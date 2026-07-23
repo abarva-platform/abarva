@@ -1,17 +1,12 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
   LabelList,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -19,6 +14,7 @@ import {
 } from "recharts";
 
 import type {
+  HomeEnterpriseBriefReadModel,
   HomeKnowledgeDataSet,
   HomeKnowledgeDesignContractPack,
   HomeKnowledgeDimension,
@@ -69,6 +65,10 @@ interface GraphEdge {
   from: string;
   to: string;
 }
+
+type EnterpriseExecutiveRead = NonNullable<
+  HomeEnterpriseBriefReadModel["executiveRead"]
+>;
 
 const COLORS = {
   page: "#f3f0ea",
@@ -173,42 +173,172 @@ const VIEW_META: Record<
   },
 };
 
+const SECTION_TABS: Array<{
+  key: ViewKey;
+  label: string;
+  badge: string;
+}> = [
+  { key: "snapshot", label: "Executive Read", badge: "01" },
+  { key: "operating", label: "Enterprise Model", badge: "02" },
+  { key: "coverage", label: "Operating Model", badge: "03" },
+  { key: "map", label: "Relationship Graph", badge: "GRAPH" },
+  { key: "apps", label: "Technology & Ecosystem", badge: "04" },
+  { key: "priorities", label: "Change Thesis", badge: "05" },
+  { key: "evidence", label: "Strategic Agenda", badge: "06" },
+];
+
 const NAV_GROUPS: Array<{
   title: string;
-  items: Array<{ key: ViewKey; label: string; measure?: string }>;
+  eyebrow?: string;
+  collapsible?: boolean;
+  items: Array<{
+    key: ViewKey;
+    label: string;
+    measure?: string;
+    tone?: "green" | "amber" | "red" | "blue" | "muted";
+  }>;
 }> = [
   {
-    title: "Enterprise",
+    title: "Enterprise Brief",
+    items: [{ key: "snapshot", label: "Enterprise Brief", tone: "green" }],
+  },
+  {
+    title: "Executive Brief",
+    eyebrow: "Explore Knowledge",
+    collapsible: true,
     items: [
-      { key: "snapshot", label: "Snapshot" },
-      { key: "operating", label: "Operating Model" },
-      { key: "map", label: "Relationship Map" },
+      { key: "snapshot", label: "Enterprise thesis", tone: "green" },
+      { key: "evidence", label: "Leadership agenda", tone: "green" },
+      { key: "coverage", label: "Proven strengths", tone: "green" },
+      { key: "constraints", label: "Structural constraints", tone: "red" },
+      { key: "operating", label: "Interview Signals", tone: "green" },
+      { key: "coverage", label: "Context confidence", tone: "amber" },
+      { key: "evidence", label: "Evidence requests", tone: "amber" },
     ],
   },
   {
-    title: "Landscape",
+    title: "Enterprise Structure",
+    collapsible: true,
     items: [
-      { key: "apps", label: "Applications", measure: "apps" },
-      { key: "data", label: "Data Domains", measure: "data" },
-      { key: "vendors", label: "Vendors", measure: "vendors" },
-      { key: "integrations", label: "Integrations", measure: "rel" },
-      { key: "spend", label: "Spend", measure: "budget" },
+      { key: "snapshot", label: "Enterprise Profile", tone: "green" },
+      { key: "operating", label: "Divisions & Business Units", tone: "green" },
+      {
+        key: "operating",
+        label: "Front / Middle / Back Office",
+        tone: "amber",
+      },
+      { key: "operating", label: "Business Functions", tone: "green" },
+      { key: "operating", label: "Business Capabilities", tone: "muted" },
+      { key: "coverage", label: "Organization Ownership", tone: "amber" },
+      { key: "coverage", label: "Decision Rights", tone: "muted" },
+      { key: "operating", label: "Workforce & Roles", tone: "amber" },
+      { key: "coverage", label: "Geography & Legal Entities", tone: "amber" },
     ],
   },
   {
-    title: "Agenda",
+    title: "Work & Value",
+    collapsible: true,
     items: [
-      { key: "priorities", label: "Strategic Priorities", measure: "ai" },
-      { key: "constraints", label: "Constraints", measure: "risks" },
-      { key: "programs", label: "Programs", measure: "programs" },
-      { key: "risks", label: "Risks", measure: "risks" },
+      { key: "priorities", label: "Strategic Priorities", tone: "green" },
+      { key: "programs", label: "Programs & Initiatives", tone: "amber" },
+      { key: "spend", label: "Spend & Value", tone: "amber" },
+      { key: "risks", label: "Value Baselines", tone: "red" },
     ],
   },
   {
-    title: "Knowledge",
+    title: "Technology & Data",
+    collapsible: true,
     items: [
-      { key: "evidence", label: "Evidence", measure: "evidence" },
-      { key: "coverage", label: "Coverage" },
+      {
+        key: "apps",
+        label: "Applications & Systems",
+        measure: "apps",
+        tone: "green",
+      },
+      { key: "data", label: "Data Domains", measure: "data", tone: "amber" },
+      {
+        key: "integrations",
+        label: "Integrations",
+        measure: "rel",
+        tone: "amber",
+      },
+      {
+        key: "apps",
+        label: "Infrastructure & Platforms",
+        measure: "infra",
+        tone: "muted",
+      },
+      { key: "map", label: "Architecture Dependencies", tone: "muted" },
+      { key: "apps", label: "Technology Lifecycle", tone: "amber" },
+      { key: "data", label: "Data Quality & Lineage", tone: "amber" },
+      { key: "data", label: "Identity & Semantic Foundations", tone: "muted" },
+    ],
+  },
+  {
+    title: "Vendors & Economics",
+    collapsible: true,
+    items: [
+      { key: "vendors", label: "Vendors", measure: "vendors", tone: "green" },
+      {
+        key: "spend",
+        label: "Run / Change Economics",
+        measure: "budget",
+        tone: "amber",
+      },
+      {
+        key: "spend",
+        label: "Contract & Spend Leverage",
+        measure: "budget",
+        tone: "amber",
+      },
+    ],
+  },
+  {
+    title: "Change & Transformation",
+    collapsible: true,
+    items: [
+      { key: "priorities", label: "Industry Movements", tone: "green" },
+      { key: "operating", label: "New Ways of Operating", tone: "green" },
+      { key: "priorities", label: "Enterprise Change Theses", tone: "green" },
+      {
+        key: "priorities",
+        label: "Strategic Priorities",
+        measure: "ai",
+        tone: "green",
+      },
+      {
+        key: "programs",
+        label: "Programs & Initiatives",
+        measure: "programs",
+        tone: "amber",
+      },
+      {
+        key: "priorities",
+        label: "Candidate Use Cases",
+        measure: "ai",
+        tone: "green",
+      },
+      { key: "map", label: "Transformation Dependencies", tone: "amber" },
+      { key: "programs", label: "Transformation Sequence", tone: "amber" },
+    ],
+  },
+  {
+    title: "Risk & Trust",
+    collapsible: true,
+    items: [
+      {
+        key: "risks",
+        label: "Risks & Controls",
+        measure: "risks",
+        tone: "red",
+      },
+      {
+        key: "evidence",
+        label: "Evidence & Trust",
+        measure: "evidence",
+        tone: "green",
+      },
+      { key: "coverage", label: "Decision Boundaries", tone: "amber" },
     ],
   },
 ];
@@ -359,6 +489,10 @@ function metricFacts(pack: HomeKnowledgeDesignContractPack) {
     "Clinics",
     "IT budget",
     "FY26 IT budget",
+    "Applications",
+    "Vendors",
+    "Integrations",
+    "Data domains",
   ];
   const mapped = wanted
     .map((label) =>
@@ -373,7 +507,31 @@ function metricFacts(pack: HomeKnowledgeDesignContractPack) {
       note: noMechanics(fact.sub),
     }))
     .filter((fact) => fact.value);
-  if (mapped.length) return mapped.slice(0, 6);
+  const dimensionFacts = [
+    ["Applications", "apps"],
+    ["Vendors", "vendors"],
+    ["Integrations", "rel"],
+    ["Data domains", "data"],
+  ]
+    .map(([label, key]) => {
+      const existing = mapped.find(
+        (fact) => fact.label.toLowerCase() === label.toLowerCase(),
+      );
+      if (existing) return null;
+      const dimension = byDimension(pack, key);
+      if (!dimension?.count) return null;
+      return {
+        label,
+        value: formatNumber(dimension.count),
+        note: dimensionLabel(key),
+      };
+    })
+    .filter((fact): fact is { label: string; value: string; note: string } =>
+      Boolean(fact),
+    );
+  if (mapped.length || dimensionFacts.length) {
+    return [...mapped, ...dimensionFacts].slice(0, 10);
+  }
   return (pack.design_slots.DIMS ?? [])
     .filter((dimension) =>
       ["apps", "data", "vendors", "programs", "ai"].includes(dimension.key),
@@ -386,30 +544,97 @@ function metricFacts(pack: HomeKnowledgeDesignContractPack) {
     }));
 }
 
-function readinessChart(pack: HomeKnowledgeDesignContractPack) {
-  const readiness = pack.enterprise_brief?.aiReadiness ?? [];
-  if (readiness.length) {
-    return readiness.slice(0, 6).map((item) => ({
-      name: shortLabel(item.readinessDimension, 18),
-      value: Math.max(0, Math.min(100, item.scorePct)),
-      fill:
-        item.tone === "green"
-          ? COLORS.teal
-          : item.tone === "red"
-            ? COLORS.red
-            : COLORS.amber,
-    }));
-  }
-  return (pack.design_slots.DIMS ?? []).slice(0, 6).map((dimension) => ({
-    name: shortLabel(dimensionLabel(dimension.key), 18),
-    value:
-      tone(dimension.status) === "ready"
-        ? 78
-        : tone(dimension.status) === "weak"
-          ? 36
-          : 58,
-    fill: toneColor(dimension.status),
-  }));
+function tenantDescriptor(pack: HomeKnowledgeDesignContractPack) {
+  const facts = pack.design_slots.FACTS ?? [];
+  const profile = dataFor(pack, "profile")?.rows?.[0];
+  const fromFacts = firstText(
+    facts.find((fact) => /industry|sector|archetype/i.test(plain(fact.label))),
+    ["value", "amount", "v"],
+  );
+  return (
+    noMechanics(
+      firstText(profile, [
+        "industry",
+        "sector",
+        "business_model",
+        "company_type",
+        "description",
+      ]) || fromFacts,
+    ) || "Enterprise context"
+  );
+}
+
+function tenantLocation(pack: HomeKnowledgeDesignContractPack) {
+  const profile = dataFor(pack, "profile")?.rows?.[0];
+  return (
+    noMechanics(
+      firstText(profile, [
+        "headquarters",
+        "hq_location",
+        "location",
+        "city",
+        "region",
+      ]),
+    ) || "Planning context"
+  );
+}
+
+function factValue(
+  facts: Array<{ label: string; value: string; note?: string }>,
+  pattern: RegExp,
+) {
+  return facts.find((fact) => pattern.test(fact.label))?.value ?? "";
+}
+
+function snapshotMetricGrid(
+  pack: HomeKnowledgeDesignContractPack,
+  facts: Array<{ label: string; value: string; note?: string }>,
+) {
+  const candidates = [
+    { label: "Revenue", value: factValue(facts, /revenue/i) },
+    { label: "Employees", value: factValue(facts, /employees/i) },
+    { label: "Members", value: factValue(facts, /members/i) },
+    { label: "Hospitals", value: factValue(facts, /hospitals/i) },
+    { label: "Clinics", value: factValue(facts, /clinics/i) },
+    {
+      label: "IT budget",
+      value: factValue(facts, /(it budget|technology budget)/i),
+    },
+    {
+      label: "Applications",
+      value:
+        factValue(facts, /applications/i) ||
+        formatNumber(byDimension(pack, "apps")?.count),
+    },
+    {
+      label: "Vendors",
+      value:
+        factValue(facts, /vendors/i) ||
+        formatNumber(byDimension(pack, "vendors")?.count),
+    },
+    {
+      label: "Integrations",
+      value:
+        factValue(facts, /integrations/i) ||
+        formatNumber(byDimension(pack, "rel")?.count),
+    },
+    {
+      label: "Data domains",
+      value:
+        factValue(facts, /data domains/i) ||
+        formatNumber(byDimension(pack, "data")?.count),
+    },
+  ].filter((fact) => fact.value);
+  return candidates.slice(0, 10);
+}
+
+function splitReality(executive?: EnterpriseExecutiveRead) {
+  const industry = executive?.industryForces;
+  const reality = executive?.tenantReality;
+  return {
+    industry: (industry?.length ? industry : []).slice(0, 5),
+    reality: (reality?.length ? reality : []).slice(0, 5),
+  };
 }
 
 function coverageChart(pack: HomeKnowledgeDesignContractPack) {
@@ -740,6 +965,7 @@ export function HomeEnterpriseBriefApp({
   selectedDimension,
 }: HomeEnterpriseBriefAppProps) {
   const [view, setView] = useState<ViewKey>(initialView(selectedDimension));
+  const [activeNavId, setActiveNavId] = useState<string | null>(null);
   const meta = VIEW_META[view];
   const graph = useMemo(
     () => buildGraph(pack, relationshipEdges),
@@ -761,16 +987,32 @@ export function HomeEnterpriseBriefApp({
         </div>
         {NAV_GROUPS.map((group) => (
           <nav className="heb-nav-group" key={group.title}>
-            <span>{group.title}</span>
+            {group.eyebrow ? <small>{group.eyebrow}</small> : null}
+            <span>
+              {group.collapsible ? <em>▾</em> : null}
+              {group.title}
+            </span>
             {group.items.map((item) => {
-              const active = item.key === view;
+              const navId = `${group.title}:${item.label}`;
+              const active = activeNavId
+                ? activeNavId === navId
+                : item.key === view && group.title === "Enterprise Brief";
               return (
                 <button
-                  className={active ? "is-active" : ""}
-                  key={item.key}
+                  className={[
+                    active ? "is-active" : "",
+                    item.tone ? `tone-${item.tone}` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  key={navId}
                   type="button"
-                  onClick={() => setView(item.key)}
+                  onClick={() => {
+                    setView(item.key);
+                    setActiveNavId(navId);
+                  }}
                 >
+                  <i aria-hidden="true" />
                   <b>{item.label}</b>
                 </button>
               );
@@ -785,10 +1027,41 @@ export function HomeEnterpriseBriefApp({
 
       <main className="heb-main">
         <header className="heb-page-head">
+          <h1>{pack.tenant_name}</h1>
+          <p className="heb-tenant-meta">
+            <b>{tenantDescriptor(pack)}</b>
+            <i />
+            <span>{tenantLocation(pack)}</span>
+          </p>
+          <p className="heb-page-kicker">
+            The enterprise&apos;s digital understanding of itself.
+          </p>
+          <div
+            className="heb-section-tabs"
+            role="tablist"
+            aria-label="Home sections"
+          >
+            {SECTION_TABS.map((tab) => (
+              <button
+                className={view === tab.key ? "is-active" : ""}
+                key={`${tab.key}-${tab.label}`}
+                type="button"
+                onClick={() => {
+                  setView(tab.key);
+                  setActiveNavId(null);
+                }}
+              >
+                <span>{tab.label}</span>
+                <em>{tab.badge}</em>
+              </button>
+            ))}
+          </div>
+        </header>
+
+        <div className="heb-current-section">
           <span>
             {meta.index} · {meta.title}
           </span>
-          <h1>{meta.title}</h1>
           <p>{meta.lead}</p>
           <div className="heb-status">
             <b>{pack.tenant_name}</b>
@@ -797,16 +1070,10 @@ export function HomeEnterpriseBriefApp({
             <i />
             <em>Updated {formatDate(pack.generated_at)}</em>
           </div>
-        </header>
+        </div>
 
         {view === "snapshot" ? (
-          <SnapshotView
-            pack={pack}
-            executive={executive}
-            facts={facts}
-            coverage={coverageChart(pack)}
-            readiness={readinessChart(pack)}
-          />
+          <SnapshotView pack={pack} executive={executive} facts={facts} />
         ) : null}
 
         {view === "operating" ? (
@@ -848,7 +1115,7 @@ export function HomeEnterpriseBriefApp({
         .heb-shell {
           min-height: calc(100vh - 64px);
           display: grid;
-          grid-template-columns: 238px minmax(0, 1fr);
+          grid-template-columns: 282px minmax(0, 1fr);
           background: ${COLORS.page};
           color: ${COLORS.ink};
           font-family:
@@ -861,7 +1128,7 @@ export function HomeEnterpriseBriefApp({
         .heb-rail {
           background: ${COLORS.rail};
           border-right: 1px solid ${COLORS.line};
-          padding: 20px 10px 32px;
+          padding: 17px 10px 32px;
           position: sticky;
           top: 0;
           align-self: start;
@@ -881,7 +1148,8 @@ export function HomeEnterpriseBriefApp({
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 0 7px 14px;
+          padding: 0 8px 15px;
+          color: #6c778b;
         }
         .heb-rail-label i,
         .heb-status i,
@@ -894,32 +1162,57 @@ export function HomeEnterpriseBriefApp({
         }
         .heb-nav-group {
           border-top: 1px solid ${COLORS.line};
-          padding: 12px 0;
+          padding: 10px 0;
         }
-        .heb-nav-group > span {
+        .heb-nav-group:first-of-type {
+          border-top: 0;
+          padding-top: 0;
+        }
+        .heb-nav-group small {
           display: block;
-          padding: 0 7px 7px;
-          color: ${COLORS.quiet};
-          font-size: 9.5px;
-          letter-spacing: 0.14em;
+          padding: 0 8px 6px;
+          color: #a29b91;
+          font-size: 9px;
+          letter-spacing: 0.13em;
           text-transform: uppercase;
           font-weight: 800;
+        }
+        .heb-nav-group > span {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 0 8px 7px;
+          color: ${COLORS.quiet};
+          font-size: 9px;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          font-weight: 800;
+        }
+        .heb-nav-group > span em {
+          color: #807a70;
+          font-style: normal;
+          font-size: 9px;
+          margin-top: -1px;
         }
         .heb-nav-group button {
           width: 100%;
           display: grid;
-          grid-template-columns: minmax(0, 1fr);
+          grid-template-columns: 10px minmax(0, 1fr);
           align-items: center;
           border: 0;
           border-left: 3px solid transparent;
           border-radius: 6px;
           background: transparent;
           color: ${COLORS.ink};
-          padding: 6px 9px 6px 8px;
+          column-gap: 8px;
+          padding: 6px 9px 6px 7px;
           margin: 1px 0;
           cursor: pointer;
           text-align: left;
           font: inherit;
+        }
+        .heb-nav-group button:hover {
+          background: rgba(255, 255, 255, 0.5);
         }
         .heb-nav-group button.is-active {
           background: rgba(255, 255, 255, 0.72);
@@ -927,10 +1220,36 @@ export function HomeEnterpriseBriefApp({
           box-shadow: inset 0 0 0 1px rgba(18, 104, 199, 0.08);
           color: ${COLORS.ink};
         }
+        .heb-nav-group:first-of-type button.is-active {
+          background: #2f2f2c;
+          color: #fffdf8;
+          border-left-color: ${COLORS.teal};
+          box-shadow: none;
+        }
+        .heb-nav-group button > i {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: #b9b4aa;
+          justify-self: center;
+        }
+        .heb-nav-group button.tone-green > i {
+          background: ${COLORS.teal};
+        }
+        .heb-nav-group button.tone-amber > i {
+          background: ${COLORS.amber};
+        }
+        .heb-nav-group button.tone-red > i {
+          background: ${COLORS.red};
+        }
+        .heb-nav-group button.tone-blue > i {
+          background: ${COLORS.blue};
+        }
         .heb-nav-group b {
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 600;
           line-height: 1.2;
+          white-space: normal;
         }
         .heb-nav-group em {
           color: ${COLORS.muted};
@@ -949,17 +1268,13 @@ export function HomeEnterpriseBriefApp({
           line-height: 1.45;
         }
         .heb-main {
-          width: min(100%, 980px);
-          padding: 30px 48px 72px;
+          width: min(100%, 1160px);
+          padding: 38px 48px 72px;
         }
         .heb-page-head {
           border-bottom: 1px solid ${COLORS.line};
-          margin-bottom: 24px;
-          padding-bottom: 22px;
-        }
-        .heb-page-head > span {
-          display: block;
-          margin-bottom: 14px;
+          margin-bottom: 22px;
+          padding-bottom: 0;
         }
         .heb-page-head h1,
         .heb-hero h2,
@@ -969,16 +1284,93 @@ export function HomeEnterpriseBriefApp({
           letter-spacing: 0;
         }
         .heb-page-head h1 {
-          font-size: clamp(28px, 3vw, 36px);
-          line-height: 1.08;
-          margin: 0 0 10px;
+          font-size: clamp(40px, 4.3vw, 54px);
+          line-height: 0.98;
+          margin: 0 0 12px;
         }
-        .heb-page-head p {
+        .heb-page-head p,
+        .heb-current-section p {
           margin: 0 0 14px;
           max-width: 74ch;
           color: ${COLORS.muted};
           font-size: 15px;
           line-height: 1.55;
+        }
+        .heb-tenant-meta {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          color: ${COLORS.muted};
+          font-size: 13px;
+        }
+        .heb-tenant-meta b {
+          color: ${COLORS.ink};
+          font-weight: 700;
+        }
+        .heb-tenant-meta i {
+          width: 4px;
+          height: 4px;
+          border-radius: 999px;
+          background: ${COLORS.lineStrong};
+        }
+        .heb-page-kicker {
+          font-family: Fraunces, Georgia, serif;
+          font-style: italic;
+          font-size: 22px !important;
+          color: #4b4740 !important;
+          margin: 14px 0 28px !important;
+        }
+        .heb-section-tabs {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          overflow-x: auto;
+          padding-bottom: 0;
+          border-bottom: 0;
+        }
+        .heb-section-tabs button {
+          appearance: none;
+          border: 0;
+          border-bottom: 2px solid transparent;
+          background: transparent;
+          color: ${COLORS.muted};
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 9px 0 12px;
+          white-space: nowrap;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 700;
+        }
+        .heb-section-tabs button.is-active {
+          color: ${COLORS.ink};
+          border-bottom-color: ${COLORS.black};
+        }
+        .heb-section-tabs em {
+          border-radius: 4px;
+          background: #eeeae1;
+          color: ${COLORS.quiet};
+          padding: 2px 4px;
+          font-style: normal;
+          font-size: 8px;
+          letter-spacing: 0.08em;
+          font-weight: 900;
+        }
+        .heb-current-section {
+          margin-bottom: 20px;
+        }
+        .heb-current-section > span {
+          display: block;
+          margin-bottom: 8px;
+        }
+        .heb-current-section > span {
+          font-size: 10px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          font-weight: 800;
+          color: #758198;
         }
         .heb-status {
           display: flex;
@@ -997,6 +1389,260 @@ export function HomeEnterpriseBriefApp({
         }
         .heb-section {
           margin: 22px 0;
+        }
+        .heb-read-intro {
+          margin: 18px 0 18px;
+        }
+        .heb-brief-legend {
+          border-top: 1px solid ${COLORS.line};
+          padding-top: 16px;
+          margin-bottom: 22px !important;
+        }
+        .heb-brief-legend a {
+          color: ${COLORS.muted};
+          text-decoration: underline;
+          text-underline-offset: 4px;
+          font-weight: 700;
+        }
+        .heb-thesis {
+          font-family: Fraunces, Georgia, serif;
+          color: ${COLORS.ink};
+          letter-spacing: 0;
+          font-size: clamp(32px, 3.7vw, 44px);
+          line-height: 1.05;
+          max-width: 980px;
+          margin: 14px 0 14px;
+        }
+        .heb-context-line {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          color: ${COLORS.muted};
+          font-size: 13px;
+          margin: 0;
+        }
+        .heb-context-line b {
+          color: ${COLORS.ink};
+        }
+        .heb-metric-table {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          border: 1px solid ${COLORS.line};
+          border-radius: 9px;
+          overflow: hidden;
+          background: ${COLORS.surface};
+        }
+        .heb-metric-table .heb-fact {
+          min-height: 74px;
+          padding: 14px 16px;
+          border-right: 1px solid ${COLORS.line};
+          border-bottom: 1px solid ${COLORS.line};
+        }
+        .heb-metric-table .heb-fact:nth-child(5n) {
+          border-right: 0;
+        }
+        .heb-metric-table .heb-fact:nth-last-child(-n + 5) {
+          border-bottom: 0;
+        }
+        .heb-metric-table strong {
+          display: block;
+          font-family: Fraunces, Georgia, serif;
+          font-size: 27px;
+          line-height: 1;
+          margin: 0 0 7px;
+        }
+        .heb-metric-table span {
+          display: block;
+          color: ${COLORS.muted};
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .heb-tension-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+          margin-top: 14px;
+        }
+        .heb-tension-grid article {
+          background: ${COLORS.surface};
+          border: 1px solid ${COLORS.line};
+          border-radius: 9px;
+          padding: 18px 20px;
+        }
+        .heb-tension-grid h3 {
+          margin: 0 0 14px;
+          color: ${COLORS.quiet};
+          font-size: 10px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          font-weight: 900;
+        }
+        .heb-tension-grid ul,
+        .heb-proof-lanes ul,
+        .heb-sequence-grid ul {
+          display: grid;
+          gap: 10px;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .heb-tension-grid li {
+          color: ${COLORS.ink};
+          font-size: 14px;
+          line-height: 1.45;
+          position: relative;
+          padding-left: 22px;
+        }
+        .heb-tension-grid li::before {
+          content: "→";
+          position: absolute;
+          left: 0;
+          color: ${COLORS.lineStrong};
+          font-weight: 700;
+        }
+        .heb-tension-grid article:nth-child(2) li::before {
+          content: "•";
+        }
+        .heb-takeaway {
+          margin: 22px 0 28px;
+          background: ${COLORS.black};
+          color: #fffdf8;
+          border-radius: 9px;
+          padding: 20px 24px;
+        }
+        .heb-takeaway span {
+          display: block;
+          color: ${COLORS.amber};
+          font-size: 10px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          font-weight: 900;
+          margin-bottom: 10px;
+        }
+        .heb-takeaway p {
+          margin: 0;
+          font-family: Fraunces, Georgia, serif;
+          font-size: 21px;
+          line-height: 1.18;
+          max-width: 940px;
+        }
+        .heb-proof-lanes {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+        .heb-section-label.green {
+          color: ${COLORS.teal};
+        }
+        .heb-section-label.red {
+          color: ${COLORS.red};
+        }
+        .heb-proof-lanes li {
+          background: ${COLORS.surface};
+          border: 1px solid ${COLORS.line};
+          border-left: 3px solid ${COLORS.teal};
+          border-radius: 7px;
+          padding: 12px 14px;
+          color: ${COLORS.ink};
+          font-size: 13.5px;
+          line-height: 1.42;
+        }
+        .heb-proof-lanes article:nth-child(2) li {
+          border-left-color: ${COLORS.red};
+        }
+        .heb-confidence-strip {
+          display: grid;
+          grid-template-columns: 66px minmax(0, 1fr);
+          align-items: center;
+          gap: 20px;
+          margin: 28px 0 34px;
+          border: 1px solid ${COLORS.line};
+          border-radius: 9px;
+          background: ${COLORS.surface};
+          padding: 16px 20px;
+        }
+        .heb-confidence-strip > strong {
+          font-family: Fraunces, Georgia, serif;
+          font-size: 31px;
+          line-height: 1;
+        }
+        .heb-progress {
+          height: 7px;
+          border-radius: 999px;
+          background: #e9e5dc;
+          margin: 8px 0 7px;
+          overflow: hidden;
+        }
+        .heb-progress i {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: ${COLORS.teal};
+        }
+        .heb-confidence-strip p {
+          margin: 0;
+          color: ${COLORS.muted};
+          font-size: 12.5px;
+          line-height: 1.45;
+        }
+        .heb-sequence-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+          margin-top: 14px;
+        }
+        .heb-sequence-grid article {
+          background: ${COLORS.surface};
+          border: 1px solid ${COLORS.line};
+          border-radius: 9px;
+          padding: 18px;
+        }
+        .heb-sequence-grid h3 {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          margin: 0 0 14px;
+          border-radius: 999px;
+          background: rgba(44, 164, 119, 0.13);
+          color: ${COLORS.tealDark};
+          padding: 5px 9px;
+          font-size: 10px;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+          font-weight: 900;
+        }
+        .heb-sequence-grid article.tone-blue h3 {
+          background: rgba(18, 104, 199, 0.11);
+          color: ${COLORS.blue};
+        }
+        .heb-sequence-grid article.tone-amber h3 {
+          background: rgba(191, 125, 29, 0.12);
+          color: ${COLORS.amber};
+        }
+        .heb-sequence-grid li {
+          color: ${COLORS.ink};
+          font-size: 13.5px;
+          line-height: 1.45;
+          position: relative;
+          padding-left: 18px;
+        }
+        .heb-sequence-grid li::before {
+          content: "—";
+          position: absolute;
+          left: 0;
+          color: ${COLORS.lineStrong};
+        }
+        .heb-full-read {
+          margin-top: 34px;
+          border-top: 1px solid ${COLORS.line};
+          padding-top: 24px;
+          max-width: 820px;
+        }
+        .heb-full-read p {
+          color: ${COLORS.ink};
+          font-size: 16px;
+          line-height: 1.56;
+          margin: 14px 0 0;
         }
         .heb-hero,
         .heb-card,
@@ -1157,6 +1803,15 @@ export function HomeEnterpriseBriefApp({
           line-height: 1;
           margin: 5px 0;
         }
+        .heb-metric-table .heb-fact strong {
+          font-size: 27px;
+          margin: 0 0 7px;
+        }
+        .heb-metric-table .heb-fact span {
+          color: ${COLORS.muted};
+          font-size: 11px;
+          font-weight: 800;
+        }
         .heb-chart {
           height: 280px;
           min-width: 0;
@@ -1266,8 +1921,22 @@ export function HomeEnterpriseBriefApp({
           .heb-hero,
           .heb-grid-2,
           .heb-grid-3,
-          .heb-facts {
+          .heb-facts,
+          .heb-metric-table,
+          .heb-tension-grid,
+          .heb-proof-lanes,
+          .heb-sequence-grid,
+          .heb-confidence-strip {
             grid-template-columns: 1fr;
+          }
+          .heb-metric-table .heb-fact,
+          .heb-metric-table .heb-fact:nth-child(5n),
+          .heb-metric-table .heb-fact:nth-last-child(-n + 5) {
+            border-right: 0;
+            border-bottom: 1px solid ${COLORS.line};
+          }
+          .heb-metric-table .heb-fact:last-child {
+            border-bottom: 0;
           }
         }
       `}</style>
@@ -1279,93 +1948,164 @@ function SnapshotView({
   pack,
   executive,
   facts,
-  coverage,
-  readiness,
 }: {
   pack: HomeKnowledgeDesignContractPack;
   executive?: NonNullable<
     HomeKnowledgeDesignContractPack["enterprise_brief"]
   >["executiveRead"];
   facts: Array<{ label: string; value: string; note?: string }>;
-  coverage: Array<{ name: string; value: number; label: string; fill: string }>;
-  readiness: Array<{ name: string; value: number; fill: string }>;
 }) {
   const confidence = Math.max(
     0,
     Math.min(100, Number(executive?.contextConfidencePct ?? 58)),
   );
+  const tension = splitReality(executive);
+  const metrics = snapshotMetricGrid(pack, facts);
+  const horizons = executive?.horizons?.length
+    ? executive.horizons
+    : [
+        {
+          horizon: "Act now",
+          tone: "blue",
+          items: [
+            "Validate one bounded workflow change",
+            "Name owners and establish baselines",
+            "Close immediate governance gaps",
+          ],
+        },
+        {
+          horizon: "Build next",
+          tone: "amber",
+          items: [
+            "Certified data and identity spine",
+            "Semantic model and governed domains",
+            "Integration and operational telemetry",
+          ],
+        },
+        {
+          horizon: "Scale later",
+          tone: "green",
+          items: [
+            "Cross-domain agents",
+            "Autonomous decisions",
+            "Enterprise value optimization",
+          ],
+        },
+      ];
+  const fullNarrative =
+    noMechanics(pack.narrative_sections?.enterprise_brief_summary) ||
+    noMechanics(pack.narrative_sections?.enterprise_hero_summary) ||
+    noMechanics(executive?.oneSentence);
+  const secondNarrative =
+    noMechanics(pack.narrative_sections?.proof_summary) ||
+    noMechanics(executive?.dataFoundationSummary) ||
+    "The useful next move is to turn context into confirmed operating evidence, so leadership can act on the whole enterprise rather than disconnected facts.";
   return (
     <>
-      <section className="heb-hero">
-        <div>
-          <span className="heb-section-label">
-            The enterprise in one sentence
-          </span>
-          <h2>
-            {noMechanics(
-              executive?.tensionHeadline ??
-                pack.narrative_sections?.enterprise_brief_title ??
-                "Leadership needs one governed enterprise view before AI and transformation decisions scale.",
-            )}
-          </h2>
-          <p className="heb-copy">
-            {noMechanics(
+      <section className="heb-read-intro">
+        <div className="heb-legend heb-brief-legend">
+          {[
+            ["Proven strength", COLORS.teal],
+            ["Structural constraint", COLORS.red],
+            ["Strategic option", COLORS.blue],
+            ["Evidence required", COLORS.amber],
+          ].map(([label, color]) => (
+            <span key={label}>
+              <i style={{ background: color }} />
+              {label}
+            </span>
+          ))}
+          <a href="#about-this-cockpit">About this cockpit</a>
+        </div>
+        <span className="heb-section-label">
+          The enterprise in one sentence
+        </span>
+        <h2 className="heb-thesis">
+          {noMechanics(
+            executive?.tensionHeadline ??
+              pack.narrative_sections?.enterprise_brief_title ??
               executive?.oneSentence ??
-                pack.narrative_sections?.enterprise_brief_summary ??
-                pack.narrative_sections?.enterprise_hero_summary,
-            )}
-          </p>
-          <div className="heb-pill-row">
-            {(executive?.industryForces ?? []).slice(0, 4).map((force) => (
-              <span className="heb-pill" key={force}>
-                {noMechanics(force)}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="heb-confidence">
-          <div
-            className="heb-donut"
-            style={{ "--pct": confidence } as CSSProperties}
-          >
-            <div>
-              <strong>{confidence}%</strong>
-              <span>Context quality</span>
-            </div>
-          </div>
-          <p className="heb-small">
-            {noMechanics(executive?.contextConfidenceNote) ||
-              "Use this as a planning-grade read until accountable owners confirm the evidence."}
-          </p>
-        </div>
+              "Leadership needs one governed enterprise view before AI and transformation decisions scale.",
+          )}
+        </h2>
+        <p className="heb-context-line">
+          <b>{tenantDescriptor(pack)}</b>
+          <span>{tenantLocation(pack)}</span>
+        </p>
       </section>
 
-      {facts.length ? (
+      {metrics.length ? (
         <section
-          className="heb-section heb-facts"
+          className="heb-section heb-metric-table"
           aria-label="Enterprise metrics"
         >
-          {facts.map((fact) => (
+          {metrics.map((fact) => (
             <article className="heb-fact" key={`${fact.label}-${fact.value}`}>
-              <span>{fact.label}</span>
               <strong>{fact.value}</strong>
-              <small>{fact.note}</small>
+              <span>{fact.label}</span>
             </article>
           ))}
         </section>
       ) : null}
 
-      <section className="heb-section heb-grid-2">
-        <article className="heb-card">
-          <span className="heb-section-label">What is strong</span>
+      <section className="heb-section">
+        <span className="heb-section-label">The strategic tension</span>
+        <div className="heb-tension-grid">
+          <article>
+            <h3>Industry is moving to</h3>
+            <ul>
+              {(tension.industry.length
+                ? tension.industry
+                : [
+                    "AI-enabled workflow redesign",
+                    "Agent-assisted service",
+                    "Governed enterprise data products",
+                    "Continuous finance and controls",
+                    "Decision automation with human accountability",
+                  ]
+              )
+                .slice(0, 5)
+                .map((item) => (
+                  <li key={item}>{noMechanics(item)}</li>
+                ))}
+            </ul>
+          </article>
+          <article>
+            <h3>{pack.tenant_name.split(" ")[0]} today</h3>
+            <ul>
+              {(tension.reality.length
+                ? tension.reality
+                : (executive?.constraints ?? []).map((item) => item.text ?? "")
+              )
+                .filter(Boolean)
+                .slice(0, 5)
+                .map((item) => (
+                  <li key={item}>{noMechanics(item)}</li>
+                ))}
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section className="heb-takeaway" aria-label="The takeaway">
+        <span>The takeaway</span>
+        <p>
+          {noMechanics(executive?.oneSentence) ||
+            "AI ambition is ahead of the enterprise context foundation required to scale it safely."}
+        </p>
+      </section>
+
+      <section className="heb-section heb-proof-lanes">
+        <article>
+          <span className="heb-section-label green">Proven strengths</span>
           <ul>
             {(executive?.strengths ?? []).slice(0, 5).map((item) => (
               <li key={plain(item.text)}>{noMechanics(item.text)}</li>
             ))}
           </ul>
         </article>
-        <article className="heb-card">
-          <span className="heb-section-label">What gates AI success</span>
+        <article>
+          <span className="heb-section-label red">Structural constraints</span>
           <ul>
             {(executive?.constraints ?? []).slice(0, 5).map((item) => (
               <li key={plain(item.text)}>{noMechanics(item.text)}</li>
@@ -1374,58 +2114,45 @@ function SnapshotView({
         </article>
       </section>
 
-      <section className="heb-section heb-grid-2">
-        <article className="heb-card">
-          <span className="heb-section-label">Knowledge coverage</span>
-          <div className="heb-chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={coverage}
-                layout="vertical"
-                margin={{ left: 8, right: 26 }}
-              >
-                <CartesianGrid horizontal={false} stroke="#e8dfd3" />
-                <XAxis type="number" domain={[0, 3]} hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={128}
-                  tick={{ fontSize: 11 }}
-                />
-                <Tooltip />
-                <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                  {coverage.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
-                  ))}
-                  <LabelList dataKey="label" position="right" fontSize={10} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+      <section className="heb-confidence-strip">
+        <strong>{confidence}%</strong>
+        <div>
+          <span className="heb-section-label">Context confidence</span>
+          <div className="heb-progress">
+            <i style={{ width: `${confidence}%` }} />
           </div>
-        </article>
-        <article className="heb-card">
-          <span className="heb-section-label">AI readiness</span>
-          <div className="heb-chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={readiness}>
-                <PolarGrid stroke="#ded8cd" />
-                <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <PolarRadiusAxis
-                  angle={90}
-                  domain={[0, 100]}
-                  tick={false}
-                  axisLine={false}
-                />
-                <Radar
-                  dataKey="value"
-                  stroke={COLORS.teal}
-                  fill={COLORS.teal}
-                  fillOpacity={0.24}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </article>
+          <p>
+            {noMechanics(executive?.contextConfidenceNote) ||
+              "Enterprise structure and systems are evidenced; realized value and operating performance still need confirmation."}
+          </p>
+        </div>
+      </section>
+
+      <section className="heb-section">
+        <span className="heb-section-label">
+          The defensible leadership sequence
+        </span>
+        <div className="heb-sequence-grid">
+          {horizons.slice(0, 3).map((horizon) => (
+            <article
+              className={`tone-${horizon.tone ?? "green"}`}
+              key={horizon.horizon}
+            >
+              <h3>{noMechanics(horizon.horizon)}</h3>
+              <ul>
+                {(horizon.items ?? []).slice(0, 4).map((item) => (
+                  <li key={item}>{noMechanics(item)}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="heb-section heb-full-read" id="about-this-cockpit">
+        <span className="heb-section-label">In full</span>
+        <p>{fullNarrative}</p>
+        <p>{secondNarrative}</p>
       </section>
     </>
   );
