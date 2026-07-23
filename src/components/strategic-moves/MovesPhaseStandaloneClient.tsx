@@ -10,8 +10,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
-import { extractArtifacts } from "@/lib/agent/artifacts";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { extractArtifacts, type Artifact } from "@/lib/agent/artifacts";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import {
@@ -38,6 +41,7 @@ import {
   buildNextPhaseReadinessPack,
   type NextPhaseReadinessPack,
 } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
+import { buildMovesChatAvaAnswerPacket } from "@/lib/programs/moves-chat-answer-packet";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import {
   APPROVAL_ROLE_LABELS,
@@ -50,6 +54,7 @@ interface AvaChatMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
+  agentAnswer?: AvaAnswerPacket | null;
 }
 
 let avaTurnCounter = 0;
@@ -665,12 +670,15 @@ export function MovesPhaseStandaloneClient({
         const decoder = new TextDecoder();
         let pendingBuffer = "";
         let committedVisible = "";
+        const streamArtifacts: Artifact[] = [];
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           pendingBuffer += decoder.decode(value, { stream: true });
-          const { visibleText, remaining } = extractArtifacts(pendingBuffer);
+          const { visibleText, artifacts, remaining } =
+            extractArtifacts(pendingBuffer);
+          streamArtifacts.push(...artifacts);
           committedVisible += visibleText;
           pendingBuffer = remaining;
           const display = committedVisible.trimEnd();
@@ -683,15 +691,25 @@ export function MovesPhaseStandaloneClient({
 
         if (pendingBuffer.length > 0) {
           const final = extractArtifacts(pendingBuffer);
+          streamArtifacts.push(...final.artifacts);
           committedVisible += final.visibleText;
-          setAvaThread((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, text: committedVisible.trimEnd() }
-                : m,
-            ),
-          );
         }
+
+        const finalText = committedVisible.trimEnd();
+        const agentAnswer = buildMovesChatAvaAnswerPacket({
+          move,
+          phase,
+          question: trimmed,
+          visibleText: finalText,
+          phaseTallies,
+          readinessPack: finderReadinessPack,
+          streamArtifacts,
+        });
+        setAvaThread((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, text: finalText, agentAnswer } : m,
+          ),
+        );
       } catch (err) {
         const message =
           err instanceof Error && err.name === "AbortError"
@@ -705,15 +723,7 @@ export function MovesPhaseStandaloneClient({
         setAvaStreaming(false);
       }
     },
-    [
-      avaStreaming,
-      move.displayCode,
-      move.id,
-      move.name,
-      move.tenant.name,
-      phase.title,
-      phaseNum,
-    ],
+    [avaStreaming, move, phase, phaseTallies, phaseNum, finderReadinessPack],
   );
 
   function openFilesWorkspace() {
@@ -1402,10 +1412,29 @@ export function MovesPhaseStandaloneClient({
                   <span className="mxw-ava-turn-who">
                     {turn.role === "user" ? "You" : "aVa"}
                   </span>
-                  <p>
-                    {turn.text ||
-                      (turn.role === "assistant" && avaStreaming ? "…" : "")}
-                  </p>
+                  {turn.role === "assistant" ? (
+                    <>
+                      <div className="mxw-ava-turn-text">
+                        {turn.text ? (
+                          <AgentMarkdown text={turn.text} />
+                        ) : avaStreaming ? (
+                          "…"
+                        ) : null}
+                      </div>
+                      {turn.agentAnswer ? (
+                        <div className="mxw-ava-rich-answer">
+                          <AgentAnswerRenderer
+                            answer={turn.agentAnswer}
+                            showChrome={false}
+                            showExport={false}
+                            showProse={false}
+                          />
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p>{turn.text}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -4985,6 +5014,14 @@ function MovesStandaloneStyles() {
 .mxw-ava-turn-who{display:block;font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:3px}
 .mxw-ava-turn p{font-size:12.5px;color:var(--ink-2);line-height:1.5;white-space:pre-wrap;margin:0;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
 .mxw-ava-turn-user p{background:var(--card);border-color:var(--line-2)}
+.mxw-ava-turn-text{font-size:12.5px;color:var(--ink-2);line-height:1.5;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 12px;white-space:normal}
+.mxw-ava-turn-text p{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;margin:0 0 7px!important;white-space:normal!important}
+.mxw-ava-turn-text p:last-child{margin-bottom:0!important}
+.mxw-ava-rich-answer{margin-top:8px;max-width:100%;overflow-x:auto}
+.mxw-ava-rich-answer .agentAnswer{min-width:300px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.mxw-ava-rich-answer .aaSection{margin-top:8px}
+.mxw-ava-rich-answer .aaTitle{font-size:10px}
+.mxw-ava-rich-answer .aaChart,.mxw-ava-rich-answer .aaTableWrap{min-width:300px}
 .mxw-ava-composer{display:flex;gap:8px;padding:12px 17px;border-top:1px solid var(--line);align-items:flex-end}
 .mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}

@@ -2150,6 +2150,12 @@ describe("MovesPhaseStandaloneClient", () => {
         ),
       ).toBeInTheDocument();
     });
+    await waitFor(() => {
+      expect(screen.getByLabelText("aVa answer")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Gate readiness by phase")).toBeInTheDocument();
+    expect(screen.getByText("Phase readiness scorecard")).toBeInTheDocument();
+    expect(screen.queryByText(/\[\[artifact:/i)).not.toBeInTheDocument();
 
     const chatCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
       String(url).includes("/api/chat/agent"),
