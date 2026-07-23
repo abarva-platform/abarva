@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type ChangeEvent,
   type CSSProperties,
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -38,6 +40,7 @@ import {
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
+import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
@@ -60,6 +63,49 @@ import type {
   StepInsightView,
   VendorCoverageView,
 } from "./view-model";
+
+type SessionEvidenceFamily = Extract<
+  SourceArtifactFamily,
+  "meeting_notes" | "workshop_output"
+>;
+
+type SessionEvidenceLane = {
+  family: SessionEvidenceFamily;
+  kind: "source_session_notes" | "source_workshop_output";
+  title: string;
+  detail: string;
+  evidenceUse: string;
+};
+
+type SessionEvidenceUploadState =
+  | { phase: "idle" }
+  | { phase: "uploading"; fileName: string }
+  | {
+      phase: "uploaded";
+      fileName: string;
+      parseStatus: string | null;
+      substrateSummary: string;
+    }
+  | { phase: "error"; message: string };
+
+const SESSION_EVIDENCE_LANES: readonly SessionEvidenceLane[] = [
+  {
+    family: "meeting_notes",
+    kind: "source_session_notes",
+    title: "Meeting notes",
+    detail: "Vendor calls, evaluation meetings, sponsor reviews, and follow-ups.",
+    evidenceUse:
+      "Low-authority context until a human promotes decisions or actions.",
+  },
+  {
+    family: "workshop_output",
+    kind: "source_workshop_output",
+    title: "Workshop output",
+    detail: "Facilitated sessions, risk reviews, scope workshops, and action logs.",
+    evidenceUse:
+      "Parsed into outcomes when text is available; unresolved items stay open.",
+  },
+] as const;
 
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
@@ -1215,6 +1261,12 @@ function FilesWorkspace({
         title="Evidence ledger"
         subtitle="Every file stays tied to its event, stage, state, and source basis."
       />
+      <SessionEvidenceCapturePanel
+        eventId={view.event.id}
+        stageKey={view.event.viewedStageKey}
+        stageLabel={view.event.viewedStageLabel}
+        onUploaded={onClientFinalAccepted}
+      />
       <ArtifactLifecyclePanel
         view={view}
         onClientFinalAccepted={onClientFinalAccepted}
@@ -1271,6 +1323,324 @@ function FilesWorkspace({
       )}
     </section>
   );
+}
+
+function SessionEvidenceCapturePanel({
+  eventId,
+  stageKey,
+  stageLabel,
+  onUploaded,
+}: {
+  eventId: string;
+  stageKey: SourceStageKey;
+  stageLabel: string;
+  onUploaded: () => void;
+}) {
+  const [states, setStates] = useState<
+    Record<SessionEvidenceFamily, SessionEvidenceUploadState>
+  >({
+    meeting_notes: { phase: "idle" },
+    workshop_output: { phase: "idle" },
+  });
+
+  const setLaneState = (
+    family: SessionEvidenceFamily,
+    next: SessionEvidenceUploadState,
+  ) => {
+    setStates((previous) => ({ ...previous, [family]: next }));
+  };
+
+  const upload = async (lane: SessionEvidenceLane, file: File) => {
+    setLaneState(lane.family, { phase: "uploading", fileName: file.name });
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    formData.append("stageKey", stageKey);
+    formData.append("artifactFamily", lane.family);
+    formData.append("artifactKind", lane.kind);
+    formData.append("dataClassification", "Internal");
+    formData.append("dataProtectionClassification", "Internal");
+
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/upload`,
+        { method: "POST", body: formData, credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | SourceSessionEvidenceUploadPayload
+        | null;
+      if (!response.ok || payload?.ok !== true || !payload.artifact?.id) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Upload failed with HTTP ${response.status}.`,
+        );
+      }
+      setLaneState(lane.family, {
+        phase: "uploaded",
+        fileName: payload.artifact.originalName ?? file.name,
+        parseStatus: payload.artifact.parseStatus ?? null,
+        substrateSummary: summarizeSubstrateSync(payload.substrateSync),
+      });
+      onUploaded();
+    } catch (error) {
+      setLaneState(lane.family, {
+        phase: "error",
+        message: error instanceof Error ? error.message : "Upload failed.",
+      });
+    }
+  };
+
+  return (
+    <section
+      data-testid="source-session-evidence-capture"
+      style={{
+        ...CARD_STYLE,
+        padding: 18,
+        marginBottom: 16,
+        boxShadow: "none",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 18,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: ANALYTICS.BLUE,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: 1.2,
+              textTransform: "uppercase",
+            }}
+          >
+            Session evidence
+          </div>
+          <h2
+            style={{
+              margin: "6px 0 0",
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 22,
+            }}
+          >
+            Capture notes for {stageLabel}
+          </h2>
+          <p
+            style={{
+              margin: "6px 0 0",
+              color: ANALYTICS.MUTED,
+              fontSize: 13,
+              lineHeight: 1.5,
+              maxWidth: 740,
+            }}
+          >
+            Upload session files into the governed Source evidence layer. Text,
+            Markdown, CSV, and readable documents are parsed now; opaque media
+            stays registered until the async parser is available.
+          </p>
+        </div>
+        <span
+          style={{
+            border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            borderRadius: 999,
+            background: ANALYTICS.SOFT,
+            color: ANALYTICS.MUTED,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+            fontWeight: 900,
+            padding: "6px 9px",
+            textTransform: "uppercase",
+          }}
+        >
+          Azure/Postgres persisted
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: 10,
+          marginTop: 14,
+        }}
+      >
+        {SESSION_EVIDENCE_LANES.map((lane) => (
+          <SessionEvidenceLaneCard
+            key={lane.family}
+            lane={lane}
+            state={states[lane.family]}
+            onUpload={(file) => void upload(lane, file)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SessionEvidenceLaneCard({
+  lane,
+  state,
+  onUpload,
+}: {
+  lane: SessionEvidenceLane;
+  state: SessionEvidenceUploadState;
+  onUpload: (file: File) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const busy = state.phase === "uploading";
+  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0] ?? null;
+    event.currentTarget.value = "";
+    if (file) onUpload(file);
+  };
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        borderRadius: 8,
+        background: ANALYTICS.SOFT,
+        padding: 12,
+      }}
+    >
+      <div style={{ color: ANALYTICS.INK, fontSize: 14, fontWeight: 850 }}>
+        {lane.title}
+      </div>
+      <p
+        style={{
+          margin: "5px 0 0",
+          color: ANALYTICS.INK_2,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+        }}
+      >
+        {lane.detail}
+      </p>
+      <p
+        style={{
+          margin: "7px 0 0",
+          color: ANALYTICS.MUTED,
+          fontSize: 12,
+          lineHeight: 1.4,
+        }}
+      >
+        {lane.evidenceUse}
+      </p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.docx,.pptx,.md,.txt,.csv,.xlsx,.mp3,.mp4"
+        style={{ display: "none" }}
+        aria-label={`${lane.title} file`}
+        data-testid={`source-session-evidence-input-${lane.family}`}
+        onChange={onChange}
+      />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          marginTop: 12,
+        }}
+      >
+        <button
+          type="button"
+          disabled={busy}
+          data-testid={`source-session-evidence-upload-${lane.family}`}
+          onClick={() => inputRef.current?.click()}
+          style={{
+            ...BUTTON_STYLE,
+            background: ANALYTICS.INK,
+            color: "#fff",
+            padding: "9px 12px",
+            opacity: busy ? 0.65 : 1,
+            cursor: busy ? "not-allowed" : "pointer",
+          }}
+        >
+          {busy ? "Uploading..." : "Upload"}
+        </button>
+        <SessionEvidenceStatus state={state} />
+      </div>
+    </div>
+  );
+}
+
+function SessionEvidenceStatus({
+  state,
+}: {
+  state: SessionEvidenceUploadState;
+}) {
+  if (state.phase === "idle") {
+    return (
+      <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+        PDF, DOCX, PPTX, MD, TXT, CSV, XLSX, audio/video.
+      </span>
+    );
+  }
+  if (state.phase === "uploading") {
+    return (
+      <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+        Uploading {state.fileName}...
+      </span>
+    );
+  }
+  if (state.phase === "error") {
+    return (
+      <span style={{ color: ANALYTICS.RUST, fontSize: 12 }}>
+        {state.message}
+      </span>
+    );
+  }
+  return (
+    <span style={{ color: ANALYTICS.GREEN_TEXT, fontSize: 12, fontWeight: 750 }}>
+      Captured {state.fileName} · {state.parseStatus ?? "pending"} ·{" "}
+      {state.substrateSummary}
+    </span>
+  );
+}
+
+type SourceSessionEvidenceUploadPayload = {
+  ok?: boolean;
+  detail?: string;
+  error?: string;
+  artifact?: {
+    id?: string;
+    originalName?: string;
+    parseStatus?: string | null;
+  };
+  substrateSync?:
+    | {
+        evidence?: { requirementId?: string; newState?: string } | null;
+        criteria?: { linked?: boolean; autoMet?: boolean }[];
+        skippedReason?: string;
+      }
+    | { skippedReason?: string }
+    | { error?: string };
+};
+
+function summarizeSubstrateSync(
+  sync: SourceSessionEvidenceUploadPayload["substrateSync"],
+): string {
+  if (!sync) return "registry receipt returned";
+  if ("error" in sync && sync.error) return `evidence sync warning: ${sync.error}`;
+  if ("skippedReason" in sync && sync.skippedReason) {
+    return `registry only: ${sync.skippedReason}`;
+  }
+  const criteria = "criteria" in sync && Array.isArray(sync.criteria)
+    ? sync.criteria.filter((item) => item.linked).length
+    : 0;
+  if ("evidence" in sync && sync.evidence?.requirementId) {
+    return `${sync.evidence.requirementId} ${sync.evidence.newState ?? "linked"}`;
+  }
+  if (criteria > 0) return `${criteria} gate link${criteria === 1 ? "" : "s"}`;
+  return "registry evidence captured";
 }
 
 function ArtifactLifecyclePanel({
