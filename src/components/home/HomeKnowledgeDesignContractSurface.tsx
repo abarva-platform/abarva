@@ -133,6 +133,23 @@ function paragraphLines(text: string): string[] {
     .filter(Boolean);
 }
 
+function executiveBreakdownRows(
+  rows?: Array<{ label?: string; value?: string; note?: string }>,
+): Array<{ label?: string; value?: string; note?: string }> {
+  return (rows ?? []).filter((row) => {
+    const label = asText(row.label).toLowerCase();
+    if (
+      /\b(?:loaded|source|relationship|candidate|distinct)\s+(?:rows?|records?|facts?|names?)\b/.test(
+        label,
+      )
+    ) {
+      return false;
+    }
+    if (/\b(?:nodes?|edges?|graph objects?)\b/.test(label)) return false;
+    return true;
+  });
+}
+
 function csvCell(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
@@ -923,6 +940,7 @@ function DimensionView({
   relationship?: { chain?: string[]; note?: string };
 }) {
   const isRelationshipDimension = dimension.key === "rel";
+  const executiveBreakdown = executiveBreakdownRows(insight?.breakdown?.rows);
 
   function exportCsv() {
     const header = columns.map((column) => csvCell(column.label)).join(",");
@@ -1026,10 +1044,10 @@ function DimensionView({
           )}
 
           <div className="nkh-dashboard-split">
-            {insight?.breakdown?.rows?.length ? (
+            {executiveBreakdown.length ? (
               <section>
-                <h3>{insight.breakdown.title ?? "Evidence posture"}</h3>
-                {insight.breakdown.rows.map((row, index) => (
+                <h3>{insight?.breakdown?.title ?? "Evidence posture"}</h3>
+                {executiveBreakdown.map((row, index) => (
                   <div
                     key={`${row.label}-${index}`}
                     className="nkh-breakdown-row"
@@ -2171,9 +2189,7 @@ function EvidenceMix({
         <div key={item.key}>
           <div>
             <span>{sourceStatus(item.key)}</span>
-            <em style={{ color: statusColor(item.key) }}>
-              {item.count} · {item.pct}%
-            </em>
+            <em style={{ color: statusColor(item.key) }}>{item.pct}%</em>
           </div>
           <b>
             <i
