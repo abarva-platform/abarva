@@ -133,13 +133,16 @@ jest.mock('@/lib/source/artifact-registry', () => ({
 jest.mock('@/lib/source/artifact-registry/upload-contract', () => ({
   inferSourceArtifactFamily: () => 'pricing_workbook',
   sourceArtifactFormatFromMime: (mime: string) =>
-    mime.includes('spreadsheet') ? 'spreadsheet' : 'text',
+    mime.includes('spreadsheet') ? 'xlsx' : 'csv',
 }));
 
+const mockParseSourceTextArtifact = jest.fn(
+  async ({ artifact }: { artifact: unknown }) => artifact,
+);
 jest.mock('@/lib/source/artifact-registry/text-parser', () => ({
   isSynchronouslyParseableSourceFormat: () => false,
-  parseSourceTextArtifact: async ({ artifact }: { artifact: unknown }) =>
-    artifact,
+  parseSourceTextArtifact: (input: { artifact: unknown }) =>
+    mockParseSourceTextArtifact(input),
 }));
 
 jest.mock('@/lib/source/canonical-specs/gate-criteria', () => ({
@@ -147,7 +150,11 @@ jest.mock('@/lib/source/canonical-specs/gate-criteria', () => ({
 }));
 
 jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
-  extractSourceUploadText: async () => ({ text: '', warnings: [] }),
+  extractSourceUploadText: async () => ({
+    text: 'Pricing: fixed transition fee $1.2M.',
+    method: 'xlsx-exceljs',
+    warnings: [],
+  }),
 }));
 
 jest.mock('@/lib/security/sensitive-upload-guard', () => ({
@@ -271,6 +278,11 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
     expect(res.status).toBe(200);
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
     expect(registerSourceArtifactUploadMock).toHaveBeenCalledTimes(1);
+    expect(mockParseSourceTextArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: 'Pricing: fixed transition fee $1.2M.',
+      }),
+    );
   });
 
   it('rejects a request with no file (400)', async () => {

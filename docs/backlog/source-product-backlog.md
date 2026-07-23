@@ -123,6 +123,41 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   client-specific rendering remains data-blocked until a governed content/data change
   publishes a tenant override row.
 
+### SOURCE-INGEST-001a — Binary workshop/session evidence extraction
+
+- **Problem statement**: Source artifact uploads accept PDF, XLSX, and PPTX files, but the
+  arbitrary evidence upload lane only turned text-like files into parsed Source evidence. A
+  buyer could upload workshop decks, session-note workbooks, or client-approved PDFs and get a
+  durable registry row, while the evidence chunks/facts that aVa and the workspace rely on
+  stayed unavailable.
+- **User/business impact**: uploaded session evidence looked stored but not learned from.
+  That undermines the Source data-layer promise: client workshop notes and approved versions
+  should become Azure/Postgres-backed evidence objects that can later populate enterprise
+  context, not inert files in the cabinet.
+- **Severity**: P2 (evidence-layer integrity and aVa readiness).
+- **Workstream**: Ingestion / data persistence.
+- **Status**: `Candidate` — first slice only; code-only, no migration and no production data
+  mutation.
+- **Dependencies**: existing `source_artifacts`, `source_artifact_chunks`,
+  `source_artifact_facts`, `source_meeting_outcomes`, `source_requirements`, and
+  `source_pricing_components` tables; existing upload route and parser; existing dependencies
+  `pdf-parse`, `exceljs`, and `jszip`.
+- **Acceptance criteria**: uploaded PDFs, XLSX workbooks, and PPTX decks are converted to
+  bounded markdown-ish text when extraction succeeds; the upload route feeds that text through
+  the existing `parseSourceTextArtifact` path; malformed/unextractable files still upload as
+  registry-only artifacts with warnings instead of fabricated content; image/audio/video remain
+  explicitly unsupported until governed OCR/transcription exists.
+- **Required tests**:
+  `src/lib/source/artifact-registry/__tests__/upload-text-extraction.test.ts`,
+  `src/app/api/v1/source/[eventId]/artifacts/upload/__tests__/route.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-binary-evidence-extraction.md`.
+- **Discovered from**: the 6-area Source audit and the standing ingest gap under
+  `SOURCE-UX-DECLUTTER-001`.
+- **Notes / remaining gaps**: this does not add the dedicated workshop/session-notes capture
+  surface, async parse worker, OCR/transcription, vector indexing, or enterprise-context
+  promotion job. Those remain follow-on `SOURCE-INGEST-001` slices.
+
 ### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
 
 - **Problem statement**: found while comparing a user-provided Source Event Shell redesign
