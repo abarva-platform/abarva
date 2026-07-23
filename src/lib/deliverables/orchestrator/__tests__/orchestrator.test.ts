@@ -297,6 +297,14 @@ describe("quality gate (before export)", () => {
     expect(res.blockers.join(" ")).toMatch(/unsupported client-fact/);
   });
 
+  it("does not treat a planning-horizon section title as an unsupported client fact", () => {
+    const doc = goodDocument();
+    doc.generatedSections[0].title = "FY2026 transition horizon";
+    const res = validateDeliverableQuality(doc, req);
+    expect(res.metrics.unsupportedClaimCount).toBe(0);
+    expect(res.blockers.join(" ")).not.toMatch(/unsupported client-fact/);
+  });
+
   it("blocks leaked internal ids and missing source register", () => {
     const doc = goodDocument();
     doc.generatedSections[0].bodyMarkdown +=
