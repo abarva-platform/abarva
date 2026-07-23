@@ -27,6 +27,7 @@ export const PROGRAM_METRIC_KEYS = {
 
 /** AI tool / cloud spend metrics that roll up to ai_tagged_spend. */
 export const SPEND_METRIC_KEYS = new Set<string>([
+  "program_ai_tagged_spend_usd",
   "ai_tool_monthly_cost_usd",
   "cloud_run_cost_usd",
 ]);

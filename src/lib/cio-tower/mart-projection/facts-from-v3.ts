@@ -254,6 +254,31 @@ export function factsFromV3Programs(
         },
       }),
     );
+    const aiTaggedProgramSpend = num(r.ai_tagged_approved_funding_usd);
+    if (aiTaggedProgramSpend > 0) {
+      facts.push(
+        buildV3Fact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["program-ai-tagged-spend", code],
+          measure: `${name} AI-tagged approved funding`,
+          view: "app_run_cost",
+          scope: "initiative",
+          valueNumeric: aiTaggedProgramSpend,
+          sourceFile: file,
+          sourceRow: r.record_id ?? code,
+          canonical: programCanonical(code, name, "program_ai_tagged_spend_usd"),
+          attributes: {
+            executive_owner: r.executive_owner ?? null,
+            finance_owner: r.finance_owner ?? null,
+            funding_status: r.funding_status ?? null,
+            ai_spend_type: r.ai_spend_type ?? null,
+            ai_spend_category: r.ai_spend_category ?? null,
+            platform_embedded_ai_flag: r.platform_embedded_ai_flag ?? null,
+            linked_ai_spend_ids: r.linked_ai_spend_ids ?? null,
+          },
+        }),
+      );
+    }
     const planned = num(r.planned_value_usd) || num(r.target_value_usd);
     if (planned > 0) {
       facts.push(

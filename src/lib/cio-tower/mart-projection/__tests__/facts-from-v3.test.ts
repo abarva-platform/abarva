@@ -120,6 +120,9 @@ describe("factsFromV3Programs", () => {
       program_code: "PROG-DEV-PRODUCTIVITY",
       business_name: "Developer Productivity AI / SDLC Automation",
       approved_funding_usd: "2900000",
+      ai_tagged_approved_funding_usd: "1050000",
+      ai_spend_type: "embedded_platform_ai",
+      ai_spend_category: "developer_productivity",
       planned_value_usd: "0",
       executive_owner: "VP Eng",
       record_id: "r1",
@@ -158,6 +161,22 @@ describe("factsFromV3Programs", () => {
     expect(dev?.value_numeric).toBe(2_900_000);
     expect(readCanonicalIdentity(dev!)!.canonical_program_key).toBe(
       programKeyFromCode("PROG-DEV-PRODUCTIVITY"),
+    );
+  });
+
+  it("emits per-program AI-tagged spend facts from approved AI funding", () => {
+    const facts = factsFromV3Programs(rows, ID);
+    const devSpend = facts.find(
+      (f) =>
+        readCanonicalIdentity(f)!.program_code ===
+          "PROG-DEV-PRODUCTIVITY" &&
+        readCanonicalIdentity(f)!.metric_key === "program_ai_tagged_spend_usd",
+    );
+    expect(devSpend?.value_numeric).toBe(1_050_000);
+    expect(devSpend?.view).toBe("app_run_cost");
+    expect(devSpend?.scope).toBe("initiative");
+    expect(JSON.parse(devSpend!.attributes).ai_spend_category).toBe(
+      "developer_productivity",
     );
   });
 });
