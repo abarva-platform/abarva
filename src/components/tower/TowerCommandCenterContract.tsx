@@ -343,7 +343,7 @@ function DecisionsWaiting({ decisions }: { decisions: DecisionRow[] }) {
             <span style={reviewLinkStyle}>Review →</span>
           </div>
         ))}
-        {decisions.length === 0 ? <EmptyState text="No executive decision is recorded in the Tower mart." /> : null}
+        {decisions.length === 0 ? <EmptyState text="No executive decision is recorded in governed Tower data." /> : null}
       </div>
     </Panel>
   );
@@ -507,7 +507,7 @@ function EvidenceView({
       </Panel>
       <Panel>
         <div style={goldEyebrowStyle}>Audit trace</div>
-        <p style={panelLeadStyle}>Raw lineage stays here for inspection. The executive read above should not require parsing file names.</p>
+        <p style={panelLeadStyle}>Detailed trace stays here for inspection. The executive read above should stand on its own.</p>
         <div style={traceListStyle}>
           {model.evidenceLineage.slice(0, 14).map((row) => (
             <div key={row.lineageKey} style={traceRowStyle}>
@@ -679,7 +679,7 @@ interface AiPlotRow extends TowerMartAiPortfolioItem {
 }
 
 function AiMatrix({ rows }: { rows: AiPlotRow[] }) {
-  if (rows.length === 0) return <EmptyState text="No AI portfolio item is available in the mart." />;
+  if (rows.length === 0) return <EmptyState text="No AI portfolio item is available in governed Tower data." />;
   return (
     <>
       <SafeChartFrame height={440} style={{ marginTop: 24 }}>
@@ -732,7 +732,7 @@ function AiMatrix({ rows }: { rows: AiPlotRow[] }) {
 }
 
 function AiCategoryBars({ rows }: { rows: AiCategorySpendRow[] }) {
-  if (rows.length === 0) return <EmptyState text="AI spend is not categorized in the mart yet." />;
+  if (rows.length === 0) return <EmptyState text="AI spend is not categorized in governed Tower data yet." />;
   const height = Math.max(220, rows.length * 42 + 44);
   return (
     <div style={categoryChartStyle}>
@@ -882,7 +882,7 @@ function buildTowerSummary(model: TowerMartCommandViewModel): TowerSummary {
   const primaryBlocker = blockingGaps[0]?.remediationAction || "Finance attestation and usage evidence";
   return {
     proofLabel: command.realizedValueYtdAllowed > 0 ? "Clear" : command.partialFinanceValidatedValueYtd > 0 ? "Partial" : "Critical",
-    refreshedLabel: "from Tower mart",
+    refreshedLabel: "from governed Tower data",
     usageSupportedValue,
     blockedValue,
     blockingGaps,
@@ -1175,13 +1175,13 @@ function buildEvidencePosture(model: TowerMartCommandViewModel, summary: TowerSu
       : "No source package is traced for this Tower posture yet.",
     missing: topMissing
       ? `${topMissing} still need evidence before Tower can upgrade planning signals into claims.`
-      : "No blocking evidence gap is marked in the current Tower mart.",
+      : "No blocking evidence gap is marked in the current governed Tower data.",
     owners: ownerNames.length > 0
       ? `${ownerNames.join(", ")} are the first owners to chase; unassigned gaps need a named accountable owner.`
       : "No named evidence owner is loaded; assign ownership before treating this as board-ready.",
     blocked: model.command.realizedValueYtdAllowed > 0
       ? "Some value is claimable, but every claim still traces through the value gate."
-      : "Realized value, ROI, savings, and achieved-benefit language stay blocked until finance-validated outcome rows allow it.",
+      : "Realized value, ROI, savings, and achieved-benefit language stay blocked until finance-validated outcome evidence allows it.",
     sources,
   };
 }
