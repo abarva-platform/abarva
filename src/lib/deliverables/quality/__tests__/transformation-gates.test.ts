@@ -89,6 +89,16 @@ describe("transformation gates (W1)", () => {
     expect(r).toHaveLength(0);
   });
 
+  it("does not flag an explicit appendix heading flattened into preceding prose", () => {
+    const r = scanMachinery(
+      base({
+        narrativeText:
+          "Recommendation: proceed with the approved option. Appendix B — Source Register Appendix B — Source Register This register lists the cited evidence.",
+      }),
+    );
+    expect(r).toHaveLength(0);
+  });
+
   it("still scans body machinery before a flattened register appendix", () => {
     const r = scanMachinery(
       base({

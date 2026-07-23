@@ -211,6 +211,12 @@ describe("multi-pass prompt builder", () => {
     });
     expect(draft.user).toMatch(/Apply citation and evidence rules silently/i);
     expect(rewrite.user).toMatch(/remove any sentence that explains those authoring rules/i);
+    for (const prompt of [draft.system, rewrite.system]) {
+      expect(prompt).toMatch(/Never write "authorized to build"/i);
+      expect(prompt).toMatch(/in scope for delivery/i);
+    }
+    expect(rewrite.user).toMatch(/Replace "authorized to build"/i);
+    expect(rewrite.user).toMatch(/in scope for delivery/i);
   });
 
   it("section draft prompts enforce the exact P1 charter section budget", () => {
