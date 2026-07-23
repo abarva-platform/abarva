@@ -51,6 +51,31 @@ function renderPage() {
   );
 }
 
+function renderDenseAiPage() {
+  const denseAi = Array.from({ length: 14 }, (_, i) => {
+    const base = view!.ai[i % view!.ai.length];
+    return {
+      ...base,
+      id: `dense-ai-${i + 1}`,
+      n: i + 1,
+      name:
+        i === 13
+          ? "Workflow Prior Authorization AI"
+          : `Dense AI Initiative ${String(i + 1).padStart(2, "0")}`,
+      valueScore: 100 - i,
+      readinessScore: 90 - i,
+    };
+  });
+
+  return render(
+    <TowerCommandCenter
+      view={{ ...view!, ai: denseAi }}
+      tenantName="Fixture Tenant"
+      refreshedOn="2026-07-23"
+    />,
+  );
+}
+
 function tab(name: RegExp) {
   return screen.getByRole("tab", { name });
 }
@@ -165,6 +190,21 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getAllByText(/Top 5 by governed value\/readiness policy/).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("keeps dense AI bubble matrices to the top 10 while the side list remains complete", () => {
+    renderDenseAiPage();
+    fireEvent.click(tab(/AI Portfolio/));
+    fireEvent.click(screen.getByRole("radio", { name: "Usage & Value Proof" }));
+
+    expect(
+      screen.getByText(/10 on matrix .* 14 in filtered list/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /14 Workflow Prior Authorization AI/,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("hides the type filter on Spend Attribution, which is a whole-portfolio view", () => {
