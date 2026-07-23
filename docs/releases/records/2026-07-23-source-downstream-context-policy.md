@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-runtime-proven`
 
 ## Plain-English Summary
 
@@ -39,7 +39,9 @@ Source already asked a human whether an accepted artifact should be included, re
 - `npx eslint src/lib/governance` — passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — passed. A first plain `npx tsc --noEmit` attempt exhausted the local Node heap before diagnostics, so the validation was rerun with a larger heap.
 - `npm run release:check` — passed.
-- Pending before release: PR checks, ACA deploy, runtime invariant, and focused read-only/live proof.
+- 2026-07-23 refresh after merge: `npm test -- --runTestsByPath src/lib/governance/__tests__/agent-context-bundle.test.ts` — passed, 16/16; same pre-existing duplicate Jest manual mock warnings observed.
+- 2026-07-23 refresh after merge: `npx eslint src/lib/governance` — passed.
+- 2026-07-23 refresh after merge: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — passed.
 
 ## Rollout Plan
 
@@ -49,9 +51,15 @@ Merge through a governed PR to `main`. The repo-owned ACA main deploy workflow w
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` only.
 - Shared runtime mutators: none allowed for this release.
-- Approved image digest: pending ACA deploy.
-- ACA runtime invariant: pending after deploy.
-- Worker image invariant: pending after deploy.
+- Approved image digest: current independently verified production revision
+  `ca-abarva-web-lab-eastus--m4eaa2e30`, image
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:52130e66c02a4d890492eb6b441ff00395fc491f1516796ad97cc7956f196d2e`,
+  tag `main-4eaa2e30`, contains PR #5470.
+- ACA runtime invariant: passed independently on 2026-07-23 for the superseding
+  production revision above; web and worker images matched and 100% traffic was on
+  that revision.
+- Worker image invariant: passed independently on 2026-07-23 for
+  `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event`.
 - Feature/env flag update path: not applicable.
 - Live signed-in proof required: focused proof required where applicable; no client data mutation required.
 
@@ -62,9 +70,12 @@ Revert the PR and let the repo-owned ACA main deploy workflow publish the rollba
 ## Audit Evidence
 
 - PR: [abarva-platform/abarva#5470](https://github.com/abarva-platform/abarva/pull/5470).
-- Merge commit: pending.
-- ACA deploy run: pending.
-- Runtime invariant: pending.
+- Merge commit: `0c2bd5c83ebbf07eba5ef3a7ea2b366dcc5b935d`.
+- ACA deploy run: `30013071091` succeeded for PR #5470; later production revision
+  `ca-abarva-web-lab-eastus--m4eaa2e30` contains the merge.
+- Runtime invariant: independently passed on 2026-07-23 for digest
+  `sha256:52130e66c02a4d890492eb6b441ff00395fc491f1516796ad97cc7956f196d2e`
+  with 100% traffic and matching worker images.
 - Focused tests: see QA / Validation.
 
 ## Known Gaps
