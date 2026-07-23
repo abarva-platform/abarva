@@ -487,7 +487,11 @@ worked examples from the design conversation.
   mockup element to its real (or not-yet-real) backend field. Read before wiring any view.
 - **Severity**: P8 (cosmetic/UX — no data-model or security impact)
 - **Workstream**: Files/workspace UX
-- **Status**: `In Progress`
+- **Status**: `Superseded by MOVES-UI-006` (2026-07-23) — the Finder-shell rail/chrome this item
+  built was itself superseded when P0 was rebuilt as the "universal shell" reference design and
+  P1-P4 were ported to match it (MOVES-UI-006, legacy pages fully retired per PR #5256). This
+  entry's rollout history is preserved below for audit purposes; do not re-attempt this scope —
+  the live component is now the universal shell, not this Finder-shell rail.
 - **Rollout plan** (flag: `moves_finder_shell_v1`, tenant policy, off by default):
   1. **Design tokens** — Fraunces/Inter/JetBrains Mono + navy/blue/teal palette scoped to Moves
      phase-workspace components only (no bleed into Intelligence/Source/Tower chrome).
@@ -550,7 +554,10 @@ worked examples from the design conversation.
   cross-phase Approvals overview to close out MOVES-UI-001.
 - **Severity**: P8 (cosmetic/UX — no data-model or security impact)
 - **Workstream**: Files/workspace UX
-- **Status**: `Ready`
+- **Status**: `Superseded by MOVES-UI-006` (2026-07-23) — built, deployed, and live E2E verified
+  (see below) against the old Finder-shell rail, which has since been fully replaced by the
+  universal shell. This entry's build/verification history is preserved for audit purposes; the
+  live Approvals overview experience is now whatever MOVES-UI-006/007/008 render, not this shell.
 - **Real data this binds to (no fabrication)**:
   - `getMovePhaseTallies(move)` (`src/lib/programs/phase-explorer-tallies.ts`) — already computed,
     deterministic, no-fabrication per-phase `{ phase, label, met, total, state: "done"|"current"|"upcoming" }`
@@ -614,7 +621,10 @@ worked examples from the design conversation.
   rail DOM.
 - **Severity**: P8 (cosmetic/UX — no data-model or security impact)
 - **Workstream**: Files/workspace UX
-- **Status**: `Ready`
+- **Status**: `Runtime Proven` (verified 2026-07-23) — confirmed built and present in the current
+  live component: `railCollapsed` state, `mxw-rail-toggle` button, and `mxw-side-collapsed` CSS
+  all exist in `MovesPhaseStandaloneClient.tsx` (checked directly against the current `main`
+  tip). Status was stale here; correcting rather than re-attempting already-shipped work.
 - **Scope**: add a real collapse/expand toggle to the live rail in
   `MovesPhaseStandaloneClient.tsx`, gated behind the existing `moves_finder_shell_v1` flag
   (flag off → no toggle, current behavior unchanged). Collapsed state: icon-only rail (phase
@@ -645,7 +655,10 @@ worked examples from the design conversation.
   design intent is one unified visual system across every phase including P0.
 - **Severity**: P8 (cosmetic/UX — no data-model or security impact)
 - **Workstream**: Files/workspace UX
-- **Status**: `Ready`
+- **Status**: `Superseded by MOVES-UI-006` (2026-07-23) — overtaken by a larger structural
+  rebuild: P0 Origination was rebuilt from scratch as the universal shell reference design
+  itself ("P0 is now the design contract" — MOVES-UI-006), not merely visually re-skinned as
+  this item scoped. This entry's narrower visual-pass scope was superseded before being built.
 - **Scope**: apply the Finder-shell visual tokens (typography, palette, spacing) to
   `StrategicMoveOriginateClient.tsx`'s main content area — the P0 header, tab strip, and
   question/step cards — so it reads as the same product as the phase-workspace pages. Gate
