@@ -58,6 +58,40 @@ describe('GET /api/v1/programs/[programId]/artifacts — Cabinet merge', () => {
     expect(json.artifacts[1]!.artifactId).toBe('mv-1');
   });
 
+  it('derives generated artifact phase from the deliverable registry metadata', async () => {
+    generatedRecs = [
+      {
+        id: 'gen-p3',
+        artifactType: 'move_board_pack',
+        sourceArtifactRef: 'move-x',
+        outputFormat: 'docx',
+        blobUrl: 'b',
+        qualityScore: 1,
+        renderedAt: '2026-07-23T16:04:12Z',
+        renderedBy: 'u',
+        quarantineReason: null,
+        metadata: {
+          deliverableTypeKey: 'solution_design',
+          renderableDoc: {
+            title: 'Governed Agent-Assist Layer for Commercial Lending — Solution Design Approval',
+            deliverableTypeKey: 'solution_design',
+          },
+        },
+      },
+    ];
+
+    const res = await GET(req(), params('move-x'));
+    const json = (await res.json()) as { artifacts: Array<Record<string, unknown>> };
+    expect(res.status).toBe(200);
+    expect(json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: 'gen-p3',
+        family: 'generated_deliverable',
+        phase: 3,
+      }),
+    );
+  });
+
   it('de-dupes a generated artifact already present in the move vault', async () => {
     moveRows = [
       { artifact_id: 'gen-1', artifact_type: 'program_charter', artifact_family: 'generated_deliverable', title: 'Charter (vault)', phase: 1, file_format: 'docx', file_name: null, version: 2, status: 'board_ready', lifecycle_state: 'current', quality_score: 0.9, unsupported_claims_count: 0, generated_by: 'u', created_at: '2026-06-17T00:00:00Z', file_size: null, metadata: {} },
