@@ -1997,6 +1997,10 @@ async function normalizePack(pack, sourceFile, sourceText) {
     if (!relationshipReadsByDimension.has(key)) relationshipReadsByDimension.set(key, []);
     relationshipReadsByDimension.get(key).push(read);
   }
+  const allRelationshipReads = asArray(brief.relationship_reads);
+  if (allRelationshipReads.length) {
+    relationshipReadsByDimension.set("rel", allRelationshipReads);
+  }
   const authoredRelationshipSlots = {
     ...(pack.design_slots?.REL ?? {}),
     ...Object.fromEntries(Array.from(relationshipReadsByDimension.entries()).map(([key, reads]) => [key, {
@@ -2010,6 +2014,17 @@ async function normalizePack(pack, sourceFile, sourceText) {
       note: reads.map((read) => [asText(read.business_meaning), asText(read.evidence_boundary)].filter(Boolean).join(" ")).filter(Boolean).join(" "),
     }])),
   };
+  const relationshipSlotFindings = scanVisibleText(
+    authoredRelationshipSlots,
+    "design_slots.REL",
+  ).filter((finding) => finding.level === "P0" || finding.level === "P1");
+  if (relationshipSlotFindings.length) {
+    throw new Error(
+      `Client-visible relationship slot failed quality gate: ${JSON.stringify(
+        relationshipSlotFindings.slice(0, 5),
+      )}`,
+    );
+  }
   const useCases = enrichUseCases(pack);
   const graph = buildNodesAndEdges(pack);
   const clientNarrativeSections = Object.fromEntries(
