@@ -157,45 +157,55 @@ efficiency, (8) cosmetic.
 ### MOVES-REMEDIATION-001 — MEMBER AI ASSIST disputed phase record
 
 - **Problem statement**: The real Move "MEMBER AI ASSIST" advanced P3→P4 through the now-fixed
-  MOVES-GATE-001 defect. Its current P4 phase state was reached through fabricated evidence, not
-  real generation or review.
+  MOVES-GATE-001 defect. That original/disputed P4 phase state was reached through fabricated
+  evidence, not real generation or review; the Move has since been corrected back to P3 through
+  MOVES-REMEDIATION-001.
 - **User/business impact**: One real client-facing Move's phase-gate integrity is disputed until an
   owner rules on it.
 - **Severity**: P0 (data/decision integrity), but not unsafe to leave paused — no code fix pending.
 - **Workstream**: Phase-gate and evidence integrity / approval authority
-- **Status**: `Decided — Approved for Implementation` (2026-07-23) — owner ruling: **return the
-  Move to P3 via a governed correction** (option (a)), not ratification. Live state was
-  independently re-verified before this decision (signed-in, read-only): the Move is genuinely
-  at P4 Build the Plan, 80%, with P2 (5/5) and P3 (2/2) showing complete — the earlier "actually
-  at P3" finding was based on an incomplete investigation and is superseded by this
-  confirmation. Full reasoning: `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
-  **The governed correction itself has NOT been executed** — only its implementation is
-  authorized; see `docs/codex-handoff/MOVES_ARTIFACT_LIFECYCLE_AND_REMEDIATION_PROMPT_2026-07-23.md`.
+- **Status**: `Closed — governed correction executed and signed-in proven` (2026-07-23). Owner
+  ruling: **return the Move to P3 via a governed correction** (option (a)), not ratification. The
+  correction shipped in PR #5496/#5497, deployed through ACA, ran via the sanctioned operator job,
+  and was signed-in verified at P3. Full reasoning:
+  `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
 - **Dependencies**: none (does not block any other backlog item)
 - **Acceptance criteria**: implement and execute a governed correction returning the Move to P3,
   with a full audit trail (who/when/why), real tests, and a release record — matching the rigor
   of every other Moves change this program has produced. **The phase must never be silently
   mutated** — this remains true even with an owner decision in hand; the correction must be a
   real, tested, auditable code path, not an ad-hoc database write or UI click-through.
-- **Required tests**: N/A (this is an operational decision + a governed correction/ratification
-  action, not a code change)
-- **PR**: #5162 (additive remediation record only — does not resolve the dispute, documents it)
-- **Merge SHA**: `1f8d9efb5`
-- **Deploy run**: confirmed success (docs-only)
-- **Runtime proof**: N/A (no runtime behavior to prove — additive record only)
-- **Release record**: N/A (docs/incidents record, not a release-relevant change)
+- **Required tests**: correction script self-test, focused Jest, focused ESLint, full TypeScript
+  check with heap flag, release check, git whitespace check, ACA inspect/apply/idempotency proof,
+  signed-in browser proof.
+- **PRs**:
+  - #5162 — additive remediation record only, historical precursor.
+  - #5496 — governed correction script/tests/release record.
+  - #5497 — live graph-node identity reconciliation and regression test.
+- **Merge SHAs**:
+  - `1f8d9efb5`
+  - `3eb7119efe38af38dab3cd7a47a89677cc7dbae7`
+  - `ae18fa0289aeaa811bf92f1464a3a45ca1131f4e`
+- **Deploy proof**: ACA revision `ca-abarva-web-lab-eastus--mae18fa02`, digest
+  `sha256:74fcdaaa5ad393f545ea20b6be5192a51074611bc664ec5149e6fd8948ac52cc`, 100% traffic,
+  healthy/running.
+- **Runtime proof**:
+  - Inspect: `/tmp/member-ai-assist-correction-inspect-20260723T175600Z/proof/local-20260723T175619655Z`
+    (`beforePhase=4`, `afterPhase=4`, `mutationApplied=false`).
+  - Apply: `/tmp/member-ai-assist-correction-apply-20260723T175900Z/proof/local-20260723T175814594Z`
+    (`beforePhase=4`, `afterPhase=3`, `mutationApplied=true`).
+  - Idempotency:
+    `/tmp/member-ai-assist-correction-idempotency-20260723T180100Z/proof/local-20260723T180002348Z`
+    (`beforePhase=3`, `afterPhase=3`, `mutationApplied=false`).
+  - Signed-in browser:
+    `/tmp/member-ai-assist-correction-browser-proof-2026-07-23T18-04-01-668Z`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-member-ai-assist-governed-correction.md`
 - **Discovered from**: MOVES-GATE-001 root-cause investigation
-- **Notes / remaining gaps**: **Do not alter the phase without explicit owner authorization.** Full
-  incident record and required remediation steps: `docs/incidents/2026-07-20-member-ai-assist-p4-phase-integrity-disputed.md`.
-  **New finding, unresolved**: an attempt to prepare the full owner-decision dossier hit a live,
-  signed-in read of the Strategic Moves list showing this Move currently at **P3** (60% complete),
-  not P4 — see `docs/incidents/2026-07-20-member-ai-assist-decision-dossier.md`. Deeper verification
-  (the Move's detail page, real `deliverables_v2`/approval state) could not be completed because the
-  browser session for this tenant expired mid-investigation with no re-authentication path available
-  in this environment (OTP-only sign-in, no email inbox access, no in-app tenant switcher). **The
-  owner should confirm the Move's actual current phase from their own signed-in session before this
-  dossier's remaining questions (artifacts present, approvals present/missing, gate pass/fail,
-  recommended option) can be answered accurately.**
+- **Notes / remaining gaps**: The correction itself is closed. Non-blocking follow-up: the signed-in
+  UI still shows the historical/display label `HEALTHCARE_PROVIDER-MEMBER-2026`; the governed
+  correction binds to the live database graph node `eng_member_ai_assist_mrp7yhe4`. Treat that as a
+  separate label/data-binding cleanup, not an open phase-integrity blocker.
 
 ---
 

@@ -1,10 +1,32 @@
 # MEMBER AI ASSIST — Owner Decision Dossier (MOVES-REMEDIATION-001)
 
-Status: **partial — a live-observation discrepancy blocks completing this dossier; owner input
-required before proceeding further.** This is additive; it does not change the Move's phase, gate
-state, or any production data. **No live phase transition was run or attempted.**
+Status: **closed — owner chose P3 and the governed correction was executed/proven on 2026-07-23.**
+This dossier remains as the decision record explaining why the Move was returned to P3 rather than
+ratified at P4.
 
-## 0. Read this first: an unresolved discrepancy
+## 2026-07-23 closure update
+
+After this dossier was first written, owner authorization was supplied and the team executed the
+P3 correction through the sanctioned ACA operator path:
+
+- PR #5496 implemented the dedicated correction script and tests.
+- PR #5497 corrected the script's identity guardrail from the historical/display label
+  `HEALTHCARE_PROVIDER-MEMBER-2026` to the live database graph node
+  `eng_member_ai_assist_mrp7yhe4`.
+- Corrected inspect proof: `beforePhase=4`, `afterPhase=4`, `planStatus=would_correct`,
+  `mutationApplied=false`.
+- Apply proof: `beforePhase=4`, `afterPhase=3`, `planStatus=would_correct`,
+  `mutationApplied=true`.
+- Idempotency proof: `beforePhase=3`, `afterPhase=3`, `planStatus=already_at_target`,
+  `mutationApplied=false`.
+- Signed-in browser proof now confirms the Move opens at
+  `/strategic-moves/cd51e4fe-b5c4-4024-bc46-73afaff4e4b7/phase/3` and renders
+  `MEMBER AI ASSIST` at P3 `Choose the Approach`.
+
+The access limitation described below was true when this dossier was first drafted. It is now
+superseded by the later Meridian automation-agent proof.
+
+## 0. Historical note: the discrepancy that originally blocked this dossier
 
 The prior remediation record
 (`docs/incidents/2026-07-20-member-ai-assist-p4-phase-integrity-disputed.md`) states the Move's
@@ -88,41 +110,25 @@ PR #5158 (fabrication removed), #5159 (queue/approve decoupled), #5160 (honest l
 (regression suite), #5166 (phase-capture evidence-integrity loophole closed) — all merged, deployed,
 and runtime-verified. None of these altered MEMBER AI ASSIST's own data.
 
-## 5. What this means for your decision — recommendation
+## 5. What this meant for the decision
 
-Given the discrepancy in §0-§2, **I cannot respons­ibly complete the original dossier's requested
-fields** (authoritative artifacts present, exact approvals present/missing, gate criteria pass/fail
-today, consequences of each option) **without first confirming which phase is actually current**.
-Presenting a confident "gate criteria pass/fail today" analysis built on a possibly-stale premise
-(P4) when the Move may already show P3 would be exactly the kind of unverified claim this whole
-audit exists to prevent.
+At the time this dossier was drafted, the discrepancy in §0-§2 meant the original requested fields
+(authoritative artifacts present, exact approvals present/missing, gate criteria pass/fail today,
+consequences of each option) could not be completed responsibly without confirming the authoritative
+phase.
 
-**Recommended next step (your action, not mine)**: from your own signed-in session (which has
-access to the Meridian Health / MEMBER AI ASSIST tenant workspace), open the Move's detail page and
-confirm:
-- The `currentPhase` value the phase-detail page itself reports (not just the list view's summary
-  badge).
-- Whether a `phase_gate_decision` artifact exists for a P3→P4 *or* a P4→P3 transition dated after
-  the original 2026-07-20 incident record, which would explain the discrepancy directly.
-- The real `deliverables_v2` rows and their `signed_off`/lifecycle status for this Move's P3
-  artifacts.
+That is now resolved. The owner decision was to return to P3, and the correction proof chain
+confirms the Move now opens at P3 in the signed-in phase-detail page, not merely the list view.
 
-Once you've confirmed the actual current phase, the remaining dossier work (artifacts present,
-approvals present/missing, gate pass/fail, consequences of each option, recommended option, named
-approver, remediation conditions) can be completed accurately — either by me, in a subsequent
-session with working tenant access, or by you directly, in under the time it would take to review a
-dossier built on an unconfirmed premise.
+The corrective conclusion is therefore: P4 should not be ratified from the disputed state; P3 is the
+authoritative phase until P3 design evidence and deliverables are regenerated/revalidated through
+the fixed gate path.
 
-**The Move's phase has not been touched, and will not be, without your explicit instruction.**
+**The Move's phase was touched only after explicit authorization and only through the audited
+operator correction described in the closure update.**
 
 ## 6. Access constraint — for the record
 
-This environment's browser automation session for this specific tenant expired mid-investigation.
-Recovery requires a one-time email verification code this environment cannot receive (no email
-inbox access). A second browser identity available in this environment is scoped to an unrelated
-tenant ("FS Demo") with no in-app tenant-switching capability (confirmed via the sign-in page's own
-disclosure: "Each email is mapped to one client workspace. No tenant switcher is used"). This is a
-genuine environment/access limitation, not a decision to stop investigating — flagged here exactly
-as the standing execution directive requires ("pause only when... credentials or permissions are
-unavailable," stated plainly, not used as a blanket excuse to avoid the rest of the work already
-completed in this program).
+This environment's browser automation session for this specific tenant expired during the first
+dossier pass. That limitation was later resolved by using the approved Meridian automation-agent
+storage state, which produced the signed-in browser proof cited in the 2026-07-23 closure update.
