@@ -18,6 +18,12 @@ const tenantArg = getArg("--tenant", "all");
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
 const packetOnly = process.argv.includes("--packet-only");
+// Offline replay: re-run every validator against already-generated candidate
+// JSON without calling Claude. This is the control point that lets a validator
+// or schema change be proven against stored output instead of being tested by
+// paying for another full tenant generation.
+const replayTarget = getArg("--validate-candidate", null);
+const replayMode = Boolean(replayTarget);
 
 const canonicalTenantOrder = [
   "meridian-health",
@@ -100,6 +106,18 @@ const requiredVisualFields = [
   "empty_state",
 ];
 
+// signature_visuals come out of the Story Architect pass, which runs before any
+// data pass. Demanding data_points/encoding there asks the model to invent data
+// it has not been given, so planning exhibits carry intent only; the dimension
+// writer binds real data into the full contract later.
+const requiredPlanningVisualFields = [
+  "visual_type",
+  "title",
+  "executive_question",
+  "classification",
+  "empty_state",
+];
+
 const requiredRelationshipGraphFields = [
   "visual_type",
   "projection_type",
@@ -168,10 +186,20 @@ const visualTypeGuidance = {
 loadEnvFile(path.join(repoRoot, ".env.local"));
 loadEnvFile(path.join(repoRoot, ".env"));
 
+// Accepts both `--name=value` and `--name value`. The equals-only form used to
+// be silent about a space-separated argument, so `--out-dir /tmp/x` fell back
+// to the default and wrote into the repo instead.
 function getArg(name, fallback = null) {
+  const argv = process.argv.slice(2);
   const prefix = `${name}=`;
-  const found = process.argv.slice(2).find((arg) => arg.startsWith(prefix));
-  return found ? found.slice(prefix.length) : fallback;
+  const inline = argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+  const index = argv.indexOf(name);
+  if (index !== -1) {
+    const next = argv[index + 1];
+    if (next !== undefined && !next.startsWith("--")) return next;
+  }
+  return fallback;
 }
 
 function loadEnvFile(file) {
@@ -509,7 +537,8 @@ function baseSystemPrompt() {
     "For chart visuals, provide compact Recharts-ready data: no more than 7 visible marks for bars/points, no more than 5x5 heatmap cells, no dense labels, no raw record counts, no JSON intended for display.",
     "Claude owns every client-visible word. Return concise, polished, complete JSON only. Do not include markdown fences.",
     "For visuals, author the visual contract and executive meaning. The renderer will render the visual exactly from your structured spec and source-backed/candidate data; it will not invent titles, annotations, claims, or fallback copy.",
-    `Every visual-like object in signature_visuals, dashboard_visuals, benchmark_exhibits, evidence_visuals, visual_contracts, primary_visual, and priority_matrix_visual must include all of these fields: ${requiredVisualFields.join(", ")}.`,
+    `Every rendered visual object in dashboard_visuals, benchmark_exhibits, evidence_visuals, visual_contracts, primary_visual, and priority_matrix_visual must include all of these fields: ${requiredVisualFields.join(", ")}.`,
+    `signature_visuals are planning exhibits chosen before any data pass has run. Specify only: ${requiredPlanningVisualFields.join(", ")}. Do not invent data_points or encoding for a signature visual; the dimension writer binds real data later.`,
     `Every relationship graph_display_contract must include all of these fields: ${requiredRelationshipGraphFields.join(", ")}.`,
     "For every visual empty_state, write the exact business-facing sentence to show if the visual cannot render because evidence is missing. Do not omit empty_state even when data_points are present.",
     "For every visual encoding, provide a compact object describing x/y/series/color/size or node/link encodings. Do not use a prose string when an object is clearer.",
@@ -1047,6 +1076,25 @@ function countVisualContracts(candidate) {
   return JSON.stringify(candidate).match(/visual_contract|primary_visual|graph_display_contract|dashboard_visuals|benchmark_exhibits|priority_matrix_visual|evidence_visuals/g)?.length ?? 0;
 }
 
+// Findings lists are capped so a broken candidate cannot produce an unbounded
+// report. The cap used to be silent, which made a truncated count read as the
+// real count (a run reporting exactly 80 findings was at the cap, not at 80).
+// Emit an explicit marker carrying the true total instead.
+function capFindings(findings, cap, source) {
+  if (findings.length <= cap) return findings;
+  return [
+    ...findings.slice(0, cap),
+    {
+      severity: "fail",
+      type: "findings_truncated",
+      message: `${source} produced ${findings.length} findings; only the first ${cap} are listed.`,
+      true_total: findings.length,
+      listed: cap,
+      source,
+    },
+  ];
+}
+
 function validateCandidate(candidate) {
   const violations = [];
   const visiblePayload = clientVisiblePayload(candidate);
@@ -1223,7 +1271,7 @@ function validateDimensionTabs(candidate) {
       });
     }
   }
-  return findings.slice(0, 120);
+  return capFindings(findings, 500, "validateDimensionTabs");
 }
 
 function validateUseCaseShape(candidate) {
@@ -1261,7 +1309,7 @@ function validateUseCaseShape(candidate) {
     Object.entries(node).forEach(([key, value]) => walk(value, [...pathParts, key]));
   };
   walk(candidate.use_cases, ["use_cases"]);
-  return findings.slice(0, 120);
+  return capFindings(findings, 500, "validateUseCaseShape");
 }
 
 function validateClosedEnums(candidate) {
@@ -1283,10 +1331,14 @@ function validateClosedEnums(candidate) {
     }
     const pathName = pathParts.join(".");
     const keyName = pathParts[pathParts.length - 1] ?? "";
+    // Containing a visual is not the same as being one. A relationship
+    // projection is a narrative object carrying a graph_display_contract child;
+    // treating the wrapper as a visual demanded visual_type/data_points/
+    // encoding of prose, one finding per missing field per projection, while
+    // the contract child it holds was already well-formed and is walked below.
     const looksVisual =
       visualKeys.has(keyName) ||
       Boolean(node.visual_type) ||
-      Boolean(node.graph_display_contract) ||
       Boolean(node.executive_question && node.encoding);
     if (looksVisual) {
       const visualType = asText(node.visual_type).trim();
@@ -1303,8 +1355,12 @@ function validateClosedEnums(candidate) {
           message: `${pathName || "visual"} uses ${visualType}; allowed: ${visualTypeEnum.join(", ")}.`,
         });
       }
-      const requiredFields =
-        visualType === "relationship_graph"
+      // A planning exhibit is judged on intent; a rendered visual is judged on
+      // its full data-bound contract.
+      const isPlanningVisual = pathParts.includes("signature_visuals");
+      const requiredFields = isPlanningVisual
+        ? requiredPlanningVisualFields
+        : visualType === "relationship_graph"
           ? requiredRelationshipGraphFields
           : requiredVisualFields;
       for (const field of requiredFields) {
@@ -1351,12 +1407,18 @@ function validateClosedEnums(candidate) {
       if (typeof value === "object") walk(value, [...pathParts, key]);
     });
   };
-  walk(candidate);
+  // Walk the assembled client-visible payload, not the whole candidate. Every
+  // pass's client_visible is copied into story_architect/dimensions/use_cases/
+  // relationships/evidence, so walking `candidate` validated the same object
+  // twice under two different paths. The duplicates were not deduped (paths
+  // differ) and they consumed the findings cap, hiding the assembled-payload
+  // findings that actually matter behind their own copies.
+  walk(clientVisiblePayload(candidate));
   const unique = new Map();
   for (const finding of findings) {
     unique.set(`${finding.severity}:${finding.type}:${finding.message}`, finding);
   }
-  return Array.from(unique.values()).slice(0, 80);
+  return capFindings(Array.from(unique.values()), 500, "validateClosedEnums");
 }
 
 function escapeHtml(value) {
@@ -1489,7 +1551,218 @@ async function runPool(items, worker, size) {
   return results;
 }
 
+// ---------------------------------------------------------------------------
+// Offline replay validation
+// ---------------------------------------------------------------------------
+
+// Accepts a candidate JSON file, a tenant directory, or a whole review-bundle
+// root, so an operator can point at whatever they actually have on disk.
+function discoverCandidateFiles(target) {
+  const abs = path.resolve(target);
+  if (!fs.existsSync(abs)) throw new Error(`--validate-candidate path does not exist: ${abs}`);
+  if (fs.statSync(abs).isFile()) return [abs];
+  const direct = path.join(abs, "candidate-home-knowledge-v4.json");
+  if (fs.existsSync(direct)) return [direct];
+  const found = [];
+  const walkDir = (dir, depth) => {
+    if (depth > 5) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) walkDir(entryPath, depth + 1);
+      else if (entry.name === "candidate-home-knowledge-v4.json") found.push(entryPath);
+    }
+  };
+  walkDir(abs, 0);
+  if (found.length === 0) throw new Error(`No candidate-home-knowledge-v4.json found under ${abs}`);
+  return found.sort();
+}
+
+function groupFindings(violations) {
+  const byType = new Map();
+  for (const violation of violations ?? []) {
+    const type = violation.type ?? "unknown";
+    if (!byType.has(type)) {
+      byType.set(type, { type, severity: violation.severity ?? "fail", count: 0, samples: [] });
+    }
+    const group = byType.get(type);
+    group.count += 1;
+    if (group.samples.length < 3) group.samples.push(violation.message);
+    if (violation.true_total) group.true_total = violation.true_total;
+  }
+  return Array.from(byType.values()).sort((a, b) => b.count - a.count);
+}
+
+// A hint only. The authoritative answer is the stored-vs-recomputed delta
+// below: a finding type that disappears when only the validator changed was a
+// validator defect; one that survives a corrected validator is Claude output.
+const findingOwnerHint = {
+  findings_truncated: "tooling",
+  visual_contract_missing_field: "claude_authorship",
+  disallowed_visual_type: "claude_authorship",
+  missing_visual_type: "claude_authorship",
+  disallowed_classification: "claude_authorship",
+  disallowed_evidence_maturity: "claude_authorship",
+  disallowed_business_object_classification: "claude_authorship",
+  client_visible_technical_leakage: "claude_authorship",
+  raw_inventory_language: "claude_authorship",
+  weak_visual_contract: "claude_authorship",
+  missing_relationship_projection: "claude_authorship",
+  missing_story_architecture: "claude_authorship",
+  coherence_reviewer_blocked: "claude_reviewer_verdict",
+  coherence_high_severity_findings: "claude_reviewer_verdict",
+  missing_coherence_recommendation: "claude_reviewer_verdict",
+  incomplete_coherence_review: "claude_reviewer_verdict",
+};
+
+function replayOneCandidate(file) {
+  const candidate = JSON.parse(fs.readFileSync(file, "utf8"));
+  // The stored validation is whatever validator version generated this bundle.
+  const stored = candidate.validation ?? null;
+  const recomputed = validateCandidate(candidate);
+  const storedGroups = groupFindings(stored?.violations);
+  const recomputedGroups = groupFindings(recomputed.violations);
+  const storedByType = new Map(storedGroups.map((g) => [g.type, g.count]));
+  const recomputedByType = new Map(recomputedGroups.map((g) => [g.type, g.count]));
+
+  const delta = [];
+  for (const type of new Set([...storedByType.keys(), ...recomputedByType.keys()])) {
+    const before = storedByType.get(type) ?? 0;
+    const after = recomputedByType.get(type) ?? 0;
+    if (before === after) continue;
+    delta.push({
+      type,
+      before,
+      after,
+      change: after - before,
+      // Same candidate JSON in, different findings out => the validator moved,
+      // not the model output.
+      attribution: after < before ? "cleared_by_validator_change" : "introduced_by_validator_change",
+    });
+  }
+  delta.sort((a, b) => a.change - b.change);
+
+  return {
+    candidate_file: file,
+    tenant_key: candidate.tenant?.tenant_key ?? candidate.tenant?.key ?? path.basename(path.dirname(file)),
+    display_name: candidate.tenant?.display_name ?? null,
+    source_hash: candidate.source_hash ?? candidate.tenant?.source_hash ?? null,
+    generated_prompt_contract_version: candidate.prompt_contract_version ?? null,
+    validator_contract_version: promptContractVersion,
+    stored_status: stored?.status ?? null,
+    stored_violation_count: stored?.violations?.length ?? null,
+    replay_status: recomputed.status,
+    replay_violation_count: recomputed.violations.length,
+    delta,
+    findings_by_type: recomputedGroups.map((group) => ({
+      ...group,
+      owner_hint: findingOwnerHint[group.type] ?? "unclassified",
+      persisted_through_validator_change: (storedByType.get(group.type) ?? 0) > 0,
+    })),
+    violations: recomputed.violations,
+  };
+}
+
+function replayMarkdown(results) {
+  const lines = [
+    "# Home Knowledge V4 — offline replay validation",
+    "",
+    `- Replayed: ${new Date().toISOString()}`,
+    `- Validator contract: ${promptContractVersion}`,
+    "- Claude calls made: **0** (validators only, against stored candidate JSON)",
+    "",
+    "## Status",
+    "",
+    "| Tenant | Stored status | Stored findings | Replay status | Replay findings |",
+    "|---|---|---:|---|---:|",
+    ...results.map(
+      (r) =>
+        `| ${r.display_name ?? r.tenant_key} | ${r.stored_status ?? "n/a"} | ${r.stored_violation_count ?? "n/a"} | ${r.replay_status} | ${r.replay_violation_count} |`,
+    ),
+    "",
+    "## Findings by type (replay)",
+    "",
+    "| Tenant | Finding type | Count | Owner hint | Survived validator change |",
+    "|---|---|---:|---|---|",
+  ];
+  for (const result of results) {
+    for (const group of result.findings_by_type) {
+      lines.push(
+        `| ${result.tenant_key} | ${group.type} | ${group.true_total ?? group.count} | ${group.owner_hint} | ${group.persisted_through_validator_change ? "yes" : "no (new)"} |`,
+      );
+    }
+  }
+  lines.push("", "## Validator-attributable delta (same JSON, different validator)", "");
+  const anyDelta = results.some((r) => r.delta.length > 0);
+  if (!anyDelta) {
+    lines.push("No finding-count changed between the stored validation and this replay.");
+  } else {
+    lines.push("| Tenant | Finding type | Before | After | Attribution |", "|---|---|---:|---:|---|");
+    for (const result of results) {
+      for (const item of result.delta) {
+        lines.push(
+          `| ${result.tenant_key} | ${item.type} | ${item.before} | ${item.after} | ${item.attribution} |`,
+        );
+      }
+    }
+  }
+  lines.push(
+    "",
+    "## How to read this",
+    "",
+    "- A finding type whose count drops with identical candidate JSON was a **validator defect**.",
+    "- A finding type that survives a corrected validator is a **Claude output defect** and needs regeneration of that scope only.",
+    "- `findings_truncated` means the real total exceeds the listed cap; use `true_total`.",
+    "",
+  );
+  return lines.join("\n");
+}
+
+async function runReplay() {
+  const files = discoverCandidateFiles(replayTarget);
+  ensureDir(outDir);
+  console.log(`[home-v4-replay] validating ${files.length} candidate file(s), no Claude calls`);
+  const results = files.map((file) => {
+    const result = replayOneCandidate(file);
+    console.log(
+      `[home-v4-replay] ${result.tenant_key}: stored=${result.stored_status ?? "n/a"}(${result.stored_violation_count ?? "?"}) -> replay=${result.replay_status}(${result.replay_violation_count})`,
+    );
+    return result;
+  });
+  writeJson(path.join(outDir, "replay-validation.json"), {
+    replayed_at: new Date().toISOString(),
+    validator_contract_version: promptContractVersion,
+    output_schema_version: outputSchemaVersion,
+    claude_calls: 0,
+    source: path.resolve(replayTarget),
+    results,
+  });
+  writeText(path.join(outDir, "REPLAY_VALIDATION.md"), replayMarkdown(results));
+  for (const result of results) {
+    const candidate = JSON.parse(fs.readFileSync(result.candidate_file, "utf8"));
+    const tenantDir = path.join(outDir, "tenants", result.tenant_key);
+    ensureDir(tenantDir);
+    writeText(
+      path.join(tenantDir, "review.html"),
+      tenantHtml(candidate, { status: result.replay_status, violations: result.violations }),
+    );
+  }
+  emitAcaProofBundleIfRequested(outDir);
+  const failed = results.filter((r) => r.replay_status !== "candidate_review_ready");
+  console.log("");
+  console.log(
+    failed.length === 0
+      ? `HOME_V4_REPLAY_VERDICT: ALL_REVIEW_READY (${results.length} candidates)`
+      : `HOME_V4_REPLAY_VERDICT: FAILED (${failed.length}/${results.length} candidates)`,
+  );
+  console.log(`[home-v4-replay] artifacts in ${outDir}`);
+  if (failed.length > 0) process.exitCode = 1;
+}
+
 async function main() {
+  if (replayMode) {
+    await runReplay();
+    return;
+  }
   if (!packetOnly && !process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is required; refusing to fabricate candidate content.");
   }
