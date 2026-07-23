@@ -54,8 +54,12 @@ describe("Source artifact prompt registry provider config", () => {
         "d01_strategy_memo",
         "d02_value_target",
         "d05_scope_memo",
+        "d06_excl_log",
+        "d08_premortem",
         "d09_rfp_pack",
+        "d10_rfi_summary",
         "d11_response_checklist",
+        "d12_vendor_shortlist",
         "d13_vendor_responses",
         "d14_qa_log",
         "d15_response_completeness",
@@ -124,6 +128,145 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain("Draft RFP Package (d09_rfp_pack)");
     expect(message).toContain("Vendor Response Control Pack");
     expect(message).toContain("future commercial leverage checks");
+  });
+
+  it("configures remaining scope and RFP prompt gaps as governed workflow artifacts", () => {
+    const d06 = getPromptTemplate("d06_excl_log");
+    const d08 = getPromptTemplate("d08_premortem");
+    const d10 = getPromptTemplate("d10_rfi_summary");
+    const d12 = getPromptTemplate("d12_vendor_shortlist");
+
+    expect(d06).not.toBeNull();
+    expect(d08).not.toBeNull();
+    expect(d10).not.toBeNull();
+    expect(d12).not.toBeNull();
+    expect(d06?.upstreamRequired).toEqual(["d05_scope_memo"]);
+    expect(d08?.upstreamRequired).toEqual(["d05_scope_memo"]);
+    expect(d10?.upstreamRequired).toEqual(["d05_scope_memo"]);
+    expect(d12?.upstreamRequired).toEqual(["d09_rfp_pack"]);
+    expect(d06?.systemPrompt).toContain("Exclusion Log");
+    expect(d06?.systemPrompt).toContain("must not contradict the Scope Memo");
+    expect(d08?.systemPrompt).toContain("Pre-mortem on Scope Risk");
+    expect(d08?.systemPrompt).toContain("A concern is not a decision");
+    expect(d10?.systemPrompt).toContain("RFI Summary");
+    expect(d10?.systemPrompt).toContain("not binding");
+    expect(d12?.systemPrompt).toContain("Vendor Shortlist");
+    expect(d12?.systemPrompt).toContain("must not invent vendors");
+  });
+
+  it("blocks the exclusion log until the scope memo exists and binds scope evidence", () => {
+    const d06 = getPromptTemplate("d06_excl_log");
+    const ctx = makeD09Context(["Scope_Boundary_Workshop.md"]);
+
+    expect(findMissingUpstreamCodes(d06!, ctx)).toEqual(["d05_scope_memo"]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d05_scope_memo",
+        "# Scope\n\nDesktop support is out of scope; ERP support is in scope.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d06!, ctx)).toEqual([]);
+
+    const message = d06?.buildUserMessage(ctx, {
+      d05_scope_memo:
+        "# Scope\n\nDesktop support is out of scope; ERP support is in scope.",
+      d04_app_inv:
+        "# Inventory\n\nERP-01 is tier 1; POS-02 owner is missing.",
+    });
+
+    expect(message).toContain("Exclusion Log");
+    expect(message).toContain("Scope Memo (d05_scope_memo)");
+    expect(message).toContain("Scope_Boundary_Workshop.md");
+    expect(message).toContain("Do not invent excluded items or sponsor review status");
+  });
+
+  it("keeps the scope pre-mortem honest about workshop decisions and mitigations", () => {
+    const d08 = getPromptTemplate("d08_premortem");
+    const ctx = makeD09Context(["Scope_Risk_Workshop_Notes.md"]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d05_scope_memo",
+        "# Scope\n\nTier 1 applications are in scope; retained-team split is open.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d08!, ctx)).toEqual([]);
+
+    const message = d08?.buildUserMessage(ctx, {
+      d05_scope_memo:
+        "# Scope\n\nTier 1 applications are in scope; retained-team split is open.",
+      d06_excl_log:
+        "# Exclusions\n\nEU data residency support is excluded pending legal review.",
+    });
+
+    expect(message).toContain("Scope Risk Pre-mortem");
+    expect(message).toContain("Scope_Risk_Workshop_Notes.md");
+    expect(d08?.systemPrompt).toContain("A concern is not a decision");
+    expect(message).toContain(
+      "Do not invent workshop decisions, completed mitigations",
+    );
+  });
+
+  it("treats RFI signals as directional and requires scope before drafting the summary", () => {
+    const d10 = getPromptTemplate("d10_rfi_summary");
+    const ctx = makeD09Context(["RFI_Market_Scan.xlsx"]);
+
+    expect(findMissingUpstreamCodes(d10!, ctx)).toEqual(["d05_scope_memo"]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d05_scope_memo",
+        "# Scope\n\nManaged applications and service desk are in scope.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d10!, ctx)).toEqual([]);
+
+    const message = d10?.buildUserMessage(ctx, {
+      d05_scope_memo:
+        "# Scope\n\nManaged applications and service desk are in scope.",
+      d09_rfp_pack:
+        "# RFP\n\nVendors must provide pricing workbook and transition plan.",
+    });
+
+    expect(message).toContain("RFI Summary");
+    expect(message).toContain("RFI_Market_Scan.xlsx");
+    expect(message).toContain("directional, not binding");
+    expect(message).toContain(
+      "do not invent vendor interest, capability, price, legal acceptance, or shortlisted status",
+    );
+  });
+
+  it("requires the RFP package before drafting the vendor shortlist", () => {
+    const d12 = getPromptTemplate("d12_vendor_shortlist");
+    const ctx = makeD09Context(["Shortlist_Approval_Email.pdf"]);
+
+    expect(findMissingUpstreamCodes(d12!, ctx)).toEqual(["d09_rfp_pack"]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d09_rfp_pack",
+        "# RFP\n\nInvitation requirements and response controls are approved.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d12!, ctx)).toEqual([]);
+
+    const message = d12?.buildUserMessage(ctx, {
+      d09_rfp_pack:
+        "# RFP\n\nInvitation requirements and response controls are approved.",
+      d10_rfi_summary:
+        "# RFI\n\nVendor A has directional market-fit evidence only.",
+    });
+
+    expect(message).toContain("Vendor Shortlist");
+    expect(message).toContain("RFP Package (d09_rfp_pack)");
+    expect(message).toContain("Shortlist_Approval_Email.pdf");
+    expect(message).toContain(
+      "Do not invent vendor names, qualifications, approvals",
+    );
   });
 
   it("configures the responses-stage prompts as a governed workflow", () => {
