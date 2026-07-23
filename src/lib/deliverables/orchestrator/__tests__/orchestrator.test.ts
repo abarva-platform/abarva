@@ -116,6 +116,8 @@ describe("multi-pass prompt builder", () => {
     expect(sys).toMatch(/EXPERT ARTIFACT MODE/);
     expect(sys).toMatch(/never invent/i);
     expect(sys).toMatch(/Do not optimize for short documents/i);
+    expect(sys).toMatch(/invisible authoring controls/i);
+    expect(sys).toMatch(/never write that a claim is "tied to"/i);
   });
 
   it("system prompt treats concise charter ceilings as a quality requirement", () => {
@@ -191,6 +193,24 @@ describe("multi-pass prompt builder", () => {
       expect(prompt).toMatch(/Do not write P2 current-state findings/i);
       expect(prompt).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
     }
+  });
+
+  it("full draft and rewrite keep evidence instructions out of client prose", () => {
+    const draft = buildPassPrompt("full_draft", {
+      req,
+      brief,
+      evidence,
+      approvedPlanJson: "{}",
+    });
+    const rewrite = buildPassPrompt("board_grade_rewrite", {
+      req,
+      brief,
+      evidence,
+      critiqueText: "remove mechanics",
+      draftMarkdown: "draft",
+    });
+    expect(draft.user).toMatch(/Apply citation and evidence rules silently/i);
+    expect(rewrite.user).toMatch(/remove any sentence that explains those authoring rules/i);
   });
 
   it("section draft prompts enforce the exact P1 charter section budget", () => {
