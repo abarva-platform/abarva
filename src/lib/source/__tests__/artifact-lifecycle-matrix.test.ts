@@ -74,6 +74,48 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.quality.hardFails[0]).toContain("Required/gate-defining");
   });
 
+  it("derives pricing prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const pricingWorkbook = summary.rows.find(
+      (row) => row.code === "d19_pricing_workbook",
+    );
+    const pricingTrapLog = summary.rows.find(
+      (row) => row.code === "d20_trap_log",
+    );
+    const lockedAssumptionSet = summary.rows.find(
+      (row) => row.code === "d21_assumption_set",
+    );
+
+    expect(pricingWorkbook?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "48k max",
+    });
+    expect(pricingTrapLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+    expect(lockedAssumptionSet?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const pricingRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d19_pricing_workbook|d20_trap_log|d21_assumption_set/.test(row),
+      )
+      .join("\n");
+
+    expect(pricingRows).toContain('"Yes"');
+    expect(pricingRows).toContain('"Claude Opus"');
+    expect(pricingRows).not.toContain("No dedicated prompt");
+  });
+
   it("scores rendered artifact body text when content is available", () => {
     const summary = buildSourceArtifactLifecycleSummary([
       {
