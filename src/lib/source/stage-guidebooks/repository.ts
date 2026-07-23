@@ -34,6 +34,9 @@ interface SourceStageGuidebookRow {
   updated_at: string;
 }
 
+const GUIDEBOOK_SELECT =
+  "id, stage_key, client_key, title, purpose, duration_minutes, status, sections, version, created_by, updated_by, published_at, created_at, updated_at";
+
 function rowToRecord(row: SourceStageGuidebookRow): SourceStageGuidebookRecord {
   return {
     id: row.id,
@@ -69,6 +72,34 @@ function normalizeSections(raw: unknown): SourceStageGuidebookSection[] {
     }));
 }
 
+async function readPublishedGuidebook(
+  stageKey: SourceStageKey,
+  clientKey: string | null,
+): Promise<SourceStageGuidebookRecord | null> {
+  const supabase = getAzureReadFluentClient();
+  let query = supabase
+    .from("source_stage_guidebooks")
+    .select(GUIDEBOOK_SELECT)
+    .eq("stage_key", stageKey)
+    .eq("status", "published");
+
+  query =
+    clientKey === null
+      ? query.is("client_key", null)
+      : query.eq("client_key", clientKey);
+
+  const { data, error } = await query
+    .order("version", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  return rowToRecord(data as unknown as SourceStageGuidebookRow);
+}
+
 /**
  * Get the guidebook to render for a stage: the tenant's own published
  * override if one exists, else the global published default, else null (no
@@ -79,20 +110,7 @@ export async function getSourceStageGuidebook(
   stageKey: SourceStageKey,
   clientKey: string,
 ): Promise<SourceStageGuidebookRecord | null> {
-  const supabase = getAzureReadFluentClient();
-  const { data, error } = await supabase
-    .from("source_stage_guidebooks")
-    .select(
-      "id, stage_key, client_key, title, purpose, duration_minutes, status, sections, version, created_by, updated_by, published_at, created_at, updated_at",
-    )
-    .eq("stage_key", stageKey)
-    .eq("status", "published")
-    .or(`client_key.eq.${clientKey},client_key.is.null`)
-    .order("client_key", { ascending: true, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
-  return rowToRecord(data as unknown as SourceStageGuidebookRow);
+  const tenantGuidebook = await readPublishedGuidebook(stageKey, clientKey);
+  if (tenantGuidebook) return tenantGuidebook;
+  return readPublishedGuidebook(stageKey, null);
 }
