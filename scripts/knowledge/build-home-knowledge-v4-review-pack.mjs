@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
 const runStamp = new Date().toISOString().replace(/[:.]/g, "-");
-const promptContractVersion = "home-knowledge-v4-business-transformation-prompt-first-20260723-safe-packet-v3";
+const promptContractVersion = "home-knowledge-v4-business-transformation-prompt-first-20260723-single-dimension-v1";
 const outputSchemaVersion = "home-knowledge-v4-candidate-review-v2";
 const defaultOutDir = path.join(repoRoot, "reports", "home-knowledge-v4-review", runStamp);
 const outDir = getArg("--out-dir", defaultOutDir);
@@ -25,49 +25,6 @@ const canonicalTenantOrder = [
   "lakeshore-holdings",
   "apex-retail",
   "skyharbor-air",
-];
-
-const dimensionBatches = [
-  {
-    key: "executive_brief",
-    title: "Executive Brief",
-    dimensions: ["enterprise_thesis", "leadership_agenda", "proven_strengths", "structural_constraints", "interview_signals"],
-  },
-  {
-    key: "enterprise_structure",
-    title: "Enterprise Structure",
-    dimensions: ["profile", "divisions", "front_middle_back", "functions", "capabilities"],
-  },
-  {
-    key: "ownership_workforce",
-    title: "Ownership / Workforce",
-    dimensions: ["org", "decision_rights", "workforce", "geography"],
-  },
-  {
-    key: "work_value",
-    title: "Work / Value",
-    dimensions: ["value_streams", "business_processes", "journeys", "opev", "service_delivery"],
-  },
-  {
-    key: "technology_data",
-    title: "Technology / Data",
-    dimensions: ["apps", "data", "integrations", "infra", "architecture_dependencies"],
-  },
-  {
-    key: "data_trust",
-    title: "Data / Trust",
-    dimensions: ["tech_lifecycle", "data_quality_lineage", "identity_semantic", "risks", "evidence"],
-  },
-  {
-    key: "economics_change",
-    title: "Economics / Change",
-    dimensions: ["vendors", "ms", "budget", "programs", "ai"],
-  },
-  {
-    key: "outcomes_industry_relationships",
-    title: "Outcomes / Industry / Relationships",
-    dimensions: ["metrics", "industry", "lenses", "rel"],
-  },
 ];
 
 const expandedDimensionCatalog = [
@@ -110,6 +67,14 @@ const expandedDimensionCatalog = [
   { key: "lenses", name: "Context Confidence", source_keys: ["functions", "evidence", "risks"] },
   { key: "rel", name: "Relationship Map", source_keys: ["rel", "apps", "data", "functions", "programs", "risks"] },
 ];
+
+function dimensionPasses() {
+  return expandedDimensionCatalog.map((entry) => ({
+    key: entry.key,
+    title: entry.name,
+    dimensions: [entry.key],
+  }));
+}
 
 const classificationEnum = [
   "loaded_fact",
@@ -674,7 +639,7 @@ function makePrompt(pass, packet, assembled) {
     return {
       task: `Call 5${pass.suffix}: Dimension Writer - ${pass.title}`,
       instruction:
-        "Write meaningful Home dimension pages for the listed explorer dimensions. For every dimension, return typed page sections, not prose-only tab descriptions. Every dimension needs a strong primary visual contract. Relationship sections must be graph/topology-ready when relationships exist, and must explain the art of the possible when evidence is missing.",
+        "Write one meaningful Home dimension page for the listed explorer dimension. Return typed page sections, not prose-only tab descriptions. The dimension needs a strong primary visual contract. Relationship sections must be graph/topology-ready when relationships exist, and must explain the art of the possible when evidence is missing.",
       output_requirements: {
         per_dimension_fields: [
           "dimension_key",
@@ -688,7 +653,7 @@ function makePrompt(pass, packet, assembled) {
           "module_implications",
         ],
         hard_limits:
-          "For each dimension, summary_tab must be an object with headline, executive_read, classification. data_tab must be an object with headline, filters, rows, evidence_boundary, classification. relationship_tab must be an object with headline, graph_nodes, graph_edges, paths_to_show, missing_relationships, classification. gaps_tab must be an object with decision_gaps, why_it_matters, evidence_to_collect, owner_hint, classification. evidence_tab must be an object with source_inventory, what_it_proves, what_it_does_not_prove, next_evidence_request, classification. primary_visual must include visual_type, title, executive_question, classification, data_points, encoding, annotation, evidence_boundary, empty_state. Keep each tab concise; do not exceed 5 dimensions in this call. Never write template filenames, evidence IDs, source table names, or raw inventory counts in any tab.",
+          "Return one dimension object directly in client_visible. summary_tab must be an object with headline, executive_read, classification. data_tab must be an object with headline, filters, rows, evidence_boundary, classification. relationship_tab must be an object with headline, graph_nodes, graph_edges, paths_to_show, missing_relationships, classification. gaps_tab must be an object with decision_gaps, why_it_matters, evidence_to_collect, owner_hint, classification. evidence_tab must be an object with source_inventory, what_it_proves, what_it_does_not_prove, next_evidence_request, classification. primary_visual must include visual_type, title, executive_question, classification, data_points, encoding, annotation, evidence_boundary, empty_state. Keep each tab concise. Never write template filenames, evidence IDs, source table names, or raw inventory counts in any tab.",
       },
       common,
       story_architecture: assembled.story_architect,
@@ -992,8 +957,9 @@ async function processTenant(client, tenantKey) {
   }
 
   assembled.dimensions = [];
-  for (let i = 0; i < dimensionBatches.length; i += 1) {
-    const batch = dimensionBatches[i];
+  const dimensionJobs = dimensionPasses();
+  for (let i = 0; i < dimensionJobs.length; i += 1) {
+    const batch = dimensionJobs[i];
     const pass = {
       id: `05${String.fromCharCode(65 + i)}-dimensions-${batch.key}`,
       type: "dimensions",
@@ -1570,5 +1536,19 @@ async function main() {
 
 main().catch((error) => {
   console.error(error);
+  try {
+    ensureDir(outDir);
+    writeJson(path.join(outDir, "failure-summary.json"), {
+      failed_at: new Date().toISOString(),
+      message: error?.message ?? String(error),
+      stack: error?.stack ?? null,
+      model,
+      prompt_contract_version: promptContractVersion,
+      output_schema_version: outputSchemaVersion,
+    });
+    emitAcaProofBundleIfRequested(outDir);
+  } catch (bundleError) {
+    console.error("[home-v4] failed to emit failure proof bundle", bundleError);
+  }
   process.exit(1);
 });
