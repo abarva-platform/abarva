@@ -2124,9 +2124,7 @@ function EvidenceRefStrip({ refs }: { refs: string[] }) {
   if (!refs.length) return null;
   return (
     <div className="nkh-ref-strip" aria-label="Evidence references">
-      {refs.slice(0, 5).map((ref) => (
-        <em key={ref}>{ref}</em>
-      ))}
+      <em>Evidence-backed</em>
     </div>
   );
 }
@@ -2237,9 +2235,7 @@ function RowDetail({
       {refs.length ? (
         <div className="nkh-evidence-strip">
           <span>Evidence</span>
-          {refs.slice(0, 8).map((ref) => (
-            <em key={ref}>{ref}</em>
-          ))}
+          <em>Traceable in Source Proof</em>
         </div>
       ) : null}
     </aside>
@@ -3594,9 +3590,7 @@ function sourceInventoryRows({
       size: "Not captured",
       loaded_at: dataSet.refreshed_at ?? "Not captured",
       loaded_by: "Not captured",
-      loaded_items: coveragePosture(
-        dataSet.row_count ?? dimension.count ?? dataSet.rows.length,
-      ),
+      loaded_items: "Available",
       status: sourceStatus(dimension.status),
       supports: dimension.summary ?? "Dimension source view",
       gaps: "Use evidence and gaps tabs for validation boundaries",
@@ -3610,7 +3604,7 @@ function sourceInventoryRows({
       size: item.size ? formatBytes(asText(item.size)) : "Not captured",
       loaded_at: item.date ?? "Not captured",
       loaded_by: item.loaded_by ?? item.source_owner ?? "Not captured",
-      loaded_items: item.rows ? "Captured" : "Not captured",
+      loaded_items: item.rows ? "Available" : "Not captured",
       status: sourceStatus(item.st ?? item.status),
       supports: item.supports ?? item.facts ?? "Supporting evidence",
       gaps: item.missing ?? "No source-specific gap captured",

@@ -228,12 +228,13 @@ const BUSINESS_COUNT_DIMENSIONS = new Map([
 ]);
 
 const CLIENT_VISIBLE_PROHIBITED = [
-  { level: "P0", name: "raw id", re: /\b(?:record[_\s-]?id|evidence[_\s-]?id|source[_\s-]?id|MER-V\d|FC-V\d|SKY-V\d|LAK-V\d|APX-V\d)\b/i },
+  { level: "P0", name: "raw id", re: /\b(?:record[_\s-]?id|evidence[_\s-]?id|source[_\s-]?id|MER-V\d|FC-V\d|SKY-V\d|LAK-V\d|APX-V\d|(?:MER|FC|SKY|LAK|APX)-[A-Z0-9-]*\d[A-Z0-9-]*)\b/i },
   { level: "P0", name: "file or path", re: /\b(?:datasets\/|reports\/|\.csv\b|\.json\b|prompt_path|response_path|source_file|storage_uri)\b/i },
   { level: "P0", name: "technical object", re: /\b(?:json|database|render_pack|design_slots|dimension_rows|home_knowledge_|relationship_nodes|relationship_edges|derivation_method|payload|runtime|packet)\b/i },
   { level: "P1", name: "internal table language", re: /\b(?:database table|raw table|source table|table schema|schema table)\b/i },
   { level: "P1", name: "ingestion count", re: /\b\d[\d,]*\s+(?:(?:source|loaded|candidate|relationship|active)\s+)?(?:rows?|records?|facts?|evidence references?|relationships?|candidates?)\b/i },
   { level: "P1", name: "technical graph count", re: /\b\d[\d,]*\s+(?:nodes?|edges?|graph objects?)\b/i },
+  { level: "P1", name: "dataset maturity jargon", re: /\b(?:candidate-grade|candidate grade|record mechanics|source rows|loaded rows|active rows)\b/i },
   { level: "P1", name: "unsupported top ranking", re: /\btop\s+\d+\b/i },
   {
     level: "P1",
@@ -261,6 +262,9 @@ function cleanExecutiveText(value) {
     .replace(/\b\d[\d,]*\s+candidates?\b/gi, "planning-grade items")
     .replace(/\b\d[\d,]*\s+(?:rows?|records?|facts?)\b/gi, "loaded business context")
     .replace(/\b(?:MER|FC|SKY|LAK|APX)-V\d-[A-Z0-9-]+\b/gi, "")
+    .replace(/\b(?:MER|FC|SKY|LAK|APX)-[A-Z0-9-]*\d[A-Z0-9-]*\b/gi, "")
+    .replace(/\bcandidate-grade\b/gi, "planning-grade")
+    .replace(/\bcandidate grade\b/gi, "planning grade")
     .replace(/\b(?:record[_\s-]?id|evidence[_\s-]?id|source[_\s-]?id|source_file|render_pack|design_slots|runtime|packet|substrate)\b/gi, "")
     .replace(/\s{2,}/g, " ")
     .trim();
@@ -698,7 +702,7 @@ function claudeSystemPrompt() {
     "",
     "CLIENT-VISIBLE LANGUAGE RULES",
     "Your output will be rendered verbatim to a CEO, CFO, CIO, COO or other business executive.",
-    "Never emit source IDs, evidence IDs, filenames, directories, storage paths, JSON, SQL, database, table, schema, prompt, response, renderer, payload, runtime, packet, rows, records, facts, candidate-row counts, relationship_nodes, relationship_edges, derivation_method, source_file, internal field names, raw lifecycle codes, or generic statements about data being loaded.",
+    "Never emit source IDs, evidence IDs, raw audit IDs, filenames, directories, storage paths, JSON, SQL, database, table, schema, prompt, response, renderer, payload, runtime, packet, rows, records, facts, candidate-row counts, relationship_nodes, relationship_edges, derivation_method, source_file, internal field names, raw lifecycle codes, candidate-grade language, source-row language, loaded-row language, active-row language, or generic statements about data being loaded.",
     "Do not repeat prohibited language even if it appears in supporting context. Translate technical information into enterprise meaning.",
     "Bad: 3,987 source rows and 208 evidence references are loaded.",
     "Good: Enterprise structure and the system estate are well evidenced; process performance and realized value remain less certain.",
@@ -951,7 +955,7 @@ function promptFirstContractBlock() {
     "The product will render your client-visible output exactly as returned.",
     "No downstream component will rewrite, shorten, sanitize, summarize, supplement, replace, repair, or complete your output.",
     "Do not rely on the renderer or any post-processing step to improve, correct or complete your output.",
-    "Never emit audit references, source IDs, evidence IDs, filenames, file paths, storage locations, prompt/response paths, database/schema/table terminology, JSON keys, internal lifecycle codes, derivation methods, renderer terminology, packet terminology, rows, records, facts, candidate-row counts, graph node/edge counts, or raw graph object names in client-visible strings.",
+    "Never emit audit references, source IDs, evidence IDs, raw audit IDs, filenames, file paths, storage locations, prompt/response paths, database/schema/table terminology, JSON keys, internal lifecycle codes, derivation methods, renderer terminology, packet terminology, rows, records, facts, candidate-grade language, source-row language, loaded-row language, active-row language, candidate-row counts, graph node/edge counts, or raw graph object names in client-visible strings.",
     "Never use phrases such as grounding packet, evidence packet, render packet, graph node, graph edge, source object, payload, JSON, schema, table, file, row, record, fact count, or ID in client-visible strings.",
     "Use structured evidence_refs fields only for machine-readable traceability.",
   ].join("\n");
@@ -1156,7 +1160,7 @@ function claudeEvidenceSystemPrompt() {
     "",
     "EVIDENCE WRITER ROLE",
     "You are writing the executive evidence boundary for the Home cockpit.",
-    "Do not narrate files, rows, IDs, ingestion status, or source inventory mechanics.",
+    "Do not narrate files, rows, IDs, ingestion status, source-row language, active-row language, candidate-grade language, or source inventory mechanics.",
     "Explain strongest areas, weakest areas, freshness, conflicts, unsupported assumptions, client-to-confirm items, priority requests, owner/source for each request, decision blocked by every missing item, and impact on Intelligence, Moves, Source and Tower.",
     `Call the ${CLAUDE_EVIDENCE_TOOL_NAME} tool exactly once.`,
   ].join("\n");
