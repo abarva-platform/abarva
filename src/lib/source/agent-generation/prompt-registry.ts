@@ -362,6 +362,34 @@ const KNOWLEDGE_TRANSFER_EVIDENCE_FIELDS = [
   "signatory",
 ] as const;
 
+const VALUE_LEDGER_FIELDS = [
+  "value line id",
+  "value lever",
+  "original target",
+  "projected value",
+  "committed value",
+  "measured value",
+  "realized value",
+  "measurement window",
+  "finance owner",
+  "data source",
+  "evidence reference",
+  "delta to target",
+  "status",
+] as const;
+
+const GOVERNANCE_REVIEW_FIELDS = [
+  "review period",
+  "SLA / XLA performance",
+  "value ledger update",
+  "open issue",
+  "decision needed",
+  "rebaseline trigger",
+  "owner",
+  "due date",
+  "evidence reference",
+] as const;
+
 function formatVendorResponseControlSections(): string {
   return VENDOR_RESPONSE_CONTROL_SECTIONS.map((section, index) =>
     [
@@ -440,6 +468,18 @@ function formatTransitionCheckpointFields(): string {
 
 function formatKnowledgeTransferEvidenceFields(): string {
   return KNOWLEDGE_TRANSFER_EVIDENCE_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatValueLedgerFields(): string {
+  return VALUE_LEDGER_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatGovernanceReviewFields(): string {
+  return GOVERNANCE_REVIEW_FIELDS.map(
     (field, index) => `${index + 1}. ${field}`,
   ).join("\n");
 }
@@ -2462,6 +2502,197 @@ Writing and format requirements:
         formatKnowledgeTransferEvidenceFields(),
         "",
         "Draft the Knowledge-Transfer Evidence record per the system prompt. If KT session notes, runbooks, competency checks, or sign-offs are missing, produce the evidence structure with explicit gaps and owner actions; do not invent sessions, attendees, runbook verification, or receiving-team sign-off.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d32_value_ledger: {
+    artifactCode: "d32_value_ledger",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: ["d29_transition_plan"],
+    upstreamOptional: [
+      "d02_value_target",
+      "d19_pricing_workbook",
+      "d24_decision_brief",
+      "d27_selection_memo",
+      "d28_contract_record",
+      "d30_checkpoint_log",
+      "d31_kt_evidence",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Value Realization Ledger (artifact d32_value_ledger). This is the finance and executive control surface that carries sourcing value from the approved target into committed, measured, and realized outcomes. It must be precise about maturity: projected value is not committed value, committed value is not measured value, and measured value is not realized value.
+
+Required structural sections:
+## §1 · Value realization answer
+## §2 · Ledger by value line
+## §3 · Lever breakdown and delta to target
+## §4 · Measurement plan and ownership
+## §5 · Evidence basis and open gaps
+## §6 · Tower handoff
+
+Required value ledger fields:
+${formatValueLedgerFields()}
+
+Writing and format requirements:
+- §1 states whether value tracking is initialized / conditionally initialized / blocked, and names the exact missing owner, baseline, contract commitment, data source, or measurement window.
+- §2 must include a table: Value line | Lever | Original target | Projected | Committed | Measured | Realized | Measurement window | Finance owner | Data source | Evidence | Delta to target | Status.
+- Use upstream target, pricing, decision, contract, transition, checkpoint, and KT evidence only. Never invent savings, run-rate baselines, realized value, SLA results, vendor commitments, owners, or measurement windows.
+- Separate target, projection, contractual commitment, measured run-rate, and realized benefit in both prose and tables. If only a target exists, show downstream states as "Not yet evidenced" with an owner action.
+- §4 defines the first measurement window only when evidence supports it. If not, make it a client-to-complete action with the likely data source and accountable role.
+- §6 describes the Tower handoff as a governed measurement package: value line, metric, source data, owner, cadence, caveat, and evidence pointer. Do not claim Tower has ingested the value unless evidence says it has.
+- Client-facing language. Do not expose raw tenant ids, database table names, routing keys, model/provider names, internal agent names, or implementation labels.
+- Markdown only. Tables are expected; write like a finance-ready operating ledger, not a savings slide.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : "Intake value estimate: (not provided)",
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Transition Roadmap (d29_transition_plan):",
+        upstream.d29_transition_plan ??
+          "(MISSING — do not fabricate value owners, measurement windows, handoff readiness, or realized value; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing value facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d02_value_target", "Value Target Brief", "original target and confidence bands");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "commercial baseline and normalized TCO");
+      bindOptional("d24_decision_brief", "Decision Brief", "approved value posture and award conditions");
+      bindOptional("d27_selection_memo", "Selection Memo", "selected-vendor and commitment basis");
+      bindOptional("d28_contract_record", "Contract Record", "contractual commitments and service dates");
+      bindOptional("d30_checkpoint_log", "Transition Checkpoint Cockpit", "transition readiness and blockers");
+      bindOptional("d31_kt_evidence", "Knowledge-Transfer Evidence", "handoff readiness and remaining KT gaps");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— VALUE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED VALUE EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED VALUE LEDGER FIELDS —",
+        formatValueLedgerFields(),
+        "",
+        "Draft the Value Realization Ledger per the system prompt. Initialize the projected → committed → measured → realized ledger from available evidence, but do not invent committed, measured, or realized value; make unsupported states explicit owner actions. Do not claim Tower has ingested the value unless evidence says it has.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d33_governance_review: {
+    artifactCode: "d33_governance_review",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d32_value_ledger"],
+    upstreamOptional: [
+      "d29_transition_plan",
+      "d30_checkpoint_log",
+      "d31_kt_evidence",
+      "d19_pricing_workbook",
+      "d24_decision_brief",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Quarterly Governance Note (artifact d33_governance_review). This is the executive review note for the post-award operating cadence: SLA performance, value progress, open issues, decisions needed, and any rebaseline trigger. It must read like a crisp governance note, not a status dump, and it must not pretend a review period has closed without evidence.
+
+Required structural sections:
+## §1 · Governance readout
+## §2 · SLA and operating performance
+## §3 · Value ledger update
+## §4 · Open issues and decisions needed
+## §5 · Rebaseline triggers
+## §6 · Next review actions
+
+Required governance review fields:
+${formatGovernanceReviewFields()}
+
+Writing and format requirements:
+- §1 gives the executive answer: on track / watch / off track / not yet reviewable, with the reason.
+- §2 only reports SLA/XLA performance that is evidenced by uploaded data or upstream artifacts. If no performance period has closed, say "First measurement window not yet evidenced" and name the required data.
+- §3 reconciles directly to d32_value_ledger. Do not invent new value lines, measured value, realized value, or delta-to-target figures absent from the ledger.
+- §4 must be a table: Issue / decision | Impact | Evidence | Owner | Due date or gate-relative deadline | Required decision.
+- §5 identifies rebaseline triggers, but does not approve a rebaseline unless a decision record supports it.
+- §6 gives the next governance actions, owners, and evidence needed for the next review.
+- Client-facing language. Do not expose raw tenant ids, database table names, routing keys, model/provider names, internal agent names, or implementation labels.
+- Markdown only. Keep it concise enough for an executive review packet.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Value Realization Ledger (d32_value_ledger):",
+        upstream.d32_value_ledger ??
+          "(MISSING — do not fabricate value progress, SLA results, rebaseline triggers, or governance decisions; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing governance facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d29_transition_plan", "Transition Roadmap", "transition posture and Value handoff conditions");
+      bindOptional("d30_checkpoint_log", "Transition Checkpoint Cockpit", "open blockers and go/no-go history");
+      bindOptional("d31_kt_evidence", "Knowledge-Transfer Evidence", "handoff readiness and operational gaps");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "commercial baseline context");
+      bindOptional("d24_decision_brief", "Decision Brief", "award conditions and executive commitments");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— GOVERNANCE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED GOVERNANCE EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED GOVERNANCE REVIEW FIELDS —",
+        formatGovernanceReviewFields(),
+        "",
+        "Draft the Quarterly Governance Note per the system prompt. If the first operating or value measurement window has not closed, make that the governance answer; do not invent SLA results, realized value, or rebaseline approvals.",
       );
       return lines.join("\n");
     },

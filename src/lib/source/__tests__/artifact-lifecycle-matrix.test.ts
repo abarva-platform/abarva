@@ -239,6 +239,41 @@ describe("Source artifact lifecycle matrix", () => {
     expect(transitionRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives value-stage prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const valueLedger = summary.rows.find(
+      (row) => row.code === "d32_value_ledger",
+    );
+    const governanceReview = summary.rows.find(
+      (row) => row.code === "d33_governance_review",
+    );
+
+    expect(valueLedger?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "48k max",
+    });
+    expect(governanceReview?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const valueRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d32_value_ledger|d33_governance_review/.test(row),
+      )
+      .join("\n");
+
+    expect(valueRows).toContain('"Yes"');
+    expect(valueRows).toContain('"Claude Opus"');
+    expect(valueRows).toContain('"Claude Sonnet"');
+    expect(valueRows).not.toContain("No dedicated prompt");
+  });
+
   it("scores rendered artifact body text when content is available", () => {
     const summary = buildSourceArtifactLifecycleSummary([
       {
