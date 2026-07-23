@@ -111,6 +111,19 @@ describe('deliverable structures', () => {
       'Keep under 150 words.',
     ]);
   });
+
+  it('keeps sourcing-strategy authoring budgets below the hard export ceiling', () => {
+    const structure = getDeliverableStructure('moves', 'sourcing_strategy')!;
+    expect(structure.sections.map((section) => section.expertLatitude)).toEqual([
+      'Keep under 350 words.',
+      'Keep under 500 words using a capability table.',
+      'Keep under 650 words plus one options matrix.',
+      'Keep under 550 words using compact criteria and guardrail tables.',
+      'Keep under 500 words.',
+      'Keep under 450 words using a single table.',
+      'Keep under 150 words.',
+    ]);
+  });
 });
 
 describe('composition — same deliverable type differs by archetype', () => {
