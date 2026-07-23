@@ -100,7 +100,13 @@ export function validateDeliverableQuality(
   const sectionCount = doc.generatedSections.length;
   const tableCount = doc.tables.length;
   const leakedInternalTags = scanForInternalLeaks(body);
-  const unsupportedClaimCount = countUnsupportedClaims(body);
+  // Section titles are structural labels, not factual prose. Including a title
+  // such as "FY2026 transition horizon" in the sentence scanner creates a
+  // blocker that the deterministic body repair can never resolve. Scan the
+  // same bodyMarkdown surface that repairUncitedFigures normalizes.
+  const unsupportedClaimCount = countUnsupportedClaims(
+    doc.generatedSections.map((s) => s.bodyMarkdown).join("\n\n"),
+  );
 
   const hasSourceRegister = doc.sourceRegister.length > 0;
   const hasDecisionSection = doc.generatedSections.some((s) =>

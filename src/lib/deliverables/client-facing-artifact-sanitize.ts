@@ -39,6 +39,10 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\btower rows\b/gi, "measurement records"],
   [/\bprompt[-\s]+injection\b/gi, "adversarial input attack"],
   [/\bprompt(?:s|ed|ing|[-\s]+(?:engineering|policy|policies|template|templates|instruction|instructions))?\b/gi, "request"],
+  // Keep the formal appendix heading intact, but remove implementation-facing
+  // "Source Register" references from narrative prose before the quality scan.
+  [/\bevidence appendix\s*\(\s*Source Register\s*\)/gi, "evidence appendix"],
+  [/\btied to (?:the )?Source Register\b/gi, "tied to cited evidence"],
 ];
 
 export function sanitizeClientFacingArtifactHtml(html: string): string {

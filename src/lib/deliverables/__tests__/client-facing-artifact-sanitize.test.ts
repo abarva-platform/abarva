@@ -47,4 +47,17 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).toContain("08_p2_kyc_control_defect_log.csv");
     expect(html).not.toMatch(/\bP2 Compliance\b/);
   });
+
+  it("removes Source Register machinery from prose while preserving the appendix heading", () => {
+    const html = sanitizeClientFacingArtifactHtml(`
+      <p>Treat facts as evidenced when tied to the Source Register.</p>
+      <p>Verify the claim in the evidence appendix (Source Register), entry [3].</p>
+      <h2>Appendix A — Source Register</h2>
+    `);
+
+    expect(html).toContain("tied to cited evidence");
+    expect(html).toContain("evidence appendix, entry [3]");
+    expect(html).toContain("Appendix A — Source Register");
+    expect(html.match(/Source Register/g)).toHaveLength(1);
+  });
 });
