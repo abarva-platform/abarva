@@ -10,7 +10,7 @@
 // and swaps the footer to Close / View in Moves.
 //
 // There is no governed Tower → Moves create path in the repo today.
-// `TowerMartCxoAction.moduleHandoff` is a display label — `TowerIndexPage.tsx`
+// `TowerMartCxoAction.moduleHandoff` is a display label — the Command Center
 // renders it as text and nothing more — and `src/app/api/tower/decision/route.ts`
 // writes a fund/pause/kill signal into `program_audit_log` against an EXISTING
 // programId or moveId. Neither creates a Move.

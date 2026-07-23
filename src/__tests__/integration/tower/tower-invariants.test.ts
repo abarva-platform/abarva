@@ -40,6 +40,8 @@ describe("Tower invariants", () => {
       "src/app/(maestro)/tower/tech-stack/page.tsx",
       "src/app/(maestro)/tower/volumetrics/page.tsx",
       "src/components/tower/TowerLegacySurface.tsx",
+      "src/components/tower/TowerIndexPage.tsx",
+      "src/components/tower/TowerCommandCenterContract.tsx",
       "src/components/tower/AiControlTowerPage.tsx",
       "src/components/tower/TowerLensTabs.tsx",
       "src/lib/ai-control-tower/read-model.ts",

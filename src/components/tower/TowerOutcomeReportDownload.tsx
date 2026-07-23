@@ -10,7 +10,7 @@
 
 import type { CSSProperties } from 'react';
 
-// Tower v3 tokens — mirror the `T` register in TowerIndexPage.tsx.
+// Tower v3 tokens — mirror the Command Center palette.
 const INK = '#1A1A18';
 const NAVY = '#1B2B5C';
 const GOLD = '#c9a227';

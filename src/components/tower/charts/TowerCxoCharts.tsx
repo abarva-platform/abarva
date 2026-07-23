@@ -2,7 +2,7 @@
 
 // Recharts-based visualizations for the Tower CXO command center (Value,
 // Budget, Benchmark sections). These sit alongside the existing governed
-// tables in TowerIndexPage.tsx — they're a visual summary, not a replacement;
+// tables in the governed Tower read models — they're a visual summary, not a replacement;
 // the tables remain the source of full per-row detail and evidence links.
 //
 // Data contracts: CioTowerPortfolioValueRow / CioTowerCxoBenchmarkRow come
@@ -43,9 +43,8 @@ import type {
 } from "@/lib/cio-tower/cxo-view-model";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
-// Local copy of the locked AbarVa/Tower design tokens (TowerIndexPage.tsx
-// keeps its own `T` unexported — duplicated here rather than widening that
-// file's export surface for a handful of color/font constants).
+// Local copy of the locked AbarVa/Tower design tokens, duplicated here rather
+// than widening another component's export surface for a few constants.
 const CT = {
   INK: "#1A1A18",
   INK_2: "#525866",

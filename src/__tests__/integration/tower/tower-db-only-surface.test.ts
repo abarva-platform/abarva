@@ -2,14 +2,17 @@ import { readFileSync } from 'node:fs';
 
 describe('Tower DB-only surface guard', () => {
   const towerPage = readFileSync('src/app/(maestro)/tower/page.tsx', 'utf8');
-  const towerIndex = readFileSync('src/components/tower/TowerIndexPage.tsx', 'utf8');
-  const visibleTowerSource = `${towerPage}\n${towerIndex}`;
+  const commandCenterAvaShell = readFileSync('src/components/tower/command-center/TowerCommandCenterAvaShell.tsx', 'utf8');
+  const commandCenterViewModel = readFileSync('src/lib/tower/command-center/view-model.ts', 'utf8');
+  const visibleTowerSource = `${towerPage}\n${commandCenterAvaShell}\n${commandCenterViewModel}`;
 
   it('does not wire visible Tower content to fixture or route-slug fallbacks', () => {
     expect(towerPage).not.toContain('getSetupAiInitiatives');
     expect(towerPage).not.toContain('fixture_fallback');
     expect(towerPage).not.toContain('findTenantByRouteSlug');
     expect(towerPage).not.toContain("findTenantByRouteSlug('apexretail')");
+    expect(towerPage).toContain('loadTowerMartCommandView');
+    expect(towerPage).toContain('buildTowerCommandCenterView');
   });
 
   it('does not render legacy Apex demo values when DB substrate is empty', () => {

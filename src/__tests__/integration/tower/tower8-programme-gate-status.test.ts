@@ -6,7 +6,7 @@
 //
 // The legacy TowerLensTabs.tsx / ProgrammeGatesPanel coverage was removed
 // when that orphaned component was deleted (never wired to a live route;
-// superseded by TowerIndexPage's CXO command center).
+// superseded by the Tower Command Center).
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
