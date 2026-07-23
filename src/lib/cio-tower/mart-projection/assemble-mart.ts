@@ -224,6 +224,8 @@ interface ProgramAggregate {
   programName: string;
   vendorName: string | null;
   systemName: string | null;
+  ownerRole: string | null;
+  financeOwnerRole: string | null;
   isProgram: boolean; // has a canonical_program_key (a funded bet, not a raw tool)
   approvedFunding: number | null;
   aiTaggedSpend: number;
@@ -247,6 +249,14 @@ function attr(fact: CioTowerFactRow): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+function textAttr(
+  attributes: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = attributes[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function identityGroupKey(
@@ -299,6 +309,8 @@ function aggregatePrograms(
           id.system_name ?? resolved.programCode ?? id.program_code ?? key,
         vendorName: id.vendor_name,
         systemName: id.system_name,
+        ownerRole: null,
+        financeOwnerRole: null,
         // A group is a funded program if it is anchored on a program key —
         // either directly or because a tool rolled up into one.
         isProgram: id.canonical_program_key !== null || resolved.viaCrosswalk,
@@ -317,6 +329,26 @@ function aggregatePrograms(
     }
     agg.factKeys.push(fact.fact_key);
     if (fact.value_source === "tenant_file") agg.anyTenantFile = true;
+    const a = attr(fact);
+    const evidenceOwner = textAttr(a, "evidence_owner");
+    const executiveOwner = textAttr(a, "executive_owner");
+    const financeOwner = textAttr(a, "finance_owner");
+    const vendorName = textAttr(a, "vendor_name");
+    const toolName = textAttr(a, "tool_name");
+
+    if (!agg.ownerRole) agg.ownerRole = evidenceOwner ?? executiveOwner;
+    if (!agg.financeOwnerRole) {
+      agg.financeOwnerRole =
+        financeOwner ??
+        (textAttr(a, "owner_attestation_status")?.includes("finance")
+          ? evidenceOwner
+          : null);
+    }
+    if (!agg.vendorName) agg.vendorName = vendorName;
+    if (!agg.systemName || agg.systemName === agg.programName) {
+      agg.systemName = toolName ?? agg.systemName;
+    }
+
     // A program fact is authoritative for the display name/code/vendor of the
     // group — a tool that rolled up should not rename the funded program.
     if (id.canonical_program_key) {
@@ -326,7 +358,6 @@ function aggregatePrograms(
       if (id.vendor_name && !agg.vendorName) agg.vendorName = id.vendor_name;
       if (id.system_name && !agg.systemName) agg.systemName = id.system_name;
     }
-    const a = attr(fact);
     agg.sourceRefs.push({
       file: fact.source_key,
       row: fact.source_row,
@@ -575,8 +606,8 @@ export function assembleMartFromFacts(
         tenant_key: tenantKey,
         program_code: agg.programCode,
         program_name: agg.programName,
-        owner_role: null,
-        finance_owner_role: null,
+        owner_role: agg.ownerRole,
+        finance_owner_role: agg.financeOwnerRole,
         decision_lane: lane,
         decision_rationale: decisionRationale(agg, lane),
         approved_funding_usd: round(agg.approvedFunding ?? 0),
