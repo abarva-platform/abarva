@@ -6,19 +6,52 @@ const mockRows: Row[] = [];
 
 interface MockBuilder {
   insert: jest.Mock;
+  update: jest.Mock;
   select: jest.Mock;
   eq: jest.Mock;
+  in: jest.Mock;
+  is: jest.Mock;
+  contains: jest.Mock;
   order: jest.Mock;
   limit: jest.Mock;
   single: jest.Mock;
   maybeSingle: jest.Mock;
+  then: (
+    onFulfilled: (result: { data: Row[] | null; error: null }) => unknown,
+  ) => unknown;
 }
 
 function makeBuilder(table: string): MockBuilder {
   let inserted: Row | null = null;
-  const filters: Array<{ column: string; value: unknown }> = [];
+  let updatePayload: Row | null = null;
+  const filters: Array<{
+    kind: "eq" | "in" | "is" | "contains";
+    column: string;
+    value: unknown;
+  }> = [];
   let sortDescending = false;
   let rowLimit: number | null = null;
+
+  function matchesRow(row: Row): boolean {
+    return filters.every((filter) => {
+      if (filter.kind === "eq") return row[filter.column] === filter.value;
+      if (filter.kind === "is") return (row[filter.column] ?? null) === filter.value;
+      if (filter.kind === "in")
+        return (filter.value as unknown[]).includes(row[filter.column]);
+      if (filter.kind === "contains") {
+        const rowValue = row[filter.column];
+        const wanted = filter.value as Record<string, unknown>;
+        return (
+          typeof rowValue === "object" &&
+          rowValue !== null &&
+          Object.entries(wanted).every(
+            ([k, v]) => (rowValue as Record<string, unknown>)[k] === v,
+          )
+        );
+      }
+      return true;
+    });
+  }
 
   const builder: MockBuilder = {
     insert: jest.fn((payload: Row) => {
@@ -30,9 +63,25 @@ function makeBuilder(table: string): MockBuilder {
       mockRows.push(inserted);
       return builder;
     }),
+    update: jest.fn((payload: Row) => {
+      updatePayload = payload;
+      return builder;
+    }),
     select: jest.fn(() => builder),
     eq: jest.fn((column: string, value: unknown) => {
-      filters.push({ column, value });
+      filters.push({ kind: "eq", column, value });
+      return builder;
+    }),
+    in: jest.fn((column: string, value: unknown[]) => {
+      filters.push({ kind: "in", column, value });
+      return builder;
+    }),
+    is: jest.fn((column: string, value: unknown) => {
+      filters.push({ kind: "is", column, value });
+      return builder;
+    }),
+    contains: jest.fn((column: string, value: unknown) => {
+      filters.push({ kind: "contains", column, value });
       return builder;
     }),
     order: jest.fn((_column: string, options?: { ascending?: boolean }) => {
@@ -48,9 +97,7 @@ function makeBuilder(table: string): MockBuilder {
       error: inserted ? null : { message: "No rows returned" },
     })),
     maybeSingle: jest.fn(async () => {
-      let matches = mockRows.filter((row) =>
-        filters.every((filter) => row[filter.column] === filter.value),
-      );
+      let matches = mockRows.filter(matchesRow);
       if (sortDescending) {
         matches = [...matches].sort((a, b) =>
           String(b.rendered_at).localeCompare(String(a.rendered_at)),
@@ -59,6 +106,18 @@ function makeBuilder(table: string): MockBuilder {
       if (rowLimit != null) matches = matches.slice(0, rowLimit);
       return { data: matches[0] ?? null, error: null };
     }),
+    // A bare `select().eq()...` chain (no `.single()`/`.maybeSingle()`) or an
+    // `.update()` chain is awaited directly by the real client — support both
+    // by making the builder thenable.
+    then: (onFulfilled) => {
+      if (updatePayload) {
+        const matches = mockRows.filter(matchesRow);
+        for (const row of matches) Object.assign(row, updatePayload);
+        return Promise.resolve(onFulfilled({ data: matches, error: null }));
+      }
+      const matches = mockRows.filter(matchesRow);
+      return Promise.resolve(onFulfilled({ data: matches, error: null }));
+    },
   };
 
   if (table !== "generated_artifacts") {
@@ -80,7 +139,9 @@ import {
   getGeneratedArtifactById,
   getLatestGeneratedArtifact,
   renderedHtmlFromGeneratedArtifact,
+  saveGeneratedArtifact,
 } from "../repository";
+import type { BoardPackRenderInput, BoardPackRenderResult } from "../types";
 
 const tenantPolicy: TenantAiPolicy = {
   allowExternalAI: true,
@@ -162,5 +223,84 @@ describe("generated artifact repository", () => {
       outputFormat: "html",
     });
     expect(latest?.id).toBe(record.id);
+  });
+
+  it("supersedes a prior artifact of the same logical deliverable on regeneration", async () => {
+    const input: BoardPackRenderInput = {
+      clientId: "codex-fs-e2e",
+      sourceArtifactRef: "4bf889aa-d4ee-4c1d-936b-51574614d191",
+      artifactType: "move_board_pack",
+      renderEngine: "internal",
+      outputFormat: "html",
+      renderedBy: "jest-user",
+      title: "Target Architecture — first title the model chose",
+      tenantPolicy,
+      facts: [],
+      sections: [],
+    };
+    const rendered: BoardPackRenderResult = {
+      artifactType: "move_board_pack",
+      sourceArtifactRef: input.sourceArtifactRef,
+      renderEngine: "internal",
+      outputFormat: "html",
+      html: "<html>first run</html>",
+      blobUrl: "",
+      blobSha256: "sha-first",
+      qualityScore: 90,
+      evidenceLedgerIds: [],
+      generationEgressAudit: null,
+      quarantined: false,
+      quarantineReason: null,
+    };
+
+    const first = await saveGeneratedArtifact(input, rendered, {
+      deliverableTypeKey: "target_architecture",
+    });
+    expect(first.supersededBy).toBeNull();
+
+    const second = await saveGeneratedArtifact(
+      { ...input, title: "Target Architecture — a completely different title" },
+      { ...rendered, blobSha256: "sha-second", html: "<html>second run</html>" },
+      { deliverableTypeKey: "target_architecture" },
+    );
+
+    const firstAfter = await getGeneratedArtifactById(first.id, {
+      clientId: "codex-fs-e2e",
+    });
+    expect(firstAfter?.supersededBy).toBe(second.id);
+    expect(second.supersededBy).toBeNull();
+
+    // A different Move must never be superseded by this one's regeneration.
+    const otherMoveInput: BoardPackRenderInput = {
+      ...input,
+      sourceArtifactRef: "some-other-move-id",
+    };
+    const otherMoveRendered: BoardPackRenderResult = {
+      ...rendered,
+      sourceArtifactRef: "some-other-move-id",
+      blobSha256: "sha-other-move",
+    };
+    const otherMoveArtifact = await saveGeneratedArtifact(
+      otherMoveInput,
+      otherMoveRendered,
+      { deliverableTypeKey: "target_architecture" },
+    );
+    expect(otherMoveArtifact.supersededBy).toBeNull();
+    const firstStillIntact = await getGeneratedArtifactById(first.id, {
+      clientId: "codex-fs-e2e",
+    });
+    expect(firstStillIntact?.supersededBy).toBe(second.id);
+
+    // A different deliverable type for the SAME Move must never be superseded.
+    const sourcingStrategy = await saveGeneratedArtifact(
+      { ...input, title: "Sourcing Strategy" },
+      { ...rendered, blobSha256: "sha-sourcing" },
+      { deliverableTypeKey: "sourcing_strategy" },
+    );
+    expect(sourcingStrategy.supersededBy).toBeNull();
+    const secondStillCurrent = await getGeneratedArtifactById(second.id, {
+      clientId: "codex-fs-e2e",
+    });
+    expect(secondStillCurrent?.supersededBy).toBeNull();
   });
 });
