@@ -82,8 +82,8 @@ No product surface, tenant data path, or runtime behavior changes.
   SVG chart; sends via the Resend HTTP API.
 - `scripts/ai-cost/collect-local.sh` — workstation collector wrapper.
 - `scripts/ai-cost/README.md` — process, setup, and how to read the numbers.
-- `.github/workflows/ai-cost-daily.yml` — 11:00 UTC daily collect → commit →
-  email.
+- `.github/workflows/ai-cost-daily.yml` — 11:00 UTC daily collect → email →
+  open/update a snapshot PR.
 - `scripts/ai-cost/azure-cost-report.mjs` — Azure Cost Management collector,
   read-only by construction (asserts ARM host + CostManagement/query path
   before issuing any call).
@@ -134,6 +134,13 @@ No product surface, tenant data path, or runtime behavior changes.
   billed total of about `$4,183.22` instead of the 100x raw interpretation.
 - `collect-local.sh` no-send path rerun: fixed optional argument expansion so
   the local digest renders when Anthropic and/or Resend inputs are absent.
+- 2026-07-23 workflow dispatch after secrets were configured: guard passed,
+  Anthropic Admin API collection wrote the daily JSON snapshot, digest rendering
+  wrote the HTML snapshot, and Resend returned a send id. The post-send
+  snapshot commit then failed because repository rules prohibit direct pushes
+  to `main`; the workflow now pushes snapshots to a date-scoped
+  `automation/ai-cost-daily-snapshot-YYYY-MM-DD` branch and opens/updates a PR
+  instead.
 - `npx eslint scripts/ai-cost/` — exit 0.
 - `node --check` on all three `.mjs` files — clean. `bash -n` on the shell
   wrapper — clean.
@@ -154,17 +161,18 @@ VIEW`, `DROP POLICY IF EXISTS` then `CREATE POLICY`).
 **Not yet validated:** the Azure collector has not executed against live
 endpoints. The Azure run was deliberately left to the operator because `az`
 holds live credentials on this workstation. The Anthropic Admin API collector
-has now live-run successfully, but live email delivery still waits on
-`RESEND_API_KEY`.
+has now live-run successfully, and live email delivery has succeeded through
+Resend.
 
 ## Rollout Plan
 
 Merge to main. No ACA image build, no runtime deploy, no traffic shift. The
 workflow begins at the next 11:00 UTC tick once its four secrets are set; it
 no-ops with a clear error until then. The migration is **not** required for the
-digest to work — snapshots land in `reports/ai-cost/daily/` because the
-control-plane Postgres is on a private VNet a GitHub-hosted runner cannot reach.
-Apply the migration when the collector moves to an ACA job inside the VNet.
+digest to work — snapshots are proposed through a protected-branch-compliant
+PR because the control-plane Postgres is on a private VNet a GitHub-hosted
+runner cannot reach. Apply the migration when the collector moves to an ACA job
+inside the VNet.
 
 ## Deployment Authority
 
@@ -189,14 +197,13 @@ reads it.
 
 ## Known Gaps
 
-- **The Admin API collector has never run against the live endpoints.** No
-  Admin API key existed at initial release, so the product-spend half — the
+- **The Admin API collector originally could not run against live endpoints.**
+  No Admin API key existed at initial release, so the product-spend half — the
   actual invoice — was unmeasured. Follow-up validation on 2026-07-22 confirmed
   the Admin API collector runs with an org Admin key and writes a snapshot.
-- **Live email delivery still needs `RESEND_API_KEY`.** `ANTHROPIC_ADMIN_KEY`,
-  `AI_COST_DIGEST_TO`, and `AI_COST_DIGEST_FROM` are configured, but the
-  scheduled GitHub workflow still cannot send until the Resend API key exists
-  in repository secrets.
+- **Snapshot persistence is PR-mediated.** Email delivery is the critical path;
+  report snapshots now land in an automation PR instead of being pushed directly
+  to protected `main`.
 - **Product spend cannot be split by workload yet.** All Nexus inference shares
   one `ANTHROPIC_API_KEY`, so `output_tokens_by_api_key` will show a single
   bucket. Splitting into per-lane keys (`intelligence-runtime`,

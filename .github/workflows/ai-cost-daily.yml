@@ -1,7 +1,7 @@
 name: AI spend · daily digest
 
-# Pulls the Anthropic Admin API cost + usage reports, commits the daily
-# snapshot to reports/ai-cost/daily/, and emails the digest.
+# Pulls the Anthropic Admin API cost + usage reports, emails the digest, and
+# opens/updates a PR with the daily snapshot under reports/ai-cost/daily/.
 #
 # This job covers the PRODUCT half only — the metered ANTHROPIC_API_KEY that
 # carries Nexus runtime inference. The Claude Code development half is
@@ -27,6 +27,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   digest:
@@ -76,14 +77,38 @@ jobs:
             --out "reports/ai-cost/daily/${TODAY}-digest.html" \
             --send
 
-      - name: Commit snapshot
+      - name: Open snapshot PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          TODAY="$(date -u +%F)"
+          SNAPSHOT_BRANCH="automation/ai-cost-daily-snapshot-${TODAY}"
+          REMOTE_REF_FILE="${RUNNER_TEMP:-/tmp}/ai-cost-snapshot-ref"
+          expected_remote_sha=""
+          if git ls-remote --exit-code --heads origin "$SNAPSHOT_BRANCH" > "$REMOTE_REF_FILE"; then
+            expected_remote_sha="$(cut -f1 "$REMOTE_REF_FILE")"
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git switch -c "$SNAPSHOT_BRANCH"
           git add reports/ai-cost/daily
           if git diff --cached --quiet; then
             echo "No snapshot change to commit."
             exit 0
           fi
-          git commit -m "chore(ai-cost): daily spend snapshot $(date -u +%F)"
-          git push
+          git commit -m "chore(ai-cost): daily spend snapshot ${TODAY}"
+          if [ -n "$expected_remote_sha" ]; then
+            git push --force-with-lease="refs/heads/${SNAPSHOT_BRANCH}:${expected_remote_sha}" origin "$SNAPSHOT_BRANCH"
+          else
+            git push origin "$SNAPSHOT_BRANCH"
+          fi
+          if gh pr view "$SNAPSHOT_BRANCH" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Snapshot PR already open for $SNAPSHOT_BRANCH."
+          else
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head "$SNAPSHOT_BRANCH" \
+              --title "AI spend daily snapshot" \
+              --body "Automated AI spend daily snapshot generated after the digest email was sent."
+          fi
