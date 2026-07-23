@@ -38,10 +38,43 @@ import { evaluateGate } from '@/lib/programs/governance';
 
 function tableResult(table: string) {
   if (table === 'deliverables_v2') {
+    const filters: Record<string, unknown> = {};
+    const chain: {
+      select: jest.Mock;
+      eq: jest.Mock;
+      maybeSingle: jest.Mock;
+      then: <TResult1 = { data: typeof deliverablesFixture }, TResult2 = never>(
+        onfulfilled?: ((value: { data: typeof deliverablesFixture }) => TResult1 | PromiseLike<TResult1>) | null,
+        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+      ) => Promise<TResult1 | TResult2>;
+    } = {
+      select: jest.fn(() => chain),
+      eq: jest.fn((field: string, value: unknown) => {
+        filters[field] = value;
+        return chain;
+      }),
+      maybeSingle: jest.fn(() => {
+        const row = deliverablesFixture.find((deliverable) => {
+          if (filters.id && deliverable.id !== filters.id) return false;
+          return true;
+        });
+        return Promise.resolve({
+          data: row
+            ? {
+                ...row,
+                created_by: 'person-1',
+                current_version: 1,
+                signed_off_version: row.status === 'signed_off' ? 1 : null,
+              }
+            : null,
+          error: null,
+        });
+      }),
+      then: (onfulfilled, onrejected) =>
+        Promise.resolve({ data: deliverablesFixture }).then(onfulfilled, onrejected),
+    };
     return {
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: deliverablesFixture })),
-      })),
+      select: chain.select,
     };
   }
 
@@ -96,10 +129,21 @@ function tableResult(table: string) {
   }
 
   if (table === 'deliverable_role_approvals') {
+    const chain: {
+      select: jest.Mock;
+      eq: jest.Mock;
+      then: <TResult1 = { data: typeof roleApprovalsFixture; error: null }, TResult2 = never>(
+        onfulfilled?: ((value: { data: typeof roleApprovalsFixture; error: null }) => TResult1 | PromiseLike<TResult1>) | null,
+        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+      ) => Promise<TResult1 | TResult2>;
+    } = {
+      select: jest.fn(() => chain),
+      eq: jest.fn(() => chain),
+      then: (onfulfilled, onrejected) =>
+        Promise.resolve({ data: roleApprovalsFixture, error: null }).then(onfulfilled, onrejected),
+    };
     return {
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: roleApprovalsFixture, error: null })),
-      })),
+      select: chain.select,
     };
   }
 
@@ -256,6 +300,39 @@ describe('evaluateGate', () => {
       { id: 'design', deliverable_type_key: 'design_brief', status: 'signed_off' },
       { id: 'trace', deliverable_type_key: 'requirements_traceability', status: 'signed_off' },
     ];
+    roleApprovalsFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ check: 'design_approved' }),
+      ]),
+    );
+  });
+
+  it('uses any signed-off design-family deliverable instead of letting an older generated draft mask the approved design spec', async () => {
+    // Live sandbox regression 2026-07-23: P3 generated artifacts created
+    // design-family rows before the user accepted a compact design_spec. The
+    // gate must evaluate the family, not whichever row Postgres happens to
+    // return first, otherwise a stale in_review generated row can hide a valid
+    // signed-off design record.
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 3,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      { id: 'architecture-draft', deliverable_type_key: 'target_state_architecture', status: 'in_review' },
+      { id: 'design-spec', deliverable_type_key: 'design_spec', status: 'signed_off' },
+      { id: 'trace', deliverable_type_key: 'requirements_traceability', status: 'signed_off' },
+    ];
+    modulesFixture = [];
     roleApprovalsFixture = [];
 
     const result = await evaluateGate(

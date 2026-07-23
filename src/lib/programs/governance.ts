@@ -274,6 +274,8 @@ export async function evaluateGate(
   const milestoneRows = (milestones as Array<{ id: string; name: string | null; status: string | null }> | null ?? []);
   const findDeliverable = (...keys: string[]) => deliverableRows
     .find((d) => keys.includes(d.deliverable_type_key));
+  const findDeliverables = (...keys: string[]) => deliverableRows
+    .filter((d) => keys.includes(d.deliverable_type_key));
   const isSignedOff = (row: { status: string } | undefined) => row?.status === 'signed_off';
   // A deliverable TYPE that requires named role approvals (see
   // deliverable-role-approvals.ts's REQUIRED_APPROVAL_ROLES) must have every
@@ -296,6 +298,14 @@ export async function evaluateGate(
     );
     return summary.allRequiredApproved;
   };
+  const anyMeetsApprovalBar = async (
+    rows: Array<{ id: string; deliverable_type_key: string; status: string }>,
+  ): Promise<boolean> => {
+    for (const row of rows) {
+      if (await meetsApprovalBar(row)) return true;
+    }
+    return false;
+  };
   const isPresent = (row: { status: string } | undefined) => Boolean(row);
   const moduleCompleted = (...keys: string[]) => moduleRows
     .some((m) => keys.includes(m.module_key) && m.status === 'completed');
@@ -316,7 +326,7 @@ export async function evaluateGate(
     .find((d) => d.deliverable_type_key === 'charter');
   const originationBriefRow = findDeliverable('origination_brief', 'program_seed_brief', 'program_seed');
   const hasSignedOriginationBrief = isSignedOff(originationBriefRow);
-  const designRow = findDeliverable('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design', 'target_state_architecture');
+  const designRows = findDeliverables('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design', 'target_state_architecture');
   const executionRoadmapRow = findDeliverable('execution_roadmap', 'execution_plan', 'roadmap', 'mobilization_roadmap');
   const requirementsTraceRow = findDeliverable('requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix');
   const businessCaseRow = findDeliverable('business_case', 'funding_business_case', 'approval_business_case');
@@ -576,7 +586,7 @@ export async function evaluateGate(
         break;
       }
       case 'cxo_interview_complete': pass = cxoInterviewModule?.status === 'completed'; break;
-      case 'design_approved': pass = await meetsApprovalBar(designRow); break;
+      case 'design_approved': pass = await anyMeetsApprovalBar(designRows); break;
       case 'requirements_design_outcome_trace':
         pass = isPresent(requirementsTraceRow) ||
           (
