@@ -633,6 +633,166 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
   ],
 };
 
+const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "solution_design",
+  purpose:
+    "Translate the accepted Target Architecture into an implementable solution design without reopening the approved solution approach.",
+  decisionToSupport:
+    "Approve the service, workflow, integration, control, and acceptance design that delivery will elaborate.",
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not repeat the full current-state diagnosis or Target Architecture narrative. Summarize only the implications needed to understand this design.",
+    "Do not select a new solution option, vendor, cloud, model, or deployment fact that is not present in the accepted architecture or an explicitly proposed ADR.",
+  ],
+  expectedExhibits: [
+    {
+      key: "experience_flow",
+      title: "End-to-End Experience Flow",
+      kind: "flow",
+      purpose: "Shows the user, AI, human decision, and system actions end to end.",
+      preferredFormat: "docx",
+      requiredElements: ["user trigger", "AI assistance", "human checkpoint", "system action", "outcome telemetry"],
+      legendRequired: true,
+    },
+    {
+      key: "component_interaction",
+      title: "Component Interaction View",
+      kind: "logical_architecture",
+      purpose: "Shows how the accepted architecture components collaborate for the priority journey.",
+      preferredFormat: "docx",
+      requiredElements: ["experience", "orchestration", "retrieval", "model", "policy gate", "audit"],
+      legendRequired: true,
+    },
+    {
+      key: "exception_control_flow",
+      title: "Exception and Control Flow",
+      kind: "agent_orchestration",
+      purpose: "Shows normal, exception, override, and escalation paths.",
+      preferredFormat: "docx",
+      requiredElements: ["normal path", "exception", "human approval", "override", "escalation", "audit"],
+      legendRequired: true,
+    },
+  ],
+  sections: [
+    s("exec_decision", "Executive Decision & Design Basis", "The approved option, accepted architecture basis, design decision, and material open items in one compact read.", "mixed", [], "Keep under 450 words; lead with the decision and do not restate the full architecture."),
+    s("journey_workflow", "End-to-End Journey & Human/AI Workflow", "The user journey, AI assistance, human decisions, exceptions, and measurable outcomes.", "mixed", [], "Keep under 650 words plus one workflow exhibit."),
+    s("service_design", "Service & Component Design", "Responsibilities, interfaces, and interaction of the reusable services inherited from the accepted architecture.", "mixed", [], "Keep under 800 words plus a component interaction exhibit."),
+    s("data_integration", "Data, Context & Integration Contracts", "Inputs, outputs, system-of-record boundaries, data products, interface patterns, and unresolved contracts.", "mixed", [], "Keep under 750 words; use a compact contract table."),
+    s("controls_exceptions", "Controls, Exceptions & Decision Rights", "Human checkpoints, policy enforcement, exception handling, audit evidence, and prohibited autonomous actions.", "mixed", [], "Keep under 650 words plus one exception/control exhibit."),
+    s("nfr_operability", "Non-Functional Design & Operability", "Security, privacy, resilience, observability, performance, support, and model operations requirements.", "mixed", [], "Keep under 650 words; distinguish confirmed requirements from open decisions."),
+    s("acceptance_traceability", "Acceptance, Traceability & Open Decisions", "Acceptance criteria, trace to architecture decisions/evidence, dependencies, risks, and the decisions required before roadmap planning.", "mixed", [], "Keep under 650 words using concise tables."),
+    s("recommendation", "Recommendation & Next Actions", "Approve, revise, or hold the solution design with named owners for open decisions.", "mixed", [], "Keep under 250 words."),
+  ],
+  requiredSectionKeys: [
+    "exec_decision",
+    "journey_workflow",
+    "service_design",
+    "data_integration",
+    "controls_exceptions",
+    "nfr_operability",
+    "acceptance_traceability",
+    "recommendation",
+  ],
+};
+
+const MOVES_OPERATING_MODEL_DESIGN: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "operating_model_design",
+  purpose:
+    "Define the human, AI, governance, and service-management model required to operate the accepted solution safely.",
+  decisionToSupport:
+    "Approve the human/AI work split, accountable roles, decision rights, controls, cadence, and adoption obligations.",
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not repeat the solution specification or invent a different architecture.",
+    "Do not create named people, organization units, staffing quantities, or approval authorities that are not evidenced or explicitly client-to-confirm.",
+  ],
+  expectedExhibits: [
+    {
+      key: "human_ai_work_split",
+      title: "Human and AI Work Split",
+      kind: "flow",
+      purpose: "Shows which work is assisted, reviewed, decided, escalated, and monitored.",
+      preferredFormat: "docx",
+      requiredElements: ["human task", "AI task", "decision", "exception", "audit"],
+      legendRequired: true,
+    },
+    {
+      key: "decision_rights",
+      title: "Decision Rights and Escalation",
+      kind: "flow",
+      purpose: "Shows accountable decisions, forums, thresholds, and escalation paths.",
+      preferredFormat: "docx",
+      requiredElements: ["decision", "owner role", "threshold", "forum", "escalation"],
+      legendRequired: true,
+    },
+  ],
+  sections: [
+    s("exec_decision", "Executive Decision & Operating Thesis", "The operating-model decision, what changes, and what remains client-to-confirm.", "mixed", [], "Keep under 400 words."),
+    s("human_ai_split", "Human/AI Work Split", "Work allocation across the priority journey, including prohibited autonomous decisions and exceptions.", "mixed", [], "Keep under 650 words plus one exhibit."),
+    s("roles_raci", "Roles, Accountabilities & RACI", "Retained business, technology, risk, data, service, and partner roles with explicit accountability.", "mixed", [], "Keep under 750 words using role and RACI tables."),
+    s("decision_controls", "Decision Rights, Controls & Escalation", "Approval thresholds, control ownership, override rights, forums, and escalation paths.", "mixed", [], "Keep under 700 words plus one decision-rights exhibit."),
+    s("run_cadence", "Run Cadence, Monitoring & Service Management", "Operating forums, telemetry, incident/model handling, policy refresh, and continuous-improvement cadence.", "mixed", [], "Keep under 650 words using a cadence table."),
+    s("adoption", "Adoption, Training & Business-Process Change", "Role-specific behavior change, enablement, adoption measures, and accountability for benefits realization.", "mixed", [], "Keep under 600 words; tie each action to the changed process and measure."),
+    s("risks_open", "Risks, Open Decisions & Mobilization Actions", "Material operating risks, unresolved ownership, dependencies, and immediate actions before roadmap planning.", "mixed", [], "Keep under 550 words using concise tables."),
+    s("recommendation", "Recommendation & Next Actions", "Approve, revise, or hold the operating model.", "mixed", [], "Keep under 200 words."),
+  ],
+  requiredSectionKeys: [
+    "exec_decision",
+    "human_ai_split",
+    "roles_raci",
+    "decision_controls",
+    "run_cadence",
+    "adoption",
+    "risks_open",
+    "recommendation",
+  ],
+};
+
+const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "sourcing_strategy",
+  purpose:
+    "Decide how the capabilities in the accepted architecture and operating model should be built, bought, configured, or partnered.",
+  decisionToSupport:
+    "Approve the sourcing posture, evaluation basis, commercial guardrails, and next sourcing actions without reopening the solution option.",
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not reopen or replace the approved solution approach.",
+    "Do not invent vendors, prices, contract facts, shortlist status, or platform selections. Unknowns remain open decisions or market-test requirements.",
+  ],
+  expectedExhibits: [
+    {
+      key: "sourcing_options_matrix",
+      title: "Build / Buy / Configure / Partner Matrix",
+      kind: "matrix",
+      purpose: "Compares sourcing paths by required capability and decision criterion.",
+      preferredFormat: "docx",
+      requiredElements: ["capability", "options", "criteria", "trade-off", "recommended posture"],
+      legendRequired: false,
+    },
+  ],
+  sections: [
+    s("exec_decision", "Executive Decision & Recommended Posture", "The sourcing decision, recommendation, guardrails, and open inputs in one page-equivalent read.", "mixed", [], "Keep under 400 words."),
+    s("capability_boundary", "Capability & Sourcing Boundary", "Capabilities inherited from the architecture, what is reusable, what requires market capacity, and explicit exclusions.", "mixed", [], "Keep under 550 words using a capability table."),
+    s("options", "Sourcing Options & Trade-Offs", "Build, buy, configure, partner, and hybrid options assessed without naming unsupported vendors.", "mixed", [], "Keep under 750 words plus one options matrix."),
+    s("evaluation_commercial", "Evaluation & Commercial Guardrails", "Decision criteria, evidence required, commercial principles, risk protections, and market-test questions.", "mixed", [], "Keep under 650 words using compact criteria and guardrail tables."),
+    s("delivery_governance", "Delivery Model, Governance & Dependencies", "Retained ownership, partner boundaries, transition responsibilities, architecture conformance, and dependencies.", "mixed", [], "Keep under 550 words."),
+    s("risks_open", "Risks, Open Decisions & Required Inputs", "Material sourcing risks, unresolved platform/vendor decisions, and evidence required before an event or award.", "mixed", [], "Keep under 500 words using a single table."),
+    s("recommendation", "Recommendation & Next Actions", "Approve the posture, authorize a market test, or hold for evidence.", "mixed", [], "Keep under 200 words."),
+  ],
+  requiredSectionKeys: [
+    "exec_decision",
+    "capability_boundary",
+    "options",
+    "evaluation_commercial",
+    "delivery_governance",
+    "risks_open",
+    "recommendation",
+  ],
+};
+
 const MOVES_OPERATING_MODEL: DeliverableStructure = {
   module: "moves",
   deliverableType: "operating_model",
@@ -1173,6 +1333,9 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_DISCOVERY,
   MOVES_ROOT_CAUSE_WORKSHEET,
   MOVES_TARGET_ARCHITECTURE,
+  MOVES_SOLUTION_DESIGN,
+  MOVES_OPERATING_MODEL_DESIGN,
+  MOVES_SOURCING_STRATEGY,
   MOVES_OPERATING_MODEL,
   MOVES_ESTIMATE,
   MOVES_VALUE,

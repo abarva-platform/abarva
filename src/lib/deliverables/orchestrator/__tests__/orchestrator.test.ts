@@ -249,6 +249,43 @@ describe("multi-pass prompt builder", () => {
     expect(p.user).toMatch(/Do not write P2 current-state findings/i);
     expect(p.user).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
   });
+
+  it("enforces fixed structure and hard document budgets for P3b solution artifacts", () => {
+    const solutionReq = amsRfpRequest({
+      module: "moves",
+      useCaseArchetype: "AI_PDLC",
+      deliverableType: "solution_design",
+      qualityBar: resolveQualityBar("moves", "solution_design"),
+    });
+    const solutionBrief = getArtifactBrief(solutionReq);
+    const draft = buildPassPrompt("full_draft", {
+      req: solutionReq,
+      brief: solutionBrief,
+      evidence: solutionReq.governedEvidenceBundle,
+      approvedPlanJson: "{}",
+    });
+    const section = buildPassPrompt("section_draft", {
+      req: solutionReq,
+      brief: solutionBrief,
+      evidence: solutionReq.governedEvidenceBundle.slice(0, 1),
+      outlineSummary: "1. Executive Summary & Design Decision",
+      section: {
+        key: "exec_summary",
+        title: "Executive Summary & Design Decision",
+        groundingMode: "mixed",
+        evidenceCitations: [1],
+        assumptionsUsed: [],
+        placeholders: [],
+        rationale: "State the accepted design and decision implications.",
+      },
+    });
+    expect(draft.user).toMatch(/ENFORCED DOCUMENT-SIZE RULES/);
+    expect(draft.user).toMatch(/5,200 words/);
+    expect(draft.user).toMatch(/Follow the REQUIRED STRUCTURE exactly/i);
+    expect(draft.user).not.toMatch(/You may add sections/i);
+    expect(section.user).toMatch(/ENFORCED SECTION-SIZE RULES/);
+    expect(section.user).toMatch(/WRITE ONLY THIS SECTION/);
+  });
 });
 
 describe("plan validation (gate before drafting)", () => {

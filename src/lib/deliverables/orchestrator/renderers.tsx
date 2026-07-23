@@ -191,6 +191,30 @@ function tableToDocx(table: RenderableTable): Paragraph | Table {
   return lightTable(table.columns, table.rows);
 }
 
+function normalizeHeadingText(value: string): string {
+  return value
+    .replace(/[*_`]/g, '')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+/** The renderer owns the section heading. Models occasionally repeat that same
+ * heading as the first Markdown line, producing a visibly duplicated title in
+ * HTML, DOCX, and PDF. Remove only an exact normalized duplicate. */
+function withoutDuplicateSectionHeading(markdown: string, title: string): string {
+  const lines = markdown.split(/\r?\n/);
+  const firstContent = lines.findIndex((line) => line.trim().length > 0);
+  if (firstContent < 0) return markdown;
+  const heading = lines[firstContent]?.match(/^#{1,6}\s+(.+?)\s*#*\s*$/);
+  if (!heading || normalizeHeadingText(heading[1] ?? '') !== normalizeHeadingText(title)) {
+    return markdown;
+  }
+  lines.splice(firstContent, 1);
+  return lines.join('\n').replace(/^\s+/, '');
+}
+
 // ── DOCX ──
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
@@ -214,7 +238,11 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   // mdast walker, instead of flattening every line to a paragraph.
   for (const section of doc.generatedSections) {
     children.push(heading1(section.title));
-    children.push(...markdownToDocxBlocks(section.bodyMarkdown));
+    children.push(
+      ...markdownToDocxBlocks(
+        withoutDuplicateSectionHeading(section.bodyMarkdown, section.title),
+      ),
+    );
   }
 
   // In-document tables (those NOT routed to the Excel companion)
@@ -690,7 +718,10 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   // ordered/unordered + nested lists, inline GFM tables) via the shared,
   // escape-first markdown subset renderer — never split('\n') → <p>.
   const sections = doc.generatedSections
-    .map((s) => `<section><h2>${esc(s.title)}</h2>${markdownToHtml(s.bodyMarkdown)}</section>`)
+    .map(
+      (s) =>
+        `<section><h2>${esc(s.title)}</h2>${markdownToHtml(withoutDuplicateSectionHeading(s.bodyMarkdown, s.title))}</section>`,
+    )
     .join('');
   const exhibits = doc.exhibits.map(exhibitHtml).join('');
   const tables = doc.tables.map(tableHtml).join('');
@@ -917,7 +948,9 @@ export function renderDeliverablePdf(doc: RenderableDeliverable): ReactElement<P
         {doc.generatedSections.map((section) => (
           <PdfView key={section.key} style={{ marginTop: 10 }}>
             <PdfText style={PDF_STYLES.h1}>{section.title}</PdfText>
-            {markdownToPdfNodes(section.bodyMarkdown)}
+            {markdownToPdfNodes(
+              withoutDuplicateSectionHeading(section.bodyMarkdown, section.title),
+            )}
           </PdfView>
         ))}
 
