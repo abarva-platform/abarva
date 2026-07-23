@@ -20,6 +20,7 @@ import { hasAuthority } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,7 +81,9 @@ export async function POST(
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     const canApprove =
+      accessPolicy.canApproveGates ||
       (await hasAuthority(ctx, programId, 'approver', { supabase })) ||
       ctx.role === 'founder' ||
       ctx.role === 'maestro';
