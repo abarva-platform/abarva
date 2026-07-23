@@ -18,4 +18,11 @@ describe('orchestrated deliverable map', () => {
     expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe('value_measurement_contract');
     expect(prescribedFormatForDeliverableType(orchestratorType)).toBe('docx');
   });
+
+  it('routes P3 Solution Design to its own workflow-exhibit profile', () => {
+    const orchestratorType = orchestratorDeliverableType('solution_design');
+    expect(orchestratorType).toBe('solution_design');
+    expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe('solution_design');
+    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe('docx');
+  });
 });

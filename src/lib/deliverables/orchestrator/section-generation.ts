@@ -80,8 +80,8 @@ export function repairUncitedFigures(markdown: string): string {
     if (FACT_LIKE.test(s) && !SUPPORTED.test(s)) {
       changed = true;
       return s.replace(
-        /\s*$/,
-        " [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]",
+        /([.!?])?\s*$/,
+        " [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]$1",
       );
     }
     return s;
@@ -446,6 +446,14 @@ export function assembleDeliverable(
 ): RenderableDeliverable {
   const { sections: cleanedSections, harvested } =
     consolidateOpenInputPlaceholders(sections);
+  // Consolidation is itself a transformation after the per-section repair. Run
+  // the same deterministic repair once more on the final body surface that the
+  // quality validator scans, so no later normalization can reintroduce an
+  // unsupported numeric/date claim.
+  const finalSections = cleanedSections.map((section) => ({
+    ...section,
+    bodyMarkdown: repairUncitedFigures(section.bodyMarkdown),
+  }));
   const combinedClaims: UnsupportedFigureClaim[] = [
     ...(options.unsupportedClaims ?? []),
     ...harvested.map((h) => ({
@@ -472,14 +480,14 @@ export function assembleDeliverable(
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
-    generatedSections: cleanedSections,
+    generatedSections: finalSections,
     tables,
     exhibits: expectedExhibitsForProfile(req, options.brief),
-    sourceRegister: buildSourceRegister(evidence, cleanedSections),
+    sourceRegister: buildSourceRegister(evidence, finalSections),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
     recommendation: repairStructuredClientFactText(
-      fallbackRecommendation(req, cleanedSections, synth),
+      fallbackRecommendation(req, finalSections, synth),
     ),
     nextActions,
   };
