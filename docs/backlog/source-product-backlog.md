@@ -263,6 +263,43 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   enterprise-context retrieval, or `agent_ready` promotion. It proves the committed
   Azure/Postgres layers and guards against premature promotion.
 
+### SOURCE-INGEST-001e — Source artifact parse backlog verifier
+
+- **Problem statement**: Source now has durable upload, parsing, readiness-panel, and
+  enterprise-context readback slices, but operators still lacked a reusable way to inspect the
+  artifact parse/index backlog itself. The next obvious ingest work — async parse worker,
+  backfill, OCR/transcription, vector indexing, and enterprise-context promotion — crosses
+  governed job/index/data-promotion boundaries, so the safe next step is a read-only verifier
+  that shows what the current Azure/Postgres artifact registry already proves.
+- **User/business impact**: Source can only "learn over time" if each evidence state remains
+  inspectable and honest. This verifier lets operators distinguish stored-only files,
+  parser-ready files, parsed evidence, search-ready artifacts, stale parsing rows, failed rows,
+  and image/audio/video files that still need governed OCR/transcription before any future
+  backfill or promotion job is approved.
+- **Severity**: P4 (evidence-layer integrity / ingestion operations readiness).
+- **Workstream**: Ingestion / data persistence.
+- **Status**: `Candidate` — code-only, read-only, no migration, no data-build job, no vector
+  indexing, no OCR/transcription, no enterprise-context promotion, and no production data
+  mutation.
+- **Dependencies**: existing `source_artifacts` rows and existing parse, embedding, graph, family,
+  format, and timestamp columns. No schema change is required.
+- **Acceptance criteria**: add a read-only command that resolves a tenant-scoped Source event or
+  tenant-wide artifact scope, summarizes parse/search/graph readiness into a proof JSON, reports
+  attention items without reading or parsing artifact bytes, and can optionally fail on attention
+  for strict operator runs. The report must never claim `agent_ready`, enterprise-context
+  promotion, OCR/transcription, vector indexing, or learned context unless those states already
+  exist in a governed downstream proof.
+- **Required tests**:
+  `src/lib/source/artifact-registry/__tests__/parse-backlog.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-artifact-parse-backlog-verifier.md`.
+- **Discovered from**: standing `SOURCE-INGEST-001` follow-on list after the evidence-readiness
+  and enterprise-context readback slices, plus the user requirement that the Source data layer be
+  persisted in Azure/Postgres and provable before later enterprise-context learning.
+- **Known gaps**: this does not add the async parse worker/backfill job, repair old artifacts,
+  run OCR/transcription, create embeddings/vector indexes, project graph rows, execute
+  enterprise-context writeback, or promote anything to `agent_ready`.
+
 ### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
 
 - **Problem statement**: found while comparing a user-provided Source Event Shell redesign
