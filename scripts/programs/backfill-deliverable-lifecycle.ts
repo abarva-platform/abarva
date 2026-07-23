@@ -243,6 +243,14 @@ function classifyCandidate(row: CandidateRow): ReportRow {
   };
 }
 
+function markStatusOnly(row: ReportRow): ReportRow {
+  if (row.action_or_skip !== "backfilled") return row;
+  return {
+    ...row,
+    action_or_skip: "would_backfill",
+  };
+}
+
 async function assertSchemaReady(pool: Pool): Promise<void> {
   const result = await pool.query<{ exists: boolean }>(
     "select exists (select 1 from information_schema.tables where table_name = 'deliverable_lifecycle_events') as exists",
@@ -393,7 +401,7 @@ async function main(): Promise<void> {
       await Promise.all(args.tenants.map((tenant) => candidatesForTenant(pool, tenant)))
     ).flat();
     const predicted = candidates.map(classifyCandidate);
-    const rows = args.mode === "apply" ? await applyReport(pool, predicted, args) : predicted;
+    const rows = args.mode === "apply" ? await applyReport(pool, predicted, args) : predicted.map(markStatusOnly);
     const counts = rows.reduce<Record<string, number>>((acc, row) => {
       acc[row.action_or_skip] = (acc[row.action_or_skip] ?? 0) + 1;
       return acc;
