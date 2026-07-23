@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 
-import { HomeExecutiveCockpit } from "@/components/home/HomeExecutiveCockpit";
+import { HomeEnterpriseBriefApp } from "@/components/home/HomeEnterpriseBriefApp";
 import { AppShell } from "@/components/shell/AppShell";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
@@ -15,6 +15,7 @@ import {
   readHomeKnowledgeDesignContractForTenant,
   readHomeKnowledgeDesignContractForTenantFromPostgres,
 } from "@/lib/home/home-knowledge-design-contract";
+import { deriveHomeRelationshipEdges } from "@/lib/home/derive-relationship-edges";
 import { readDerivedRelationshipGraphEdges } from "@/lib/home/read-derived-relationship-graph";
 
 export const metadata: Metadata = {
@@ -164,6 +165,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     ? postgresDesignContract
     : fileDesignContract;
   if (designContract.pack) {
+    const derivedRelationshipEdges =
+      readDerivedRelationshipGraphEdges(homeTenantKey);
+    const relationshipEdges = derivedRelationshipEdges.length
+      ? derivedRelationshipEdges
+      : deriveHomeRelationshipEdges(designContract.pack.design_slots.DATA);
+
     return (
       <AppShell
         surface="home"
@@ -185,10 +192,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             background: "#f5f1eb",
           }}
         >
-          <HomeExecutiveCockpit
+          <HomeEnterpriseBriefApp
             pack={designContract.pack}
+            relationshipEdges={relationshipEdges}
             selectedDimension={requestedDimension}
-            relationshipEdges={readDerivedRelationshipGraphEdges(homeTenantKey)}
           />
         </main>
       </AppShell>

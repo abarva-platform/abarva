@@ -1,1 +1,4 @@
 file
+src/components/home/__tests__/buildRelationshipTopology.test.ts
+src/components/home/HomeExecutiveCockpit.tsx
+src/components/home/HomeKnowledgeDesignContractSurface.tsx

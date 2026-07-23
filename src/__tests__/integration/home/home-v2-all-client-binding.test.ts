@@ -6,7 +6,7 @@ const HOME_DATA_ROUTE = "src/app/api/home/v2-data/route.ts";
 const HOME_V2_DATA = "src/lib/home-v2/data.ts";
 const HOME_V2_PUBLIC_DIR = "public/home-v2";
 const FEATURE_REGISTRY = "src/lib/features/registry.ts";
-const HOME_SURFACE = "src/components/home/HomeExecutiveCockpit.tsx";
+const HOME_SURFACE = "src/components/home/HomeEnterpriseBriefApp.tsx";
 const RETIRED_ENTERPRISE_HOME =
   "src/components/home/EnterpriseLandscapeHome.tsx";
 const RETIRED_ENTERPRISE_HOME_CSS =
@@ -24,7 +24,8 @@ describe("Home KNOW runtime has no legacy Home v2 fallback", () => {
   it("mounts the React Home KNOW surface directly under the canonical app shell", () => {
     expect(pageSource).toContain("<AppShell");
     expect(pageSource).toContain('surface="home"');
-    expect(pageSource).toContain("<HomeExecutiveCockpit");
+    expect(pageSource).toContain("<HomeEnterpriseBriefApp");
+    expect(pageSource).not.toContain("HomeExecutiveCockpit");
     expect(pageSource).toContain("getActiveClientRow(requestedClient)");
     expect(pageSource).not.toContain("v2-frame");
     expect(pageSource).not.toContain("iframe");
@@ -52,9 +53,11 @@ describe("Home KNOW runtime has no legacy Home v2 fallback", () => {
     expect(pageSource).toContain(
       "readHomeKnowledgeDesignContractForTenantFromPostgres",
     );
-    expect(surfaceSource).toContain("RelationshipMap");
-    expect(surfaceSource).toContain("EvidenceBoundary");
-    expect(surfaceSource).toContain("DimensionCockpit");
+    expect(surfaceSource).toContain("RelationshipMapView");
+    expect(surfaceSource).toContain("EvidenceView");
+    expect(surfaceSource).toContain("DimensionView");
+    expect(surfaceSource).toContain("Enterprise relationship map");
+    expect(surfaceSource).toContain("Context Explorer");
     expect(askSource).toContain("/api/home/know/ask");
     expect(askSource).toContain("AvaAskMark");
     expect(pageSource).not.toContain("EnterpriseLandscapeHome");
