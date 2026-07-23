@@ -122,6 +122,18 @@ No product surface, tenant data path, or runtime behavior changes.
   are absent.
 - `ANTHROPIC_ADMIN_KEY=` → exits 2 with remediation text naming the console
   path. No partial or misleading output.
+- 2026-07-22 follow-up live Admin API validation after the organization was
+  converted to a team: `anthropic-cost-report.mjs --out /tmp/...` completed
+  successfully with a real `sk-ant-admin01-...` key. Anthropic now rejects
+  `limit: 1000` on the Admin reporting endpoints, so the collector caps both
+  usage and cost report requests at `limit: 31`.
+- Cost report unit reconciliation: the Admin API amount fields returned minor
+  currency units for the current organization. The workflow sets
+  `ANTHROPIC_COST_UNIT=minor`; local validation regenerated
+  `reports/ai-cost/daily/2026-07-23-anthropic.json` with a corrected 30-day
+  billed total of about `$4,183.22` instead of the 100x raw interpretation.
+- `collect-local.sh` no-send path rerun: fixed optional argument expansion so
+  the local digest renders when Anthropic and/or Resend inputs are absent.
 - `npx eslint scripts/ai-cost/` — exit 0.
 - `node --check` on all three `.mjs` files — clean. `bash -n` on the shell
   wrapper — clean.
@@ -139,13 +151,11 @@ VIEW`, `DROP POLICY IF EXISTS` then `CREATE POLICY`).
   was wrong (actual 1.5x) and was corrected before commit.
 - `node scripts/release-check.mjs --base origin/main --head HEAD` — passed.
 
-**Not yet validated:** neither the Anthropic Admin API collector nor the Azure
-collector has executed against live endpoints. No Admin API key exists yet, and
-the Azure run was deliberately left to the operator because `az` holds live
-credentials on this workstation. Both read response fields defensively; the
-Anthropic collector additionally ships a `--reconcile <usd>` gate that refuses
-to publish on drift against a Console figure. Treat the first live run of each
-as unverified until its output is inspected.
+**Not yet validated:** the Azure collector has not executed against live
+endpoints. The Azure run was deliberately left to the operator because `az`
+holds live credentials on this workstation. The Anthropic Admin API collector
+has now live-run successfully, but live email delivery still waits on
+`RESEND_API_KEY`.
 
 ## Rollout Plan
 
@@ -180,9 +190,13 @@ reads it.
 ## Known Gaps
 
 - **The Admin API collector has never run against the live endpoints.** No
-  Admin API key exists yet, so the product-spend half — the actual invoice — is
-  still unmeasured. Field names are read defensively and `--raw` dumps the real
-  shape, but the first live run must be inspected before its output is trusted.
+  Admin API key existed at initial release, so the product-spend half — the
+  actual invoice — was unmeasured. Follow-up validation on 2026-07-22 confirmed
+  the Admin API collector runs with an org Admin key and writes a snapshot.
+- **Live email delivery still needs `RESEND_API_KEY`.** `ANTHROPIC_ADMIN_KEY`,
+  `AI_COST_DIGEST_TO`, and `AI_COST_DIGEST_FROM` are configured, but the
+  scheduled GitHub workflow still cannot send until the Resend API key exists
+  in repository secrets.
 - **Product spend cannot be split by workload yet.** All Nexus inference shares
   one `ANTHROPIC_API_KEY`, so `output_tokens_by_api_key` will show a single
   bucket. Splitting into per-lane keys (`intelligence-runtime`,

@@ -37,6 +37,7 @@ jobs:
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       AI_COST_DIGEST_TO: ${{ secrets.AI_COST_DIGEST_TO }}
       AI_COST_DIGEST_FROM: ${{ secrets.AI_COST_DIGEST_FROM }}
+      ANTHROPIC_COST_UNIT: minor
       LOOKBACK_DAYS: ${{ inputs.days || '30' }}
 
     steps:

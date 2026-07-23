@@ -224,14 +224,14 @@ async function main() {
       ending_at: endingAt,
       bucket_width: "1d",
       "group_by[]": ["model", "api_key_id", "workspace_id", "service_tier"],
-      limit: 1000,
+      limit: 31,
     }),
     fetchAllPages("/v1/organizations/cost_report", {
       starting_at: startingAt,
       ending_at: endingAt,
       bucket_width: "1d",
       "group_by[]": ["workspace_id", "description"],
-      limit: 1000,
+      limit: 31,
     }),
   ]);
 

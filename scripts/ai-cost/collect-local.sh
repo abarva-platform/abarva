@@ -38,9 +38,28 @@ if [ -n "${RESEND_API_KEY:-}" ] && [ -n "${AI_COST_DIGEST_TO:-}" ]; then
   SEND_ARG=(--send)
 fi
 
-node scripts/ai-cost/render-digest.mjs \
-  --claude-code "$OUT_DIR/${TODAY}-claude-code.json" \
-  "${ANTHROPIC_ARG[@]}" \
-  --day "$YESTERDAY" \
-  --out "$OUT_DIR/${TODAY}-digest.html" \
-  "${SEND_ARG[@]}"
+if [ "${#ANTHROPIC_ARG[@]}" -gt 0 ] && [ "${#SEND_ARG[@]}" -gt 0 ]; then
+  node scripts/ai-cost/render-digest.mjs \
+    --claude-code "$OUT_DIR/${TODAY}-claude-code.json" \
+    "${ANTHROPIC_ARG[@]}" \
+    --day "$YESTERDAY" \
+    --out "$OUT_DIR/${TODAY}-digest.html" \
+    "${SEND_ARG[@]}"
+elif [ "${#ANTHROPIC_ARG[@]}" -gt 0 ]; then
+  node scripts/ai-cost/render-digest.mjs \
+    --claude-code "$OUT_DIR/${TODAY}-claude-code.json" \
+    "${ANTHROPIC_ARG[@]}" \
+    --day "$YESTERDAY" \
+    --out "$OUT_DIR/${TODAY}-digest.html"
+elif [ "${#SEND_ARG[@]}" -gt 0 ]; then
+  node scripts/ai-cost/render-digest.mjs \
+    --claude-code "$OUT_DIR/${TODAY}-claude-code.json" \
+    --day "$YESTERDAY" \
+    --out "$OUT_DIR/${TODAY}-digest.html" \
+    "${SEND_ARG[@]}"
+else
+  node scripts/ai-cost/render-digest.mjs \
+    --claude-code "$OUT_DIR/${TODAY}-claude-code.json" \
+    --day "$YESTERDAY" \
+    --out "$OUT_DIR/${TODAY}-digest.html"
+fi
