@@ -827,6 +827,35 @@ updated 19 d ago` on the proof event).
   parse worker, OCR/transcription, vector indexing, and enterprise-context promotion remain
   governed ingest/data-build slices.
 
+### SOURCE-ANALYTICS-CHAT-003 — Value ledger/waterfall governed chat answer
+
+- **Problem statement**: Source's Value Ledger page and stage-specific analytics can separate
+  projected, committed, measurement-pending, and realized value, but aVa chat still cannot answer
+  "show the value waterfall" with a rendered chart/table grounded in the existing ledger.
+- **User/business impact**: sourcing leaders need a fast executive read on value without leaving
+  chat, but the answer must not collapse projected value into realized savings or imply Tower /
+  enterprise-context ingestion before that promotion exists.
+- **Severity**: P3 (analytics / aVa chat capability gap).
+- **Workstream**: Analytics / aVa chat.
+- **Status**: `Candidate` — code-only, read-only, no migration and no production data mutation.
+- **Dependencies**: existing `getSourceValueLedger()` read model, existing `AvaAnswerPacket` /
+  `AgentAnswerRenderer` pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.
+- **Acceptance criteria**: Source's opt-in NDJSON event-chat route recognizes value-ledger /
+  value-waterfall questions; returns a governed `AvaAnswerPacket` with a waterfall chart and
+  ledger line-item table; scopes rows to the requested event / event aliases; keeps projected,
+  committed, measured, and realized states distinct; reports an honest no-data state when no
+  event-scoped ledger rows exist; does not claim vector indexing, `agent_ready` promotion, Tower
+  ingestion, enterprise-context promotion, or realized savings unless the persisted ledger and
+  governance state support it.
+- **Required tests**:
+  `src/lib/source/ava/__tests__/value-ledger-governed-answer.test.ts`,
+  `src/app/api/v1/source/[eventId]/nexus/ask/__tests__/vendor-coverage-intent.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-value-ledger-governed-chat-answer.md`.
+- **Discovered from**: the standing `SOURCE-ANALYTICS-CHAT-001` follow-on list, the 6-area Source
+  audit's request for aVa-rendered analytics/insights, and the user's requirement to keep Source's
+  persisted Azure/Postgres evidence layer distinct from future enterprise-context promotion.
+
 ---
 
 ### SOURCE-ARTIFACT-AUTHORITY-001 — One authoritative artifact per event+slot, consumed everywhere downstream

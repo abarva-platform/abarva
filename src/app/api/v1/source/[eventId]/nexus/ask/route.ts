@@ -45,6 +45,10 @@ import {
   looksLikeArtifactQualityQuestion,
 } from "@/lib/source/ava/artifact-quality-governed-answer";
 import {
+  buildValueLedgerGovernedAnswer,
+  looksLikeValueLedgerQuestion,
+} from "@/lib/source/ava/value-ledger-governed-answer";
+import {
   resolveAuthoritativeArtifactSlots,
   type AuthoritativeArtifactCandidate,
 } from "@/lib/source/client-final-artifacts";
@@ -262,6 +266,35 @@ export async function POST(
               clientKey: activeClientKey,
               eventType: liveEventDetail?.archetype ?? null,
               message: err instanceof Error ? err.message : String(err),
+              stack: err instanceof Error ? err.stack : undefined,
+            }),
+          );
+          return null;
+        });
+      } else if (eventId && looksLikeValueLedgerQuestion(normalizedBody.prompt)) {
+        agentAnswer = await buildValueLedgerGovernedAnswer({
+          eventId,
+          eventAliases: [liveEventDetail?.id, liveEventDetail?.code].filter(
+            (value): value is string => Boolean(value),
+          ),
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : JSON.stringify(err);
+          console.error(
+            "[source.nexus-ask.value-ledger-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId: liveEventDetail?.id ?? eventId,
+              eventCode: liveEventDetail?.code ?? null,
+              clientKey: activeClientKey,
+              message: errorMessage,
               stack: err instanceof Error ? err.stack : undefined,
             }),
           );
