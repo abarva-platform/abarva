@@ -163,11 +163,20 @@ efficiency, (8) cosmetic.
   owner rules on it.
 - **Severity**: P0 (data/decision integrity), but not unsafe to leave paused — no code fix pending.
 - **Workstream**: Phase-gate and evidence integrity / approval authority
-- **Status**: `Needs Owner Decision`
+- **Status**: `Decided — Approved for Implementation` (2026-07-23) — owner ruling: **return the
+  Move to P3 via a governed correction** (option (a)), not ratification. Live state was
+  independently re-verified before this decision (signed-in, read-only): the Move is genuinely
+  at P4 Build the Plan, 80%, with P2 (5/5) and P3 (2/2) showing complete — the earlier "actually
+  at P3" finding was based on an incomplete investigation and is superseded by this
+  confirmation. Full reasoning: `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
+  **The governed correction itself has NOT been executed** — only its implementation is
+  authorized; see `docs/codex-handoff/MOVES_ARTIFACT_LIFECYCLE_AND_REMEDIATION_PROMPT_2026-07-23.md`.
 - **Dependencies**: none (does not block any other backlog item)
-- **Acceptance criteria**: an owner reviews the override/gate trace and either (a) returns the Move
-  to P3 through a governed correction, or (b) ratifies P4 with a named-owner approval and documented
-  conditions. **The phase must never be silently mutated.**
+- **Acceptance criteria**: implement and execute a governed correction returning the Move to P3,
+  with a full audit trail (who/when/why), real tests, and a release record — matching the rigor
+  of every other Moves change this program has produced. **The phase must never be silently
+  mutated** — this remains true even with an owner decision in hand; the correction must be a
+  real, tested, auditable code path, not an ad-hoc database write or UI click-through.
 - **Required tests**: N/A (this is an operational decision + a governed correction/ratification
   action, not a code change)
 - **PR**: #5162 (additive remediation record only — does not resolve the dispute, documents it)
@@ -202,9 +211,14 @@ efficiency, (8) cosmetic.
   review of the specific version in question; no visible client-vs-AI-vs-uploaded provenance.
 - **Severity**: P1/P2 (capability gap, not an active exploit)
 - **Workstream**: Approval, authority, and artifact-lineage controls; deliverable quality
-- **Status**: `Needs Owner Decision`
-- **Dependencies**: MOVES-DESIGN-001, MOVES-DESIGN-002, MOVES-DESIGN-003 must resolve before Phase 1
-  schema implementation begins
+- **Status**: `Approved for Phase 1 implementation` (2026-07-23) — MOVES-DESIGN-001/002/003 all
+  approved as written (see below); Phase 1 only (§6 scope: schema migration, ACA backfill job,
+  the 3 new mutations, lifecycle-event writes on `completeDeliverable()`/`signOffDeliverable()`,
+  full regression coverage). Workstreams B/D/E/F/G remain separately-scoped future work, not
+  pre-approved by this decision. Full reasoning:
+  `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`. Implementation handoff:
+  `docs/codex-handoff/MOVES_ARTIFACT_LIFECYCLE_AND_REMEDIATION_PROMPT_2026-07-23.md`.
+- **Dependencies**: MOVES-DESIGN-001, MOVES-DESIGN-002, MOVES-DESIGN-003 — all resolved 2026-07-23
 - **Acceptance criteria**: see design doc §§2–6 for the full Phase-1 schema/behavior contract
 - **Required tests**: full state-transition table (valid + explicitly-invalid transitions),
   revocation, supersession, 3 legacy-backfill scenarios — specified in design doc §6, not yet written
@@ -231,10 +245,12 @@ efficiency, (8) cosmetic.
   `risk_security`) without silently collapsing meaning.
 - **Severity**: Blocks MOVES-ARTIFACT-001 Phase 1
 - **Workstream**: Approval, authority, and artifact-lineage controls
-- **Status**: `Needs Owner Decision`
+- **Status**: `Approved as written` (2026-07-23) — mapping below confirmed exactly as proposed,
+  plus adding `compliance` as a 16th `reviewer_role_code` value per the design doc's §3.8
+  expansion. Reasoning: `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
 - **Dependencies**: none (pure decision, no code)
 - **Discovered from**: MOVES-ARTIFACT-001 design pass
-- **Decision table** (proposed mapping, awaiting confirmation or correction):
+- **Decision table** (confirmed mapping):
 
 | `reviewer_role_code` | Maps to gate role                                                      | Rationale                                                                                                   |
 | -------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -254,8 +270,9 @@ efficiency, (8) cosmetic.
 | `abarva_quality`     | _(none)_                                                               | Internal QA capacity, descriptive only                                                                      |
 | `other`              | _(none, requires `reviewer_role_label`)_                               | Catch-all                                                                                                   |
 
-**Owner decision needed**: confirm this mapping, or specify corrections (e.g., should `data` map to
-`technology`? should `legal`/`procurement` map to `risk_security`?).
+**Decided**: mapping confirmed as-is above, no corrections — the conservative "descriptive-only
+unless directly matched" default is the safer choice and no compelling case was made to expand
+`data`/`legal`/`procurement` into gate-satisfying roles.
 
 ### MOVES-DESIGN-002 — Full artifact gate-policy matrix
 
@@ -265,9 +282,14 @@ efficiency, (8) cosmetic.
 - **Severity**: Blocks Workstream F (not Phase 1 schema — schema is type-agnostic data, this is
   per-type configuration)
 - **Workstream**: Deliverable quality; approval/authority controls
-- **Status**: `Needs Owner Decision`
-- **Dependencies**: MOVES-DESIGN-001 (reviewer-role mapping) should resolve first so this matrix's
-  `requiredReviewerRoles` column is meaningful
+- **Status**: `Approved as written` (2026-07-23) — **note**: the illustrative-only table below is
+  stale; the design doc's §3.7 has since been fully filled in for all 16 artifact types with
+  specific recommendations and is the authoritative source, not this table. Approved as written
+  there, including the four flagged ambiguous calls (`charter`/`execution_roadmap` minimum
+  lifecycle state → `client_final`; add missing hard-gate checks for `sourcing_strategy`/
+  `tower_metrics_plan`; `requires_revalidation` → hard block). Reasoning:
+  `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
+- **Dependencies**: MOVES-DESIGN-001 (reviewer-role mapping) — resolved 2026-07-23
 - **Discovered from**: MOVES-ARTIFACT-001 design pass — explicitly flagged as illustrative-only in
   v1/v2 of the design doc
 - **Decision table needed** (columns per artifact type, current registry keys listed; owner to fill
@@ -293,8 +315,8 @@ efficiency, (8) cosmetic.
 | `value_measurement_contract`                                | 5     | ?                                                                   | ?                       | ?                         | ?           |
 | Workshop guide (no registry key yet — non-gate working doc) | —     | _(reviewer's example: `human_approved`)_                            | —                       | false                     | ?           |
 
-**Owner decision needed**: fill in every `?` cell. Rows in _italics_ already have the reviewer's own
-worked examples from the design conversation.
+**Decided**: approved per the design doc's §3.7 full matrix (authoritative — this table's `?`
+cells are stale and superseded by that resolution).
 
 ### MOVES-DESIGN-003 — ACA lifecycle backfill contract
 
@@ -304,7 +326,11 @@ worked examples from the design conversation.
   idempotency, rollback, audit output) is not yet defined.
 - **Severity**: Blocks MOVES-ARTIFACT-001 Phase 1 step 2 (backfill)
 - **Workstream**: Approval/authority controls; data remediation
-- **Status**: `Needs Owner Decision`
+- **Status**: `Approved as written` (2026-07-23) — per the design doc's §11 contract:
+  tenant-batched (not all-tenant), dry-run mandatory before apply, conservative legacy inference
+  (never infers `client_final`), idempotent by `(deliverable_id, version, workflow_run_id)`,
+  bounded batches (200/batch default), rollback scoped strictly to the exact workflow run.
+  Reasoning: `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
 - **Dependencies**: MOVES-ARTIFACT-001 schema (Phase 1 step 1) must land first; this defines how
   step 2 runs against it
 - **Discovered from**: MOVES-ARTIFACT-001 design pass, §6 Phase 1 plan
@@ -323,7 +349,7 @@ worked examples from the design conversation.
 | Failure handling                 | Does one tenant's backfill failure block the whole run, or does the job skip and report per-tenant, continuing others?                                                                                                                   |
 | Operator path                    | Confirm this runs through the sanctioned ACA Job path only — no `az containerapp exec`, no local script against production Postgres.                                                                                                     |
 
-**Owner decision needed**: resolve every row above before this job can be scoped/built.
+**Decided**: approved per the design doc's §11 contract as summarized above.
 
 ---
 
@@ -361,8 +387,9 @@ worked examples from the design conversation.
 - **Severity**: P1/P2 — capability gap, not an active exploit (an agent-completed, signed-off
   deliverable still passes `status === 'signed_off'` checks; it just has no version-lineage pointer)
 - **Workstream**: Approval, authority, and artifact-lineage controls
-- **Status**: `Ready after canonical lifecycle schema is approved` (i.e., blocked on MOVES-ARTIFACT-001 Phase 1)
-- **Dependencies**: MOVES-ARTIFACT-001 Phase 1
+- **Status**: `Ready for implementation` (2026-07-23) — MOVES-ARTIFACT-001 Phase 1 approved;
+  included in the same implementation handoff.
+- **Dependencies**: MOVES-ARTIFACT-001 Phase 1 — approved 2026-07-23
 - **Acceptance criteria**: `completeDeliverable()` writes the same lineage pointers
   `signOffDeliverable()` does, using the new event-sourced write path.
 - **Required tests**: agent-completed deliverable has a resolvable `getAuthoritativeVersion()`.
@@ -378,8 +405,9 @@ worked examples from the design conversation.
   `signed_off_version` currently points to).
 - **Severity**: P2 (capability gap)
 - **Workstream**: Approval, authority, and artifact-lineage controls
-- **Status**: `Ready after lifecycle design approval` (blocked on MOVES-ARTIFACT-001 Phase 1)
-- **Dependencies**: MOVES-ARTIFACT-001 Phase 1
+- **Status**: `Ready for implementation` (2026-07-23) — MOVES-ARTIFACT-001 Phase 1 approved;
+  included in the same implementation handoff.
+- **Dependencies**: MOVES-ARTIFACT-001 Phase 1 — approved 2026-07-23
 - **Acceptance criteria**: a new `supersedeDeliverableVersion()` mutation marks the prior
   authoritative version `superseded` whenever a newer version becomes authoritative, while
   preserving the prior version's own approval history unchanged.
@@ -433,7 +461,8 @@ worked examples from the design conversation.
   end-to-end proof of P4 business-case generation and approval was never completed.
 - **Severity**: P2 (verification/evidence gap, not a defect)
 - **Workstream**: Live runtime failures / verification
-- **Status**: `Blocked`
+- **Status**: `Blocked` — sequenced after MOVES-TEST-001 provisioning, which is itself sequenced
+  after MOVES-ARTIFACT-001 Phase 1 lands (approved 2026-07-23; see below)
 - **Dependencies**: an isolated test tenant or purpose-built synthetic Move (per the standing
   constraint established during the MEMBER AI ASSIST incident audit: no further live phase
   transitions may be run against shared production data)
@@ -454,8 +483,10 @@ worked examples from the design conversation.
   browser proof — a real gap in this program's own evidence standard.
 - **Severity**: P2 (test-infrastructure gap, not a defect)
 - **Workstream**: Automation and efficiency / test enablement
-- **Status**: `Needs Design Review`
-- **Dependencies**: this design document's review/approval; recommended (not required) to sequence
+- **Status**: `Design approved — provisioning sequenced after MOVES-ARTIFACT-001 Phase 1` (2026-07-23).
+  Reasoning: `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`. Do not provision until
+  Phase 1's schema has landed, per the design doc's own recommended sequencing.
+- **Dependencies**: this design document's review/approval — done; sequenced (not blocked)
   after `MOVES-ARTIFACT-001`'s schema lands, so fixtures are seeded against the final lifecycle
   schema rather than needing to be reseeded once that schema changes
 - **Acceptance criteria**: the isolated tenant exists, is provisioned via a sanctioned ACA Job (never
