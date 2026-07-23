@@ -44,6 +44,22 @@ describe("resolveQualityBar", () => {
     expect(qb.requiresEvidenceGapsNoted).toBe(true);
   });
 
+  it.each([
+    ["solution_design", 8, 2_800, 5_200],
+    ["operating_model_design", 8, 2_400, 4_600],
+    ["sourcing_strategy", 7, 1_800, 3_600],
+  ] as const)(
+    "gives %s a right-sized hard-blocking band",
+    (deliverableType, minSections, minBodyWords, targetBodyWordsMax) => {
+      const qb = resolveQualityBar("moves", deliverableType);
+      expect(qb.minSections).toBe(minSections);
+      expect(qb.minBodyWords).toBe(minBodyWords);
+      expect(qb.targetBodyWordsMax).toBe(targetBodyWordsMax);
+      expect(qb.enforceMaxAsBlocker).toBe(true);
+      expect(qb.requiresEvidenceGapsNoted).toBe(true);
+    },
+  );
+
   it("falls back to the shared default for an artifact type with no override", () => {
     const qb = resolveQualityBar("moves", "some_future_artifact_type");
     expect(qb.minSections).toBe(6);

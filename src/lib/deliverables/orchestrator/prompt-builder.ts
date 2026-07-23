@@ -140,7 +140,7 @@ function buildContextBlock(
           .join("\n");
 
   const latitude = brief.fixedStructure
-    ? `This artifact uses a FIXED STRUCTURE. Do not add sections, exhibits, tables, appendices, or decision views beyond the recommended structure unless explicitly listed under EXPECTED EXHIBITS or EXPECTED TABLES. ${brief.allowedExpertKnowledge}`
+    ? `This artifact uses a FIXED STRUCTURE. Do not add sections, exhibits, tables, appendices, or decision views beyond the recommended structure unless explicitly listed under EXPECTED EXHIBITS or EXPECTED TABLES. Apply expert frameworks, synthesis, and executive language only within that fixed structure; qualitative industry context must never become a fabricated client fact.`
     : `Use your expert knowledge to design the best artifact for this use case. You are NOT limited to the minimum sections — add sections, exhibits, tables, and decision views if they materially improve the artifact. ${brief.allowedExpertKnowledge}`;
   const structureLabel = brief.fixedStructure
     ? "REQUIRED STRUCTURE (exhaustive — do not add sections)"
@@ -250,6 +250,17 @@ function conciseInstrumentDraftInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
+  if (req.deliverableType !== "charter") {
+    return [
+      `ENFORCED DOCUMENT-SIZE RULES:`,
+      `- The entire authored body must stay within ${qb.targetBodyWordsMax.toLocaleString()} words. This is a quality gate, not a suggestion.`,
+      `- Follow the REQUIRED STRUCTURE exactly. Do not add a second current-state report, architecture recap, methodology, vendor landscape, or implementation manual.`,
+      `- Use compact tables and the required exhibits to carry detail; keep prose focused on decisions, implications, trade-offs, controls, and open inputs.`,
+      `- Summarize inherited upstream decisions once and link the design to them. Never reproduce whole predecessor sections.`,
+      `- Consolidate risks and missing inputs rather than repeating them in every section.`,
+      `- Before returning, delete repetition, generic framework exposition, and any subsection that does not change the decision or execution understanding.`,
+    ].join("\n");
+  }
   return [
     `CONCISE APPROVAL-INSTRUMENT RULES:`,
     `- The entire body must stay within ${qb.targetBodyWordsMax.toLocaleString()} words; prefer 1,200–1,500 when the evidence is rich.`,
@@ -287,6 +298,18 @@ function conciseSectionDraftInstruction(
   );
   const wordBudget =
     extractSectionWordBudget(sectionInstruction) ?? fallbackBudget;
+
+  if (req.deliverableType !== "charter") {
+    return [
+      `ENFORCED SECTION-SIZE RULES:`,
+      `- Hard cap for this section: ${wordBudget} body words.`,
+      `- Section-specific instruction: ${sectionInstruction || "stay concise and decision-oriented"}.`,
+      `- Use one compact table or exhibit when it carries the detail more clearly than prose.`,
+      `- Do not repeat the recommendation, inherited architecture, evidence summary, risks, open inputs, or predecessor-document narrative unless this section changes their implication.`,
+      `- Do not add subsections beyond what is necessary to answer this section's decision question.`,
+      `- Before returning, delete any sentence that does not advance the design, trade-off, control, accountability, or decision this section exists to explain.`,
+    ].join("\n");
+  }
 
   return [
     `CONCISE SECTION RULES:`,

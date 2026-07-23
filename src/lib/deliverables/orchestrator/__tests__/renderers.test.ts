@@ -47,7 +47,7 @@ describe('HTML preview', () => {
 
   it('is self-contained and includes title, recommendation, and source register', () => {
     expect(html).toMatch(/<!doctype html>/i);
-    expect(html).toMatch(/SkyHarbor Air/);
+    expect(html).toMatch(/Airline Demo/);
     expect(html).toMatch(/Recommendation/);
     expect(html).toMatch(/Source Register/);
     expect(html).toMatch(/F8F7F4/); // AbarVa cream background
@@ -78,6 +78,24 @@ describe('HTML preview', () => {
     // The old flattening would have wrapped every line in <p> with the markers stripped.
     expect(out).not.toMatch(/<p>- First bullet<\/p>/);
     expect(out).not.toMatch(/<p>### Sub-heading<\/p>/);
+  });
+
+  it('does not render a section heading twice when authored markdown repeats the renderer-owned title', () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: 'exec_summary',
+        title: '1. Executive Summary',
+        bodyMarkdown:
+          '# 1. Executive Summary\n\nActual decision-led body.\n\n### What changes\n\nThe approved option remains authoritative.',
+        groundingMode: 'mixed',
+        citationsUsed: [],
+      },
+    ];
+    const out = renderDeliverableHtml(doc);
+    expect(out.match(/>1\. Executive Summary<\/h2>/g)).toHaveLength(1);
+    expect(out).toMatch(/Actual decision-led body/);
+    expect(out).toMatch(/<h4>What changes<\/h4>/);
   });
 
   it('uses the canonical clean table recipe — no navy header fill, status-pill confidence', () => {

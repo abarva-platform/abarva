@@ -67,6 +67,36 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
   },
+  "moves::solution_design": {
+    // 8-12 visual, decision-led pages. This is a specification of the accepted
+    // architecture, not a second architecture report or implementation manual.
+    minSections: 8,
+    minBodyWords: 2_800,
+    targetBodyWordsMax: 5_200,
+    enforceMaxAsBlocker: true,
+    requiresCentralTension: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::operating_model_design": {
+    // 6-10 table/diagram-rich pages. Reader energy belongs on work split,
+    // accountability, controls, cadence, and adoption decisions.
+    minSections: 8,
+    minBodyWords: 2_400,
+    targetBodyWordsMax: 4_600,
+    enforceMaxAsBlocker: true,
+    requiresCentralTension: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::sourcing_strategy": {
+    // 5-8 page options paper. It chooses a sourcing posture; it does not become
+    // an RFP, vendor landscape, contract, or restatement of the full design.
+    minSections: 7,
+    minBodyWords: 1_800,
+    targetBodyWordsMax: 3_600,
+    enforceMaxAsBlocker: true,
+    requiresOptionsConsidered: true,
+    requiresEvidenceGapsNoted: true,
+  },
   "moves::discovery_report": {
     minSections: 8,
     minBodyWords: 6_500, // ~15 pages
