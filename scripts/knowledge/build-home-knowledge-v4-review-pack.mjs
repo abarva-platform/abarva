@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
 const runStamp = new Date().toISOString().replace(/[:.]/g, "-");
-const promptContractVersion = "home-knowledge-v4-business-transformation-prompt-first-20260723-visual-enum-v2";
-const outputSchemaVersion = "home-knowledge-v4-candidate-review-v1";
+const promptContractVersion = "home-knowledge-v4-business-transformation-prompt-first-20260723-safe-packet-v3";
+const outputSchemaVersion = "home-knowledge-v4-candidate-review-v2";
 const defaultOutDir = path.join(repoRoot, "reports", "home-knowledge-v4-review", runStamp);
 const outDir = getArg("--out-dir", defaultOutDir);
 const model = getArg("--model", process.env.HOME_KNOWLEDGE_V4_MODEL || "claude-opus-4-8");
@@ -17,6 +17,7 @@ const maxTokens = Number(getArg("--max-tokens", process.env.HOME_KNOWLEDGE_V4_MA
 const tenantArg = getArg("--tenant", "all");
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
+const packetOnly = process.argv.includes("--packet-only");
 
 const canonicalTenantOrder = [
   "meridian-health",
@@ -118,6 +119,21 @@ const classificationEnum = [
   "missing_evidence",
 ];
 
+const evidenceMaturityEnum = [
+  "source_backed",
+  "directional",
+  "needs_validation",
+  "not_evidenced",
+];
+
+const businessObjectClassificationEnum = [
+  "qualified_use_case",
+  "strategic_foundation",
+  "early_idea",
+  "current_program",
+  "evidence_request",
+];
+
 const visualTypeEnum = [
   "horizontal_bar",
   "stacked_bar",
@@ -211,9 +227,61 @@ function asText(value) {
   return JSON.stringify(value);
 }
 
+function writerSafeText(value) {
+  return asText(value)
+    .replace(/\b[\w.-]+\.(?:csv|xlsx|json|parquet)\b/gi, "source extract")
+    .replace(/\b[A-Z]{2,}-V\d+-EVID-\d+\b/gi, "evidence reference")
+    .replace(/\b[A-Z]{2,}-SA\d+-INT-EVID-\d+\b/gi, "interview evidence reference")
+    .replace(/\b[A-Z]{2,}-V\d+-EVID-[A-Z0-9*_-]+\b/gi, "evidence reference")
+    .replace(/\b(?:\d{1,3}(?:,\d{3})*|\d+)\s+active\s+(?:rows|records|nodes|edges|files|coverage|coverage items)\b/gi, "active evidence coverage")
+    .replace(/\b(?:\d{1,3}(?:,\d{3})*|\d+)\b(?=\s+(?:rows|records|nodes|edges|files|coverage items)\b)/gi, "source-backed")
+    .replace(/\bsource-backed\s+(rows|records|nodes|edges|files|coverage items)\b/gi, "source-backed coverage")
+    .replace(/\b(rows|records|nodes|edges|files|coverage items)\b/gi, "coverage")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function writerSafeValue(value) {
+  if (value === null || value === undefined) return value;
+  if (typeof value === "string") return writerSafeText(value);
+  if (Array.isArray(value)) return value.map(writerSafeValue).filter((item) => item !== "");
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, item]) => [key, writerSafeValue(item)])
+        .filter(([, item]) => item !== "" && item !== undefined && item !== null),
+    );
+  }
+  return value;
+}
+
+function sourceKeyLabel(key) {
+  const labels = {
+    profile: "enterprise profile",
+    functions: "business functions",
+    org: "organization ownership",
+    workforce: "workforce and leadership signals",
+    apps: "applications and systems",
+    data: "data domains and integrations",
+    infra: "infrastructure and platforms",
+    vendors: "vendors and contracts",
+    budget: "budget, spend, and value",
+    programs: "programs and initiatives",
+    ai: "AI and automation use cases",
+    risks: "risks and controls",
+    evidence: "evidence sources",
+    metrics: "metrics and outcomes",
+    industry: "industry patterns",
+    rel: "relationship paths",
+    ms: "managed services",
+    opev: "operational process evidence",
+  };
+  return labels[key] ?? key.replace(/_/g, " ");
+}
+
 function pick(record, keys) {
   for (const key of keys) {
-    const value = asText(record?.[key]).trim();
+    const value = writerSafeText(record?.[key]);
     if (value) return value;
   }
   return "";
@@ -228,7 +296,7 @@ function compactRows(rows, limit, keys) {
     const compact = { row_index: index + 1 };
     for (const key of keys) {
       const value = row?.[key];
-      if (value !== undefined && value !== null && asText(value).trim()) compact[key] = value;
+      if (value !== undefined && value !== null && asText(value).trim()) compact[key] = writerSafeValue(value);
     }
     return compact;
   });
@@ -288,11 +356,14 @@ function buildTenantContextPacket(pack, sourceHash) {
       key: dimension.key,
       name: dimension.name,
       status: dimension.status,
-      summary: dimension.summary,
-      covers: dimension.covers,
-      source_names: dimension.sources,
+      summary: writerSafeText(dimension.summary),
+      covers: writerSafeValue(dimension.covers),
+      business_source_coverage: (dimension.source_keys ?? dimension.covers ?? [])
+        .map(sourceKeyLabel)
+        .filter(Boolean)
+        .slice(0, 8),
     })),
-    existing_home_narratives: narrativeSections,
+    existing_home_narratives: writerSafeValue(narrativeSections),
     business_context_samples: {
       enterprise_profile: compactRows(rowsFor(pack, "profile"), 10, [
         "name", "tenant_name", "industry", "summary", "revenue_usd", "employee_count",
@@ -343,7 +414,6 @@ function buildTenantContextPacket(pack, sourceHash) {
         value_signal: pick(row, ["value", "value_hypothesis", "target_or_promise"]),
         evidence_gate: pick(row, ["gate", "evidence_gate", "evidence_needed", "required_data"]),
         why_this_is_material: pick(row, ["why_this_is_top_5", "summary", "description"]),
-        evidence_refs: row.evidence_refs ?? [],
       })),
       risks_controls: compactRows(rowsFor(pack, "risks"), 20, [
         "risk_or_gap", "risk_name", "control", "metric_boundary", "owner",
@@ -372,15 +442,42 @@ function buildTenantContextPacket(pack, sourceHash) {
         source_owner: pick(row, ["source_owner", "owner", "loaded_by"]),
         source_status: pick(row, ["source_status", "status"]),
         known_gaps: pick(row, ["known_gaps", "gap", "notes"]),
-        parsed_into_dimensions: row.parsed_into_dimensions ?? row.dimensions ?? [],
+        parsed_into_dimensions: writerSafeValue(row.parsed_into_dimensions ?? row.dimensions ?? []),
       })),
     },
+  };
+  return packet;
+}
+
+function buildSourceLineageMetadata(pack, sourceHash) {
+  const dims = mergeDimensionCatalog(pack);
+  const evidence = pack.design_slots?.EVIDENCE ?? [];
+  return {
+    tenant: {
+      canonical_key: pack.tenant_key,
+      display_name: pack.tenant_name,
+      source_snapshot_hash: sourceHash,
+    },
+    warning:
+      "Lineage metadata is for audit/review only. It is not passed to Claude writer prompts and must not be copied into client-visible narrative.",
+    dimension_sources: dims.map((dimension) => ({
+      key: dimension.key,
+      name: dimension.name,
+      source_keys: dimension.source_keys ?? [],
+      raw_source_names: dimension.sources ?? [],
+    })),
+    evidence_sources: evidence.slice(0, 100).map((row) => ({
+      name: asText(row.name ?? row.source_name ?? row.source_file ?? row.file_name),
+      type: asText(row.type ?? row.source_type ?? row.file_type),
+      source_owner: asText(row.source_owner ?? row.owner ?? row.loaded_by),
+      source_status: asText(row.source_status ?? row.status),
+      parsed_into_dimensions: row.parsed_into_dimensions ?? row.dimensions ?? [],
+    })),
     source_files: {
       home_pack_path: pack.__source_file,
       source_hash: sourceHash,
     },
   };
-  return packet;
 }
 
 function aliasesForTenant(tenantKey, displayName) {
@@ -402,8 +499,10 @@ function baseSystemPrompt() {
     "Use only the supplied tenant context and supplied industry-pattern rows. If evidence is missing, say what leadership can decide directionally and what must be validated next.",
     "Never narrate raw inventory counts such as rows, nodes, edges, or files as executive value. Translate inventory into business coverage, evidence maturity, decision readiness, and leadership implications.",
     "Every use case must be a bounded workflow, decision, or business intervention. Platforms, lakehouses, semantic layers, identity spines, governance frameworks, and model gateways are strategic foundations, not qualified use cases.",
-    `Every client-visible claim, recommendation, dimension tab, use case, evidence gap, visual annotation, and relationship statement must carry exactly one classification from this governance enum: ${classificationEnum.join(", ")}.`,
-    "Do not use other classification vocabulary such as business_priority, strategic_foundation, current_program, early_idea, or qualified_use_case.",
+    `Every client-visible claim, recommendation, dimension tab, evidence gap, visual annotation, and relationship statement must carry exactly one content classification in a field named classification, using only: ${classificationEnum.join(", ")}.`,
+    `Use cases and business objects must also carry evidence_maturity using only: ${evidenceMaturityEnum.join(", ")}.`,
+    `Use cases and business objects must carry business_object_classification using only: ${businessObjectClassificationEnum.join(", ")}.`,
+    "Do not place business_object_classification values inside the content classification field.",
     `Every primary_visual, dashboard_visual, benchmark_exhibit, evidence_visual, priority_matrix_visual, and graph_display_contract must use exactly one visual_type from this closed renderer enum: ${visualTypeEnum.join(", ")}.`,
     "Do not invent visual types. Do not use aliases such as graph_topology, topology_graph, status_heatmap, risk_matrix, priority_grid, dependency_graph, or landscape.",
     "For chart visuals, provide compact Recharts-ready data: no more than 7 visible marks for bars/points, no more than 5x5 heatmap cells, no dense labels, no raw record counts, no JSON intended for display.",
@@ -459,6 +558,8 @@ function makePrompt(pass, packet, assembled) {
     visual_standard:
       "Design for a simple executive cockpit: compact Recharts-ready cards, few labels, strong executive annotations, relationship_graph views for relationships, no giant row-count cards, no visual clutter, no raw JSON in UI.",
     classification_enum: classificationEnum,
+    evidence_maturity_enum: evidenceMaturityEnum,
+    business_object_classification_enum: businessObjectClassificationEnum,
     visual_type_enum: visualTypeEnum,
     visual_type_guidance: visualTypeGuidance,
     visual_contract_rules: [
@@ -560,7 +661,7 @@ function makePrompt(pass, packet, assembled) {
           "sequencing_rationale",
         ],
         hard_limits:
-          "For each candidate, write at most 110 words across all fields. Each candidate must include industry_realization, client_context_signal, evidence_gate, and classification. priority_matrix_visual must use visual_type=scatter_2x2 and be a compact Recharts-compatible 2x2 spec with <= 8 points.",
+          "For each candidate, write at most 110 words across all fields. Each candidate must include industry_realization, client_context_signal, evidence_gate, classification, evidence_maturity, and business_object_classification. classification must use classification_enum only; business_object_classification must use qualified_use_case, strategic_foundation, early_idea, current_program, or evidence_request only. priority_matrix_visual must use visual_type=scatter_2x2 and be a compact Recharts-compatible 2x2 spec with <= 8 points.",
       },
       common,
       story_architecture: assembled.story_architect,
@@ -587,7 +688,7 @@ function makePrompt(pass, packet, assembled) {
           "module_implications",
         ],
         hard_limits:
-          "For each dimension, summary_tab must be an object with headline, executive_read, classification. data_tab must be an object with headline, filters, rows, evidence_boundary, classification. relationship_tab must be an object with headline, graph_nodes, graph_edges, paths_to_show, missing_relationships, classification. gaps_tab must be an object with decision_gaps, why_it_matters, evidence_to_collect, owner_hint, classification. evidence_tab must be an object with source_inventory, what_it_proves, what_it_does_not_prove, next_evidence_request, classification. primary_visual must include visual_type, title, executive_question, classification, data_points, encoding, annotation, and evidence_boundary. Keep each tab concise; do not exceed 5 dimensions in this call.",
+          "For each dimension, summary_tab must be an object with headline, executive_read, classification. data_tab must be an object with headline, filters, rows, evidence_boundary, classification. relationship_tab must be an object with headline, graph_nodes, graph_edges, paths_to_show, missing_relationships, classification. gaps_tab must be an object with decision_gaps, why_it_matters, evidence_to_collect, owner_hint, classification. evidence_tab must be an object with source_inventory, what_it_proves, what_it_does_not_prove, next_evidence_request, classification. primary_visual must include visual_type, title, executive_question, classification, data_points, encoding, annotation, evidence_boundary, empty_state. Keep each tab concise; do not exceed 5 dimensions in this call. Never write template filenames, evidence IDs, source table names, or raw inventory counts in any tab.",
       },
       common,
       story_architecture: assembled.story_architect,
@@ -626,7 +727,7 @@ function makePrompt(pass, packet, assembled) {
           "graph_display_contract",
         ],
         hard_limits:
-          "Return exactly six graph_projections, one per requested projection_type. Each projection <= 120 words total. graph_display_contract must include visual_type=relationship_graph, projection_type, classification, node_groups, edge_meaning, layout_hint, and visual_emphasis.",
+          "Return exactly six graph_projections, one per requested projection_type. Each projection <= 120 words total. graph_display_contract must include visual_type=relationship_graph, projection_type, classification, node_groups, edge_meaning, layout_hint, visual_emphasis, and empty_state.",
       },
       common,
       story_architecture: assembled.story_architect,
@@ -650,7 +751,7 @@ function makePrompt(pass, packet, assembled) {
           "evidence_visuals",
         ],
         hard_limits:
-          "critical_gaps <= 8; source_inventory_rows <= 12; evidence_visuals <= 4. evidence_visuals must use visual types from visual_type_enum. Use business provenance language, not raw file-count language.",
+          "critical_gaps <= 8; source_inventory_rows <= 12; evidence_visuals <= 4. evidence_visuals must use visual types from visual_type_enum. Use business provenance language, not raw file-count language. Do not mention filenames, physical tables, evidence IDs, or loader internals.",
       },
       common,
       story_architecture: assembled.story_architect,
@@ -662,14 +763,17 @@ function makePrompt(pass, packet, assembled) {
   return {
     task: "Call 8: Coherence Reviewer",
     instruction:
-      "Return violations only. Do not rewrite content. Check cross-section consistency, business-first story, visual quality, raw-count leakage, tenant leakage, foundation/use-case confusion, and weak evidence posture.",
+      "Return a complete review object. Do not rewrite content. Check cross-section consistency, business-first story, visual quality, raw-count leakage, tenant leakage, foundation/use-case confusion, missing classification fields, missing visual types, and weak evidence posture.",
     output_requirements: {
       fields: [
         "violations",
         "source_sections_to_regenerate",
         "approval_recommendation",
         "reason",
+        "sections_to_regenerate",
       ],
+      hard_limits:
+        "Always return approval_recommendation, reason, violations, source_sections_to_regenerate, and sections_to_regenerate. If there are no issues, return approval_recommendation=approve_for_human_review and empty arrays. If any field is missing, the deterministic validator fails the candidate.",
     },
     common,
     assembled_candidate_pack: assembled,
@@ -833,7 +937,21 @@ async function processTenant(client, tenantKey) {
   const tenantDir = path.join(outDir, "tenants", tenantKey);
   ensureDir(tenantDir);
   const packet = buildTenantContextPacket(pack, sourceHash);
+  const lineage = buildSourceLineageMetadata(pack, sourceHash);
   writeJson(path.join(tenantDir, "source-context-packet.json"), packet);
+  writeJson(path.join(tenantDir, "source-lineage-metadata.json"), lineage);
+  if (packetOnly) {
+    return {
+      tenant_key: tenantKey,
+      display_name: pack.tenant_name,
+      source_hash: sourceHash,
+      validation_status: "packet_only",
+      violation_count: 0,
+      visual_contract_count: 0,
+      prompt_count: 0,
+      tenant_dir: path.relative(outDir, tenantDir),
+    };
+  }
   const assembled = {
     tenant: packet.tenant,
     prompt_contract_version: promptContractVersion,
@@ -1010,6 +1128,15 @@ function clientVisiblePayload(candidate) {
 function validateCoherenceGate(candidate) {
   const findings = [];
   const review = candidate.coherence_review ?? candidate.passes?.["08-coherence-review"]?.client_visible ?? {};
+  for (const field of ["approval_recommendation", "reason", "violations", "source_sections_to_regenerate", "sections_to_regenerate"]) {
+    if (!Object.hasOwn(review, field)) {
+      findings.push({
+        severity: "fail",
+        type: "incomplete_coherence_review",
+        message: `Claude coherence review did not return required field: ${field}.`,
+      });
+    }
+  }
   const recommendation = asText(review.approval_recommendation ?? review.recommendation ?? review.status).toLowerCase();
   if (/\b(revise|resubmit|reject|not[_ -]?approve|do[_ -]?not[_ -]?approve|failed?)\b/.test(recommendation)) {
     findings.push({
@@ -1099,6 +1226,8 @@ function validateUseCaseShape(candidate) {
   const findings = [];
   const required = [
     "classification",
+    "evidence_maturity",
+    "business_object_classification",
     "industry_realization",
     "client_context_signal",
     "evidence_gate",
@@ -1141,35 +1270,34 @@ function validateUseCaseShape(candidate) {
 function validateClosedEnums(candidate) {
   const findings = [];
   const allowedClassifications = new Set(classificationEnum);
+  const allowedEvidenceMaturity = new Set(evidenceMaturityEnum);
+  const allowedBusinessObjectClassifications = new Set(businessObjectClassificationEnum);
   const allowedVisualTypes = new Set(visualTypeEnum);
   const visualKeys = new Set([
     "primary_visual",
-    "dashboard_visuals",
-    "benchmark_exhibits",
     "priority_matrix_visual",
     "graph_display_contract",
-    "evidence_visuals",
   ]);
-  const legacyClassificationWords = [
-    "business_priority",
-    "operating_model_change_thesis",
-    "qualified_use_case",
-    "strategic_foundation",
-    "current_program",
-    "early_idea",
-    "evidence_request",
+  const requiredVisualFields = [
+    "visual_type",
+    "title",
+    "executive_question",
+    "classification",
+    "data_points",
+    "encoding",
+    "annotation",
+    "evidence_boundary",
+    "empty_state",
   ];
-  const legacyVisualWords = [
-    "graph_topology",
-    "topology_graph",
-    "network_topology",
-    "dependency_graph",
-    "status_heatmap",
-    "readiness_heatmap",
-    "risk_matrix",
-    "priority_grid",
-    "landscape",
-    "severity_matrix",
+  const requiredRelationshipGraphFields = [
+    "visual_type",
+    "projection_type",
+    "classification",
+    "node_groups",
+    "edge_meaning",
+    "layout_hint",
+    "visual_emphasis",
+    "empty_state",
   ];
   const walk = (node, pathParts = []) => {
     if (!node || typeof node !== "object") return;
@@ -1199,6 +1327,19 @@ function validateClosedEnums(candidate) {
           message: `${pathName || "visual"} uses ${visualType}; allowed: ${visualTypeEnum.join(", ")}.`,
         });
       }
+      const requiredFields =
+        visualType === "relationship_graph" && keyName === "graph_display_contract"
+          ? requiredRelationshipGraphFields
+          : requiredVisualFields;
+      for (const field of requiredFields) {
+        if (!Object.hasOwn(node, field) || !asText(node[field]).trim()) {
+          findings.push({
+            severity: "fail",
+            type: "visual_contract_missing_field",
+            message: `${pathName || "visual"} is missing required visual field ${field}.`,
+          });
+        }
+      }
     }
     if (Object.hasOwn(node, "classification")) {
       const classification = asText(node.classification).trim();
@@ -1210,29 +1351,29 @@ function validateClosedEnums(candidate) {
         });
       }
     }
-    for (const [key, value] of Object.entries(node)) {
-      if (typeof value === "string") {
-        for (const word of legacyClassificationWords) {
-          if (new RegExp(`\\b${word}\\b`, "i").test(value)) {
-            findings.push({
-              severity: "review",
-              type: "legacy_classification_word",
-              message: `${[...pathParts, key].join(".")} contains legacy classification word ${word}.`,
-            });
-          }
-        }
-        for (const word of legacyVisualWords) {
-          if (new RegExp(`\\b${word}\\b`, "i").test(value)) {
-            findings.push({
-              severity: "fail",
-              type: "legacy_visual_word",
-              message: `${[...pathParts, key].join(".")} contains legacy visual word ${word}.`,
-            });
-          }
-        }
+    if (Object.hasOwn(node, "evidence_maturity")) {
+      const evidenceMaturity = asText(node.evidence_maturity).trim();
+      if (!allowedEvidenceMaturity.has(evidenceMaturity)) {
+        findings.push({
+          severity: "fail",
+          type: "disallowed_evidence_maturity",
+          message: `${pathName || "candidate"} uses evidence_maturity ${evidenceMaturity || "(empty)"}; allowed: ${evidenceMaturityEnum.join(", ")}.`,
+        });
       }
-      if (typeof value === "object") walk(value, [...pathParts, key]);
     }
+    if (Object.hasOwn(node, "business_object_classification")) {
+      const businessObjectClassification = asText(node.business_object_classification).trim();
+      if (!allowedBusinessObjectClassifications.has(businessObjectClassification)) {
+        findings.push({
+          severity: "fail",
+          type: "disallowed_business_object_classification",
+          message: `${pathName || "candidate"} uses business_object_classification ${businessObjectClassification || "(empty)"}; allowed: ${businessObjectClassificationEnum.join(", ")}.`,
+        });
+      }
+    }
+    Object.entries(node).forEach(([key, value]) => {
+      if (typeof value === "object") walk(value, [...pathParts, key]);
+    });
   };
   walk(candidate);
   const unique = new Map();
@@ -1373,11 +1514,11 @@ async function runPool(items, worker, size) {
 }
 
 async function main() {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!packetOnly && !process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is required; refusing to fabricate candidate content.");
   }
-  const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const Anthropic = packetOnly ? null : (await import("@anthropic-ai/sdk")).default;
+  const client = packetOnly ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const tenants = tenantArg === "all"
     ? canonicalTenantOrder
     : tenantArg.split(",").map((t) => t.trim()).filter(Boolean);
@@ -1386,10 +1527,11 @@ async function main() {
     run_stamp: runStamp,
     model,
     prompt_contract_version: promptContractVersion,
-    output_schema_version: outputSchemaVersion,
-    tenant_order: tenants,
-    review_only: reviewOnly,
-    max_tokens: maxTokens,
+	    output_schema_version: outputSchemaVersion,
+	    tenant_order: tenants,
+	    review_only: reviewOnly,
+	    packet_only: packetOnly,
+	    max_tokens: maxTokens,
     concurrency,
   });
   console.log(`[home-v4] writing review artifacts to ${outDir}`);
