@@ -288,12 +288,14 @@ function ThisWeeksRead({
   const max = Math.max(command.promisedValueFy26, 1);
 
   return (
-    <Panel style={{ minHeight: 430 }}>
+    <Panel style={{ minHeight: 540 }}>
       <div style={goldEyebrowStyle}>This week&apos;s read</div>
       <p style={weeklyStatementStyle}>
-        {money(command.totalItBudgetFy26)} is in view. {money(command.aiTaggedSpendFy26NonAdditive)} is AI-tagged.{" "}
-        {money(command.promisedValueFy26)} is promised value. {money(command.realizedValueYtdAllowed)} is claimable.
-        The issue is not spend visibility - it is value proof.
+        <strong style={signalGreenStyle}>{money(command.totalItBudgetFy26)}</strong> is in view.{" "}
+        <strong style={signalGreenStyle}>{money(command.aiTaggedSpendFy26NonAdditive)}</strong> is AI-tagged.{" "}
+        <strong style={signalGreenStyle}>{money(command.promisedValueFy26)}</strong> is promised value.{" "}
+        <strong style={signalRedStyle}>{money(command.realizedValueYtdAllowed)}</strong> is claimable. The issue is
+        not spend visibility - it is value proof.
       </p>
       <div style={ladderStyle}>
         {bars.map((bar) => (
@@ -312,9 +314,12 @@ function ThisWeeksRead({
           </div>
         ))}
       </div>
-      <div style={blockerStripStyle}>
-        <span>Primary blocker</span>
-        <b>{summary.primaryBlocker}</b>
+      <div style={readFooterStyle}>
+        <div style={blockerStripStyle}>
+          <span>Primary blocker</span>
+          <b>{summary.primaryBlocker}</b>
+        </div>
+        <button type="button" style={blackActionButtonStyle}>See the value funnel</button>
       </div>
     </Panel>
   );
@@ -322,18 +327,20 @@ function ThisWeeksRead({
 
 function DecisionsWaiting({ decisions }: { decisions: DecisionRow[] }) {
   return (
-    <Panel style={{ minHeight: 430 }}>
-      <div style={goldEyebrowStyle}>Decisions waiting on you</div>
-      <p style={panelLeadStyle}>aVa proposes - you approve - nothing acts on its own.</p>
-      <div style={{ display: "grid", gap: 10, marginTop: 20 }}>
-        {decisions.slice(0, 4).map((decision, index) => (
-          <div key={decision.key} style={decisionRowStyle}>
-            <span style={{ ...decisionNumberStyle, background: decision.color }}>{index + 1}</span>
+    <Panel style={{ minHeight: 540, padding: 0, overflow: "hidden" }}>
+      <div style={decisionPanelHeaderStyle}>
+        <h3>Decisions waiting on you</h3>
+        <span>aVa proposes - you approve - nothing acts on its own</span>
+      </div>
+      <div style={{ display: "grid", gap: 10, padding: 22 }}>
+        {decisions.slice(0, 4).map((decision) => (
+          <div key={decision.key} style={{ ...decisionRowStyle, borderLeft: `4px solid ${decision.color}` }}>
+            <span style={{ ...decisionBadgeStyle, color: decision.color, background: decisionBadgeBg(decision.color) }}>{decision.lane}</span>
             <div>
               <b>{decision.title}</b>
               <p>{decision.body}</p>
             </div>
-            <span style={decisionLaneStyle}>{decision.lane}</span>
+            <span style={reviewLinkStyle}>Review →</span>
           </div>
         ))}
         {decisions.length === 0 ? <EmptyState text="No executive decision is recorded in the Tower mart." /> : null}
@@ -1256,10 +1263,17 @@ function toneColor(tone: "green" | "red" | "amber"): string {
   return theme.amber;
 }
 
+function decisionBadgeBg(color: string): string {
+  if (color === theme.red) return theme.redBg;
+  if (color === theme.amber) return theme.amberBg;
+  if (color === theme.green) return theme.greenBg;
+  return "#eef2ff";
+}
+
 const shellStyle: CSSProperties = {
-  maxWidth: 1700,
+  maxWidth: 1600,
   margin: "0 auto",
-  padding: "34px clamp(28px, 4vw, 76px) 48px",
+  padding: "18px clamp(20px, 3vw, 54px) 40px",
 };
 
 const visuallyHiddenStyle: CSSProperties = {
@@ -1279,7 +1293,7 @@ const headerStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: 32,
-  paddingBottom: 28,
+  paddingBottom: 20,
   borderBottom: `1px solid ${theme.rule}`,
 };
 
@@ -1295,7 +1309,7 @@ const contractEyebrowStyle: CSSProperties = {
 const heroStyle: CSSProperties = {
   margin: "8px 0 0",
   fontFamily: theme.serif,
-  fontSize: "clamp(26px, 2.3vw, 34px)",
+  fontSize: "clamp(26px, 2.1vw, 32px)",
   lineHeight: 1.05,
   letterSpacing: 0,
   maxWidth: 1000,
@@ -1337,7 +1351,7 @@ const tabsStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 24,
-  marginBottom: 28,
+  marginBottom: 18,
   borderBottom: `1px solid ${theme.rule}`,
   overflowX: "auto",
 };
@@ -1347,7 +1361,7 @@ const tabStyle: CSSProperties = {
   border: 0,
   borderBottom: "3px solid transparent",
   background: "transparent",
-  padding: "18px 0 16px",
+  padding: "16px 0 13px",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
@@ -1375,8 +1389,8 @@ const postureCardStyle: CSSProperties = {
   border: `1px solid ${theme.rule}`,
   borderLeft: "5px solid transparent",
   borderRadius: 12,
-  padding: 18,
-  minHeight: 198,
+  padding: 16,
+  minHeight: 188,
   boxShadow: theme.cardShadow,
 };
 
@@ -1395,7 +1409,7 @@ const postureTopStyle: CSSProperties = {
 const kpiValueStyle: CSSProperties = {
   fontFamily: theme.serif,
   fontWeight: 900,
-  fontSize: 34,
+  fontSize: 32,
   lineHeight: 1,
   letterSpacing: 0,
 };
@@ -1409,9 +1423,9 @@ const kpiLabelStyle: CSSProperties = {
 
 const metricRowsStyle: CSSProperties = {
   display: "grid",
-  gap: 8,
-  marginTop: 18,
-  paddingTop: 14,
+  gap: 7,
+  marginTop: 14,
+  paddingTop: 12,
   borderTop: `1px solid ${theme.softRule}`,
 };
 
@@ -1425,7 +1439,7 @@ const metricRowStyle: CSSProperties = {
 
 const commandGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 560px), 1fr))",
   gap: 20,
 };
 
@@ -1433,7 +1447,7 @@ const panelStyle: CSSProperties = {
   background: theme.panel,
   border: `1px solid ${theme.rule}`,
   borderRadius: 14,
-  padding: 26,
+  padding: 24,
   boxShadow: theme.cardShadow,
 };
 
@@ -1447,33 +1461,41 @@ const goldEyebrowStyle: CSSProperties = {
 };
 
 const weeklyStatementStyle: CSSProperties = {
-  margin: "18px 0 24px",
+  margin: "18px 0 28px",
   fontFamily: theme.serif,
-  fontSize: "clamp(27px, 2.15vw, 36px)",
-  lineHeight: 1.18,
+  fontSize: "clamp(24px, 1.95vw, 32px)",
+  lineHeight: 1.22,
   fontWeight: 900,
   letterSpacing: 0,
   maxWidth: 970,
 };
 
+const signalGreenStyle: CSSProperties = {
+  color: theme.teal,
+};
+
+const signalRedStyle: CSSProperties = {
+  color: theme.red,
+};
+
 const ladderStyle: CSSProperties = {
   display: "grid",
-  gap: 16,
+  gap: 18,
   maxWidth: 900,
 };
 
 const ladderRowStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "150px minmax(120px, 1fr) 80px",
-  gap: 14,
+  gridTemplateColumns: "150px minmax(140px, 1fr) 86px",
+  gap: 16,
   alignItems: "center",
   color: theme.text,
   fontSize: 13,
 };
 
 const ladderTrackStyle: CSSProperties = {
-  height: 11,
-  borderRadius: 999,
+  height: 40,
+  borderRadius: 2,
   background: "#ebe7df",
   overflow: "hidden",
 };
@@ -1481,19 +1503,40 @@ const ladderTrackStyle: CSSProperties = {
 const ladderFillStyle: CSSProperties = {
   display: "block",
   height: "100%",
-  borderRadius: 999,
+  borderRadius: 2,
 };
 
 const blockerStripStyle: CSSProperties = {
   display: "flex",
   gap: 12,
   alignItems: "center",
-  marginTop: 24,
-  padding: "15px 18px",
+  minHeight: 44,
+  padding: "12px 16px",
   borderRadius: 12,
   background: theme.greenBg,
   color: "#103f2f",
   borderLeft: `4px solid ${theme.green}`,
+  flex: "1 1 auto",
+};
+
+const readFooterStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 14,
+  marginTop: 28,
+  paddingTop: 18,
+  borderTop: `1px solid ${theme.softRule}`,
+};
+
+const blackActionButtonStyle: CSSProperties = {
+  appearance: "none",
+  border: 0,
+  borderRadius: 8,
+  background: "#070707",
+  color: "#fff",
+  fontWeight: 900,
+  padding: "12px 18px",
+  whiteSpace: "nowrap",
 };
 
 const panelLeadStyle: CSSProperties = {
@@ -1505,11 +1548,42 @@ const panelLeadStyle: CSSProperties = {
 
 const decisionRowStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "34px minmax(0, 1fr) auto",
-  gap: 12,
+  gridTemplateColumns: "64px minmax(0, 1fr) auto",
+  gap: 16,
   alignItems: "center",
-  padding: "14px 0",
-  borderBottom: `1px solid ${theme.softRule}`,
+  padding: "14px 18px",
+  border: `1px solid ${theme.rule}`,
+  borderRadius: 12,
+  background: "#fff",
+};
+
+const decisionPanelHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 16,
+  padding: "18px 22px",
+  borderBottom: `1px solid ${theme.rule}`,
+};
+
+const decisionBadgeStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 24,
+  borderRadius: 6,
+  padding: "0 8px",
+  fontSize: 10,
+  fontFamily: theme.mono,
+  fontWeight: 900,
+  letterSpacing: 1.2,
+  textTransform: "uppercase",
+};
+
+const reviewLinkStyle: CSSProperties = {
+  color: theme.ink,
+  fontWeight: 900,
+  whiteSpace: "nowrap",
 };
 
 const decisionNumberStyle: CSSProperties = {

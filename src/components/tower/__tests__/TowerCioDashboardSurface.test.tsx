@@ -990,7 +990,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getByText("Funded ahead of proof. Value is the constraint."),
     ).toBeInTheDocument();
-    expect(screen.getByText("$650.0M")).toBeInTheDocument();
+    expect(screen.getAllByText("$650.0M").length).toBeGreaterThan(0);
     fireEvent.click(
       within(commandMart).getByRole("button", { name: /Decision Lanes/ }),
     );
