@@ -43,10 +43,12 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   // concise root-cause readout.
   discovery_report: "discovery_report",
   root_cause_worksheet: "root_cause_worksheet",
-  // P3 — architecture/solution → target_architecture; org design → operating_model;
-  //      sourcing brief has no dedicated structure, uses the generic board brief
+  // P3 — architecture keeps the premium architecture path; Solution Design keeps
+  // its own profile so its five workflow/control exhibits are generated and
+  // evaluated in the same key space. Org design → operating_model; sourcing uses
+  // the generic board brief.
   target_state_architecture: "target_architecture",
-  solution_design: "target_architecture",
+  solution_design: "solution_design",
   operating_model_design: "operating_model",
   sourcing_strategy: "sourcing_strategy",
   // P4 — roadmap structure; investment case; financial model → estimate_model;

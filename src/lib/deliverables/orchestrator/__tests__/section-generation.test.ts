@@ -36,9 +36,11 @@ describe("repairUncitedFigures", () => {
     expect(
       extractUnsupportedFigureClaims("Revenue grew 25% last year."),
     ).toEqual(["Revenue grew 25% last year."]);
-    expect(repairUncitedFigures("Revenue grew 25% last year.")).toContain(
+    const repaired = repairUncitedFigures("Revenue grew 25% last year.");
+    expect(repaired).toContain(
       "[ASSUMPTION TO VALIDATE:",
     );
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([]);
     expect(
       repairUncitedFigures("Revenue grew 25% last year [3]."),
     ).not.toContain("[ASSUMPTION TO VALIDATE:");
@@ -315,6 +317,27 @@ describe("assembleDeliverable", () => {
     expect(visibleStructuredText).toContain("$5M");
     expect(visibleStructuredText).toContain("12%");
     expect(visibleStructuredText).toContain("2026");
+  });
+
+  it("repairs the final assembled body after open-input consolidation", () => {
+    const req = amsRfpRequest();
+    const doc = assembleDeliverable(
+      req,
+      [
+        {
+          key: "target",
+          title: "Target",
+          bodyMarkdown: "Confirm the FY2026 target. [CLIENT TO COMPLETE: target owner]",
+          groundingMode: "mixed",
+          citationsUsed: [],
+        },
+      ],
+      {},
+      req.governedEvidenceBundle,
+    );
+
+    expect(extractUnsupportedFigureClaims(doc.generatedSections[0]!.bodyMarkdown)).toEqual([]);
+    expect(doc.generatedSections[0]!.bodyMarkdown).toContain("open input");
   });
 });
 
