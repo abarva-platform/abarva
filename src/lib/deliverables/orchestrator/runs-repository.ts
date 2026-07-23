@@ -5,6 +5,7 @@
 // tested without the data plane.
 
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type SqlRunner } from '@/lib/data-plane/read-adapters/azureSession';
@@ -28,6 +29,17 @@ export interface OrchestratorDeliverableRunJobPayload {
   deliverableType: string;
   audience?: string[];
   decisionContext: string;
+  /** Human-approved P3 option, bound separately so structured generation cannot omit it. */
+  approvedSolutionApproach?: string;
+  /** Immutable decision/context lineage captured at queue time and revalidated by the worker. */
+  decisionLineage?: {
+    decisionHash: string;
+    decisionVersion: string;
+    approvedOptionId: string;
+    approvedOptionVersion: string;
+    contextSnapshotHash: string;
+    architectureModelVersion: string;
+  };
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
@@ -82,6 +94,9 @@ export interface DeliverableRunRecord {
   workerId: string | null;
   /** self-contained job payload the worker runs the generation from. */
   jobPayload: DeliverableRunJobPayload | null;
+  batchId: string | null;
+  sequenceNo: number | null;
+  dependsOnRunId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -155,9 +170,60 @@ function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
     claimedAt: row.claimed_at ? String(row.claimed_at) : null,
     workerId: typeof row.worker_id === 'string' ? row.worker_id : null,
     jobPayload: parsePayload(row.job_payload),
+    batchId: row.batch_id ? String(row.batch_id) : null,
+    sequenceNo: row.sequence_no === null || row.sequence_no === undefined ? null : Number(row.sequence_no),
+    dependsOnRunId: row.depends_on_run_id ? String(row.depends_on_run_id) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
+}
+
+export interface SequentialRunInput extends CreateRunInput {
+  sequenceNo: number;
+}
+
+/** Insert a complete ordered generation batch in one statement; Postgres commits all rows or none. */
+export async function createSequentialDeliverableRunBatch(
+  inputs: SequentialRunInput[],
+  opts: { idempotencyKey: string; db?: DbClient } ,
+): Promise<DeliverableRunRecord[]> {
+  if (!inputs.length) return [];
+  const db = opts.db ?? getAzureWriteFluentClient();
+  const batchId = randomUUID();
+  const ids = inputs.map(() => randomUUID());
+  const rows = inputs.map((input, index) => ({
+    id: ids[index],
+    client_id: input.clientId,
+    tenant_key: input.tenantKey,
+    user_id: input.userId,
+    module: input.module,
+    archetype: input.archetype,
+    deliverable_type: input.deliverableType,
+    status: 'queued',
+    job_payload: input.jobPayload,
+    batch_id: batchId,
+    sequence_no: input.sequenceNo,
+    depends_on_run_id: index > 0 ? ids[index - 1] : null,
+    idempotency_key: opts.idempotencyKey,
+  }));
+  const { data, error } = await db.from('deliverable_runs').insert(rows).select('*');
+  if (error) {
+    if ((error as { code?: string }).code === '23505') {
+      const { data: existing, error: readError } = await db
+        .from('deliverable_runs')
+        .select('*')
+        .eq('client_id', inputs[0].clientId)
+        .eq('idempotency_key', opts.idempotencyKey)
+        .order('sequence_no', { ascending: true });
+      if (!readError && existing?.length === inputs.length) {
+        return (existing as Array<Record<string, unknown>>).map(rowToRecord);
+      }
+    }
+    throw new Error(`deliverable_runs batch insert failed: ${error.message}`);
+  }
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .map(rowToRecord)
+    .sort((a, b) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0));
 }
 
 export async function createDeliverableRun(
@@ -206,10 +272,22 @@ export async function claimNextDeliverableRun(
            worker_id = $1,
            updated_at = now()
      WHERE id = (
-       SELECT id FROM deliverable_runs
-        WHERE status = 'queued'
-           OR (status = 'running' AND claimed_at < now() - ($2 || ' minutes')::interval)
-        ORDER BY created_at
+       SELECT r.id FROM deliverable_runs r
+        WHERE (
+          r.status = 'queued'
+          AND (
+            r.depends_on_run_id IS NULL
+            OR EXISTS (
+              SELECT 1 FROM deliverable_runs predecessor
+               WHERE predecessor.id = r.depends_on_run_id
+                 AND predecessor.client_id = r.client_id
+                 AND predecessor.tenant_key = r.tenant_key
+                 AND predecessor.status = 'succeeded'
+                 AND predecessor.artifact_id IS NOT NULL
+            )
+          )
+        ) OR (r.status = 'running' AND r.claimed_at < now() - ($2 || ' minutes')::interval)
+        ORDER BY r.created_at, r.sequence_no NULLS FIRST
         FOR UPDATE SKIP LOCKED
         LIMIT 1
      )
@@ -264,12 +342,45 @@ export async function sweepStaleDeliverableRuns(
            error = 'reclaimed: worker did not complete within deadline',
            updated_at = now()
      WHERE (status = 'running' AND updated_at < now() - ($1 || ' minutes')::interval)
-        OR (status = 'queued'  AND updated_at < now() - ($2 || ' minutes')::interval)
+        OR (status = 'queued' AND depends_on_run_id IS NULL AND updated_at < now() - ($2 || ' minutes')::interval)
     RETURNING id`;
   const rows = await rawSql((run) =>
     run<{ id: string }>(sql, [String(deadlineMinutes), String(queuedDeadlineMinutes)]),
   );
   return (Array.isArray(rows) ? rows : []).map((r) => String(r.id));
+}
+
+/** Resolve queued descendants of a blocked/failed predecessor immediately. */
+export async function blockRunsWithFailedDependencies(
+  opts: { rawSql?: RawSqlRunner } = {},
+): Promise<string[]> {
+  const rawSql = opts.rawSql ?? defaultRawSql;
+  const sql = `
+    WITH RECURSIVE blocked_descendants AS (
+      SELECT child.id, parent.deliverable_type AS upstream_type
+        FROM deliverable_runs child
+        JOIN deliverable_runs parent ON parent.id = child.depends_on_run_id
+         AND parent.client_id = child.client_id
+         AND parent.tenant_key = child.tenant_key
+       WHERE child.status = 'queued' AND parent.status IN ('blocked', 'failed')
+      UNION ALL
+      SELECT child.id, blocked_descendants.upstream_type
+        FROM deliverable_runs child
+        JOIN blocked_descendants ON child.depends_on_run_id = blocked_descendants.id
+       WHERE child.status = 'queued'
+    )
+    UPDATE deliverable_runs target
+       SET status = 'blocked',
+           error = 'dependency_not_satisfied',
+           blockers = jsonb_build_array(
+             'Upstream deliverable ' || blocked_descendants.upstream_type || ' did not complete successfully'
+           ),
+           updated_at = now()
+      FROM blocked_descendants
+     WHERE target.id = blocked_descendants.id
+    RETURNING target.id`;
+  const rows = await rawSql((run) => run<{ id: string }>(sql, []));
+  return (Array.isArray(rows) ? rows : []).map((row) => String(row.id));
 }
 
 export async function completeDeliverableRun(

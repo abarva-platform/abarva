@@ -29,6 +29,8 @@ export interface ExcelSheetSpec {
 
 export interface DeliverableSpec {
   deliverableTypeKey: string;
+  /** P3b dependency. The worker may claim this deliverable only after this predecessor persists successfully. */
+  dependsOnDeliverableTypeKey?: string;
   documentTitle: string;
   /** Phase this document belongs to (1–5; 0 = origination) */
   phase: number;
@@ -166,6 +168,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
 
   {
     deliverableTypeKey: 'solution_design',
+    dependsOnDeliverableTypeKey: 'target_state_architecture',
     documentTitle: 'Solution Design Specification',
     phase: 3,
     phaseLabel: 'P3 Design Future State',
@@ -189,6 +192,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
 
   {
     deliverableTypeKey: 'operating_model_design',
+    dependsOnDeliverableTypeKey: 'solution_design',
     documentTitle: 'Operating Model Design',
     phase: 3,
     phaseLabel: 'P3 Design Future State',
@@ -210,6 +214,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
 
   {
     deliverableTypeKey: 'sourcing_strategy',
+    dependsOnDeliverableTypeKey: 'operating_model_design',
     documentTitle: 'Sourcing Strategy Brief',
     phase: 3,
     phaseLabel: 'P3 Design Future State',

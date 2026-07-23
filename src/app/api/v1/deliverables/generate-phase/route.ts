@@ -14,7 +14,11 @@
 
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { createDeliverableRun, type DeliverableRunJobPayload } from '@/lib/deliverables/orchestrator/runs-repository';
+import {
+  createDeliverableRun,
+  createSequentialDeliverableRunBatch,
+  type DeliverableRunJobPayload,
+} from '@/lib/deliverables/orchestrator/runs-repository';
 import {
   tenantInvariantHttpStatus,
   validateDeliverableTenantInvariant,
@@ -29,6 +33,11 @@ import {
   createMoveContextExtract,
   type MoveContextExtractResult,
 } from '@/lib/programs/move-context-extract';
+import {
+  formatApprovedSolutionApproach,
+  loadApprovedSolutionApproach,
+  ARCHITECTURE_MODEL_VERSION,
+} from '@/lib/programs/approved-solution-approach';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -155,6 +164,33 @@ export async function POST(req: NextRequest) {
     // as-is for the route's own response (internal/ops-facing, not model input).
     const clientSafePhaseLabel = phaseLabel.replace(/^P\d+\s*/i, '').trim() || 'this phase';
 
+    // P3 is deliberately split into two governed decisions. The option set is
+    // shaped first; target architecture and the companion design artifacts may
+    // only build after a human has signed off one option. Enforce this at the
+    // batch boundary so older clients and direct API callers cannot bypass it.
+    const approvedSolutionApproach =
+      phase === 3
+        ? await loadApprovedSolutionApproach({
+            moveId,
+            clientId: ctx.clientId,
+          })
+        : null;
+    if (phase === 3 && !approvedSolutionApproach) {
+      return Response.json(
+        {
+          error: 'solution_approach_approval_required',
+          detail:
+            'Select and approve a P3 solution option before building target architecture, solution design, operating model, or sourcing strategy.',
+          nextAction:
+            'Review the solution options, record the decision rationale and accepted tradeoffs, then run Approve & Build again.',
+        },
+        { status: 409 },
+      );
+    }
+    const approvedApproachBlock = approvedSolutionApproach
+      ? formatApprovedSolutionApproach(approvedSolutionApproach)
+      : null;
+
     let contextExtract: MoveContextExtractResult | null = null;
     try {
       contextExtract = await createMoveContextExtract({
@@ -222,22 +258,84 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // Enqueue one run per deliverable. Best-effort: a failure on one is reported in
-    // its row, not fatal to the batch — so the user still gets the rest building.
+    const decisionLineage = approvedSolutionApproach
+      ? {
+          decisionHash: approvedSolutionApproach.decisionHash,
+          decisionVersion: approvedSolutionApproach.decisionVersion,
+          approvedOptionId: approvedSolutionApproach.selectedOptionId,
+          approvedOptionVersion: approvedSolutionApproach.selectedOptionVersion,
+          contextSnapshotHash: contextExtract?.freshness.evidenceFingerprint ?? 'context-extract-error',
+          architectureModelVersion: ARCHITECTURE_MODEL_VERSION,
+        }
+      : null;
+
+    const payloadFor = (spec: DeliverableSpec): DeliverableRunJobPayload => {
+      const deliverableType = orchestratorDeliverableType(spec.deliverableTypeKey);
+      return {
+        module: 'moves',
+        useCaseArchetype,
+        deliverableTypeKey: spec.deliverableTypeKey,
+        deliverableType,
+        decisionContext: [
+          `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
+          approvedApproachBlock,
+        ].filter(Boolean).join('\n\n'),
+        clientDisplayName,
+        initiativeDisplayName: moveName,
+        sourceArtifactRef: moveId,
+        ...(approvedApproachBlock ? { approvedSolutionApproach: approvedApproachBlock } : {}),
+        ...(decisionLineage ? { decisionLineage } : {}),
+      };
+    };
+
     const results: EnqueuedDeliverable[] = [];
+    if (phase === 3 && approvedSolutionApproach && decisionLineage) {
+      try {
+        const runs = await createSequentialDeliverableRunBatch(
+          specs.map((spec, sequenceNo) => ({
+            clientId: ctx.clientId,
+            tenantKey: clientKey,
+            userId: ctx.userId,
+            module: 'moves',
+            archetype: useCaseArchetype,
+            deliverableType: orchestratorDeliverableType(spec.deliverableTypeKey),
+            jobPayload: payloadFor(spec),
+            sequenceNo,
+          })),
+          {
+            idempotencyKey: [
+              moveId,
+              phase,
+              decisionLineage.decisionHash,
+              decisionLineage.contextSnapshotHash,
+            ].join(':'),
+          },
+        );
+        specs.forEach((spec, index) => {
+          const run = runs[index];
+          results.push({
+            deliverableTypeKey: spec.deliverableTypeKey,
+            documentTitle: spec.documentTitle,
+            deliverableType: orchestratorDeliverableType(spec.deliverableTypeKey),
+            gateArtifact: spec.gateArtifact,
+            runId: run?.id ?? null,
+            status: run ? 'queued' : 'error',
+            ...(!run ? { error: 'atomic P3 assembly did not return a run' } : {}),
+          });
+        });
+      } catch (err) {
+        return Response.json(
+          {
+            error: 'p3_assembly_enqueue_failed',
+            detail: errorMessage(err, 'atomic P3 assembly enqueue failed'),
+          },
+          { status: 500 },
+        );
+      }
+    } else {
     for (const spec of specs) {
       const deliverableType = orchestratorDeliverableType(spec.deliverableTypeKey);
       try {
-        const jobPayload: DeliverableRunJobPayload = {
-          module: 'moves',
-          useCaseArchetype,
-          deliverableTypeKey: spec.deliverableTypeKey,
-          deliverableType,
-          decisionContext: `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
-          clientDisplayName,
-          initiativeDisplayName: moveName,
-          sourceArtifactRef: moveId,
-        };
         const run = await createDeliverableRun({
           clientId: ctx.clientId,
           tenantKey: clientKey,
@@ -245,7 +343,7 @@ export async function POST(req: NextRequest) {
           module: 'moves',
           archetype: useCaseArchetype,
           deliverableType,
-          jobPayload,
+          jobPayload: payloadFor(spec),
         });
         results.push({
           deliverableTypeKey: spec.deliverableTypeKey,
@@ -266,6 +364,7 @@ export async function POST(req: NextRequest) {
           error: errorMessage(err, 'enqueue failed'),
         });
       }
+    }
     }
 
     const queued = results.filter((r) => r.status === 'queued').length;

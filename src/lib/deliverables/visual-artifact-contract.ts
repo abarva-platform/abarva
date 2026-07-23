@@ -80,7 +80,7 @@ const CONTRACTS: Partial<Record<DeliverableKey, VisualArtifactContract>> = {
       "control / governance matrix",
       "implementation work package table",
       "open decision log",
-      "P4 readiness checklist",
+      "roadmap planning readiness checklist",
     ],
     minNarrativeDepth: "board-grade",
   },

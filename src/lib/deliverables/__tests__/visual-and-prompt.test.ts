@@ -115,7 +115,7 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toMatch(/STOP and request P3a approval/);
   });
 
-  it("P3 draft prompt shapes a Future-State Blueprint without selecting a final option", () => {
+  it("P3 draft prompt refuses to shape architecture without an approved option", () => {
     const ctx = applyPhaseDigest(emptySolutionContext("m1", "lakeshore"), {
       useCase: "AP exception redesign",
       currentState:
@@ -142,7 +142,8 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
       "P3 Draft — based on approved P2 diagnostic for design shaping",
     );
     expect(p.user).toContain("P2 is not final. P3 is not final");
-    expect(p.user).toContain("No final option has been selected");
+    expect(p.user).toContain("No approved option is present");
+    expect(p.user).toContain("Do not draft architecture");
     expect(p.user).toContain("1,872");
     expect(p.user).toContain("2,345");
     expect(p.user).toContain("7.4");

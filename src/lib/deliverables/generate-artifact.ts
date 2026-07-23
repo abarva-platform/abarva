@@ -463,10 +463,7 @@ export async function generateArtifact(
   if (profile.renderer === "html_architecture" && args.artifact !== "solution_approach_options") {
     const archOk = architectureMayProceed(ctx);
     if (!archOk.ready) {
-      if (generationMode !== "draft") return { status: "blocked_context", missing: archOk.missing };
-      contextCaveats.push(
-        "No final P3 option has been selected; this draft must compare future-state options and keep open decisions explicit.",
-      );
+      return { status: "blocked_context", missing: archOk.missing };
     }
   }
 

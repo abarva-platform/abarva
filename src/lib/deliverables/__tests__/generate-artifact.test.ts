@@ -21,7 +21,7 @@ const GOOD_ARCH_HTML = `<html><body>
 <table>control / governance matrix</table>
 <table>implementation work package table</table>
 <table>open decision log</table>
-<table>P4 readiness checklist</table>
+<table>Roadmap planning readiness checklist</table>
 <p>${ENOUGH_WORDS}</p>
 </body></html>`;
 
@@ -87,7 +87,7 @@ describe("generateArtifact — the integration keystone", () => {
     if (r.status === "blocked_context") expect(r.missing.join(" ")).toMatch(/chosenOption/);
   });
 
-  it("allows a P3 future-state blueprint draft after P2 draft approval without inventing a chosen option", async () => {
+  it("blocks a P3 architecture draft until a solution option is approved", async () => {
     const r = await generateArtifact(
       {
         moveId: "m",
@@ -121,12 +121,9 @@ describe("generateArtifact — the integration keystone", () => {
         },
       }),
     );
-    expect(r.status).toBe("generated");
-    if (r.status === "generated") {
-      expect(r.generationMode).toBe("draft");
-      expect(r.draftOnly).toBe(true);
-      expect(r.contextCaveats.join(" ")).toMatch(/No final P3 option has been selected/);
-      expect(r.html).toContain("P3 Draft");
+    expect(r.status).toBe("blocked_context");
+    if (r.status === "blocked_context") {
+      expect(r.missing.join(" ")).toMatch(/chosenOption/);
     }
   });
 
@@ -169,7 +166,7 @@ describe("generateArtifact — the integration keystone", () => {
       expect(r.html).toContain("Control / Governance Matrix");
       expect(r.html).toContain("Implementation Work Package Table");
       expect(r.html).toContain("Open Decision Log");
-      expect(r.html).toContain("P4 Readiness Checklist");
+      expect(r.html).toContain("roadmap planning Readiness Checklist");
       expect(r.html.match(/<table/g)?.length).toBeGreaterThanOrEqual(9);
     }
   });

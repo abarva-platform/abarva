@@ -47,6 +47,12 @@ import {
   MAX_ATTACHMENT_SIZE_BYTES,
 } from '@/lib/programs/attachments/mime';
 import { extractProgramEvidenceFromUploadBuffer } from '@/lib/programs/evidence-ingestion';
+import {
+  loadApprovedSolutionApproach,
+  P3_ARCHITECTURE_DELIVERABLE_KEYS,
+  validateArchitectureGenerationLineage,
+} from '@/lib/programs/approved-solution-approach';
+import { loadCurrentMoveContextExtractFreshness } from '@/lib/programs/move-context-extract';
 
 // Union of every deliberately registered/agent-authorable deliverable type
 // key this codebase actually produces. A small handful of legacy alias keys
@@ -127,6 +133,42 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
           },
           { status: 422 },
         );
+      }
+      if (P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)) {
+        if (!ctx.clientKey) {
+          return Response.json(
+            { error: 'architecture_lineage_not_current', detail: 'The active tenant key is unavailable.' },
+            { status: 409 },
+          );
+        }
+        const structuredData = (versionRow as { structured_data?: Record<string, unknown> | null } | null)
+          ?.structured_data;
+        const approved = await loadApprovedSolutionApproach({
+          moveId: programId,
+          clientId: ctx.clientId,
+        });
+        const freshness = await loadCurrentMoveContextExtractFreshness({
+          tenantKey: ctx.clientKey,
+          moveId: programId,
+          phase: 3,
+        });
+        if (!approved || !freshness?.evidenceFingerprint) {
+          return Response.json(
+            { error: 'architecture_lineage_not_current', detail: 'The current approved option or P3 context snapshot is unavailable.' },
+            { status: 409 },
+          );
+        }
+        const validation = validateArchitectureGenerationLineage({
+          lineage: structuredData?.generationLineage,
+          approved,
+          currentContextSnapshotHash: freshness.evidenceFingerprint,
+        });
+        if (!validation.ok) {
+          return Response.json(
+            { error: 'architecture_lineage_not_current', detail: validation.detail },
+            { status: 409 },
+          );
+        }
       }
     }
 

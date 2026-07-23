@@ -8,6 +8,8 @@ const mockSignOffDeliverable = jest.fn();
 const mockSaveMoveArtifact = jest.fn();
 const mockGetGeneratedArtifactById = jest.fn();
 const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
+const mockLoadApprovedSolutionApproach = jest.fn();
+const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -77,7 +79,31 @@ jest.mock("@/lib/programs/deliverable-registry", () => ({
       documentTitle: "Root Cause Analysis Worksheet",
       phase: 2,
     },
+    {
+      deliverableTypeKey: "target_state_architecture",
+      documentTitle: "Target Architecture",
+      phase: 3,
+    },
   ],
+}));
+
+jest.mock("@/lib/programs/approved-solution-approach", () => ({
+  P3_ARCHITECTURE_DELIVERABLE_KEYS: new Set(["target_state_architecture"]),
+  loadApprovedSolutionApproach: (input: unknown) =>
+    mockLoadApprovedSolutionApproach(input),
+  validateArchitectureGenerationLineage: ({
+    lineage,
+    approved,
+    currentContextSnapshotHash,
+  }: Record<string, unknown>) =>
+    lineage && approved && currentContextSnapshotHash === "context-hash"
+      ? { ok: true, lineage }
+      : { ok: false, detail: "Architecture lineage is stale." },
+}));
+
+jest.mock("@/lib/programs/move-context-extract", () => ({
+  loadCurrentMoveContextExtractFreshness: (input: unknown) =>
+    mockLoadCurrentMoveContextExtractFreshness(input),
 }));
 
 jest.mock("@/lib/deliverables/quality/deliverable-key-map", () => ({
@@ -178,6 +204,14 @@ beforeEach(() => {
     versionId: "version-1",
   });
   mockSignOffDeliverable.mockResolvedValue(true);
+  mockLoadApprovedSolutionApproach.mockResolvedValue({
+    decisionHash: "decision-hash",
+    selectedOptionId: "option-2",
+    selectedOptionVersion: "1",
+  });
+  mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+    evidenceFingerprint: "context-hash",
+  });
 });
 
 export {};
@@ -323,5 +357,62 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       }),
     );
     expect(mockSignOffDeliverable).toHaveBeenCalled();
+  });
+
+  it("blocks approval when a P3 architecture artifact lacks current lineage", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 3 });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:3",
+      artifactType: "target_state_architecture",
+      metadata: {
+        deliverableTypeKey: "target_state_architecture",
+        renderableDoc: {
+          title: "Target Architecture",
+          deliverableTypeKey: "target_state_architecture",
+          generatedSections: [{ title: "Architecture", bodyMarkdown: "Approved option architecture." }],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+    const res = await POST(request({ reason: "Approve stale architecture." }) as never, { params });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ error: "architecture_lineage_not_current" });
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("preserves verified P3 architecture lineage in the authoritative deliverable", async () => {
+    const lineage = {
+      decisionHash: "decision-hash",
+      decisionVersion: "v1",
+      approvedOptionId: "option-2",
+      approvedOptionVersion: "1",
+      contextSnapshotHash: "context-hash",
+      architectureModelVersion: "moves-architecture-model-v2",
+    };
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 3 });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:3",
+      artifactType: "target_state_architecture",
+      metadata: {
+        deliverableTypeKey: "target_state_architecture",
+        generationLineage: lineage,
+        renderableDoc: {
+          title: "Target Architecture",
+          deliverableTypeKey: "target_state_architecture",
+          generatedSections: [{ title: "Architecture", bodyMarkdown: "Approved option architecture." }],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+    const res = await POST(request({ reason: "Architecture reviewed." }) as never, { params });
+    expect(res.status).toBe(200);
+    expect(mockDraftModuleDeliverable).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        structuredData: expect.objectContaining({ generationLineage: lineage }),
+      }),
+    );
   });
 });

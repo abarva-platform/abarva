@@ -29,7 +29,9 @@ import { persistMoveGeneratedArtifact } from "@/lib/deliverables/persist-move-ge
 import { validateDeliverableTenantInvariant } from "@/lib/deliverables/orchestrator/tenant-invariant";
 import {
   claimNextDeliverableRun,
+  blockRunsWithFailedDependencies,
   completeDeliverableRun,
+  getDeliverableRun,
   sweepStaleDeliverableRuns,
   updateDeliverableRunProgress,
   type DeliverableRunRecord,
@@ -37,6 +39,7 @@ import {
   type OrchestratorDeliverableRunJobPayload,
 } from "@/lib/deliverables/orchestrator/runs-repository";
 import { getProgramById } from "@/lib/programs/queries";
+import { getGeneratedArtifactById } from "@/lib/artifacts/repository";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type {
   AudienceRole,
@@ -235,6 +238,77 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
       return;
     }
 
+    if (orchestratorPayload.decisionLineage) {
+      const { loadApprovedSolutionApproach } = await import(
+        "@/lib/programs/approved-solution-approach"
+      );
+      const current = await loadApprovedSolutionApproach({
+        moveId: orchestratorPayload.sourceArtifactRef,
+        clientId: run.clientId,
+      });
+      if (!current || current.decisionHash !== orchestratorPayload.decisionLineage.decisionHash) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "stale_decision_basis",
+          blockers: [
+            "The approved solution approach changed after this architecture batch was queued. Rebuild from the current approved decision.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+      const { loadCurrentMoveContextExtractFreshness } = await import(
+        "@/lib/programs/move-context-extract"
+      );
+      const freshness = await loadCurrentMoveContextExtractFreshness({
+        tenantKey: run.tenantKey,
+        moveId: orchestratorPayload.sourceArtifactRef,
+        phase: 3,
+      });
+      if (
+        !freshness ||
+        freshness.evidenceFingerprint !==
+          orchestratorPayload.decisionLineage.contextSnapshotHash
+      ) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "stale_context_snapshot",
+          blockers: [
+            "Move evidence changed after this architecture batch was queued. Refresh the Context Extract and rebuild from the approved evidence snapshot.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+    }
+
+    let upstreamArtifactContext = "";
+    if (run.dependsOnRunId) {
+      const predecessor = await getDeliverableRun(run.dependsOnRunId, run.clientId);
+      if (!predecessor?.artifactId || predecessor.status !== "succeeded") {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "dependency_not_satisfied",
+          blockers: ["The required upstream P3 artifact is not successfully persisted."],
+        }).catch(() => {});
+        return;
+      }
+      const artifact = await getGeneratedArtifactById(predecessor.artifactId, {
+        clientId: run.clientId,
+      });
+      if (!artifact) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "dependency_artifact_missing",
+          blockers: ["The upstream run succeeded but its persisted artifact could not be loaded."],
+        }).catch(() => {});
+        return;
+      }
+      const renderable = artifact.metadata.renderableDoc;
+      upstreamArtifactContext = [
+        "APPROVED P3 ASSEMBLY PREDECESSOR - PRESERVE ITS DECISIONS",
+        JSON.stringify(renderable ?? artifact.metadata.renderedHtml ?? artifact.metadata).slice(0, 18000),
+      ].join("\n");
+    }
+
     const result = await runDeliverableForTenant({
       module: orchestratorPayload.module as DeliverableModule,
       useCaseArchetype: orchestratorPayload.useCaseArchetype,
@@ -243,7 +317,12 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
         : {}),
       deliverableType: orchestratorPayload.deliverableType,
       audience: orchestratorPayload.audience as AudienceRole[] | undefined,
-      decisionContext: orchestratorPayload.decisionContext,
+      decisionContext: [orchestratorPayload.decisionContext, upstreamArtifactContext]
+        .filter(Boolean)
+        .join("\n\n"),
+      approvedSolutionApproach:
+        orchestratorPayload.approvedSolutionApproach,
+      decisionLineage: orchestratorPayload.decisionLineage,
       clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
       initiativeDisplayName: orchestratorPayload.initiativeDisplayName || orchestratorPayload.useCaseArchetype,
       sourceArtifactRef: orchestratorPayload.sourceArtifactRef,
@@ -265,6 +344,15 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
         }).catch(() => {});
       },
     });
+
+    if (result.ok && !result.artifactId) {
+      await completeDeliverableRun(run.id, {
+        status: "failed",
+        error: "generation_succeeded_without_persisted_artifact",
+        blockers: ["Generation returned success without an artifact id; downstream assembly cannot continue."],
+      });
+      return;
+    }
 
     // Same completion mapping the route used before it became enqueue-only.
     await completeDeliverableRun(
@@ -307,6 +395,9 @@ export async function processDeliverableQueue(
   if (reclaimed.length > 0) {
     console.warn(`[process-deliverable-queue] reclaimed ${reclaimed.length} stale run(s): ${reclaimed.join(", ")}`);
   }
+  await blockRunsWithFailedDependencies().catch((err) => {
+    console.error("[process-deliverable-queue] dependency sweep failed", err);
+  });
 
   // 2 · bounded claim loop.
   const processed: string[] = [];
@@ -315,6 +406,9 @@ export async function processDeliverableQueue(
     if (!run) break; // queue empty — let the cron re-fire later.
     console.log(`[process-deliverable-queue] claimed run ${run.id} (tenant=${run.tenantKey}, module=${run.module})`);
     await runClaimed(run, workerId);
+    await blockRunsWithFailedDependencies().catch((err) => {
+      console.error("[process-deliverable-queue] dependency cascade failed", err);
+    });
     processed.push(run.id);
   }
 

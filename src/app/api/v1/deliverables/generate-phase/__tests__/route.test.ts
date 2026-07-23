@@ -17,9 +17,32 @@ const createMoveContextExtract = jest.fn(
       suggestedContextItems: [],
       excludedContextItems: [],
       gapItems: [],
+      freshness: { evidenceFingerprint: 'ctx-hash-1' },
     };
   },
 );
+const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
+  decisionId: 'decision-1',
+  decisionVersion: '1',
+  decisionHash: 'decision-hash-1',
+  selectedOptionId: 'B',
+  selectedOptionVersion: '1',
+  chosenOption: 'Option B',
+  approach: 'Governed agent assist',
+  options: [
+    { id: 'A', name: 'Option A', summary: 'Workflow optimization' },
+    { id: 'B', name: 'Option B', summary: 'Governed agent assist' },
+  ],
+  tradeoffsAccepted: ['Phased integration'],
+  rejectedOptions: [], scope: [], exclusions: [], assumptions: [], constraints: [], unresolvedDecisions: [],
+  decision: {
+    phase: 3,
+    decision: 'Approved solution option: Option B',
+    rationale: 'Best balance of value and control.',
+    approvedBy: 'u1',
+    approvedAt: '2026-07-23T00:00:00.000Z',
+  },
+}));
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -29,6 +52,14 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
   createDeliverableRun: jest.fn(async (input: Record<string, unknown>) => {
     createCalls.push(input);
     return createBehavior(input);
+  }),
+  createSequentialDeliverableRunBatch: jest.fn(async (inputs: Array<Record<string, unknown>>) => {
+    createCalls.push(...inputs);
+    return inputs.map((input, index) => ({
+      id: `run-${index}`,
+      sequenceNo: index,
+      jobPayload: input.jobPayload,
+    }));
   }),
 }));
 const validateDeliverableTenantInvariant = jest.fn(
@@ -50,6 +81,12 @@ jest.mock('@/lib/programs/move-context-extract', () => ({
   createMoveContextExtract: (input: Record<string, unknown>) =>
     createMoveContextExtract(input),
 }));
+jest.mock('@/lib/programs/approved-solution-approach', () => ({
+  loadApprovedSolutionApproach: () => loadApprovedSolutionApproach(),
+  formatApprovedSolutionApproach: (approved: { chosenOption: string }) =>
+    `APPROVED SOLUTION APPROACH - AUTHORITATIVE INPUT\nChosen option: ${approved.chosenOption}\nBuild only to the approved option.`,
+  ARCHITECTURE_MODEL_VERSION: 'moves-architecture-model-v2',
+}));
 
 import { POST } from '../route';
 
@@ -68,6 +105,29 @@ beforeEach(() => {
   validateDeliverableTenantInvariant.mockClear();
   validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'm-1' });
   createMoveContextExtract.mockClear();
+  loadApprovedSolutionApproach.mockClear();
+  loadApprovedSolutionApproach.mockResolvedValue({
+    decisionId: 'decision-1',
+    decisionVersion: '1',
+    decisionHash: 'decision-hash-1',
+    selectedOptionId: 'B',
+    selectedOptionVersion: '1',
+    chosenOption: 'Option B',
+    approach: 'Governed agent assist',
+    options: [
+      { id: 'A', name: 'Option A', summary: 'Workflow optimization' },
+      { id: 'B', name: 'Option B', summary: 'Governed agent assist' },
+    ],
+    tradeoffsAccepted: ['Phased integration'],
+    rejectedOptions: [], scope: [], exclusions: [], assumptions: [], constraints: [], unresolvedDecisions: [],
+    decision: {
+      phase: 3,
+      decision: 'Approved solution option: Option B',
+      rationale: 'Best balance of value and control.',
+      approvedBy: 'u1',
+      approvedAt: '2026-07-23T00:00:00.000Z',
+    },
+  });
 });
 
 describe('POST /api/v1/deliverables/generate-phase', () => {
@@ -113,7 +173,30 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
       expect(c.tenantKey).toBe('skyharbor-air');
       expect(c.module).toBe('moves');
       expect((c.jobPayload as { sourceArtifactRef: string }).sourceArtifactRef).toBe('m-1');
+      expect(c.jobPayload).toEqual(expect.objectContaining({
+        approvedSolutionApproach: expect.stringContaining('Chosen option: Option B'),
+        decisionContext: expect.stringContaining('APPROVED SOLUTION APPROACH'),
+        decisionLineage: expect.objectContaining({
+          decisionHash: 'decision-hash-1',
+          contextSnapshotHash: 'ctx-hash-1',
+        }),
+      }));
     }
+  });
+
+  it('blocks P3 before context extraction or enqueue when no option is approved', async () => {
+    loadApprovedSolutionApproach.mockResolvedValueOnce(null);
+    const res = await POST(req({
+      moveId: 'm-p3-unapproved',
+      phase: 3,
+      useCaseArchetype: 'commercial_lending_agent_assist',
+    }));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual(expect.objectContaining({
+      error: 'solution_approach_approval_required',
+    }));
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
   });
 
   it('queues P2 root-cause with its own type and canonical registry key', async () => {
@@ -205,7 +288,7 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
       if (n === 1) throw new Error('boom');
       return { id: `run-${n}` };
     };
-    const res = await POST(req({ moveId: 'm-2', phase: 3, useCaseArchetype: 'ams' }));
+    const res = await POST(req({ moveId: 'm-2', phase: 2, useCaseArchetype: 'ams' }));
     expect(res.status).toBe(202);
     const json = (await res.json()) as { queued: number; total: number; deliverables: Array<Record<string, unknown>> };
     expect(json.queued).toBe(json.total - 1);

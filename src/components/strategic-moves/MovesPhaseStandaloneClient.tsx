@@ -411,7 +411,11 @@ export function MovesPhaseStandaloneClient({
   const [avaStreaming, setAvaStreaming] = useState(false);
   const avaThreadRef = useRef<AvaChatMessage[]>([]);
   avaThreadRef.current = avaThread;
-  const [selectedOption, setSelectedOption] = useState("B");
+  // P3 recommendations may be highlighted, but no option is selected until the
+  // human explicitly clicks it. A recommendation is not an approval.
+  const [selectedOption, setSelectedOption] = useState(
+    phase.phase === 3 ? "" : "B",
+  );
   const [gateApproved, setGateApproved] = useState(isHistoricalPhase);
   const [gateApprovalStatus, setGateApprovalStatus] = useState<
     "idle" | "approving" | "approved" | "blocked"
@@ -539,6 +543,10 @@ export function MovesPhaseStandaloneClient({
       p3OptionSet.options.find((option) => option.id === selectedOption)?.label,
     [p3OptionSet.options, selectedOption],
   );
+  const selectedP3Option = useMemo(
+    () => p3OptionSet.options.find((option) => option.id === selectedOption),
+    [p3OptionSet.options, selectedOption],
+  );
   const [phaseCaptureValues, setPhaseCaptureValues] =
     useState<PhaseCaptureValues>(() =>
       buildPhaseCaptureItems({
@@ -552,6 +560,21 @@ export function MovesPhaseStandaloneClient({
   const phaseCaptureSections = useMemo(
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
+  );
+  const selectP3Option = useCallback(
+    (optionId: string) => {
+      setSelectedOption(optionId);
+      const option = p3OptionSet.options.find((item) => item.id === optionId);
+      if (phase.phase !== 3 || !option) return;
+      setPhaseCaptureValues((current) => ({
+        ...current,
+        solution_approach: `${option.label}. ${option.summary}`,
+        recommendation:
+          current.recommendation?.trim() ||
+          `${option.recommendationLabel}. ${option.evidenceBasis.join(" ")}`,
+      }));
+    },
+    [p3OptionSet.options, phase.phase],
   );
   useEffect(() => {
     setFinderSelectedSectionKey(
@@ -572,7 +595,9 @@ export function MovesPhaseStandaloneClient({
   const phaseCaptureMissingCount =
     phaseCaptureSections.length - phaseCaptureCompleteCount;
   const phaseCaptureBlocker =
-    phase.phase >= 1 && phaseCaptureMissingCount > 0
+    phase.phase === 3 && !selectedP3Option
+      ? "Select the solution option that architecture should implement before Approve & Build."
+      : phase.phase >= 1 && phaseCaptureMissingCount > 0
       ? `Complete ${phaseCaptureMissingCount} phase input${
           phaseCaptureMissingCount === 1 ? "" : "s"
         } before Approve & Build.`
@@ -779,6 +804,56 @@ export function MovesPhaseStandaloneClient({
               finalize.error ||
               `Finalize failed (HTTP ${finalizeRes.status})`,
       );
+    }
+
+    if (phase.phase === 3) {
+      if (!selectedP3Option) {
+        setGateApprovalStatus("blocked");
+        throw new Error(
+          "Select a solution option before building the P3 architecture package.",
+        );
+      }
+      setGateApprovalMessage(
+        "Recording the approved solution option before architecture assembly...",
+      );
+      const optionApprovalRes = await fetch(
+        `/api/v1/programs/${move.id}/solution-options/approve`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chosenOption: selectedP3Option.label,
+            approach: `${selectedP3Option.label}. ${selectedP3Option.summary}`,
+            rationale:
+              String(phaseCaptureValues.recommendation ?? "").trim() ||
+              `${selectedP3Option.recommendationLabel}. ${selectedP3Option.evidenceBasis.join(" ")}`,
+            tradeoffsAccepted: [
+              `Effort: ${selectedP3Option.effort}`,
+              `Time to value: ${selectedP3Option.timeToValue}`,
+              ...selectedP3Option.risks.map((risk) => `Risk accepted for design: ${risk}`),
+            ],
+            options: p3OptionSet.options.map((option) => ({
+              id: option.id,
+              name: option.label,
+              summary: option.summary,
+              scores: option.scores,
+              recommended: option.recommended,
+            })),
+          }),
+        },
+      );
+      const optionApproval = (await optionApprovalRes
+        .json()
+        .catch(() => ({}))) as { ok?: boolean; detail?: string; error?: string };
+      if (!optionApprovalRes.ok || !optionApproval.ok) {
+        setGateApprovalStatus("blocked");
+        throw new Error(
+          optionApproval.detail ||
+            optionApproval.error ||
+            `Solution option approval failed (HTTP ${optionApprovalRes.status})`,
+        );
+      }
     }
   }
 
@@ -1283,7 +1358,7 @@ export function MovesPhaseStandaloneClient({
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
                           onRefreshPhase={refreshPhase}
-                          onSelectOption={setSelectedOption}
+                          onSelectOption={selectP3Option}
                           nextOpenPhaseContract={nextOpenPhaseContract}
                           p3OptionSet={p3OptionSet}
                           phase={phase}
@@ -1333,7 +1408,7 @@ export function MovesPhaseStandaloneClient({
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
                           onRefreshPhase={refreshPhase}
-                          onSelectOption={setSelectedOption}
+                          onSelectOption={selectP3Option}
                           nextOpenPhaseContract={nextOpenPhaseContract}
                           p3OptionSet={p3OptionSet}
                           phase={phase}
@@ -3427,14 +3502,18 @@ function buildPhaseCaptureItems({
   return Object.fromEntries(
     getPhaseCaptureSections(phase.phase).map((section) => [
       section.key,
-      [
-        `${section.label}: ${section.description}`,
-        `Move: ${move.name}.`,
-        `Phase: ${phase.code} ${phase.title}.`,
-        optionContext,
-        `Evidence basis: ${evidenceSummary}`,
-        "Approval note: accountable owner review and caveats must remain attached to the gate record.",
-      ].join(" "),
+      phase.phase === 3 &&
+      !selectedOptionLabel &&
+      (section.key === "solution_approach" || section.key === "recommendation")
+        ? ""
+        : [
+            `${section.label}: ${section.description}`,
+            `Move: ${move.name}.`,
+            `Phase: ${phase.code} ${phase.title}.`,
+            optionContext,
+            `Evidence basis: ${evidenceSummary}`,
+            "Approval note: accountable owner review and caveats must remain attached to the gate record.",
+          ].join(" "),
     ]),
   );
 }
@@ -4419,6 +4498,7 @@ function OptionCards({
     <div className="mxw-options">
       {optionSet.options.map((option) => (
         <button
+          aria-label={`${option.label}${option.recommended ? " (recommended)" : ""}`}
           className={`${selectedOption === option.id ? "selected" : ""} ${
             option.recommended ? "recommended" : ""
           }`}

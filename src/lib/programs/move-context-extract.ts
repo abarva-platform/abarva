@@ -574,6 +574,20 @@ function existingFreshness(value: ExistingMoveContextExtract | null): MoveContex
   };
 }
 
+/** Read the current persisted extract fingerprint without rebuilding or mutating the Move. */
+export async function loadCurrentMoveContextExtractFreshness(args: {
+  tenantKey: string;
+  moveId: string;
+  phase: number;
+}): Promise<MoveContextExtractFreshness | null> {
+  const existing = await defaultExistingExtract({
+    tenantKey: args.tenantKey,
+    moveId: args.moveId,
+    artifactType: artifactTypeForPhase(args.phase),
+  });
+  return existingFreshness(existing);
+}
+
 function isExistingFresh(args: {
   existing: ExistingMoveContextExtract | null;
   current: MoveContextExtractFreshness;

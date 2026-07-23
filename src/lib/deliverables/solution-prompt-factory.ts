@@ -63,7 +63,7 @@ function p3FutureStateBoundaryBlock(args: {
       : "- Final P3 output requires formal P3 option approval and phase-gate approval.";
   const optionRule = args.context.chosenOption
     ? `- Build to the approved chosen option: "${args.context.chosenOption}".`
-    : `- No final option has been selected. For this draft, present 2-3 future-state options, compare them, and keep the Open Decision Log explicit. Do not imply a selected final architecture.`;
+    : `- No approved option is present. STOP and request P3a solution-option approval. Do not draft architecture, select an option, or blend alternatives.`;
   return `\nP3 FUTURE-STATE BLUEPRINT BOUNDARY
 ${draftStatus}
 ${optionRule}
@@ -117,9 +117,7 @@ export function buildArtifactPrompt(args: {
 
   const archRule =
     profile.renderer === "html_architecture" && artifact !== "solution_approach_options"
-      ? generationMode === "draft" && !ctx.chosenOption
-        ? `\nARCHITECTURE DRAFT RULE:\n- No chosenOption is approved yet. This draft may shape future-state options, compare tradeoffs, and define open decisions, but it must not select or imply final architecture approval.`
-        : `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.`
+      ? `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.\n- Do not reopen, blend, or silently replace rejected alternatives. If new evidence conflicts with the decision, expose the conflict in the Open Decision Log.`
       : "";
 
   const draftBlock =

@@ -166,4 +166,22 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     expect(html).not.toContain("source register");
     expect(html).not.toContain("client to complete");
   });
+
+  it("keeps the deterministic fallback industry-neutral for financial-services work", () => {
+    const model = buildGroundedArchitectureFallback({
+      engagement: "Commercial Lending Agent Assist",
+      client: "First Capital Financial",
+      contextText:
+        "Bankers coordinate onboarding across CRM, loan origination, document, KYC, and core banking systems.",
+      failureReason: "Structured generation unavailable.",
+    });
+    const html = renderArchitectureHtml(model).toLowerCase();
+
+    expect(validateArchitectureModel(model).some((i) => i.level === "error")).toBe(false);
+    expect(html).not.toMatch(/flight|crew|passenger|airport|disruption recovery/);
+    expect(html).toContain("system of engagement");
+    expect(html).toContain("transaction system of record");
+    expect(html).toContain("policy and knowledge");
+    expect(html).toContain("open input");
+  });
 });

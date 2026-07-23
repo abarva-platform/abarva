@@ -8,6 +8,7 @@ import {
   getDeliverableRun,
   claimNextDeliverableRun,
   sweepStaleDeliverableRuns,
+  blockRunsWithFailedDependencies,
   type RawSqlRunner,
   type DeliverableRunJobPayload,
 } from '../runs-repository';
@@ -148,6 +149,39 @@ describe('claimNextDeliverableRun', () => {
     const emptyRunner: RawSqlRunner = async (fn) => fn((async () => []) as never);
     expect(await claimNextDeliverableRun('worker-A', { rawSql: emptyRunner })).toBeNull();
   });
+
+  it('claims a dependent row only after its tenant-scoped predecessor succeeded with an artifact', async () => {
+    let sql = '';
+    const runner: RawSqlRunner = async (fn) =>
+      fn((async (statement: string) => {
+        sql = statement;
+        return [];
+      }) as never);
+    await claimNextDeliverableRun('worker-A', { rawSql: runner });
+    expect(sql).toMatch(/depends_on_run_id IS NULL/);
+    expect(sql).toMatch(/predecessor\.status = 'succeeded'/);
+    expect(sql).toMatch(/predecessor\.artifact_id IS NOT NULL/);
+    expect(sql).toMatch(/predecessor\.client_id = r\.client_id/);
+    expect(sql).toMatch(/predecessor\.tenant_key = r\.tenant_key/);
+  });
+});
+
+describe('blockRunsWithFailedDependencies', () => {
+  it('cascades a failed predecessor to all queued descendants', async () => {
+    let sql = '';
+    const runner: RawSqlRunner = async (fn) =>
+      fn((async (statement: string) => {
+        sql = statement;
+        return [{ id: 'child-1' }, { id: 'child-2' }];
+      }) as never);
+    await expect(blockRunsWithFailedDependencies({ rawSql: runner })).resolves.toEqual([
+      'child-1',
+      'child-2',
+    ]);
+    expect(sql).toMatch(/WITH RECURSIVE blocked_descendants/);
+    expect(sql).toMatch(/parent\.status IN \('blocked', 'failed'\)/);
+    expect(sql).toMatch(/dependency_not_satisfied/);
+  });
 });
 
 describe('sweepStaleDeliverableRuns', () => {
@@ -169,7 +203,7 @@ describe('sweepStaleDeliverableRuns', () => {
     // Split predicate: queued is NOT reaped on the same tight deadline as running —
     // a queued backlog is waiting for a worker, not stuck. Running uses $1, queued $2.
     expect(captured.sql).toMatch(/status\s*=\s*'running'\s+AND\s+updated_at\s*<\s*now\(\)\s*-\s*\(\$1/);
-    expect(captured.sql).toMatch(/status\s*=\s*'queued'\s+AND\s+updated_at\s*<\s*now\(\)\s*-\s*\(\$2/);
+    expect(captured.sql).toMatch(/status\s*=\s*'queued'\s+AND\s+depends_on_run_id\s+IS\s+NULL\s+AND\s+updated_at\s*<\s*now\(\)\s*-\s*\(\$2/);
     expect(captured.sql).not.toMatch(/status\s+IN\s+\('queued',\s*'running'\)/);
     expect(captured.sql).toMatch(/SET\s+status\s*=\s*'failed'/);
     // Default: running 15 min, queued 6h (360 min) — the longer abandonment bound.
