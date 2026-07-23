@@ -958,6 +958,40 @@ updated 19 d ago` on the proof event).
   audit's request for aVa-rendered analytics/insights, and the user's requirement to keep Source's
   persisted Azure/Postgres evidence layer distinct from future enterprise-context promotion.
 
+### SOURCE-ANALYTICS-CHAT-004 — Evidence-processing readiness governed chat answer
+
+- **Problem statement**: Source can now show evidence readiness in the Files workspace and operators
+  can run a read-only artifact parse-backlog verifier, but aVa chat cannot yet answer "which files
+  are parsed, search-ready, or blocked?" with a rendered chart/table grounded in the existing
+  `source_artifacts` statuses.
+- **User/business impact**: a reviewer should be able to ask aVa for the current evidence-processing
+  state without leaving the event. The answer must keep stored, parsed, search-ready,
+  graph-projected, enterprise-context-promoted, and `agent_ready` states separate so users do not
+  mistake uploaded files for learned context.
+- **Severity**: P3 (analytics / aVa chat capability gap; evidence-layer integrity).
+- **Workstream**: Analytics / aVa chat, Source ingest readiness.
+- **Status**: `Candidate` — code-only, read-only, no migration, no production data mutation, no
+  parser/indexer/OCR/transcription/promotion job.
+- **Dependencies**: existing Source artifact registry repository, existing
+  `buildSourceArtifactParseBacklogReport()`, existing `AvaAnswerPacket` / `AgentAnswerRenderer`
+  pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.
+- **Acceptance criteria**: Source's opt-in NDJSON event-chat route recognizes evidence parse/index
+  readiness questions; returns a governed `AvaAnswerPacket` with a processing-readiness chart and
+  item table; reads real `source_artifacts` parse/search/graph statuses and citations when present;
+  reports an honest no-data state when no files are registered; blocks restricted evidence through
+  the governance gate; does not claim OCR, transcription, vector indexing, graph projection,
+  enterprise-context promotion, or `agent_ready` unless those existing statuses already support it.
+- **Required tests**:
+  `src/lib/source/ava/__tests__/evidence-readiness-governed-answer.test.ts`,
+  `src/app/api/v1/source/[eventId]/nexus/ask/__tests__/vendor-coverage-intent.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-evidence-readiness-governed-chat-answer.md`.
+- **Discovered from**: the standing `SOURCE-INGEST-001` follow-on list, the shipped artifact parse
+  backlog verifier, and the 6-area Source audit's request for aVa to render impactful analytics
+  while preserving Azure/Postgres evidence-layer truth.
+- **Notes / remaining gaps**: this is not the async parse worker, OCR/transcription path, vector
+  indexing, or enterprise-context promotion. Those remain governed data-build/job slices.
+
 ---
 
 ### SOURCE-ARTIFACT-AUTHORITY-001 — One authoritative artifact per event+slot, consumed everywhere downstream

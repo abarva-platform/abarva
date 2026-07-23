@@ -45,6 +45,10 @@ import {
   looksLikeArtifactQualityQuestion,
 } from "@/lib/source/ava/artifact-quality-governed-answer";
 import {
+  buildEvidenceReadinessGovernedAnswer,
+  looksLikeEvidenceReadinessQuestion,
+} from "@/lib/source/ava/evidence-readiness-governed-answer";
+import {
   buildValueLedgerGovernedAnswer,
   looksLikeValueLedgerQuestion,
 } from "@/lib/source/ava/value-ledger-governed-answer";
@@ -289,6 +293,40 @@ export async function POST(
                 : JSON.stringify(err);
           console.error(
             "[source.nexus-ask.value-ledger-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId: liveEventDetail?.id ?? eventId,
+              eventCode: liveEventDetail?.code ?? null,
+              clientKey: activeClientKey,
+              message: errorMessage,
+              stack: err instanceof Error ? err.stack : undefined,
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
+        looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)
+      ) {
+        agentAnswer = await buildEvidenceReadinessGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventAliases: [
+            eventId,
+            liveEventDetail?.id,
+            liveEventDetail?.code,
+          ].filter((value): value is string => Boolean(value)),
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : JSON.stringify(err);
+          console.error(
+            "[source.nexus-ask.evidence-readiness-governed-answer.failed]",
             JSON.stringify({
               eventId,
               resolvedEventId: liveEventDetail?.id ?? eventId,
