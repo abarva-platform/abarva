@@ -141,8 +141,14 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   context, not inert files in the cabinet.
 - **Severity**: P2 (evidence-layer integrity and aVa readiness).
 - **Workstream**: Ingestion / data persistence.
-- **Status**: `Candidate` — first slice only; code-only, no migration and no production data
-  mutation.
+- **Status**: `Shipped — deployed and regression/signed-in proven` — first slice only;
+  code-only, no migration and no production data mutation. Merged in PR #5432
+  (`919b7ae487e237c1157c50d92c613efc23624e70`), deployed by ACA main run
+  `29981467082`, and still present on the independently verified production revision
+  `ca-abarva-web-lab-eastus--me89b7e4d` (`main-e89b7e4d`). Focused extraction/upload
+  route tests passed again on 2026-07-23. Signed-in Files proof confirms the
+  Source ingest/readiness surfaces render on `app.abarva.ai`; no production upload
+  mutation was performed for this closure without a dedicated safe test file/event.
 - **Dependencies**: existing `source_artifacts`, `source_artifact_chunks`,
   `source_artifact_facts`, `source_meeting_outcomes`, `source_requirements`, and
   `source_pricing_components` tables; existing upload route and parser; existing dependencies
@@ -176,7 +182,14 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   explicit family, kind, stage, classification, parse state, and evidence-sync receipt.
 - **Severity**: P2 (evidence-layer integrity and workflow clarity).
 - **Workstream**: Ingestion / workspace UX.
-- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Status**: `Shipped — deployed and signed-in proven` — code-only, no migration and
+  no production data mutation. Merged in PR #5434
+  (`8ac1adb5272208d9689678aec90600425344df15`), deployed by ACA main run
+  `29982980000`, and still present on the independently verified production revision
+  `ca-abarva-web-lab-eastus--me89b7e4d` (`main-e89b7e4d`). Focused UI/upload-contract
+  tests passed again on 2026-07-23. Signed-in Files proof confirms the Meeting Notes
+  and Workshop Output capture surface renders with honest Azure/Postgres persistence
+  copy on `app.abarva.ai`; no upload mutation was performed.
 - **Dependencies**: existing Source Files workspace, existing `/api/v1/source/:eventId/artifacts/upload`
   route, existing `source_artifacts` registry, existing synchronous first-mile parser, and
   existing upload-to-canvas-substrate sync.
@@ -210,7 +223,15 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   stored, parsed, indexed, promoted, and agent-ready are separate states.
 - **Severity**: P5 (evidence integrity / workspace UX).
 - **Workstream**: Evidence ingestion and persistence readiness.
-- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Status**: `Shipped — deployed and signed-in proven` — code-only, no migration and
+  no production data mutation. Merged in PR #5454
+  (`d436d4b654dc6e920db9fb2753ecd8867b846205`), deployed by ACA main run
+  `29991443166` with a later successful retry/superseding run `29991922890`, and
+  still present on the independently verified production revision
+  `ca-abarva-web-lab-eastus--me89b7e4d` (`main-e89b7e4d`). Focused Files workspace
+  tests passed again on 2026-07-23. Signed-in Files proof confirms Stored, Parsed,
+  Needs parser, and Search-ready states render on `app.abarva.ai` while keeping
+  search indexing and enterprise-context promotion separate governed steps.
 - **Dependencies**: existing `source_artifacts.parse_status`, `embedding_status`, and
   `graph_status` fields already returned to the Source event shell. No schema or data-build job
   dependency.
