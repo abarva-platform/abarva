@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -41,11 +41,13 @@ Live First Capital P3 proof showed that the P3 architecture chain could generate
 - Pass: `npx jest src/lib/deliverables/__tests__/golden-bar.test.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/orchestrator/__tests__/quality-validator-size-range.test.ts --runInBand` (Jest emitted pre-existing duplicate mock warnings; all targeted suites passed).
 - Pass: `npx eslint` on changed files.
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`.
-- Pending: `npm run release:check` after this QA status update.
+- Pass: `npm run release:check`.
 - Pass: `git diff --check`.
-- Partial: ACA deploy and runtime-invariant proof passed for PR #5478 / merge SHA `2a4864280d0330483b5215e43f84505c9c402a4f`; this follow-up sourcing headroom change still needs deploy.
+- Pass: ACA deploy and runtime-invariant proof passed for PR #5478 / merge SHA `2a4864280d0330483b5215e43f84505c9c402a4f`.
+- Pass: ACA deploy and runtime-invariant proof passed for PR #5481 / merge SHA `448b5d5c2544644afeaafb36101813692bdbcb64`; active revision `ca-abarva-web-lab-eastus--m448b5d5c`, active digest `sha256:d5fcf2cc06aa2e93df7dd24323b4346d1e971b47468b2c4b4e2340b37001409c`, 100% traffic, health OK, worker jobs matched.
 - Partial: signed-in First Capital P3 v16 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191` generated all four artifacts; Operating Model and Sourcing fit their rendered ceilings, while Solution Design rendered at 5,397 words against a 5,200-word ceiling and required this follow-up headroom reduction.
 - Partial: signed-in First Capital P3 v17 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191` generated all four artifacts with zero browser errors; Solution Design rendered at 4,519 words against a 5,200-word ceiling, Operating Model rendered at 4,567 words against a 4,600-word ceiling, and Sourcing Strategy rendered at 3,664 words against a 3,600-word ceiling. This follow-up tightens Sourcing Strategy body headroom.
+- Pass: signed-in First Capital P3 v18 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191` generated all four artifacts with zero browser errors. Final rendered audit: Target Architecture 5,189 words (advisory maximum only), Solution Design 4,513 words <= 5,200, Operating Model 4,254 words <= 4,600, Sourcing Strategy 2,930 words <= 3,600. All downloads returned HTTP 200, sourceRef matched the Move ID, no duplicate section headings were detected, and no banned language was detected.
 
 ## Rollout Plan
 
@@ -55,9 +57,9 @@ Merge through PR to `main`. The repo-owned ACA main deploy workflow builds and d
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none outside the repo-owned workflow
-- Approved image digest: pending deploy
-- ACA runtime invariant: pending deploy
-- Worker image invariant: pending deploy
+- Approved image digest: `sha256:d5fcf2cc06aa2e93df7dd24323b4346d1e971b47468b2c4b4e2340b37001409c`
+- ACA runtime invariant: passed
+- Worker image invariant: passed
 - Feature/env flag update path: none
 - Live signed-in proof required: yes
 
@@ -73,6 +75,10 @@ Rollback by reverting this PR and redeploying the prior ACA image through the re
 - Merge SHA: `2a4864280d0330483b5215e43f84505c9c402a4f`
 - ACA deploy proof for PR #5478: `/tmp/aca-proof-30019244639.n65btr/runtime-invariant/runtime-invariant-proof.json`
 - Signed-in P3 v17 partial proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v17-2026-07-23T15-18-51Z/11-artifact-content-audit.json`
+- Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/5481
+- Follow-up merge SHA: `448b5d5c2544644afeaafb36101813692bdbcb64`
+- ACA deploy proof for PR #5481: `/tmp/aca-proof-30021823769.PFHME8/runtime-invariant/runtime-invariant-proof.json`
+- Signed-in P3 v18 proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v18-2026-07-23T15-51-51Z/11-artifact-content-audit.json`
 
 ## Known Gaps
 
