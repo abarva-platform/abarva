@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -52,25 +52,37 @@ documents block export instead of receiving only a warning.
   `npx jest src/lib/deliverables/orchestrator/__tests__/quality-bar-registry.test.ts src/lib/deliverables/orchestrator/__tests__/quality-validator-size-range.test.ts --runInBand`
   - Passed: 2 suites, 28 tests.
   - Known pre-existing warning: duplicate Jest manual mock names.
-- Broader validation to be captured before release:
-  - `npx eslint ...`
-  - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
-  - `npm run release:check`
-  - `git diff --check`
+- ESLint:
+  `npx eslint src/lib/deliverables/orchestrator/quality-bar-registry.ts src/lib/deliverables/orchestrator/__tests__/quality-bar-registry.test.ts src/lib/deliverables/orchestrator/__tests__/quality-validator-size-range.test.ts`
+  - Passed locally and in GitHub PR checks.
+- TypeScript:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
+  - Passed locally and in GitHub PR checks.
+- Release gate:
+  `npm run release:check`
+  - Passed locally and in GitHub PR checks.
+- Diff hygiene:
+  `git diff --check`
+  - Passed locally.
+- GitHub PR checks:
+  - Passed on PR #5515, including release control, typecheck, ESLint, browser
+    matrix, Lighthouse, production readiness, and hygiene.
 
 ## Rollout Plan
 
-Merge through PR to `main`. The repo-owned ACA main deploy workflow builds and
-deploys the new image. Verify the ACA runtime invariant before claiming the
-quality gate is live.
+Merged through PR #5515 to `main`. The repo-owned ACA main deploy workflow built
+and deployed the new image. Runtime invariant was verified after deploy.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none in this PR.
-- Approved image digest: pending deploy.
-- ACA runtime invariant: pending deploy.
-- Worker image invariant: pending deploy.
+- Approved image digest:
+  `sha256:45175ca745202053989ea2d2efa8283031af66961803049e01fd877a73652b7c`
+- ACA runtime invariant: passed; template image and 100%-traffic revision match
+  the approved digest.
+- Worker image invariant: passed for `job-abarva-deliv-worker` and
+  `job-abarva-deliv-worker-event`; both use the approved digest.
 - Feature/env flag update path: not applicable.
 - Live signed-in proof required: no user-data mutation required for this control
   change; runtime invariant plus tests are sufficient unless a later smoke uses a
@@ -84,7 +96,13 @@ quality evaluation behavior only.
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5515
+- Merge SHA: `c7fda2d5242b9086e713815c89e18f7ae2f1be5a`
+- ACA deploy workflow:
+  https://github.com/abarva-platform/abarva/actions/runs/30044861944
+- ACA revision: `ca-abarva-web-lab-eastus--mc7fda2d5`
+- Production health endpoint: `https://app.abarva.ai/api/health` returned
+  `{ "ok": true }` with Postgres and Azure graph checks healthy.
 - Focused Jest result: passed locally in
   `/private/tmp/nexus-moves-artifact-size-guard`.
 - Triggering proof: First Capital sandbox P4/P5 run showed
