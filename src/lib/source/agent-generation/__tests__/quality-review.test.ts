@@ -100,35 +100,13 @@ function makeContext(): SourceGenerationContext {
 }
 
 describe("Source consulting-grade quality gate helpers", () => {
-  const originalExpandedFlag = process.env.SOURCE_QUALITY_GATE_EXPANDED;
-
-  afterEach(() => {
-    if (originalExpandedFlag === undefined) {
-      delete process.env.SOURCE_QUALITY_GATE_EXPANDED;
-    } else {
-      process.env.SOURCE_QUALITY_GATE_EXPANDED = originalExpandedFlag;
-    }
-  });
-
-  it("always requires Gate B for the RFP package", () => {
-    delete process.env.SOURCE_QUALITY_GATE_EXPANDED;
+  it("requires Gate B for flagship narrative, decision, and vendor-pack artifacts", () => {
     expect(requiresSourceConsultingGradeGate("d09_rfp_pack")).toBe(true);
-    expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(false);
-  });
-
-  it("gates the expanded high-stakes narrative codes only when the flag is on", () => {
-    delete process.env.SOURCE_QUALITY_GATE_EXPANDED;
-    expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(false);
-    expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(false);
-    expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(false);
-    expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(false);
-
-    process.env.SOURCE_QUALITY_GATE_EXPANDED = "1";
     expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(true);
-    // Untouched artifact types stay ungated even with the flag on.
+    // Untouched artifact types stay ungated.
     expect(requiresSourceConsultingGradeGate("d04_app_inv")).toBe(false);
   });
 

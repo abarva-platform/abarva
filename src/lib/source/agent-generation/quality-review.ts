@@ -27,34 +27,17 @@ export function shortSourceArtifactCode(artifactCode: string): string {
   return artifactCode.split("_")[0] ?? artifactCode;
 }
 
-// The consulting-grade gate was previously RFP-only: `SOURCE_CONSULTING_GRADE_CODES`
-// held just d09, and its review context unconditionally injected D09-specific
-// evidence-coverage language regardless of artifact code (a latent bug — harmless
-// while d09 was the only gated code, but wrong the moment another code joined).
-// This gate is now artifact-aware: coverage is derived from source-artifact-profiles.ts
-// (gated codes are the high-stakes narrative/decision/vendor-pack artifacts — the
-// document types this rubric's dimensions were actually written for), and the
-// D09-specific context block below is now scoped to d09 only.
-//
-// Expansion beyond d09 is a real production behavior change (added review +
-// possible rewrite latency, and a new failure mode if a previously-single-pass
-// artifact doesn't clear the bar), so it stays behind SOURCE_QUALITY_GATE_EXPANDED
-// until it has a live-proof pass on each newly-gated code.
-const SOURCE_QUALITY_GATE_ALWAYS_CODES = new Set(["d09_rfp_pack"]);
-
-// Long-code aliases for the short codes selected below, confirmed against
-// exports/spec-builder.ts's ARTIFACT_CODE_ALIASES so this doesn't guess at a
-// naming convention it can't verify.
-const SOURCE_QUALITY_GATE_EXPANDED_CODES = new Set([
+// The consulting-grade gate was originally RFP-only. The artifact-aware context
+// below now supports the high-stakes narrative/decision/vendor-pack artifacts
+// this rubric was written for, with D09-specific evidence coverage scoped to
+// D09 only.
+export const SOURCE_CONSULTING_GRADE_GATE_CODES = new Set([
+  "d09_rfp_pack",
   "d01_strategy_memo",
   "d05_scope_memo",
   "d24_decision_brief",
   "d27_selection_memo",
 ]);
-
-function isSourceQualityGateExpansionEnabled(): boolean {
-  return process.env.SOURCE_QUALITY_GATE_EXPANDED === "1";
-}
 
 export interface SourceArtifactQualityGateMetadata {
   required: boolean;
@@ -70,11 +53,7 @@ export interface SourceArtifactQualityGateMetadata {
 export function requiresSourceConsultingGradeGate(
   artifactCode: string,
 ): boolean {
-  if (SOURCE_QUALITY_GATE_ALWAYS_CODES.has(artifactCode)) return true;
-  return (
-    isSourceQualityGateExpansionEnabled() &&
-    SOURCE_QUALITY_GATE_EXPANDED_CODES.has(artifactCode)
-  );
+  return SOURCE_CONSULTING_GRADE_GATE_CODES.has(artifactCode);
 }
 
 export function buildSourceQualitySourceContext(args: {

@@ -37,6 +37,10 @@ describe("Source artifact lifecycle matrix", () => {
     expect(summary.quality.reviewRequiredCount).toBe(0);
     expect(summary.quality.contentScoredCount).toBe(0);
     expect(summary.quality.contentBlockerCount).toBe(0);
+    expect(summary.quality.consultingGateRequiredCount).toBe(5);
+    expect(summary.quality.consultingGatePendingCount).toBe(5);
+    expect(summary.quality.consultingGatePassedCount).toBe(0);
+    expect(summary.quality.consultingGateFailedCount).toBe(0);
     expect(summary.quality.label).toBe("Hard fails present");
 
     const scopeMemo = summary.rows.find((row) => row.code === "d05_scope_memo");
@@ -70,6 +74,12 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.controlsLabel).toContain("Missing inputs");
     expect(rfpPack?.prompt.maxTokensLabel).toBe("128k max");
     expect(rfpPack?.exportFormatsLabel).toBe("DOCX / HTML / PDF");
+    expect(rfpPack?.consultingGate).toMatchObject({
+      required: true,
+      state: "required_not_run",
+      label: "Gate B required",
+      scoreLabel: "Not run",
+    });
     expect(rfpPack?.quality.state).toBe("missing");
     expect(rfpPack?.quality.hardFails[0]).toContain("Required/gate-defining");
   });
@@ -432,6 +442,14 @@ describe("Source artifact lifecycle matrix", () => {
         sourceOrigin: "generated",
         status: "approved",
         body: "Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
+        bodyGenerationMetadata: {
+          qualityGate: {
+            passed: false,
+            finalSummary: "Failed: evidence grounding 6/10.",
+            unsupportedClaims: ["Internal sensitivity needs support."],
+            missingEvidence: ["No approved commercial sensitivity file."],
+          },
+        },
       },
     ]);
 
@@ -448,6 +466,10 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.contentQuality.state).toBe("blocked");
     expect(rfpPack?.contentQuality.blockers.join(" ")).toContain(
       "Mechanical/banned terms",
+    );
+    expect(rfpPack?.consultingGate.state).toBe("failed");
+    expect(rfpPack?.consultingGate.findings.join(" ")).toContain(
+      "Failed: evidence grounding",
     );
   });
 
@@ -515,6 +537,7 @@ describe("Source artifact lifecycle matrix", () => {
     expect(standards[0]?.excerpt).toContain("No fixed page cap");
     expect(standards[0]?.excerpt).toContain("Source register");
     expect(standards[0]?.excerpt).toContain("128k max");
+    expect(standards[0]?.excerpt).toContain("Consulting-grade Gate B: Gate B required");
     expect(standards[0]?.excerpt).toContain(
       "Human review is required before external use",
     );
@@ -556,6 +579,9 @@ describe("Source artifact lifecycle matrix", () => {
     expect(csv).toContain('"Content QA status"');
     expect(csv).toContain('"Content QA score"');
     expect(csv).toContain('"Content QA findings"');
+    expect(csv).toContain('"Consulting Gate B"');
+    expect(csv).toContain('"Consulting Gate B score"');
+    expect(csv).toContain('"Consulting Gate B findings"');
     expect(csv).toContain('"Scope","d08_premortem","Pre-mortem on Scope Risk"');
     expect(csv).toContain(
       '"Transition","d31_kt_evidence","Knowledge-Transfer Evidence"',
@@ -570,5 +596,6 @@ describe("Source artifact lifecycle matrix", () => {
     expect(csv).toContain('"Human review required","68"');
     expect(csv).toContain('"Evidence only","42"');
     expect(csv).toContain('"Content not scored","Not scored"');
+    expect(csv).toContain('"Gate B required","Not run"');
   });
 });

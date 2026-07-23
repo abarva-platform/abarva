@@ -1321,6 +1321,9 @@ function ArtifactLifecyclePanel({
     ["Content scored", String(lifecycle.quality.contentScoredCount)],
     ["Content blockers", String(lifecycle.quality.contentBlockerCount)],
     ["Content warnings", String(lifecycle.quality.contentWarningCount)],
+    ["Gate B required", String(lifecycle.quality.consultingGateRequiredCount)],
+    ["Gate B passed", String(lifecycle.quality.consultingGatePassedCount)],
+    ["Gate B pending", String(lifecycle.quality.consultingGatePendingCount)],
     ["Expected artifacts", String(lifecycle.expectedCount)],
     ["Required", String(lifecycle.requiredCount)],
     ["Gate-defining", String(lifecycle.gateDefiningCount)],
@@ -1640,6 +1643,33 @@ function LifecycleStageRows({
             <div style={{ marginTop: 3, color: ANALYTICS.MUTED, fontSize: 11 }}>
               {row.contentQuality.label}
             </div>
+            {row.consultingGate.required ? (
+              <>
+                <div
+                  data-testid={`source-artifact-consulting-gate-${row.code}`}
+                  style={{
+                    marginTop: 8,
+                    color:
+                      row.consultingGate.state === "failed"
+                        ? "#8A3A12"
+                        : ANALYTICS.INK_2,
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                  }}
+                >
+                  {row.consultingGate.label}
+                </div>
+                <div
+                  style={{
+                    marginTop: 3,
+                    color: ANALYTICS.MUTED,
+                    fontSize: 11,
+                  }}
+                >
+                  {row.consultingGate.scoreLabel}
+                </div>
+              </>
+            ) : null}
             <div style={{ marginTop: 6, color: ANALYTICS.MUTED, fontSize: 11 }}>
               {row.familyLabel}
             </div>
@@ -1695,6 +1725,21 @@ function LifecycleStageRows({
                 }}
               >
                 {row.contentQuality.blockers[0] ?? row.contentQuality.warnings[0]}
+              </div>
+            ) : null}
+            {row.consultingGate.required &&
+            row.consultingGate.state !== "passed" ? (
+              <div
+                style={{
+                  marginTop: 8,
+                  color:
+                    row.consultingGate.state === "failed"
+                      ? "#8A3A12"
+                      : ANALYTICS.MUTED,
+                  fontSize: 11.5,
+                }}
+              >
+                {row.consultingGate.findings[0] ?? row.consultingGate.nextAction}
               </div>
             ) : null}
             {row.lifecycleState === "ai_draft" ? (
