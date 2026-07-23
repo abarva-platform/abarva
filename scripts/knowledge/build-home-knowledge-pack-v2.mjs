@@ -232,8 +232,8 @@ const CLIENT_VISIBLE_PROHIBITED = [
   { level: "P0", name: "file or path", re: /\b(?:datasets\/|reports\/|\.csv\b|\.json\b|prompt_path|response_path|source_file|storage_uri)\b/i },
   { level: "P0", name: "technical object", re: /\b(?:json|database|render_pack|design_slots|dimension_rows|home_knowledge_|relationship_nodes|relationship_edges|derivation_method|payload|runtime|packet)\b/i },
   { level: "P1", name: "internal table language", re: /\b(?:database table|raw table|source table|table schema|schema table)\b/i },
-  { level: "P1", name: "ingestion count", re: /\b\d[\d,]*\s+(?:source\s+)?(?:rows?|records?|facts?|evidence references?|relationship rows?|candidate rows?)\b/i },
-  { level: "P1", name: "technical graph count", re: /\b\d[\d,]*\s+(?:nodes?|edges?)\b/i },
+  { level: "P1", name: "ingestion count", re: /\b\d[\d,]*\s+(?:(?:source|loaded|candidate|relationship|active)\s+)?(?:rows?|records?|facts?|evidence references?|relationships?|candidates?)\b/i },
+  { level: "P1", name: "technical graph count", re: /\b\d[\d,]*\s+(?:nodes?|edges?|graph objects?)\b/i },
   { level: "P1", name: "unsupported top ranking", re: /\btop\s+\d+\b/i },
   {
     level: "P1",
@@ -255,7 +255,8 @@ function cleanExecutiveText(value) {
   text = text
     .replace(/\b\d[\d,]*\s+source\s+rows?\b/gi, "a broad source base")
     .replace(/\b\d[\d,]*\s+evidence\s+references?\b/gi, "a broad evidence base")
-    .replace(/\b\d[\d,]*\s+relationship\s+rows?\b/gi, "material relationship paths")
+    .replace(/\b\d[\d,]*\s+(?:(?:active|material)\s+)?relationships?\b/gi, "material relationship paths")
+    .replace(/\b\d[\d,]*\s+(?:loaded\s+)?rows?\b/gi, "source-backed context")
     .replace(/\b\d[\d,]*\s+candidate\s+rows?\b/gi, "planning-grade items")
     .replace(/\b\d[\d,]*\s+candidates?\b/gi, "planning-grade items")
     .replace(/\b\d[\d,]*\s+(?:rows?|records?|facts?)\b/gi, "loaded business context")
@@ -1105,7 +1106,9 @@ function claudeRelationshipSystemPrompt() {
     "",
     "RELATIONSHIP WRITER ROLE",
     "You are authoring material enterprise graph projections for a CXO Knowledge cockpit.",
-    "Do not narrate graph size, nodes, edges, or raw relationships. Generate a small number of material graph projections: enterprise structure, operating model, technology dependency, change impact, value realization, and evidence lineage where supported.",
+    "Do not narrate graph size, source breadth, evidence counts, node counts, edge counts, row counts, record counts, relationship counts, candidate counts, loaded-row counts, or raw relationship mechanics.",
+    "Never write phrases such as active relationships, relationship rows, loaded rows, loaded records, candidates, candidate rows, nodes, or edges in client-visible fields. Translate them into business meaning, such as material dependency paths, ownership gaps, unvalidated handoffs, or evidence-backed connection families.",
+    "Generate a small number of material graph projections: enterprise structure, operating model, technology dependency, change impact, value realization, and evidence lineage where supported.",
     "For each projection explain the business meaning, what it enables, dependencies, constraints, unresolved relationships, affected changes, evidence boundary, and next action.",
     `Call the ${CLAUDE_RELATIONSHIP_TOOL_NAME} tool exactly once.`,
   ].join("\n");
@@ -1407,29 +1410,54 @@ async function callClaudeForDimensionStories(promptPacket) {
 async function callClaudeForRelationshipReads(promptPacket) {
   if (!useClaude || !process.env.ANTHROPIC_API_KEY) return [];
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const result = await invokeClaudeTool(anthropicClient(Anthropic), {
-    tool: claudeRelationshipTool(),
-    system: claudeRelationshipSystemPrompt(),
-    promptPacket: {
-      tenant: promptPacket.tenant,
-      story_architecture: promptPacket.story_architecture,
-      material_relationship_paths: promptPacket.context?.material_relationship_paths,
-      strategic_candidates: promptPacket.context?.strategic_candidates,
-      evidence_read: promptPacket.context?.evidence_read,
-      expected_manifest: {
-        required_projection_types: [
-          "enterprise_structure",
-          "operating_model",
-          "technology_dependency",
-          "change_impact",
-          "value_realization",
-          "evidence_lineage",
-        ],
+  let acceptedRows = [];
+  let acceptedMetadata = null;
+  let previousFindings = [];
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+      tool: claudeRelationshipTool(),
+      system: claudeRelationshipSystemPrompt(),
+      promptPacket: {
+        tenant: promptPacket.tenant,
+        story_architecture: promptPacket.story_architecture,
+        material_relationship_paths: promptPacket.context?.material_relationship_paths,
+        strategic_candidates: promptPacket.context?.strategic_candidates,
+        evidence_read: promptPacket.context?.evidence_read,
+        expected_manifest: {
+          required_projection_types: [
+            "enterprise_structure",
+            "operating_model",
+            "technology_dependency",
+            "change_impact",
+            "value_realization",
+            "evidence_lineage",
+          ],
+        },
+        previous_attempt_client_visible_findings: previousFindings,
       },
-    },
-    maxTokens: Number(process.env.HOME_KNOWLEDGE_RELATIONSHIP_MAX_TOKENS || 8000),
-  });
-  return attachProviderMetadata(asArray(result?.relationship_reads), providerMetadata(result));
+      maxTokens: Number(process.env.HOME_KNOWLEDGE_RELATIONSHIP_MAX_TOKENS || 8000),
+    });
+    acceptedRows = asArray(result?.relationship_reads);
+    acceptedMetadata = providerMetadata(result);
+    previousFindings = scanVisibleText(
+      acceptedRows.map((row) => ({
+        projection_key: row.projection_key,
+        answer_headline: row.answer_headline,
+        business_meaning: row.business_meaning,
+        enables: row.enables,
+        dependencies: row.dependencies,
+        constraints: row.constraints,
+        unresolved_relationships: row.unresolved_relationships,
+        affected_changes: row.affected_changes,
+        evidence_boundary: row.evidence_boundary,
+        next_action: row.next_action,
+      })),
+      "relationship_reads",
+    ).filter((finding) => finding.level === "P0" || finding.level === "P1");
+    if (acceptedRows.length && previousFindings.length === 0) break;
+    console.error(`[relationship-reads] attempt ${attempt} incomplete; rows=${acceptedRows.length} findings=${JSON.stringify(previousFindings.slice(0, 3))}`);
+  }
+  return attachProviderMetadata(acceptedRows, acceptedMetadata);
 }
 
 async function callClaudeForEvidenceRead(promptPacket) {
