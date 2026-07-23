@@ -75,6 +75,42 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       ).toBe(true);
     });
 
+    it("enables the Tower Command Center only for controlled demo tenants", () => {
+      expect(
+        isFeatureEnabled({ clientKey: "meridian" }, "tower_command_center_v2"),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled({ clientKey: "skyharbor" }, "tower_command_center_v2"),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled({ clientKey: "arcturus" }, "tower_command_center_v2"),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "skyharbor-air" },
+          "tower_command_center_v2",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "first-capital" },
+          "tower_command_center_v2",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "tower_command_center_v2",
+        ),
+      ).toBe(false);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "lakeshore" },
+          "tower_command_center_v2",
+        ),
+      ).toBe(false);
+    });
+
     it("is off when the context is missing a tenant key", () => {
       // Tenant-default flags fail closed without a resolved tenant.
       expect(isFeatureEnabled(null, "first_capital_substrate_overlay")).toBe(
