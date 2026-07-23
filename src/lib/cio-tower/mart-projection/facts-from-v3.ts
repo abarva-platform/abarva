@@ -260,6 +260,18 @@ function programCanonical(
   };
 }
 
+function benefitAttributes(row: CsvRow): Record<string, unknown> {
+  return {
+    vendor_name: row.vendor_name ?? null,
+    tool_name: row.tool_name ?? null,
+    evidence_owner: row.evidence_owner ?? null,
+    evidence_source_system: row.evidence_source_system ?? null,
+    owner_attestation_status: row.owner_attestation_status ?? null,
+    business_function: row.business_function ?? null,
+    process_area: row.process_area ?? null,
+  };
+}
+
 /**
  * Funded programs (09_programs_initiatives.csv). Emits an approved-funding fact
  * per funded program, and a promised-value fact when planned/target value is
@@ -379,6 +391,7 @@ export function factsFromV3Benefits(
     const name = (r.program_name ?? code).trim();
     const promised = num(r.promised_value_usd);
     const fundedSpend = num(r.funded_spend_usd);
+    const commonAttributes = benefitAttributes(r);
     if (fundedSpend > 0) {
       facts.push(
         buildV3Fact({
@@ -395,10 +408,7 @@ export function factsFromV3Benefits(
             name,
             PROGRAM_METRIC_KEYS.approvedFunding,
           ),
-          attributes: {
-            vendor_name: r.vendor_name ?? null,
-            tool_name: r.tool_name ?? null,
-          },
+          attributes: commonAttributes,
         }),
       );
       facts.push(
@@ -413,8 +423,7 @@ export function factsFromV3Benefits(
           sourceRow: r.source_record_id ?? programId,
           canonical: programCanonical(code, name, "program_ai_tagged_spend_usd"),
           attributes: {
-            vendor_name: r.vendor_name ?? null,
-            tool_name: r.tool_name ?? null,
+            ...commonAttributes,
             additive_status: r.additive_status ?? null,
             tower_claim_allowed: r.tower_claim_allowed ?? null,
           },
@@ -437,10 +446,7 @@ export function factsFromV3Benefits(
             name,
             PROGRAM_METRIC_KEYS.promisedValue,
           ),
-          attributes: {
-            vendor_name: r.vendor_name ?? null,
-            tool_name: r.tool_name ?? null,
-          },
+          attributes: commonAttributes,
         }),
       );
     }
@@ -463,9 +469,8 @@ export function factsFromV3Benefits(
             metric_unit: "count",
           },
           attributes: {
+            ...commonAttributes,
             usage_metric: r.usage_metric ?? null,
-            vendor_name: r.vendor_name ?? null,
-            tool_name: r.tool_name ?? null,
           },
         }),
       );
@@ -489,11 +494,10 @@ export function factsFromV3Benefits(
             metric_unit: "ratio",
           },
           attributes: {
+            ...commonAttributes,
             source_metric: r.adoption_rate_pct
               ? "adoption_rate_pct"
               : "usage_rate_pct",
-            vendor_name: r.vendor_name ?? null,
-            tool_name: r.tool_name ?? null,
           },
         }),
       );
@@ -520,6 +524,7 @@ export function factsFromV3Benefits(
             PROGRAM_METRIC_KEYS.financeValidatedValue,
           ),
           attributes: {
+            ...commonAttributes,
             finance_validation_status: r.finance_validation_status ?? null,
             tower_claim_allowed: r.tower_claim_allowed ?? null,
           },

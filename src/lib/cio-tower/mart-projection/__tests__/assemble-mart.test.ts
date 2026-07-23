@@ -41,6 +41,7 @@ function v3Fact(args: {
   programKey?: string;
   programCode?: string;
   systemName?: string;
+  attributes?: Record<string, unknown>;
   valueSource?: CioTowerFactValueSource;
   priority?: number;
 }): CioTowerFactRow {
@@ -84,7 +85,10 @@ function v3Fact(args: {
     valid_from: null,
     valid_to: null,
     attributes: JSON.stringify(
-      withCanonicalIdentity({ source_system: "V3 template" }, identity),
+      withCanonicalIdentity(
+        { source_system: "V3 template", ...(args.attributes ?? {}) },
+        identity,
+      ),
     ),
   };
 }
@@ -160,6 +164,12 @@ function buildFixtureFacts(): CioTowerFactRow[] {
       programKey: "program::copilot-productivity",
       programCode: "PROG-COPILOT",
       systemName: "M365 Copilot Productivity",
+      attributes: {
+        vendor_name: "Microsoft",
+        tool_name: "Microsoft 365 Copilot",
+        evidence_owner: "VP Operations",
+        owner_attestation_status: "finance_attested",
+      },
     }),
     v3Fact({
       key: "copilot-promise",
@@ -259,6 +269,19 @@ describe("assembleMartFromFacts — full CXO story on unified facts", () => {
     expect(copilot?.tower_claim_allowed).toBe("partial");
     expect(copilot?.value_claim_status).toBe("partial_validated");
     expect(copilot?.finance_validated_value_usd).toBe(900_000);
+  });
+
+  it("promotes governed owner/vendor attribution into executive mart rows", () => {
+    const copilotLane = mart.program_decision_lanes.find(
+      (l) => l.program_code === "PROG-COPILOT",
+    );
+    const copilotItem = mart.ai_portfolio.find(
+      (i) => i.item_name === "M365 Copilot Productivity",
+    );
+    expect(copilotLane?.owner_role).toBe("VP Operations");
+    expect(copilotLane?.finance_owner_role).toBe("VP Operations");
+    expect(copilotItem?.vendor_name).toBe("Microsoft");
+    expect(copilotItem?.system_name).toBe("Microsoft 365 Copilot");
   });
 
   it("emits gaps (not zeros) for the missing promised-value and finance-validation fields", () => {
