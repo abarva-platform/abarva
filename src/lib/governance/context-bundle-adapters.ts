@@ -8,7 +8,10 @@
 // =============================================================================
 
 import type { Classification, SourceLayer } from "./context-corpus-policy";
-import type { GovernedCandidate } from "./agent-context-bundle";
+import type {
+  DownstreamContextPolicy,
+  GovernedCandidate,
+} from "./agent-context-bundle";
 
 // Loosely-typed views of the source shapes so this module doesn't hard-import
 // their declarations (and create coupling/cycles). Only the fields we map.
@@ -20,6 +23,7 @@ interface EnterpriseItemView {
   tenantKey?: string;
   sourceBasis?: string;
   dataClassification?: string;
+  downstreamContextPolicy?: string;
   linkedEvidence?: Array<{ citationLocator?: string }>;
 }
 interface EnterpriseBundleView {
@@ -61,6 +65,15 @@ function mapSourceLayer(kind: string | undefined): SourceLayer {
   }
 }
 
+function mapDownstreamContextPolicy(
+  raw: string | undefined,
+): DownstreamContextPolicy | undefined {
+  if (raw === "include" || raw === "restricted" || raw === "exclude") {
+    return raw;
+  }
+  return undefined;
+}
+
 /** One broker item -> a conservative GovernedCandidate. */
 export function fromEnterpriseItem(
   item: EnterpriseItemView,
@@ -83,6 +96,9 @@ export function fromEnterpriseItem(
     cited_render_verified_at: null,
     title: item.title,
     citations,
+    downstream_context_policy: mapDownstreamContextPolicy(
+      item.downstreamContextPolicy,
+    ),
   };
 }
 
