@@ -79,6 +79,7 @@ approved-option, evidence, and dependency validation.
 
 ## Audit Evidence
 
+- Streaming adapter PR: https://github.com/abarva-platform/abarva/pull/5452.
 - Pre-fix signed-in proof:
   `/Users/anand/Downloads/moves-p3-architecture-live-proof-final-2026-07-23T07-22-49Z`.
 - Transport finding proof:
