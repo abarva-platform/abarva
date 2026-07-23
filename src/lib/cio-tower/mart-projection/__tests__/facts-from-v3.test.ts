@@ -217,6 +217,10 @@ describe("factsFromV3Benefits", () => {
       adoption_rate_pct: "34",
       finance_validated_value_usd: "500000",
       finance_validation_status: "partial_validated",
+      vendor_name: "Microsoft",
+      tool_name: "Microsoft 365 Copilot",
+      evidence_owner: "VP Engineering",
+      owner_attestation_status: "finance_attested",
       source_record_id: "b1",
     },
     {
@@ -286,6 +290,12 @@ describe("factsFromV3Benefits", () => {
     expect(devAiSpend?.value_numeric).toBe(2_900_000);
     expect(devAiSpend?.view).toBe("app_run_cost");
     expect(devAiSpend?.scope).toBe("initiative");
+    expect(JSON.parse(devAiSpend!.attributes)).toMatchObject({
+      vendor_name: "Microsoft",
+      tool_name: "Microsoft 365 Copilot",
+      evidence_owner: "VP Engineering",
+      owner_attestation_status: "finance_attested",
+    });
   });
 });
 
