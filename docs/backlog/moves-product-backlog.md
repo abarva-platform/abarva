@@ -211,28 +211,39 @@ efficiency, (8) cosmetic.
   review of the specific version in question; no visible client-vs-AI-vs-uploaded provenance.
 - **Severity**: P1/P2 (capability gap, not an active exploit)
 - **Workstream**: Approval, authority, and artifact-lineage controls; deliverable quality
-- **Status**: `Approved for Phase 1 implementation` (2026-07-23) — MOVES-DESIGN-001/002/003 all
-  approved as written (see below); Phase 1 only (§6 scope: schema migration, ACA backfill job,
-  the 3 new mutations, lifecycle-event writes on `completeDeliverable()`/`signOffDeliverable()`,
-  full regression coverage). Workstreams B/D/E/F/G remain separately-scoped future work, not
-  pre-approved by this decision. Full reasoning:
+- **Status**: `Phase 1 implemented; authorized lifecycle apply proven` (2026-07-23) —
+  MOVES-DESIGN-001/002/003 all approved as written (see below); Phase 1 scope has landed
+  (schema migration, ACA backfill job, the 3 new mutations, lifecycle-event writes on
+  `completeDeliverable()`/`signOffDeliverable()`, full regression coverage). The reviewed
+  tenant-explicit backfill apply for workflow run `local-20260723T070210304Z` also completed
+  through the sanctioned ACA operator job and idempotency was proven. Workstreams B/D/E/F/G
+  remain separately-scoped future work, not pre-approved by this decision. Full reasoning:
   `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`. Implementation handoff:
   `docs/codex-handoff/MOVES_ARTIFACT_LIFECYCLE_AND_REMEDIATION_PROMPT_2026-07-23.md`.
 - **Dependencies**: MOVES-DESIGN-001, MOVES-DESIGN-002, MOVES-DESIGN-003 — all resolved 2026-07-23
 - **Acceptance criteria**: see design doc §§2–6 for the full Phase-1 schema/behavior contract
-- **Required tests**: full state-transition table (valid + explicitly-invalid transitions),
-  revocation, supersession, 3 legacy-backfill scenarios — specified in design doc §6, not yet written
-- **PR**: #5168 (**draft, design-only — do not merge until approved**)
-- **Merge SHA**: n/a (not merged)
-- **Deploy run**: n/a
-- **Runtime proof**: n/a
-- **Release record**: n/a (design doc is not release-relevant; will need one at Phase-1 implementation)
+- **Required tests**: Phase 1 lifecycle mutation/state-transition coverage is in place; later
+  Workstreams B/D/E/F/G require their own coverage when implemented.
+- **PRs**: #5438 (schema/lifecycle foundation), #5440 (ACA operator bridge), #5443 (status label
+  semantics), #5461 (apply authorization), #5489 (artifact size/dedup proof record)
+- **Merge SHA**: #5438 `e2b9588a9`, #5440 `5a1d995af`, #5443 `e9bb7ab2f`,
+  #5461 `c55449f66`
+- **Deploy proof**: ACA runtime invariant verified on digest
+  `sha256:a2759de6ef44923dceb31ceeb852883de7fb85d971a0d014a705a2359506e481`
+  at 100% traffic before the apply run.
+- **Operator proof**:
+  `/tmp/moves-lifecycle-apply-authorized-20260723T170036Z-db/proof/local-20260723T070210304Z`
+  (`counts.backfilled=12`) and
+  `/tmp/moves-lifecycle-apply-idempotency-20260723T170259Z-db/proof/local-20260723T070210304Z`
+  (`counts.skipped:already_processed_for_workflow_run=12`).
+- **Release record**: `docs/releases/records/2026-07-23-moves-deliverable-lifecycle-phase1.md`
 - **Discovered from**: user-directed follow-up after the Phase Advancement Control program closed —
   "the recent gate-control work fixed whether a phase is allowed to advance... it does not by itself
   complete the broader deliverable governance and quality model"
 - **Notes / remaining gaps**: 7 connected workstreams, approved sequence **A → C → B → D → E → F →
   G**. Full design: `docs/specs/programs/deliverable-quality-and-approval-lifecycle-design.md`. Do
-  not begin schema implementation until MOVES-DESIGN-001/002/003 resolve.
+  not wire lifecycle state into phase-gate pass/fail until Workstream F is separately scoped and
+  implemented.
 
 ---
 
@@ -326,11 +337,14 @@ cells are stale and superseded by that resolution).
   idempotency, rollback, audit output) is not yet defined.
 - **Severity**: Blocks MOVES-ARTIFACT-001 Phase 1 step 2 (backfill)
 - **Workstream**: Approval/authority controls; data remediation
-- **Status**: `Approved as written` (2026-07-23) — per the design doc's §11 contract:
-  tenant-batched (not all-tenant), dry-run mandatory before apply, conservative legacy inference
-  (never infers `client_final`), idempotent by `(deliverable_id, version, workflow_run_id)`,
-  bounded batches (200/batch default), rollback scoped strictly to the exact workflow run.
-  Reasoning: `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
+- **Status**: `Approved and executed for reviewed three-tenant report` (2026-07-23) — per the
+  design doc's §11 contract: tenant-batched (not all-tenant), dry-run mandatory before apply,
+  conservative legacy inference (never infers `client_final`), idempotent by
+  `(deliverable_id, version, workflow_run_id)`, bounded batches (200/batch default), rollback
+  scoped strictly to the exact workflow run. The authorized apply for
+  `local-20260723T070210304Z` backfilled 12 `human_approved` legacy rows and the repeat run
+  skipped all 12 as already processed. Reasoning and proof:
+  `docs/backlog/decisions/2026-07-23-moves-owner-decisions.md`.
 - **Dependencies**: MOVES-ARTIFACT-001 schema (Phase 1 step 1) must land first; this defines how
   step 2 runs against it
 - **Discovered from**: MOVES-ARTIFACT-001 design pass, §6 Phase 1 plan

@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed; authorized operator apply proven`
 
 ## Plain-English Summary
 
@@ -15,8 +15,9 @@ version-scoped, sign-off/write paths emit lifecycle events, authoritative delive
 be live-validated against the event log, and a dry-run-first ACA operator backfill script is
 available for legacy signed-off rows.
 
-This does not wire the new lifecycle into phase-gate pass/fail semantics and does not execute a
-live backfill.
+This does not wire the new lifecycle into phase-gate pass/fail semantics. After the code release
+deployed, the exact owner-authorized, tenant-explicit legacy backfill was applied through the
+sanctioned ACA operator job and rerun to prove idempotency.
 
 ## Layer Impact
 
@@ -53,12 +54,24 @@ live backfill.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — patch-related
   errors cleared; local compile still fails on pre-existing missing module resolution for
   `@xyflow/react` and `@dagrejs/dagre` in Home files.
+- Post-deploy operator apply proof:
+  `/tmp/moves-lifecycle-apply-authorized-20260723T170036Z-db/proof/local-20260723T070210304Z`
+  — PASS, `mode=apply`, reviewed workflow/report id `local-20260723T070210304Z`, migration hash
+  `ff49c850a9bfe18ac837e7dfab19256d8cfe51f22cb01f86dbd0bdf014dabfcb`,
+  `counts.backfilled=12`.
+- Post-deploy operator idempotency proof:
+  `/tmp/moves-lifecycle-apply-idempotency-20260723T170259Z-db/proof/local-20260723T070210304Z`
+  — PASS, same workflow/report id, `counts.skipped:already_processed_for_workflow_run=12`.
 
 ## Rollout Plan
 
 Merge via PR to `main`. The repo-owned ACA main deploy workflow may build/deploy the code. The
 schema migration must apply before any lifecycle backfill apply run. Backfill is dry-run-first and
 tenant-explicit; live apply requires `--reviewed-report-id`.
+
+The reviewed apply for `meridian-health`, `skyharbor-air`, and `first-capital` has now run. Future
+tenant batches must repeat the same dry-run, owner-review, apply, proof-bundle, and idempotency
+discipline.
 
 ## Deployment Authority
 
@@ -81,14 +94,20 @@ widening would require collapsing any future version-scoped duplicate rows back 
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PRs: #5438 (schema/lifecycle foundation), #5440 (ACA operator bridge), #5443 (dry-run/status
+  label semantics), #5461 (owner authorization record).
+- Deployed image digest used for the operator apply:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:a2759de6ef44923dceb31ceeb852883de7fb85d971a0d014a705a2359506e481`.
 - Focused Jest output and ESLint output from this branch.
-- Backfill reports will be emitted under `reports/moves-deliverable-lifecycle-backfill/<workflowRunId>/`
-  when the operator job is run.
+- Apply proof bundle:
+  `/tmp/moves-lifecycle-apply-authorized-20260723T170036Z-db/proof/local-20260723T070210304Z`.
+- Idempotency proof bundle:
+  `/tmp/moves-lifecycle-apply-idempotency-20260723T170259Z-db/proof/local-20260723T070210304Z`.
 
 ## Known Gaps
 
-- No live backfill has been run.
+- The reviewed three-tenant backfill has been applied; other tenants remain unbackfilled until
+  separately dry-run/reviewed/applied.
 - No phase-gate evaluation semantics changed.
 - Workstreams B/D/E/F/G remain out of scope.
 - MEMBER AI ASSIST governed correction is separate Task B and is not executed by this Phase 1 PR.

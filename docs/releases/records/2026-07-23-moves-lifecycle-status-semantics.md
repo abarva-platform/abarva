@@ -6,13 +6,15 @@
 
 ## Status
 
-`candidate`
+`deployed; status/apply distinction proven`
 
 ## Plain-English Summary
 
 This release fixes the Moves lifecycle backfill status report so dry-run/status rows are labeled as `would_backfill` instead of `backfilled`. The previous operator status run was non-mutating, but the report wording was too easy to misread as an applied backfill.
 
-This does not apply lifecycle state, run the backfill in apply mode, or correct MEMBER AI ASSIST.
+This release itself did not apply lifecycle state, run the backfill in apply mode, or correct MEMBER
+AI ASSIST. After deployment, the approved apply run proved the distinction: apply reports
+`backfilled`, while the same workflow rerun reports `skipped:already_processed_for_workflow_run`.
 
 ## Layer Impact
 
@@ -42,10 +44,15 @@ This does not apply lifecycle state, run the backfill in apply mode, or correct 
 - PASS: `npm run audit:architecture-rules`
 - PASS: `npm run audit:enterprise-naming`
 - PASS: `git diff --check`
+- PASS: post-deploy authorized apply proof recorded `counts.backfilled=12`:
+  `/tmp/moves-lifecycle-apply-authorized-20260723T170036Z-db/proof/local-20260723T070210304Z`.
+- PASS: same-workflow idempotency proof recorded
+  `counts.skipped:already_processed_for_workflow_run=12`:
+  `/tmp/moves-lifecycle-apply-idempotency-20260723T170259Z-db/proof/local-20260723T070210304Z`.
 
 ## Rollout Plan
 
-Merge to `main`, then deploy through the repo-owned Azure Container Apps main deploy workflow. After deploy, rerun the tenant-explicit lifecycle status job and confirm the report uses `would_backfill`.
+Merge to `main`, then deploy through the repo-owned Azure Container Apps main deploy workflow. After deploy, rerun the tenant-explicit lifecycle status job and confirm the report uses `would_backfill`. Apply-mode jobs must still report real mutation states only after mutation; the approved apply/idempotency proof now confirms that split.
 
 ## Deployment Authority
 
@@ -66,8 +73,13 @@ Revert this PR and redeploy the previous digest-pinned image. Since no data is m
 - PR for this release.
 - ACA main deploy run for the merged commit.
 - Follow-up tenant-explicit status proof showing `would_backfill`.
+- Approved apply proof:
+  `/tmp/moves-lifecycle-apply-authorized-20260723T170036Z-db/proof/local-20260723T070210304Z`.
+- Idempotency rerun proof:
+  `/tmp/moves-lifecycle-apply-idempotency-20260723T170259Z-db/proof/local-20260723T070210304Z`.
 
 ## Known Gaps
 
-- No lifecycle backfill has been applied.
+- The reviewed `local-20260723T070210304Z` lifecycle backfill has been applied for the approved
+  three-tenant batch only; future tenant batches remain pending.
 - No MEMBER AI ASSIST correction has been executed.
