@@ -65,6 +65,8 @@ describe("Source artifact prompt registry provider config", () => {
         "d19_pricing_workbook",
         "d20_trap_log",
         "d21_assumption_set",
+        "d22_bafo_question_pack",
+        "d23_bafo_round_log",
         "d29_transition_plan",
         "d30_checkpoint_log",
         "d31_kt_evidence",
@@ -725,6 +727,100 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain("Trap categories to test".toUpperCase());
     expect(message).toContain("hidden transition fee");
     expect(message).toContain("Vendor A has unpriced transition fees");
+  });
+
+  it("configures the BAFO-stage prompts as a governed workflow", () => {
+    const d22 = getPromptTemplate("d22_bafo_question_pack");
+    const d23 = getPromptTemplate("d23_bafo_round_log");
+
+    expect(d22).not.toBeNull();
+    expect(d23).not.toBeNull();
+    expect(d22?.upstreamRequired).toEqual(["d20_trap_log"]);
+    expect(d23?.upstreamRequired).toEqual(["d22_bafo_question_pack"]);
+    expect(d22?.systemPrompt).toContain("BAFO Question Pack");
+    expect(d22?.systemPrompt).toContain("Every P0/P1 trap");
+    expect(d22?.systemPrompt).toContain("walk-away positions");
+    expect(d23?.systemPrompt).toContain("BAFO Round Readout");
+    expect(d23?.systemPrompt).toContain("A response is not an acceptance");
+    expect(d23?.systemPrompt).toContain("written acceptance captured");
+  });
+
+  it("blocks BAFO question pack generation until the pricing trap log exists", () => {
+    const d22 = getPromptTemplate("d22_bafo_question_pack");
+    const ctx = makeD09Context(["Vendor_A_BAFO_Request.xlsx"]);
+
+    expect(findMissingUpstreamCodes(d22!, ctx)).toEqual([
+      "d20_trap_log",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d20_trap_log",
+        "# Trap Log\n\nP0 hidden transition fee; P1 weak SLA credits.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d22!, ctx)).toEqual([]);
+  });
+
+  it("binds BAFO evidence and upstream controls without inventing concessions", () => {
+    const d22 = getPromptTemplate("d22_bafo_question_pack");
+    const ctx = makeD09Context([
+      "Vendor_A_Commercial_Exception.xlsx",
+      "Vendor_B_SLA_Response.docx",
+      "BAFO_Response_Template.xlsx",
+    ]);
+
+    const message = d22?.buildUserMessage(ctx, {
+      d20_trap_log:
+        "# Trap Log\n\nP0 hidden transition fee; P1 weak SLA credit economics.",
+      d19_pricing_workbook:
+        "# Pricing\n\nVendor A transition fee is not comparable.",
+      d16_scorecard:
+        "# Scorecard\n\nVendor B security answer is conditionally acceptable.",
+    });
+
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("BAFO Question Pack");
+    expect(message).toContain("Pricing Trap Log (d20_trap_log)");
+    expect(message).toContain("P0 hidden transition fee");
+    expect(message).toContain("Vendor_A_Commercial_Exception.xlsx");
+    expect(message).toContain("BAFO_Response_Template.xlsx");
+    expect(message).toContain("do not invent finalists, prices, concessions");
+    expect(message).toContain("Required BAFO question fields".toUpperCase());
+  });
+
+  it("requires the BAFO question pack before drafting the BAFO round log", () => {
+    const d23 = getPromptTemplate("d23_bafo_round_log");
+    const ctx = makeD09Context(["Vendor_A_BAFO_Response.xlsx"]);
+
+    expect(findMissingUpstreamCodes(d23!, ctx)).toEqual([
+      "d22_bafo_question_pack",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d22_bafo_question_pack",
+        "# BAFO Questions\n\nQ-01 asks Vendor A to price transition fee.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d23!, ctx)).toEqual([]);
+
+    const message = d23?.buildUserMessage(ctx, {
+      d22_bafo_question_pack:
+        "# BAFO Questions\n\nQ-01 asks Vendor A to price transition fee.",
+      d20_trap_log:
+        "# Trap Log\n\nTransition fee remains open until written acceptance.",
+    });
+
+    expect(message).toContain("BAFO Round Readout");
+    expect(message).toContain("BAFO Question Pack (d22_bafo_question_pack)");
+    expect(message).toContain("Vendor_A_BAFO_Response.xlsx");
+    expect(message).toContain("written acceptance");
+    expect(message).toContain(
+      "do not invent completed rounds, concessions, price deltas, or closure status",
+    );
   });
 });
 

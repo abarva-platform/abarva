@@ -253,6 +253,32 @@ const PRICING_TRAP_CATEGORIES = [
   "contract exception with price impact",
 ] as const;
 
+const BAFO_QUESTION_FIELDS = [
+  "question id",
+  "vendor / finalist",
+  "trap or gap reference",
+  "question text",
+  "commercial ask",
+  "required response format",
+  "evidence / proof requested",
+  "walk-away or evaluation impact",
+  "owner",
+  "due date or gate-relative deadline",
+] as const;
+
+const BAFO_ROUND_LOG_FIELDS = [
+  "round id",
+  "vendor / finalist",
+  "question id",
+  "response received",
+  "before / after commercial delta",
+  "trap resolution status",
+  "terms changed",
+  "written acceptance evidence",
+  "unresolved clarification",
+  "decision impact",
+] as const;
+
 const VENDOR_RESPONSE_INTAKE_FIELDS = [
   "vendor legal name",
   "submission receipt timestamp",
@@ -415,6 +441,18 @@ function formatPricingCostSections(): string {
 function formatPricingTrapCategories(): string {
   return PRICING_TRAP_CATEGORIES.map(
     (category, index) => `${index + 1}. ${category}`,
+  ).join("\n");
+}
+
+function formatBafoQuestionFields(): string {
+  return BAFO_QUESTION_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatBafoRoundLogFields(): string {
+  return BAFO_ROUND_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
   ).join("\n");
 }
 
@@ -2071,6 +2109,186 @@ Writing requirements:
 
       lines.push(
         "Draft the Pricing Trap Log per the system prompt. Rank by decision impact and BAFO leverage. If pricing evidence is thin, make the missing data itself a trap with owner, materiality unknown, and a resolution path rather than inventing materiality.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d22_bafo_question_pack: {
+    artifactCode: "d22_bafo_question_pack",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: ["d20_trap_log"],
+    upstreamOptional: [
+      "d13_vendor_responses",
+      "d15_response_completeness",
+      "d16_scorecard",
+      "d17_weight_log",
+      "d19_pricing_workbook",
+      "d21_assumption_set",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the BAFO Question Pack (artifact d22_bafo_question_pack). This is the vendor-facing best-and-final-offer request: precise, commercial, evidence-demanding questions that close pricing traps, evaluation gaps, and unresolved terms before the executive decision. It is not a generic clarification list.
+
+Required structural sections:
+## §1 · BAFO posture and send decision
+## §2 · Vendor-specific question matrix
+## §3 · Commercial asks and response format
+## §4 · Proof requests and acceptance standard
+## §5 · Response rules, due dates, and governance sign-off
+## §6 · Internal evaluation impact map
+
+Required BAFO question fields:
+${formatBafoQuestionFields()}
+
+Writing and format requirements:
+- §1 states whether the BAFO pack is ready to issue / conditionally ready / blocked. If no Pricing Trap Log exists, this artifact should not be generated.
+- §2 must be a vendor-specific table: Question ID | Vendor/finalist | Trap or gap reference | Question text | Commercial ask | Required response format | Proof requested | Walk-away or evaluation impact | Owner | Due date.
+- Every P0/P1 trap from the Pricing Trap Log must have a targeted BAFO question or an explicit rationale for why it is accepted rather than challenged.
+- Do not invent finalists, vendors, prices, concessions, walk-away positions, due dates, or legal terms. If a vendor, trap, or price delta is not evidenced, mark the row as blocked and name the owner action.
+- Vendor-facing language must be clean and neutral. Do not expose internal labels such as P0/P1, scoring rationale, walk-away economics, tenant ids, database table names, routing keys, model/provider names, or implementation labels in the vendor-facing body.
+- §6 may be internal-only and can map each question to decision impact, evaluation impact, and pricing normalization impact for the sourcing team.
+- Markdown only. Use tables. Keep question wording crisp enough to send to vendors without rewriting.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Pricing Trap Log (d20_trap_log):",
+        upstream.d20_trap_log ??
+          "(MISSING — do not fabricate traps or BAFO questions; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing BAFO facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d13_vendor_responses", "Vendor Responses", "submitted claims, terms, and exceptions");
+      bindOptional("d15_response_completeness", "Response Completeness Report", "missing mandatory fields and conditional admissions");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability gaps and finalist evaluation impact");
+      bindOptional("d17_weight_log", "Weight Governance Record", "locked scoring weights and pass/fail rules");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "normalized TCO and commercial gaps");
+      bindOptional("d21_assumption_set", "Locked Assumptions Record", "approved commercial basis");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— BAFO EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED BAFO EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED BAFO QUESTION FIELDS —",
+        formatBafoQuestionFields(),
+        "",
+        "Draft the BAFO Question Pack per the system prompt. Target evidenced traps and gaps; do not invent finalists, prices, concessions, due dates, walk-away positions, or legal terms.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d23_bafo_round_log: {
+    artifactCode: "d23_bafo_round_log",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d22_bafo_question_pack"],
+    upstreamOptional: [
+      "d20_trap_log",
+      "d19_pricing_workbook",
+      "d16_scorecard",
+      "d24_decision_brief",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the BAFO Round Readout (artifact d23_bafo_round_log). This is the internal finance/procurement record of each BAFO round: vendor responses, before/after deltas, trap resolution, terms changed, unresolved issues, and written acceptances. It must not mark clarifications closed or concessions accepted unless evidence supports it.
+
+Required structural sections:
+## §1 · BAFO round answer
+## §2 · Round-by-vendor response log
+## §3 · Price and term deltas
+## §4 · Trap resolution status
+## §5 · Written acceptances and unresolved clarifications
+## §6 · Decision impact and next action
+
+Required BAFO round log fields:
+${formatBafoRoundLogFields()}
+
+Writing and format requirements:
+- §1 states whether at least one BAFO round is complete for every finalist, whether open clarifications remain, and whether concessions are accepted in writing.
+- §2 must include a table: Round ID | Vendor/finalist | Question ID | Response received | Evidence | Status | Owner | Next action.
+- §3 must compare before/after pricing or terms only when upstream artifacts or uploaded evidence provide the numbers or language. Do not infer deltas from narrative tone.
+- §4 maps each P0/P1 trap from d20 and each BAFO question from d22 to resolved / partially resolved / accepted risk / still open.
+- §5 must separate "vendor responded", "buyer accepted", and "written acceptance captured". A response is not an acceptance. A verbal concession is not written acceptance.
+- §6 explains how BAFO outcomes affect the Decision Brief, finalist ranking, residual risk, transition cost, and contract conditions.
+- Internal language is allowed, but do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Tables are expected; keep the readout direct enough for finance and procurement to use in the award recommendation.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "BAFO Question Pack (d22_bafo_question_pack):",
+        upstream.d22_bafo_question_pack ??
+          "(MISSING — do not fabricate BAFO rounds, vendor responses, concessions, or acceptance status; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing BAFO round facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d20_trap_log", "Pricing Trap Log", "traps that BAFO should close or accept explicitly");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "before/after TCO and commercial baselines");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability and finalist-ranking impact");
+      bindOptional("d24_decision_brief", "Decision Brief", "draft decision implications, if already prepared");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— BAFO ROUND EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED BAFO RESPONSE EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED BAFO ROUND LOG FIELDS —",
+        formatBafoRoundLogFields(),
+        "",
+        "Draft the BAFO Round Readout per the system prompt. Keep vendor responses, buyer acceptances, written acceptances, and unresolved clarifications separate; do not invent completed rounds, concessions, price deltas, or closure status.",
       );
       return lines.join("\n");
     },

@@ -180,6 +180,7 @@ const GUIDELINES_BY_CODE: Partial<Record<string, string>> = {
   d19_pricing_workbook: "Pricing template/comparison; normalized assumptions, transition, run, risk reserve.",
   d20_trap_log: "Commercial traps, financial exposure, negotiation response, resolution owner.",
   d22_bafo_question_pack: "Vendor-specific asks, proof requests, walk-away conditions, owner/due date.",
+  d23_bafo_round_log: "Round responses, price/term deltas, trap closure, written acceptances.",
   d24_decision_brief: "7-section executive decision standard with tradeoffs, risk, recommendation, signoff.",
   d27_selection_memo: "Selection rationale, final economics, contract conditions, audit trail.",
   d29_transition_plan: "Milestones, KT, go/no-go checkpoints, owner and risk controls.",

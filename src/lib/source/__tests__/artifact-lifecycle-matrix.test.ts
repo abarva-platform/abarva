@@ -116,6 +116,40 @@ describe("Source artifact lifecycle matrix", () => {
     expect(pricingRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives BAFO-stage prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const questionPack = summary.rows.find(
+      (row) => row.code === "d22_bafo_question_pack",
+    );
+    const roundLog = summary.rows.find(
+      (row) => row.code === "d23_bafo_round_log",
+    );
+
+    expect(questionPack?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "48k max",
+    });
+    expect(roundLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const bafoRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d22_bafo_question_pack|d23_bafo_round_log/.test(row),
+      )
+      .join("\n");
+
+    expect(bafoRows).toContain('"Yes"');
+    expect(bafoRows).toContain('"Claude Opus"');
+    expect(bafoRows).not.toContain("No dedicated prompt");
+  });
+
   it("derives response-stage prompt-backed labels from the generation registry", () => {
     const summary = buildSourceArtifactLifecycleSummary();
 
