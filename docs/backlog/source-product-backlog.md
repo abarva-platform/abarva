@@ -837,7 +837,9 @@ updated 19 d ago` on the proof event).
   enterprise-context ingestion before that promotion exists.
 - **Severity**: P3 (analytics / aVa chat capability gap).
 - **Workstream**: Analytics / aVa chat.
-- **Status**: `Candidate` — code-only, read-only, no migration and no production data mutation.
+- **Status**: `Shipped — deployed and live-proven` — code-only, read-only, no migration and no
+  production data mutation. Merged in PR #5462, deployed by ACA main run `30006567762`, and
+  signed-in proven on `app.abarva.ai` for the Apex AMS Source event.
 - **Dependencies**: existing `getSourceValueLedger()` read model, existing `AvaAnswerPacket` /
   `AgentAnswerRenderer` pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.
 - **Acceptance criteria**: Source's opt-in NDJSON event-chat route recognizes value-ledger /
