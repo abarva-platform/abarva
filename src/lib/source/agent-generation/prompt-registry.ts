@@ -279,6 +279,55 @@ const BAFO_ROUND_LOG_FIELDS = [
   "decision impact",
 ] as const;
 
+const RISK_ATTESTATION_FIELDS = [
+  "risk id",
+  "risk category",
+  "vendor / finalist",
+  "evidence basis",
+  "residual exposure",
+  "control or mitigation",
+  "attestation owner",
+  "accept / remediate / block decision",
+  "decision condition",
+  "evidence reference",
+] as const;
+
+const STEWARD_SIGNOFF_FIELDS = [
+  "sign-off item",
+  "governance owner",
+  "artifact or decision covered",
+  "status",
+  "approval basis",
+  "exception or dissent",
+  "condition to close",
+  "sign-off timestamp or gate-relative deadline",
+  "evidence reference",
+] as const;
+
+const SELECTION_MEMO_FIELDS = [
+  "selected vendor",
+  "sponsor decision",
+  "selection rationale",
+  "final economics",
+  "accepted risk conditions",
+  "contract conditions",
+  "transition prerequisites",
+  "appeals / dissent disposition",
+  "audit trail reference",
+] as const;
+
+const CONTRACT_RECORD_FIELDS = [
+  "contract reference",
+  "vendor legal name",
+  "effective date",
+  "term and renewal window",
+  "commercial terms snapshot",
+  "SLA / XLA commitments",
+  "transition obligations",
+  "open legal or operational condition",
+  "repository / evidence reference",
+] as const;
+
 const VENDOR_RESPONSE_INTAKE_FIELDS = [
   "vendor legal name",
   "submission receipt timestamp",
@@ -452,6 +501,30 @@ function formatBafoQuestionFields(): string {
 
 function formatBafoRoundLogFields(): string {
   return BAFO_ROUND_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatRiskAttestationFields(): string {
+  return RISK_ATTESTATION_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatStewardSignoffFields(): string {
+  return STEWARD_SIGNOFF_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatSelectionMemoFields(): string {
+  return SELECTION_MEMO_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatContractRecordFields(): string {
+  return CONTRACT_RECORD_FIELDS.map(
     (field, index) => `${index + 1}. ${field}`,
   ).join("\n");
 }
@@ -2454,6 +2527,371 @@ If the scorecard (d16) or pricing workbook (d19) has not been authored, DO NOT f
     },
   },
 
+  d25_risk_attestation: {
+    artifactCode: "d25_risk_attestation",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d24_decision_brief", "d23_bafo_round_log"],
+    upstreamOptional: [
+      "d16_scorecard",
+      "d18_disqualification_log",
+      "d19_pricing_workbook",
+      "d20_trap_log",
+      "d22_bafo_question_pack",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Risk Attestation (artifact d25_risk_attestation). This is the Sentinel-grade executive risk record behind a sourcing award: the residual commercial, security, concentration, operational, transition, legal, and geopolitical risks that leadership is knowingly accepting, remediating, or blocking before Selection. It is not a generic risk register and it is not a way to launder unapproved risk into a recommendation.
+
+Required structural sections:
+## §1 · Attestation answer
+## §2 · Residual risk register
+## §3 · Materiality and decision impact
+## §4 · Controls, mitigations, and acceptance conditions
+## §5 · Open blockers before Selection
+## §6 · Attestation signatures and evidence trail
+
+Required risk attestation fields:
+${formatRiskAttestationFields()}
+
+Writing and format requirements:
+- §1 states whether the event is ready for Selection from a risk standpoint: attested / conditionally attested / blocked.
+- §2 must be a table: Risk ID | Category | Vendor/finalist | Evidence basis | Residual exposure | Control/mitigation | Accept/remediate/block | Owner | Condition to close | Evidence reference.
+- Draw residual risk from the Decision Brief, BAFO Round Log, scorecard, disqualification rationale, trap log, pricing workbook, and uploaded evidence. Do not invent security findings, commercial exposure, vendor commitments, risk acceptance, or legal sign-off.
+- Separate risk acknowledged by the sourcing team from risk formally accepted by the accountable owner. A listed mitigation is not an attestation unless the signatory and evidence are present.
+- Where the Decision Brief recommends award despite a gap, turn that gap into an explicit risk condition rather than smoothing it away.
+- Markdown only. Tables expected. Keep language crisp enough for Sentinel, legal, finance, and the sponsor to sign or challenge.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Decision Brief (d24_decision_brief):",
+        upstream.d24_decision_brief ??
+          "(MISSING — do not fabricate an award recommendation or accepted risk posture; surface as a blocker)",
+        "",
+        "BAFO Round Log (d23_bafo_round_log):",
+        upstream.d23_bafo_round_log ??
+          "(MISSING — do not fabricate finalist concessions, closure status, or written acceptances; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer risk facts or acceptance from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability, security, and transition residuals");
+      bindOptional("d18_disqualification_log", "Disqualification Rationale", "threshold failures or no-evidenced-disqualification posture");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "financial exposure and normalized TCO basis");
+      bindOptional("d20_trap_log", "Pricing Trap Log", "unresolved or accepted commercial traps");
+      bindOptional("d22_bafo_question_pack", "BAFO Question Pack", "questions and proof requests that drove the BAFO round");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— DECISION-STAGE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED RISK EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED RISK ATTESTATION FIELDS —",
+        formatRiskAttestationFields(),
+        "",
+        "Draft the Risk Attestation per the system prompt. Keep risk identified, mitigation proposed, and risk formally accepted separate; do not invent accepted risks, controls, exposures, or sign-offs.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d26_steward_signoff: {
+    artifactCode: "d26_steward_signoff",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d24_decision_brief", "d25_risk_attestation"],
+    upstreamOptional: [
+      "d17_weight_log",
+      "d16_scorecard",
+      "d18_disqualification_log",
+      "d21_assumption_set",
+      "d23_bafo_round_log",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Governance Sign-off Record (artifact d26_steward_signoff). This is the Steward-controlled record that the sourcing process followed the governed evaluation, pricing, BAFO, risk, and decision rules before Selection. It is a sign-off ledger, not a narrative recap.
+
+Required structural sections:
+## §1 · Sign-off answer
+## §2 · Governance checklist
+## §3 · Exceptions, dissent, and conditions
+## §4 · Decision-rights and signatory map
+## §5 · Evidence trail
+
+Required governance sign-off fields:
+${formatStewardSignoffFields()}
+
+Writing and format requirements:
+- §1 states whether governance sign-off is recorded / conditional / blocked.
+- §2 must be a table: Sign-off item | Governance owner | Artifact/decision covered | Status | Approval basis | Exception or dissent | Condition to close | Evidence reference.
+- Confirm only what the upstream artifacts prove: weight lock, scorecard completion, disqualification handling, locked assumptions, BAFO closure, risk attestation, and decision brief sign-off.
+- Do not invent sponsor, finance, legal, Steward, Sentinel, or committee approval. If the signatory, status, or timestamp is absent, mark it as a gap and name the accountable role.
+- If a decision is ready with conditions, make the conditions explicit and preserve dissent rather than laundering it into a clean approval.
+- Markdown only. Make it scan like an approval ledger an executive assistant, Steward, or audit reviewer can use.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Decision Brief (d24_decision_brief):",
+        upstream.d24_decision_brief ??
+          "(MISSING — do not fabricate decision sign-off; surface as a blocker)",
+        "",
+        "Risk Attestation (d25_risk_attestation):",
+        upstream.d25_risk_attestation ??
+          "(MISSING — do not fabricate risk acceptance or Sentinel attestation; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM GOVERNANCE RECORD —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer approval or sign-off from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d17_weight_log", "Weight Governance Record", "locked criteria and scoring governance");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "scoring completion and reviewer coverage");
+      bindOptional("d18_disqualification_log", "Disqualification Rationale", "exclusions, appeals, or no-disqualification basis");
+      bindOptional("d21_assumption_set", "Locked Assumptions Record", "finance basis and pricing assumptions");
+      bindOptional("d23_bafo_round_log", "BAFO Round Log", "closed clarifications and written acceptances");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— DECISION-STAGE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED SIGN-OFF EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED GOVERNANCE SIGN-OFF FIELDS —",
+        formatStewardSignoffFields(),
+        "",
+        "Draft the Governance Sign-off Record per the system prompt. Keep approval, conditional approval, dissent, and open conditions separate; do not invent signatories, timestamps, or approvals.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d27_selection_memo: {
+    artifactCode: "d27_selection_memo",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [
+      "d24_decision_brief",
+      "d25_risk_attestation",
+      "d26_steward_signoff",
+    ],
+    upstreamOptional: [
+      "d23_bafo_round_log",
+      "d19_pricing_workbook",
+      "d16_scorecard",
+      "d28_contract_record",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Selection Memo (artifact d27_selection_memo). This is the sponsor-facing final selection statement that turns the executive decision into a named award path, with rationale, final economics, accepted risk conditions, contract conditions, transition prerequisites, and audit trail. It must not declare a vendor selected unless the Decision Brief, Risk Attestation, and Governance Sign-off Record support that selection.
+
+Required structural sections:
+## §1 · Selection answer
+## §2 · Selected vendor and rationale
+## §3 · Final economics and conditions
+## §4 · Accepted risks and controls
+## §5 · Contract and transition prerequisites
+## §6 · Appeals, dissent, and audit trail
+
+Required selection memo fields:
+${formatSelectionMemoFields()}
+
+Writing and format requirements:
+- §1 states selected / conditionally selected / blocked. If sponsor sign-off is missing, say the memo is draft pending sponsor approval.
+- §2 must connect the selected vendor to the Decision Brief's recommendation, not re-run evaluation from scratch.
+- §3 uses final economics only from BAFO, pricing, or contract evidence. Do not invent final pricing, concessions, effective dates, spend commitments, or productivity credits.
+- §4 carries forward every accepted risk condition from d25 and every governance condition from d26.
+- §5 names only evidenced contract and transition prerequisites. If contract evidence is not yet present, mark it as a Selection-to-Transition blocker rather than inventing terms.
+- §6 preserves appeals, dissent, and audit trail plainly enough for a future review.
+- Markdown only. Tables expected for conditions, risks, and prerequisites.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Decision Brief (d24_decision_brief):",
+        upstream.d24_decision_brief ??
+          "(MISSING — do not fabricate selected vendor or sponsor decision; surface as a blocker)",
+        "",
+        "Risk Attestation (d25_risk_attestation):",
+        upstream.d25_risk_attestation ??
+          "(MISSING — do not fabricate accepted risk conditions; surface as a blocker)",
+        "",
+        "Governance Sign-off Record (d26_steward_signoff):",
+        upstream.d26_steward_signoff ??
+          "(MISSING — do not fabricate governance sign-off; surface as a blocker)",
+        "",
+        "— OPTIONAL SELECTION EVIDENCE —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer final selection facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d23_bafo_round_log", "BAFO Round Log", "final concessions and written acceptances");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "normalized economics and final TCO basis");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability/evidence rationale behind the selected vendor");
+      bindOptional("d28_contract_record", "Contract Record", "signed contract evidence if already on file");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— SELECTION EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED SELECTION EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED SELECTION MEMO FIELDS —",
+        formatSelectionMemoFields(),
+        "",
+        "Draft the Selection Memo per the system prompt. Keep recommendation, sponsor decision, contract readiness, and transition prerequisites distinct; do not invent final pricing, selected vendors, signed approvals, or contract terms.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d28_contract_record: {
+    artifactCode: "d28_contract_record",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d27_selection_memo"],
+    upstreamOptional: [
+      "d24_decision_brief",
+      "d25_risk_attestation",
+      "d23_bafo_round_log",
+      "d19_pricing_workbook",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Contract Record (artifact d28_contract_record). This is the controlled, evidence-backed snapshot of the signed contract or contract-ready legal record that Selection needs before Transition. It is not a generated contract and it must not invent legal terms.
+
+Required structural sections:
+## §1 · Contract record status
+## §2 · Signed contract reference
+## §3 · Commercial terms snapshot
+## §4 · SLA/XLA, transition, and value commitments
+## §5 · Open legal or operational conditions
+## §6 · Repository and evidence trail
+
+Required contract record fields:
+${formatContractRecordFields()}
+
+Writing and format requirements:
+- §1 states signed/on file, contract-ready pending signature, or blocked. Do not mark signed unless uploaded evidence or upstream artifacts say a signed contract exists.
+- §2 must identify the contract reference, repository/source, vendor legal name, effective date, term, and renewal/notice window only when evidenced.
+- §3 and §4 summarize commercial, SLA/XLA, transition, value, and acceptance commitments from signed contract evidence, BAFO, pricing, and the selection memo. Do not invent terms, dates, credits, obligations, or repository locations.
+- §5 lists open legal or operational conditions that block Transition.
+- §6 names the evidence files and artifact references. If the signed contract itself has not been uploaded or accepted, the record is a gap log, not a contract of record.
+- Markdown only. This artifact should read like a concise legal/procurement control record, not a narrative sales summary.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Selection Memo (d27_selection_memo):",
+        upstream.d27_selection_memo ??
+          "(MISSING — do not fabricate a selected vendor, signed contract, or transition authority; surface as a blocker)",
+        "",
+        "— OPTIONAL CONTRACT BASIS —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer contract facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d24_decision_brief", "Decision Brief", "award rationale and sponsor conditions");
+      bindOptional("d25_risk_attestation", "Risk Attestation", "accepted risks and controls that must appear in the record");
+      bindOptional("d23_bafo_round_log", "BAFO Round Log", "final concessions and written acceptances");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "pricing baseline and commercial snapshot");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— SELECTION EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED CONTRACT EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED CONTRACT RECORD FIELDS —",
+        formatContractRecordFields(),
+        "",
+        "Draft the Contract Record per the system prompt. Do not invent signed contracts, effective dates, repository references, SLA credits, transition obligations, or legal terms.",
+      );
+      return lines.join("\n");
+    },
+  },
+
   d29_transition_plan: {
     artifactCode: "d29_transition_plan",
     version: 1,
@@ -2463,7 +2901,7 @@ If the scorecard (d16) or pricing workbook (d19) has not been authored, DO NOT f
     upstreamOptional: [
       "d24_decision_brief",
       "d25_risk_attestation",
-      "d26_signoff_packet",
+      "d26_steward_signoff",
       "d19_pricing_workbook",
       "d20_trap_log",
       "d22_bafo_question_pack",
@@ -2531,7 +2969,7 @@ Writing and format requirements:
 
       bindOptional("d24_decision_brief", "Decision Brief", "award rationale and conditions");
       bindOptional("d25_risk_attestation", "Risk Attestation", "accepted residual risk and controls");
-      bindOptional("d26_signoff_packet", "Sign-off Packet", "sponsor/legal/finance approvals");
+      bindOptional("d26_steward_signoff", "Governance Sign-off Record", "sponsor/legal/finance approvals");
       bindOptional("d19_pricing_workbook", "Pricing Workbook", "transition fees and assumptions");
       bindOptional("d20_trap_log", "Pricing Trap Log", "commercial traps that survive into transition");
       bindOptional("d22_bafo_question_pack", "BAFO Question Pack", "vendor commitments from final negotiations");
