@@ -292,6 +292,40 @@ const RESPONSE_COMPLETENESS_DIMENSIONS = [
   "evidence pointers and file references",
 ] as const;
 
+const EVALUATION_SCORECARD_REQUIREMENTS = [
+  "locked criteria and weight version",
+  "vendor-by-criterion scores",
+  "evaluator rationale for each material score",
+  "evidence citation for every score",
+  "pass/fail gate result",
+  "two-rater coverage and deviation reconciliation",
+  "disqualification / exclusion flags",
+  "weighted totals and final rank",
+] as const;
+
+const EVALUATION_WEIGHT_LOG_FIELDS = [
+  "weight set version",
+  "criterion id and definition",
+  "weight percentage",
+  "business rationale",
+  "mandatory / pass-fail status",
+  "approval owner",
+  "lock timestamp or gate-relative deadline",
+  "change reason",
+  "response/scoring freeze confirmation",
+] as const;
+
+const DISQUALIFICATION_LOG_FIELDS = [
+  "vendor",
+  "rule or threshold triggered",
+  "evidence basis",
+  "decision owner",
+  "reviewer / legal sign-off",
+  "debrief implication",
+  "appeal or revisit rule",
+  "downstream scoring treatment",
+] as const;
+
 function formatVendorResponseControlSections(): string {
   return VENDOR_RESPONSE_CONTROL_SECTIONS.map((section, index) =>
     [
@@ -335,6 +369,24 @@ function formatVendorQaLogFields(): string {
 function formatResponseCompletenessDimensions(): string {
   return RESPONSE_COMPLETENESS_DIMENSIONS.map(
     (dimension, index) => `${index + 1}. ${dimension}`,
+  ).join("\n");
+}
+
+function formatEvaluationScorecardRequirements(): string {
+  return EVALUATION_SCORECARD_REQUIREMENTS.map(
+    (requirement, index) => `${index + 1}. ${requirement}`,
+  ).join("\n");
+}
+
+function formatEvaluationWeightLogFields(): string {
+  return EVALUATION_WEIGHT_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatDisqualificationLogFields(): string {
+  return DISQUALIFICATION_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
   ).join("\n");
 }
 
@@ -1212,6 +1264,290 @@ Writing and format requirements:
         formatUploadedEvidence(ctx),
         "",
         "Draft the Response Completeness Report per the system prompt. Make the evaluation gate decision explicit, conservative, and vendor-specific. Do not rank vendors, score merit, invent missing submissions, or treat unsupported claims as complete.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d17_weight_log: {
+    artifactCode: "d17_weight_log",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d09_rfp_pack"],
+    upstreamOptional: [
+      "d01_strategy_memo",
+      "d05_scope_memo",
+      "d11_response_checklist",
+      "d15_response_completeness",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Weight Governance Record (artifact d17_weight_log). This is the control record that proves evaluation criteria and weights were defined, approved, and locked before vendor scoring. It is not a scoring workbook and must not retrofit weights to justify a preferred result.
+
+Required structural sections:
+## §1 · Weight-set answer
+## §2 · Criteria definitions
+## §3 · Version history
+## §4 · Approver signatures
+## §5 · Change rationale
+## §6 · Lock status and scoring freeze rule
+
+Required governance fields:
+${formatEvaluationWeightLogFields()}
+
+Writing and format requirements:
+- §1 states whether the weight set is locked / conditionally locked / blocked, and what approval is still missing.
+- §2 must include a table: Criterion ID | Criterion | Definition | Weight % | Mandatory/pass-fail | Evidence expected | Rationale.
+- §3 preserves version history. Do not backdate or invent approval timestamps; use gate-relative deadlines when exact timestamps are missing.
+- §4 names the approver roles and evidence basis. If signature evidence is missing, show owner/action, not a fake signature.
+- §5 explains any weight change and whether it happened before or after response receipt. Post-response changes must be flagged as governance risk.
+- §6 states the lock rule: d16 scoring may not begin until the approved weight set is locked and the response/scoring freeze is confirmed.
+- Internal governance language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Keep it audit-ready and concise.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "RFP Package (d09_rfp_pack) — evaluation criteria and response rules issued to vendors:",
+        upstream.d09_rfp_pack ??
+          "(MISSING — do not fabricate criteria or weights; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer approval or weights from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "evaluation priorities");
+      bindOptional("d05_scope_memo", "Scope Memo", "scope and service boundaries");
+      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "response fields that support criteria");
+      bindOptional("d15_response_completeness", "Response Completeness Report", "vendors admitted or conditionally admitted");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— EVALUATION GOVERNANCE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED EVALUATION EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "Draft the Weight Governance Record per the system prompt. If approved weight evidence is not present, produce the governance shell with explicit owner actions and lock blockers; do not invent criteria, percentages, signatures, or timestamps.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d16_scorecard: {
+    artifactCode: "d16_scorecard",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: [
+      "d17_weight_log",
+      "d13_vendor_responses",
+      "d15_response_completeness",
+    ],
+    upstreamOptional: [
+      "d09_rfp_pack",
+      "d11_response_checklist",
+      "d14_qa_log",
+      "d18_disqualification_log",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Evaluation Scorecard (artifact d16_scorecard). This is the evidence-cited scoring workbook for admitted vendors against locked criteria. It can explain a ranking, but it must never invent scores, criteria, evaluators, evidence citations, or a preferred vendor to fill blanks.
+
+Required structural sections:
+## §1 · Evaluation answer
+## §2 · Locked weights
+## §3 · Vendor scores
+## §4 · Evaluator rationale
+## §5 · Evidence citations
+## §6 · Dissent, deviation reconciliation, and final rank
+## §7 · Pricing / BAFO handoff
+
+Scorecard requirements:
+${formatEvaluationScorecardRequirements()}
+
+Writing and format requirements:
+- §1 leads with an evidence-limited answer: ranked / conditionally ranked / blocked. Name the exact reason if ranking is blocked.
+- §2 must mirror d17 locked criteria and weights. Do not change weights in d16; disputed weights go back to d17.
+- §3 must include a table: Vendor | Criterion | Weight | Score | Weighted score | Evidence citation | Evaluator rationale | Pass/fail flags | Confidence.
+- §4 preserves evaluator rationale and calls out where the second rater is missing or deviations exceed the governance threshold.
+- §5 cites source files, artifact names, or uploaded evidence for every material score. No evidence means no scored claim.
+- §6 summarizes final rank only for vendors admitted by d15 and not excluded by d18. Conditional vendors must be labeled conditional.
+- §7 states what can move to d19 pricing and BAFO: score impacts, unresolved conditions, and challenge questions.
+- Internal buyer/procurement language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Tables are expected. Keep the workbook decisive but audit-defensible.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Weight Governance Record (d17_weight_log):",
+        upstream.d17_weight_log ??
+          "(MISSING — do not fabricate scoring criteria or weights; scorecard is blocked until weights are locked)",
+        "",
+        "Vendor Response Pack (d13_vendor_responses):",
+        upstream.d13_vendor_responses ??
+          "(MISSING — do not fabricate vendor submissions, claims, or evidence)",
+        "",
+        "Response Completeness Report (d15_response_completeness):",
+        upstream.d15_response_completeness ??
+          "(MISSING — do not admit vendors to scoring without completeness gate evidence)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing scoring facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d09_rfp_pack", "RFP Package", "criteria as issued to vendors");
+      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "response fields that support criteria");
+      bindOptional("d14_qa_log", "Q&A Parity Log", "binding addenda that affect criteria or evidence");
+      bindOptional("d18_disqualification_log", "Disqualification Log", "vendors excluded before or during scoring");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— EVALUATION EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED EVALUATION EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED SCORECARD CONTROLS —",
+        formatEvaluationScorecardRequirements(),
+        "",
+        "Draft the Evaluation Scorecard per the system prompt. If evaluator scores or evidence citations are not present, produce the scorecard structure with explicit missing-score gaps, owner actions, and blocked/conditional ranking; do not invent scores, vendors, rankings, or evidence citations.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d18_disqualification_log: {
+    artifactCode: "d18_disqualification_log",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d15_response_completeness"],
+    upstreamOptional: [
+      "d09_rfp_pack",
+      "d13_vendor_responses",
+      "d14_qa_log",
+      "d16_scorecard",
+      "d17_weight_log",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Disqualification Rationale (artifact d18_disqualification_log). This is the defensible internal record for any vendor eliminated, excluded from scoring, or treated as conditional because a rule, threshold, compliance issue, or completeness failure was triggered. It is not a place to rationalize a preference after the fact.
+
+Required structural sections:
+## §1 · Disqualification answer
+## §2 · Vendor
+## §3 · Threshold or failure reason
+## §4 · Evidence
+## §5 · Reviewer decision
+## §6 · Appeal or revisit rule
+
+Required disqualification fields:
+${formatDisqualificationLogFields()}
+
+Writing and format requirements:
+- §1 states whether there are disqualifications / conditional admissions / no evidenced disqualifications. If no evidence supports a disqualification, say so directly and do not invent one.
+- §2 and §3 must include a table: Vendor | Status | Rule/threshold | Triggered by | Evidence basis | Decision owner | Reviewer/legal status | Debrief implication | Revisit rule.
+- §4 cites the response completeness report, vendor response evidence, RFP criteria, Q&A/addenda, scorecard, or uploaded source file that supports the decision.
+- §5 preserves who made or must make the decision. Missing review is an owner action, not an implied approval.
+- §6 states whether the vendor can cure, appeal, or be revisited, and what downstream artifacts must exclude or conditionally include the vendor.
+- Internal risk/procurement/legal language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Keep it tight, factual, and debrief-safe.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Response Completeness Report (d15_response_completeness):",
+        upstream.d15_response_completeness ??
+          "(MISSING — do not fabricate disqualification reasons; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing disqualification evidence from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d09_rfp_pack", "RFP Package", "published rules and evaluation criteria");
+      bindOptional("d13_vendor_responses", "Vendor Response Pack", "submission evidence and exceptions");
+      bindOptional("d14_qa_log", "Q&A Parity Log", "binding addenda or changed rules");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "score thresholds and pass/fail flags");
+      bindOptional("d17_weight_log", "Weight Governance Record", "locked criteria and thresholds");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— DISQUALIFICATION EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED EVALUATION EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "Draft the Disqualification Rationale per the system prompt. If no vendor is evidenced as disqualified, produce an explicit no-evidenced-disqualification record with the review controls and revisit rule; do not invent eliminated vendors or legal conclusions.",
       );
       return lines.join("\n");
     },
