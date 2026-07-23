@@ -311,7 +311,7 @@ export async function buildArtifactQualityGovernedAnswer(
     businessImplication:
       summary.quality.hardFailCount > 0
         ? "The event should not treat the artifact set as decision-ready until missing required artifacts, draft-finality, and content/consulting-gate blockers are cleared."
-        : "The artifact set has enough lifecycle signal for a reviewer to focus on remaining warnings and final acceptance rather than hunting through raw files.",
+        : "The artifact set has enough lifecycle signal for a reviewer to focus on remaining warnings and final acceptance rather than searching through loose files.",
     recommendation:
       summary.quality.missingRequiredCount > 0
         ? "Start with the missing required artifacts, then accept reviewed client-final versions back into Source so downstream packs use the authoritative version."
@@ -337,18 +337,30 @@ export async function buildArtifactQualityGovernedAnswer(
       },
     ],
     citations,
+    gaps:
+      registeredCount === 0
+        ? [
+            {
+              id: "artifact-quality-required-files-missing",
+              label: "Required artifact capture has not started",
+              detail:
+                "Source has the expected artifact standard for this event, but no accepted files are available yet. Upload or accept the required workshop and decision files before using this answer as a readiness view.",
+              severity: "high",
+            },
+          ]
+        : [],
     caveats: [
       {
         id: "artifact-quality-canonical-standards",
-        label: "Canonical standards plus registry rows",
+        label: "Standards plus accepted Source records",
         detail:
-          "Missing-artifact rows come from Source's canonical artifact standards; citations attach only to real source_artifacts rows that passed the governance gate.",
+          "Missing artifacts come from Source's artifact standards; citations attach only to accepted Source artifact records that passed the governance gate.",
       },
       {
         id: "artifact-quality-indexing-known-gap",
         label: "Persistence is not full enterprise promotion",
         detail:
-          "The answer proves Azure/Postgres registry persistence and parse/index status from source_artifacts; it does not claim OCR, transcription, vector indexing, or enterprise-context promotion unless those statuses already exist.",
+          "The answer confirms stored artifact records and visible processing status; it does not claim OCR, transcription, search readiness, or enterprise-context promotion unless those statuses already exist.",
       },
     ],
     retrievalSummary: {
