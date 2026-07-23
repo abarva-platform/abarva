@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-signed-in-proven`
 
 ## Plain-English Summary
 
@@ -42,6 +42,7 @@ The upload route also returns the existing substrate-sync receipt in its JSON re
 
 - `npm test -- --runTestsByPath src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx --runInBand` — pass, 15/15. Same pre-existing duplicate Jest manual mock warnings observed.
 - `npm test -- --runTestsByPath src/lib/source/artifact-registry/__tests__/upload-contract.test.ts --runInBand` — pass, 4/4. Same pre-existing duplicate Jest manual mock warnings observed.
+- `npm test -- --runTestsByPath src/lib/source/artifact-registry/__tests__/upload-text-extraction.test.ts 'src/app/api/v1/source/[eventId]/artifacts/upload/__tests__/route.test.ts' src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx src/lib/source/artifact-registry/__tests__/upload-contract.test.ts --runInBand` — pass on 2026-07-23, 34/34 across the combined ingest regression set. Same pre-existing duplicate Jest manual mock warnings observed.
 - `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx 'src/app/api/v1/source/[eventId]/artifacts/upload/route.ts' src/lib/source/artifact-registry/__tests__/upload-contract.test.ts` — pass.
 - `npm run release:check -- --base origin/main --head HEAD` — pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — blocked by pre-existing missing optional Home graph packages in unrelated files: `@xyflow/react` and `@dagrejs/dagre`.
@@ -54,8 +55,13 @@ Merge through PR into `main`; the repo-owned ACA main deploy workflow builds and
 
 - Repo-owned deploy workflow: required for production rollout.
 - Shared runtime mutators: none in this PR.
-- Approved image digest: to be recorded after ACA main deploy completes.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: later independently verified production revision
+  `ca-abarva-web-lab-eastus--me89b7e4d`, image
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:24e692b4213213fede4a7921ffe8a53d3a1b9215989c0f81bb2cd308b3ff5185`,
+  tag `main-e89b7e4d`, contains PR #5434.
+- ACA runtime invariant: passed independently on 2026-07-23 for the superseding
+  production revision above; web and worker images matched and 100% traffic was on
+  that revision.
 - Worker image invariant: no worker image changes expected.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes, Source Files workspace should show the session-evidence capture panel. A real production upload is optional and should use only safe test data.
@@ -66,10 +72,16 @@ Revert the PR and redeploy through the repo-owned ACA main workflow. That remove
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
-- Merge SHA: to be added after merge.
-- ACA deploy run / digest: to be added after deployment.
-- Signed-in browser proof: to be added after deployment.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5434.
+- Merge SHA: `8ac1adb5272208d9689678aec90600425344df15`.
+- ACA deploy run / digest: ACA main run `29982980000` succeeded for the merge SHA;
+  later production revision `ca-abarva-web-lab-eastus--me89b7e4d` was independently
+  invariant-proven with digest
+  `sha256:24e692b4213213fede4a7921ffe8a53d3a1b9215989c0f81bb2cd308b3ff5185`.
+- Signed-in browser proof: non-mutating Files workspace proof captured in
+  `audit-artifacts/source-ingest-files-workspace-live-proof-20260723/ui-proof-summary.json`;
+  it confirms the Meeting Notes and Workshop Output capture lanes and honest
+  Azure/Postgres persistence copy render on `app.abarva.ai`.
 
 ## Known Gaps
 
