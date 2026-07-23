@@ -59,16 +59,50 @@ export interface ArtifactDepthStandard {
   maxTokens: number;
 }
 
-const DEPTH_BY_ARTIFACT: Partial<Record<DeliverableKey, ArtifactDepthStandard>> = {
+const DEPTH_BY_ARTIFACT: Partial<
+  Record<DeliverableKey, ArtifactDepthStandard>
+> = {
   charter: { targetWords: "700-1,200", minWords: 450, maxTokens: 6000 },
-  discovery_report: { targetWords: "3,000-5,000", minWords: 2500, maxTokens: 34000 },
-  root_cause_worksheet: { targetWords: "1,500-2,500", minWords: 1200, maxTokens: 24000 },
-  solution_approach_options: { targetWords: "2,000-3,500", minWords: 1500, maxTokens: 30000 },
-  target_state_architecture: { targetWords: "3,500-6,000", minWords: 2500, maxTokens: 36000 },
-  solution_design: { targetWords: "3,500-6,000", minWords: 2500, maxTokens: 36000 },
-  execution_roadmap: { targetWords: "3,000-5,000", minWords: 2500, maxTokens: 32000 },
-  business_case: { targetWords: "3,000-5,000", minWords: 2500, maxTokens: 32000 },
-  handoff_package: { targetWords: "2,500-4,000", minWords: 2000, maxTokens: 30000 },
+  discovery_report: {
+    targetWords: "3,000-5,000",
+    minWords: 2500,
+    maxTokens: 34000,
+  },
+  root_cause_worksheet: {
+    targetWords: "1,500-2,500",
+    minWords: 1200,
+    maxTokens: 24000,
+  },
+  solution_approach_options: {
+    targetWords: "2,000-3,500",
+    minWords: 1500,
+    maxTokens: 30000,
+  },
+  target_state_architecture: {
+    targetWords: "3,500-6,000",
+    minWords: 2500,
+    maxTokens: 36000,
+  },
+  solution_design: {
+    targetWords: "3,500-6,000",
+    minWords: 2500,
+    maxTokens: 36000,
+  },
+  execution_roadmap: {
+    targetWords: "3,000-5,000",
+    minWords: 2500,
+    maxTokens: 32000,
+  },
+  business_case: {
+    targetWords: "3,000-5,000",
+    minWords: 2500,
+    maxTokens: 32000,
+  },
+  handoff_package: {
+    targetWords: "2,500-4,000",
+    minWords: 2000,
+    maxTokens: 30000,
+  },
 };
 
 export function depthStandardForArtifact(
@@ -97,8 +131,12 @@ function maxWordsFromTargetRange(targetWords: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-export function maximumWordCountForArtifact(artifact: DeliverableKey): number | undefined {
-  return maxWordsFromTargetRange(depthStandardForArtifact(artifact).targetWords);
+export function maximumWordCountForArtifact(
+  artifact: DeliverableKey,
+): number | undefined {
+  return maxWordsFromTargetRange(
+    depthStandardForArtifact(artifact).targetWords,
+  );
 }
 
 export function premiumGoldenBarOptionsForArtifact(
@@ -163,7 +201,15 @@ Classify substantive claims naturally in the artifact:
 
 Use client-facing language such as "current evidence supports", "stakeholder notes suggest",
 "this remains an assumption until", and "this cannot be finalized until". Do not invent values,
-ROI, named owners, sponsor approval, or control readiness.`;
+ROI, named owners, sponsor approval, or control readiness.
+
+NUMERIC AND DATE CLAIM RULE
+- Every client-facing sentence containing a number, date, dollar amount, or percentage must include
+  its supporting [n] citation in that same sentence.
+- If the value is a planning hypothesis, label that sentence [ASSUMPTION TO VALIDATE].
+- If the value is unknown, use [CLIENT TO COMPLETE] or [EVIDENCE MISSING]; do not estimate it.
+- Do not print a generated-on date, target date, timeline, page count, maturity score, or percentage
+  unless it is evidence-backed or explicitly labeled as an assumption.`;
 }
 
 function evidencePriorityRuleBlock(): string {
@@ -184,7 +230,8 @@ Do not write a polished consulting document that fails to use the strongest avai
 }
 
 function metricsThatMatterBlock(ctx: SolutionContext): string {
-  if (!ctx.metricsThatMatter?.length) return "- [none extracted as first-class metrics]";
+  if (!ctx.metricsThatMatter?.length)
+    return "- [none extracted as first-class metrics]";
   return ctx.metricsThatMatter
     .map((metric) => {
       const parts = [
@@ -198,15 +245,20 @@ function metricsThatMatterBlock(ctx: SolutionContext): string {
 }
 
 function evidenceTaxonomyBlock(ctx: SolutionContext): string {
-  if (!ctx.evidenceTaxonomy?.length) return "- [none extracted as first-class taxonomy]";
+  if (!ctx.evidenceTaxonomy?.length)
+    return "- [none extracted as first-class taxonomy]";
   return ctx.evidenceTaxonomy
     .map((item) => {
       const parts = [
         item.category,
         item.volume ? `volume=${item.volume}` : undefined,
         item.rate ? `rate=${item.rate}` : undefined,
-        item.averageResolutionDays ? `avg_resolution_days=${item.averageResolutionDays}` : undefined,
-        item.manualTouchHours ? `manual_touch_hours=${item.manualTouchHours}` : undefined,
+        item.averageResolutionDays
+          ? `avg_resolution_days=${item.averageResolutionDays}`
+          : undefined,
+        item.manualTouchHours
+          ? `manual_touch_hours=${item.manualTouchHours}`
+          : undefined,
         item.riskLevel ? `risk=${item.riskLevel}` : undefined,
         item.owner ? `owner=${item.owner}` : undefined,
       ].filter(Boolean);
@@ -216,7 +268,8 @@ function evidenceTaxonomyBlock(ctx: SolutionContext): string {
 }
 
 function missingInputsActionBlock(ctx: SolutionContext): string {
-  if (!ctx.clientActionableMissingInputs?.length) return "- [none promoted as client-actionable inputs]";
+  if (!ctx.clientActionableMissingInputs?.length)
+    return "- [none promoted as client-actionable inputs]";
   return ctx.clientActionableMissingInputs
     .map(
       (input) =>
@@ -226,7 +279,9 @@ function missingInputsActionBlock(ctx: SolutionContext): string {
 }
 
 function clientMoveReference(ctx: SolutionContext): string {
-  return ctx.useCase ?? ctx.useCaseCandidate ?? ctx.problemSeed ?? "client move";
+  return (
+    ctx.useCase ?? ctx.useCaseCandidate ?? ctx.problemSeed ?? "client move"
+  );
 }
 
 function p1Assignment(): string {
@@ -418,6 +473,97 @@ Visual requirements:
 - Use inline SVGs and real tables, not prose-only sections.`;
 }
 
+function p3SolutionDesignAssignment(ctx?: SolutionContext): string {
+  const moveReference = ctx ? clientMoveReference(ctx) : "this Move";
+  return `PHASE-SPECIFIC ASSIGNMENT — SOLUTION DESIGN SPECIFICATION
+Purpose: explain how the proposed solution for ${moveReference} works from user event through
+human decision, system action, control evidence, and measurement. This is a design draft for
+review, not an implementation-complete claim and not a repeat of the Target Architecture.
+
+Decision focus:
+- show what the banker or operations user does, what the AI assist does, and what remains human-owned
+- trace each material design choice to current-state evidence or an explicit assumption
+- show the systems and data touched without inventing integrations or deployment commitments
+- make exception handling, approval, override, audit, and measurement behavior explicit
+
+Required exhibits — render each as a real diagram or decision table, not prose:
+- Experience Flow
+- Agent Workflow with human approval and override
+- Exception Handling Flow
+- Control Points and audit evidence
+- Data Flow across the evidence-backed systems
+
+Required sections:
+- Executive design answer and decision needed
+- Experience and workflow design
+- Human + AI responsibilities
+- Exception and escalation design
+- Data, integration, identity, audit, and model-risk controls
+- Measurement and observability
+- Open inputs and implementation decisions
+
+Length discipline:
+- Target 3,500-6,000 words / approximately 8-12 visual-first pages.
+- Do not repeat the full architecture, operating model, sourcing strategy, or evidence register.
+- Prefer exhibits and concise captions over architecture essays.`;
+}
+
+function p3OperatingModelAssignment(ctx?: SolutionContext): string {
+  const moveReference = ctx ? clientMoveReference(ctx) : "this Move";
+  return `PHASE-SPECIFIC ASSIGNMENT — OPERATING MODEL DESIGN
+Purpose: define how work for ${moveReference} will be owned, governed, reviewed, and improved after
+the solution exists. This is a practical operating model, not a solution architecture or PMO manual.
+
+Required exhibits — render each as a real table or diagram:
+- RACI
+- Decision Rights Matrix
+- Operating Cadence
+- Escalation Path
+
+Required sections:
+- Executive operating-model answer and decisions needed
+- Human + AI work split by activity
+- Roles, accountability, and decision rights by title
+- Operating cadence and service-management loop
+- Control ownership, override, exception, and escalation path
+- Adoption, workforce, skills, and change implications
+- Measures, review triggers, and unresolved inputs
+
+Length discipline:
+- Target 1,800-3,000 words / approximately 6-10 table-rich pages.
+- Stop at 3,000 words. Do not reproduce the architecture, detailed workflow specification,
+  sourcing options, implementation roadmap, or source register in the body.
+- Use plain operating language; avoid governance-legal and generic PMO prose.`;
+}
+
+function p3SourcingStrategyAssignment(ctx?: SolutionContext): string {
+  const moveReference = ctx ? clientMoveReference(ctx) : "this Move";
+  return `PHASE-SPECIFIC ASSIGNMENT — SOURCING STRATEGY BRIEF
+Purpose: decide the build, buy, partner, or hybrid path for ${moveReference}. This is a concise
+options paper, not a procurement event, vendor selection, architecture, or implementation plan.
+
+Required exhibits — render each as a real decision exhibit:
+- Options Matrix comparing build, buy, partner, and hybrid
+- Decision Box with recommendation, rationale, guardrails, and decisions still open
+
+Required sections:
+- Executive sourcing recommendation and decision needed
+- Capability boundary: retain, acquire, and partner
+- Evidence-backed evaluation criteria
+- Build / buy / partner / hybrid options and tradeoffs
+- Recommended path, guardrails, and reversibility
+- Commercial, delivery, security, model-risk, data, and concentration considerations
+- Next market-testing or diligence actions
+
+Evidence discipline:
+- Do not invent vendor names, prices, rates, savings, dates, delivery durations, or market facts.
+- Any planning range must be labeled [ASSUMPTION TO VALIDATE]; client facts require [n].
+
+Length discipline:
+- Target 1,800-3,000 words / approximately 5-8 pages.
+- Stop at 3,000 words. Do not repeat the full target architecture or operating model.`;
+}
+
 function genericPhaseAssignment(phase: number): string {
   const byPhase: Record<number, string> = {
     0: "Frame the opportunity, evidence, value hypothesis, known/unknowns, and P1 recommendation.",
@@ -434,8 +580,16 @@ export function phaseAssignmentForArtifact(args: {
   context?: SolutionContext;
 }): string {
   if (args.artifact === "charter" || args.phase === 1) return p1Assignment();
-  if (args.artifact === "discovery_report" || args.phase === 2) return p2Assignment();
-  if (args.artifact === "target_state_architecture" || args.phase === 3) return p3FutureStateAssignment(args.context);
+  if (args.artifact === "discovery_report" || args.phase === 2)
+    return p2Assignment();
+  if (args.artifact === "target_state_architecture")
+    return p3FutureStateAssignment(args.context);
+  if (args.artifact === "solution_design")
+    return p3SolutionDesignAssignment(args.context);
+  if (args.artifact === "operating_model_design")
+    return p3OperatingModelAssignment(args.context);
+  if (args.artifact === "sourcing_strategy")
+    return p3SourcingStrategyAssignment(args.context);
   return genericPhaseAssignment(args.phase);
 }
 
@@ -449,7 +603,9 @@ export function renderStrategicMovesArtifactBrief(args: {
   const { context: ctx } = args;
   const depth = depthStandardForArtifact(args.artifact);
   const evidenceSignals = [
-    ctx.currentState ? "current-state broker bundle is bound in full below" : undefined,
+    ctx.currentState
+      ? "current-state broker bundle is bound in full below"
+      : undefined,
     ctx.humanApprovalNotes.length ? "human review notes are bound" : undefined,
     ctx.decisions.length ? "approved decisions are bound" : undefined,
     ctx.evidenceNeeds?.length ? "evidence needs are captured" : undefined,
@@ -489,7 +645,7 @@ ${missingInputsActionBlock(ctx)}
 
 4. Readiness and gates
 - Draft/final mode: ${args.generationMode}
-- Draft caveat when applicable: ${args.generationMode === "draft" ? args.draftCaveat ?? STRATEGIC_MOVES_DRAFT_CAVEAT : "Not a draft artifact."}
+- Draft caveat when applicable: ${args.generationMode === "draft" ? (args.draftCaveat ?? STRATEGIC_MOVES_DRAFT_CAVEAT) : "Not a draft artifact."}
 - Final artifacts require capture complete, sponsor/owner conditions satisfied, evidence covered or waived, gate approval, golden-bar pass, and no hard blockers.
 
 5. Phase-specific assignment
