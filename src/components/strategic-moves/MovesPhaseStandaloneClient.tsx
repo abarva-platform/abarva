@@ -671,6 +671,16 @@ export function MovesPhaseStandaloneClient({
         let pendingBuffer = "";
         let committedVisible = "";
         const streamArtifacts: Artifact[] = [];
+        const buildVisibleAnswer = (visibleText: string) =>
+          buildMovesChatAvaAnswerPacket({
+            move,
+            phase,
+            question: trimmed,
+            visibleText,
+            phaseTallies,
+            readinessPack: finderReadinessPack,
+            streamArtifacts,
+          });
 
         while (true) {
           const { done, value } = await reader.read();
@@ -682,9 +692,10 @@ export function MovesPhaseStandaloneClient({
           committedVisible += visibleText;
           pendingBuffer = remaining;
           const display = committedVisible.trimEnd();
+          const agentAnswer = buildVisibleAnswer(display);
           setAvaThread((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, text: display } : m,
+              m.id === assistantId ? { ...m, text: display, agentAnswer } : m,
             ),
           );
         }
@@ -696,15 +707,7 @@ export function MovesPhaseStandaloneClient({
         }
 
         const finalText = committedVisible.trimEnd();
-        const agentAnswer = buildMovesChatAvaAnswerPacket({
-          move,
-          phase,
-          question: trimmed,
-          visibleText: finalText,
-          phaseTallies,
-          readinessPack: finderReadinessPack,
-          streamArtifacts,
-        });
+        const agentAnswer = buildVisibleAnswer(finalText);
         setAvaThread((prev) =>
           prev.map((m) =>
             m.id === assistantId ? { ...m, text: finalText, agentAnswer } : m,
