@@ -52,6 +52,9 @@ function contractStepButton(name: RegExp | string): HTMLElement {
   return stepButton;
 }
 
+const mockRouterPush = jest.fn();
+const mockRouterRefresh = jest.fn();
+
 jest.mock("next/link", () => {
   return function MockLink({
     children,
@@ -71,7 +74,8 @@ jest.mock("next/link", () => {
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
-    refresh: jest.fn(),
+    push: mockRouterPush,
+    refresh: mockRouterRefresh,
   }),
 }));
 
@@ -242,6 +246,8 @@ describe("MovesPhaseStandaloneClient", () => {
   }>;
 
   beforeEach(() => {
+    mockRouterPush.mockReset();
+    mockRouterRefresh.mockReset();
     window.scrollTo = jest.fn();
     window.open = jest.fn(() => ({}) as Window);
     uploadedEvidenceArtifacts = [];
@@ -535,6 +541,38 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   describe("MOVES-UI-003 rail collapse/expand toggle", () => {
+    it("keeps compact phase and workspace controls reachable when the desktop rail is hidden", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const compactNav = screen.getByLabelText("Compact move navigation");
+      const phaseSelect =
+        within(compactNav).getByLabelText("Switch move phase");
+      expect(phaseSelect).toBeInTheDocument();
+      expect(
+        within(compactNav).getByRole("tab", { hidden: true, name: "Stage" }),
+      ).toHaveAttribute("aria-selected", "true");
+
+      fireEvent.click(
+        within(compactNav).getByRole("tab", { hidden: true, name: "Files" }),
+      );
+      expect(
+        screen.getByRole("heading", { name: "Files & Evidence" }),
+      ).toBeInTheDocument();
+
+      fireEvent.change(phaseSelect, { target: { value: "2" } });
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        "/strategic-moves/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase/2",
+      );
+    });
+
     it("keeps the collapse toggle available even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -686,8 +724,16 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getAllByText("0 of 2 met").length).toBeGreaterThan(0);
       // P4/P5 are "upcoming" -> Not reached.
       expect(screen.getAllByText("Not reached").length).toBe(2);
-      // Approver is always the static "Sponsor" label, once per phase row.
-      expect(within(overview).getAllByText("Sponsor").length).toBe(6);
+      expect(within(overview).queryByText("Sponsor")).not.toBeInTheDocument();
+      expect(within(overview).getAllByText("Not yet assigned").length).toBe(4);
+      expect(
+        within(overview).getByText(
+          "Business approver · Technology approver · Risk/security approver",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        within(overview).getByText("Business approver · Finance approver"),
+      ).toBeInTheDocument();
     });
 
     it("current-phase row: Review & approve returns to the phase workspace at the approve substep", () => {

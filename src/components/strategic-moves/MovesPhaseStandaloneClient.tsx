@@ -38,6 +38,12 @@ import {
   buildNextPhaseReadinessPack,
   type NextPhaseReadinessPack,
 } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
+import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
+import {
+  APPROVAL_ROLE_LABELS,
+  type ApprovalRole,
+  requiredApprovalRolesFor,
+} from "@/lib/programs/deliverable-role-approval-policy";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
 interface AvaChatMessage {
@@ -904,6 +910,13 @@ export function MovesPhaseStandaloneClient({
           </strong>
         </div>
       </div>
+      <MobileMovesRailControls
+        currentMoveId={move.id}
+        maxReachablePhase={move.currentPhase ?? 0}
+        onSelectWorkspaceView={setWorkspaceView}
+        viewingPhase={phase.phase}
+        workspaceView={workspaceView}
+      />
       {(() => {
         const collapsedRail = railCollapsed;
         return (
@@ -1500,6 +1513,29 @@ function approvalStatusClass(row: PhaseTallyRow): string {
   return "upcoming";
 }
 
+function approvalRoleLabelForPhase(phase: number): string {
+  const roleOrder: ApprovalRole[] = [
+    "business",
+    "technology",
+    "finance",
+    "risk_security",
+  ];
+  const roles = new Set(
+    (PHASE_CANONICAL_KEYS[phase] ?? []).flatMap((key) =>
+      requiredApprovalRolesFor(key),
+    ),
+  );
+
+  if (roles.size === 0) {
+    return "Not yet assigned";
+  }
+
+  return roleOrder
+    .filter((role) => roles.has(role))
+    .map((role) => APPROVAL_ROLE_LABELS[role])
+    .join(" · ");
+}
+
 function ApprovalsOverview({
   currentMoveId,
   phaseTallies,
@@ -1525,6 +1561,7 @@ function ApprovalsOverview({
       {phaseTallies.map((row) => {
         const isViewingRow = row.phase === viewingPhase;
         const isReachable = row.phase <= reachablePhase;
+        const approverLabel = approvalRoleLabelForPhase(row.phase);
         return (
           <div className="mxw-approvals-row" key={row.phase}>
             <span className="mxw-approvals-phase">{row.label}</span>
@@ -1536,7 +1573,13 @@ function ApprovalsOverview({
             >
               {approvalStatusText(row)}
             </span>
-            <span className="mxw-approvals-approver">Sponsor</span>
+            <span
+              className={`mxw-approvals-approver ${
+                approverLabel === "Not yet assigned" ? "unassigned" : ""
+              }`}
+            >
+              {approverLabel}
+            </span>
             <span className="mxw-approvals-action">
               {isViewingRow ? (
                 <button onClick={onReviewCurrentPhase} type="button">
@@ -1557,6 +1600,71 @@ function ApprovalsOverview({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function MobileMovesRailControls({
+  currentMoveId,
+  maxReachablePhase,
+  onSelectWorkspaceView,
+  viewingPhase,
+  workspaceView,
+}: {
+  currentMoveId: string;
+  maxReachablePhase: number;
+  onSelectWorkspaceView: (view: WorkspaceView) => void;
+  viewingPhase: number;
+  workspaceView: WorkspaceView;
+}) {
+  const router = useRouter();
+  const views: Array<{ label: string; value: WorkspaceView }> = [
+    { label: "Stage", value: "phase" },
+    { label: "Files", value: "files" },
+    { label: "Intel", value: "intelligence" },
+    { label: "Approvals", value: "approvals" },
+  ];
+
+  return (
+    <div className="mxw-mobile-rail" aria-label="Compact move navigation">
+      <label>
+        <span>Phase</span>
+        <select
+          aria-label="Switch move phase"
+          onChange={(event) => {
+            const nextPhase = Number(event.currentTarget.value);
+            router.push(`/strategic-moves/${currentMoveId}/phase/${nextPhase}`);
+          }}
+          value={viewingPhase}
+        >
+          {PHASES.map((phase) => (
+            <option
+              disabled={phase.phase > maxReachablePhase}
+              key={phase.code}
+              value={phase.phase}
+            >
+              {phase.code} · {phase.navLabel}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div role="tablist" aria-label="Compact workspace views">
+        {views.map((view) => (
+          <button
+            aria-selected={workspaceView === view.value}
+            className={workspaceView === view.value ? "viewing" : ""}
+            key={view.value}
+            onClick={() => {
+              onSelectWorkspaceView(view.value);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            role="tab"
+            type="button"
+          >
+            {view.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -4412,6 +4520,13 @@ function MovesStandaloneStyles() {
 .mxw-contextbar span{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--blue);font-weight:900}
 .mxw-contextbar strong{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
 .mxw-contextbar em{font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.mxw-mobile-rail{display:none}
+.mxw-mobile-rail label{display:flex;align-items:center;gap:8px;min-width:0}
+.mxw-mobile-rail label span{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:900}
+.mxw-mobile-rail select{min-width:140px;max-width:42vw;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:12px;font-weight:750;padding:7px 9px}
+.mxw-mobile-rail [role="tablist"]{display:flex;align-items:center;gap:4px;overflow-x:auto}
+.mxw-mobile-rail [role="tab"]{border:1px solid transparent;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:800;border-radius:8px;padding:7px 9px;white-space:nowrap;cursor:pointer}
+.mxw-mobile-rail [role="tab"].viewing{background:#e4ecf9;border-color:rgba(42,90,168,.24);color:var(--blue)}
 .mxw-surface{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100% - 44px)}
 .mxw-side{border-right:1px solid var(--line);background:#faf9f7;padding:20px 16px 28px;position:sticky;top:44px;height:calc(100vh - 108px);overflow-y:auto;display:flex;flex-direction:column}
 .mxw-move{padding:0 8px 15px;border-bottom:1px solid var(--line);margin-bottom:14px}
@@ -4876,6 +4991,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
 @media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-intel-grid{grid-template-columns:1fr}}
 @media (max-width:900px){
+  .mxw-mobile-rail{position:sticky;top:44px;z-index:55;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(12,26,58,.10);background:#fff;padding:10px 14px;box-shadow:0 6px 14px rgba(12,26,58,.06)}
   .mxw-surface{grid-template-columns:1fr}
   .mxw-side{display:none}
   .mxw-shell{width:100%;max-width:none}
@@ -4890,6 +5006,8 @@ function MovesStandaloneStyles() {
   .mxw-how-step:not(:last-child)::after{content:"↓";right:auto;left:20px;top:auto;bottom:-17px;transform:none;background:var(--card);width:16px}
 }
 @media (max-width:720px){
+  .mxw-mobile-rail{align-items:stretch;flex-direction:column}
+  .mxw-mobile-rail label,.mxw-mobile-rail select{width:100%;max-width:none}
   .mxw-howflow,.mxw-ts-grid,.mxw-file-cols,.mxw-kdd-fields,.mxw-kdd-options{grid-template-columns:1fr}
   .mxw-kdd summary{grid-template-columns:1fr}
   .mxw-option-summary{grid-template-columns:1fr}
@@ -5019,6 +5137,7 @@ function MovesStandaloneStyles() {
 .mxw-approvals-status.pending{background:#fbf1df;color:#ba7517}
 .mxw-approvals-status.upcoming{background:rgba(12,26,58,.06);color:#5b6c8a}
 .mxw-approvals-approver{font-size:13px;color:#5b6c8a}
+.mxw-approvals-approver.unassigned{font-style:italic;color:#7b8798}
 .mxw-approvals-action{justify-self:end}
 .mxw-approvals-action button,.mxw-approvals-action a{border:0;background:none;color:#2a5aa8;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
 .mxw-approvals-action button:hover,.mxw-approvals-action a:hover{text-decoration:underline}
