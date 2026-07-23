@@ -245,7 +245,20 @@ export async function loadTowerMartCommandView(args: {
         { missingTable: "empty" },
       ),
       azureRead.query<Record<string, unknown>>(
-        `select * from cio_tower.mart_ai_portfolio where tenant_key = $1 order by item_kind, value_score desc, readiness_score desc, item_name limit 80`,
+        `select *
+           from cio_tower.mart_ai_portfolio
+          where tenant_key = $1
+          order by
+            case item_kind
+              when 'funded_program' then 0
+              when 'embedded_platform' then 1
+              when 'usage_benefit' then 2
+              when 'candidate_opportunity' then 3
+              else 4
+            end,
+            value_score desc,
+            readiness_score desc,
+            item_name`,
         [tenantKey],
         { missingTable: "empty" },
       ),
