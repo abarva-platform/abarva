@@ -1683,7 +1683,14 @@ function ArtifactLifecyclePanel({
     rowsDueSoFar.length > 0
       ? `${rowsRegisteredSoFar.length} of ${rowsDueSoFar.length} artifacts due through ${currentStageLabel} are registered`
       : null;
-  const summaryItems = [
+  const [showAuditMetrics, setShowAuditMetrics] = useState(false);
+  const toplineItems = [
+    ["Due so far", String(rowsDueSoFar.length)],
+    ["Registered", String(rowsRegisteredSoFar.length)],
+    ["Missing required", String(lifecycle.quality.missingRequiredCount)],
+    ["Client finals", String(lifecycle.clientFinalCount)],
+  ];
+  const auditItems = [
     ["Quality score", `${lifecycle.quality.score}/100`],
     ["Hard fails", String(lifecycle.quality.hardFailCount)],
     ["Missing required", String(lifecycle.quality.missingRequiredCount)],
@@ -1717,7 +1724,7 @@ function ArtifactLifecyclePanel({
           alignItems: "flex-start",
         }}
       >
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div
             style={{
               color: ANALYTICS.BLUE,
@@ -1763,13 +1770,12 @@ function ArtifactLifecyclePanel({
                 lineHeight: 1.4,
               }}
             >
-              {stageRelativeProgressLabel} — the quality score below is
-              scored against the full 11-stage set, so it stays low by
-              design until the event nears completion.
+              {stageRelativeProgressLabel}. Start with the current-stage list;
+              the full 11-stage audit stays one click away.
             </p>
           ) : null}
           <p
-            data-testid="source-artifact-quality-scope"
+            data-testid="source-artifact-quality-scope-summary"
             style={{
               margin: "8px 0 0",
               color: ANALYTICS.MUTED,
@@ -1778,8 +1784,9 @@ function ArtifactLifecyclePanel({
               maxWidth: 760,
             }}
           >
-            Quality rubric: {lifecycle.quality.label}.{" "}
-            {lifecycle.quality.scopeLabel}
+            Detailed quality rubric, Gate B checks, and export coverage are
+            available in audit metrics; they are not required for routine file
+            capture.
           </p>
           <div
             style={{
@@ -1824,17 +1831,36 @@ function ArtifactLifecyclePanel({
                 ? `Show ${view.stage.label} only`
                 : `Show all 11 stages`}
             </button>
+            <button
+              type="button"
+              data-testid="source-artifact-audit-metrics-toggle"
+              onClick={() => setShowAuditMetrics((value) => !value)}
+              style={{
+                border: "none",
+                background: "none",
+                color: ANALYTICS.BLUE,
+                fontFamily: ANALYTICS.SANS,
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: "9px 4px",
+              }}
+            >
+              {showAuditMetrics ? "Hide audit metrics" : "Show audit metrics"}
+            </button>
           </div>
         </div>
         <div
+          data-testid="source-artifact-execution-summary"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(82px, 1fr))",
+            gridTemplateColumns: "repeat(2, minmax(112px, 1fr))",
             gap: 8,
-            minWidth: 430,
+            minWidth: 260,
+            maxWidth: 330,
           }}
         >
-          {summaryItems.map(([label, value]) => (
+          {toplineItems.map(([label, value]) => (
             <div
               key={label}
               style={{
@@ -1869,6 +1895,72 @@ function ArtifactLifecyclePanel({
           ))}
         </div>
       </div>
+      {showAuditMetrics ? (
+        <section
+          data-testid="source-artifact-audit-metrics"
+          style={{
+            marginTop: 16,
+            border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            borderRadius: 8,
+            background: ANALYTICS.SOFT,
+            padding: 12,
+          }}
+        >
+          <p
+            data-testid="source-artifact-quality-scope"
+            style={{
+              margin: "0 0 10px",
+              color: ANALYTICS.MUTED,
+              fontSize: 12,
+              lineHeight: 1.45,
+            }}
+          >
+            Quality rubric: {lifecycle.quality.label}.{" "}
+            {lifecycle.quality.scopeLabel}
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))",
+              gap: 8,
+            }}
+          >
+            {auditItems.map(([label, value]) => (
+              <div
+                key={label}
+                style={{
+                  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+                  borderRadius: 8,
+                  padding: "8px 9px",
+                  background: ANALYTICS.CARD,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: ANALYTICS.MONO,
+                    color: ANALYTICS.MUTED,
+                    fontSize: 9.5,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {label}
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    color: ANALYTICS.INK,
+                    fontSize: 16,
+                    fontWeight: 900,
+                  }}
+                >
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <div
         style={{
           marginTop: 16,

@@ -294,25 +294,42 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.queryByTestId("source-shell-file-compliance-flag-generated-draft"),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
-      "Expected artifacts",
+    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
+      "Due so far",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
+      "Registered",
+    );
+    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
+      "Missing required",
+    );
+    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
+      "Client finals",
+    );
+    expect(screen.queryByTestId("source-artifact-audit-metrics")).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).not.toHaveTextContent(
       "Quality score",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    fireEvent.click(screen.getByTestId("source-artifact-audit-metrics-toggle"));
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
+      "Expected artifacts",
+    );
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
+      "Quality score",
+    );
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
       "Hard fails",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
       "Content scored",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
       "Content blockers",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
       "Gate B required",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
       "Gate B pending",
     );
     expect(screen.getByTestId("source-artifact-quality-scope")).toHaveTextContent(
@@ -361,7 +378,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(decodedCsv).toContain(
       "A reviewed client-final version must be accepted back into Source as the authoritative artifact of record.",
     );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
       "Evidence-only",
     );
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(

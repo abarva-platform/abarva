@@ -670,6 +670,37 @@ updated 19 d ago` on the proof event).
   parse worker for PDF/XLSX/PPTX uploads currently stuck at `parse_status: "pending"` with no
   consumer).
 
+### SOURCE-UX-002 — Files lifecycle matrix execution-first declutter
+
+- **Problem statement**: live Source Files proof still showed the artifact lifecycle panel
+  leading with a large 18-counter audit scoreboard (`Quality score`, `Hard fails`, `Gate B`,
+  export coverage, evidence-only counts, etc.) before users reached the actual files. The
+  information is valid, but its default presentation reads like internal QA machinery rather
+  than a Stripe-like execution surface.
+- **User/business impact**: sourcing teams opening Files to capture notes, upload evidence,
+  or accept client-final artifacts should see the next execution state first. Full audit
+  metrics still matter for governance, but they should be deliberate drill-in context, not
+  first-paint clutter.
+- **Severity**: P6 (workspace UX / information density).
+- **Workstream**: Workspace UX.
+- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Dependencies**: existing Source Files lifecycle matrix and artifact-quality summary; no
+  schema or data dependency.
+- **Acceptance criteria**: the lifecycle panel defaults to four execution-oriented metrics
+  (`Due so far`, `Registered`, `Missing required`, `Client finals`); the full audit metrics
+  remain reachable in one click; the standards CSV export and all-stage toggle remain visible;
+  no artifact rows, approval controls, lifecycle states, quality findings, or CSV export fields
+  are removed.
+- **Required tests**:
+  `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-files-lifecycle-declutter.md`.
+- **Discovered from**: signed-in live proof after `SOURCE-INGEST-001b` and the standing
+  `SOURCE-UX-DECLUTTER-001` follow-on list.
+- **Notes / remaining gaps**: this does not redesign the FileCard list, lifecycle row table,
+  or artifact-quality scoring rules. It only changes the default hierarchy so routine Files
+  work starts with execution state while audit depth remains available.
+
 ### SOURCE-ANALYTICS-CHAT-001 — Wire Source's aVa chat to the AgentAnswerRenderer pipeline
 
 - **Problem statement**: Source's chat surfaces (in-canvas `AvaBottomBar`, portfolio
