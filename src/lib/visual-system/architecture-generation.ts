@@ -396,7 +396,12 @@ export type GovernedToolCall = (params: {
   tool: GovernedToolDefinition;
   model: string;
   maxTokens: number;
-}) => Promise<{ toolInput: unknown; modelId: string }>;
+}) => Promise<{
+  toolInput: unknown;
+  modelId: string;
+  stopReason?: string | null;
+  outputTokens?: number;
+}>;
 
 export interface GeneratedArchitecture {
   model: ArchitectureModel;
@@ -423,13 +428,20 @@ export async function generateArchitectureModel(
   call: GovernedToolCall,
 ): Promise<GeneratedArchitecture> {
   const model = req.model ?? DEFAULT_ARCHITECTURE_MODEL;
-  const { toolInput, modelId } = await call({
+  const maxTokens = req.maxTokens ?? 32_000;
+  const { toolInput, modelId, stopReason, outputTokens } = await call({
     system: ARCHITECTURE_SYSTEM_PROMPT,
     userMessage: buildArchitectureUserMessage(req),
     tool: ARCHITECTURE_TOOL,
     model,
-    maxTokens: req.maxTokens ?? 8000,
+    maxTokens,
   });
+  if (stopReason === "max_tokens") {
+    throw new Error(
+      `Architecture generation was truncated at the ${maxTokens}-token output limit` +
+        `${typeof outputTokens === "number" ? ` after ${outputTokens} output tokens` : ""}.`,
+    );
+  }
   if (!toolInput || typeof toolInput !== "object") {
     throw new Error("Architecture generation returned no structured model.");
   }
