@@ -12,6 +12,8 @@
 
 Home Knowledge generation and rendering now treat executive visuals as a governed contract, not a generic fallback. Claude must author compact, C-suite-readable visual specifications from a closed vocabulary, separate tenant facts from industry patterns, and describe industry realization patterns for use cases without presenting them as tenant achievements. The Home dimension page now preserves those authored visual specifications and renders compact Recharts-based visuals instead of showing the same generic chart across dimensions.
 
+Follow-up hardening after the first Meridian single-dimension ACA run makes the Claude prompt contract explicit for every visual-like object and every use-case object. Claude must now provide all required visual fields (`visual_type`, title, executive question, classification, data points, encoding, annotation, evidence boundary, and empty state), and every qualified candidate, foundation, and early idea must carry the grounding fields the validator enforces. The change also makes generated dimension proof file names stable and readable for the expanded catalog.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Home Knowledge generation prompts, review tooling, and Home dimension rendering for all tenants that use approved Home packs.
@@ -29,6 +31,7 @@ Home Knowledge generation and rendering now treat executive visuals as a governe
 
 - `scripts/knowledge/build-home-knowledge-pack-v2.mjs`: Tightens Claude prompt contract for visual types, use-case industry realization, and dimension visual specifications.
 - `scripts/knowledge/build-home-knowledge-v4-review-pack.mjs`: Adds V4 candidate-review generator with closed classification and visual vocabularies.
+- `scripts/knowledge/build-home-knowledge-v4-review-pack.mjs`: Follow-up hardening aligns prompt instructions with the deterministic validator for visual fields and use-case grounding fields, and replaces alphabetic dimension proof suffixes with zero-padded numeric suffixes for the 38-dimension catalog.
 - `src/lib/home/home-knowledge-design-contract.ts`: Preserves authored dimension visual specifications in the Home read model.
 - `src/components/home/HomeEnterpriseBriefApp.tsx`: Renders dimension visuals from the authored contract and shows use-case cards with industry pattern plus client context.
 
@@ -36,9 +39,11 @@ Home Knowledge generation and rendering now treat executive visuals as a governe
 
 - PASS: `node --check scripts/knowledge/build-home-knowledge-pack-v2.mjs`
 - PASS: `node --check scripts/knowledge/build-home-knowledge-v4-review-pack.mjs`
+- PASS: `npm run home:knowledge-v4:review-job:meridian -- --packet-only --out-dir=/tmp/home-v4-visual-contract-packet-meridian`
 - PASS: `./node_modules/.bin/eslint src/components/home/HomeEnterpriseBriefApp.tsx src/lib/home/home-knowledge-design-contract.ts`
 - PASS: `PATH=/Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false`
 - PASS: `npm run release:check` after this release record was updated.
+- OBSERVED: Meridian single-dimension ACA review job completed on image `acrabarvalab001.azurecr.io/abarva/web@sha256:79ec2676cdf3363caa6be469700248cde599644f87357e46ea2564e99fd2474e` but correctly returned `candidate_failed` because Claude omitted required fields in several visual contracts and use-case objects. That output is review evidence only and was not loaded or approved.
 - NOT RUN: New all-tenant Claude V4 content generation/load. The latest content audit found the existing V4 candidate archive is not load-ready because it has fail-open review status, incomplete expanded dimensions, prose-only tab payloads, unconstrained visual payloads, raw technical leakage, use-case schema drift, and ungoverned external-industry provenance.
 - NOT RUN: Azure/Postgres publication. This PR intentionally ships the stricter generator, candidate validator, and renderer contract only.
 - PENDING AFTER DEPLOY: signed-in Home Knowledge browser proof on `https://app.abarva.ai` after the normal ACA deployment lands.

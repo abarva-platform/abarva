@@ -76,12 +76,48 @@ function dimensionPasses() {
   }));
 }
 
+function dimensionPassLabel(index) {
+  return String(index + 1).padStart(2, "0");
+}
+
 const classificationEnum = [
   "loaded_fact",
   "derived_measure",
   "industry_pattern",
   "strategic_inference",
   "missing_evidence",
+];
+
+const requiredVisualFields = [
+  "visual_type",
+  "title",
+  "executive_question",
+  "classification",
+  "data_points",
+  "encoding",
+  "annotation",
+  "evidence_boundary",
+  "empty_state",
+];
+
+const requiredRelationshipGraphFields = [
+  "visual_type",
+  "projection_type",
+  "classification",
+  "node_groups",
+  "edge_meaning",
+  "layout_hint",
+  "visual_emphasis",
+  "empty_state",
+];
+
+const requiredUseCaseFields = [
+  "classification",
+  "evidence_maturity",
+  "business_object_classification",
+  "industry_realization",
+  "client_context_signal",
+  "evidence_gate",
 ];
 
 const evidenceMaturityEnum = [
@@ -473,6 +509,12 @@ function baseSystemPrompt() {
     "For chart visuals, provide compact Recharts-ready data: no more than 7 visible marks for bars/points, no more than 5x5 heatmap cells, no dense labels, no raw record counts, no JSON intended for display.",
     "Claude owns every client-visible word. Return concise, polished, complete JSON only. Do not include markdown fences.",
     "For visuals, author the visual contract and executive meaning. The renderer will render the visual exactly from your structured spec and source-backed/candidate data; it will not invent titles, annotations, claims, or fallback copy.",
+    `Every visual-like object in signature_visuals, dashboard_visuals, benchmark_exhibits, evidence_visuals, visual_contracts, primary_visual, and priority_matrix_visual must include all of these fields: ${requiredVisualFields.join(", ")}.`,
+    `Every relationship graph_display_contract must include all of these fields: ${requiredRelationshipGraphFields.join(", ")}.`,
+    "For every visual empty_state, write the exact business-facing sentence to show if the visual cannot render because evidence is missing. Do not omit empty_state even when data_points are present.",
+    "For every visual encoding, provide a compact object describing x/y/series/color/size or node/link encodings. Do not use a prose string when an object is clearer.",
+    "For every visual data_points, provide the exact compact array the renderer can draw. Do not leave it empty unless the classification is missing_evidence and empty_state explains why.",
+    `Every item in qualified_candidates, foundations, and early_ideas must include all of these fields: ${requiredUseCaseFields.join(", ")}.`,
     "Be concise enough to fit the schema. Every pass must populate client_visible. Do not spend tokens restating instructions.",
   ].join("\n");
 }
@@ -533,7 +575,8 @@ function makePrompt(pass, packet, assembled) {
       "Use relationship_graph only when the executive question is explicitly about connections, pathways, dependencies, ownership, lineage, or operating model relationships.",
       "Use fewer than 7 labels. Prefer short labels that fit inside a dashboard card.",
       "Do not show raw rows, records, nodes, edges, or file counts.",
-      "Every visual must include: visual_type, title, executive_question, classification, data_points, encoding, annotation, evidence_boundary.",
+      `Every non-relationship visual must include: ${requiredVisualFields.join(", ")}.`,
+      `Every relationship graph_display_contract must include: ${requiredRelationshipGraphFields.join(", ")}.`,
       "Each data_point must include label, value or x/y where relevant, classification, and source_basis.",
       "If source data is directional rather than measured, classification must be strategic_inference or industry_pattern, and the evidence_boundary must say that plainly.",
     ],
@@ -626,7 +669,7 @@ function makePrompt(pass, packet, assembled) {
           "sequencing_rationale",
         ],
         hard_limits:
-          "For each candidate, write at most 110 words across all fields. Each candidate must include industry_realization, client_context_signal, evidence_gate, classification, evidence_maturity, and business_object_classification. classification must use classification_enum only; business_object_classification must use qualified_use_case, strategic_foundation, early_idea, current_program, or evidence_request only. priority_matrix_visual must use visual_type=scatter_2x2 and be a compact Recharts-compatible 2x2 spec with <= 8 points.",
+          `For each item in qualified_candidates, foundations, and early_ideas, write at most 110 words across all fields and include: ${requiredUseCaseFields.join(", ")}. classification must use classification_enum only; business_object_classification must use qualified_use_case, strategic_foundation, early_idea, current_program, or evidence_request only. priority_matrix_visual must use visual_type=scatter_2x2 and be a compact Recharts-compatible 2x2 spec with <= 8 points and must include all required visual fields.`,
       },
       common,
       story_architecture: assembled.story_architect,
@@ -716,7 +759,7 @@ function makePrompt(pass, packet, assembled) {
           "evidence_visuals",
         ],
         hard_limits:
-          "critical_gaps <= 8; source_inventory_rows <= 12; evidence_visuals <= 4. evidence_visuals must use visual types from visual_type_enum. Use business provenance language, not raw file-count language. Do not mention filenames, physical tables, evidence IDs, or loader internals.",
+          "critical_gaps <= 8; source_inventory_rows <= 12; evidence_visuals <= 4. evidence_visuals must use visual types from visual_type_enum and include all required visual fields. Use business provenance language, not raw file-count language. Do not mention filenames, physical tables, evidence IDs, or loader internals.",
       },
       common,
       story_architecture: assembled.story_architect,
@@ -738,7 +781,7 @@ function makePrompt(pass, packet, assembled) {
         "sections_to_regenerate",
       ],
       hard_limits:
-        "Always return approval_recommendation, reason, violations, source_sections_to_regenerate, and sections_to_regenerate. If there are no issues, return approval_recommendation=approve_for_human_review and empty arrays. If any field is missing, the deterministic validator fails the candidate.",
+        "Always return approval_recommendation, reason, violations, source_sections_to_regenerate, and sections_to_regenerate. If there are no issues, return approval_recommendation=approve_for_human_review and empty arrays. In approval prose, do not use the words high, critical, fail, failed, failure, or forbidden; reserve severity words only for actual violation objects. If any field is missing, the deterministic validator rejects the candidate.",
     },
     common,
     assembled_candidate_pack: assembled,
@@ -960,10 +1003,11 @@ async function processTenant(client, tenantKey) {
   const dimensionJobs = dimensionPasses();
   for (let i = 0; i < dimensionJobs.length; i += 1) {
     const batch = dimensionJobs[i];
+    const suffix = dimensionPassLabel(i);
     const pass = {
-      id: `05${String.fromCharCode(65 + i)}-dimensions-${batch.key}`,
+      id: `05-${suffix}-dimensions-${batch.key}`,
       type: "dimensions",
-      suffix: String.fromCharCode(65 + i),
+      suffix,
       ...batch,
     };
     const content = await callClaude(client, pass, makePrompt(pass, packet, assembled), tenantDir);
@@ -1184,14 +1228,7 @@ function validateDimensionTabs(candidate) {
 
 function validateUseCaseShape(candidate) {
   const findings = [];
-  const required = [
-    "classification",
-    "evidence_maturity",
-    "business_object_classification",
-    "industry_realization",
-    "client_context_signal",
-    "evidence_gate",
-  ];
+  const required = requiredUseCaseFields;
   const walk = (node, pathParts = []) => {
     if (!node || typeof node !== "object") return;
     if (Array.isArray(node)) {
@@ -1238,27 +1275,6 @@ function validateClosedEnums(candidate) {
     "priority_matrix_visual",
     "graph_display_contract",
   ]);
-  const requiredVisualFields = [
-    "visual_type",
-    "title",
-    "executive_question",
-    "classification",
-    "data_points",
-    "encoding",
-    "annotation",
-    "evidence_boundary",
-    "empty_state",
-  ];
-  const requiredRelationshipGraphFields = [
-    "visual_type",
-    "projection_type",
-    "classification",
-    "node_groups",
-    "edge_meaning",
-    "layout_hint",
-    "visual_emphasis",
-    "empty_state",
-  ];
   const walk = (node, pathParts = []) => {
     if (!node || typeof node !== "object") return;
     if (Array.isArray(node)) {
