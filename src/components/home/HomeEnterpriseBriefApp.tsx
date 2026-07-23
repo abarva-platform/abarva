@@ -19,6 +19,7 @@ import type {
   HomeKnowledgeDesignContractPack,
   HomeKnowledgeDimension,
   HomeKnowledgeRecord,
+  HomeKnowledgeStory,
 } from "@/lib/home/home-knowledge-design-contract";
 import type { HomeRelationshipEdge } from "@/lib/home/derive-relationship-edges";
 
@@ -651,19 +652,55 @@ function coverageChart(pack: HomeKnowledgeDesignContractPack) {
   }));
 }
 
-function landscapeChart(pack: HomeKnowledgeDesignContractPack) {
-  return (pack.design_slots.DIMS ?? [])
-    .filter((dimension) =>
-      ["apps", "data", "vendors", "infra", "programs", "ai", "risks"].includes(
-        dimension.key,
+function authoredVisualType(story?: HomeKnowledgeStory) {
+  const type = story?.visual_specification?.visual_type?.trim();
+  return type || "executive_scorecard";
+}
+
+function dimensionVisualChart(
+  dimension?: HomeKnowledgeDimension,
+  dataSet?: HomeKnowledgeDataSet,
+) {
+  const rows = dataSet?.rows ?? [];
+  const categoryKey =
+    dataSet?.columns?.find((column) =>
+      /(function|category|domain|owner|status|criticality|stage|type)/i.test(
+        column.k,
       ),
-    )
-    .slice(0, 7)
-    .map((dimension) => ({
-      name: shortLabel(dimensionLabel(dimension.key), 18),
-      value: dimension.count ?? 0,
-      fill: toneColor(dimension.status),
+    )?.k ?? "status";
+  const buckets = new Map<string, { label: string; value: number; tone: string }>();
+  for (const row of rows.slice(0, 80)) {
+    const raw =
+      firstText(row, [categoryKey, "business_function", "system_category", "criticality", "stage", "status"]) ||
+      toneLabel(String(dimension?.status ?? ""));
+    const label = shortLabel(noMechanics(raw) || "Context", 24);
+    const existing = buckets.get(label) ?? {
+      label,
+      value: 0,
+      tone: firstText(row, ["status", "confidence", "criticality"]) || dimension?.status || "",
+    };
+    existing.value += 1;
+    buckets.set(label, existing);
+  }
+  const ranked = Array.from(buckets.values())
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
+  const max = Math.max(1, ...ranked.map((item) => item.value));
+  const values = ranked.map((item) => ({
+      name: item.label,
+      value: Math.max(12, Math.round((item.value / max) * 100)),
+      label: item.value === max ? "strongest signal" : "",
+      fill: toneColor(item.tone),
     }));
+  if (values.length) return values;
+  return [
+    {
+      name: toneLabel(dimension?.status),
+      value: tone(dimension?.status) === "ready" ? 82 : tone(dimension?.status) === "weak" ? 34 : 58,
+      label: toneLabel(dimension?.status),
+      fill: toneColor(dimension?.status),
+    },
+  ];
 }
 
 function caseItems(pack: HomeKnowledgeDesignContractPack) {
@@ -680,6 +717,7 @@ function caseItems(pack: HomeKnowledgeDesignContractPack) {
         "operating_model_change",
       ]),
     ),
+    industryPattern: noMechanics(firstText(row, ["industry_pattern"])),
     status: noMechanics(firstText(row, ["status", "stage", "readiness"])),
   }));
 }
@@ -1817,6 +1855,65 @@ export function HomeEnterpriseBriefApp({
           height: 280px;
           min-width: 0;
         }
+        .heb-chart-compact {
+          height: 220px;
+          margin-top: 12px;
+        }
+        .heb-visual-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: flex-start;
+          margin-top: 7px;
+        }
+        .heb-visual-head h3 {
+          margin: 0 0 5px;
+          font-family: Fraunces, Georgia, serif;
+          font-size: 20px;
+          line-height: 1.1;
+          color: ${COLORS.ink};
+        }
+        .heb-visual-head p {
+          margin: 0;
+          color: ${COLORS.muted};
+          font-size: 13px;
+          line-height: 1.45;
+          max-width: 78ch;
+        }
+        .heb-visual-head > span {
+          flex: none;
+          border: 1px solid ${COLORS.line};
+          border-radius: 999px;
+          padding: 5px 9px;
+          color: ${COLORS.quiet};
+          background: #fff;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .heb-visual-notes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          border-top: 1px solid ${COLORS.line};
+          padding-top: 12px;
+          margin-top: 8px;
+        }
+        .heb-visual-notes span {
+          border: 1px solid rgba(44, 164, 119, 0.22);
+          border-radius: 999px;
+          background: rgba(44, 164, 119, 0.08);
+          color: ${COLORS.tealDark};
+          padding: 6px 9px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+        .heb-mini-relationship {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
         .heb-map-card {
           padding: 12px;
         }
@@ -2190,7 +2287,14 @@ function OperatingView({
                 {item.functionName || item.status}
               </span>
               <h3>{item.name}</h3>
-              <p>{item.signal}</p>
+              {item.industryPattern ? (
+                <p>
+                  <strong>Industry:</strong> {item.industryPattern}
+                </p>
+              ) : null}
+              <p>
+                <strong>Client context:</strong> {item.signal}
+              </p>
             </article>
           ))}
         </div>
@@ -2338,10 +2442,12 @@ function DimensionView({
   view: ViewKey;
 }) {
   const sample = dimensionSample(dataSet);
-  const chart = landscapeChart(pack);
   const story = dimension?.key
     ? pack.design_slots.STORY?.[dimension.key]
     : undefined;
+  const visual = story?.visual_specification;
+  const visualType = authoredVisualType(story);
+  const chart = dimensionVisualChart(dimension, dataSet);
   const gaps = dimension?.key
     ? (pack.design_slots.DGAPS?.[dimension.key] ?? [])
     : [];
@@ -2367,22 +2473,62 @@ function DimensionView({
         </article>
       </section>
       <section className="heb-section heb-card">
-        <span className="heb-section-label">Dimension visual</span>
-        <div className="heb-chart">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chart} margin={{ left: 8, right: 20 }}>
-              <CartesianGrid vertical={false} stroke="#e8dfd3" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {chart.map((entry) => (
-                  <Cell key={entry.name} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <span className="heb-section-label">
+          {visualType === "relationship_graph"
+            ? "Primary graph"
+            : "Primary Recharts visual"}
+        </span>
+        <div className="heb-visual-head">
+          <div>
+            <h3>
+              {noMechanics(visual?.answer_first_title) ||
+                `${dimension?.name ?? VIEW_META[view].title} decision view`}
+            </h3>
+            <p>
+              {noMechanics(visual?.conclusion_to_prove) ||
+                "The visual should help leadership see where context is strong enough to act and where evidence still gates confidence."}
+            </p>
+          </div>
+          <span>{visualType.replaceAll("_", " ")}</span>
         </div>
+        <div className="heb-chart heb-chart-compact">
+          {visualType === "relationship_graph" ? (
+            <MiniRelationshipVisual chart={chart} />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chart}
+                layout="vertical"
+                margin={{ left: 12, right: 30, top: 6, bottom: 6 }}
+              >
+                <CartesianGrid horizontal={false} stroke="#e8dfd3" />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  width={150}
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip
+                  formatter={(value) => [`${value}/100`, "Coverage signal"]}
+                />
+                <Bar dataKey="value" radius={[0, 7, 7, 0]}>
+                  {chart.map((entry) => (
+                    <Cell key={entry.name} fill={entry.fill} />
+                  ))}
+                  <LabelList dataKey="label" position="right" fontSize={10} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+        {visual?.annotations?.length ? (
+          <div className="heb-visual-notes">
+            {visual.annotations.slice(0, 3).map((annotation) => (
+              <span key={annotation}>{noMechanics(annotation)}</span>
+            ))}
+          </div>
+        ) : null}
       </section>
       {sample.rows.length && sample.columns.length ? (
         <section className="heb-section">
@@ -2437,6 +2583,58 @@ function DimensionView({
         </article>
       </section>
     </>
+  );
+}
+
+function MiniRelationshipVisual({
+  chart,
+}: {
+  chart: Array<{ name: string; value: number; fill: string }>;
+}) {
+  const center = { x: 310, y: 104 };
+  const nodes = chart.slice(0, 6).map((item, index) => {
+    const angle = (-130 + index * (260 / Math.max(1, chart.length - 1))) * (Math.PI / 180);
+    return {
+      ...item,
+      x: center.x + Math.cos(angle) * 210,
+      y: center.y + Math.sin(angle) * 78,
+    };
+  });
+  return (
+    <svg
+      className="heb-mini-relationship"
+      viewBox="0 0 640 220"
+      role="img"
+      aria-label="Compact relationship graph"
+    >
+      {nodes.map((node) => (
+        <line
+          key={`edge-${node.name}`}
+          x1={center.x}
+          y1={center.y}
+          x2={node.x}
+          y2={node.y}
+          stroke="#d8d1c5"
+          strokeWidth="1.2"
+        />
+      ))}
+      <circle cx={center.x} cy={center.y} r="28" fill={COLORS.black} />
+      <text x={center.x} y={center.y + 4} textAnchor="middle" fill="#fffdf8" fontSize="11" fontWeight="700">
+        Context
+      </text>
+      {nodes.map((node) => (
+        <g key={node.name}>
+          <circle cx={node.x} cy={node.y} r="13" fill={node.fill} />
+          <text
+            x={node.x + 18}
+            y={node.y + 4}
+            className="heb-node-label"
+          >
+            {shortLabel(node.name, 22)}
+          </text>
+        </g>
+      ))}
+    </svg>
   );
 }
 

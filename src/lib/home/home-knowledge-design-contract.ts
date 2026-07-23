@@ -43,6 +43,13 @@ export interface HomeKnowledgeStory {
   observed?: string;
   matters?: string;
   supports?: string;
+  visual_specification?: {
+    answer_first_title?: string;
+    visual_type?: string;
+    conclusion_to_prove?: string;
+    annotations?: string[];
+    empty_state_behavior?: string;
+  };
 }
 
 export interface HomeKnowledgeInsight {
