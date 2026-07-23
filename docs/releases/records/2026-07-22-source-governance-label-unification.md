@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -37,21 +37,24 @@ Source aVa artifact-authority answers now use the same shared artifact-authority
 
 - `npx jest --runTestsByPath src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/__tests__/client-final-artifacts.test.ts --runInBand` — passed, 67 tests.
 - Focused regression verifies an active-acceptance artifact beats a merely current-authoritative generated record through the shared resolver, and aVa does not claim client-final status when it is not confirmed.
-- ESLint, TypeScript, `npm run release:check`, PR checks, ACA deploy proof, runtime invariant, and signed-in live proof are required before this record can move from `candidate` to `released`.
+- `npm test -- --runInBand src/lib/source/__tests__/source-answer-engine.test.ts -t "shared artifact-authority resolver"` — passed on 2026-07-23, 1 focused test passed.
+- The original PR validation also ran `npx jest --runTestsByPath src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/__tests__/client-final-artifacts.test.ts --runInBand` — passed, 67 tests.
+- Current ACA runtime invariant passed on 2026-07-23T15:35:22Z for superseding main revision `ca-abarva-web-lab-eastus--m8e1cf690`, digest `sha256:b0d7bdd7681a32330e640823df0c3673bce2134db3df2e55e1260881dc081bb8`, 100% traffic, health ok, worker images matched.
+- Signed-in Lakeshore proof passed on `https://app.abarva.ai`: Source analytics shell loaded, aVa launcher invoked, `/api/v1/source/c05872d8-0465-4bc8-8eeb-ff3d42ac6761/nexus/ask` returned `Artifact authority answer`, and the rendered panel showed the shared resolver-selected artifact with client-final honesty.
 
 ## Rollout Plan
 
-Merge to `main` through a governed PR. The repo-owned ACA main deploy workflow builds and deploys the digest-pinned web image to `app.abarva.ai`. No migration or manual runtime mutation is required.
+Merged to `main` through governed PR #5389. The repo-owned ACA main deploy workflow deployed merge `c308bcde5`; later main deploys superseded it, and the current production revision still contains the merge. No migration or manual runtime mutation was required.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
-- Shared runtime mutators: None in this PR; deploy must be performed by the repo-owned main workflow.
-- Approved image digest: Pending main deploy.
-- ACA runtime invariant: Required after main deploy.
+- Shared runtime mutators: None in this PR; deployed by the repo-owned main workflow only.
+- Approved image digest: Original deploy succeeded for `c308bcde5`; current superseding digest is `sha256:b0d7bdd7681a32330e640823df0c3673bce2134db3df2e55e1260881dc081bb8`.
+- ACA runtime invariant: Passed on the current superseding main revision at 2026-07-23T15:35:22Z.
 - Worker image invariant: No worker changes.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, a Source aVa artifact-finality answer should still render from signed-in `app.abarva.ai` and cite the artifact authority evidence path.
+- Live signed-in proof required: Completed for Lakeshore on 2026-07-23.
 
 ## Rollback Plan
 
@@ -59,12 +62,14 @@ Revert the PR and let the repo-owned ACA main deploy workflow roll forward with 
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Release checks: Focused Jest passed locally; ESLint, TypeScript, and `npm run release:check` pending.
-- ACA deploy run: Pending.
-- Runtime invariant report: Pending.
-- Signed-in live proof bundle: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5389
+- Merge commit: `c308bcde5ded29ab8117f8e394dc373733e00ef3`
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29967031904
+- Current superseding ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/30019874450
+- Runtime invariant report: `audit-artifacts/source-governance-label-unification-current-invariant-20260723/runtime-invariant-proof.json`
+- Signed-in live proof bundle: `audit-artifacts/source-governance-label-unification-live-proof-20260723/ui-proof-summary.json`
+- Screenshot: `audit-artifacts/source-governance-label-unification-live-proof-20260723/source-ava-artifact-authority-ui-render.png`
 
 ## Known Gaps
 
-This slice does not add a new data join from `source_artifact_acceptances` into the Source aVa evidence formatter. It only aligns the answer-engine selection when that evidence is present. Safe repair/regenerate of old persisted drafts remains open as `SOURCE-ARTIFACT-AUTHORITY-001` item #8.
+This slice does not add a new data join from `source_artifact_acceptances` into the Source aVa evidence formatter. It only aligns the answer-engine selection when that evidence is present. The later safe repair/regenerate slice is tracked separately as `SOURCE-ARTIFACT-AUTHORITY-001g`.
