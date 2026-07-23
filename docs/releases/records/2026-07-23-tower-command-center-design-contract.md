@@ -36,11 +36,12 @@ Tower's mart-backed command center is reshaped to follow the supplied Tower Comm
 
 ## QA / Validation
 
-- Pass: focused Tower surface test: `npm test -- --runTestsByPath src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand` passed 17/17.
+- Pass: focused Tower component lint: `npx eslint src/components/tower/TowerCommandCenterContract.tsx src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx`.
+- Pass: focused Tower surface test: `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand` passed 17/17.
 - Pass: `git diff --check`.
-- Pass: static visual render of the supplied design contract: `/tmp/tower-contract-design.png`.
-- Pass: static visual render of the implementation component: `/tmp/tower-contract-implementation.png`.
+- Pass: static visual render of the supplied design contract: `/Users/anand/Projects/nexus/proof/tower-command-contract-fidelity-20260723/00-reference-contract.png`.
 - Blocked: full TypeScript validation is currently blocked by unrelated Home dependency resolution errors for `@xyflow/react` and `@dagrejs/dagre`.
+- Pending: signed-in deployed Tower screenshot after ACA main deploy.
 
 ## Rollout Plan
 
@@ -63,7 +64,7 @@ Revert the PR or redeploy the prior ACA image digest. No data rollback is requir
 ## Audit Evidence
 
 - PR URL: pending.
-- Screenshot evidence: `/tmp/tower-contract-design.png` and `/tmp/tower-contract-implementation.png` in the local proof workspace.
+- Screenshot evidence: `/Users/anand/Projects/nexus/proof/tower-command-contract-fidelity-20260723/00-reference-contract.png`; deployed implementation screenshot pending.
 - Focused Jest output from Tower surface tests.
 
 ## Known Gaps
