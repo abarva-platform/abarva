@@ -34,12 +34,14 @@ This release improves the Tower command center visual experience so the AI Portf
   - Cleaned AI Portfolio watchlist copy so candidate rows are grouped by business lens instead of leaking generic owner labels such as "Application Owners / Business Applications."
   - Added a candidate-portfolio mix fallback for the AI category bars when spend categories are not populated, so the view remains useful without inventing spend.
   - Reworked Evidence into executive posture cards plus source-package and audit-trace sections.
+  - Cleaned Evidence audit-trace labels and planning-grade caveats so the trace remains inspectable without exposing generic owner labels as CXO-facing copy.
 
 ## QA / Validation
 
 - `npx eslint src/components/tower/TowerCommandCenterContract.tsx src/components/tower/TowerIndexPage.tsx` passed with no errors. Existing unused-symbol warnings remain in `TowerIndexPage.tsx`.
 - `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand` passed: 17/17 tests.
 - Cleanup validation: `npx eslint src/components/tower/TowerCommandCenterContract.tsx`, `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand`, and `git diff --check` passed after the AI Portfolio copy/mix cleanup.
+- Evidence trace cleanup validation: `npx eslint src/components/tower/TowerCommandCenterContract.tsx`, `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand`, and `git diff --check` passed after the audit-trace label cleanup.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` was attempted; it fails on pre-existing Home dependency errors for `@xyflow/react` and `@dagrejs/dagre`, not on this Tower slice.
 - Post-merge validation required: ACA runtime invariant plus signed-in Healthcare/Meridian Tower browser proof across Command Center, Value Proof Funnel, Decision Lanes, AI Portfolio, Recommended Actions, and Evidence.
 
