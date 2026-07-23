@@ -43,8 +43,12 @@ P3.
   - `inspect` mode reads the live Move and writes a proof plan without mutation.
   - `apply` mode requires `MOVES_MEMBER_AI_ASSIST_CORRECTION_AUTHORIZATION=return-to-p3-approved-2026-07-23`.
   - Refuses any Move id other than `cd51e4fe-b5c4-4024-bc46-73afaff4e4b7`.
-  - Refuses identity mismatch on name `MEMBER AI ASSIST` and graph node
-    `HEALTHCARE_PROVIDER-MEMBER-2026`.
+  - Refuses identity mismatch on name `MEMBER AI ASSIST` and live database graph node
+    `eng_member_ai_assist_mrp7yhe4`.
+  - Note: older incident/backlog text used the display/historical identifier
+    `HEALTHCARE_PROVIDER-MEMBER-2026`; the ACA inspect run proved the current
+    `engagements.graph_node_id` is `eng_member_ai_assist_mrp7yhe4`, so this script binds to the
+    live database identity plus exact Move UUID/name.
   - If live state is already P3, reports `already_at_target` and does not mutate.
   - If live state is P4, updates `engagements.current_phase` to P3, removes P4 gate entries from
     `gates_passed`, writes `program_audit_log`, writes `module_state_log`, raises a critical
