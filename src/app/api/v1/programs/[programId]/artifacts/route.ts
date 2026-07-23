@@ -9,6 +9,7 @@ import {
   type ArtifactFamily,
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,36 @@ function contextExtractFromMetadata(value: unknown): CabinetContextExtract | nul
     Array.isArray(extract.excludedContextItems) ||
     Array.isArray(extract.gapItems);
   return hasContextExtractShape ? extract : null;
+}
+
+function phaseFromGeneratedArtifactMetadata(meta: Record<string, unknown> | null | undefined): number | null {
+  const directPhase = meta?.phase;
+  if (typeof directPhase === "number" && Number.isInteger(directPhase)) return directPhase;
+  if (typeof directPhase === "string" && directPhase.trim()) {
+    const parsed = Number(directPhase);
+    if (Number.isInteger(parsed)) return parsed;
+  }
+
+  const keyCandidates = [
+    meta?.deliverableTypeKey,
+    meta?.registryKey,
+    meta?.deliverableType,
+    meta?.renderableDoc && typeof meta.renderableDoc === "object" && !Array.isArray(meta.renderableDoc)
+      ? (meta.renderableDoc as Record<string, unknown>).deliverableTypeKey
+      : null,
+    meta?.renderableDoc && typeof meta.renderableDoc === "object" && !Array.isArray(meta.renderableDoc)
+      ? (meta.renderableDoc as Record<string, unknown>).deliverableType
+      : null,
+  ];
+  for (const candidate of keyCandidates) {
+    if (typeof candidate !== "string" || !candidate.trim()) continue;
+    const spec = DELIVERABLE_REGISTRY.find(
+      (item) => item.deliverableTypeKey === candidate.trim(),
+    );
+    if (spec) return spec.phase;
+  }
+
+  return null;
 }
 
 export async function GET(
@@ -180,6 +211,10 @@ export async function GET(
           .map((rec) => {
             const meta = rec.metadata as {
               renderableDoc?: { title?: string };
+              phase?: number | string;
+              deliverableTypeKey?: string;
+              deliverableType?: string;
+              registryKey?: string;
               qualityStatus?: string;
               goldenBarStatus?: string;
               artifactStatus?: string;
@@ -191,7 +226,7 @@ export async function GET(
               artifactType: rec.artifactType,
               family: "generated_deliverable",
               title: meta?.renderableDoc?.title ?? rec.artifactType,
-              phase: null,
+              phase: phaseFromGeneratedArtifactMetadata(meta),
               fileFormat: rec.outputFormat,
               fileName: null,
               version: 1,
