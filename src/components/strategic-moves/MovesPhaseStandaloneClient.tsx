@@ -118,7 +118,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Originate",
     title: "Originate",
     question: "What business bet should become a governed Move?",
-    lede: "Capture the intent, sponsor, value hypothesis, and first evidence family before the work becomes a program.",
+    lede: "Capture intent, sponsor, value hypothesis, and the first evidence family. Do this before the work becomes a program.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "decide", label: "Frame" },
@@ -145,7 +145,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Charter",
     title: "Charter",
     question: "What exactly are we committing to investigate?",
-    lede: "Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.",
+    lede: "Turn the idea into a bounded charter. Define scope, owner, success measures, assumptions, and the next gate.",
     substeps: [
       { key: "prepare", label: "Charter Inputs" },
       { key: "decide", label: "Upload Evidence" },
@@ -176,7 +176,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Understand Current State",
     title: "Understand Current State",
     question: "What is true now, before we design the future state?",
-    lede: "Use operational evidence, metrics, systems, workforce signals, and constraints to diagnose the current state before choosing a path.",
+    lede: "Diagnose the current state before choosing a path. Use operational evidence, metrics, systems, workforce signals, and constraints.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "current", label: "Upload & Review" },
@@ -210,7 +210,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Choose the Approach",
     title: "Choose the Approach",
     question: "Which solution approach should we use?",
-    lede: "Strategy-phase solutioning: we design each lane just enough to estimate effort, sequence the roadmap, and map the risks - not to build it here. aVa recommends; you decide with your SMEs and approve.",
+    lede: "Design each lane enough to estimate effort, sequence the roadmap, and map risk. aVa recommends; your SMEs decide and approve.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "options", label: "Compare Options" },
@@ -248,7 +248,7 @@ const PHASES: PhaseContract[] = [
     title: "Build the Plan",
     question:
       "What plan, value case, and sequencing should leadership approve?",
-    lede: "Convert the chosen approach into workstreams, delivery scenarios, economics, dependencies, and the executive commit package.",
+    lede: "Convert the chosen approach into workstreams, delivery scenarios, economics, and dependencies. Shape the executive commit package.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "value", label: "Value Case" },
@@ -282,7 +282,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Prepare to Execute",
     title: "Prepare to Execute",
     question: "Is the organization ready to execute and track outcomes?",
-    lede: "Prepare ownership, controls, adoption, value tracking, and Tower handoff so approved value can be measured after launch.",
+    lede: "Prepare ownership, controls, adoption, value tracking, and Tower handoff. Make approved value measurable after launch.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "workstreams", label: "Execution Readiness" },
@@ -308,6 +308,14 @@ const PHASES: PhaseContract[] = [
     ],
   },
 ];
+
+export function movesPhaseCopyAuditBlocks(): string[] {
+  return PHASES.flatMap((phase) => [
+    phase.lede,
+    phase.question,
+    phase.avaContext,
+  ]);
+}
 
 export const MOVES_STANDALONE_SUGGESTED_QUESTIONS = PHASES.map((phase) => ({
   phase: phase.phase,
@@ -377,9 +385,15 @@ export function MovesPhaseStandaloneClient({
   const [finderSelectedSectionKey, setFinderSelectedSectionKey] = useState<
     string | null
   >(() =>
-    getInitialFinderSectionKey(phase.phase, initialSubstepKey, isHistoricalPhase),
+    getInitialFinderSectionKey(
+      phase.phase,
+      initialSubstepKey,
+      isHistoricalPhase,
+    ),
   );
-  const [finderComingUpOpen, setFinderComingUpOpen] = useState(false);
+  const [finderComingUpOpen, setFinderComingUpOpen] = useState<boolean | null>(
+    null,
+  );
   const [avaOpen, setAvaOpen] = useState(false);
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
   const [avaInput, setAvaInput] = useState("");
@@ -420,9 +434,9 @@ export function MovesPhaseStandaloneClient({
       ? "Complete"
       : substep.key === "approve" && topLevelHardGateTotal > 0
         ? topLevelHardGateMet >= topLevelHardGateTotal
-          ? `Gate ready · ${hardGateProgressLabel}`
-          : `Gate blocked · ${hardGateProgressLabel}`
-        : `${progressPct}% workflow · ${hardGateProgressLabel}`;
+          ? `Ready · ${hardGateProgressLabel}`
+          : `Blocked · ${hardGateProgressLabel}`
+        : hardGateProgressLabel;
   const workspaceSurfaceLabel =
     workspaceView === "phase"
       ? `${phase.code} workflow`
@@ -578,6 +592,8 @@ export function MovesPhaseStandaloneClient({
       phase.phase,
     ],
   );
+  const finderComingUpExpanded =
+    finderComingUpOpen ?? finderReadinessPack.openNeeds.length > 0;
   const setPhaseCaptureValue = useCallback((key: string, value: string) => {
     setPhaseCaptureValues((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -869,583 +885,545 @@ export function MovesPhaseStandaloneClient({
   }
 
   return (
-            <main
-              className="mxw mxw-finder-on"
-              data-testid="moves-phase-standalone"
-              data-finder-shell="on"
+    <main
+      className="mxw mxw-finder-on"
+      data-testid="moves-phase-standalone"
+      data-finder-shell="on"
+    >
+      <MovesStandaloneStyles />
+      <div className="mxw-contextbar" aria-label="Move context">
+        <div>
+          <span>MOVES</span>
+          <strong>{move.displayCode || move.name}</strong>
+          <em>{supportLine}</em>
+        </div>
+        <div>
+          <span>{workspaceSurfaceLabel}</span>
+          <strong>
+            Phase {phase.phase + 1} of {PHASES.length} · {phase.title}
+          </strong>
+        </div>
+      </div>
+      {(() => {
+        const collapsedRail = railCollapsed;
+        return (
+          <div
+            className={`mxw-surface${collapsedRail ? " mxw-surface-rail-collapsed" : ""}`}
+          >
+            <aside
+              className={`mxw-side${collapsedRail ? " mxw-side-collapsed" : ""}`}
+              aria-label="Move phases"
             >
-              <MovesStandaloneStyles />
-              <div className="mxw-contextbar" aria-label="Move context">
-                <div>
-                  <span>MOVES</span>
-                  <strong>{move.displayCode || move.name}</strong>
-                  <em>{supportLine}</em>
-                </div>
-                <div>
-                  <span>{workspaceSurfaceLabel}</span>
-                  <strong>
-                    Phase {phase.phase + 1} of {PHASES.length} · {phase.title}
-                  </strong>
-                </div>
-              </div>
-              {(() => {
-                const collapsedRail = railCollapsed;
-                return (
-                  <div
-                    className={`mxw-surface${collapsedRail ? " mxw-surface-rail-collapsed" : ""}`}
-                  >
-                    <aside
-                      className={`mxw-side${collapsedRail ? " mxw-side-collapsed" : ""}`}
-                      aria-label="Move phases"
-                    >
-                      <button
-                        type="button"
-                        className="mxw-rail-toggle"
-                        onClick={() => setRailCollapsed((prev) => !prev)}
-                        aria-expanded={!railCollapsed}
-                        aria-label={
-                          railCollapsed
-                            ? "Expand phase rail"
-                            : "Collapse phase rail"
-                        }
-                        title={railCollapsed ? "Expand" : "Collapse"}
-                      >
-                        {railCollapsed ? "»" : "«"}
-                      </button>
-                      {!collapsedRail && (
-                        <div className="mxw-move">
-                          <Link className="mxw-back" href="/strategic-moves">
-                            ← All Moves
-                          </Link>
-                          <h2>{move.name}</h2>
-                          <p>{supportLine}</p>
-                        </div>
-                      )}
-                      {!collapsedRail && (
-                        <div className="mxw-side-label">Phases</div>
-                      )}
-                      <nav className="mxw-phase-list">
-                        {PHASES.map((item) => {
-                          const tally = phaseTallies.find(
-                            (row) => row.phase === item.phase,
-                          );
-                          const state =
-                            tally?.state === "done"
-                              ? "done"
-                              : item.phase < move.currentPhase
-                                ? "done"
-                                : item.phase === move.currentPhase
-                                  ? "current"
-                                  : "up";
-                          const viewing = item.phase === phase.phase;
-                          const stateLabel = tally
-                            ? `${tally.met} of ${tally.total}`
-                            : state === "done"
-                              ? "Complete"
-                              : state === "current"
-                                ? "In progress"
-                                : "Upcoming";
-                          const phaseBody = (
-                            <>
-                              <span className="mxw-phase-dot">
-                                {state === "done" ? "✓" : item.code}
-                              </span>
-                              {!collapsedRail && (
-                                <span className="mxw-phase-name">
-                                  {item.navLabel}
-                                </span>
-                              )}
-                              {!collapsedRail && (
-                                <span className="mxw-phase-state">
-                                  {stateLabel}
-                                </span>
-                              )}
-                            </>
-                          );
-                          const rowTitle = collapsedRail
-                            ? `${item.navLabel} · ${stateLabel}`
-                            : tally
-                              ? `${tally.met} of ${tally.total} gate criteria met`
-                              : undefined;
-                          return (
-                            <div className="mxw-phase-row" key={item.code}>
-                              {item.phase <= move.currentPhase ? (
-                                <Link
-                                  className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
-                                  href={`/strategic-moves/${move.id}/phase/${item.phase}`}
-                                  title={rowTitle}
-                                >
-                                  {phaseBody}
-                                </Link>
-                              ) : (
-                                <button
-                                  className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
-                                  disabled
-                                  title={rowTitle}
-                                >
-                                  {phaseBody}
-                                </button>
-                              )}
-                              {item.phase < 5 && !collapsedRail ? (
-                                <span className="mxw-connector" />
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </nav>
-                      {!collapsedRail && (
-                        <div className="mxw-side-label mxw-workspace-label">
-                          Workspace
-                        </div>
-                      )}
-                      <div className="mxw-rail-extra">
-                        <button
-                          className={`mxw-lib-link ${workspaceView === "phase" ? "viewing" : ""}`}
-                          onClick={() => {
-                            setWorkspaceView("phase");
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          title={collapsedRail ? "Stage workspace" : undefined}
-                          type="button"
-                        >
-                          <span>▦</span>
-                          {!collapsedRail && "Stage workspace"}
-                        </button>
-                        <button
-                          className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
-                          onClick={() => {
-                            setWorkspaceView("files");
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          title={collapsedRail ? "Files & Evidence" : undefined}
-                          type="button"
-                        >
-                          <span>▣</span>
-                          {!collapsedRail && "Files & Evidence"}
-                        </button>
-                        <button
-                          className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
-                          onClick={() => {
-                            setWorkspaceView("intelligence");
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          title={
-                            collapsedRail ? "Phase Intelligence" : undefined
-                          }
-                          type="button"
-                        >
-                          <span>◈</span>
-                          {!collapsedRail && "Phase Intelligence"}
-                        </button>
-                        <button
-                          className={`mxw-lib-link ${
-                            workspaceView === "approvals" ? "viewing" : ""
-                          }`}
-                          onClick={() => {
-                            setWorkspaceView("approvals");
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          title={collapsedRail ? "Approvals" : undefined}
-                          type="button"
-                        >
-                          <span>✓</span>
-                          {!collapsedRail && "Approvals"}
-                        </button>
-                      </div>
-                      {!collapsedRail && (
-                        <p className="mxw-foot">
-                          <b>aVa</b> guides P0-P4 · Atlas takes over P5 Execute.
-                        </p>
-                      )}
-                    </aside>
-
-                    <section
-                      className="mxw-shell"
-                      aria-label={`${phase.code} phase workspace`}
-                    >
-                      {workspaceView === "files" ? (
-                        <>
-                          <div className="mxw-crumb">
-                            <button
-                              onClick={() => setWorkspaceView("phase")}
-                              type="button"
-                            >
-                              {move.name}
-                            </button>
-                            <span>/</span>
-                            Files & Evidence
-                          </div>
-                          <div className="mxw-stage-head">
-                            <div className="mxw-agent-chip">
-                              <span />
-                              AVA · MOVES
-                            </div>
-                            <h1>Files & Evidence</h1>
-                            <p>
-                              Every input template, client-loaded evidence file,
-                              and AbarVa-generated deliverable — the real
-                              Artifact Vault for this Move, not a preview.
-                            </p>
-                          </div>
-                          <WorkspaceSurfaceTabs
-                            activeView={workspaceView}
-                            onSelect={setWorkspaceView}
-                          />
-                          <FileCabinetPanel
-                            moveId={move.id}
-                            phase={phase.phase}
-                          />
-                        </>
-                      ) : workspaceView === "intelligence" ? (
-                        <>
-                          <div className="mxw-crumb">
-                            <button
-                              onClick={() => setWorkspaceView("phase")}
-                              type="button"
-                            >
-                              {move.name}
-                            </button>
-                            <span>/</span>
-                            Phase Intelligence
-                          </div>
-                          <div className="mxw-stage-head">
-                            <div className="mxw-agent-chip">
-                              <span />
-                              AVA · MOVES
-                            </div>
-                            <h1>Phase Intelligence</h1>
-                            <p>
-                              The short readout for this phase: key decision,
-                              function-pack signal, and governed gate/evidence
-                              truth.
-                            </p>
-                          </div>
-                          <WorkspaceSurfaceTabs
-                            activeView={workspaceView}
-                            onSelect={setWorkspaceView}
-                          />
-                          <PhaseIntelligencePanel
-                            moveId={move.id}
-                            phase={phase.phase}
-                          />
-                        </>
-                      ) : workspaceView === "approvals" ? (
-                        <>
-                          <div className="mxw-crumb">
-                            <button
-                              onClick={() => setWorkspaceView("phase")}
-                              type="button"
-                            >
-                              {move.name}
-                            </button>
-                            <span>/</span>
-                            Approvals overview
-                          </div>
-                          <div className="mxw-stage-head">
-                            <div className="mxw-agent-chip">
-                              <span />
-                              AVA · MOVES
-                            </div>
-                            <h1>Approvals overview</h1>
-                            <p>
-                              Gate-approval status across every phase of this
-                              Move, one row per phase — the same gate criteria
-                              the Approve &amp; Build flow evaluates against.
-                            </p>
-                          </div>
-                          <ApprovalsOverview
-                            currentMoveId={move.id}
-                            phaseTallies={phaseTallies}
-                            reachablePhase={move.currentPhase ?? 0}
-                            viewingPhase={phase.phase}
-                            onReviewCurrentPhase={() => {
-                              setWorkspaceView("phase");
-                              setSubstepIndex(phase.substeps.length - 1);
-                              setFinderSelectedSectionKey(null);
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <div className="mxw-crumb">
-                            <Link
-                              href={`/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`}
-                            >
-                              {move.name}
-                            </Link>
-                            <span>/</span>
-                            {phase.code} · {phase.title}
-                          </div>
-
-                          <div className="mxw-stage-head">
-                            <div className="mxw-agent-chip">
-                              <span />
-                              AVA · MOVES
-                            </div>
-                            <h1>{phase.title}</h1>
-                            <div className="mxw-question">{phase.question}</div>
-                            <p>{phase.lede}</p>
-                            <div
-                              className="mxw-progress-card"
-                              aria-label="Phase progress"
-                            >
-                              <strong>
-                                {phaseProgressDone} / {phase.substeps.length}
-                              </strong>
-                              <span className="mxw-track">
-                                <span style={{ width: `${progressPct}%` }} />
-                              </span>
-                              <em>
-                                {phaseReadinessLabel} · {substep.label}
-                              </em>
-                            </div>
-                          </div>
-
-                          <WorkspaceSurfaceTabs
-                            activeView={workspaceView}
-                            onSelect={setWorkspaceView}
-                          />
-
-                          {phase.phase >= 1 && phase.phase <= 5 ? (
-                              <PhaseContractStepsCanvas
-                                comingUpExpanded={finderComingUpOpen}
-                                onPhaseCaptureValueChange={setPhaseCaptureValue}
-                                onSelectSection={setFinderSelectedSectionKey}
-                                onSelectSubstep={setSubstepIndex}
-                                onToggleComingUp={() =>
-                                  setFinderComingUpOpen((open) => !open)
-                                }
-                                phase={phase}
-                                phaseCaptureSections={phaseCaptureSections}
-                                phaseCaptureValues={phaseCaptureValues}
-                                readinessPack={finderReadinessPack}
-                                selectedSectionKey={finderSelectedSectionKey}
-                                substepBody={
-                                  <PhaseBody
-                                    carriesForwardContent={
-                                      carriesForwardContent
-                                    }
-                                    currentStateReadiness={
-                                      currentStateReadiness
-                                    }
-                                    evidenceCount={evidenceCount}
-                                    findingsEvidenceLabel={
-                                      findingsEvidenceLabel
-                                    }
-                                    evidenceNeedPackets={evidenceNeedPackets}
-                                    gateApproved={gateApproved}
-                                    gateApprovalMessage={gateApprovalMessage}
-                                    gateApprovalStatus={gateApprovalStatus}
-                                    isHistoricalPhase={isHistoricalPhase}
-                                    move={move}
-                                    onApproveAfterBuild={
-                                      approvePhaseGateAfterBuild
-                                    }
-                                    onContinueCurrentPhase={
-                                      continueToCurrentPhase
-                                    }
-                                    onApproveP0Gate={approveP0Gate}
-                                    onFinalizePhaseCapture={
-                                      finalizePhaseCapture
-                                    }
-                                    onOpenFiles={openFilesWorkspace}
-                                    onPhaseCaptureValueChange={
-                                      setPhaseCaptureValue
-                                    }
-                                    onRefreshPhase={refreshPhase}
-                                    onSelectOption={setSelectedOption}
-                                    nextOpenPhaseContract={
-                                      nextOpenPhaseContract
-                                    }
-                                    p3OptionSet={p3OptionSet}
-                                    phase={phase}
-                                    phaseCaptureBlocker={phaseCaptureBlocker}
-                                    phaseCaptureCompleteCount={
-                                      phaseCaptureCompleteCount
-                                    }
-                                    phaseCaptureSections={phaseCaptureSections}
-                                    phaseCaptureValues={phaseCaptureValues}
-                                    selectedOption={selectedOption}
-                                    substep={substep.key}
-                                    terminalComplete={terminalComplete}
-                                  />
-                                }
-                                substepIndex={substepIndex}
-                              />
-                          ) : (
-                              <FinderStepsColumns
-                                comingUpExpanded={finderComingUpOpen}
-                                onPhaseCaptureValueChange={setPhaseCaptureValue}
-                                onSelectSection={setFinderSelectedSectionKey}
-                                onSelectSubstep={setSubstepIndex}
-                                onToggleComingUp={() =>
-                                  setFinderComingUpOpen((open) => !open)
-                                }
-                                phase={phase}
-                                phaseCaptureSections={phaseCaptureSections}
-                                phaseCaptureValues={phaseCaptureValues}
-                                readinessPack={finderReadinessPack}
-                                selectedSectionKey={finderSelectedSectionKey}
-                                substepBody={
-                                  <PhaseBody
-                                    carriesForwardContent={
-                                      carriesForwardContent
-                                    }
-                                    currentStateReadiness={
-                                      currentStateReadiness
-                                    }
-                                    evidenceCount={evidenceCount}
-                                    findingsEvidenceLabel={
-                                      findingsEvidenceLabel
-                                    }
-                                    evidenceNeedPackets={evidenceNeedPackets}
-                                    gateApproved={gateApproved}
-                                    gateApprovalMessage={gateApprovalMessage}
-                                    gateApprovalStatus={gateApprovalStatus}
-                                    isHistoricalPhase={isHistoricalPhase}
-                                    move={move}
-                                    onApproveAfterBuild={
-                                      approvePhaseGateAfterBuild
-                                    }
-                                    onContinueCurrentPhase={
-                                      continueToCurrentPhase
-                                    }
-                                    onApproveP0Gate={approveP0Gate}
-                                    onFinalizePhaseCapture={
-                                      finalizePhaseCapture
-                                    }
-                                    onOpenFiles={openFilesWorkspace}
-                                    onPhaseCaptureValueChange={
-                                      setPhaseCaptureValue
-                                    }
-                                    onRefreshPhase={refreshPhase}
-                                    onSelectOption={setSelectedOption}
-                                    nextOpenPhaseContract={
-                                      nextOpenPhaseContract
-                                    }
-                                    p3OptionSet={p3OptionSet}
-                                    phase={phase}
-                                    phaseCaptureBlocker={phaseCaptureBlocker}
-                                    phaseCaptureCompleteCount={
-                                      phaseCaptureCompleteCount
-                                    }
-                                    phaseCaptureSections={phaseCaptureSections}
-                                    phaseCaptureValues={phaseCaptureValues}
-                                    selectedOption={selectedOption}
-                                    substep={substep.key}
-                                    terminalComplete={terminalComplete}
-                                  />
-                                }
-                                substepIndex={substepIndex}
-                              />
-                          )}
-                        </>
-                      )}
-                    </section>
-                  </div>
-                );
-              })()}
-
               <button
-                aria-expanded={avaOpen}
-                className="mxw-ava-fab"
-                onClick={() => setAvaOpen((open) => !open)}
                 type="button"
+                className="mxw-rail-toggle"
+                onClick={() => setRailCollapsed((prev) => !prev)}
+                aria-expanded={!railCollapsed}
+                aria-label={
+                  railCollapsed ? "Expand phase rail" : "Collapse phase rail"
+                }
+                title={railCollapsed ? "Expand" : "Collapse"}
               >
-                <AvaAskMark
-                  variant="avatar-dark"
-                  style={{ maxWidth: 28, minWidth: 28, width: 28 }}
-                />
-                Ask aVa
+                {railCollapsed ? "»" : "«"}
               </button>
-              <aside
-                className={`mxw-ava-pop ${avaOpen ? "open" : ""}`}
-                aria-label="Ask aVa"
-              >
-                <div className="mxw-ava-head">
-                  <AvaAskMark
-                    variant="avatar-dark"
-                    style={{ maxWidth: 30, minWidth: 30, width: 30 }}
-                  />
-                  <div>
-                    <strong>aVa</strong>
-                    <small>{phase.avaRole}</small>
-                  </div>
-                  <button onClick={() => setAvaOpen(false)} type="button">
-                    ×
-                  </button>
+              {!collapsedRail && (
+                <div className="mxw-move">
+                  <Link className="mxw-back" href="/strategic-moves">
+                    ← All Moves
+                  </Link>
+                  <h2>{move.name}</h2>
+                  <p>{supportLine}</p>
                 </div>
-                <div className="mxw-ava-body">
-                  {avaThread.length === 0 ? (
+              )}
+              {!collapsedRail && <div className="mxw-side-label">Phases</div>}
+              <nav className="mxw-phase-list">
+                {PHASES.map((item) => {
+                  const tally = phaseTallies.find(
+                    (row) => row.phase === item.phase,
+                  );
+                  const state =
+                    tally?.state === "done"
+                      ? "done"
+                      : item.phase < move.currentPhase
+                        ? "done"
+                        : item.phase === move.currentPhase
+                          ? "current"
+                          : "up";
+                  const viewing = item.phase === phase.phase;
+                  const stateLabel = tally
+                    ? `${tally.met} of ${tally.total}`
+                    : state === "done"
+                      ? "Complete"
+                      : state === "current"
+                        ? "In progress"
+                        : "Upcoming";
+                  const phaseBody = (
                     <>
-                      <p>{phase.avaContext}</p>
-                      <div className="mxw-suggested">
-                        {workspaceView !== "phase"
-                          ? "Ask about this workspace"
-                          : "Ask about this phase"}
-                      </div>
-                      {phase.avaQuestions.map((question) => (
-                        <button
-                          key={question}
-                          type="button"
-                          onClick={() => void sendAvaMessage(question)}
-                          disabled={avaStreaming}
-                        >
-                          {question}
-                        </button>
-                      ))}
+                      <span className="mxw-phase-dot">
+                        {state === "done" ? "✓" : item.code}
+                      </span>
+                      {!collapsedRail && (
+                        <span className="mxw-phase-name">{item.navLabel}</span>
+                      )}
+                      {!collapsedRail && (
+                        <span className="mxw-phase-state">{stateLabel}</span>
+                      )}
                     </>
-                  ) : (
-                    <div className="mxw-ava-thread">
-                      {avaThread.map((turn) => (
-                        <div
-                          key={turn.id}
-                          className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}
+                  );
+                  const rowTitle = collapsedRail
+                    ? `${item.navLabel} · ${stateLabel}`
+                    : tally
+                      ? `${tally.met} of ${tally.total} gate criteria met`
+                      : undefined;
+                  return (
+                    <div className="mxw-phase-row" key={item.code}>
+                      {item.phase <= move.currentPhase ? (
+                        <Link
+                          className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
+                          href={`/strategic-moves/${move.id}/phase/${item.phase}`}
+                          title={rowTitle}
                         >
-                          <span className="mxw-ava-turn-who">
-                            {turn.role === "user" ? "You" : "aVa"}
-                          </span>
-                          <p>
-                            {turn.text ||
-                              (turn.role === "assistant" && avaStreaming
-                                ? "…"
-                                : "")}
-                          </p>
-                        </div>
-                      ))}
+                          {phaseBody}
+                        </Link>
+                      ) : (
+                        <button
+                          className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
+                          disabled
+                          title={rowTitle}
+                        >
+                          {phaseBody}
+                        </button>
+                      )}
+                      {item.phase < 5 && !collapsedRail ? (
+                        <span className="mxw-connector" />
+                      ) : null}
                     </div>
-                  )}
+                  );
+                })}
+              </nav>
+              {!collapsedRail && (
+                <div className="mxw-side-label mxw-workspace-label">
+                  Workspace
                 </div>
-                <form
-                  className="mxw-ava-composer"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void sendAvaMessage(avaInput);
+              )}
+              <div className="mxw-rail-extra">
+                <button
+                  className={`mxw-lib-link ${workspaceView === "phase" ? "viewing" : ""}`}
+                  onClick={() => {
+                    setWorkspaceView("phase");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
+                  title={collapsedRail ? "Stage workspace" : undefined}
+                  type="button"
                 >
-                  <textarea
-                    value={avaInput}
-                    onChange={(event) => setAvaInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault();
-                        void sendAvaMessage(avaInput);
-                      }
-                    }}
-                    placeholder={`Ask aVa about ${phase.title.toLowerCase()}…`}
-                    rows={2}
-                    disabled={avaStreaming}
+                  <span>▦</span>
+                  {!collapsedRail && "Stage workspace"}
+                </button>
+                <button
+                  className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
+                  onClick={() => {
+                    setWorkspaceView("files");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  title={collapsedRail ? "Files & Evidence" : undefined}
+                  type="button"
+                >
+                  <span>▣</span>
+                  {!collapsedRail && "Files & Evidence"}
+                </button>
+                <button
+                  className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
+                  onClick={() => {
+                    setWorkspaceView("intelligence");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  title={collapsedRail ? "Phase Intelligence" : undefined}
+                  type="button"
+                >
+                  <span>◈</span>
+                  {!collapsedRail && "Phase Intelligence"}
+                </button>
+                <button
+                  className={`mxw-lib-link ${
+                    workspaceView === "approvals" ? "viewing" : ""
+                  }`}
+                  onClick={() => {
+                    setWorkspaceView("approvals");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  title={collapsedRail ? "Approvals" : undefined}
+                  type="button"
+                >
+                  <span>✓</span>
+                  {!collapsedRail && "Approvals"}
+                </button>
+              </div>
+              {!collapsedRail && (
+                <p className="mxw-foot">
+                  <b>aVa</b> guides P0-P4 · Atlas takes over P5 Execute.
+                </p>
+              )}
+            </aside>
+
+            <section
+              className="mxw-shell"
+              aria-label={`${phase.code} phase workspace`}
+            >
+              {workspaceView === "files" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Files & Evidence
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Files & Evidence</h1>
+                    <p>
+                      Every input template, client-loaded evidence file, and
+                      AbarVa-generated deliverable — the real Artifact Vault for
+                      this Move, not a preview.
+                    </p>
+                  </div>
+                  <WorkspaceSurfaceTabs
+                    activeView={workspaceView}
+                    onSelect={setWorkspaceView}
                   />
-                  <button
-                    type="submit"
-                    disabled={avaStreaming || !avaInput.trim()}
-                  >
-                    Send
-                  </button>
-                </form>
-              </aside>
-            </main>
+                  <FileCabinetPanel moveId={move.id} phase={phase.phase} />
+                </>
+              ) : workspaceView === "intelligence" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Phase Intelligence
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Phase Intelligence</h1>
+                    <p>
+                      The short readout for this phase: key decision,
+                      function-pack signal, and governed gate/evidence truth.
+                    </p>
+                  </div>
+                  <WorkspaceSurfaceTabs
+                    activeView={workspaceView}
+                    onSelect={setWorkspaceView}
+                  />
+                  <PhaseIntelligencePanel
+                    moveId={move.id}
+                    phase={phase.phase}
+                  />
+                </>
+              ) : workspaceView === "approvals" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Approvals overview
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Approvals overview</h1>
+                    <p>
+                      Gate-approval status across every phase of this Move, one
+                      row per phase — the same gate criteria the Approve &amp;
+                      Build flow evaluates against.
+                    </p>
+                  </div>
+                  <ApprovalsOverview
+                    currentMoveId={move.id}
+                    phaseTallies={phaseTallies}
+                    reachablePhase={move.currentPhase ?? 0}
+                    viewingPhase={phase.phase}
+                    onReviewCurrentPhase={() => {
+                      setWorkspaceView("phase");
+                      setSubstepIndex(phase.substeps.length - 1);
+                      setFinderSelectedSectionKey(null);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="mxw-crumb">
+                    <Link
+                      href={`/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`}
+                    >
+                      {move.name}
+                    </Link>
+                    <span>/</span>
+                    {phase.code} · {phase.title}
+                  </div>
+
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>{phase.title}</h1>
+                    <div className="mxw-question">{phase.question}</div>
+                    <p>{phase.lede}</p>
+                    <div
+                      className="mxw-progress-card"
+                      aria-label="Phase progress"
+                    >
+                      <strong>
+                        {phaseProgressDone} / {phase.substeps.length}
+                      </strong>
+                      <span className="mxw-track">
+                        <span style={{ width: `${progressPct}%` }} />
+                      </span>
+                      <div className="mxw-progress-meta">
+                        <span>
+                          <b>Workflow</b>
+                          {isHistoricalPhase || gateApproved
+                            ? "Complete"
+                            : `${progressPct}%`}
+                        </span>
+                        <span>
+                          <b>Gate</b>
+                          {phaseReadinessLabel}
+                        </span>
+                        <span>
+                          <b>Stage</b>
+                          {substep.label}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <WorkspaceSurfaceTabs
+                    activeView={workspaceView}
+                    onSelect={setWorkspaceView}
+                  />
+
+                  {phase.phase >= 1 && phase.phase <= 5 ? (
+                    <PhaseContractStepsCanvas
+                      comingUpExpanded={finderComingUpExpanded}
+                      onPhaseCaptureValueChange={setPhaseCaptureValue}
+                      onSelectSection={setFinderSelectedSectionKey}
+                      onSelectSubstep={setSubstepIndex}
+                      onToggleComingUp={() =>
+                        setFinderComingUpOpen(
+                          (open) => !(open ?? finderComingUpExpanded),
+                        )
+                      }
+                      phase={phase}
+                      phaseCaptureSections={phaseCaptureSections}
+                      phaseCaptureValues={phaseCaptureValues}
+                      readinessPack={finderReadinessPack}
+                      selectedSectionKey={finderSelectedSectionKey}
+                      substepBody={
+                        <PhaseBody
+                          carriesForwardContent={carriesForwardContent}
+                          currentStateReadiness={currentStateReadiness}
+                          evidenceCount={evidenceCount}
+                          findingsEvidenceLabel={findingsEvidenceLabel}
+                          evidenceNeedPackets={evidenceNeedPackets}
+                          gateApproved={gateApproved}
+                          gateApprovalMessage={gateApprovalMessage}
+                          gateApprovalStatus={gateApprovalStatus}
+                          isHistoricalPhase={isHistoricalPhase}
+                          move={move}
+                          onApproveAfterBuild={approvePhaseGateAfterBuild}
+                          onContinueCurrentPhase={continueToCurrentPhase}
+                          onApproveP0Gate={approveP0Gate}
+                          onFinalizePhaseCapture={finalizePhaseCapture}
+                          onOpenFiles={openFilesWorkspace}
+                          onPhaseCaptureValueChange={setPhaseCaptureValue}
+                          onRefreshPhase={refreshPhase}
+                          onSelectOption={setSelectedOption}
+                          nextOpenPhaseContract={nextOpenPhaseContract}
+                          p3OptionSet={p3OptionSet}
+                          phase={phase}
+                          phaseCaptureBlocker={phaseCaptureBlocker}
+                          phaseCaptureCompleteCount={phaseCaptureCompleteCount}
+                          phaseCaptureSections={phaseCaptureSections}
+                          phaseCaptureValues={phaseCaptureValues}
+                          selectedOption={selectedOption}
+                          substep={substep.key}
+                          terminalComplete={terminalComplete}
+                        />
+                      }
+                      substepIndex={substepIndex}
+                    />
+                  ) : (
+                    <FinderStepsColumns
+                      comingUpExpanded={finderComingUpExpanded}
+                      onPhaseCaptureValueChange={setPhaseCaptureValue}
+                      onSelectSection={setFinderSelectedSectionKey}
+                      onSelectSubstep={setSubstepIndex}
+                      onToggleComingUp={() =>
+                        setFinderComingUpOpen(
+                          (open) => !(open ?? finderComingUpExpanded),
+                        )
+                      }
+                      phase={phase}
+                      phaseCaptureSections={phaseCaptureSections}
+                      phaseCaptureValues={phaseCaptureValues}
+                      readinessPack={finderReadinessPack}
+                      selectedSectionKey={finderSelectedSectionKey}
+                      substepBody={
+                        <PhaseBody
+                          carriesForwardContent={carriesForwardContent}
+                          currentStateReadiness={currentStateReadiness}
+                          evidenceCount={evidenceCount}
+                          findingsEvidenceLabel={findingsEvidenceLabel}
+                          evidenceNeedPackets={evidenceNeedPackets}
+                          gateApproved={gateApproved}
+                          gateApprovalMessage={gateApprovalMessage}
+                          gateApprovalStatus={gateApprovalStatus}
+                          isHistoricalPhase={isHistoricalPhase}
+                          move={move}
+                          onApproveAfterBuild={approvePhaseGateAfterBuild}
+                          onContinueCurrentPhase={continueToCurrentPhase}
+                          onApproveP0Gate={approveP0Gate}
+                          onFinalizePhaseCapture={finalizePhaseCapture}
+                          onOpenFiles={openFilesWorkspace}
+                          onPhaseCaptureValueChange={setPhaseCaptureValue}
+                          onRefreshPhase={refreshPhase}
+                          onSelectOption={setSelectedOption}
+                          nextOpenPhaseContract={nextOpenPhaseContract}
+                          p3OptionSet={p3OptionSet}
+                          phase={phase}
+                          phaseCaptureBlocker={phaseCaptureBlocker}
+                          phaseCaptureCompleteCount={phaseCaptureCompleteCount}
+                          phaseCaptureSections={phaseCaptureSections}
+                          phaseCaptureValues={phaseCaptureValues}
+                          selectedOption={selectedOption}
+                          substep={substep.key}
+                          terminalComplete={terminalComplete}
+                        />
+                      }
+                      substepIndex={substepIndex}
+                    />
+                  )}
+                </>
+              )}
+            </section>
+          </div>
+        );
+      })()}
+
+      <button
+        aria-expanded={avaOpen}
+        className="mxw-ava-fab"
+        onClick={() => setAvaOpen((open) => !open)}
+        type="button"
+      >
+        <AvaAskMark
+          variant="avatar-dark"
+          style={{ maxWidth: 28, minWidth: 28, width: 28 }}
+        />
+        Ask aVa
+      </button>
+      <aside
+        className={`mxw-ava-pop ${avaOpen ? "open" : ""}`}
+        aria-label="Ask aVa"
+      >
+        <div className="mxw-ava-head">
+          <AvaAskMark
+            variant="avatar-dark"
+            style={{ maxWidth: 30, minWidth: 30, width: 30 }}
+          />
+          <div>
+            <strong>aVa</strong>
+            <small>{phase.avaRole}</small>
+          </div>
+          <button onClick={() => setAvaOpen(false)} type="button">
+            ×
+          </button>
+        </div>
+        <div className="mxw-ava-body">
+          {avaThread.length === 0 ? (
+            <>
+              <p>{phase.avaContext}</p>
+              <div className="mxw-suggested">
+                {workspaceView !== "phase"
+                  ? "Ask about this workspace"
+                  : "Ask about this phase"}
+              </div>
+              {phase.avaQuestions.map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => void sendAvaMessage(question)}
+                  disabled={avaStreaming}
+                >
+                  {question}
+                </button>
+              ))}
+            </>
+          ) : (
+            <div className="mxw-ava-thread">
+              {avaThread.map((turn) => (
+                <div
+                  key={turn.id}
+                  className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}
+                >
+                  <span className="mxw-ava-turn-who">
+                    {turn.role === "user" ? "You" : "aVa"}
+                  </span>
+                  <p>
+                    {turn.text ||
+                      (turn.role === "assistant" && avaStreaming ? "…" : "")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <form
+          className="mxw-ava-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void sendAvaMessage(avaInput);
+          }}
+        >
+          <textarea
+            value={avaInput}
+            onChange={(event) => setAvaInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void sendAvaMessage(avaInput);
+              }
+            }}
+            placeholder={`Ask aVa about ${phase.title.toLowerCase()}…`}
+            rows={2}
+            disabled={avaStreaming}
+          />
+          <button type="submit" disabled={avaStreaming || !avaInput.trim()}>
+            Send
+          </button>
+        </form>
+      </aside>
+    </main>
   );
 }
 
@@ -1642,6 +1620,82 @@ function finderSectionHasValue(
   return Boolean(String(values[section.key] ?? "").trim());
 }
 
+function workflowIndexForSelectedSection(
+  phase: PhaseContract,
+  phaseCaptureSections: readonly PhaseCaptureSection[],
+  selectedSection: PhaseCaptureSection | null,
+  fallbackSubstepIndex: number,
+): number {
+  if (!selectedSection) {
+    return fallbackSubstepIndex;
+  }
+
+  const key = selectedSection.key;
+  const exactSubstepIndex = phase.substeps.findIndex(
+    (substep) => substep.key === key,
+  );
+  if (exactSubstepIndex >= 0) {
+    return exactSubstepIndex;
+  }
+
+  const uploadIndex = phase.substeps.findIndex((substep) =>
+    ["current", "decide"].includes(substep.key),
+  );
+  const findingsIndex = phase.substeps.findIndex((substep) =>
+    ["findings", "options", "value", "workstreams"].includes(substep.key),
+  );
+  const approveIndex = phase.substeps.findIndex(
+    (substep) => substep.key === "approve",
+  );
+
+  if (
+    ["evidence_plan", "baseline_metrics", "process_handoffs"].includes(key) &&
+    uploadIndex >= 0
+  ) {
+    return uploadIndex;
+  }
+  if (
+    [
+      "gaps_root_causes",
+      "data_quality_governance",
+      "evidence_confidence",
+      "solution_approach",
+      "operating_model",
+      "process_design",
+      "controls_governance",
+      "architecture_integration",
+      "roadmap_sequencing",
+      "estimates_capacity",
+      "value_plan",
+      "risks_dependencies",
+    ].includes(key) &&
+    findingsIndex >= 0
+  ) {
+    return findingsIndex;
+  }
+  if (
+    ["recommendation", "approval_rationale"].includes(key) &&
+    approveIndex >= 0
+  ) {
+    return approveIndex;
+  }
+
+  const selectedIndex = phaseCaptureSections.findIndex(
+    (section) => section.key === key,
+  );
+  if (selectedIndex < 0) {
+    return fallbackSubstepIndex;
+  }
+  const inputSlotCount = Math.max(phase.substeps.length - 1, 1);
+  return Math.min(
+    Math.floor(
+      (selectedIndex / Math.max(phaseCaptureSections.length, 1)) *
+        inputSlotCount,
+    ),
+    phase.substeps.length - 1,
+  );
+}
+
 function PhaseContractStepsCanvas({
   comingUpExpanded,
   onPhaseCaptureValueChange,
@@ -1675,6 +1729,12 @@ function PhaseContractStepsCanvas({
       ) ?? null)
     : null;
   const selectedWorkflow = selectedSectionKey === null;
+  const activeWorkflowIndex = workflowIndexForSelectedSection(
+    phase,
+    phaseCaptureSections,
+    selectedSection,
+    substepIndex,
+  );
   const detailStepNumber =
     selectedSection != null
       ? phaseCaptureSections.findIndex(
@@ -1722,7 +1782,9 @@ function PhaseContractStepsCanvas({
         <div className="mxw-contract-group">
           <div className="mxw-contract-group-label">Workflow</div>
           {phase.substeps.map((item, index) => {
-            const active = selectedWorkflow && index === substepIndex;
+            const active = selectedWorkflow
+              ? index === substepIndex
+              : index === activeWorkflowIndex;
             const complete = index < substepIndex;
             return (
               <button
@@ -1788,18 +1850,12 @@ function PhaseContractStepsCanvas({
             Step {Math.max(detailStepNumber, 1)} of {totalStepCount}
           </small>
           <h2>{detailTitle}</h2>
-          <em>Provide</em>
           <b>{detailComplete ? "Done" : "Open"}</b>
         </div>
 
         {selectedSection ? (
           <div className="mxw-contract-form">
             <p>{selectedSection.description}</p>
-            {finderSectionHasValue(selectedSection, phaseCaptureValues) ? (
-              <div className="mxw-contract-captured">
-                {phaseCaptureValues[selectedSection.key]}
-              </div>
-            ) : null}
             {selectedSection.structured === "facts" ? (
               <FinderFactsTable
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
@@ -2453,11 +2509,12 @@ function PhaseBody({
       : isGateBlocked
         ? `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`
         : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
-  const approvalDecisionState = isHistoricalPhase || gateApproved
-    ? "complete"
-    : isGateBlocked
-      ? "blocked"
-      : "ready";
+  const approvalDecisionState =
+    isHistoricalPhase || gateApproved
+      ? "complete"
+      : isGateBlocked
+        ? "blocked"
+        : "ready";
   const nextActionLabel = isHistoricalPhase
     ? terminalComplete
       ? "Open Tower"
@@ -2559,7 +2616,9 @@ function PhaseBody({
             <h3>{approvalDecisionTitle}</h3>
             <p>{approvalDecisionText}</p>
             <div className="mxw-decision-chips">
-              <span>{hardMetCount}/{hardTotal} hard gates met</span>
+              <span>
+                {hardMetCount}/{hardTotal} hard gates met
+              </span>
               <span>
                 {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
               </span>
@@ -2842,9 +2901,7 @@ function PhaseBody({
                       </span>
                       {softGateCriteria.map((criterion) => (
                         <span
-                          className={
-                            criterion.completed ? "met" : "soft-open"
-                          }
+                          className={criterion.completed ? "met" : "soft-open"}
                           key={criterion.id}
                         >
                           {criterion.completed ? "✓" : "○"} {criterion.label}
@@ -3771,7 +3828,9 @@ function CurrentStateFamilyUploadPanel({
         fileName: file.name,
         status: "error",
         detail:
-          payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
+          payload.detail ||
+          payload.error ||
+          `Upload failed (HTTP ${res.status})`,
       };
     }
     return {
@@ -3799,14 +3858,18 @@ function CurrentStateFamilyUploadPanel({
     const nextResults: FamilyUploadResult[] = [];
     try {
       for (const file of selectedFiles) {
-        const mappedFamilies = inferCurrentStateFamilies(file.name, openFamilies);
+        const mappedFamilies = inferCurrentStateFamilies(
+          file.name,
+          openFamilies,
+        );
         if (mappedFamilies.length === 0) {
           nextResults.push({
             familyKey: "unmapped",
             familyLabel: "No open current-state family",
             fileName: file.name,
             status: "error",
-            detail: "No open document evidence family was available for this file.",
+            detail:
+              "No open document evidence family was available for this file.",
           });
           continue;
         }
@@ -3835,7 +3898,10 @@ function CurrentStateFamilyUploadPanel({
   }
 
   return (
-    <section className="mxw-family-upload" aria-label="Current-state evidence upload">
+    <section
+      className="mxw-family-upload"
+      aria-label="Current-state evidence upload"
+    >
       <header>
         <div>
           <span>Family-aware upload</span>
@@ -3877,7 +3943,10 @@ function CurrentStateFamilyUploadPanel({
       {results.length > 0 ? (
         <div className="mxw-family-results" aria-label="Mapped upload results">
           {results.map((row, index) => (
-            <div className={row.status} key={`${row.fileName}-${row.familyKey}-${index}`}>
+            <div
+              className={row.status}
+              key={`${row.fileName}-${row.familyKey}-${index}`}
+            >
               <strong>{row.fileName}</strong>
               <span>{row.familyLabel}</span>
               <em>{row.detail}</em>
@@ -3895,7 +3964,9 @@ function CurrentStateFamilyUploadPanel({
           <div key={instrument.key}>
             <strong>{instrument.label}</strong>
             <p>{instrument.whyNeeded}</p>
-            <em className={instrument.status}>{instrument.status.replace(/_/g, " ")}</em>
+            <em className={instrument.status}>
+              {instrument.status.replace(/_/g, " ")}
+            </em>
           </div>
         ))}
       </div>
@@ -4384,10 +4455,12 @@ function MovesStandaloneStyles() {
 .mxw-agent-chip span{width:7px;height:7px;border-radius:50%;background:var(--teal)}
 .mxw-stage-head h1{grid-column:1;font-family:Fraunces, Georgia, serif;font-size:34px;font-weight:600;letter-spacing:-.9px;line-height:1.08;margin:0 0 7px;color:var(--ink)}
 .mxw-question{grid-column:1;font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:2px}
-.mxw-stage-head p{grid-column:1;font-size:14.5px;color:var(--muted);line-height:1.5;max-width:64ch;margin:0}
+.mxw-stage-head p{grid-column:1;font-size:14.5px;color:var(--muted);line-height:1.5;max-width:82ch;margin:0}
 .mxw-progress-card{grid-column:2;grid-row:1 / span 4;align-self:center;width:230px;border:1px solid var(--line-2);border-radius:12px;background:#fff;padding:14px 16px;box-shadow:none}
 .mxw-progress-card strong{display:block;font-family:Fraunces, Georgia, serif;font-size:20px;font-weight:650;line-height:1.05;margin-bottom:9px;color:var(--ink)}
-.mxw-progress-card em{display:block;font-style:normal;font-size:12px;color:var(--muted);font-weight:800;margin-top:8px}
+.mxw-progress-meta{display:grid;gap:6px;margin-top:10px}
+.mxw-progress-meta span{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;align-items:start;color:var(--muted);font-size:11.5px;font-weight:700;line-height:1.25}
+.mxw-progress-meta b{color:#8b95a8;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .mxw-surface-tabs{display:inline-flex;align-items:center;gap:2px;background:rgba(12,26,58,.05);border-radius:10px;padding:3px;margin:0 0 20px;overflow-x:auto}
 .mxw-surface-tabs button{position:relative;border:0;background:transparent;color:var(--muted);padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
@@ -4899,26 +4972,24 @@ function MovesStandaloneStyles() {
 .mxw-contract-step>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-step>span.done{border-color:#1d9e75;background:#1d9e75}
 .mxw-contract-step strong{min-width:0;font-size:13px;font-weight:700;line-height:1.2;color:inherit}
-.mxw-contract-comingup{border-top:1px solid rgba(12,26,58,.08);padding:14px 8px 0}
-.mxw-contract-comingup button{appearance:none;border:0;background:transparent;color:#5b6c8a;cursor:pointer;font-size:12px;font-weight:800;line-height:1.35;padding:0;text-align:left}
+.mxw-contract-comingup{border-top:1px solid rgba(12,26,58,.12);padding:16px 8px 2px}
+.mxw-contract-comingup button{appearance:none;border:1px solid rgba(42,90,168,.14);border-radius:8px;background:#fff;color:#0c1a3a;cursor:pointer;font-size:12px;font-weight:850;line-height:1.35;padding:8px 10px;text-align:left;width:100%;box-shadow:0 1px 2px rgba(12,26,58,.04)}
 .mxw-contract-comingup div{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .mxw-contract-comingup span{border:1px solid rgba(42,90,168,.14);border-radius:999px;background:#e4ecf9;color:#2a5aa8;font-size:10.5px;font-weight:800;line-height:1.2;padding:5px 8px}
 .mxw-contract-comingup span.req{border-color:rgba(186,117,23,.18);background:#fbf1df;color:#8a5a12}
 .mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
-.mxw-contract-nav-foot{margin-top:auto;border-top:1px solid rgba(12,26,58,.08);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
+.mxw-contract-nav-foot{margin-top:4px;border-top:1px solid rgba(12,26,58,.14);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
 .mxw-contract-detail{padding:28px 30px 24px;min-width:0}
-.mxw-contract-detail-top{display:grid;grid-template-columns:22px auto minmax(0,auto) auto auto;align-items:center;gap:10px;margin-bottom:18px}
+.mxw-contract-detail-top{display:grid;grid-template-columns:22px auto minmax(0,auto) auto;align-items:center;gap:10px;margin-bottom:18px}
 .mxw-contract-detail-top>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-detail-top>span.done{border-color:#1d9e75;background:#1d9e75}
 .mxw-contract-detail-top small{color:#8b95a8;font-size:12px;font-weight:700;white-space:nowrap}
 .mxw-contract-detail-top h2{margin:0;color:#0c1a3a;font-size:16px;font-weight:800;line-height:1.2;min-width:0}
-.mxw-contract-detail-top em,.mxw-contract-detail-top b{border-radius:8px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-style:normal;font-weight:800;letter-spacing:.12em;padding:4px 7px;text-transform:uppercase}
-.mxw-contract-detail-top em{background:rgba(42,90,168,.09);color:#5b6c8a}
+.mxw-contract-detail-top b{border-radius:8px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-style:normal;font-weight:800;letter-spacing:.12em;padding:4px 7px;text-transform:uppercase}
 .mxw-contract-detail-top b{background:rgba(12,26,58,.06);color:#8b95a8}
 .mxw-contract-detail-top>span.done~b{background:rgba(29,158,117,.13);color:#147c5b}
 .mxw-contract-form{display:grid;gap:13px}
 .mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
-.mxw-contract-captured{border-left:2px solid rgba(29,158,117,.45);color:#0c1a3a;font-size:13px;line-height:1.5;padding-left:10px;white-space:pre-wrap}
 .mxw-contract-input{width:100%;resize:vertical;border:1px solid rgba(12,26,58,.16);border-radius:10px;background:#fff;color:#0c1a3a;font:inherit;font-size:13.5px;line-height:1.45;padding:12px}
 .mxw-contract-input:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
 .mxw-contract-legacy-body>.mxw-zone:first-child,.mxw-contract-legacy-body>.mxw-review:first-child,.mxw-contract-legacy-body>.mxw-action-panel:first-child{margin-top:0}
@@ -4929,7 +5000,7 @@ function MovesStandaloneStyles() {
   .mxw-contract-card{grid-template-columns:1fr}
   .mxw-contract-nav{border-right:0;border-bottom:1px solid rgba(12,26,58,.09)}
   .mxw-contract-detail-top{grid-template-columns:22px auto minmax(0,1fr)}
-  .mxw-contract-detail-top em,.mxw-contract-detail-top b{justify-self:start}
+  .mxw-contract-detail-top b{justify-self:start}
 }
 /*
  * Approvals overview. Rendered only when workspaceView === "approvals".
