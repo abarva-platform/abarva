@@ -118,3 +118,28 @@ correction itself.
 
 See `docs/codex-handoff/MOVES_ARTIFACT_LIFECYCLE_AND_REMEDIATION_PROMPT_2026-07-23.md` for the
 grounded implementation handoff covering all of the above.
+
+## Addendum (same day) — Backfill dry-run reviewed, apply authorized
+
+PR #5438 (schema), #5440 (ACA operator-job bridge), #5443 (dry-run label fix) verified
+independently: all three confirmed as ancestors of the current `origin/main` tip via
+`git merge-base --is-ancestor`; ACA runtime invariant holds (template image matches the
+100%-traffic revision). The reported revision name (`m46793612`) had already been superseded by
+an unrelated later deploy (`mae5c2501`, PR #5460) by the time this was checked — normal given
+this repo's deploy cadence; ancestry confirms the lifecycle work is genuinely live regardless.
+
+**Dry-run status report reviewed** (workflow run `local-20260723T070210304Z`, tenants
+`meridian-health`/`skyharbor-air`/`first-capital`, 12 candidates): matches the approved
+MOVES-DESIGN-003 contract exactly — 2 `high`-confidence rows resolve a real `approved_artifact_id`
+(`requires_revalidation=false`), 10 `inferred` rows are `signed_off_version`-only
+(`requires_revalidation=true`); every row targets `human_approved`, never `client_final`; all
+carry `authoritative_flag_source=legacy_backfill`. No fabrication, no over-claiming, correctly
+conservative.
+
+**Decision: apply authorized** for this exact reviewed report (workflow run
+`local-20260723T070210304Z`, migration hash
+`ff49c850a9bfe18ac837e7dfab19256d8cfe51f22cb01f86dbd0bdf014dabfcb`) against these three tenants
+only. Proceed through the sanctioned ACA operator job's apply mode, capture the same
+proof-bundle discipline as the dry-run, and confirm post-apply that `deliverables_v2.status`
+reads identically to pre-apply for every existing caller (per the design doc's own compatibility
+plan, §5) before considering this closed.
