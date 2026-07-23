@@ -2173,6 +2173,62 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(chatBody.surfaceContext.phase).toBe(3);
   });
 
+  it("renders the rich aVa answer while the live stream is still open", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    const encoder = new TextEncoder();
+    let streamController: ReadableStreamDefaultController<Uint8Array> | null =
+      null;
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/api/chat/agent")) {
+          const body = new ReadableStream<Uint8Array>({
+            start(controller) {
+              streamController = controller;
+              controller.enqueue(
+                encoder.encode(
+                  "The current phase needs decision evidence before the next phase starts.",
+                ),
+              );
+            },
+          });
+          return { ok: true, status: 200, body } as unknown as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /What must be true before P4\?/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/needs decision evidence before the next phase/i),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("aVa answer")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Gate readiness by phase")).toBeInTheDocument();
+    expect(screen.getByText("Phase readiness scorecard")).toBeInTheDocument();
+
+    const controllerToClose = streamController as { close: () => void } | null;
+    controllerToClose?.close();
+  });
+
   it("supports typing and sending a free-form question via the composer", async () => {
     render(
       <MovesPhaseStandaloneClient
