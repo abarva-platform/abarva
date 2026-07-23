@@ -188,6 +188,7 @@ describe("buildArtifactQualityGovernedAnswer", () => {
     expect(answer!.citations).toHaveLength(1);
     expect(answer!.citations[0]?.recordId).toBe("artifact-1");
     expect(answer!.directAnswer).toContain("1 artifacts are registered");
+    expect(answer!.safety.forbiddenLanguagePassed).toBe(true);
     expect(answer!.artifacts[1]).toMatchObject({
       artifact: "table",
       title: "Artifact quality and lifecycle",
@@ -207,9 +208,21 @@ describe("buildArtifactQualityGovernedAnswer", () => {
     expect(answer).not.toBeNull();
     expect(answer!.status).toBe("no_data");
     expect(answer!.citations).toHaveLength(0);
+    expect(answer!.gaps).toEqual([
+      expect.objectContaining({
+        id: "artifact-quality-required-files-missing",
+        severity: "high",
+      }),
+    ]);
     expect(answer!.directAnswer).toContain("No Source artifacts are registered");
     expect(answer!.caveats[0]?.detail).toContain(
-      "Missing-artifact rows come from Source's canonical artifact standards",
+      "Missing artifacts come from Source's artifact standards",
     );
+    expect(
+      answer!.caveats
+        .map((caveat) => `${caveat.label} ${caveat.detail}`)
+        .join(" "),
+    ).not.toMatch(/source_artifacts|\brows?\b/i);
+    expect(answer!.safety.forbiddenLanguagePassed).toBe(true);
   });
 });
