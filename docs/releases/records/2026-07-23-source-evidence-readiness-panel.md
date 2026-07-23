@@ -62,7 +62,7 @@ Revert the PR and redeploy through the repo-owned ACA main workflow. That remove
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5454.
 - Merge SHA: pending.
 - ACA deploy run / digest: pending.
 - Signed-in proof: pending.
