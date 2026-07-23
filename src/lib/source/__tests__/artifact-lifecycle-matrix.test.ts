@@ -230,6 +230,57 @@ describe("Source artifact lifecycle matrix", () => {
     expect(evaluationRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives decision and selection prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const riskAttestation = summary.rows.find(
+      (row) => row.code === "d25_risk_attestation",
+    );
+    const stewardSignoff = summary.rows.find(
+      (row) => row.code === "d26_steward_signoff",
+    );
+    const selectionMemo = summary.rows.find(
+      (row) => row.code === "d27_selection_memo",
+    );
+    const contractRecord = summary.rows.find(
+      (row) => row.code === "d28_contract_record",
+    );
+
+    expect(riskAttestation?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+    expect(stewardSignoff?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(selectionMemo?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+    expect(contractRecord?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const decisionSelectionRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d25_risk_attestation|d26_steward_signoff|d27_selection_memo|d28_contract_record/.test(row),
+      )
+      .join("\n");
+
+    expect(decisionSelectionRows).toContain('"Yes"');
+    expect(decisionSelectionRows).toContain('"Claude Opus"');
+    expect(decisionSelectionRows).toContain('"Claude Sonnet"');
+    expect(decisionSelectionRows).not.toContain("No dedicated prompt");
+  });
+
   it("derives transition-stage prompt-backed labels from the generation registry", () => {
     const summary = buildSourceArtifactLifecycleSummary();
 

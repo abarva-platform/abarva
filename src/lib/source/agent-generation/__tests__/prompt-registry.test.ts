@@ -67,6 +67,10 @@ describe("Source artifact prompt registry provider config", () => {
         "d21_assumption_set",
         "d22_bafo_question_pack",
         "d23_bafo_round_log",
+        "d25_risk_attestation",
+        "d26_steward_signoff",
+        "d27_selection_memo",
+        "d28_contract_record",
         "d29_transition_plan",
         "d30_checkpoint_log",
         "d31_kt_evidence",
@@ -820,6 +824,201 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain("written acceptance");
     expect(message).toContain(
       "do not invent completed rounds, concessions, price deltas, or closure status",
+    );
+  });
+
+  it("configures the decision and selection prompts as a governed workflow", () => {
+    const d25 = getPromptTemplate("d25_risk_attestation");
+    const d26 = getPromptTemplate("d26_steward_signoff");
+    const d27 = getPromptTemplate("d27_selection_memo");
+    const d28 = getPromptTemplate("d28_contract_record");
+    const d29 = getPromptTemplate("d29_transition_plan");
+
+    expect(d25).not.toBeNull();
+    expect(d26).not.toBeNull();
+    expect(d27).not.toBeNull();
+    expect(d28).not.toBeNull();
+    expect(d25?.upstreamRequired).toEqual([
+      "d24_decision_brief",
+      "d23_bafo_round_log",
+    ]);
+    expect(d26?.upstreamRequired).toEqual([
+      "d24_decision_brief",
+      "d25_risk_attestation",
+    ]);
+    expect(d27?.upstreamRequired).toEqual([
+      "d24_decision_brief",
+      "d25_risk_attestation",
+      "d26_steward_signoff",
+    ]);
+    expect(d28?.upstreamRequired).toEqual(["d27_selection_memo"]);
+    expect(d29?.upstreamOptional).toContain("d26_steward_signoff");
+    expect(d29?.upstreamOptional).not.toContain("d26_signoff_packet");
+    expect(d25?.systemPrompt).toContain("Risk Attestation");
+    expect(d25?.systemPrompt).toContain("A listed mitigation is not an attestation");
+    expect(d26?.systemPrompt).toContain("Governance Sign-off Record");
+    expect(d26?.systemPrompt).toContain("Do not invent sponsor, finance, legal");
+    expect(d27?.systemPrompt).toContain("Selection Memo");
+    expect(d27?.systemPrompt).toContain("must not declare a vendor selected");
+    expect(d28?.systemPrompt).toContain("Contract Record");
+    expect(d28?.systemPrompt).toContain("must not invent legal terms");
+  });
+
+  it("blocks decision risk attestation until decision and BAFO round evidence exist", () => {
+    const d25 = getPromptTemplate("d25_risk_attestation");
+    const ctx = makeD09Context(["Risk_Register.xlsx"]);
+
+    expect(findMissingUpstreamCodes(d25!, ctx)).toEqual([
+      "d24_decision_brief",
+      "d23_bafo_round_log",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d24_decision_brief",
+        "# Decision\n\nRecommend Vendor A conditional on risk controls.",
+      ),
+      makeArtifactState(
+        "d23_bafo_round_log",
+        "# BAFO Round\n\nVendor A responded; written acceptance pending.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d25!, ctx)).toEqual([]);
+
+    const message = d25?.buildUserMessage(ctx, {
+      d24_decision_brief:
+        "# Decision\n\nRecommend Vendor A conditional on security uplift.",
+      d23_bafo_round_log:
+        "# BAFO Round\n\nVendor A responded; no written acceptance yet.",
+      d20_trap_log:
+        "# Trap Log\n\nP1 SLA credit economics accepted as residual risk.",
+    });
+
+    expect(message).toContain("Risk Attestation");
+    expect(message).toContain("Decision Brief (d24_decision_brief)");
+    expect(message).toContain("BAFO Round Log (d23_bafo_round_log)");
+    expect(message).toContain("Risk_Register.xlsx");
+    expect(message).toContain("risk formally accepted separate");
+    expect(message).toContain(
+      "do not invent accepted risks, controls, exposures, or sign-offs",
+    );
+  });
+
+  it("requires risk attestation before drafting the governance sign-off record", () => {
+    const d26 = getPromptTemplate("d26_steward_signoff");
+    const ctx = makeD09Context(["Governance_Approval_Notes.md"]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d24_decision_brief",
+        "# Decision\n\nDecision brief is ready for sponsor review.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d26!, ctx)).toEqual([
+      "d25_risk_attestation",
+    ]);
+
+    ctx.artifactStates.push(
+      makeArtifactState(
+        "d25_risk_attestation",
+        "# Risk Attestation\n\nConditionally attested; legal sign-off pending.",
+      ),
+    );
+
+    expect(findMissingUpstreamCodes(d26!, ctx)).toEqual([]);
+
+    const message = d26?.buildUserMessage(ctx, {
+      d24_decision_brief:
+        "# Decision\n\nDecision brief is ready for sponsor review.",
+      d25_risk_attestation:
+        "# Risk Attestation\n\nConditionally attested; legal sign-off pending.",
+      d17_weight_log:
+        "# Weight Governance\n\nWeights locked before scoring.",
+    });
+
+    expect(message).toContain("Governance Sign-off Record");
+    expect(message).toContain("Risk Attestation (d25_risk_attestation)");
+    expect(message).toContain("Governance_Approval_Notes.md");
+    expect(message).toContain("Weights locked before scoring");
+    expect(message).toContain(
+      "do not invent signatories, timestamps, or approvals",
+    );
+  });
+
+  it("requires decision approvals before drafting the selection memo", () => {
+    const d27 = getPromptTemplate("d27_selection_memo");
+    const ctx = makeD09Context(["Sponsor_Decision_Email.pdf"]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d24_decision_brief",
+        "# Decision\n\nRecommend Vendor A.",
+      ),
+      makeArtifactState(
+        "d25_risk_attestation",
+        "# Risk\n\nResidual risk conditionally accepted.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d27!, ctx)).toEqual([
+      "d26_steward_signoff",
+    ]);
+
+    ctx.artifactStates.push(
+      makeArtifactState(
+        "d26_steward_signoff",
+        "# Sign-off\n\nSteward sign-off recorded with finance condition.",
+      ),
+    );
+
+    expect(findMissingUpstreamCodes(d27!, ctx)).toEqual([]);
+
+    const message = d27?.buildUserMessage(ctx, {
+      d24_decision_brief: "# Decision\n\nRecommend Vendor A.",
+      d25_risk_attestation:
+        "# Risk\n\nResidual risk conditionally accepted.",
+      d26_steward_signoff:
+        "# Sign-off\n\nSteward sign-off recorded with finance condition.",
+      d19_pricing_workbook:
+        "# Pricing\n\nFinal TCO basis pending sponsor approval.",
+    });
+
+    expect(message).toContain("Selection Memo");
+    expect(message).toContain("Governance Sign-off Record (d26_steward_signoff)");
+    expect(message).toContain("Sponsor_Decision_Email.pdf");
+    expect(message).toContain("do not invent final pricing, selected vendors");
+  });
+
+  it("requires the selection memo before drafting the contract record", () => {
+    const d28 = getPromptTemplate("d28_contract_record");
+    const ctx = makeD09Context(["Signed_Contract.pdf"]);
+
+    expect(findMissingUpstreamCodes(d28!, ctx)).toEqual([
+      "d27_selection_memo",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d27_selection_memo",
+        "# Selection\n\nSponsor selected Vendor A pending contract upload.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d28!, ctx)).toEqual([]);
+
+    const message = d28?.buildUserMessage(ctx, {
+      d27_selection_memo:
+        "# Selection\n\nSponsor selected Vendor A pending contract upload.",
+      d23_bafo_round_log:
+        "# BAFO\n\nWritten acceptance captured for SLA credit language.",
+    });
+
+    expect(message).toContain("Contract Record");
+    expect(message).toContain("Selection Memo (d27_selection_memo)");
+    expect(message).toContain("Signed_Contract.pdf");
+    expect(d28?.systemPrompt).toContain("Do not mark signed unless");
+    expect(message).toContain(
+      "Do not invent signed contracts, effective dates, repository references",
     );
   });
 });
