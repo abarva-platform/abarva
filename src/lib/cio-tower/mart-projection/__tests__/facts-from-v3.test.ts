@@ -167,7 +167,10 @@ describe("factsFromV3Benefits", () => {
     {
       ai_program_id: "AIP-DEV",
       program_name: "Developer Productivity AI",
+      funded_spend_usd: "2900000",
       promised_value_usd: "4500000",
+      usage_actual: "306",
+      adoption_rate_pct: "34",
       finance_validated_value_usd: "500000",
       finance_validation_status: "partial_validated",
       source_record_id: "b1",
@@ -190,8 +193,25 @@ describe("factsFromV3Benefits", () => {
       (f) => readCanonicalIdentity(f)!.program_code === "PROG-DEV-PRODUCTIVITY",
     );
     expect(dev.map((f) => readCanonicalIdentity(f)!.metric_key).sort()).toEqual(
-      ["program_finance_validated_value_usd", "program_promised_value_usd"],
+      [
+        "ai_tool_active_users",
+        "ai_tool_seat_utilization",
+        "program_approved_funding_usd",
+        "program_finance_validated_value_usd",
+        "program_promised_value_usd",
+      ],
     );
+    expect(
+      dev.find(
+        (f) => readCanonicalIdentity(f)!.metric_key === "ai_tool_active_users",
+      )?.value_numeric,
+    ).toBe(306);
+    expect(
+      dev.find(
+        (f) =>
+          readCanonicalIdentity(f)!.metric_key === "ai_tool_seat_utilization",
+      )?.value_numeric,
+    ).toBeCloseTo(0.34, 5);
   });
 
   it("never emits a finance-validated fact when status is not_validated", () => {
