@@ -10,7 +10,7 @@ import { Client } from "pg";
 
 const AUTHORIZED_MOVE_ID = "cd51e4fe-b5c4-4024-bc46-73afaff4e4b7";
 const AUTHORIZED_MOVE_NAME = "MEMBER AI ASSIST";
-const AUTHORIZED_GRAPH_NODE_ID = "HEALTHCARE_PROVIDER-MEMBER-2026";
+const AUTHORIZED_GRAPH_NODE_ID = "eng_member_ai_assist_mrp7yhe4";
 const DEFAULT_WORKFLOW_RUN_ID = `local-${new Date().toISOString().replace(/[-:.]/g, "")}`;
 const AUTHORIZATION_TOKEN = "return-to-p3-approved-2026-07-23";
 const TARGET_PHASE = 3;

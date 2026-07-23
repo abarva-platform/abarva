@@ -6,7 +6,7 @@ import {
 const authorizedMove = {
   id: "cd51e4fe-b5c4-4024-bc46-73afaff4e4b7",
   name: "MEMBER AI ASSIST",
-  graph_node_id: "HEALTHCARE_PROVIDER-MEMBER-2026",
+  graph_node_id: "eng_member_ai_assist_mrp7yhe4",
   client_id: "client",
   client_slug: "meridian-health",
   client_name: "Meridian Health",
@@ -47,6 +47,15 @@ describe("correct-member-ai-assist-phase", () => {
 
     expect(
       buildCorrectionPlan({ ...authorizedMove, graph_node_id: "OTHER" }, { expectedCurrentPhase: 4, targetPhase: 3 }),
+    ).toMatchObject({
+      status: "blocked",
+    });
+
+    expect(
+      buildCorrectionPlan(
+        { ...authorizedMove, graph_node_id: "HEALTHCARE_PROVIDER-MEMBER-2026" },
+        { expectedCurrentPhase: 4, targetPhase: 3 },
+      ),
     ).toMatchObject({
       status: "blocked",
     });
