@@ -278,9 +278,13 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   backfill or promotion job is approved.
 - **Severity**: P4 (evidence-layer integrity / ingestion operations readiness).
 - **Workstream**: Ingestion / data persistence.
-- **Status**: `Candidate` — code-only, read-only, no migration, no data-build job, no vector
-  indexing, no OCR/transcription, no enterprise-context promotion, and no production data
-  mutation.
+- **Status**: `Shipped — deployed and runtime-proven` — code-only, read-only, no migration,
+  no data-build job, no vector indexing, no OCR/transcription, no enterprise-context
+  promotion, and no production data mutation. Merged in PR #5475, deployed by ACA main run
+  `30015900379`, superseded by current healthy main revision `ca-abarva-web-lab-eastus--mc6fbb7ff`,
+  and VNet-proven with the read-only operator command for Lakeshore event
+  `LAKE-AMS-2026-C1402EFD` (`c05872d8-0465-4bc8-8eeb-ff3d42ac6761`): 9 artifacts read,
+  9 parser-ready, 0 parsed, 0 search-ready, 0 graph-projected, and 0 attention items.
 - **Dependencies**: existing `source_artifacts` rows and existing parse, embedding, graph, family,
   format, and timestamp columns. No schema change is required.
 - **Acceptance criteria**: add a read-only command that resolves a tenant-scoped Source event or
