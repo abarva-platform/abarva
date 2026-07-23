@@ -471,8 +471,12 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 
 ### SOURCE-SHELL-004a — Enforce accepted-artifact downstream context policy
 
-- **Status**: Candidate — code complete on `codex/source-next-safe-backlog-1336`; awaiting PR,
-  repo-owned ACA deploy, runtime invariant, and focused live/read-only proof.
+- **Status**: `Shipped — deployed and runtime-proven` — code-only, no migration, no
+  data-build job, no vector indexing, and no production data mutation. Merged in PR #5470
+  (`0c2bd5c83ebbf07eba5ef3a7ea2b366dcc5b935d`), deployed by ACA main run
+  `30013071091`, and still present on the independently verified production revision
+  `ca-abarva-web-lab-eastus--m4eaa2e30` (`main-4eaa2e30`). Focused governance test,
+  governance lint, and heap-sized TypeScript check passed again on 2026-07-23.
 - **Problem statement**: SOURCE-SHELL-004 captured `downstream_context_policy` when a human
   accepted an artifact, but the central governed context gate ignored that field. A default
   `restricted` acceptance could therefore become indistinguishable from explicitly included
