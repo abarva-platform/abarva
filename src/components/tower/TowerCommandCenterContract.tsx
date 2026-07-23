@@ -19,6 +19,7 @@ import {
 import type {
   TowerMartAiPortfolioItem,
   TowerMartCommandViewModel,
+  TowerMartEvidenceLineage,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
 } from "@/lib/cio-tower/tower-mart-view-model";
@@ -504,8 +505,8 @@ function EvidenceView({
           {model.evidenceLineage.slice(0, 14).map((row) => (
             <div key={row.lineageKey} style={traceRowStyle}>
               <div>
-                <b>{row.displayedFact}</b>
-                <p>{row.caveat || "Evidence supports the displayed posture."}</p>
+                <b>{evidenceFactLabel(row)}</b>
+                <p>{evidenceCaveatLabel(row.caveat)}</p>
               </div>
               <span>{friendlySourceLabel(row.sourceFile)}</span>
             </div>
@@ -1188,6 +1189,32 @@ function friendlySourceLabel(value: string | null | undefined): string {
   if (source.includes("07_vendor")) return "Vendors and contracts template";
   if (!source || source === "null") return "Source pending";
   return humanize(source.replace(/\.csv$/i, ""));
+}
+
+function evidenceFactLabel(row: TowerMartEvidenceLineage): string {
+  const raw = row.displayedFact
+    .replace(/^Application Owners\s*\/\s*Business Applications:\s*/i, "")
+    .replace(/^Business Applications:\s*/i, "")
+    .replace(/\s+AI-tagged spend$/i, "")
+    .trim();
+  if (!raw) return "Evidence item";
+  const lens = candidatePortfolioLens({
+    itemName: raw,
+    vendorName: row.sourceSystem,
+    systemName: row.sourceSystem,
+  } as TowerMartAiPortfolioItem);
+  const name = shortAiName(raw);
+  if (lens !== "Candidate opportunity" && name !== lens) return `${name} - ${lens}`;
+  return name;
+}
+
+function evidenceCaveatLabel(value: string | null | undefined): string {
+  const caveat = String(value ?? "").trim();
+  if (!caveat) return "Evidence supports the displayed posture.";
+  if (/reference\/synthetic estimate/i.test(caveat)) {
+    return "Planning-grade signal; production usage or finance extract is not loaded yet.";
+  }
+  return caveat;
 }
 
 function normalizeScore(value: number): number {
