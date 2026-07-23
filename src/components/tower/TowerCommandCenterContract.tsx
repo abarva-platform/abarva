@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Cell,
   LabelList,
@@ -20,7 +18,6 @@ import {
 import type {
   TowerMartAiPortfolioItem,
   TowerMartCommandViewModel,
-  TowerMartCxoAction,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
 } from "@/lib/cio-tower/tower-mart-view-model";
@@ -290,7 +287,7 @@ function ThisWeeksRead({
 
   return (
     <Panel style={{ minHeight: 430 }}>
-      <div style={goldEyebrowStyle}>This week's read</div>
+      <div style={goldEyebrowStyle}>This week&apos;s read</div>
       <p style={weeklyStatementStyle}>
         {money(command.totalItBudgetFy26)} is in view. {money(command.aiTaggedSpendFy26NonAdditive)} is AI-tagged.{" "}
         {money(command.promisedValueFy26)} is promised value. {money(command.realizedValueYtdAllowed)} is claimable.
