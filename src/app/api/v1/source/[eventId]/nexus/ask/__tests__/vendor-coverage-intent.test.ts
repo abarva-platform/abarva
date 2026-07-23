@@ -41,11 +41,22 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     expect(ROUTE_SOURCE).toContain('buildVendorCoverageGovernedAnswer');
     expect(ROUTE_SOURCE).toContain('buildValueLedgerGovernedAnswer');
     expect(ROUTE_SOURCE).toContain('looksLikeValueLedgerQuestion');
+    expect(ROUTE_SOURCE).toContain('buildEvidenceReadinessGovernedAnswer');
+    expect(ROUTE_SOURCE).toContain('looksLikeEvidenceReadinessQuestion');
     expect(ROUTE_SOURCE).toContain('buildArtifactQualityGovernedAnswer');
     expect(ROUTE_SOURCE).toContain('looksLikeArtifactQualityQuestion');
     expect(ROUTE_SOURCE).toContain('eventId: liveEventDetail?.id ?? eventId');
     expect(
       ROUTE_SOURCE.indexOf('looksLikeValueLedgerQuestion(normalizedBody.prompt)'),
+    ).toBeLessThan(
+      ROUTE_SOURCE.indexOf(
+        'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
+      ),
+    );
+    expect(
+      ROUTE_SOURCE.indexOf(
+        'looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)',
+      ),
     ).toBeLessThan(
       ROUTE_SOURCE.indexOf(
         'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
