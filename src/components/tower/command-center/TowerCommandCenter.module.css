@@ -473,3 +473,9 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 }
 
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* AI portfolio search — the escape hatch from the Top-10 executive default.
+ * Sized to sit in the view head beside the type-filter chips. */
+.searchInput { font-family: var(--abarva-sans); font-size: 13px; color: var(--canon-gray-900); background: var(--canon-bg-surface); border: 1px solid var(--canon-border-strong); border-radius: 9px; padding: 7px 12px; min-width: 300px; max-width: 100%; }
+.searchInput::placeholder { color: var(--canon-gray-300); }
+.searchInput:focus-visible { outline: 2px solid var(--abarva-signal-blue); outline-offset: -1px; }

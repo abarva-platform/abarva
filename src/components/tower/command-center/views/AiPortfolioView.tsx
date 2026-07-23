@@ -23,17 +23,19 @@ import {
   spendLensTextAlternative,
 } from "../charts/AiSpendLensChart";
 import {
+  AI_KIND_CHIP_TONE,
   AI_KIND_HEX,
   AI_KIND_WORD,
   Card,
   Chip,
+  MiniMeter,
   SubNav,
   ViewHead,
   cx,
 } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
-export type AiSubView = "overview" | "bubble" | "lens" | "table";
+export type AiSubView = "overview" | "bubble" | "lens" | "table" | "all";
 export type AiFilter = "all" | TowerAiKind;
 
 export const AI_SUB_VIEWS: ReadonlyArray<readonly [AiSubView, string]> = [
@@ -41,6 +43,7 @@ export const AI_SUB_VIEWS: ReadonlyArray<readonly [AiSubView, string]> = [
   ["bubble", "Usage & Value Proof"],
   ["lens", "Spend Attribution"],
   ["table", "Candidate Pipeline"],
+  ["all", "All initiatives"],
 ];
 
 const AI_FILTERS: ReadonlyArray<readonly [AiFilter, string]> = [
@@ -205,6 +208,105 @@ function SpendUnattributed({ aiTagged }: { aiTagged: string }) {
   );
 }
 
+
+/**
+ * Free-text search across the fields an executive would actually type: the
+ * initiative name, its vendor, the system it runs in, and its spend category.
+ *
+ * The matrix and candidate pipeline default to the top 10 by governed policy,
+ * which keeps a 232-row portfolio readable but would otherwise put rows 11+
+ * out of reach. Search is how you get to a specific initiative without
+ * scrolling a table of everything, and it applies to every sub-view.
+ */
+export function applySearch(
+  items: readonly TowerAiView[],
+  query: string,
+): TowerAiView[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [...items];
+  return items.filter((a) =>
+    [a.name, a.vendor, a.system, a.category]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(q)),
+  );
+}
+
+/** The full portfolio table — every row, no policy cap. */
+function AllInitiativesTable({
+  items,
+  onOpenAi,
+}: {
+  items: readonly TowerAiView[];
+  onOpenAi: (n: number) => void;
+}) {
+  if (items.length === 0) {
+    return <p className={styles.lhSub}>No initiatives match the current filter or search.</p>;
+  }
+  return (
+    <table className={styles.tbl}>
+      <thead>
+        <tr>
+          <th scope="col">Initiative</th>
+          <th scope="col">Spend type</th>
+          <th scope="col">Vendor</th>
+          <th scope="col">System</th>
+          <th scope="col" className={styles.num}>Value</th>
+          <th scope="col" className={styles.num}>Readiness</th>
+          <th scope="col" style={{ textAlign: "right" }}>Posture</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((a) => (
+          <tr
+            key={a.id}
+            className={styles.click}
+            onClick={() => onOpenAi(a.n)}
+          >
+            <td>
+              <button
+                type="button"
+                className={styles.rowOpen}
+                aria-label={`Open ${a.name}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenAi(a.n);
+                }}
+              >
+                <span className={styles.pname} style={{ fontSize: 14 }}>
+                  {a.name}
+                </span>
+              </button>
+            </td>
+            <td>
+              <Chip tone={AI_KIND_CHIP_TONE[a.kind]} mono>
+                {AI_KIND_WORD[a.kind]}
+              </Chip>
+            </td>
+            <td>{a.vendor ?? "—"}</td>
+            <td>{a.system ?? "—"}</td>
+            <td className={styles.num}>
+              <MiniMeter value={a.valueScore} />
+            </td>
+            <td className={styles.num}>
+              <MiniMeter value={a.readinessScore} />
+            </td>
+            <td
+              style={{
+                textAlign: "right",
+                fontWeight: 600,
+                fontSize: 12.5,
+                color: "var(--canon-gray-700)",
+              }}
+            >
+              {a.posture}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 // ── the view ───────────────────────────────────────────────────────────────
 
 export function AiPortfolioView({
@@ -213,6 +315,8 @@ export function AiPortfolioView({
   onSubView,
   filter,
   onFilter,
+  search,
+  onSearch,
   onOpenAi,
 }: {
   view: TowerCommandCenterView;
@@ -220,11 +324,18 @@ export function AiPortfolioView({
   onSubView: (next: AiSubView) => void;
   filter: AiFilter;
   onFilter: (next: AiFilter) => void;
+  search: string;
+  onSearch: (next: string) => void;
   onOpenAi: (n: number) => void;
 }) {
-  const filtered = applyFilter(view.ai, filter);
+  const searched = applySearch(view.ai, search);
+  const filtered = applyFilter(searched, filter);
   const matrixItems = topMatrixItems(filtered);
-  const showChips = subView === "overview" || subView === "bubble";
+  // Table mode reads the UNCAPPED portfolio, so search + filters can reach
+  // every row the mart holds — not just the top 10 the matrix plots.
+  const allFiltered = applyFilter(applySearch(view.allInitiatives, search), filter);
+  const showChips =
+    subView === "overview" || subView === "bubble" || subView === "all";
   const aiTagged = formatUsdM(view.summary.aiTaggedUsd);
   const sizeMode = view.summary.aiSpendUnattributed ? "constant" : "spend";
   const fundedCount = view.ai.filter((a) => a.kind === "funded").length;
@@ -380,6 +491,19 @@ export function AiPortfolioView({
         </div>
       </Card>
     );
+  } else if (subView === "all") {
+    body = (
+      <Card
+        title="All initiatives"
+        right={`${allFiltered.length} of ${view.allInitiatives.length} rows${search.trim() ? " · searched" : ""}`}
+        headId="tcc-ai-all"
+        style={{ flex: 1 }}
+        bodyClassName={styles.scroll}
+        bodyStyle={{ paddingTop: 8 }}
+      >
+        <AllInitiativesTable items={allFiltered} onOpenAi={onOpenAi} />
+      </Card>
+    );
   } else {
     body = (
       <Card
@@ -412,6 +536,24 @@ export function AiPortfolioView({
           onChange={onSubView}
         />
       </ViewHead>
+
+      <div
+        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}
+      >
+        <input
+          type="search"
+          className={styles.searchInput}
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Search initiative, vendor, system or category"
+          aria-label="Search AI initiatives"
+        />
+        {search.trim() ? (
+          <span className={styles.vhint}>
+            {allFiltered.length} of {view.allInitiatives.length} initiatives match
+          </span>
+        ) : null}
+      </div>
 
       {showChips ? (
         <div

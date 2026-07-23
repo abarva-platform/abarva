@@ -908,6 +908,8 @@ export function buildTowerCommandCenterView(
     programs,
     ai,
     candidates,
+    // Uncapped — see TowerCommandCenterView.allInitiatives.
+    allInitiatives: aiAll,
     portfolioCounts: {
       sourceItemCount: null,
       canonicalItemCount: null,
