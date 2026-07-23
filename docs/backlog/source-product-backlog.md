@@ -192,6 +192,39 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   governed slices because they may require worker/job operations, indexing policy, or data
   promotion approval.
 
+### SOURCE-INGEST-001c — Evidence readiness status in Files
+
+- **Problem statement**: after binary extraction and the dedicated session/workshop upload
+  panel shipped, the Files workspace still did not make evidence-processing state visible at a
+  glance. Users could upload notes and see a one-off receipt, but on return they could not
+  quickly tell which files were merely stored, which were parsed into Source evidence, which
+  were search-ready, and which still needed a parser/backfill step.
+- **User/business impact**: workshop/session evidence can appear "done" just because it is
+  uploaded, even when it is only registered and not yet usable for Source evidence, search, or
+  enterprise-context promotion. That blurs the exact state distinctions this backlog requires:
+  stored, parsed, indexed, promoted, and agent-ready are separate states.
+- **Severity**: P5 (evidence integrity / workspace UX).
+- **Workstream**: Evidence ingestion and persistence readiness.
+- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Dependencies**: existing `source_artifacts.parse_status`, `embedding_status`, and
+  `graph_status` fields already returned to the Source event shell. No schema or data-build job
+  dependency.
+- **Acceptance criteria**: the Files workspace shows a compact evidence-readiness summary using
+  existing durable Source artifact state: Stored, Parsed, Needs parser, Search-ready; per-file
+  chips show Parsed, Registered only, Parser failed, or Search ready; copy stays honest that
+  search readiness and enterprise-context promotion remain separate governed steps; no upload,
+  artifact acceptance, lifecycle scoring, or file-list behavior changes.
+- **Required tests**:
+  `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-evidence-readiness-panel.md`.
+- **Discovered from**: standing `SOURCE-INGEST-001` follow-on list and the user requirement
+  that Source evidence persistence, search/indexing, and enterprise-context promotion be
+  visible as separate proof layers.
+- **Known gaps**: this does not run OCR/transcription, async parsing, vector indexing, or
+  enterprise-context promotion. It makes the current processing state visible so those future
+  steps can be operated and proven honestly.
+
 ### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
 
 - **Problem statement**: found while comparing a user-provided Source Event Shell redesign

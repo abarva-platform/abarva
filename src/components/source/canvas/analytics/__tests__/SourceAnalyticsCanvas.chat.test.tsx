@@ -422,6 +422,81 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toBeInTheDocument();
   });
 
+  it("summarizes Source evidence parsing and search readiness without implying enterprise promotion", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        artifacts={[
+          {
+            id: "parsed-notes",
+            stageKey: "scope",
+            artifactKind: "source_session_notes",
+            artifactFamily: "meeting_notes",
+            sourceOrigin: "uploaded",
+            title: "Sponsor call notes",
+            fileFormat: "md",
+            status: "preliminary",
+            parseStatus: "parsed",
+            embeddingStatus: "pending",
+            graphStatus: "pending",
+          },
+          {
+            id: "search-ready-workshop",
+            stageKey: "scope",
+            artifactKind: "source_workshop_output",
+            artifactFamily: "workshop_output",
+            sourceOrigin: "uploaded",
+            title: "Scope workshop output",
+            fileFormat: "xlsx",
+            status: "preliminary",
+            parseStatus: "parsed",
+            embeddingStatus: "embedded",
+            graphStatus: "pending",
+          },
+          {
+            id: "audio-recording",
+            stageKey: "scope",
+            artifactKind: "source_session_notes",
+            artifactFamily: "meeting_notes",
+            sourceOrigin: "uploaded",
+            title: "Vendor call recording",
+            fileFormat: "mp3",
+            status: "registered",
+            parseStatus: "pending",
+            embeddingStatus: "pending",
+            graphStatus: "pending",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+
+    const readiness = screen.getByTestId("source-evidence-readiness-panel");
+    expect(readiness).toHaveTextContent("Evidence readiness");
+    expect(readiness).toHaveTextContent("Stored");
+    expect(readiness).toHaveTextContent("Parsed");
+    expect(readiness).toHaveTextContent("Needs parser");
+    expect(readiness).toHaveTextContent("Search-ready");
+    expect(readiness).toHaveTextContent(
+      "enterprise-context promotion remain separate governed steps",
+    );
+    expect(
+      screen.getByTestId("source-evidence-readiness-registered-only"),
+    ).toHaveTextContent("Vendor call recording");
+    expect(
+      screen.getByTestId("source-shell-file-processing-parsed-notes"),
+    ).toHaveTextContent("PARSED");
+    expect(
+      screen.getByTestId("source-shell-file-processing-search-ready-workshop"),
+    ).toHaveTextContent("SEARCH READY");
+    expect(
+      screen.getByTestId("source-shell-file-processing-audio-recording"),
+    ).toHaveTextContent("REGISTERED ONLY");
+  });
+
   it("posts reviewed client-final files from the Files lifecycle matrix", async () => {
     const fetchMock = jest.fn().mockResolvedValueOnce({
       ok: true,
