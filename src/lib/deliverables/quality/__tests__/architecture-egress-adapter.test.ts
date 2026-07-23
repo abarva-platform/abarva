@@ -57,4 +57,69 @@ describe("governedArchitectureToolCall", () => {
       outputTokens: 12_345,
     });
   });
+
+  it("retries a transient Anthropic overload with bounded backoff", async () => {
+    jest.useFakeTimers();
+    finalMessage
+      .mockRejectedValueOnce({
+        status: 529,
+        error: { type: "overloaded_error", message: "Overloaded" },
+      })
+      .mockResolvedValueOnce({
+        model: "claude-opus-4-7",
+        stop_reason: "end_turn",
+        usage: { output_tokens: 10_000 },
+        content: [
+          {
+            type: "tool_use",
+            input: { engagement: "Commercial Lending Agent Assist" },
+          },
+        ],
+      });
+
+    const resultPromise = governedArchitectureToolCall({
+      model: "claude-opus-4-7",
+      maxTokens: 32_000,
+      system: "system",
+      userMessage: "user",
+      tool: {
+        name: "emit_architecture_model",
+        description: "emit",
+        input_schema: { type: "object" },
+      },
+    });
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    await expect(resultPromise).resolves.toEqual(
+      expect.objectContaining({
+        toolInput: { engagement: "Commercial Lending Agent Assist" },
+      }),
+    );
+    expect(stream).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
+
+  it("does not retry a non-transient request error", async () => {
+    finalMessage.mockRejectedValueOnce({
+      status: 400,
+      error: { type: "invalid_request_error", message: "Invalid schema" },
+    });
+
+    await expect(
+      governedArchitectureToolCall({
+        model: "claude-opus-4-7",
+        maxTokens: 32_000,
+        system: "system",
+        userMessage: "user",
+        tool: {
+          name: "emit_architecture_model",
+          description: "emit",
+          input_schema: { type: "object" },
+        },
+      }),
+    ).rejects.toEqual(
+      expect.objectContaining({ status: 400 }),
+    );
+    expect(stream).toHaveBeenCalledTimes(1);
+  });
 });
