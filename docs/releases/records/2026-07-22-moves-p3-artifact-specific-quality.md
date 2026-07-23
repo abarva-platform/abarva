@@ -66,7 +66,7 @@ Revert this PR and redeploy the prior approved digest. Previously generated arti
 
 ## Audit Evidence
 
-- PR: pending
+- PR: https://github.com/abarva-platform/abarva/pull/5409
 - Merge SHA: pending
 - ACA revision/digest/traffic: pending
 - Signed-in post-deploy proof: pending
