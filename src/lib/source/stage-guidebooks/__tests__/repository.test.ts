@@ -21,17 +21,23 @@ interface FakeRow {
 }
 
 interface FilterCall {
-  kind: "eq" | "or" | "order" | "limit";
+  kind: "eq" | "is" | "or" | "order" | "limit";
   args: unknown[];
 }
 
 const filterCalls: FilterCall[] = [];
-let nextMaybeSingle: () => Promise<{ data: FakeRow | null; error: unknown }> =
-  async () => ({ data: null, error: null });
+const maybeSingleQueue: { data: FakeRow | null; error: unknown }[] = [];
+
+function queueMaybeSingles(
+  ...results: { data: FakeRow | null; error: unknown }[]
+) {
+  maybeSingleQueue.push(...results);
+}
 
 interface FakeBuilder {
   select: jest.Mock<FakeBuilder, []>;
   eq: jest.Mock<FakeBuilder, unknown[]>;
+  is: jest.Mock<FakeBuilder, unknown[]>;
   or: jest.Mock<FakeBuilder, unknown[]>;
   order: jest.Mock<FakeBuilder, unknown[]>;
   limit: jest.Mock<FakeBuilder, unknown[]>;
@@ -43,6 +49,10 @@ function makeBuilder(): FakeBuilder {
     select: jest.fn(() => builder),
     eq: jest.fn((...args: unknown[]) => {
       filterCalls.push({ kind: "eq", args });
+      return builder;
+    }),
+    is: jest.fn((...args: unknown[]) => {
+      filterCalls.push({ kind: "is", args });
       return builder;
     }),
     or: jest.fn((...args: unknown[]) => {
@@ -57,7 +67,9 @@ function makeBuilder(): FakeBuilder {
       filterCalls.push({ kind: "limit", args });
       return builder;
     }),
-    maybeSingle: jest.fn(() => nextMaybeSingle()),
+    maybeSingle: jest.fn(
+      async () => maybeSingleQueue.shift() ?? { data: null, error: null },
+    ),
   };
   return builder;
 }
@@ -100,10 +112,15 @@ function baseRow(overrides: Partial<FakeRow> = {}): FakeRow {
 describe("getSourceStageGuidebook", () => {
   beforeEach(() => {
     filterCalls.length = 0;
+    maybeSingleQueue.length = 0;
+    fakeClient.from.mockClear();
   });
 
   it("maps a row into the typed record shape, normalizing sections", async () => {
-    nextMaybeSingle = async () => ({ data: baseRow(), error: null });
+    queueMaybeSingles(
+      { data: null, error: null },
+      { data: baseRow(), error: null },
+    );
 
     const result = await getSourceStageGuidebook("strategy", "healthcare-demo");
 
@@ -125,11 +142,27 @@ describe("getSourceStageGuidebook", () => {
     ]);
   });
 
-  it("scopes the query to the requested stage and tenant-or-global client key", async () => {
-    nextMaybeSingle = async () => ({ data: baseRow(), error: null });
+  it("uses an exact client guidebook before checking the global default", async () => {
+    queueMaybeSingles({
+      data: baseRow({
+        id: "guidebook-lakeshore",
+        client_key: "lakeshore-holdings",
+        title: "Lakeshore Strategy Gate",
+      }),
+      error: null,
+    });
 
-    await getSourceStageGuidebook("strategy", "healthcare-demo");
+    const result = await getSourceStageGuidebook(
+      "strategy",
+      "lakeshore-holdings",
+    );
 
+    expect(result).toMatchObject({
+      id: "guidebook-lakeshore",
+      clientKey: "lakeshore-holdings",
+      title: "Lakeshore Strategy Gate",
+    });
+    expect(fakeClient.from).toHaveBeenCalledTimes(1);
     expect(filterCalls).toContainEqual({
       kind: "eq",
       args: ["stage_key", "strategy"],
@@ -139,13 +172,67 @@ describe("getSourceStageGuidebook", () => {
       args: ["status", "published"],
     });
     expect(filterCalls).toContainEqual({
-      kind: "or",
-      args: ["client_key.eq.healthcare-demo,client_key.is.null"],
+      kind: "eq",
+      args: ["client_key", "lakeshore-holdings"],
+    });
+    expect(filterCalls.some((call) => call.kind === "or")).toBe(false);
+  });
+
+  it("falls back to the global guidebook when no exact client override exists", async () => {
+    queueMaybeSingles(
+      { data: null, error: null },
+      { data: baseRow({ client_key: null }), error: null },
+    );
+
+    const result = await getSourceStageGuidebook(
+      "strategy",
+      "lakeshore-holdings",
+    );
+
+    expect(result).toMatchObject({
+      id: "guidebook-1",
+      clientKey: null,
+      title: "Strategy Gate Review",
+    });
+    expect(fakeClient.from).toHaveBeenCalledTimes(2);
+    expect(filterCalls).toContainEqual({
+      kind: "eq",
+      args: ["client_key", "lakeshore-holdings"],
+    });
+    expect(filterCalls).toContainEqual({
+      kind: "is",
+      args: ["client_key", null],
     });
   });
 
+  it("orders each lookup by newest published version deterministically", async () => {
+    queueMaybeSingles({
+      data: baseRow({ client_key: "lakeshore-holdings", version: 3 }),
+      error: null,
+    });
+
+    await getSourceStageGuidebook("strategy", "lakeshore-holdings");
+
+    expect(filterCalls).toContainEqual({
+      kind: "order",
+      args: ["version", { ascending: false }],
+    });
+    expect(filterCalls).toContainEqual({
+      kind: "order",
+      args: ["published_at", { ascending: false, nullsFirst: false }],
+    });
+    expect(filterCalls).toContainEqual({
+      kind: "order",
+      args: ["updated_at", { ascending: false }],
+    });
+    expect(filterCalls).toContainEqual({ kind: "limit", args: [1] });
+  });
+
   it("returns null when no guidebook is authored for the stage yet, without throwing", async () => {
-    nextMaybeSingle = async () => ({ data: null, error: null });
+    queueMaybeSingles(
+      { data: null, error: null },
+      { data: null, error: null },
+    );
 
     await expect(
       getSourceStageGuidebook("pricing", "healthcare-demo"),
@@ -153,17 +240,17 @@ describe("getSourceStageGuidebook", () => {
   });
 
   it("degrades a malformed sections payload to an empty array instead of throwing", async () => {
-    nextMaybeSingle = async () => ({
-      data: baseRow({ sections: "not-an-array" }),
-      error: null,
-    });
+    queueMaybeSingles(
+      { data: null, error: null },
+      { data: baseRow({ sections: "not-an-array" }), error: null },
+    );
 
     const result = await getSourceStageGuidebook("strategy", "healthcare-demo");
     expect(result?.sections).toEqual([]);
   });
 
   it("propagates a real query error rather than silently returning null", async () => {
-    nextMaybeSingle = async () => ({
+    queueMaybeSingles({
       data: null,
       error: new Error("connection reset"),
     });

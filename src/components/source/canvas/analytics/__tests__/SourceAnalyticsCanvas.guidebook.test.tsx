@@ -148,4 +148,26 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
       screen.queryByRole("button", { name: /Guidebook/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("labels a client-specific guidebook distinctly from the global default", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        guidebook={{
+          ...GUIDEBOOK,
+          id: "guidebook-lakeshore",
+          clientKey: "lakeshore-holdings",
+          title: "Lakeshore Strategy Gate Review",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Guidebook/i }));
+
+    expect(screen.getByText("Lakeshore Strategy Gate Review")).toBeInTheDocument();
+    expect(screen.getByText("Tenant guidebook")).toBeInTheDocument();
+    expect(screen.queryByText("Global default")).not.toBeInTheDocument();
+  });
 });

@@ -90,6 +90,39 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Discovered from**: `SOURCE-GUIDEBOOK-001`'s own Known Gaps.
 - **Notes / remaining gaps**: none yet.
 
+### SOURCE-GUIDEBOOK-004 — Client-specific guidebook override resolver
+
+- **Problem statement**: the `source_stage_guidebooks.client_key` column was designed to let
+  tenant-specific guidebooks override global defaults, but the behavior was not directly
+  proven and relied on a combined tenant-or-global query plus SQL null ordering.
+- **User/business impact**: before authoring client-tailored facilitator guidance, Source
+  needs a simple, auditable resolver contract: exact client content wins, global content
+  is the fallback, and another client's guidebook can never bleed into the viewed tenant.
+- **Severity**: P5 (deliverable/content quality and tenant-specific guidance readiness)
+- **Workstream**: Guidebook quality
+- **Status**: `Candidate` — PR pending; code-only, no migration and no production data
+  mutation.
+- **Dependencies**: the existing `source_stage_guidebooks.client_key` column and RLS policy
+  from `SOURCE-GUIDEBOOK-001`; no new schema is required.
+- **Acceptance criteria**: `getSourceStageGuidebook(stageKey, clientKey)` performs an exact
+  client lookup first, falls back to the global `client_key IS NULL` row only when the exact
+  client row is absent, orders each lookup deterministically by newest published version,
+  and never uses a broad OR filter as the authority mechanism. The existing Guidebook
+  workspace continues to render global content and labels tenant-specific content when a
+  client row is passed through.
+- **Required tests**:
+  `src/lib/source/stage-guidebooks/__tests__/repository.test.ts`,
+  `src/lib/source/__tests__/source-event-shell-v2.test.ts`,
+  `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-guidebook-client-overrides.md`.
+- **Discovered from**: the 6-area Source audit's guidebook-quality finding and the
+  follow-on backlog note to activate per-client guidebook content using the existing
+  `client_key` override column.
+- **Notes / remaining gaps**: this PR does not author tenant-specific rows. Live
+  client-specific rendering remains data-blocked until a governed content/data change
+  publishes a tenant override row.
+
 ### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
 
 - **Problem statement**: found while comparing a user-provided Source Event Shell redesign
