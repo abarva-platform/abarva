@@ -28,6 +28,10 @@ export const dynamic = 'force-dynamic';
 const VALID_ROLES: ApprovalRole[] = ['business', 'technology', 'finance', 'risk_security'];
 const VALID_STATUSES: RoleApprovalStatus[] = ['pending', 'reviewed', 'approved', 'rejected'];
 
+function isCodexProofSandboxMove(programName: string | null | undefined): boolean {
+  return /^codex proof\b/i.test((programName ?? '').trim());
+}
+
 async function loadDeliverableTypeKey(
   supabase: Awaited<ReturnType<typeof getProgramsRouteSupabase>>['supabase'],
   programId: string,
@@ -95,7 +99,13 @@ export async function POST(
     }
 
     const body = (await req.json().catch(() => null)) as
-      | { role?: string; status?: string; approverName?: string; outstandingConditions?: string }
+      | {
+          role?: string;
+          status?: string;
+          approverName?: string;
+          outstandingConditions?: string;
+          sandboxProxyApproval?: boolean;
+        }
       | null;
     if (!body?.role || !VALID_ROLES.includes(body.role as ApprovalRole)) {
       return Response.json(
@@ -110,6 +120,11 @@ export async function POST(
       );
     }
 
+    const sandboxProxyApproval =
+      body.sandboxProxyApproval === true &&
+      accessPolicy.canApproveGates &&
+      isCodexProofSandboxMove(program.name);
+
     const record = await recordRoleApprovalDecision(
       ctx,
       programId,
@@ -118,15 +133,38 @@ export async function POST(
         role: body.role as ApprovalRole,
         status: body.status as RoleApprovalStatus,
         approverName: body.approverName,
-        outstandingConditions: body.outstandingConditions,
+        outstandingConditions: sandboxProxyApproval
+          ? [
+              body.outstandingConditions,
+              `Sandbox proxy approval recorded by ${ctx.email ?? ctx.userId} for Codex Proof Move ${programId}.`,
+            ]
+              .filter(Boolean)
+              .join('\n')
+          : body.outstandingConditions,
       },
-      { supabase },
+      { supabase, sandboxProxyApproval },
     );
     return Response.json({ ok: true, record });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
     } catch {}
+    if (
+      err instanceof Error &&
+      (err.message === 'self_approval_violation' ||
+        err.message === 'separation_of_duties_violation')
+    ) {
+      return Response.json(
+        {
+          error: err.message,
+          detail:
+            err.message === 'self_approval_violation'
+              ? 'The deliverable creator cannot approve this role decision. Use a distinct approver or an explicit sandbox proxy on Codex Proof Moves.'
+              : 'The same reviewer cannot approve multiple required roles for this deliverable version.',
+        },
+        { status: 409 },
+      );
+    }
     console.error('[POST /programs/:id/deliverables/:did/role-approvals]', err);
     return Response.json({ error: 'internal_error', message: (err as Error).message }, { status: 500 });
   }

@@ -206,7 +206,7 @@ export async function recordRoleApprovalDecision(
     approverName?: string;
     outstandingConditions?: string;
   },
-  opts: { supabase?: SupabaseClient } = {},
+  opts: { supabase?: SupabaseClient; sandboxProxyApproval?: boolean } = {},
 ): Promise<RoleApprovalRecord> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
@@ -215,7 +215,11 @@ export async function recordRoleApprovalDecision(
   const deliverable = await readDeliverableApprovalPointer(sb, programId, deliverableId);
   const version = resolveApprovalVersion(deliverable);
 
-  if (decision.status === "approved" && deliverable.created_by === ctx.userId) {
+  if (
+    decision.status === "approved" &&
+    deliverable.created_by === ctx.userId &&
+    !opts.sandboxProxyApproval
+  ) {
     throw new Error("self_approval_violation");
   }
 
@@ -238,7 +242,7 @@ export async function recordRoleApprovalDecision(
       (row) =>
         row.status === "approved" &&
         row.role !== decision.role &&
-        (row.approver_user_id === ctx.userId ||
+        ((!opts.sandboxProxyApproval && row.approver_user_id === ctx.userId) ||
           (decision.approverName && row.approver_name === decision.approverName)),
     );
     if (sameReviewerOtherRole) throw new Error("separation_of_duties_violation");
@@ -257,7 +261,9 @@ export async function recordRoleApprovalDecision(
         role: decision.role,
         status: decision.status,
         version,
-        approver_user_id: ctx.userId,
+        approver_user_id: opts.sandboxProxyApproval
+          ? `sandbox-proxy:${decision.role}:${ctx.userId}`
+          : ctx.userId,
         approver_name: decision.approverName ?? null,
         outstanding_conditions: decision.outstandingConditions ?? null,
         decided_at: decidedAt,

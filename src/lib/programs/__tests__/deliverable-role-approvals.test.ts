@@ -394,4 +394,91 @@ describe("recordRoleApprovalDecision", () => {
       }),
     ).rejects.toThrow("separation_of_duties_violation");
   });
+
+  it("allows explicit sandbox proxy approval without treating the signed-in proxy as the role approver", async () => {
+    const upsertPayloads: Array<{
+      role: string;
+      approver_user_id: string | null;
+      approver_name: string | null;
+    }> = [];
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer({ created_by: CTX.userId }));
+      if (table === "deliverable_role_approvals") {
+        const approvalCalls = fromMock.mock.calls.filter(
+          ([t]) => t === "deliverable_role_approvals",
+        ).length;
+        if (approvalCalls === 1) return selectApprovals([]);
+        if (approvalCalls === 3)
+          return selectApprovals([
+            {
+              role: "business",
+              status: "approved",
+              version: 2,
+              approver_user_id: `sandbox-proxy:business:${CTX.userId}`,
+              approver_name: "Business sponsor",
+              outstanding_conditions: null,
+              decided_at: "2026-07-23T00:00:00Z",
+            },
+          ]);
+        return {
+          upsert: jest.fn((payload) => {
+            upsertPayloads.push(payload);
+            return {
+              select: jest.fn().mockReturnThis(),
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  role: payload.role,
+                  status: payload.status,
+                  version: payload.version,
+                  approver_user_id: payload.approver_user_id,
+                  approver_name: payload.approver_name,
+                  outstanding_conditions: payload.outstanding_conditions,
+                  decided_at: payload.decided_at,
+                },
+                error: null,
+              }),
+            };
+          }),
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await recordRoleApprovalDecision(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      {
+        role: "business",
+        status: "approved",
+        approverName: "Business sponsor",
+      },
+      { sandboxProxyApproval: true },
+    );
+    await recordRoleApprovalDecision(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      {
+        role: "finance",
+        status: "approved",
+        approverName: "Finance sponsor",
+      },
+      { sandboxProxyApproval: true },
+    );
+
+    expect(upsertPayloads).toEqual([
+      expect.objectContaining({
+        role: "business",
+        approver_user_id: `sandbox-proxy:business:${CTX.userId}`,
+        approver_name: "Business sponsor",
+      }),
+      expect.objectContaining({
+        role: "finance",
+        approver_user_id: `sandbox-proxy:finance:${CTX.userId}`,
+        approver_name: "Finance sponsor",
+      }),
+    ]);
+  });
 });
