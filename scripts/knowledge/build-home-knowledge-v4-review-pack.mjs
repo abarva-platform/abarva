@@ -845,71 +845,65 @@ async function callClaude(client, pass, prompt, tenantDir) {
   writeText(path.join(tenantDir, "prompts", `${pass.id}.json`), `${promptText}\n`);
   const started = Date.now();
   console.log(`[home-v4]   ${pass.id} start`);
-  const message = await retry(async () => client.messages.create({
-    model,
-    max_tokens: maxTokens,
-    system: baseSystemPrompt(),
-    messages: [{ role: "user", content: promptText }],
-    tools: [tool],
-    tool_choice: { type: "tool", name: tool.name },
-  }));
-  const elapsedMs = Date.now() - started;
-  const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
-  if (!toolUse) {
-    writeJson(path.join(tenantDir, "responses", `${pass.id}.raw-message.json`), message);
-    throw new Error(`No tool_use returned for ${pass.id}`);
-  }
-  if (!toolUse.input?.client_visible || Object.keys(toolUse.input.client_visible ?? {}).length === 0) {
-    writeJson(path.join(tenantDir, "responses", `${pass.id}.empty-response.json`), {
+  let lastMessage = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const attemptPrompt = attempt === 1
+      ? prompt
+      : {
+          ...prompt,
+          repair_instruction: [
+            `Repair attempt ${attempt - 1}: your previous tool call did not populate client_visible.`,
+            "You are still the sole author of every client-visible word.",
+            "Return a compact, complete client_visible object now.",
+            "Do not omit client_visible.",
+            "Do not include raw filenames, row counts, internal IDs, or loader/table names.",
+            "Keep every list short, but complete enough for the requested section.",
+          ].join(" "),
+        };
+    const attemptText = JSON.stringify(attemptPrompt, null, 2);
+    if (attempt > 1) writeText(path.join(tenantDir, "prompts", `${pass.id}.repair-${attempt - 1}.json`), `${attemptText}\n`);
+    const message = await retry(async () => client.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system: baseSystemPrompt(),
+      messages: [{ role: "user", content: attemptText }],
+      tools: [tool],
+      tool_choice: { type: "tool", name: tool.name },
+    }));
+    lastMessage = message;
+    const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
+    if (!toolUse) {
+      writeJson(path.join(tenantDir, "responses", `${pass.id}.attempt-${attempt}-raw-message.json`), message);
+      if (attempt === 3) throw new Error(`No tool_use returned for ${pass.id}`);
+      continue;
+    }
+    if (!toolUse.input?.client_visible || Object.keys(toolUse.input.client_visible ?? {}).length === 0) {
+      writeJson(path.join(tenantDir, "responses", `${pass.id}.empty-response-attempt-${attempt}.json`), {
+        elapsed_ms: Date.now() - started,
+        attempt,
+        model,
+        usage: message.usage ?? null,
+        content: toolUse.input,
+      });
+      continue;
+    }
+    const response = {
+      id: pass.id,
+      pass: pass.type,
+      repaired: attempt > 1,
+      repair_attempts: attempt - 1,
       elapsed_ms: Date.now() - started,
       model,
       usage: message.usage ?? null,
       content: toolUse.input,
-    });
-    const repairPrompt = {
-      ...prompt,
-      repair_instruction:
-        "Your previous tool call did not populate client_visible. Return a compact complete client_visible object now. Do not omit client_visible. Keep every list short and complete.",
     };
-    const repairText = JSON.stringify(repairPrompt, null, 2);
-    writeText(path.join(tenantDir, "prompts", `${pass.id}.repair.json`), `${repairText}\n`);
-    const repair = await retry(async () => client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      system: baseSystemPrompt(),
-      messages: [{ role: "user", content: repairText }],
-      tools: [tool],
-      tool_choice: { type: "tool", name: tool.name },
-    }));
-    const repairedToolUse = repair.content.find((block) => block.type === "tool_use" && block.name === tool.name);
-    if (!repairedToolUse?.input?.client_visible || Object.keys(repairedToolUse.input.client_visible ?? {}).length === 0) {
-      writeJson(path.join(tenantDir, "responses", `${pass.id}.repair-raw-message.json`), repair);
-      throw new Error(`Claude returned empty client_visible for ${pass.id} after repair.`);
-    }
-    const repairedResponse = {
-      id: pass.id,
-      pass: pass.type,
-      repaired: true,
-      elapsed_ms: Date.now() - started,
-      model,
-      usage: repair.usage ?? null,
-      content: repairedToolUse.input,
-    };
-    writeJson(path.join(tenantDir, "responses", `${pass.id}.json`), repairedResponse);
-    console.log(`[home-v4]   ${pass.id} repaired in ${Math.round((Date.now() - started) / 1000)}s`);
-    return repairedResponse.content;
+    writeJson(path.join(tenantDir, "responses", `${pass.id}.json`), response);
+    const label = attempt > 1 ? `repaired after ${attempt - 1} attempt(s)` : "done";
+    console.log(`[home-v4]   ${pass.id} ${label} in ${Math.round((Date.now() - started) / 1000)}s`);
+    return response.content;
   }
-  const response = {
-    id: pass.id,
-    pass: pass.type,
-    elapsed_ms: elapsedMs,
-    model,
-    usage: message.usage ?? null,
-    content: toolUse.input,
-  };
-  writeJson(path.join(tenantDir, "responses", `${pass.id}.json`), response);
-  console.log(`[home-v4]   ${pass.id} done in ${Math.round(elapsedMs / 1000)}s`);
-  return response.content;
+  writeJson(path.join(tenantDir, "responses", `${pass.id}.final-empty-raw-message.json`), lastMessage);
+  throw new Error(`Claude returned empty client_visible for ${pass.id} after 3 attempts.`);
 }
 
 async function retry(fn) {
