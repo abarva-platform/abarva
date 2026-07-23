@@ -25,14 +25,17 @@ function archResult(): OrchestrationResult {
   } as OrchestrationResult;
 }
 
-async function persistWith(opts: Record<string, unknown>) {
+async function persistWith(
+  opts: Record<string, unknown>,
+  result: OrchestrationResult = archResult(),
+) {
   let rendered: Record<string, unknown> | undefined;
   const save = (async (_i: unknown, r: unknown) => {
     rendered = r as Record<string, unknown>;
     return { id: 'a', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
   }) as never;
   await persistDeliverable(
-    archResult(),
+    result,
     { clientId: 'c1', renderedBy: 'u1', sourceArtifactRef: 'evt', tenantPolicy, ...opts },
     { save },
   );
@@ -84,5 +87,43 @@ describe('persistDeliverable — quality contract enforcement', () => {
     expect(rendered.quarantined).toBe(true);
     expect(String(rendered.html)).not.toContain('data-exhibit="target_conceptual_architecture"');
     expect(String(rendered.quarantineReason)).toMatch(/^blocked_/);
+  });
+
+  it('keeps Solution Design on its own five-view renderer instead of replacing it with Target Architecture', async () => {
+    const solutionResult = archResult();
+    solutionResult.brief = {
+      ...solutionResult.brief,
+      deliverableType: 'solution_design',
+    };
+    solutionResult.document = {
+      ...goodDocument(),
+      exhibits: [
+        'experience_flow',
+        'agent_workflow',
+        'exception_handling',
+        'control_points',
+        'data_flow',
+      ].map((key) => ({
+        key,
+        title: key.replaceAll('_', ' '),
+        kind: 'flow' as const,
+        description: `Governed ${key.replaceAll('_', ' ')} view.`,
+        targetFormat: 'html' as const,
+      })),
+    };
+
+    const rendered = await persistWith(
+      {
+        deliverableTypeKey: 'solution_design',
+        renderViaProfile: true,
+        structuredModels: { architectureModel: FIRST_CAPITAL_ARCHITECTURE },
+      },
+      solutionResult,
+    );
+
+    expect(String(rendered.html)).toContain('<strong>experience flow</strong>');
+    expect(String(rendered.html)).toContain('<strong>data flow</strong>');
+    expect((String(rendered.html).match(/<svg\b/g) ?? [])).toHaveLength(5);
+    expect(String(rendered.html)).not.toContain('data-exhibit="target_conceptual_architecture"');
   });
 });

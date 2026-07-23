@@ -305,6 +305,15 @@ describe("quality gate (before export)", () => {
     expect(res.blockers.join(" ")).not.toMatch(/unsupported client-fact/);
   });
 
+  it("does not block a numeric claim carried as a governed open input", () => {
+    const doc = goodDocument();
+    doc.generatedSections[0].bodyMarkdown =
+      "Confirm the FY2026 target (open input — see Open Inputs Required).";
+    const res = validateDeliverableQuality(doc, req);
+    expect(res.metrics.unsupportedClaimCount).toBe(0);
+    expect(res.blockers.join(" ")).not.toMatch(/unsupported client-fact/);
+  });
+
   it("blocks leaked internal ids and missing source register", () => {
     const doc = goodDocument();
     doc.generatedSections[0].bodyMarkdown +=

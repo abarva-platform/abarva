@@ -180,7 +180,11 @@ export async function persistDeliverable(
   if (opts.renderViaProfile && contractDeliverableKey) {
     const profile = DELIVERABLE_PROFILES[contractDeliverableKey];
     const models = opts.structuredModels;
-    if (profile.renderer === "html_architecture" && models?.architectureModel) {
+    if (
+      profile.renderer === "html_architecture" &&
+      contractDeliverableKey === "target_state_architecture" &&
+      models?.architectureModel
+    ) {
       html = renderArchitectureHtml(models.architectureModel);
       outputFormat = "html";
       profileRenderedHtml = true;
@@ -232,13 +236,13 @@ export async function persistDeliverable(
   let qualityQuarantineReason: string | null = null;
   if (contractDeliverableKey) {
     const profile = DELIVERABLE_PROFILES[contractDeliverableKey];
-    const architectureSignals: Partial<ArchitectureContractSignals> = opts
-      .structuredModels?.architectureModel
-      ? deriveArchitectureContractSignals(
-          opts.structuredModels.architectureModel,
-          html,
-        )
-      : {};
+    const architectureSignals: Partial<ArchitectureContractSignals> =
+      profileRenderedHtml && opts.structuredModels?.architectureModel
+        ? deriveArchitectureContractSignals(
+            opts.structuredModels.architectureModel,
+            html,
+          )
+        : {};
     // Exhibits the structured generation passes produced (stage 4) count toward
     // the contract's exhibit-enforcement check only when the FINAL persisted
     // HTML still contains real rendered architecture visuals. This prevents a

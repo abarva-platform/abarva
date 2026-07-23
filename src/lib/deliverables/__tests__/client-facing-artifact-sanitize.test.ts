@@ -60,4 +60,19 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).toContain("Appendix A — Source Register");
     expect(html.match(/Source Register/g)).toHaveLength(1);
   });
+
+  it("removes residual internal vocabulary and bare phase shorthand without corrupting references", () => {
+    const html = sanitizeClientFacingArtifactHtml(`
+      <p>P2 should verify enterprise_context_chunks against the Source Register.</p>
+      <p>Use the Client-to-Complete Checklist and retain 08_p2_controls.csv plus DP2.</p>
+      <h2>Appendix A — Source Register</h2>
+    `);
+
+    expect(html).toContain("discovery should verify enterprise evidence against the evidence appendix");
+    expect(html).toContain("Client Input Checklist");
+    expect(html).toContain("08_p2_controls.csv");
+    expect(html).toContain("DP2");
+    expect(html).toContain("Appendix A — Source Register");
+    expect(html.match(/Source Register/g)).toHaveLength(1);
+  });
 });
