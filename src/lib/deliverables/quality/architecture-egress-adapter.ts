@@ -12,14 +12,16 @@ import type { GovernedToolCall } from "@/lib/visual-system/architecture-generati
 
 export const governedArchitectureToolCall: GovernedToolCall = async (params) => {
   const client = getAnthropicDirectClient();
-  const response = await client.messages.create({
-    model: params.model,
-    max_tokens: params.maxTokens,
-    system: params.system,
-    tools: [params.tool as never],
-    tool_choice: { type: "tool", name: params.tool.name },
-    messages: [{ role: "user", content: params.userMessage }],
-  });
+  const response = await client.messages
+    .stream({
+      model: params.model,
+      max_tokens: params.maxTokens,
+      system: params.system,
+      tools: [params.tool as never],
+      tool_choice: { type: "tool", name: params.tool.name },
+      messages: [{ role: "user", content: params.userMessage }],
+    })
+    .finalMessage();
   const toolUse = response.content.find(
     (b): b is Extract<typeof b, { type: "tool_use" }> => b.type === "tool_use",
   );

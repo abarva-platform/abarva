@@ -37,12 +37,15 @@ truncation failure instead of presenting it as missing client evidence.
   tokens, matching the existing premium deliverable generation envelope.
 - Preserve Anthropic `stop_reason` and output-token usage through the governed
   architecture adapter.
+- Stream the forced-tool response through `finalMessage()` so the expanded
+  budget is supported by the Anthropic SDK's long-request contract.
 - Fail explicitly when structured architecture output is truncated.
 - Add focused regression coverage for the output budget and truncation class.
 
 ## QA / Validation
 
 - Pass: 35 focused ArchitectureModel, renderer, and orchestration tests.
+- Pass: governed architecture adapter streaming regression test.
 - Pass: ESLint on changed TypeScript files.
 - Pass: TypeScript with `NODE_OPTIONS=--max-old-space-size=8192`.
 - Pass: `npm run audit:architecture-rules`.
@@ -78,6 +81,8 @@ approved-option, evidence, and dependency validation.
 
 - Pre-fix signed-in proof:
   `/Users/anand/Downloads/moves-p3-architecture-live-proof-final-2026-07-23T07-22-49Z`.
+- Transport finding proof:
+  `/Users/anand/Downloads/moves-p3-architecture-live-proof-v4-2026-07-23T07-50-02Z`.
 - PR, merge SHA, deploy run, digest invariant, and post-fix signed-in proof:
   pending.
 
