@@ -77,7 +77,7 @@ function countUnsupportedClaims(body: string): number {
   const factLike =
     /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
   const supported =
-    /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING/;
+    /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
   let n = 0;
   for (const s of sentences) {
     if (factLike.test(s) && !supported.test(s)) n++;

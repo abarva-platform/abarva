@@ -46,6 +46,12 @@ describe("repairUncitedFigures", () => {
       "We will modernise the platform.",
     );
   });
+
+  it("recognizes the governed open-input pointer as supported after consolidation", () => {
+    const text = "Target by FY2026 (open input — see Open Inputs Required).";
+    expect(extractUnsupportedFigureClaims(text)).toEqual([]);
+    expect(repairUncitedFigures(text)).toBe(text);
+  });
 });
 
 describe("buildSourceRegister", () => {

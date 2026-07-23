@@ -6,6 +6,8 @@
 const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\[CLIENT TO COMPLETE:\s*([^\]]+)\]/gi, "Client input required: $1"],
   [/\bCLIENT TO COMPLETE:\s*/gi, "Client input required: "],
+  [/\bClient[-\s]to[-\s]Complete Checklist\b/gi, "Client Input Checklist"],
+  [/\bclient[-\s]to[-\s]complete\b/gi, "client input"],
   [/\bis\s+TBC\b/gi, "requires confirmation"],
   [/\bis\s+to be confirmed\b/gi, "requires confirmation"],
   [/\bTBC\b/gi, "requires confirmation"],
@@ -43,11 +45,43 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   // "Source Register" references from narrative prose before the quality scan.
   [/\bevidence appendix\s*\(\s*Source Register\s*\)/gi, "evidence appendix"],
   [/\btied to (?:the )?Source Register\b/gi, "tied to cited evidence"],
+  [/\bSource Register\b/gi, "evidence appendix"],
+  [
+    /\benterprise_context(?:_chunks|_records|_facts|_sources)?\b/gi,
+    "enterprise evidence",
+  ],
 ];
 
+const PHASE_LABELS: Record<string, string> = {
+  P0: "origination",
+  P1: "charter",
+  P2: "discovery",
+  P3: "design",
+  P4: "roadmap planning",
+  P5: "handoff",
+};
+
 export function sanitizeClientFacingArtifactHtml(html: string): string {
-  return CLIENT_ARTIFACT_REPLACEMENTS.reduce(
+  const protectedHeadings: string[] = [];
+  const withProtectedHeadings = html.replace(
+    /<h([1-6])\b[^>]*>[^<]*\bSource Register\b[^<]*<\/h\1>/gi,
+    (heading) => {
+      const token = `__ABARVA_SOURCE_REGISTER_HEADING_${protectedHeadings.length}__`;
+      protectedHeadings.push(heading);
+      return token;
+    },
+  );
+  const cleaned = CLIENT_ARTIFACT_REPLACEMENTS.reduce(
     (cleaned, [pattern, replacement]) => cleaned.replace(pattern, replacement),
-    html,
+    withProtectedHeadings,
+  );
+  const phaseCleaned = cleaned.replace(
+    /(?<![A-Za-z0-9_-])P([0-5])(?![A-Za-z0-9_])/g,
+    (phase) => PHASE_LABELS[phase] ?? phase,
+  );
+  return protectedHeadings.reduce(
+    (restored, heading, index) =>
+      restored.replace(`__ABARVA_SOURCE_REGISTER_HEADING_${index}__`, heading),
+    phaseCleaned,
   );
 }
