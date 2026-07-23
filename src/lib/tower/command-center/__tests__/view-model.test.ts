@@ -359,13 +359,13 @@ describe("buildTowerCommandCenterView", () => {
       { tenantName: "Demo" },
     )!;
     expect(view.summary.candidateAiCount).toBe(242);
-    expect(view.candidates).toHaveLength(20);
-    expect(view.portfolioCounts.displayCandidateCount).toBe(20);
+    expect(view.candidates).toHaveLength(10);
+    expect(view.portfolioCounts.displayCandidateCount).toBe(10);
     expect(view.portfolioCounts.totalCandidateCount).toBe(242);
     expect(view.portfolioCounts.martItemCount).toBe(243);
     expect(view.portfolioCounts.excludedItemCount).toBe(218);
     expect(view.portfolioCounts.exclusionReasons).toEqual(
-      expect.arrayContaining([expect.stringContaining("20 of 242")]),
+      expect.arrayContaining([expect.stringContaining("10 of 242")]),
     );
   });
 

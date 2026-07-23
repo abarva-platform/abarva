@@ -51,11 +51,26 @@ const AI_FILTERS: ReadonlyArray<readonly [AiFilter, string]> = [
   ["platform", "Platform"],
 ];
 
+const AI_MATRIX_DISPLAY_LIMIT = 10;
+
 function applyFilter(
   items: readonly TowerAiView[],
   filter: AiFilter,
 ): TowerAiView[] {
   return filter === "all" ? [...items] : items.filter((a) => a.kind === filter);
+}
+
+function topMatrixItems(items: readonly TowerAiView[]): TowerAiView[] {
+  return [...items]
+    .sort(
+      (a, b) =>
+        b.valueScore - a.valueScore ||
+        b.readinessScore - a.readinessScore ||
+        b.financeValidatedUsd - a.financeValidatedUsd ||
+        b.promisedUsd - a.promisedUsd ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, AI_MATRIX_DISPLAY_LIMIT);
 }
 
 // ── pieces ─────────────────────────────────────────────────────────────────
@@ -208,16 +223,21 @@ export function AiPortfolioView({
   onOpenAi: (n: number) => void;
 }) {
   const filtered = applyFilter(view.ai, filter);
+  const matrixItems = topMatrixItems(filtered);
   const showChips = subView === "overview" || subView === "bubble";
   const aiTagged = formatUsdM(view.summary.aiTaggedUsd);
   const sizeMode = view.summary.aiSpendUnattributed ? "constant" : "spend";
   const fundedCount = view.ai.filter((a) => a.kind === "funded").length;
   const embeddedCount = view.ai.filter((a) => a.kind === "embedded").length;
   const candidateRight = `${view.portfolioCounts.displayCandidateCount} shown of ${view.portfolioCounts.totalCandidateCount} candidates`;
+  const matrixCountRight =
+    filtered.length > matrixItems.length
+      ? `${matrixItems.length} on matrix · ${filtered.length} in filtered list`
+      : `${matrixItems.length} on matrix`;
   const matrixRight =
     sizeMode === "constant"
-      ? "value potential × readiness · constant radius"
-      : "value potential × readiness · size = attributed spend";
+      ? `${matrixCountRight} · constant radius`
+      : `${matrixCountRight} · size = attributed spend`;
 
   let body: React.ReactNode;
   if (subView === "overview") {
@@ -233,7 +253,7 @@ export function AiPortfolioView({
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
           <BubblePanel
-            items={filtered}
+            items={matrixItems}
             sizeMode={sizeMode}
             onOpenAi={onOpenAi}
           />
@@ -301,14 +321,18 @@ export function AiPortfolioView({
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
           <BubblePanel
-            items={filtered}
+            items={matrixItems}
             sizeMode={sizeMode}
             onOpenAi={onOpenAi}
           />
         </Card>
         <Card
           title="Initiatives"
-          right="numbered on the matrix"
+          right={
+            filtered.length > matrixItems.length
+              ? `${matrixItems.length} numbered on matrix`
+              : "numbered on the matrix"
+          }
           headId="tcc-ai-legend"
           bodyClassName={styles.scroll}
           bodyStyle={{ padding: "10px 12px" }}

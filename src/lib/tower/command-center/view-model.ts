@@ -43,7 +43,7 @@ import type {
   TowerUsageBar,
 } from "./types";
 
-const TOWER_CANDIDATE_DISPLAY_LIMIT = 20;
+const TOWER_CANDIDATE_DISPLAY_LIMIT = 10;
 const TOWER_GAP_POLICY_VERSION = "tower_business_evidence_gap_bridge_v1";
 
 function num(value: number | null | undefined): number {
