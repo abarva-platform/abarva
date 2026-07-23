@@ -358,6 +358,7 @@
     "audit:home-knowledge-pressure": "npx tsx scripts/audit/build-home-knowledge-pressure-proof.ts",
     "audit:home-knowledge-cutover": "npx tsx scripts/audit/build-home-knowledge-cutover-proof.ts",
     "home:knowledge-pack-v2:write": "node scripts/knowledge/build-home-knowledge-pack-v2.mjs --tenant=all --use-claude --write-db --approve",
+    "home:knowledge-v4:replay": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --validate-candidate",
     "home:knowledge-v4:review-job": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --tenant=all --out-dir=/tmp/home-knowledge-v4-review",
     "home:knowledge-v4:review-job:meridian": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --tenant=meridian-health --out-dir=/tmp/home-knowledge-v4-review-meridian-health",
     "home:knowledge-v4:review-job:fs-demo": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --tenant=first-capital --out-dir=/tmp/home-knowledge-v4-review-first-capital",
