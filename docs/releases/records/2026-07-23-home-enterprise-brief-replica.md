@@ -29,6 +29,7 @@ Replaces the old Home Enterprise Brief presentation with a brand-new executive c
 ## Changes Included
 
 - `src/components/home/HomeEnterpriseBriefApp.tsx`: new reference-style cockpit layout, simplified explorer rail, executive-read tabs, narrative snapshot blocks, and polished responsive styling.
+- Follow-up scale polish: tighter dashboard density, smaller executive typography, non-clipping wrapped section tabs, and narrower explorer rail after signed-in visual inspection.
 
 ## QA / Validation
 
@@ -39,6 +40,7 @@ Replaces the old Home Enterprise Brief presentation with a brand-new executive c
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npm run build`
 - Blocked locally: signed-in browser proof against `localhost:3001/home`; production Clerk storage states redirect to `/sign-in` on localhost. Live signed-in proof remains required after ACA deploy before calling this live-proven.
+- Pass after first deploy: signed-in production screenshots for Meridian and FS Demo/First Capital confirmed `/home`, tenant header, explorer rail, section tabs, and no raw row/node/edge/fact-count language.
 
 ## Rollout Plan
 
