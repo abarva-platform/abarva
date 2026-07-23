@@ -42,6 +42,16 @@ export interface GenerateDeliverableServiceInput extends Omit<
   deliverableTypeKey?: string;
   /** semantic query used to retrieve governed evidence. */
   evidenceQuery?: string;
+  /** Human-approved P3 option. Required by P3 architecture assembly. */
+  approvedSolutionApproach?: string;
+  decisionLineage?: {
+    decisionHash: string;
+    decisionVersion: string;
+    approvedOptionId: string;
+    approvedOptionVersion: string;
+    contextSnapshotHash: string;
+    architectureModelVersion: string;
+  };
   outputFormats?: OutputFormat[];
   model?: string;
   /** invoked after each orchestrator pass with a {pct,label} for the live progress band. */
@@ -122,17 +132,25 @@ export async function runDeliverableForTenant(
   const wantsArchitecture =
     !!deliverableKey &&
     DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture";
+  // Target Architecture's quality contract requires a rendered current state,
+  // gap-to-target bridge, and conceptual/logical/physical architecture levels.
+  // A prose-only path can never satisfy that contract, so the structured model
+  // is part of the artifact contract rather than an optional tenant preview.
+  const structuredArchitectureRequired =
+    deliverableKey === "target_state_architecture";
   const structuredExhibitsEnabled =
     wantsArchitecture &&
-    isFeatureEnabled(
-      { clientKey: input.tenantClientKey },
-      "deliverable_structured_exhibits",
-    );
+    (structuredArchitectureRequired ||
+      isFeatureEnabled(
+        { clientKey: input.tenantClientKey },
+        "deliverable_structured_exhibits",
+      ));
 
   let deliverablePlan: DeliverablePlan | undefined;
   if (structuredExhibitsEnabled && deliverableKey) {
     try {
       const contextText = [
+        input.approvedSolutionApproach,
         `Decision context: ${input.decisionContext}`,
         ...evidence.map(
           (e) =>
@@ -161,6 +179,64 @@ export async function runDeliverableForTenant(
         "[generate-service] deliverable plan generation failed; structured exhibit plan unavailable",
         err,
       );
+      if (structuredArchitectureRequired) {
+        return {
+          ok: false,
+          qualityPass: false,
+          blockers: ["Structured Architecture Brief could not be assembled and validated."],
+          blockedReason: `architecture_brief_incomplete: ${err instanceof Error ? err.message : String(err)}`,
+          retrievedEvidence: retrievedCount,
+        };
+      }
+    }
+  }
+
+  // Target Architecture is assembled from the validated brief before narrative drafting.
+  // The visible document explains the structured model; it does not invent the model from prose.
+  let structuredModels:
+    | {
+        architectureModel?: ArchitectureModel;
+        structuredArchitectureBrief?: DeliverablePlan;
+      }
+    | undefined;
+  if (structuredArchitectureRequired) {
+    const planContext = deliverablePlan
+      ? `Structured Architecture Brief:\n${JSON.stringify(deliverablePlan)}\n\n`
+      : "";
+    const contextText = [
+      input.approvedSolutionApproach,
+      planContext,
+      ...evidence.map(
+        (e) => `[${e.citationNumber}] ${e.label} (${e.evidenceFamily}, ${e.confidence}): ${e.statement}`,
+      ),
+    ].filter(Boolean).join("\n").slice(0, 32000);
+    try {
+      const genArch =
+        deps.generateArchitecture ??
+        ((request) => generateArchitectureModel(request, governedArchitectureToolCall));
+      const generated = await genArch({
+        engagement: input.initiativeDisplayName,
+        client: input.clientDisplayName,
+        contextText,
+        ...(input.model ? { model: input.model } : {}),
+      });
+      structuredModels = {
+        architectureModel: generated.model,
+        structuredArchitectureBrief: deliverablePlan,
+      };
+      req.decisionContext = [
+        req.decisionContext,
+        planContext,
+        `VALIDATED ARCHITECTURE MODEL - NARRATE WITHOUT CHANGING ITS DECISIONS:\n${JSON.stringify(generated.model)}`,
+      ].filter(Boolean).join("\n\n").slice(0, 48000);
+    } catch (err) {
+      return {
+        ok: false,
+        qualityPass: false,
+        blockers: ["Target Architecture assembly failed structured-model validation."],
+        blockedReason: `architecture_assembly_failed: ${err instanceof Error ? err.message : String(err)}`,
+        retrievedEvidence: retrievedCount,
+      };
     }
   }
 
@@ -201,8 +277,7 @@ export async function runDeliverableForTenant(
   // deliverables, generate the ArchitectureModel via the GOVERNED adapter and render
   // the profile's renderer. Tenant-agnostic; grounded in the tenant's own generated
   // narrative. Any failure falls back to prose — generation never breaks.
-  let structuredModels: { architectureModel?: ArchitectureModel } | undefined;
-  if (structuredExhibitsEnabled) {
+  if (structuredExhibitsEnabled && !structuredArchitectureRequired) {
     const contextText = result.document.generatedSections
       .map((s) => `## ${s.title}\n${s.bodyMarkdown}`)
       .join("\n\n")
@@ -217,7 +292,7 @@ export async function runDeliverableForTenant(
       const gen = await genArch({
         engagement: result.document.initiativeDisplayName,
         client: result.document.clientDisplayName,
-        contextText: `${planContext}${contextText}`.slice(0, 32000),
+        contextText: `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(0, 32000),
         ...(input.model ? { model: input.model } : {}),
       });
       structuredModels = { architectureModel: gen.model };
@@ -230,7 +305,7 @@ export async function runDeliverableForTenant(
         architectureModel: buildGroundedArchitectureFallback({
           engagement: result.document.initiativeDisplayName,
           client: result.document.clientDisplayName,
-          contextText: `${planContext}${contextText}`.slice(0, 32000),
+          contextText: `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(0, 32000),
           ...(deliverablePlan ? { plan: deliverablePlan } : {}),
           failureReason: err instanceof Error ? err.message : String(err),
         }),
@@ -272,6 +347,7 @@ export async function runDeliverableForTenant(
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
+    ...(input.decisionLineage ? { generationLineage: input.decisionLineage } : {}),
     enforceQualityContract,
     governanceOk: true, // the multi-pass generation already cleared audited egress
     tenantTerms: [

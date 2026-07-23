@@ -18,6 +18,16 @@ jest.mock("@/lib/programs/mutations", () => ({
   completeDeliverable: (...args: unknown[]) => completeDeliverableMock(...args),
 }));
 
+const neqMock = jest.fn();
+const inMock = jest.fn();
+const eqMock = jest.fn();
+const updateMock = jest.fn();
+const fromMock = jest.fn();
+jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
+  __esModule: true,
+  getProgramsRouteSupabase: async () => ({ supabase: { from: fromMock } }),
+}));
+
 import { POST } from "../route";
 
 const PROGRAM_ID = "program-123";
@@ -38,6 +48,11 @@ beforeEach(() => {
   requireTenancyMock.mockReset();
   getProgramByIdMock.mockReset();
   completeDeliverableMock.mockReset();
+  neqMock.mockReset();
+  inMock.mockReset();
+  eqMock.mockReset();
+  updateMock.mockReset();
+  fromMock.mockReset();
   requireTenancyMock.mockResolvedValue(CTX);
   getProgramByIdMock.mockResolvedValue({
     id: PROGRAM_ID,
@@ -48,6 +63,11 @@ beforeEach(() => {
     versionId: "version-1",
     status: "signed_off",
   });
+  neqMock.mockResolvedValue({ error: null });
+  inMock.mockImplementation(() => ({ neq: neqMock }));
+  eqMock.mockImplementation(() => ({ in: inMock }));
+  updateMock.mockImplementation(() => ({ eq: eqMock }));
+  fromMock.mockImplementation(() => ({ update: updateMock }));
 });
 
 describe("POST /api/v1/programs/:programId/solution-options/approve", () => {
@@ -97,6 +117,16 @@ describe("POST /api/v1/programs/:programId/solution-options/approve", () => {
           }),
         }),
       }),
+    );
+    expect(updateMock).toHaveBeenCalledWith({ status: "superseded" });
+    expect(inMock).toHaveBeenCalledWith(
+      "deliverable_type_key",
+      expect.arrayContaining([
+        "target_state_architecture",
+        "solution_design",
+        "operating_model_design",
+        "sourcing_strategy",
+      ]),
     );
   });
 

@@ -37,6 +37,7 @@ import {
   type ArchitectureContractSignals,
 } from "@/lib/visual-system/architecture-html-renderer";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-plan";
 import { sanitizeClientFacingArtifactHtml } from "@/lib/deliverables/client-facing-artifact-sanitize";
 import {
   renderDeckHtml,
@@ -88,9 +89,12 @@ export interface PersistDeliverableOptions {
   structuredModels?: {
     architectureModel?: ArchitectureModel;
     storylineDeck?: StorylineDeck;
+    /** Persisted P3b assembly input generated before Target Architecture. */
+    structuredArchitectureBrief?: DeliverablePlan;
   };
   /** Select the renderer by profile (stage 6). Staged per tenant via flag. */
   renderViaProfile?: boolean;
+  generationLineage?: Record<string, unknown>;
 }
 
 export interface PersistDeps {
@@ -390,5 +394,12 @@ export async function persistDeliverable(
     deliverableType: result.brief.deliverableType,
     registryKey: resolvedDeliverableTypeKey,
     renderableDoc: renderableDocWithType,
+    ...(opts.generationLineage ? { generationLineage: opts.generationLineage } : {}),
+    ...(opts.structuredModels?.architectureModel
+      ? { architectureModel: opts.structuredModels.architectureModel }
+      : {}),
+    ...(opts.structuredModels?.structuredArchitectureBrief
+      ? { structuredArchitectureBrief: opts.structuredModels.structuredArchitectureBrief }
+      : {}),
   });
 }

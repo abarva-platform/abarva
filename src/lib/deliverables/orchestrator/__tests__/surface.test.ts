@@ -535,9 +535,8 @@ describe("runDeliverableForTenant", () => {
     expect(persisted).toBe(false);
   });
 
-  it("generates the architecture model and hands it to persistence when the flag is on (any tenant)", async () => {
-    process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS =
-      "skyharbor-air";
+  it("always generates the structured model required by the Target Architecture contract", async () => {
+    delete process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS;
     let persistOpts: Record<string, unknown> | undefined;
     const generate = (async () =>
       ({
@@ -617,6 +616,9 @@ describe("runDeliverableForTenant", () => {
         ...baseInput,
         module: "moves" as const,
         deliverableType: "target_architecture",
+        tenantClientKey: "arcturus",
+        approvedSolutionApproach:
+          "APPROVED SOLUTION APPROACH - AUTHORITATIVE INPUT\nChosen option: Option B - governed commercial lending agent assist",
       },
       {
         assemble,
@@ -630,17 +632,23 @@ describe("runDeliverableForTenant", () => {
 
     expect(out.ok).toBe(true);
     expect(calls).toEqual(["plan", "architecture"]);
-    expect(calledWith.engagement).toBe("IROPS Agentic Response");
-    expect(calledWith.contextText).toContain("Reason-first DeliverablePlan");
+    expect(calledWith.engagement).toBe("AMS 2026");
+    expect(calledWith.contextText).toContain("Structured Architecture Brief");
+    expect(calledWith.contextText).toContain(
+      "Chosen option: Option B - governed commercial lending agent assist",
+    );
     expect(persistOpts?.renderViaProfile).toBe(true);
     expect(
       (persistOpts?.structuredModels as { architectureModel?: unknown })
         ?.architectureModel,
     ).toBeDefined();
-    delete process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS;
+    expect(
+      (persistOpts?.structuredModels as { structuredArchitectureBrief?: unknown })
+        ?.structuredArchitectureBrief,
+    ).toEqual(plan);
   });
 
-  it("uses a grounded architecture fallback when the structured model is incomplete", async () => {
+  it("blocks Target Architecture when the structured model is incomplete", async () => {
     process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS =
       "skyharbor-air";
     let fallbackModel:
@@ -731,13 +739,9 @@ describe("runDeliverableForTenant", () => {
       },
     );
 
-    expect(out.ok).toBe(true);
-    expect(fallbackModel?.current).toBeDefined();
-    expect(fallbackModel?.target).toBeDefined();
-    expect(fallbackModel?.architectureLevels).toBeDefined();
-    expect(fallbackModel?.openInputs?.join(" ")).toMatch(
-      /Confirm integration protocols|incomplete/i,
-    );
+    expect(out.ok).toBe(false);
+    expect(out.blockedReason).toMatch(/architecture_assembly_failed/);
+    expect(fallbackModel).toBeUndefined();
     delete process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS;
   });
 });

@@ -639,6 +639,7 @@ export async function signOffDeliverable(
       mimeType: string;
       parseMethod: string;
       warnings?: string[];
+      generationLineage?: Record<string, unknown>;
     };
   } = {},
 ): Promise<boolean> {
@@ -678,6 +679,9 @@ export async function signOffDeliverable(
           approved_by_email: ctx.email ?? null,
           human_approved: true,
           replaces_ai_draft: true,
+          ...(opts.approvedContent?.generationLineage
+            ? { generationLineage: opts.approvedContent.generationLineage }
+            : {}),
         },
         quality_issues: null,
         generated_from_context_hash: null,
@@ -835,6 +839,7 @@ export async function completeDeliverable(
         title,
         current_version: nextVersion,
         status: input.signOff === false ? "draft" : "signed_off",
+        signed_off_version: input.signOff === false ? null : nextVersion,
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
         updated_at: now,
@@ -851,6 +856,7 @@ export async function completeDeliverable(
         title,
         status: input.signOff === false ? "draft" : "signed_off",
         current_version: 1,
+        signed_off_version: input.signOff === false ? null : 1,
         // Actor fields should identify the signed-in user/person. Nexus
         // authorship is recorded in structured provenance below.
         created_by: ctx.userId,

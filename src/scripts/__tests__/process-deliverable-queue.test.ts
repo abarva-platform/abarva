@@ -8,6 +8,11 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
   claimNextDeliverableRun: jest.fn(),
   completeDeliverableRun: jest.fn(async () => undefined),
   updateDeliverableRunProgress: jest.fn(async () => undefined),
+  blockRunsWithFailedDependencies: jest.fn(async () => [] as string[]),
+  getDeliverableRun: jest.fn(),
+}));
+jest.mock('@/lib/artifacts/repository', () => ({
+  getGeneratedArtifactById: jest.fn(),
 }));
 jest.mock('@/lib/deliverables/orchestrator/generate-service', () => ({
   runDeliverableForTenant: jest.fn(),
@@ -23,6 +28,12 @@ jest.mock('@/lib/deliverables/persist-move-generated-artifact', () => ({
 }));
 jest.mock('@/lib/programs/queries', () => ({
   getProgramById: jest.fn(),
+}));
+jest.mock('@/lib/programs/approved-solution-approach', () => ({
+  loadApprovedSolutionApproach: jest.fn(),
+}));
+jest.mock('@/lib/programs/move-context-extract', () => ({
+  loadCurrentMoveContextExtractFreshness: jest.fn(),
 }));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
   validateDeliverableTenantInvariant: jest.fn(async () => ({ ok: true, sourceKind: 'move', sourceId: 'evt-1' })),
@@ -52,6 +63,12 @@ const programQueries = jest.requireMock('@/lib/programs/queries') as {
 const invariant = jest.requireMock('@/lib/deliverables/orchestrator/tenant-invariant') as {
   validateDeliverableTenantInvariant: jest.Mock;
 };
+const approvedApproach = jest.requireMock('@/lib/programs/approved-solution-approach') as {
+  loadApprovedSolutionApproach: jest.Mock;
+};
+const contextExtract = jest.requireMock('@/lib/programs/move-context-extract') as {
+  loadCurrentMoveContextExtractFreshness: jest.Mock;
+};
 const { sweepStaleDeliverableRuns, claimNextDeliverableRun, completeDeliverableRun } = repo;
 const { runDeliverableForTenant } = svc;
 const { generateArtifact } = premium;
@@ -76,6 +93,7 @@ function claimedRow(id: string) {
     artifactId: null, sectionCount: null, retrievedEvidence: null, blockers: [], warnings: [],
     error: null, progressPct: null, progressLabel: null, claimedAt: 'now', workerId: 'w', jobPayload,
     createdAt: 't0', updatedAt: 't0',
+    batchId: null, sequenceNo: null, dependsOnRunId: null,
   };
 }
 
@@ -84,6 +102,8 @@ beforeEach(() => {
   sweepStaleDeliverableRuns.mockResolvedValue([]);
   validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'evt-1' });
   getProgramById.mockResolvedValue({ id: 'move-1', name: 'Move One' });
+  approvedApproach.loadApprovedSolutionApproach.mockResolvedValue({ decisionHash: 'decision-hash-1' });
+  contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({ evidenceFingerprint: 'context-hash-1' });
   generateArtifact.mockResolvedValue({
     status: 'generated',
     html: '<html><body><svg></svg><table></table>Diagnostic</body></html>',
@@ -181,6 +201,38 @@ describe('processDeliverableQueue', () => {
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-root-cause',
       expect.objectContaining({ status: 'succeeded', artifactId: 'art-root-cause' }),
+    );
+  });
+
+  it('blocks a queued P3 artifact before Claude when the approved decision changed', async () => {
+    const staleRun = {
+      ...claimedRow('run-stale-decision'),
+      module: 'moves',
+      jobPayload: {
+        ...jobPayload,
+        module: 'moves',
+        sourceArtifactRef: 'move-1',
+        decisionLineage: {
+          decisionHash: 'queued-hash',
+          decisionVersion: '1',
+          approvedOptionId: 'option-b',
+          approvedOptionVersion: '1',
+          contextSnapshotHash: 'context-hash-1',
+          architectureModelVersion: 'moves-architecture-model-v2',
+        },
+      },
+    };
+    approvedApproach.loadApprovedSolutionApproach.mockResolvedValueOnce({
+      decisionHash: 'newer-hash',
+    });
+    claimNextDeliverableRun.mockResolvedValueOnce(staleRun).mockResolvedValueOnce(null);
+
+    await processDeliverableQueue({ workerId: 'worker-stale', batchSize: 2 });
+
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-stale-decision',
+      expect.objectContaining({ status: 'blocked', error: 'stale_decision_basis' }),
     );
   });
 

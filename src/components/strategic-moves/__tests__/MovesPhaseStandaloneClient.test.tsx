@@ -1884,6 +1884,9 @@ describe("MovesPhaseStandaloneClient", () => {
         name: "Upload evidence for approach decision",
       }),
     ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /\(recommended\)/i }),
+    );
 
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
@@ -2008,8 +2011,10 @@ describe("MovesPhaseStandaloneClient", () => {
       ),
     ).toBe(false);
 
+    fireEvent.click(screen.getByRole("button", { name: /Stage workspace/i }));
+    fireEvent.click(contractStepButton(/Record Decision/i));
     fireEvent.click(
-      screen.getByRole("button", { name: /CANARY - SkyHarbor/i }),
+      screen.getByRole("button", { name: /\(recommended\)/i }),
     );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     expect(
@@ -2038,6 +2043,22 @@ describe("MovesPhaseStandaloneClient", () => {
       "/api/v1/deliverables/generate-phase",
       expect.objectContaining({ credentials: "include", method: "POST" }),
     );
+    const optionApprovalCall = (global.fetch as jest.Mock).mock.calls.find(
+      ([url]) => String(url).includes("/solution-options/approve"),
+    );
+    expect(optionApprovalCall).toBeTruthy();
+    const optionApprovalBody = JSON.parse(
+      String(optionApprovalCall?.[1]?.body ?? "{}"),
+    );
+    expect(optionApprovalBody).toEqual(
+      expect.objectContaining({
+        chosenOption: expect.any(String),
+        rationale: expect.any(String),
+        tradeoffsAccepted: expect.any(Array),
+        options: expect.any(Array),
+      }),
+    );
+    expect(optionApprovalBody.options.length).toBeGreaterThanOrEqual(2);
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v1/deliverables/runs/run-1",
       expect.objectContaining({ credentials: "include" }),
@@ -2107,6 +2128,10 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
+    fireEvent.click(contractStepButton(/Record Decision/i));
+    fireEvent.click(
+      screen.getByRole("button", { name: /\(recommended\)/i }),
+    );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {

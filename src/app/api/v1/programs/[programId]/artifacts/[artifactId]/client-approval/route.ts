@@ -30,6 +30,12 @@ import {
   MAX_ATTACHMENT_SIZE_BYTES,
 } from "@/lib/programs/attachments/mime";
 import { extractProgramEvidenceFromUploadBuffer } from "@/lib/programs/evidence-ingestion";
+import {
+  loadApprovedSolutionApproach,
+  P3_ARCHITECTURE_DELIVERABLE_KEYS,
+  validateArchitectureGenerationLineage,
+} from "@/lib/programs/approved-solution-approach";
+import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -291,6 +297,46 @@ export async function POST(
       );
     }
 
+    let verifiedGenerationLineage: Record<string, unknown> | null = null;
+    if (phase === 3 && P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)) {
+      if (!ctx.clientKey) {
+        return Response.json(
+          { error: "architecture_lineage_not_current", detail: "The active tenant key is unavailable." },
+          { status: 409 },
+        );
+      }
+      const approved = await loadApprovedSolutionApproach({
+        moveId: programId,
+        clientId: ctx.clientId,
+      });
+      const freshness = await loadCurrentMoveContextExtractFreshness({
+        tenantKey: ctx.clientKey,
+        moveId: programId,
+        phase: 3,
+      });
+      if (!approved || !freshness?.evidenceFingerprint) {
+        return Response.json(
+          {
+            error: "architecture_lineage_not_current",
+            detail: "The current approved option or P3 context snapshot is unavailable. Rebuild the architecture chain before approval.",
+          },
+          { status: 409 },
+        );
+      }
+      const validation = validateArchitectureGenerationLineage({
+        lineage: artifact.metadata.generationLineage,
+        approved,
+        currentContextSnapshotHash: freshness.evidenceFingerprint,
+      });
+      if (!validation.ok) {
+        return Response.json(
+          { error: "architecture_lineage_not_current", detail: validation.detail },
+          { status: 409 },
+        );
+      }
+      verifiedGenerationLineage = validation.lineage as unknown as Record<string, unknown>;
+    }
+
     if (phase === 1) {
       await ensureSponsorAuthorityForP1ClientApproval(supabase, programId, ctx);
     }
@@ -333,6 +379,7 @@ export async function POST(
           mimeType: string;
           parseMethod: string;
           warnings: string[];
+          generationLineage?: Record<string, unknown>;
         }
       | undefined;
 
@@ -379,8 +426,11 @@ export async function POST(
             error: "approved_upload_not_extractable",
             detail:
               "Client-approved replacement files must contain extractable text before they can become the downstream source of truth.",
-            parseMethod: parsed.extractedStructured.parse_method,
-            warnings: parsed.extractedStructured.warnings,
+          parseMethod: parsed.extractedStructured.parse_method,
+          warnings: parsed.extractedStructured.warnings,
+          ...(verifiedGenerationLineage
+            ? { generationLineage: verifiedGenerationLineage }
+            : {}),
           },
           { status: 422 },
         );
@@ -446,6 +496,9 @@ export async function POST(
         mode: isFileUploadApproval
           ? "client_approved_replacement"
           : "accept_ai_draft_as_authoritative",
+        ...(verifiedGenerationLineage
+          ? { generationLineage: verifiedGenerationLineage }
+          : {}),
       },
       provenanceMap: {
         moveId: programId,
