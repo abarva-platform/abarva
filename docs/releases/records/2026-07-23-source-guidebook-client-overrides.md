@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-signed-in-proven`
 
 ## Plain-English Summary
 
@@ -38,10 +38,13 @@ This is the code contract needed before authoring tenant-tailored facilitator gu
 
 ## QA / Validation
 
-- `npm test -- --runInBand src/lib/source/stage-guidebooks/__tests__/repository.test.ts src/lib/source/__tests__/source-event-shell-v2.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx` — pass after adding the tenant-label UI regression, 22/22. Same pre-existing duplicate Jest manual mock warnings observed.
-- `npx eslint src/lib/source/stage-guidebooks/repository.ts src/lib/source/stage-guidebooks/__tests__/repository.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx` — pass.
-- `npm run release:check` — pass. The command rewrote legacy-purge report timestamps; those generated timestamp-only changes were reverted before commit.
-- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — blocked by pre-existing missing optional graph packages in unrelated Home files: `@xyflow/react` and `@dagrejs/dagre`.
+- Pass — `npm test -- --runInBand src/lib/source/stage-guidebooks/__tests__/repository.test.ts src/lib/source/__tests__/source-event-shell-v2.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx` passed after adding the tenant-label UI regression, 22/22. Same pre-existing duplicate Jest manual mock warnings observed.
+- Pass — `npx eslint src/lib/source/stage-guidebooks/repository.ts src/lib/source/stage-guidebooks/__tests__/repository.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx` passed.
+- Pass — `npm run release:check` passed. The command rewrote legacy-purge report timestamps; those generated timestamp-only changes were reverted before commit.
+- Blocked — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` was blocked by pre-existing missing optional graph packages in unrelated Home files: `@xyflow/react` and `@dagrejs/dagre`.
+- Pass — PR #5426 merged as `f83eeb95f2067a0ec54da06bba53461fa58f675d`.
+- Pass — PR #5426's immediate ACA main deploy run `29980182441` was canceled by the deploy queue, but the next successful main deploy run `29980215454` completed for `908a3a3139ecb7eef026778c33d6278ca877a942`, which contains `f83eeb95f2067a0ec54da06bba53461fa58f675d`.
+- Pass — signed-in Lakeshore browser proof on `app.abarva.ai` at `2026-07-23T16:38:38.214Z` opened Source event `c05872d8-0465-4bc8-8eeb-ff3d42ac6761` on Strategy, clicked the Guidebook tab, and confirmed the global Strategy guidebook rendered with "Global default"; no tenant guidebook label appeared because no governed tenant-specific row exists.
 
 ## Rollout Plan
 
@@ -51,8 +54,8 @@ Merge through PR into `main`; the repo-owned ACA main deploy workflow builds and
 
 - Repo-owned deploy workflow: required for production rollout.
 - Shared runtime mutators: none in this PR.
-- Approved image digest: to be recorded after ACA main deploy completes.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: superseding main deploys contain this merge; current digest is recorded in the latest independent ACA invariant for the active revision.
+- ACA runtime invariant: required after every superseding deploy before claiming current production.
 - Worker image invariant: no worker image changes expected.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes, Source Strategy Guidebook tab should still render the global guidebook; client-specific live proof requires an authored tenant row and is data-blocked until one exists.
@@ -63,10 +66,10 @@ Revert the PR and redeploy through the repo-owned ACA main workflow. That restor
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
-- Merge SHA: to be added after merge.
-- ACA deploy run / digest: to be added after deployment.
-- Signed-in browser proof: to be added after deployment.
+- PR URL: #5426.
+- Merge SHA: `f83eeb95f2067a0ec54da06bba53461fa58f675d`.
+- ACA deploy run / digest: immediate run `29980182441` canceled; superseding successful main run `29980215454` contains the merge. Later successful main deploys also contain it.
+- Signed-in browser proof: Lakeshore Source Strategy Guidebook tab rendered on `app.abarva.ai`, global default visible, tenant override absent as expected because no tenant-specific row exists.
 
 ## Known Gaps
 

@@ -100,8 +100,13 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   is the fallback, and another client's guidebook can never bleed into the viewed tenant.
 - **Severity**: P5 (deliverable/content quality and tenant-specific guidance readiness)
 - **Workstream**: Guidebook quality
-- **Status**: `Candidate` — PR pending; code-only, no migration and no production data
-  mutation.
+- **Status**: `Shipped — deployed and signed-in proven` — code-only, no migration and no
+  production data mutation. Merged in PR #5426 as `f83eeb95f2067a0ec54da06bba53461fa58f675d`;
+  the PR's immediate deploy was superseded by the next successful main deploy run
+  `29980215454`, and later main revisions continue to contain the merge. Signed-in
+  Lakeshore proof on `app.abarva.ai` confirmed the Strategy Guidebook tab renders the
+  global default and does not falsely show a tenant guidebook when no tenant-specific row
+  exists.
 - **Dependencies**: the existing `source_stage_guidebooks.client_key` column and RLS policy
   from `SOURCE-GUIDEBOOK-001`; no new schema is required.
 - **Acceptance criteria**: `getSourceStageGuidebook(stageKey, clientKey)` performs an exact
