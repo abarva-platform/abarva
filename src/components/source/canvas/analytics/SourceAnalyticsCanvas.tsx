@@ -1267,6 +1267,7 @@ function FilesWorkspace({
         stageLabel={view.event.viewedStageLabel}
         onUploaded={onClientFinalAccepted}
       />
+      <EvidenceReadinessPanel files={view.files.items} />
       <ArtifactLifecyclePanel
         view={view}
         onClientFinalAccepted={onClientFinalAccepted}
@@ -1323,6 +1324,162 @@ function FilesWorkspace({
       )}
     </section>
   );
+}
+
+function EvidenceReadinessPanel({
+  files,
+}: {
+  files: readonly SourceShellFileItem[];
+}) {
+  const summary = summarizeEvidenceReadiness(files);
+  const registeredOnly = files
+    .filter((file) => file.parseStatus !== "parsed")
+    .slice(0, 3);
+
+  return (
+    <section
+      data-testid="source-evidence-readiness-panel"
+      style={{
+        ...CARD_STYLE,
+        padding: 16,
+        marginBottom: 16,
+        boxShadow: "none",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 16,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: ANALYTICS.BLUE,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10.5,
+              fontWeight: 900,
+              letterSpacing: 1.1,
+              textTransform: "uppercase",
+            }}
+          >
+            Evidence readiness
+          </div>
+          <h2
+            style={{
+              margin: "5px 0 0",
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 21,
+            }}
+          >
+            Stored, parsed, and ready for promotion
+          </h2>
+          <p
+            style={{
+              margin: "6px 0 0",
+              color: ANALYTICS.MUTED,
+              fontSize: 13,
+              lineHeight: 1.45,
+              maxWidth: 780,
+            }}
+          >
+            Files are persisted in Source as soon as upload succeeds. Parsed
+            files can support Source evidence now; search indexing and
+            enterprise-context promotion remain separate governed steps.
+          </p>
+          {registeredOnly.length > 0 ? (
+            <p
+              data-testid="source-evidence-readiness-registered-only"
+              style={{
+                margin: "8px 0 0",
+                color: ANALYTICS.INK_2,
+                fontSize: 12.5,
+                lineHeight: 1.45,
+              }}
+            >
+              Registered only:{" "}
+              {registeredOnly.map((file) => file.name).join(", ")}
+              {summary.registeredOnlyCount > registeredOnly.length
+                ? `, +${summary.registeredOnlyCount - registeredOnly.length} more`
+                : ""}
+              .
+            </p>
+          ) : null}
+        </div>
+        <div
+          data-testid="source-evidence-readiness-summary"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(104px, 1fr))",
+            gap: 8,
+            minWidth: 246,
+          }}
+        >
+          {[
+            ["Stored", summary.storedCount],
+            ["Parsed", summary.parsedCount],
+            ["Needs parser", summary.registeredOnlyCount],
+            ["Parser failed", summary.failedCount],
+            ["Search-ready", summary.searchReadyCount],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              style={{
+                border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+                borderRadius: 8,
+                background: ANALYTICS.SOFT,
+                padding: "8px 9px",
+              }}
+            >
+              <div
+                style={{
+                  color: ANALYTICS.MUTED,
+                  fontFamily: ANALYTICS.MONO,
+                  fontSize: 9,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                }}
+              >
+                {label}
+              </div>
+              <div
+                style={{
+                  marginTop: 4,
+                  color: ANALYTICS.INK,
+                  fontSize: 17,
+                  fontWeight: 900,
+                }}
+              >
+                {value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
+  const storedCount = files.length;
+  const parsedCount = files.filter((file) => file.parseStatus === "parsed").length;
+  const failedCount = files.filter((file) => file.parseStatus === "failed").length;
+  const registeredOnlyCount = files.filter(
+    (file) => file.parseStatus !== "parsed",
+  ).length;
+  const searchReadyCount = files.filter(
+    (file) => file.embeddingStatus === "embedded",
+  ).length;
+
+  return {
+    storedCount,
+    parsedCount,
+    failedCount,
+    registeredOnlyCount,
+    searchReadyCount,
+  };
 }
 
 function SessionEvidenceCapturePanel({
@@ -2812,6 +2969,7 @@ function FileCard({
       <div style={{ marginTop: 9, display: "flex", flexWrap: "wrap", gap: 6 }}>
         <ArtifactRoleBadge role={item.artifactRole} />
         <EvidenceBadge basis={item.sourceBasis} label={item.governanceLabel} />
+        <ProcessingReadinessBadge item={item} />
         {item.needsComplianceReview ? (
           <span
             data-testid={`source-shell-file-compliance-flag-${item.id}`}
@@ -2863,6 +3021,47 @@ function FileCard({
         onAccepted={onAccepted}
       />
     </div>
+  );
+}
+
+function ProcessingReadinessBadge({ item }: { item: SourceShellFileItem }) {
+  const parsed = item.parseStatus === "parsed";
+  const failed = item.parseStatus === "failed";
+  const searchReady = item.embeddingStatus === "embedded";
+  const label = searchReady
+    ? "SEARCH READY"
+    : parsed
+      ? "PARSED"
+      : failed
+        ? "PARSER FAILED"
+        : "REGISTERED ONLY";
+  const color = searchReady || parsed
+    ? ANALYTICS.GREEN_TEXT
+    : failed
+      ? ANALYTICS.RUST
+      : ANALYTICS.MUTED;
+  const background = searchReady || parsed
+    ? "rgba(17, 120, 84, 0.1)"
+    : failed
+      ? "rgba(166, 71, 43, 0.1)"
+      : "rgba(10,10,11,0.05)";
+
+  return (
+    <span
+      data-testid={`source-shell-file-processing-${item.id}`}
+      title={`Parse: ${item.parseStatus ?? "pending"} · Search: ${item.embeddingStatus ?? "pending"} · Graph: ${item.graphStatus ?? "pending"}`}
+      style={{
+        fontFamily: ANALYTICS.MONO,
+        fontSize: 10,
+        fontWeight: 800,
+        padding: "3px 8px",
+        borderRadius: 999,
+        background,
+        color,
+      }}
+    >
+      {label}
+    </span>
   );
 }
 
