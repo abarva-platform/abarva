@@ -24,7 +24,7 @@ export interface GoldenBarResult {
   missingTaxonomyTerms: string[];
   rawClientFacingIdHits: string[];
   reasons: string[];
-  /** Informational only — does not affect `pass`. See maximumWordCount below. */
+  /** True when the artifact exceeds `maximumWordCount`. May block when configured. */
   overMaximumWordCount: boolean;
   /** Quantified ($ or %) claims with no nearby evidence-qualifying language. Informational only. */
   unsupportedClaimSignals: string[];
@@ -35,12 +35,12 @@ export interface GoldenBarResult {
 export interface GoldenBarOptions {
   minimumWordCount?: number;
   /**
-   * Soft concision ceiling. Unlike minimumWordCount this does NOT affect
-   * `pass` — it only sets `overMaximumWordCount` and nudges `qualityScore`
-   * down, so it can be rolled out to every artifact type without risking a
-   * new generation-blocking failure on a live Move.
+   * Concision ceiling. Defaults to advisory-only so deep artifacts can warn
+   * without blocking. Set `enforceMaximumWordCount` for concise executive
+   * artifacts where the rendered output must fit the contract.
    */
   maximumWordCount?: number;
+  enforceMaximumWordCount?: boolean;
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -237,8 +237,11 @@ export function meetsGoldenBar(
     options.maximumWordCount && wordCount > options.maximumWordCount,
   );
   if (overMaximumWordCount) {
+    const enforcement = options.enforceMaximumWordCount
+      ? "blocks acceptance"
+      : "informational — does not block";
     reasons.push(
-      `runs long: artifact has ${wordCount} words; target ceiling is ${options.maximumWordCount} (informational — does not block)`,
+      `runs long: artifact has ${wordCount} words; target ceiling is ${options.maximumWordCount} (${enforcement})`,
     );
   }
   const unsupportedClaimSignals = findUnsupportedQuantifiedClaims(text);
@@ -301,6 +304,9 @@ export function meetsGoldenBar(
     !hasDataGap &&
     !proseOnly &&
     (!options.minimumWordCount || wordCount >= options.minimumWordCount) &&
+    (!options.maximumWordCount ||
+      !options.enforceMaximumWordCount ||
+      wordCount <= options.maximumWordCount) &&
     forbiddenLanguageHits.length === 0 &&
     missingExactEvidenceTerms.length === 0 &&
     missingTaxonomyTerms.length === 0 &&

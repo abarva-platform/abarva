@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { findUnsupportedQuantifiedClaims, meetsGoldenBar } from "../golden-bar";
+import { premiumGoldenBarOptionsForArtifact } from "../strategic-moves-artifact-standard";
 
 const GOLDEN_DIR = join(process.cwd(), "docs/build/golden-artifacts");
 
@@ -93,7 +94,7 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
         <table><tr><th>Objective</th><th>Owner</th></tr></table>
         <h2>Open Decision Log</h2>
         <table><tr><th>Decision</th><th>Owner</th></tr></table>
-        <h2>P4 Readiness Checklist</h2>
+        <h2>Roadmap Planning Readiness Checklist</h2>
         <table><tr><th>Item</th><th>Status</th></tr></table>
       </body></html>`,
       "target_state_architecture",
@@ -253,6 +254,37 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     expect(r.overMaximumWordCount).toBe(true);
     expect(r.pass).toBe(true);
     expect(r.qualityScore).toBeLessThan(92);
+  });
+
+  it("blocks over-ceiling artifacts when the artifact contract makes concision enforceable", () => {
+    const longBody = Array.from({ length: 50 }, (_, i) => `word${i}`).join(" ");
+    const r = meetsGoldenBar(
+      `<html><body><svg></svg><table></table><p>${longBody}</p></body></html>`,
+      undefined,
+      { maximumWordCount: 20, enforceMaximumWordCount: true },
+    );
+    expect(r.overMaximumWordCount).toBe(true);
+    expect(r.pass).toBe(false);
+    expect(r.reasons.join(" ")).toMatch(/blocks acceptance/i);
+  });
+
+  it("enforces rendered-size ceilings for concise Moves decision artifacts only", () => {
+    expect(
+      premiumGoldenBarOptionsForArtifact("solution_design")
+        .enforceMaximumWordCount,
+    ).toBe(true);
+    expect(
+      premiumGoldenBarOptionsForArtifact("operating_model_design")
+        .enforceMaximumWordCount,
+    ).toBe(true);
+    expect(
+      premiumGoldenBarOptionsForArtifact("sourcing_strategy")
+        .enforceMaximumWordCount,
+    ).toBe(true);
+    expect(
+      premiumGoldenBarOptionsForArtifact("target_state_architecture")
+        .enforceMaximumWordCount,
+    ).toBeUndefined();
   });
 
   it("does not flag overMaximumWordCount when under the ceiling", () => {
