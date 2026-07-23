@@ -36,7 +36,10 @@ import {
 } from "@/lib/source/artifact-registry/text-parser";
 import { criteriaByArtifactCode } from "@/lib/source/canonical-specs/gate-criteria";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { extractSourceUploadText } from "@/lib/source/artifact-registry/upload-text-extraction";
+import {
+  extractSourceUploadText,
+  type ExtractedUploadText,
+} from "@/lib/source/artifact-registry/upload-text-extraction";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -185,8 +188,7 @@ async function landUploadOnArtifact(args: {
   eventId: string;
   clientKey: string;
   artifactCode: string;
-  buffer: Buffer;
-  mimeType: string;
+  extracted: ExtractedUploadText;
   reviewerPersonId: string | null;
   authorId: string | null;
 }): Promise<UploadLandingResult> {
@@ -215,15 +217,11 @@ async function landUploadOnArtifact(args: {
       `Artifact ${args.artifactCode} is ${artifactRow.status}; its body was not replaced.`,
     );
   } else {
-    const extracted = await extractSourceUploadText({
-      buffer: args.buffer,
-      mimeType: args.mimeType,
-    });
-    warnings.push(...extracted.warnings);
-    if (extracted.text) {
+    warnings.push(...args.extracted.warnings);
+    if (args.extracted.text) {
       const nowIso = new Date().toISOString();
       const columns: Record<string, unknown> = {
-        body: extracted.text,
+        body: args.extracted.text,
         body_format: "markdown",
         body_authored_by: args.authorId,
         body_updated_at: nowIso,
@@ -236,6 +234,10 @@ async function landUploadOnArtifact(args: {
       });
       bodyLanded = write.ok;
       if (!write.ok) warnings.push(`Body update failed: ${write.error}`);
+    } else {
+      warnings.push(
+        `No extracted text available for artifact ${args.artifactCode}; canvas body was not replaced.`,
+      );
     }
   }
 
@@ -433,6 +435,11 @@ export async function POST(
       createdBy: tenancy.userId,
     });
 
+    const extracted = await extractSourceUploadText({
+      buffer,
+      mimeType,
+    });
+
     // Artifact-scoped landing (chosen semantics: an uploaded document satisfies
     // its gate). When the upload targets a specific canvas artifact, land the
     // extracted text on that artifact's body and mark the gate criteria it is
@@ -444,19 +451,22 @@ export async function POST(
           eventId: scope.eventId,
           clientKey: client.key,
           artifactCode,
-          buffer,
-          mimeType,
+          extracted,
           reviewerPersonId: currentUser?.personId ?? null,
           authorId: currentUser?.clerkUserId ?? null,
         })
       : null;
 
-    const parseWarnings: string[] = [];
-    if (isSynchronouslyParseableSourceFormat(artifact.sourceFormat)) {
+    const parseWarnings: string[] = [...extracted.warnings];
+    if (
+      extracted.text &&
+      (isSynchronouslyParseableSourceFormat(artifact.sourceFormat) ||
+        extracted.method !== "unsupported")
+    ) {
       try {
         artifact = await parseSourceTextArtifact({
           artifact,
-          text: buffer.toString("utf8"),
+          text: extracted.text,
         });
       } catch (parseError) {
         parseWarnings.push(
@@ -473,6 +483,10 @@ export async function POST(
           },
         );
       }
+    } else if (extracted.method !== "unsupported" && !extracted.text) {
+      parseWarnings.push(
+        `No text was extracted from ${filename}; document remains registry-only until async parsing is available.`,
+      );
     }
 
     // Durably reflect the upload in the canvas substrate (evidence readiness

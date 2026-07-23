@@ -1,6 +1,28 @@
-import { extractSourceUploadText, MAX_UPLOAD_BODY_CHARS } from '../upload-text-extraction';
+import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
+
+const mockPdfGetText = jest.fn();
+const mockPdfDestroy = jest.fn();
+
+jest.mock('pdf-parse', () => ({
+  PDFParse: jest.fn().mockImplementation(() => ({
+    getText: mockPdfGetText,
+    destroy: mockPdfDestroy,
+  })),
+}));
+
+import {
+  extractSourceUploadText,
+  MAX_UPLOAD_BODY_CHARS,
+} from '../upload-text-extraction';
 
 describe('extractSourceUploadText', () => {
+  beforeEach(() => {
+    mockPdfGetText.mockReset();
+    mockPdfDestroy.mockReset();
+    mockPdfDestroy.mockResolvedValue(undefined);
+  });
+
   it('decodes a markdown upload to text', async () => {
     const out = await extractSourceUploadText({
       buffer: Buffer.from('# Scope\n\nIn scope: everything.', 'utf8'),
@@ -31,10 +53,65 @@ describe('extractSourceUploadText', () => {
     expect(out.text!.length).toBe(MAX_UPLOAD_BODY_CHARS);
   });
 
-  it('marks pdf and other binaries unsupported without throwing', async () => {
+  it('extracts text from a PDF using the bounded pdf parser path', async () => {
+    mockPdfGetText.mockResolvedValue({
+      total: 2,
+      text: 'Decision: approve the finalist slate.',
+    });
     const out = await extractSourceUploadText({
       buffer: Buffer.from([0x25, 0x50, 0x44, 0x46]),
       mimeType: 'application/pdf',
+    });
+    expect(out.method).toBe('pdf-parse');
+    expect(out.text).toContain('approve the finalist slate');
+    expect(out.warnings).toHaveLength(0);
+    expect(mockPdfGetText).toHaveBeenCalledWith({ first: 50 });
+    expect(mockPdfDestroy).toHaveBeenCalled();
+  });
+
+  it('extracts workbook cells into a markdown evidence body', async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Workshop Notes');
+    sheet.addRow(['Topic', 'Detail']);
+    sheet.addRow(['Decision', 'Keep ServiceNow integration in scope']);
+    sheet.addRow(['Action', 'Owner=Procurement due=2026-08-15']);
+    const bytes = Buffer.from(await workbook.xlsx.writeBuffer());
+
+    const out = await extractSourceUploadText({
+      buffer: bytes,
+      mimeType:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    expect(out.method).toBe('xlsx-exceljs');
+    expect(out.text).toContain('## Worksheet: Workshop Notes');
+    expect(out.text).toContain('Keep ServiceNow integration in scope');
+    expect(out.warnings).toHaveLength(0);
+  });
+
+  it('extracts presentation slide text into labeled slide sections', async () => {
+    const zip = new JSZip();
+    zip.file(
+      'ppt/slides/slide1.xml',
+      '<p:sld><p:cSld><p:spTree><a:t>Decision: advance BAFO</a:t><a:t>Risk: transition capacity</a:t></p:spTree></p:cSld></p:sld>',
+    );
+    const bytes = await zip.generateAsync({ type: 'nodebuffer' });
+
+    const out = await extractSourceUploadText({
+      buffer: bytes,
+      mimeType:
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    });
+
+    expect(out.method).toBe('pptx-jszip');
+    expect(out.text).toContain('## Slide 1');
+    expect(out.text).toContain('Decision: advance BAFO');
+  });
+
+  it('marks unsupported binaries unsupported without throwing', async () => {
+    const out = await extractSourceUploadText({
+      buffer: Buffer.from([0, 1, 2, 3]),
+      mimeType: 'image/png',
     });
     expect(out.method).toBe('unsupported');
     expect(out.text).toBeNull();
