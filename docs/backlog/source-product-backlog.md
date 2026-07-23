@@ -225,6 +225,39 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   enterprise-context promotion. It makes the current processing state visible so those future
   steps can be operated and proven honestly.
 
+### SOURCE-INGEST-001d — Source enterprise-context writeback readback verifier
+
+- **Problem statement**: Source has a governed writeback command that can project eligible typed
+  Source facts into existing Azure/Postgres enterprise-context tables, but the proof path was
+  still operator/manual: readback queries existed only as release evidence, not as a reusable
+  verifier like the Moves learning writeback path has.
+- **User/business impact**: the Source data layer promise needs repeatable proof at each layer:
+  persisted Source evidence, enterprise-context records/facts, governed readiness, indexing, and
+  `agent_ready` promotion are separate states. Without a read-only verifier, a future operator
+  could claim Source "learned" from an event without proving the Azure/Postgres read model and
+  conservative readiness rows are actually present.
+- **Severity**: P3 (data-layer integrity / enterprise-context promotion readiness).
+- **Workstream**: Ingestion / data persistence.
+- **Status**: `Candidate` — code-only, read-only, no migration and no production data mutation.
+- **Dependencies**: existing Source enterprise-context writeback module and existing
+  `enterprise_context_records`, `enterprise_context_facts`, and `governed_object_readiness`
+  tables. No new schema or data-build job is required.
+- **Acceptance criteria**: add a read-only Source writeback readback verifier command; it resolves
+  one tenant-scoped Source event, reads persisted enterprise-context records/facts/readiness rows,
+  writes a proof JSON, fails when records are missing facts/readiness, and fails if any row has
+  been prematurely promoted beyond `not_reviewed` / `committed_not_indexed` / `pending`. It must
+  not write, index, promote, mutate runtime flags, or mark anything `agent_ready`.
+- **Required tests**:
+  `src/lib/source/context-writeback/__tests__/source-context-writeback.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-enterprise-context-readback-verifier.md`.
+- **Discovered from**: standing `SOURCE-INGEST-001` follow-on list, the Source enterprise-context
+  writeback release's Known Gaps, and the user's requirement that Source persistence in Azure be
+  provable before it can populate the enterprise context layer over time.
+- **Known gaps**: this does not run writeback apply, OCR/transcription, vector indexing,
+  enterprise-context retrieval, or `agent_ready` promotion. It proves the committed
+  Azure/Postgres layers and guards against premature promotion.
+
 ### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
 
 - **Problem statement**: found while comparing a user-provided Source Event Shell redesign

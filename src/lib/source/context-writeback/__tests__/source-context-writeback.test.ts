@@ -3,6 +3,7 @@ import {
   SOURCE_CONTEXT_RECORD_TYPE,
   buildSourceContextWritebackPlan,
   writeSourceFactsToEnterpriseContext,
+  summarizeSourceContextReadback,
   type SourceContextWritebackStore,
   type SourceEnterpriseContextFactRow,
   type SourceEnterpriseContextRecordRow,
@@ -254,5 +255,132 @@ describe("writeSourceFactsToEnterpriseContext", () => {
       status: "failed",
       detail: "record store unavailable",
     });
+  });
+});
+
+describe("summarizeSourceContextReadback", () => {
+  it("passes when records, facts, and conservative readiness rows match the source event", () => {
+    const summary = summarizeSourceContextReadback({
+      clientKey: "apex-retail",
+      sourceEventId: "event-1",
+      records: [
+        {
+          id: "record-1",
+          tenant_key: "apex-retail",
+          canonical_record_id: "source-event-fact-event-1-fact-1",
+          record_type: SOURCE_CONTEXT_RECORD_TYPE,
+          record_subtype: "annual_baseline_spend_usd",
+          source_system: "source_event_facts",
+          source_record_id: "fact-1",
+          lifecycle_state: "active",
+          payload: {
+            sourceEventId: "event-1",
+            sourceEventCode: "SRC-004",
+            sourceEventName: "Apex AMS Outsourcing",
+            sourceFactId: "fact-1",
+            factKey: "annual_baseline_spend_usd",
+            entityKind: "event",
+            entityRef: null,
+            valueNumeric: 1_200_000,
+            valueText: null,
+            unit: "usd",
+            sourceMethod: "structured_map",
+            sourceCitation: {
+              doc: "AMS intake template",
+              locator: "Spend!B4",
+            },
+            confidence: "high",
+            capturedAt: "2026-07-22T12:00:00.000Z",
+            stageKey: "responses",
+            writebackSchemaVersion: 1,
+          },
+        },
+      ],
+      facts: [
+        {
+          id: "enterprise-fact-1",
+          record_id: "record-1",
+          tenant_key: "apex-retail",
+          source_system: "source_event_facts",
+          source_record_id: "fact-1",
+          lifecycle_state: "active",
+        },
+      ],
+      readinessRows: [
+        {
+          object_table: "enterprise_context_records",
+          object_id: "record-1",
+          client_key: "apex-retail",
+          source_layer: "tenant_context",
+          source_basis: "source_event_fact",
+          agent_readiness_status: "not_reviewed",
+          retrievability: "committed_not_indexed",
+          policy_validation_status: "pending",
+          provenance: {
+            sourceEventId: "event-1",
+            sourceFactId: "fact-1",
+          },
+        },
+      ],
+    });
+
+    expect(summary).toMatchObject({
+      status: "pass",
+      counts: { records: 1, facts: 1, readinessRows: 1 },
+      byFactKey: { annual_baseline_spend_usd: 1 },
+      readinessStatuses: {
+        "not_reviewed / committed_not_indexed / pending": 1,
+      },
+      missingFactsForRecords: [],
+      missingReadinessForRecords: [],
+      activePromotionViolations: [],
+    });
+  });
+
+  it("fails when readback rows are missing or prematurely promoted", () => {
+    const summary = summarizeSourceContextReadback({
+      clientKey: "apex-retail",
+      sourceEventId: "event-1",
+      records: [
+        {
+          id: "record-1",
+          tenant_key: "apex-retail",
+          canonical_record_id: "source-event-fact-event-1-fact-1",
+          record_type: SOURCE_CONTEXT_RECORD_TYPE,
+          record_subtype: "annual_baseline_spend_usd",
+          source_system: "source_event_facts",
+          source_record_id: "fact-1",
+          lifecycle_state: "active",
+          payload: { sourceEventId: "event-1" },
+        },
+      ],
+      facts: [],
+      readinessRows: [
+        {
+          object_table: "enterprise_context_records",
+          object_id: "record-1",
+          client_key: "apex-retail",
+          source_layer: "tenant_context",
+          source_basis: "source_event_fact",
+          agent_readiness_status: "agent_ready",
+          retrievability: "search_indexed",
+          policy_validation_status: "passed",
+          provenance: { sourceEventId: "event-1" },
+        },
+      ],
+    });
+
+    expect(summary.status).toBe("fail");
+    expect(summary.missingFactsForRecords).toEqual([
+      "source-event-fact-event-1-fact-1",
+    ]);
+    expect(summary.activePromotionViolations).toEqual([
+      {
+        objectId: "record-1",
+        agentReadinessStatus: "agent_ready",
+        retrievability: "search_indexed",
+        policyValidationStatus: "passed",
+      },
+    ]);
   });
 });
