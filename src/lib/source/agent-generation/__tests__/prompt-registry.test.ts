@@ -56,6 +56,9 @@ describe("Source artifact prompt registry provider config", () => {
         "d05_scope_memo",
         "d09_rfp_pack",
         "d11_response_checklist",
+        "d13_vendor_responses",
+        "d14_qa_log",
+        "d15_response_completeness",
         "d19_pricing_workbook",
         "d20_trap_log",
         "d21_assumption_set",
@@ -107,6 +110,115 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain("Draft RFP Package (d09_rfp_pack)");
     expect(message).toContain("Vendor Response Control Pack");
     expect(message).toContain("future commercial leverage checks");
+  });
+
+  it("configures the responses-stage prompts as a governed workflow", () => {
+    const d13 = getPromptTemplate("d13_vendor_responses");
+    const d14 = getPromptTemplate("d14_qa_log");
+    const d15 = getPromptTemplate("d15_response_completeness");
+
+    expect(d13).not.toBeNull();
+    expect(d14).not.toBeNull();
+    expect(d15).not.toBeNull();
+    expect(d13?.upstreamRequired).toEqual([
+      "d09_rfp_pack",
+      "d11_response_checklist",
+    ]);
+    expect(d14?.upstreamRequired).toEqual(["d09_rfp_pack"]);
+    expect(d15?.upstreamRequired).toEqual([
+      "d11_response_checklist",
+      "d13_vendor_responses",
+    ]);
+    expect(d13?.systemPrompt).toContain("Response intake status");
+    expect(d13?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
+    expect(d14?.systemPrompt).toContain("published to all eligible vendors");
+    expect(d14?.systemPrompt).toContain("Binding addenda and RFP changes");
+    expect(d15?.systemPrompt).toContain("Completeness gate decision");
+    expect(d15?.systemPrompt).toContain("must not rank vendors on merit");
+  });
+
+  it("blocks vendor response intake until the RFP and control pack exist", () => {
+    const d13 = getPromptTemplate("d13_vendor_responses");
+    const ctx = makeD09Context(["Vendor_A_Response.docx"]);
+
+    expect(findMissingUpstreamCodes(d13!, ctx)).toEqual([
+      "d09_rfp_pack",
+      "d11_response_checklist",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState("d09_rfp_pack", "# RFP\n\nIssued package."),
+      makeArtifactState(
+        "d11_response_checklist",
+        "# Response Control\n\nStructured tables required.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d13!, ctx)).toEqual([]);
+  });
+
+  it("binds uploaded vendor evidence into the vendor response pack prompt", () => {
+    const d13 = getPromptTemplate("d13_vendor_responses");
+    const ctx = makeD09Context([
+      "Vendor_A_Response.docx",
+      "Vendor_A_Pricing_Workbook.xlsx",
+      "Vendor_B_Commercial_Exceptions.xlsx",
+    ]);
+
+    const message = d13?.buildUserMessage(ctx, {
+      d09_rfp_pack: "# RFP\n\nVendor response instructions.",
+      d11_response_checklist:
+        "# Vendor Response Control Pack\n\nStructured pricing workbook required.",
+      d14_qa_log: "# Q&A\n\nQuestion Q-01 answered for all vendors.",
+    });
+
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("Vendor Response Pack");
+    expect(message).toContain("RFP Package (d09_rfp_pack)");
+    expect(message).toContain("Vendor Response Control Pack");
+    expect(message).toContain("Vendor_A_Response.docx");
+    expect(message).toContain("Vendor_A_Pricing_Workbook.xlsx");
+    expect(message).toContain("Question Q-01 answered for all vendors");
+    expect(message).toContain(
+      "do not invent vendors, prices, claims, or completeness",
+    );
+  });
+
+  it("requires the vendor response pack before drafting response completeness", () => {
+    const d15 = getPromptTemplate("d15_response_completeness");
+    const ctx = makeD09Context(["Vendor_A_Response.docx"]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d11_response_checklist",
+        "# Response Control\n\nStructured tables required.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d15!, ctx)).toEqual([
+      "d13_vendor_responses",
+    ]);
+
+    ctx.artifactStates.push(
+      makeArtifactState(
+        "d13_vendor_responses",
+        "# Vendor Response Pack\n\nVendor A missing SLA commitments.",
+      ),
+    );
+    expect(findMissingUpstreamCodes(d15!, ctx)).toEqual([]);
+
+    const message = d15?.buildUserMessage(ctx, {
+      d11_response_checklist:
+        "# Response Control\n\nStructured tables required.",
+      d13_vendor_responses:
+        "# Vendor Response Pack\n\nVendor A missing SLA commitments.",
+    });
+
+    expect(message).toContain("Response Completeness Report");
+    expect(message).toContain("Vendor A missing SLA commitments");
+    expect(message).toContain("Do not rank vendors");
+    expect(message).toContain(
+      "treat unsupported claims as complete",
+    );
   });
 
   it("uses client-facing company language for strategy and scope drafts", () => {

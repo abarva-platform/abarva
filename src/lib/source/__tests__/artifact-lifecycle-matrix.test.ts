@@ -116,6 +116,47 @@ describe("Source artifact lifecycle matrix", () => {
     expect(pricingRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives response-stage prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const vendorResponsePack = summary.rows.find(
+      (row) => row.code === "d13_vendor_responses",
+    );
+    const qaLog = summary.rows.find((row) => row.code === "d14_qa_log");
+    const completenessReport = summary.rows.find(
+      (row) => row.code === "d15_response_completeness",
+    );
+
+    expect(vendorResponsePack?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "48k max",
+    });
+    expect(qaLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(completenessReport?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const responseRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d13_vendor_responses|d14_qa_log|d15_response_completeness/.test(row),
+      )
+      .join("\n");
+
+    expect(responseRows).toContain('"Yes"');
+    expect(responseRows).toContain('"Claude Opus"');
+    expect(responseRows).toContain('"Claude Sonnet"');
+    expect(responseRows).not.toContain("No dedicated prompt");
+  });
+
   it("scores rendered artifact body text when content is available", () => {
     const summary = buildSourceArtifactLifecycleSummary([
       {
