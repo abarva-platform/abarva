@@ -16,6 +16,12 @@ import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
+import {
+  APPROVAL_ROLE_LABELS,
+  requiredApprovalRolesFor,
+  REQUIRED_APPROVAL_ROLES,
+  type ApprovalRole,
+} from "@/lib/programs/deliverable-role-approval-policy";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { getProgramById } from "@/lib/programs/queries";
 
@@ -41,43 +47,18 @@ async function assertProgramTenancy(
     );
 }
 
-export type ApprovalRole = "business" | "technology" | "finance" | "risk_security";
-
-export const APPROVAL_ROLE_LABELS: Record<ApprovalRole, string> = {
-  business: "Business approver",
-  technology: "Technology approver",
-  finance: "Finance approver",
-  risk_security: "Risk/security approver",
+export {
+  APPROVAL_ROLE_LABELS,
+  requiredApprovalRolesFor,
+  REQUIRED_APPROVAL_ROLES,
+  type ApprovalRole,
 };
 
-export type RoleApprovalStatus = "pending" | "reviewed" | "approved" | "rejected";
-
-/**
- * Which roles a deliverable TYPE requires, keyed by deliverableTypeKey. A type
- * absent from this map requires no role approvals — the existing single-actor
- * sign-off is the only gate for it, exactly as today. Populate this
- * deliberately per type rather than defaulting every type to every role; most
- * artifact types do not need a four-way sign-off.
- *
- * These keys MUST match `deliverables_v2.deliverable_type_key` verbatim — that
- * column stores the phase-registry key from `deliverable-registry.ts`
- * (`DeliverableSpec.deliverableTypeKey`), not the orchestrator's internal
- * `deliverableType` (those two diverge for some types, e.g. the registry key
- * `operating_model_design` maps to orchestrator type `operating_model` via
- * `orchestratorDeliverableType()` in `orchestrated-deliverable-map.ts`). Using
- * the orchestrator-mapped name here — as an earlier version of this file did
- * for the operating-model entry — silently means that type never requires any
- * role approval, since no `deliverables_v2` row is ever written with that key.
- */
-export const REQUIRED_APPROVAL_ROLES: Partial<Record<string, ApprovalRole[]>> = {
-  business_case: ["business", "finance"],
-  target_state_architecture: ["technology", "risk_security"],
-  operating_model_design: ["business", "technology"],
-};
-
-export function requiredApprovalRolesFor(deliverableTypeKey: string): ApprovalRole[] {
-  return REQUIRED_APPROVAL_ROLES[deliverableTypeKey] ?? [];
-}
+export type RoleApprovalStatus =
+  | "pending"
+  | "reviewed"
+  | "approved"
+  | "rejected";
 
 export interface RoleApprovalRecord {
   role: ApprovalRole;
@@ -172,10 +153,10 @@ export async function getRoleApprovalSummary(
     records,
     allRequiredApproved:
       requiredRoles.length > 0 &&
-      requiredRoles.every(
-        (role) => existing.get(role)?.status === "approved",
-      ),
-    anyRejected: requiredRoles.some((role) => existing.get(role)?.status === "rejected"),
+      requiredRoles.every((role) => existing.get(role)?.status === "approved"),
+    anyRejected: requiredRoles.some(
+      (role) => existing.get(role)?.status === "rejected",
+    ),
   };
 }
 
