@@ -272,17 +272,24 @@ export async function POST(
         looksLikeArtifactQualityQuestion(normalizedBody.prompt)
       ) {
         agentAnswer = await buildArtifactQualityGovernedAnswer({
-          eventId,
+          eventId: liveEventDetail?.id ?? eventId,
           clientKey: activeClientKey,
           tenantId: tenancy.clientId ?? null,
           question: normalizedBody.prompt ?? "",
         }).catch((err) => {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : JSON.stringify(err);
           console.error(
             "[source.nexus-ask.artifact-quality-governed-answer.failed]",
             JSON.stringify({
               eventId,
+              resolvedEventId: liveEventDetail?.id ?? eventId,
               clientKey: activeClientKey,
-              message: err instanceof Error ? err.message : String(err),
+              message: errorMessage,
               stack: err instanceof Error ? err.stack : undefined,
             }),
           );
