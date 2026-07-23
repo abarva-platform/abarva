@@ -11,9 +11,9 @@
 // density (11pt body, tables/diagrams reduce prose density vs. a plain memo).
 // Concise, commitment-style artifacts (Charter, decision briefs, approval
 // records) enforce the ceiling as a BLOCKER — they should never bloat. Substantial,
-// analytical artifacts (architecture, solution design) only WARN on the ceiling —
-// a genuinely complex document should never be blocked from being thorough; the
-// ceiling still exists as a discipline signal, it just doesn't gate export.
+// analytical artifacts can warn-only when depth is genuinely part of the artifact
+// contract. Phase-close and sponsor decision artifacts enforce the ceiling because
+// their value is synthesis, not page volume.
 
 import type { DeliverableModule, QualityBar } from "./types";
 
@@ -45,12 +45,12 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   },
   "moves::business_case": {
     // Substantial narrative artifact — must tell one coherent investment
-    // argument, not a stack of disconnected sections. Ceiling is a warning:
-    // a genuinely complex funding case should not be blocked for depth.
+    // argument, not a stack of disconnected sections. The financial model is a
+    // separate workbook, so the narrative case must stay within its hard band.
     minSections: 9,
     minBodyWords: 5_000, // ~12 pages
     targetBodyWordsMax: 9_500, // ~20 pages (financial model is a separate companion artifact)
-    enforceMaxAsBlocker: false,
+    enforceMaxAsBlocker: true,
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
@@ -126,16 +126,51 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     requiresEvidenceGapsNoted: true,
   },
   "moves::roadmap": {
+    // P4 execution roadmap is an executable sequence with dependency logic and
+    // milestone tables. If it sprawls past this ceiling, it is no longer a
+    // sponsor-readable roadmap.
     minSections: 6,
     minBodyWords: 5_000, // ~12 pages
     targetBodyWordsMax: 11_000, // ~25 pages
-    enforceMaxAsBlocker: false,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::estimate_model": {
+    // P4 financial model is table/workbook-led. It should explain assumptions
+    // and confidence, but prose bloat is a quality failure.
+    minSections: 6,
+    minBodyWords: 1_600,
+    targetBodyWordsMax: 4_200,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::value_model": {
+    // P4 Tower metrics / value realization plan: compact measurement contract,
+    // not a second business case.
+    minSections: 6,
+    minBodyWords: 1_800,
+    targetBodyWordsMax: 4_600,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
   },
   "moves::handoff_pack": {
+    // P5 handoff must be a crisp execution-transfer package. Oversized handoff
+    // packs bury accountabilities and should not become board-ready.
     minSections: 6,
     minBodyWords: 5_000, // ~12 pages
     targetBodyWordsMax: 11_000, // ~25 pages
-    enforceMaxAsBlocker: false,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::value_measurement_contract": {
+    // P5 value contract is a measurement instrument. It should name metrics,
+    // baselines, owners, cadence, gaps, and Tower handoff without re-telling
+    // the entire Move history.
+    minSections: 6,
+    minBodyWords: 1_800,
+    targetBodyWordsMax: 4_200,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
   },
 };
 
