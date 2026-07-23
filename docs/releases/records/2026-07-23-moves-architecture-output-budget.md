@@ -39,6 +39,8 @@ truncation failure instead of presenting it as missing client evidence.
   architecture adapter.
 - Stream the forced-tool response through `finalMessage()` so the expanded
   budget is supported by the Anthropic SDK's long-request contract.
+- Retry transient overload, rate-limit, 5xx, and network-stream failures at most
+  twice with bounded backoff; request/schema failures remain non-retryable.
 - Fail explicitly when structured architecture output is truncated.
 - Add focused regression coverage for the output budget and truncation class.
 
@@ -46,6 +48,8 @@ truncation failure instead of presenting it as missing client evidence.
 
 - Pass: 35 focused ArchitectureModel, renderer, and orchestration tests.
 - Pass: governed architecture adapter streaming regression test.
+- Pass: adapter retry classification tests for transient 529 and non-retryable
+  400 responses.
 - Pass: ESLint on changed TypeScript files.
 - Pass: TypeScript with `NODE_OPTIONS=--max-old-space-size=8192`.
 - Pass: `npm run audit:architecture-rules`.
@@ -84,6 +88,8 @@ approved-option, evidence, and dependency validation.
   `/Users/anand/Downloads/moves-p3-architecture-live-proof-final-2026-07-23T07-22-49Z`.
 - Transport finding proof:
   `/Users/anand/Downloads/moves-p3-architecture-live-proof-v4-2026-07-23T07-50-02Z`.
+- Provider-overload finding proof:
+  `/Users/anand/Downloads/moves-p3-architecture-live-proof-v5-2026-07-23T08-29-43Z`.
 - PR, merge SHA, deploy run, digest invariant, and post-fix signed-in proof:
   pending.
 
