@@ -410,6 +410,130 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
   ],
 };
 
+// ── Financial Services / Commercial Lending Agent Assist ───────────────────
+const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
+  blueprintId: "financial_services_commercial_lending_agent_assist",
+  blueprintVersion: "2026-07-22",
+  archetypeLabel: "Financial Services Commercial Lending Agent Assist",
+  evidenceFamilies: [
+    {
+      id: "commercial_lending_workflow_map",
+      label: "Commercial lending onboarding workflow map",
+      grounds: "Current-State Assessment · Future-State Process",
+      required: true,
+      likelySource: "Commercial Lending Operations / Process Owner",
+      format: "Workshop notes or process map",
+    },
+    {
+      id: "loan_onboarding_kpis",
+      label: "Loan onboarding baseline KPIs",
+      grounds: "Value Hypothesis · Business Case · Tower Metrics",
+      required: true,
+      likelySource: "Lending Operations Analytics / Finance",
+      format: "CSV/XLSX",
+    },
+    {
+      id: "los_crm_core_system_map",
+      label: "LOS, CRM, document, KYC/sanctions, and core banking system map",
+      grounds: "Current-State Systems · Target Architecture",
+      required: true,
+      likelySource: "Enterprise Architecture / Lending Technology",
+      format: "CSV or architecture inventory",
+    },
+    {
+      id: "kyc_sanctions_credit_policy_controls",
+      label: "KYC, sanctions, credit-policy, and approval controls",
+      grounds: "Risk Controls · AI Governance · Gate Decision",
+      required: true,
+      likelySource: "Compliance / Credit Policy / Model Risk",
+      format: "Controls matrix",
+    },
+    {
+      id: "document_intake_quality",
+      label: "Document intake, collateral, and data-quality evidence",
+      grounds: "Data Foundation · Exception Reduction · Agent Assist Retrieval Scope",
+      required: true,
+      likelySource: "Loan Ops / Collateral / Document Management",
+      format: "Document inventory + quality sample",
+    },
+    {
+      id: "decision_rights_human_review_model",
+      label: "Decision rights and human-review model",
+      grounds: "Operating Model · Responsible AI Controls",
+      required: true,
+      likelySource: "Credit Leadership / Operations / Compliance",
+      format: "Decision-rights matrix",
+    },
+    {
+      id: "relationship_manager_credit_ops_org",
+      label: "RM, credit analyst, KYC, collateral, and servicing operating model",
+      grounds: "Operating Model · Adoption Risk · Change Plan",
+      required: false,
+      likelySource: "Commercial Bank Leadership / Workforce Planning",
+      format: "RACI or org/workflow notes",
+    },
+    {
+      id: "finance_baseline_value_plan",
+      label: "Finance baseline and value measurement plan",
+      grounds: "Business Case · Value Proof",
+      required: true,
+      likelySource: "Finance / FP&A / Lending Operations",
+      format: "XLSX",
+    },
+  ],
+  interviewRoster: [
+    {
+      role: "Executive sponsor for commercial lending operations",
+      side: "business",
+      objectives: "Outcome, scope, value, and risk appetite",
+      questions: [
+        "Which commercial lending pain points must improve first: cycle time, rework, document defects, KYC latency, approval handoffs, or auditability?",
+        "Which credit, KYC, sanctions, collateral, or covenant decisions must remain human-owned?",
+        "What would make the agent-assist option unsafe or not worth scaling?",
+      ],
+    },
+    {
+      role: "Commercial lending operations / onboarding owner",
+      side: "business",
+      objectives: "Workflow truth, handoffs, defects, and operating model",
+      questions: [
+        "Walk through loan onboarding from banker request through booking and servicing handoff.",
+        "Where do bankers, credit analysts, KYC reviewers, collateral teams, and operations specialists rekey or reinterpret information?",
+        "Which defects or missing documents drive repeat work and delays?",
+      ],
+    },
+    {
+      role: "Credit policy / compliance / model-risk lead",
+      side: "business",
+      objectives: "Controls, review boundaries, and decision rights",
+      questions: [
+        "Which recommendations can AI draft versus only explain?",
+        "What evidence must be retained for KYC, sanctions, credit-policy, covenant, and audit review?",
+        "Which model-risk controls are required before production use?",
+      ],
+    },
+    {
+      role: "Enterprise architect / lending technology owner",
+      side: "it",
+      objectives: "LOS, CRM, document management, core banking, data, and integration scope",
+      questions: [
+        "Which systems are sources of record for customer, loan, document, approval, collateral, covenant, and servicing data?",
+        "Which systems can be read in near real time, and which remain batch or manual?",
+        "Where should AWS, Databricks, search, semantic layer, IAM, and audit logging fit?",
+      ],
+    },
+    {
+      role: "Finance / value owner",
+      side: "business",
+      objectives: "Baseline, target, measurement cadence, and value proof",
+      questions: [
+        "Which baseline metrics are reliable today: cycle time, manual touch hours, defect rate, rework, approval latency, audit exceptions, cost per booked loan?",
+        "Who signs off the measurement method and value-realization cadence?",
+      ],
+    },
+  ],
+};
+
 // ── Generic default (any non-ops archetype) ──
 const DEFAULT_BLUEPRINT: DiscoveryBlueprint = {
   blueprintId: "general_default",
@@ -503,6 +627,16 @@ export function getDiscoveryBlueprint(
   useCaseArchetype: string,
 ): DiscoveryBlueprint {
   const a = (useCaseArchetype || "").toLowerCase();
+  if (
+    /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
+      a,
+    ) &&
+    /agent.?assist|agentic.?assist|ai.?assist|document.?intelligence|onboarding|workflow|operations?/.test(
+      a,
+    )
+  ) {
+    return FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST;
+  }
   if (
     /health|meridian|member.?service|member.?experience|contact.?center|call.?center|agent.?assist|agentic.?assist|customer.?service.?ai|claims?|eligibility|benefits?|prior.?auth|authorization|crm/.test(
       a,

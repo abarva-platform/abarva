@@ -68,7 +68,7 @@ function p3FutureStateBoundaryBlock(args: {
 ${draftStatus}
 ${optionRule}
 - Carry forward P2 caveats, missing evidence, sponsor/signoff limits, and client-to-complete fields.
-- AbarVa's role is to shape, govern, prove, and help the client decide. The client and delivery teams own detailed process redesign, BPMN/workflow design, ERP/AP configuration, data engineering, implementation, training, adoption execution, and run-state operations.
+- AbarVa's role is to shape, govern, prove, and help the client decide. The client and delivery teams own detailed process redesign, BPMN/workflow design, system configuration, data engineering, implementation, training, adoption execution, and run-state operations.
 - Use client-facing labels: Future-State Direction, New Way of Working Blueprint, Target Operating Concept, Implementation work packages for client/delivery teams.
 - Do not write that AbarVa implements, executes, configures systems, trains users, runs operations, or completes end-to-end automation.`;
 }

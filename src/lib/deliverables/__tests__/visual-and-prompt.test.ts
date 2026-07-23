@@ -120,6 +120,43 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Client and delivery teams own detailed process redesign");
   });
 
+  it("P3 commercial lending Agent Assist prompt does not import unrelated AP/payment examples", () => {
+    const ctx = applyPhaseDigest(emptySolutionContext("m1", "firstcapital"), {
+      useCase:
+        "Commercial Lending Agent Assist for banker, credit analyst, KYC, collateral, and servicing handoffs.",
+      scope:
+        "Loan onboarding, document intake, KYC/sanctions review, credit-policy support, LOS, CRM, document management, and core banking read paths.",
+      currentState:
+        "Commercial lending teams work across LOS, CRM, document management, KYC/sanctions, credit policy, collateral, and core banking handoffs.",
+      gaps: ["No unified semantic layer", "Manual document completeness checks"],
+      metricsThatMatter: [
+        { label: "Median onboarding cycle time", value: "18.6 days" },
+        { label: "Manual touch hours per loan", value: "11.4 hours" },
+      ],
+    });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: ctx,
+      generationMode: "draft",
+      draftCaveat: "P2 approved only for P3 draft shaping.",
+    });
+
+    expect(p.user).toContain(
+      "Domain-specific evidence priorities for commercial lending Agent Assist",
+    );
+    expect(p.user).toContain("Conceptual Architecture");
+    expect(p.user).toContain("Logical Architecture");
+    expect(p.user).toContain("Physical Architecture");
+    expect(p.user).toContain("current evidence → design implication");
+    expect(p.user).toContain("loan onboarding cycle time");
+    expect(p.user).not.toContain("1,872 monthly exceptions");
+    expect(p.user).not.toContain("AP/payment");
+    expect(p.user).not.toContain("payment holds");
+    expect(p.user).not.toContain("ERP/AP");
+    expect(p.user).not.toContain("vendor master");
+  });
+
   it("marks missing required context as a blocking input, not invented", () => {
     const ctx = emptySolutionContext("m1", "t");
     const p = buildArtifactPrompt({ artifact: "discovery_report", phase: 2, context: ctx });
