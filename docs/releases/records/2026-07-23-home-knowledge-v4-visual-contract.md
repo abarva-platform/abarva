@@ -14,6 +14,8 @@ Home Knowledge generation and rendering now treat executive visuals as a governe
 
 Follow-up hardening after the first Meridian single-dimension ACA run makes the Claude prompt contract explicit for every visual-like object and every use-case object. Claude must now provide all required visual fields (`visual_type`, title, executive question, classification, data points, encoding, annotation, evidence boundary, and empty state), and every qualified candidate, foundation, and early idea must carry the grounding fields the validator enforces. The change also makes generated dimension proof file names stable and readable for the expanded catalog.
 
+Second-pass hardening after the full Meridian 38-dimension ACA run corrects the V4 validator so relationship graph objects are validated by their `visual_type: relationship_graph`, not only by the literal object key `graph_display_contract`. The prior validator incorrectly applied normal chart required fields to nested relationship-graph contracts and produced false visual-field findings even when Claude authored relationship graph semantics.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Home Knowledge generation prompts, review tooling, and Home dimension rendering for all tenants that use approved Home packs.
@@ -32,6 +34,7 @@ Follow-up hardening after the first Meridian single-dimension ACA run makes the 
 - `scripts/knowledge/build-home-knowledge-pack-v2.mjs`: Tightens Claude prompt contract for visual types, use-case industry realization, and dimension visual specifications.
 - `scripts/knowledge/build-home-knowledge-v4-review-pack.mjs`: Adds V4 candidate-review generator with closed classification and visual vocabularies.
 - `scripts/knowledge/build-home-knowledge-v4-review-pack.mjs`: Follow-up hardening aligns prompt instructions with the deterministic validator for visual fields and use-case grounding fields, and replaces alphabetic dimension proof suffixes with zero-padded numeric suffixes for the 38-dimension catalog.
+- `scripts/knowledge/build-home-knowledge-v4-review-pack.mjs`: Validates any `relationship_graph` visual with the relationship graph field contract, whether it appears as `graph_display_contract` or as a nested relationship visual object.
 - `src/lib/home/home-knowledge-design-contract.ts`: Preserves authored dimension visual specifications in the Home read model.
 - `src/components/home/HomeEnterpriseBriefApp.tsx`: Renders dimension visuals from the authored contract and shows use-case cards with industry pattern plus client context.
 
@@ -44,6 +47,7 @@ Follow-up hardening after the first Meridian single-dimension ACA run makes the 
 - PASS: `PATH=/Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false`
 - PASS: `npm run release:check` after this release record was updated.
 - OBSERVED: Meridian single-dimension ACA review job completed on image `acrabarvalab001.azurecr.io/abarva/web@sha256:79ec2676cdf3363caa6be469700248cde599644f87357e46ea2564e99fd2474e` but correctly returned `candidate_failed` because Claude omitted required fields in several visual contracts and use-case objects. That output is review evidence only and was not loaded or approved.
+- OBSERVED: Meridian full 38-dimension ACA review job completed on image `acrabarvalab001.azurecr.io/abarva/web@sha256:e2a4a868934476bbe1cbb735d114d32d276bcb4818774b8bd46dcafe17a77349` and returned `candidate_failed` with `visuals=298, findings=80`. The run proved all 38 dimensions can be generated, but exposed validator drift for nested relationship graphs. No generated content was loaded or approved.
 - NOT RUN: New all-tenant Claude V4 content generation/load. The latest content audit found the existing V4 candidate archive is not load-ready because it has fail-open review status, incomplete expanded dimensions, prose-only tab payloads, unconstrained visual payloads, raw technical leakage, use-case schema drift, and ungoverned external-industry provenance.
 - NOT RUN: Azure/Postgres publication. This PR intentionally ships the stricter generator, candidate validator, and renderer contract only.
 - PENDING AFTER DEPLOY: signed-in Home Knowledge browser proof on `https://app.abarva.ai` after the normal ACA deployment lands.
