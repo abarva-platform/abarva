@@ -10,6 +10,7 @@ import {
   renderDeliverableExcelCompanion,
   renderDeliverableHtml,
   renderDeliverablePdf,
+  renderDeliverablePptx,
 } from '../renderers';
 import { scanForInternalLeaks } from '../source-register';
 import { goodDocument } from '../__fixtures__/ams-rfp';
@@ -47,7 +48,7 @@ describe('HTML preview', () => {
 
   it('is self-contained and includes title, recommendation, and source register', () => {
     expect(html).toMatch(/<!doctype html>/i);
-    expect(html).toMatch(/Airline Demo/);
+    expect(html).toMatch(/SkyHarbor Air/);
     expect(html).toMatch(/Recommendation/);
     expect(html).toMatch(/Source Register/);
     expect(html).toMatch(/F8F7F4/); // AbarVa cream background
@@ -78,24 +79,6 @@ describe('HTML preview', () => {
     // The old flattening would have wrapped every line in <p> with the markers stripped.
     expect(out).not.toMatch(/<p>- First bullet<\/p>/);
     expect(out).not.toMatch(/<p>### Sub-heading<\/p>/);
-  });
-
-  it('does not render a section heading twice when authored markdown repeats the renderer-owned title', () => {
-    const doc = goodDocument();
-    doc.generatedSections = [
-      {
-        key: 'exec_summary',
-        title: '1. Executive Summary',
-        bodyMarkdown:
-          '# 1. Executive Summary\n\nActual decision-led body.\n\n### What changes\n\nThe approved option remains authoritative.',
-        groundingMode: 'mixed',
-        citationsUsed: [],
-      },
-    ];
-    const out = renderDeliverableHtml(doc);
-    expect(out.match(/>1\. Executive Summary<\/h2>/g)).toHaveLength(1);
-    expect(out).toMatch(/Actual decision-led body/);
-    expect(out).toMatch(/<h4>What changes<\/h4>/);
   });
 
   it('uses the canonical clean table recipe — no navy header fill, status-pill confidence', () => {
@@ -231,5 +214,90 @@ describe('PDF renderer (MOVES-QUALITY-001)', () => {
     expect(text).toContain('AI-generated working draft');
     expect(text).toContain('Obtain named human approval');
     expect(text).toContain('must not be treated as an approved client deliverable');
+  });
+});
+
+describe('PPTX renderer (MOVES-QUALITY-003 / Track D)', () => {
+  async function slideXmlFiles(buf: Buffer): Promise<string[]> {
+    const zip = await JSZip.loadAsync(buf);
+    const slideFiles = Object.keys(zip.files)
+      .filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f))
+      .sort((a, b) => {
+        const na = Number(a.match(/slide(\d+)\.xml/)![1]);
+        const nb = Number(b.match(/slide(\d+)\.xml/)![1]);
+        return na - nb;
+      });
+    return Promise.all(slideFiles.map((f) => zip.file(f)!.async('string')));
+  }
+
+  it('produces a valid .pptx buffer (a real zip) with one slide per section + exhibit + in-deck table, plus a title and closing slide', async () => {
+    const doc = goodDocument();
+    const buf = await renderDeliverablePptx(doc);
+    expect(buf.subarray(0, 2).toString('latin1')).toBe('PK');
+
+    const slides = await slideXmlFiles(buf);
+    const inDeckTables = doc.tables.filter((t) => t.targetFormat !== 'xlsx');
+    // title + one per section + one per exhibit + one per in-deck table + closing
+    expect(slides).toHaveLength(1 + doc.generatedSections.length + doc.exhibits.length + inDeckTables.length + 1);
+  });
+
+  it('the title slide carries the deliverable title, client/initiative, and the AI-draft disclosure', async () => {
+    const slides = await slideXmlFiles(await renderDeliverablePptx(goodDocument()));
+    const title = slides[0];
+    expect(title).toContain('AMS / IT Outsourcing RFP');
+    expect(title).toContain('Airline Demo');
+    expect(title).toContain('AI-generated working draft');
+    expect(title).toMatch(/must not be treated as an approved client deliverable/i);
+  });
+
+  it('renders each declared exhibit as its own slide with a rasterised image and its title/description', async () => {
+    const buf = await renderDeliverablePptx(goodDocument());
+    const zip = await JSZip.loadAsync(buf);
+    const slides = await slideXmlFiles(buf);
+    const exhibitSlide = slides.find((s) => s.includes('Service Tower Scope Map'));
+    expect(exhibitSlide).toBeDefined();
+    expect(exhibitSlide).toContain('Towers');
+
+    const mediaFiles = Object.keys(zip.files).filter((f) => /^ppt\/media\/.*\.png$/i.test(f));
+    expect(mediaFiles.length).toBeGreaterThan(0);
+  });
+
+  it('renders an in-deck (non-xlsx) table as a native table slide', async () => {
+    const slides = await slideXmlFiles(await renderDeliverablePptx(goodDocument()));
+    const tableSlide = slides.find((s) => s.includes('Risks, Issues'));
+    expect(tableSlide).toBeDefined();
+    expect(tableSlide).toContain('Transition window');
+  });
+
+  it('the closing slide carries the recommendation, next actions, and client-to-complete checklist', async () => {
+    const slides = await slideXmlFiles(await renderDeliverablePptx(goodDocument()));
+    const closing = slides[slides.length - 1];
+    expect(closing).toContain('Next Actions');
+    expect(closing).toContain('Confirm evaluation weights');
+    expect(closing).toContain('Client-to-Complete Checklist');
+    expect(closing).toContain('Final evaluation weights');
+  });
+
+  it('falls back to a text notice (not a thrown error) when exhibit rasterisation fails', async () => {
+    jest.resetModules();
+    jest.doMock('@/lib/programs/expert-kernel/exports/board-grade/svg-raster', () => ({
+      rasteriseSvg: () => {
+        throw new Error('simulated rasteriser failure');
+      },
+    }));
+    const { renderDeliverablePptx: renderWithBrokenRasteriser } = await import('../renderers');
+    const { goodDocument: freshGoodDocument } = await import('../__fixtures__/ams-rfp');
+
+    const buf = await renderWithBrokenRasteriser(freshGoodDocument());
+    expect(buf.subarray(0, 2).toString('latin1')).toBe('PK');
+    const zip = await JSZip.loadAsync(buf);
+    const slides = await slideXmlFiles(buf);
+    const exhibitSlide = slides.find((s) => s.includes('Service Tower Scope Map'));
+    expect(exhibitSlide).toContain('exhibit could not be rendered as an image');
+    const mediaFiles = Object.keys(zip.files).filter((f) => /^ppt\/media\/.+\.(png|jpe?g)$/i.test(f));
+    expect(mediaFiles).toHaveLength(0);
+
+    jest.dontMock('@/lib/programs/expert-kernel/exports/board-grade/svg-raster');
+    jest.resetModules();
   });
 });

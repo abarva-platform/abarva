@@ -11,6 +11,7 @@ import {
   renderDeliverableDocx,
   renderDeliverableExcelCompanion,
   renderDeliverablePdf,
+  renderDeliverablePptx,
 } from "@/lib/deliverables/orchestrator/renderers";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -23,8 +24,10 @@ const DOCX_CONTENT_TYPE =
 const XLSX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const PDF_CONTENT_TYPE = "application/pdf";
+const PPTX_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
-type DownloadFormat = "docx" | "xlsx" | "pdf" | "html";
+type DownloadFormat = "docx" | "xlsx" | "pdf" | "pptx" | "html";
 
 /** A non-html artifact whose structured doc is missing can only serve its HTML. */
 function resolveRequestedFormat(
@@ -32,15 +35,14 @@ function resolveRequestedFormat(
   record: GeneratedArtifactRecord,
 ): DownloadFormat {
   const raw = new URL(req.url).searchParams.get("format")?.toLowerCase();
-  if (raw === "docx" || raw === "xlsx" || raw === "pdf" || raw === "html") return raw;
-  // Default = the artifact's persisted prescribed format. 'pptx' has no
-  // renderer here yet, so it falls back to docx (its structured doc still
-  // renders as a Word document); anything else → html preview.
+  if (raw === "docx" || raw === "xlsx" || raw === "pdf" || raw === "pptx" || raw === "html")
+    return raw;
+  // Default = the artifact's persisted prescribed format.
   const out = record.outputFormat;
   if (out === "docx") return "docx";
   if (out === "xlsx") return "xlsx";
   if (out === "pdf") return "pdf";
-  if (out === "pptx") return "docx";
+  if (out === "pptx") return "pptx";
   return "html";
 }
 
@@ -155,8 +157,27 @@ export async function GET(
   // Binary formats (docx/xlsx/pdf) require the structured document. Older
   // artifacts that predate structured persistence fall back to the stored
   // HTML — never 500.
-  if ((requested === "docx" || requested === "xlsx" || requested === "pdf") && structuredDoc) {
+  if (
+    (requested === "docx" ||
+      requested === "xlsx" ||
+      requested === "pdf" ||
+      requested === "pptx") &&
+    structuredDoc
+  ) {
     try {
+      if (requested === "pptx") {
+        const buf = await renderDeliverablePptx(structuredDoc);
+        return new Response(new Uint8Array(buf), {
+          status: 200,
+          headers: attachmentHeaders(
+            record,
+            PPTX_CONTENT_TYPE,
+            safeFilename(structuredDoc.title, "pptx"),
+            buf.length,
+          ),
+        });
+      }
+
       if (requested === "xlsx") {
         const wb = renderDeliverableExcelCompanion(structuredDoc);
         if (wb) {
