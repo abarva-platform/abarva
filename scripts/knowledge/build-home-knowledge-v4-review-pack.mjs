@@ -25,6 +25,11 @@ const tenantArg = process.env.HOME_KNOWLEDGE_V4_TENANT || getArg("--tenant", "al
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
 const packetOnly = process.argv.includes("--packet-only");
+// Integrated Home Book architecture: one call for all dimension manifests
+// instead of one call per dimension. See makePrompt's "integrated_dimensions"
+// pass type and the deterministic_dataset_registry on the context packet.
+const integratedMode =
+  process.env.HOME_KNOWLEDGE_V4_INTEGRATED === "true" || process.argv.includes("--integrated");
 // Offline replay: re-run every validator against already-generated candidate
 // JSON without calling Claude. This is the control point that lets a validator
 // or schema change be proven against stored output instead of being tested by
@@ -837,6 +842,59 @@ function makePrompt(pass, packet, assembled) {
         : undefined,
     };
   }
+  if (pass.type === "integrated_dimensions") {
+    return {
+      task: "Call 5-integrated: Home Book — all dimension manifests in one call",
+      instruction:
+        "Write ONE cohesive enterprise story across every listed dimension, not independent " +
+        "mini-reports. Each dimension gets a concise page manifest, not a 5-tab dossier. Do not " +
+        "reproduce inventories, financial records, application rows, vendor rows, program rows, " +
+        "evidence rows, or relationship edges — reference the governed dataset_id instead; the " +
+        "renderer attaches the real rows deterministically. Read deterministic_dataset_registry " +
+        "below before writing each dimension: bind data_binding/visual_binding/relationship_binding " +
+        "to a real dataset_id from that registry, or omit the binding entirely if no dataset " +
+        "applies — never invent a dataset_id.",
+      output_requirements: {
+        fields: ["enterprise_story", "dimensions"],
+        enterprise_story_fields: ["title", "thesis", "narrative_arc", "strategic_agenda"],
+        per_dimension_fields: [
+          "dimension_key",
+          "chapter",
+          "title",
+          "headline",
+          "executive_takeaway",
+          "key_insights",
+          "strategic_implication",
+          "recommended_actions",
+          "evidence_refs",
+          "visual_binding",
+          "data_binding",
+          "relationship_binding",
+          "gap_binding",
+          "related_dimensions",
+          "confidence_statement",
+        ],
+        hard_limits:
+          "title: one concise line. executive_takeaway: 40-80 words. key_insights: 3-5 objects " +
+          "with {statement, evidence_refs}. strategic_implication: one concise statement. " +
+          "recommended_actions: 1-3 short items. evidence_refs: compact IDs only, from the " +
+          "evidence_sources list below — never invent an ID. No repeated enterprise background " +
+          "per dimension — that belongs in enterprise_story only. No long generic introductions. " +
+          "No restatement of navigation labels. No raw records. The whole Home Book should read " +
+          "as one enterprise story, not independent essays — carry the same vocabulary, tone, and " +
+          "cross-dimension themes from enterprise_story into every dimension's framing.",
+      },
+      common,
+      story_architecture: assembled.story_architect,
+      dimensions: packet.dimension_summary,
+      deterministic_dataset_registry: packet.deterministic_dataset_registry ?? [],
+      material_aggregates: packet.business_context_samples.application_ownership_coverage
+        ? { applications: packet.business_context_samples.application_ownership_coverage }
+        : {},
+      relationship_samples: packet.business_context_samples.relationship_samples,
+      evidence_sources: packet.business_context_samples.evidence_sources,
+    };
+  }
   if (pass.type === "relationships") {
     return {
       task: "Call 6: Relationship Writer",
@@ -1125,13 +1183,7 @@ async function retry(fn) {
 // sees and the source hash, so narrative generated after this data was
 // found is provably distinguishable from narrative generated before it.
 function loadTenantApplicationOwnershipFacts(tenantKey) {
-  const tstFolder = {
-    "skyharbor-air": "skyharbor-air",
-    "first-capital": "first-capital-financial",
-    "meridian-health": "meridian-health",
-    "apex-retail": "apex-retail",
-    "lakeshore-holdings": "lakeshore-industries",
-  }[tenantKey];
+  const tstFolder = TST_TENANT_FOLDER[tenantKey];
   if (!tstFolder) return null;
   const f05Path = path.join(repoRoot, "tower-standardized-v1", tstFolder, "family-2-technology-estate/F05_applications-systems.csv");
   if (!fs.existsSync(f05Path)) return null;
@@ -1167,6 +1219,107 @@ function loadTenantApplicationOwnershipFacts(tenantKey) {
   };
 }
 
+const TST_TENANT_FOLDER = {
+  "skyharbor-air": "skyharbor-air",
+  "first-capital": "first-capital-financial",
+  "meridian-health": "meridian-health",
+  "apex-retail": "apex-retail",
+  "lakeshore-holdings": "lakeshore-industries",
+};
+
+// Deterministic dataset registry (spec Section 2, "DETERMINISTIC DATASET
+// REGISTRY"): every dataset here has been directly opened and its content
+// verified this session -- real named vendors/risks/initiatives/evidence,
+// not just file existence. Claude references dataset_id; it never
+// reproduces the rows. Only datasets actually verified go in this list --
+// no placeholder entries for datasets not yet checked.
+function loadTenantDatasetRegistry(tenantKey) {
+  const tstFolder = TST_TENANT_FOLDER[tenantKey];
+  if (!tstFolder) return [];
+  const base = path.join(repoRoot, "tower-standardized-v1", tstFolder);
+  const registry = [];
+
+  const appsPath = path.join(base, "family-2-technology-estate/F05_applications-systems.csv");
+  if (fs.existsSync(appsPath)) {
+    const rows = fs.readFileSync(appsPath, "utf8").trim().split("\n").length - 1;
+    registry.push({
+      dataset_id: "applications_full",
+      grain: "one row per application",
+      business_definition: "The tenant's application inventory: hosting, criticality, vendor, run cost, modernization plan, and owner where known.",
+      row_count: rows,
+      approved_visual_types: ["horizontal_bar", "treemap", "heatmap"],
+      evidence_source: `tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`,
+    });
+  }
+
+  const vendorsPath = path.join(base, "family-4-financial-commercial/F11_vendors-contracts-licenses.csv");
+  if (fs.existsSync(vendorsPath)) {
+    const rows = fs.readFileSync(vendorsPath, "utf8").trim().split("\n").length - 1;
+    registry.push({
+      dataset_id: "vendors_full",
+      grain: "one row per vendor contract",
+      business_definition: "Vendor name, scope, annual run rate, renewal date, and criticality.",
+      row_count: rows,
+      approved_visual_types: ["horizontal_bar", "treemap"],
+      evidence_source: `tower-standardized-v1/${tstFolder}/family-4-financial-commercial/F11_vendors-contracts-licenses.csv`,
+    });
+  }
+
+  const programsPath = path.join(base, "ai-control-tower/T01_initiative-registry.csv");
+  if (fs.existsSync(programsPath)) {
+    const rows = fs.readFileSync(programsPath, "utf8").trim().split("\n").length - 1;
+    registry.push({
+      dataset_id: "programs_full",
+      grain: "one row per initiative",
+      business_definition: "Named initiative, business area, owner, sponsor, stage, promised vs. measured value, evidence status, scale decision.",
+      row_count: rows,
+      approved_visual_types: ["horizontal_bar", "scatter_2x2", "waterfall"],
+      evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T01_initiative-registry.csv`,
+    });
+  }
+
+  const risksPath = path.join(base, "ai-control-tower/T09_risk-governance.csv");
+  if (fs.existsSync(risksPath)) {
+    const rows = fs.readFileSync(risksPath, "utf8").trim().split("\n").length - 1;
+    registry.push({
+      dataset_id: "risk_register",
+      grain: "one row per identified risk",
+      business_definition: "Risk type, severity, control status, owner role, mitigation, linked evidence.",
+      row_count: rows,
+      approved_visual_types: ["heatmap", "horizontal_bar"],
+      evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T09_risk-governance.csv`,
+    });
+  }
+
+  const evidencePath = path.join(base, "ai-control-tower/T10_evidence-items.csv");
+  if (fs.existsSync(evidencePath)) {
+    const rows = fs.readFileSync(evidencePath, "utf8").trim().split("\n").length - 1;
+    registry.push({
+      dataset_id: "evidence_registry",
+      grain: "one row per evidence item",
+      business_definition: "Source document, claim supported, freshness status, trust status.",
+      row_count: rows,
+      approved_visual_types: ["evidence_timeline"],
+      evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T10_evidence-items.csv`,
+    });
+  }
+
+  const budgetPath = path.join(base, "family-4-financial-commercial/F12_it-budget-financials.csv");
+  if (fs.existsSync(budgetPath)) {
+    const rows = fs.readFileSync(budgetPath, "utf8").trim().split("\n").length - 1;
+    registry.push({
+      dataset_id: "budget_summary",
+      grain: "one row per budget line",
+      business_definition: "Budget area, run/change split, capex/opex split, owner team.",
+      row_count: rows,
+      approved_visual_types: ["waterfall", "stacked_bar"],
+      evidence_source: `tower-standardized-v1/${tstFolder}/family-4-financial-commercial/F12_it-budget-financials.csv`,
+    });
+  }
+
+  return registry;
+}
+
 async function processTenant(client, tenantKey) {
   const sourceFile = path.join(repoRoot, "datasets", "tenant-inputs", tenantKey, "approved-content", "home", "design-contract-pack.json");
   const sourceText = fs.readFileSync(sourceFile, "utf8");
@@ -1178,6 +1331,7 @@ async function processTenant(client, tenantKey) {
   const tenantDir = path.join(outDir, "tenants", tenantKey);
   ensureDir(tenantDir);
   const packet = buildTenantContextPacket(pack, sourceHash);
+  packet.deterministic_dataset_registry = loadTenantDatasetRegistry(tenantKey);
   const lineage = buildSourceLineageMetadata(pack, sourceHash);
   writeJson(path.join(tenantDir, "source-context-packet.json"), packet);
   writeJson(path.join(tenantDir, "source-lineage-metadata.json"), lineage);
@@ -1244,19 +1398,29 @@ async function processTenant(client, tenantKey) {
   }
 
   assembled.dimensions = [];
-  const dimensionJobs = dimensionPasses();
-  for (let i = 0; i < dimensionJobs.length; i += 1) {
-    const batch = dimensionJobs[i];
-    const suffix = dimensionPassLabel(i);
-    const pass = {
-      id: `05-${suffix}-dimensions-${batch.key}`,
-      type: "dimensions",
-      suffix,
-      ...batch,
-    };
+  if (integratedMode) {
+    // One call for every dimension's manifest, per the integrated Home Book
+    // architecture -- replaces the one-call-per-dimension loop below.
+    const pass = { id: "05-integrated-dimensions", type: "integrated_dimensions" };
     const content = await callClaude(client, pass, makePrompt(pass, packet, assembled), tenantDir);
     assembled.passes[pass.id] = content;
-    assembled.dimensions.push(content.client_visible);
+    assembled.enterprise_story_integrated = content.client_visible?.enterprise_story ?? null;
+    assembled.dimensions = content.client_visible?.dimensions ?? [];
+  } else {
+    const dimensionJobs = dimensionPasses();
+    for (let i = 0; i < dimensionJobs.length; i += 1) {
+      const batch = dimensionJobs[i];
+      const suffix = dimensionPassLabel(i);
+      const pass = {
+        id: `05-${suffix}-dimensions-${batch.key}`,
+        type: "dimensions",
+        suffix,
+        ...batch,
+      };
+      const content = await callClaude(client, pass, makePrompt(pass, packet, assembled), tenantDir);
+      assembled.passes[pass.id] = content;
+      assembled.dimensions.push(content.client_visible);
+    }
   }
 
   for (const pass of [
