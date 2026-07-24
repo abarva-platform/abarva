@@ -116,6 +116,22 @@ describe("TowerCommandCenter", () => {
     expect(screen.getAllByText("$0").length).toBeGreaterThan(0);
   });
 
+  it("does not repeat the decision question as both the H1 and the week-read turn", () => {
+    // The design carries two distinct strings: the H1 states the posture and
+    // the week-read turn states the consequence. Wiring both to
+    // `decision_question` rendered the identical sentence twice within ~400px
+    // on every live tenant.
+    renderPage();
+    const heading = screen.getByRole("heading", { level: 1 }).textContent ?? "";
+    expect(heading.trim()).not.toBe("");
+
+    const weekRead = document.querySelector('[class*="wkLine"]');
+    expect(weekRead).not.toBeNull();
+    const turn = weekRead!.querySelector('[class*="turn"]')?.textContent ?? "";
+    expect(turn.trim()).not.toBe("");
+    expect(turn.trim()).not.toBe(heading.trim());
+  });
+
   it("moves between tabs with arrow keys and reflects the tab in the URL", () => {
     renderPage();
     const first = tab(/Command Center/);
