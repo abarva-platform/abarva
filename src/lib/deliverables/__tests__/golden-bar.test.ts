@@ -291,6 +291,37 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     ).toBeUndefined();
   });
 
+  it("forbids internal implementation language leaking into every artifact type, including ones with no depth-band branch of their own", () => {
+    // charter/discovery_report, target_state_architecture, and
+    // solution_design/operating_model_design/sourcing_strategy each have
+    // their own branch that already sets forbiddenLanguage — this covers the
+    // remaining artifact types that fall through to the generic branch and,
+    // before this fix, got no forbidden-language check at all.
+    for (const artifact of [
+      "business_case",
+      "execution_roadmap",
+      "root_cause_worksheet",
+      "solution_approach_options",
+      "handoff_package",
+    ] as const) {
+      const options = premiumGoldenBarOptionsForArtifact(artifact);
+      expect(options.forbiddenLanguage?.length).toBeGreaterThan(0);
+      expect(options.forbiddenLanguage).toContain("tenant key");
+    }
+  });
+
+  it("a business_case containing internal implementation language fails the bar", () => {
+    const r = meetsGoldenBar(
+      `<html><body><svg></svg><table></table>
+        <p>The recommendation is grounded in the tenant key resolved for this Move.</p>
+      </body></html>`,
+      undefined,
+      premiumGoldenBarOptionsForArtifact("business_case"),
+    );
+    expect(r.forbiddenLanguageHits).toContain("tenant key");
+    expect(r.pass).toBe(false);
+  });
+
   it("does not flag overMaximumWordCount when under the ceiling", () => {
     const r = meetsGoldenBar(
       "<html><body><svg></svg><table></table><p>short body.</p></body></html>",

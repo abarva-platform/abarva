@@ -651,6 +651,62 @@ cells are stale and superseded by that resolution).
   — treat any specific page-count figure for Charter as unverified until a real artifact is
   measured.
 
+### MOVES-BUG-006 — 5 of 9 Moves deliverable types had no internal-language leak check at all
+
+- **Problem statement**: Following the P1 Charter trace (`MOVES-BUG-005`), read
+  `premiumGoldenBarOptionsForArtifact()` in `strategic-moves-artifact-standard.ts` in full and
+  found its branching only covers `charter`/`discovery_report`, `target_state_architecture`, and
+  `solution_design`/`operating_model_design`/`sourcing_strategy` — each of those gets
+  `forbiddenLanguage` (`STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS` or the P3-specific list) wired
+  into its `GoldenBarOptions`. Every other declared artifact type
+  (`root_cause_worksheet`, `solution_approach_options`, `execution_roadmap`, `business_case`,
+  `handoff_package`) fell through to a bare `return { maximumWordCount, enforceMaximumWordCount };`
+  — no `forbiddenLanguage` at all, meaning `meetsGoldenBar()` had zero mechanism to catch internal
+  implementation jargon (`kernel`, `tenant key`, `debug`, `canonical internal id`, `prompt`,
+  `model call`, etc.) leaking into these 5 client-facing document types. This was found while
+  independently verifying a research agent's P4 Business Case claim that
+  `enforceMaximumWordCount` "doesn't exist anywhere in the codebase" — that specific claim was
+  wrong (it does exist, confirmed by reading the file directly), but the agent's underlying
+  conclusion that business_case gets no forbidden-language check was independently confirmed by
+  direct inspection.
+- **User/business impact**: a generated Business Case, Execution Roadmap, Root-Cause Worksheet,
+  Solution Approach Options doc, or Handoff Package could contain literal internal
+  implementation/system language with nothing catching it before it reaches a client-facing
+  export — the exact class of leak the forbidden-language check exists to prevent for the other 4
+  artifact types.
+- **Severity**: P2 (quality/leak-prevention gap; no evidence found of an actual live leak, but the
+  safeguard that would have caught one was simply absent for most artifact types)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Deployed` (2026-07-24) — the generic fallthrough branch in
+  `premiumGoldenBarOptionsForArtifact()` now also returns
+  `forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS`, matching what `charter`/
+  `discovery_report` already had. Word-count enforcement (`minimumWordCount`) for these 5 types is
+  deliberately left untouched — that is a policy decision with real generation-blocking risk on
+  live Moves (same caution already applied to `discovery_report` in `MOVES-QUALITY-004`), not a
+  safe unilateral addition.
+- **Dependencies**: none — additive, informational-becomes-blocking only for a check that should
+  never legitimately fire (no artifact should contain "tenant key" or "canonical internal id" in
+  client-facing prose)
+- **Acceptance criteria**: `premiumGoldenBarOptionsForArtifact()` returns a non-empty
+  `forbiddenLanguage` list for every one of the 9 declared artifact types; `meetsGoldenBar()`
+  fails an artifact containing forbidden terms regardless of type.
+- **Required tests**: `golden-bar.test.ts` — 2 new assertions (all 5 previously-uncovered artifact
+  types now get a non-empty `forbiddenLanguage` list including `"tenant key"`; a `business_case`
+  containing `"tenant key"` fails the bar). Zero regressions across `src/lib/deliverables`
+  (418/424 passing — the 6 failures are all pre-existing and unrelated).
+- **PR**: not yet opened
+- **Release record**: `docs/releases/records/2026-07-24-universal-forbidden-language-check.md`
+- **Discovered from**: 2026-07-23/24 P4 Business Case document-quality audit, following the same
+  code-tracing discipline used for P1 Charter (`MOVES-BUG-005`)
+- **Notes / remaining gaps**: does not add `minimumWordCount` enforcement to these 5 artifact
+  types — `business_case` in particular has no minimum-depth check at all in the real generation
+  path (only an informational max ceiling), which is a separate, real gap left open as a
+  deliberate policy decision rather than fixed here. Whether to also wire `quality-bar-registry.ts`'s
+  richer per-artifact bars (9 sections/5,000-9,500 words for `business_case`) into the real
+  generation path remains the same open architectural question raised in `MOVES-BUG-005` for
+  Charter — this fix does not resolve that, only closes the narrower, safely-fixable
+  forbidden-language gap.
+
 ### MOVES-QUALITY-001 — Dedicated PDF renderer for the orchestrator deliverable pipeline
 
 - **Problem statement**: The orchestrator renders DOCX/HTML; no PDF export path exists for
