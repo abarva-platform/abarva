@@ -121,6 +121,15 @@ export interface CreateRateCardVersionInput {
   cardCode: string;
   parentRateCardId?: string | null;
   status?: PricingVersionStatus;
+  /**
+   * Approval metadata (PR3 addition — the `approved_by`/`approved_at`/
+   * `approval_rationale` columns already exist on `pricing_rate_cards` from
+   * the PR2 migration but PR2's write path never populated them, since
+   * nothing called `createRateCardVersion` with `status: "approved"` yet.
+   * Purely additive: omitting these fields behaves exactly as PR2 did.
+   */
+  approvedBy?: string | null;
+  approvalRationale?: string | null;
   lines: readonly NewRateCardLineInput[];
 }
 
@@ -151,6 +160,9 @@ export interface RateCardStorePort {
     version: number;
     contentHash: string;
     status: PricingVersionStatus;
+    approvedBy: string | null;
+    approvedAt: string | null;
+    approvalRationale: string | null;
     previousCardId: string | null;
     lines: readonly (NewRateCardLineInput & { contentHash: string })[];
   }): Promise<void>;
@@ -175,8 +187,8 @@ function defaultRateCardStore(
         await run(
           `INSERT INTO pricing_rate_cards
              (id, scope_type, tenant_key, move_id, card_code, parent_rate_card_id,
-              version, is_current, content_hash, status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9)`,
+              version, is_current, content_hash, status, approved_by, approved_at, approval_rationale)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, $11, $12)`,
           [
             input.id,
             input.scopeType,
@@ -187,6 +199,9 @@ function defaultRateCardStore(
             input.version,
             input.contentHash,
             input.status,
+            input.approvedBy,
+            input.approvedAt,
+            input.approvalRationale,
           ],
         );
         for (const line of input.lines) {
@@ -274,6 +289,9 @@ export async function createRateCardVersion(
     version: decision.version,
     contentHash,
     status: input.status ?? "draft",
+    approvedBy: input.approvedBy ?? null,
+    approvedAt: input.approvedBy ? new Date().toISOString() : null,
+    approvalRationale: input.approvalRationale ?? null,
     previousCardId: current?.id ?? null,
     lines: sortedLines.map((line) => ({ ...line, contentHash: computeContentHash(line) })),
   });
