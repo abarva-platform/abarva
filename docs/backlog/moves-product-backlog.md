@@ -582,6 +582,75 @@ cells are stale and superseded by that resolution).
   this entry as having closed the underlying oversized-artifact problem, only as having built the
   detection signal that was previously believed to already exist but did not.
 
+### MOVES-BUG-005 — P1 Charter's designed quality bar (7 sections, 900-1,600 words, central-tension/evidence-gap checks) is unreachable dead code
+
+- **Problem statement**: Following up on the P1 Charter priority in the document-quality
+  re-verification order (P2 Discovery done > **P1 Charter** > P4 Business Case > P3 family (done)
+  > P5), traced the actual code path for charter generation and found there are **two entirely
+  separate quality-bar systems** for Moves deliverables, and only one of them runs for charter:
+  - **System A** (`src/lib/deliverables/orchestrator/quality-bar-registry.ts`,
+    `OVERRIDES["moves::charter"]`): a well-designed, richer bar — 7 minimum sections, 900-1,600
+    word band, `enforceMaxAsBlocker: true`, plus `requiresCentralTension`/
+    `requiresEvidenceGapsNoted` structural checks — built and merged in commits `246fcb7a3`,
+    `28531cd2f`, `4b9ce0fba`, `f14c8ec7c` (2026-07-21/22), and enforced for real by
+    `quality-validator.ts`'s `validateDeliverableQuality()` when reached.
+  - **System B** (`src/lib/deliverables/strategic-moves-artifact-standard.ts`,
+    `DEPTH_BY_ARTIFACT.charter`): a simpler, older bar — `{targetWords: "700-1,200", minWords:
+    450}`, feeding `meetsGoldenBar()` in `golden-bar.ts` with a hard 1,200-word ceiling.
+  - **Only System B actually executes for charter.** `src/app/api/v1/programs/[programId]/generate/route.ts`
+    routes phase-1 charter generation directly to `generateArtifact()`
+    (`src/lib/deliverables/generate-artifact.ts`), which imports and calls only
+    `meetsGoldenBar()`/`premiumGoldenBarOptionsForArtifact()` — it has zero references to
+    `quality-bar-registry`, `QualityBar`, or the `orchestrator/` module that hosts System A.
+    System A is only reachable via `build-request.ts`, whose real callers
+    (`generate-service.ts`, `run-orchestrated-business-case.ts`, `auto-generate-discovery-plan.ts`,
+    the board-artifacts orchestrated route) handle `business_case`/`discovery_plan`/other
+    board-pack types — none of them ever construct a `"moves::charter"` request. The
+    2026-07-21/22 fix commits, and the release record describing them
+    (`docs/releases/records/2026-07-22-moves-p1-charter-generation-discipline.md`, still status
+    `candidate`, live-proof still "Not run yet") therefore never actually changed live charter
+    generation behavior.
+- **User/business impact**: the intended, more nuanced Charter discipline (7-section minimum,
+  central-tension requirement, evidence-gaps-noted requirement, 900-1,600 word band) has never
+  been enforced in production. The only real live constraint on a generated Charter is a bare
+  450-1,200 word count with no structural checks — meaning a Charter could be well within the
+  word ceiling and still be missing a central decision framing, evidence gaps, or a coherent
+  7-part structure, with nothing catching it. Separately, the earlier iteration history in the
+  2026-07-22 release record shows real live generation attempts blocked at 11,374 → 4,045 → 2,724
+  words before an eventual pass on length alone (still failing "synthesis completeness" per that
+  record) — consistent with a generation prompt that was tuned against System A's word band but
+  is actually being checked against System B's stricter 1,200-word ceiling and none of System A's
+  structural requirements.
+- **Severity**: P1 (a designed, already-built quality control is silently inert; real user-facing
+  document quality risk, not just an internal inconsistency)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Found, not fixed` (2026-07-23) — this entry documents the finding only. No code
+  change was made in this pass; wiring System A into the real charter path (or consolidating the
+  two systems into one, per the project's own standing "no fourth quality system" principle) is a
+  genuine design decision — which system should be authoritative, whether to merge them, and how
+  to avoid yet a third parallel mechanism — not a one-line fix, and should not be attempted
+  without a short design pass given how much prior iteration this exact area has already absorbed
+  (4 commits, a full release record, still unresolved).
+- **Dependencies**: a design decision on System A vs. System B consolidation for `charter` (and
+  likely other artifact types using `quality-bar-registry.ts` overrides that may have the same
+  reachability problem — not checked in this pass, scope was charter-only)
+- **Acceptance criteria**: N/A until a design decision is made
+- **Required tests**: N/A until a design decision is made
+- **PR**: none (documentation-only finding)
+- **Discovered from**: 2026-07-23 P1 Charter document-quality re-audit, tracing the actual
+  generation code path rather than trusting the 2026-07-22 release record's "candidate" status at
+  face value
+- **Notes / remaining gaps**: do NOT independently patch `strategic-moves-artifact-standard.ts`'s
+  charter numbers to match `quality-bar-registry.ts`'s (e.g. bumping the ceiling from 1,200 to
+  1,600) without first deciding whether System A should be wired in instead — a numbers-only patch
+  would still leave the 7-section/central-tension/evidence-gap structural checks unenforced,
+  giving a false sense of the gap being closed. The "41-42 page" figure referenced in an earlier
+  handoff prompt could not be located anywhere in this repo; the closest matching text is a
+  descriptive comment in `quality-bar-registry.ts` ("it must not become a 40-page strategy or
+  solution report") describing the failure mode being guarded against, not a literal measurement
+  — treat any specific page-count figure for Charter as unverified until a real artifact is
+  measured.
+
 ### MOVES-QUALITY-001 — Dedicated PDF renderer for the orchestrator deliverable pipeline
 
 - **Problem statement**: The orchestrator renders DOCX/HTML; no PDF export path exists for
