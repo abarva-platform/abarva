@@ -109,6 +109,8 @@
     "project:tower-mart:lakeshore-industries:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant lakeshore-industries --v3-dir datasets/tenant-inputs/active/lakeshore-industries/current --out-dir /tmp/tower-mart-projection-lakeshore-industries",
     "audit:tower-active-budget-envelopes": "node scripts/tower/repair-active-budget-envelopes.mjs --check",
     "repair:tower-active-budget-envelopes": "node scripts/tower/repair-active-budget-envelopes.mjs --write",
+    "seed:tower-client:lakeshore-industries:plan": "node scripts/tower/ensure-lakeshore-industries-client.mjs --plan-only --out-dir reports/tower-lakeshore-industries-client-seed",
+    "seed:tower-client:lakeshore-industries:write-job": "node scripts/tower/ensure-lakeshore-industries-client.mjs --write --emit-proof-bundle --out-dir /tmp/tower-lakeshore-industries-client-seed",
     "audit:tower-mart-data-loading-qa": "node scripts/tower/audit-tower-mart-data-loading-qa.mjs",
     "verify:phs-health-plan-corpus": "npx tsx src/scripts/corpus/verify-phs-health-plan-corpus.ts",
     "generate:meridian-vnext-context": "python3 scripts/enterprise-context/generate-meridian-vnext.py",
