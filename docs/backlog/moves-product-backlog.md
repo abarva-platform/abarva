@@ -482,6 +482,61 @@ cells are stale and superseded by that resolution).
 
 ## Deliverable quality and consulting depth
 
+### MOVES-QUALITY-004 — Duplicate-heading detection signal in the golden bar; P2 Discovery Report size gate audit
+
+- **Problem statement**: Two related gaps found while re-auditing the P2 Discovery Report against
+  the same size/dedup standard `MOVES-ARTIFACT-002` proved for 4 P3 profiles (per the 2026-07-23
+  handoff's priority order: P2 Discovery > P1 Charter > P4 Business Case > P3 family (done) >
+  P5). (1) `golden-bar.ts`'s `meetsGoldenBar()` had no duplicate-section-heading detection
+  anywhere — `MOVES-ARTIFACT-002`'s "no `duplicateSectionHeadings`" claim came from an *external*
+  proof-bundle JSON produced by a different tool, not from any in-repo enforcement mechanism; a
+  repo-wide grep confirmed zero hits before this change. (2) `discovery_report`'s
+  `maximumWordCount` ceiling (3,000-5,000 target words, from `strategic-moves-artifact-standard.ts`)
+  is `overMaximumWordCount`-only (informational, never blocks) unless `enforceMaximumWordCount` is
+  also set for that profile — and it is not: only `solution_design`/`operating_model_design`/
+  `sourcing_strategy` opt into hard enforcement (see `MOVES-ARTIFACT-002`). A real First Capital
+  Discovery Report DOCX measured at **19,245 words / 136 headings / 14 duplicate heading
+  titles / zero TOC** (per
+  `docs/codex-handoff/MOVES_ARTIFACT_DIGESTION_PROMPTING_LAYOUT_PROMPT_2026-07-22.md`) — nearly
+  4× the target ceiling — would have generated only a soft "runs long" warning and passed the
+  bar regardless, with no duplicate-heading signal recorded at all.
+- **User/business impact**: an oversized, duplicate-heading-laden Discovery Report can reach
+  phase-gate review looking board-grade in every other quality dimension while actually being
+  unreadable at nearly 4× the intended length, with no automated signal flagging it.
+- **Severity**: P2 (quality-gate gap; the underlying oversized artifact is P1 in user impact but
+  is a stale, unverified measurement, not reconfirmed live this session)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Partially closed` (2026-07-23) — added real `findDuplicateSectionHeadings()` to
+  `golden-bar.ts`, wired as an informational `duplicateSectionHeadings` result field (same
+  soft-rollout pattern as `overMaximumWordCount`, contributes to `qualityScore`, does not block
+  `pass`) so the signal now genuinely exists for every profile including `discovery_report`.
+  Enforcing `discovery_report`'s word ceiling as hard-blocking (`enforceMaximumWordCount: true`)
+  is explicitly **not** done in this change — it is a policy decision (which profiles get hard
+  enforcement) that belongs with `MOVES-ARTIFACT-002`'s existing enforcement matrix, not a
+  unilateral addition here.
+- **Dependencies**: none for the signal; a scoped follow-up decision for enforcing
+  `discovery_report`'s ceiling
+- **Acceptance criteria**: `findDuplicateSectionHeadings()` correctly identifies exact
+  (case/whitespace-insensitive) repeated h1-h4 headings in rendered artifact HTML;
+  `meetsGoldenBar()` surfaces them via `duplicateSectionHeadings` and a `reasons` entry without
+  affecting `pass`.
+- **Required tests**: `golden-bar.test.ts` — 5 new assertions (repeated heading flagged;
+  case/whitespace-insensitive + first-seen-order dedup; unique headings return empty; the signal
+  is surfaced in `meetsGoldenBar()` output and pushes `qualityScore` down without failing `pass`;
+  a clean artifact reports no duplicates). Zero regressions across `src/lib/deliverables`
+  (412/418 passing — the 6 failures are all pre-existing and unrelated).
+- **PR**: not yet opened
+- **Release record**: `docs/releases/records/2026-07-23-golden-bar-duplicate-heading-signal.md`
+- **Discovered from**: 2026-07-23 independent re-audit of the P2 Discovery Report against the
+  size/dedup standard, per the Claude Code handoff's document-quality priority order
+- **Notes / remaining gaps**: this does NOT retest the actual live First Capital Discovery Report
+  against the new signal — the 19,245-word/14-duplicate-heading measurement is a stale reading
+  from `docs/codex-handoff/MOVES_ARTIFACT_DIGESTION_PROMPTING_LAYOUT_PROMPT_2026-07-22.md`, not
+  reconfirmed this session. A genuine live re-measurement, and a deliberate decision on whether
+  `discovery_report` should join the hard-enforcement list, remain open follow-ups — do not treat
+  this entry as having closed the underlying oversized-artifact problem, only as having built the
+  detection signal that was previously believed to already exist but did not.
+
 ### MOVES-QUALITY-001 — Dedicated PDF renderer for the orchestrator deliverable pipeline
 
 - **Problem statement**: The orchestrator renders DOCX/HTML; no PDF export path exists for
