@@ -1350,6 +1350,131 @@ cells are stale and superseded by that resolution).
 
 ---
 
+### MOVES-UI-010 — Gate approval fires immediately on click; no confirmation, no approver identity captured
+
+- **Problem statement**: a fresh gate-approval-clarity audit (2026-07-24) found both approval
+  paths — `approveP0Gate()` (`MovesPhaseStandaloneClient.tsx:852-869`, wired directly to the P0
+  approve button's `onClick`) and `PhaseApproveAndBuild.approveAndBuild()`
+  (`PhaseApproveAndBuild.tsx:298-371`, wired directly to its button's `onClick`) — submit the
+  approval the instant the button is clicked. Neither path shows a confirmation dialog, a summary
+  of what is being approved, or the identity (name/role) of the person approving. The component
+  displays a generic AI-decision-support watermark but never reads or shows the current session
+  user anywhere in the gate-approval UI.
+- **User/business impact**: an irreversible, governed phase-gate approval — the exact action this
+  entire program's "no phase closes on the strength of an AI draft alone" invariant is built
+  around — can be triggered by a single accidental click, with no "are you sure," no visible
+  record of who approved in the moment of approving, and no attestation language shown to the
+  user before they commit.
+- **Severity**: P1 (governance/trust gap on an irreversible action, not a cosmetic issue)
+- **Workstream**: UI/UX shell (gate approval clarity)
+- **Status**: `Found, not fixed` (2026-07-24) — documentation only. This touches the actual gate
+  approval submission path (not pure navigation, unlike `MOVES-UI-009`), and per this session's own
+  standing guardrails (preserve existing working Moves business logic; do not approve/advance real
+  Moves), a change here should be built and tested carefully — including verifying via unit tests
+  only, never by actually approving a real production/client Move — rather than rushed in the same
+  pass that found it.
+- **Dependencies**: none technically (the current session's identity is already resolvable via
+  existing auth context used elsewhere in the app), but this is a higher-trust surface than most
+  UI-only fixes and deserves a dedicated, carefully-tested change
+- **Acceptance criteria**: clicking Approve opens a confirmation step showing (a) the current
+  user's name/role, (b) a plain-language summary of what is being approved (which phase, which
+  gate), and (c) requires an explicit second confirmation before the approval actually submits;
+  cancelling leaves the gate unapproved with no side effects.
+- **Required tests**: unit tests confirming the confirmation step blocks submission until
+  confirmed, cancelling performs no mutation, and the approver identity shown matches the
+  authenticated session — exercised entirely via mocks, never against a real Move.
+- **PR**: not yet opened
+- **Discovered from**: 2026-07-24 gate-approval-clarity audit
+- **Notes / remaining gaps**: scope this narrowly to adding the confirmation/identity display —
+  do not use this as an opportunity to also change gate-evaluation logic, approval authority
+  rules, or the underlying mutation itself.
+
+### MOVES-UI-011 — Multi-role approver status (Business/Technology/Risk) not visible on the phase-level gate decision surface
+
+- **Problem statement**: `requiredApprovalRolesFor()` (`src/lib/programs/deliverable-role-approvals.ts:78-80`)
+  and `RoleApprovalsPanel.tsx` (role pills with status/approver name/summary lines at
+  `RoleApprovalsPanel.tsx:47-71,155-189`) already give a genuinely clear per-role approval
+  checklist — but it is only mounted per-deliverable inside `PhaseDocumentsPanel.tsx:541`, i.e.
+  buried in the Files & Evidence tab. The phase-level "Decision"/"Open blockers" card in
+  `MovesPhaseStandaloneClient.tsx` that `MOVES-UI-007` already redesigned for plain-language
+  clarity has no visibility into pending Business/Technology/Risk approvers, even though
+  `governance.ts:284-298`'s `meetsApprovalBar()` is silently gating advancement on exactly that
+  data. A user reading the gate decision surface for a multi-role-gated phase (e.g. Design, which
+  per project history requires Business + Technology + Risk/security approvers) has no way to
+  tell which of those roles has or hasn't signed off without separately navigating to Files &
+  Evidence and finding the right deliverable's `RoleApprovalsPanel`.
+- **User/business impact**: a user could believe a gate is "just waiting on me" when it is
+  actually still waiting on other named roles, or vice versa — the phase-level surface and the
+  underlying gate logic are answering different questions about the same gate.
+- **Severity**: P2 (visibility/clarity gap; the underlying role-approval enforcement itself
+  already works correctly per `MOVES-DESIGN-001`/`MOVES-DESIGN-002`)
+- **Workstream**: UI/UX shell (gate approval clarity)
+- **Status**: `Found, not fixed` (2026-07-24) — documentation only
+- **Dependencies**: none — `RoleApprovalsPanel`'s data-fetching pattern already exists and could
+  be surfaced (or a condensed summary of it) in `MovesPhaseStandaloneClient.tsx`'s decision card;
+  this is additive UI, not a new data model
+- **Implementation notes (traced 2026-07-24, not yet built)**: `requiredApprovalRolesFor()`
+  (`deliverable-role-approvals.ts:78-80`) takes a `deliverableTypeKey`, not a phase number — a
+  phase can map to zero, one, or MULTIPLE role-gated deliverables (e.g. phase 3 has both
+  `target_state_architecture` and `operating_model_design`, each with its own required-role set).
+  `PhaseBody` has no `deliverableId` prop today, but does receive `move: StrategicMove`, whose
+  `move.deliverables` (`types.ui.ts:487-494`) carries `{id, typeKey, ...}` for every deliverable —
+  so the real implementation path is: resolve the phase's gate deliverable type keys (via
+  `PHASE_CANONICAL_KEYS`/`getGateArtifacts(phase)` in `deliverable-registry.ts`), filter
+  `move.deliverables` to those with a non-empty `requiredApprovalRolesFor(typeKey)`, then fetch
+  `GET /api/v1/programs/:moveId/deliverables/:deliverableId/role-approvals` (the same route
+  `RoleApprovalsPanel.tsx:89` already calls) once per matching deliverable and aggregate the
+  results. **No existing hook does this aggregation across a phase's multiple deliverables** — this
+  needs new client-side fetch/aggregation logic (a small new hook), not just a re-render of
+  existing data. Scope accordingly: this is a real, if modest, feature build, not a one-line wire-up
+  like `MOVES-UI-009`.
+- **Acceptance criteria**: the phase-level gate decision surface shows, for any phase requiring
+  multi-role approval, a condensed per-role status (approved/pending/rejected + approver name when
+  approved) across ALL of that phase's role-gated deliverables, without requiring navigation to
+  Files & Evidence
+- **Required tests**: a phase with 2 of 3 required roles approved renders the correct
+  per-role breakdown at the phase-level decision surface, matching what `RoleApprovalsPanel` shows
+  for the same deliverable
+- **PR**: not yet opened
+- **Discovered from**: 2026-07-24 gate-approval-clarity audit
+- **Notes / remaining gaps**: also confirmed separately: `approverName` in `RoleApprovalsPanel.tsx:224-230`
+  is a free-text input, not tied to an authenticated user identity — a real identity-binding fix
+  would be a separate, larger change (likely coupled with `MOVES-UI-010`'s approver-identity work)
+  and is not attempted here.
+
+### MOVES-UI-012 — No approval-history / audit-trail view for gate decisions
+
+- **Problem statement**: `recordRoleApprovalDecision()` (`deliverable-role-approvals.ts:182-235`)
+  upserts on `(deliverable_id, role)` — each role keeps only its single latest decision. There is
+  no history table and no UI component anywhere in `src/components/strategic-moves` renders past
+  decisions, timestamps beyond the current `decidedAt`, or prior rejection/changes-requested
+  cycles for a gate.
+- **User/business impact**: if a role approver initially rejects and later approves (or approves,
+  then a new version requires re-approval), there is no way for a reviewer or auditor to see that
+  history — only the current state. For a governance-sensitive product where "no phase closes on
+  the strength of an AI draft alone" is a stated invariant, the absence of an audit trail for how
+  a gate got approved is a real gap for pilot/compliance readiness.
+- **Severity**: P2 (audit/compliance gap; not blocking current gate-approval correctness)
+- **Workstream**: UI/UX shell (gate approval clarity) / evidence and client-approved lifecycle
+- **Status**: `Found, not fixed` (2026-07-24) — documentation only; this is a genuine schema-level
+  gap (an upsert-only table has no history to show), not a UI-only fix, and should be scoped
+  alongside the broader lifecycle/event-sourcing work already tracked in `MOVES-ARTIFACT-001`
+  (which already establishes `deliverable_lifecycle_events` as the event-sourced source of truth
+  for the broader lifecycle model) rather than built as a one-off.
+- **Dependencies**: `MOVES-ARTIFACT-001`'s event-sourced lifecycle model — role-approval history
+  should likely live in the same event-sourced pattern rather than a second, competing history
+  mechanism
+- **Acceptance criteria**: N/A until scoped as part of `MOVES-ARTIFACT-001` or a dedicated design
+  pass
+- **Required tests**: N/A until scoped
+- **PR**: none
+- **Discovered from**: 2026-07-24 gate-approval-clarity audit
+- **Notes / remaining gaps**: explicitly flagging the dependency on `MOVES-ARTIFACT-001` so this
+  doesn't get built as a third, competing approval-history mechanism alongside the event-sourced
+  lifecycle model already designed there.
+
+---
+
 ### MOVES-ARTIFACT-002 — P3 artifact size/duplicate-heading gate, live-proven
 
 - **Problem statement**: the 2026-07-22 artifact-digestion audit found the P2 discovery report
