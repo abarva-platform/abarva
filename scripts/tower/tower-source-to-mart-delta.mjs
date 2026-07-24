@@ -68,7 +68,7 @@ function project(tenantKey, v3, std, outDir, skipV3Programs = false) {
     outDir,
   ];
   if (std) args.push("--standardized-dir", std);
-  if (skipV3Programs) args.push("--skip-v3-programs");
+  if (skipV3Programs) args.push("--keep-sa08-value");
 
   const run = spawnSync("npx", args, {
     cwd: ROOT,
@@ -146,11 +146,10 @@ function main() {
     const after = std
       ? project(t.key, v3, std, path.join(base, "after"))
       : { skipped: "no standardized packet" };
-    // Third variant: T-family owns the program registry; V3 budget still
-    // projects, V3 programs/use-cases do not. This is the option that removes
-    // the double-count rather than merging two parallel registries forever.
+    // Third variant: the old additive behaviour, kept for comparison. "after"
+    // is now the decided model — T-family owns programme value, SA08 suppressed.
     const tfamily = std
-      ? project(t.key, v3, std, path.join(base, "tfamily-only"), true)
+      ? project(t.key, v3, std, path.join(base, "additive-sa08"), true)
       : { skipped: "no standardized packet" };
 
     results.push({
@@ -217,7 +216,7 @@ function main() {
     lines.push("### Layers 2–3 — facts and mart");
     lines.push("");
     const c = r.tfamily?.mart ?? null;
-    lines.push("| Layer | Today (V3 only) | Additive (V3 + T) | T-family owns programs |");
+    lines.push("| Layer | Today (V3 only) | **Decided (T owns value)** | Additive w/ SA08 |");
     lines.push("| --- | ---: | ---: | ---: |");
     lines.push(
       `| canonical facts (merged) | ${r.before.facts ?? "—"} | ${r.after.facts} | ${r.tfamily?.facts ?? "—"} |`,
@@ -230,7 +229,7 @@ function main() {
     lines.push("");
     lines.push("### The two defects");
     lines.push("");
-    lines.push("| Measure | Today (V3 only) | Additive (V3 + T) | T-family owns programs |");
+    lines.push("| Measure | Today (V3 only) | **Decided (T owns value)** | Additive w/ SA08 |");
     lines.push("| --- | ---: | ---: | ---: |");
     const m = (k) =>
       `${money(b?.[k] ?? 0)} | ${money(a[k])} | ${c ? money(c[k]) : "—"}`;

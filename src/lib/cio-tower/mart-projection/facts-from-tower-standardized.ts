@@ -249,65 +249,120 @@ export function factsFromTowerSpend(
   initiativeNames: Readonly<Record<string, string>>,
 ): CioTowerFactRow[] {
   const file = "ai-control-tower/T08_spend-contracts.csv";
-  const facts: CioTowerFactRow[] = [];
+
+  // AGGREGATE PER INITIATIVE BEFORE EMITTING.
+  //
+  // T08 carries one row per initiative *per vendor* — four lines for
+  // SHA-INIT-001 (internal, AWS, Teradata, SAS). Emitting a fact per line makes
+  // them collide: `canonicalMergeKey` is
+  // `canonical_tool_key ?? canonical_program_key` + metric_key, so four lines
+  // with the same program key and the same metric are treated as four
+  // assertions of ONE fact, and the merge keeps a single winner.
+  //
+  // That silently dropped 3 of every 4 spend rows. Because T08's per-initiative
+  // values run 1:2:3:4, keeping the first yielded exactly one tenth of the true
+  // total — source $1,031.2M projected as $103.1M. The source→mart
+  // reconciliation in the delta report is what caught it.
+  //
+  // The lane wants initiative-level money, so summing here is both correct and
+  // the fix. Vendor detail is preserved in `attributes.vendor_breakdown` for a
+  // surface that wants it, rather than being thrown away.
+  interface SpendAggregate {
+    initiativeId: string;
+    budget: number;
+    actual: number;
+    contract: number;
+    vendors: Array<{ vendor: string; budget: number; actual: number }>;
+    lineIds: string[];
+    renewalDates: string[];
+  }
+
+  const byInitiative = new Map<string, SpendAggregate>();
 
   for (const r of rows) {
     const initiativeId = text(r.initiative_id);
     if (!initiativeId) continue;
-    const lineId = text(r.line_id) ?? initiativeId;
-    const name = initiativeNames[initiativeId] ?? initiativeId;
-    const toolRaw = text(r.vendor_or_tool);
-    const vendor =
-      toolRaw && toolRaw.toLowerCase() !== "internal" ? toolRaw : null;
-
-    const attributes = {
-      vendor_or_tool: toolRaw,
-      spend_category: text(r.spend_category),
-      renewal_date: text(r.renewal_date),
-      contract_value_usd: num(r.contract_value_usd) || null,
-      unit_economic_note: text(r.unit_economic_note),
-    };
-
+    let agg = byInitiative.get(initiativeId);
+    if (!agg) {
+      agg = {
+        initiativeId,
+        budget: 0,
+        actual: 0,
+        contract: 0,
+        vendors: [],
+        lineIds: [],
+        renewalDates: [],
+      };
+      byInitiative.set(initiativeId, agg);
+    }
     const budget = num(r.budget_fy26_usd);
-    if (budget > 0) {
+    const actual = num(r.actual_ytd_usd);
+    agg.budget += budget;
+    agg.actual += actual;
+    agg.contract += num(r.contract_value_usd);
+    agg.lineIds.push(text(r.line_id) ?? initiativeId);
+    const renewal = text(r.renewal_date);
+    if (renewal) agg.renewalDates.push(renewal);
+    const vendor = text(r.vendor_or_tool);
+    if (vendor && vendor.toLowerCase() !== "internal") {
+      agg.vendors.push({ vendor, budget, actual });
+    }
+  }
+
+  const facts: CioTowerFactRow[] = [];
+
+  for (const agg of byInitiative.values()) {
+    const name = initiativeNames[agg.initiativeId] ?? agg.initiativeId;
+    // The largest vendor by spend labels the aggregate, so vendor concentration
+    // has something to read; the full breakdown rides in attributes.
+    const topVendor =
+      [...agg.vendors].sort((a, b) => b.actual - a.actual)[0]?.vendor ?? null;
+    const attributes = {
+      vendor_breakdown: agg.vendors,
+      contract_value_usd: agg.contract || null,
+      renewal_date: agg.renewalDates[0] ?? null,
+      spend_line_count: agg.lineIds.length,
+    };
+    const sourceRow = agg.lineIds[0] ?? agg.initiativeId;
+
+    if (agg.budget > 0) {
       facts.push(
         buildFact({
           tenantKey: identity.tenantKey,
-          keyParts: ["tsv1-spend-budget", lineId],
+          keyParts: ["tsv1-spend-budget", agg.initiativeId],
           measure: `${name} approved funding`,
           view: "initiative_budget",
           scope: "initiative",
-          valueNumeric: budget,
+          valueNumeric: agg.budget,
           sourceFile: file,
-          sourceRow: lineId,
+          sourceRow,
           canonical: programCanonical(
-            initiativeId,
+            agg.initiativeId,
             name,
             PROGRAM_METRIC_KEYS.approvedFunding,
-            vendor,
+            topVendor,
           ),
           attributes,
         }),
       );
     }
 
-    const actual = num(r.actual_ytd_usd);
-    if (actual > 0) {
+    if (agg.actual > 0) {
       facts.push(
         buildFact({
           tenantKey: identity.tenantKey,
-          keyParts: ["tsv1-spend-actual", lineId],
+          keyParts: ["tsv1-spend-actual", agg.initiativeId],
           measure: `${name} AI-tagged spend`,
           view: "vendor_contract",
           scope: "initiative",
-          valueNumeric: actual,
+          valueNumeric: agg.actual,
           sourceFile: file,
-          sourceRow: lineId,
+          sourceRow,
           canonical: programCanonical(
-            initiativeId,
+            agg.initiativeId,
             name,
             AI_TOOL_SPEND_METRIC,
-            vendor,
+            topVendor,
           ),
           attributes,
         }),

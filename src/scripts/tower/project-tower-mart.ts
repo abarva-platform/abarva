@@ -56,7 +56,7 @@ interface CliArgs {
   tenant: string;
   v3Dir: string;
   standardizedDir: string | null;
-  skipV3Programs: boolean;
+  keepSa08Value: boolean;
   dryRun: boolean;
   noDb: boolean;
   emitProofBundle: boolean;
@@ -91,10 +91,10 @@ function parseArgs(argv: readonly string[]): CliArgs {
     // Local pure-pipeline run: skip the DB entirely (V3 CSVs only, no tower_*
     // telemetry, no alias crosswalk). Proves the projection without the VNet.
     noDb: args.includes("--no-db"),
-    // Suppress V3 program/use-case facts so the T-family owns the program
-    // registry outright. V3 budget (08) still projects — the T-family has no
-    // budget-envelope equivalent.
-    skipV3Programs: args.includes("--skip-v3-programs"),
+    // Escape hatch: keep SA08 programme value alongside the T-family even when
+    // the standardized tree is supplied. Off by default — see the comment on
+    // the benefits read below for why summing them double-counts.
+    keepSa08Value: args.includes("--keep-sa08-value"),
     // Emit the out-dir as a base64 tar between the proof markers the governed
     // ACA operator wrapper (scripts/ops/submit-aca-operator-job.mjs) extracts
     // from job logs — so a live ACA run returns its proof/summary/mart JSON.
@@ -280,20 +280,61 @@ async function main(): Promise<void> {
   try {
     const identity = await resolveTenant(client, args.tenant, args.tenant);
 
+    // Does the standardized tree actually carry programme value for this
+    // tenant? Only then may it displace SA08 — see the benefits read below.
+    const standardizedInitiatives = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T01_initiative-registry.csv",
+        )
+      : [];
+    const standardizedSpend = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T08_spend-contracts.csv",
+        )
+      : [];
+    const standardizedOwnsProgrammeValue =
+      standardizedInitiatives.some(
+        (r) =>
+          Number(String(r.promised_benefit_usd ?? "").replace(/[$,\s]/g, "")) >
+          0,
+      ) &&
+      standardizedSpend.some(
+        (r) => String(r.initiative_id ?? "").trim() !== "",
+      );
+
     // 1. V3 facts (local CSVs)
     const v3Facts = projectV3ToFacts(
       {
         budget: readV3Csv(args.v3Dir, "08_it_budget_spend_value.csv"),
-        programs: args.skipV3Programs
-          ? []
-          : readV3Csv(args.v3Dir, "09_programs_initiatives.csv"),
-        aiUseCases: args.skipV3Programs
-          ? []
-          : readV3Csv(args.v3Dir, "10_ai_automation_use_cases.csv"),
-        benefits: readV3Csv(
-          args.v3Dir,
-          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        ),
+        programs: readV3Csv(args.v3Dir, "09_programs_initiatives.csv"),
+        aiUseCases: readV3Csv(args.v3Dir, "10_ai_automation_use_cases.csv"),
+        // SA08 is the AI *benefits ledger* and emits only promised and
+        // finance-validated value — no usage, no adoption. Its programmes are
+        // the AI component INSIDE a T01 initiative, not siblings of it:
+        //
+        //   SA08  Crew Recovery Copilot        $27M   <- the AI component
+        //   T01   Crew Recovery Optimization  $140M   <- the programme it sits in
+        //
+        // Summing them counts the AI slice twice, so where the T-family owns
+        // the programme registry SA08's value is suppressed rather than added.
+        // Nothing else is lost, because value is all SA08 emits.
+        //
+        // CONDITIONAL, and deliberately so. The T-family is NOT uniformly
+        // populated: Meridian's T08 carries vendor contracts with an EMPTY
+        // initiative_id and its T01 holds 7 MER-MOVE rows rather than an
+        // initiative registry, so it supplies no programme value at all.
+        // Suppressing SA08 unconditionally took Meridian's promised value from
+        // $35.5M to $0 — a regression on the one live-proven tenant. Suppress
+        // only where the T-family actually replaces what is being removed.
+        benefits:
+          standardizedOwnsProgrammeValue && !args.keepSa08Value
+            ? []
+            : readV3Csv(
+                args.v3Dir,
+                "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+              ),
       },
       identity,
     );
@@ -305,14 +346,8 @@ async function main(): Promise<void> {
     const standardizedFacts = args.standardizedDir
       ? projectTowerStandardizedToFacts(
           {
-            initiatives: readV3Csv(
-              args.standardizedDir,
-              "ai-control-tower/T01_initiative-registry.csv",
-            ),
-            spend: readV3Csv(
-              args.standardizedDir,
-              "ai-control-tower/T08_spend-contracts.csv",
-            ),
+            initiatives: standardizedInitiatives,
+            spend: standardizedSpend,
           },
           identity,
         )
@@ -354,6 +389,7 @@ async function main(): Promise<void> {
       idempotency_key: idemKey,
       v3_facts: v3Facts.length,
       standardized_facts: standardizedFacts.length,
+      standardized_owns_programme_value: standardizedOwnsProgrammeValue,
       tower_facts: towerFacts.length,
       merged_facts: merged.facts.length,
       suppressed_facts: merged.suppressed.length,
