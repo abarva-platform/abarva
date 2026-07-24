@@ -1409,7 +1409,15 @@ cells are stale and superseded by that resolution).
 - **Severity**: P2 (visibility/clarity gap; the underlying role-approval enforcement itself
   already works correctly per `MOVES-DESIGN-001`/`MOVES-DESIGN-002`)
 - **Workstream**: UI/UX shell (gate approval clarity)
-- **Status**: `Found, not fixed` (2026-07-24) — documentation only
+- **Status**: `Implemented` (2026-07-24) — new `PhaseRoleApprovalsSummary.tsx` component, mounted
+  in `MovesPhaseStandaloneClient.tsx` right after the "Gate execution checklist" details block.
+  One important correction found while building it: the implementation notes below originally
+  said to use `getGateArtifacts(phase)`, but `operating_model_design` (which requires
+  business+technology approval) is `gateArtifact: false` in the registry — a role-gated *working
+  doc*, not a formal gate artifact. `governance.ts`'s `meetsApprovalBar()` checks named criteria
+  against specific deliverable rows, not filtered by the `gateArtifact` flag, so the real fix uses
+  `getDeliverablesByPhase(phase)` (every non-deprecated deliverable declared for the phase) —
+  using `getGateArtifacts` would have silently dropped `operating_model_design` from the summary.
 - **Dependencies**: none — `RoleApprovalsPanel`'s data-fetching pattern already exists and could
   be surfaced (or a condensed summary of it) in `MovesPhaseStandaloneClient.tsx`'s decision card;
   this is additive UI, not a new data model
@@ -1432,9 +1440,13 @@ cells are stale and superseded by that resolution).
   multi-role approval, a condensed per-role status (approved/pending/rejected + approver name when
   approved) across ALL of that phase's role-gated deliverables, without requiring navigation to
   Files & Evidence
-- **Required tests**: a phase with 2 of 3 required roles approved renders the correct
-  per-role breakdown at the phase-level decision surface, matching what `RoleApprovalsPanel` shows
-  for the same deliverable
+- **Required tests**: `PhaseRoleApprovalsSummary.test.tsx` — 5 assertions: renders nothing for a
+  phase with no role-gated deliverables; renders nothing when the phase's role-gated types
+  haven't been generated yet; shows a condensed per-role breakdown across multiple role-gated
+  deliverables in one phase (using real phase-3 data — `target_state_architecture` +
+  `operating_model_design`); renders nothing while the fetch is in flight (no empty-state flash);
+  degrades gracefully on fetch failure. Zero regressions across `src/components/strategic-moves`
+  (151/151 real tests passing).
 - **PR**: not yet opened
 - **Discovered from**: 2026-07-24 gate-approval-clarity audit
 - **Notes / remaining gaps**: also confirmed separately: `approverName` in `RoleApprovalsPanel.tsx:224-230`

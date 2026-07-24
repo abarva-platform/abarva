@@ -22,6 +22,7 @@ import {
   FileCabinetPanel,
 } from "@/components/strategic-moves/FileCabinetPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import { PhaseRoleApprovalsSummary } from "@/components/strategic-moves/PhaseRoleApprovalsSummary";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -2992,6 +2993,11 @@ function PhaseBody({
             </tbody>
           </table>
         </details>
+        <PhaseRoleApprovalsSummary
+          moveId={move.id}
+          phase={phase.phase}
+          deliverables={move.deliverables}
+        />
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
@@ -5010,6 +5016,15 @@ function MovesStandaloneStyles() {
 .mxw-gate-table .met,.mxw-gate-table .pending{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;white-space:nowrap}
 .mxw-gate-table .met{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
 .mxw-gate-table .pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
+.mxw-role-approvals-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:#fff}
+.mxw-role-approvals-row{display:flex;flex-direction:column;gap:5px}
+.mxw-role-approvals-title{font-size:12px;font-weight:800;color:var(--ink)}
+.mxw-role-approvals-pills{display:flex;flex-wrap:wrap;gap:6px}
+.mxw-role-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.mxw-role-pill-pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
+.mxw-role-pill-reviewed{border:1px solid rgba(176,115,15,.32);background:var(--amber-tint);color:var(--amber)}
+.mxw-role-pill-approved{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-role-pill-rejected{border:1px solid rgba(200,60,60,.35);background:rgba(200,60,60,.08);color:#B4513C}
 .mxw-approval-disclosures{display:grid;gap:9px;margin:14px 0 0}
 .mxw-approval-disclosures details{border:1px solid var(--line);border-radius:12px;background:var(--soft);overflow:hidden}
 .mxw-approval-disclosures summary{display:flex;align-items:center;justify-content:space-between;gap:14px;list-style:none;cursor:pointer;padding:11px 13px}
