@@ -294,6 +294,17 @@ async function main(): Promise<void> {
           "ai-control-tower/T08_spend-contracts.csv",
         )
       : [];
+    const standardizedBenefits = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T07_benefit-realization.csv",
+        )
+      : [];
+    // T07 is the benefit ledger and is 100% populated on every tenant, so the
+    // T-family owns programme value wherever the standardized tree is supplied.
+    // (An earlier version keyed this on T01's value columns, which are empty on
+    // Meridian — that made the guard necessary. Reading the right table removed
+    // the need for it.)
     const standardizedOwnsProgrammeValue =
       standardizedInitiatives.some(
         (r) =>
@@ -348,6 +359,7 @@ async function main(): Promise<void> {
           {
             initiatives: standardizedInitiatives,
             spend: standardizedSpend,
+            benefits: standardizedBenefits,
           },
           identity,
         )

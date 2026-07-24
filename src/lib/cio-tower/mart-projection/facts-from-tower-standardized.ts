@@ -143,14 +143,14 @@ function buildFact(args: BuildFactArgs): CioTowerFactRow {
 }
 
 /**
- * `T01_initiative-registry.csv` — the join spine.
+ * `T01_initiative-registry.csv` — identity and ownership only.
  *
- * Emits promised value and finance-validated value per initiative, and carries
- * `owner_role` / `business_sponsor_role` on the fact attributes so the lane can
- * stop rendering "No owner recorded".
- *
- * `measured_value_usd` maps to finance-validated, NOT to claimable. The claim
- * gate stays where it is; measuring a benefit is not permission to book it.
+ * T01 carries a denormalised copy of promised/measured value, but it is NOT the
+ * source of record for it and is not reliably populated: Meridian's T01 has
+ * both columns empty on all 7 rows. `T07_benefit-realization.csv` is the actual
+ * benefit ledger and is 100% populated on every tenant. Value comes from there;
+ * T01 supplies the name and the owner, which is what stops the lane rendering
+ * "No owner recorded".
  */
 export function factsFromTowerInitiatives(
   rows: readonly CsvRow[],
@@ -177,49 +177,26 @@ export function factsFromTowerInitiatives(
       value_confidence: text(r.value_confidence),
     };
 
-    const promised = num(r.promised_benefit_usd);
-    if (promised > 0) {
-      facts.push(
-        buildFact({
-          tenantKey: identity.tenantKey,
-          keyParts: ["tsv1-initiative-promised", id],
-          measure: `${name} promised value`,
-          view: "value",
-          scope: "initiative",
-          valueNumeric: promised,
-          sourceFile: file,
-          sourceRow: id,
-          canonical: programCanonical(
-            id,
-            name,
-            PROGRAM_METRIC_KEYS.promisedValue,
-          ),
-          attributes,
-        }),
-      );
-    }
-
-    const measured = num(r.measured_value_usd);
-    if (measured > 0) {
-      facts.push(
-        buildFact({
-          tenantKey: identity.tenantKey,
-          keyParts: ["tsv1-initiative-measured", id],
-          measure: `${name} finance-validated value`,
-          view: "value",
-          scope: "initiative",
-          valueNumeric: measured,
-          sourceFile: file,
-          sourceRow: id,
-          canonical: programCanonical(
-            id,
-            name,
-            PROGRAM_METRIC_KEYS.financeValidatedValue,
-          ),
-          attributes,
-        }),
-      );
-    }
+    // Identity + ownership only. An initiative with no money yet still needs a
+    // lane, so this emits a text-valued anchor fact rather than a fabricated
+    // zero — the value invariant is satisfied without inventing a number.
+    facts.push({
+      ...buildFact({
+        tenantKey: identity.tenantKey,
+        keyParts: ["tsv1-initiative", id],
+        measure: `${name} initiative`,
+        view: "initiative_budget",
+        scope: "initiative",
+        valueNumeric: 0,
+        sourceFile: file,
+        sourceRow: id,
+        canonical: programCanonical(id, name, "initiative_registered"),
+        attributes,
+      }),
+      value_numeric: null,
+      value_text: name,
+      unit: "count",
+    });
   }
 
   return facts;
@@ -373,9 +350,95 @@ export function factsFromTowerSpend(
   return facts;
 }
 
+/**
+ * `T07_benefit-realization.csv` — the benefit ledger, and the source of record
+ * for promised and finance-validated value.
+ *
+ * 100% populated on all five tenants (14 / 126 / 30 / 10 / 14 rows), every row
+ * carrying an `initiative_id`. `measured_value_usd` maps to finance-validated,
+ * NOT to claimable — the claim gate stays where it is, and measuring a benefit
+ * is not permission to book it.
+ */
+export function factsFromTowerBenefits(
+  rows: readonly CsvRow[],
+  identity: CioTowerTenantIdentity,
+  initiativeNames: Readonly<Record<string, string>>,
+): CioTowerFactRow[] {
+  const file = "ai-control-tower/T07_benefit-realization.csv";
+  const facts: CioTowerFactRow[] = [];
+
+  // One initiative can carry several benefit lines; sum them, as with T08.
+  const byInitiative = new Map<
+    string,
+    { promised: number; measured: number; blocked: number; rows: number }
+  >();
+  for (const r of rows) {
+    const id = text(r.initiative_id);
+    if (!id) continue;
+    const agg = byInitiative.get(id) ?? {
+      promised: 0,
+      measured: 0,
+      blocked: 0,
+      rows: 0,
+    };
+    agg.promised += num(r.promised_benefit_usd);
+    agg.measured += num(r.measured_value_usd);
+    agg.blocked += num(r.unrealized_or_blocked_value_usd);
+    agg.rows += 1;
+    byInitiative.set(id, agg);
+  }
+
+  for (const [id, agg] of byInitiative) {
+    const name = initiativeNames[id] ?? id;
+    const attributes = { benefit_line_count: agg.rows };
+    if (agg.promised > 0) {
+      facts.push(
+        buildFact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["tsv1-benefit-promised", id],
+          measure: `${name} promised value`,
+          view: "value",
+          scope: "initiative",
+          valueNumeric: agg.promised,
+          sourceFile: file,
+          sourceRow: id,
+          canonical: programCanonical(
+            id,
+            name,
+            PROGRAM_METRIC_KEYS.promisedValue,
+          ),
+          attributes,
+        }),
+      );
+    }
+    if (agg.measured > 0) {
+      facts.push(
+        buildFact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["tsv1-benefit-measured", id],
+          measure: `${name} finance-validated value`,
+          view: "value",
+          scope: "initiative",
+          valueNumeric: agg.measured,
+          sourceFile: file,
+          sourceRow: id,
+          canonical: programCanonical(
+            id,
+            name,
+            PROGRAM_METRIC_KEYS.financeValidatedValue,
+          ),
+          attributes,
+        }),
+      );
+    }
+  }
+  return facts;
+}
+
 export interface TowerStandardizedInput {
   initiatives?: readonly CsvRow[];
   spend?: readonly CsvRow[];
+  benefits?: readonly CsvRow[];
 }
 
 /** Initiative id → display name, so spend rows can label their program. */
@@ -400,5 +463,6 @@ export function projectTowerStandardizedToFacts(
   return [
     ...factsFromTowerInitiatives(initiatives, identity),
     ...factsFromTowerSpend(input.spend ?? [], identity, names),
+    ...factsFromTowerBenefits(input.benefits ?? [], identity, names),
   ];
 }
