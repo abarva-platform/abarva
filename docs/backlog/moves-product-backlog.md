@@ -1314,14 +1314,19 @@ cells are stale and superseded by that resolution).
   themselves to check what was actually uploaded before approving a gate.
 - **Severity**: P2 (UX clarity gap in gate-approval decision-making, not a data or logic defect)
 - **Workstream**: UI/UX shell (evidence and client-approved lifecycle)
-- **Status**: `Implemented` (2026-07-24) — all three `evidenceCount` displays
+- **Status**: `Deployed, live-proven` (2026-07-24) — all three `evidenceCount` displays
   (`.mxw-value-grid` "Evidence posture", `.mxw-decision-chips` "N evidence items", and the
   "Evidence" article's "N approved or agent-ready items") are now `<button>` elements wired to
   the same `onOpenFiles` handler the "Open Files & Evidence" button already uses, with an
   `aria-label` describing the destination. New `.mxw-evidence-count-link` CSS matches the
   existing visual treatment (inherited text size/weight, underline-on-hover/focus for the plain
   text spots; existing pill styling preserved for the decision-chips spot) rather than
-  introducing a new visual pattern.
+  introducing a new visual pattern. PR #5552 merged (`1d63da0742348730ed3c3ae94b9861daeb09f1ae`),
+  ACA revision `ca-abarva-web-lab-eastus--m1d63da07` confirmed as both the template image and the
+  100%-traffic revision. Live signed-in proof: on the Retail Demo tenant's `RETAIL-APEX-2026` Move
+  (P5 gate-approval stage), both count buttons confirmed as real, focusable elements with the
+  correct `aria-label`s via the accessibility tree, and clicking one opened the real Files &
+  Evidence view.
 - **Dependencies**: none — reuses the existing `onOpenFiles` prop and `FileCabinetPanel` surface,
   no new data fetching
 - **Acceptance criteria**: clicking any of the three evidence-count displays opens the Files &
@@ -1332,7 +1337,7 @@ cells are stale and superseded by that resolution).
   across `src/components/strategic-moves` (146/146 real tests passing; the 1 failed suite is a
   pre-existing, unrelated Clerk/module-resolution failure confirmed present on a clean
   `origin/main` checkout before this change).
-- **PR**: not yet opened
+- **PR**: #5552
 - **Release record**: `docs/releases/records/2026-07-24-evidence-count-clickable-link.md`
 - **Discovered from**: 2026-07-24 evidence/client-approved-lifecycle UX audit, following the
   document-quality re-verification pass

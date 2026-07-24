@@ -6,7 +6,11 @@
 
 ## Status
 
-`candidate`
+`released` — merged (PR #5552, commit `1d63da0742348730ed3c3ae94b9861daeb09f1ae`), deployed
+(ACA revision `ca-abarva-web-lab-eastus--m1d63da07`, digest
+`sha256:3bfaf9084250d242beeac24555055958ebd4f2eb79820b94978058c4af754432` — confirmed as both
+the template image and the 100%-traffic revision image), and live-proven signed-in
+(2026-07-24).
 
 ## Plain-English Summary
 
@@ -62,10 +66,16 @@ Evidence" button already opens.
   with and without this diff applied)
 - `git diff --check`: clean
 - `node scripts/release-check.mjs --base origin/main --head HEAD`: to be run before PR open
-- Live browser verification was not performed this pass — another session's dev server was
-  already running on this shared working directory and was not reachable by this session's
-  browser tooling; the fix is proven via the new unit test (real click → real Files & Evidence
-  heading assertion) instead
+- Live signed-in browser verification (2026-07-24, post-deploy): signed in as
+  `anand.sundaram+apex@thesundaram.com` (Retail Demo tenant) on `app.abarva.ai`, opened Move
+  "Apex Intelligent Store Operations and Inventory Accuracy - E2E 2026-05-02" (`RETAIL-APEX-2026`,
+  P5 · Prepare to Execute), navigated to the "Approve & Build" workflow stage, and confirmed via
+  the accessibility tree that both `button "0 evidence items — open Files & Evidence"` and
+  `button "0 approved or agent-ready items — open Files & Evidence"` render as real, focusable
+  `<button>` elements (not static text) with the exact `aria-label`s from this change. Clicking
+  the first button navigated to the Files tab and rendered the real "Files & Evidence" heading —
+  the exact behavior this fix was built to deliver, confirmed live in production, not just in a
+  unit test.
 
 ## Rollout Plan
 
@@ -82,9 +92,8 @@ Evidence" button already opens.
 - ACA runtime invariant: verify template image = 100%-traffic revision image post-deploy
 - Worker image invariant: n/a (client-rendered UI only)
 - Feature/env flag update path: none
-- Live signed-in proof required: yes — see Rollout Plan step 3; not yet completed as of this
-  record (live browser verification was blocked this pass by another session's dev server on the
-  shared working directory, per QA/Validation)
+- Live signed-in proof required: yes — completed 2026-07-24, see QA/Validation for the signed-in
+  browser evidence
 
 ## Rollback Plan
 
@@ -93,16 +102,20 @@ existing handler; reverting restores the prior inert-text behavior. No data clea
 
 ## Audit Evidence
 
-- PR: (added at merge time)
+- PR: #5552
+- Merge SHA: `1d63da0742348730ed3c3ae94b9861daeb09f1ae`
+- Deploy: ACA revision `ca-abarva-web-lab-eastus--m1d63da07`, digest
+  `sha256:3bfaf9084250d242beeac24555055958ebd4f2eb79820b94978058c4af754432` — confirmed as both
+  the template image and the 100%-traffic revision image
 - Backlog item: `MOVES-UI-009` in `docs/backlog/moves-product-backlog.md`
 - Test evidence: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
-  output captured in this session's validation pass (53/53 passing, including the new assertion)
+  output captured pre-merge (53/53 passing, including the new assertion)
+- Live proof: signed-in browser session on `app.abarva.ai`, Retail Demo tenant, Move
+  `RETAIL-APEX-2026` P5 gate-approval stage — real button elements confirmed via accessibility
+  tree, click confirmed to open the real Files & Evidence view (see QA/Validation)
 
 ## Known Gaps
 
-- No live signed-in browser proof yet — blocked this pass by another session's dev server
-  already running on the shared working directory. Proven instead via a real unit test exercising
-  the exact click → navigation path.
 - Does not add inline per-file metadata (name/date/uploader) at the count display locations
   themselves — `evidenceCount`'s data sources (`currentStateReadiness`, `move.linkedEvidence`)
   don't carry that data. This is a navigation fix to the existing, already-built file list, not an
