@@ -1,11 +1,11 @@
-action_id,action_title,priority,derived_from,decision_owner,next_decision_date,expected_impact_usd,source_file,source_row,value_source
-APX-ACT-001,at_risk decision for Retail lakehouse and customer inventory graph,P0,APX-INIT-001,Chief Data Officer,2026-07-28,83000000,ai-control-tower/T12_derived-actions.csv,2,tenant_file
-APX-ACT-002,scale_candidate decision for AI demand forecasting and replenishment,P0,APX-INIT-002,Chief Merchandising Officer,2026-08-28,51000000,ai-control-tower/T12_derived-actions.csv,3,tenant_file
-APX-ACT-003,hold_until_evidence decision for Store labor scheduling optimization,P0,APX-INIT-003,COO,2026-09-28,42000000,ai-control-tower/T12_derived-actions.csv,4,tenant_file
-APX-ACT-004,at_risk decision for Shrink anomaly detection,P1,APX-INIT-004,Chief Risk Officer,2026-10-28,61200000,ai-control-tower/T12_derived-actions.csv,5,tenant_file
-APX-ACT-005,scale_candidate decision for Search and personalization AI,P1,APX-INIT-005,Chief Digital Officer,2026-11-28,42000000,ai-control-tower/T12_derived-actions.csv,6,tenant_file
-APX-ACT-006,hold_until_evidence decision for Retail media measurement clean room,P1,APX-INIT-006,Chief Marketing Officer,2026-07-28,34000000,ai-control-tower/T12_derived-actions.csv,7,tenant_file
-APX-ACT-007,scale_candidate decision for BOPIS exception prediction,P1,APX-INIT-007,Chief Supply Chain Officer,2026-08-28,26600000,ai-control-tower/T12_derived-actions.csv,8,tenant_file
-APX-ACT-008,at_risk decision for Returns fraud triage,P1,APX-INIT-008,Chief Risk Officer,2026-09-28,22800000,ai-control-tower/T12_derived-actions.csv,9,tenant_file
-APX-ACT-009,scale_candidate decision for Finance margin bridge automation,P1,APX-INIT-009,CFO,2026-10-28,18200000,ai-control-tower/T12_derived-actions.csv,10,tenant_file
-APX-ACT-010,hold_until_evidence decision for ServiceNow store support agent,P1,APX-INIT-010,VP IT Operations,2026-11-28,15600000,ai-control-tower/T12_derived-actions.csv,11,tenant_file
+action_id,action_title,priority,derived_from,owner_role,decision_needed,expected_value_usd,approval_status,decision_owner,next_decision_date,expected_impact_usd,source_file,source_row,value_source
+APX-ACT-001,at_risk decision for Retail lakehouse and customer inventory graph,P0,APX-INIT-001,VP Customer Experience,,,,Chief Data Officer,2026-07-13,83000000,ai-control-tower/T12_derived-actions.csv,2,tenant_file
+APX-ACT-002,scale_candidate decision for AI demand forecasting and replenishment,P0,APX-INIT-002,Director of Data,,,,Chief Merchandising Officer,2026-08-08,51000000,ai-control-tower/T12_derived-actions.csv,3,tenant_file
+APX-ACT-003,hold_until_evidence decision for Store labor scheduling optimization,P0,APX-INIT-003,Head of Platform,,,,COO,2026-09-22,42000000,ai-control-tower/T12_derived-actions.csv,4,tenant_file
+APX-ACT-004,at_risk decision for Shrink anomaly detection,P1,APX-INIT-004,VP Engineering,,,,Chief Risk Officer,2026-10-18,61200000,ai-control-tower/T12_derived-actions.csv,5,tenant_file
+APX-ACT-005,scale_candidate decision for Search and personalization AI,P1,APX-INIT-005,VP Customer Experience,,,,Chief Digital Officer,2026-11-15,42000000,ai-control-tower/T12_derived-actions.csv,6,tenant_file
+APX-ACT-006,hold_until_evidence decision for Retail media measurement clean room,P1,APX-INIT-006,Director of Finance Systems,,,,Chief Marketing Officer,2026-07-11,34000000,ai-control-tower/T12_derived-actions.csv,7,tenant_file
+APX-ACT-007,scale_candidate decision for BOPIS exception prediction,P1,APX-INIT-007,Director of Data,,,,Chief Supply Chain Officer,2026-08-25,26600000,ai-control-tower/T12_derived-actions.csv,8,tenant_file
+APX-ACT-008,at_risk decision for Returns fraud triage,P1,APX-INIT-008,Director of Finance Systems,,,,Chief Risk Officer,2026-09-20,22800000,ai-control-tower/T12_derived-actions.csv,9,tenant_file
+APX-ACT-009,scale_candidate decision for Finance margin bridge automation,P1,APX-INIT-009,Director of Finance Systems,,,,CFO,2026-10-09,18200000,ai-control-tower/T12_derived-actions.csv,10,tenant_file
+APX-ACT-010,hold_until_evidence decision for ServiceNow store support agent,P1,APX-INIT-010,VP Engineering,,,,VP IT Operations,2026-11-25,15600000,ai-control-tower/T12_derived-actions.csv,11,tenant_file

@@ -1,0 +1,581 @@
+{
+  "tenant_key": "skyharbor-air",
+  "client_id": null,
+  "idempotency_key": "d1a2d43c9cffc5e4d50305895ea894f8",
+  "v3_facts": 10,
+  "standardized_facts": 286,
+  "tower_facts": 0,
+  "merged_facts": 116,
+  "suppressed_facts": 180,
+  "crosswalk_size": 0,
+  "crosswalk_conflicts": [],
+  "mart_counts": {
+    "command_center": 1,
+    "value_funnel": 5,
+    "program_decision_lanes": 36,
+    "ai_portfolio": 36,
+    "cxo_actions": 4,
+    "evidence_lineage": 72,
+    "required_field_gaps": 17
+  },
+  "command_center": {
+    "command_center_key": "skyharbor-air::tower_command_mart_v1::command-center",
+    "tenant_key": "skyharbor-air",
+    "tenant_name": "skyharbor-air",
+    "mart_version": "tower_command_mart_v1",
+    "source_standard": "standard-2026-07-v3",
+    "formula_version": "unified_facts_v1",
+    "source_run_id": null,
+    "total_it_budget_fy26": 0,
+    "run_budget_fy26": 0,
+    "change_budget_fy26": 0,
+    "approved_program_budget_fy26": 103125000,
+    "ai_tagged_spend_fy26_non_additive": 53925000,
+    "promised_value_fy26": 3454200000,
+    "partial_finance_validated_value_ytd": 437690000,
+    "realized_value_ytd_allowed": 0,
+    "candidate_ai_opportunities": 0,
+    "watch_pressure_signals": 1,
+    "run_ratio": null,
+    "change_ratio": null,
+    "finance_validation_ratio": 0.13,
+    "decision_question": "Which AI/technology bets deserve more capital, which need evidence, which are blocked, and which should stop?",
+    "executive_summary": "Total technology budget is not yet loaded, so the run/change split cannot be shown. AI-tagged spend is $53.9M against $3454.2M promised value, of which finance has partially validated $437.7M. Across funded bets the decision posture is 20 fund, 14 fix, 2 freeze. Realized value stays blocked until usage, KPI movement, and finance validation line up.",
+    "source_fact_keys": [
+      "skyharbor-air::benefit-promised::prog-crew-copilot",
+      "skyharbor-air::benefit-validated::prog-crew-copilot",
+      "skyharbor-air::benefit-promised::prog-irops-snow-ai",
+      "skyharbor-air::benefit-validated::prog-irops-snow-ai",
+      "skyharbor-air::benefit-promised::prog-digital-eng-ai",
+      "skyharbor-air::benefit-validated::prog-digital-eng-ai",
+      "skyharbor-air::benefit-promised::prog-loyalty-ai",
+      "skyharbor-air::benefit-validated::prog-loyalty-ai",
+      "skyharbor-air::benefit-promised::prog-crew-recovery-ai",
+      "skyharbor-air::benefit-promised::prog-mx-predict",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-001",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-001",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-001-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-001-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-002",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-002",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-002-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-002-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-003",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-003-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-003-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-004",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-004-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-004-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-005",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-005",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-005-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-005-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-006",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-006",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-006-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-006-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-007",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-007-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-007-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-008",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-008-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-008-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-009",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-009",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-009-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-009-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-010",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-010",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-010-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-010-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-100",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-011-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-011-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-101",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-012-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-012-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-102",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-102",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-013-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-013-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-103",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-103",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-014-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-014-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-104",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-015-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-015-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-105",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-016-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-016-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-106",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-106",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-017-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-017-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-107",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-107",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-018-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-018-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-108",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-019-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-019-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-109",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-020-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-020-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-110",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-110",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-021-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-021-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-111",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-111",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-022-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-022-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-112",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-023-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-023-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-113",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-024-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-024-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-114",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-114",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-025-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-025-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-115",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-115",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-026-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-026-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-116",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-027-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-027-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-117",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-028-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-028-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-118",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-118",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-029-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-029-1",
+      "skyharbor-air::tsv1-initiative-promised::sha-init-119",
+      "skyharbor-air::tsv1-initiative-measured::sha-init-119",
+      "skyharbor-air::tsv1-spend-budget::sha-spend-030-1",
+      "skyharbor-air::tsv1-spend-actual::sha-spend-030-1"
+    ],
+    "source_files": [
+      "08_it_budget_spend_value.csv",
+      "09_programs_initiatives.csv",
+      "SA08_AI_Benefits_Realization_Usage_Ledger.csv"
+    ]
+  },
+  "decision_lanes": [
+    {
+      "program": "Crew and Station Productivity Copilot",
+      "lane": "fund",
+      "funded": 0,
+      "promised": 9800000,
+      "validated": 1300000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "IROPS Service Desk Agent Assist",
+      "lane": "fund",
+      "funded": 0,
+      "promised": 6200000,
+      "validated": 700000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Digital Engineering Copilot",
+      "lane": "fund",
+      "funded": 0,
+      "promised": 4200000,
+      "validated": 450000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Loyalty Personalization AI",
+      "lane": "fund",
+      "funded": 0,
+      "promised": 18000000,
+      "validated": 3200000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Crew Recovery Copilot",
+      "lane": "freeze",
+      "funded": 0,
+      "promised": 27000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Predictive Maintenance AI",
+      "lane": "freeze",
+      "funded": 0,
+      "promised": 15000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "IROPS Agentic Recovery Cockpit",
+      "lane": "fund",
+      "funded": 900000,
+      "promised": 270000000,
+      "validated": 91800000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Delta-style Digital Concierge",
+      "lane": "fund",
+      "funded": 1075000,
+      "promised": 180000000,
+      "validated": 21600000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Enterprise CDP Selection and Identity Graph",
+      "lane": "fix",
+      "funded": 1250000,
+      "promised": 210000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Mainframe API and Event Bridge",
+      "lane": "fix",
+      "funded": 1425000,
+      "promised": 310000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Teradata Vantage Workload Rationalization",
+      "lane": "fund",
+      "funded": 1600000,
+      "promised": 122000000,
+      "validated": 41480000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Crew Recovery Optimization",
+      "lane": "fund",
+      "funded": 1775000,
+      "promised": 140000000,
+      "validated": 16800000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Baggage Exception Prediction",
+      "lane": "fix",
+      "funded": 1950000,
+      "promised": 86000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "MRO Predictive Maintenance Agent",
+      "lane": "fix",
+      "funded": 2125000,
+      "promised": 150000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Contact Center Agent Assist",
+      "lane": "fund",
+      "funded": 2300000,
+      "promised": 92000000,
+      "validated": 31280000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Engineering Productivity AI",
+      "lane": "fund",
+      "funded": 2475000,
+      "promised": 74000000,
+      "validated": 8880000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "IROPS recovery decisioning modernization",
+      "lane": "fix",
+      "funded": 2650000,
+      "promised": 18000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Crew recovery and legality modernization",
+      "lane": "fix",
+      "funded": 2825000,
+      "promised": 30000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Flight planning and dispatch modernization",
+      "lane": "fund",
+      "funded": 3000000,
+      "promised": 42000000,
+      "validated": 14280000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Airport turn management modernization",
+      "lane": "fund",
+      "funded": 3175000,
+      "promised": 54000000,
+      "validated": 6480000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Baggage tracking and recovery modernization",
+      "lane": "fix",
+      "funded": 3350000,
+      "promised": 66000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "MRO predictive maintenance modernization",
+      "lane": "fix",
+      "funded": 3525000,
+      "promised": 78000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Revenue management and pricing modernization",
+      "lane": "fund",
+      "funded": 3700000,
+      "promised": 90000000,
+      "validated": 30600000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "NDC offer/order retailing modernization",
+      "lane": "fund",
+      "funded": 3875000,
+      "promised": 102000000,
+      "validated": 12240000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Loyalty personalization modernization",
+      "lane": "fix",
+      "funded": 4050000,
+      "promised": 114000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Digital concierge and journey orchestration modernization",
+      "lane": "fix",
+      "funded": 4225000,
+      "promised": 126000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Contact center service recovery modernization",
+      "lane": "fund",
+      "funded": 4400000,
+      "promised": 138000000,
+      "validated": 46920000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Cargo capacity optimization modernization",
+      "lane": "fund",
+      "funded": 4575000,
+      "promised": 150000000,
+      "validated": 18000000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Fuel optimization and sustainability modernization",
+      "lane": "fix",
+      "funded": 4750000,
+      "promised": 162000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Revenue accounting and settlement modernization",
+      "lane": "fix",
+      "funded": 4925000,
+      "promised": 174000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "SAP finance close and procurement modernization",
+      "lane": "fund",
+      "funded": 5100000,
+      "promised": 186000000,
+      "validated": 63240000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Mainframe transaction processing modernization",
+      "lane": "fund",
+      "funded": 5275000,
+      "promised": 18000000,
+      "validated": 2160000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Cloud-native digital engineering modernization",
+      "lane": "fix",
+      "funded": 5450000,
+      "promised": 30000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Enterprise integration and eventing modernization",
+      "lane": "fix",
+      "funded": 5625000,
+      "promised": 42000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "EDW and certified BI modernization",
+      "lane": "fund",
+      "funded": 5800000,
+      "promised": 54000000,
+      "validated": 18360000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Data lake ingestion and lineage modernization",
+      "lane": "fund",
+      "funded": 5975000,
+      "promised": 66000000,
+      "validated": 7920000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    }
+  ],
+  "gaps": [
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Crew Recovery Copilot not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Predictive Maintenance AI not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Enterprise CDP Selection and Identity Graph not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Mainframe API and Event Bridge not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Baggage Exception Prediction not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for MRO Predictive Maintenance Agent not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for IROPS recovery decisioning modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Crew recovery and legality modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Baggage tracking and recovery modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for MRO predictive maintenance modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Loyalty personalization modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Digital concierge and journey orchestration modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Fuel optimization and sustainability modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Revenue accounting and settlement modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Cloud-native digital engineering modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Enterprise integration and eventing modernization not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "total_it_budget_fy26",
+      "severity": "blocking",
+      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
+    }
+  ]
+}

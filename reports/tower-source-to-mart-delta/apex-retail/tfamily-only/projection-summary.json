@@ -1,0 +1,251 @@
+{
+  "tenant_key": "apex-retail",
+  "client_id": null,
+  "idempotency_key": "183c9f27321242e876be01b2e23085da",
+  "v3_facts": 0,
+  "standardized_facts": 54,
+  "tower_facts": 0,
+  "merged_facts": 54,
+  "suppressed_facts": 0,
+  "crosswalk_size": 0,
+  "crosswalk_conflicts": [],
+  "mart_counts": {
+    "command_center": 1,
+    "value_funnel": 5,
+    "program_decision_lanes": 14,
+    "ai_portfolio": 14,
+    "cxo_actions": 3,
+    "evidence_lineage": 28,
+    "required_field_gaps": 3
+  },
+  "command_center": {
+    "command_center_key": "apex-retail::tower_command_mart_v1::command-center",
+    "tenant_key": "apex-retail",
+    "tenant_name": "apex-retail",
+    "mart_version": "tower_command_mart_v1",
+    "source_standard": "apex-retail",
+    "formula_version": "unified_facts_v1",
+    "source_run_id": null,
+    "total_it_budget_fy26": 0,
+    "run_budget_fy26": 0,
+    "change_budget_fy26": 0,
+    "approved_program_budget_fy26": 111160000,
+    "ai_tagged_spend_fy26_non_additive": 55020000,
+    "promised_value_fy26": 641000000,
+    "partial_finance_validated_value_ytd": 130600000,
+    "realized_value_ytd_allowed": 0,
+    "candidate_ai_opportunities": 0,
+    "watch_pressure_signals": 1,
+    "run_ratio": null,
+    "change_ratio": null,
+    "finance_validation_ratio": 0.2,
+    "decision_question": "Which AI/technology bets deserve more capital, which need evidence, which are blocked, and which should stop?",
+    "executive_summary": "Total technology budget is not yet loaded, so the run/change split cannot be shown. AI-tagged spend is $55.0M against $641.0M promised value, of which finance has partially validated $130.6M. Across funded bets the decision posture is 12 fund, 2 fix. Realized value stays blocked until usage, KPI movement, and finance validation line up.",
+    "source_fact_keys": [
+      "apex-retail::tsv1-initiative-promised::apx-init-001",
+      "apex-retail::tsv1-initiative-measured::apx-init-001",
+      "apex-retail::tsv1-spend-budget::apx-init-001-2",
+      "apex-retail::tsv1-spend-actual::apx-init-001-2",
+      "apex-retail::tsv1-initiative-promised::apx-init-002",
+      "apex-retail::tsv1-initiative-measured::apx-init-002",
+      "apex-retail::tsv1-spend-budget::apx-init-002-3",
+      "apex-retail::tsv1-spend-actual::apx-init-002-3",
+      "apex-retail::tsv1-initiative-promised::apx-init-003",
+      "apex-retail::tsv1-initiative-measured::apx-init-003",
+      "apex-retail::tsv1-spend-budget::apx-init-003-4",
+      "apex-retail::tsv1-spend-actual::apx-init-003-4",
+      "apex-retail::tsv1-initiative-promised::apx-init-004",
+      "apex-retail::tsv1-initiative-measured::apx-init-004",
+      "apex-retail::tsv1-spend-budget::apx-init-004-5",
+      "apex-retail::tsv1-spend-actual::apx-init-004-5",
+      "apex-retail::tsv1-initiative-promised::apx-init-005",
+      "apex-retail::tsv1-initiative-measured::apx-init-005",
+      "apex-retail::tsv1-spend-budget::apx-init-005-6",
+      "apex-retail::tsv1-spend-actual::apx-init-005-6",
+      "apex-retail::tsv1-initiative-promised::apx-init-006",
+      "apex-retail::tsv1-initiative-measured::apx-init-006",
+      "apex-retail::tsv1-spend-budget::apx-init-006-7",
+      "apex-retail::tsv1-spend-actual::apx-init-006-7",
+      "apex-retail::tsv1-initiative-promised::apx-init-007",
+      "apex-retail::tsv1-initiative-measured::apx-init-007",
+      "apex-retail::tsv1-spend-budget::apx-init-007-8",
+      "apex-retail::tsv1-spend-actual::apx-init-007-8",
+      "apex-retail::tsv1-initiative-promised::apx-init-008",
+      "apex-retail::tsv1-initiative-measured::apx-init-008",
+      "apex-retail::tsv1-spend-budget::apx-init-008-9",
+      "apex-retail::tsv1-spend-actual::apx-init-008-9",
+      "apex-retail::tsv1-initiative-promised::apx-init-009",
+      "apex-retail::tsv1-initiative-measured::apx-init-009",
+      "apex-retail::tsv1-spend-budget::apx-init-009-10",
+      "apex-retail::tsv1-spend-actual::apx-init-009-10",
+      "apex-retail::tsv1-initiative-promised::apx-init-010",
+      "apex-retail::tsv1-initiative-measured::apx-init-010",
+      "apex-retail::tsv1-spend-budget::apx-init-010-11",
+      "apex-retail::tsv1-spend-actual::apx-init-010-11",
+      "apex-retail::tsv1-initiative-promised::apx-init-011",
+      "apex-retail::tsv1-spend-budget::apx-init-011-12",
+      "apex-retail::tsv1-spend-actual::apx-init-011-12",
+      "apex-retail::tsv1-initiative-promised::apx-init-012",
+      "apex-retail::tsv1-spend-budget::apx-init-012-13",
+      "apex-retail::tsv1-spend-actual::apx-init-012-13",
+      "apex-retail::tsv1-initiative-promised::apx-init-013",
+      "apex-retail::tsv1-initiative-measured::apx-init-013",
+      "apex-retail::tsv1-spend-budget::apx-init-013-14",
+      "apex-retail::tsv1-spend-actual::apx-init-013-14",
+      "apex-retail::tsv1-initiative-promised::apx-init-014",
+      "apex-retail::tsv1-initiative-measured::apx-init-014",
+      "apex-retail::tsv1-spend-budget::apx-init-014-15",
+      "apex-retail::tsv1-spend-actual::apx-init-014-15"
+    ],
+    "source_files": [
+      "08_it_budget_spend_value.csv",
+      "09_programs_initiatives.csv",
+      "SA08_AI_Benefits_Realization_Usage_Ledger.csv"
+    ]
+  },
+  "decision_lanes": [
+    {
+      "program": "Retail lakehouse and customer inventory graph",
+      "lane": "fund",
+      "funded": 3000000,
+      "promised": 95000000,
+      "validated": 12000000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "AI demand forecasting and replenishment",
+      "lane": "fund",
+      "funded": 3760000,
+      "promised": 72000000,
+      "validated": 21000000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Store labor scheduling optimization",
+      "lane": "fund",
+      "funded": 4520000,
+      "promised": 51000000,
+      "validated": 9000000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Shrink anomaly detection",
+      "lane": "fund",
+      "funded": 5280000,
+      "promised": 68000000,
+      "validated": 6800000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Search and personalization AI",
+      "lane": "fund",
+      "funded": 6040000,
+      "promised": 84000000,
+      "validated": 42000000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Retail media measurement clean room",
+      "lane": "fund",
+      "funded": 6800000,
+      "promised": 38000000,
+      "validated": 4000000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "BOPIS exception prediction",
+      "lane": "fund",
+      "funded": 7560000,
+      "promised": 34000000,
+      "validated": 7400000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Returns fraud triage",
+      "lane": "fund",
+      "funded": 8320000,
+      "promised": 26000000,
+      "validated": 3200000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Finance margin bridge automation",
+      "lane": "fund",
+      "funded": 9080000,
+      "promised": 24000000,
+      "validated": 5800000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "ServiceNow store support agent",
+      "lane": "fund",
+      "funded": 9840000,
+      "promised": 18000000,
+      "validated": 2400000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "Assortment localization copilot",
+      "lane": "fix",
+      "funded": 10600000,
+      "promised": 30000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Store associate task assistant",
+      "lane": "fix",
+      "funded": 11360000,
+      "promised": 43000000,
+      "validated": 0,
+      "usage": "-=-",
+      "status": "promised_only"
+    },
+    {
+      "program": "Supply chain ETA and carrier exception AI",
+      "lane": "fund",
+      "funded": 12120000,
+      "promised": 36000000,
+      "validated": 7200000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    },
+    {
+      "program": "AI code productivity program",
+      "lane": "fund",
+      "funded": 12880000,
+      "promised": 22000000,
+      "validated": 9800000,
+      "usage": "-=-",
+      "status": "partial_validated"
+    }
+  ],
+  "gaps": [
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Assortment localization copilot not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Store associate task assistant not loaded; realized value stays blocked until it is."
+    },
+    {
+      "field": "total_it_budget_fy26",
+      "severity": "blocking",
+      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
+    }
+  ]
+}

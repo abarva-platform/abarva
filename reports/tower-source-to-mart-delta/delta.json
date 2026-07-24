@@ -1,0 +1,258 @@
+[
+  {
+    "tenant": "meridian-health",
+    "v3Dir": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3",
+    "stdDir": "tower-standardized-v1/meridian-health",
+    "sourceRows": {
+      "T01_initiatives": 14,
+      "T08_spend": 7,
+      "T03_tool_usage": 40
+    },
+    "before": {
+      "facts": 293,
+      "mart": {
+        "lanes": 12,
+        "portfolio": 255,
+        "actions": 3,
+        "evidence": 267,
+        "gaps": 15,
+        "ai_tagged_spend_usd": 113200000,
+        "lanes_with_owner": 12,
+        "approved_funding_usd": 291900000,
+        "promised_value_usd": 35500000,
+        "finance_validated_usd": 3800000
+      }
+    },
+    "after": {
+      "facts": 401,
+      "standardizedFacts": 134,
+      "mart": {
+        "lanes": 26,
+        "portfolio": 279,
+        "actions": 2,
+        "evidence": 305,
+        "gaps": 24,
+        "ai_tagged_spend_usd": 81015341,
+        "lanes_with_owner": 26,
+        "approved_funding_usd": 336725000,
+        "promised_value_usd": 742000000,
+        "finance_validated_usd": 185670000
+      }
+    },
+    "tfamily": {
+      "facts": 427,
+      "mart": {
+        "lanes": 26,
+        "portfolio": 279,
+        "actions": 3,
+        "evidence": 305,
+        "gaps": 15,
+        "ai_tagged_spend_usd": 157015341,
+        "lanes_with_owner": 26,
+        "approved_funding_usd": 336725000,
+        "promised_value_usd": 777500000,
+        "finance_validated_usd": 189470000
+      }
+    }
+  },
+  {
+    "tenant": "first-capital",
+    "v3Dir": "datasets/tenant-inputs/first-capital/standard-2026-07-v3",
+    "stdDir": "tower-standardized-v1/first-capital-financial",
+    "sourceRows": {
+      "T01_initiatives": 42,
+      "T08_spend": 42,
+      "T03_tool_usage": 35
+    },
+    "before": {
+      "facts": 262,
+      "mart": {
+        "lanes": 7,
+        "portfolio": 232,
+        "actions": 4,
+        "evidence": 239,
+        "gaps": 6,
+        "ai_tagged_spend_usd": 75600000,
+        "lanes_with_owner": 7,
+        "approved_funding_usd": 37800000,
+        "promised_value_usd": 50800000,
+        "finance_validated_usd": 1750000
+      }
+    },
+    "after": {
+      "facts": 499,
+      "standardizedFacts": 274,
+      "mart": {
+        "lanes": 42,
+        "portfolio": 274,
+        "actions": 3,
+        "evidence": 316,
+        "gaps": 7,
+        "ai_tagged_spend_usd": 133843878,
+        "lanes_with_owner": 42,
+        "approved_funding_usd": 139700000,
+        "promised_value_usd": 3786000000,
+        "finance_validated_usd": 412688353
+      }
+    },
+    "tfamily": {
+      "facts": 536,
+      "mart": {
+        "lanes": 49,
+        "portfolio": 281,
+        "actions": 4,
+        "evidence": 330,
+        "gaps": 12,
+        "ai_tagged_spend_usd": 209443878,
+        "lanes_with_owner": 49,
+        "approved_funding_usd": 177500000,
+        "promised_value_usd": 3836800000,
+        "finance_validated_usd": 414438353
+      }
+    }
+  },
+  {
+    "tenant": "skyharbor-air",
+    "v3Dir": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3",
+    "stdDir": "tower-standardized-v1/skyharbor-air",
+    "sourceRows": {
+      "T01_initiatives": 30,
+      "T08_spend": 120,
+      "T03_tool_usage": 144
+    },
+    "before": {
+      "facts": 247,
+      "mart": {
+        "lanes": 6,
+        "portfolio": 219,
+        "actions": 3,
+        "evidence": 225,
+        "gaps": 3,
+        "ai_tagged_spend_usd": 90200000,
+        "lanes_with_owner": 6,
+        "approved_funding_usd": 45100000,
+        "promised_value_usd": 80200000,
+        "finance_validated_usd": 5650000
+      }
+    },
+    "after": {
+      "facts": 633,
+      "standardizedFacts": 420,
+      "mart": {
+        "lanes": 30,
+        "portfolio": 255,
+        "actions": 3,
+        "evidence": 285,
+        "gaps": 15,
+        "ai_tagged_spend_usd": 406473522,
+        "lanes_with_owner": 30,
+        "approved_funding_usd": 1031250000,
+        "promised_value_usd": 3374000000,
+        "finance_validated_usd": 432040000
+      }
+    },
+    "tfamily": {
+      "facts": 667,
+      "mart": {
+        "lanes": 36,
+        "portfolio": 261,
+        "actions": 3,
+        "evidence": 297,
+        "gaps": 17,
+        "ai_tagged_spend_usd": 496673522,
+        "lanes_with_owner": 36,
+        "approved_funding_usd": 1076350000,
+        "promised_value_usd": 3454200000,
+        "finance_validated_usd": 437690000
+      }
+    }
+  },
+  {
+    "tenant": "lakeshore-holdings",
+    "v3Dir": null,
+    "stdDir": "tower-standardized-v1/lakeshore-industries",
+    "sourceRows": {
+      "T01_initiatives": 10,
+      "T08_spend": 10,
+      "T03_tool_usage": 40
+    },
+    "before": {
+      "skipped": "no V3 packet — this tenant has no 'before' state"
+    },
+    "after": {
+      "facts": 130,
+      "standardizedFacts": 130,
+      "mart": {
+        "lanes": 10,
+        "portfolio": 20,
+        "actions": 2,
+        "evidence": 30,
+        "gaps": 1,
+        "ai_tagged_spend_usd": 100071060,
+        "lanes_with_owner": 10,
+        "approved_funding_usd": 76434000,
+        "promised_value_usd": 381000000,
+        "finance_validated_usd": 91680000
+      }
+    },
+    "tfamily": {
+      "facts": 130,
+      "mart": {
+        "lanes": 10,
+        "portfolio": 20,
+        "actions": 2,
+        "evidence": 30,
+        "gaps": 1,
+        "ai_tagged_spend_usd": 100071060,
+        "lanes_with_owner": 10,
+        "approved_funding_usd": 76434000,
+        "promised_value_usd": 381000000,
+        "finance_validated_usd": 91680000
+      }
+    }
+  },
+  {
+    "tenant": "apex-retail",
+    "v3Dir": null,
+    "stdDir": "tower-standardized-v1/apex-retail",
+    "sourceRows": {
+      "T01_initiatives": 14,
+      "T08_spend": 14,
+      "T03_tool_usage": 44
+    },
+    "before": {
+      "skipped": "no V3 packet — this tenant has no 'before' state"
+    },
+    "after": {
+      "facts": 156,
+      "standardizedFacts": 156,
+      "mart": {
+        "lanes": 14,
+        "portfolio": 25,
+        "actions": 3,
+        "evidence": 39,
+        "gaps": 3,
+        "ai_tagged_spend_usd": 101167336,
+        "lanes_with_owner": 14,
+        "approved_funding_usd": 111160000,
+        "promised_value_usd": 641000000,
+        "finance_validated_usd": 130600000
+      }
+    },
+    "tfamily": {
+      "facts": 156,
+      "mart": {
+        "lanes": 14,
+        "portfolio": 25,
+        "actions": 3,
+        "evidence": 39,
+        "gaps": 3,
+        "ai_tagged_spend_usd": 101167336,
+        "lanes_with_owner": 14,
+        "approved_funding_usd": 111160000,
+        "promised_value_usd": 641000000,
+        "finance_validated_usd": 130600000
+      }
+    }
+  }
+]

@@ -1,41 +1,41 @@
-period,tool_name,licensed_users,active_users,prompts_or_actions,estimated_hours_saved,quality_or_control_flag,source_file,source_row,cost_usd,value_source
-2026-03,M365 Copilot,120,45,8000,260,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,2,3490,tenant_file
-2026-04,M365 Copilot,120,52,11100,340,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,3,3428,tenant_file
-2026-05,M365 Copilot,120,60,14200,420,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,4,3593,tenant_file
-2026-06,M365 Copilot,120,67,17300,500,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,5,3531,tenant_file
-2026-03,Claude Code,330,125,12200,315,normal,ai-control-tower/T03_tool-usage-monthly.csv,6,47231,tenant_file
-2026-04,Claude Code,330,145,15300,395,normal,ai-control-tower/T03_tool-usage-monthly.csv,7,52322,tenant_file
-2026-05,Claude Code,330,165,18400,475,normal,ai-control-tower/T03_tool-usage-monthly.csv,8,48645,tenant_file
-2026-06,Claude Code,330,184,21500,555,normal,ai-control-tower/T03_tool-usage-monthly.csv,9,47795,tenant_file
-2026-03,Codex,540,205,16400,370,normal,ai-control-tower/T03_tool-usage-monthly.csv,10,33014,tenant_file
-2026-04,Codex,540,237,19500,450,normal,ai-control-tower/T03_tool-usage-monthly.csv,11,32645,tenant_file
-2026-05,Codex,540,270,22600,530,normal,ai-control-tower/T03_tool-usage-monthly.csv,12,34126,tenant_file
-2026-06,Codex,540,302,25700,610,normal,ai-control-tower/T03_tool-usage-monthly.csv,13,33570,tenant_file
-2026-03,Cursor,750,285,20600,425,normal,ai-control-tower/T03_tool-usage-monthly.csv,14,28398,tenant_file
-2026-04,Cursor,750,330,23700,505,normal,ai-control-tower/T03_tool-usage-monthly.csv,15,28913,tenant_file
-2026-05,Cursor,750,375,26800,585,normal,ai-control-tower/T03_tool-usage-monthly.csv,16,31141,tenant_file
-2026-06,Cursor,750,420,29900,665,normal,ai-control-tower/T03_tool-usage-monthly.csv,17,31656,tenant_file
-2026-03,ServiceNow Now Assist,960,364,24800,480,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,18,33935,tenant_file
-2026-04,ServiceNow Now Assist,960,422,27900,560,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,19,34511,tenant_file
-2026-05,ServiceNow Now Assist,960,480,31000,640,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,20,32975,tenant_file
-2026-06,ServiceNow Now Assist,960,537,34100,720,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,21,33552,tenant_file
-2026-03,Databricks Assistant,1170,444,29000,535,normal,ai-control-tower/T03_tool-usage-monthly.csv,22,61253,tenant_file
-2026-04,Databricks Assistant,1170,514,32100,615,normal,ai-control-tower/T03_tool-usage-monthly.csv,23,61987,tenant_file
-2026-05,Databricks Assistant,1170,585,35200,695,normal,ai-control-tower/T03_tool-usage-monthly.csv,24,66767,tenant_file
-2026-06,Databricks Assistant,1170,655,38300,775,normal,ai-control-tower/T03_tool-usage-monthly.csv,25,67871,tenant_file
-2026-03,AWS Bedrock,1380,524,33200,590,normal,ai-control-tower/T03_tool-usage-monthly.csv,26,60952,tenant_file
-2026-04,AWS Bedrock,1380,607,36300,670,normal,ai-control-tower/T03_tool-usage-monthly.csv,27,60244,tenant_file
-2026-05,AWS Bedrock,1380,690,39400,750,normal,ai-control-tower/T03_tool-usage-monthly.csv,28,63084,tenant_file
-2026-06,AWS Bedrock,1380,772,42500,830,normal,ai-control-tower/T03_tool-usage-monthly.csv,29,62018,tenant_file
-2026-03,Tableau Pulse,1590,604,37400,645,normal,ai-control-tower/T03_tool-usage-monthly.csv,30,23581,tenant_file
-2026-04,Tableau Pulse,1590,699,40500,725,normal,ai-control-tower/T03_tool-usage-monthly.csv,31,23172,tenant_file
-2026-05,Tableau Pulse,1590,795,43600,805,normal,ai-control-tower/T03_tool-usage-monthly.csv,32,24262,tenant_file
-2026-06,Tableau Pulse,1590,890,46700,885,normal,ai-control-tower/T03_tool-usage-monthly.csv,33,23853,tenant_file
-2026-03,Epic AI,1800,684,41600,700,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,34,45950,tenant_file
-2026-04,Epic AI,1800,792,44700,780,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,35,42608,tenant_file
-2026-05,Epic AI,1800,900,47800,860,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,36,44665,tenant_file
-2026-06,Epic AI,1800,1008,50900,940,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,37,46723,tenant_file
-2026-03,Kyriba AI,2010,763,45800,755,normal,ai-control-tower/T03_tool-usage-monthly.csv,38,56805,tenant_file
-2026-04,Kyriba AI,2010,884,48900,835,normal,ai-control-tower/T03_tool-usage-monthly.csv,39,61284,tenant_file
-2026-05,Kyriba AI,2010,1005,52000,915,normal,ai-control-tower/T03_tool-usage-monthly.csv,40,58527,tenant_file
-2026-06,Kyriba AI,2010,1125,55100,995,normal,ai-control-tower/T03_tool-usage-monthly.csv,41,63006,tenant_file
+period,tool_name,vendor,business_function,licensed_users,active_users,active_rate_pct,monthly_prompts_or_actions,prompts_or_actions,estimated_hours_saved,quality_or_control_flag,source_file,source_row,cost_usd,policy_status,notes,value_source
+2026-03,M365 Copilot,Microsoft,GEN-BF-001,120,45,38,1614,8000,260,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,2,3490,approved,,tenant_file
+2026-04,M365 Copilot,Microsoft,GEN-BF-006,120,52,43,2065,11100,340,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,3,3428,approved,,tenant_file
+2026-05,M365 Copilot,Microsoft,GEN-BF-001,120,60,50,1691,14200,420,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,4,3593,approved,,tenant_file
+2026-06,M365 Copilot,Microsoft,GEN-BF-006,120,67,56,2146,17300,500,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,5,3531,approved,,tenant_file
+2026-03,Claude Code,Anthropic,GEN-BF-008,330,125,38,1837,12200,315,normal,ai-control-tower/T03_tool-usage-monthly.csv,6,47231,under_review,,tenant_file
+2026-04,Claude Code,Anthropic,GEN-BF-002,330,145,44,3530,15300,395,normal,ai-control-tower/T03_tool-usage-monthly.csv,7,52322,under_review,,tenant_file
+2026-05,Claude Code,Anthropic,GEN-BF-007,330,165,50,6107,18400,475,normal,ai-control-tower/T03_tool-usage-monthly.csv,8,48645,approved,,tenant_file
+2026-06,Claude Code,Anthropic,GEN-BF-004,330,184,56,7517,21500,555,normal,ai-control-tower/T03_tool-usage-monthly.csv,9,47795,under_review,,tenant_file
+2026-03,Codex,OpenAI,GEN-BF-002,540,205,38,6012,16400,370,normal,ai-control-tower/T03_tool-usage-monthly.csv,10,33014,under_review,,tenant_file
+2026-04,Codex,OpenAI,GEN-BF-005,540,237,44,7861,19500,450,normal,ai-control-tower/T03_tool-usage-monthly.csv,11,32645,approved,,tenant_file
+2026-05,Codex,OpenAI,GEN-BF-002,540,270,50,7765,22600,530,normal,ai-control-tower/T03_tool-usage-monthly.csv,12,34126,approved,,tenant_file
+2026-06,Codex,OpenAI,GEN-BF-008,540,302,56,7525,25700,610,normal,ai-control-tower/T03_tool-usage-monthly.csv,13,33570,under_review,,tenant_file
+2026-03,Cursor,Cursor,GEN-BF-005,750,285,38,10386,20600,425,normal,ai-control-tower/T03_tool-usage-monthly.csv,14,28398,approved,,tenant_file
+2026-04,Cursor,Cursor,GEN-BF-008,750,330,44,10758,23700,505,normal,ai-control-tower/T03_tool-usage-monthly.csv,15,28913,approved,,tenant_file
+2026-05,Cursor,Cursor,GEN-BF-003,750,375,50,14092,26800,585,normal,ai-control-tower/T03_tool-usage-monthly.csv,16,31141,approved,,tenant_file
+2026-06,Cursor,Cursor,GEN-BF-006,750,420,56,14169,29900,665,normal,ai-control-tower/T03_tool-usage-monthly.csv,17,31656,approved,,tenant_file
+2026-03,ServiceNow Now Assist,ServiceNow,GEN-BF-008,960,364,38,7671,24800,480,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,18,33935,approved,,tenant_file
+2026-04,ServiceNow Now Assist,ServiceNow,GEN-BF-006,960,422,44,5221,27900,560,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,19,34511,approved,,tenant_file
+2026-05,ServiceNow Now Assist,ServiceNow,GEN-BF-001,960,480,50,8329,31000,640,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,20,32975,under_review,,tenant_file
+2026-06,ServiceNow Now Assist,ServiceNow,GEN-BF-005,960,537,56,7254,34100,720,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,21,33552,approved,,tenant_file
+2026-03,Databricks Assistant,Databricks,GEN-BF-003,1170,444,38,11788,29000,535,normal,ai-control-tower/T03_tool-usage-monthly.csv,22,61253,approved,,tenant_file
+2026-04,Databricks Assistant,Databricks,GEN-BF-006,1170,514,44,15622,32100,615,normal,ai-control-tower/T03_tool-usage-monthly.csv,23,61987,approved,,tenant_file
+2026-05,Databricks Assistant,Databricks,GEN-BF-003,1170,585,50,22869,35200,695,normal,ai-control-tower/T03_tool-usage-monthly.csv,24,66767,under_review,,tenant_file
+2026-06,Databricks Assistant,Databricks,GEN-BF-005,1170,655,56,8473,38300,775,normal,ai-control-tower/T03_tool-usage-monthly.csv,25,67871,approved,,tenant_file
+2026-03,AWS Bedrock,AWS,GEN-BF-006,1380,524,38,21080,33200,590,normal,ai-control-tower/T03_tool-usage-monthly.csv,26,60952,approved,,tenant_file
+2026-04,AWS Bedrock,AWS,GEN-BF-001,1380,607,44,8541,36300,670,normal,ai-control-tower/T03_tool-usage-monthly.csv,27,60244,approved,,tenant_file
+2026-05,AWS Bedrock,AWS,GEN-BF-003,1380,690,50,13017,39400,750,normal,ai-control-tower/T03_tool-usage-monthly.csv,28,63084,approved,,tenant_file
+2026-06,AWS Bedrock,AWS,GEN-BF-002,1380,772,56,17530,42500,830,normal,ai-control-tower/T03_tool-usage-monthly.csv,29,62018,approved,,tenant_file
+2026-03,Tableau Pulse,Salesforce,GEN-BF-006,1590,604,38,22926,37400,645,normal,ai-control-tower/T03_tool-usage-monthly.csv,30,23581,approved,,tenant_file
+2026-04,Tableau Pulse,Salesforce,GEN-BF-006,1590,699,44,29218,40500,725,normal,ai-control-tower/T03_tool-usage-monthly.csv,31,23172,approved,,tenant_file
+2026-05,Tableau Pulse,Salesforce,GEN-BF-008,1590,795,50,13356,43600,805,normal,ai-control-tower/T03_tool-usage-monthly.csv,32,24262,approved,,tenant_file
+2026-06,Tableau Pulse,Salesforce,GEN-BF-005,1590,890,56,11532,46700,885,normal,ai-control-tower/T03_tool-usage-monthly.csv,33,23853,approved,,tenant_file
+2026-03,Epic AI,Epic,GEN-BF-006,1800,684,38,23432,41600,700,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,34,45950,approved,,tenant_file
+2026-04,Epic AI,Epic,GEN-BF-008,1800,792,44,23335,44700,780,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,35,42608,approved,,tenant_file
+2026-05,Epic AI,Epic,GEN-BF-003,1800,900,50,23059,47800,860,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,36,44665,under_review,,tenant_file
+2026-06,Epic AI,Epic,GEN-BF-008,1800,1008,56,21952,50900,940,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,37,46723,approved,,tenant_file
+2026-03,Kyriba AI,Kyriba,GEN-BF-001,2010,763,38,13685,45800,755,normal,ai-control-tower/T03_tool-usage-monthly.csv,38,56805,approved,,tenant_file
+2026-04,Kyriba AI,Kyriba,GEN-BF-001,2010,884,44,12458,48900,835,normal,ai-control-tower/T03_tool-usage-monthly.csv,39,61284,approved,,tenant_file
+2026-05,Kyriba AI,Kyriba,GEN-BF-001,2010,1005,50,23466,52000,915,normal,ai-control-tower/T03_tool-usage-monthly.csv,40,58527,approved,,tenant_file
+2026-06,Kyriba AI,Kyriba,GEN-BF-004,2010,1125,56,21945,55100,995,normal,ai-control-tower/T03_tool-usage-monthly.csv,41,63006,under_review,,tenant_file
