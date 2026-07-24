@@ -156,6 +156,15 @@ const requiredRelationshipGraphFields = [
   "empty_state",
 ];
 
+// Genuinely exclusive to one branch — not derived from set difference against
+// the required-field lists above, because title/executive_question/
+// classification/empty_state are legitimate on both a chart and a graph even
+// though they only happen to be *required* on one of the two lists. Deriving
+// "foreign" fields by list difference flagged those as violations; this list
+// only names the data-binding fields that are meaningless on the other type.
+const chartOnlyVisualFields = ["data_points", "encoding", "annotation", "evidence_boundary"];
+const graphOnlyVisualFields = ["projection_type", "node_groups", "edge_meaning", "layout_hint", "visual_emphasis"];
+
 const requiredUseCaseFields = [
   "classification",
   "evidence_maturity",
@@ -564,12 +573,11 @@ function baseSystemPrompt() {
     "For chart visuals, provide compact Recharts-ready data: no more than 7 visible marks for bars/points, no more than 5x5 heatmap cells, no dense labels, no raw record counts, no JSON intended for display.",
     "Claude owns every client-visible word. Return concise, polished, complete JSON only. Do not include markdown fences.",
     "For visuals, author the visual contract and executive meaning. The renderer will render the visual exactly from your structured spec and source-backed/candidate data; it will not invent titles, annotations, claims, or fallback copy.",
-    `Every rendered visual object in dashboard_visuals, benchmark_exhibits, evidence_visuals, visual_contracts, primary_visual, and priority_matrix_visual must include all of these fields: ${requiredVisualFields.join(", ")}.`,
+    `A visual object with visual_type from the chart enum (anything except relationship_graph) — in dashboard_visuals, benchmark_exhibits, evidence_visuals, visual_contracts, primary_visual, or priority_matrix_visual — must include all of these fields: ${requiredVisualFields.join(", ")}. It must NOT include projection_type, node_groups, edge_meaning, layout_hint, or visual_emphasis — those belong only to a relationship_graph.`,
     `signature_visuals are planning exhibits chosen before any data pass has run. Specify only: ${requiredPlanningVisualFields.join(", ")}. Do not invent data_points or encoding for a signature visual; the dimension writer binds real data later.`,
-    `Every relationship graph_display_contract must include all of these fields: ${requiredRelationshipGraphFields.join(", ")}.`,
-    "For every visual empty_state, write the exact business-facing sentence to show if the visual cannot render because evidence is missing. Do not omit empty_state even when data_points are present.",
-    "For every visual encoding, provide a compact object describing x/y/series/color/size or node/link encodings. Do not use a prose string when an object is clearer.",
-    "For every visual data_points, provide the exact compact array the renderer can draw. Do not leave it empty unless the classification is missing_evidence and empty_state explains why.",
+    `A visual object with visual_type: relationship_graph — wherever it appears, including as a dimension's primary_visual — must include all of these fields and none of the chart fields: ${requiredRelationshipGraphFields.join(", ")}. It must NOT include data_points, encoding, or annotation — express the graph through node_groups and edge_meaning instead. There is no separate "graph_display_contract" field to nest this inside; the visual object itself carries these fields directly.`,
+    "For every visual, chart or graph, write empty_state: the exact business-facing sentence to show if the visual cannot render because evidence is missing. Do not omit empty_state even when the visual is otherwise fully populated.",
+    "For a chart visual, provide encoding as a compact object describing x/y/series/color/size, and data_points as the exact compact array the renderer can draw. Do not leave data_points empty unless the classification is missing_evidence and empty_state explains why. Do not add encoding or data_points to a relationship_graph.",
     `Every item in qualified_candidates, foundations, and early_ideas must include all of these fields: ${requiredUseCaseFields.join(", ")}.`,
     "Be concise enough to fit the schema. Every pass must populate client_visible. Do not spend tokens restating instructions.",
   ].join("\n");
@@ -685,8 +693,8 @@ function makePrompt(pass, packet, assembled) {
       "Use relationship_graph only when the executive question is explicitly about connections, pathways, dependencies, ownership, lineage, or operating model relationships.",
       "Use fewer than 7 labels. Prefer short labels that fit inside a dashboard card.",
       "Do not show raw rows, records, nodes, edges, or file counts.",
-      `Every non-relationship visual must include: ${requiredVisualFields.join(", ")}.`,
-      `Every relationship graph_display_contract must include: ${requiredRelationshipGraphFields.join(", ")}.`,
+      `A chart visual (visual_type anything except relationship_graph) must include: ${requiredVisualFields.join(", ")}, and must NOT include projection_type, node_groups, edge_meaning, layout_hint, or visual_emphasis.`,
+      `A relationship_graph visual — the primary_visual object itself when visual_type is relationship_graph, not a separate nested field — must include: ${requiredRelationshipGraphFields.join(", ")}, and must NOT include data_points, encoding, or annotation.`,
       "Each data_point must include label, value or x/y where relevant, classification, and source_basis.",
       "If source data is directional rather than measured, classification must be strategic_inference or industry_pattern, and the evidence_boundary must say that plainly.",
     ],
@@ -1520,6 +1528,23 @@ function validateClosedEnums(candidate) {
             type: "visual_contract_missing_field",
             message: `${pathName || "visual"} is missing required visual field ${field}.`,
           });
+        }
+      }
+      // The live canary showed visual_type set correctly to relationship_graph
+      // while the object was still filled with chart fields (data_points,
+      // encoding, annotation) rather than graph fields. requiredFields above
+      // only checks for absence; it does not catch the wrong branch's fields
+      // being present alongside the right branch's visual_type.
+      if (!isPlanningVisual && (visualType === "relationship_graph" || allowedVisualTypes.has(visualType))) {
+        const foreignFields = visualType === "relationship_graph" ? chartOnlyVisualFields : graphOnlyVisualFields;
+        for (const field of foreignFields) {
+          if (Object.hasOwn(node, field) && asText(node[field]).trim()) {
+            findings.push({
+              severity: "fail",
+              type: "visual_contract_wrong_branch_field",
+              message: `${pathName || "visual"} has visual_type=${visualType} but also carries ${field}, which belongs to the other visual branch.`,
+            });
+          }
         }
       }
     }
