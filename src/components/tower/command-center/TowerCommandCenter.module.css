@@ -26,6 +26,11 @@
  */
 .root {
   --canon-bg-cream: #f5f1eb;
+  /* Navigation band — one step deeper than the canvas, so header + tabs read
+   * as chrome rather than as the top of the working area. The page then runs a
+   * three-step lightness ramp: band #f1efe8 -> canvas #f5f1eb -> cards #ffffff,
+   * getting lighter as it gets closer to the content. */
+  --tcc-nav-band: #f1efe8;
   --canon-gray-900: #2c2c2a;
   --canon-gray-700: #444441;
   --canon-gray-300: #b4b2a9;
@@ -78,6 +83,11 @@
 .wrap { width: 100%; max-width: 1560px; margin: 0 auto; padding: 0 34px; }
 
 /* Standing header — compact */
+/* The band is full-bleed; `.dash` inside it stays width-constrained by `.wrap`.
+ * The band carries the rule, so it spans the whole viewport instead of stopping
+ * at the 1560px content column — that edge-to-edge line is what separates
+ * navigation from canvas without tinting the canvas itself. */
+.dashBand { flex: none; background: var(--tcc-nav-band); border-bottom: 1px solid var(--canon-border-strong); }
 .dash { flex: none; padding: 16px 0 0; }
 .dashTop { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .dashId .eyebrow { font-family: var(--abarva-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--canon-teal-dark); margin-bottom: 5px; }
@@ -100,7 +110,7 @@
  * The teal accent moves from the bottom edge to the TOP edge. On the underline
  * version the accent and the hairline competed at the same y; capping the tab
  * keeps the hairline as one unbroken rule and lets the accent belong to the tab. */
-.tabs { flex: none; display: flex; gap: 4px; border-bottom: 1px solid var(--canon-border-strong); margin-top: 14px; padding-left: 2px; }
+.tabs { flex: none; display: flex; gap: 4px; margin-top: 14px; padding-left: 2px; }
 .tab { font-family: var(--abarva-sans); font-size: 14px; font-weight: 600; color: var(--canon-gray-500); background: none; border: 1px solid transparent; border-bottom: 0; padding: 11px 17px 12px; cursor: pointer; position: relative; bottom: -1px; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px 10px 0 0; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .tab:hover { color: var(--canon-gray-900); background: rgba(255, 255, 255, 0.6); }
 .tab.on { color: var(--canon-gray-900); background: var(--canon-bg-surface); border-color: var(--canon-border-strong); box-shadow: var(--shadow-card); }
