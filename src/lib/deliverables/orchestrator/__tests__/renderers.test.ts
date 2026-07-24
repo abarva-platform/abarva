@@ -25,6 +25,65 @@ describe('DOCX renderer', () => {
   });
 });
 
+describe('DOCX/HTML/PDF renderers — duplicate section-heading suppression', () => {
+  // Regression coverage: the renderer owns the section heading (heading1(section.title) /
+  // <h2>${section.title}</h2> / PdfText). Models occasionally repeat that exact title as
+  // the first Markdown line of section.bodyMarkdown, which without suppression renders
+  // as a visibly duplicated heading in every export format.
+  function docWithRepeatedHeading() {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: 'exec_overview',
+        title: 'Executive Overview',
+        bodyMarkdown: '## Executive Overview\n\nReal section body content follows the repeated heading.',
+        groundingMode: 'mixed',
+        citationsUsed: [],
+      },
+    ];
+    return doc;
+  }
+
+  it('DOCX: does not render the section title a second time as a body paragraph', async () => {
+    const buf = await Packer.toBuffer(renderDeliverableDocx(docWithRepeatedHeading()));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    const occurrences = (documentXml.match(/Executive Overview/g) ?? []).length;
+    // Exactly once: the renderer's own heading1(section.title). Not twice
+    // (heading + duplicated first Markdown line).
+    expect(occurrences).toBe(1);
+  });
+
+  it('HTML: does not render the section title a second time inside the section body', () => {
+    const html = renderDeliverableHtml(docWithRepeatedHeading());
+    const occurrences = (html.match(/Executive Overview/g) ?? []).length;
+    expect(occurrences).toBe(1);
+    expect(html).toMatch(/Real section body content/);
+  });
+
+  it('PDF: does not render the section title a second time inside the section body', async () => {
+    const buf = await renderToBuffer(renderDeliverablePdf(docWithRepeatedHeading()));
+    const text = buf.toString('latin1');
+    const occurrences = (text.match(/Executive Overview/g) ?? []).length;
+    expect(occurrences).toBe(1);
+  });
+
+  it('leaves the body untouched when the first Markdown line is a DIFFERENT heading', async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: 'exec_overview',
+        title: 'Executive Overview',
+        bodyMarkdown: '## A Different Sub-heading\n\nBody content.',
+        groundingMode: 'mixed',
+        citationsUsed: [],
+      },
+    ];
+    const html = renderDeliverableHtml(doc);
+    expect(html).toMatch(/A Different Sub-heading/);
+  });
+});
+
 describe('Excel companion', () => {
   it('builds a workbook with one sheet per xlsx-flagged table', async () => {
     const wb = renderDeliverableExcelCompanion(goodDocument());
