@@ -651,6 +651,53 @@ cells are stale and superseded by that resolution).
   — treat any specific page-count figure for Charter as unverified until a real artifact is
   measured.
 
+### MOVES-BUG-007 — P5 Handoff's designed quality bar is the same unreachable dead code as Charter's
+
+- **Problem statement**: Completing the document-quality re-verification priority order (P2 done →
+  P1 done → P4 done → P3 done → **P5**), traced P5 Handoff (`handoff_package` in
+  `src/lib/deliverables/profiles/registry.ts`, title "Executive Handoff", `renderer:
+  "pptx_storyline"`) and found the exact same pattern already documented for Charter in
+  `MOVES-BUG-005`: `quality-bar-registry.ts` has an `OVERRIDES["moves::handoff_pack"]` entry
+  (`minSections: 6, minBodyWords: 5_000, targetBodyWordsMax: 11_000, enforceMaxAsBlocker: false`),
+  but `src/app/api/v1/programs/[programId]/generate/route.ts`'s `shouldEnqueuePremiumArtifact()`
+  only routes phase-2 `discovery_report` and phase-3 `target_state_architecture` (draft mode) to
+  the orchestrator path that actually reads `quality-bar-registry.ts` — phase-5 handoff always
+  falls through to the same `generateArtifact()`/`meetsGoldenBar()` path as Charter and Business
+  Case, meaning the `handoff_pack` override is dead code, never invoked for the real P5
+  deliverable. (Note the key mismatch too: the override is keyed `"moves::handoff_pack"`, while
+  the profile registry's key is `handoff_package` — a second, independent reason the two would
+  never line up even if the routing did reach it.)
+- **User/business impact**: unknown/unmeasured — **no production Move has ever reached P5**.
+  `docs/backlog/moves-product-backlog.md`'s `MOVES-UI-006` entry (2026-07-22) already records
+  "P5 unreachable pending a Move that actually reaches it" and that P5's redirect behavior "has
+  not yet been independently observed on a Move that has actually reached P5." No generated
+  Handoff artifact exists anywhere in `proof/`, `docs/releases/records/`, or
+  `docs/codex-handoff/` to measure — unlike Charter (which has real 11,374-word generation-attempt
+  evidence) or Discovery Report (19,245 words measured), this is a *dormant* gap, not yet an
+  *active* one.
+- **Severity**: P3 (same class of gap as `MOVES-BUG-005`, but downgraded from Charter's P1
+  because it has zero observed live impact — nothing has ever exercised this path)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Found, not fixed` (2026-07-24) — documentation only, consistent with how
+  `MOVES-BUG-005` was handled: this is the same open architectural question (should
+  `quality-bar-registry.ts`'s richer per-artifact bars be wired into the real generation path, or
+  consolidated with `strategic-moves-artifact-standard.ts`?) recurring for a second artifact type,
+  which strengthens the case that this is a systemic gap across `quality-bar-registry.ts`'s
+  overrides in general, not a one-off for Charter.
+- **Dependencies**: same design decision as `MOVES-BUG-005`; also blocked on `MOVES-UI-006`/the
+  isolated-tenant work (`MOVES-TEST-001`) before any live Move can even reach P5 to generate a
+  real Handoff to measure
+- **Acceptance criteria**: N/A until a design decision is made
+- **Required tests**: N/A until a design decision is made
+- **PR**: none (documentation-only finding)
+- **Discovered from**: 2026-07-24 P5 Handoff document-quality re-audit, completing the priority
+  order started with P2/P1/P4
+- **Notes / remaining gaps**: with `MOVES-BUG-005` (Charter) and this entry both showing the same
+  dead-code pattern for `quality-bar-registry.ts` overrides, it is worth checking the file's
+  remaining overrides (`root_cause_worksheet`, `solution_approach_options`, `execution_roadmap`,
+  and any others not yet audited) for the same reachability problem before treating this as fully
+  scoped — that broader sweep was not performed in this pass.
+
 ### MOVES-BUG-006 — 5 of 9 Moves deliverable types had no internal-language leak check at all
 
 - **Problem statement**: Following the P1 Charter trace (`MOVES-BUG-005`), read
