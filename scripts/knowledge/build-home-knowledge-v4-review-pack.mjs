@@ -21,7 +21,7 @@ const model = getArg("--model", process.env.HOME_KNOWLEDGE_V4_MODEL || "claude-o
 // scaling with tenant size, not flakiness. Streaming is required above ~16K or
 // the SDK hits an HTTP timeout.
 const maxTokens = Number(getArg("--max-tokens", process.env.HOME_KNOWLEDGE_V4_MAX_TOKENS || "32000"));
-const tenantArg = getArg("--tenant", "all");
+const tenantArg = process.env.HOME_KNOWLEDGE_V4_TENANT || getArg("--tenant", "all");
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
 const packetOnly = process.argv.includes("--packet-only");
@@ -87,8 +87,22 @@ const expandedDimensionCatalog = [
   { key: "rel", name: "Relationship Map", source_keys: ["rel", "apps", "data", "functions", "programs", "risks"] },
 ];
 
+// Canary support: restrict generation to named dimensions so a contract change
+// can be proven on ~3 calls instead of a full 38-dimension tenant run.
+const dimensionFilter = process.env.HOME_KNOWLEDGE_V4_DIMENSIONS || getArg("--dimensions", null);
+
 function dimensionPasses() {
-  return expandedDimensionCatalog.map((entry) => ({
+  const wanted = dimensionFilter
+    ? new Set(dimensionFilter.split(",").map((d) => d.trim()).filter(Boolean))
+    : null;
+  const selected = expandedDimensionCatalog.filter((entry) => !wanted || wanted.has(entry.key));
+  if (wanted) {
+    const unknown = Array.from(wanted).filter(
+      (key) => !expandedDimensionCatalog.some((entry) => entry.key === key),
+    );
+    if (unknown.length > 0) throw new Error(`Unknown --dimensions key(s): ${unknown.join(", ")}`);
+  }
+  return selected.map((entry) => ({
     key: entry.key,
     title: entry.name,
     dimensions: [entry.key],
