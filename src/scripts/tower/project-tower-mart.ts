@@ -33,6 +33,7 @@ import {
   projectV3ToFacts,
   type CsvRow,
 } from "../../lib/cio-tower/mart-projection/facts-from-v3";
+import { projectTowerStandardizedToFacts } from "../../lib/cio-tower/mart-projection/facts-from-tower-standardized";
 import {
   projectTowerOperationalToFacts,
   type TowerOperationalInput,
@@ -55,6 +56,8 @@ const FORMULA_VERSION = "unified_facts_v1";
 interface CliArgs {
   tenant: string;
   v3Dir: string;
+  standardizedDir: string | null;
+  keepSa08Value: boolean;
   supplementalDir: string | null;
   dryRun: boolean;
   noDb: boolean;
@@ -73,6 +76,7 @@ function parseArgs(argv: readonly string[]): CliArgs {
   };
   const tenant = get("--tenant");
   const v3Dir = get("--v3-dir");
+  const standardizedDir = get("--standardized-dir");
   if (!tenant || !v3Dir) {
     console.error(
       "usage: project-tower-mart --tenant <key> --v3-dir <path> [--dry-run] [--actor <email>] [--out-dir <path>]",
@@ -82,6 +86,12 @@ function parseArgs(argv: readonly string[]): CliArgs {
   return {
     tenant,
     v3Dir: path.resolve(process.cwd(), v3Dir),
+    standardizedDir: standardizedDir
+      ? path.resolve(process.cwd(), standardizedDir)
+      : null,
+    // Escape hatch: keep SA08 programme value alongside the T-family. Off by
+    // default — see the benefits read below for why summing them double-counts.
+    keepSa08Value: process.argv.includes("--keep-sa08-value"),
     supplementalDir: get("--supplemental-dir")
       ? path.resolve(process.cwd(), get("--supplemental-dir")!)
       : null,
@@ -184,7 +194,11 @@ async function resolveTenant(
         ELSE 2
       END
       LIMIT 1`,
-    [aliases, canonicalTenantKey, tenantNameLookupAliases(canonicalTenantKey, tenantNameFallback)],
+    [
+      aliases,
+      canonicalTenantKey,
+      tenantNameLookupAliases(canonicalTenantKey, tenantNameFallback),
+    ],
   );
   const row = res.rows[0];
   return {
@@ -218,7 +232,10 @@ function tenantLookupAliases(
   return [...aliases].filter(Boolean);
 }
 
-function tenantNameLookupAliases(canonicalTenantKey: string, tenantNameFallback: string): string[] {
+function tenantNameLookupAliases(
+  canonicalTenantKey: string,
+  tenantNameFallback: string,
+): string[] {
   const aliases = new Set([tenantNameFallback.trim().toLowerCase()]);
   const normalized = canonicalTenantKey.trim().toLowerCase();
   if (normalized === "meridian-health") {
@@ -352,6 +369,50 @@ async function main(): Promise<void> {
     ) as string[];
     const primaryCsvDirs = [args.v3Dir];
 
+    // The tower-standardized-v1 T-family. T07 is the benefit ledger and is
+    // 100% populated on every tenant, so where this tree is supplied it owns
+    // programme value.
+    const standardizedInitiatives = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T01_initiative-registry.csv",
+        )
+      : [];
+    const standardizedSpend = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T08_spend-contracts.csv",
+        )
+      : [];
+    const standardizedBenefits = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T07_benefit-realization.csv",
+        )
+      : [];
+    // T03 is the AI-tool ledger — the defensible source for "AI-tagged spend".
+    const standardizedToolUsage = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T03_tool-usage-monthly.csv",
+        )
+      : [];
+    const standardizedOwnsProgrammeValue = standardizedBenefits.some(
+      (r) =>
+        Number(String(r.promised_benefit_usd ?? "").replace(/[$,\s]/g, "")) > 0,
+    );
+    const standardizedFacts = args.standardizedDir
+      ? projectTowerStandardizedToFacts(
+          {
+            initiatives: standardizedInitiatives,
+            spend: standardizedSpend,
+            benefits: standardizedBenefits,
+            toolUsage: standardizedToolUsage,
+          },
+          identity,
+        )
+      : [];
+
     // 1. V3 facts (local CSVs)
     const v3Facts = projectV3ToFacts(
       {
@@ -360,11 +421,23 @@ async function main(): Promise<void> {
           ...readV3Csvs(csvDirs, "08_spend_value.csv"),
         ],
         programs: readV3Csvs(primaryCsvDirs, "09_programs_initiatives.csv"),
-        aiUseCases: readV3Csvs(primaryCsvDirs, "10_ai_automation_use_cases.csv"),
-        benefits: readV3Csvs(
+        aiUseCases: readV3Csvs(
           primaryCsvDirs,
-          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "10_ai_automation_use_cases.csv",
         ),
+        // SA08 is the AI benefits ledger and emits only promised and
+        // finance-validated value. Its programmes are the AI component INSIDE a
+        // T-family initiative, not siblings of it, so summing them counts the
+        // AI slice twice. Where the T-family owns programme value (T07 carries
+        // promised benefit), SA08 is suppressed. `--keep-sa08-value` restores
+        // the old behaviour for comparison.
+        benefits:
+          standardizedOwnsProgrammeValue && !args.keepSa08Value
+            ? []
+            : readV3Csvs(
+                primaryCsvDirs,
+                "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+              ),
       },
       identity,
     );
@@ -378,7 +451,11 @@ async function main(): Promise<void> {
     );
 
     // 4. merge
-    const merged = mergeFactsByCanonicalIdentity([...v3Facts, ...towerFacts]);
+    const merged = mergeFactsByCanonicalIdentity([
+      ...v3Facts,
+      ...standardizedFacts,
+      ...towerFacts,
+    ]);
     // 5. assemble
     const mart = assembleMartFromFacts(merged.facts, {
       tenantKey: identity.tenantKey,
@@ -406,6 +483,8 @@ async function main(): Promise<void> {
       client_id: identity.clientId,
       idempotency_key: idemKey,
       v3_facts: v3Facts.length,
+      standardized_facts: standardizedFacts.length,
+      standardized_owns_programme_value: standardizedOwnsProgrammeValue,
       tower_facts: towerFacts.length,
       merged_facts: merged.facts.length,
       suppressed_facts: merged.suppressed.length,

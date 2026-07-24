@@ -1,2 +1,2 @@
-tenant_key,metric_key,period,amount_usd,notes
-meridian-health,budget_not_loaded,FY2025,,No trend loaded
+tenant_key,metric_key,source_file,source_row,source_record_id,source_label,view,amount_type,basis,period,amount_usd,is_rollup_of,component_of,formula,formula_version,value_source,reconciles_to_view,reconciles_to_record_id,reconciliation_envelope_usd,notes
+meridian-health,budget_not_loaded,,,,,,,,FY2025,,,,,tower_standardized_v1,synthetic,,,,No trend loaded

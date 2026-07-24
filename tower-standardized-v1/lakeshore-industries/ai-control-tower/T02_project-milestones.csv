@@ -1,51 +1,51 @@
-initiative_id,milestone_id,milestone_name,due_date,status,blocker_or_condition,source_file,source_row,value_source
-LAK-AI-001,LAK-AI-001-MS-1,charter_approved,2026-07-08,complete,,ai-control-tower/T02_project-milestones.csv,2,tenant_file
-LAK-AI-001,LAK-AI-001-MS-2,data_ready,2026-08-09,at_risk,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,3,tenant_file
-LAK-AI-001,LAK-AI-001-MS-3,control_ready,2026-09-10,not_started,,ai-control-tower/T02_project-milestones.csv,4,tenant_file
-LAK-AI-001,LAK-AI-001-MS-4,pilot_exit,2026-10-11,not_started,,ai-control-tower/T02_project-milestones.csv,5,tenant_file
-LAK-AI-001,LAK-AI-001-MS-5,scale_decision,2026-11-12,not_started,,ai-control-tower/T02_project-milestones.csv,6,tenant_file
-LAK-AI-002,LAK-AI-002-MS-1,charter_approved,2026-08-09,complete,,ai-control-tower/T02_project-milestones.csv,7,tenant_file
-LAK-AI-002,LAK-AI-002-MS-2,data_ready,2026-09-10,complete,,ai-control-tower/T02_project-milestones.csv,8,tenant_file
-LAK-AI-002,LAK-AI-002-MS-3,control_ready,2026-10-11,at_risk,integration and master-data defect backlog,ai-control-tower/T02_project-milestones.csv,9,tenant_file
-LAK-AI-002,LAK-AI-002-MS-4,pilot_exit,2026-11-12,not_started,,ai-control-tower/T02_project-milestones.csv,10,tenant_file
-LAK-AI-002,LAK-AI-002-MS-5,scale_decision,2026-07-13,not_started,,ai-control-tower/T02_project-milestones.csv,11,tenant_file
-LAK-AI-003,LAK-AI-003-MS-1,charter_approved,2026-09-10,complete,,ai-control-tower/T02_project-milestones.csv,12,tenant_file
-LAK-AI-003,LAK-AI-003-MS-2,data_ready,2026-10-11,complete,,ai-control-tower/T02_project-milestones.csv,13,tenant_file
-LAK-AI-003,LAK-AI-003-MS-3,control_ready,2026-11-12,complete,,ai-control-tower/T02_project-milestones.csv,14,tenant_file
-LAK-AI-003,LAK-AI-003-MS-4,pilot_exit,2026-07-13,at_risk,value measurement needs CFO/Treasurer signoff,ai-control-tower/T02_project-milestones.csv,15,tenant_file
-LAK-AI-003,LAK-AI-003-MS-5,scale_decision,2026-08-14,not_started,,ai-control-tower/T02_project-milestones.csv,16,tenant_file
-LAK-AI-004,LAK-AI-004-MS-1,charter_approved,2026-10-11,complete,,ai-control-tower/T02_project-milestones.csv,17,tenant_file
-LAK-AI-004,LAK-AI-004-MS-2,data_ready,2026-11-12,complete,,ai-control-tower/T02_project-milestones.csv,18,tenant_file
-LAK-AI-004,LAK-AI-004-MS-3,control_ready,2026-07-13,complete,,ai-control-tower/T02_project-milestones.csv,19,tenant_file
-LAK-AI-004,LAK-AI-004-MS-4,pilot_exit,2026-08-14,complete,,ai-control-tower/T02_project-milestones.csv,20,tenant_file
-LAK-AI-004,LAK-AI-004-MS-5,scale_decision,2026-09-15,at_risk,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,21,tenant_file
-LAK-AI-005,LAK-AI-005-MS-1,charter_approved,2026-11-12,complete,,ai-control-tower/T02_project-milestones.csv,22,tenant_file
-LAK-AI-005,LAK-AI-005-MS-2,data_ready,2026-07-13,at_risk,integration and master-data defect backlog,ai-control-tower/T02_project-milestones.csv,23,tenant_file
-LAK-AI-005,LAK-AI-005-MS-3,control_ready,2026-08-14,not_started,,ai-control-tower/T02_project-milestones.csv,24,tenant_file
-LAK-AI-005,LAK-AI-005-MS-4,pilot_exit,2026-09-15,not_started,,ai-control-tower/T02_project-milestones.csv,25,tenant_file
-LAK-AI-005,LAK-AI-005-MS-5,scale_decision,2026-10-16,not_started,,ai-control-tower/T02_project-milestones.csv,26,tenant_file
-LAK-AI-006,LAK-AI-006-MS-1,charter_approved,2026-07-13,complete,,ai-control-tower/T02_project-milestones.csv,27,tenant_file
-LAK-AI-006,LAK-AI-006-MS-2,data_ready,2026-08-14,complete,,ai-control-tower/T02_project-milestones.csv,28,tenant_file
-LAK-AI-006,LAK-AI-006-MS-3,control_ready,2026-09-15,at_risk,value measurement needs CFO/Treasurer signoff,ai-control-tower/T02_project-milestones.csv,29,tenant_file
-LAK-AI-006,LAK-AI-006-MS-4,pilot_exit,2026-10-16,not_started,,ai-control-tower/T02_project-milestones.csv,30,tenant_file
-LAK-AI-006,LAK-AI-006-MS-5,scale_decision,2026-11-17,not_started,,ai-control-tower/T02_project-milestones.csv,31,tenant_file
-LAK-AI-007,LAK-AI-007-MS-1,charter_approved,2026-08-14,complete,,ai-control-tower/T02_project-milestones.csv,32,tenant_file
-LAK-AI-007,LAK-AI-007-MS-2,data_ready,2026-09-15,complete,,ai-control-tower/T02_project-milestones.csv,33,tenant_file
-LAK-AI-007,LAK-AI-007-MS-3,control_ready,2026-10-16,complete,,ai-control-tower/T02_project-milestones.csv,34,tenant_file
-LAK-AI-007,LAK-AI-007-MS-4,pilot_exit,2026-11-17,at_risk,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,35,tenant_file
-LAK-AI-007,LAK-AI-007-MS-5,scale_decision,2026-07-18,not_started,,ai-control-tower/T02_project-milestones.csv,36,tenant_file
-LAK-AI-008,LAK-AI-008-MS-1,charter_approved,2026-09-15,complete,,ai-control-tower/T02_project-milestones.csv,37,tenant_file
-LAK-AI-008,LAK-AI-008-MS-2,data_ready,2026-10-16,complete,,ai-control-tower/T02_project-milestones.csv,38,tenant_file
-LAK-AI-008,LAK-AI-008-MS-3,control_ready,2026-11-17,complete,,ai-control-tower/T02_project-milestones.csv,39,tenant_file
-LAK-AI-008,LAK-AI-008-MS-4,pilot_exit,2026-07-18,complete,,ai-control-tower/T02_project-milestones.csv,40,tenant_file
-LAK-AI-008,LAK-AI-008-MS-5,scale_decision,2026-08-19,at_risk,integration and master-data defect backlog,ai-control-tower/T02_project-milestones.csv,41,tenant_file
-LAK-AI-009,LAK-AI-009-MS-1,charter_approved,2026-10-16,complete,,ai-control-tower/T02_project-milestones.csv,42,tenant_file
-LAK-AI-009,LAK-AI-009-MS-2,data_ready,2026-11-17,at_risk,value measurement needs CFO/Treasurer signoff,ai-control-tower/T02_project-milestones.csv,43,tenant_file
-LAK-AI-009,LAK-AI-009-MS-3,control_ready,2026-07-18,not_started,,ai-control-tower/T02_project-milestones.csv,44,tenant_file
-LAK-AI-009,LAK-AI-009-MS-4,pilot_exit,2026-08-19,not_started,,ai-control-tower/T02_project-milestones.csv,45,tenant_file
-LAK-AI-009,LAK-AI-009-MS-5,scale_decision,2026-09-20,not_started,,ai-control-tower/T02_project-milestones.csv,46,tenant_file
-LAK-AI-010,LAK-AI-010-MS-1,charter_approved,2026-11-17,complete,,ai-control-tower/T02_project-milestones.csv,47,tenant_file
-LAK-AI-010,LAK-AI-010-MS-2,data_ready,2026-07-18,complete,,ai-control-tower/T02_project-milestones.csv,48,tenant_file
-LAK-AI-010,LAK-AI-010-MS-3,control_ready,2026-08-19,at_risk,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,49,tenant_file
-LAK-AI-010,LAK-AI-010-MS-4,pilot_exit,2026-09-20,not_started,,ai-control-tower/T02_project-milestones.csv,50,tenant_file
-LAK-AI-010,LAK-AI-010-MS-5,scale_decision,2026-10-21,not_started,,ai-control-tower/T02_project-milestones.csv,51,tenant_file
+initiative_id,milestone_id,milestone_name,milestone_type,target_date,actual_date,due_date,status,gate_criteria,approver_role,blocker,evidence_id,blocker_or_condition,source_file,source_row,value_source
+LAK-AI-001,LAK-AI-001-MS-1,charter_approved,,2026-06-26,2026-06-18,2026-07-15,complete,,Director of Data,,,,ai-control-tower/T02_project-milestones.csv,2,tenant_file
+LAK-AI-001,LAK-AI-001-MS-2,data_ready,,2026-09-11,2026-09-12,2026-08-21,at_risk,,Director of Service Management,,,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,3,tenant_file
+LAK-AI-001,LAK-AI-001-MS-3,control_ready,,2026-09-16,2026-09-19,2026-09-27,not_started,,Director of Data,,,,ai-control-tower/T02_project-milestones.csv,4,tenant_file
+LAK-AI-001,LAK-AI-001-MS-4,pilot_exit,,2026-11-27,2026-11-24,2026-11-01,not_started,,VP Engineering,,,,ai-control-tower/T02_project-milestones.csv,5,tenant_file
+LAK-AI-001,LAK-AI-001-MS-5,scale_decision,,2026-11-11,2026-10-29,2026-11-21,not_started,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,6,tenant_file
+LAK-AI-002,LAK-AI-002-MS-1,charter_approved,,2026-08-28,2026-08-25,2026-08-23,complete,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,7,tenant_file
+LAK-AI-002,LAK-AI-002-MS-2,data_ready,,2026-09-14,2026-08-31,2026-09-29,complete,,VP Engineering,,,,ai-control-tower/T02_project-milestones.csv,8,tenant_file
+LAK-AI-002,LAK-AI-002-MS-3,control_ready,,2026-09-30,2026-10-10,2026-10-13,at_risk,,VP Operations,,,integration and master-data defect backlog,ai-control-tower/T02_project-milestones.csv,9,tenant_file
+LAK-AI-002,LAK-AI-002-MS-4,pilot_exit,,2026-12-09,2026-10-25,2026-11-24,not_started,,Director of Finance Systems,,,,ai-control-tower/T02_project-milestones.csv,10,tenant_file
+LAK-AI-002,LAK-AI-002-MS-5,scale_decision,,2026-07-05,2026-06-30,2026-07-29,not_started,,Head of Platform,,,,ai-control-tower/T02_project-milestones.csv,11,tenant_file
+LAK-AI-003,LAK-AI-003-MS-1,charter_approved,,2026-09-24,2026-10-03,2026-09-23,complete,,Head of AI Governance,,,,ai-control-tower/T02_project-milestones.csv,12,tenant_file
+LAK-AI-003,LAK-AI-003-MS-2,data_ready,,2026-10-06,2026-11-07,2026-10-20,complete,,Director of Service Management,,,,ai-control-tower/T02_project-milestones.csv,13,tenant_file
+LAK-AI-003,LAK-AI-003-MS-3,control_ready,,2026-12-06,2026-11-20,2026-11-14,complete,,VP Engineering,,,,ai-control-tower/T02_project-milestones.csv,14,tenant_file
+LAK-AI-003,LAK-AI-003-MS-4,pilot_exit,,2026-07-08,2026-08-28,2026-07-31,at_risk,,Director of Data,,,value measurement needs CFO/Treasurer signoff,ai-control-tower/T02_project-milestones.csv,15,tenant_file
+LAK-AI-003,LAK-AI-003-MS-5,scale_decision,,2026-08-02,2026-08-03,2026-08-25,not_started,,VP Engineering,,,,ai-control-tower/T02_project-milestones.csv,16,tenant_file
+LAK-AI-004,LAK-AI-004-MS-1,charter_approved,,2026-10-02,2026-10-17,2026-10-17,complete,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,17,tenant_file
+LAK-AI-004,LAK-AI-004-MS-2,data_ready,,2026-11-16,2026-12-17,2026-12-03,complete,,Head of AI Governance,,,,ai-control-tower/T02_project-milestones.csv,18,tenant_file
+LAK-AI-004,LAK-AI-004-MS-3,control_ready,,2026-07-27,2026-08-09,2026-07-29,complete,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,19,tenant_file
+LAK-AI-004,LAK-AI-004-MS-4,pilot_exit,,2026-08-28,2026-09-14,2026-09-01,complete,,VP Customer Experience,,,,ai-control-tower/T02_project-milestones.csv,20,tenant_file
+LAK-AI-004,LAK-AI-004-MS-5,scale_decision,,2026-10-19,2026-10-07,2026-09-28,at_risk,,VP Operations,,,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,21,tenant_file
+LAK-AI-005,LAK-AI-005-MS-1,charter_approved,,2026-10-27,2026-12-01,2026-11-23,complete,,Director of Finance Systems,,,,ai-control-tower/T02_project-milestones.csv,22,tenant_file
+LAK-AI-005,LAK-AI-005-MS-2,data_ready,,2026-06-28,2026-07-25,2026-07-28,at_risk,,VP Engineering,,,integration and master-data defect backlog,ai-control-tower/T02_project-milestones.csv,23,tenant_file
+LAK-AI-005,LAK-AI-005-MS-3,control_ready,,2026-09-23,2026-08-11,2026-09-03,not_started,,Director of Service Management,,,,ai-control-tower/T02_project-milestones.csv,24,tenant_file
+LAK-AI-005,LAK-AI-005-MS-4,pilot_exit,,2026-09-05,2026-09-28,2026-09-19,not_started,,Director of Finance Systems,,,,ai-control-tower/T02_project-milestones.csv,25,tenant_file
+LAK-AI-005,LAK-AI-005-MS-5,scale_decision,,2026-11-22,2026-11-23,2026-10-29,not_started,,Head of Platform,,,,ai-control-tower/T02_project-milestones.csv,26,tenant_file
+LAK-AI-006,LAK-AI-006-MS-1,charter_approved,,2026-08-28,2026-07-12,2026-07-31,complete,,VP Customer Experience,,,,ai-control-tower/T02_project-milestones.csv,27,tenant_file
+LAK-AI-006,LAK-AI-006-MS-2,data_ready,,2026-08-30,2026-08-01,2026-08-15,complete,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,28,tenant_file
+LAK-AI-006,LAK-AI-006-MS-3,control_ready,,2026-10-12,2026-10-13,2026-09-21,at_risk,,VP Customer Experience,,,value measurement needs CFO/Treasurer signoff,ai-control-tower/T02_project-milestones.csv,29,tenant_file
+LAK-AI-006,LAK-AI-006-MS-4,pilot_exit,,2026-11-29,2026-10-06,2026-10-31,not_started,,Head of AI Governance,,,,ai-control-tower/T02_project-milestones.csv,30,tenant_file
+LAK-AI-006,LAK-AI-006-MS-5,scale_decision,,2026-12-22,2026-11-30,2026-12-07,not_started,,Head of Platform,,,,ai-control-tower/T02_project-milestones.csv,31,tenant_file
+LAK-AI-007,LAK-AI-007-MS-1,charter_approved,,2026-08-12,2026-08-23,2026-08-22,complete,,Head of Platform,,,,ai-control-tower/T02_project-milestones.csv,32,tenant_file
+LAK-AI-007,LAK-AI-007-MS-2,data_ready,,2026-08-23,2026-09-10,2026-09-18,complete,,Head of Platform,,,,ai-control-tower/T02_project-milestones.csv,33,tenant_file
+LAK-AI-007,LAK-AI-007-MS-3,control_ready,,2026-10-09,2026-12-02,2026-11-05,complete,,Head of AI Governance,,,,ai-control-tower/T02_project-milestones.csv,34,tenant_file
+LAK-AI-007,LAK-AI-007-MS-4,pilot_exit,,2026-11-03,2026-12-25,2026-12-02,at_risk,,VP Engineering,,,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,35,tenant_file
+LAK-AI-007,LAK-AI-007-MS-5,scale_decision,,2026-08-03,2026-07-10,2026-07-28,not_started,,Director of Service Management,,,,ai-control-tower/T02_project-milestones.csv,36,tenant_file
+LAK-AI-008,LAK-AI-008-MS-1,charter_approved,,2026-09-23,2026-09-23,2026-09-20,complete,,VP Engineering,,,,ai-control-tower/T02_project-milestones.csv,37,tenant_file
+LAK-AI-008,LAK-AI-008-MS-2,data_ready,,2026-11-12,2026-11-09,2026-10-17,complete,,VP Customer Experience,,,,ai-control-tower/T02_project-milestones.csv,38,tenant_file
+LAK-AI-008,LAK-AI-008-MS-3,control_ready,,2026-12-08,2026-12-26,2026-12-04,complete,,Director of Data,,,,ai-control-tower/T02_project-milestones.csv,39,tenant_file
+LAK-AI-008,LAK-AI-008-MS-4,pilot_exit,,2026-07-27,2026-08-28,2026-07-30,complete,,Director of Finance Systems,,,,ai-control-tower/T02_project-milestones.csv,40,tenant_file
+LAK-AI-008,LAK-AI-008-MS-5,scale_decision,,2026-09-20,2026-09-19,2026-08-27,at_risk,,Director of Finance Systems,,,integration and master-data defect backlog,ai-control-tower/T02_project-milestones.csv,41,tenant_file
+LAK-AI-009,LAK-AI-009-MS-1,charter_approved,,2026-10-07,2026-10-07,2026-10-26,complete,,VP Engineering,,,,ai-control-tower/T02_project-milestones.csv,42,tenant_file
+LAK-AI-009,LAK-AI-009-MS-2,data_ready,,2026-12-31,2026-12-13,2026-12-02,at_risk,,Director of Data,,,value measurement needs CFO/Treasurer signoff,ai-control-tower/T02_project-milestones.csv,43,tenant_file
+LAK-AI-009,LAK-AI-009-MS-3,control_ready,,2026-07-14,2026-07-29,2026-08-08,not_started,,Director of Finance Systems,,,,ai-control-tower/T02_project-milestones.csv,44,tenant_file
+LAK-AI-009,LAK-AI-009-MS-4,pilot_exit,,2026-09-19,2026-08-10,2026-08-24,not_started,,Director of Data,,,,ai-control-tower/T02_project-milestones.csv,45,tenant_file
+LAK-AI-009,LAK-AI-009-MS-5,scale_decision,,2026-08-29,2026-09-09,2026-09-28,not_started,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,46,tenant_file
+LAK-AI-010,LAK-AI-010-MS-1,charter_approved,,2026-11-04,2026-11-21,2026-11-29,complete,,VP Operations,,,,ai-control-tower/T02_project-milestones.csv,47,tenant_file
+LAK-AI-010,LAK-AI-010-MS-2,data_ready,,2026-08-13,2026-08-12,2026-08-06,complete,,Director of Finance Systems,,,,ai-control-tower/T02_project-milestones.csv,48,tenant_file
+LAK-AI-010,LAK-AI-010-MS-3,control_ready,,2026-09-09,2026-07-28,2026-08-22,at_risk,,Head of Platform,,,SOX/control evidence and source citation gap,ai-control-tower/T02_project-milestones.csv,49,tenant_file
+LAK-AI-010,LAK-AI-010-MS-4,pilot_exit,,2026-11-01,2026-10-30,2026-10-04,not_started,,Head of AI Governance,,,,ai-control-tower/T02_project-milestones.csv,50,tenant_file
+LAK-AI-010,LAK-AI-010-MS-5,scale_decision,,2026-10-22,2026-12-01,2026-11-09,not_started,,Head of AI Governance,,,,ai-control-tower/T02_project-milestones.csv,51,tenant_file

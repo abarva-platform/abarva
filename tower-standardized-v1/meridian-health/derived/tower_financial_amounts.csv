@@ -1,2 +1,2 @@
-tenant_key,metric_key,metric_label,amount_usd,amount_type,source_file,source_row,notes
-meridian-health,budget_not_loaded,Budget not loaded,,not_loaded,templates/V6_08_spend_value.csv,2,No invented dollar values in Meridian V6/V7 v1
+tenant_key,metric_key,metric_label,source_file,source_row,source_record_id,source_label,view,amount_type,basis,period,amount_usd,is_rollup_of,component_of,formula,formula_version,value_source,reconciles_to_view,reconciles_to_record_id,reconciliation_envelope_usd,notes
+meridian-health,budget_not_loaded,Budget not loaded,templates/V6_08_spend_value.csv,2,,,,not_loaded,,,,,,,tower_standardized_v1,synthetic,,,,No invented dollar values in Meridian V6/V7 v1
