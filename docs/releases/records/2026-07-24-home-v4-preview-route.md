@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`candidate` — access-control correction applied (see [Post-merge correction](#post-merge-correction-cross-tenant-exposure) below); live proof still open.
 
 ## Plain-English Summary
 
@@ -37,6 +37,30 @@ existing lab/production runtime).
 The page stays labeled "Dev-only preview — not production data" in its own UI regardless of
 where it's deployed, so it is reachable but never silently presented as approved content.
 
+**Superseded by the correction below**: as originally merged, "reachable behind normal
+Clerk/maestro auth" meant *any* signed-in identity, with no per-tenant authorization check. The
+route is now gated to platform-admin only.
+
+## Post-merge correction: cross-tenant exposure
+
+Found live, immediately after deploy: signed in as a tenant-scoped account
+(`anand.sundaram+meridian@thesundaram.com`), the route rendered — and its `?tenant=` switcher
+allowed navigating to **skyharbor-air and first-capital's** generated candidate content too, not
+just meridian-health's own. The route had an authentication check (must be signed in) but no
+authorization check (must be entitled to this tenant). Any signed-in identity, including a real
+tenant-scoped maestro or buyer login, could view any of the three tenants' generated content via
+the query param.
+
+Fixed in a same-day follow-up PR (#5549): gated the route to platform-admin only, using the
+identical pattern already established in `src/app/(maestro)/admin/layout.tsx` (email allowlist +
+Clerk `publicMetadata.role === "admin"`), deliberately excluding the `hasTenantAdminAccess()`
+fallback used elsewhere in `/admin/*` — a tenant admin still should not see another tenant's data
+through this route. Unauthorized requests now get `notFound()`, matching every other admin-gated
+route in the app.
+
+This correction updates the "Client Applicability" and "Deployment Authority" sections below to
+reflect platform-admin-only access, not general Clerk/maestro auth.
+
 ### Content
 
 - Typed visual renderer (`HomeV4VisualRenderer.tsx`) covering all 12 schema visual types
@@ -63,11 +87,12 @@ where it's deployed, so it is reachable but never silently presented as approved
 
 ## Client Applicability
 
-- All clients technically reachable at this route once deployed, but content shown is
-  synthetic/candidate data for three demo tenants (skyharbor-air, first-capital,
+- Content shown is synthetic/candidate data for three demo tenants (skyharbor-air, first-capital,
   meridian-health) only — not per-viewer client data, not live for any real client.
-- Feature flag: none. Reachability is by URL + existing Clerk/maestro auth only, not surfaced in
-  any navigation menu.
+- **As of #5549: platform-admin only**, not "all clients technically reachable." No tenant-scoped
+  account (maestro or buyer login) can access this route regardless of which tenant it's scoped
+  to. Feature flag: none. Reachability is by URL + platform-admin authorization check, not
+  surfaced in any navigation menu.
 
 ## Changes Included
 
@@ -132,7 +157,7 @@ live Enterprise Brief page either way.
 ## Known Gaps
 
 - **Live browser proof is the open item** — must be captured post-deploy before this record can
-  be marked proven.
+  be marked proven, including confirming a non-admin session now receives `notFound()`.
 - Menu-vs-content mismatch fix (5 Change & Transformation items instead of 8) is applied only in
   this new preview route, not in the live `HomeEnterpriseBriefApp.tsx` navigation — that fix is
   still pending a decision on timing (fold into this migration vs. fix independently now).

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { HomeV4ExplorerShell } from "@/components/home/v4/HomeV4ExplorerShell";
 import type { HomeV4Candidate } from "@/components/home/v4/homeV4Visual";
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 
 import skyharborFixture from "./_fixtures/skyharbor-air.json";
 import firstCapitalFixture from "./_fixtures/first-capital.json";
@@ -15,16 +19,31 @@ import meridianFixture from "./_fixtures/meridian-health.json";
 // (skyharbor-air/first-capital/meridian-health, apps+risks+rel dimensions,
 // skyharbor-air additionally re-run across the full 38-dimension catalog).
 //
-// Reachable in production behind normal Clerk/maestro auth, by explicit
-// request (2026-07-24), for internal review only. It writes nothing to any
-// database — fixtures are static JSON bundled at build time — and it stays
-// clearly labeled as unapproved candidate content on the page itself. The
-// standing decision that no V4-generated content gets LOADED to Postgres
-// until human review passes is unaffected: this route makes the rendering
-// path visible for review, it does not load anything.
+// Reachable in production, gated to platform admins only (see
+// ADMIN_EMAIL_ALLOWLIST below) — NOT any signed-in maestro/tenant session.
+// The fixtures span all three tenants and there is no per-tenant scoping on
+// the ?tenant= switcher, so any identity able to view this page can view
+// every tenant's generated candidate content; that made a general
+// "signed-in" gate a real cross-tenant exposure. Platform-admin-only matches
+// this route's actual purpose (internal candidate review), same pattern as
+// src/app/(maestro)/admin/layout.tsx.
+//
+// It writes nothing to any database — fixtures are static JSON bundled at
+// build time — and stays clearly labeled as unapproved candidate content on
+// the page itself. The standing decision that no V4-generated content gets
+// LOADED to Postgres until human review passes is unaffected: this route
+// makes the rendering path visible for review, it does not load anything.
 export const metadata: Metadata = {
   title: "Home V4 Preview (candidate review) | AbarVa",
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
+  "anand.sundaram@thesundaram.com",
+  ...CANONICAL_CLIENT_ADMIN_EMAILS,
+]);
 
 const FIXTURES: Record<string, HomeV4Candidate> = {
   "skyharbor-air": skyharborFixture as unknown as HomeV4Candidate,
@@ -37,6 +56,37 @@ export default async function HomeV4PreviewPage({
 }: {
   searchParams?: Promise<{ tenant?: string }>;
 }) {
+  await connection();
+  const session = await auth();
+  if (!session.userId) {
+    notFound();
+  }
+
+  const claims = session.sessionClaims as
+    | {
+        publicMetadata?: { role?: string };
+        email?: string;
+        emailAddress?: string;
+        email_addresses?: Array<{ emailAddress?: string }>;
+        emailAddresses?: Array<{ emailAddress?: string }>;
+      }
+    | undefined;
+  const user = await currentUser().catch(() => null);
+
+  const role = (claims?.publicMetadata?.role as string | undefined) ?? (user?.publicMetadata?.role as string | undefined) ?? "";
+  const primaryEmail = (
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    user?.primaryEmailAddress?.emailAddress
+  )?.toLowerCase();
+
+  const isPlatformAdmin = role === "admin" || (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail));
+  if (!isPlatformAdmin) {
+    notFound();
+  }
+
   const params = (await searchParams) ?? {};
   const tenantKey = params.tenant && FIXTURES[params.tenant] ? params.tenant : "skyharbor-air";
   const candidate = FIXTURES[tenantKey];
