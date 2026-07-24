@@ -19,6 +19,12 @@ const ANSWER_GENERATION_RE =
   /^(src\/app\/api\/chat|src\/app\/api\/reasoning|src\/app\/api\/programs|src\/app\/api\/tower|src\/app\/api\/v1\/source|src\/lib\/intelligence|src\/lib\/sentinel|src\/lib\/nexus|src\/lib\/agents|src\/lib\/programs|src\/components\/intelligence|src\/components\/strategic-moves)/;
 const MODEL_GATEWAY_ALLOW_RE = /^src\/lib\/integrations\/ai-egress\/(anthropic-direct|anthropic-prompt-cache|types|policy|tenant-policy|audit|index)\.ts$/;
 const SUPABASE_DENYLIST_ALLOW_RE = /^scripts\/verify-canonical-tenants\.ts$/;
+const PRODUCT_LAYER_RE =
+  /^(src\/app|src\/components|src\/lib\/(home|tower|cio-tower|source|programs|intelligence|enterprise-knowledge\/tower|enterprise-data\/tower-candidate-load)|src\/scripts\/tower\/project-tower-mart\.ts)/;
+const PRODUCT_LAYER_ALLOW_RE =
+  /^src\/lib\/cio-tower\/mart-projection\/(facts-from-v3|facts-from-tower|facts-from-tower-standardized|facts-schema|merge-facts|tool-identity-crosswalk|assemble-mart)\.ts$/;
+const PRODUCT_LAYER_SOURCE_RE =
+  /tower-standardized-v1|facts-from-tower-standardized|datasets\/tenant-inputs\/(?:candidates|generated|[^/'"`$\s]+\/(?:standard-2026|derived|approved-content))|derived\/module-context\/(?:home|tower|moves|source|intelligence)[-_a-z0-9]*\.json/i;
 
 const RULES = [
   {
@@ -71,13 +77,25 @@ const RULES = [
       return /vercel-dns|x-vercel-id|server:\s*vercel|nexus-vert-kappa\.vercel\.app|VERCEL_PROJECT_ID|VERCEL_ORG_ID/i.test(line);
     },
   },
+  {
+    id: 'NO_PRODUCT_LAYER_SOURCE_READ',
+    description:
+      'Product/projection code must not read intake, generated, derived module-context, or tower-standardized adapter paths directly. Products project canonical/active governed data; source adapters own source formats.',
+    changedOnly: true,
+    appliesTo(file) {
+      return PRODUCT_LAYER_RE.test(file) && !PRODUCT_LAYER_ALLOW_RE.test(file);
+    },
+    matches(line) {
+      return PRODUCT_LAYER_SOURCE_RE.test(line);
+    },
+  },
 ];
 
 function argValue(name, fallback = null) {
   const eq = `${name}=`;
-  const inline = process.argv.find((arg) => arg.startsWith(eq));
+  const inline = process.argv.filter((arg) => arg.startsWith(eq)).at(-1);
   if (inline) return inline.slice(eq.length);
-  const index = process.argv.indexOf(name);
+  const index = process.argv.lastIndexOf(name);
   if (index >= 0 && process.argv[index + 1]) return process.argv[index + 1];
   return fallback;
 }
@@ -186,12 +204,13 @@ function fullLines(files) {
   return rows;
 }
 
-function evaluate(rows) {
+function evaluate(rows, { mode = 'changed' } = {}) {
   const violations = [];
   for (const row of rows) {
     const file = normalizeFile(row.file);
     if (shouldSkipFile(file)) continue;
     for (const rule of RULES) {
+      if (mode === 'full' && rule.changedOnly) continue;
       if (!rule.appliesTo(file)) continue;
       if (!rule.matches(row.text)) continue;
       if (rule.id === 'NO_SUPABASE_RUNTIME' && SUPABASE_DENYLIST_ALLOW_RE.test(file)) continue;
@@ -240,14 +259,19 @@ function runSelfTest() {
     { file: 'src/lib/integrations/ai-egress/anthropic-direct.ts', lineNumber: 1, text: "import Anthropic from '@anthropic-ai/sdk';" },
     { file: 'docs/build/example.md', lineNumber: 1, text: 'NEXT_PUBLIC_SUPABASE_URL is mentioned in a report.' },
     { file: 'src/lib/corpus/embedding.ts', lineNumber: 1, text: "provider: 'openai-embeddings'" },
+    { file: 'src/scripts/tower/project-tower-mart.ts', lineNumber: 1, text: "import { projectTowerStandardizedToFacts } from '../../lib/cio-tower/mart-projection/facts-from-tower-standardized';" },
+    { file: 'src/lib/tower/runtime.ts', lineNumber: 1, text: "const p = 'datasets/tenant-inputs/generated/skyharbor-air/standard-2026-07-v3';" },
+    { file: 'scripts/tower/fix-source-data.mjs', lineNumber: 1, text: "const p = 'tower-standardized-v1/skyharbor-air';" },
   ];
-  const violations = evaluate(rows);
+  const violations = evaluate(rows, { mode: 'changed' });
   const ids = violations.map((v) => v.rule).sort();
   const expected = [
     'NO_DIRECT_MODEL_SDK_OUTSIDE_EGRESS',
     'NO_OPENAI_PRODUCTION_REASONING',
     'NO_OPENAI_PRODUCTION_REASONING',
     'NO_PINECONE_NEO4J_RUNTIME',
+    'NO_PRODUCT_LAYER_SOURCE_READ',
+    'NO_PRODUCT_LAYER_SOURCE_READ',
     'NO_SUPABASE_RUNTIME',
   ].sort();
   if (JSON.stringify(ids) !== JSON.stringify(expected)) {
@@ -280,6 +304,6 @@ if (mode === 'full') {
   process.exit(2);
 }
 
-const violations = evaluate(rows);
+const violations = evaluate(rows, { mode });
 printResult({ mode, base, head, scannedFiles: files, violations });
 if (violations.length > 0) process.exit(1);
