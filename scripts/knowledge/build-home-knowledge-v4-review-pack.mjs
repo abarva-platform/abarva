@@ -13,8 +13,15 @@ const outputSchemaVersion = "home-knowledge-v4-candidate-review-v2";
 const defaultOutDir = path.join(repoRoot, "reports", "home-knowledge-v4-review", runStamp);
 const outDir = getArg("--out-dir", defaultOutDir);
 const model = getArg("--model", process.env.HOME_KNOWLEDGE_V4_MODEL || "claude-opus-4-8");
-const maxTokens = Number(getArg("--max-tokens", process.env.HOME_KNOWLEDGE_V4_MAX_TOKENS || "12000"));
-const tenantArg = getArg("--tenant", "all");
+// Opus 4.8 allows 128K output. The old 12000 default was truncating tool calls
+// mid-generation: a call that hit the cap before emitting `client_visible`
+// returned a tool input of just `{"phase": ...}`, which the code read as an
+// empty response and retried in full. It failed hardest on the largest tenant
+// (Meridian, 4 of 16 calls) and not at all on the smallest — deterministic
+// scaling with tenant size, not flakiness. Streaming is required above ~16K or
+// the SDK hits an HTTP timeout.
+const maxTokens = Number(getArg("--max-tokens", process.env.HOME_KNOWLEDGE_V4_MAX_TOKENS || "32000"));
+const tenantArg = process.env.HOME_KNOWLEDGE_V4_TENANT || getArg("--tenant", "all");
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
 const packetOnly = process.argv.includes("--packet-only");
@@ -80,8 +87,22 @@ const expandedDimensionCatalog = [
   { key: "rel", name: "Relationship Map", source_keys: ["rel", "apps", "data", "functions", "programs", "risks"] },
 ];
 
+// Canary support: restrict generation to named dimensions so a contract change
+// can be proven on ~3 calls instead of a full 38-dimension tenant run.
+const dimensionFilter = process.env.HOME_KNOWLEDGE_V4_DIMENSIONS || getArg("--dimensions", null);
+
 function dimensionPasses() {
-  return expandedDimensionCatalog.map((entry) => ({
+  const wanted = dimensionFilter
+    ? new Set(dimensionFilter.split(",").map((d) => d.trim()).filter(Boolean))
+    : null;
+  const selected = expandedDimensionCatalog.filter((entry) => !wanted || wanted.has(entry.key));
+  if (wanted) {
+    const unknown = Array.from(wanted).filter(
+      (key) => !expandedDimensionCatalog.some((entry) => entry.key === key),
+    );
+    if (unknown.length > 0) throw new Error(`Unknown --dimensions key(s): ${unknown.join(", ")}`);
+  }
+  return selected.map((entry) => ({
     key: entry.key,
     title: entry.name,
     dimensions: [entry.key],
@@ -1002,7 +1023,10 @@ async function callClaude(client, pass, prompt, tenantDir) {
     const attemptText = JSON.stringify(attemptPrompt, null, 2);
     if (attempt > 1) writeText(path.join(tenantDir, "prompts", `${pass.id}.repair-${attempt - 1}.json`), `${attemptText}\n`);
     const { stableText, variableText } = splitPromptForCache(attemptPrompt);
-    const message = await retry(async () => client.messages.create({
+    // Streaming, not create(): above ~16K max_tokens a non-streaming request
+    // hits the SDK's HTTP timeout. getFinalMessage() returns the same assembled
+    // Message object, so nothing downstream changes.
+    const message = await retry(async () => client.messages.stream({
       model,
       max_tokens: maxTokens,
       system: baseSystemPrompt(),
@@ -1020,7 +1044,7 @@ async function callClaude(client, pass, prompt, tenantDir) {
       }],
       tools: [tool],
       tool_choice: { type: "tool", name: tool.name },
-    }));
+    }).finalMessage());
     lastMessage = message;
     const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
     if (!toolUse) {
@@ -1943,11 +1967,21 @@ function runCostLedger() {
       continue;
     }
     const tenant = path.basename(path.dirname(path.dirname(file)));
-    // Empty-response and raw-message files record wasted attempts, not billed
-    // successful passes; count them separately so retry waste stays visible.
-    if (/empty-response-attempt|raw-message/.test(path.basename(file))) {
+    // Truncated/empty attempts are wasted work but they ARE billed — the call
+    // ran and burned its full output budget before being discarded. Count them
+    // as waste *and* include their tokens, or the ledger under-reports spend.
+    // The earlier pattern missed `<pass>.empty-response.json` (it only matched
+    // `empty-response-attempt`), so those retries were being counted as
+    // successful passes.
+    if (/empty-response|raw-message/.test(path.basename(file))) {
       const bucket = byTenant.get(tenant) ?? emptyLedgerBucket();
       bucket.empty_response_attempts += 1;
+      if (response?.usage) {
+        addUsage(bucket, response);
+        bucket.calls -= 1; // billed, but not a completed pass
+        addUsage(total, response);
+        total.calls -= 1;
+      }
       byTenant.set(tenant, bucket);
       total.empty_response_attempts += 1;
       continue;
