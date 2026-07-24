@@ -27,6 +27,7 @@ import {
   type ReadinessReport,
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,11 @@ export default async function StrategicMovePhaseWorkspacePage({
 
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
+
+  const pricingEngineEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_pricing_engine",
+  );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -149,6 +155,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         move={move}
         phaseNum={parsedPhase}
         phaseTallies={getMovePhaseTallies(move)}
+        pricingEngineEnabled={pricingEngineEnabled}
       />
     </AppShell>
   );

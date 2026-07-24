@@ -1566,6 +1566,56 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("hides the Cost & Effort rail entry point when moves_pricing_engine is off (the default)", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Build the Plan" })}
+        phaseNum={4}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /Cost & Effort/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Cost & Effort rail entry point only on P4 when the flag is on, and opens the wizard", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Build the Plan" })}
+        phaseNum={4}
+        phaseTallies={[...phaseTallies]}
+        pricingEngineEnabled
+      />,
+    );
+    const costEffortButton = screen.getByRole("button", { name: /Cost & Effort/i });
+    expect(costEffortButton).toBeInTheDocument();
+    fireEvent.click(costEffortButton);
+    expect(
+      screen.getByRole("heading", { name: "Cost & Effort" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the Cost & Effort rail entry point on a non-P4 phase, even with the flag on", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 3, phaseLabel: "P3 Choose the Approach" })}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+        pricingEngineEnabled
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /Cost & Effort/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders P5 in the contract shell instead of the older prepare wall", () => {
     render(
       <MovesPhaseStandaloneClient

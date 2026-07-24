@@ -93,7 +93,8 @@ export type FeatureFlagKey =
   | "moves_ava_chat_hardening"
   | "moves_finder_shell_v1"
   | "moves_approvals_overview_v1"
-  | "tower_command_center_v2";
+  | "tower_command_center_v2"
+  | "moves_pricing_engine";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -325,6 +326,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Tower synthesis route may use the Apex Retail demo fixture as portfolio input. Tenant-gated to apexretail only — closes the Atlas P0 cross-tenant leak where the Apex fixture was the silent default for every tenant. Default ON for apexretail.",
     policy: "tenant",
     includeTenants: ["apexretail"],
+  },
+  {
+    key: "moves_pricing_engine",
+    summary:
+      "Attaches the P4 'Cost & Effort' workspace entry point (the 5-step estimate wizard wired to the independent pricing_* schema + PR4 effort engine, brief §9) to the Moves phase workspace. Default OFF — this is a NEW Move-facing surface built across an 8-PR sequence (PR2-PR7); the underlying pricing_* tables/engine are real and tested, but the workspace has not yet been live-proven with a real tenant. Flip on per tenant via includeTenants once a pilot tenant is ready to validate the wizard end-to-end. Flag off = the rail entry point does not render at all (no dead-code call site exposed).",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "graph_neo4j_enabled",
