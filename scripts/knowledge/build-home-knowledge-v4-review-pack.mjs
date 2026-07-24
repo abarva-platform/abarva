@@ -554,7 +554,61 @@ function baseSystemPrompt() {
   ].join("\n");
 }
 
-function toolSchema() {
+// A rendered visual, typed. `empty_state` used to be prose only ("Do not omit
+// empty_state even when data_points are present") and was dropped on ~57 of
+// Meridian's visuals — prose is not holding, so the contract moves into the
+// schema. The anyOf discriminates on visual_type so a relationship_graph must
+// carry graph fields instead of chart fields, which is the other observed
+// defect: the model picked the graph type, then filled a chart contract.
+function renderedVisualSchema() {
+  const fieldSchema = (field, graphType) => {
+    if (field === "visual_type") {
+      return {
+        type: "string",
+        enum: graphType ? ["relationship_graph"] : visualTypeEnum.filter((t) => t !== "relationship_graph"),
+      };
+    }
+    if (field === "classification") return { type: "string", enum: classificationEnum };
+    if (field === "data_points" || field === "node_groups") return { type: "array" };
+    if (field === "encoding") return { type: "object" };
+    return { type: "string" };
+  };
+  return {
+    anyOf: [
+      {
+        type: "object",
+        additionalProperties: true,
+        properties: Object.fromEntries(requiredVisualFields.map((f) => [f, fieldSchema(f, false)])),
+        required: requiredVisualFields,
+      },
+      {
+        type: "object",
+        additionalProperties: true,
+        properties: Object.fromEntries(requiredRelationshipGraphFields.map((f) => [f, fieldSchema(f, true)])),
+        required: requiredRelationshipGraphFields,
+      },
+    ],
+  };
+}
+
+// NOTE: `tools` renders at prefix position 0, so varying the schema by pass type
+// invalidates the prompt cache between pass types. That is deliberate and cheap
+// — cross-pass-type sharing measured only ~148 tokens — and the 13k-token
+// dimension-to-dimension cache is untouched, because every dimension pass gets
+// a byte-identical schema.
+function toolSchema(pass = null) {
+  const clientVisible = pass?.type === "dimensions"
+    ? {
+        type: "object",
+        additionalProperties: true,
+        properties: {
+          dimension_key: { type: "string" },
+          executive_title: { type: "string" },
+          primary_visual: renderedVisualSchema(),
+        },
+        required: ["dimension_key", "executive_title", "primary_visual"],
+      }
+    : { type: "object", additionalProperties: true };
   return {
     name: "submit_home_v4_candidate_section",
     description: "Submit one bounded Home Knowledge Pack V4 candidate section.",
@@ -563,7 +617,7 @@ function toolSchema() {
       additionalProperties: true,
       properties: {
         phase: { type: "string" },
-        client_visible: { type: "object", additionalProperties: true },
+        client_visible: clientVisible,
         visual_contracts: {
           type: "array",
           items: { type: "object", additionalProperties: true },
@@ -882,8 +936,50 @@ function rowsForDimensionPacket(packet, key) {
   return map[key] ?? [];
 }
 
+// Prompt-cache partitioning.
+//
+// Prompt caching matches on an exact byte prefix, so the first differing byte
+// ends the cacheable region. Every dimension prompt used to lead with `task`,
+// which names the dimension and therefore differs on every call — poisoning the
+// ~47KB of byte-identical content behind it (`common`, `story_architecture`,
+// `relationship_samples`, `evidence_sources`). Measured result: 0 cache reads
+// across 86 calls, every one re-sending its full context at uncached price.
+//
+// Ordered most-widely-shared first, so shorter prefixes still match longer ones:
+// a pass without `relationship_samples` still shares `common` +
+// `story_architecture` with a pass that has it.
+const CACHE_STABLE_KEYS = [
+  "common",
+  "story_architecture",
+  "context_packet",
+  "relationship_samples",
+  "evidence_sources",
+  "industry_context",
+  "tenant_signals",
+  "industry_change",
+  "instruction",
+  "output_requirements",
+];
+
+function splitPromptForCache(prompt) {
+  const stable = {};
+  const variable = {};
+  for (const key of CACHE_STABLE_KEYS) {
+    if (Object.hasOwn(prompt, key)) stable[key] = prompt[key];
+  }
+  for (const [key, value] of Object.entries(prompt)) {
+    // Everything not explicitly stable stays after the breakpoint — including
+    // `task` and any `repair_instruction` added on a retry.
+    if (!Object.hasOwn(stable, key)) variable[key] = value;
+  }
+  return {
+    stableText: JSON.stringify(stable, null, 2),
+    variableText: JSON.stringify(variable, null, 2),
+  };
+}
+
 async function callClaude(client, pass, prompt, tenantDir) {
-  const tool = toolSchema();
+  const tool = toolSchema(pass);
   const promptText = JSON.stringify(prompt, null, 2);
   writeText(path.join(tenantDir, "prompts", `${pass.id}.json`), `${promptText}\n`);
   const started = Date.now();
@@ -905,11 +1001,23 @@ async function callClaude(client, pass, prompt, tenantDir) {
         };
     const attemptText = JSON.stringify(attemptPrompt, null, 2);
     if (attempt > 1) writeText(path.join(tenantDir, "prompts", `${pass.id}.repair-${attempt - 1}.json`), `${attemptText}\n`);
+    const { stableText, variableText } = splitPromptForCache(attemptPrompt);
     const message = await retry(async () => client.messages.create({
       model,
       max_tokens: maxTokens,
       system: baseSystemPrompt(),
-      messages: [{ role: "user", content: attemptText }],
+      messages: [{
+        role: "user",
+        content: [
+          // Cache breakpoint. Prompt caching is a prefix match over
+          // tools -> system -> messages, so this one breakpoint covers the tool
+          // schema and system prompt as well as the stable body below. A
+          // breakpoint on the tool alone would cache nothing: tools + system is
+          // ~1.2k tokens, under Opus's 4096-token minimum cacheable prefix.
+          { type: "text", text: stableText, cache_control: { type: "ephemeral", ttl: "1h" } },
+          { type: "text", text: variableText },
+        ],
+      }],
       tools: [tool],
       tool_choice: { type: "tool", name: tool.name },
     }));
@@ -1766,11 +1874,13 @@ async function runReplay() {
 
 // Published Opus list pricing, USD per million tokens. Override with
 // HOME_V4_PRICE_* when a negotiated rate applies.
+// Opus 4.8 list pricing: $5/MTok input, $25/MTok output. Cache writes bill at
+// 2x input for the 1h TTL used here; cache reads at 0.1x input.
 const pricePerMillion = {
-  input: Number(process.env.HOME_V4_PRICE_INPUT ?? 15),
-  cache_write: Number(process.env.HOME_V4_PRICE_CACHE_WRITE ?? 18.75),
-  cache_read: Number(process.env.HOME_V4_PRICE_CACHE_READ ?? 1.5),
-  output: Number(process.env.HOME_V4_PRICE_OUTPUT ?? 75),
+  input: Number(process.env.HOME_V4_PRICE_INPUT ?? 5),
+  cache_write: Number(process.env.HOME_V4_PRICE_CACHE_WRITE ?? 10),
+  cache_read: Number(process.env.HOME_V4_PRICE_CACHE_READ ?? 0.5),
+  output: Number(process.env.HOME_V4_PRICE_OUTPUT ?? 25),
 };
 
 function emptyLedgerBucket() {
