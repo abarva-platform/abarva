@@ -451,6 +451,13 @@ function buildTenantContextPacket(pack, sourceHash) {
         "criticality", "lifecycle_status", "deployment_model", "hosting_location",
         "technology_owner", "business_owner", "current_state_notes", "known_gaps",
       ]),
+      // Real, deterministic application-ownership coverage from the reconciled
+      // tower-standardized-v1 source (see loadTenantApplicationOwnershipFacts).
+      // If present, this is authoritative for any ownership-coverage claim in
+      // the apps dimension's narrative/gaps/relationship/evidence text --
+      // do not claim ownership is universally unassigned or "to confirm" when
+      // owner_coverage_pct is above 0; state the actual split instead.
+      application_ownership_coverage: pack.__application_ownership_facts ?? null,
       data_assets: compactRows(rowsFor(pack, "data"), 24, [
         "data_domain", "name", "use_case", "source_systems", "integration_pattern",
         "readiness_status", "known_gaps", "evidence_status",
@@ -814,7 +821,10 @@ function makePrompt(pass, packet, assembled) {
           "module_implications",
         ],
         hard_limits:
-          "Return one dimension object directly in client_visible. summary_tab must be an object with headline, executive_read, classification. data_tab must be an object with headline, filters, rows, evidence_boundary, classification. relationship_tab must be an object with headline, graph_nodes, graph_edges, paths_to_show, missing_relationships, classification. gaps_tab must be an object with decision_gaps, why_it_matters, evidence_to_collect, owner_hint, classification. evidence_tab must be an object with source_inventory, what_it_proves, what_it_does_not_prove, next_evidence_request, classification. primary_visual must include visual_type, title, executive_question, classification, data_points, encoding, annotation, evidence_boundary, empty_state. Keep each tab concise. Never write template filenames, evidence IDs, source table names, or raw inventory counts in any tab.",
+          "Return one dimension object directly in client_visible. summary_tab must be an object with headline, executive_read, classification. data_tab must be an object with headline, filters, rows, evidence_boundary, classification. relationship_tab must be an object with headline, graph_nodes, graph_edges, paths_to_show, missing_relationships, classification. gaps_tab must be an object with decision_gaps, why_it_matters, evidence_to_collect, owner_hint, classification. evidence_tab must be an object with source_inventory, what_it_proves, what_it_does_not_prove, next_evidence_request, classification. primary_visual must include visual_type, title, executive_question, classification, data_points, encoding, annotation, evidence_boundary, empty_state. Keep each tab concise. Never write template filenames, evidence IDs, source table names, or raw inventory counts in any tab." +
+          (packet.business_context_samples.application_ownership_coverage
+            ? " If writing the apps dimension: application_ownership_coverage below is deterministic, verified data — the applications_with_named_owner / total_applications split is a fact, not an estimate. Do not state or imply ownership is universally unassigned, unknown, or 'to confirm' across the whole estate; state the real coverage split (e.g. as a percentage or a business-coverage phrase) in summary_tab, gaps_tab, and relationship_tab consistently. gaps_tab may correctly note that the remaining share lacks ownership. relationship_tab's Owners node group must reflect both the known-owner population and the genuinely unresolved remainder, not only a single missing_evidence node."
+            : ""),
       },
       common,
       story_architecture: assembled.story_architect,
@@ -822,6 +832,9 @@ function makePrompt(pass, packet, assembled) {
       rows_by_dimension: Object.fromEntries(pass.dimensions.map((key) => [key, (packet.business_context_samplesForDimension?.[key] ?? rowsForDimensionPacket(packet, key)).slice(0, 8)])),
       relationship_samples: packet.business_context_samples.relationship_samples,
       evidence_sources: packet.business_context_samples.evidence_sources,
+      application_ownership_coverage: pass.dimensions.includes("apps")
+        ? packet.business_context_samples.application_ownership_coverage
+        : undefined,
     };
   }
   if (pass.type === "relationships") {
@@ -1105,12 +1118,63 @@ async function retry(fn) {
   throw lastError;
 }
 
+// Loads a tenant's reconciled application inventory (real per-application
+// ownership/hosting/vendor/cost data), the same source
+// scripts/knowledge/reconcile-tenant-applications.mjs uses for the
+// deterministic HomeV4ApplicationsGrid. Folded into both the context Claude
+// sees and the source hash, so narrative generated after this data was
+// found is provably distinguishable from narrative generated before it.
+function loadTenantApplicationOwnershipFacts(tenantKey) {
+  const tstFolder = {
+    "skyharbor-air": "skyharbor-air",
+    "first-capital": "first-capital-financial",
+    "meridian-health": "meridian-health",
+    "apex-retail": "apex-retail",
+    "lakeshore-holdings": "lakeshore-industries",
+  }[tenantKey];
+  if (!tstFolder) return null;
+  const f05Path = path.join(repoRoot, "tower-standardized-v1", tstFolder, "family-2-technology-estate/F05_applications-systems.csv");
+  if (!fs.existsSync(f05Path)) return null;
+  const f05Text = fs.readFileSync(f05Path, "utf8");
+  const rows = f05Text.trim().split("\n").slice(1).map((line) => line.replace(/\r$/, ""));
+  const totalCount = rows.length;
+  const isLegacySchema = f05Text.split("\n")[0].startsWith("app_id");
+  let ownedCount = 0;
+  if (isLegacySchema) {
+    const f19Path = path.join(repoRoot, "tower-standardized-v1", tstFolder, "family-8-semantic-enrichment/F19_team-application-ownership.csv");
+    if (fs.existsSync(f19Path)) {
+      const f19Text = fs.readFileSync(f19Path, "utf8");
+      ownedCount = f19Text
+        .trim()
+        .split("\n")
+        .slice(1)
+        .filter((line) => line.split(",")[4]).length; // business_owner_role column
+    }
+  } else {
+    ownedCount = rows.filter((line) => line.split(",")[3]).length; // primary_business_owner column
+  }
+  return {
+    source_files: isLegacySchema
+      ? [`tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`, `tower-standardized-v1/${tstFolder}/family-8-semantic-enrichment/F19_team-application-ownership.csv`]
+      : [`tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`],
+    total_applications: totalCount,
+    applications_with_named_owner: ownedCount,
+    owner_coverage_pct: Math.round((ownedCount / totalCount) * 100),
+    ownership_maturity: isLegacySchema
+      ? "Derived from a team/domain-matched join, not directly captured on the source record. Carries an explicit confidence score per row."
+      : "Directly captured on the source application record.",
+    raw_hash: sha256(f05Text),
+  };
+}
+
 async function processTenant(client, tenantKey) {
   const sourceFile = path.join(repoRoot, "datasets", "tenant-inputs", tenantKey, "approved-content", "home", "design-contract-pack.json");
   const sourceText = fs.readFileSync(sourceFile, "utf8");
-  const sourceHash = sha256(sourceText);
+  const applicationOwnershipFacts = loadTenantApplicationOwnershipFacts(tenantKey);
+  const sourceHash = sha256(sourceText + (applicationOwnershipFacts?.raw_hash ?? ""));
   const pack = JSON.parse(sourceText);
   pack.__source_file = sourceFile;
+  pack.__application_ownership_facts = applicationOwnershipFacts;
   const tenantDir = path.join(outDir, "tenants", tenantKey);
   ensureDir(tenantDir);
   const packet = buildTenantContextPacket(pack, sourceHash);
