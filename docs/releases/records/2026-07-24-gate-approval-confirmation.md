@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate`
+`released` — merged (#5556, commit `34335af96b406da13f0b59f0b6a798d98b6b97b8`), deployed, ACA
+runtime invariant confirmed, and live-proven signed-in on `app.abarva.ai` (see Audit Evidence).
 
 ## Plain-English Summary
 
@@ -77,11 +78,27 @@ confirmed.
     a Clerk ESM transform error in this worktree's `node_modules`) — confirmed via `git diff
     origin/main` to be untouched by this change, and is an existing worktree/jest-config issue,
     not a regression.
-- No live browser verification was performed for this specific change. Per the standing session
-  guardrail against approving/advancing real production Moves, and because the change is a
-  client-side confirmation gate in front of an already-verified server mutation, this was judged
-  low-risk enough to rely on unit-test coverage plus a subsequent live click-through check after
-  deploy (see Known Gaps).
+- Live signed-in browser verification (2026-07-24, post-deploy): navigated to
+  `https://app.abarva.ai/strategic-moves/4d0e21b9-1812-44db-9268-a7fcff90f118/phase/5`
+  (RETAIL-APEX-2026, a real, already-existing demo/canary Move at P5 Prepare to Execute — no new
+  Move created, no approval confirmed), signed in as `anand.sundaram+apex@thesundaram.com ·
+  tenant_admin`. Clicked "Approve & Build P5 Prepare to Execute →": the confirmation dialog opened
+  and its rendered text read exactly:
+
+  > Approve & build P5 Prepare to Execute?
+  >
+  > This generates all 2 P5 Prepare to Execute deliverables in one governed batch and closes the
+  > phase gate once every document reaches a terminal state. There is no per-document regenerate
+  > afterward — if an input changes, you'll re-run and re-approve the whole phase.
+  >
+  > Approving as: anand.sundaram+apex@thesundaram.com · tenant_admin
+
+  confirming the real signed-in session's email/role render correctly, sourced from `TenancyCtx`,
+  with no fabricated placeholder. Per the standing guardrail against approving/advancing real
+  Moves, the dialog was then **cancelled**, not confirmed — verified via
+  `read_network_requests` (urlPattern `generate-phase`) showing zero requests, the dialog element
+  removed from the DOM, and the gate rail still reading "0 of 4" afterward, i.e. no mutation and no
+  gate-state change occurred from this proof pass.
 
 ## Rollout Plan
 
@@ -92,18 +109,18 @@ Merge to `main` via squash-merge PR (repository ruleset is PR-only, speed mode).
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` (only mutator of shared web
-  traffic)
+  traffic) — run `30106990157`, conclusion `success`, for commit `34335af96b`.
 - Shared runtime mutators: none outside the repo-owned workflow
-- Approved image digest: to be confirmed post-merge via `az containerapp show` /
-  `az containerapp revision list` runtime-invariant check
-- ACA runtime invariant: to be verified after deploy (template image == 100%-traffic revision
-  image == approved digest)
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:3abb9dd7bc4c5ae1ac1ff2d344b5d9398bb3286b901405285ae4f50e26eec0f4`
+- ACA runtime invariant: confirmed — `ca-abarva-web-lab-eastus`'s template image and the
+  100%-traffic revision (`ca-abarva-web-lab-eastus--m34335af9`) both resolve to the digest above.
 - Worker image invariant: not applicable (no worker-job change)
 - Feature/env flag update path: not applicable (no flag)
-- Live signed-in proof required: yes — a signed-in click-through of both the P0 and a P1–P5
-  "Approve & Build" confirmation dialog (open → cancel → reopen → confirm) should be captured
-  after deploy, consistent with this session's pattern for prior UI changes (MOVES-UI-009,
-  MOVES-UI-011).
+- Live signed-in proof required: yes — captured (see Audit Evidence). The P0 path was not
+  separately re-exercised live in this pass (no P0-stage Move was readily at hand); the phase-level
+  "Approve & Build" path, which shares the same `GateApprovalConfirmDialog` component and the same
+  `approverLabel` derivation, was proven directly.
 
 ## Rollback Plan
 
@@ -113,17 +130,24 @@ shapes are unchanged, so a rollback is a pure UI revert with no backward-compati
 
 ## Audit Evidence
 
-- PR: to be opened
+- PR: [#5556](https://github.com/abarva-platform/abarva/pull/5556), squash-merged as
+  `34335af96b406da13f0b59f0b6a798d98b6b97b8`
 - Local validation: eslint clean, tsc clean, `npx jest src/components/strategic-moves` — 154
   passed / 1 pre-existing unrelated failure
-- Post-deploy: ACA runtime-invariant check output and live signed-in browser proof to be added
-  once captured (see Known Gaps)
+- ACA deploy workflow run `30106990157` — `success`
+- ACA runtime invariant — template image and 100%-traffic revision `ca-abarva-web-lab-eastus--
+  m34335af9` both at digest `sha256:3abb9dd7bc4c5ae1ac1ff2d344b5d9398bb3286b901405285ae4f50e26eec0f4`
+- Live signed-in browser proof (2026-07-24) — RETAIL-APEX-2026 Move, P5 Prepare to Execute,
+  `anand.sundaram+apex@thesundaram.com · tenant_admin`: confirmation dialog opened with the exact
+  approval summary and approver identity, then was cancelled with zero fetches to
+  `/api/v1/deliverables/generate-phase` and no change to the gate's "0 of 4" state.
 
 ## Known Gaps
 
-- Live signed-in browser verification on `app.abarva.ai` has not yet been captured for this
-  specific change — planned as a follow-up once deployed, following the same pattern used for
-  MOVES-UI-009/011 in this session.
+- The P0 "Approve gate →" path shares the identical `GateApprovalConfirmDialog` component and
+  `approverLabel` derivation as the phase-level path that was live-proven, but was not separately
+  re-exercised live in this pass (no P0-stage Move was readily at hand in this proof session) —
+  covered by unit tests only for the P0-specific wiring.
 - `MOVES-UI-012` (approval history/audit trail) remains explicitly deferred — it depends on the
   separate `MOVES-ARTIFACT-001` event-sourced lifecycle model and is intentionally out of scope
   here, to avoid building a second, competing history mechanism.
