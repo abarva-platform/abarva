@@ -1,0 +1,77 @@
+{
+  "tenant": {
+    "canonical_key": "fixture-tenant",
+    "display_name": "Fixture Tenant",
+    "source_snapshot_hash": "fixturehash0001"
+  },
+  "deterministic_dataset_registry": [
+    {
+      "dataset_id": "applications_full",
+      "available_dimensions": [
+        "category",
+        "business_function"
+      ],
+      "available_measures": [
+        "count"
+      ]
+    },
+    {
+      "dataset_id": "vendors_full",
+      "available_dimensions": [
+        "criticality"
+      ],
+      "available_measures": [
+        "annual_run_rate_usd",
+        "count"
+      ]
+    },
+    {
+      "dataset_id": "programs_full",
+      "available_dimensions": [
+        "stage"
+      ],
+      "available_measures": [
+        "count"
+      ]
+    },
+    {
+      "dataset_id": "risk_register",
+      "available_dimensions": [
+        "severity"
+      ],
+      "available_measures": [
+        "count"
+      ]
+    },
+    {
+      "dataset_id": "evidence_registry",
+      "available_dimensions": [
+        "source_type"
+      ],
+      "available_measures": [
+        "count"
+      ]
+    },
+    {
+      "dataset_id": "budget_summary",
+      "available_dimensions": [
+        "budget_area"
+      ],
+      "available_measures": [
+        "budget_fy26_usd"
+      ]
+    }
+  ],
+  "evidence_index": [
+    {
+      "evidence_id": "EVID-FIX-0001",
+      "source_family": "fixture",
+      "title": "Fixture evidence one"
+    },
+    {
+      "evidence_id": "EVID-FIX-0002",
+      "source_family": "fixture",
+      "title": "Fixture evidence two"
+    }
+  ]
+}
