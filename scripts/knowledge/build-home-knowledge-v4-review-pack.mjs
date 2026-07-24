@@ -554,7 +554,61 @@ function baseSystemPrompt() {
   ].join("\n");
 }
 
-function toolSchema() {
+// A rendered visual, typed. `empty_state` used to be prose only ("Do not omit
+// empty_state even when data_points are present") and was dropped on ~57 of
+// Meridian's visuals — prose is not holding, so the contract moves into the
+// schema. The anyOf discriminates on visual_type so a relationship_graph must
+// carry graph fields instead of chart fields, which is the other observed
+// defect: the model picked the graph type, then filled a chart contract.
+function renderedVisualSchema() {
+  const fieldSchema = (field, graphType) => {
+    if (field === "visual_type") {
+      return {
+        type: "string",
+        enum: graphType ? ["relationship_graph"] : visualTypeEnum.filter((t) => t !== "relationship_graph"),
+      };
+    }
+    if (field === "classification") return { type: "string", enum: classificationEnum };
+    if (field === "data_points" || field === "node_groups") return { type: "array" };
+    if (field === "encoding") return { type: "object" };
+    return { type: "string" };
+  };
+  return {
+    anyOf: [
+      {
+        type: "object",
+        additionalProperties: true,
+        properties: Object.fromEntries(requiredVisualFields.map((f) => [f, fieldSchema(f, false)])),
+        required: requiredVisualFields,
+      },
+      {
+        type: "object",
+        additionalProperties: true,
+        properties: Object.fromEntries(requiredRelationshipGraphFields.map((f) => [f, fieldSchema(f, true)])),
+        required: requiredRelationshipGraphFields,
+      },
+    ],
+  };
+}
+
+// NOTE: `tools` renders at prefix position 0, so varying the schema by pass type
+// invalidates the prompt cache between pass types. That is deliberate and cheap
+// — cross-pass-type sharing measured only ~148 tokens — and the 13k-token
+// dimension-to-dimension cache is untouched, because every dimension pass gets
+// a byte-identical schema.
+function toolSchema(pass = null) {
+  const clientVisible = pass?.type === "dimensions"
+    ? {
+        type: "object",
+        additionalProperties: true,
+        properties: {
+          dimension_key: { type: "string" },
+          executive_title: { type: "string" },
+          primary_visual: renderedVisualSchema(),
+        },
+        required: ["dimension_key", "executive_title", "primary_visual"],
+      }
+    : { type: "object", additionalProperties: true };
   return {
     name: "submit_home_v4_candidate_section",
     description: "Submit one bounded Home Knowledge Pack V4 candidate section.",
@@ -563,7 +617,7 @@ function toolSchema() {
       additionalProperties: true,
       properties: {
         phase: { type: "string" },
-        client_visible: { type: "object", additionalProperties: true },
+        client_visible: clientVisible,
         visual_contracts: {
           type: "array",
           items: { type: "object", additionalProperties: true },
@@ -925,7 +979,7 @@ function splitPromptForCache(prompt) {
 }
 
 async function callClaude(client, pass, prompt, tenantDir) {
-  const tool = toolSchema();
+  const tool = toolSchema(pass);
   const promptText = JSON.stringify(prompt, null, 2);
   writeText(path.join(tenantDir, "prompts", `${pass.id}.json`), `${promptText}\n`);
   const started = Date.now();
