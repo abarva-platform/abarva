@@ -13,8 +13,19 @@
 // anything failed.
 
 import "@testing-library/jest-dom";
-import { render, screen, act, waitFor } from "@testing-library/react";
+import { render, screen, act, waitFor, within } from "@testing-library/react";
 import { PhaseApproveAndBuild, type BuildSettledResult } from "../PhaseApproveAndBuild";
+
+async function clickApproveAndBuild(name: RegExp) {
+  await act(async () => {
+    screen.getByRole("button", { name }).click();
+  });
+  await act(async () => {
+    within(screen.getByRole("dialog"))
+      .getByRole("button", { name: /^Approve & Build$/i })
+      .click();
+  });
+}
 
 const originalFetch = global.fetch;
 afterEach(() => {
@@ -91,9 +102,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       />,
     );
 
-    await act(async () => {
-      screen.getByRole("button", { name: /Approve & Build P1 Charter/i }).click();
-    });
+    await clickApproveAndBuild(/Approve & Build P1 Charter/i);
 
     // Immediately after queueing (before the first poll resolves as terminal),
     // onBuildSettled must NOT have fired — this is the exact bug: the old
@@ -123,9 +132,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       />,
     );
 
-    await act(async () => {
-      screen.getByRole("button", { name: /Approve & Build P1 Charter/i }).click();
-    });
+    await clickApproveAndBuild(/Approve & Build P1 Charter/i);
 
     await waitFor(() => expect(onBuildSettled).toHaveBeenCalledTimes(1), { timeout: 8000 });
     const result = onBuildSettled.mock.calls[0][0];
@@ -173,9 +180,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       />,
     );
 
-    await act(async () => {
-      screen.getByRole("button", { name: /Approve & Build P1 Charter/i }).click();
-    });
+    await clickApproveAndBuild(/Approve & Build P1 Charter/i);
 
     await waitFor(() => expect(onBuildSettled).toHaveBeenCalledTimes(1), { timeout: 8000 });
     const result = onBuildSettled.mock.calls[0][0];

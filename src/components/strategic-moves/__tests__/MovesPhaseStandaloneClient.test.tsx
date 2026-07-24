@@ -867,6 +867,82 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("gates P0 gate approval behind a confirmation dialog and shows the signed-in approver identity", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Approve gate →" })[0],
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByText(/Approving as: jane@apex-retail.com/i),
+    ).toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-gate-approval"),
+      ),
+    ).toBe(false);
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Approve gate" }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+          String(url).includes("/phase-gate-approval"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("cancelling the P0 gate approval confirmation leaves the gate unapproved", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Approve gate →" })[0],
+    );
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-gate-approval"),
+      ),
+    ).toBe(false);
+    expect(
+      screen.getAllByRole("button", { name: "Approve gate →" })[0],
+    ).toBeInTheDocument();
+  });
+
   it("shows completed P0 as read-only when the Move has already advanced to P1", () => {
     render(
       <MovesPhaseStandaloneClient
@@ -2116,6 +2192,11 @@ describe("MovesPhaseStandaloneClient", () => {
         name: /Approve & Build P3 Choose the Approach/i,
       }),
     );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
     await waitFor(() => {
       expect(screen.getAllByText(/Gate approved/i).length).toBeGreaterThan(0);
     });
@@ -2221,6 +2302,11 @@ describe("MovesPhaseStandaloneClient", () => {
         name: /Approve & Build P3 Choose the Approach/i,
       }),
     );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
 
     await waitFor(() => {
       expect(
@@ -2233,6 +2319,66 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/approve or upload the client-approved deliverable/i),
     ).toBeInTheDocument();
+  });
+
+  it("gates Approve & Build behind a confirmation dialog and does not enqueue a build until confirmed", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Record Decision/i));
+    fireEvent.click(
+      screen.getByRole("button", { name: /\(recommended\)/i }),
+    );
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByText(/Approving as: jane@apex-retail.com/i),
+    ).toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/api/v1/deliverables/generate-phase"),
+      ),
+    ).toBe(false);
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/api/v1/deliverables/generate-phase"),
+      ),
+    ).toBe(false);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+          String(url).includes("/api/v1/deliverables/generate-phase"),
+        ),
+      ).toBe(true);
+    });
   });
 
   it("wires the aVa suggested questions to a real chat send, with programId set correctly to avoid the 'no active Move session' regression", async () => {

@@ -1367,12 +1367,21 @@ cells are stale and superseded by that resolution).
   user before they commit.
 - **Severity**: P1 (governance/trust gap on an irreversible action, not a cosmetic issue)
 - **Workstream**: UI/UX shell (gate approval clarity)
-- **Status**: `Found, not fixed` (2026-07-24) — documentation only. This touches the actual gate
-  approval submission path (not pure navigation, unlike `MOVES-UI-009`), and per this session's own
-  standing guardrails (preserve existing working Moves business logic; do not approve/advance real
-  Moves), a change here should be built and tested carefully — including verifying via unit tests
-  only, never by actually approving a real production/client Move — rather than rushed in the same
-  pass that found it.
+- **Status**: `Implemented` (2026-07-24) — a new reusable `GateApprovalConfirmDialog` (shared
+  `StrategicMoves.module.css` confirm-dialog CSS, same pattern already used in
+  `StrategicMoveOriginateClient.tsx`) now sits in front of both approval paths. Both the P0
+  "Approve gate →" button and `PhaseApproveAndBuild`'s "Approve & Build" button now only *open* the
+  dialog on click; the real mutation (`onApproveP0Gate()` / `approveAndBuild()`) fires only from the
+  dialog's own confirm button. The dialog shows a plain-language summary of exactly what the
+  approval does and, when available, the signed-in session's `email · tenantRole` — threaded down
+  as a new `currentUser` prop from the server page component
+  (`src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx`, sourced from the same
+  `TenancyCtx` (`ctx.email`/`ctx.tenantRole`) the server mutation itself already resolves the
+  approver from — this is a pure additive display, no server-side change). Cancelling closes the
+  dialog with zero side effects; no fetch to `/phase-gate-approval` or
+  `/api/v1/deliverables/generate-phase` fires until the dialog is explicitly confirmed. Verified
+  entirely via unit tests, never against a real Move, consistent with this session's standing
+  guardrails.
 - **Dependencies**: none technically (the current session's identity is already resolvable via
   existing auth context used elsewhere in the app), but this is a higher-trust surface than most
   UI-only fixes and deserves a dedicated, carefully-tested change

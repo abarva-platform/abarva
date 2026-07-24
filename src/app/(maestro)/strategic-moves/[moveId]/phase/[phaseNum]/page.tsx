@@ -146,6 +146,10 @@ export default async function StrategicMovePhaseWorkspacePage({
       <MovesPhaseStandaloneClient
         carriesForwardContent={carriesForwardContent}
         currentStateReadiness={currentStateReadiness}
+        currentUser={{
+          email: ctx.email ?? null,
+          role: ctx.tenantRole ?? ctx.role ?? null,
+        }}
         evidenceNeedPackets={evidenceNeedPackets}
         initialSubstepKey={
           parsedPhase === 0 && resolvedSearchParams.focus === "gate"
