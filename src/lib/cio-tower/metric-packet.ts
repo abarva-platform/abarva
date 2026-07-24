@@ -65,9 +65,9 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
   "skyharbor-air": "skyharbor-air",
   lakeshore: "lakeshore-holdings",
   lakeshoreholdings: "lakeshore-holdings",
-  lakeshoreindustries: "lakeshore-holdings",
+  lakeshoreindustries: "lakeshore-industries",
   "lakeshore-holdings": "lakeshore-holdings",
-  "lakeshore-industries": "lakeshore-holdings",
+  "lakeshore-industries": "lakeshore-industries",
 };
 
 const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
@@ -76,6 +76,7 @@ const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
   "first-capital-financial": DEMO_SAFE_CLIENT_NAMES.arcturus,
   "skyharbor-air": DEMO_SAFE_CLIENT_NAMES.skyharbor,
   "lakeshore-holdings": "Lakeshore Holdings",
+  "lakeshore-industries": "Lakeshore Industries",
 };
 
 export function canonicalCioTowerTenantKey(value: string): string {

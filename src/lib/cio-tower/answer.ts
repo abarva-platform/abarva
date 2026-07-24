@@ -225,9 +225,9 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
   "skyharbor-air": "skyharbor-air",
   lakeshore: "lakeshore-holdings",
   lakeshoreholdings: "lakeshore-holdings",
-  lakeshoreindustries: "lakeshore-holdings",
+  lakeshoreindustries: "lakeshore-industries",
   "lakeshore-holdings": "lakeshore-holdings",
-  "lakeshore-industries": "lakeshore-holdings",
+  "lakeshore-industries": "lakeshore-industries",
 };
 
 export function canonicalCioTowerTenantKey(value: string): string {

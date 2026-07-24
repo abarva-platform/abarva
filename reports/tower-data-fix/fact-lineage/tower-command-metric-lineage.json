@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-24T19:09:06.088Z",
+  "generated_at": "2026-07-24T20:59:58.789Z",
   "tenants": [
     "apex-retail",
     "first-capital-financial",
@@ -12,8 +12,8 @@
     {
       "tenant_key": "apex-retail",
       "metric": "total_it_budget_fy26",
-      "value": 0,
-      "status": "BLOCKING_GAP",
+      "value": 1516800000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 36
@@ -21,8 +21,8 @@
     {
       "tenant_key": "apex-retail",
       "metric": "run_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 979600000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 36
@@ -30,8 +30,8 @@
     {
       "tenant_key": "apex-retail",
       "metric": "change_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 537200000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 36
@@ -48,7 +48,7 @@
     {
       "tenant_key": "apex-retail",
       "metric": "ai_tagged_spend_fy26_non_additive",
-      "value": 30800000,
+      "value": 25400000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
@@ -93,8 +93,8 @@
     {
       "tenant_key": "first-capital-financial",
       "metric": "total_it_budget_fy26",
-      "value": 0,
-      "status": "BLOCKING_GAP",
+      "value": 2132000000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 37
@@ -102,8 +102,8 @@
     {
       "tenant_key": "first-capital-financial",
       "metric": "run_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 1321840000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 37
@@ -111,8 +111,8 @@
     {
       "tenant_key": "first-capital-financial",
       "metric": "change_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 810160000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 37
@@ -129,7 +129,7 @@
     {
       "tenant_key": "first-capital-financial",
       "metric": "ai_tagged_spend_fy26_non_additive",
-      "value": 37800000,
+      "value": 323960000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
@@ -174,8 +174,8 @@
     {
       "tenant_key": "lakeshore-holdings",
       "metric": "total_it_budget_fy26",
-      "value": 0,
-      "status": "BLOCKING_GAP",
+      "value": 190600000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 37
@@ -183,8 +183,8 @@
     {
       "tenant_key": "lakeshore-holdings",
       "metric": "run_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 133420000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 37
@@ -192,8 +192,8 @@
     {
       "tenant_key": "lakeshore-holdings",
       "metric": "change_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 57180000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 37
@@ -210,7 +210,7 @@
     {
       "tenant_key": "lakeshore-holdings",
       "metric": "ai_tagged_spend_fy26_non_additive",
-      "value": 28800000,
+      "value": 11800000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
@@ -255,65 +255,65 @@
     {
       "tenant_key": "lakeshore-industries",
       "metric": "total_it_budget_fy26",
-      "value": 0,
-      "status": "BLOCKING_GAP",
+      "value": 877920000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
       "metric": "run_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 604160000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
       "metric": "change_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 273760000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
       "metric": "approved_program_budget_fy26",
-      "value": 28800000,
+      "value": 22100000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
       "metric": "ai_tagged_spend_fy26_non_additive",
-      "value": 28800000,
+      "value": 105665000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
       "metric": "promised_value_fy26",
-      "value": 34200000,
+      "value": 23000000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
       "metric": "partial_finance_validated_value_ytd",
-      "value": 1650000,
+      "value": 1150000,
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
@@ -322,7 +322,7 @@
       "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "lakeshore-industries",
@@ -331,7 +331,7 @@
       "status": "ZERO",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-      "source_fact_count": 37
+      "source_fact_count": 36
     },
     {
       "tenant_key": "meridian-health",
@@ -417,8 +417,8 @@
     {
       "tenant_key": "skyharbor-air",
       "metric": "total_it_budget_fy26",
-      "value": 0,
-      "status": "BLOCKING_GAP",
+      "value": 2578000000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 34
@@ -426,8 +426,8 @@
     {
       "tenant_key": "skyharbor-air",
       "metric": "run_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 1445400000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 34
@@ -435,8 +435,8 @@
     {
       "tenant_key": "skyharbor-air",
       "metric": "change_budget_fy26",
-      "value": 0,
-      "status": "ZERO",
+      "value": 1132600000,
+      "status": "MULTI_SOURCE",
       "source_standard": "active-current",
       "source_files": "08_spend_value.csv;09_programs_initiatives.csv;10_ai_automation_use_cases.csv;SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       "source_fact_count": 34
@@ -534,12 +534,6 @@
       "remediation": "Finance validation for Retail AI Governance Controls not loaded; realized value stays blocked until it is."
     },
     {
-      "tenant_key": "apex-retail",
-      "field": "total_it_budget_fy26",
-      "severity": "blocking",
-      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
-    },
-    {
       "tenant_key": "first-capital-financial",
       "field": "finance_validated_value_usd",
       "severity": "warning",
@@ -570,12 +564,6 @@
       "remediation": "Finance validation for Loan Operations Automation not loaded; realized value stays blocked until it is."
     },
     {
-      "tenant_key": "first-capital-financial",
-      "field": "total_it_budget_fy26",
-      "severity": "blocking",
-      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
-    },
-    {
       "tenant_key": "lakeshore-holdings",
       "field": "finance_validated_value_usd",
       "severity": "warning",
@@ -606,46 +594,40 @@
       "remediation": "Finance validation for Industrial Data and AI Foundation not loaded; realized value stays blocked until it is."
     },
     {
-      "tenant_key": "lakeshore-holdings",
-      "field": "total_it_budget_fy26",
-      "severity": "blocking",
-      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
+      "tenant_key": "lakeshore-industries",
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for SAP Supply Chain AI Workflow Pilot not loaded; realized value stays blocked until it is."
     },
     {
       "tenant_key": "lakeshore-industries",
       "field": "finance_validated_value_usd",
       "severity": "warning",
-      "remediation": "Finance validation for HR Service Delivery AI Pilot not loaded; realized value stays blocked until it is."
-    },
-    {
-      "tenant_key": "lakeshore-industries",
-      "field": "finance_validated_value_usd",
-      "severity": "warning",
-      "remediation": "Finance validation for Finance Close and AP Automation AI not loaded; realized value stays blocked until it is."
-    },
-    {
-      "tenant_key": "lakeshore-industries",
-      "field": "finance_validated_value_usd",
-      "severity": "warning",
-      "remediation": "Finance validation for Legal Intake and Contract Review AI not loaded; realized value stays blocked until it is."
+      "remediation": "Finance validation for Workforce Planning AI Pilot not loaded; realized value stays blocked until it is."
     },
     {
       "tenant_key": "lakeshore-industries",
       "field": "promised_value_usd",
       "severity": "warning",
-      "remediation": "Load a promised-value case for Industrial Data and AI Foundation or mark it mandatory/no-value spend."
+      "remediation": "Load a promised-value case for Quality Analytics AI Foundation or mark it mandatory/no-value spend."
     },
     {
       "tenant_key": "lakeshore-industries",
       "field": "finance_validated_value_usd",
       "severity": "warning",
-      "remediation": "Finance validation for Industrial Data and AI Foundation not loaded; realized value stays blocked until it is."
+      "remediation": "Finance validation for Quality Analytics AI Foundation not loaded; realized value stays blocked until it is."
     },
     {
       "tenant_key": "lakeshore-industries",
-      "field": "total_it_budget_fy26",
-      "severity": "blocking",
-      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
+      "field": "promised_value_usd",
+      "severity": "warning",
+      "remediation": "Load a promised-value case for Industrial AI Governance Controls or mark it mandatory/no-value spend."
+    },
+    {
+      "tenant_key": "lakeshore-industries",
+      "field": "finance_validated_value_usd",
+      "severity": "warning",
+      "remediation": "Finance validation for Industrial AI Governance Controls not loaded; realized value stays blocked until it is."
     },
     {
       "tenant_key": "meridian-health",
@@ -748,24 +730,18 @@
       "field": "finance_validated_value_usd",
       "severity": "warning",
       "remediation": "Finance validation for Predictive Maintenance AI not loaded; realized value stays blocked until it is."
-    },
-    {
-      "tenant_key": "skyharbor-air",
-      "field": "total_it_budget_fy26",
-      "severity": "blocking",
-      "remediation": "IT budget envelope not loaded from V3 08/SA02; command-center totals are incomplete."
     }
   ],
   "summaryRows": [
     {
       "tenant_key": "apex-retail",
       "source_standard": "active-current",
-      "v3_facts": 36,
+      "v3_facts": 40,
       "tower_facts": 0,
-      "merged_facts": 36,
+      "merged_facts": 40,
       "source_file_count": 4,
-      "gap_count": 7,
-      "blocking_gap_count": 1,
+      "gap_count": 6,
+      "blocking_gap_count": 0,
       "mart_command_center_rows": 1,
       "mart_program_decision_lane_rows": 7,
       "mart_ai_portfolio_rows": 7
@@ -773,12 +749,12 @@
     {
       "tenant_key": "first-capital-financial",
       "source_standard": "active-current",
-      "v3_facts": 37,
+      "v3_facts": 41,
       "tower_facts": 0,
-      "merged_facts": 37,
+      "merged_facts": 41,
       "source_file_count": 4,
-      "gap_count": 6,
-      "blocking_gap_count": 1,
+      "gap_count": 5,
+      "blocking_gap_count": 0,
       "mart_command_center_rows": 1,
       "mart_program_decision_lane_rows": 7,
       "mart_ai_portfolio_rows": 7
@@ -786,12 +762,12 @@
     {
       "tenant_key": "lakeshore-holdings",
       "source_standard": "active-current",
-      "v3_facts": 37,
+      "v3_facts": 41,
       "tower_facts": 0,
-      "merged_facts": 37,
+      "merged_facts": 41,
       "source_file_count": 4,
-      "gap_count": 6,
-      "blocking_gap_count": 1,
+      "gap_count": 5,
+      "blocking_gap_count": 0,
       "mart_command_center_rows": 1,
       "mart_program_decision_lane_rows": 7,
       "mart_ai_portfolio_rows": 7
@@ -799,12 +775,12 @@
     {
       "tenant_key": "lakeshore-industries",
       "source_standard": "active-current",
-      "v3_facts": 37,
+      "v3_facts": 40,
       "tower_facts": 0,
-      "merged_facts": 37,
+      "merged_facts": 40,
       "source_file_count": 4,
       "gap_count": 6,
-      "blocking_gap_count": 1,
+      "blocking_gap_count": 0,
       "mart_command_center_rows": 1,
       "mart_program_decision_lane_rows": 7,
       "mart_ai_portfolio_rows": 7
@@ -825,12 +801,12 @@
     {
       "tenant_key": "skyharbor-air",
       "source_standard": "active-current",
-      "v3_facts": 34,
+      "v3_facts": 37,
       "tower_facts": 0,
-      "merged_facts": 34,
+      "merged_facts": 37,
       "source_file_count": 4,
-      "gap_count": 3,
-      "blocking_gap_count": 1,
+      "gap_count": 2,
+      "blocking_gap_count": 0,
       "mart_command_center_rows": 1,
       "mart_program_decision_lane_rows": 6,
       "mart_ai_portfolio_rows": 6

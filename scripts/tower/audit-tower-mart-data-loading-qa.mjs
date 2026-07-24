@@ -12,6 +12,10 @@ const targets = [
     summary: "reports/tower-mart-projection-meridian-health/projection-summary.json",
   },
   {
+    tenant: "apex-retail",
+    summary: "reports/tower-mart-projection-apex-retail/projection-summary.json",
+  },
+  {
     tenant: "skyharbor-air",
     summary: "reports/tower-mart-projection-skyharbor-air/projection-summary.json",
   },
@@ -19,6 +23,16 @@ const targets = [
     tenant: "first-capital-financial",
     summary:
       "reports/tower-mart-projection-first-capital-financial/projection-summary.json",
+  },
+  {
+    tenant: "lakeshore-holdings",
+    summary:
+      "reports/tower-mart-projection-lakeshore-holdings/projection-summary.json",
+  },
+  {
+    tenant: "lakeshore-industries",
+    summary:
+      "reports/tower-mart-projection-lakeshore-industries/projection-summary.json",
   },
 ];
 

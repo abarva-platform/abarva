@@ -97,10 +97,18 @@
     "project:tower-mart:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write",
     "project:tower-mart:meridian:dry-run": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run --no-db --tenant meridian-health --v3-dir datasets/tenant-inputs/active/meridian-health/current --out-dir reports/tower-mart-projection-meridian-health",
     "project:tower-mart:meridian:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant meridian-health --v3-dir datasets/tenant-inputs/active/meridian-health/current --out-dir /tmp/tower-mart-projection-meridian-health",
+    "project:tower-mart:apex-retail:dry-run": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run --no-db --tenant apex-retail --v3-dir datasets/tenant-inputs/active/apex-retail/current --out-dir reports/tower-mart-projection-apex-retail",
+    "project:tower-mart:apex-retail:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant apex-retail --v3-dir datasets/tenant-inputs/active/apex-retail/current --out-dir /tmp/tower-mart-projection-apex-retail",
     "project:tower-mart:airline-demo:dry-run": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run --no-db --tenant skyharbor-air --v3-dir datasets/tenant-inputs/active/skyharbor-air/current --out-dir reports/tower-mart-projection-skyharbor-air",
     "project:tower-mart:airline-demo:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant skyharbor-air --v3-dir datasets/tenant-inputs/active/skyharbor-air/current --out-dir /tmp/tower-mart-projection-skyharbor-air",
     "project:tower-mart:fs-demo:dry-run": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run --no-db --tenant first-capital-financial --v3-dir datasets/tenant-inputs/active/first-capital-financial/current --out-dir reports/tower-mart-projection-first-capital-financial",
     "project:tower-mart:fs-demo:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant first-capital-financial --v3-dir datasets/tenant-inputs/active/first-capital-financial/current --out-dir /tmp/tower-mart-projection-first-capital-financial",
+    "project:tower-mart:lakeshore-holdings:dry-run": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run --no-db --tenant lakeshore-holdings --v3-dir datasets/tenant-inputs/active/lakeshore-holdings/current --out-dir reports/tower-mart-projection-lakeshore-holdings",
+    "project:tower-mart:lakeshore-holdings:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant lakeshore-holdings --v3-dir datasets/tenant-inputs/active/lakeshore-holdings/current --out-dir /tmp/tower-mart-projection-lakeshore-holdings",
+    "project:tower-mart:lakeshore-industries:dry-run": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run --no-db --tenant lakeshore-industries --v3-dir datasets/tenant-inputs/active/lakeshore-industries/current --out-dir reports/tower-mart-projection-lakeshore-industries",
+    "project:tower-mart:lakeshore-industries:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant lakeshore-industries --v3-dir datasets/tenant-inputs/active/lakeshore-industries/current --out-dir /tmp/tower-mart-projection-lakeshore-industries",
+    "audit:tower-active-budget-envelopes": "node scripts/tower/repair-active-budget-envelopes.mjs --check",
+    "repair:tower-active-budget-envelopes": "node scripts/tower/repair-active-budget-envelopes.mjs --write",
     "audit:tower-mart-data-loading-qa": "node scripts/tower/audit-tower-mart-data-loading-qa.mjs",
     "verify:phs-health-plan-corpus": "npx tsx src/scripts/corpus/verify-phs-health-plan-corpus.ts",
     "generate:meridian-vnext-context": "python3 scripts/enterprise-context/generate-meridian-vnext.py",
@@ -580,7 +588,7 @@
     "report:meridian-page-fact-lineage": "node scripts/tenant-v3/build-meridian-page-fact-lineage-report.mjs",
     "home:knowledge-pack-v2:verify": "node scripts/knowledge/verify-home-knowledge-pack-content.mjs",
     "audit:tower-fact-lineage": "node scripts/tower/fact-lineage-report.mjs",
-    "audit:tower-data-path-fix": "npm run audit:tower-fact-lineage && npm run project:tower-mart:meridian:dry-run && npm run project:tower-mart:airline-demo:dry-run && npm run project:tower-mart:fs-demo:dry-run"
+    "audit:tower-data-path-fix": "npm run audit:tower-fact-lineage && npm run project:tower-mart:meridian:dry-run && npm run project:tower-mart:apex-retail:dry-run && npm run project:tower-mart:airline-demo:dry-run && npm run project:tower-mart:fs-demo:dry-run && npm run project:tower-mart:lakeshore-holdings:dry-run && npm run project:tower-mart:lakeshore-industries:dry-run && npm run audit:tower-mart-data-loading-qa"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
