@@ -10,6 +10,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ReferenceLine,
   Cell,
   LabelList,
   ResponsiveContainer,
@@ -21,6 +22,13 @@ import { formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerCommandSummary } from "@/lib/tower/command-center/types";
 
 import { HEX, toM, twoLineTick, withSliver } from "./chart-kit";
+
+/**
+ * Bars are capped rather than filling their band. Seven steps across a wide card
+ * produced ~50px slabs, which read as heavy blocks rather than as a measured
+ * figure; the leftover band width becomes air.
+ */
+const WATERFALL_MAX_BAR = 26;
 
 /**
  * The seven waterfall bars — four levels and the three drops between them.
@@ -111,6 +119,29 @@ export function ValueWaterfallChart({
     fill: row.fill,
   }));
 
+  /**
+   * Waterfall connectors — the affordance that makes this a waterfall rather
+   * than a bar chart with some bars mysteriously floating.
+   *
+   * Each connector sits at the value level that two neighbouring steps share:
+   * the top of "Promised" is the top of the "No usage" drop; the bottom of that
+   * drop is the top of "Usage supported"; and so on down the chain. Without
+   * them a floating bar reads as a rendering error.
+   *
+   * They are declared BEFORE the <Bar> elements so Recharts paints them first.
+   * The opaque bars then cover the middle of each segment, leaving exactly the
+   * inter-bar gap visible — edge-to-edge connectors for free, with no dependency
+   * on Recharts' internal bar geometry.
+   */
+  const levels = [
+    toM(summary.promisedUsd),
+    toM(rows[2]?.usd ?? 0),
+    toM(rows[2]?.usd ?? 0),
+    toM(rows[4]?.usd ?? 0),
+    toM(rows[4]?.usd ?? 0),
+    toM(rows[6]?.usd ?? 0),
+  ];
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
@@ -119,6 +150,20 @@ export function ValueWaterfallChart({
         barCategoryGap="18%"
       >
         <CartesianGrid vertical={false} stroke={HEX.border} />
+        {levels.map((y, i) =>
+          data[i] && data[i + 1] ? (
+            <ReferenceLine
+              key={`connector-${i}`}
+              segment={[
+                { x: data[i].name, y },
+                { x: data[i + 1].name, y },
+              ]}
+              stroke={HEX.gray300}
+              strokeWidth={1}
+              ifOverflow="visible"
+            />
+          ) : null,
+        )}
         <XAxis
           dataKey="name"
           interval={0}
@@ -144,8 +189,10 @@ export function ValueWaterfallChart({
           stackId="a"
           fill="transparent"
           isAnimationActive={false}
+          maxBarSize={WATERFALL_MAX_BAR}
         />
         <Bar
+          maxBarSize={WATERFALL_MAX_BAR}
           dataKey="v"
           stackId="a"
           radius={[3, 3, 0, 0]}
