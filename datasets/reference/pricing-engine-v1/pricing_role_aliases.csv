@@ -1,0 +1,7 @@
+alias_code,role_code,alias_label,alias_type,source_artifact,source_row,status,version
+ALIAS-0001,ROL-020,Business Process Automation Engineer,disambiguation_label,hand-authored-pr1,,active,1
+ALIAS-0002,ROL-037,Lead Data Engineer,seed_original_label,Workforce_Taxonomy_Master.xlsx:Roles,40,active,1
+ALIAS-0003,ROL-037,Senior Data Engineer,seed_original_label,Workforce_Taxonomy_Master.xlsx:Roles,41,active,1
+ALIAS-0004,ROL-080,Senior Software Engineer,seed_original_label,Workforce_Taxonomy_Master.xlsx:Roles,84,active,1
+ALIAS-0005,ROL-120,QE Automation Engineer,disambiguation_label,hand-authored-pr1,,active,1
+ALIAS-0006,ROL-193,Senior Data Scientist,seed_original_label,Workforce_Taxonomy_Master.xlsx:Roles,199,active,1
