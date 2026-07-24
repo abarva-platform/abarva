@@ -65,6 +65,11 @@ export function RecommendedActionsView({
 }) {
   const columns = bucketActions(view.actions);
 
+  // Due windows are a column the governed action set does not carry. Stating
+  // that once, under the memo, is honest; repeating "No due window recorded" on
+  // every card turned the absence into the loudest text on the tab.
+  const anyDue = view.actions.some((a) => Boolean(a.due));
+
   return (
     <div className={styles.view}>
       <ViewHead
@@ -83,53 +88,81 @@ export function RecommendedActionsView({
           </p>
         </div>
       ) : (
-        <div className={styles.owncols}>
-          {columns.map((column) => (
-            <section
-              key={column.label}
-              className={styles.owncol}
-              aria-label={column.label}
-            >
-              <header className={styles.ocHead}>
-                <div className={styles.ocRole}>{column.label}</div>
-                <div className={styles.ocCnt}>
-                  {formatCount(column.items.length)} action
-                  {column.items.length === 1 ? "" : "s"}
+        <>
+          <div className={styles.owncols}>
+            {columns.map((column) => (
+              <section
+                key={column.label}
+                className={styles.owncol}
+                aria-label={column.label}
+              >
+                <header className={styles.ocHead}>
+                  <div className={styles.ocRole}>{column.label}</div>
+                  <div className={styles.ocCnt}>
+                    {formatCount(column.items.length)} action
+                    {column.items.length === 1 ? "" : "s"}
+                  </div>
+                </header>
+                <div className={styles.ocBody}>
+                  {column.items.length === 0 ? (
+                    /* An owner with nothing waiting is a finding, not a hole.
+                     * Saying so beats a column of blank space, which reads as
+                     * the page having failed to load. */
+                    <p className={styles.ocEmpty}>
+                      {/* Not lower-cased: four of the five owners are
+                       * acronyms, and "nothing waiting on cio" reads as a
+                       * typo. */}
+                      Nothing waiting on {column.label} this week.
+                    </p>
+                  ) : (
+                    column.items.map((action) => (
+                      <button
+                        key={action.id}
+                        type="button"
+                        className={cx(styles.acard, laneClass(action.lane))}
+                        onClick={() => onOpenAction(action.id)}
+                      >
+                        <span className={styles.ak}>{action.lane}</span>
+                        <span className={styles.at}>{action.title}</span>
+                        {action.due ? (
+                          <span className={styles.adue}>
+                            <Dot
+                              tone={
+                                action.lane === "fund"
+                                  ? "teal"
+                                  : action.lane === "fix"
+                                    ? "amber"
+                                    : "red"
+                              }
+                            />
+                            {action.due}
+                          </span>
+                        ) : null}
+                        {action.moduleHandoff ? (
+                          <span className={styles.alink}>
+                            Routes to · <b>{action.moduleHandoff}</b>
+                          </span>
+                        ) : null}
+                      </button>
+                    ))
+                  )}
                 </div>
-              </header>
-              <div className={styles.ocBody}>
-                {column.items.map((action) => (
-                  <button
-                    key={action.id}
-                    type="button"
-                    className={cx(styles.acard, laneClass(action.lane))}
-                    onClick={() => onOpenAction(action.id)}
-                  >
-                    <span className={styles.ak}>{action.lane}</span>
-                    <span className={styles.at}>{action.title}</span>
-                    <span className={styles.adue}>
-                      <Dot
-                        tone={
-                          action.lane === "fund"
-                            ? "teal"
-                            : action.lane === "fix"
-                              ? "amber"
-                              : "red"
-                        }
-                      />
-                      {action.due ?? "No due window recorded"}
-                    </span>
-                    {action.moduleHandoff ? (
-                      <span className={styles.alink}>
-                        Routes to · <b>{action.moduleHandoff}</b>
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+              </section>
+            ))}
+          </div>
+
+          {!anyDue ? (
+            <p className={styles.tnote}>
+              <Dot tone="gray" />
+              <span>
+                No due windows are recorded in the governed action set, so these
+                actions carry no dates. Sequence them by lane —{" "}
+                <b>freeze and stop before fund</b> — until the mart carries a
+                target date.
+              </span>
+            </p>
+          ) : null}
+        </>
       )}
     </div>
   );

@@ -21,7 +21,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
@@ -143,6 +143,27 @@ describe("Command Center render harness", () => {
     fireEvent.click(screen.getByRole("tab", { name: /Recommended Actions/ }));
     dump("06-recommended-actions");
 
+    expect(true).toBe(true);
+  });
+
+
+  it("writes the sparse action memo the live tenants actually show", () => {
+    // Live tenants carry ~3 actions against 5 owner columns, so most columns are
+    // empty. The fixture fills all five, which hides that state.
+    cleanup();
+    const sparse = {
+      ...view!,
+      actions: view!.actions.filter((a) => a.ownerRole === "CFO").slice(0, 1),
+    };
+    render(
+      <TowerCommandCenter
+        view={sparse}
+        tenantName="Fixture Tenant"
+        refreshedOn="2026-07-24"
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /Recommended Actions/ }));
+    dump("06b-recommended-actions-sparse");
     expect(true).toBe(true);
   });
 

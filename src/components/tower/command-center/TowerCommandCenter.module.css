@@ -513,3 +513,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .searchInput { font-family: var(--abarva-sans); font-size: 13px; color: var(--canon-gray-900); background: var(--canon-bg-surface); border: 1px solid var(--canon-border-strong); border-radius: 9px; padding: 7px 12px; min-width: 300px; max-width: 100%; }
 .searchInput::placeholder { color: var(--canon-gray-300); }
 .searchInput:focus-visible { outline: 2px solid var(--abarva-signal-blue); outline-offset: -1px; }
+
+/* An owner column with no action this week. Stating it beats blank space,
+ * which reads as a page that failed to load. */
+.ocEmpty { font-size: 12px; color: var(--canon-gray-500); line-height: 1.5; padding: 10px 2px; border-top: 1px dashed var(--canon-border); }

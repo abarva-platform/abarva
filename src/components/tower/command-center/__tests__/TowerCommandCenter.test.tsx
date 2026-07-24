@@ -360,6 +360,48 @@ describe("TowerCommandCenter", () => {
     ).toBeInTheDocument();
   });
 
+  it("states the absence once, not on every action card", () => {
+    // Every governed action lacks a due date, so "No due window recorded" was
+    // repeating on all nine cards and became the loudest text on the tab.
+    renderPage();
+    fireEvent.click(tab(/Recommended Actions/));
+    expect(screen.queryByText("No due window recorded")).toBeNull();
+    expect(
+      screen.getByText(/No due windows are recorded in the governed action set/),
+    ).toBeInTheDocument();
+  });
+
+  it("says what an owner with no action means, instead of leaving a blank column", () => {
+    // The live tenants carry ~3 actions against 5 owner columns, so most
+    // columns are empty. The fixture spreads 9 across all five, so narrow it to
+    // the live shape.
+    const sparse = {
+      ...view!,
+      actions: view!.actions.filter((a) => a.ownerRole === "CFO").slice(0, 1),
+    };
+    render(
+      <TowerCommandCenter
+        view={sparse}
+        tenantName="Fixture Tenant"
+        refreshedOn="2026-07-24"
+      />,
+    );
+    fireEvent.click(tab(/Recommended Actions/));
+    const empty = screen.getAllByText(/Nothing waiting on .* this week\./);
+    expect(empty.length).toBeGreaterThanOrEqual(4);
+    // The five owner columns still render — an owner with nothing waiting is a
+    // finding, so the column stays.
+    for (const label of [
+      "CFO",
+      "CIO",
+      "CDAO",
+      "Model Risk Office",
+      "Procurement & business owners",
+    ]) {
+      expect(screen.getByRole("region", { name: label })).toBeInTheDocument();
+    }
+  });
+
   it("opens the program drawer with its value proof chain, and closes on Escape", () => {
     renderPage();
     fireEvent.click(tab(/Decision Lanes/));
