@@ -223,6 +223,7 @@ export function factsFromTowerSpend(
   rows: readonly CsvRow[],
   identity: CioTowerTenantIdentity,
   initiativeNames: Readonly<Record<string, string>>,
+  aiShareByInitiative: Readonly<Record<string, number>> = {},
 ): CioTowerFactRow[] {
   const file = "ai-control-tower/T08_spend-contracts.csv";
 
@@ -324,7 +325,40 @@ export function factsFromTowerSpend(
       );
     }
 
-    // `actual_ytd_usd` is deliberately NOT emitted as AI-tagged spend.
+    // AI-tagged spend = this initiative's delivery spend x its AI share.
+    //
+    // AI programmes ARE transformation programmes, so the AI investment is
+    // programme money, not the tool licences — those are a rounding error
+    // beside it. But not all of a programme's money is AI: an `ai_enabled`
+    // modernization spends most of its budget on the platform it is
+    // modernising. `T01.ai_investment_share_pct` carries the split, and
+    // `T00_ai-investment-super-template` — the AI investment register — is
+    // what decides the tag. See scripts/tower/tag-ai-initiatives.mjs.
+    const aiShare = aiShareByInitiative[agg.initiativeId] ?? 0;
+    const aiSpend = Math.round(agg.actual * aiShare);
+    if (aiSpend > 0) {
+      facts.push(
+        buildFact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["tsv1-spend-ai", agg.initiativeId],
+          measure: `${name} AI-tagged spend`,
+          view: "vendor_contract",
+          scope: "initiative",
+          valueNumeric: aiSpend,
+          sourceFile: file,
+          sourceRow,
+          canonical: programCanonical(
+            agg.initiativeId,
+            name,
+            AI_TOOL_SPEND_METRIC,
+            topVendor,
+          ),
+          attributes: { ...attributes, ai_investment_share: aiShare },
+        }),
+      );
+    }
+
+    // The FULL `actual_ytd_usd` is deliberately NOT emitted as AI-tagged spend.
     //
     // An earlier version mapped it to `ai_tool_monthly_cost_usd`, which rolls
     // into `ai_tagged_spend`. That was wrong, and it read as an airline
@@ -546,15 +580,30 @@ export function initiativeNameIndex(
   return index;
 }
 
+/** Initiative id → AI investment share (0..1), from T01's ai_classification. */
+export function aiShareIndex(rows: readonly CsvRow[]): Record<string, number> {
+  const index: Record<string, number> = {};
+  for (const r of rows) {
+    const id = text(r.initiative_id);
+    if (!id) continue;
+    const pct = num(r.ai_investment_share_pct);
+    // An untagged packet predates the AI register. Treating it as 100% AI is
+    // the assumption that caused this whole problem, so it is 0 until tagged.
+    index[id] = pct > 0 ? pct / 100 : 0;
+  }
+  return index;
+}
+
 export function projectTowerStandardizedToFacts(
   input: TowerStandardizedInput,
   identity: CioTowerTenantIdentity,
 ): CioTowerFactRow[] {
   const initiatives = input.initiatives ?? [];
   const names = initiativeNameIndex(initiatives);
+  const aiShare = aiShareIndex(initiatives);
   return [
     ...factsFromTowerInitiatives(initiatives, identity),
-    ...factsFromTowerSpend(input.spend ?? [], identity, names),
+    ...factsFromTowerSpend(input.spend ?? [], identity, names, aiShare),
     ...factsFromTowerToolUsage(input.toolUsage ?? [], identity),
     ...factsFromTowerBenefits(input.benefits ?? [], identity, names),
   ];
