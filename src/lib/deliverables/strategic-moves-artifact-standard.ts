@@ -221,7 +221,19 @@ export function premiumGoldenBarOptionsForArtifact(
         : {}),
     };
   }
-  return { maximumWordCount, enforceMaximumWordCount };
+  // Every branch above already forbids internal implementation language from
+  // leaking into a client-facing artifact (kernel/tenant-key/prompt/etc. —
+  // STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS). Artifacts that fall through to
+  // here (root_cause_worksheet, solution_approach_options, execution_roadmap,
+  // business_case, handoff_package) got no such check at all — an oversight,
+  // not an intentional exemption; there is no artifact type where leaking
+  // "tenant key" or "canonical internal id" into client-facing prose is ever
+  // acceptable.
+  return {
+    maximumWordCount,
+    enforceMaximumWordCount,
+    forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
+  };
 }
 
 function list(values: readonly string[] | undefined, fallback: string): string {
