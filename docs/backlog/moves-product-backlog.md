@@ -478,6 +478,51 @@ cells are stale and superseded by that resolution).
 - **Discovered from**: MOVES-ARTIFACT-001 design pass, §1/§3.11
 - **Notes / remaining gaps**: none beyond the Phase 1 dependency.
 
+### MOVES-BUG-004 — Regression: duplicate-heading suppression silently dropped from renderers.tsx
+
+- **Problem statement**: PR #5530 (native PPTX renderer, `MOVES-QUALITY-003`), authored from a
+  local branch that had fallen behind `origin/main`, was built by copying a locally-edited copy
+  of `src/lib/deliverables/orchestrator/renderers.tsx` into a fresh worktree without first
+  re-diffing against the actual current `origin/main`. That local branch's copy of the file
+  pre-dated an already-merged, already-live fix — `withoutDuplicateSectionHeading()` /
+  `normalizeHeadingText()` and their 3 call sites in the DOCX/HTML/PDF renderers, which strip a
+  model-repeated section heading from the first line of `bodyMarkdown` before rendering — so the
+  merge silently deleted that working feature from `main` and shipped the regression to
+  production via the normal `aca-main-deploy` path.
+- **User/business impact**: every DOCX/HTML/PDF deliverable export regenerated after PR #5530's
+  deploy (`6c440e7dcc3639290bec758a0745f9c610c6285b`) could show a section title twice — once as
+  the renderer's own heading, once again as the model's repeated first Markdown line — until this
+  fix lands. This is the exact class of defect the original fix (and, coincidentally, this
+  session's independent `MOVES-BUG-003`-adjacent duplicate-heading investigation) was built to
+  prevent.
+- **Severity**: P1 (shipped regression removing existing, working, deployed behavior)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Deployed` (2026-07-23) — restored `normalizeHeadingText()` /
+  `withoutDuplicateSectionHeading()` and all 3 call sites (DOCX `renderDeliverableDocx`, HTML
+  `renderDeliverableHtml`, PDF `renderDeliverablePdf`) exactly as they existed before PR #5530,
+  now layered on top of the PPTX renderer PR #5530 already added.
+- **Dependencies**: none
+- **Acceptance criteria**: a section whose `bodyMarkdown` repeats `section.title` as its first
+  Markdown heading line renders that title exactly once (the renderer's own heading) in DOCX,
+  HTML, and PDF output; a section whose first line is a genuinely different heading is left
+  untouched.
+- **Required tests**: `renderers.test.ts` — new `describe('DOCX/HTML/PDF renderers — duplicate
+  section-heading suppression')` block, 4 assertions (DOCX/HTML/PDF each render the repeated
+  title exactly once; a genuinely different first-line heading is preserved, not stripped).
+- **PR**: not yet opened
+- **Release record**: `docs/releases/records/2026-07-23-restore-duplicate-heading-suppression.md`
+- **Discovered from**: a test failure surfaced while validating an unrelated, separate
+  `golden-bar.ts` change in this same session — the pre-existing `enforceMaximumWordCount`
+  contract-blocking test on `origin/main` failed against a locally-edited copy of `golden-bar.ts`
+  that also turned out to be stale, which is what first exposed that the local working branch had
+  fallen behind `origin/main` in a way that mattered.
+- **Notes / remaining gaps**: this is a process failure, not just a code bug — building a PR by
+  copying files edited in a stale local branch into a fresh `origin/main`-based worktree can
+  silently regress unrelated, already-merged work if the stale branch and current `origin/main`
+  have diverged on the same file. The corrective practice going forward: before copying any
+  locally-edited file into a fresh worktree, diff it against the worktree's actual `origin/main`
+  base first, not just against the file's own prior content.
+
 ---
 
 ## Deliverable quality and consulting depth
