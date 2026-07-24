@@ -99,9 +99,14 @@ function martShape(mart) {
     actions: (mart.cxo_actions ?? []).length,
     evidence: (mart.evidence_lineage ?? []).length,
     gaps: (mart.required_field_gaps ?? []).length,
-    // The two defects this work exists to fix.
-    ai_tagged_spend_usd:
-      sum(lanes, "ai_tagged_spend_usd") + sum(portfolio, "ai_tagged_spend_usd"),
+    // NOT lanes + portfolio. The AI portfolio is a different projection of the
+    // same money, so adding them double-counts — that bug put $1,078.5M on a
+    // report when the figure was $539.2M, and it survived being spotted once.
+    // The portfolio is the wider of the two, so it is the total.
+    ai_tagged_spend_usd: Math.max(
+      sum(lanes, "ai_tagged_spend_usd"),
+      sum(portfolio, "ai_tagged_spend_usd"),
+    ),
     lanes_with_owner: lanes.filter((r) => r.owner_role).length,
     approved_funding_usd: sum(lanes, "approved_funding_usd"),
     promised_value_usd: sum(lanes, "promised_value_usd"),
