@@ -338,3 +338,96 @@ export interface PricingEstimateSnapshotRow {
   approval_rationale: string | null;
   created_at: string;
 }
+
+// ---------------------------------------------------------------------------
+// PR5 Moves Cost & Effort estimate workflow (brief §8.3/§8.4) — mirrors
+// `20260724010000_pricing_estimates_moves_workflow_v1.sql`. See that
+// migration's header for the "no separate pricing_estimate_scenarios table"
+// judgment call and the draft-mutability / replace-on-rerun conventions.
+// ---------------------------------------------------------------------------
+
+export type PricingEstimateInputSourceType =
+  | "move_context"
+  | "client_profile"
+  | "global_default"
+  | "client_input"
+  | "override";
+
+export type PricingEstimateInputConfidence = "low" | "medium" | "high";
+
+export interface PricingEstimateRow {
+  id: string;
+  tenant_key: string;
+  move_id: string;
+  scenario_group_id: string;
+  scenario_name: string;
+  scenario_key: string;
+  archetype_code: string;
+  model_version: number;
+  currency: string;
+  target_start_date: string | null;
+  target_duration_weeks: number | null;
+  selected_rate_card_id: string | null;
+  status: PricingSnapshotStatus;
+  last_run_id: string | null;
+  last_run_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PricingEstimateInputRow {
+  id: string;
+  estimate_id: string;
+  input_key: string;
+  value: unknown;
+  unit: string | null;
+  required: boolean;
+  source_type: PricingEstimateInputSourceType;
+  source_ref: string | null;
+  confidence: PricingEstimateInputConfidence | null;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  override_reason: string | null;
+  model_version: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PricingEstimateLineItemRow {
+  id: string;
+  estimate_id: string;
+  tenant_key: string;
+  run_id: string;
+  archetype_code: string;
+  activity_pack_code: string;
+  activity_pack_name: string;
+  category: "technical" | "shared_nontechnical";
+  rule_code: string;
+  operation: string;
+  driver_code: string | null;
+  driver_quantity: number | null;
+  model_version: number;
+  scenario_key: string;
+  classification: string;
+  shared_cost_ref: string | null;
+  role_code: string | null;
+  allocation_pct: number | null;
+  raw_hours: number | null;
+  complexity_factor: number | null;
+  novelty_factor: number | null;
+  assurance_factor: number | null;
+  scenario_factor: number | null;
+  expected_hours: number | null;
+  role_hours: number | null;
+  rate_resolved_from_scope: string | null;
+  rate_hourly_cents: number | null;
+  rate_currency: string | null;
+  rate_card_version_id: string | null;
+  labor_cost_cents: number | null;
+  manual_cost_cents: number | null;
+  gap_reason: string | null;
+  override_rationale: string | null;
+  formula_trace: string;
+  created_at: string;
+}
