@@ -1367,8 +1367,8 @@ cells are stale and superseded by that resolution).
   user before they commit.
 - **Severity**: P1 (governance/trust gap on an irreversible action, not a cosmetic issue)
 - **Workstream**: UI/UX shell (gate approval clarity)
-- **Status**: `Implemented` (2026-07-24) — a new reusable `GateApprovalConfirmDialog` (shared
-  `StrategicMoves.module.css` confirm-dialog CSS, same pattern already used in
+- **Status**: `Deployed, live-proven` (2026-07-24) — a new reusable `GateApprovalConfirmDialog`
+  (shared `StrategicMoves.module.css` confirm-dialog CSS, same pattern already used in
   `StrategicMoveOriginateClient.tsx`) now sits in front of both approval paths. Both the P0
   "Approve gate →" button and `PhaseApproveAndBuild`'s "Approve & Build" button now only *open* the
   dialog on click; the real mutation (`onApproveP0Gate()` / `approveAndBuild()`) fires only from the
@@ -1379,9 +1379,16 @@ cells are stale and superseded by that resolution).
   `TenancyCtx` (`ctx.email`/`ctx.tenantRole`) the server mutation itself already resolves the
   approver from — this is a pure additive display, no server-side change). Cancelling closes the
   dialog with zero side effects; no fetch to `/phase-gate-approval` or
-  `/api/v1/deliverables/generate-phase` fires until the dialog is explicitly confirmed. Verified
-  entirely via unit tests, never against a real Move, consistent with this session's standing
-  guardrails.
+  `/api/v1/deliverables/generate-phase` fires until the dialog is explicitly confirmed. Merged
+  [#5556](https://github.com/abarva-platform/abarva/pull/5556), deployed, ACA runtime invariant
+  confirmed (`ca-abarva-web-lab-eastus--m34335af9`). Live-proven signed-in on `app.abarva.ai`
+  against RETAIL-APEX-2026 (P5 Prepare to Execute): the dialog opened with the correct summary and
+  the real approver identity (`anand.sundaram+apex@thesundaram.com · tenant_admin`), then was
+  cancelled — confirmed via network-request inspection that no `generate-phase` fetch fired and
+  the gate stayed at "0 of 4", i.e. no mutation and no fabricated approval. The P0 path shares the
+  identical dialog component and was verified via unit tests only, not re-proven live in this
+  pass (no P0-stage Move was on hand). See
+  `docs/releases/records/2026-07-24-gate-approval-confirmation.md` for full evidence.
 - **Dependencies**: none technically (the current session's identity is already resolvable via
   existing auth context used elsewhere in the app), but this is a higher-trust surface than most
   UI-only fixes and deserves a dedicated, carefully-tested change
