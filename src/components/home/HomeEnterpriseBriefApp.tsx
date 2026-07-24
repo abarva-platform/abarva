@@ -88,90 +88,21 @@ export const COLORS = {
   black: "#0a0a0b",
 };
 
-const VIEW_META: Record<
-  ViewKey,
-  { index: string; title: string; lead: string; dimKey?: string }
-> = {
-  snapshot: {
-    index: "01",
-    title: "Enterprise snapshot",
-    lead: "The executive read: what is known about the enterprise, where context is strong, and which decisions should not be over-claimed yet.",
-  },
-  operating: {
-    index: "02",
-    title: "Operating model",
-    lead: "How the business may need to run differently when AI, data, process, and governance are treated as one change system.",
-  },
-  map: {
-    index: "03",
-    title: "Enterprise relationship map",
-    lead: "A business-readable graph of the enterprise: functions, systems, priorities, constraints, and proof boundaries in one connected view.",
-  },
-  apps: {
-    index: "04",
-    title: "Applications",
-    lead: "Where the application estate is understood well enough to shape modernization, AI activation, sourcing, and risk decisions.",
-    dimKey: "apps",
-  },
-  data: {
-    index: "05",
-    title: "Data domains",
-    lead: "The data foundation behind AI execution: domains, systems of record, quality boundaries, and missing lineage.",
-    dimKey: "data",
-  },
-  vendors: {
-    index: "06",
-    title: "Vendors",
-    lead: "The vendor and ecosystem lens: which partners matter, where concentration risk exists, and where Source needs proof.",
-    dimKey: "vendors",
-  },
-  integrations: {
-    index: "07",
-    title: "Integrations",
-    lead: "How systems and data move across the enterprise, and where interface evidence must improve before execution.",
-    dimKey: "rel",
-  },
-  spend: {
-    index: "08",
-    title: "Spend and value",
-    lead: "The financial lens: budget, run/change posture, value signals, and where Tower needs accountable measures.",
-    dimKey: "budget",
-  },
-  priorities: {
-    index: "09",
-    title: "Strategic priorities",
-    lead: "The agenda items that should anchor executive conversation and determine which AI or transformation bets matter first.",
-    dimKey: "ai",
-  },
-  constraints: {
-    index: "10",
-    title: "Constraints",
-    lead: "The evidence gaps, risks, control issues, and operating blockers that should gate confident execution.",
-    dimKey: "risks",
-  },
-  programs: {
-    index: "11",
-    title: "Programs",
-    lead: "The transformation portfolio view: what is in motion, what it depends on, and what should convert into Moves.",
-    dimKey: "programs",
-  },
-  risks: {
-    index: "12",
-    title: "Risks",
-    lead: "The control and readiness posture that should shape what AbarVa can safely recommend, source, execute, and measure.",
-    dimKey: "risks",
-  },
-  evidence: {
-    index: "13",
-    title: "Evidence",
-    lead: "The source proof layer: what file families, interviews, extracts, or templates support the context and who owns the evidence.",
-    dimKey: "evidence",
-  },
-  coverage: {
-    index: "14",
-    title: "Coverage",
-    lead: "Where the knowledge layer is strong enough for decision support, and where it still needs client confirmation.",
-  },
+const VIEW_META: Record<ViewKey, { title: string; dimKey?: string }> = {
+  snapshot: { title: "Enterprise snapshot" },
+  operating: { title: "Operating model" },
+  map: { title: "Enterprise relationship map" },
+  apps: { title: "Applications", dimKey: "apps" },
+  data: { title: "Data domains", dimKey: "data" },
+  vendors: { title: "Vendors", dimKey: "vendors" },
+  integrations: { title: "Integrations", dimKey: "rel" },
+  spend: { title: "Spend and value", dimKey: "budget" },
+  priorities: { title: "Strategic priorities", dimKey: "ai" },
+  constraints: { title: "Constraints", dimKey: "risks" },
+  programs: { title: "Programs", dimKey: "programs" },
+  risks: { title: "Risks", dimKey: "risks" },
+  evidence: { title: "Evidence", dimKey: "evidence" },
+  coverage: { title: "Coverage" },
 };
 
 const SECTION_TABS: Array<{
@@ -1020,9 +951,6 @@ export function HomeEnterpriseBriefApp({
             <i />
             <span>{tenantLocation(pack)}</span>
           </p>
-          <p className="heb-page-kicker">
-            The enterprise&apos;s digital understanding of itself.
-          </p>
           <div
             className="heb-section-tabs"
             role="tablist"
@@ -1046,10 +974,6 @@ export function HomeEnterpriseBriefApp({
         </header>
 
         <div className="heb-current-section">
-          <span>
-            {meta.index} · {meta.title}
-          </span>
-          <p>{meta.lead}</p>
           <div className="heb-status">
             <b>{pack.tenant_name}</b>
             <i />
@@ -1256,11 +1180,11 @@ export function HomeEnterpriseBriefApp({
         }
         .heb-main {
           width: min(100%, 1280px);
-          padding: 32px 44px 68px;
+          padding: 22px 36px 48px;
         }
         .heb-page-head {
           border-bottom: 1px solid ${COLORS.line};
-          margin-bottom: 22px;
+          margin-bottom: 14px;
           padding-bottom: 0;
         }
         .heb-page-head h1,
@@ -1271,17 +1195,16 @@ export function HomeEnterpriseBriefApp({
           letter-spacing: 0;
         }
         .heb-page-head h1 {
-          font-size: clamp(34px, 3.4vw, 46px);
+          font-size: clamp(30px, 3vw, 40px);
           line-height: 1;
-          margin: 0 0 10px;
+          margin: 0 0 6px;
         }
-        .heb-page-head p,
-        .heb-current-section p {
-          margin: 0 0 14px;
+        .heb-page-head p {
+          margin: 0 0 12px;
           max-width: 74ch;
           color: ${COLORS.muted};
-          font-size: 15px;
-          line-height: 1.55;
+          font-size: 14px;
+          line-height: 1.4;
         }
         .heb-tenant-meta {
           display: flex;
@@ -1299,13 +1222,6 @@ export function HomeEnterpriseBriefApp({
           height: 4px;
           border-radius: 999px;
           background: ${COLORS.lineStrong};
-        }
-        .heb-page-kicker {
-          font-family: Fraunces, Georgia, serif;
-          font-style: italic;
-          font-size: 18px !important;
-          color: #4b4740 !important;
-          margin: 12px 0 22px !important;
         }
         .heb-section-tabs {
           display: flex;
@@ -1326,7 +1242,7 @@ export function HomeEnterpriseBriefApp({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 7px 0 10px;
+          padding: 5px 0 8px;
           white-space: nowrap;
           font: inherit;
           font-size: 12px;
@@ -1347,18 +1263,7 @@ export function HomeEnterpriseBriefApp({
           font-weight: 900;
         }
         .heb-current-section {
-          margin-bottom: 18px;
-        }
-        .heb-current-section > span {
-          display: block;
-          margin-bottom: 8px;
-        }
-        .heb-current-section > span {
-          font-size: 10px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          font-weight: 800;
-          color: #758198;
+          margin-bottom: 12px;
         }
         .heb-status {
           display: flex;
