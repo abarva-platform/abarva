@@ -191,30 +191,6 @@ function tableToDocx(table: RenderableTable): Paragraph | Table {
   return lightTable(table.columns, table.rows);
 }
 
-function normalizeHeadingText(value: string): string {
-  return value
-    .replace(/[*_`]/g, '')
-    .replace(/&amp;/gi, '&')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-/** The renderer owns the section heading. Models occasionally repeat that same
- * heading as the first Markdown line, producing a visibly duplicated title in
- * HTML, DOCX, and PDF. Remove only an exact normalized duplicate. */
-function withoutDuplicateSectionHeading(markdown: string, title: string): string {
-  const lines = markdown.split(/\r?\n/);
-  const firstContent = lines.findIndex((line) => line.trim().length > 0);
-  if (firstContent < 0) return markdown;
-  const heading = lines[firstContent]?.match(/^#{1,6}\s+(.+?)\s*#*\s*$/);
-  if (!heading || normalizeHeadingText(heading[1] ?? '') !== normalizeHeadingText(title)) {
-    return markdown;
-  }
-  lines.splice(firstContent, 1);
-  return lines.join('\n').replace(/^\s+/, '');
-}
-
 // ── DOCX ──
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
@@ -238,11 +214,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   // mdast walker, instead of flattening every line to a paragraph.
   for (const section of doc.generatedSections) {
     children.push(heading1(section.title));
-    children.push(
-      ...markdownToDocxBlocks(
-        withoutDuplicateSectionHeading(section.bodyMarkdown, section.title),
-      ),
-    );
+    children.push(...markdownToDocxBlocks(section.bodyMarkdown));
   }
 
   // In-document tables (those NOT routed to the Excel companion)
@@ -718,10 +690,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   // ordered/unordered + nested lists, inline GFM tables) via the shared,
   // escape-first markdown subset renderer — never split('\n') → <p>.
   const sections = doc.generatedSections
-    .map(
-      (s) =>
-        `<section><h2>${esc(s.title)}</h2>${markdownToHtml(withoutDuplicateSectionHeading(s.bodyMarkdown, s.title))}</section>`,
-    )
+    .map((s) => `<section><h2>${esc(s.title)}</h2>${markdownToHtml(s.bodyMarkdown)}</section>`)
     .join('');
   const exhibits = doc.exhibits.map(exhibitHtml).join('');
   const tables = doc.tables.map(tableHtml).join('');
@@ -948,9 +917,7 @@ export function renderDeliverablePdf(doc: RenderableDeliverable): ReactElement<P
         {doc.generatedSections.map((section) => (
           <PdfView key={section.key} style={{ marginTop: 10 }}>
             <PdfText style={PDF_STYLES.h1}>{section.title}</PdfText>
-            {markdownToPdfNodes(
-              withoutDuplicateSectionHeading(section.bodyMarkdown, section.title),
-            )}
+            {markdownToPdfNodes(section.bodyMarkdown)}
           </PdfView>
         ))}
 
@@ -1030,4 +997,473 @@ export function renderDeliverablePdf(doc: RenderableDeliverable): ReactElement<P
       </PdfPage>
     </PdfDocument>
   );
+}
+
+// ── PPTX (pptxgenjs) ──
+//
+// MOVES-QUALITY-003 / Track D (artifact-digestion audit). Structural model
+// mirrors the proven storyline-deck PPTX renderer
+// (`@/lib/visual-system/storyline-deck.ts` → `renderStorylineDeckPptx`):
+// LAYOUT_16x9, one governing point per slide, evidence/detail kept off the
+// slide face. Exhibits are rasterised with the exact same pipeline as DOCX
+// and PDF (`resolveSvgTokens` → `withXmlns` → `rasteriseSvg`) so a diagram
+// looks identical across every export format — unlike the storyline deck,
+// which only had a placeholder box because its exhibit renderer didn't
+// exist yet at the time it was written.
+
+const PPTX_COLOR = {
+  ink: '1B1A17',
+  muted: '6F6A61',
+  line: 'E6E2DA',
+  cream: 'F8F7F4',
+  paper: 'FFFFFF',
+  accent: '3F7A5B',
+  white: 'FFFFFF',
+} as const;
+
+const MAX_BULLETS_PER_SLIDE = 6;
+
+function safePptxText(s: string): string {
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+/** Condense a section's authored markdown into a handful of slide bullets —
+ *  a slide is scanned, not read, so full prose paragraphs never belong on
+ *  the face of it (the full text still lives in the DOCX/PDF/HTML export). */
+function condensedBulletsFromMarkdown(markdown: string, max: number): string[] {
+  const lines = markdown
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !/^#{1,6}\s/.test(line)) // headings become the slide title elsewhere, not a bullet
+    .filter((line) => !/^\|.*\|$/.test(line)) // skip raw markdown table rows
+    .map((line) => line.replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, ''))
+    .map((line) => line.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1'))
+    .map(safePptxText)
+    .filter(Boolean);
+  return lines.slice(0, max);
+}
+
+/** First non-empty, non-heading line of a section's markdown — used as the
+ *  slide's governing message when the section title alone is too generic. */
+function firstMarkdownLine(markdown: string): string | null {
+  const line = markdown
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => l.length > 0 && !/^#{1,6}\s/.test(l) && !/^\|.*\|$/.test(l));
+  return line ? safePptxText(line.replace(/^[-*]\s+/, '').replace(/\*\*([^*]+)\*\*/g, '$1')) : null;
+}
+
+type PptxGenJSCtor = (typeof import('pptxgenjs'))['default'];
+type PptxGenJSInstance = InstanceType<PptxGenJSCtor>;
+type PptxSlide = ReturnType<PptxGenJSInstance['addSlide']>;
+
+function addPptxChrome(
+  slide: PptxSlide,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  slide.addText(`${doc.clientDisplayName.toUpperCase()} · ${doc.title.toUpperCase()}`, {
+    x: 0.55,
+    y: 0.28,
+    w: 9.8,
+    h: 0.24,
+    fontFace: 'Arial',
+    fontSize: 8,
+    bold: true,
+    color: PPTX_COLOR.muted,
+    charSpacing: 1,
+  });
+  slide.addText(`${slideNumber}/${totalSlides}`, {
+    x: 11.7,
+    y: 0.28,
+    w: 1,
+    h: 0.24,
+    fontFace: 'Arial',
+    fontSize: 8,
+    color: PPTX_COLOR.muted,
+    align: 'right',
+  });
+  slide.addShape('line', {
+    x: 0.55,
+    y: 0.62,
+    w: 12.2,
+    h: 0,
+    line: { color: PPTX_COLOR.line, width: 0.75 },
+  });
+}
+
+function addPptxExhibitSlide(
+  pptx: PptxGenJSInstance,
+  exhibit: RenderableExhibit,
+  index: number,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText(safePptxText(exhibit.title), {
+    x: 0.72,
+    y: 0.85,
+    w: 11.8,
+    h: 0.6,
+    fontFace: 'Georgia',
+    fontSize: 20,
+    color: PPTX_COLOR.ink,
+    fit: 'shrink',
+  });
+  const svg = withXmlns(resolveSvgTokens(exhibitSvg(exhibit, index)));
+  try {
+    const { png, aspect } = rasteriseSvg(svg, 3);
+    const maxW = 11.8;
+    const maxH = 4.6;
+    let w = maxW;
+    let h = w / aspect;
+    if (h > maxH) {
+      h = maxH;
+      w = h * aspect;
+    }
+    slide.addImage({
+      data: `data:image/png;base64,${png.toString('base64')}`,
+      x: 0.72 + (maxW - w) / 2,
+      y: 1.55,
+      w,
+      h,
+    });
+  } catch (err) {
+    slide.addShape('roundRect', {
+      x: 0.72,
+      y: 1.55,
+      w: 11.8,
+      h: 3,
+      rectRadius: 0.12,
+      fill: { color: PPTX_COLOR.paper },
+      line: { color: PPTX_COLOR.line, width: 1 },
+    });
+    slide.addText('(exhibit could not be rendered as an image — see HTML/DOCX preview)', {
+      x: 1,
+      y: 2.9,
+      w: 11.3,
+      h: 0.4,
+      fontFace: 'Arial',
+      fontSize: 11,
+      italic: true,
+      color: PPTX_COLOR.muted,
+    });
+    console.error('[renderDeliverablePptx] exhibit rasterisation failed', exhibit.key, err);
+  }
+  slide.addText(safePptxText(exhibit.description), {
+    x: 0.72,
+    y: 6.35,
+    w: 11.8,
+    h: 0.6,
+    fontFace: 'Arial',
+    fontSize: 10,
+    italic: true,
+    color: PPTX_COLOR.muted,
+  });
+}
+
+function addPptxTableSlide(
+  pptx: PptxGenJSInstance,
+  table: RenderableTable,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText(safePptxText(table.title), {
+    x: 0.72,
+    y: 0.85,
+    w: 11.8,
+    h: 0.6,
+    fontFace: 'Georgia',
+    fontSize: 20,
+    color: PPTX_COLOR.ink,
+    fit: 'shrink',
+  });
+  if (table.rows.length === 0) {
+    slide.addText(`(${table.title}: see Excel companion exhibit)`, {
+      x: 0.72,
+      y: 2,
+      w: 11.8,
+      h: 0.5,
+      fontFace: 'Arial',
+      fontSize: 12,
+      italic: true,
+      color: PPTX_COLOR.muted,
+    });
+    return;
+  }
+  const header = table.columns.map((c) => ({
+    text: c,
+    options: { bold: true, color: PPTX_COLOR.muted, fontFace: 'Arial', fontSize: 9, fill: { color: PPTX_COLOR.paper } },
+  }));
+  const bodyRows = table.rows.slice(0, 14).map((row) =>
+    row.map((cell) => ({
+      text: cell,
+      options: { color: PPTX_COLOR.ink, fontFace: 'Arial', fontSize: 10 },
+    })),
+  );
+  slide.addTable([header, ...bodyRows], {
+    x: 0.72,
+    y: 1.6,
+    w: 11.8,
+    border: { type: 'solid', color: PPTX_COLOR.line, pt: 0.5 },
+    autoPage: false,
+  });
+  if (table.rows.length > 14) {
+    slide.addText(`+ ${table.rows.length - 14} more rows — see Excel companion exhibit`, {
+      x: 0.72,
+      y: 6.9,
+      w: 11.8,
+      h: 0.3,
+      fontFace: 'Arial',
+      fontSize: 9,
+      italic: true,
+      color: PPTX_COLOR.muted,
+    });
+  }
+}
+
+/** Render a RenderableDeliverable as a native, editable PPTX deck: a title
+ *  slide (with the mandatory AI-draft disclosure), one condensed slide per
+ *  generated section, one rasterised-image slide per exhibit, one table
+ *  slide per in-deck table, and a closing slide for next actions / the
+ *  client-to-complete checklist. Mirrors the DOCX/PDF renderers' content
+ *  model; a malformed exhibit is best-effort (falls back to a text notice)
+ *  and never fails the whole deck. */
+export async function renderDeliverablePptx(doc: RenderableDeliverable): Promise<Buffer> {
+  const { default: PptxGenJS } = await import('pptxgenjs');
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_16x9';
+  pptx.author = 'AbarVa';
+  pptx.company = 'AbarVa';
+  pptx.subject = doc.title;
+  pptx.title = `${doc.clientDisplayName} — ${doc.title}`;
+
+  const inDeckTables = doc.tables.filter((t) => t.targetFormat !== 'xlsx');
+  const totalSlides = 1 + doc.generatedSections.length + doc.exhibits.length + inDeckTables.length + 1;
+  let slideNumber = 1;
+
+  // Title slide.
+  const titleSlide = pptx.addSlide();
+  titleSlide.background = { color: PPTX_COLOR.ink };
+  titleSlide.addText('ABARVA · BOARD-GRADE DELIVERABLE', {
+    x: 0.72,
+    y: 0.7,
+    w: 10,
+    h: 0.3,
+    fontFace: 'Arial',
+    fontSize: 9,
+    bold: true,
+    color: PPTX_COLOR.accent,
+    charSpacing: 1.5,
+  });
+  titleSlide.addText(safePptxText(doc.title), {
+    x: 0.72,
+    y: 1.6,
+    w: 11.3,
+    h: 1.6,
+    fontFace: 'Georgia',
+    fontSize: 34,
+    color: PPTX_COLOR.white,
+    fit: 'shrink',
+  });
+  if (doc.subtitle) {
+    titleSlide.addText(safePptxText(doc.subtitle), {
+      x: 0.72,
+      y: 3.15,
+      w: 11.3,
+      h: 0.6,
+      fontFace: 'Arial',
+      fontSize: 14,
+      color: 'BEB9AE',
+    });
+  }
+  titleSlide.addText(`${doc.clientDisplayName} — ${doc.initiativeDisplayName}`, {
+    x: 0.72,
+    y: 3.85,
+    w: 11.3,
+    h: 0.4,
+    fontFace: 'Arial',
+    fontSize: 12,
+    color: 'BEB9AE',
+  });
+  titleSlide.addShape('line', {
+    x: 0.72,
+    y: 4.5,
+    w: 4,
+    h: 0,
+    line: { color: PPTX_COLOR.accent, width: 2 },
+  });
+  titleSlide.addText(safePptxText(DOC_STATUS_LABEL), {
+    x: 0.72,
+    y: 4.75,
+    w: 11.3,
+    h: 0.35,
+    fontFace: 'Arial',
+    fontSize: 12,
+    bold: true,
+    color: PPTX_COLOR.white,
+  });
+  titleSlide.addText(safePptxText(DOC_STATUS_CAVEAT), {
+    x: 0.72,
+    y: 5.15,
+    w: 11.3,
+    h: 1,
+    fontFace: 'Arial',
+    fontSize: 10,
+    color: 'BEB9AE',
+    fit: 'shrink',
+  });
+  titleSlide.addNotes(`Recommendation: ${doc.recommendation}`);
+  slideNumber += 1;
+
+  // One condensed slide per generated section.
+  for (const section of doc.generatedSections) {
+    const slide = pptx.addSlide();
+    slide.background = { color: PPTX_COLOR.cream };
+    addPptxChrome(slide, doc, slideNumber, totalSlides);
+    const governing = firstMarkdownLine(section.bodyMarkdown) ?? section.title;
+    slide.addText(safePptxText(section.title), {
+      x: 0.72,
+      y: 0.85,
+      w: 11.8,
+      h: 0.5,
+      fontFace: 'Arial',
+      fontSize: 11,
+      bold: true,
+      color: PPTX_COLOR.accent,
+      charSpacing: 0.5,
+    });
+    slide.addText(governing, {
+      x: 0.72,
+      y: 1.35,
+      w: 11.8,
+      h: 1.1,
+      fontFace: 'Georgia',
+      fontSize: 22,
+      color: PPTX_COLOR.ink,
+      fit: 'shrink',
+    });
+    const bullets = condensedBulletsFromMarkdown(section.bodyMarkdown, MAX_BULLETS_PER_SLIDE);
+    if (bullets.length > 0) {
+      slide.addText(
+        bullets.map((b) => ({ text: b, options: { bullet: { type: 'bullet' as const } } } as const)),
+        {
+          x: 0.95,
+          y: 2.6,
+          w: 11.1,
+          h: 4,
+          fontFace: 'Arial',
+          fontSize: 14,
+          color: PPTX_COLOR.ink,
+          fit: 'shrink',
+          breakLine: false,
+        },
+      );
+    }
+    if (section.citationsUsed.length > 0) {
+      slide.addNotes(`Grounding: ${section.groundingMode}; citations [${section.citationsUsed.join(', ')}]`);
+    }
+    slideNumber += 1;
+  }
+
+  // One rasterised-image slide per exhibit.
+  doc.exhibits.forEach((exhibit, index) => {
+    addPptxExhibitSlide(pptx, exhibit, index, doc, slideNumber, totalSlides);
+    slideNumber += 1;
+  });
+
+  // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).
+  inDeckTables.forEach((table) => {
+    addPptxTableSlide(pptx, table, doc, slideNumber, totalSlides);
+    slideNumber += 1;
+  });
+
+  // Closing slide: recommendation, next actions, client-to-complete checklist.
+  const closingSlide = pptx.addSlide();
+  closingSlide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(closingSlide, doc, slideNumber, totalSlides);
+  closingSlide.addText('RECOMMENDATION & NEXT ACTIONS', {
+    x: 0.72,
+    y: 0.85,
+    w: 11.8,
+    h: 0.4,
+    fontFace: 'Arial',
+    fontSize: 11,
+    bold: true,
+    color: PPTX_COLOR.accent,
+    charSpacing: 0.5,
+  });
+  closingSlide.addText(safePptxText(doc.recommendation), {
+    x: 0.72,
+    y: 1.3,
+    w: 11.8,
+    h: 1.2,
+    fontFace: 'Georgia',
+    fontSize: 18,
+    color: PPTX_COLOR.ink,
+    fit: 'shrink',
+  });
+  const nextActionBullets = doc.nextActions.slice(0, MAX_BULLETS_PER_SLIDE).map(safePptxText);
+  if (nextActionBullets.length > 0) {
+    closingSlide.addText(
+      [
+        { text: 'Next Actions', options: { bold: true, breakLine: true } },
+        ...nextActionBullets.map((b) => ({ text: b, options: { bullet: { type: 'bullet' as const } } } as const)),
+      ],
+      {
+        x: 0.95,
+        y: 2.7,
+        w: 5.6,
+        h: 3.6,
+        fontFace: 'Arial',
+        fontSize: 13,
+        color: PPTX_COLOR.ink,
+        fit: 'shrink',
+        breakLine: false,
+      },
+    );
+  }
+  const checklistBullets = doc.clientCompleteChecklist
+    .slice(0, MAX_BULLETS_PER_SLIDE)
+    .map((c) => safePptxText(`${c.label} — owner: ${String(c.owner)}`));
+  if (checklistBullets.length > 0) {
+    closingSlide.addText(
+      [
+        { text: 'Client-to-Complete Checklist', options: { bold: true, breakLine: true } },
+        ...checklistBullets.map((b) => ({ text: b, options: { bullet: { type: 'bullet' as const } } } as const)),
+      ],
+      {
+        x: 6.85,
+        y: 2.7,
+        w: 5.6,
+        h: 3.6,
+        fontFace: 'Arial',
+        fontSize: 13,
+        color: PPTX_COLOR.ink,
+        fit: 'shrink',
+        breakLine: false,
+      },
+    );
+  }
+  closingSlide.addText(safePptxText(DOC_STATUS_FOOTER), {
+    x: 0.72,
+    y: 6.6,
+    w: 11.8,
+    h: 0.5,
+    fontFace: 'Arial',
+    fontSize: 9,
+    italic: true,
+    color: PPTX_COLOR.muted,
+  });
+
+  return (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
 }

@@ -498,6 +498,89 @@ cells are stale and superseded by that resolution).
   — does not become unblocked by resolving MOVES-DESIGN-001/002/003. Enablement design now exists
   (`MOVES-TEST-001`, below) — the actual tenant is not yet provisioned.
 
+### MOVES-CAPABILITY-002 — Deliverable regeneration supersession
+
+- **Problem statement**: A live inspection of a real sandbox Move's Files & Evidence vault found
+  53 deliverables where there should have been far fewer — every regeneration of a phase's
+  deliverable (`saveGeneratedArtifact`) was a pure `INSERT` with no lookup for an existing
+  deliverable of the same logical type, so each Approve & Build re-run created a brand-new
+  titled row instead of superseding the prior draft (~15+ near-duplicate "Target Architecture"
+  entries, same pattern for Sourcing Strategy/Operating Model/Solution Design).
+- **User/business impact**: an unbounded, ever-growing pile of near-duplicate AI drafts in every
+  Move's vault, with no way for a reviewer to tell which version is current — directly undermines
+  the "current vs. superseded" lifecycle model the UI (`FileCabinetPanel.tsx`,
+  `MovesPhaseStandaloneClient.tsx`) was already built to display.
+- **Severity**: P1 (data-integrity/UX defect — actively misleading in a live sandbox Move)
+- **Workstream**: Approval, authority, and artifact-lineage controls
+- **Status**: `Deployed` (2026-07-23) — `saveGeneratedArtifact` now calls a new
+  `supersedePriorDeliverableVersions()` step after a successful insert, keyed on
+  client + Move (`sourceArtifactRef`) + canonical `deliverableTypeKey` (not the model-authored
+  title, which is fresh on every run and can't be used for dedup).
+- **Dependencies**: none — additive only, no schema change (`generated_artifacts.superseded_by`
+  already existed but was never written by any live code path)
+- **Acceptance criteria**: regenerating a deliverable of the same logical type marks the prior
+  still-active version's `superseded_by`; a different Move or a different `deliverableTypeKey` is
+  never touched; a failure in this step never fails the save that already succeeded.
+- **Required tests**: `repository.test.ts` — 3 assertions (same-type regeneration supersedes;
+  different Move untouched; different deliverable type for the same Move untouched); zero
+  regressions across `src/lib/deliverables/orchestrator` (204/204) and `src/lib/artifacts` (5/5).
+- **PR**: #5526
+- **Merge SHA**: `d7067bb10802b3ae86102fcca7a9ce9da53eea8e`
+- **Deploy run**: `aca-main-deploy.yml` run `30052845868` (success); ACA revision
+  `ca-abarva-web-lab-eastus--md7067bb1`, digest
+  `sha256:5fa90d135a73197aaf56279087a73e85d8e89abc5f7031b71f9f53c771244243` — confirmed as both
+  the template image and the 100%-traffic revision image.
+- **Release record**: `docs/releases/records/2026-07-23-moves-deliverable-supersession.md`
+- **Discovered from**: 2026-07-23 live sandbox-Move Files & Evidence inspection (Claude Code
+  handoff backlog, Track: evidence and client-approved lifecycle)
+- **Notes / remaining gaps**: this fix prevents FUTURE proliferation only — it does not
+  retroactively clean up the 53 existing duplicate rows already in the sandbox Move's vault (a
+  separate, explicitly scoped backfill pass, not run against real data without its own review).
+  `deliverableTypeKey` lookup is a full-table JSONB containment scan — fine at current volume,
+  worth an index later. Live signed-in regeneration proof was not captured (the specific sandbox
+  Move used to find the bug had gone fully terminal by the time proof was attempted); the fix
+  itself is proven via 3 precise unit assertions directly exercising the exact code path.
+
+### MOVES-QUALITY-003 — PPTX renderer for the orchestrator deliverable pipeline
+
+- **Problem statement**: The orchestrator renders DOCX/XLSX/PDF/HTML; no PPTX export path
+  exists, even though several deliverable profiles (Discovery Report, Root-Cause Worksheet,
+  Execution Roadmap, Handoff Package) declare `pptx` as an intended output format. The download
+  route silently substituted the DOCX renderer whenever `pptx` was requested or prescribed
+  (`route.ts`: `if (out === "pptx") return "docx";`) — a client asking for a deck got a Word
+  document with no indication of the substitution.
+- **User/business impact**: any profile meant to ship as an executive deck instead ships as a
+  Word document; no native, editable PPTX ever reaches a client or reviewer.
+- **Severity**: P2 (capability gap, not a defect)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Implemented` (2026-07-23) — new `renderDeliverablePptx()` in
+  `src/lib/deliverables/orchestrator/renderers.tsx`, modeled on the proven
+  `renderStorylineDeckPptx` pattern in `@/lib/visual-system/storyline-deck.ts` (native
+  `pptxgenjs`, `LAYOUT_16x9`, one governing point per slide). Unlike that reference, exhibits are
+  rendered as real rasterised images (same `resolveSvgTokens` → `withXmlns` → `rasteriseSvg`
+  pipeline as the DOCX/PDF renderers), not a placeholder box — a diagram now looks identical
+  across every export format. `route.ts`'s `pptx → docx` silent fallback is removed; `pptx` is
+  now a first-class requested/default format alongside docx/xlsx/pdf.
+- **Dependencies**: none — `pptxgenjs` was already a project dependency
+- **Acceptance criteria**: a real, valid `.pptx` (zip) buffer; one slide per generated section
+  (condensed governing point + capped bullets, not full prose); one rasterised-image slide per
+  exhibit with title/description; one native table slide per in-deck (non-xlsx) table; a title
+  slide and closing slide both carry the mandatory AI-draft disclosure; a malformed exhibit falls
+  back to a text notice and never fails the whole deck.
+- **Required tests**: `renderers.test.ts` — 8 new assertions (valid pptx buffer + correct slide
+  count; title slide content + disclosure; exhibit slide with real embedded PNG; native table
+  slide; closing slide next-actions/checklist; rasterisation-failure fallback). Zero regressions
+  across `src/lib/deliverables/orchestrator` (192/192) and `src/lib/artifacts` (5/5).
+- **PR**: not yet opened
+- **Release record**: not yet written
+- **Discovered from**: `docs/codex-handoff/MOVES_ARTIFACT_DIGESTION_PROMPTING_LAYOUT_PROMPT_2026-07-22.md`,
+  Track D
+- **Notes / remaining gaps**: no live signed-in proof yet of an actual PPTX download opening
+  correctly in PowerPoint/Keynote — the buffer is proven valid (zip magic bytes, real slide XML,
+  real embedded PNG media parts) via unit tests, not a manual open. Table slides cap at 14 rows
+  in-deck (consistent with the PDF renderer's simplicity bar); wider tables should carry
+  `targetFormat: 'xlsx'` and rely on the Excel companion, same as DOCX/PDF.
+
 ### MOVES-TEST-001 — Isolated governed Moves test tenant
 
 - **Problem statement**: `MOVES-QUALITY-002` (and any future live-proof need) is blocked because no
