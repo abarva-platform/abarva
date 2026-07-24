@@ -2725,7 +2725,14 @@ function PhaseBody({
           </div>
           <div>
             <span>Evidence posture</span>
-            <strong>{evidenceCount} items</strong>
+            <button
+              type="button"
+              className="mxw-evidence-count-link"
+              onClick={onOpenFiles}
+              aria-label={`${evidenceCount} evidence items — open Files & Evidence`}
+            >
+              {evidenceCount} items
+            </button>
           </div>
           <div>
             <span>Decision state</span>
@@ -2883,18 +2890,28 @@ function PhaseBody({
               <span>
                 {hardMetCount}/{hardTotal} hard gates met
               </span>
-              <span>
+              <button
+                type="button"
+                className="mxw-evidence-count-link"
+                onClick={onOpenFiles}
+                aria-label={`${evidenceCount} evidence items — open Files & Evidence`}
+              >
                 {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
-              </span>
+              </button>
               <span>{nextActionLabel}</span>
             </div>
           </article>
           <article>
             <span className="mxw-exec-label">Evidence</span>
-            <strong>
+            <button
+              type="button"
+              className="mxw-evidence-count-link mxw-evidence-count-link-strong"
+              onClick={onOpenFiles}
+              aria-label={`${evidenceCount} approved or agent-ready items — open Files & Evidence`}
+            >
               {evidenceCount} approved or agent-ready item
               {evidenceCount === 1 ? "" : "s"}
-            </strong>
+            </button>
             <p>
               Uploaded files only influence the gate after review. Gaps and
               caveats remain visible so aVa and generation do not silently fill
@@ -4934,6 +4951,11 @@ function MovesStandaloneStyles() {
 .mxw-value-grid div{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px}
 .mxw-value-grid span{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);font-weight:700}
 .mxw-value-grid strong{display:block;font-size:18px;margin-top:4px}
+.mxw-evidence-count-link{display:inline-block;font:inherit;font-size:18px;margin-top:4px;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .12s ease}
+.mxw-evidence-count-link:hover,.mxw-evidence-count-link:focus-visible{text-decoration-color:currentColor}
+.mxw-decision-chips .mxw-evidence-count-link{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:5px 8px;white-space:nowrap;margin-top:0;text-decoration:none}
+.mxw-decision-chips .mxw-evidence-count-link:hover,.mxw-decision-chips .mxw-evidence-count-link:focus-visible{background:var(--soft)}
+.mxw-evidence-count-link-strong{font-weight:600}
 .mxw-review-flow{display:flex;gap:6px;flex-wrap:wrap;margin:15px 0}
 .mxw-review-flow span{padding:7px 12px;border:1px solid var(--line-2);border-radius:999px;font-size:12px;font-weight:600;color:var(--muted)}
 .mxw-review-flow span.done{background:var(--green-tint);color:var(--green);border-color:var(--green)}

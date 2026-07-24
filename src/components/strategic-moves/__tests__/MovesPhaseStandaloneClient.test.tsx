@@ -1828,6 +1828,39 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Gate execution checklist")).toBeInTheDocument();
   });
 
+  it("the evidence-item counts at gate approval are clickable links that open Files & Evidence, not inert text", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("heading", { name: "Files & Evidence" }),
+    ).not.toBeInTheDocument();
+
+    const evidenceLinks = screen.getAllByRole("button", {
+      name: /open Files & Evidence/i,
+    });
+    expect(evidenceLinks.length).toBeGreaterThan(0);
+
+    fireEvent.click(evidenceLinks[0]);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Files & Evidence" }),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
     render(
       <MovesPhaseStandaloneClient
