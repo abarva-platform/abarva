@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/shell/AppShell";
 import { HomeV4ExplorerShell } from "@/components/home/v4/HomeV4ExplorerShell";
 import type { HomeV4Candidate } from "@/components/home/v4/homeV4Visual";
-import { COLORS } from "@/components/home/HomeEnterpriseBriefApp";
 
 import skyharborFixture from "./_fixtures/skyharbor-air.json";
 import firstCapitalFixture from "./_fixtures/first-capital.json";
@@ -62,34 +61,6 @@ export default async function HomeV4PreviewPage({
         </nav>
       </div>
       <HomeV4ExplorerShell key={tenantKey} candidate={candidate} />
-      <style jsx global>{`
-        .heb-v4-preview-tenant-bar {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px 32px;
-          background: ${COLORS.rail};
-          border-bottom: 1px solid ${COLORS.line};
-        }
-        .heb-v4-preview-tabs {
-          display: flex;
-          gap: 8px;
-        }
-        .heb-v4-preview-tab {
-          padding: 4px 10px;
-          border: 1px solid ${COLORS.line};
-          border-radius: 999px;
-          font-size: 11px;
-          color: ${COLORS.muted};
-          text-decoration: none;
-          background: ${COLORS.surface};
-        }
-        .heb-v4-preview-tab.active {
-          background: ${COLORS.ink};
-          color: #fffdf8;
-          border-color: ${COLORS.ink};
-        }
-      `}</style>
     </AppShell>
   );
 }

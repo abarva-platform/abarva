@@ -98,6 +98,32 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
           color: ${COLORS.muted};
           max-width: 74ch;
         }
+        .heb-v4-preview-tenant-bar {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 32px;
+          background: ${COLORS.rail};
+          border-bottom: 1px solid ${COLORS.line};
+        }
+        .heb-v4-preview-tabs {
+          display: flex;
+          gap: 8px;
+        }
+        .heb-v4-preview-tab {
+          padding: 4px 10px;
+          border: 1px solid ${COLORS.line};
+          border-radius: 999px;
+          font-size: 11px;
+          color: ${COLORS.muted};
+          text-decoration: none;
+          background: ${COLORS.surface};
+        }
+        .heb-v4-preview-tab.active {
+          background: ${COLORS.ink};
+          color: #fffdf8;
+          border-color: ${COLORS.ink};
+        }
       `}</style>
     </div>
   );
