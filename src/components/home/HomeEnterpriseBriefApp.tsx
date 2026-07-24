@@ -71,7 +71,7 @@ type EnterpriseExecutiveRead = NonNullable<
   HomeEnterpriseBriefReadModel["executiveRead"]
 >;
 
-const COLORS = {
+export const COLORS = {
   page: "#f3f0ea",
   rail: "#ebe9e2",
   surface: "#fffdf8",
