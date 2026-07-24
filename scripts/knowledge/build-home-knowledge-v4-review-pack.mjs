@@ -5,6 +5,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { assertIntegratedPromptPreflight } from "./assert-integrated-prompt-preflight.mjs";
+import { assertEnterpriseBookPromptPreflight } from "./assert-enterprise-book-prompt-preflight.mjs";
+import { validateIntegratedManifest } from "./validate-integrated-manifest.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
@@ -42,6 +44,14 @@ const preflightMode = process.argv.includes("--preflight");
 // pass type and the deterministic_dataset_registry on the context packet.
 const integratedMode =
   process.env.HOME_KNOWLEDGE_V4_INTEGRATED === "true" || process.argv.includes("--integrated");
+// Enterprise Book architecture: one call producing ONE enterprise story with
+// per-dimension notes; all 38 dimension pages (including every visual_binding)
+// are then derived deterministically by renderDimensionsFromBook(), never
+// authored by Claude. Supersedes integratedMode's per-call visual authoring
+// -- see DIMENSION_BOOK_CHAPTERS / VISUAL_RENDER_RULES below. Additive: gated
+// behind its own flag so the just-proven integrated path stays intact.
+const bookMode =
+  process.env.HOME_KNOWLEDGE_V4_BOOK_MODE === "true" || process.argv.includes("--book-mode");
 // Offline replay: re-run every validator against already-generated candidate
 // JSON without calling Claude. This is the control point that lets a validator
 // or schema change be proven against stored output instead of being tested by
@@ -938,6 +948,75 @@ function makePrompt(pass, packet, assembled) {
       evidence_index: packet.evidence_index ?? [],
     };
   }
+  if (pass.type === "enterprise_book") {
+    const bookCommon = { ...common };
+    delete bookCommon.visual_contract_rules;
+    return {
+      task: "Enterprise Book — one enterprise knowledge book, not 38 pages",
+      contract_version: DIMENSION_DATASET_BINDINGS_VERSION,
+      instruction:
+        "Write ONE enterprise knowledge book for this tenant: a governing executive " +
+        "narrative plus a compact note for each of the 38 listed dimension_keys. " +
+        "You are an enterprise architect authoring one coherent document, not a " +
+        "page-layout engine authoring 38 independent pages -- every dimension_notes " +
+        "entry must read as a chapter of the SAME story (same thesis, same tensions, " +
+        "same numbers where they overlap), not a fresh essay that rediscovers the " +
+        "enterprise from scratch. You never choose a visual, chart, dataset field, or " +
+        "chart type for any dimension -- that is rendered deterministically after you " +
+        "respond from real data. Never reproduce rows, records, or numeric series from " +
+        "any dataset; reference dataset facts only through evidence_refs against " +
+        "evidence_index. OVERRIDE NOTICE: common.visual_contract_rules described the " +
+        "OLD per-dimension chart contract used elsewhere in this pipeline -- it has " +
+        "been removed from this payload and does not apply here.",
+      output_requirements: {
+        fields: ["executive_narrative", "dimension_notes"],
+        executive_narrative_fields: [
+          "title", "thesis", "narrative_arc", "strategic_agenda", "strategic_tensions",
+        ],
+        dimension_notes_shape:
+          "An object keyed by dimension_key -- one entry for every key listed in " +
+          "dimension_catalog below, no more, no fewer, no duplicates. Each entry: " +
+          "{title, headline, executive_takeaway, key_insights, strategic_implication, " +
+          "recommended_actions, evidence_refs, related_dimensions, confidence_statement, " +
+          "visual_interpretation}. Never include visual_type, data_points, dataset_id, " +
+          "or any chart/graph field inside a dimension_notes entry -- those fields do " +
+          "not belong to your output schema at all.",
+        hard_limits:
+          "title: one line. executive_takeaway: 40-80 words. key_insights: 3-5 objects " +
+          "{statement, evidence_refs}. strategic_implication: one statement. " +
+          "recommended_actions: 1-3 items. visual_interpretation: one sentence naming " +
+          "what a leadership audience should take from this dimension's data, with no " +
+          "numbers in it -- you must never choose, name, or describe a chart type or " +
+          "visualization for this dimension; the renderer attaches one deterministically. " +
+          "evidence_refs and key_insights[].evidence_refs: evidence_id values from " +
+          "evidence_index only -- an ID not in that list is invalid, never invent one; " +
+          "empty array if no evidence_index entry supports the claim. No generic " +
+          "introductions, no restated navigation labels, no raw records, no " +
+          "methodology explanations. Keep the whole response compact: target well " +
+          "under 24000 output tokens across the narrative plus all 38 notes combined.",
+      },
+      common: bookCommon,
+      // No story_architecture input here, unlike every other pass type --
+      // this call generates the executive_narrative itself; it does not
+      // consume one. assembled.story_architect does not exist yet at the
+      // point this pass runs (book mode calls this first and derives
+      // assembled.story_architect FROM its output afterward), so passing it
+      // through would just send an empty/undefined field.
+      dimension_catalog: packet.dimension_summary,
+      dimension_chapters: DIMENSION_BOOK_CHAPTERS,
+      // Unlike every downstream pass, this call has no upstream story
+      // architecture to lean on -- it is the first (and, for dimension
+      // content, only) call. It needs the same full raw context the OLD
+      // story_architect pass got, not just the thesis-level summaries later
+      // passes use.
+      context_packet: packet,
+      material_aggregates: packet.business_context_samples.application_ownership_coverage
+        ? { applications: packet.business_context_samples.application_ownership_coverage }
+        : {},
+      relationship_samples: packet.business_context_samples.relationship_samples,
+      evidence_index: packet.evidence_index ?? [],
+    };
+  }
   if (pass.type === "relationships") {
     return {
       task: "Call 6: Relationship Writer",
@@ -1425,6 +1504,175 @@ const DIMENSION_DATASET_BINDINGS = {
   budget: { primary_dataset: "budget_summary", evidence_families: ["budget", "annual_report"] },
 };
 
+// ---------------------------------------------------------------------------
+// Enterprise Book architecture (v1).
+//
+// Replaces "ask Claude to author 38 independent dimension pages" with "ask
+// Claude to author ONE enterprise story with per-dimension notes, then derive
+// all 38 pages from it deterministically." Two structural changes vs the
+// integrated_dimensions pass above, not just a prompt change:
+//
+//   1. Claude never writes visual_binding. The integrated_dimensions contract
+//      still let the model choose visual_type/dimension/measure per
+//      dimension -- the validator could catch a fabricated data_points
+//      field, but nothing stopped a plausible-looking but wrong dimension/
+//      measure pairing, because the model was still the one assembling the
+//      visual object. Under book mode, VISUAL_RENDER_RULES below is the only
+//      thing that ever produces a visual_binding; Claude has no field to
+//      fabricate into because visual_binding never appears in its schema.
+//   2. Claude's output is organized into a small number of chapters, each
+//      carrying `dimension_notes` for the handful of pages it's responsible
+//      for. One shared narrative context authors every dimension_notes
+//      entry in the same call, which is what actually prevents
+//      cross-dimension drift -- chapters are an organizing device for the
+//      prompt (and for future non-Home surfaces: Word/PPT/Moves), not a
+//      second round of independent generation.
+//
+// DIMENSION_BOOK_CHAPTERS: every one of the 38 real catalog keys assigned to
+// exactly one chapter. The self-check below throws at load time if any
+// catalog key is uncovered or any chapter key is unknown to the catalog.
+const DIMENSION_BOOK_CHAPTERS = {
+  enterprise_thesis: "executive_narrative",
+  profile: "enterprise_context",
+  geography: "enterprise_context",
+  industry: "enterprise_context",
+  metrics: "enterprise_context",
+  divisions: "operating_model",
+  front_middle_back: "operating_model",
+  org: "operating_model",
+  decision_rights: "operating_model",
+  workforce: "operating_model",
+  business_processes: "operating_model",
+  opev: "operating_model",
+  journeys: "operating_model",
+  service_delivery: "operating_model",
+  leadership_agenda: "operating_model",
+  interview_signals: "operating_model",
+  functions: "capabilities",
+  capabilities: "capabilities",
+  proven_strengths: "capabilities",
+  value_streams: "capabilities",
+  infra: "technology",
+  integrations: "technology",
+  architecture_dependencies: "technology",
+  tech_lifecycle: "technology",
+  data: "data",
+  data_quality_lineage: "data",
+  identity_semantic: "data",
+  apps: "applications",
+  vendors: "vendors",
+  ms: "vendors",
+  risks: "risks",
+  structural_constraints: "risks",
+  evidence: "evidence",
+  lenses: "evidence",
+  ai: "ai_opportunities",
+  budget: "investment_priorities",
+  programs: "transformation_roadmap",
+  rel: "relationships",
+};
+
+{
+  const covered = new Set(Object.keys(DIMENSION_BOOK_CHAPTERS));
+  const catalogKeys = expandedDimensionCatalog.map((e) => e.key);
+  const missing = catalogKeys.filter((k) => !covered.has(k));
+  const extra = Array.from(covered).filter((k) => !catalogKeys.includes(k));
+  if (missing.length > 0) throw new Error(`DIMENSION_BOOK_CHAPTERS missing catalog keys: ${missing.join(", ")}`);
+  if (extra.length > 0) throw new Error(`DIMENSION_BOOK_CHAPTERS has unknown keys: ${extra.join(", ")}`);
+}
+
+// Deterministic visual construction. dataset_id -> a fixed visual_binding
+// template. The renderer fills these in for the 6 governed dimensions; every
+// other dimension gets no visual_binding, same as before. Values are the
+// same dimension/measure/visual_type combinations Claude itself chose well
+// in the 2026-07-24 paid integrated run -- proven good picks, now code-owned
+// so they can never be fabricated or drift between runs.
+const VISUAL_RENDER_RULES = {
+  applications_full: {
+    visual_type: "treemap", dimension: "business_function", measure: "count", limit: 7,
+    title: "Application concentration by business function",
+    annotation_instruction: "Emphasize the functions with the largest system footprint",
+  },
+  vendors_full: {
+    visual_type: "horizontal_bar", dimension: "scope", measure: "annual_run_rate_usd", limit: 7,
+    title: "Vendor concentration by run rate",
+    annotation_instruction: "Emphasize the largest delivery dependency",
+    format: "currency", orientation: "horizontal",
+  },
+  programs_full: {
+    visual_type: "scatter_2x2", dimension: "stage", measure: "measured_value_usd", limit: 8,
+    title: "Programs by measured value and stage",
+    annotation_instruction: "Highlight programs with promised but no measured value",
+    format: "currency",
+  },
+  risk_register: {
+    visual_type: "heatmap", dimension: "risk_type", measure: "count", limit: 5,
+    title: "Risk intensity by type and control status",
+    annotation_instruction: "Emphasize high-severity risks with weak control status",
+  },
+  evidence_registry: {
+    visual_type: "evidence_timeline", dimension: "trust_status", measure: "count", limit: 7,
+    title: "From planning-grade to board-grade evidence",
+    annotation_instruction: "Emphasize items needing review versus governed-real",
+  },
+  budget_summary: {
+    visual_type: "stacked_bar", dimension: "budget_area", measure: "budget_fy26_usd", limit: 5,
+    title: "Budget composition by area and spend type",
+    annotation_instruction: "Emphasize the run versus change split",
+    format: "currency",
+  },
+};
+
+// Deterministic renderer: turns one EnterpriseBook object into the same
+// dimensions[] shape the rest of the pipeline (validator, review HTML,
+// downstream Home V4 consumers) already expects from the integrated_
+// dimensions pass. Claude supplies dimension_notes; every dataset/visual
+// field below is attached by code, never by the model.
+export function renderDimensionsFromBook(book, packet) {
+  const notes = book?.dimension_notes ?? {};
+  const registryById = new Map((packet.deterministic_dataset_registry ?? []).map((d) => [d.dataset_id, d]));
+  return expandedDimensionCatalog.map((entry) => {
+    const key = entry.key;
+    const note = notes[key] ?? {};
+    const chapter = DIMENSION_BOOK_CHAPTERS[key];
+    const binding = DIMENSION_DATASET_BINDINGS[key];
+    const dimension = {
+      dimension_key: key,
+      chapter,
+      title: note.title || entry.name,
+      headline: note.headline ?? "",
+      executive_takeaway: note.executive_takeaway ?? "",
+      key_insights: Array.isArray(note.key_insights) ? note.key_insights : [],
+      strategic_implication: note.strategic_implication ?? "",
+      recommended_actions: Array.isArray(note.recommended_actions) ? note.recommended_actions : [],
+      evidence_refs: Array.isArray(note.evidence_refs) ? note.evidence_refs : [],
+      related_dimensions: Array.isArray(note.related_dimensions) ? note.related_dimensions : [],
+      confidence_statement: note.confidence_statement ?? "",
+    };
+    if (binding && registryById.has(binding.primary_dataset)) {
+      dimension.data_binding = { dataset_id: binding.primary_dataset };
+      const rule = VISUAL_RENDER_RULES[binding.primary_dataset];
+      if (rule) {
+        dimension.visual_binding = {
+          dataset_id: binding.primary_dataset,
+          visual_type: rule.visual_type,
+          dimension: rule.dimension,
+          measure: rule.measure,
+          filters: [],
+          sort: "descending",
+          limit: rule.limit,
+          title: rule.title,
+          annotation_instruction: rule.annotation_instruction,
+          ...(rule.format ? { format: rule.format } : {}),
+          ...(rule.orientation ? { orientation: rule.orientation } : {}),
+          interpretation: note.visual_interpretation || `Deterministic view of ${binding.primary_dataset}.`,
+        };
+      }
+    }
+    return dimension;
+  });
+}
+
 async function processTenant(client, tenantKey) {
   const sourceFile = path.join(repoRoot, "datasets", "tenant-inputs", tenantKey, "approved-content", "home", "design-contract-pack.json");
   const sourceText = fs.readFileSync(sourceFile, "utf8");
@@ -1469,10 +1717,14 @@ async function processTenant(client, tenantKey) {
       story_architecture_version: promptContractVersion,
       story_architecture_hash: sha256(JSON.stringify(storyArchitect)),
     };
-    const pass = { id: "05-integrated-dimensions", type: "integrated_dimensions" };
+    const pass = bookMode
+      ? { id: "01-enterprise-book", type: "enterprise_book" }
+      : { id: "05-integrated-dimensions", type: "integrated_dimensions" };
     const prompt = makePrompt(pass, packet, assembled);
     writeJson(path.join(tenantDir, "preflight", `${pass.id}.prompt.json`), prompt);
-    const preflight = assertIntegratedPromptPreflight(prompt, packet);
+    const preflight = bookMode
+      ? assertEnterpriseBookPromptPreflight(prompt, packet)
+      : assertIntegratedPromptPreflight(prompt, packet);
     writeJson(path.join(tenantDir, "preflight", `${pass.id}.preflight-result.json`), preflight);
     console.log(`[home-v4-preflight] ${tenantKey}: ${preflight.status} (${preflight.failure_count} failure(s))`);
     for (const f of preflight.failures) {
@@ -1480,6 +1732,31 @@ async function processTenant(client, tenantKey) {
     }
     if (preflight.status !== "pass") {
       throw new Error(`Integrated prompt preflight failed for "${tenantKey}": ${preflight.failure_count} failure(s). See ${path.relative(repoRoot, path.join(tenantDir, "preflight"))}.`);
+    }
+    // Book mode has one more zero-cost step available: if a fixture
+    // EnterpriseBook exists for this tenant (a real, previously-captured
+    // book, or one reshaped from prior real dimension content), run the
+    // ACTUAL production renderDimensionsFromBook() against it -- not a copy,
+    // the same function the real pipeline calls -- and validate the result
+    // with the same validator that would run against a paid candidate. This
+    // proves the deterministic half of book mode end-to-end without ever
+    // calling Claude.
+    if (bookMode) {
+      const bookFixturePath = path.join(repoRoot, "scripts", "knowledge", "__fixtures__", "enterprise-book", `${tenantKey}-book.json`);
+      if (fs.existsSync(bookFixturePath)) {
+        const fixtureBook = JSON.parse(fs.readFileSync(bookFixturePath, "utf8"));
+        const renderedDimensions = renderDimensionsFromBook(fixtureBook, packet);
+        writeJson(path.join(tenantDir, "preflight", "rendered-dimensions-from-fixture-book.json"), renderedDimensions);
+        const rendererCandidate = { dimensions: renderedDimensions, enterprise_story_integrated: fixtureBook.executive_narrative };
+        const rendererValidation = validateIntegratedManifest(rendererCandidate, packet, { bindings: DIMENSION_DATASET_BINDINGS });
+        writeJson(path.join(tenantDir, "preflight", "renderer-proof-validation.json"), rendererValidation);
+        console.log(`[home-v4-preflight] ${tenantKey}: renderer-proof ${rendererValidation.status} (${rendererValidation.failure_count} failure(s), ${rendererValidation.warning_count} warning(s))`);
+        for (const f of rendererValidation.failures) {
+          console.log(`[home-v4-preflight]   [RENDERER FAIL] ${f.type}${f.dimension_key ? ` (${f.dimension_key})` : ""}: ${f.message}`);
+        }
+      } else {
+        console.log(`[home-v4-preflight] ${tenantKey}: no enterprise-book fixture at ${path.relative(repoRoot, bookFixturePath)} -- skipping renderer proof.`);
+      }
     }
     return {
       tenant_key: tenantKey,
@@ -1508,11 +1785,37 @@ async function processTenant(client, tenantKey) {
     passes: {},
   };
 
-  const passes = [
-    { id: "01-story-architect", type: "story_architect" },
-    { id: "02-executive-brief", type: "executive_brief" },
-    { id: "03-industry-change", type: "industry_change" },
-  ];
+  // Book mode replaces Call 1 (story_architect) AND Call 5 (the 38-dimension
+  // generation, whichever of the two prior architectures) with ONE
+  // enterprise_book call. The book's executive_narrative stands in for
+  // story_architect for every downstream pass that still references
+  // assembled.story_architect (executive_brief, industry_change, use_cases,
+  // relationships, evidence) -- those passes are unchanged and still run;
+  // only the two passes that were actually producing the fabrication-prone,
+  // drift-prone 38-independent-authors output are replaced.
+  let bookResult = null;
+  if (bookMode) {
+    const pass = { id: "01-enterprise-book", type: "enterprise_book" };
+    const content = await callClaude(client, pass, makePrompt(pass, packet, assembled), tenantDir);
+    assembled.passes[pass.id] = content;
+    bookResult = content.client_visible ?? {};
+    assembled.story_architect = bookResult.executive_narrative ?? {};
+    assembled.story_architecture_id = `home-v4-book-${tenantKey}-${sourceHash.slice(0, 10)}`;
+    assembled.story_architecture_version = promptContractVersion;
+    assembled.story_architecture_hash = sha256(JSON.stringify(bookResult.executive_narrative ?? {}));
+    assembled.enterprise_book = bookResult;
+  }
+
+  const passes = bookMode
+    ? [
+        { id: "02-executive-brief", type: "executive_brief" },
+        { id: "03-industry-change", type: "industry_change" },
+      ]
+    : [
+        { id: "01-story-architect", type: "story_architect" },
+        { id: "02-executive-brief", type: "executive_brief" },
+        { id: "03-industry-change", type: "industry_change" },
+      ];
 
   for (const pass of passes) {
     const content = await callClaude(client, pass, makePrompt(pass, packet, assembled), tenantDir);
@@ -1543,7 +1846,13 @@ async function processTenant(client, tenantKey) {
   }
 
   assembled.dimensions = [];
-  if (integratedMode) {
+  if (bookMode) {
+    // No model call here -- renderDimensionsFromBook() is pure code. Claude
+    // already returned dimension_notes as part of the enterprise_book call
+    // above; every dataset/visual field is attached deterministically.
+    assembled.enterprise_story_integrated = bookResult?.executive_narrative ?? null;
+    assembled.dimensions = renderDimensionsFromBook(bookResult, packet);
+  } else if (integratedMode) {
     // One call for every dimension's manifest, per the integrated Home Book
     // architecture -- replaces the one-call-per-dimension loop below.
     const pass = { id: "05-integrated-dimensions", type: "integrated_dimensions" };
