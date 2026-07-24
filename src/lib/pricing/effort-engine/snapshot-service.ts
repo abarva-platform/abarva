@@ -181,6 +181,37 @@ export class SelfApprovalViolationError extends Error {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Unresolved rate gaps (PR7 hardening — brief §12 "missing all fallbacks
+// blocks the estimate")
+// ---------------------------------------------------------------------------
+
+/**
+ * Thrown when an estimate has one or more line items whose role rate could
+ * not be resolved (`EffortEngineTotals.gapCount > 0` — PR4's engine already
+ * refuses to fabricate a zero cost for these; see `cost-engine.ts#aggregateTotals`,
+ * which tracks `gapCount` and never sums a null `laborCostCents` into the
+ * total). Prior to this PR7 hardening pass, `runEstimate` surfaced a
+ * non-zero `gapCount` only as an entry in `topUncertaintyDrivers` — a
+ * disclosure, not a gate — which meant an estimate with a genuinely unpriced
+ * role could still be approved into a permanent, immutable snapshot. That
+ * gap is closed HERE, at the one point of no return (`createEstimateSnapshot`):
+ * approval — the moment a cost figure becomes a financial commitment,
+ * matching this file's own segregation-of-duties control — must not lock in
+ * a number with an honest hole in it. `/run` and the draft workflow are
+ * UNCHANGED and still show gaps as an in-progress disclosure (a user must be
+ * able to see a gap while still fixing rate-card coverage); only approval
+ * blocks.
+ */
+export class UnresolvedRateGapError extends Error {
+  constructor(public readonly gapCount: number) {
+    super(
+      `unresolved_rate_gap: ${gapCount} line item(s) have no resolvable role rate (no client rate-card line, global rate-card line, or rate-band default) — approve cannot lock in a snapshot with an unpriced cost line. Resolve the rate-card gap (or the tenant's rate-card coverage) before approving.`,
+    );
+    this.name = "UnresolvedRateGapError";
+  }
+}
+
 /**
  * Resolves "who prepared this estimate" for the segregation-of-duties check:
  * the `confirmed_by` of whichever input was confirmed most recently, or —
@@ -365,6 +396,9 @@ export async function createEstimateSnapshot(
 ): Promise<PricingEstimateSnapshotRow> {
   if (!candidate.approvalRationale.trim()) {
     throw new Error("approval_rationale_required: an approved snapshot must record why it was approved");
+  }
+  if (candidate.totals.gapCount > 0) {
+    throw new UnresolvedRateGapError(candidate.totals.gapCount);
   }
   assertSegregationOfDuties(candidate.approvedBy, candidate.preparedBy);
 

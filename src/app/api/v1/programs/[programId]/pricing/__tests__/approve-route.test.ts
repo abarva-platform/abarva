@@ -42,6 +42,11 @@ class FakeSelfApprovalViolationError extends Error {
     super(`self_approval_violation: '${approvedBy}' === '${preparedBy}'`);
   }
 }
+class FakeUnresolvedRateGapError extends Error {
+  constructor(public readonly gapCount: number) {
+    super(`unresolved_rate_gap: ${gapCount} line item(s)`);
+  }
+}
 
 jest.mock("@/lib/pricing/effort-engine/snapshot-service", () => ({
   createEstimateSnapshot: (candidate: unknown) => createEstimateSnapshotMock(candidate),
@@ -57,6 +62,7 @@ jest.mock("@/lib/pricing/effort-engine/snapshot-service", () => ({
     confidence: row.confidence,
   }),
   SelfApprovalViolationError: FakeSelfApprovalViolationError,
+  UnresolvedRateGapError: FakeUnresolvedRateGapError,
 }));
 
 jest.mock("@/lib/pricing/reference-repository", () => ({
@@ -214,6 +220,21 @@ describe("POST /api/v1/programs/[programId]/pricing/estimates/[estimateId]/appro
     expect(res.status).toBe(409);
     const json = await res.json();
     expect(json.error).toBe("self_approval_violation");
+    expect(updateEstimateHeaderMock).not.toHaveBeenCalled();
+  });
+
+  // PR7 hardening: brief §12's "missing all fallbacks blocks the estimate" —
+  // approving a run with ANY unresolved role-rate gap must fail with a
+  // distinct, actionable 409, never silently succeed with an incomplete
+  // total locked into a permanent snapshot.
+  it("unresolved_rate_gap: rejects approval when createEstimateSnapshot reports an unpriced-role gap", async () => {
+    createEstimateSnapshotMock.mockRejectedValue(new FakeUnresolvedRateGapError(2));
+
+    const res = await postApprove({ approvalRationale: "Reviewed and holds up." });
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error).toBe("unresolved_rate_gap");
+    expect(json.gapCount).toBe(2);
     expect(updateEstimateHeaderMock).not.toHaveBeenCalled();
   });
 
