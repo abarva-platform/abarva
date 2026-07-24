@@ -21,3 +21,4 @@ export * from "./client-profile-repository";
 export * from "./client-profile-import";
 export * from "./role-alias-import";
 export * from "./technology-cost-import";
+export * from "./business-case-projection";

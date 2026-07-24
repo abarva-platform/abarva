@@ -13,7 +13,7 @@ import { getProgramById } from "@/lib/programs/queries";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { getEstimate } from "@/lib/pricing/moves-workflow";
-import type { PricingEstimateInputRow, PricingEstimateRow } from "@/lib/pricing/types";
+import type { PricingEstimateInputRow, PricingEstimateRow, PricingEstimateSnapshotRow } from "@/lib/pricing/types";
 
 export class MissingTenantClientKeyError extends Error {
   constructor() {
@@ -78,6 +78,27 @@ export function estimateToJson(row: PricingEstimateRow) {
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+/** snake_case DB row -> camelCase JSON for the client (PR6). `totals` is passed through as-is — it is already the safe `SnapshotTotalsPayload` shape (see `effort-engine/snapshot-service.ts`), never raw line items. */
+export function snapshotToJson(row: PricingEstimateSnapshotRow) {
+  return {
+    id: row.id,
+    tenantKey: row.tenant_key,
+    moveId: row.move_id,
+    estimateId: row.estimate_id,
+    modelVersion: row.model_version,
+    taxonomyVersion: row.taxonomy_version,
+    rateCardVersionId: row.rate_card_version_id,
+    clientProfileVersionId: row.client_profile_version_id,
+    upstreamScopeFingerprint: row.upstream_scope_fingerprint,
+    totals: row.totals,
+    status: row.status,
+    approvedBy: row.approved_by,
+    approvedAt: row.approved_at,
+    approvalRationale: row.approval_rationale,
+    createdAt: row.created_at,
   };
 }
 

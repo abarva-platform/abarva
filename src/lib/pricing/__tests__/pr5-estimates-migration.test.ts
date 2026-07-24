@@ -19,7 +19,13 @@ describe("PR5 estimates migration exists and is well-formed", () => {
     const files = fs.readdirSync(MIGRATIONS_DIR).sort();
     const idx = files.indexOf(ESTIMATES_FILE);
     expect(idx).toBeGreaterThan(-1);
-    expect(files[files.length - 1]).toBe(ESTIMATES_FILE);
+    // NOT asserted to be the globally-last migration file: PR6 adds
+    // 20260724020000_pricing_estimate_snapshots_pr6_estimate_link.sql after
+    // this one (see that migration's header). This assertion only needs
+    // "after the latest PR4 migration", which idx > -1 relative to a sorted
+    // list already proves given the filename's own timestamp prefix.
+    expect(files[idx]).toBe(ESTIMATES_FILE);
+    expect(files[idx] > "20260723235500_pricing_effort_engine_v1.sql").toBe(true);
   });
 
   it.each(NEW_TABLES)("creates table %s with CREATE TABLE IF NOT EXISTS", (table) => {
