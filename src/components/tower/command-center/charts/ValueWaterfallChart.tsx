@@ -11,6 +11,7 @@ import {
   BarChart,
   CartesianGrid,
   ReferenceLine,
+  Tooltip,
   Cell,
   LabelList,
   ResponsiveContainer,
@@ -102,6 +103,67 @@ export function buildWaterfallRows(summary: TowerCommandSummary) {
   ];
 }
 
+
+interface WaterfallDatum {
+  name: string;
+  lab: string;
+  meaning: string;
+}
+
+/**
+ * Hover content for the waterfall.
+ *
+ * A default Recharts tooltip on a stacked bar lists BOTH stack members, so the
+ * transparent riser that floats each step would show up as a phantom series
+ * with a meaningless number. This reads the datum instead and shows the step's
+ * true signed value plus what the step means — the same wording the program
+ * drawer's proof chain uses, so hovering the chart and opening a program teach
+ * the same vocabulary.
+ */
+function WaterfallTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: ReadonlyArray<{ payload?: WaterfallDatum }>;
+}) {
+  const row = active ? payload?.[0]?.payload : undefined;
+  if (!row) return null;
+  return (
+    <div
+      style={{
+        fontFamily: "var(--abarva-sans)",
+        fontSize: 12,
+        background: "var(--canon-bg-surface)",
+        border: `1px solid ${HEX.borderStrong}`,
+        borderRadius: 8,
+        boxShadow: "var(--shadow-pop)",
+        padding: "9px 12px",
+        maxWidth: 260,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--abarva-mono)",
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: HEX.gray500,
+          marginBottom: 4,
+        }}
+      >
+        {row.name.replace("|", " ")}
+      </div>
+      <div style={{ fontWeight: 600, fontSize: 14, color: HEX.gray900 }}>
+        {row.lab}
+      </div>
+      <div style={{ color: HEX.gray500, marginTop: 4, lineHeight: 1.45 }}>
+        {row.meaning}
+      </div>
+    </div>
+  );
+}
+
 export function ValueWaterfallChart({
   summary,
 }: {
@@ -117,6 +179,7 @@ export function ValueWaterfallChart({
     lab:
       row.drop && row.usd > 0 ? `−${formatUsdM(row.usd)}` : formatUsdM(row.usd),
     fill: row.fill,
+    meaning: row.meaning,
   }));
 
   /**
@@ -150,6 +213,10 @@ export function ValueWaterfallChart({
         barCategoryGap="18%"
       >
         <CartesianGrid vertical={false} stroke={HEX.border} />
+        <Tooltip
+          cursor={{ fill: "rgba(0,0,0,0.03)" }}
+          content={<WaterfallTooltip />}
+        />
         {levels.map((y, i) =>
           data[i] && data[i + 1] ? (
             <ReferenceLine

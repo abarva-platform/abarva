@@ -252,6 +252,15 @@ describe("TowerCommandCenter", () => {
     expect(screen.queryByText("Unassigned")).toBeNull();
   });
 
+  it("never prints a source filename on the Evidence tab", () => {
+    // A CXO surface reports business posture, not the projection's plumbing.
+    // The filename belongs in the gap drawer's audit trace.
+    renderPage();
+    fireEvent.click(tab(/Evidence/));
+    expect(screen.queryByText(/\.csv/)).toBeNull();
+    expect(screen.queryByText(/Source: /)).toBeNull();
+  });
+
   it('answers "what is missing" from the claim chain, not the ETL backlog', () => {
     renderPage();
     fireEvent.click(tab(/Evidence/));
