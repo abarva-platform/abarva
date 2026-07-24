@@ -1,0 +1,377 @@
+{
+  "dataset_id": "pricing-engine-v1",
+  "version": "1.1.0",
+  "version_bump_reason": "PR4 adds the 8 effort-engine reference objects this manifest's own deferred_pr4_objects section named as explicitly out of PR1 scope (pricing_archetypes, pricing_activity_packs, pricing_effort_drivers, pricing_effort_rules, pricing_activity_role_mix, pricing_archetype_activity_map, pricing_range_policies, pricing_agent_costs). PR1's original 9 taxonomy CSVs (towers/capabilities/role_families/roles/role_aliases/seniority_levels/rate_bands/provider_classes/delivery_locations) are UNCHANGED by this bump — their own `pricing_taxonomy_versions` DB version stays independent (see pr4_effort_engine_pack.versioning_note below). This top-level `version` field is the dataset-PACK's own semantic version, distinct from the DB's `pricing_taxonomy_versions.version` and `pricing_model_versions.version` integers.",
+  "generated_at": "2026-07-24T01:26:35.579Z",
+  "generated_from": {
+    "source_file_name": "Workforce_Taxonomy_Master.xlsx",
+    "source_sha256": "acf4af48fcde6d3fcff579c8482f6621a4dc11f47f1c5ef3438f5fc2fa407053",
+    "note": "Source workbook is NOT part of this repository (machine-specific path). Re-running this conversion requires the source file to be present again, supplied via CLI arg or the PRICING_TAXONOMY_SOURCE_XLSX env var — the checked-in CSVs under this directory are the durable artifact; the script's job is reproducibility of provenance, not guaranteed re-runnability without the source file present."
+  },
+  "generation_script": "scripts/pricing/convert-workbook-to-reference-pack.ts",
+  "row_counts": {
+    "pricing_towers.csv": 21,
+    "pricing_capabilities.csv": 147,
+    "pricing_role_families.csv": 146,
+    "pricing_roles.csv": 326,
+    "pricing_role_aliases.csv": 6,
+    "pricing_seniority_levels.csv": 10,
+    "pricing_rate_bands.csv": 908,
+    "pricing_provider_classes.csv": 5,
+    "pricing_delivery_locations.csv": 17
+  },
+  "file_checksums_sha256": {
+    "pricing_towers.csv": "db05ce57e022ddb2f4ab98bd45757aed09cb85e71bc5196146abe6c7e01f245a",
+    "pricing_capabilities.csv": "48eaa4f03470a7a9947def3a6e77e774a66a135145ef0dae108788249d8ada43",
+    "pricing_role_families.csv": "cf4fc90a9942035b2808065933cae6da9892f9786595bc8d958f3e1922efe1c4",
+    "pricing_roles.csv": "fbfd37166d0f463090d569935a08325674054139582beb9ccf7a02e8dbb301ba",
+    "pricing_role_aliases.csv": "f2087e700fbc9c632eb02c3eac49b4c39b058eab46e19b01e39db1beb3220992",
+    "pricing_seniority_levels.csv": "6b148b594d287eda144370098c8ed2812ffefcc2e11d6bf523adf97e79c12991",
+    "pricing_rate_bands.csv": "ba505172f2b317baddbe775a2b473f2d2d2208182b27d67b286be543813b50d8",
+    "pricing_provider_classes.csv": "95ff7c2b74db35b8e6962b5d09fe3332c96e8d312dfdfc88a5c149d4c87778de",
+    "pricing_delivery_locations.csv": "f4b3395350575c851e61dc06008ffca059b065d8dbd6e098f2bc158ffb117761"
+  },
+  "role_family_grouping_rule": "role_family_code groups roles by the deterministic key {tower_code, capability_code} — the set of canonical roles sharing a tower+capability forms one family (e.g. all roles under Strategy & Transformation / Transformation Strategy). This is a PR1 authoring decision (the seed workbook has no explicit family column), documented per the PR1 execution prompt.",
+  "role_type_classification": "role_type is NOT source data — it is derived by a documented, reviewable heuristic rule table (ROLE_TYPE_RULES constant in scripts/pricing/convert-workbook-to-reference-pack.ts), evaluated in order, first match wins, default 'delivery'. Reviewers should inspect and challenge that table directly rather than trust role_type as ground truth.",
+  "role_normalization_merges": [
+    {
+      "canonical_role_code": "ROL-037",
+      "canonical_name": "Data Engineer",
+      "merged_away": [
+        {
+          "roleCode": "ROL-035",
+          "name": "Lead Data Engineer"
+        },
+        {
+          "roleCode": "ROL-036",
+          "name": "Senior Data Engineer"
+        }
+      ],
+      "rationale": "Seed modeled \"Data Engineer\" as three role rows split by a seniority prefix in the name (Lead Data Engineer, Senior Data Engineer, Data Engineer), all under Data & Analytics / Data Engineering — the exact brief §4.2 anti-pattern. Collapsed to the base/unmodified name (ROL-037) with an allowed-level range spanning the union of all three (Intermediate .. Senior Manager). The two modifier-prefixed names become role aliases. All three source rows carried the same scarcity tier (High), so no rate conflict; the \"Senior Data Engineer\" Role Rate Card row at the Senior level (RC-0104) duplicates the canonical row's own Senior-level row (RC-0105, identical value) and is dropped as a redundant duplicate, not a data loss."
+    },
+    {
+      "canonical_role_code": "ROL-193",
+      "canonical_name": "Data Scientist",
+      "merged_away": [
+        {
+          "roleCode": "ROL-194",
+          "name": "Senior Data Scientist"
+        }
+      ],
+      "rationale": "\"Senior Data Scientist\" (Senior .. Lead) is a strict sub-range of \"Data Scientist\" (Intermediate .. Senior Manager) under the same tower+capability (AI & GenAI / Machine Learning) — same seniority-prefix anti-pattern. Collapsed to ROL-193; both source rows carried scarcity tier High, so the merged-away role's Lead/Senior Role Rate Card rows (RC-0543, RC-0544) duplicate the canonical role's own rows at those levels (RC-0540, RC-0541, identical value) and are dropped as redundant duplicates."
+    },
+    {
+      "canonical_role_code": "ROL-080",
+      "canonical_name": "Software Engineer",
+      "merged_away": [
+        {
+          "roleCode": "ROL-079",
+          "name": "Senior Software Engineer"
+        }
+      ],
+      "rationale": "\"Senior Software Engineer\" (Senior .. Senior) duplicates a level already inside \"Software Engineer\" (Intermediate .. Senior) under the same tower+capability (Application Engineering / Backend Engineering). Collapsed to ROL-080. UNLIKE the other two merges, the merged-away role carried a *different* scarcity tier (High) than the canonical role (Medium) at the overlapping Senior level. Policy applied uniformly across all three merges: the base/unmodified name's own declared scarcity tier is canonical, so Medium wins here. The merged-away role's Senior-level Role Rate Card row (RC-0215, priced at the High tier) is dropped as superseded by normalization — not silently averaged, not silently duplicated alongside the canonical Medium-tier row for the same role+level."
+    }
+  ],
+  "disambiguation_aliases_added": [
+    {
+      "roleCode": "ROL-020",
+      "aliasLabel": "Business Process Automation Engineer"
+    },
+    {
+      "roleCode": "ROL-120",
+      "aliasLabel": "QE Automation Engineer"
+    }
+  ],
+  "tower_reconciliation": [
+    {
+      "briefTopicNumber": 1,
+      "briefTopicLabel": "Enterprise Strategy, Architecture & Technology Management",
+      "seedTowers": [
+        "Strategy & Transformation",
+        "Enterprise Architecture"
+      ],
+      "mappingType": "clean",
+      "notes": "Split cleanly across two seed towers; no additions needed."
+    },
+    {
+      "briefTopicNumber": 2,
+      "briefTopicLabel": "Product Management, Process Design & Business Analysis",
+      "seedTowers": [
+        "Product Management",
+        "Business Process"
+      ],
+      "mappingType": "clean",
+      "notes": "Split cleanly across two seed towers; no additions needed."
+    },
+    {
+      "briefTopicNumber": 3,
+      "briefTopicLabel": "AI, GenAI, Agentic AI, MLOps & Responsible AI",
+      "seedTowers": [
+        "AI & GenAI"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match."
+    },
+    {
+      "briefTopicNumber": 4,
+      "briefTopicLabel": "Data Strategy, Architecture, Engineering, Governance, BI, MDM & Platforms",
+      "seedTowers": [
+        "Data & Analytics"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match."
+    },
+    {
+      "briefTopicNumber": 5,
+      "briefTopicLabel": "Application Engineering — Java, .NET, Python, web, mobile, packaged and low-code",
+      "seedTowers": [
+        "Application Engineering"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match; language-specific capabilities present (Java, .NET, Python engineering)."
+    },
+    {
+      "briefTopicNumber": 6,
+      "briefTopicLabel": "Integration, API, Event, EDI & Middleware",
+      "seedTowers": [
+        "Integration"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match."
+    },
+    {
+      "briefTopicNumber": 7,
+      "briefTopicLabel": "ERP & Enterprise Platforms — SAP, Oracle, Workday, ServiceNow, Salesforce",
+      "seedTowers": [
+        "ERP",
+        "Application Engineering"
+      ],
+      "mappingType": "clean",
+      "notes": "SAP/Oracle/Workday under ERP tower; ServiceNow/Salesforce capabilities are filed under Application Engineering in the seed (platform engineering, not functional ERP) — noted, not moved."
+    },
+    {
+      "briefTopicNumber": 8,
+      "briefTopicLabel": "Digital Experience, Content, MarTech & Commerce",
+      "seedTowers": [
+        "Digital Experience",
+        "Marketing Technology"
+      ],
+      "mappingType": "clean",
+      "notes": "Split cleanly across two seed towers; no additions needed."
+    },
+    {
+      "briefTopicNumber": 9,
+      "briefTopicLabel": "Cloud, Platform Engineering, Containers, DevSecOps & SRE",
+      "seedTowers": [
+        "Cloud"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match (Kubernetes, IaC, DevOps, SRE capabilities present)."
+    },
+    {
+      "briefTopicNumber": 10,
+      "briefTopicLabel": "Infrastructure, Network, Telecom, Storage, Backup & Disaster Recovery",
+      "seedTowers": [
+        "Infrastructure"
+      ],
+      "mappingType": "partial",
+      "notes": "Network/Storage/Compute/Identity capabilities present; telecom and backup/DR are not individually broken out as separate capabilities. Not in this build's explicit hand-author list (only topics 15/16/20 were called out) — accepted as adequate coverage, flagged for a future PR to consider a dedicated Backup & DR capability if it matters to the effort model."
+    },
+    {
+      "briefTopicNumber": 11,
+      "briefTopicLabel": "Database, Middleware & Platform Operations",
+      "seedTowers": [
+        "Operations",
+        "Integration"
+      ],
+      "mappingType": "partial",
+      "notes": "Service Operations/Monitoring/SRE under Operations; ESB/Middleware under Integration. No dedicated DBA/database-administration capability exists in the seed. Not in this build's explicit hand-author list — accepted as adequate, flagged for future consideration."
+    },
+    {
+      "briefTopicNumber": 12,
+      "briefTopicLabel": "Legacy & Mainframe — z/OS, COBOL, CICS, IMS, DB2, MQ, batch, RACF and modernization",
+      "seedTowers": [
+        "Legacy & Mainframe"
+      ],
+      "mappingType": "clean",
+      "notes": "Mainframe/COBOL/DB2/z/OS capabilities present at a coarser grain than the brief's list (no separate CICS/IMS/MQ/RACF/batch capabilities) — accepted, capability grain is coarser by design across this taxonomy."
+    },
+    {
+      "briefTopicNumber": 13,
+      "briefTopicLabel": "Cybersecurity, IAM, SOC, AppSec, Cloud Security, GRC, Privacy & Resilience",
+      "seedTowers": [
+        "Cybersecurity"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match (IAM, SOC, GRC, AppSec, Threat & Vuln, Zero Trust capabilities present)."
+    },
+    {
+      "briefTopicNumber": 14,
+      "briefTopicLabel": "Quality Engineering, Functional, Automation, Performance, Security and Data Testing",
+      "seedTowers": [
+        "Quality Engineering"
+      ],
+      "mappingType": "clean",
+      "notes": "Direct 1:1 match."
+    },
+    {
+      "briefTopicNumber": 15,
+      "briefTopicLabel": "ITSM, Service Delivery, NOC, Observability, Incident, Problem, Change and Capacity",
+      "seedTowers": [
+        "Operations"
+      ],
+      "mappingType": "fold_subscope",
+      "notes": "Operations tower already covers Service Operations/Monitoring & Observability/Site Reliability, but has no ITSM practice-level capability (service desk, incident/problem/change/capacity management as a governed discipline). Note: the seed's \"ServiceNow ITSM\" capability (CAP-115) is filed under Application Engineering and is about *engineering/configuring* the ServiceNow platform, not the operational ITSM practice — a real but distinct thing, not double-counted here. Folded as a documented sub-scope of Operations with 3 hand-authored capabilities (CAP-143 ITSM & Service Delivery, CAP-144 Incident & Problem Management, CAP-145 Capacity & Availability Management) and 3 hand-authored roles, tagged source_artifact hand-authored-pr1."
+    },
+    {
+      "briefTopicNumber": 16,
+      "briefTopicLabel": "End-User Computing, Workplace, Collaboration and Field Support",
+      "seedTowers": [
+        "Infrastructure"
+      ],
+      "mappingType": "fold_subscope",
+      "notes": "Infrastructure tower has a narrow \"End-User Compute\" capability (CAP-076, device/compute only) but no Workplace/Collaboration or Field Support capability. Folded as a documented sub-scope of Infrastructure with 2 hand-authored capabilities (CAP-146 Workplace & Collaboration, CAP-147 Field Support & Deskside) and 3 hand-authored roles, tagged source_artifact hand-authored-pr1."
+    },
+    {
+      "briefTopicNumber": 17,
+      "briefTopicLabel": "Change, Adoption, Communications, Organization Design and Training",
+      "seedTowers": [
+        "Change Management"
+      ],
+      "mappingType": "clean",
+      "notes": "Organizational Change/Training/Communications/Adoption capabilities present; Organization Design is not separately broken out but is closely adjacent to Organizational Change — accepted, not flagged for hand-authoring."
+    },
+    {
+      "briefTopicNumber": 18,
+      "briefTopicLabel": "Program, Portfolio, PMO, Governance, Finance, Commercial, Sourcing and Vendor Management",
+      "seedTowers": [
+        "Program Management"
+      ],
+      "mappingType": "partial",
+      "notes": "PMO/Program Delivery/Agile Delivery capabilities present; Finance/Commercial/Sourcing/Vendor Management sub-topics are not individually broken out as separate capabilities. Not in this build's explicit hand-author list (only 15/16/20 were called out) — accepted as adequate practice-level coverage."
+    },
+    {
+      "briefTopicNumber": 19,
+      "briefTopicLabel": "Industry / Functional SMEs and Process Transformation",
+      "seedTowers": [
+        "Industry SMEs",
+        "Business Process"
+      ],
+      "mappingType": "clean",
+      "notes": "Split cleanly across two seed towers; no additions needed."
+    },
+    {
+      "briefTopicNumber": 20,
+      "briefTopicLabel": "FinOps, TBM, Value Management and Benefits Realization",
+      "seedTowers": [
+        "Program Management"
+      ],
+      "mappingType": "fold_subscope",
+      "notes": "No seed tower distinctly covers enterprise Technology Business Management / Value Management / Benefits Realization. The seed's \"FinOps\" capability (CAP-126) is filed under Cloud and is narrowly about cloud cost-optimization engineering tactics, not enterprise TBM/value governance — a real but distinct thing, not double-counted here. The seed's \"Business Case\" *workbook sheet* (not a taxonomy tower/capability sheet — it is a small traditional-vs-AI-native ROI calculator) and the Program Management tower's existing PMO/Program Delivery capabilities were checked for partial overlap; Program Management is the closest practice home for delivery-spend governance. Folded as a documented sub-scope of Program Management with 3 hand-authored capabilities (CAP-140 Technology Business Management (TBM) & FinOps Governance, CAP-141 Value Management, CAP-142 Benefits Realization) and 3 hand-authored roles, tagged source_artifact hand-authored-pr1."
+    }
+  ],
+  "hand_authored_additions": {
+    "towers_added": 0,
+    "capabilities_added": [
+      "CAP-140",
+      "CAP-141",
+      "CAP-142",
+      "CAP-143",
+      "CAP-144",
+      "CAP-145",
+      "CAP-146",
+      "CAP-147"
+    ],
+    "roles_added": [
+      "ROL-322",
+      "ROL-323",
+      "ROL-324",
+      "ROL-325",
+      "ROL-326",
+      "ROL-327",
+      "ROL-328",
+      "ROL-329",
+      "ROL-330"
+    ],
+    "note": "All hand-authored rows are tagged source_artifact = \"hand-authored-pr1\" in the CSVs themselves (never attributed to the seed workbook). Rate bands for hand-authored roles are computed using the same disclosed Internal-Cost-Model/Assumptions formula engine the seed workbook itself uses (see generation script header), not fabricated numbers."
+  },
+  "provider_classes_and_delivery_locations_source": "Contrary to the PR1 execution prompt's expectation that these might need a hand-authored starter set, the seed workbook's own Assumptions sheet (provider-tier multipliers: CONS-T1, SI-T1, SI-T2, ENG-B, AI-B) and Geography sheet (17 onshore/nearshore/offshore regions with salary/rate/scarcity multipliers and cost-of-living index) provide real, workbook-sourced data for pricing_provider_classes.csv and pricing_delivery_locations.csv — both are sourced from the workbook, not hand-authored.",
+  "deferred_reference_objects": {
+    "objects": [
+      "pricing_taxonomy_versions",
+      "pricing_provider_level_aliases",
+      "pricing_providers"
+    ],
+    "reason": "The brief §4.4 lists these as required reference objects, but they are out of the explicit PR1 build scope given in this build's authorizing prompt (which enumerates exactly 9 CSVs for PR1). pricing_taxonomy_versions is superseded for now by this manifest's own version/checksum fields; pricing_provider_level_aliases and pricing_providers require real onboarded providers/tenant rate cards, which arrive with PR2's persistence layer."
+  },
+  "deferred_pr4_objects_FULFILLED_BY_PR4": {
+    "objects": [
+      "pricing_effort_drivers",
+      "pricing_effort_rules",
+      "pricing_activity_packs",
+      "pricing_archetypes",
+      "pricing_agent_costs",
+      "pricing_activity_role_mix",
+      "pricing_archetype_activity_map",
+      "pricing_range_policies"
+    ],
+    "reason": "Was PR4 scope per the brief's PR execution sequence, not PR1 — now delivered by PR4 (2026-07-23/24). Kept under this renamed key rather than deleted, so a reader diffing manifest history can see this section was intentionally fulfilled, not silently dropped. See `pr4_effort_engine_pack` below for the real content."
+  },
+  "pr4_effort_engine_pack": {
+    "generated_at": "2026-07-24T02:00:00.000Z",
+    "generation_script": "scripts/pricing/generate-pr4-effort-pack.ts",
+    "honesty_disclosure": "Every row in every file listed below is hand-authored planning-estimation content — general enterprise IT delivery/consulting domain knowledge (activity decomposition, typical base hours, typical driver unit-hours, typical role mixes), NOT a researched market benchmark and NOT extracted from any source workbook. This is directional V1 content meant to make the engine's math deterministic, explainable, and versioned — it is explicitly NOT claimed to be precisely accurate on day one, and is expected to be tuned against real delivery data (actuals from completed Moves) over time, the same posture the brief itself takes toward this content ('deterministic, explainable, versioned' does not mean 'precisely accurate first try'). Every row is tagged `source_artifact = \"hand-authored-pr4\"`, matching PR1's own precedent (`hand-authored-pr1`) for its 8 hand-authored capabilities and 9 hand-authored roles.",
+    "versioning_note": "These 8 files load into the `pricing_*` tables created by supabase/migrations/20260723235500_pricing_effort_engine_v1.sql via src/lib/pricing/effort-engine/pack-loader.ts, versioned against `pricing_model_versions` (created by PR2, populated for the first time by PR4) — an INDEPENDENT version axis from `pricing_taxonomy_versions` (PR1's 9 files above). A future change to effort rules/activity packs bumps `pricing_model_versions.version`; it does NOT require re-importing or re-versioning PR1's taxonomy pack, and vice versa.",
+    "row_counts": {
+      "pricing_archetypes.csv": 8,
+      "pricing_activity_packs.csv": 49,
+      "pricing_effort_drivers.csv": 23,
+      "pricing_effort_rules.csv": 100,
+      "pricing_activity_role_mix.csv": 126,
+      "pricing_archetype_activity_map.csv": 133,
+      "pricing_range_policies.csv": 4,
+      "pricing_agent_costs.csv": 6
+    },
+    "activity_pack_breakdown": {
+      "technical_packs": 37,
+      "shared_nontechnical_packs": 12,
+      "technical_packs_per_archetype": "4-5 (see pricing_archetype_activity_map.csv)"
+    },
+    "archetype_activity_map_exclusions": [
+      {
+        "archetype_code": "ARCH-05",
+        "activity_pack_code": "AP-SHARED-11",
+        "applicability": "excluded",
+        "reason": "A pure internal operating-model/process transformation is assumed to carry no third-party sourcing relationship in scope by default."
+      },
+      {
+        "archetype_code": "ARCH-05",
+        "activity_pack_code": "AP-SHARED-06",
+        "applicability": "excluded",
+        "reason": "A pure organizational/process-design transformation with no technical cutover event has no hypercare window by default."
+      }
+    ],
+    "file_checksums_sha256": {
+      "pricing_archetypes.csv": "3c2d9ef949967fa836b9d98f0a6a5e0a97ae8da0f74f3243a8971a1745d5b8b5",
+      "pricing_activity_packs.csv": "e235b7d3117576c5aa4edc58c3b2b98362c4c87e28d7e763ebf11436986097b9",
+      "pricing_effort_drivers.csv": "3841beae4815c292c2b4aac0db5803ac2932fb71bcbbb34cf97f46470e9bab1a",
+      "pricing_effort_rules.csv": "60586122c8043b38e06b30c87f9db3088ec3a1c651eaf74bc39986197fc03607",
+      "pricing_activity_role_mix.csv": "e9727c33fc2de12e9ae7105a609311587c1409f6a6bab9aae95a75b6ce61e2fb",
+      "pricing_archetype_activity_map.csv": "7df34ce38cbb98c253607400017edecce40b7fbc8418ced75f9862d2fec5d98f",
+      "pricing_range_policies.csv": "1f4a1c03813b5cef794f79272e6611905d7d0deae7796678136926d8d98dc519",
+      "pricing_agent_costs.csv": "b37447b63d98577c850fbe807b23d1bae298364c304e8432307d06e9b439fa41"
+    },
+    "known_gaps": [
+      "No live ACA/Azure Postgres proof — the pack loader is unit-tested against an injected in-memory fake store, matching PR2's reference-pack-loader.ts convention; no environment credential exists here to load it against a real database.",
+      "Range-policy scoring inputs (scope maturity/evidence quality/delivery novelty/quantity uncertainty) are supplied by the caller today (Move-level judgment, not yet derived from any live signal) — only the rate-card-coverage input is derived from a real, computed source (PR3's coverage-report). A future PR could wire the other four inputs to real Move-context signals.",
+      "pricing_agent_costs is a starter set (6 rows) covering the archetypes most likely to have a distinct AI-tooling cost profile (ARCH-01, ARCH-02, ARCH-08) plus 2 cross-archetype tooling costs — not an exhaustive catalog of every possible AI-tooling cost line."
+    ]
+  },
+  "known_gaps": [
+    "No Postgres persistence yet — this is a reference-pack (CSV) only; PR2 builds the pricing_rate_cards / pricing_rate_card_lines persistence layer.",
+    "Not yet wired into the context/corpus governance pipeline (docs/governance/dataset-manifests/) — this reference pack is not consumed by any agent yet (no UI/API wiring until PR3+), so a governance dataset manifest was not created in PR1. PR3 must add one before any agent-facing wiring.",
+    "The role-coverage validator's 'active roles have a rate' check only verifies a pricing_rate_bands.csv row exists (or an explicit no_default_rate status) — the full 6-tier fallback resolver (tenant -> provider -> global, etc.) is PR2/PR5 scope and is not implemented here.",
+    "Ambiguous-alias validation is global-scope only for PR1 (no tenant/provider-scoped rate cards exist yet to make the ambiguity tenant-relative).",
+    "Topics 10, 11, 18 in the tower reconciliation are accepted as 'partial/adequate' coverage without hand-authored additions, per the PR1 execution prompt's explicit fix-list (only topics 15, 16, 20 were called out) — a future PR could add a dedicated Backup & DR capability, a DBA/database-operations capability, and Finance/Commercial/Sourcing/Vendor-Management capabilities under Program Management if the effort model needs that granularity."
+  ]
+}

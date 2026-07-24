@@ -23,6 +23,7 @@ import {
 } from "@/components/strategic-moves/FileCabinetPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
+import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import {
   getPhaseCaptureSections,
@@ -102,9 +103,11 @@ interface MovesPhaseStandaloneClientProps {
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness?: ReadinessReport | null;
   initialSubstepKey?: SubstepKey;
+  /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
+  pricingEngineEnabled?: boolean;
 }
 
-type WorkspaceView = "phase" | "files" | "intelligence" | "approvals";
+type WorkspaceView = "phase" | "files" | "intelligence" | "approvals" | "pricing";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
@@ -372,6 +375,7 @@ export function MovesPhaseStandaloneClient({
   carriesForwardContent,
   currentStateReadiness = null,
   initialSubstepKey,
+  pricingEngineEnabled = false,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
   const phase = phaseFor(phaseNum);
@@ -459,7 +463,9 @@ export function MovesPhaseStandaloneClient({
         ? "Files & Evidence"
         : workspaceView === "approvals"
           ? "Approvals overview"
-          : "Phase Intelligence";
+          : workspaceView === "pricing"
+            ? "Cost & Effort"
+            : "Phase Intelligence";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -1158,6 +1164,20 @@ export function MovesPhaseStandaloneClient({
                   <span>✓</span>
                   {!collapsedRail && "Approvals"}
                 </button>
+                {phase.phase === 4 && pricingEngineEnabled ? (
+                  <button
+                    className={`mxw-lib-link ${workspaceView === "pricing" ? "viewing" : ""}`}
+                    onClick={() => {
+                      setWorkspaceView("pricing");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    title={collapsedRail ? "Cost & Effort" : undefined}
+                    type="button"
+                  >
+                    <span>$</span>
+                    {!collapsedRail && "Cost & Effort"}
+                  </button>
+                ) : null}
               </div>
               {!collapsedRail && (
                 <p className="mxw-foot">
@@ -1230,6 +1250,35 @@ export function MovesPhaseStandaloneClient({
                   <PhaseIntelligencePanel
                     moveId={move.id}
                     phase={phase.phase}
+                  />
+                </>
+              ) : workspaceView === "pricing" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Cost & Effort
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Cost & Effort</h1>
+                    <p>
+                      Build a deterministic, evidence-grounded cost and effort
+                      estimate for this Move — the Nexus Pricing Engine&apos;s
+                      five-step wizard.
+                    </p>
+                  </div>
+                  <CostEffortWizard
+                    moveId={move.id}
+                    defaultCurrency={move.valueAtStake.projected?.currency ?? null}
                   />
                 </>
               ) : workspaceView === "approvals" ? (

@@ -1,0 +1,9 @@
+archetype_code,archetype_name,description,source_artifact,status
+ARCH-01,AI / automation use case,"A discrete AI, GenAI, agentic-AI, or intelligent-automation use case: solution design, model/agent build, MLOps/LLMOps enablement, responsible-AI governance.",hand-authored-pr4,active
+ARCH-02,Data and analytics product,"A data platform, data product, or analytics capability: data architecture, engineering/pipeline build, governance/quality/MDM, BI/reporting.",hand-authored-pr4,active
+ARCH-03,Application implementation or modernization,"Custom application build, replatforming, or modernization: solution architecture, backend/API/frontend/mobile engineering, quality engineering.",hand-authored-pr4,active
+ARCH-04,"Cloud, platform or integration initiative",Cloud landing zone / platform engineering / SRE enablement plus integration architecture and iPaaS/event-streaming build.,hand-authored-pr4,active
+ARCH-05,Process and operating-model transformation,"Operating-model redesign, business-process reengineering, process mining, and intelligent automation applied to a process (not a standalone AI use case).",hand-authored-pr4,active
+ARCH-06,Managed-services / sourcing transition,"Transitioning application/platform support into a managed-services model: transition and service design, knowledge transfer, L1/L2/L3 stand-up, observability.",hand-authored-pr4,active
+ARCH-07,ERP implementation or upgrade,"ERP solution architecture and migration strategy, functional configuration, technical build, data migration/cutover, and ERP security/controls.",hand-authored-pr4,active
+ARCH-08,Legacy / mainframe modernization,"Mainframe modernization architecture, COBOL/batch engineering, z/OS & DB2 platform engineering, and modernized target-state application build.",hand-authored-pr4,active

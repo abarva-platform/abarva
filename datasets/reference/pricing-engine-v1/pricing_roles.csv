@@ -1,0 +1,327 @@
+role_code,canonical_name,tower_code,capability_code,role_family_code,role_type,allowed_level_min,allowed_level_max,default_rate_band_code,internal_external_default,billable_default,source_artifact,source_row,source_label,status,version
+ROL-001,Transformation Partner,TWR-01,CAP-001,RF-0001,delivery,Partner,Partner,ROL-001-LVL-01,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,6,Transformation Partner,active,1
+ROL-002,Transformation Director,TWR-01,CAP-001,RF-0001,delivery,Director,Principal,ROL-002-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,7,Transformation Director,active,1
+ROL-003,Operating Model Lead,TWR-01,CAP-002,RF-0002,delivery,Senior Manager,Director,ROL-003-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,8,Operating Model Lead,active,1
+ROL-004,Value Architect,TWR-01,CAP-003,RF-0003,architecture,Manager,Principal,ROL-004-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,9,Value Architect,active,1
+ROL-005,Business Case Lead,TWR-01,CAP-004,RF-0004,delivery,Manager,Director,ROL-005-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,10,Business Case Lead,active,1
+ROL-006,Transformation Consultant,TWR-01,CAP-001,RF-0001,delivery,Intermediate,Manager,ROL-006-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,11,Transformation Consultant,active,1
+ROL-007,Financial Services Principal SME,TWR-02,CAP-005,RF-0005,functional,Principal,Managing Director,ROL-007-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,12,Financial Services Principal SME,active,1
+ROL-008,Financial Services Domain Consultant,TWR-02,CAP-005,RF-0005,functional,Senior,Senior Manager,ROL-008-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,13,Financial Services Domain Consultant,active,1
+ROL-009,Healthcare Principal SME,TWR-02,CAP-006,RF-0006,functional,Principal,Managing Director,ROL-009-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,14,Healthcare Principal SME,active,1
+ROL-010,Healthcare Domain Consultant,TWR-02,CAP-006,RF-0006,functional,Senior,Senior Manager,ROL-010-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,15,Healthcare Domain Consultant,active,1
+ROL-011,Retail & CPG Principal SME,TWR-02,CAP-007,RF-0007,functional,Principal,Managing Director,ROL-011-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,16,Retail & CPG Principal SME,active,1
+ROL-012,Retail & CPG Domain Consultant,TWR-02,CAP-007,RF-0007,functional,Senior,Senior Manager,ROL-012-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,17,Retail & CPG Domain Consultant,active,1
+ROL-013,Manufacturing Principal SME,TWR-02,CAP-008,RF-0008,functional,Principal,Managing Director,ROL-013-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,18,Manufacturing Principal SME,active,1
+ROL-014,Manufacturing Domain Consultant,TWR-02,CAP-008,RF-0008,functional,Senior,Senior Manager,ROL-014-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,19,Manufacturing Domain Consultant,active,1
+ROL-015,Public Sector Principal SME,TWR-02,CAP-009,RF-0009,functional,Principal,Managing Director,ROL-015-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,20,Public Sector Principal SME,active,1
+ROL-016,Public Sector Domain Consultant,TWR-02,CAP-009,RF-0009,functional,Senior,Senior Manager,ROL-016-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,21,Public Sector Domain Consultant,active,1
+ROL-017,Process Design Lead,TWR-03,CAP-010,RF-0020,delivery,Manager,Director,ROL-017-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,22,Process Design Lead,active,1
+ROL-018,Process Mining Consultant,TWR-03,CAP-011,RF-0021,delivery,Senior,Manager,ROL-018-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,23,Process Mining Consultant,active,1
+ROL-019,Intelligent Automation Architect,TWR-03,CAP-012,RF-0022,architecture,Lead,Director,ROL-019-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,24,Intelligent Automation Architect,active,1
+ROL-020,Automation Engineer,TWR-03,CAP-012,RF-0022,delivery,Intermediate,Senior,ROL-020-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,25,Automation Engineer,active,1
+ROL-021,Chief Data Officer (Advisory),TWR-04,CAP-013,RF-0024,delivery,Managing Director,Partner,ROL-021-LVL-02,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,26,Chief Data Officer (Advisory),active,1
+ROL-022,Enterprise Data Architect,TWR-04,CAP-013,RF-0024,architecture,Director,Principal,ROL-022-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,27,Enterprise Data Architect,active,1
+ROL-023,Data Architect,TWR-04,CAP-013,RF-0024,architecture,Lead,Director,ROL-023-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,28,Data Architect,active,1
+ROL-024,Data Product Manager,TWR-04,CAP-018,RF-0029,delivery,Manager,Director,ROL-024-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,29,Data Product Manager,active,1
+ROL-025,Data Product Owner,TWR-04,CAP-018,RF-0029,delivery,Senior,Senior Manager,ROL-025-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,30,Data Product Owner,active,1
+ROL-026,Data Governance Lead,TWR-04,CAP-014,RF-0025,governance,Manager,Director,ROL-026-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,31,Data Governance Lead,active,1
+ROL-027,Data Steward,TWR-04,CAP-014,RF-0025,delivery,Intermediate,Senior,ROL-027-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,32,Data Steward,active,1
+ROL-028,Metadata Lead,TWR-04,CAP-016,RF-0027,delivery,Lead,Senior Manager,ROL-028-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,33,Metadata Lead,active,1
+ROL-029,MDM Architect,TWR-04,CAP-017,RF-0028,architecture,Lead,Director,ROL-029-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,34,MDM Architect,active,1
+ROL-030,Data Quality Lead,TWR-04,CAP-015,RF-0026,delivery,Lead,Senior Manager,ROL-030-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,35,Data Quality Lead,active,1
+ROL-031,Snowflake Architect,TWR-04,CAP-023,RF-0034,architecture,Lead,Director,ROL-031-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,36,Snowflake Architect,active,1
+ROL-032,Snowflake Engineer,TWR-04,CAP-023,RF-0034,delivery,Intermediate,Senior,ROL-032-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,37,Snowflake Engineer,active,1
+ROL-033,Databricks Architect,TWR-04,CAP-024,RF-0035,architecture,Lead,Director,ROL-033-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,38,Databricks Architect,active,1
+ROL-034,Databricks Engineer,TWR-04,CAP-024,RF-0035,delivery,Intermediate,Senior,ROL-034-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,39,Databricks Engineer,active,1
+ROL-037,Data Engineer,TWR-04,CAP-019,RF-0030,delivery,Intermediate,Senior Manager,ROL-037-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,42,Data Engineer,active,1
+ROL-038,Informatica Developer,TWR-04,CAP-025,RF-0036,delivery,Intermediate,Senior,ROL-038-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,43,Informatica Developer,active,1
+ROL-039,Collibra Consultant,TWR-04,CAP-026,RF-0037,delivery,Senior,Manager,ROL-039-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,44,Collibra Consultant,active,1
+ROL-040,BI Architect,TWR-04,CAP-020,RF-0031,architecture,Lead,Director,ROL-040-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,45,BI Architect,active,1
+ROL-041,BI Developer,TWR-04,CAP-020,RF-0031,delivery,Intermediate,Senior,ROL-041-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,46,BI Developer,active,1
+ROL-042,Analytics Lead,TWR-04,CAP-022,RF-0033,delivery,Lead,Senior Manager,ROL-042-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,47,Analytics Lead,active,1
+ROL-043,Analytics Consultant,TWR-04,CAP-022,RF-0033,delivery,Intermediate,Senior,ROL-043-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,48,Analytics Consultant,active,1
+ROL-044,Reporting Analyst,TWR-04,CAP-021,RF-0032,delivery,Junior,Intermediate,ROL-044-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,49,Reporting Analyst,active,1
+ROL-045,Chief AI Officer (Advisory),TWR-05,CAP-034,RF-0045,delivery,Managing Director,Partner,ROL-045-LVL-02,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,50,Chief AI Officer (Advisory),active,1
+ROL-046,Chief AI Architect,TWR-05,CAP-027,RF-0038,architecture,Director,Principal,ROL-046-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,51,Chief AI Architect,active,1
+ROL-047,AI Strategist,TWR-05,CAP-028,RF-0039,delivery,Manager,Director,ROL-047-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,52,AI Strategist,active,1
+ROL-048,AI Product Manager,TWR-05,CAP-028,RF-0039,delivery,Manager,Director,ROL-048-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,53,AI Product Manager,active,1
+ROL-049,Agent Architect,TWR-05,CAP-027,RF-0038,architecture,Lead,Director,ROL-049-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,54,Agent Architect,active,1
+ROL-050,Forward Deployed Engineer,TWR-05,CAP-027,RF-0038,delivery,Senior,Senior Manager,ROL-050-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,55,Forward Deployed Engineer,active,1
+ROL-051,Principal AI Engineer,TWR-05,CAP-030,RF-0041,delivery,Principal,Principal,ROL-051-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,56,Principal AI Engineer,active,1
+ROL-052,Lead AI Engineer,TWR-05,CAP-030,RF-0041,delivery,Lead,Senior Manager,ROL-052-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,57,Lead AI Engineer,active,1
+ROL-053,AI Engineer,TWR-05,CAP-028,RF-0039,delivery,Intermediate,Senior,ROL-053-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,58,AI Engineer,active,1
+ROL-054,ML Engineer,TWR-05,CAP-030,RF-0041,delivery,Intermediate,Senior,ROL-054-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,59,ML Engineer,active,1
+ROL-055,MLOps Engineer,TWR-05,CAP-031,RF-0042,delivery,Senior,Lead,ROL-055-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,60,MLOps Engineer,active,1
+ROL-056,LLMOps Engineer,TWR-05,CAP-032,RF-0043,delivery,Senior,Lead,ROL-056-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,61,LLMOps Engineer,active,1
+ROL-057,Prompt Engineer,TWR-05,CAP-029,RF-0040,delivery,Intermediate,Senior,ROL-057-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,62,Prompt Engineer,active,1
+ROL-058,Responsible AI Lead,TWR-05,CAP-033,RF-0044,delivery,Manager,Director,ROL-058-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,63,Responsible AI Lead,active,1
+ROL-059,AI Governance Lead,TWR-05,CAP-034,RF-0045,governance,Manager,Director,ROL-059-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,64,AI Governance Lead,active,1
+ROL-060,Model Validation Lead,TWR-05,CAP-035,RF-0046,delivery,Lead,Senior Manager,ROL-060-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,65,Model Validation Lead,active,1
+ROL-061,Experience Director,TWR-06,CAP-036,RF-0047,delivery,Director,Principal,ROL-061-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,66,Experience Director,active,1
+ROL-062,UX Lead,TWR-06,CAP-036,RF-0047,delivery,Lead,Senior Manager,ROL-062-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,67,UX Lead,active,1
+ROL-063,UX Designer,TWR-06,CAP-036,RF-0047,delivery,Intermediate,Senior,ROL-063-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,68,UX Designer,active,1
+ROL-064,UI Designer,TWR-06,CAP-037,RF-0048,delivery,Intermediate,Senior,ROL-064-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,69,UI Designer,active,1
+ROL-065,Journey Architect,TWR-06,CAP-038,RF-0049,architecture,Lead,Director,ROL-065-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,70,Journey Architect,active,1
+ROL-066,Commerce Architect,TWR-06,CAP-039,RF-0050,architecture,Lead,Director,ROL-066-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,71,Commerce Architect,active,1
+ROL-067,Adobe Architect,TWR-07,CAP-041,RF-0052,architecture,Lead,Director,ROL-067-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,72,Adobe Architect,active,1
+ROL-068,AEM Architect,TWR-07,CAP-041,RF-0052,architecture,Lead,Director,ROL-068-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,73,AEM Architect,active,1
+ROL-069,Adobe Developer,TWR-07,CAP-041,RF-0052,delivery,Intermediate,Senior,ROL-069-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,74,Adobe Developer,active,1
+ROL-070,Adobe Analytics Consultant,TWR-07,CAP-042,RF-0053,delivery,Senior,Manager,ROL-070-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,75,Adobe Analytics Consultant,active,1
+ROL-071,CDP Architect,TWR-07,CAP-044,RF-0055,architecture,Lead,Director,ROL-071-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,76,CDP Architect,active,1
+ROL-072,MarTech Strategist,TWR-07,CAP-043,RF-0054,delivery,Manager,Director,ROL-072-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,77,MarTech Strategist,active,1
+ROL-073,Head of Product (Advisory),TWR-08,CAP-046,RF-0057,delivery,Director,Managing Director,ROL-073-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,78,Head of Product (Advisory),active,1
+ROL-074,Principal Product Manager,TWR-08,CAP-046,RF-0057,delivery,Principal,Principal,ROL-074-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,79,Principal Product Manager,active,1
+ROL-075,Senior Product Manager,TWR-08,CAP-047,RF-0058,delivery,Senior Manager,Senior Manager,ROL-075-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,80,Senior Product Manager,active,1
+ROL-076,Product Owner,TWR-08,CAP-047,RF-0058,delivery,Senior,Manager,ROL-076-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,81,Product Owner,active,1
+ROL-077,Principal Engineer,TWR-09,CAP-052,RF-0063,delivery,Principal,Principal,ROL-077-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,82,Principal Engineer,active,1
+ROL-078,Engineering Lead,TWR-09,CAP-049,RF-0060,delivery,Lead,Senior Manager,ROL-078-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,83,Engineering Lead,active,1
+ROL-080,Software Engineer,TWR-09,CAP-052,RF-0063,delivery,Intermediate,Senior,ROL-080-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,85,Software Engineer,active,1
+ROL-081,Frontend Engineer,TWR-09,CAP-051,RF-0062,delivery,Intermediate,Senior,ROL-081-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,86,Frontend Engineer,active,1
+ROL-082,Mobile Engineer,TWR-09,CAP-053,RF-0064,delivery,Intermediate,Senior,ROL-082-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,87,Mobile Engineer,active,1
+ROL-083,API Engineer,TWR-09,CAP-050,RF-0061,delivery,Intermediate,Senior,ROL-083-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,88,API Engineer,active,1
+ROL-084,Modernization Architect,TWR-09,CAP-054,RF-0065,architecture,Lead,Director,ROL-084-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,89,Modernization Architect,active,1
+ROL-085,Integration Architect,TWR-10,CAP-057,RF-0076,architecture,Lead,Director,ROL-085-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,90,Integration Architect,active,1
+ROL-086,iPaaS Developer,TWR-10,CAP-055,RF-0074,delivery,Intermediate,Senior,ROL-086-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,91,iPaaS Developer,active,1
+ROL-087,Event Streaming Engineer,TWR-10,CAP-056,RF-0075,delivery,Senior,Lead,ROL-087-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,92,Event Streaming Engineer,active,1
+ROL-088,Middleware Engineer,TWR-10,CAP-058,RF-0077,delivery,Intermediate,Senior,ROL-088-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,93,Middleware Engineer,active,1
+ROL-089,SAP Enterprise Architect,TWR-11,CAP-059,RF-0079,architecture,Director,Principal,ROL-089-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,94,SAP Enterprise Architect,active,1
+ROL-090,SAP Finance Architect,TWR-11,CAP-059,RF-0079,architecture,Lead,Director,ROL-090-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,95,SAP Finance Architect,active,1
+ROL-091,SAP Supply Chain Architect,TWR-11,CAP-060,RF-0080,architecture,Lead,Director,ROL-091-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,96,SAP Supply Chain Architect,active,1
+ROL-092,SAP Security Architect,TWR-11,CAP-061,RF-0081,architecture,Lead,Senior Manager,ROL-092-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,97,SAP Security Architect,active,1
+ROL-093,SAP Basis Consultant,TWR-11,CAP-061,RF-0081,delivery,Senior,Manager,ROL-093-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,98,SAP Basis Consultant,active,1
+ROL-094,Oracle Finance Architect,TWR-11,CAP-062,RF-0082,architecture,Lead,Director,ROL-094-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,99,Oracle Finance Architect,active,1
+ROL-095,Oracle SCM Consultant,TWR-11,CAP-063,RF-0083,delivery,Senior,Manager,ROL-095-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,100,Oracle SCM Consultant,active,1
+ROL-096,Workday Architect,TWR-11,CAP-064,RF-0084,architecture,Lead,Director,ROL-096-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,101,Workday Architect,active,1
+ROL-097,Workday Functional Lead,TWR-11,CAP-064,RF-0084,delivery,Lead,Senior Manager,ROL-097-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,102,Workday Functional Lead,active,1
+ROL-098,Workday Technical Lead,TWR-11,CAP-065,RF-0085,delivery,Lead,Senior Manager,ROL-098-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,103,Workday Technical Lead,active,1
+ROL-099,Cloud Architect,TWR-12,CAP-066,RF-0095,architecture,Lead,Director,ROL-099-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,104,Cloud Architect,active,1
+ROL-100,Azure Architect,TWR-12,CAP-066,RF-0095,architecture,Lead,Director,ROL-100-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,105,Azure Architect,active,1
+ROL-101,AWS Architect,TWR-12,CAP-067,RF-0096,architecture,Lead,Director,ROL-101-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,106,AWS Architect,active,1
+ROL-102,GCP Architect,TWR-12,CAP-068,RF-0097,architecture,Lead,Director,ROL-102-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,107,GCP Architect,active,1
+ROL-103,Platform Architect,TWR-12,CAP-069,RF-0098,architecture,Lead,Director,ROL-103-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,108,Platform Architect,active,1
+ROL-104,Platform Engineer,TWR-12,CAP-069,RF-0098,delivery,Intermediate,Senior,ROL-104-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,109,Platform Engineer,active,1
+ROL-105,DevOps Architect,TWR-12,CAP-070,RF-0099,architecture,Lead,Senior Manager,ROL-105-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,110,DevOps Architect,active,1
+ROL-106,DevOps Engineer,TWR-12,CAP-070,RF-0099,delivery,Intermediate,Senior,ROL-106-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,111,DevOps Engineer,active,1
+ROL-107,SRE Architect,TWR-12,CAP-071,RF-0100,architecture,Lead,Senior Manager,ROL-107-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,112,SRE Architect,active,1
+ROL-108,Infrastructure Architect,TWR-13,CAP-074,RF-0106,architecture,Lead,Director,ROL-108-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,113,Infrastructure Architect,active,1
+ROL-109,Network Architect,TWR-13,CAP-072,RF-0104,architecture,Lead,Senior Manager,ROL-109-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,114,Network Architect,active,1
+ROL-110,Storage Engineer,TWR-13,CAP-073,RF-0105,delivery,Intermediate,Senior,ROL-110-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,115,Storage Engineer,active,1
+ROL-111,Identity Architect,TWR-13,CAP-075,RF-0107,architecture,Lead,Senior Manager,ROL-111-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,116,Identity Architect,active,1
+ROL-112,IAM Architect,TWR-14,CAP-077,RF-0111,architecture,Lead,Director,ROL-112-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,117,IAM Architect,active,1
+ROL-113,SOC Lead,TWR-14,CAP-078,RF-0112,delivery,Lead,Senior Manager,ROL-113-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,118,SOC Lead,active,1
+ROL-114,SOC Analyst,TWR-14,CAP-078,RF-0112,delivery,Junior,Senior,ROL-114-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,119,SOC Analyst,active,1
+ROL-115,GRC Lead,TWR-14,CAP-079,RF-0113,delivery,Manager,Director,ROL-115-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,120,GRC Lead,active,1
+ROL-116,Application Security Engineer,TWR-14,CAP-080,RF-0114,delivery,Senior,Lead,ROL-116-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,121,Application Security Engineer,active,1
+ROL-117,Threat & Vuln Analyst,TWR-14,CAP-081,RF-0115,delivery,Intermediate,Senior,ROL-117-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,122,Threat & Vuln Analyst,active,1
+ROL-118,QA Architect,TWR-15,CAP-082,RF-0117,architecture,Lead,Director,ROL-118-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,123,QA Architect,active,1
+ROL-119,Automation Architect,TWR-15,CAP-083,RF-0118,architecture,Lead,Senior Manager,ROL-119-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,124,Automation Architect,active,1
+ROL-120,Automation Engineer,TWR-15,CAP-083,RF-0118,delivery,Intermediate,Senior,ROL-120-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,125,Automation Engineer,active,1
+ROL-121,Performance Architect,TWR-15,CAP-084,RF-0119,architecture,Lead,Senior Manager,ROL-121-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,126,Performance Architect,active,1
+ROL-122,Security Testing Architect,TWR-15,CAP-085,RF-0120,architecture,Lead,Senior Manager,ROL-122-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,127,Security Testing Architect,active,1
+ROL-123,Service Operations Lead,TWR-16,CAP-086,RF-0121,operations,Lead,Senior Manager,ROL-123-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,128,Service Operations Lead,active,1
+ROL-124,Observability Engineer,TWR-16,CAP-087,RF-0122,operations,Senior,Lead,ROL-124-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,129,Observability Engineer,active,1
+ROL-125,Site Reliability Engineer,TWR-16,CAP-088,RF-0123,operations,Senior,Lead,ROL-125-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,130,Site Reliability Engineer,active,1
+ROL-126,AMS Delivery Manager,TWR-17,CAP-091,RF-0129,operations,Manager,Director,ROL-126-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,131,AMS Delivery Manager,active,1
+ROL-127,L3 Support Engineer,TWR-17,CAP-091,RF-0129,operations,Senior,Lead,ROL-127-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,132,L3 Support Engineer,active,1
+ROL-128,L2 Support Engineer,TWR-17,CAP-090,RF-0128,operations,Intermediate,Senior,ROL-128-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,133,L2 Support Engineer,active,1
+ROL-129,L1 Support Analyst,TWR-17,CAP-089,RF-0127,operations,Junior,Intermediate,ROL-129-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,134,L1 Support Analyst,active,1
+ROL-130,Mainframe Architect,TWR-18,CAP-092,RF-0130,architecture,Lead,Director,ROL-130-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,135,Mainframe Architect,active,1
+ROL-131,COBOL Architect,TWR-18,CAP-093,RF-0131,architecture,Lead,Senior Manager,ROL-131-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,136,COBOL Architect,active,1
+ROL-132,COBOL Engineer,TWR-18,CAP-093,RF-0131,delivery,Intermediate,Senior,ROL-132-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,137,COBOL Engineer,active,1
+ROL-133,z/OS Engineer,TWR-18,CAP-095,RF-0133,delivery,Senior,Lead,ROL-133-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,138,z/OS Engineer,active,1
+ROL-134,OCM Lead,TWR-19,CAP-096,RF-0134,governance,Manager,Director,ROL-134-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,139,OCM Lead,active,1
+ROL-135,Training Lead,TWR-19,CAP-097,RF-0135,governance,Lead,Senior Manager,ROL-135-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,140,Training Lead,active,1
+ROL-136,Communications Lead,TWR-19,CAP-098,RF-0136,governance,Lead,Senior Manager,ROL-136-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,141,Communications Lead,active,1
+ROL-137,Adoption Consultant,TWR-19,CAP-099,RF-0137,governance,Senior,Manager,ROL-137-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,142,Adoption Consultant,active,1
+ROL-138,Program Director,TWR-20,CAP-101,RF-0139,governance,Director,Principal,ROL-138-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,143,Program Director,active,1
+ROL-139,Program Manager,TWR-20,CAP-101,RF-0139,governance,Senior Manager,Director,ROL-139-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,144,Program Manager,active,1
+ROL-140,Project Manager,TWR-20,CAP-100,RF-0138,governance,Manager,Senior Manager,ROL-140-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,145,Project Manager,active,1
+ROL-141,Scrum Master,TWR-20,CAP-102,RF-0140,governance,Senior,Manager,ROL-141-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,146,Scrum Master,active,1
+ROL-142,PMO Analyst,TWR-20,CAP-100,RF-0138,governance,Junior,Intermediate,ROL-142-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,147,PMO Analyst,active,1
+ROL-143,Chief Architect,TWR-21,CAP-103,RF-0144,architecture,Director,Managing Director,ROL-143-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,148,Chief Architect,active,1
+ROL-144,Enterprise Architect,TWR-21,CAP-103,RF-0144,architecture,Director,Principal,ROL-144-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,149,Enterprise Architect,active,1
+ROL-145,Solution Architect,TWR-21,CAP-104,RF-0145,architecture,Lead,Director,ROL-145-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,150,Solution Architect,active,1
+ROL-146,Technical Architect,TWR-21,CAP-105,RF-0146,architecture,Lead,Senior Manager,ROL-146-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,151,Technical Architect,active,1
+ROL-147,Sourcing Strategy Lead,TWR-01,CAP-004,RF-0004,delivery,Manager,Director,ROL-147-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,152,Sourcing Strategy Lead,active,1
+ROL-148,Vendor Management Advisor,TWR-01,CAP-002,RF-0002,delivery,Senior Manager,Director,ROL-148-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,153,Vendor Management Advisor,active,1
+ROL-149,Cost Optimization Lead,TWR-01,CAP-004,RF-0004,delivery,Manager,Director,ROL-149-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,154,Cost Optimization Lead,active,1
+ROL-150,M&A Integration Lead,TWR-01,CAP-001,RF-0001,delivery,Senior Manager,Principal,ROL-150-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,155,M&A Integration Lead,active,1
+ROL-151,Cloud Economics Advisor,TWR-01,CAP-003,RF-0003,delivery,Manager,Director,ROL-151-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,156,Cloud Economics Advisor,active,1
+ROL-152,Banking Principal SME,TWR-02,CAP-130,RF-0010,functional,Principal,Managing Director,ROL-152-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,157,Banking Principal SME,active,1
+ROL-153,Banking Consultant,TWR-02,CAP-130,RF-0010,functional,Senior,Senior Manager,ROL-153-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,158,Banking Consultant,active,1
+ROL-154,Capital Markets Principal SME,TWR-02,CAP-131,RF-0011,functional,Principal,Managing Director,ROL-154-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,159,Capital Markets Principal SME,active,1
+ROL-155,Capital Markets Consultant,TWR-02,CAP-131,RF-0011,functional,Senior,Senior Manager,ROL-155-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,160,Capital Markets Consultant,active,1
+ROL-156,Insurance Principal SME,TWR-02,CAP-132,RF-0012,functional,Principal,Managing Director,ROL-156-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,161,Insurance Principal SME,active,1
+ROL-157,Insurance Consultant,TWR-02,CAP-132,RF-0012,functional,Senior,Senior Manager,ROL-157-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,162,Insurance Consultant,active,1
+ROL-158,Payments Principal SME,TWR-02,CAP-133,RF-0013,functional,Principal,Managing Director,ROL-158-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,163,Payments Principal SME,active,1
+ROL-159,Payments Consultant,TWR-02,CAP-133,RF-0013,functional,Senior,Senior Manager,ROL-159-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,164,Payments Consultant,active,1
+ROL-160,Payer Principal SME,TWR-02,CAP-134,RF-0014,functional,Principal,Managing Director,ROL-160-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,165,Payer Principal SME,active,1
+ROL-161,Payer Consultant,TWR-02,CAP-134,RF-0014,functional,Senior,Senior Manager,ROL-161-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,166,Payer Consultant,active,1
+ROL-162,Provider Principal SME,TWR-02,CAP-135,RF-0015,functional,Principal,Managing Director,ROL-162-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,167,Provider Principal SME,active,1
+ROL-163,Provider Consultant,TWR-02,CAP-135,RF-0015,functional,Senior,Senior Manager,ROL-163-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,168,Provider Consultant,active,1
+ROL-164,Life Sciences Principal SME,TWR-02,CAP-136,RF-0016,functional,Principal,Managing Director,ROL-164-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,169,Life Sciences Principal SME,active,1
+ROL-165,Life Sciences Consultant,TWR-02,CAP-136,RF-0016,functional,Senior,Senior Manager,ROL-165-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,170,Life Sciences Consultant,active,1
+ROL-166,Energy & Utilities Principal SME,TWR-02,CAP-137,RF-0017,functional,Principal,Managing Director,ROL-166-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,171,Energy & Utilities Principal SME,active,1
+ROL-167,Energy & Utilities Consultant,TWR-02,CAP-137,RF-0017,functional,Senior,Senior Manager,ROL-167-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,172,Energy & Utilities Consultant,active,1
+ROL-168,Telecom Principal SME,TWR-02,CAP-138,RF-0018,functional,Principal,Managing Director,ROL-168-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,173,Telecom Principal SME,active,1
+ROL-169,Telecom Consultant,TWR-02,CAP-138,RF-0018,functional,Senior,Senior Manager,ROL-169-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,174,Telecom Consultant,active,1
+ROL-170,Media Principal SME,TWR-02,CAP-139,RF-0019,functional,Principal,Managing Director,ROL-170-LVL-03,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,175,Media Principal SME,active,1
+ROL-171,Media Consultant,TWR-02,CAP-139,RF-0019,functional,Senior,Senior Manager,ROL-171-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,176,Media Consultant,active,1
+ROL-172,Process Architect,TWR-03,CAP-010,RF-0020,architecture,Lead,Director,ROL-172-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,177,Process Architect,active,1
+ROL-173,RPA Developer,TWR-03,CAP-129,RF-0023,delivery,Intermediate,Senior,ROL-173-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,178,RPA Developer,active,1
+ROL-174,Workflow Designer,TWR-03,CAP-012,RF-0022,delivery,Intermediate,Senior,ROL-174-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,179,Workflow Designer,active,1
+ROL-175,Process Analyst,TWR-03,CAP-011,RF-0021,delivery,Junior,Senior,ROL-175-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,180,Process Analyst,active,1
+ROL-176,Analytics Engineer (dbt),TWR-04,CAP-019,RF-0030,delivery,Intermediate,Lead,ROL-176-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,181,Analytics Engineer (dbt),active,1
+ROL-177,Streaming Data Engineer,TWR-04,CAP-019,RF-0030,delivery,Intermediate,Lead,ROL-177-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,182,Streaming Data Engineer,active,1
+ROL-178,DataOps Engineer,TWR-04,CAP-019,RF-0030,delivery,Intermediate,Senior,ROL-178-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,183,DataOps Engineer,active,1
+ROL-179,Data Modeler,TWR-04,CAP-013,RF-0024,delivery,Intermediate,Lead,ROL-179-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,184,Data Modeler,active,1
+ROL-180,Data Privacy Lead,TWR-04,CAP-014,RF-0025,delivery,Lead,Director,ROL-180-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,185,Data Privacy Lead,active,1
+ROL-181,Data Catalog Analyst,TWR-04,CAP-016,RF-0027,delivery,Junior,Senior,ROL-181-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,186,Data Catalog Analyst,active,1
+ROL-182,Power BI Developer,TWR-04,CAP-020,RF-0031,delivery,Intermediate,Senior,ROL-182-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,187,Power BI Developer,active,1
+ROL-183,Tableau Developer,TWR-04,CAP-020,RF-0031,delivery,Intermediate,Senior,ROL-183-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,188,Tableau Developer,active,1
+ROL-184,Looker Developer,TWR-04,CAP-020,RF-0031,delivery,Intermediate,Senior,ROL-184-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,189,Looker Developer,active,1
+ROL-185,Data Visualization Designer,TWR-04,CAP-021,RF-0032,delivery,Junior,Senior,ROL-185-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,190,Data Visualization Designer,active,1
+ROL-186,Quantitative Analyst,TWR-04,CAP-022,RF-0033,delivery,Senior,Senior Manager,ROL-186-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,191,Quantitative Analyst,active,1
+ROL-187,Decision Scientist,TWR-04,CAP-022,RF-0033,delivery,Senior,Senior Manager,ROL-187-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,192,Decision Scientist,active,1
+ROL-188,Data Quality Engineer,TWR-04,CAP-015,RF-0026,delivery,Intermediate,Senior,ROL-188-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,193,Data Quality Engineer,active,1
+ROL-189,Reference Data Analyst,TWR-04,CAP-017,RF-0028,delivery,Intermediate,Senior,ROL-189-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,194,Reference Data Analyst,active,1
+ROL-190,Snowflake Administrator,TWR-04,CAP-023,RF-0034,delivery,Intermediate,Senior,ROL-190-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,195,Snowflake Administrator,active,1
+ROL-191,Databricks Platform Engineer,TWR-04,CAP-024,RF-0035,delivery,Senior,Lead,ROL-191-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,196,Databricks Platform Engineer,active,1
+ROL-192,Informatica Architect,TWR-04,CAP-025,RF-0036,architecture,Lead,Senior Manager,ROL-192-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,197,Informatica Architect,active,1
+ROL-193,Data Scientist,TWR-05,CAP-030,RF-0041,delivery,Intermediate,Senior Manager,ROL-193-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,198,Data Scientist,active,1
+ROL-195,NLP Engineer,TWR-05,CAP-028,RF-0039,delivery,Senior,Lead,ROL-195-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,200,NLP Engineer,active,1
+ROL-196,Computer Vision Engineer,TWR-05,CAP-030,RF-0041,delivery,Senior,Lead,ROL-196-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,201,Computer Vision Engineer,active,1
+ROL-197,RAG Engineer,TWR-05,CAP-028,RF-0039,delivery,Intermediate,Senior,ROL-197-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,202,RAG Engineer,active,1
+ROL-198,AI Evaluation Engineer,TWR-05,CAP-035,RF-0046,delivery,Senior,Lead,ROL-198-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,203,AI Evaluation Engineer,active,1
+ROL-199,AI Safety Engineer,TWR-05,CAP-033,RF-0044,delivery,Senior,Lead,ROL-199-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,204,AI Safety Engineer,active,1
+ROL-200,Knowledge Engineer,TWR-05,CAP-027,RF-0038,delivery,Senior,Lead,ROL-200-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,205,Knowledge Engineer,active,1
+ROL-201,Conversational AI Designer,TWR-05,CAP-028,RF-0039,delivery,Intermediate,Senior,ROL-201-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,206,Conversational AI Designer,active,1
+ROL-202,AI Platform Engineer,TWR-05,CAP-031,RF-0042,delivery,Senior,Lead,ROL-202-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,207,AI Platform Engineer,active,1
+ROL-203,Retrieval Engineer,TWR-05,CAP-032,RF-0043,delivery,Senior,Lead,ROL-203-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,208,Retrieval Engineer,active,1
+ROL-204,AI Solution Architect,TWR-05,CAP-027,RF-0038,architecture,Lead,Director,ROL-204-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,209,AI Solution Architect,active,1
+ROL-205,Service Designer,TWR-06,CAP-036,RF-0047,delivery,Senior,Senior Manager,ROL-205-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,210,Service Designer,active,1
+ROL-206,Content Strategist,TWR-06,CAP-040,RF-0051,delivery,Intermediate,Senior Manager,ROL-206-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,211,Content Strategist,active,1
+ROL-207,Accessibility Specialist,TWR-06,CAP-036,RF-0047,delivery,Intermediate,Senior,ROL-207-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,212,Accessibility Specialist,active,1
+ROL-208,Design System Lead,TWR-06,CAP-037,RF-0048,delivery,Lead,Senior Manager,ROL-208-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,213,Design System Lead,active,1
+ROL-209,Adobe Campaign Consultant,TWR-07,CAP-045,RF-0056,delivery,Senior,Manager,ROL-209-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,214,Adobe Campaign Consultant,active,1
+ROL-210,Adobe Target Specialist,TWR-07,CAP-042,RF-0053,delivery,Intermediate,Senior,ROL-210-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,215,Adobe Target Specialist,active,1
+ROL-211,MarTech Engineer,TWR-07,CAP-043,RF-0054,delivery,Intermediate,Senior,ROL-211-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,216,MarTech Engineer,active,1
+ROL-212,Personalization Lead,TWR-07,CAP-045,RF-0056,delivery,Lead,Senior Manager,ROL-212-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,217,Personalization Lead,active,1
+ROL-213,CDP Engineer,TWR-07,CAP-044,RF-0055,delivery,Intermediate,Senior,ROL-213-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,218,CDP Engineer,active,1
+ROL-214,Technical Product Manager,TWR-08,CAP-046,RF-0057,delivery,Senior Manager,Director,ROL-214-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,219,Technical Product Manager,active,1
+ROL-215,Platform Product Manager,TWR-08,CAP-046,RF-0057,delivery,Senior Manager,Director,ROL-215-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,220,Platform Product Manager,active,1
+ROL-216,Product Analyst,TWR-08,CAP-048,RF-0059,delivery,Junior,Senior,ROL-216-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,221,Product Analyst,active,1
+ROL-217,Product Designer,TWR-08,CAP-048,RF-0059,delivery,Intermediate,Senior,ROL-217-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,222,Product Designer,active,1
+ROL-218,Staff Engineer,TWR-09,CAP-052,RF-0063,delivery,Lead,Principal,ROL-218-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,223,Staff Engineer,active,1
+ROL-219,Full-Stack Engineer,TWR-09,CAP-052,RF-0063,delivery,Intermediate,Senior,ROL-219-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,224,Full-Stack Engineer,active,1
+ROL-220,Java Engineer,TWR-09,CAP-052,RF-0063,delivery,Intermediate,Senior,ROL-220-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,225,Java Engineer,active,1
+ROL-221,.NET Engineer,TWR-09,CAP-052,RF-0063,delivery,Intermediate,Senior,ROL-221-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,226,.NET Engineer,active,1
+ROL-222,Python Engineer,TWR-09,CAP-052,RF-0063,delivery,Intermediate,Senior,ROL-222-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,227,Python Engineer,active,1
+ROL-223,React Engineer,TWR-09,CAP-051,RF-0062,delivery,Intermediate,Senior,ROL-223-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,228,React Engineer,active,1
+ROL-224,iOS Engineer,TWR-09,CAP-053,RF-0064,delivery,Intermediate,Senior,ROL-224-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,229,iOS Engineer,active,1
+ROL-225,Android Engineer,TWR-09,CAP-053,RF-0064,delivery,Intermediate,Senior,ROL-225-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,230,Android Engineer,active,1
+ROL-226,GraphQL Engineer,TWR-09,CAP-050,RF-0061,delivery,Intermediate,Senior,ROL-226-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,231,GraphQL Engineer,active,1
+ROL-227,ServiceNow Architect,TWR-09,CAP-115,RF-0066,architecture,Lead,Director,ROL-227-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,232,ServiceNow Architect,active,1
+ROL-228,ServiceNow ITSM Developer,TWR-09,CAP-115,RF-0066,delivery,Intermediate,Senior,ROL-228-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,233,ServiceNow ITSM Developer,active,1
+ROL-229,ServiceNow HRSD Developer,TWR-09,CAP-116,RF-0067,delivery,Intermediate,Senior,ROL-229-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,234,ServiceNow HRSD Developer,active,1
+ROL-230,ServiceNow ITOM Consultant,TWR-09,CAP-118,RF-0068,delivery,Senior,Senior Manager,ROL-230-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,235,ServiceNow ITOM Consultant,active,1
+ROL-231,ServiceNow SecOps Consultant,TWR-09,CAP-119,RF-0069,delivery,Senior,Senior Manager,ROL-231-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,236,ServiceNow SecOps Consultant,active,1
+ROL-232,Salesforce Architect,TWR-09,CAP-123,RF-0073,architecture,Lead,Director,ROL-232-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,237,Salesforce Architect,active,1
+ROL-233,Salesforce Sales Cloud Consultant,TWR-09,CAP-120,RF-0070,delivery,Senior,Manager,ROL-233-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,238,Salesforce Sales Cloud Consultant,active,1
+ROL-234,Salesforce Service Cloud Consultant,TWR-09,CAP-121,RF-0071,delivery,Senior,Manager,ROL-234-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,239,Salesforce Service Cloud Consultant,active,1
+ROL-235,Salesforce Marketing Cloud Consultant,TWR-09,CAP-122,RF-0072,delivery,Senior,Manager,ROL-235-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,240,Salesforce Marketing Cloud Consultant,active,1
+ROL-236,Apex Developer,TWR-09,CAP-123,RF-0073,delivery,Intermediate,Senior,ROL-236-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,241,Apex Developer,active,1
+ROL-237,LWC Developer,TWR-09,CAP-123,RF-0073,delivery,Intermediate,Senior,ROL-237-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,242,LWC Developer,active,1
+ROL-238,MuleSoft Architect,TWR-10,CAP-124,RF-0078,architecture,Lead,Director,ROL-238-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,243,MuleSoft Architect,active,1
+ROL-239,MuleSoft Developer,TWR-10,CAP-124,RF-0078,delivery,Intermediate,Senior,ROL-239-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,244,MuleSoft Developer,active,1
+ROL-240,Kafka Engineer,TWR-10,CAP-056,RF-0075,delivery,Senior,Lead,ROL-240-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,245,Kafka Engineer,active,1
+ROL-241,EDI Specialist,TWR-10,CAP-058,RF-0077,delivery,Intermediate,Senior,ROL-241-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,246,EDI Specialist,active,1
+ROL-242,API Product Manager,TWR-10,CAP-057,RF-0076,delivery,Senior Manager,Director,ROL-242-LVL-05,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,247,API Product Manager,active,1
+ROL-243,SAP FICO Consultant,TWR-11,CAP-059,RF-0079,delivery,Senior,Senior Manager,ROL-243-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,248,SAP FICO Consultant,active,1
+ROL-244,SAP MM Consultant,TWR-11,CAP-060,RF-0080,delivery,Senior,Senior Manager,ROL-244-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,249,SAP MM Consultant,active,1
+ROL-245,SAP SD Consultant,TWR-11,CAP-060,RF-0080,delivery,Senior,Senior Manager,ROL-245-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,250,SAP SD Consultant,active,1
+ROL-246,SAP PP Consultant,TWR-11,CAP-060,RF-0080,delivery,Senior,Senior Manager,ROL-246-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,251,SAP PP Consultant,active,1
+ROL-247,SAP EWM Consultant,TWR-11,CAP-060,RF-0080,delivery,Senior,Senior Manager,ROL-247-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,252,SAP EWM Consultant,active,1
+ROL-248,SAP ABAP Developer,TWR-11,CAP-107,RF-0087,delivery,Intermediate,Senior,ROL-248-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,253,SAP ABAP Developer,active,1
+ROL-249,SAP Fiori Developer,TWR-11,CAP-107,RF-0087,delivery,Intermediate,Senior,ROL-249-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,254,SAP Fiori Developer,active,1
+ROL-250,SAP BTP Architect,TWR-11,CAP-108,RF-0088,architecture,Lead,Director,ROL-250-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,255,SAP BTP Architect,active,1
+ROL-251,SAP CPI Consultant,TWR-11,CAP-108,RF-0088,delivery,Senior,Senior Manager,ROL-251-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,256,SAP CPI Consultant,active,1
+ROL-252,S/4HANA Migration Lead,TWR-11,CAP-106,RF-0086,delivery,Lead,Director,ROL-252-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,257,S/4HANA Migration Lead,active,1
+ROL-253,SAP Analytics Cloud Consultant,TWR-11,CAP-111,RF-0091,delivery,Senior,Senior Manager,ROL-253-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,258,SAP Analytics Cloud Consultant,active,1
+ROL-254,SAP SuccessFactors Consultant,TWR-11,CAP-109,RF-0089,delivery,Senior,Senior Manager,ROL-254-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,259,SAP SuccessFactors Consultant,active,1
+ROL-255,SAP Ariba Consultant,TWR-11,CAP-110,RF-0090,delivery,Senior,Senior Manager,ROL-255-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,260,SAP Ariba Consultant,active,1
+ROL-256,Oracle Fusion Finance Consultant,TWR-11,CAP-112,RF-0092,delivery,Senior,Senior Manager,ROL-256-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,261,Oracle Fusion Finance Consultant,active,1
+ROL-257,Oracle Fusion HCM Consultant,TWR-11,CAP-112,RF-0092,delivery,Senior,Senior Manager,ROL-257-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,262,Oracle Fusion HCM Consultant,active,1
+ROL-258,Oracle EBS Consultant,TWR-11,CAP-062,RF-0082,delivery,Senior,Senior Manager,ROL-258-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,263,Oracle EBS Consultant,active,1
+ROL-259,OCI Architect,TWR-11,CAP-113,RF-0093,architecture,Lead,Director,ROL-259-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,264,OCI Architect,active,1
+ROL-260,Workday Integration Consultant,TWR-11,CAP-114,RF-0094,delivery,Senior,Senior Manager,ROL-260-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,265,Workday Integration Consultant,active,1
+ROL-261,Workday Reporting Analyst,TWR-11,CAP-114,RF-0094,delivery,Intermediate,Senior,ROL-261-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,266,Workday Reporting Analyst,active,1
+ROL-262,Workday Adaptive Planning Consultant,TWR-11,CAP-065,RF-0085,delivery,Senior,Senior Manager,ROL-262-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,267,Workday Adaptive Planning Consultant,active,1
+ROL-263,Azure Data Engineer,TWR-12,CAP-066,RF-0095,delivery,Intermediate,Senior,ROL-263-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,268,Azure Data Engineer,active,1
+ROL-264,Azure Security Engineer,TWR-12,CAP-066,RF-0095,delivery,Senior,Lead,ROL-264-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,269,Azure Security Engineer,active,1
+ROL-265,AWS Data Engineer,TWR-12,CAP-067,RF-0096,delivery,Intermediate,Senior,ROL-265-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,270,AWS Data Engineer,active,1
+ROL-266,AWS DevOps Engineer,TWR-12,CAP-070,RF-0099,delivery,Intermediate,Senior,ROL-266-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,271,AWS DevOps Engineer,active,1
+ROL-267,GCP Data Engineer,TWR-12,CAP-068,RF-0097,delivery,Intermediate,Senior,ROL-267-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,272,GCP Data Engineer,active,1
+ROL-268,Kubernetes Architect,TWR-12,CAP-125,RF-0101,architecture,Lead,Director,ROL-268-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,273,Kubernetes Architect,active,1
+ROL-269,Kubernetes Engineer,TWR-12,CAP-125,RF-0101,delivery,Intermediate,Senior,ROL-269-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,274,Kubernetes Engineer,active,1
+ROL-270,FinOps Analyst,TWR-12,CAP-126,RF-0102,delivery,Intermediate,Senior,ROL-270-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,275,FinOps Analyst,active,1
+ROL-271,IaC / Terraform Engineer,TWR-12,CAP-127,RF-0103,delivery,Intermediate,Senior,ROL-271-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,276,IaC / Terraform Engineer,active,1
+ROL-272,Landing Zone Architect,TWR-12,CAP-069,RF-0098,architecture,Lead,Director,ROL-272-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,277,Landing Zone Architect,active,1
+ROL-273,Cloud Migration Engineer,TWR-12,CAP-066,RF-0095,delivery,Intermediate,Senior,ROL-273-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,278,Cloud Migration Engineer,active,1
+ROL-274,SRE Engineer,TWR-12,CAP-071,RF-0100,delivery,Intermediate,Senior,ROL-274-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,279,SRE Engineer,active,1
+ROL-275,Cloud Infrastructure Engineer,TWR-13,CAP-074,RF-0106,delivery,Intermediate,Senior,ROL-275-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,280,Cloud Infrastructure Engineer,active,1
+ROL-276,Virtualization Engineer,TWR-13,CAP-074,RF-0106,delivery,Intermediate,Senior,ROL-276-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,281,Virtualization Engineer,active,1
+ROL-277,Backup & DR Engineer,TWR-13,CAP-073,RF-0105,delivery,Intermediate,Senior,ROL-277-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,282,Backup & DR Engineer,active,1
+ROL-278,Active Directory Engineer,TWR-13,CAP-075,RF-0107,delivery,Intermediate,Senior,ROL-278-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,283,Active Directory Engineer,active,1
+ROL-279,Endpoint Engineer,TWR-13,CAP-076,RF-0108,delivery,Junior,Senior,ROL-279-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,284,Endpoint Engineer,active,1
+ROL-280,Network Engineer,TWR-13,CAP-072,RF-0104,delivery,Intermediate,Senior,ROL-280-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,285,Network Engineer,active,1
+ROL-281,CISO Advisor,TWR-14,CAP-079,RF-0113,delivery,Director,Managing Director,ROL-281-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,286,CISO Advisor,active,1
+ROL-282,Security Architect,TWR-14,CAP-080,RF-0114,architecture,Lead,Director,ROL-282-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,287,Security Architect,active,1
+ROL-283,Cloud Security Engineer,TWR-14,CAP-077,RF-0111,delivery,Senior,Lead,ROL-283-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,288,Cloud Security Engineer,active,1
+ROL-284,Zero Trust Architect,TWR-14,CAP-128,RF-0116,architecture,Lead,Director,ROL-284-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,289,Zero Trust Architect,active,1
+ROL-285,Incident Responder,TWR-14,CAP-078,RF-0112,delivery,Intermediate,Senior,ROL-285-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,290,Incident Responder,active,1
+ROL-286,Threat Hunter,TWR-14,CAP-081,RF-0115,delivery,Senior,Lead,ROL-286-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,291,Threat Hunter,active,1
+ROL-287,Penetration Tester,TWR-14,CAP-081,RF-0115,delivery,Senior,Lead,ROL-287-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,292,Penetration Tester,active,1
+ROL-288,GRC Analyst,TWR-14,CAP-079,RF-0113,delivery,Junior,Senior,ROL-288-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,293,GRC Analyst,active,1
+ROL-289,SIEM Engineer,TWR-14,CAP-078,RF-0112,delivery,Senior,Lead,ROL-289-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,294,SIEM Engineer,active,1
+ROL-290,PAM Engineer,TWR-14,CAP-077,RF-0111,delivery,Senior,Lead,ROL-290-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,295,PAM Engineer,active,1
+ROL-291,Privacy Engineer,TWR-14,CAP-079,RF-0113,delivery,Senior,Lead,ROL-291-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,296,Privacy Engineer,active,1
+ROL-292,SDET,TWR-15,CAP-083,RF-0118,delivery,Intermediate,Senior,ROL-292-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,297,SDET,active,1
+ROL-293,API Test Engineer,TWR-15,CAP-083,RF-0118,delivery,Intermediate,Senior,ROL-293-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,298,API Test Engineer,active,1
+ROL-294,Mobile Test Engineer,TWR-15,CAP-083,RF-0118,delivery,Intermediate,Senior,ROL-294-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,299,Mobile Test Engineer,active,1
+ROL-295,Test Data Engineer,TWR-15,CAP-082,RF-0117,delivery,Intermediate,Senior,ROL-295-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,300,Test Data Engineer,active,1
+ROL-296,Chaos Engineer,TWR-15,CAP-084,RF-0119,delivery,Senior,Lead,ROL-296-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,301,Chaos Engineer,active,1
+ROL-297,Incident Manager,TWR-16,CAP-086,RF-0121,operations,Senior,Manager,ROL-297-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,302,Incident Manager,active,1
+ROL-298,Problem Manager,TWR-16,CAP-086,RF-0121,operations,Senior,Manager,ROL-298-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,303,Problem Manager,active,1
+ROL-299,Major Incident Lead,TWR-16,CAP-086,RF-0121,operations,Lead,Senior Manager,ROL-299-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,304,Major Incident Lead,active,1
+ROL-300,Monitoring Engineer,TWR-16,CAP-087,RF-0122,operations,Intermediate,Senior,ROL-300-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,305,Monitoring Engineer,active,1
+ROL-301,Capacity Engineer,TWR-16,CAP-088,RF-0123,operations,Senior,Lead,ROL-301-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,306,Capacity Engineer,active,1
+ROL-302,Service Delivery Manager,TWR-17,CAP-091,RF-0129,operations,Manager,Director,ROL-302-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,307,Service Delivery Manager,active,1
+ROL-303,Transition Manager,TWR-17,CAP-091,RF-0129,operations,Manager,Senior Manager,ROL-303-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,308,Transition Manager,active,1
+ROL-304,AMS Architect,TWR-17,CAP-091,RF-0129,architecture,Lead,Director,ROL-304-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,309,AMS Architect,active,1
+ROL-305,Knowledge Manager,TWR-17,CAP-090,RF-0128,operations,Senior,Manager,ROL-305-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,310,Knowledge Manager,active,1
+ROL-306,DB2 DBA,TWR-18,CAP-094,RF-0132,delivery,Senior,Lead,ROL-306-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,311,DB2 DBA,active,1
+ROL-307,Mainframe Modernization Consultant,TWR-18,CAP-092,RF-0130,delivery,Senior,Senior Manager,ROL-307-LVL-08,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,312,Mainframe Modernization Consultant,active,1
+ROL-308,JCL Engineer,TWR-18,CAP-095,RF-0133,delivery,Intermediate,Senior,ROL-308-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,313,JCL Engineer,active,1
+ROL-309,Change Analyst,TWR-19,CAP-096,RF-0134,governance,Junior,Senior,ROL-309-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,314,Change Analyst,active,1
+ROL-310,Instructional Designer,TWR-19,CAP-097,RF-0135,governance,Intermediate,Senior,ROL-310-LVL-09,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,315,Instructional Designer,active,1
+ROL-311,Adoption Analyst,TWR-19,CAP-099,RF-0137,governance,Junior,Senior,ROL-311-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,316,Adoption Analyst,active,1
+ROL-312,Portfolio Manager,TWR-20,CAP-101,RF-0139,governance,Director,Principal,ROL-312-LVL-04,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,317,Portfolio Manager,active,1
+ROL-313,Agile Coach,TWR-20,CAP-102,RF-0140,governance,Lead,Senior Manager,ROL-313-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,318,Agile Coach,active,1
+ROL-314,Release Train Engineer,TWR-20,CAP-102,RF-0140,governance,Lead,Senior Manager,ROL-314-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,319,Release Train Engineer,active,1
+ROL-315,Delivery Lead,TWR-20,CAP-101,RF-0139,governance,Manager,Senior Manager,ROL-315-LVL-06,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,320,Delivery Lead,active,1
+ROL-316,Business Analyst,TWR-20,CAP-100,RF-0138,governance,Junior,Senior,ROL-316-LVL-10,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,321,Business Analyst,active,1
+ROL-317,Business Architect,TWR-21,CAP-103,RF-0144,architecture,Lead,Director,ROL-317-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,322,Business Architect,active,1
+ROL-318,Domain Architect,TWR-21,CAP-104,RF-0145,architecture,Lead,Director,ROL-318-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,323,Domain Architect,active,1
+ROL-319,Integration Architect (EA),TWR-21,CAP-105,RF-0146,architecture,Lead,Senior Manager,ROL-319-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,324,Integration Architect (EA),active,1
+ROL-320,Security Architect (EA),TWR-21,CAP-105,RF-0146,architecture,Lead,Senior Manager,ROL-320-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,325,Security Architect (EA),active,1
+ROL-321,Data Architect (EA),TWR-21,CAP-105,RF-0146,architecture,Lead,Senior Manager,ROL-321-LVL-07,internal,true,Workforce_Taxonomy_Master.xlsx:Roles,326,Data Architect (EA),active,1
+ROL-322,TBM & FinOps Governance Lead,TWR-20,CAP-140,RF-0141,governance,Senior Manager,Director,ROL-322-LVL-05,internal,true,hand-authored-pr1,,TBM & FinOps Governance Lead,active,1
+ROL-323,Value Management Manager,TWR-20,CAP-141,RF-0142,governance,Manager,Senior Manager,ROL-323-LVL-06,internal,true,hand-authored-pr1,,Value Management Manager,active,1
+ROL-324,Benefits Realization Lead,TWR-20,CAP-142,RF-0143,governance,Manager,Director,ROL-324-LVL-06,internal,true,hand-authored-pr1,,Benefits Realization Lead,active,1
+ROL-325,ITSM Service Delivery Manager,TWR-16,CAP-143,RF-0124,operations,Manager,Director,ROL-325-LVL-06,internal,true,hand-authored-pr1,,ITSM Service Delivery Manager,active,1
+ROL-326,Incident & Problem Manager,TWR-16,CAP-144,RF-0125,operations,Manager,Senior Manager,ROL-326-LVL-06,internal,true,hand-authored-pr1,,Incident & Problem Manager,active,1
+ROL-327,Capacity & Availability Manager,TWR-16,CAP-145,RF-0126,operations,Manager,Senior Manager,ROL-327-LVL-06,internal,true,hand-authored-pr1,,Capacity & Availability Manager,active,1
+ROL-328,Workplace & Collaboration Lead,TWR-13,CAP-146,RF-0109,delivery,Manager,Senior Manager,ROL-328-LVL-06,internal,true,hand-authored-pr1,,Workplace & Collaboration Lead,active,1
+ROL-329,Field Support Engineer,TWR-13,CAP-147,RF-0110,delivery,Intermediate,Senior,ROL-329-LVL-09,internal,true,hand-authored-pr1,,Field Support Engineer,active,1
+ROL-330,Deskside Support Lead,TWR-13,CAP-147,RF-0110,delivery,Senior,Manager,ROL-330-LVL-08,internal,true,hand-authored-pr1,,Deskside Support Lead,active,1

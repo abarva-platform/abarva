@@ -1,0 +1,11 @@
+level_code,level_name,rank,years_exp,expectation,source_artifact,source_row,status,version
+LVL-01,Partner,1,25+,"Owns client P&L, sells & sponsors transformation",Workforce_Taxonomy_Master.xlsx:Career Levels,5,active,1
+LVL-02,Managing Director,2,20+,"Owns portfolio, executive relationships, delivery assurance",Workforce_Taxonomy_Master.xlsx:Career Levels,6,active,1
+LVL-03,Principal,3,18+,Owns large program design and outcomes,Workforce_Taxonomy_Master.xlsx:Career Levels,7,active,1
+LVL-04,Director,4,15+,Owns workstream/program delivery and quality,Workforce_Taxonomy_Master.xlsx:Career Levels,8,active,1
+LVL-05,Senior Manager,5,12+,Leads multiple teams / a delivery track,Workforce_Taxonomy_Master.xlsx:Career Levels,9,active,1
+LVL-06,Manager,6,10+,Leads a team and a deliverable scope,Workforce_Taxonomy_Master.xlsx:Career Levels,10,active,1
+LVL-07,Lead,7,8+,Technical/functional lead for a squad,Workforce_Taxonomy_Master.xlsx:Career Levels,11,active,1
+LVL-08,Senior,8,6+,Independent senior contributor,Workforce_Taxonomy_Master.xlsx:Career Levels,12,active,1
+LVL-09,Intermediate,9,3+,Contributor with guidance,Workforce_Taxonomy_Master.xlsx:Career Levels,13,active,1
+LVL-10,Junior,10,0-3,"Entry contributor, supervised",Workforce_Taxonomy_Master.xlsx:Career Levels,14,active,1

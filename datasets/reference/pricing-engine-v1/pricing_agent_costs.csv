@@ -1,0 +1,7 @@
+agent_cost_code,cost_key,applies_to_archetype_code,cost_value,unit,description,source_artifact,status
+AGT-001,ai_platform_license_monthly_usd,ARCH-01,8000,USD/month,Ongoing GenAI/agent platform license fee for the duration of build + hypercare.,hand-authored-pr4,active
+AGT-002,agent_compute_per_use_case_usd,ARCH-01,1200,USD/AI use case,One-time inference/compute provisioning cost per AI use case brought to production.,hand-authored-pr4,active
+AGT-003,coding_copilot_seat_monthly_usd,,45,USD/engineer-seat/month,"AI coding-assistant seat license, applicable to any archetype with an engineering build activity.",hand-authored-pr4,active
+AGT-004,data_pipeline_ai_assist_monthly_usd,ARCH-02,2500,USD/month,AI-assisted data-pipeline authoring/testing tooling license.,hand-authored-pr4,active
+AGT-005,test_generation_ai_assist_monthly_usd,,1800,USD/month,"AI-assisted test-case generation tooling license, applicable wherever quality engineering is in scope.",hand-authored-pr4,active
+AGT-006,legacy_code_translation_ai_assist_monthly_usd,ARCH-08,3200,USD/month,AI-assisted COBOL-to-target-language translation tooling license.,hand-authored-pr4,active

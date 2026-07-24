@@ -1,0 +1,24 @@
+driver_code,driver_name,unit_label,description,source_artifact,status
+integration_count,Integration Count,integration,Number of point-to-point/API/event integrations in scope.,hand-authored-pr4,active
+impacted_user_count,Impacted User Count,user,"Number of end users impacted by the change, for training/adoption sizing.",hand-authored-pr4,active
+rollout_wave_count,Rollout Wave Count,wave,Number of deployment/rollout waves.,hand-authored-pr4,active
+stakeholder_group_count,Stakeholder Group Count,stakeholder group,Number of distinct stakeholder groups requiring tailored engagement.,hand-authored-pr4,active
+course_count,Course Count,course,Number of distinct training courses to design.,hand-authored-pr4,active
+training_session_count,Training Session Count,session,Number of scheduled training delivery sessions.,hand-authored-pr4,active
+supplier_month_count,Supplier-Month Count,supplier-month,Number of supplier-months under active commercial/vendor governance.,hand-authored-pr4,active
+data_domain_count,Data Domain Count,data domain,Number of data domains in scope for governance/modeling.,hand-authored-pr4,active
+data_source_count,Data Source Count,data source,Number of source systems feeding the data pipeline.,hand-authored-pr4,active
+report_count,Report Count,report,Number of BI reports/dashboards to build.,hand-authored-pr4,active
+process_count,Process Count,process,Number of end-to-end business processes in scope.,hand-authored-pr4,active
+automation_count,Automation Count,automation,Number of automations/bots to design and build.,hand-authored-pr4,active
+environment_count,Environment Count,environment,Number of cloud/platform environments to stand up.,hand-authored-pr4,active
+application_count,Application Count,application,Number of applications in scope for build/modernization.,hand-authored-pr4,active
+module_count,Module Count,module,"Number of ERP functional modules in scope (e.g. FI/CO, MM, SD).",hand-authored-pr4,active
+batch_job_count,Batch Job Count,batch job,Number of mainframe batch jobs to migrate or re-platform.,hand-authored-pr4,active
+program_count,COBOL Program Count,COBOL program,Number of COBOL programs to remediate or modernize.,hand-authored-pr4,active
+ai_use_case_count,AI Use Case Count,AI use case,Number of distinct AI/agentic use cases in scope.,hand-authored-pr4,active
+model_count,Model Count,model,Number of ML/GenAI models requiring MLOps/validation/governance.,hand-authored-pr4,active
+support_ticket_volume_monthly,Monthly Support Ticket Volume,ticket/month,Steady-state monthly ticket volume used to size a managed-services support model.,hand-authored-pr4,active
+role_count,Role Count,role,Number of distinct organizational/security roles in scope (RACI/config sizing).,hand-authored-pr4,active
+test_case_count,Test Case Count,test case,Number of automated test cases to build.,hand-authored-pr4,active
+hypercare_week_count,Hypercare Week Count,week,Number of weeks of post-go-live hypercare stabilization support.,hand-authored-pr4,active

@@ -1,0 +1,50 @@
+activity_pack_code,activity_pack_name,category,tower_code,capability_code,description,source_artifact,status
+AP-TECH-AI-01,AI Solution Design & Agent Architecture,technical,TWR-05,CAP-027,"Use-case discovery, agent/solution architecture, and integration design for an AI or agentic-AI initiative.",hand-authored-pr4,active
+AP-TECH-AI-02,GenAI/Agent Build & Prompt Engineering,technical,TWR-05,CAP-028,"Build of the GenAI/agent capability itself: prompt/context engineering, retrieval, tool-use wiring.",hand-authored-pr4,active
+AP-TECH-AI-03,MLOps/LLMOps Platform Enablement,technical,TWR-05,CAP-031,"Model/agent deployment pipeline, monitoring, and platform enablement for ongoing operation.",hand-authored-pr4,active
+AP-TECH-AI-04,"Responsible AI, Model Validation & AI Governance",technical,TWR-05,CAP-035,"Model validation, bias/safety review, and AI governance sign-off specific to the AI use case.",hand-authored-pr4,active
+AP-TECH-AI-05,Intelligent Automation / RPA Integration,technical,TWR-03,CAP-012,RPA/workflow automation build where the AI use case includes a robotic-process-automation component.,hand-authored-pr4,active
+AP-TECH-DATA-01,Data Architecture & Modeling,technical,TWR-04,CAP-013,Target-state data architecture and logical/physical data modeling for the data product.,hand-authored-pr4,active
+AP-TECH-DATA-02,Data Engineering & Pipeline Build,technical,TWR-04,CAP-019,Ingestion/transformation pipeline build from source systems into the target data platform.,hand-authored-pr4,active
+AP-TECH-DATA-03,"Data Governance, Quality & MDM",technical,TWR-04,CAP-014,"Governance policy, data-quality rules, and master-data management for the domains in scope.",hand-authored-pr4,active
+AP-TECH-DATA-04,BI/Analytics & Reporting Enablement,technical,TWR-04,CAP-020,"BI semantic layer, reports, and dashboards built on the data product.",hand-authored-pr4,active
+AP-TECH-DATA-05,Data Product Management,technical,TWR-04,CAP-018,Product management and phased rollout of the data product to consuming teams.,hand-authored-pr4,active
+AP-TECH-APP-01,Solution & Modernization Architecture,technical,TWR-09,CAP-054,Target-state application architecture and modernization approach (rehost/replatform/rearchitect).,hand-authored-pr4,active
+AP-TECH-APP-02,Backend/API Engineering Build,technical,TWR-09,CAP-052,Backend service and API implementation for the application(s) in scope.,hand-authored-pr4,active
+AP-TECH-APP-03,Frontend/UX Engineering Build,technical,TWR-09,CAP-051,Frontend implementation for the application(s) in scope.,hand-authored-pr4,active
+AP-TECH-APP-04,Mobile Engineering Build,technical,TWR-09,CAP-053,"Native/cross-platform mobile implementation, where the application scope includes a mobile client.",hand-authored-pr4,active
+AP-TECH-APP-05,Quality Engineering & Test Automation,technical,TWR-15,CAP-083,Test strategy and automated test-suite build for the application(s) in scope.,hand-authored-pr4,active
+AP-TECH-CLOUD-01,Cloud/Landing-Zone Architecture,technical,TWR-12,CAP-066,Cloud landing-zone and platform architecture design.,hand-authored-pr4,active
+AP-TECH-CLOUD-02,Platform Engineering & DevOps/IaC,technical,TWR-12,CAP-069,"Platform engineering, CI/CD, and infrastructure-as-code build for the environments in scope.",hand-authored-pr4,active
+AP-TECH-CLOUD-03,SRE & Site Reliability Enablement,technical,TWR-12,CAP-071,SLO/SLI definition and site-reliability engineering enablement for the platform.,hand-authored-pr4,active
+AP-TECH-INTEG-01,Integration Architecture & API Management,technical,TWR-10,CAP-057,"Integration architecture, API management, and contract design across the integrations in scope.",hand-authored-pr4,active
+AP-TECH-INTEG-02,iPaaS/Event Streaming Build,technical,TWR-10,CAP-056,iPaaS flow and/or event-streaming pipeline build for the integrations in scope.,hand-authored-pr4,active
+AP-TECH-PROC-01,Operating Model & Transformation Strategy,technical,TWR-01,CAP-002,Target operating-model design and transformation strategy/roadmap.,hand-authored-pr4,active
+AP-TECH-PROC-02,Process Design & Reengineering,technical,TWR-03,CAP-010,Current/target-state process design and reengineering for the processes in scope.,hand-authored-pr4,active
+AP-TECH-PROC-03,Process Mining & Diagnostics,technical,TWR-03,CAP-011,Process-mining diagnostic work to baseline current-state process performance.,hand-authored-pr4,active
+AP-TECH-PROC-04,Intelligent Automation for Process,technical,TWR-03,CAP-012,Workflow/automation build applied to the redesigned process(es).,hand-authored-pr4,active
+AP-TECH-AMS-01,Transition & Service Design,technical,TWR-17,CAP-091,Service design and transition planning from the incumbent model to the target managed-services model.,hand-authored-pr4,active
+AP-TECH-AMS-02,Knowledge Transfer & Runbook Build,technical,TWR-17,CAP-091,Knowledge capture and operational runbook build ahead of go-live.,hand-authored-pr4,active
+AP-TECH-AMS-03,L1/L2/L3 Support Model Stand-up,technical,TWR-17,CAP-089,Stand-up of the tiered support organization and processes.,hand-authored-pr4,active
+AP-TECH-AMS-04,Observability & Monitoring Enablement,technical,TWR-16,CAP-087,Monitoring/observability tooling enablement for the transitioned estate.,hand-authored-pr4,active
+AP-TECH-ERP-01,ERP Solution Architecture & Migration Strategy,technical,TWR-11,CAP-106,ERP solution architecture and migration-wave strategy.,hand-authored-pr4,active
+AP-TECH-ERP-02,ERP Functional Configuration — Finance & SCM,technical,TWR-11,CAP-059,Functional configuration of finance and supply-chain modules.,hand-authored-pr4,active
+AP-TECH-ERP-03,ERP Technical Build — ABAP/Fiori/Integration,technical,TWR-11,CAP-107,Custom technical development and integration build on the ERP platform.,hand-authored-pr4,active
+AP-TECH-ERP-04,ERP Data Migration & Cutover,technical,TWR-11,CAP-061,"Legacy data migration, mock/dress-rehearsal cutovers, and go-live cutover execution.",hand-authored-pr4,active
+AP-TECH-ERP-05,ERP Security & Controls,technical,TWR-11,CAP-061,Segregation-of-duties design and security-role build for the ERP platform.,hand-authored-pr4,active
+AP-TECH-LEGACY-01,Mainframe Modernization Architecture,technical,TWR-18,CAP-092,Modernization architecture and wave sequencing for the mainframe estate.,hand-authored-pr4,active
+AP-TECH-LEGACY-02,COBOL/Batch Engineering,technical,TWR-18,CAP-093,COBOL remediation and batch-job re-engineering.,hand-authored-pr4,active
+AP-TECH-LEGACY-03,z/OS & DB2 Platform Engineering,technical,TWR-18,CAP-095,z/OS and DB2 platform engineering supporting the modernization.,hand-authored-pr4,active
+AP-TECH-LEGACY-04,Modernized Target-State Application Build,technical,TWR-18,CAP-054,"Build of the modernized, non-mainframe target-state application(s).",hand-authored-pr4,active
+AP-SHARED-01,Change & Stakeholder Engagement,shared_nontechnical,TWR-19,CAP-096,Organizational change management and stakeholder engagement planning/execution.,hand-authored-pr4,active
+AP-SHARED-02,Communications,shared_nontechnical,TWR-19,CAP-098,Communications planning and execution across the stakeholder groups in scope.,hand-authored-pr4,active
+AP-SHARED-03,Org & Operating-Model Design,shared_nontechnical,TWR-01,CAP-002,Organization design and role/RACI definition arising from the initiative.,hand-authored-pr4,active
+AP-SHARED-04,"Training Design, Content, Delivery & Localization",shared_nontechnical,TWR-19,CAP-097,"End-to-end training: curriculum design, content build, delivery, and localization.",hand-authored-pr4,active
+AP-SHARED-05,Adoption Support & Measurement,shared_nontechnical,TWR-19,CAP-099,Post-launch adoption support and measurement of usage/behavior-change outcomes.,hand-authored-pr4,active
+AP-SHARED-06,Hypercare,shared_nontechnical,TWR-16,CAP-086,Intensive post-go-live stabilization support for a defined hypercare window.,hand-authored-pr4,active
+AP-SHARED-07,Program / Project Management,shared_nontechnical,TWR-20,CAP-101,"Program/project management, PMO, and delivery governance for the initiative.",hand-authored-pr4,active
+AP-SHARED-08,Architecture / Design Authority,shared_nontechnical,TWR-21,CAP-104,Enterprise/solution architecture review and design-authority governance.,hand-authored-pr4,active
+AP-SHARED-09,"Risk, Security, Compliance & Model Validation Governance",shared_nontechnical,TWR-14,CAP-079,"Risk, security, and compliance governance, including model-validation oversight where AI is in scope.",hand-authored-pr4,active
+AP-SHARED-10,Financial / Benefits / Value Governance,shared_nontechnical,TWR-20,CAP-141,"TBM/FinOps, value management, and benefits-realization governance for the initiative.",hand-authored-pr4,active
+AP-SHARED-11,Vendor / Commercial / Supplier Governance,shared_nontechnical,TWR-01,CAP-004,Sourcing strategy and vendor/commercial governance where third-party suppliers are engaged.,hand-authored-pr4,active
+AP-SHARED-12,Transition & Knowledge Transfer,shared_nontechnical,TWR-17,CAP-091,Knowledge transfer and transition-to-run activities at the close of the initiative.,hand-authored-pr4,active

@@ -1,0 +1,5 @@
+policy_code,policy_name,min_score,max_score,low_multiplier,high_multiplier,description,source_artifact,status
+RANGE-TIGHT,Tight (high confidence),0,2,0.9,1.15,"Mature scope, strong evidence, low novelty, low quantity uncertainty, high rate-card coverage.",hand-authored-pr4,active
+RANGE-STANDARD,Standard,3,5,0.75,1.35,Typical planning-stage confidence across the five input dimensions.,hand-authored-pr4,active
+RANGE-WIDE,Wide,6,8,0.6,1.6,Meaningful scope/evidence/novelty/quantity/coverage uncertainty; early-stage estimate.,hand-authored-pr4,active
+RANGE-VERY-WIDE,Very Wide (early/low confidence),9,10,0.45,2,Highest uncertainty across all five dimensions; very early planning horizon.,hand-authored-pr4,active

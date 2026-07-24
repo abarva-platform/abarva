@@ -1,0 +1,148 @@
+capability_code,tower_code,capability_name,scarcity_tier,agent_amenability,source_artifact,source_row,source_label,status,version
+CAP-001,TWR-01,Transformation Strategy,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,6,Transformation Strategy,active,1
+CAP-002,TWR-01,Operating Model Design,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,7,Operating Model Design,active,1
+CAP-003,TWR-01,Value Architecture,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,8,Value Architecture,active,1
+CAP-004,TWR-01,Business Case & ROI,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,9,Business Case & ROI,active,1
+CAP-005,TWR-02,Financial Services Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,10,Financial Services Domain,active,1
+CAP-006,TWR-02,Healthcare Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,11,Healthcare Domain,active,1
+CAP-007,TWR-02,Retail & CPG Domain,Medium,2,Workforce_Taxonomy_Master.xlsx:Capabilities,12,Retail & CPG Domain,active,1
+CAP-008,TWR-02,Manufacturing Domain,Medium,2,Workforce_Taxonomy_Master.xlsx:Capabilities,13,Manufacturing Domain,active,1
+CAP-009,TWR-02,Public Sector Domain,Medium,2,Workforce_Taxonomy_Master.xlsx:Capabilities,14,Public Sector Domain,active,1
+CAP-010,TWR-03,Process Design,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,15,Process Design,active,1
+CAP-011,TWR-03,Process Mining,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,16,Process Mining,active,1
+CAP-012,TWR-03,Intelligent Automation,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,17,Intelligent Automation,active,1
+CAP-013,TWR-04,Data Strategy,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,18,Data Strategy,active,1
+CAP-014,TWR-04,Data Governance,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,19,Data Governance,active,1
+CAP-015,TWR-04,Data Quality,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,20,Data Quality,active,1
+CAP-016,TWR-04,Metadata Management,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,21,Metadata Management,active,1
+CAP-017,TWR-04,Master Data Management,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,22,Master Data Management,active,1
+CAP-018,TWR-04,Data Products,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,23,Data Products,active,1
+CAP-019,TWR-04,Data Engineering,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,24,Data Engineering,active,1
+CAP-020,TWR-04,Business Intelligence,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,25,Business Intelligence,active,1
+CAP-021,TWR-04,Reporting,Low,5,Workforce_Taxonomy_Master.xlsx:Capabilities,26,Reporting,active,1
+CAP-022,TWR-04,Advanced Analytics,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,27,Advanced Analytics,active,1
+CAP-023,TWR-04,Snowflake,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,28,Snowflake,active,1
+CAP-024,TWR-04,Databricks,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,29,Databricks,active,1
+CAP-025,TWR-04,Informatica,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,30,Informatica,active,1
+CAP-026,TWR-04,Collibra,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,31,Collibra,active,1
+CAP-027,TWR-05,Agentic AI,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,32,Agentic AI,active,1
+CAP-028,TWR-05,Generative AI,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,33,Generative AI,active,1
+CAP-029,TWR-05,Prompt Engineering,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,34,Prompt Engineering,active,1
+CAP-030,TWR-05,Machine Learning,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,35,Machine Learning,active,1
+CAP-031,TWR-05,MLOps,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,36,MLOps,active,1
+CAP-032,TWR-05,LLMOps,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,37,LLMOps,active,1
+CAP-033,TWR-05,Responsible AI,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,38,Responsible AI,active,1
+CAP-034,TWR-05,AI Governance,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,39,AI Governance,active,1
+CAP-035,TWR-05,Model Validation,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,40,Model Validation,active,1
+CAP-036,TWR-06,UX Design,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,41,UX Design,active,1
+CAP-037,TWR-06,UI Design,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,42,UI Design,active,1
+CAP-038,TWR-06,Customer Journey,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,43,Customer Journey,active,1
+CAP-039,TWR-06,Commerce,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,44,Commerce,active,1
+CAP-040,TWR-06,Content Management,Low,5,Workforce_Taxonomy_Master.xlsx:Capabilities,45,Content Management,active,1
+CAP-041,TWR-07,Adobe AEM,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,46,Adobe AEM,active,1
+CAP-042,TWR-07,Adobe Analytics,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,47,Adobe Analytics,active,1
+CAP-043,TWR-07,MarTech Strategy,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,48,MarTech Strategy,active,1
+CAP-044,TWR-07,Customer Data Platform,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,49,Customer Data Platform,active,1
+CAP-045,TWR-07,Journey Orchestration,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,50,Journey Orchestration,active,1
+CAP-046,TWR-08,Product Strategy,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,51,Product Strategy,active,1
+CAP-047,TWR-08,Product Ownership,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,52,Product Ownership,active,1
+CAP-048,TWR-08,Product Discovery,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,53,Product Discovery,active,1
+CAP-049,TWR-09,Microservices,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,54,Microservices,active,1
+CAP-050,TWR-09,API Engineering,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,55,API Engineering,active,1
+CAP-051,TWR-09,Frontend Engineering,Medium,5,Workforce_Taxonomy_Master.xlsx:Capabilities,56,Frontend Engineering,active,1
+CAP-052,TWR-09,Backend Engineering,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,57,Backend Engineering,active,1
+CAP-053,TWR-09,Mobile Engineering,Medium,5,Workforce_Taxonomy_Master.xlsx:Capabilities,58,Mobile Engineering,active,1
+CAP-054,TWR-09,App Modernization,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,59,App Modernization,active,1
+CAP-055,TWR-10,iPaaS,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,60,iPaaS,active,1
+CAP-056,TWR-10,Event Streaming,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,61,Event Streaming,active,1
+CAP-057,TWR-10,API Management,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,62,API Management,active,1
+CAP-058,TWR-10,ESB / Middleware,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,63,ESB / Middleware,active,1
+CAP-059,TWR-11,SAP Finance,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,64,SAP Finance,active,1
+CAP-060,TWR-11,SAP Supply Chain,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,65,SAP Supply Chain,active,1
+CAP-061,TWR-11,SAP Basis,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,66,SAP Basis,active,1
+CAP-062,TWR-11,Oracle Finance,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,67,Oracle Finance,active,1
+CAP-063,TWR-11,Oracle SCM,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,68,Oracle SCM,active,1
+CAP-064,TWR-11,Workday HCM,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,69,Workday HCM,active,1
+CAP-065,TWR-11,Workday Finance,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,70,Workday Finance,active,1
+CAP-066,TWR-12,Azure,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,71,Azure,active,1
+CAP-067,TWR-12,AWS,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,72,AWS,active,1
+CAP-068,TWR-12,GCP,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,73,GCP,active,1
+CAP-069,TWR-12,Platform Engineering,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,74,Platform Engineering,active,1
+CAP-070,TWR-12,DevOps,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,75,DevOps,active,1
+CAP-071,TWR-12,SRE,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,76,SRE,active,1
+CAP-072,TWR-13,Network,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,77,Network,active,1
+CAP-073,TWR-13,Storage,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,78,Storage,active,1
+CAP-074,TWR-13,Compute,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,79,Compute,active,1
+CAP-075,TWR-13,Identity,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,80,Identity,active,1
+CAP-076,TWR-13,End-User Compute,Low,4,Workforce_Taxonomy_Master.xlsx:Capabilities,81,End-User Compute,active,1
+CAP-077,TWR-14,IAM,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,82,IAM,active,1
+CAP-078,TWR-14,SOC,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,83,SOC,active,1
+CAP-079,TWR-14,GRC,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,84,GRC,active,1
+CAP-080,TWR-14,Application Security,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,85,Application Security,active,1
+CAP-081,TWR-14,Threat & Vuln Mgmt,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,86,Threat & Vuln Mgmt,active,1
+CAP-082,TWR-15,Test Strategy,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,87,Test Strategy,active,1
+CAP-083,TWR-15,Test Automation,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,88,Test Automation,active,1
+CAP-084,TWR-15,Performance Testing,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,89,Performance Testing,active,1
+CAP-085,TWR-15,Security Testing,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,90,Security Testing,active,1
+CAP-086,TWR-16,Service Operations,Low,5,Workforce_Taxonomy_Master.xlsx:Capabilities,91,Service Operations,active,1
+CAP-087,TWR-16,Monitoring & Observability,Medium,5,Workforce_Taxonomy_Master.xlsx:Capabilities,92,Monitoring & Observability,active,1
+CAP-088,TWR-16,Site Reliability,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,93,Site Reliability,active,1
+CAP-089,TWR-17,AMS L1,Low,5,Workforce_Taxonomy_Master.xlsx:Capabilities,94,AMS L1,active,1
+CAP-090,TWR-17,AMS L2,Medium,5,Workforce_Taxonomy_Master.xlsx:Capabilities,95,AMS L2,active,1
+CAP-091,TWR-17,AMS L3,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,96,AMS L3,active,1
+CAP-092,TWR-18,Mainframe,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,97,Mainframe,active,1
+CAP-093,TWR-18,COBOL,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,98,COBOL,active,1
+CAP-094,TWR-18,DB2,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,99,DB2,active,1
+CAP-095,TWR-18,z/OS,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,100,z/OS,active,1
+CAP-096,TWR-19,Organizational Change,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,101,Organizational Change,active,1
+CAP-097,TWR-19,Training,Low,4,Workforce_Taxonomy_Master.xlsx:Capabilities,102,Training,active,1
+CAP-098,TWR-19,Communications,Low,4,Workforce_Taxonomy_Master.xlsx:Capabilities,103,Communications,active,1
+CAP-099,TWR-19,Adoption,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,104,Adoption,active,1
+CAP-100,TWR-20,PMO,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,105,PMO,active,1
+CAP-101,TWR-20,Program Delivery,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,106,Program Delivery,active,1
+CAP-102,TWR-20,Agile Delivery,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,107,Agile Delivery,active,1
+CAP-103,TWR-21,Enterprise Architecture,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,108,Enterprise Architecture,active,1
+CAP-104,TWR-21,Solution Architecture,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,109,Solution Architecture,active,1
+CAP-105,TWR-21,Technical Architecture,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,110,Technical Architecture,active,1
+CAP-106,TWR-11,SAP S/4HANA,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,111,SAP S/4HANA,active,1
+CAP-107,TWR-11,SAP ABAP & Fiori,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,112,SAP ABAP & Fiori,active,1
+CAP-108,TWR-11,SAP BTP & Integration,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,113,SAP BTP & Integration,active,1
+CAP-109,TWR-11,SAP SuccessFactors,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,114,SAP SuccessFactors,active,1
+CAP-110,TWR-11,SAP Ariba,Medium,3,Workforce_Taxonomy_Master.xlsx:Capabilities,115,SAP Ariba,active,1
+CAP-111,TWR-11,SAP Analytics Cloud,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,116,SAP Analytics Cloud,active,1
+CAP-112,TWR-11,Oracle Fusion,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,117,Oracle Fusion,active,1
+CAP-113,TWR-11,Oracle Cloud Infrastructure,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,118,Oracle Cloud Infrastructure,active,1
+CAP-114,TWR-11,Workday Integration,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,119,Workday Integration,active,1
+CAP-115,TWR-09,ServiceNow ITSM,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,120,ServiceNow ITSM,active,1
+CAP-116,TWR-09,ServiceNow HRSD,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,121,ServiceNow HRSD,active,1
+CAP-117,TWR-09,ServiceNow CSM,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,122,ServiceNow CSM,active,1
+CAP-118,TWR-09,ServiceNow ITOM,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,123,ServiceNow ITOM,active,1
+CAP-119,TWR-09,ServiceNow SecOps,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,124,ServiceNow SecOps,active,1
+CAP-120,TWR-09,Salesforce Sales Cloud,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,125,Salesforce Sales Cloud,active,1
+CAP-121,TWR-09,Salesforce Service Cloud,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,126,Salesforce Service Cloud,active,1
+CAP-122,TWR-09,Salesforce Marketing Cloud,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,127,Salesforce Marketing Cloud,active,1
+CAP-123,TWR-09,Salesforce Platform,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,128,Salesforce Platform,active,1
+CAP-124,TWR-10,MuleSoft,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,129,MuleSoft,active,1
+CAP-125,TWR-12,Kubernetes,High,4,Workforce_Taxonomy_Master.xlsx:Capabilities,130,Kubernetes,active,1
+CAP-126,TWR-12,FinOps,Medium,4,Workforce_Taxonomy_Master.xlsx:Capabilities,131,FinOps,active,1
+CAP-127,TWR-12,Infrastructure as Code,High,5,Workforce_Taxonomy_Master.xlsx:Capabilities,132,Infrastructure as Code,active,1
+CAP-128,TWR-14,Zero Trust,High,3,Workforce_Taxonomy_Master.xlsx:Capabilities,133,Zero Trust,active,1
+CAP-129,TWR-03,Robotic Process Automation,Medium,5,Workforce_Taxonomy_Master.xlsx:Capabilities,134,Robotic Process Automation,active,1
+CAP-130,TWR-02,Banking Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,135,Banking Domain,active,1
+CAP-131,TWR-02,Capital Markets Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,136,Capital Markets Domain,active,1
+CAP-132,TWR-02,Insurance Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,137,Insurance Domain,active,1
+CAP-133,TWR-02,Payments Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,138,Payments Domain,active,1
+CAP-134,TWR-02,Payer Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,139,Payer Domain,active,1
+CAP-135,TWR-02,Provider Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,140,Provider Domain,active,1
+CAP-136,TWR-02,Life Sciences Domain,High,2,Workforce_Taxonomy_Master.xlsx:Capabilities,141,Life Sciences Domain,active,1
+CAP-137,TWR-02,Energy & Utilities Domain,Medium,2,Workforce_Taxonomy_Master.xlsx:Capabilities,142,Energy & Utilities Domain,active,1
+CAP-138,TWR-02,Telecom Domain,Medium,2,Workforce_Taxonomy_Master.xlsx:Capabilities,143,Telecom Domain,active,1
+CAP-139,TWR-02,Media Domain,Medium,2,Workforce_Taxonomy_Master.xlsx:Capabilities,144,Media Domain,active,1
+CAP-140,TWR-20,Technology Business Management (TBM) & FinOps Governance,Medium,3,hand-authored-pr1,,Fold of brief topic 20 — see manifest tower_reconciliation,active,1
+CAP-141,TWR-20,Value Management,Medium,3,hand-authored-pr1,,Fold of brief topic 20 — see manifest tower_reconciliation,active,1
+CAP-142,TWR-20,Benefits Realization,Medium,3,hand-authored-pr1,,Fold of brief topic 20 — see manifest tower_reconciliation,active,1
+CAP-143,TWR-16,ITSM & Service Delivery,Low,4,hand-authored-pr1,,Fold of brief topic 15 — see manifest tower_reconciliation,active,1
+CAP-144,TWR-16,Incident & Problem Management,Medium,4,hand-authored-pr1,,Fold of brief topic 15 — see manifest tower_reconciliation,active,1
+CAP-145,TWR-16,Capacity & Availability Management,Medium,4,hand-authored-pr1,,Fold of brief topic 15 — see manifest tower_reconciliation,active,1
+CAP-146,TWR-13,Workplace & Collaboration,Low,4,hand-authored-pr1,,Fold of brief topic 16 — see manifest tower_reconciliation,active,1
+CAP-147,TWR-13,Field Support & Deskside,Low,3,hand-authored-pr1,,Fold of brief topic 16 — see manifest tower_reconciliation,active,1

@@ -1,0 +1,22 @@
+tower_code,tower_name,scope,source_artifact,source_row,source_label,status,version
+TWR-01,Strategy & Transformation,"Vision, operating model, transformation strategy, value architecture",Workforce_Taxonomy_Master.xlsx:Towers,5,Strategy & Transformation,active,1
+TWR-02,Industry SMEs,"Vertical domain expertise (FS, healthcare, retail, manufacturing, public)",Workforce_Taxonomy_Master.xlsx:Towers,6,Industry SMEs,active,1
+TWR-03,Business Process,"Process design, reengineering, process mining, automation strategy",Workforce_Taxonomy_Master.xlsx:Towers,7,Business Process,active,1
+TWR-04,Data & Analytics,"Data strategy, governance, engineering, BI, analytics, data products",Workforce_Taxonomy_Master.xlsx:Towers,8,Data & Analytics,active,1
+TWR-05,AI & GenAI,"AI/ML, GenAI, agentic AI, MLOps/LLMOps, responsible AI",Workforce_Taxonomy_Master.xlsx:Towers,9,AI & GenAI,active,1
+TWR-06,Digital Experience,"UX/UI, commerce, content, web/mobile experience platforms",Workforce_Taxonomy_Master.xlsx:Towers,10,Digital Experience,active,1
+TWR-07,Marketing Technology,"MarTech, Adobe, journey orchestration, customer data",Workforce_Taxonomy_Master.xlsx:Towers,11,Marketing Technology,active,1
+TWR-08,Product Management,"Product strategy, ownership, discovery, lifecycle",Workforce_Taxonomy_Master.xlsx:Towers,12,Product Management,active,1
+TWR-09,Application Engineering,"Custom app dev, microservices, APIs, modernization",Workforce_Taxonomy_Master.xlsx:Towers,13,Application Engineering,active,1
+TWR-10,Integration,"iPaaS, ESB, event streaming, API management",Workforce_Taxonomy_Master.xlsx:Towers,14,Integration,active,1
+TWR-11,ERP,"SAP, Oracle, Workday functional & technical delivery",Workforce_Taxonomy_Master.xlsx:Towers,15,ERP,active,1
+TWR-12,Cloud,"Azure/AWS/GCP architecture, migration, platform engineering",Workforce_Taxonomy_Master.xlsx:Towers,16,Cloud,active,1
+TWR-13,Infrastructure,"Compute, network, storage, identity, end-user",Workforce_Taxonomy_Master.xlsx:Towers,17,Infrastructure,active,1
+TWR-14,Cybersecurity,"IAM, SOC, GRC, AppSec, threat & vuln management",Workforce_Taxonomy_Master.xlsx:Towers,18,Cybersecurity,active,1
+TWR-15,Quality Engineering,"Test strategy, automation, performance, security testing",Workforce_Taxonomy_Master.xlsx:Towers,19,Quality Engineering,active,1
+TWR-16,Operations,"Run, monitoring, SRE, service operations",Workforce_Taxonomy_Master.xlsx:Towers,20,Operations,active,1
+TWR-17,Managed Services,"AMS L1/L2/L3, application & platform support",Workforce_Taxonomy_Master.xlsx:Towers,21,Managed Services,active,1
+TWR-18,Legacy & Mainframe,"Mainframe, COBOL, DB2, z/OS modernization",Workforce_Taxonomy_Master.xlsx:Towers,22,Legacy & Mainframe,active,1
+TWR-19,Change Management,"OCM, training, communications, adoption",Workforce_Taxonomy_Master.xlsx:Towers,23,Change Management,active,1
+TWR-20,Program Management,"PMO, program/project delivery, agile delivery",Workforce_Taxonomy_Master.xlsx:Towers,24,Program Management,active,1
+TWR-21,Enterprise Architecture,"EA, solution & technical architecture, standards",Workforce_Taxonomy_Master.xlsx:Towers,25,Enterprise Architecture,active,1
