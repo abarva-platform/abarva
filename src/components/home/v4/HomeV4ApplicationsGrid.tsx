@@ -49,6 +49,9 @@ export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRo
   }, [rows, search, hostingFilter, modernizationFilter, criticalityFilter, sortKey]);
 
   const owned = rows.filter((row) => row.owner).length;
+  const directCapture = rows.filter((row) => row.owner && row.owner_confidence === 1).length;
+  const derivedCapture = owned - directCapture;
+  const unowned = rows.length - owned;
 
   return (
     <div className="heb-v4-appgrid">
@@ -59,9 +62,15 @@ export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRo
         </span>
       </div>
       <p className="heb-v4-appgrid-gap-note">
-        Named owner/sponsor is not captured in source data for any application in this inventory
-        ({owned} of {rows.length} have an owner on file) — shown as &ldquo;{NOT_CAPTURED}&rdquo;
-        below rather than omitted, per the evidence-gap standard.
+        {owned} of {rows.length} applications have a named owner on file
+        {directCapture > 0 && derivedCapture > 0
+          ? ` (${directCapture} directly captured, ${derivedCapture} derived from a team/domain match — see the caveat on hover)`
+          : directCapture > 0
+            ? " (directly captured on the source record)"
+            : derivedCapture > 0
+              ? " (derived from a team/domain match, not directly captured — see the caveat on hover)"
+              : ""}
+        {unowned > 0 ? `. The remaining ${unowned} show “${NOT_CAPTURED}” rather than a guess.` : "."}
       </p>
       <div className="heb-v4-appgrid-controls">
         <input
@@ -133,9 +142,24 @@ export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRo
                 <td>{row.criticality ?? "—"}</td>
                 <td>{row.vendor ?? "—"}</td>
                 <td>{row.modernization_disposition ?? "—"}</td>
-                <td className="heb-v4-appgrid-gap">{row.owner ?? NOT_CAPTURED}</td>
-                <td className="heb-v4-appgrid-gap">{row.sponsor ?? NOT_CAPTURED}</td>
-                <td className="heb-v4-appgrid-gap">{row.application_type ?? NOT_CAPTURED}</td>
+                <td
+                  className={row.owner ? undefined : "heb-v4-appgrid-gap"}
+                  title={row.owner_caveat ?? undefined}
+                >
+                  {row.owner ?? NOT_CAPTURED}
+                  {row.owner && row.owner_confidence != null && row.owner_confidence < 1 ? (
+                    <span className="heb-v4-appgrid-confidence">
+                      {" "}
+                      ({Math.round(row.owner_confidence * 100)}%)
+                    </span>
+                  ) : null}
+                </td>
+                <td className={row.sponsor ? undefined : "heb-v4-appgrid-gap"}>
+                  {row.sponsor ?? NOT_CAPTURED}
+                </td>
+                <td className={row.application_type ? undefined : "heb-v4-appgrid-gap"}>
+                  {row.application_type ?? NOT_CAPTURED}
+                </td>
                 <td>{row.named_users?.toLocaleString() ?? "—"}</td>
                 <td>
                   {row.annual_run_cost_usd
@@ -218,6 +242,10 @@ export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRo
         .heb-v4-appgrid-gap {
           color: ${COLORS.quiet};
           font-style: italic;
+        }
+        .heb-v4-appgrid-confidence {
+          color: ${COLORS.amber};
+          font-size: 11px;
         }
       `}</style>
     </div>

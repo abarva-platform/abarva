@@ -10,30 +10,38 @@
 
 ## Plain-English Summary
 
-Follow-up to the same-day Home Knowledge V4 preview work. A deterministic "Context Intelligence
-Yield Audit" this session (`docs/audits/HOME-KNOWLEDGE-CONTEXT-INTELLIGENCE-YIELD-AUDIT-2026-07-24.md`)
-found that skyharbor-air has a genuinely rich 412-application inventory (real hosting, vendor, run
-cost, modernization data) that the Home Knowledge pipeline never used — the review page's apps
-dimension only ever showed 6 Claude-generated summary buckets, no per-application detail. This
-release adds the real 412-row inventory as a filterable/sortable data grid on the `/home/v4-preview`
-review route's Applications & Systems dimension page, alongside (not replacing) the existing
-Claude-authored narrative interpretation.
+Follow-up to the same-day Home Knowledge V4 preview work, revised twice in-session as better
+sources were found — this record describes the final state, not the intermediate ones (see
+Audit Evidence for the full trail).
+
+A deterministic "Context Intelligence Yield Audit" first found that skyharbor-air has a rich
+412-application inventory (`datasets/skyharbor-air-supporting-evidence/`) the Home Knowledge
+pipeline never used. A first version of this release shipped that inventory as a grid with
+owner/sponsor shown as "Not captured" for all rows, based on an audit that had only checked the
+`datasets/` tree.
+
+**That was superseded before merge.** A second source, `tower-standardized-v1/` — a governed,
+per-tenant reconciled package with its own reconciliation report and documentation, covering all
+5 canonical tenants — has real per-application data including named business owners for **4 of 5
+tenants directly on the source record** (`F05_applications-systems.csv`: "COO", "Head of Consumer
+Banking", "CFO", "Chief Medical Officer", etc.) and a governed derived-ownership join for the
+5th (skyharbor-air, via `F19_team-application-ownership.csv`, confidence-scored 0.50–0.78,
+verified 900/900 `application_id` match against F05 for that tenant). This is now the primary
+reconciliation source for this release, replacing the `datasets/`-only version.
 
 The grid is deterministic source data rendered directly — never passed through Claude, never
-truncated. Named owner/sponsor/application-type fields are absent from the specific 412-row source
-this grid uses; the grid shows "Not captured" for those columns rather than a blank cell or a
-fabricated value, so the gap stays visible.
+truncated. Reconciled across **all 5 tenants** in one pass:
 
-**Correction (found later the same session, before this record shipped)**: the original audit's
-claim that owner/sponsor is "confirmed absent from every tenant's source data" was an overclaim —
-it was based on the `datasets/` tree only. A separate, richer source
-(`tower-standardized-v1/skyharbor-air/family-8-semantic-enrichment/F19_team-application-ownership.csv`,
-900 rows, real `business_owner_role`/`owning_team_id`/`executive_owner_role` fields) exists and was
-not audited. It uses a non-overlapping application identity space from this grid's 412 rows —
-verified zero name overlap — so it cannot be joined onto this grid as-is, and its own values carry
-explicit confidence scores (0.50–0.78) and caveats rather than being ground truth. "Not captured"
-in this grid is accurate for *this grid's specific rows*; it is not a claim that no ownership data
-exists anywhere for this tenant.
+| Tenant | Applications | With a named owner | Owner source |
+|---|---:|---:|---|
+| skyharbor-air | 900 | 682 (76%) | Derived join (F19), confidence-scored, caveat shown on hover |
+| first-capital | 260 | 260 (100%) | Direct capture (F05) |
+| meridian-health | 150 | 150 (100%) | Direct capture (F05) |
+| apex-retail | 170 | 170 (100%) | Direct capture (F05) — **reconciled but not injected**, no V4 fixture exists for this tenant yet (no canary has been run) |
+| lakeshore-holdings | 130 | 130 (100%) | Direct capture (F05) — same as apex-retail |
+
+Rows still without an owner (skyharbor-air only, 218 of 900) show "Not captured" — genuinely
+absent from both F05 and F19 for those specific rows, not fabricated.
 
 **Second change in this release, higher blast radius**: the live production `/home` page
 (`HomeEnterpriseBriefApp.tsx`, `NAV_GROUPS`) previously listed ~45 labeled sidebar items across 8
@@ -67,21 +75,25 @@ blast-radius half of this release.
 
 ## Changes Included
 
-- `src/components/home/v4/homeV4Visual.ts`: adds `HomeV4ApplicationFullRow` type and an optional
-  `full_rows` field on `HomeV4DataTab` — a passthrough field distinct from the existing
-  Claude-authored `rows` sample.
-- `src/components/home/v4/HomeV4ApplicationsGrid.tsx` (new): filterable/sortable grid component.
+- `src/components/home/v4/homeV4Visual.ts`: adds `HomeV4ApplicationFullRow` type (with
+  `owner_confidence`/`owner_caveat` for derived-ownership rows) and an optional `full_rows` field
+  on `HomeV4DataTab` — a passthrough field distinct from the existing Claude-authored `rows` sample.
+- `src/components/home/v4/HomeV4ApplicationsGrid.tsx` (new): filterable/sortable grid component;
+  shows a confidence percentage and hover caveat on derived-ownership rows, distinct styling for
+  genuinely uncaptured rows.
 - `src/components/home/v4/HomeV4ExplorerShell.tsx`: renders the grid under a dimension's primary
   visual when `data_tab.full_rows` is present.
-- `scripts/knowledge/reconcile-skyharbor-applications.mjs` (new): one-off reshaping script, reads
-  the real 412-row source CSV and writes `full_rows` into the skyharbor-air fixture. Not a merge
-  with the tenant's other (sparser) application file — confirmed during implementation that the
-  two files' overlapping `APP-NNNN` IDs identify different, unrelated synthetic applications (e.g.
-  `APP-0001` is "Reservations Core PSS-01" in one file, "Revenue Accounting Core 1" in the other) —
-  a row-level merge would have fabricated correspondence between unrelated rows, so this uses the
-  richer file alone.
-- `src/app/(maestro)/home/v4-preview/_fixtures/skyharbor-air.json`: regenerated by the script
-  above — `dimensions[apps].data_tab.full_rows` now has 412 real rows.
+- `scripts/knowledge/reconcile-tenant-applications.mjs` (new): reconciles all 5 tenants'
+  `tower-standardized-v1/*/family-2-technology-estate/F05_applications-systems.csv` (+
+  `F19_team-application-ownership.csv` for skyharbor-air, whose F05 predates the owner column the
+  other 4 tenants have) into `HomeV4ApplicationFullRow[]`, and injects into any existing V4
+  fixture for that tenant. Writes a summary to
+  `docs/audits/artifacts/tenant-application-reconciliation-2026-07-24.json`. Supersedes and
+  deletes `reconcile-skyharbor-applications.mjs` (the `datasets/`-only, skyharbor-air-only, no-owner
+  first version of this work).
+- `src/app/(maestro)/home/v4-preview/_fixtures/{skyharbor-air,first-capital,meridian-health}.json`:
+  regenerated by the script above — each `dimensions[apps].data_tab.full_rows` now has real,
+  tenant-specific application + ownership data.
 - `docs/audits/HOME-KNOWLEDGE-CONTEXT-INTELLIGENCE-YIELD-AUDIT-2026-07-24.md` (new): the audit that
   motivated the grid.
 - `src/components/home/HomeEnterpriseBriefApp.tsx`: `NAV_GROUPS` deduplicated from ~45 items to 14,
@@ -134,11 +146,20 @@ navigation bug, but not a new risk, since that was the pre-existing behavior.
 
 ## Known Gaps
 
-- Owner/sponsor/application-type columns will read "Not captured" for all 412 rows on day one —
-  genuine for this specific grid's source rows; see the correction above re: `tower-standardized-v1`
-  for the fuller picture across sources.
-- This same reconciliation-and-grid pattern has not yet been applied to any other tenant or
-  dimension — skyharbor-air's apps dimension only, per the audit's proven scope.
+- **apex-retail and lakeshore-holdings have real, reconciled application+ownership data
+  (170 and 130 rows respectively, both 100% owned) that is not visible anywhere**, because no V4
+  candidate has ever been generated for those 2 tenants this session — there is no fixture to
+  inject the reconciled data into. This is a real, named gap, not a "some tenants unaudited"
+  hedge: the data exists and is ready; what's missing is a V4 canary run for those 2 tenants
+  (a paid generation job) or a lighter-weight wrapper that shows deterministic data without
+  requiring Claude narrative first. Neither is done in this release.
+- skyharbor-air: 218 of 900 applications (24%) still show "Not captured" for owner — genuinely
+  absent from both F05 and F19 for those specific rows, not a processing gap.
+- Sponsor and application-type remain unpopulated for all 5 tenants — no source file found for
+  either field in `tower-standardized-v1` or `datasets/` during this reconciliation.
+- This reconciliation-and-grid pattern has been applied to Applications only, across all 5
+  tenants' available source data — not yet extended to other dimensions (Vendors, Programs,
+  Budget, etc.) that the same audit found real `tower-standardized-v1` sources for.
 - The nav dedup keeps the same 8 group headers and reduces to 14 items matching what's currently
   implemented — it does not yet add new views for dimensions found real via `tower-standardized-v1`
   (e.g. a consolidated Organization/Leadership view, a standalone Metrics view) or reorganize

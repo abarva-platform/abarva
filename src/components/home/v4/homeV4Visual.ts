@@ -107,12 +107,15 @@ export interface HomeV4ApplicationFullRow {
   named_users?: number | null;
   annual_run_cost_usd?: number | null;
   interface_count?: number | null;
-  // Confirmed absent from every tenant's source data as of the 2026-07-24 yield audit —
-  // always null today. Kept as an explicit field (not omitted) so the UI shows a visible
-  // gap rather than silently dropping the column.
   owner?: string | null;
   sponsor?: string | null;
   application_type?: string | null;
+  // 1 = directly captured on the source application record. <1 = derived from a
+  // team/domain-matched join (see owner_caveat). null = no owner source found for
+  // this row. Never silently promote a derived owner to the same confidence as a
+  // directly-captured one.
+  owner_confidence?: number | null;
+  owner_caveat?: string | null;
   source_file: string;
 }
 
