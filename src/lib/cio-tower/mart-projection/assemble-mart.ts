@@ -232,6 +232,8 @@ interface ProgramAggregate {
   usageMetric: string | null;
   usageActual: number | null;
   adoptionRatePct: number | null;
+  ownerRole: string | null;
+  financeOwnerRole: string | null;
   factKeys: string[];
   sourceRefs: Array<{
     file: string | null;
@@ -309,6 +311,8 @@ function aggregatePrograms(
         usageMetric: null,
         usageActual: null,
         adoptionRatePct: null,
+        ownerRole: null,
+        financeOwnerRole: null,
         factKeys: [],
         sourceRefs: [],
         anyTenantFile: false,
@@ -327,6 +331,16 @@ function aggregatePrograms(
       if (id.system_name && !agg.systemName) agg.systemName = id.system_name;
     }
     const a = attr(fact);
+    // Owner attribution. The T-family carries owner_role / business_sponsor_role
+    // per initiative; until it was read, every decision lane rendered
+    // "No owner recorded". First non-null wins so a rolled-up tool row cannot
+    // overwrite the owning program's owner.
+    if (!agg.ownerRole && typeof a.executive_owner === "string") {
+      agg.ownerRole = a.executive_owner.trim() || null;
+    }
+    if (!agg.financeOwnerRole && typeof a.finance_owner === "string") {
+      agg.financeOwnerRole = a.finance_owner.trim() || null;
+    }
     agg.sourceRefs.push({
       file: fact.source_key,
       row: fact.source_row,
@@ -575,8 +589,8 @@ export function assembleMartFromFacts(
         tenant_key: tenantKey,
         program_code: agg.programCode,
         program_name: agg.programName,
-        owner_role: null,
-        finance_owner_role: null,
+        owner_role: agg.ownerRole,
+        finance_owner_role: agg.financeOwnerRole,
         decision_lane: lane,
         decision_rationale: decisionRationale(agg, lane),
         approved_funding_usd: round(agg.approvedFunding ?? 0),

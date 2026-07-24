@@ -33,6 +33,7 @@ import {
   projectV3ToFacts,
   type CsvRow,
 } from "../../lib/cio-tower/mart-projection/facts-from-v3";
+import { projectTowerStandardizedToFacts } from "../../lib/cio-tower/mart-projection/facts-from-tower-standardized";
 import {
   projectTowerOperationalToFacts,
   type TowerOperationalInput,
@@ -54,6 +55,8 @@ const FORMULA_VERSION = "unified_facts_v1";
 interface CliArgs {
   tenant: string;
   v3Dir: string;
+  standardizedDir: string | null;
+  skipV3Programs: boolean;
   dryRun: boolean;
   noDb: boolean;
   emitProofBundle: boolean;
@@ -71,6 +74,7 @@ function parseArgs(argv: readonly string[]): CliArgs {
   };
   const tenant = get("--tenant");
   const v3Dir = get("--v3-dir");
+  const standardizedDir = get("--standardized-dir");
   if (!tenant || !v3Dir) {
     console.error(
       "usage: project-tower-mart --tenant <key> --v3-dir <path> [--dry-run] [--actor <email>] [--out-dir <path>]",
@@ -80,10 +84,17 @@ function parseArgs(argv: readonly string[]): CliArgs {
   return {
     tenant,
     v3Dir: path.resolve(process.cwd(), v3Dir),
+    standardizedDir: standardizedDir
+      ? path.resolve(process.cwd(), standardizedDir)
+      : null,
     dryRun: args.includes("--dry-run") || !args.includes("--write"),
     // Local pure-pipeline run: skip the DB entirely (V3 CSVs only, no tower_*
     // telemetry, no alias crosswalk). Proves the projection without the VNet.
     noDb: args.includes("--no-db"),
+    // Suppress V3 program/use-case facts so the T-family owns the program
+    // registry outright. V3 budget (08) still projects — the T-family has no
+    // budget-envelope equivalent.
+    skipV3Programs: args.includes("--skip-v3-programs"),
     // Emit the out-dir as a base64 tar between the proof markers the governed
     // ACA operator wrapper (scripts/ops/submit-aca-operator-job.mjs) extracts
     // from job logs — so a live ACA run returns its proof/summary/mart JSON.
@@ -273,8 +284,12 @@ async function main(): Promise<void> {
     const v3Facts = projectV3ToFacts(
       {
         budget: readV3Csv(args.v3Dir, "08_it_budget_spend_value.csv"),
-        programs: readV3Csv(args.v3Dir, "09_programs_initiatives.csv"),
-        aiUseCases: readV3Csv(args.v3Dir, "10_ai_automation_use_cases.csv"),
+        programs: args.skipV3Programs
+          ? []
+          : readV3Csv(args.v3Dir, "09_programs_initiatives.csv"),
+        aiUseCases: args.skipV3Programs
+          ? []
+          : readV3Csv(args.v3Dir, "10_ai_automation_use_cases.csv"),
         benefits: readV3Csv(
           args.v3Dir,
           "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
@@ -282,6 +297,26 @@ async function main(): Promise<void> {
       },
       identity,
     );
+    // 1b. tower-standardized-v1 T-family facts (local CSVs).
+    //
+    // The complete, properly-keyed tree: T08 spend joins to T01 initiatives on
+    // a real initiative_id, and T01 carries owner_role. This is what makes
+    // ai_tagged_spend_usd non-zero and puts an owner on the decision lane.
+    const standardizedFacts = args.standardizedDir
+      ? projectTowerStandardizedToFacts(
+          {
+            initiatives: readV3Csv(
+              args.standardizedDir,
+              "ai-control-tower/T01_initiative-registry.csv",
+            ),
+            spend: readV3Csv(
+              args.standardizedDir,
+              "ai-control-tower/T08_spend-contracts.csv",
+            ),
+          },
+          identity,
+        )
+      : [];
     // 2. tower_* operational facts (DB)
     const towerFacts = await readTowerFacts(client, identity);
     // 3. crosswalk (DB)
@@ -292,7 +327,11 @@ async function main(): Promise<void> {
     );
 
     // 4. merge
-    const merged = mergeFactsByCanonicalIdentity([...v3Facts, ...towerFacts]);
+    const merged = mergeFactsByCanonicalIdentity([
+      ...v3Facts,
+      ...standardizedFacts,
+      ...towerFacts,
+    ]);
     // 5. assemble
     const mart = assembleMartFromFacts(merged.facts, {
       tenantKey: identity.tenantKey,
@@ -314,6 +353,7 @@ async function main(): Promise<void> {
       client_id: identity.clientId,
       idempotency_key: idemKey,
       v3_facts: v3Facts.length,
+      standardized_facts: standardizedFacts.length,
       tower_facts: towerFacts.length,
       merged_facts: merged.facts.length,
       suppressed_facts: merged.suppressed.length,
