@@ -1,0 +1,3011 @@
+{
+  "tenant": {
+    "canonical_key": "skyharbor-air",
+    "display_name": "Airline Demo",
+    "aliases": [
+      "Airline Demo",
+      "SkyHarbor",
+      "SkyHarbor Air"
+    ],
+    "source_snapshot_hash": "6e06d77ce54ee6285e879055234780128a65110eb67e56242e5f6cd5099b6618"
+  },
+  "authoring_contract": {
+    "prompt_contract_version": "home-knowledge-v4-business-transformation-prompt-first-20260723-single-dimension-v1",
+    "output_schema_version": "home-knowledge-v4-candidate-review-v2",
+    "candidate_status": "candidate_for_human_review",
+    "renderer_rule": "Claude owns every client-visible word. Renderer may parse, arrange, style, paginate, validate, filter, and render visuals; renderer may not rewrite, shorten, sanitize, summarize, supplement, replace, or create fallback narrative.",
+    "no_raw_inventory_language": "Do not narrate raw row counts, node counts, edge counts, or file-size counts as executive claims. Convert them into business coverage and evidence-maturity language."
+  },
+  "dimension_summary": [
+    {
+      "key": "enterprise_thesis",
+      "name": "Enterprise Thesis",
+      "status": "derived_from_related_context",
+      "summary": "Enterprise Thesis must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "profile",
+        "functions",
+        "programs",
+        "ai",
+        "industry",
+        "risks"
+      ],
+      "business_source_coverage": [
+        "enterprise profile",
+        "business functions",
+        "programs and initiatives",
+        "AI and automation use cases",
+        "industry patterns",
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "leadership_agenda",
+      "name": "Leadership Agenda",
+      "status": "derived_from_related_context",
+      "summary": "Leadership Agenda must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "workforce",
+        "org",
+        "programs",
+        "ai",
+        "risks"
+      ],
+      "business_source_coverage": [
+        "workforce and leadership signals",
+        "organization ownership",
+        "programs and initiatives",
+        "AI and automation use cases",
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "proven_strengths",
+      "name": "Proven Strengths",
+      "status": "derived_from_related_context",
+      "summary": "Proven Strengths must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "metrics",
+        "programs",
+        "apps",
+        "data",
+        "evidence"
+      ],
+      "business_source_coverage": [
+        "metrics and outcomes",
+        "programs and initiatives",
+        "applications and systems",
+        "data domains and integrations",
+        "evidence sources"
+      ]
+    },
+    {
+      "key": "structural_constraints",
+      "name": "Structural Constraints",
+      "status": "derived_from_related_context",
+      "summary": "Structural Constraints must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "risks",
+        "infra",
+        "data",
+        "vendors",
+        "evidence"
+      ],
+      "business_source_coverage": [
+        "risks and controls",
+        "infrastructure and platforms",
+        "data domains and integrations",
+        "vendors and contracts",
+        "evidence sources"
+      ]
+    },
+    {
+      "key": "interview_signals",
+      "name": "Interview Signals",
+      "status": "derived_from_related_context",
+      "summary": "Interview Signals must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "workforce",
+        "functions",
+        "opev",
+        "programs"
+      ],
+      "business_source_coverage": [
+        "workforce and leadership signals",
+        "business functions",
+        "operational process evidence",
+        "programs and initiatives"
+      ]
+    },
+    {
+      "key": "profile",
+      "name": "Enterprise Profile",
+      "status": "needs-evidence",
+      "summary": "Airline Demo is a complex global passenger airline with cargo, loyalty, maintenance, and digital operations.",
+      "covers": [],
+      "business_source_coverage": [
+        "enterprise profile"
+      ]
+    },
+    {
+      "key": "divisions",
+      "name": "Divisions & Business Units",
+      "status": "derived_from_related_context",
+      "summary": "Divisions & Business Units must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "org",
+        "functions",
+        "profile"
+      ],
+      "business_source_coverage": [
+        "organization ownership",
+        "business functions",
+        "enterprise profile"
+      ]
+    },
+    {
+      "key": "front_middle_back",
+      "name": "Front / Middle / Back Office",
+      "status": "derived_from_related_context",
+      "summary": "Front / Middle / Back Office must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "functions",
+        "org",
+        "workforce"
+      ],
+      "business_source_coverage": [
+        "business functions",
+        "organization ownership",
+        "workforce and leadership signals"
+      ]
+    },
+    {
+      "key": "functions",
+      "name": "Business Functions",
+      "status": "directional",
+      "summary": "Flight operations, crew management, customer experience, maintenance, and sourcing are the primary AI-relevant functions.",
+      "covers": [],
+      "business_source_coverage": [
+        "business functions"
+      ]
+    },
+    {
+      "key": "capabilities",
+      "name": "Business Capabilities",
+      "status": "derived_from_related_context",
+      "summary": "Business Capabilities must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "functions",
+        "opev",
+        "programs",
+        "ai"
+      ],
+      "business_source_coverage": [
+        "business functions",
+        "operational process evidence",
+        "programs and initiatives",
+        "AI and automation use cases"
+      ]
+    },
+    {
+      "key": "org",
+      "name": "Org Ownership",
+      "status": "directional",
+      "summary": "Policy content ownership and data governance accountability are not yet assigned across critical use cases.",
+      "covers": [],
+      "business_source_coverage": [
+        "organization ownership"
+      ]
+    },
+    {
+      "key": "decision_rights",
+      "name": "Decision Rights",
+      "status": "derived_from_related_context",
+      "summary": "Decision Rights must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "org",
+        "risks",
+        "evidence",
+        "programs"
+      ],
+      "business_source_coverage": [
+        "organization ownership",
+        "risks and controls",
+        "evidence sources",
+        "programs and initiatives"
+      ]
+    },
+    {
+      "key": "workforce",
+      "name": "Workforce Roles",
+      "status": "directional",
+      "summary": "Crew planners, contact center agents, maintenance technicians, and sourcing analysts are primary AI-adjacent roles.",
+      "covers": [],
+      "business_source_coverage": [
+        "workforce and leadership signals"
+      ]
+    },
+    {
+      "key": "geography",
+      "name": "Geography & Legal Entities",
+      "status": "derived_from_related_context",
+      "summary": "Geography & Legal Entities must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "profile",
+        "org",
+        "vendors"
+      ],
+      "business_source_coverage": [
+        "enterprise profile",
+        "organization ownership",
+        "vendors and contracts"
+      ]
+    },
+    {
+      "key": "value_streams",
+      "name": "Value Streams",
+      "status": "derived_from_related_context",
+      "summary": "Value Streams must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "programs",
+        "metrics",
+        "budget",
+        "opev",
+        "ai"
+      ],
+      "business_source_coverage": [
+        "programs and initiatives",
+        "metrics and outcomes",
+        "budget, spend, and value",
+        "operational process evidence",
+        "AI and automation use cases"
+      ]
+    },
+    {
+      "key": "business_processes",
+      "name": "Business Processes",
+      "status": "derived_from_related_context",
+      "summary": "Business Processes must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "opev",
+        "functions",
+        "apps",
+        "data"
+      ],
+      "business_source_coverage": [
+        "operational process evidence",
+        "business functions",
+        "applications and systems",
+        "data domains and integrations"
+      ]
+    },
+    {
+      "key": "journeys",
+      "name": "Member / Customer Journeys",
+      "status": "derived_from_related_context",
+      "summary": "Member / Customer Journeys must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "opev",
+        "functions",
+        "ai",
+        "metrics"
+      ],
+      "business_source_coverage": [
+        "operational process evidence",
+        "business functions",
+        "AI and automation use cases",
+        "metrics and outcomes"
+      ]
+    },
+    {
+      "key": "opev",
+      "name": "Operational Process Evidence",
+      "status": "directional",
+      "summary": "Risk spans managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls.",
+      "covers": [],
+      "business_source_coverage": [
+        "operational process evidence"
+      ]
+    },
+    {
+      "key": "service_delivery",
+      "name": "Service Delivery Model",
+      "status": "derived_from_related_context",
+      "summary": "Service Delivery Model must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "ms",
+        "vendors",
+        "workforce",
+        "functions",
+        "opev"
+      ],
+      "business_source_coverage": [
+        "managed services",
+        "vendors and contracts",
+        "workforce and leadership signals",
+        "business functions",
+        "operational process evidence"
+      ]
+    },
+    {
+      "key": "apps",
+      "name": "Applications & Systems",
+      "status": "directional",
+      "summary": "Fourteen systems span reservations, crew, maintenance, baggage, CRM, loyalty, ITSM, and data platforms.",
+      "covers": [
+        "Commercial (43)",
+        "Ground Ops (42)",
+        "Procurement (42)",
+        "Flight Ops (40)",
+        "Customer (38)"
+      ],
+      "business_source_coverage": [
+        "applications and systems"
+      ]
+    },
+    {
+      "key": "data",
+      "name": "Data Assets & Integrations",
+      "status": "directional",
+      "summary": "Key data domains including disruption lineage, bag scans, maintenance events, and transcripts lack certification.",
+      "covers": [],
+      "business_source_coverage": [
+        "data domains and integrations"
+      ]
+    },
+    {
+      "key": "integrations",
+      "name": "Integrations",
+      "status": "derived_from_related_context",
+      "summary": "Integrations must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "apps",
+        "data",
+        "rel"
+      ],
+      "business_source_coverage": [
+        "applications and systems",
+        "data domains and integrations",
+        "relationship paths"
+      ]
+    },
+    {
+      "key": "infra",
+      "name": "Infrastructure & Platforms",
+      "status": "directional",
+      "summary": "AWS airline data lakehouse is a target-state platform; current-state certification evidence is not yet confirmed.",
+      "covers": [],
+      "business_source_coverage": [
+        "infrastructure and platforms"
+      ]
+    },
+    {
+      "key": "architecture_dependencies",
+      "name": "Architecture Dependencies",
+      "status": "derived_from_related_context",
+      "summary": "Architecture Dependencies must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "apps",
+        "data",
+        "infra",
+        "rel",
+        "risks"
+      ],
+      "business_source_coverage": [
+        "applications and systems",
+        "data domains and integrations",
+        "infrastructure and platforms",
+        "relationship paths",
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "tech_lifecycle",
+      "name": "Technology Lifecycle",
+      "status": "derived_from_related_context",
+      "summary": "Technology Lifecycle must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "apps",
+        "infra",
+        "vendors",
+        "risks"
+      ],
+      "business_source_coverage": [
+        "applications and systems",
+        "infrastructure and platforms",
+        "vendors and contracts",
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "data_quality_lineage",
+      "name": "Data Quality & Lineage",
+      "status": "derived_from_related_context",
+      "summary": "Data Quality & Lineage must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "data",
+        "apps",
+        "evidence",
+        "risks"
+      ],
+      "business_source_coverage": [
+        "data domains and integrations",
+        "applications and systems",
+        "evidence sources",
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "identity_semantic",
+      "name": "Identity & Semantic Foundations",
+      "status": "derived_from_related_context",
+      "summary": "Identity & Semantic Foundations must be authored from related source context; the candidate must state what is known, inferred, and missing.",
+      "covers": [
+        "data",
+        "apps",
+        "risks",
+        "evidence"
+      ],
+      "business_source_coverage": [
+        "data domains and integrations",
+        "applications and systems",
+        "risks and controls",
+        "evidence sources"
+      ]
+    },
+    {
+      "key": "risks",
+      "name": "Risks & Controls",
+      "status": "directional",
+      "summary": "Risk spans managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls.",
+      "covers": [],
+      "business_source_coverage": [
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "evidence",
+      "name": "Evidence Sources",
+      "status": "directional",
+      "summary": "Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes are claimed.",
+      "covers": [],
+      "business_source_coverage": [
+        "evidence sources"
+      ]
+    },
+    {
+      "key": "vendors",
+      "name": "Vendors & Contracts",
+      "status": "directional",
+      "summary": "Eight vendors including NorthSky Managed Services and AeroCore anchor critical operational and IT delivery.",
+      "covers": [],
+      "business_source_coverage": [
+        "vendors and contracts"
+      ]
+    },
+    {
+      "key": "ms",
+      "name": "Managed Services Scope",
+      "status": "needs-evidence",
+      "summary": "NorthSky Managed Services anchors AMS and IMS delivery; scope, SLAs, and exit terms are not yet validated.",
+      "covers": [],
+      "business_source_coverage": [
+        "managed services",
+        "vendors and contracts"
+      ]
+    },
+    {
+      "key": "budget",
+      "name": "IT Budget, Spend & Value",
+      "status": "directional",
+      "summary": "Flight operations, crew management, customer experience, maintenance, and sourcing are the primary AI-relevant functions.",
+      "covers": [],
+      "business_source_coverage": [
+        "budget, spend, and value"
+      ]
+    },
+    {
+      "key": "programs",
+      "name": "Programs & Initiatives",
+      "status": "directional",
+      "summary": "Seven active use-case programs span sourcing, operations, customer experience, and analytics modernization.",
+      "covers": [],
+      "business_source_coverage": [
+        "programs and initiatives"
+      ]
+    },
+    {
+      "key": "ai",
+      "name": "AI & Automation Use Cases",
+      "status": "directional",
+      "summary": "Airline Demo is a complex global passenger airline with cargo, loyalty, maintenance, and digital operations.",
+      "covers": [],
+      "business_source_coverage": [
+        "AI and automation use cases",
+        "programs and initiatives",
+        "industry patterns"
+      ]
+    },
+    {
+      "key": "metrics",
+      "name": "Metrics & Outcomes",
+      "status": "directional",
+      "summary": "No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.",
+      "covers": [],
+      "business_source_coverage": [
+        "metrics and outcomes"
+      ]
+    },
+    {
+      "key": "industry",
+      "name": "Industry Context Patterns",
+      "status": "directional",
+      "summary": "IROPS sensitivity, crew legality complexity, and managed-services dependency are common airline transformation risks.",
+      "covers": [],
+      "business_source_coverage": [
+        "industry patterns"
+      ]
+    },
+    {
+      "key": "lenses",
+      "name": "Expert Lenses",
+      "status": "directional",
+      "summary": "Legal, procurement, data governance, AI ethics, and operational safety expertise are required across use cases.",
+      "covers": [],
+      "business_source_coverage": [
+        "business functions",
+        "evidence sources",
+        "risks and controls"
+      ]
+    },
+    {
+      "key": "rel",
+      "name": "Relationships",
+      "status": "source-backed",
+      "summary": "CIO, CTO, and CDAO teams share overlapping priorities but cross-functional alignment is not yet evidenced.",
+      "covers": [],
+      "business_source_coverage": [
+        "relationship paths",
+        "applications and systems",
+        "data domains and integrations",
+        "business functions",
+        "programs and initiatives",
+        "risks and controls"
+      ]
+    }
+  ],
+  "existing_home_narratives": {
+    "enterprise_brief_title": "Airline Demo — Enterprise Context Cockpit",
+    "enterprise_brief_summary": "Airline Demo now has an approved Home design pack sourced from active tenant CSVs. The cockpit should tell a CXO what context is loaded, why it matters for AI success, which evidence is missing, and where Intelligence, Moves, Source, and Tower should take over.",
+    "context_confidence_summary": "Context confidence separates loaded data from board-grade truth. Stronger answers require source-owner validation, relationship materialization, and evidence lineage.",
+    "evidence_gaps_summary": "Evidence gaps are framed as business blockers: what cannot be claimed yet, what source evidence is needed, and which module should own the next action.",
+    "use_cases_summary": "AI opportunities are planning-grade until the required systems, data, controls, owners, and value evidence are confirmed.",
+    "proof_summary": "The proof tab shows source coverage, row counts, dates, owners when supplied, fields loaded, and the evidence boundary behind the cockpit.",
+    "proof_relationship_visual": {
+      "title": "Context becomes a relationship graph",
+      "caption": "Active source coverage are converted into a planning-grade graph so aVa can reason across functions, systems, data, vendors, programs, processes, and risks.",
+      "nodes": [
+        "Source coverage",
+        "Context dimensions",
+        "Relationship graph",
+        "aVa grounding packet",
+        "Module handoff"
+      ],
+      "edges": [
+        "loaded into",
+        "materialized as",
+        "grounds",
+        "routes"
+      ]
+    },
+    "render_contract": "renderer_displays_design_slots_from_approved_pack_no_raw_source_aliases"
+  },
+  "business_context_samples": {
+    "enterprise_profile": [
+      {
+        "row_index": 1,
+        "revenue_usd": "81400000000",
+        "employee_count": "92000"
+      },
+      {
+        "row_index": 2,
+        "industry": "Airline",
+        "revenue_usd": "not_provided",
+        "employee_count": "not_provided",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      }
+    ],
+    "functions": [
+      {
+        "row_index": 1,
+        "function_name": "MRO"
+      },
+      {
+        "row_index": 2,
+        "function_name": "Safety"
+      },
+      {
+        "row_index": 3,
+        "function_name": "Ground Ops"
+      },
+      {
+        "row_index": 4,
+        "function_name": "Customer"
+      },
+      {
+        "row_index": 5,
+        "function_name": "PSS"
+      },
+      {
+        "row_index": 6,
+        "function_name": "DCS"
+      },
+      {
+        "row_index": 7,
+        "function_name": "Cargo"
+      },
+      {
+        "row_index": 8,
+        "function_name": "Revenue Accounting"
+      },
+      {
+        "row_index": 9,
+        "function_name": "Finance"
+      },
+      {
+        "row_index": 10,
+        "function_name": "Commercial"
+      },
+      {
+        "row_index": 11,
+        "function_name": "Loyalty"
+      },
+      {
+        "row_index": 12,
+        "function_name": "HR"
+      },
+      {
+        "row_index": 13,
+        "function_name": "Flight Ops"
+      },
+      {
+        "row_index": 14,
+        "function_name": "Maintenance"
+      },
+      {
+        "row_index": 15,
+        "function_name": "Crew"
+      },
+      {
+        "row_index": 16,
+        "function_name": "Procurement"
+      },
+      {
+        "row_index": 17,
+        "function_name": "Network Planning"
+      },
+      {
+        "row_index": 18,
+        "function_name": "Catering"
+      },
+      {
+        "row_index": 19,
+        "function_name": "Operations Control Center / IROPS",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 20,
+        "function_name": "Flight Operations",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 21,
+        "function_name": "Crew Operations",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 22,
+        "function_name": "Customer Operations",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 23,
+        "function_name": "Airline Operations Technology",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 24,
+        "function_name": "Finance and Vendor Management",
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      }
+    ],
+    "org": [
+      {
+        "row_index": 1
+      },
+      {
+        "row_index": 2
+      },
+      {
+        "row_index": 3
+      },
+      {
+        "row_index": 4
+      },
+      {
+        "row_index": 5
+      },
+      {
+        "row_index": 6
+      },
+      {
+        "row_index": 7
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      },
+      {
+        "row_index": 10
+      },
+      {
+        "row_index": 11
+      },
+      {
+        "row_index": 12
+      },
+      {
+        "row_index": 13
+      },
+      {
+        "row_index": 14
+      },
+      {
+        "row_index": 15
+      },
+      {
+        "row_index": 16
+      },
+      {
+        "row_index": 17
+      },
+      {
+        "row_index": 18
+      }
+    ],
+    "workforce": [
+      {
+        "row_index": 1,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 2,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 3,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 4,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 5,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 6,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 7,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 8,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 9,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 10,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 11,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      },
+      {
+        "row_index": 12,
+        "known_gaps": "Synthetic airline planning-grade substrate; not real Airline Demo production data. | Existing tenant upgrade candidate; do not treat as active until promotion proof passes. | No client-approved system inventory, contract economics, or operational baseline is loaded. | No production IROPS AI, autonomous recovery, or Tower value outcome is proven. | No workshop signoff for owners, baseline metrics, control evidence, or data quality scores is loaded."
+      }
+    ],
+    "systems": [
+      {
+        "row_index": 1,
+        "system_name": "Revenue Accounting Core 1",
+        "business_function": "Revenue Accounting",
+        "criticality": "tier1",
+        "deployment_model": "aws"
+      },
+      {
+        "row_index": 2,
+        "system_name": "PSS Hub 2",
+        "business_function": "PSS",
+        "criticality": "tier2",
+        "deployment_model": "saas"
+      },
+      {
+        "row_index": 3,
+        "system_name": "MRO Portal 3",
+        "business_function": "MRO",
+        "criticality": "tier1",
+        "deployment_model": "aws"
+      },
+      {
+        "row_index": 4,
+        "system_name": "Commercial Hub 4",
+        "business_function": "Commercial",
+        "criticality": "tier1",
+        "deployment_model": "gcp"
+      },
+      {
+        "row_index": 5,
+        "system_name": "Customer Portal 5",
+        "business_function": "Customer",
+        "criticality": "tier3",
+        "deployment_model": "on_prem_distributed"
+      },
+      {
+        "row_index": 6,
+        "system_name": "MRO Service 6",
+        "business_function": "MRO",
+        "criticality": "tier1",
+        "deployment_model": "private_cloud"
+      },
+      {
+        "row_index": 7,
+        "system_name": "HR Ledger 7",
+        "business_function": "HR",
+        "criticality": "tier2",
+        "deployment_model": "on_prem_mainframe"
+      },
+      {
+        "row_index": 8,
+        "system_name": "Catering Hub 8",
+        "business_function": "Catering",
+        "criticality": "tier2",
+        "deployment_model": "azure"
+      },
+      {
+        "row_index": 9,
+        "system_name": "Ground Ops Ledger 9",
+        "business_function": "Ground Ops",
+        "criticality": "tier2",
+        "deployment_model": "azure"
+      },
+      {
+        "row_index": 10,
+        "system_name": "Maintenance Gateway 10",
+        "business_function": "Maintenance",
+        "criticality": "tier1",
+        "deployment_model": "saas"
+      },
+      {
+        "row_index": 11,
+        "system_name": "Customer Hub 11",
+        "business_function": "Customer",
+        "criticality": "tier1",
+        "deployment_model": "aws"
+      },
+      {
+        "row_index": 12,
+        "system_name": "Finance Portal 12",
+        "business_function": "Finance",
+        "criticality": "tier1",
+        "deployment_model": "saas"
+      },
+      {
+        "row_index": 13,
+        "system_name": "Commercial Hub 13",
+        "business_function": "Commercial",
+        "criticality": "tier1",
+        "deployment_model": "on_prem_mainframe"
+      },
+      {
+        "row_index": 14,
+        "system_name": "PSS Engine 14",
+        "business_function": "PSS",
+        "criticality": "tier1",
+        "deployment_model": "private_cloud"
+      },
+      {
+        "row_index": 15,
+        "system_name": "Loyalty Service 15",
+        "business_function": "Loyalty",
+        "criticality": "tier1",
+        "deployment_model": "aws"
+      },
+      {
+        "row_index": 16,
+        "system_name": "MRO Ledger 16",
+        "business_function": "MRO",
+        "criticality": "tier1",
+        "deployment_model": "gcp"
+      },
+      {
+        "row_index": 17,
+        "system_name": "Cargo Service 17",
+        "business_function": "Cargo",
+        "criticality": "tier3",
+        "deployment_model": "aws"
+      },
+      {
+        "row_index": 18,
+        "system_name": "Ground Ops Manager 18",
+        "business_function": "Ground Ops",
+        "criticality": "tier2",
+        "deployment_model": "private_cloud"
+      },
+      {
+        "row_index": 19,
+        "system_name": "Catering Ledger 19",
+        "business_function": "Catering",
+        "criticality": "tier3",
+        "deployment_model": "saas"
+      },
+      {
+        "row_index": 20,
+        "system_name": "Commercial Gateway 20",
+        "business_function": "Commercial",
+        "criticality": "tier2",
+        "deployment_model": "gcp"
+      },
+      {
+        "row_index": 21,
+        "system_name": "HR Hub 21",
+        "business_function": "HR",
+        "criticality": "tier3",
+        "deployment_model": "on_prem_mainframe"
+      },
+      {
+        "row_index": 22,
+        "system_name": "Revenue Accounting Engine 22",
+        "business_function": "Revenue Accounting",
+        "criticality": "tier2",
+        "deployment_model": "on_prem_distributed"
+      },
+      {
+        "row_index": 23,
+        "system_name": "Crew Ledger 23",
+        "business_function": "Crew",
+        "criticality": "tier3",
+        "deployment_model": "saas"
+      },
+      {
+        "row_index": 24,
+        "system_name": "Maintenance Service 24",
+        "business_function": "Maintenance",
+        "criticality": "tier1",
+        "deployment_model": "saas"
+      },
+      {
+        "row_index": 25,
+        "system_name": "Maintenance Ledger 25",
+        "business_function": "Maintenance",
+        "criticality": "tier1",
+        "deployment_model": "gcp"
+      },
+      {
+        "row_index": 26,
+        "system_name": "Revenue Accounting Core 26",
+        "business_function": "Revenue Accounting",
+        "criticality": "tier1",
+        "deployment_model": "aws"
+      },
+      {
+        "row_index": 27,
+        "system_name": "Crew Gateway 27",
+        "business_function": "Crew",
+        "criticality": "tier1",
+        "deployment_model": "on_prem_distributed"
+      },
+      {
+        "row_index": 28,
+        "system_name": "PSS Ledger 28",
+        "business_function": "PSS",
+        "criticality": "tier1",
+        "deployment_model": "private_cloud"
+      }
+    ],
+    "application_ownership_coverage": {
+      "source_files": [
+        "tower-standardized-v1/skyharbor-air/family-2-technology-estate/F05_applications-systems.csv",
+        "tower-standardized-v1/skyharbor-air/family-8-semantic-enrichment/F19_team-application-ownership.csv"
+      ],
+      "total_applications": 900,
+      "applications_with_named_owner": 682,
+      "owner_coverage_pct": 76,
+      "ownership_maturity": "Derived from a team/domain-matched join, not directly captured on the source record. Carries an explicit confidence score per row.",
+      "raw_hash": "2e745fb285e1eddfb6567789eaacbb03345075f509d86f699e8f98cb081103b6"
+    },
+    "data_assets": [
+      {
+        "row_index": 1
+      },
+      {
+        "row_index": 2
+      },
+      {
+        "row_index": 3
+      },
+      {
+        "row_index": 4
+      },
+      {
+        "row_index": 5
+      },
+      {
+        "row_index": 6
+      },
+      {
+        "row_index": 7
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      },
+      {
+        "row_index": 10
+      },
+      {
+        "row_index": 11
+      },
+      {
+        "row_index": 12
+      },
+      {
+        "row_index": 13
+      },
+      {
+        "row_index": 14
+      },
+      {
+        "row_index": 15
+      },
+      {
+        "row_index": 16
+      },
+      {
+        "row_index": 17
+      },
+      {
+        "row_index": 18
+      },
+      {
+        "row_index": 19
+      },
+      {
+        "row_index": 20
+      },
+      {
+        "row_index": 21
+      },
+      {
+        "row_index": 22
+      },
+      {
+        "row_index": 23
+      },
+      {
+        "row_index": 24
+      }
+    ],
+    "infrastructure": [
+      {
+        "row_index": 1,
+        "platform_name": "IBM-0001"
+      },
+      {
+        "row_index": 2,
+        "platform_name": "IBM-0002"
+      },
+      {
+        "row_index": 3,
+        "platform_name": "IBM-0003"
+      },
+      {
+        "row_index": 4,
+        "platform_name": "IBM-0004"
+      },
+      {
+        "row_index": 5,
+        "platform_name": "IBM-0005"
+      },
+      {
+        "row_index": 6,
+        "platform_name": "IBM-0006"
+      },
+      {
+        "row_index": 7,
+        "platform_name": "IBM-0007"
+      },
+      {
+        "row_index": 8,
+        "platform_name": "IBM-0008"
+      },
+      {
+        "row_index": 9,
+        "platform_name": "IBM-0009"
+      },
+      {
+        "row_index": 10,
+        "platform_name": "IBM-0010"
+      },
+      {
+        "row_index": 11,
+        "platform_name": "IBM-0011"
+      },
+      {
+        "row_index": 12,
+        "platform_name": "IBM-0012"
+      },
+      {
+        "row_index": 13,
+        "platform_name": "IBM-0013"
+      },
+      {
+        "row_index": 14,
+        "platform_name": "IBM-0014"
+      },
+      {
+        "row_index": 15,
+        "platform_name": "IBM-0015"
+      },
+      {
+        "row_index": 16,
+        "platform_name": "IBM-0016"
+      },
+      {
+        "row_index": 17,
+        "platform_name": "IBM-0017"
+      },
+      {
+        "row_index": 18,
+        "platform_name": "IBM-0018"
+      }
+    ],
+    "vendors": [
+      {
+        "row_index": 1,
+        "vendor_name": "IBM Global Services"
+      },
+      {
+        "row_index": 2,
+        "vendor_name": "Amazon Web Services"
+      },
+      {
+        "row_index": 3,
+        "vendor_name": "Accenture"
+      },
+      {
+        "row_index": 4,
+        "vendor_name": "TCS"
+      },
+      {
+        "row_index": 5,
+        "vendor_name": "Microsoft Azure"
+      },
+      {
+        "row_index": 6,
+        "vendor_name": "Oracle"
+      },
+      {
+        "row_index": 7,
+        "vendor_name": "SAP"
+      },
+      {
+        "row_index": 8,
+        "vendor_name": "Sabre"
+      },
+      {
+        "row_index": 9,
+        "vendor_name": "Salesforce"
+      },
+      {
+        "row_index": 10,
+        "vendor_name": "Workday"
+      },
+      {
+        "row_index": 11,
+        "vendor_name": "Helios Technologies"
+      },
+      {
+        "row_index": 12,
+        "vendor_name": "Summit Consulting"
+      },
+      {
+        "row_index": 13,
+        "vendor_name": "Vertex Technologies"
+      },
+      {
+        "row_index": 14,
+        "vendor_name": "Summit Technologies"
+      },
+      {
+        "row_index": 15,
+        "vendor_name": "Helios Software"
+      },
+      {
+        "row_index": 16,
+        "vendor_name": "Northwind Software"
+      },
+      {
+        "row_index": 17,
+        "vendor_name": "Vertex Consulting"
+      },
+      {
+        "row_index": 18,
+        "vendor_name": "Beacon Technologies"
+      }
+    ],
+    "budget_value": [
+      {
+        "row_index": 1
+      },
+      {
+        "row_index": 2
+      },
+      {
+        "row_index": 3
+      },
+      {
+        "row_index": 4
+      },
+      {
+        "row_index": 5
+      },
+      {
+        "row_index": 6
+      },
+      {
+        "row_index": 7
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      },
+      {
+        "row_index": 10
+      },
+      {
+        "row_index": 11
+      },
+      {
+        "row_index": 12
+      },
+      {
+        "row_index": 13
+      },
+      {
+        "row_index": 14
+      },
+      {
+        "row_index": 15
+      },
+      {
+        "row_index": 16
+      },
+      {
+        "row_index": 17
+      },
+      {
+        "row_index": 18
+      }
+    ],
+    "programs": [
+      {
+        "row_index": 1
+      },
+      {
+        "row_index": 2
+      },
+      {
+        "row_index": 3
+      },
+      {
+        "row_index": 4
+      },
+      {
+        "row_index": 5
+      },
+      {
+        "row_index": 6
+      },
+      {
+        "row_index": 7
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      },
+      {
+        "row_index": 10
+      },
+      {
+        "row_index": 11
+      },
+      {
+        "row_index": 12
+      },
+      {
+        "row_index": 13
+      },
+      {
+        "row_index": 14
+      },
+      {
+        "row_index": 15
+      },
+      {
+        "row_index": 16
+      },
+      {
+        "row_index": 17
+      },
+      {
+        "row_index": 18
+      }
+    ],
+    "ai_use_cases": [
+      {
+        "candidate_index": 1,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 2,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 3,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 4,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 5,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 6,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 7,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      },
+      {
+        "candidate_index": 8,
+        "name": "AI opportunity",
+        "business_function": "Owner to confirm",
+        "stage": "Planning-grade",
+        "value_signal": "Value hypothesis needs validation",
+        "evidence_gate": "Confirm data, systems, controls, and owner evidence.",
+        "why_this_is_material": ""
+      }
+    ],
+    "risks_controls": [
+      {
+        "row_index": 1
+      },
+      {
+        "row_index": 2
+      },
+      {
+        "row_index": 3
+      },
+      {
+        "row_index": 4
+      },
+      {
+        "row_index": 5
+      },
+      {
+        "row_index": 6
+      },
+      {
+        "row_index": 7
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      },
+      {
+        "row_index": 10
+      },
+      {
+        "row_index": 11
+      },
+      {
+        "row_index": 12
+      },
+      {
+        "row_index": 13
+      },
+      {
+        "row_index": 14
+      },
+      {
+        "row_index": 15
+      },
+      {
+        "row_index": 16
+      },
+      {
+        "row_index": 17
+      },
+      {
+        "row_index": 18
+      },
+      {
+        "row_index": 19
+      },
+      {
+        "row_index": 20
+      }
+    ],
+    "metrics_outcomes": [
+      {
+        "row_index": 1
+      },
+      {
+        "row_index": 2
+      },
+      {
+        "row_index": 3
+      },
+      {
+        "row_index": 4
+      },
+      {
+        "row_index": 5
+      },
+      {
+        "row_index": 6
+      },
+      {
+        "row_index": 7
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      },
+      {
+        "row_index": 10
+      },
+      {
+        "row_index": 11
+      },
+      {
+        "row_index": 12
+      },
+      {
+        "row_index": 13
+      },
+      {
+        "row_index": 14
+      },
+      {
+        "row_index": 15
+      },
+      {
+        "row_index": 16
+      },
+      {
+        "row_index": 17
+      },
+      {
+        "row_index": 18
+      }
+    ],
+    "industry_patterns": [
+      {
+        "row_index": 1,
+        "pattern_name": "IROPS AI recovery cockpit industry pattern"
+      },
+      {
+        "row_index": 2,
+        "pattern_name": "Crew recovery decision support industry pattern"
+      },
+      {
+        "row_index": 3,
+        "pattern_name": "Customer reaccommodation and notification assist industry pattern"
+      },
+      {
+        "row_index": 4,
+        "pattern_name": "Mainframe and MQ modernization sequencing industry pattern"
+      },
+      {
+        "row_index": 5,
+        "pattern_name": "Tower value tracking for IROPS outcomes industry pattern"
+      },
+      {
+        "row_index": 6,
+        "pattern_name": "Operations data foundation for airline AI industry pattern"
+      },
+      {
+        "row_index": 7,
+        "pattern_name": "Vendor and AMS economics transparency industry pattern"
+      },
+      {
+        "row_index": 8
+      },
+      {
+        "row_index": 9
+      }
+    ],
+    "process_evidence": [
+      {
+        "row_index": 1,
+        "systems_used": "APP-0365"
+      },
+      {
+        "row_index": 2,
+        "systems_used": "APP-0304"
+      },
+      {
+        "row_index": 3,
+        "systems_used": "APP-0558"
+      },
+      {
+        "row_index": 4,
+        "systems_used": "APP-0363"
+      },
+      {
+        "row_index": 5,
+        "systems_used": "APP-0047"
+      },
+      {
+        "row_index": 6,
+        "systems_used": "APP-0171"
+      },
+      {
+        "row_index": 7,
+        "systems_used": "APP-0370"
+      },
+      {
+        "row_index": 8,
+        "systems_used": "APP-0203"
+      },
+      {
+        "row_index": 9,
+        "systems_used": "APP-0043"
+      },
+      {
+        "row_index": 10,
+        "systems_used": "APP-0515"
+      },
+      {
+        "row_index": 11,
+        "systems_used": "APP-0101"
+      },
+      {
+        "row_index": 12,
+        "systems_used": "APP-0430"
+      },
+      {
+        "row_index": 13,
+        "systems_used": "APP-0395"
+      },
+      {
+        "row_index": 14,
+        "systems_used": "APP-0571"
+      },
+      {
+        "row_index": 15,
+        "systems_used": "APP-0183"
+      },
+      {
+        "row_index": 16,
+        "systems_used": "APP-0506"
+      },
+      {
+        "row_index": 17,
+        "systems_used": "APP-0448"
+      },
+      {
+        "row_index": 18,
+        "systems_used": "APP-0317"
+      },
+      {
+        "row_index": 19,
+        "systems_used": "APP-0580"
+      },
+      {
+        "row_index": 20,
+        "systems_used": "APP-0190"
+      }
+    ],
+    "relationship_samples": [
+      {
+        "row_index": 1,
+        "from_object_name": "Catering",
+        "to_object_name": "Catering Hub 8",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 2,
+        "from_object_name": "Finance",
+        "to_object_name": "Finance Portal 12",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 3,
+        "from_object_name": "Cargo",
+        "to_object_name": "Cargo Service 372",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 4,
+        "from_object_name": "APP-0003",
+        "to_object_name": "INT-0067",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 5,
+        "from_object_name": "INT-0212",
+        "to_object_name": "APP-0425",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 6,
+        "from_object_name": "APP-0421",
+        "to_object_name": "INT-0450",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 7,
+        "from_object_name": "DCS",
+        "to_object_name": "DCS Service 306",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 8,
+        "from_object_name": "INC-00250",
+        "to_object_name": "APP-0015",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 9,
+        "from_object_name": "APP-0532",
+        "to_object_name": "INT-0127",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 10,
+        "from_object_name": "APP-0476",
+        "to_object_name": "INT-0237",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 11,
+        "from_object_name": "INT-0054",
+        "to_object_name": "APP-0286",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 12,
+        "from_object_name": "APP-0510",
+        "to_object_name": "INT-0163",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 13,
+        "from_object_name": "INT-0429",
+        "to_object_name": "APP-0227",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 14,
+        "from_object_name": "flight planning platform",
+        "to_object_name": "IT incident and change-risk copilot",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 15,
+        "from_object_name": "APP-0062",
+        "to_object_name": "INT-0333",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 16,
+        "from_object_name": "INT-0209",
+        "to_object_name": "APP-0568",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 17,
+        "from_object_name": "APP-0144",
+        "to_object_name": "INT-0098",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 18,
+        "from_object_name": "INC-00181",
+        "to_object_name": "APP-0281",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 19,
+        "from_object_name": "INT-0228",
+        "to_object_name": "APP-0118",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 20,
+        "from_object_name": "APP-0523",
+        "to_object_name": "INT-0087",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 21,
+        "from_object_name": "APP-0558",
+        "to_object_name": "INT-0301",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 22,
+        "from_object_name": "INT-0096",
+        "to_object_name": "APP-0119",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 23,
+        "from_object_name": "Safety",
+        "to_object_name": "Safety Manager 475",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 24,
+        "from_object_name": "APP-0235",
+        "to_object_name": "INT-0226",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 25,
+        "from_object_name": "INC-00096",
+        "to_object_name": "APP-0426",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 26,
+        "from_object_name": "INT-0297",
+        "to_object_name": "APP-0432",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 27,
+        "from_object_name": "INC-00373",
+        "to_object_name": "APP-0056",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 28,
+        "from_object_name": "PSS",
+        "to_object_name": "PSS Portal 202",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 29,
+        "from_object_name": "INC-00079",
+        "to_object_name": "APP-0185",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 30,
+        "from_object_name": "INC-00214",
+        "to_object_name": "APP-0276",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 31,
+        "from_object_name": "Crew",
+        "to_object_name": "Crew Ledger 23",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 32,
+        "from_object_name": "IROPS AI recovery cockpit: crew legality",
+        "to_object_name": "skyharbor-air-v6-v7-upgrade-candidate-20260710",
+        "relationship_type": "runs_on"
+      },
+      {
+        "row_index": 33,
+        "from_object_name": "Revenue Accounting",
+        "to_object_name": "Revenue Accounting Engine 560",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 34,
+        "from_object_name": "owner_to_confirm_in_workshop",
+        "to_object_name": "Vendor and AMS economics transparency: vendor contract inventory",
+        "relationship_type": "owns"
+      },
+      {
+        "row_index": 35,
+        "from_object_name": "INT-0066",
+        "to_object_name": "APP-0499",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 36,
+        "from_object_name": "INC-00101",
+        "to_object_name": "APP-0417",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 37,
+        "from_object_name": "Mainframe and MQ modernization sequencing: batch settlement",
+        "to_object_name": "skyharbor-air-v6-v7-upgrade-candidate-20260710",
+        "relationship_type": "runs_on"
+      },
+      {
+        "row_index": 38,
+        "from_object_name": "INT-0302",
+        "to_object_name": "APP-0332",
+        "relationship_type": "feeds"
+      },
+      {
+        "row_index": 39,
+        "from_object_name": "Catering",
+        "to_object_name": "Catering Ledger 184",
+        "relationship_type": "uses"
+      },
+      {
+        "row_index": 40,
+        "from_object_name": "Maintenance",
+        "to_object_name": "Maintenance Ledger 25",
+        "relationship_type": "uses"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "needs-evidence",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "needs-evidence",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      },
+      {
+        "name": "source extract",
+        "type": "csv",
+        "source_owner": "",
+        "source_status": "directional",
+        "known_gaps": "",
+        "parsed_into_dimensions": []
+      }
+    ]
+  },
+  "deterministic_dataset_registry": [
+    {
+      "dataset_id": "applications_full",
+      "grain": "one row per application",
+      "business_definition": "The tenant's application inventory: hosting, criticality, vendor, run cost, modernization plan, and owner where known.",
+      "row_count": 900,
+      "available_dimensions": [
+        "category",
+        "business_function",
+        "deployment",
+        "lifecycle_stage",
+        "criticality",
+        "vendor"
+      ],
+      "available_measures": [
+        "run_cost_fy26_usd",
+        "integration_count",
+        "count"
+      ],
+      "approved_visual_types": [
+        "horizontal_bar",
+        "treemap",
+        "heatmap"
+      ],
+      "evidence_source": "tower-standardized-v1/skyharbor-air/family-2-technology-estate/F05_applications-systems.csv"
+    },
+    {
+      "dataset_id": "vendors_full",
+      "grain": "one row per vendor contract",
+      "business_definition": "Vendor name, scope, annual run rate, renewal date, and criticality.",
+      "row_count": 320,
+      "available_dimensions": [
+        "scope",
+        "criticality"
+      ],
+      "available_measures": [
+        "annual_run_rate_usd",
+        "count"
+      ],
+      "approved_visual_types": [
+        "horizontal_bar",
+        "treemap"
+      ],
+      "evidence_source": "tower-standardized-v1/skyharbor-air/family-4-financial-commercial/F11_vendors-contracts-licenses.csv"
+    },
+    {
+      "dataset_id": "programs_full",
+      "grain": "one row per initiative",
+      "business_definition": "Named initiative, business area, owner, sponsor, stage, promised vs. measured value, evidence status, scale decision.",
+      "row_count": 30,
+      "available_dimensions": [
+        "business_area",
+        "portfolio_segment",
+        "stage",
+        "status",
+        "scale_decision"
+      ],
+      "available_measures": [
+        "promised_benefit_usd",
+        "measured_value_usd",
+        "count"
+      ],
+      "approved_visual_types": [
+        "horizontal_bar",
+        "scatter_2x2",
+        "waterfall"
+      ],
+      "evidence_source": "tower-standardized-v1/skyharbor-air/ai-control-tower/T01_initiative-registry.csv"
+    },
+    {
+      "dataset_id": "risk_register",
+      "grain": "one row per identified risk",
+      "business_definition": "Risk type, severity, control status, owner role, mitigation, linked evidence.",
+      "row_count": 150,
+      "available_dimensions": [
+        "risk_type",
+        "severity",
+        "control_status",
+        "owner_role"
+      ],
+      "available_measures": [
+        "count"
+      ],
+      "approved_visual_types": [
+        "heatmap",
+        "horizontal_bar"
+      ],
+      "evidence_source": "tower-standardized-v1/skyharbor-air/ai-control-tower/T09_risk-governance.csv"
+    },
+    {
+      "dataset_id": "evidence_registry",
+      "grain": "one row per evidence item",
+      "business_definition": "Source document, claim supported, freshness status, trust status.",
+      "row_count": 80,
+      "available_dimensions": [
+        "source_type",
+        "claim_supported",
+        "freshness_status",
+        "trust_status"
+      ],
+      "available_measures": [
+        "count"
+      ],
+      "approved_visual_types": [
+        "evidence_timeline"
+      ],
+      "evidence_source": "tower-standardized-v1/skyharbor-air/ai-control-tower/T10_evidence-items.csv"
+    },
+    {
+      "dataset_id": "budget_summary",
+      "grain": "one row per budget line",
+      "business_definition": "Budget area, run/change split, capex/opex split, owner team.",
+      "row_count": 13,
+      "available_dimensions": [
+        "budget_area",
+        "spend_type"
+      ],
+      "available_measures": [
+        "budget_fy26_usd",
+        "run_budget_fy26_usd",
+        "change_budget_fy26_usd",
+        "capex_budget_fy26_usd",
+        "opex_budget_fy26_usd"
+      ],
+      "approved_visual_types": [
+        "waterfall",
+        "stacked_bar"
+      ],
+      "evidence_source": "tower-standardized-v1/skyharbor-air/family-4-financial-commercial/F12_it-budget-financials.csv"
+    }
+  ],
+  "evidence_index": [
+    {
+      "evidence_id": "EVID-SHA-0001",
+      "source_family": "annual_report",
+      "title": "Annual report §Operating scale",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0002",
+      "source_family": "annual_report",
+      "title": "Annual report §Revenue and segment performance",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0003",
+      "source_family": "investor_day_deck",
+      "title": "Investor day §Digital and loyalty growth",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0004",
+      "source_family": "architecture_deck",
+      "title": "Architecture deck slide 7",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0005",
+      "source_family": "edw_deck",
+      "title": "EDW deck slide 11",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0006",
+      "source_family": "program_roadmap",
+      "title": "Roadmap page 4",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0007",
+      "source_family": "modernization_options",
+      "title": "Mainframe options page 9",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0008",
+      "source_family": "monthly_refresh",
+      "title": "Monthly refresh workbook control sheet",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0100",
+      "source_family": "annual_report",
+      "title": "synthetic locator 1",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0101",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 2",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0102",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 3",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0103",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 4",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0104",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 5",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0105",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 6",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0106",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 7",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0107",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 8",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0108",
+      "source_family": "annual_report",
+      "title": "synthetic locator 9",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0109",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 10",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0110",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 11",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0111",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 12",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0112",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 13",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0113",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 14",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0114",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 15",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0115",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 16",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0116",
+      "source_family": "annual_report",
+      "title": "synthetic locator 17",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0117",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 18",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0118",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 19",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0119",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 20",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0120",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 21",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0121",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 22",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0122",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 23",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0123",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 24",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0124",
+      "source_family": "annual_report",
+      "title": "synthetic locator 25",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0125",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 26",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0126",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 27",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0127",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 28",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0128",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 29",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0129",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 30",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0130",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 31",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0131",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 32",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0132",
+      "source_family": "annual_report",
+      "title": "synthetic locator 33",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0133",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 34",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0134",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 35",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0135",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 36",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0136",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 37",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0137",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 38",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0138",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 39",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0139",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 40",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0140",
+      "source_family": "annual_report",
+      "title": "synthetic locator 41",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0141",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 42",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0142",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 43",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0143",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 44",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0144",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 45",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0145",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 46",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0146",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 47",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0147",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 48",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0148",
+      "source_family": "annual_report",
+      "title": "synthetic locator 49",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0149",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 50",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0150",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 51",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0151",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 52",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0152",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 53",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0153",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 54",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0154",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 55",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0155",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 56",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0156",
+      "source_family": "annual_report",
+      "title": "synthetic locator 57",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0157",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 58",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0158",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 59",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0159",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 60",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0160",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 61",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0161",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 62",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0162",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 63",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0163",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 64",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0164",
+      "source_family": "annual_report",
+      "title": "synthetic locator 65",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "needs-review"
+    },
+    {
+      "evidence_id": "EVID-SHA-0165",
+      "source_family": "quarterly_earnings",
+      "title": "synthetic locator 66",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0166",
+      "source_family": "investor_day_deck",
+      "title": "synthetic locator 67",
+      "supports": [
+        "risk"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0167",
+      "source_family": "architecture_deck",
+      "title": "synthetic locator 68",
+      "supports": [
+        "adoption"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0168",
+      "source_family": "edw_deck",
+      "title": "synthetic locator 69",
+      "supports": [
+        "architecture"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0169",
+      "source_family": "program_roadmap",
+      "title": "synthetic locator 70",
+      "supports": [
+        "governance"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0170",
+      "source_family": "modernization_options",
+      "title": "synthetic locator 71",
+      "supports": [
+        "budget"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    },
+    {
+      "evidence_id": "EVID-SHA-0171",
+      "source_family": "monthly_refresh",
+      "title": "synthetic locator 72",
+      "supports": [
+        "value"
+      ],
+      "period": null,
+      "confidence": "governed-real"
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+{
+  "story_architecture_id": "home-v4-skyharbor-air-1784919276938",
+  "business_archetype": {
+    "label": "Global network airline where value is won or lost in the recovery of disrupted operations",
+    "narrative": "SkyHarbor Air is a full-service global carrier whose economics turn on how quickly and legally it recovers from irregular operations (IROPS) across flight, crew, customer, maintenance, and cargo. Margin, brand, and regulatory standing are all decided in the hours around a disruption, where flight, crew legality, reaccommodation, and vendor-operated systems must resolve together. The transformation question is not whether to modernize technology, but whether SkyHarbor can convert fragmented operational context into faster, safer, more accountable recovery decisions.",
+    "classification": "strategic_inference",
+    "evidence_maturity": "directional"
+  },
+  "governing_thesis": {
+    "statement": "SkyHarbor's next value step is to industrialize disruption recovery as a governed, cross-functional decision capability \u2014 turning IROPS from a cost-and-service shock into a managed, measurable operating advantage \u2014 before layering AI onto operations whose data, ownership, and control evidence are not yet certified.",
+    "why_now": "The tenant context shows a rich but uncertified operational estate: recovery-relevant functions (IROPS/OCC, crew, customer, maintenance) are identifiable, industry recovery patterns are recognized, and a target data platform is named \u2014 but ownership, baselines, contract economics, and control evidence are explicitly not validated. Leadership can commit to the recovery-value direction now while treating specific AI use cases as planning-grade until evidence gates pass.",
+    "classification": "strategic_inference",
+    "evidence_maturity": "directional",
+    "business_object_classification": "strategic_foundation"
+  },
+  "strategic_tensions": [
+    {
+      "tension": "Recovery speed vs. crew and safety legality",
+      "explanation": "Faster reaccommodation and re-crewing create commercial value, but every recovery move must stay inside crew-duty legality and safety constraints. Automation that optimizes for speed without encoded legality controls transfers risk to the regulator's desk.",
+      "classification": "industry_pattern",
+      "evidence_maturity": "directional"
+    },
+    {
+      "tension": "AI ambition vs. uncertified operational data",
+      "explanation": "The airline aspires to AI-assisted recovery, yet disruption lineage, bag scans, maintenance events, and contact-center transcripts are not certified. Modeling on uncertified data would produce confident but ungoverned recommendations.",
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    },
+    {
+      "tension": "Managed-services dependency vs. decision accountability",
+      "explanation": "Critical application and infrastructure delivery runs through managed-services and named vendors whose scope, SLAs, and exit terms are not validated. Recovery decisions depend on systems the airline does not fully control or price transparently.",
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    },
+    {
+      "tension": "Cross-functional recovery vs. unassigned ownership",
+      "explanation": "Recovery requires flight, crew, customer, and maintenance to act as one, but content ownership and data-governance accountability are not yet assigned across critical use cases, leaving decisions without a single accountable owner.",
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    }
+  ],
+  "chapter_spine": [
+    {
+      "order": 1,
+      "chapter_key": "context_and_stakes",
+      "title": "Where SkyHarbor's value is decided",
+      "executive_promise": "Frame the airline as a recovery-economics business and state what context is loaded, what is inferred, and what remains unproven.",
+      "covers_dimensions": [
+        "profile",
+        "functions",
+        "industry",
+        "enterprise_thesis"
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    },
+    {
+      "order": 2,
+      "chapter_key": "operating_reality",
+      "title": "How recovery works today",
+      "executive_promise": "Show the current cross-functional recovery workflow, the systems and vendors it depends on, and where accountability is missing.",
+      "covers_dimensions": [
+        "opev",
+        "apps",
+        "service_delivery",
+        "org",
+        "workforce"
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    },
+    {
+      "order": 3,
+      "chapter_key": "evidence_and_constraints",
+      "title": "What we can and cannot yet claim",
+      "executive_promise": "Separate loaded context from board-grade truth: uncertified data, contract gaps, missing baselines, and control evidence still required.",
+      "covers_dimensions": [
+        "evidence",
+        "data",
+        "risks",
+        "metrics",
+        "ms"
+      ],
+      "classification": "missing_evidence",
+      "evidence_maturity": "needs_validation"
+    },
+    {
+      "order": 4,
+      "chapter_key": "opportunity_agenda",
+      "title": "The recovery-value opportunity set",
+      "executive_promise": "Present planning-grade recovery use cases and the foundations they depend on, each with an explicit evidence gate.",
+      "covers_dimensions": [
+        "ai",
+        "programs",
+        "capabilities",
+        "value_streams"
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    },
+    {
+      "order": 5,
+      "chapter_key": "leadership_agenda",
+      "title": "Decisions leadership must own",
+      "executive_promise": "Convert tensions and gaps into 3-5 decisions on ownership, evidence, vendor economics, and sequencing.",
+      "covers_dimensions": [
+        "leadership_agenda",
+        "decision_rights",
+        "vendors",
+        "budget"
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    },
+    {
+      "order": 6,
+      "chapter_key": "handoff",
+      "title": "Where the modules take over",
+      "executive_promise": "Route validated context to Intelligence, Moves, Source, and Tower and state the next proof each must return.",
+      "covers_dimensions": [
+        "rel",
+        "evidence",
+        "architecture_dependencies"
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional"
+    }
+  ],
+  "act_build_scale": {
+    "act": {
+      "horizon": "0-3 months",
+      "theme": "Establish recovery ownership and evidence gates",
+      "moves": [
+        "Assign a single accountable owner for cross-functional disruption recovery and for data governance on recovery-critical domains.",
+        "Certify the minimum data spine for recovery decisions: disruption lineage, crew legality, bag scans, maintenance events.",
+        "Baseline current recovery performance and cost so any AI value claim has a measurable anchor."
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional",
+      "business_object_classification": "current_program"
+    },
+    "build": {
+      "horizon": "3-9 months",
+      "theme": "Govern recovery decisions before automating them",
+      "moves": [
+        "Codify crew-legality and safety constraints as explicit decision controls for any recovery recommendation.",
+        "Validate managed-services scope, SLAs, and exit terms on recovery-critical systems.",
+        "Stand up governed recovery decision support with human accountability, not autonomous action."
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional",
+      "business_object_classification": "strategic_foundation"
+    },
+    "scale": {
+      "horizon": "9-18 months",
+      "theme": "Industrialize measured recovery advantage",
+      "moves": [
+        "Extend proven recovery decision support across network, cargo, and loyalty impact.",
+        "Track recovery value in a control tower against certified baselines.",
+        "Scale only use cases that passed data, control, owner, and value gates."
+      ],
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional",
+      "business_object_classification": "strategic_foundation"
+    }
+  },
+  "leadership_decisions": [
+    {
+      "decision": "Name a single accountable owner for cross-functional disruption recovery",
+      "why_it_matters": "Recovery decisions currently span functions with no unified accountability; without an owner, neither value nor risk can be governed.",
+      "classification": "strategic_inference",
+      "evidence_maturity": "directional",
+      "business_object_classification": "evidence_request"
+    },
+    {
+      "decision": "Approve certification of the recovery data spine before any AI build",
+      "why_it_matters": "Disruption, crew, bag, and maintenance data are uncertified; modeling on them now would produce ungoverned recommendations.",
+      "classification": "missing_evidence",
+      "evidence_maturity": "needs_validation",
+      "business_object_classification": "evidence_request"
+    },
+    {
+      "decision": "Commission a managed-services and vendor economics review on recovery-critical systems",
+      "why_it_matters": "Scope, SLAs, and exit terms are unvalidated on the systems recovery depends on, exposing both cost and continuity risk.",
+      "classification": "strategic_inference",
+      "evidence_maturity": "needs_validation",
+      "business_object_classification": "evidence_request"
+    },
+    {
+      "decision": "Set a policy that recovery automation stays decision-support with human accountability until legality controls are proven",
+      "why_it_matters": "Speed-optimized automation without encoded crew-legality and safety controls transfers regulatory risk to the airline.",
+      "classification": "industry_pattern",
+      "evidence_maturity": "directional",
+      "business_object_classification": "current_program"
+    },
+    {
+      "decision": "Establish certified recovery baselines to anchor value measurement",
+      "why_it_matters": "No certified operational, financial, or CX baselines exist, so no outcome claim can be defended to the board.",
+      "classification": "missing_evidence",
+      "evidence_maturity": "needs_validation",
+      "business_object_classification": "evidence_request"
+    }
+  ],
+  "signature_visuals": [
+    {
+      "visual_type": "executive_scorecard",
+      "title": "Recovery readiness: what leadership can claim today",
+      "executive_question": "For disruption recovery, where are we source-backed, directional, or not yet evidenced?",
+      "classification": "strategic_inference",
+      "empty_state": "Recovery readiness cannot be scored until context dimensions are bound to source coverage."
+    },
+    {
+      "visual_type": "relationship_graph",
+      "title": "The cross-functional recovery decision path",
+      "executive_question": "Which functions, systems, and vendors must act together to recover a disrupted operation, and where is ownership missing?",
+      "classification": "strategic_inference",
+      "empty_state": "The recovery decision path cannot be drawn until function-to-system-to-vendor relationships are materialized."
+    },
+    {
+      "visual_type": "scatter_2x2",
+      "title": "Recovery opportunity set: value vs. evidence readiness",
+      "executive_question": "Which recovery use cases carry the highest value and are closest to being evidence-ready?",
+      "classification": "strategic_inference",
+      "empty_state": "The opportunity set cannot be plotted until use-case value hypotheses and evidence gates are confirmed."
+    },
+    {
+      "visual_type": "heatmap",
+      "title": "Recovery risk and control intensity",
+      "executive_question": "Across recovery-critical domains, where is risk high and control evidence weak?",
+      "classification": "strategic_inference",
+      "empty_state": "Risk and control intensity cannot be shown until the risk register is bound to recovery domains."
+    },
+    {
+      "visual_type": "evidence_timeline",
+      "title": "From loaded context to board-grade truth",
+      "executive_question": "What evidence exists now, and what must be validated to defend recovery decisions?",
+      "classification": "missing_evidence",
+      "empty_state": "The evidence timeline cannot render until evidence items and their trust status are loaded."
+    },
+    {
+      "visual_type": "stacked_bar",
+      "title": "Where recovery-critical systems run",
+      "executive_question": "How concentrated is the recovery estate across hosting and delivery models, and how much depends on vendors?",
+      "classification": "loaded_fact",
+      "empty_state": "System composition cannot be shown until the application estate is bound with hosting and criticality."
+    }
+  ],
+  "do_not_claim": [
+    {
+      "statement": "Do not claim any production IROPS AI, autonomous recovery, or realized Tower value outcome; none is proven.",
+      "classification": "missing_evidence"
+    },
+    {
+      "statement": "Do not present certified operational, financial, or customer-experience baselines; none is loaded.",
+      "classification": "missing_evidence"
+    },
+    {
+      "statement": "Do not state validated managed-services scope, SLAs, contract economics, or exit terms; these are unvalidated.",
+      "classification": "missing_evidence"
+    },
+    {
+      "statement": "Do not treat named data domains as certified for AI use; lineage and certification are not confirmed.",
+      "classification": "missing_evidence"
+    },
+    {
+      "statement": "Do not narrate this substrate as real SkyHarbor production data; it is a planning-grade synthetic upgrade candidate.",
+      "classification": "loaded_fact"
+    },
+    {
+      "statement": "Do not present raw inventory counts (applications, vendors, risks, rows) as executive value; translate to coverage and readiness.",
+      "classification": "loaded_fact"
+    }
+  ]
+}

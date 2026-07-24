@@ -1,0 +1,1242 @@
+{
+  "enterprise_story_integrated": {
+    "title": "Fixture Enterprise Story",
+    "thesis": "A fixture enterprise thesis for validator testing.",
+    "narrative_arc": "Fixture narrative arc.",
+    "strategic_agenda": [
+      "Fixture agenda item."
+    ]
+  },
+  "dimensions": [
+    {
+      "dimension_key": "enterprise_thesis",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for enterprise_thesis",
+      "headline": "Fixture headline for enterprise_thesis.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the enterprise_thesis dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for enterprise_thesis.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for enterprise_thesis.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for enterprise_thesis.",
+      "recommended_actions": [
+        "Fixture recommended action for enterprise_thesis."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "leadership_agenda",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for leadership_agenda",
+      "headline": "Fixture headline for leadership_agenda.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the leadership_agenda dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for leadership_agenda.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for leadership_agenda.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for leadership_agenda.",
+      "recommended_actions": [
+        "Fixture recommended action for leadership_agenda."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "proven_strengths",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for proven_strengths",
+      "headline": "Fixture headline for proven_strengths.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the proven_strengths dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for proven_strengths.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for proven_strengths.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for proven_strengths.",
+      "recommended_actions": [
+        "Fixture recommended action for proven_strengths."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "structural_constraints",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for structural_constraints",
+      "headline": "Fixture headline for structural_constraints.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the structural_constraints dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for structural_constraints.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for structural_constraints.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for structural_constraints.",
+      "recommended_actions": [
+        "Fixture recommended action for structural_constraints."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "interview_signals",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for interview_signals",
+      "headline": "Fixture headline for interview_signals.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the interview_signals dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for interview_signals.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for interview_signals.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for interview_signals.",
+      "recommended_actions": [
+        "Fixture recommended action for interview_signals."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "profile",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for profile",
+      "headline": "Fixture headline for profile.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the profile dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for profile.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for profile.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for profile.",
+      "recommended_actions": [
+        "Fixture recommended action for profile."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "divisions",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for divisions",
+      "headline": "Fixture headline for divisions.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the divisions dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for divisions.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for divisions.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for divisions.",
+      "recommended_actions": [
+        "Fixture recommended action for divisions."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "front_middle_back",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for front_middle_back",
+      "headline": "Fixture headline for front_middle_back.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the front_middle_back dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for front_middle_back.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for front_middle_back.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for front_middle_back.",
+      "recommended_actions": [
+        "Fixture recommended action for front_middle_back."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "functions",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for functions",
+      "headline": "Fixture headline for functions.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the functions dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for functions.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for functions.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for functions.",
+      "recommended_actions": [
+        "Fixture recommended action for functions."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "capabilities",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for capabilities",
+      "headline": "Fixture headline for capabilities.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the capabilities dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for capabilities.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for capabilities.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for capabilities.",
+      "recommended_actions": [
+        "Fixture recommended action for capabilities."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "org",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for org",
+      "headline": "Fixture headline for org.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the org dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for org.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for org.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for org.",
+      "recommended_actions": [
+        "Fixture recommended action for org."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "decision_rights",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for decision_rights",
+      "headline": "Fixture headline for decision_rights.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the decision_rights dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for decision_rights.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for decision_rights.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for decision_rights.",
+      "recommended_actions": [
+        "Fixture recommended action for decision_rights."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "workforce",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for workforce",
+      "headline": "Fixture headline for workforce.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the workforce dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for workforce.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for workforce.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for workforce.",
+      "recommended_actions": [
+        "Fixture recommended action for workforce."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "geography",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for geography",
+      "headline": "Fixture headline for geography.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the geography dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for geography.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for geography.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for geography.",
+      "recommended_actions": [
+        "Fixture recommended action for geography."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "value_streams",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for value_streams",
+      "headline": "Fixture headline for value_streams.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the value_streams dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for value_streams.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for value_streams.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for value_streams.",
+      "recommended_actions": [
+        "Fixture recommended action for value_streams."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "business_processes",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for business_processes",
+      "headline": "Fixture headline for business_processes.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the business_processes dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for business_processes.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for business_processes.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for business_processes.",
+      "recommended_actions": [
+        "Fixture recommended action for business_processes."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "journeys",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for journeys",
+      "headline": "Fixture headline for journeys.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the journeys dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for journeys.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for journeys.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for journeys.",
+      "recommended_actions": [
+        "Fixture recommended action for journeys."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "opev",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for opev",
+      "headline": "Fixture headline for opev.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the opev dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for opev.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for opev.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for opev.",
+      "recommended_actions": [
+        "Fixture recommended action for opev."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "service_delivery",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for service_delivery",
+      "headline": "Fixture headline for service_delivery.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the service_delivery dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for service_delivery.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for service_delivery.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for service_delivery.",
+      "recommended_actions": [
+        "Fixture recommended action for service_delivery."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "apps",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for apps",
+      "headline": "Fixture headline for apps.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the apps dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for apps.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for apps.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for apps.",
+      "recommended_actions": [
+        "Fixture recommended action for apps."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional",
+      "data_binding": {
+        "dataset_id": "applications_full"
+      },
+      "visual_binding": {
+        "dataset_id": "applications_full",
+        "visual_type": "horizontal_bar",
+        "dimension": "category",
+        "measure": "count",
+        "filters": [],
+        "sort": "descending",
+        "limit": 6,
+        "title": "apps by category",
+        "interpretation": "What leadership should see in apps.",
+        "data_points": [
+          {
+            "label": "AWS",
+            "value": 42
+          }
+        ]
+      }
+    },
+    {
+      "dimension_key": "data",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for data",
+      "headline": "Fixture headline for data.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the data dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for data.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for data.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for data.",
+      "recommended_actions": [
+        "Fixture recommended action for data."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "integrations",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for integrations",
+      "headline": "Fixture headline for integrations.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the integrations dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for integrations.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for integrations.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for integrations.",
+      "recommended_actions": [
+        "Fixture recommended action for integrations."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "infra",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for infra",
+      "headline": "Fixture headline for infra.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the infra dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for infra.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for infra.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for infra.",
+      "recommended_actions": [
+        "Fixture recommended action for infra."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "architecture_dependencies",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for architecture_dependencies",
+      "headline": "Fixture headline for architecture_dependencies.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the architecture_dependencies dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for architecture_dependencies.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for architecture_dependencies.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for architecture_dependencies.",
+      "recommended_actions": [
+        "Fixture recommended action for architecture_dependencies."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "tech_lifecycle",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for tech_lifecycle",
+      "headline": "Fixture headline for tech_lifecycle.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the tech_lifecycle dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for tech_lifecycle.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for tech_lifecycle.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for tech_lifecycle.",
+      "recommended_actions": [
+        "Fixture recommended action for tech_lifecycle."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "data_quality_lineage",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for data_quality_lineage",
+      "headline": "Fixture headline for data_quality_lineage.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the data_quality_lineage dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for data_quality_lineage.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for data_quality_lineage.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for data_quality_lineage.",
+      "recommended_actions": [
+        "Fixture recommended action for data_quality_lineage."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "identity_semantic",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for identity_semantic",
+      "headline": "Fixture headline for identity_semantic.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the identity_semantic dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for identity_semantic.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for identity_semantic.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for identity_semantic.",
+      "recommended_actions": [
+        "Fixture recommended action for identity_semantic."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "risks",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for risks",
+      "headline": "Fixture headline for risks.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the risks dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for risks.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for risks.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for risks.",
+      "recommended_actions": [
+        "Fixture recommended action for risks."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional",
+      "data_binding": {
+        "dataset_id": "risk_register"
+      },
+      "visual_binding": {
+        "dataset_id": "risk_register",
+        "visual_type": "horizontal_bar",
+        "dimension": "severity",
+        "measure": "count",
+        "filters": [],
+        "sort": "descending",
+        "limit": 6,
+        "title": "risks by severity",
+        "interpretation": "What leadership should see in risks."
+      }
+    },
+    {
+      "dimension_key": "evidence",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for evidence",
+      "headline": "Fixture headline for evidence.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the evidence dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for evidence.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for evidence.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for evidence.",
+      "recommended_actions": [
+        "Fixture recommended action for evidence."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional",
+      "data_binding": {
+        "dataset_id": "evidence_registry"
+      },
+      "visual_binding": {
+        "dataset_id": "evidence_registry",
+        "visual_type": "horizontal_bar",
+        "dimension": "source_type",
+        "measure": "count",
+        "filters": [],
+        "sort": "descending",
+        "limit": 6,
+        "title": "evidence by source_type",
+        "interpretation": "What leadership should see in evidence."
+      }
+    },
+    {
+      "dimension_key": "vendors",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for vendors",
+      "headline": "Fixture headline for vendors.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the vendors dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for vendors.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for vendors.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for vendors.",
+      "recommended_actions": [
+        "Fixture recommended action for vendors."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional",
+      "data_binding": {
+        "dataset_id": "vendors_full"
+      },
+      "visual_binding": {
+        "dataset_id": "vendors_full",
+        "visual_type": "horizontal_bar",
+        "dimension": "criticality",
+        "measure": "annual_run_rate_usd",
+        "filters": [],
+        "sort": "descending",
+        "limit": 6,
+        "title": "vendors by criticality",
+        "interpretation": "What leadership should see in vendors."
+      }
+    },
+    {
+      "dimension_key": "ms",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for ms",
+      "headline": "Fixture headline for ms.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the ms dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for ms.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for ms.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for ms.",
+      "recommended_actions": [
+        "Fixture recommended action for ms."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "budget",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for budget",
+      "headline": "Fixture headline for budget.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the budget dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for budget.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for budget.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for budget.",
+      "recommended_actions": [
+        "Fixture recommended action for budget."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional",
+      "data_binding": {
+        "dataset_id": "budget_summary"
+      },
+      "visual_binding": {
+        "dataset_id": "budget_summary",
+        "visual_type": "horizontal_bar",
+        "dimension": "budget_area",
+        "measure": "budget_fy26_usd",
+        "filters": [],
+        "sort": "descending",
+        "limit": 6,
+        "title": "budget by budget_area",
+        "interpretation": "What leadership should see in budget."
+      }
+    },
+    {
+      "dimension_key": "programs",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for programs",
+      "headline": "Fixture headline for programs.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the programs dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for programs.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for programs.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for programs.",
+      "recommended_actions": [
+        "Fixture recommended action for programs."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional",
+      "data_binding": {
+        "dataset_id": "programs_full"
+      },
+      "visual_binding": {
+        "dataset_id": "programs_full",
+        "visual_type": "horizontal_bar",
+        "dimension": "stage",
+        "measure": "count",
+        "filters": [],
+        "sort": "descending",
+        "limit": 6,
+        "title": "programs by stage",
+        "interpretation": "What leadership should see in programs."
+      }
+    },
+    {
+      "dimension_key": "ai",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for ai",
+      "headline": "Fixture headline for ai.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the ai dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for ai.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for ai.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for ai.",
+      "recommended_actions": [
+        "Fixture recommended action for ai."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "metrics",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for metrics",
+      "headline": "Fixture headline for metrics.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the metrics dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for metrics.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for metrics.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for metrics.",
+      "recommended_actions": [
+        "Fixture recommended action for metrics."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "industry",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for industry",
+      "headline": "Fixture headline for industry.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the industry dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for industry.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for industry.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for industry.",
+      "recommended_actions": [
+        "Fixture recommended action for industry."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "lenses",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for lenses",
+      "headline": "Fixture headline for lenses.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the lenses dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for lenses.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for lenses.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for lenses.",
+      "recommended_actions": [
+        "Fixture recommended action for lenses."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    },
+    {
+      "dimension_key": "rel",
+      "chapter": "Test Chapter",
+      "title": "Fixture title for rel",
+      "headline": "Fixture headline for rel.",
+      "executive_takeaway": "A concise, non-numeric executive takeaway for the rel dimension used only for fixture testing.",
+      "key_insights": [
+        {
+          "statement": "First fixture insight for rel.",
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
+        },
+        {
+          "statement": "Second fixture insight for rel.",
+          "evidence_refs": [
+            "EVID-FIX-0002"
+          ]
+        }
+      ],
+      "strategic_implication": "Fixture strategic implication for rel.",
+      "recommended_actions": [
+        "Fixture recommended action for rel."
+      ],
+      "evidence_refs": [
+        "EVID-FIX-0001"
+      ],
+      "related_dimensions": [],
+      "confidence_statement": "directional"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { assertIntegratedPromptPreflight } from "./assert-integrated-prompt-preflight.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
@@ -25,6 +26,17 @@ const tenantArg = process.env.HOME_KNOWLEDGE_V4_TENANT || getArg("--tenant", "al
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
 const packetOnly = process.argv.includes("--packet-only");
+// Zero-cost runtime-path proof: assemble the EXACT integrated_dimensions
+// prompt the deployed job would send (same makePrompt() call, real packet,
+// real registry, real evidence_index, real bindings), run
+// assert-integrated-prompt-preflight.mjs against it, and exit -- without
+// ever constructing an Anthropic client or importing the SDK. Because
+// integrated_dimensions needs assembled.story_architect (normally Call 1's
+// output), preflight mode loads a real, previously-captured story
+// architecture fixture instead of calling Claude for it -- everything else
+// in the payload (registry, evidence_index, bindings, visual contract,
+// hash, dimension list) is the real, current, code-computed value.
+const preflightMode = process.argv.includes("--preflight");
 // Integrated Home Book architecture: one call for all dimension manifests
 // instead of one call per dimension. See makePrompt's "integrated_dimensions"
 // pass type and the deterministic_dataset_registry on the context packet.
@@ -843,56 +855,87 @@ function makePrompt(pass, packet, assembled) {
     };
   }
   if (pass.type === "integrated_dimensions") {
+    // The old chart contract (visual_contract_rules, requiring data_points/
+    // encoding/annotation) is structurally excluded from `common` for this
+    // pass below -- not merely told to be ignored. A contradicting
+    // instruction sitting next to an "ignore it" notice is exactly the
+    // shape of bug that let attempt 1 fabricate data_points: the field was
+    // present, mandatory-sounding, and the override was prose, not schema.
+    // See assert-integrated-prompt-preflight.mjs's
+    // preflight.stale_visual_contract_rules_present check.
+    const integratedCommon = { ...common };
+    delete integratedCommon.visual_contract_rules;
     return {
       task: "Call 5-integrated: Home Book — all dimension manifests in one call",
+      contract_version: DIMENSION_DATASET_BINDINGS_VERSION,
       instruction:
         "Write ONE cohesive enterprise story across every listed dimension, not independent " +
-        "mini-reports. Each dimension gets a concise page manifest, not a 5-tab dossier. Do not " +
-        "reproduce inventories, financial records, application rows, vendor rows, program rows, " +
-        "evidence rows, or relationship edges — reference the governed dataset_id instead; the " +
-        "renderer attaches the real rows deterministically. Read deterministic_dataset_registry " +
-        "below before writing each dimension: bind data_binding/visual_binding/relationship_binding " +
-        "to a real dataset_id from that registry, or omit the binding entirely if no dataset " +
-        "applies — never invent a dataset_id.",
+        "essays. Each dimension gets a concise page manifest. Never reproduce rows, records, " +
+        "or numeric series from any dataset — reference dataset_id only; the renderer attaches " +
+        "real values deterministically after you respond. The only visual contract for this " +
+        "pass is visual_binding_contract below; common.visual_contract_rules from other passes " +
+        "in this pipeline does not apply here and has been omitted from this payload.",
+      visual_binding_contract: {
+        instruction:
+          "visual_binding is a DECLARATIVE INSTRUCTION for the renderer, not a rendered chart. " +
+          "It must contain ONLY: dataset_id, visual_type, dimension, measure, filters, sort, " +
+          "limit, title, annotation_instruction, format, orientation, interpretation. It must " +
+          "NEVER contain data_points, series, values, percentages, computed_totals, x_values, " +
+          "y_values, or any other computed/numeric figure — those come from the real dataset at " +
+          "render time, and you have not seen the real rows. title and annotation_instruction " +
+          "are plain presentation text (e.g. a chart title, or 'highlight the largest category') " +
+          "and must never themselves state a number, percentage, or figure you were not given. " +
+          "dataset_id must be the primary_dataset named in dimension_dataset_bindings for this " +
+          "dimension_key, or omitted entirely if that map has no entry for this dimension_key. " +
+          "dimension/measure must be chosen from that dataset's available_dimensions/" +
+          "available_measures in deterministic_dataset_registry — never invent a field name. " +
+          "visual_type must be one from common.visual_type_enum.",
+        shape: {
+          dataset_id: "string, from dimension_dataset_bindings[dimension_key].primary_dataset — omit visual_binding entirely if no binding exists",
+          visual_type: "string, from common.visual_type_enum",
+          dimension: "string, from the dataset's available_dimensions",
+          measure: "string, from the dataset's available_measures",
+          filters: "array, may be empty",
+          sort: "'ascending' | 'descending'",
+          limit: "integer, max categories to show",
+          title: "optional string, a chart title with no numbers or figures in it",
+          annotation_instruction: "optional string, a presentation instruction with no numbers or figures in it (e.g. 'highlight the largest category')",
+          format: "optional string, a display format hint (e.g. 'currency', 'percent-of-total') — not a computed value",
+          orientation: "optional string, e.g. 'horizontal' | 'vertical'",
+          interpretation: "one sentence: what this visual should help leadership see",
+        },
+      },
       output_requirements: {
         fields: ["enterprise_story", "dimensions"],
         enterprise_story_fields: ["title", "thesis", "narrative_arc", "strategic_agenda"],
         per_dimension_fields: [
-          "dimension_key",
-          "chapter",
-          "title",
-          "headline",
-          "executive_takeaway",
-          "key_insights",
-          "strategic_implication",
-          "recommended_actions",
-          "evidence_refs",
-          "visual_binding",
-          "data_binding",
-          "relationship_binding",
-          "gap_binding",
-          "related_dimensions",
-          "confidence_statement",
+          "dimension_key", "chapter", "title", "headline", "executive_takeaway",
+          "key_insights", "strategic_implication", "recommended_actions", "evidence_refs",
+          "visual_binding", "data_binding", "relationship_binding", "gap_binding",
+          "related_dimensions", "confidence_statement",
         ],
         hard_limits:
-          "title: one concise line. executive_takeaway: 40-80 words. key_insights: 3-5 objects " +
-          "with {statement, evidence_refs}. strategic_implication: one concise statement. " +
-          "recommended_actions: 1-3 short items. evidence_refs: compact IDs only, from the " +
-          "evidence_sources list below — never invent an ID. No repeated enterprise background " +
-          "per dimension — that belongs in enterprise_story only. No long generic introductions. " +
-          "No restatement of navigation labels. No raw records. The whole Home Book should read " +
-          "as one enterprise story, not independent essays — carry the same vocabulary, tone, and " +
-          "cross-dimension themes from enterprise_story into every dimension's framing.",
+          "title: one line. executive_takeaway: 40-80 words. key_insights: 3-5 objects " +
+          "{statement, evidence_refs}. strategic_implication: one statement. " +
+          "recommended_actions: 1-3 items. evidence_refs and key_insights[].evidence_refs: " +
+          "evidence_id values from evidence_index only — an ID not in that list is invalid, " +
+          "never invent one; empty array if no evidence_index entry supports the claim. " +
+          "data_binding/relationship_binding/gap_binding: {dataset_id} from dimension_dataset_bindings " +
+          "only, or omit the field. No enterprise background per dimension — that belongs in " +
+          "enterprise_story. No generic introductions, no restated navigation labels, no raw " +
+          "records, no methodology explanations. Keep total response compact: target well under " +
+          "24000 output tokens across all 38 dimensions combined.",
       },
-      common,
+      common: integratedCommon,
       story_architecture: assembled.story_architect,
       dimensions: packet.dimension_summary,
+      dimension_dataset_bindings: DIMENSION_DATASET_BINDINGS,
       deterministic_dataset_registry: packet.deterministic_dataset_registry ?? [],
       material_aggregates: packet.business_context_samples.application_ownership_coverage
         ? { applications: packet.business_context_samples.application_ownership_coverage }
         : {},
       relationship_samples: packet.business_context_samples.relationship_samples,
-      evidence_sources: packet.business_context_samples.evidence_sources,
+      evidence_index: packet.evidence_index ?? [],
     };
   }
   if (pass.type === "relationships") {
@@ -1247,6 +1290,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per application",
       business_definition: "The tenant's application inventory: hosting, criticality, vendor, run cost, modernization plan, and owner where known.",
       row_count: rows,
+      available_dimensions: ["category", "business_function", "deployment", "lifecycle_stage", "criticality", "vendor"],
+      available_measures: ["run_cost_fy26_usd", "integration_count", "count"],
       approved_visual_types: ["horizontal_bar", "treemap", "heatmap"],
       evidence_source: `tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`,
     });
@@ -1260,6 +1305,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per vendor contract",
       business_definition: "Vendor name, scope, annual run rate, renewal date, and criticality.",
       row_count: rows,
+      available_dimensions: ["scope", "criticality"],
+      available_measures: ["annual_run_rate_usd", "count"],
       approved_visual_types: ["horizontal_bar", "treemap"],
       evidence_source: `tower-standardized-v1/${tstFolder}/family-4-financial-commercial/F11_vendors-contracts-licenses.csv`,
     });
@@ -1273,6 +1320,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per initiative",
       business_definition: "Named initiative, business area, owner, sponsor, stage, promised vs. measured value, evidence status, scale decision.",
       row_count: rows,
+      available_dimensions: ["business_area", "portfolio_segment", "stage", "status", "scale_decision"],
+      available_measures: ["promised_benefit_usd", "measured_value_usd", "count"],
       approved_visual_types: ["horizontal_bar", "scatter_2x2", "waterfall"],
       evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T01_initiative-registry.csv`,
     });
@@ -1286,6 +1335,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per identified risk",
       business_definition: "Risk type, severity, control status, owner role, mitigation, linked evidence.",
       row_count: rows,
+      available_dimensions: ["risk_type", "severity", "control_status", "owner_role"],
+      available_measures: ["count"],
       approved_visual_types: ["heatmap", "horizontal_bar"],
       evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T09_risk-governance.csv`,
     });
@@ -1299,6 +1350,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per evidence item",
       business_definition: "Source document, claim supported, freshness status, trust status.",
       row_count: rows,
+      available_dimensions: ["source_type", "claim_supported", "freshness_status", "trust_status"],
+      available_measures: ["count"],
       approved_visual_types: ["evidence_timeline"],
       evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T10_evidence-items.csv`,
     });
@@ -1312,6 +1365,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per budget line",
       business_definition: "Budget area, run/change split, capex/opex split, owner team.",
       row_count: rows,
+      available_dimensions: ["budget_area", "spend_type"],
+      available_measures: ["budget_fy26_usd", "run_budget_fy26_usd", "change_budget_fy26_usd", "capex_budget_fy26_usd", "opex_budget_fy26_usd"],
       approved_visual_types: ["waterfall", "stacked_bar"],
       evidence_source: `tower-standardized-v1/${tstFolder}/family-4-financial-commercial/F12_it-budget-financials.csv`,
     });
@@ -1319,6 +1374,56 @@ function loadTenantDatasetRegistry(tenantKey) {
 
   return registry;
 }
+
+// Compact, real evidence index (spec Section "Wire the real evidence
+// registry into the prompt") -- sourced from T10_evidence-items.csv, the
+// same file registered as evidence_registry above. Ships IDs, source
+// family, title, supported claims, period, and confidence -- never the
+// full row set. Claude cites evidence_id values from this list; the
+// validator (validate-integrated-manifest.mjs) rejects any ID that isn't
+// in it.
+function loadTenantEvidenceIndex(tenantKey) {
+  const tstFolder = TST_TENANT_FOLDER[tenantKey];
+  if (!tstFolder) return [];
+  const evidencePath = path.join(repoRoot, "tower-standardized-v1", tstFolder, "ai-control-tower/T10_evidence-items.csv");
+  if (!fs.existsSync(evidencePath)) return [];
+  const lines = fs.readFileSync(evidencePath, "utf8").trim().split("\n").map((l) => l.replace(/\r$/, ""));
+  const header = lines[0].split(",");
+  return lines.slice(1).map((line) => {
+    const cells = line.split(",");
+    const row = Object.fromEntries(header.map((h, i) => [h, cells[i] ?? ""]));
+    return {
+      evidence_id: row.evidence_id,
+      source_family: row.source_type || "unspecified",
+      title: row.locator || row.source_path || row.evidence_id,
+      supports: [row.claim_supported].filter(Boolean),
+      period: null, // not captured in source -- do not infer
+      confidence: row.trust_status === "usable" ? "governed-real" : "needs-review",
+    };
+  });
+}
+
+// Versioned, explicit dimension -> dataset binding map (spec Section "Add
+// explicit dimension-to-dataset bindings"). Claude selects among these
+// pre-approved options; it does not infer which dataset supports a
+// dimension. Only dimensions with a verified real dataset get an entry --
+// every other dimension gets no binding, which is correct, not a gap to
+// silently paper over.
+const DIMENSION_DATASET_BINDINGS_VERSION = "v1-2026-07-24";
+const DIMENSION_DATASET_BINDINGS = {
+  apps: { primary_dataset: "applications_full", evidence_families: ["applications", "cmdb", "architecture_deck"] },
+  vendors: { primary_dataset: "vendors_full", evidence_families: ["vendors", "annual_report"] },
+  programs: { primary_dataset: "programs_full", evidence_families: ["programs", "investor_day_deck"] },
+  risks: { primary_dataset: "risk_register", evidence_families: ["risk", "investor_day_deck"] },
+  evidence: { primary_dataset: "evidence_registry", evidence_families: ["evidence"] },
+  // NOTE: the real 38-dimension catalog key for this concept is "budget"
+  // (expandedDimensionCatalog: { key: "budget", name: "IT Budget, Spend &
+  // Value" }) -- an earlier version of this map used "spend", which matches
+  // no real dimension_key and made this binding permanently unreachable.
+  // Caught by assert-integrated-prompt-preflight.mjs's
+  // preflight.binding_unreachable_dimension check.
+  budget: { primary_dataset: "budget_summary", evidence_families: ["budget", "annual_report"] },
+};
 
 async function processTenant(client, tenantKey) {
   const sourceFile = path.join(repoRoot, "datasets", "tenant-inputs", tenantKey, "approved-content", "home", "design-contract-pack.json");
@@ -1332,6 +1437,7 @@ async function processTenant(client, tenantKey) {
   ensureDir(tenantDir);
   const packet = buildTenantContextPacket(pack, sourceHash);
   packet.deterministic_dataset_registry = loadTenantDatasetRegistry(tenantKey);
+  packet.evidence_index = loadTenantEvidenceIndex(tenantKey);
   const lineage = buildSourceLineageMetadata(pack, sourceHash);
   writeJson(path.join(tenantDir, "source-context-packet.json"), packet);
   writeJson(path.join(tenantDir, "source-lineage-metadata.json"), lineage);
@@ -1344,6 +1450,45 @@ async function processTenant(client, tenantKey) {
       violation_count: 0,
       visual_contract_count: 0,
       prompt_count: 0,
+      tenant_dir: path.relative(outDir, tenantDir),
+    };
+  }
+  if (preflightMode) {
+    const fixturePath = path.join(repoRoot, "scripts", "knowledge", "__fixtures__", `story-architecture-${tenantKey}.json`);
+    if (!fs.existsSync(fixturePath)) {
+      throw new Error(
+        `No story-architecture preflight fixture for "${tenantKey}" at ${path.relative(repoRoot, fixturePath)}. ` +
+        "Preflight mode never calls Claude, so it needs a real, previously-captured story architecture on disk to stand in for Call 1's output.",
+      );
+    }
+    const storyArchitect = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    const assembled = {
+      tenant: packet.tenant,
+      story_architect: storyArchitect,
+      story_architecture_id: storyArchitect.story_architecture_id ?? `home-v4-${tenantKey}-${sourceHash.slice(0, 10)}`,
+      story_architecture_version: promptContractVersion,
+      story_architecture_hash: sha256(JSON.stringify(storyArchitect)),
+    };
+    const pass = { id: "05-integrated-dimensions", type: "integrated_dimensions" };
+    const prompt = makePrompt(pass, packet, assembled);
+    writeJson(path.join(tenantDir, "preflight", `${pass.id}.prompt.json`), prompt);
+    const preflight = assertIntegratedPromptPreflight(prompt, packet);
+    writeJson(path.join(tenantDir, "preflight", `${pass.id}.preflight-result.json`), preflight);
+    console.log(`[home-v4-preflight] ${tenantKey}: ${preflight.status} (${preflight.failure_count} failure(s))`);
+    for (const f of preflight.failures) {
+      console.log(`[home-v4-preflight]   [FAIL] ${f.rule_id}${f.dimension_key ? ` (${f.dimension_key})` : ""}: ${f.message}`);
+    }
+    if (preflight.status !== "pass") {
+      throw new Error(`Integrated prompt preflight failed for "${tenantKey}": ${preflight.failure_count} failure(s). See ${path.relative(repoRoot, path.join(tenantDir, "preflight"))}.`);
+    }
+    return {
+      tenant_key: tenantKey,
+      display_name: pack.tenant_name,
+      source_hash: sourceHash,
+      validation_status: "preflight_pass",
+      violation_count: 0,
+      visual_contract_count: 0,
+      prompt_count: 1,
       tenant_dir: path.relative(outDir, tenantDir),
     };
   }
@@ -2322,11 +2467,12 @@ async function main() {
     await runReplay();
     return;
   }
-  if (!packetOnly && !process.env.ANTHROPIC_API_KEY) {
+  if (!packetOnly && !preflightMode && !process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is required; refusing to fabricate candidate content.");
   }
-  const Anthropic = packetOnly ? null : (await import("@anthropic-ai/sdk")).default;
-  const client = packetOnly ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const skipClient = packetOnly || preflightMode;
+  const Anthropic = skipClient ? null : (await import("@anthropic-ai/sdk")).default;
+  const client = skipClient ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const tenants = tenantArg === "all"
     ? canonicalTenantOrder
     : tenantArg.split(",").map((t) => t.trim()).filter(Boolean);

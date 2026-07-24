@@ -1,0 +1,20 @@
+{
+  "apps": {
+    "primary_dataset": "applications_full"
+  },
+  "vendors": {
+    "primary_dataset": "vendors_full"
+  },
+  "programs": {
+    "primary_dataset": "programs_full"
+  },
+  "risks": {
+    "primary_dataset": "risk_register"
+  },
+  "evidence": {
+    "primary_dataset": "evidence_registry"
+  },
+  "budget": {
+    "primary_dataset": "budget_summary"
+  }
+}
