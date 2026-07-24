@@ -326,6 +326,12 @@ export interface PricingEstimateSnapshotRow {
   id: string;
   tenant_key: string;
   move_id: string;
+  /** Soft-within-schema FK to pricing_estimates.id (PR6:
+   * 20260724020000_pricing_estimate_snapshots_pr6_estimate_link.sql) —
+   * which specific scenario draft this snapshot approved. Nullable for
+   * defensiveness (a hand-inserted or legacy-shaped row without it is still
+   * a valid, if unverifiable-for-staleness, snapshot). */
+  estimate_id: string | null;
   model_version: number | null;
   taxonomy_version: number | null;
   rate_card_version_id: string | null;
