@@ -1129,6 +1129,11 @@ async function processTenant(client, tenantKey) {
     review_only: reviewOnly,
     generated_at: new Date().toISOString(),
     model,
+    // Recorded so validateDimensionTabs can tell a deliberate canary subset
+    // from a full run missing dimensions it should have produced.
+    requested_dimensions: dimensionFilter
+      ? dimensionPasses().map((entry) => entry.key)
+      : null,
     passes: {},
   };
 
@@ -1370,7 +1375,14 @@ function collectDimensionObjects(candidate) {
 
 function validateDimensionTabs(candidate) {
   const findings = [];
-  const expectedKeys = new Set(expandedDimensionCatalog.map((entry) => entry.key));
+  // A canary run (--dimensions) deliberately generates a subset. Checking
+  // against the full 38-key catalog on a 3-dimension run produced 35 false
+  // "missing" findings that swamped the real signal. Completeness against the
+  // full catalog is still enforced for an unscoped run.
+  const requestedKeys = candidate.requested_dimensions ?? null;
+  const expectedKeys = new Set(
+    requestedKeys ?? expandedDimensionCatalog.map((entry) => entry.key),
+  );
   const dimensions = collectDimensionObjects(candidate);
   const actualKeys = new Set(dimensions.map((dimension) => asText(dimension.dimension_key)));
   for (const key of expectedKeys) {
