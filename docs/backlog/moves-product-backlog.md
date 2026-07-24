@@ -1413,9 +1413,25 @@ cells are stale and superseded by that resolution).
 - **Dependencies**: none — `RoleApprovalsPanel`'s data-fetching pattern already exists and could
   be surfaced (or a condensed summary of it) in `MovesPhaseStandaloneClient.tsx`'s decision card;
   this is additive UI, not a new data model
+- **Implementation notes (traced 2026-07-24, not yet built)**: `requiredApprovalRolesFor()`
+  (`deliverable-role-approvals.ts:78-80`) takes a `deliverableTypeKey`, not a phase number — a
+  phase can map to zero, one, or MULTIPLE role-gated deliverables (e.g. phase 3 has both
+  `target_state_architecture` and `operating_model_design`, each with its own required-role set).
+  `PhaseBody` has no `deliverableId` prop today, but does receive `move: StrategicMove`, whose
+  `move.deliverables` (`types.ui.ts:487-494`) carries `{id, typeKey, ...}` for every deliverable —
+  so the real implementation path is: resolve the phase's gate deliverable type keys (via
+  `PHASE_CANONICAL_KEYS`/`getGateArtifacts(phase)` in `deliverable-registry.ts`), filter
+  `move.deliverables` to those with a non-empty `requiredApprovalRolesFor(typeKey)`, then fetch
+  `GET /api/v1/programs/:moveId/deliverables/:deliverableId/role-approvals` (the same route
+  `RoleApprovalsPanel.tsx:89` already calls) once per matching deliverable and aggregate the
+  results. **No existing hook does this aggregation across a phase's multiple deliverables** — this
+  needs new client-side fetch/aggregation logic (a small new hook), not just a re-render of
+  existing data. Scope accordingly: this is a real, if modest, feature build, not a one-line wire-up
+  like `MOVES-UI-009`.
 - **Acceptance criteria**: the phase-level gate decision surface shows, for any phase requiring
   multi-role approval, a condensed per-role status (approved/pending/rejected + approver name when
-  approved) without requiring navigation to Files & Evidence
+  approved) across ALL of that phase's role-gated deliverables, without requiring navigation to
+  Files & Evidence
 - **Required tests**: a phase with 2 of 3 required roles approved renders the correct
   per-role breakdown at the phase-level decision surface, matching what `RoleApprovalsPanel` shows
   for the same deliverable
