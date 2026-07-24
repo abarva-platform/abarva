@@ -199,6 +199,13 @@ const NAV_GROUPS: Array<{
     tone?: "green" | "amber" | "red" | "blue" | "muted";
   }>;
 }> = [
+  // Deduplicated 2026-07-24: this array previously listed ~45 labeled items
+  // across these 8 groups, but only 14 distinct ViewKeys exist to render —
+  // most labels were aliases sharing one `key` with several others (e.g. 4
+  // different items all rendering "priorities"), so navigating them showed
+  // duplicate content under different names. Each key now appears exactly
+  // once, in its best-fit group, with the label that most accurately
+  // describes what it actually renders (VIEW_META[key].title).
   {
     title: "Enterprise Brief",
     items: [{ key: "snapshot", label: "Enterprise Brief", tone: "green" }],
@@ -208,42 +215,29 @@ const NAV_GROUPS: Array<{
     eyebrow: "Explore Knowledge",
     collapsible: true,
     items: [
-      { key: "snapshot", label: "Enterprise thesis", tone: "green" },
-      { key: "evidence", label: "Leadership agenda", tone: "green" },
-      { key: "coverage", label: "Proven strengths", tone: "green" },
-      { key: "constraints", label: "Structural constraints", tone: "red" },
-      { key: "operating", label: "Interview Signals", tone: "green" },
-      { key: "coverage", label: "Context confidence", tone: "amber" },
-      { key: "evidence", label: "Evidence requests", tone: "amber" },
+      { key: "evidence", label: "Evidence", tone: "green" },
+      { key: "coverage", label: "Coverage", tone: "amber" },
     ],
   },
   {
     title: "Enterprise Structure",
     collapsible: true,
     items: [
-      { key: "snapshot", label: "Enterprise Profile", tone: "green" },
-      { key: "operating", label: "Divisions & Business Units", tone: "green" },
-      {
-        key: "operating",
-        label: "Front / Middle / Back Office",
-        tone: "amber",
-      },
-      { key: "operating", label: "Business Functions", tone: "green" },
-      { key: "operating", label: "Business Capabilities", tone: "muted" },
-      { key: "coverage", label: "Organization Ownership", tone: "amber" },
-      { key: "coverage", label: "Decision Rights", tone: "muted" },
-      { key: "operating", label: "Workforce & Roles", tone: "amber" },
-      { key: "coverage", label: "Geography & Legal Entities", tone: "amber" },
+      { key: "operating", label: "Operating Model", tone: "green" },
+      { key: "constraints", label: "Structural Constraints", tone: "red" },
     ],
   },
   {
     title: "Work & Value",
     collapsible: true,
     items: [
-      { key: "priorities", label: "Strategic Priorities", tone: "green" },
-      { key: "programs", label: "Programs & Initiatives", tone: "amber" },
-      { key: "spend", label: "Spend & Value", tone: "amber" },
-      { key: "risks", label: "Value Baselines", tone: "red" },
+      {
+        key: "programs",
+        label: "Programs & Initiatives",
+        measure: "programs",
+        tone: "amber",
+      },
+      { key: "spend", label: "Spend & Value", measure: "budget", tone: "amber" },
     ],
   },
   {
@@ -263,16 +257,7 @@ const NAV_GROUPS: Array<{
         measure: "rel",
         tone: "amber",
       },
-      {
-        key: "apps",
-        label: "Infrastructure & Platforms",
-        measure: "infra",
-        tone: "muted",
-      },
-      { key: "map", label: "Architecture Dependencies", tone: "muted" },
-      { key: "apps", label: "Technology Lifecycle", tone: "amber" },
-      { key: "data", label: "Data Quality & Lineage", tone: "amber" },
-      { key: "data", label: "Identity & Semantic Foundations", tone: "muted" },
+      { key: "map", label: "Relationship Map", tone: "muted" },
     ],
   },
   {
@@ -280,47 +265,18 @@ const NAV_GROUPS: Array<{
     collapsible: true,
     items: [
       { key: "vendors", label: "Vendors", measure: "vendors", tone: "green" },
-      {
-        key: "spend",
-        label: "Run / Change Economics",
-        measure: "budget",
-        tone: "amber",
-      },
-      {
-        key: "spend",
-        label: "Contract & Spend Leverage",
-        measure: "budget",
-        tone: "amber",
-      },
     ],
   },
   {
     title: "Change & Transformation",
     collapsible: true,
     items: [
-      { key: "priorities", label: "Industry Movements", tone: "green" },
-      { key: "operating", label: "New Ways of Operating", tone: "green" },
-      { key: "priorities", label: "Enterprise Change Theses", tone: "green" },
       {
         key: "priorities",
-        label: "Strategic Priorities",
+        label: "AI & Automation Use Cases",
         measure: "ai",
         tone: "green",
       },
-      {
-        key: "programs",
-        label: "Programs & Initiatives",
-        measure: "programs",
-        tone: "amber",
-      },
-      {
-        key: "priorities",
-        label: "Candidate Use Cases",
-        measure: "ai",
-        tone: "green",
-      },
-      { key: "map", label: "Transformation Dependencies", tone: "amber" },
-      { key: "programs", label: "Transformation Sequence", tone: "amber" },
     ],
   },
   {
@@ -333,13 +289,6 @@ const NAV_GROUPS: Array<{
         measure: "risks",
         tone: "red",
       },
-      {
-        key: "evidence",
-        label: "Evidence & Trust",
-        measure: "evidence",
-        tone: "green",
-      },
-      { key: "coverage", label: "Decision Boundaries", tone: "amber" },
     ],
   },
 ];

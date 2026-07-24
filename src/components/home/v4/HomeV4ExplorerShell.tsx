@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { COLORS } from "@/components/home/HomeEnterpriseBriefApp";
+import { HomeV4ApplicationsGrid } from "./HomeV4ApplicationsGrid";
 import { HomeV4Explorer, type HomeV4ExplorerGroup } from "./HomeV4Explorer";
 import {
   CandidateUseCasesPage,
@@ -76,6 +77,9 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
                     <p className="heb-v4-preview-summary">{dimension.summary_tab.executive_read}</p>
                   ) : null}
                   <HomeV4VisualRenderer visual={dimension.primary_visual} />
+                  {dimension.data_tab?.full_rows?.length ? (
+                    <HomeV4ApplicationsGrid rows={dimension.data_tab.full_rows} />
+                  ) : null}
                 </div>
               ))
           : null}
