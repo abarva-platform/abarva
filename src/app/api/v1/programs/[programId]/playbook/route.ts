@@ -13,6 +13,8 @@ import {
 } from "@/lib/programs/playbook/move-phase-playbook";
 import { AI_PDLC_SESSION_OVERRIDES } from "@/lib/programs/playbook/ai-pdlc-design-sessions";
 import { generateDesignSessionPack } from "@/lib/programs/playbook/design-session-pack";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
+import { AI_PRODUCT_DEVELOPMENT_LIFECYCLE } from "@/lib/programs/archetypes/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,8 +29,13 @@ async function resolve(req: NextRequest, programId: string) {
     const move = await getStrategicMoveById(ctx, programId);
     phase = move?.currentPhase ?? null;
     if (move?.name) moveName = move.name;
-    const blob = `${move?.archetype ?? ""} ${move?.name ?? ""}`.toLowerCase();
-    isAiPdlc = /pdlc|product development lifecycle|ai-?pdlc|sdlc/.test(blob);
+    // Canonical archetype resolution (same registry every other archetype-aware
+    // route uses), not a free-text regex over the coarse UI-label `archetype`
+    // field — that field is a 5-value display category
+    // (`strategic_transformation` etc.), not the fine-grained framework
+    // archetype id, and never reliably contains "pdlc"/"sdlc" substrings.
+    const archetype = await resolveMoveArchetypeForProgram(ctx, programId);
+    isAiPdlc = archetype.id === AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id;
   } catch {
     /* best-effort */
   }

@@ -422,6 +422,43 @@ cells are stale and superseded by that resolution).
 - **Notes / remaining gaps**: **do not patch this independently in a way that creates a competing
   lineage model** — must land as part of MOVES-ARTIFACT-001's convergence plan (design doc §3.14).
 
+### MOVES-BUG-003 — Playbook route detected AI-PDLC via a free-text regex, not the canonical archetype
+
+- **Problem statement**: `GET/POST /api/v1/programs/:programId/playbook` decided whether to apply
+  AI-PDLC session overrides with `/pdlc|product development lifecycle|ai-?pdlc|sdlc/.test(archetype + name)`
+  — a regex over the Move's coarse 5-value UI label (`strategic_transformation`, etc.) and its
+  free-text name, neither of which reliably contains those substrings. The canonical framework
+  archetype (`AI_PRODUCT_DEVELOPMENT_LIFECYCLE`, one of 5 ids in
+  `src/lib/programs/archetypes/registry.ts`) is resolved on read via
+  `resolveMoveArchetypeForProgram()` — already the correct pattern used by 7 other archetype-aware
+  routes — but this route never called it.
+- **User/business impact**: an AI-PDLC Move whose name/label didn't happen to contain a matching
+  substring silently got the generic P3 session pack instead of the AI-PDLC-specific one (missed
+  positive); conversely a non-AI-PDLC Move literally named e.g. "SDLC Modernization Program" would
+  have false-positived into AI-PDLC overrides it shouldn't get.
+- **Severity**: P2 (routing defect — wrong content served, not a security/data issue)
+- **Workstream**: Deliverable quality and consulting depth
+- **Status**: `Deployed` (2026-07-23) — replaced the regex with
+  `resolveMoveArchetypeForProgram(ctx, programId)` and an exact `archetype.id === AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id`
+  check.
+- **Dependencies**: none — the resolver helper already existed
+- **Acceptance criteria**: AI-PDLC overrides apply only when the canonical resolved archetype id is
+  `AI_PRODUCT_DEVELOPMENT_LIFECYCLE`, regardless of the Move's free-text name/label; a resolver
+  failure is best-effort (falls back to no overrides, never a 500).
+- **Required tests**: `playbook/__tests__/route.test.ts` — 5 new assertions (overrides apply on the
+  canonical id; a differently-archetyped Move with a misleading free-text name does NOT get
+  overrides; the resolver is called with the correct args; a resolver failure degrades gracefully;
+  an explicit `?phase=` query param still overrides the Move's current phase).
+- **PR**: not yet opened
+- **Release record**: `docs/releases/records/2026-07-23-moves-playbook-archetype-routing.md`
+- **Discovered from**: `docs/codex-handoff/MOVES_ARTIFACT_DIGESTION_PROMPTING_LAYOUT_PROMPT_2026-07-22.md`,
+  Phase 2.2 (archetype-driven playbook routing)
+- **Notes / remaining gaps**: only the AI-PDLC archetype has a session-override table today
+  (`AI_PDLC_SESSION_OVERRIDES`, phase 3 only). The other 4 archetypes (IT Sourcing, AI Operations,
+  Contact Center Agent Assist, Commercial Lending Agent Assist) still fall back to the generic
+  phase playbook with no archetype-specific session content — building those override packs is
+  separate, not-yet-scoped work this fix does not attempt.
+
 ### MOVES-CAPABILITY-001 — Explicit supersession
 
 - **Problem statement**: `deliverables_v2.status` has a ready `'superseded'` CHECK value, but no
