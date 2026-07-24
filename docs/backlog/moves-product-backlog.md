@@ -1292,6 +1292,59 @@ cells are stale and superseded by that resolution).
 
 ---
 
+### MOVES-UI-009 — Evidence-item counts at gate approval were inert text, not a link to the real file list
+
+- **Problem statement**: the handoff's evidence/client-approved-lifecycle track flagged a known
+  UX issue: "uploaded files show as count but not list clearly." Traced this to
+  `MovesPhaseStandaloneClient.tsx`'s `PhaseBody` component — the "Evidence posture" figure (value
+  substep), and the "N evidence items"/"N approved or agent-ready items" figures in the
+  gate-approval decision surface, all rendered `evidenceCount` as plain `<strong>`/`<span>` text
+  with no `onClick`, link, or navigation of any kind. The real per-file list (name, date,
+  reviewer, status) already exists and is fully built — `FileCabinetPanel.tsx`, reachable via the
+  "Files & Evidence" nav tab and an already-wired `onOpenFiles`/`openFilesWorkspace` handler used
+  elsewhere in the same component (the "findings" substep's "Open Files & Evidence" button) — but
+  none of the three count displays were connected to it. Also confirmed: `evidenceCount` itself
+  counts satisfied evidence *families* (or committed rows within them, from
+  `currentStateReadiness`/`move.linkedEvidence`), not individual files — neither of its data
+  sources carries filename/date/uploader fields, so an inline expand-in-place list at these exact
+  spots was never possible without also threading real artifact data further down the component
+  tree; linking to the already-built `FileCabinetPanel` surface was the correct, minimal fix.
+- **User/business impact**: a user reviewing a phase gate saw "3 evidence items" with no way to
+  see which 3, forcing them to separately discover and navigate to the Files & Evidence tab
+  themselves to check what was actually uploaded before approving a gate.
+- **Severity**: P2 (UX clarity gap in gate-approval decision-making, not a data or logic defect)
+- **Workstream**: UI/UX shell (evidence and client-approved lifecycle)
+- **Status**: `Implemented` (2026-07-24) — all three `evidenceCount` displays
+  (`.mxw-value-grid` "Evidence posture", `.mxw-decision-chips` "N evidence items", and the
+  "Evidence" article's "N approved or agent-ready items") are now `<button>` elements wired to
+  the same `onOpenFiles` handler the "Open Files & Evidence" button already uses, with an
+  `aria-label` describing the destination. New `.mxw-evidence-count-link` CSS matches the
+  existing visual treatment (inherited text size/weight, underline-on-hover/focus for the plain
+  text spots; existing pill styling preserved for the decision-chips spot) rather than
+  introducing a new visual pattern.
+- **Dependencies**: none — reuses the existing `onOpenFiles` prop and `FileCabinetPanel` surface,
+  no new data fetching
+- **Acceptance criteria**: clicking any of the three evidence-count displays opens the Files &
+  Evidence workspace view.
+- **Required tests**: `MovesPhaseStandaloneClient.test.tsx` — 1 new assertion: the Files &
+  Evidence heading is absent before the click, all evidence-count buttons are present and
+  accessible by role, and clicking one reveals the Files & Evidence heading. Zero regressions
+  across `src/components/strategic-moves` (146/146 real tests passing; the 1 failed suite is a
+  pre-existing, unrelated Clerk/module-resolution failure confirmed present on a clean
+  `origin/main` checkout before this change).
+- **PR**: not yet opened
+- **Release record**: `docs/releases/records/2026-07-24-evidence-count-clickable-link.md`
+- **Discovered from**: 2026-07-24 evidence/client-approved-lifecycle UX audit, following the
+  document-quality re-verification pass
+- **Notes / remaining gaps**: this is a navigation fix only — it does not add inline per-file
+  metadata at the count location itself, since neither `currentStateReadiness` nor
+  `move.linkedEvidence` (the count's data sources) carry filename/date/uploader fields. If the
+  intent evolves toward showing files inline rather than navigating to a separate tab, that would
+  require threading real `FileCabinetPanel`-shaped artifact data further down into `PhaseBody`, a
+  larger change not attempted here.
+
+---
+
 ### MOVES-ARTIFACT-002 — P3 artifact size/duplicate-heading gate, live-proven
 
 - **Problem statement**: the 2026-07-22 artifact-digestion audit found the P2 discovery report
