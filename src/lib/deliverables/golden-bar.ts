@@ -28,6 +28,15 @@ export interface GoldenBarResult {
   overMaximumWordCount: boolean;
   /** Quantified ($ or %) claims with no nearby evidence-qualifying language. Informational only. */
   unsupportedClaimSignals: string[];
+  /**
+   * Section (h1-h4) headings that appear more than once in the rendered
+   * artifact, e.g. the model authoring "Current State Overview" twice in the
+   * same document. Informational only — same rationale as
+   * overMaximumWordCount when unenforced: rolling this out as a hard block
+   * without having exercised it against real generated content across every
+   * profile risks a new generation-blocking failure on a live Move.
+   */
+  duplicateSectionHeadings: string[];
   /** Deterministic 0-100 score derived from the checks above — replaces the old fixed 96/null. */
   qualityScore: number;
 }
@@ -103,11 +112,51 @@ function computeQualityScore(input: {
   pass: boolean;
   overMaximumWordCount: boolean;
   unsupportedClaimCount: number;
+  duplicateHeadingCount: number;
 }): number {
   let score = input.pass ? 92 : 55;
   score -= Math.min(input.unsupportedClaimCount, 8) * 3;
   if (input.overMaximumWordCount) score -= 6;
+  score -= Math.min(input.duplicateHeadingCount, 6) * 4;
   return Math.max(0, Math.min(100, score));
+}
+
+/** Extract the visible text of every h1-h4 heading in a rendered artifact. */
+function extractHeadingTexts(html: string): string[] {
+  const matches = html.matchAll(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi);
+  const texts: string[] = [];
+  for (const match of matches) {
+    const text = match[1]
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text) texts.push(text);
+  }
+  return texts;
+}
+
+/**
+ * Section headings the model authored more than once in the same document
+ * (case/whitespace-insensitive), e.g. two "Current State Overview" sections.
+ * Returns each duplicated heading once, in first-seen order.
+ */
+export function findDuplicateSectionHeadings(html: string): string[] {
+  const headings = extractHeadingTexts(html);
+  const counts = new Map<string, number>();
+  for (const heading of headings) {
+    const key = heading.toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  for (const heading of headings) {
+    const key = heading.toLowerCase();
+    if ((counts.get(key) ?? 0) > 1 && !seen.has(key)) {
+      seen.add(key);
+      duplicates.push(heading);
+    }
+  }
+  return duplicates;
 }
 
 /** Extract the visual/table "kinds" present in a rendered HTML artifact (heuristic). */
@@ -245,6 +294,12 @@ export function meetsGoldenBar(
     );
   }
   const unsupportedClaimSignals = findUnsupportedQuantifiedClaims(text);
+  const duplicateSectionHeadings = findDuplicateSectionHeadings(html);
+  if (duplicateSectionHeadings.length) {
+    reasons.push(
+      `repeats section headings: ${duplicateSectionHeadings.join(", ")} (informational — does not block)`,
+    );
+  }
   const lowerText = text.toLowerCase();
   const forbiddenLanguageHits = (options.forbiddenLanguage ?? []).filter(
     (term) => lowerText.includes(term.toLowerCase()),
@@ -318,6 +373,7 @@ export function meetsGoldenBar(
     pass,
     overMaximumWordCount,
     unsupportedClaimCount: unsupportedClaimSignals.length,
+    duplicateHeadingCount: duplicateSectionHeadings.length,
   });
 
   return {
@@ -335,6 +391,7 @@ export function meetsGoldenBar(
     reasons,
     overMaximumWordCount,
     unsupportedClaimSignals,
+    duplicateSectionHeadings,
     qualityScore,
   };
 }

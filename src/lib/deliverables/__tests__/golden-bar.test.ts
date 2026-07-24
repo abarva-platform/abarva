@@ -1,6 +1,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { findUnsupportedQuantifiedClaims, meetsGoldenBar } from "../golden-bar";
+import {
+  findDuplicateSectionHeadings,
+  findUnsupportedQuantifiedClaims,
+  meetsGoldenBar,
+} from "../golden-bar";
 import { premiumGoldenBarOptionsForArtifact } from "../strategic-moves-artifact-standard";
 
 const GOLDEN_DIR = join(process.cwd(), "docs/build/golden-artifacts");
@@ -321,6 +325,50 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     );
     expect(failing.pass).toBe(false);
     expect(failing.qualityScore).toBeLessThan(92);
+  });
+});
+
+describe("duplicate section headings (informational — does not block pass)", () => {
+  it("findDuplicateSectionHeadings flags a heading repeated verbatim", () => {
+    const dupes = findDuplicateSectionHeadings(
+      "<h2>Current State Overview</h2><p>a</p><h2>Findings</h2><p>b</p><h2>Current State Overview</h2>",
+    );
+    expect(dupes).toEqual(["Current State Overview"]);
+  });
+
+  it("findDuplicateSectionHeadings is case/whitespace-insensitive and dedupes report order", () => {
+    const dupes = findDuplicateSectionHeadings(
+      "<h3>Risk  Register</h3><h2>Overview</h2><h3>risk register</h3><h2>Overview</h2>",
+    );
+    expect(dupes).toEqual(["Risk Register", "Overview"]);
+  });
+
+  it("findDuplicateSectionHeadings returns an empty array when every heading is unique", () => {
+    expect(
+      findDuplicateSectionHeadings("<h2>Overview</h2><h2>Findings</h2><h3>Next Steps</h3>"),
+    ).toEqual([]);
+  });
+
+  it("meetsGoldenBar surfaces duplicate headings as informational — it does not fail the bar", () => {
+    const r = meetsGoldenBar(
+      `<html><body><svg></svg><table></table>
+        <h2>Current State Overview</h2><p>text</p>
+        <h2>Findings</h2><p>text</p>
+        <h2>Current State Overview</h2><p>duplicate content the model re-authored</p>
+      </body></html>`,
+    );
+    expect(r.duplicateSectionHeadings).toEqual(["Current State Overview"]);
+    expect(r.reasons.join(" ")).toMatch(/repeats section headings.*Current State Overview/i);
+    expect(r.pass).toBe(true);
+    expect(r.qualityScore).toBeLessThan(92);
+  });
+
+  it("meetsGoldenBar reports no duplicates for a clean artifact", () => {
+    const r = meetsGoldenBar(
+      "<html><body><svg></svg><table></table><h2>Overview</h2><h2>Findings</h2></body></html>",
+    );
+    expect(r.duplicateSectionHeadings).toEqual([]);
+    expect(r.reasons.join(" ")).not.toMatch(/repeats section headings/i);
   });
 });
 
