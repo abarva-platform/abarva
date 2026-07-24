@@ -1,0 +1,6 @@
+provider_class_code,class_name,archetype_label,tier_multiplier,source_artifact,source_row,status,version
+AI-B,AI-B,AI-native provider,1.35,Workforce_Taxonomy_Master.xlsx:Assumptions,31,active,1
+CONS-T1,CONS-T1,Premium strategy/advisory,1.85,Workforce_Taxonomy_Master.xlsx:Assumptions,27,active,1
+ENG-B,ENG-B,Engineering boutique,1.1,Workforce_Taxonomy_Master.xlsx:Assumptions,30,active,1
+SI-T1,SI-T1,Global system integrator,1.25,Workforce_Taxonomy_Master.xlsx:Assumptions,28,active,1
+SI-T2,SI-T2,Industrialized offshore,0.85,Workforce_Taxonomy_Master.xlsx:Assumptions,29,active,1
