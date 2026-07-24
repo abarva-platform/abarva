@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   SelfApprovalViolationError,
+  UnresolvedRateGapError,
   checkSnapshotStaleness,
   computeUpstreamScopeFingerprint,
   createEstimateSnapshot,
@@ -286,6 +287,46 @@ describe("createEstimateSnapshot", () => {
       createEstimateSnapshot(baseCandidate({ approvedBy: "preparer@abarva.ai", preparedBy: "preparer@abarva.ai" }), store),
     ).rejects.toThrow(SelfApprovalViolationError);
     expect(store.rows).toHaveLength(0);
+  });
+
+  // PR7 hardening (brief §12 "missing all fallbacks blocks the estimate"):
+  // PR4's engine already refuses to fabricate a zero cost for an unpriced
+  // role (it leaves that line's laborCostCents null and increments
+  // totals.gapCount — see cost-engine.ts#aggregateTotals). Before this PR7
+  // change, nothing stopped an estimate with gapCount > 0 from being
+  // approved into a permanent, immutable snapshot — `runEstimate` only ever
+  // surfaced the gap as a `topUncertaintyDrivers` disclosure, never a block.
+  // This is the fix: approval — the one point a number becomes a financial
+  // commitment — now refuses outright, rather than silently locking in an
+  // honest-but-incomplete total.
+  it("rejects approval when the candidate totals carry ANY unresolved rate gap, before writing anything", async () => {
+    const store = createFakeSnapshotStore();
+    await expect(
+      createEstimateSnapshot(
+        baseCandidate({ totals: { ...baseCandidate().totals, gapCount: 1 } }),
+        store,
+      ),
+    ).rejects.toThrow(UnresolvedRateGapError);
+    expect(store.rows).toHaveLength(0);
+  });
+
+  it("UnresolvedRateGapError carries the exact gap count for the caller to surface", async () => {
+    const store = createFakeSnapshotStore();
+    try {
+      await createEstimateSnapshot(baseCandidate({ totals: { ...baseCandidate().totals, gapCount: 3 } }), store);
+      throw new Error("expected createEstimateSnapshot to throw");
+    } catch (err) {
+      expect(err).toBeInstanceOf(UnresolvedRateGapError);
+      expect((err as UnresolvedRateGapError).gapCount).toBe(3);
+    }
+    expect(store.rows).toHaveLength(0);
+  });
+
+  it("still approves cleanly when gapCount is exactly 0 (the unaffected, common case)", async () => {
+    const store = createFakeSnapshotStore();
+    const snapshot = await createEstimateSnapshot(baseCandidate({ totals: { ...baseCandidate().totals, gapCount: 0 } }), store);
+    expect(snapshot.status).toBe("approved");
+    expect(store.rows).toHaveLength(1);
   });
 
   it("approving twice for the same Move: the first row is NEVER mutated — 'superseded' is purely a function of a newer row existing", async () => {

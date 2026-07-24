@@ -30,6 +30,7 @@ import {
 } from "@/lib/pricing/moves-workflow";
 import {
   SelfApprovalViolationError,
+  UnresolvedRateGapError,
   createEstimateSnapshot,
   resolvePreparedBy,
   toScopeFingerprintInput,
@@ -130,6 +131,16 @@ export async function POST(
           {
             error: "self_approval_violation",
             detail: err.message,
+          },
+          { status: 409 },
+        );
+      }
+      if (err instanceof UnresolvedRateGapError) {
+        return Response.json(
+          {
+            error: "unresolved_rate_gap",
+            detail: err.message,
+            gapCount: err.gapCount,
           },
           { status: 409 },
         );
