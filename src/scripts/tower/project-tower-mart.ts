@@ -390,6 +390,13 @@ async function main(): Promise<void> {
           "ai-control-tower/T07_benefit-realization.csv",
         )
       : [];
+    // T03 is the AI-tool ledger — the defensible source for "AI-tagged spend".
+    const standardizedToolUsage = args.standardizedDir
+      ? readV3Csv(
+          args.standardizedDir,
+          "ai-control-tower/T03_tool-usage-monthly.csv",
+        )
+      : [];
     const standardizedOwnsProgrammeValue = standardizedBenefits.some(
       (r) =>
         Number(String(r.promised_benefit_usd ?? "").replace(/[$,\s]/g, "")) > 0,
@@ -400,6 +407,7 @@ async function main(): Promise<void> {
             initiatives: standardizedInitiatives,
             spend: standardizedSpend,
             benefits: standardizedBenefits,
+            toolUsage: standardizedToolUsage,
           },
           identity,
         )

@@ -203,18 +203,17 @@ export function factsFromTowerInitiatives(
 }
 
 /**
- * `T08_spend-contracts.csv` — the `$0 AI-tagged` fix.
+ * `T08_spend-contracts.csv` — approved funding and vendor attribution.
  *
  * Every row joins to an initiative on `initiative_id` and names a
- * `vendor_or_tool`. Two facts per row:
+ * `vendor_or_tool`. One fact per initiative:
  *
- *   · `budget_fy26_usd` → approved funding for the initiative
- *   · `actual_ytd_usd`  → AI-tagged spend, which is what the portfolio's bubble
- *     size, spend lens and vendor-concentration tile all read
+ *   · `budget_fy26_usd` → approved funding
  *
- * Actual-YTD is used for the AI-tagged figure rather than budget because the
- * tile says "AI-tagged spend", not "AI-tagged budget" — reporting committed
- * budget as spend would overstate it.
+ * `actual_ytd_usd` is NOT emitted as AI-tagged spend — see the note at the
+ * emission site. T08 is total delivery cost across `labor` / `vendor_license` /
+ * `cloud_infra` / `si_services`, most of it non-AI vendors. AI-tagged spend
+ * comes from T03.
  *
  * Rows whose `vendor_or_tool` is "internal" still carry funding but are not
  * vendor-attributed, so they are excluded from the vendor-concentration input
@@ -297,6 +296,7 @@ export function factsFromTowerSpend(
     const attributes = {
       vendor_breakdown: agg.vendors,
       contract_value_usd: agg.contract || null,
+      actual_ytd_usd: agg.actual || null,
       renewal_date: agg.renewalDates[0] ?? null,
       spend_line_count: agg.lineIds.length,
     };
@@ -324,27 +324,23 @@ export function factsFromTowerSpend(
       );
     }
 
-    if (agg.actual > 0) {
-      facts.push(
-        buildFact({
-          tenantKey: identity.tenantKey,
-          keyParts: ["tsv1-spend-actual", agg.initiativeId],
-          measure: `${name} AI-tagged spend`,
-          view: "vendor_contract",
-          scope: "initiative",
-          valueNumeric: agg.actual,
-          sourceFile: file,
-          sourceRow,
-          canonical: programCanonical(
-            agg.initiativeId,
-            name,
-            AI_TOOL_SPEND_METRIC,
-            topVendor,
-          ),
-          attributes,
-        }),
-      );
-    }
+    // `actual_ytd_usd` is deliberately NOT emitted as AI-tagged spend.
+    //
+    // An earlier version mapped it to `ai_tool_monthly_cost_usd`, which rolls
+    // into `ai_tagged_spend`. That was wrong, and it read as an airline
+    // spending $539.2M a year on AI against a $2,600M IT budget.
+    //
+    // T08's own `spend_category` values are `labor` / `vendor_license` /
+    // `cloud_infra` / `si_services` — the four cost categories of an
+    // initiative's TOTAL delivery cost — and its vendors are the core IT
+    // estate: Sabre, Amadeus and Jeppesen (reservations and flight planning),
+    // Honeywell, Collins and GE Aerospace (avionics), Okta, Splunk, Datadog.
+    // An AI initiative that replatforms onto Sabre spends most of that money on
+    // Sabre, not on AI. It is programme delivery spend, not AI spend.
+    //
+    // AI-tagged spend comes from `T03_tool-usage-monthly.csv` instead, which
+    // carries per-tool `cost_usd` for the actual AI tools. Actual-YTD stays on
+    // the fact as an attribute so a burn-rate surface can still read it.
   }
 
   return facts;
@@ -439,6 +435,102 @@ export interface TowerStandardizedInput {
   initiatives?: readonly CsvRow[];
   spend?: readonly CsvRow[];
   benefits?: readonly CsvRow[];
+  toolUsage?: readonly CsvRow[];
+}
+
+/**
+ * `T03_tool-usage-monthly.csv` — the real AI-tagged spend, and adoption.
+ *
+ * This is what a CIO means by "AI spend": per-tool licence and consumption cost
+ * for the AI tools themselves (M365 Copilot, the coding assistants, the agent
+ * platforms), one row per tool per month. SkyHarbor's twelve tools over twelve
+ * months total $10.2M — 0.4% of a $2,600M IT budget, which is the right order
+ * of magnitude for 2026. The $539.2M this surface used to report came from
+ * mis-reading T08 programme delivery cost as AI spend.
+ *
+ * Emitted per period, not summed here: `canonicalMergeKey` includes the period,
+ * so twelve monthly facts survive the merge and `assembleMartFromFacts` adds
+ * them into an annual figure. Summing here instead would work, but it would
+ * throw away the month, and the spend lens wants the trend.
+ *
+ * `active_users` rides along as adoption evidence — it is what
+ * `usageSupportedUsd` reads to decide how much promised value is actually
+ * backed by someone using the thing.
+ */
+export function factsFromTowerToolUsage(
+  rows: readonly CsvRow[],
+  identity: CioTowerTenantIdentity,
+): CioTowerFactRow[] {
+  const file = "ai-control-tower/T03_tool-usage-monthly.csv";
+  const facts: CioTowerFactRow[] = [];
+
+  for (const r of rows) {
+    const tool = text(r.tool_name);
+    if (!tool) continue;
+    const period = text(r.period);
+    const vendor = text(r.vendor);
+    const toolKey = programKeyFromCode(tool);
+    const canonical = (metricKey: string, unit: string): CanonicalIdentity => ({
+      canonical_tool_key: toolKey,
+      canonical_program_key: null,
+      vendor_name: vendor,
+      system_name: tool,
+      program_code: null,
+      metric_key: metricKey,
+      metric_unit: unit,
+      period_start: period ? `${period}-01` : null,
+      period_end: period ? `${period}-01` : null,
+      source_priority: SOURCE_PRIORITY.v3_template,
+    });
+    const attributes = {
+      tool_name: tool,
+      vendor,
+      period,
+      business_function: text(r.business_function),
+      licensed_users: num(r.licensed_users) || null,
+      active_users: num(r.active_users) || null,
+      policy_status: text(r.policy_status),
+    };
+
+    const cost = num(r.cost_usd);
+    if (cost > 0) {
+      facts.push(
+        buildFact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["tsv1-tool-cost", tool, period ?? "fy26"],
+          measure: `${tool} AI tool cost`,
+          view: "vendor_contract",
+          scope: "system",
+          valueNumeric: cost,
+          sourceFile: file,
+          sourceRow: period ? `${tool}/${period}` : tool,
+          canonical: canonical(AI_TOOL_SPEND_METRIC, "usd"),
+          attributes,
+        }),
+      );
+    }
+
+    const active = num(r.active_users);
+    if (active > 0) {
+      facts.push({
+        ...buildFact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["tsv1-tool-active", tool, period ?? "fy26"],
+          measure: `${tool} active users`,
+          view: "adoption",
+          scope: "system",
+          valueNumeric: active,
+          sourceFile: file,
+          sourceRow: period ? `${tool}/${period}` : tool,
+          canonical: canonical("ai_tool_active_users", "users"),
+          attributes,
+        }),
+        unit: "count",
+      });
+    }
+  }
+
+  return facts;
 }
 
 /** Initiative id → display name, so spend rows can label their program. */
@@ -463,6 +555,7 @@ export function projectTowerStandardizedToFacts(
   return [
     ...factsFromTowerInitiatives(initiatives, identity),
     ...factsFromTowerSpend(input.spend ?? [], identity, names),
+    ...factsFromTowerToolUsage(input.toolUsage ?? [], identity),
     ...factsFromTowerBenefits(input.benefits ?? [], identity, names),
   ];
 }
