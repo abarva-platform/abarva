@@ -88,6 +88,32 @@ export interface HomeV4DataTab extends HomeV4DimensionTabCommon {
   filters?: string[];
   rows?: Array<Record<string, unknown>>;
   evidence_boundary?: string;
+  // Deterministic source rows, passed through directly from the reconciled source file —
+  // never Claude-authored, never truncated. Distinct from `rows` above (an LLM-selected
+  // sample). Absent/null fields are genuine source gaps, not omissions — render as
+  // "not captured", never inferred.
+  full_rows?: HomeV4ApplicationFullRow[];
+}
+
+export interface HomeV4ApplicationFullRow {
+  app_id: string;
+  name: string;
+  business_domain?: string | null;
+  criticality?: string | null;
+  tech_stack?: string | null;
+  hosting?: string | null;
+  vendor?: string | null;
+  modernization_disposition?: string | null;
+  named_users?: number | null;
+  annual_run_cost_usd?: number | null;
+  interface_count?: number | null;
+  // Confirmed absent from every tenant's source data as of the 2026-07-24 yield audit —
+  // always null today. Kept as an explicit field (not omitted) so the UI shows a visible
+  // gap rather than silently dropping the column.
+  owner?: string | null;
+  sponsor?: string | null;
+  application_type?: string | null;
+  source_file: string;
 }
 
 export interface HomeV4RelationshipTab extends HomeV4DimensionTabCommon {
