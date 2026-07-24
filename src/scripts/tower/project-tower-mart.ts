@@ -259,7 +259,10 @@ function tenantLookupAliases(
   }
   if (normalized === "lakeshore-holdings") {
     aliases.add("lakeshore");
-    aliases.add("lakeshore-industries");
+    aliases.add("lakeshoreholdings");
+  }
+  if (normalized === "lakeshore-industries") {
+    aliases.add("lakeshoreindustries");
   }
   return [...aliases].filter(Boolean);
 }

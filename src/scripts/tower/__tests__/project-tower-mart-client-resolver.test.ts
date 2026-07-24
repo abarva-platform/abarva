@@ -14,4 +14,10 @@ describe("project-tower-mart client resolver", () => {
     expect(source).not.toContain("WHERE key = ANY($1::text[])");
     expect(source).not.toContain("WHEN key = ANY($1::text[])");
   });
+
+  it("does not collapse Lakeshore Industries into Lakeshore Holdings", () => {
+    expect(source).toContain('if (normalized === "lakeshore-holdings")');
+    expect(source).toContain('if (normalized === "lakeshore-industries")');
+    expect(source).not.toContain('aliases.add("lakeshore-industries");');
+  });
 });
