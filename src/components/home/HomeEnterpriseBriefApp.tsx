@@ -24,20 +24,55 @@ import type {
 import type { HomeRelationshipEdge } from "@/lib/home/derive-relationship-edges";
 
 type ViewKey =
+  // Special views — dedicated hand-built components, not the generic DimensionView.
   | "snapshot"
   | "operating"
   | "map"
+  | "coverage"
+  // Executive Brief
+  | "enterprise_thesis"
+  | "leadership_agenda"
+  | "proven_strengths"
+  | "structural_constraints"
+  | "interview_signals"
+  // Enterprise Structure
+  | "profile"
+  | "divisions"
+  | "front_middle_back"
+  | "functions"
+  | "capabilities"
+  | "org"
+  | "decision_rights"
+  | "workforce"
+  | "geography"
+  // Work & Value
+  | "value_streams"
+  | "business_processes"
+  | "journeys"
+  | "opev"
+  | "service_delivery"
+  | "spend"
+  | "programs"
+  // Technology & Data
   | "apps"
   | "data"
-  | "vendors"
   | "integrations"
-  | "spend"
+  | "infra"
+  | "architecture_dependencies"
+  | "tech_lifecycle"
+  | "data_quality_lineage"
+  | "identity_semantic"
+  // Vendors & Economics
+  | "vendors"
+  | "ms"
+  // Change & Transformation
   | "priorities"
-  | "constraints"
-  | "programs"
+  | "metrics"
+  | "industry"
+  | "lenses"
+  // Risk & Trust
   | "risks"
-  | "evidence"
-  | "coverage";
+  | "evidence";
 
 interface HomeEnterpriseBriefAppProps {
   pack: HomeKnowledgeDesignContractPack;
@@ -88,21 +123,62 @@ export const COLORS = {
   black: "#0a0a0b",
 };
 
+// Mirrors scripts/knowledge/build-home-knowledge-v4-review-pack.mjs's
+// expandedDimensionCatalog (38 real dimension-family keys) — kept in sync by
+// hand, same reasoning as src/components/home/v4/homeV4Visual.ts. Every
+// catalog concept gets its own ViewKey/dimKey here, even though most have no
+// generated content yet on the V2 pipeline this page reads (DimensionView's
+// existing fallback — "available for exploration, but ... not yet authored"
+// — handles that honestly; nothing here is fabricated to fill a gap.
 const VIEW_META: Record<ViewKey, { title: string; dimKey?: string }> = {
   snapshot: { title: "Enterprise snapshot" },
   operating: { title: "Operating model" },
   map: { title: "Enterprise relationship map" },
-  apps: { title: "Applications", dimKey: "apps" },
-  data: { title: "Data domains", dimKey: "data" },
-  vendors: { title: "Vendors", dimKey: "vendors" },
-  integrations: { title: "Integrations", dimKey: "rel" },
-  spend: { title: "Spend and value", dimKey: "budget" },
-  priorities: { title: "Strategic priorities", dimKey: "ai" },
-  constraints: { title: "Constraints", dimKey: "risks" },
-  programs: { title: "Programs", dimKey: "programs" },
-  risks: { title: "Risks", dimKey: "risks" },
-  evidence: { title: "Evidence", dimKey: "evidence" },
   coverage: { title: "Coverage" },
+
+  enterprise_thesis: { title: "Enterprise Thesis", dimKey: "enterprise_thesis" },
+  leadership_agenda: { title: "Leadership Agenda", dimKey: "leadership_agenda" },
+  proven_strengths: { title: "Proven Strengths", dimKey: "proven_strengths" },
+  structural_constraints: { title: "Structural Constraints", dimKey: "structural_constraints" },
+  interview_signals: { title: "Interview Signals", dimKey: "interview_signals" },
+
+  profile: { title: "Enterprise Profile", dimKey: "profile" },
+  divisions: { title: "Divisions & Business Units", dimKey: "divisions" },
+  front_middle_back: { title: "Front / Middle / Back Office", dimKey: "front_middle_back" },
+  functions: { title: "Business Functions", dimKey: "functions" },
+  capabilities: { title: "Business Capabilities", dimKey: "capabilities" },
+  org: { title: "Organization Ownership", dimKey: "org" },
+  decision_rights: { title: "Decision Rights", dimKey: "decision_rights" },
+  workforce: { title: "Workforce & Roles", dimKey: "workforce" },
+  geography: { title: "Geography & Legal Entities", dimKey: "geography" },
+
+  value_streams: { title: "Value Streams", dimKey: "value_streams" },
+  business_processes: { title: "Business Processes", dimKey: "business_processes" },
+  journeys: { title: "Member / Customer Journeys", dimKey: "journeys" },
+  opev: { title: "Operational Evidence", dimKey: "opev" },
+  service_delivery: { title: "Service Delivery Model", dimKey: "service_delivery" },
+  spend: { title: "IT Budget, Spend & Value", dimKey: "budget" },
+  programs: { title: "Programs & Initiatives", dimKey: "programs" },
+
+  apps: { title: "Applications & Systems", dimKey: "apps" },
+  data: { title: "Data Domains", dimKey: "data" },
+  integrations: { title: "Integrations", dimKey: "integrations" },
+  infra: { title: "Infrastructure & Platforms", dimKey: "infra" },
+  architecture_dependencies: { title: "Architecture Dependencies", dimKey: "architecture_dependencies" },
+  tech_lifecycle: { title: "Technology Lifecycle", dimKey: "tech_lifecycle" },
+  data_quality_lineage: { title: "Data Quality & Lineage", dimKey: "data_quality_lineage" },
+  identity_semantic: { title: "Identity & Semantic Foundations", dimKey: "identity_semantic" },
+
+  vendors: { title: "Vendors & Contracts", dimKey: "vendors" },
+  ms: { title: "Managed Services", dimKey: "ms" },
+
+  priorities: { title: "AI & Automation Use Cases", dimKey: "ai" },
+  metrics: { title: "Metrics & Outcomes", dimKey: "metrics" },
+  industry: { title: "Industry Patterns", dimKey: "industry" },
+  lenses: { title: "Context Confidence", dimKey: "lenses" },
+
+  risks: { title: "Risks & Controls", dimKey: "risks" },
+  evidence: { title: "Evidence Sources", dimKey: "evidence" },
 };
 
 const SECTION_TABS: Array<{
@@ -119,10 +195,22 @@ const SECTION_TABS: Array<{
   { key: "evidence", label: "Strategic Agenda", badge: "06" },
 ];
 
+type ExplorerIcon =
+  | "brief"
+  | "compass"
+  | "structure"
+  | "value"
+  | "technology"
+  | "vendors"
+  | "change"
+  | "risk";
+
 const NAV_GROUPS: Array<{
   title: string;
+  icon: ExplorerIcon;
   eyebrow?: string;
   collapsible?: boolean;
+  defaultOpen?: boolean;
   items: Array<{
     key: ViewKey;
     label: string;
@@ -130,96 +218,112 @@ const NAV_GROUPS: Array<{
     tone?: "green" | "amber" | "red" | "blue" | "muted";
   }>;
 }> = [
-  // Deduplicated 2026-07-24: this array previously listed ~45 labeled items
-  // across these 8 groups, but only 14 distinct ViewKeys exist to render —
-  // most labels were aliases sharing one `key` with several others (e.g. 4
-  // different items all rendering "priorities"), so navigating them showed
-  // duplicate content under different names. Each key now appears exactly
-  // once, in its best-fit group, with the label that most accurately
-  // describes what it actually renders (VIEW_META[key].title).
+  // Restored to the full 38-dimension catalog 2026-07-24 (see
+  // scripts/knowledge/build-home-knowledge-v4-review-pack.mjs's
+  // expandedDimensionCatalog, the single source of truth for these keys) —
+  // superseding the 2026-07-24 dedup that collapsed distinct enterprise
+  // concepts down to 14 items for lack of a dedicated renderer. Every item
+  // here is a real, individually-addressable concept (own ViewKey, own
+  // dimKey) rendered through the shared DimensionView; concepts without
+  // generated content yet show DimensionView's existing honest fallback
+  // ("available for exploration, but ... not yet authored"), not fabricated
+  // content. Progressive disclosure (collapsed by default except the first
+  // two groups) keeps the surface calm without deleting real concepts.
   {
     title: "Enterprise Brief",
+    icon: "brief",
+    defaultOpen: true,
     items: [{ key: "snapshot", label: "Enterprise Brief", tone: "green" }],
   },
   {
     title: "Executive Brief",
+    icon: "compass",
     eyebrow: "Explore Knowledge",
     collapsible: true,
+    defaultOpen: true,
     items: [
-      { key: "evidence", label: "Evidence", tone: "green" },
+      { key: "enterprise_thesis", label: "Enterprise Thesis", tone: "green" },
+      { key: "leadership_agenda", label: "Leadership Agenda", tone: "green" },
+      { key: "proven_strengths", label: "Proven Strengths", tone: "green" },
+      { key: "structural_constraints", label: "Structural Constraints", tone: "red" },
+      { key: "interview_signals", label: "Interview Signals", tone: "amber" },
       { key: "coverage", label: "Coverage", tone: "amber" },
     ],
   },
   {
     title: "Enterprise Structure",
+    icon: "structure",
     collapsible: true,
     items: [
       { key: "operating", label: "Operating Model", tone: "green" },
-      { key: "constraints", label: "Structural Constraints", tone: "red" },
+      { key: "profile", label: "Enterprise Profile", tone: "green" },
+      { key: "divisions", label: "Divisions & Business Units", tone: "green" },
+      { key: "front_middle_back", label: "Front / Middle / Back Office", tone: "amber" },
+      { key: "functions", label: "Business Functions", tone: "green" },
+      { key: "capabilities", label: "Business Capabilities", tone: "muted" },
+      { key: "org", label: "Organization Ownership", tone: "amber" },
+      { key: "decision_rights", label: "Decision Rights", tone: "muted" },
+      { key: "workforce", label: "Workforce & Roles", tone: "amber" },
+      { key: "geography", label: "Geography & Legal Entities", tone: "amber" },
     ],
   },
   {
     title: "Work & Value",
+    icon: "value",
     collapsible: true,
     items: [
-      {
-        key: "programs",
-        label: "Programs & Initiatives",
-        measure: "programs",
-        tone: "amber",
-      },
-      { key: "spend", label: "Spend & Value", measure: "budget", tone: "amber" },
+      { key: "value_streams", label: "Value Streams", tone: "amber" },
+      { key: "business_processes", label: "Business Processes", tone: "muted" },
+      { key: "journeys", label: "Member / Customer Journeys", tone: "muted" },
+      { key: "opev", label: "Operational Evidence", tone: "muted" },
+      { key: "service_delivery", label: "Service Delivery Model", tone: "muted" },
+      { key: "spend", label: "IT Budget, Spend & Value", measure: "budget", tone: "amber" },
+      { key: "programs", label: "Programs & Initiatives", measure: "programs", tone: "amber" },
     ],
   },
   {
     title: "Technology & Data",
+    icon: "technology",
     collapsible: true,
     items: [
-      {
-        key: "apps",
-        label: "Applications & Systems",
-        measure: "apps",
-        tone: "green",
-      },
+      { key: "apps", label: "Applications & Systems", measure: "apps", tone: "green" },
       { key: "data", label: "Data Domains", measure: "data", tone: "amber" },
-      {
-        key: "integrations",
-        label: "Integrations",
-        measure: "rel",
-        tone: "amber",
-      },
+      { key: "integrations", label: "Integrations", tone: "amber" },
+      { key: "infra", label: "Infrastructure & Platforms", tone: "muted" },
+      { key: "architecture_dependencies", label: "Architecture Dependencies", tone: "muted" },
+      { key: "tech_lifecycle", label: "Technology Lifecycle", tone: "amber" },
+      { key: "data_quality_lineage", label: "Data Quality & Lineage", tone: "amber" },
+      { key: "identity_semantic", label: "Identity & Semantic Foundations", tone: "muted" },
       { key: "map", label: "Relationship Map", tone: "muted" },
     ],
   },
   {
     title: "Vendors & Economics",
+    icon: "vendors",
     collapsible: true,
     items: [
-      { key: "vendors", label: "Vendors", measure: "vendors", tone: "green" },
+      { key: "vendors", label: "Vendors & Contracts", measure: "vendors", tone: "green" },
+      { key: "ms", label: "Managed Services", tone: "muted" },
     ],
   },
   {
     title: "Change & Transformation",
+    icon: "change",
     collapsible: true,
     items: [
-      {
-        key: "priorities",
-        label: "AI & Automation Use Cases",
-        measure: "ai",
-        tone: "green",
-      },
+      { key: "priorities", label: "AI & Automation Use Cases", measure: "ai", tone: "green" },
+      { key: "metrics", label: "Metrics & Outcomes", tone: "muted" },
+      { key: "industry", label: "Industry Patterns", tone: "muted" },
+      { key: "lenses", label: "Context Confidence", tone: "muted" },
     ],
   },
   {
     title: "Risk & Trust",
+    icon: "risk",
     collapsible: true,
     items: [
-      {
-        key: "risks",
-        label: "Risks & Controls",
-        measure: "risks",
-        tone: "red",
-      },
+      { key: "risks", label: "Risks & Controls", measure: "risks", tone: "red" },
+      { key: "evidence", label: "Evidence Sources", measure: "evidence", tone: "green" },
     ],
   },
 ];
@@ -877,6 +981,41 @@ function initialView(selectedDimension?: string | null): ViewKey {
   return (match?.[0] as ViewKey | undefined) ?? "snapshot";
 }
 
+// Minimal monochrome line icons, one per explorer group — a second,
+// independent scan axis alongside the existing tone-dot color (icon =
+// concept category, color = data-maturity). Inline SVG, no icon-library
+// dependency; single-color strokes so they sit quietly under the locked
+// Georgia/DM Sans system rather than compete with it.
+const EXPLORER_ICON_PATHS: Record<ExplorerIcon, string> = {
+  brief: "M4 2.5h6l2 2v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5ZM9 2.5v2.5h2.5 M5.5 7.5h5 M5.5 9.5h5 M5.5 11.5h3",
+  compass: "M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z M10 6l-1.4 3.3L5.3 10.7 6.7 7.4 10 6Z",
+  structure: "M8 1.5v3M4.5 8h7M2.5 4.5h11v3h-11z M3 11h3v3H3z M6.5 11h3v3h-3z M10 11h3v3h-3z",
+  value: "M8 1.5v13 M4.5 4.5c0-1 1-1.5 3.5-1.5s3.5.7 3.5 1.7-1.3 1.5-3.5 1.8-3.5.9-3.5 1.9 1 1.6 3.5 1.6 3.5-.5 3.5-1.5",
+  technology: "M2.5 3.5h11v7h-11z M6 13.5h4 M8 10.5v3 M5 6h1.5 M5 8h3",
+  vendors: "M2.5 5.5 8 2l5.5 3.5v6L8 15l-5.5-3.5z M8 8l5.5-3.5M8 8v7M8 8 2.5 5.5",
+  change: "M3 8a5 5 0 0 1 8.5-3.5L13 3M13 3v3h-3 M13 8a5 5 0 0 1-8.5 3.5L3 13M3 13v-3h3",
+  risk: "M8 1.5 14 4v4c0 4-2.5 6-6 6.5C4.5 14 2 12 2 8V4z M8 5.5v3.5 M8 10.5h.01",
+};
+
+function ExplorerGroupIcon({ icon }: { icon: ExplorerIcon }) {
+  return (
+    <svg
+      className="heb-nav-group-icon"
+      viewBox="0 0 16 16"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={EXPLORER_ICON_PATHS[icon]} />
+    </svg>
+  );
+}
+
 export function HomeEnterpriseBriefApp({
   pack,
   relationshipEdges = [],
@@ -884,6 +1023,9 @@ export function HomeEnterpriseBriefApp({
 }: HomeEnterpriseBriefAppProps) {
   const [view, setView] = useState<ViewKey>(initialView(selectedDimension));
   const [activeNavId, setActiveNavId] = useState<string | null>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(NAV_GROUPS.map((g) => [g.title, g.defaultOpen ?? false])),
+  );
   const meta = VIEW_META[view];
   const graph = useMemo(
     () => buildGraph(pack, relationshipEdges),
@@ -903,14 +1045,25 @@ export function HomeEnterpriseBriefApp({
           <i />
           Context Explorer
         </div>
-        {NAV_GROUPS.map((group) => (
+        {NAV_GROUPS.map((group) => {
+          const isOpen = openGroups[group.title] ?? false;
+          return (
           <nav className="heb-nav-group" key={group.title}>
             {group.eyebrow ? <small>{group.eyebrow}</small> : null}
-            <span>
-              {group.collapsible ? <em>▾</em> : null}
+            <button
+              type="button"
+              className="heb-nav-group-head"
+              aria-expanded={isOpen}
+              onClick={() =>
+                setOpenGroups((prev) => ({ ...prev, [group.title]: !isOpen }))
+              }
+            >
+              <em className={isOpen ? "heb-disclosure open" : "heb-disclosure"}>▶</em>
+              <ExplorerGroupIcon icon={group.icon} />
               {group.title}
-            </span>
-            {group.items.map((item) => {
+            </button>
+            {isOpen
+              ? group.items.map((item) => {
               const navId = `${group.title}:${item.label}`;
               const active = activeNavId
                 ? activeNavId === navId
@@ -934,9 +1087,11 @@ export function HomeEnterpriseBriefApp({
                   <b>{item.label}</b>
                 </button>
               );
-            })}
+                })
+              : null}
           </nav>
-        ))}
+          );
+        })}
         <p className="heb-rail-note">
           The Enterprise Brief is the executive read. Open any item to inspect
           the context behind it.
@@ -1088,22 +1243,38 @@ export function HomeEnterpriseBriefApp({
           text-transform: uppercase;
           font-weight: 800;
         }
-        .heb-nav-group > span {
+        .heb-nav-group button.heb-nav-group-head {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 0 8px 7px;
+          gap: 6px;
+          width: 100%;
+          padding: 4px 8px 7px;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
           color: ${COLORS.quiet};
+          font: inherit;
           font-size: 9px;
           letter-spacing: 0.13em;
           text-transform: uppercase;
           font-weight: 800;
+          text-align: left;
         }
-        .heb-nav-group > span em {
+        .heb-nav-group-icon {
           color: #807a70;
+          flex: none;
+        }
+        .heb-disclosure {
+          display: inline-block;
           font-style: normal;
-          font-size: 9px;
-          margin-top: -1px;
+          font-size: 7px;
+          color: #a29b91;
+          flex: none;
+          transition: transform 0.12s ease;
+          transform: rotate(0deg);
+        }
+        .heb-disclosure.open {
+          transform: rotate(90deg);
         }
         .heb-nav-group button {
           width: 100%;
