@@ -24,6 +24,7 @@ import {
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -123,6 +124,10 @@ interface Props {
   onBuildSettled?: (result: BuildSettledResult) => Promise<void>;
   /** User-facing blocker owned by the parent, such as incomplete visible capture inputs. */
   disabledReason?: string | null;
+  /** Display label for the signed-in session (e.g. "jane@client.com · Client admin"),
+   *  shown in the pre-commit confirmation dialog. Purely a display of who the
+   *  server already resolves the session to — never sent to the mutation itself. */
+  approverLabel?: string | null;
 }
 
 export interface BuildSettledResult {
@@ -170,7 +175,9 @@ export function PhaseApproveAndBuild({
   onBeforeBuild,
   onBuildSettled,
   disabledReason = null,
+  approverLabel = null,
 }: Props) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
     .map((key) =>
       DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
@@ -469,7 +476,7 @@ export function PhaseApproveAndBuild({
       {/* The single phase action */}
       <button
         type="button"
-        onClick={() => void approveAndBuild()}
+        onClick={() => setConfirmOpen(true)}
         disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
         style={{
           alignSelf: "flex-start",
@@ -492,6 +499,19 @@ export function PhaseApproveAndBuild({
       >
         {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
       </button>
+
+      <GateApprovalConfirmDialog
+        open={confirmOpen}
+        title={`Approve & build ${phaseLabel}?`}
+        summary={`This generates all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one governed batch and closes the phase gate once every document reaches a terminal state. There is no per-document regenerate afterward — if an input changes, you'll re-run and re-approve the whole phase.`}
+        approverLabel={approverLabel}
+        confirmLabel="Approve & Build"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          void approveAndBuild();
+        }}
+      />
 
       {error && <div style={{ fontSize: 12, color: STALE }}>{error}</div>}
 

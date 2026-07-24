@@ -23,6 +23,7 @@ import {
 } from "@/components/strategic-moves/FileCabinetPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { PhaseRoleApprovalsSummary } from "@/components/strategic-moves/PhaseRoleApprovalsSummary";
+import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -106,6 +107,11 @@ interface MovesPhaseStandaloneClientProps {
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
+  /** The signed-in session's identity, resolved server-side (never client-supplied)
+   *  — shown in the gate-approval confirmation dialog so an approver sees who
+   *  they're approving as before committing. Absent (null) degrades gracefully:
+   *  the confirmation still shows, just without the approver-identity line. */
+  currentUser?: { email: string | null; role: string | null } | null;
 }
 
 type WorkspaceView = "phase" | "files" | "intelligence" | "approvals" | "pricing";
@@ -377,8 +383,13 @@ export function MovesPhaseStandaloneClient({
   currentStateReadiness = null,
   initialSubstepKey,
   pricingEngineEnabled = false,
+  currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
+  const approverLabel =
+    currentUser?.email && currentUser?.role
+      ? `${currentUser.email} · ${currentUser.role}`
+      : (currentUser?.email ?? null);
   const phase = phaseFor(phaseNum);
   const currentPhase = move.currentPhase ?? 0;
   const terminalComplete = Boolean(move.terminalComplete);
@@ -1404,6 +1415,7 @@ export function MovesPhaseStandaloneClient({
                           onApproveAfterBuild={approvePhaseGateAfterBuild}
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
+                          approverLabel={approverLabel}
                           onFinalizePhaseCapture={finalizePhaseCapture}
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -1454,6 +1466,7 @@ export function MovesPhaseStandaloneClient({
                           onApproveAfterBuild={approvePhaseGateAfterBuild}
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
+                          approverLabel={approverLabel}
                           onFinalizePhaseCapture={finalizePhaseCapture}
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -2397,6 +2410,7 @@ function PhaseBody({
   onApproveAfterBuild,
   onContinueCurrentPhase,
   onApproveP0Gate,
+  approverLabel,
   onFinalizePhaseCapture,
   onOpenFiles,
   onPhaseCaptureValueChange,
@@ -2430,6 +2444,7 @@ function PhaseBody({
   }) => Promise<void>;
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
+  approverLabel: string | null;
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
@@ -2446,6 +2461,7 @@ function PhaseBody({
   substep: SubstepKey;
   terminalComplete: boolean;
 }) {
+  const [p0ConfirmOpen, setP0ConfirmOpen] = useState(false);
   if (phase.phase === 0 && substep !== "approve") {
     return <P0OriginationHandoff move={move} />;
   }
@@ -3029,6 +3045,7 @@ function PhaseBody({
           ) : phase.phase >= 1 ? (
             <PhaseApproveAndBuild
               archetype={move.archetype}
+              approverLabel={approverLabel}
               clientDisplayName={move.tenant.name}
               disabledReason={phaseCaptureBlocker}
               evidenceNeedPackets={evidenceNeedPackets}
@@ -3041,16 +3058,30 @@ function PhaseBody({
               phaseNum={phase.phase}
             />
           ) : (
-            <button
-              className="mxw-gate-button"
-              disabled={gateApprovalStatus === "approving"}
-              onClick={() => void onApproveP0Gate()}
-              type="button"
-            >
-              {gateApprovalStatus === "approving"
-                ? "Approving..."
-                : "Approve gate →"}
-            </button>
+            <>
+              <button
+                className="mxw-gate-button"
+                disabled={gateApprovalStatus === "approving"}
+                onClick={() => setP0ConfirmOpen(true)}
+                type="button"
+              >
+                {gateApprovalStatus === "approving"
+                  ? "Approving..."
+                  : "Approve gate →"}
+              </button>
+              <GateApprovalConfirmDialog
+                open={p0ConfirmOpen}
+                title="Approve the P0 gate?"
+                summary="This approves the origination brief and unlocks P1 Charter. The approved brief is what carries forward — review it before confirming."
+                approverLabel={approverLabel}
+                confirmLabel="Approve gate"
+                onCancel={() => setP0ConfirmOpen(false)}
+                onConfirm={() => {
+                  setP0ConfirmOpen(false);
+                  void onApproveP0Gate();
+                }}
+              />
+            </>
           )}
         </div>
         {isHistoricalPhase ? (
