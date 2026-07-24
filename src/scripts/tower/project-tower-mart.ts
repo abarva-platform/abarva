@@ -2,7 +2,7 @@
 //
 //   npx tsx src/scripts/tower/project-tower-mart.ts \
 //     --tenant meridian-health \
-//     --v3-dir datasets/tenant-inputs/meridian-health/standard-2026-07-v3 \
+//     --v3-dir datasets/tenant-inputs/active/meridian-health/current \
 //     [--dry-run] [--actor <email>]
 //
 // Pipeline (facts -> mart is the single Tower projection path):
@@ -51,10 +51,12 @@ import type {
 
 const MART_VERSION = "tower_command_mart_v1";
 const FORMULA_VERSION = "unified_facts_v1";
+const TENANT_INPUT_REGISTRY_PATH =
+  "datasets/tenant-inputs/tenant-input-registry.json";
 
 interface CliArgs {
   tenant: string;
-  v3Dir: string;
+  v3Dir: string | null;
   supplementalDir: string | null;
   dryRun: boolean;
   noDb: boolean;
@@ -73,15 +75,15 @@ function parseArgs(argv: readonly string[]): CliArgs {
   };
   const tenant = get("--tenant");
   const v3Dir = get("--v3-dir");
-  if (!tenant || !v3Dir) {
+  if (!tenant) {
     console.error(
-      "usage: project-tower-mart --tenant <key> --v3-dir <path> [--dry-run] [--actor <email>] [--out-dir <path>]",
+      "usage: project-tower-mart --tenant <key> [--v3-dir <active packet path>] [--dry-run] [--actor <email>] [--out-dir <path>]",
     );
     process.exit(2);
   }
   return {
     tenant,
-    v3Dir: path.resolve(process.cwd(), v3Dir),
+    v3Dir: v3Dir ? path.resolve(process.cwd(), v3Dir) : null,
     supplementalDir: get("--supplemental-dir")
       ? path.resolve(process.cwd(), get("--supplemental-dir")!)
       : null,
@@ -98,6 +100,50 @@ function parseArgs(argv: readonly string[]): CliArgs {
       get("--out-dir") ??
       path.join(process.cwd(), "reports", `tower-mart-projection-${tenant}`),
   };
+}
+
+interface TenantInputRegistry {
+  activeTenants?: Array<{
+    tenantKey?: string;
+    displayName?: string;
+    canonicalInputRoot?: string;
+  }>;
+}
+
+function readTenantInputRegistry(): TenantInputRegistry {
+  const full = path.resolve(process.cwd(), TENANT_INPUT_REGISTRY_PATH);
+  return JSON.parse(fs.readFileSync(full, "utf8")) as TenantInputRegistry;
+}
+
+function resolveActiveTenantInputRoot(tenantKey: string): string {
+  const canonicalTenantKey = canonicalCioTowerTenantKey(tenantKey);
+  const registry = readTenantInputRegistry();
+  const activeTenant = registry.activeTenants?.find(
+    (tenant) =>
+      canonicalCioTowerTenantKey(tenant.tenantKey ?? "") ===
+      canonicalTenantKey,
+  );
+  const root = activeTenant?.canonicalInputRoot;
+  if (!root) {
+    throw new Error(
+      `No active input packet found for tenant "${tenantKey}" in ${TENANT_INPUT_REGISTRY_PATH}.`,
+    );
+  }
+  const absoluteRoot = path.resolve(process.cwd(), root);
+  if (!fs.existsSync(absoluteRoot)) {
+    throw new Error(
+      `Active input packet for tenant "${tenantKey}" does not exist: ${root}`,
+    );
+  }
+  return absoluteRoot;
+}
+
+function sourceStandardForDir(dir: string): string {
+  const relative = path.relative(process.cwd(), dir).replaceAll(path.sep, "/");
+  if (relative.startsWith("datasets/tenant-inputs/active/")) {
+    return "active-current";
+  }
+  return path.basename(dir);
 }
 
 function parseCsv(text: string): CsvRow[] {
@@ -321,6 +367,7 @@ async function loadEnvFiles(): Promise<void> {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv);
   await loadEnvFiles();
+  const activeV3Dir = args.v3Dir ?? resolveActiveTenantInputRoot(args.tenant);
 
   const connectionString = args.noDb
     ? null
@@ -347,10 +394,10 @@ async function main(): Promise<void> {
 
   try {
     const identity = await resolveTenant(client, args.tenant, args.tenant);
-    const csvDirs = [args.v3Dir, args.supplementalDir].filter(
+    const csvDirs = [activeV3Dir, args.supplementalDir].filter(
       Boolean,
     ) as string[];
-    const primaryCsvDirs = [args.v3Dir];
+    const primaryCsvDirs = [activeV3Dir];
 
     // 1. V3 facts (local CSVs)
     const v3Facts = projectV3ToFacts(
@@ -385,7 +432,7 @@ async function main(): Promise<void> {
       tenantName: identity.tenantName,
       martVersion: MART_VERSION,
       formulaVersion: FORMULA_VERSION,
-      sourceStandard: path.basename(args.v3Dir),
+      sourceStandard: sourceStandardForDir(activeV3Dir),
       crosswalk,
       sourceFiles: [
         ...existingV3Files(csvDirs, [
