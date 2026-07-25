@@ -47,6 +47,7 @@ jest.mock("@/lib/auth/current-user", () => ({
 
 jest.mock("@/lib/auth/source-access-policy", () => ({
   loadUserSourceAccessPolicy: jest.fn(async () => ({
+    canApproveSourceStages: true,
     canUploadSourceArtifacts: true,
   })),
 }));
@@ -56,11 +57,17 @@ jest.mock("@/lib/source/queries", () => ({
 }));
 
 jest.mock("@/lib/source/canonical-specs/artifact-specs", () => ({
-  specByCode: jest.fn((code: string) => ({ gateDefining: code === "d04_app_inventory" })),
+  specByCode: jest.fn((code: string) => ({
+    gateDefining: code === "d04_app_inventory",
+  })),
 }));
 
 const insertArtifactAcceptance = jest.fn(
-  async (input: unknown): Promise<{ ok: true; record: Record<string, unknown> } | { ok: false; error: string }> => ({
+  async (
+    input: unknown,
+  ): Promise<
+    { ok: true; record: Record<string, unknown> } | { ok: false; error: string }
+  > => ({
     ok: true,
     record: {
       id: "acceptance-1",
@@ -91,11 +98,20 @@ function fakeFluentClient() {
         },
         maybeSingle: async () => {
           if (table === "source_events") {
-            return { data: { id: "11111111-1111-1111-1111-111111111111", client_key: "skyharbor-air" }, error: null };
+            return {
+              data: {
+                id: "11111111-1111-1111-1111-111111111111",
+                client_key: "skyharbor-air",
+              },
+              error: null,
+            };
           }
           if (table === "source_event_artifact_states") {
             return {
-              data: filters.artifact_code === "d11_response_checklist" ? artifactStateRow : null,
+              data:
+                filters.artifact_code === "d11_response_checklist"
+                  ? artifactStateRow
+                  : null,
               error: null,
             };
           }
@@ -114,11 +130,16 @@ function fakeFluentClient() {
 }
 
 function request(body: unknown): import("next/server").NextRequest {
-  return { json: async () => body } as unknown as import("next/server").NextRequest;
+  return {
+    json: async () => body,
+  } as unknown as import("next/server").NextRequest;
 }
 
 const ctx = {
-  params: Promise.resolve({ eventId: "11111111-1111-1111-1111-111111111111", artifactCode: "d11_response_checklist" }),
+  params: Promise.resolve({
+    eventId: "11111111-1111-1111-1111-111111111111",
+    artifactCode: "d11_response_checklist",
+  }),
 };
 
 beforeEach(() => {
@@ -180,25 +201,51 @@ describe("POST /api/v1/source/:eventId/artifacts/:artifactCode/accept", () => {
   });
 
   it("rejects an artifact code with no linked content yet", async () => {
-    const res = await POST(
-      request({ approvalRationale: "x" }),
-      { params: Promise.resolve({ eventId: "11111111-1111-1111-1111-111111111111", artifactCode: "d99_unlinked" }) },
-    );
+    const res = await POST(request({ approvalRationale: "x" }), {
+      params: Promise.resolve({
+        eventId: "11111111-1111-1111-1111-111111111111",
+        artifactCode: "d99_unlinked",
+      }),
+    });
     expect(res.status).toBe(404);
   });
 
-  it("returns 403 when the user lacks upload rights", async () => {
+  it("returns 403 when the user lacks stage-approval rights", async () => {
     const { loadUserSourceAccessPolicy } = jest.requireMock(
       "@/lib/auth/source-access-policy",
     ) as { loadUserSourceAccessPolicy: jest.Mock };
-    loadUserSourceAccessPolicy.mockResolvedValueOnce({ canUploadSourceArtifacts: false });
+    loadUserSourceAccessPolicy.mockResolvedValueOnce({
+      canApproveSourceStages: false,
+      canUploadSourceArtifacts: true,
+    });
     const res = await POST(request({ approvalRationale: "x" }), ctx);
     expect(res.status).toBe(403);
     expect(insertArtifactAcceptance).not.toHaveBeenCalled();
   });
 
+  it("returns 403 for a user with upload rights but no approval rights — accept is a stronger claim than upload", async () => {
+    // Source integrity fix, 2026-07-23: acceptance previously only checked
+    // canUploadSourceArtifacts, the same broad permission as a plain file
+    // upload. This proves upload-only rights are no longer sufficient.
+    const { loadUserSourceAccessPolicy } = jest.requireMock(
+      "@/lib/auth/source-access-policy",
+    ) as { loadUserSourceAccessPolicy: jest.Mock };
+    loadUserSourceAccessPolicy.mockResolvedValueOnce({
+      canApproveSourceStages: false,
+      canUploadSourceArtifacts: true,
+    });
+    const res = await POST(request({ approvalRationale: "x" }), ctx);
+    expect(res.status).toBe(403);
+    const json = (await res.json()) as { detail?: string };
+    expect(json.detail).toMatch(/upload rights alone are not sufficient/i);
+    expect(insertArtifactAcceptance).not.toHaveBeenCalled();
+  });
+
   it("surfaces an insert failure as a 500", async () => {
-    insertArtifactAcceptance.mockResolvedValueOnce({ ok: false, error: "db down" });
+    insertArtifactAcceptance.mockResolvedValueOnce({
+      ok: false,
+      error: "db down",
+    });
     const res = await POST(request({ approvalRationale: "x" }), ctx);
     expect(res.status).toBe(500);
     const json = (await res.json()) as { error?: string; detail?: string };
