@@ -342,7 +342,12 @@ export async function POST(
     discoveryReceipt = ingested.discoveryReceipt;
     discoveryReadiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
   } catch (err) {
-    evidenceWarning = err instanceof Error ? err.message : String(err);
+    evidenceWarning =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null
+          ? JSON.stringify(err)
+          : String(err);
     console.error("[workspace/upload] evidence_ingestion_failed", {
       attachmentId: record.id,
       moveId,

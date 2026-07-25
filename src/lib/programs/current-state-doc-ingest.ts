@@ -501,7 +501,18 @@ export interface IngestUploadedMoveEvidenceArgs {
   filename: string;
   mimeType: string;
   buffer: Buffer;
+  /**
+   * `program_evidence_items.attachment_id` is a foreign key into
+   * `program_attachments`, NOT `move_artifacts` — only pass a
+   * `program_attachments.id` here (e.g. from `recordAttachmentUpload`).
+   * Callers whose upload surface writes to a different table (e.g. the
+   * Files & Evidence vault, which writes `move_artifacts`) must omit this
+   * and instead carry that id via `moveArtifactId` below, which is stored
+   * in `source_ref` metadata rather than the FK column.
+   */
   attachmentId?: string | null;
+  /** The `move_artifacts.id` for this upload, if the caller's surface uses that table. Traceability only — never written to the `attachment_id` FK column. */
+  moveArtifactId?: string | null;
   declaredClassification?: unknown;
 }
 
@@ -611,6 +622,7 @@ export async function ingestUploadedMoveEvidence(
       what_found: classification.whatFound,
       where_used: classification.whereUsed,
       quarantined,
+      move_artifact_id: args.moveArtifactId ?? undefined,
     },
   });
 
