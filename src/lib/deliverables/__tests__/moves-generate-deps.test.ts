@@ -73,6 +73,7 @@ describe("createMovesGenerateArtifactDeps", () => {
       "lakeshore",
       "current state",
       "move-1",
+      2,
     );
 
     expect(buildProgramsContextBundleAsyncMock).toHaveBeenCalledWith(
@@ -90,7 +91,7 @@ describe("createMovesGenerateArtifactDeps", () => {
         role: "program_user",
       },
       "move-1",
-      20,
+      2,
     );
     expect(currentState).toContain("BROKER CURRENT STATE");
     expect(currentState).toContain("PROGRAM EVIDENCE LEDGER");
