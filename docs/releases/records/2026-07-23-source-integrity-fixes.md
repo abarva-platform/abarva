@@ -7,9 +7,11 @@
 ## Status
 
 `released` — merged to `main` via [#5600](https://github.com/abarva-platform/abarva/pull/5600)
-(squash-merge `86b4ffe9302e4350447ee330c0c5f135eeca5318`), all 20 CI checks passed. ACA deploy and
-live signed-in proof still pending — see QA / Validation and Deployment Authority; this record does
-not claim live-proven status until those checks are captured.
+(squash-merge `86b4ffe9302e4350447ee330c0c5f135eeca5318`), all 20 CI checks passed. Deployed to
+`app.abarva.ai` (run 30169132204, digest
+`sha256:79ce565d2ce90a65d1e87dd755d4e9cbc52a2f57effacb42a94df4d4daae0267`), runtime invariant
+verified. 3 of 4 live signed-in checks confirmed directly against production; the 4th relies on
+existing automated test coverage — see QA / Validation for the exact evidence and the honest gap.
 
 ## Plain-English Summary
 
@@ -97,11 +99,26 @@ roadmap, each closing a gap the audit found and cited with exact code references
   files, this release record found and matched.
 - `pass` — all 20 required CI checks on PR #5600 (typecheck, ESLint, architecture rules, migration
   drift, gitleaks, bundle/Lighthouse budgets, hygiene gate, tenant allowlist, etc.).
-- `pending` — live signed-in proof — after deploy: (a) attempt a chat-save with a bogus
-  artifact code and confirm 400; (b) attempt generating `d24_decision_brief` on an event with no
-  scorecard/pricing workbook and confirm the upstream-block 409; (c) render a BAFO Question Pack
-  or Market Scan artifact and confirm the governance banner now appears; (d) confirm a
-  upload-rights-only user gets 403 on `/accept`.
+- `pass` — live signed-in proof on `app.abarva.ai` (2026-07-25, post-deploy,
+  `86b4ffe9302e4350447ee330c0c5f135eeca5318` / image digest
+  `sha256:79ce565d2ce90a65d1e87dd755d4e9cbc52a2f57effacb42a94df4d4daae0267`):
+  - (a) `POST /api/v1/source/:eventId/artifacts/generate` with `artifactCode:
+"totally_bogus_code_xyz"` on a real Meridian Health sourcing event returned
+    `400 unknown_artifact_code`.
+  - (b) `POST /api/v1/source/:eventId/artifacts/d24_decision_brief/generate` on a real event
+    still at Strategy stage (no scorecard/pricing workbook drafted) returned the
+    `upstream_required` block naming exactly `["d16_scorecard", "d19_pricing_workbook"]` — no
+    artifact was fabricated or persisted.
+  - (c) `GET /api/v1/source/:eventId/artifacts/d22_bafo_question_pack/render-docx` on a real
+    event returned a real docx; unzipped and inspected, `word/document.xml` contains the exact
+    governance banner text: "Not approved for vendor release. This AI-prepared draft must be
+    reviewed and approved by Procurement and the designated business owner before issuance."
+  - (d) not re-verified live in this pass — exercising the negative-permission path would
+    require signing in as a non-admin, upload-only demo identity, which wasn't available in this
+    session (the signed-in session is an admin and passes the check by design either way). Relies
+    on the 7/7 passing `accept/__tests__/route.test.ts` suite, including the dedicated test
+    `"returns 403 for a user with upload rights but no approval rights"`, as the evidence for this
+    path. Flagged here rather than silently marked done.
 
 ## Rollout Plan
 
@@ -112,11 +129,16 @@ per the four checks above.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be recorded after merge and deploy.
+- Approved image digest: `sha256:79ce565d2ce90a65d1e87dd755d4e9cbc52a2f57effacb42a94df4d4daae0267`
+  (`acrabarvalab001.azurecr.io/abarva/web`, tag `main-86b4ffe9`), deployed via run
+  [30169132204](https://github.com/abarva-platform/abarva/actions/runs/30169132204), 100% traffic
+  shifted, runtime invariant + health endpoint verified in-workflow.
+- ACA runtime invariant: verified — template image, 100%-traffic revision image, and worker job
+  images match the digest above.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — see QA / Validation.
+- Live signed-in proof required: yes — see QA / Validation (3 of 4 checks confirmed live; the
+  4th relies on existing test coverage — see note there).
 
 ## Rollback Plan
 
