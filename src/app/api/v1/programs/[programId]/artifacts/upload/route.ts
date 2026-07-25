@@ -151,11 +151,20 @@ export async function POST(
           filename: file.name,
           mimeType: file.type || "application/octet-stream",
           buffer: body,
-          attachmentId: saved.artifactId,
+          // NOT attachmentId — that's an FK into program_attachments, and
+          // this route writes move_artifacts, a different table. Carry the
+          // move_artifacts id as metadata instead (see
+          // IngestUploadedMoveEvidenceArgs.moveArtifactId).
+          moveArtifactId: saved.artifactId,
           declaredClassification: form.get("dataClassification"),
         });
       } catch (err) {
-        evidenceWarning = err instanceof Error ? err.message : String(err);
+        evidenceWarning =
+          err instanceof Error
+            ? err.message
+            : typeof err === "object" && err !== null
+              ? JSON.stringify(err)
+              : String(err);
         console.error("[artifacts/upload] evidence_ingestion_failed", {
           artifactId: saved.artifactId,
           programId,
