@@ -16,7 +16,31 @@
 // their value is synthesis, not page volume.
 
 import type { DeliverableModule, QualityBar } from "./types";
-import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import {
+  CHARTER_CONTRACT,
+  P3_P4_WORD_BAND_CONTRACTS,
+} from "@/lib/deliverables/shared/artifact-contracts";
+
+/** Spreads a shared P3/P4 word-band contract's numbers into QualityBar's
+ * shape, so quality-validator.ts's banded logic (pass/advisory/block) applies
+ * identically to Charter and to these reconciled types. */
+function wordBandFrom(
+  key: keyof typeof P3_P4_WORD_BAND_CONTRACTS,
+): Pick<
+  QualityBar,
+  | "minBodyWords"
+  | "targetBodyWordsMax"
+  | "advisoryBandMax"
+  | "enforceMaxAsBlocker"
+> {
+  const c = P3_P4_WORD_BAND_CONTRACTS[key];
+  return {
+    minBodyWords: c.minWords,
+    targetBodyWordsMax: c.targetWordsMax,
+    advisoryBandMax: c.advisoryMaxWords,
+    enforceMaxAsBlocker: c.enforceMaxAsBlocker,
+  };
+}
 
 type QualityBarOverride = Partial<QualityBar>;
 
@@ -57,10 +81,11 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Substantial narrative artifact — must tell one coherent investment
     // argument, not a stack of disconnected sections. The financial model is a
     // separate workbook, so the narrative case must stay within its hard band.
+    // Word band reconciled 2026-07-25 with golden-bar's DEPTH_BY_ARTIFACT
+    // (they previously contradicted: golden-bar's ceiling equalled this
+    // pipeline's floor) — see P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
     minSections: 9,
-    minBodyWords: 5_000, // ~12 pages
-    targetBodyWordsMax: 9_500, // ~20 pages (financial model is a separate companion artifact)
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("business_case"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
@@ -69,10 +94,11 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Substantial, visual, implementation-grade — this is exactly the artifact
     // type that must NOT be squeezed by a universal brevity rule. Ceiling is a
     // warning only; the four architecture-view exhibits alone justify real depth.
+    // Word band reconciled 2026-07-25 — golden-bar's ceiling (6,000) previously
+    // sat below this pipeline's own floor (9,000); both now read the same
+    // numbers from P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
     minSections: 10,
-    minBodyWords: 9_000, // ~20 pages
-    targetBodyWordsMax: 16_000, // ~35 pages, plus the diagram appendix
-    enforceMaxAsBlocker: false,
+    ...wordBandFrom("target_state_architecture"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
@@ -81,9 +107,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // 8-12 visual, decision-led pages. This is a specification of the accepted
     // architecture, not a second architecture report or implementation manual.
     minSections: 8,
-    minBodyWords: 2_800,
-    targetBodyWordsMax: 5_200,
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("solution_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
@@ -91,9 +115,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // 6-10 table/diagram-rich pages. Reader energy belongs on work split,
     // accountability, controls, cadence, and adoption decisions.
     minSections: 8,
-    minBodyWords: 2_400,
-    targetBodyWordsMax: 4_600,
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
@@ -101,9 +123,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // 5-8 page options paper. It chooses a sourcing posture; it does not become
     // an RFP, vendor landscape, contract, or restatement of the full design.
     minSections: 7,
-    minBodyWords: 1_800,
-    targetBodyWordsMax: 3_600,
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("sourcing_strategy"),
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
   },
@@ -129,38 +149,36 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // registry artifact. It must resolve to the same concise control as the
     // registry-facing alias above.
     minSections: 8,
-    minBodyWords: 2_400,
-    targetBodyWordsMax: 4_600,
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::roadmap": {
     // P4 execution roadmap is an executable sequence with dependency logic and
     // milestone tables. If it sprawls past this ceiling, it is no longer a
-    // sponsor-readable roadmap.
+    // sponsor-readable roadmap. Word band reconciled 2026-07-25 — golden-bar's
+    // `execution_roadmap` ceiling (5,000) previously equalled this pipeline's
+    // own floor; both now read P3_P4_WORD_BAND_CONTRACTS.roadmap.
     minSections: 6,
-    minBodyWords: 5_000, // ~12 pages
-    targetBodyWordsMax: 11_000, // ~25 pages
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("roadmap"),
     requiresEvidenceGapsNoted: true,
   },
   "moves::estimate_model": {
     // P4 financial model is table/workbook-led. It should explain assumptions
-    // and confidence, but prose bloat is a quality failure.
+    // and confidence, but prose bloat is a quality failure. golden-bar calls
+    // this deliverable type `financial_model` and had no depth standard for
+    // it at all before this reconciliation.
     minSections: 6,
-    minBodyWords: 1_600,
-    targetBodyWordsMax: 4_200,
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("estimate_model"),
     requiresEvidenceGapsNoted: true,
   },
   "moves::value_model": {
     // P4 Tower metrics / value realization plan: compact measurement contract,
-    // not a second business case.
+    // not a second business case. golden-bar calls this deliverable type
+    // `tower_metrics_plan` and had no depth standard for it at all before
+    // this reconciliation.
     minSections: 6,
-    minBodyWords: 1_800,
-    targetBodyWordsMax: 4_600,
-    enforceMaxAsBlocker: true,
+    ...wordBandFrom("value_model"),
     requiresEvidenceGapsNoted: true,
   },
   "moves::handoff_pack": {

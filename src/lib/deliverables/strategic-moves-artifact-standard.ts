@@ -2,6 +2,7 @@ import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import {
   CHARTER_CONTRACT,
   CHARTER_PLACEHOLDER_LABELS,
+  P3_P4_WORD_BAND_CONTRACTS,
 } from "@/lib/deliverables/shared/artifact-contracts";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import { renderPhaseDeliverablePackagePrompt } from "@/lib/programs/phase-deliverable-package-contract";
@@ -70,6 +71,25 @@ export interface ArtifactDepthStandard {
   hardMaxWords?: number;
 }
 
+/**
+ * Builds an `ArtifactDepthStandard` from the shared P3/P4 word-band contract
+ * (artifact-contracts.ts), so this pipeline can never drift from the
+ * orchestrator's numbers again the way it did before the 2026-07-25
+ * reconciliation (see P3_P4_WORD_BAND_CONTRACTS's own comment for the
+ * contradictions that were found).
+ */
+function depthFromWordBand(
+  key: keyof typeof P3_P4_WORD_BAND_CONTRACTS,
+): ArtifactDepthStandard {
+  const c = P3_P4_WORD_BAND_CONTRACTS[key];
+  return {
+    targetWords: `${c.minWords.toLocaleString()}-${c.targetWordsMax.toLocaleString()}`,
+    minWords: c.minWords,
+    maxTokens: c.maxOutputTokens,
+    hardMaxWords: c.targetWordsMax,
+  };
+}
+
 const DEPTH_BY_ARTIFACT: Partial<
   Record<DeliverableKey, ArtifactDepthStandard>
 > = {
@@ -102,41 +122,46 @@ const DEPTH_BY_ARTIFACT: Partial<
     minWords: 1500,
     maxTokens: 30000,
   },
+  // Reconciled 2026-07-25 with the orchestrator's quality-bar-registry.ts —
+  // this type's ceiling here (previously 6,000) sat BELOW the orchestrator's
+  // own floor (9,000), a real contradiction. Ceiling now matches the shared
+  // contract (16,000). Floor is deliberately NOT raised to the shared
+  // contract's 9,000: this pipeline generates target_state_architecture in a
+  // single pass (p3FutureStateAssignment), unlike the orchestrator's
+  // decomposed multi-pass generator that the 9,000-word floor was designed
+  // around — forcing that floor here broke real generation in
+  // generate-artifact.test.ts. Revisit once this pipeline's single-pass
+  // prompt is proven to reliably produce that much depth; until then, a
+  // shorter-but-real single-pass architecture document is better than
+  // padding to hit a floor the prompt wasn't built for.
   target_state_architecture: {
-    targetWords: "3,500-6,000",
-    minWords: 2500,
-    maxTokens: 36000,
+    ...depthFromWordBand("target_state_architecture"),
+    minWords: 2_500,
   },
-  solution_design: {
-    targetWords: "3,500-5,200",
-    minWords: 2500,
-    maxTokens: 36000,
-  },
-  operating_model_design: {
-    targetWords: "2,400-4,600",
-    minWords: 2400,
-    maxTokens: 30000,
-  },
-  sourcing_strategy: {
-    targetWords: "1,800-3,400",
-    minWords: 1800,
-    maxTokens: 24000,
-  },
-  execution_roadmap: {
-    targetWords: "3,000-5,000",
-    minWords: 2500,
-    maxTokens: 32000,
-  },
-  business_case: {
-    targetWords: "3,000-5,000",
-    minWords: 2500,
-    maxTokens: 32000,
-  },
+  solution_design: depthFromWordBand("solution_design"),
+  operating_model_design: depthFromWordBand("operating_model_design"),
+  sourcing_strategy: depthFromWordBand("sourcing_strategy"),
+  // golden-bar's DeliverableKey name for the orchestrator's `roadmap` type.
+  // Reconciled 2026-07-25 — this type's ceiling here (previously 5,000)
+  // exactly equalled the orchestrator's own floor.
+  execution_roadmap: depthFromWordBand("roadmap"),
+  // Reconciled 2026-07-25 — same contradiction as execution_roadmap: this
+  // type's ceiling here (previously 5,000) exactly equalled the
+  // orchestrator's own floor.
+  business_case: depthFromWordBand("business_case"),
   handoff_package: {
     targetWords: "2,500-4,000",
     minWords: 2000,
     maxTokens: 30000,
   },
+  // golden-bar's DeliverableKey name for the orchestrator's `estimate_model`
+  // type. Added 2026-07-25 — this pipeline had no depth standard for it at
+  // all before this reconciliation (silently fell back to the generic
+  // 1,200/1,800-3,000/24,000 default).
+  financial_model: depthFromWordBand("estimate_model"),
+  // golden-bar's DeliverableKey name for the orchestrator's `value_model`
+  // type. Added 2026-07-25 for the same reason as financial_model above.
+  tower_metrics_plan: depthFromWordBand("value_model"),
 };
 
 export function depthStandardForArtifact(
@@ -188,26 +213,42 @@ export function premiumGoldenBarOptionsForArtifact(
   // A concision ceiling applies to every artifact type; concise executive
   // artifacts opt into enforcement once their rendered wrapper overhead is known.
   const maximumWordCount = maximumWordCountForArtifact(artifact);
-  const enforceMaximumWordCount = (
-    [
-      "charter",
-      "solution_design",
-      "operating_model_design",
-      "sourcing_strategy",
-    ] as readonly DeliverableKey[]
-  ).includes(artifact);
+  // Which golden-bar DeliverableKey maps to which shared P3_P4_WORD_BAND_CONTRACTS
+  // entry — the two pipelines use different names for the same artifact type
+  // (e.g. golden-bar's `execution_roadmap` is the orchestrator's `roadmap`).
+  const WORD_BAND_KEY_BY_ARTIFACT: Partial<
+    Record<DeliverableKey, keyof typeof P3_P4_WORD_BAND_CONTRACTS>
+  > = {
+    target_state_architecture: "target_state_architecture",
+    solution_design: "solution_design",
+    operating_model_design: "operating_model_design",
+    sourcing_strategy: "sourcing_strategy",
+    business_case: "business_case",
+    execution_roadmap: "roadmap",
+    financial_model: "estimate_model",
+    tower_metrics_plan: "value_model",
+  };
+  const wordBand = WORD_BAND_KEY_BY_ARTIFACT[artifact]
+    ? P3_P4_WORD_BAND_CONTRACTS[WORD_BAND_KEY_BY_ARTIFACT[artifact]!]
+    : undefined;
+  // Reconciled 2026-07-25: enforcement now matches the orchestrator's
+  // enforceMaxAsBlocker exactly for every P3/P4 type with a shared contract —
+  // previously this golden-bar whitelist silently disagreed with the
+  // orchestrator for business_case/execution_roadmap (informational here,
+  // hard-blocking there).
+  const enforceMaximumWordCount =
+    artifact === "charter" ? true : (wordBand?.enforceMaxAsBlocker ?? false);
+  const advisoryMaximumWordCount =
+    artifact === "charter"
+      ? CHARTER_CONTRACT.wordBudget.advisoryMaxWords
+      : wordBand?.advisoryMaxWords;
 
   if (artifact === "charter" || artifact === "discovery_report") {
     return {
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
       maximumWordCount,
       enforceMaximumWordCount,
-      ...(artifact === "charter"
-        ? {
-            advisoryMaximumWordCount:
-              CHARTER_CONTRACT.wordBudget.advisoryMaxWords,
-          }
-        : {}),
+      ...(advisoryMaximumWordCount ? { advisoryMaximumWordCount } : {}),
       forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
       ...(artifact === "discovery_report" && context
         ? {
@@ -241,6 +282,7 @@ export function premiumGoldenBarOptionsForArtifact(
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
       maximumWordCount,
       enforceMaximumWordCount,
+      ...(advisoryMaximumWordCount ? { advisoryMaximumWordCount } : {}),
       forbiddenLanguage: P3_FUTURE_STATE_FORBIDDEN_ARTIFACT_TERMS,
       ...(context
         ? {
@@ -262,6 +304,7 @@ export function premiumGoldenBarOptionsForArtifact(
   return {
     maximumWordCount,
     enforceMaximumWordCount,
+    ...(advisoryMaximumWordCount ? { advisoryMaximumWordCount } : {}),
     forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
   };
 }
