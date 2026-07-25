@@ -4,17 +4,22 @@
 // HomeV4ApplicationFullRow[], and injects into any existing V4 preview
 // fixture for that tenant.
 //
-// Supersedes the skyharbor-air-only version of this script
-// (reconcile-skyharbor-applications.mjs) which used a datasets/ file with
-// no owner data. tower-standardized-v1's F05_applications-systems.csv has
-// real, specific business-owner data directly for 4 of 5 tenants
-// (apex-retail, first-capital, lakeshore-holdings, meridian-health) --
-// "COO", "CFO", "Chief Medical Officer", etc. skyharbor-air's F05 is an
-// older schema with no owner column; its owner data instead comes from a
-// governed join to F19_team-application-ownership.csv (verified 900/900
-// application_id match against F05's app_id, same tenant) -- that join
-// carries an explicit confidence score (0.50-0.78) and caveat per row,
-// since it's a derived team/domain match, not a directly-captured owner.
+// F05_applications-systems.csv was normalized to one canonical column
+// schema across all 5 tenants on 2026-07-25 (previously skyharbor-air used
+// a different, older column set than the other 4 -- see git history for
+// the pre-normalization schema and scripts/knowledge/build-home-knowledge-v4-review-pack.mjs's
+// TENANT_SCHEMA_FAMILY comment, since removed, for the full mapping). This
+// script no longer branches on schema shape.
+//
+// Real, specific business-owner data is directly captured in F05 for
+// apex-retail/first-capital/lakeshore-holdings/meridian-health -- "COO",
+// "CFO", "Chief Medical Officer", etc. skyharbor-air's F05 has no directly
+// captured owner (real gap in that tenant's source data, not a schema
+// artifact of the normalization); F19_team-application-ownership.csv exists
+// for every tenant and is used as a fallback wherever F05's owner is blank,
+// via a governed application_id join. That join carries an explicit
+// confidence score (0.50-0.78) and caveat per row, since it's a derived
+// team/domain match, not a directly-captured owner.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -61,71 +66,49 @@ function reconcileTenant(tenantKey) {
   }
   const f05Rows = parseCsv(fs.readFileSync(f05Path, "utf8"));
 
-  // skyharbor-air's F05 is an older schema (app_id/name/no owner column);
-  // the other 4 tenants share a canonical schema with owner columns inline.
-  const isLegacySchema = "app_id" in (f05Rows[0] ?? {});
-
-  let ownershipById = new Map();
-  if (isLegacySchema) {
-    const f19Path = path.join(tstRoot, folder, "family-8-semantic-enrichment/F19_team-application-ownership.csv");
-    if (fs.existsSync(f19Path)) {
-      const f19Rows = parseCsv(fs.readFileSync(f19Path, "utf8"));
-      for (const row of f19Rows) {
-        ownershipById.set(row.application_id, row);
-      }
+  const f19Path = path.join(tstRoot, folder, "family-8-semantic-enrichment/F19_team-application-ownership.csv");
+  const ownershipById = new Map();
+  if (fs.existsSync(f19Path)) {
+    const f19Rows = parseCsv(fs.readFileSync(f19Path, "utf8"));
+    for (const row of f19Rows) {
+      ownershipById.set(row.application_id, row);
     }
   }
 
+  let directCount = 0;
+  let derivedCount = 0;
   const fullRows = f05Rows.map((row) => {
-    if (isLegacySchema) {
-      const ownership = ownershipById.get(row.app_id);
-      return {
-        app_id: row.app_id,
-        name: row.name,
-        business_domain: row.business_function || row.category || null,
-        criticality: row.criticality || null,
-        tech_stack: row.vendor || null,
-        hosting: row.deployment || null,
-        vendor: row.vendor || null,
-        modernization_disposition: row.lifecycle_stage || null,
-        named_users: null,
-        annual_run_cost_usd: toNumberOrNull(row.run_cost_fy26_usd),
-        interface_count: toNumberOrNull(row.integration_count),
-        owner: ownership?.business_owner_role || null,
-        sponsor: ownership?.executive_owner_role || null,
-        application_type: row.category || null,
-        owner_confidence: ownership ? toNumberOrNull(ownership.confidence) : null,
-        owner_caveat: ownership?.caveat || null,
-        source_file: `tower-standardized-v1/${folder}/family-2-technology-estate/F05_applications-systems.csv` +
-          (ownership ? ` + family-8-semantic-enrichment/F19_team-application-ownership.csv` : ""),
-      };
-    }
+    const hasDirectOwner = Boolean(row.primary_business_owner);
+    const ownership = hasDirectOwner ? null : ownershipById.get(row.application_id);
+    if (hasDirectOwner) directCount += 1;
+    else if (ownership) derivedCount += 1;
     return {
       app_id: row.application_id,
       name: row.application_name,
       business_domain: row.domain || null,
       criticality: row.criticality || null,
-      tech_stack: row.platform_type || null,
+      tech_stack: row.platform_type || row.legacy_platform_category || null,
       hosting: row.hosting_model || null,
-      vendor: null,
+      vendor: row.legacy_vendor || null,
       modernization_disposition: row.modernization_state || null,
       named_users: toNumberOrNull(row.users_or_entities_supported),
       annual_run_cost_usd: toNumberOrNull(row.annual_run_cost_usd),
       interface_count: toNumberOrNull(row.integration_count),
-      owner: row.primary_business_owner || null,
-      sponsor: null,
-      application_type: row.platform_type || null,
-      owner_confidence: row.primary_business_owner ? 1 : null,
-      owner_caveat: row.primary_business_owner
+      owner: hasDirectOwner ? row.primary_business_owner : (ownership?.business_owner_role || null),
+      sponsor: ownership?.executive_owner_role || null,
+      application_type: row.platform_type || row.legacy_platform_category || null,
+      owner_confidence: hasDirectOwner ? 1 : (ownership ? toNumberOrNull(ownership.confidence) : null),
+      owner_caveat: hasDirectOwner
         ? "Directly captured on the source application record (F05), not derived."
-        : null,
-      source_file: `tower-standardized-v1/${folder}/family-2-technology-estate/F05_applications-systems.csv`,
+        : (ownership?.caveat || null),
+      source_file: `tower-standardized-v1/${folder}/family-2-technology-estate/F05_applications-systems.csv` +
+        (!hasDirectOwner && ownership ? ` + family-8-semantic-enrichment/F19_team-application-ownership.csv` : ""),
     };
   });
 
   const ownedCount = fullRows.filter((r) => r.owner).length;
   console.log(
-    `[${tenantKey}] ${fullRows.length} applications reconciled, ${ownedCount} with a real owner (${isLegacySchema ? "F19 derived join, confidence-scored" : "F05 direct capture"})`,
+    `[${tenantKey}] ${fullRows.length} applications reconciled, ${ownedCount} with a real owner (${directCount} F05 direct capture, ${derivedCount} F19 derived join, confidence-scored)`,
   );
 
   const fixturePath = path.join(fixturesDir, `${tenantKey}.json`);
