@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { COLORS } from "@/components/home/HomeEnterpriseBriefApp";
-import type { HomeKnowledgeV4JobRunFailure, HomeKnowledgeV4ReviewCandidate } from "@/lib/home/home-knowledge-v4-review";
+import type {
+  HomeKnowledgeV4JobRunFailure,
+  HomeKnowledgeV4PackHistoryRow,
+  HomeKnowledgeV4ReviewCandidate,
+} from "@/lib/home/home-knowledge-v4-review";
 
 function statusPill(label: string, tone: string) {
   return (
@@ -22,43 +26,76 @@ function validationPill(status: string | null) {
 }
 
 function approvalPill(status: string) {
-  if (status === "approved") return statusPill("Approved", COLORS.tealDark);
+  if (status === "approved") return statusPill("Active", COLORS.tealDark);
   if (status === "candidate") return statusPill("Awaiting review", COLORS.amber);
   if (status === "retired") return statusPill("Retired", COLORS.quiet);
+  if (status === "rejected") return statusPill("Rejected", COLORS.red);
   return statusPill(status, COLORS.quiet);
 }
 
-function CandidateRow({ candidate, onApproved }: { candidate: HomeKnowledgeV4ReviewCandidate; onApproved: () => void }) {
+function CandidateRow({
+  candidate,
+  onChanged,
+}: {
+  candidate: HomeKnowledgeV4ReviewCandidate;
+  onChanged: () => void;
+}) {
   const [overrideReason, setOverrideReason] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [retireReason, setRetireReason] = useState("");
+  const [showReject, setShowReject] = useState(false);
+  const [showRetire, setShowRetire] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const needsOverride = candidate.validation_status !== "pass";
-  const alreadyApproved = candidate.status === "approved";
+  const isActive = candidate.status === "approved";
+  const isCandidate = candidate.status === "candidate";
+
+  async function post(url: string, body: Record<string, unknown>) {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "Request failed.");
+        return;
+      }
+      onChanged();
+    } catch {
+      setError("Request failed to reach the server.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleApprove() {
-    setError(null);
     if (needsOverride && !overrideReason.trim()) {
       setError("An override reason is required to approve a flagged candidate.");
       return;
     }
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/admin/home-knowledge-v4/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenantKey: candidate.tenant_key, overrideReason }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        setError(data.error ?? "Approval failed.");
-        return;
-      }
-      onApproved();
-    } catch {
-      setError("Approval request failed to reach the server.");
-    } finally {
-      setSubmitting(false);
+    await post("/api/admin/home-knowledge-v4/approve", { tenantKey: candidate.tenant_key, overrideReason });
+  }
+
+  async function handleReject() {
+    if (!rejectReason.trim()) {
+      setError("A reject reason is required.");
+      return;
     }
+    await post("/api/admin/home-knowledge-v4/reject", { packId: candidate.id, reason: rejectReason });
+  }
+
+  async function handleRetire() {
+    if (!retireReason.trim()) {
+      setError("A retire reason is required.");
+      return;
+    }
+    await post("/api/admin/home-knowledge-v4/retire", { tenantKey: candidate.tenant_key, reason: retireReason });
   }
 
   return (
@@ -72,12 +109,20 @@ function CandidateRow({ candidate, onApproved }: { candidate: HomeKnowledgeV4Rev
       </div>
       <p className="heb-v4-rq-meta">
         {candidate.pack_version} · generated {new Date(candidate.created_at).toLocaleString()}
-        {alreadyApproved && candidate.approved_by ? ` · approved by ${candidate.approved_by}` : ""}
+        {isActive && candidate.approved_by ? ` · approved by ${candidate.approved_by}` : ""}
+        {candidate.status === "rejected" && candidate.rejected_by ? ` · rejected by ${candidate.rejected_by}` : ""}
+        {candidate.status === "retired" && candidate.retired_by ? ` · retired by ${candidate.retired_by}` : ""}
       </p>
       {candidate.override_reason ? (
         <p className="heb-v4-rq-override-note">
-          Approved with override by {candidate.overridden_by}: &ldquo;{candidate.override_reason}&rdquo;
+          {candidate.rollback_of_pack_id ? "Rolled back" : "Approved with override"} by {candidate.overridden_by}: &ldquo;{candidate.override_reason}&rdquo;
         </p>
+      ) : null}
+      {candidate.reject_reason ? (
+        <p className="heb-v4-rq-override-note">Rejected: &ldquo;{candidate.reject_reason}&rdquo;</p>
+      ) : null}
+      {candidate.retire_reason ? (
+        <p className="heb-v4-rq-override-note">Retired: &ldquo;{candidate.retire_reason}&rdquo;</p>
       ) : null}
       {candidate.violations.length > 0 ? (
         <div className="heb-v4-rq-findings">
@@ -92,24 +137,169 @@ function CandidateRow({ candidate, onApproved }: { candidate: HomeKnowledgeV4Rev
           </ul>
         </div>
       ) : null}
-      {!alreadyApproved ? (
-        <div className="heb-v4-rq-actions">
-          {needsOverride ? (
+      <div className="heb-v4-rq-actions">
+        {isCandidate ? (
+          <>
+            {needsOverride ? (
+              <textarea
+                className="heb-v4-rq-override-input"
+                placeholder="Required: why is it safe to approve this candidate despite the failed findings above?"
+                value={overrideReason}
+                onChange={(event) => setOverrideReason(event.target.value)}
+                rows={2}
+              />
+            ) : null}
+            <div className="heb-v4-rq-action-row">
+              <button type="button" className="heb-v4-rq-approve-btn" onClick={handleApprove} disabled={submitting}>
+                {submitting ? "Approving…" : needsOverride ? "Approve with override" : "Approve"}
+              </button>
+              <button type="button" className="heb-v4-rq-reject-btn" onClick={() => setShowReject((v) => !v)} disabled={submitting}>
+                Reject
+              </button>
+            </div>
+            {showReject ? (
+              <div className="heb-v4-rq-action-row">
+                <textarea
+                  className="heb-v4-rq-override-input"
+                  placeholder="Required: why is this candidate being declined?"
+                  value={rejectReason}
+                  onChange={(event) => setRejectReason(event.target.value)}
+                  rows={2}
+                />
+                <button type="button" className="heb-v4-rq-reject-confirm-btn" onClick={handleReject} disabled={submitting}>
+                  {submitting ? "Rejecting…" : "Confirm reject"}
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+        {isActive ? (
+          <div className="heb-v4-rq-action-row">
+            <button type="button" className="heb-v4-rq-reject-btn" onClick={() => setShowRetire((v) => !v)} disabled={submitting}>
+              Retire
+            </button>
+          </div>
+        ) : null}
+        {showRetire ? (
+          <div className="heb-v4-rq-action-row">
             <textarea
               className="heb-v4-rq-override-input"
-              placeholder="Required: why is it safe to approve this candidate despite the failed findings above?"
-              value={overrideReason}
-              onChange={(event) => setOverrideReason(event.target.value)}
+              placeholder="Required: why is this active pack being pulled down (tenant falls back to V2)?"
+              value={retireReason}
+              onChange={(event) => setRetireReason(event.target.value)}
               rows={2}
             />
-          ) : null}
-          <button type="button" className="heb-v4-rq-approve-btn" onClick={handleApprove} disabled={submitting}>
-            {submitting ? "Approving…" : needsOverride ? "Approve with override" : "Approve"}
-          </button>
-          {error ? <p className="heb-v4-rq-error">{error}</p> : null}
-        </div>
+            <button type="button" className="heb-v4-rq-reject-confirm-btn" onClick={handleRetire} disabled={submitting}>
+              {submitting ? "Retiring…" : "Confirm retire"}
+            </button>
+          </div>
+        ) : null}
+        <button type="button" className="heb-v4-rq-history-btn" onClick={() => setShowHistory((v) => !v)}>
+          {showHistory ? "Hide version history" : "View version history"}
+        </button>
+        {error ? <p className="heb-v4-rq-error">{error}</p> : null}
+      </div>
+      {showHistory ? (
+        <HistoryPanel tenantKey={candidate.tenant_key} onChanged={onChanged} />
       ) : null}
     </article>
+  );
+}
+
+function HistoryPanel({ tenantKey, onChanged }: { tenantKey: string; onChanged: () => void }) {
+  const [history, setHistory] = useState<HomeKnowledgeV4PackHistoryRow[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rollingBackId, setRollingBackId] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/admin/home-knowledge-v4/history?tenantKey=${encodeURIComponent(tenantKey)}`)
+      .then((res) => res.json())
+      .then((data) => setHistory(Array.isArray(data.history) ? data.history : []))
+      .catch(() => setError("Failed to load version history."))
+      .finally(() => setLoading(false));
+  }, [tenantKey]);
+
+  async function handleRollback(targetPackId: string) {
+    if (!reason.trim()) {
+      setError("A rollback reason is required.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/home-knowledge-v4/rollback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantKey, targetPackId, reason }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "Rollback failed.");
+        return;
+      }
+      onChanged();
+    } catch {
+      setError("Rollback request failed to reach the server.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) return <p className="heb-v4-rq-history-loading">Loading version history…</p>;
+  if (!history || history.length === 0) return <p className="heb-v4-rq-history-loading">No version history yet.</p>;
+
+  return (
+    <div className="heb-v4-rq-history">
+      <span className="heb-section-label">Version history ({history.length})</span>
+      <ul>
+        {history.map((row) => {
+          const canRollback = row.status === "retired" || row.status === "rejected";
+          return (
+            <li key={row.id}>
+              <span className="heb-v4-rq-history-status">{row.status}</span>
+              {row.pack_version} · {new Date(row.created_at).toLocaleString()}
+              {row.status === "retired" && row.retire_reason ? ` — "${row.retire_reason}"` : ""}
+              {row.status === "rejected" && row.reject_reason ? ` — "${row.reject_reason}"` : ""}
+              {canRollback ? (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    className="heb-v4-rq-rollback-btn"
+                    onClick={() => setRollingBackId(rollingBackId === row.id ? null : row.id)}
+                  >
+                    Roll back to this
+                  </button>
+                  {rollingBackId === row.id ? (
+                    <div className="heb-v4-rq-action-row">
+                      <textarea
+                        className="heb-v4-rq-override-input"
+                        placeholder="Required: why roll back to this specific pack?"
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        rows={2}
+                      />
+                      <button
+                        type="button"
+                        className="heb-v4-rq-reject-confirm-btn"
+                        onClick={() => handleRollback(row.id)}
+                        disabled={submitting}
+                      >
+                        {submitting ? "Rolling back…" : "Confirm rollback"}
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      {error ? <p className="heb-v4-rq-error">{error}</p> : null}
+    </div>
   );
 }
 
@@ -136,7 +326,7 @@ export function HomeV4ReviewQueue({
           // candidates/recentFailures are server-fetched props, so a purely
           // client-side state bump would reset local UI state without ever
           // reflecting the real post-approval database row.
-          <CandidateRow key={candidate.id} candidate={candidate} onApproved={() => router.refresh()} />
+          <CandidateRow key={candidate.id} candidate={candidate} onChanged={() => router.refresh()} />
         ))}
       </div>
       {recentFailures.length > 0 ? (
@@ -263,6 +453,72 @@ function HomeV4ReviewQueueStyles() {
       .heb-v4-rq-approve-btn:disabled {
         opacity: 0.6;
         cursor: default;
+      }
+      .heb-v4-rq-action-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .heb-v4-rq-reject-btn,
+      .heb-v4-rq-history-btn {
+        padding: 6px 16px;
+        border: 1px solid ${COLORS.lineStrong};
+        border-radius: 999px;
+        background: transparent;
+        color: ${COLORS.ink};
+        font-size: 12.5px;
+        cursor: pointer;
+      }
+      .heb-v4-rq-reject-confirm-btn,
+      .heb-v4-rq-rollback-btn {
+        padding: 5px 14px;
+        border: 1px solid ${COLORS.red};
+        border-radius: 999px;
+        background: transparent;
+        color: ${COLORS.red};
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .heb-v4-rq-rollback-btn {
+        border-color: ${COLORS.blue};
+        color: ${COLORS.blue};
+        padding: 2px 10px;
+        font-size: 11px;
+      }
+      .heb-v4-rq-history-btn {
+        align-self: flex-start;
+      }
+      .heb-v4-rq-history {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed ${COLORS.line};
+      }
+      .heb-v4-rq-history ul {
+        margin: 6px 0 0;
+        padding-left: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 12px;
+        color: ${COLORS.muted};
+      }
+      .heb-v4-rq-history-status {
+        display: inline-block;
+        margin-right: 6px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: ${COLORS.rail};
+        color: ${COLORS.ink};
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .heb-v4-rq-history-loading {
+        margin: 10px 0 0;
+        font-size: 12px;
+        color: ${COLORS.quiet};
       }
       .heb-v4-rq-error {
         margin: 0;

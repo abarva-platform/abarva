@@ -30,6 +30,33 @@ export interface HomeKnowledgeV4ReviewCandidate {
   override_reason: string | null;
   overridden_by: string | null;
   overridden_at: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  reject_reason: string | null;
+  retired_by: string | null;
+  retire_reason: string | null;
+  rollback_of_pack_id: string | null;
+  effective_from: string | null;
+  effective_to: string | null;
+}
+
+export interface HomeKnowledgeV4PackHistoryRow {
+  id: string;
+  tenant_key: string;
+  pack_version: string;
+  status: string;
+  validation_status: string | null;
+  created_at: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  effective_from: string | null;
+  effective_to: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  reject_reason: string | null;
+  retired_by: string | null;
+  retire_reason: string | null;
+  rollback_of_pack_id: string | null;
 }
 
 export interface HomeKnowledgeV4JobRunFailure {
@@ -76,7 +103,10 @@ export async function listHomeKnowledgeV4CandidatesForReview(): Promise<HomeKnow
       `SELECT DISTINCT ON (tenant_key)
               id, tenant_key, tenant_name, pack_version, status, validation_status,
               quality_report, created_at, approved_by, approved_at,
-              override_reason, overridden_by, overridden_at
+              override_reason, overridden_by, overridden_at,
+              rejected_by, rejected_at, reject_reason,
+              retired_by, retire_reason, rollback_of_pack_id,
+              effective_from, effective_to
          FROM public.home_knowledge_packs
         WHERE artifact_type = $1
         ORDER BY tenant_key, created_at DESC`,
@@ -96,9 +126,47 @@ export async function listHomeKnowledgeV4CandidatesForReview(): Promise<HomeKnow
       override_reason: row.override_reason,
       overridden_by: row.overridden_by,
       overridden_at: row.overridden_at,
+      rejected_by: row.rejected_by,
+      rejected_at: row.rejected_at,
+      reject_reason: row.reject_reason,
+      retired_by: row.retired_by,
+      retire_reason: row.retire_reason,
+      rollback_of_pack_id: row.rollback_of_pack_id,
+      effective_from: row.effective_from,
+      effective_to: row.effective_to,
     }));
   } catch (error) {
     console.warn("[home-v4-review] failed to list candidates for review", error);
+    return [];
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
+// Full version history for one tenant -- what the review-queue's "latest
+// row only" listing above deliberately omits. Needed for rollback: you can
+// only roll back to a pack you can see.
+export async function listHomeKnowledgeV4PackHistoryForTenant(
+  tenantKey: string,
+): Promise<HomeKnowledgeV4PackHistoryRow[]> {
+  const dbUrl = connectionString();
+  if (!dbUrl) return [];
+  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-read"));
+  try {
+    await client.connect();
+    const result = await client.query(
+      `SELECT id, tenant_key, pack_version, status, validation_status, created_at,
+              approved_by, approved_at, effective_from, effective_to,
+              rejected_by, rejected_at, reject_reason,
+              retired_by, retire_reason, rollback_of_pack_id
+         FROM public.home_knowledge_packs
+        WHERE tenant_key = $1 AND artifact_type = $2
+        ORDER BY created_at DESC`,
+      [tenantKey, ARTIFACT_TYPE],
+    );
+    return result.rows;
+  } catch (error) {
+    console.warn("[home-v4-review] failed to list pack history", error);
     return [];
   } finally {
     await client.end().catch(() => undefined);
@@ -192,6 +260,170 @@ export async function approveHomeKnowledgeV4Candidate(options: {
     await client.query("COMMIT");
     const result = approved.rows[0];
     return { id: result.id, tenantKey: result.tenant_key, packVersion: result.pack_version, overridden: needsOverride };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
+// Reject a candidate outright -- reviewed and explicitly declined, never
+// approved. Distinct from retire: a rejected row never went live.
+export async function rejectHomeKnowledgeV4Candidate(options: {
+  packId: string;
+  rejectedBy: string;
+  reason: string;
+}): Promise<{ id: string; tenantKey: string; packVersion: string }> {
+  if (!options.reason.trim()) {
+    throw new HomeKnowledgeV4ApprovalError("A reject reason is required.");
+  }
+  const dbUrl = connectionString();
+  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-reject"));
+  await client.connect();
+  try {
+    await client.query("BEGIN");
+    const current = await client.query(
+      `SELECT id, status FROM public.home_knowledge_packs WHERE id = $1 AND artifact_type = $2 FOR UPDATE`,
+      [options.packId, ARTIFACT_TYPE],
+    );
+    if (current.rows.length === 0) {
+      throw new HomeKnowledgeV4ApprovalError(`No V4 pack found with id "${options.packId}".`);
+    }
+    if (current.rows[0].status !== "candidate") {
+      throw new HomeKnowledgeV4ApprovalError(
+        `Only a pack with status "candidate" can be rejected (this one is "${current.rows[0].status}"). Use retire to pull down an already-active pack.`,
+      );
+    }
+    const rejected = await client.query(
+      `UPDATE public.home_knowledge_packs
+        SET status = 'rejected', rejected_by = $2, rejected_at = now(), reject_reason = $3, updated_at = now()
+        WHERE id = $1
+        RETURNING id, tenant_key, pack_version`,
+      [options.packId, options.rejectedBy, options.reason.trim()],
+    );
+    await client.query("COMMIT");
+    const result = rejected.rows[0];
+    return { id: result.id, tenantKey: result.tenant_key, packVersion: result.pack_version };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
+// Pull a tenant's currently-active pack down WITHOUT promoting a
+// replacement -- e.g. to deliberately fall a tenant back to the V2
+// renderer. This is the standalone action approve's implicit retire-of-
+// prior never exposed on its own.
+export async function retireHomeKnowledgeV4ActivePack(options: {
+  tenantKey: string;
+  retiredBy: string;
+  reason: string;
+}): Promise<{ id: string; tenantKey: string; packVersion: string }> {
+  if (!options.reason.trim()) {
+    throw new HomeKnowledgeV4ApprovalError("A retire reason is required.");
+  }
+  const dbUrl = connectionString();
+  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-retire"));
+  await client.connect();
+  try {
+    await client.query("BEGIN");
+    const active = await client.query(
+      `SELECT id FROM public.home_knowledge_packs
+        WHERE tenant_key = $1 AND artifact_type = $2 AND status = 'approved' AND effective_to IS NULL
+        FOR UPDATE`,
+      [options.tenantKey, ARTIFACT_TYPE],
+    );
+    if (active.rows.length === 0) {
+      throw new HomeKnowledgeV4ApprovalError(`No active V4 pack found for tenant "${options.tenantKey}".`);
+    }
+    const retired = await client.query(
+      `UPDATE public.home_knowledge_packs
+        SET status = 'retired', effective_to = now(), retired_by = $2, retire_reason = $3, updated_at = now()
+        WHERE id = $1
+        RETURNING id, tenant_key, pack_version`,
+      [active.rows[0].id, options.retiredBy, options.reason.trim()],
+    );
+    await client.query("COMMIT");
+    const result = retired.rows[0];
+    return { id: result.id, tenantKey: result.tenant_key, packVersion: result.pack_version };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
+// Reactivate a specific earlier pack (retired or rejected) for a tenant --
+// retires whatever is currently active for that tenant (same partial-
+// unique-index-respecting pattern as approve) and flips the named pack back
+// to approved/live, stamping rollback_of_pack_id with whatever it displaced.
+export async function rollbackHomeKnowledgeV4Pack(options: {
+  tenantKey: string;
+  targetPackId: string;
+  rolledBackBy: string;
+  reason: string;
+}): Promise<{ id: string; tenantKey: string; packVersion: string; displacedPackId: string | null }> {
+  if (!options.reason.trim()) {
+    throw new HomeKnowledgeV4ApprovalError("A rollback reason is required.");
+  }
+  const dbUrl = connectionString();
+  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-rollback"));
+  await client.connect();
+  try {
+    await client.query("BEGIN");
+    const target = await client.query(
+      `SELECT id, tenant_key, status FROM public.home_knowledge_packs
+        WHERE id = $1 AND artifact_type = $2 AND tenant_key = $3
+        FOR UPDATE`,
+      [options.targetPackId, ARTIFACT_TYPE, options.tenantKey],
+    );
+    if (target.rows.length === 0) {
+      throw new HomeKnowledgeV4ApprovalError(
+        `No V4 pack with id "${options.targetPackId}" found for tenant "${options.tenantKey}".`,
+      );
+    }
+    if (!["retired", "rejected"].includes(target.rows[0].status)) {
+      throw new HomeKnowledgeV4ApprovalError(
+        `Rollback target must currently be "retired" or "rejected" (this one is "${target.rows[0].status}").`,
+      );
+    }
+    const displaced = await client.query(
+      `UPDATE public.home_knowledge_packs
+        SET status = 'retired', effective_to = now(), retired_by = $2,
+            retire_reason = $3, updated_at = now()
+        WHERE tenant_key = $1 AND status = 'approved' AND effective_to IS NULL
+        RETURNING id`,
+      [options.tenantKey, options.rolledBackBy, `Displaced by rollback to pack ${options.targetPackId}: ${options.reason.trim()}`],
+    );
+    const reactivated = await client.query(
+      `UPDATE public.home_knowledge_packs
+        SET status = 'approved', approved_by = $2, approved_at = now(), effective_from = now(), effective_to = NULL,
+            updated_at = now(), rollback_of_pack_id = $3,
+            override_reason = $4, overridden_by = $2, overridden_at = now()
+        WHERE id = $1
+        RETURNING id, tenant_key, pack_version`,
+      [
+        options.targetPackId,
+        options.rolledBackBy,
+        displaced.rows[0]?.id ?? null,
+        `Rolled back: ${options.reason.trim()}`,
+      ],
+    );
+    await client.query("COMMIT");
+    const result = reactivated.rows[0];
+    return {
+      id: result.id,
+      tenantKey: result.tenant_key,
+      packVersion: result.pack_version,
+      displacedPackId: displaced.rows[0]?.id ?? null,
+    };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
