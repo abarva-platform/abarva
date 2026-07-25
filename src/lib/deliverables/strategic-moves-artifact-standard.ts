@@ -1,4 +1,8 @@
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import {
+  CHARTER_CONTRACT,
+  CHARTER_PLACEHOLDER_LABELS,
+} from "@/lib/deliverables/shared/artifact-contracts";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import { renderPhaseDeliverablePackagePrompt } from "@/lib/programs/phase-deliverable-package-contract";
 import type { SolutionContext } from "@/lib/programs/solution-context";
@@ -69,15 +73,18 @@ export interface ArtifactDepthStandard {
 const DEPTH_BY_ARTIFACT: Partial<
   Record<DeliverableKey, ArtifactDepthStandard>
 > = {
+  // Word budget is read from the shared contract (src/lib/deliverables/
+  // shared/artifact-contracts.ts) so it can never drift from the orchestrator
+  // pipeline's copy again — see docs/architecture/MOVES_DUAL_PIPELINE_AUDIT.md.
   charter: {
-    targetWords: "900-1,100",
-    minWords: 700,
+    targetWords: `${CHARTER_CONTRACT.wordBudget.targetWords.min}-${CHARTER_CONTRACT.wordBudget.targetWords.max.toLocaleString()}`,
+    minWords: CHARTER_CONTRACT.wordBudget.minWords,
     // Generous on tokens, firm on words (2026-07-25): the word ceiling
     // (hardMaxWords) is what enforces conciseness; a starved token budget
     // would only constrain the model's ability to reason/draft before
     // compressing to that word count, which hurts quality, not just length.
     maxTokens: 8000,
-    hardMaxWords: 1300,
+    hardMaxWords: CHARTER_CONTRACT.wordBudget.hardMaxWords,
   },
   discovery_report: {
     targetWords: "3,000-5,000",
@@ -353,6 +360,11 @@ function clientMoveReference(ctx: SolutionContext): string {
 }
 
 function p1Assignment(): string {
+  const wb = CHARTER_CONTRACT.wordBudget;
+  const labels = CHARTER_PLACEHOLDER_LABELS;
+  const presentationElements = CHARTER_CONTRACT.presentationElements
+    .map((element, i) => `${i + 1}. ${element}`)
+    .join("\n");
   return `PHASE-SPECIFIC ASSIGNMENT — P1 MOVE CHARTER
 Purpose: record the approved P0 bet well enough to authorize P2 Discovery.
 This is a concise charter brief / gate decision record, not a discovery report, solution design,
@@ -371,16 +383,16 @@ You consume only structured P0 capture, approved enterprise context, and sponsor
 invent information that should have been collected in P0. Every sentence in this Charter must be
 traceable to one of those three sources. If a required section cannot be populated from them, do
 not fabricate content for it — write one of these exact labels instead, whichever fits:
-- "Client decision required" (a decision only the client/sponsor can make)
-- "Hypothesis to test in P2" (a plausible direction that P2 discovery must validate)
-- "Evidence required for P2" (a fact that only P2 evidence collection can supply)
+- "${labels.clientDecisionRequired}" (a decision only the client/sponsor can make)
+- "${labels.hypothesisToTestInP2}" (a plausible direction that P2 discovery must validate)
+- "${labels.evidenceRequiredForP2}" (a fact that only P2 evidence collection can supply)
 No Charter section should ever require P2 evidence to be considered complete — a section that is
 honestly incomplete, labeled as above, is correct; a section that is confidently wrong is not.
 
 Document presentation standard
 Produce an executive-quality Charter designed for approximately 2-3 pages.
-- Target 900-1,100 body words.
-- Hard maximum 1,300 body words.
+- Target ${wb.targetWords.min}-${wb.targetWords.max.toLocaleString()} body words.
+- Hard maximum ${wb.hardMaxWords.toLocaleString()} body words.
 - Use concise executive prose, short paragraphs, and descriptive headings.
 - Use no more than three tables.
 - Prefer tables where they improve decision clarity; do not convert every section into a table.
@@ -389,10 +401,7 @@ Produce an executive-quality Charter designed for approximately 2-3 pages.
 - Do not create empty rows, placeholder sections, or decorative content.
 
 Required presentation elements:
-1. A prominent Charter Decision box at the beginning.
-2. A two-column Scope / Out of Scope table.
-3. A structured Discovery Questions and Evidence Required table.
-4. A short Authorization and Immediate Next Steps section at the end.
+${presentationElements}
 
 Rendering requirements (content-level — exact border width, colors, fonts, margins, padding, cover
 treatment, and footer are enforced by the document renderer, not by you):

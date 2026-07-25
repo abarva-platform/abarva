@@ -13,7 +13,9 @@ describe("resolveQualityBar", () => {
     // the Charter's whole point is staying concise — its band must be
     // materially smaller than the architecture doc's.
     expect(qb.minSections).toBe(7);
-    expect(qb.minBodyWords).toBe(900);
+    // Aligned to the shared contract's floor (src/lib/deliverables/shared/
+    // artifact-contracts.ts) — matches the golden-bar pipeline's own floor.
+    expect(qb.minBodyWords).toBe(700);
     expect(qb.targetBodyWordsMax!).toBe(1_300);
   });
 

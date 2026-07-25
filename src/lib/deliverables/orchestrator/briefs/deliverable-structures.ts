@@ -10,6 +10,21 @@ import type {
   ExpectedExhibit,
   SectionGroundingMode,
 } from "../types";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+
+/**
+ * The Charter's per-section word cap, read from the shared contract
+ * (src/lib/deliverables/shared/artifact-contracts.ts) so it can never
+ * silently diverge from the golden-bar pipeline's copy — see docs/
+ * architecture/MOVES_DUAL_PIPELINE_AUDIT.md.
+ */
+function charterSectionMaxWords(key: string): number {
+  const section = CHARTER_CONTRACT.sections.find((s) => s.key === key);
+  if (!section) {
+    throw new Error(`No shared contract section for charter key "${key}"`);
+  }
+  return section.maxWords;
+}
 
 export interface DeliverableStructure {
   module: DeliverableModule;
@@ -82,7 +97,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "One tight section: the problem, why it matters now, the preliminary value hypothesis (labelled PRELIMINARY), and the approval requested. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
       "mixed",
       [],
-      "Keep this section under 125 words. Use one paragraph plus a small decision box; do not add subsections.",
+      `Keep this section under ${charterSectionMaxWords("exec_summary")} words. Use one paragraph plus a small decision box; do not add subsections.`,
     ),
     s(
       "problem_opportunity",
@@ -90,7 +105,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "Define the business problem or opportunity in plain English, including the trigger, affected business area, and the consequence of doing nothing. Do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
       [],
-      "Keep this section under 150 words. This is hypothesis framing, not P2 findings.",
+      `Keep this section under ${charterSectionMaxWords("problem_opportunity")} words. This is hypothesis framing, not P2 findings.`,
     ),
     s(
       "sponsor_commitment",
@@ -98,7 +113,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "Capture accountable role/title, operating owners, decision rights, review cadence, and the commitment to drive business-process change and measurement. Use roles/titles; do not invent named people.",
       "mixed",
       [],
-      "Keep this section under 175 words. Use a compact role/title table; no narrative role biographies.",
+      `Keep this section under ${charterSectionMaxWords("sponsor_commitment")} words. Use a compact role/title table; no narrative role biographies.`,
     ),
     s(
       "scope",
@@ -106,7 +121,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "Explicit in-scope / out-of-scope boundary — specific business process, user cohort, capability, system/data domain, and decision boundary. Keep future-state design out of the charter.",
       "mixed",
       [],
-      "Keep this section under 175 words. Use a simple in/out/adjacent table.",
+      `Keep this section under ${charterSectionMaxWords("scope")} words. Use a simple in/out/adjacent table.`,
     ),
     s(
       "success_criteria",
@@ -114,7 +129,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "Define success as a four-part commitment: business outcomes, key metrics, post-deployment measurement approach, and the business-process changes required. Label every baseline/target/value figure as cited, PRELIMINARY_ESTIMATE, or [CLIENT TO COMPLETE].",
       "mixed",
       [],
-      "Keep this section under 200 words. Use a compact table; do not build the P4 business case here.",
+      `Keep this section under ${charterSectionMaxWords("success_criteria")} words. Use a compact table; do not build the P4 business case here.`,
     ),
     s(
       "kill_criterion",
@@ -122,7 +137,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "Top risks, issues, dependencies, and a specific observable condition that would stop or redirect the Move. Keep the register to the highest-signal items.",
       "mixed",
       [],
-      "Keep this section under 175 words. Include only the top 3-5 risks/dependencies plus the kill criterion.",
+      `Keep this section under ${charterSectionMaxWords("kill_criterion")} words. Include only the top 3-5 risks/dependencies plus the kill criterion.`,
     ),
     s(
       "recommendation",
@@ -130,7 +145,7 @@ const MOVES_CHARTER: DeliverableStructure = {
       "Give the clear recommendation: approve the charter to start P2 discovery, approve with caveats, or hold. Include the immediate next actions, evidence families, workshops, and owner roles P2 must complete before any design or build decision.",
       "mixed",
       [],
-      "Keep this section under 175 words. Use bullets grouped by business, process, systems/data, controls, and value.",
+      `Keep this section under ${charterSectionMaxWords("recommendation")} words. Use bullets grouped by business, process, systems/data, controls, and value.`,
     ),
   ],
   requiredSectionKeys: [
@@ -143,25 +158,7 @@ const MOVES_CHARTER: DeliverableStructure = {
     "recommendation",
   ],
   fixedStructure: true,
-  forbiddenSectionTopics: [
-    "current state",
-    "current-state",
-    "as-is",
-    "as is assessment",
-    "baseline assessment",
-    "target state",
-    "target-state",
-    "future state",
-    "future-state",
-    "to-be",
-    "gap analysis",
-    "solution design",
-    "solution architecture",
-    "reference architecture",
-    "technical architecture",
-    "detailed design",
-    "implementation plan",
-  ],
+  forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],
 };
 
 const MOVES_BUSINESS_CASE: DeliverableStructure = {
