@@ -31,6 +31,11 @@ import type {
   PhaseDigest,
   SolutionDecision,
 } from "@/lib/programs/solution-context";
+import {
+  P3_ARCHITECTURE_TYPE_KEYS,
+  type DeliverableAcceptance,
+  type PriorDeliverable,
+} from "@/lib/programs/prior-deliverable-precedence";
 
 const BROKER_DOMAINS = [
   "enterprise_profile",
@@ -142,10 +147,49 @@ function stripHtmlFences(value: string): string {
 function maxTokensForRequest(requested?: number): number {
   const envTokens = Number(process.env.NEXUS_MOVES_ARTIFACT_MAX_TOKENS ?? 0);
   const requestedTokens = requested ?? 25000;
-  return Math.max(
-    Number.isFinite(envTokens) ? envTokens : 0,
-    requestedTokens,
-  );
+  return Math.max(Number.isFinite(envTokens) ? envTokens : 0, requestedTokens);
+}
+
+/** Map a deliverables_v2 row's status to the authoritative-acceptance model. */
+function acceptanceFromStatus(
+  status: string,
+  version: number,
+  signedOffVersion: number | null,
+): DeliverableAcceptance {
+  const s = (status ?? "").toLowerCase();
+  if (s === "superseded") return "superseded";
+  if (s === "rejected") return "rejected";
+  // Accepted only when the deliverable is signed off AND this is the signed-off
+  // version — a later unreviewed regeneration is never authoritative.
+  if (
+    (s === "signed_off" || s === "approved" || s === "board_ready") &&
+    (signedOffVersion == null || version === signedOffVersion)
+  ) {
+    return "accepted";
+  }
+  if (s === "draft" || s === "in_review" || s === "review_required")
+    return "draft";
+  return "candidate";
+}
+
+/** Best-effort plain-text architecture summary from a deliverable version. */
+function architectureSummaryFrom(
+  digest: PhaseDigest | null,
+  content: string | null,
+): string | undefined {
+  const fromDigest = (
+    digest?.architecture ??
+    digest?.solutionDesign ??
+    digest?.approach
+  )?.trim();
+  if (fromDigest) return fromDigest;
+  const text = (content ?? "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text ? text.slice(0, 1200) : undefined;
 }
 
 export function createMovesGenerateArtifactDeps(
@@ -202,6 +246,54 @@ export function createMovesGenerateArtifactDeps(
           .map((row) => structuredDigest(row.structured_data))
           .filter((digest): digest is PhaseDigest => digest !== null);
       },
+      async loadPriorDeliverables(moveId) {
+        // Architecture-bearing prior deliverables WITH real acceptance status +
+        // Move/tenant scope + lineage, so the assembler can resolve authoritative
+        // architecture by precedence (PR1). Scoped to this Move by
+        // engagement_id; the tenant is this ctx's tenant. The pure resolver
+        // still re-checks Move/tenant scope as defense in depth.
+        const rows = await azureRead.query<{
+          id: string;
+          structured_data: unknown;
+          content: string | null;
+          version: number;
+          status: string;
+          signed_off_version: number | null;
+          deliverable_type_key: string;
+        }>(
+          "SELECT dv.id, dv.structured_data, dv.content, dv.version, " +
+            "d.status, d.signed_off_version, d.deliverable_type_key FROM (" +
+            "SELECT DISTINCT ON (d.deliverable_type_key) " +
+            "dv.id, dv.structured_data, dv.content, dv.version, " +
+            "d.status, d.signed_off_version, d.deliverable_type_key " +
+            "FROM deliverable_versions dv " +
+            "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
+            "WHERE d.engagement_id = $1 " +
+            "AND d.deliverable_type_key = ANY($2) " +
+            "ORDER BY d.deliverable_type_key, (dv.version = d.signed_off_version) DESC, dv.version DESC" +
+            ") d " +
+            "ORDER BY deliverable_type_key ASC",
+          [moveId, [...P3_ARCHITECTURE_TYPE_KEYS]],
+          { missingTable: "empty" },
+        );
+        const tenantKey = ctx.clientKey ?? ctx.clientId;
+        return rows.map((row): PriorDeliverable => {
+          const digest = structuredDigest(row.structured_data) ?? {};
+          const architecture = architectureSummaryFrom(digest, row.content);
+          return {
+            deliverableTypeKey: row.deliverable_type_key,
+            acceptance: acceptanceFromStatus(
+              row.status,
+              row.version,
+              row.signed_off_version,
+            ),
+            engagementId: moveId,
+            tenantKey,
+            digest: architecture ? { ...digest, architecture } : digest,
+            lineageRef: row.id,
+          };
+        });
+      },
       async loadDecisions(moveId) {
         const decisions: SolutionDecision[] = [];
         const program = await getProgramById(ctx, moveId).catch(() => null);
@@ -231,8 +323,7 @@ export function createMovesGenerateArtifactDeps(
         for (const mod of modules) {
           if (mod.phaseNumber !== phase) continue;
           const st = (mod.state ?? {}) as Record<string, unknown>;
-          const value =
-            typeof st.value === "string" ? st.value.trim() : "";
+          const value = typeof st.value === "string" ? st.value.trim() : "";
           if (!value) continue;
           const key =
             typeof st.capture_section_key === "string"
@@ -240,9 +331,7 @@ export function createMovesGenerateArtifactDeps(
               : mod.moduleKey;
           byKey.set(key, value);
           const heading =
-            (typeof st.label === "string" && st.label) ||
-            mod.moduleName ||
-            key;
+            (typeof st.label === "string" && st.label) || mod.moduleName || key;
           // Structured facts (baseline) are stored as JSON — render them as
           // readable "metric: value (source: …)" lines, not raw JSON, so the
           // model sees clean provenance-tagged facts.
