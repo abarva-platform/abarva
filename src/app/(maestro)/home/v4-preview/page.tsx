@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { HomeV4ExplorerShell } from "@/components/home/v4/HomeV4ExplorerShell";
+import { HomeV4ReviewQueue } from "@/components/home/v4/HomeV4ReviewQueue";
 import type { HomeV4Candidate } from "@/components/home/v4/homeV4Visual";
-import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
+import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
+import { listHomeKnowledgeV4CandidatesForReview, listHomeKnowledgeV4RecentJobRunFailures } from "@/lib/home/home-knowledge-v4-review";
 
 import skyharborFixture from "./_fixtures/skyharbor-air.json";
 import firstCapitalFixture from "./_fixtures/first-capital.json";
@@ -40,11 +41,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
-  "anand.sundaram@thesundaram.com",
-  ...CANONICAL_CLIENT_ADMIN_EMAILS,
-]);
-
 const FIXTURES: Record<string, HomeV4Candidate> = {
   "skyharbor-air": skyharborFixture as unknown as HomeV4Candidate,
   "first-capital": firstCapitalFixture as unknown as HomeV4Candidate,
@@ -57,33 +53,7 @@ export default async function HomeV4PreviewPage({
   searchParams?: Promise<{ tenant?: string }>;
 }) {
   await connection();
-  const session = await auth();
-  if (!session.userId) {
-    notFound();
-  }
-
-  const claims = session.sessionClaims as
-    | {
-        publicMetadata?: { role?: string };
-        email?: string;
-        emailAddress?: string;
-        email_addresses?: Array<{ emailAddress?: string }>;
-        emailAddresses?: Array<{ emailAddress?: string }>;
-      }
-    | undefined;
-  const user = await currentUser().catch(() => null);
-
-  const role = (claims?.publicMetadata?.role as string | undefined) ?? (user?.publicMetadata?.role as string | undefined) ?? "";
-  const primaryEmail = (
-    claims?.emailAddress ??
-    claims?.email ??
-    claims?.emailAddresses?.[0]?.emailAddress ??
-    claims?.email_addresses?.[0]?.emailAddress ??
-    user?.primaryEmailAddress?.emailAddress
-  )?.toLowerCase();
-
-  const isPlatformAdmin = role === "admin" || (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail));
-  if (!isPlatformAdmin) {
+  if (!(await isPlatformAdminSession())) {
     notFound();
   }
 
@@ -91,11 +61,17 @@ export default async function HomeV4PreviewPage({
   const tenantKey = params.tenant && FIXTURES[params.tenant] ? params.tenant : "skyharbor-air";
   const candidate = FIXTURES[tenantKey];
 
+  const [reviewCandidates, recentFailures] = await Promise.all([
+    listHomeKnowledgeV4CandidatesForReview().catch(() => []),
+    listHomeKnowledgeV4RecentJobRunFailures().catch(() => []),
+  ]);
+
   return (
     <AppShell
       surface="home"
       topBarProps={{ tenantName: candidate.tenant.display_name ?? tenantKey, context: "Knowledge · V4 preview" }}
     >
+      <HomeV4ReviewQueue candidates={reviewCandidates} recentFailures={recentFailures} />
       <div className="heb-v4-preview-tenant-bar">
         <span className="heb-section-label">Dev-only preview — not production data — switch tenant:</span>
         <nav className="heb-v4-preview-tabs">
