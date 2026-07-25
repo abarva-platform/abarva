@@ -231,10 +231,10 @@ describe("multi-pass prompt builder", () => {
       req: charterReq,
       brief: charterBrief,
       evidence: charterReq.governedEvidenceBundle.slice(0, 1),
-      outlineSummary: "1. Executive Summary & Decision Ask",
+      outlineSummary: "1. Charter Decision",
       section: {
-        key: "exec_summary",
-        title: "Executive Summary & Decision Ask",
+        key: "charter_decision",
+        title: "Charter Decision",
         groundingMode: "mixed",
         evidenceCitations: [1],
         assumptionsUsed: [],
@@ -243,7 +243,7 @@ describe("multi-pass prompt builder", () => {
       },
     });
     expect(p.user).toMatch(/CONCISE SECTION RULES/);
-    expect(p.user).toMatch(/Hard cap for this section: 125 body words/);
+    expect(p.user).toMatch(/Hard cap for this section: 100 body words/);
     expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
     expect(p.user).toMatch(/do NOT write any other section/i);
     expect(p.user).toMatch(/Do not write P2 current-state findings/i);

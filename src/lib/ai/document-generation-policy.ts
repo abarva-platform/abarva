@@ -13,6 +13,8 @@
 // Scattered callers must resolve their model/token settings from here rather
 // than hardcoding them. See docs/build/DOCUMENT_GENERATION_MODEL_POLICY.md.
 
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+
 export type DocGenTier =
   | "tier1_chat" // short Nexus/Sentinel answers — never a final deliverable
   | "tier2_working_draft" // preliminary drafts / internal analysis
@@ -212,22 +214,33 @@ export function resolveDocGenQualityProfile(): DocGenQualityProfile {
   return qualityProfile();
 }
 
-// Every deliverable type — including P1 charters — gets the standard
-// per-profile token budget below. A P1 Charter used to get a compacted
-// per-pass budget (900/1200 tokens for section_draft/synthesis vs. the
-// standard 12,000/6,000) so a starved token ceiling would force conciseness.
-// Per direction (2026-07-25): be generous on tokens, firm on words — a tight
-// token ceiling constrains the model's ability to reason/draft before
-// compressing, which constrains quality, not just length. Conciseness is
-// enforced where it belongs: the word-count quality gate
-// (`quality-bar-registry.ts`'s `targetBodyWordsMax`/`enforceMaxAsBlocker`)
-// and the prompt's own size-discipline instructions.
+// A P1 Charter previously got a compacted per-pass budget here (900/1200
+// tokens for section_draft/synthesis) specifically to force conciseness via
+// token starvation, then briefly fell through to the generic per-profile
+// defaults (12,000/6,000 — unbounded relative to a 1,300-word artifact).
+// Reconciled 2026-07-25: charter's section_draft/synthesis passes use the one
+// canonical ceiling (CHARTER_CONTRACT.maxOutputTokens, shared with the
+// golden-bar pipeline's single-shot maxTokens) — generous enough for
+// structured content/tables above the word ceiling, without being unbounded.
+// Every other deliverable type still gets the standard per-profile budget.
+function charterPassFallback(input: ResolvePassTokenBudgetInput): number | null {
+  const deliverableKey = input.deliverableType
+    ? normalizeDeliverableKey(input.deliverableType)
+    : "";
+  if (deliverableKey !== "charter" && deliverableKey !== "program_charter") {
+    return null;
+  }
+  if (input.pass !== "section_draft" && input.pass !== "synthesis") return null;
+  return CHARTER_CONTRACT.maxOutputTokens;
+}
+
 export function resolvePassTokenBudget(
   input: ResolvePassTokenBudgetInput,
 ): number {
   const profile = qualityProfile();
   const envKey = `ABARVA_DOCGEN_PASS_${PASS_ENV_KEY[input.pass]}_MAX_TOKENS`;
-  const fallback = PASS_TOKEN_DEFAULTS[profile][input.pass];
+  const fallback =
+    charterPassFallback(input) ?? PASS_TOKEN_DEFAULTS[profile][input.pass];
   const highStakes = input.highStakes ?? true;
   const requested = envTokens(envKey, fallback);
   const adjusted = highStakes ? requested : Math.round(requested * 0.6);

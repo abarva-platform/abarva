@@ -76,13 +76,16 @@ const s = (
 
 // ── Moves deliverables (strategic transformation artifacts) ──
 
-// A P1 Charter is a COMMITMENT instrument — it frames the decision to fund
-// discovery & design, names the sponsor, sets the value hypothesis and the kill
-// criterion. It must NOT pre-empt later phases: no current-state evidence
-// analysis (that is P2 Discovery), no target/future-state or solution/architecture
-// design (that is P3). The earlier structure carried a required "Current-State
-// Evidence" section, which produced premature current/target-state perspectives
-// and varied run-to-run; these are the canonical decision-sections instead.
+// A P1 Charter is a COMMITMENT instrument — it authorizes and bounds Discovery,
+// names the sponsor, and prepares the client for what Discovery will need. It
+// must NOT pre-empt later phases: no current-state evidence analysis (that is
+// P2 Discovery), no target/future-state or solution/architecture design (that
+// is P3). Redesigned 2026-07-25: the Charter ends with a first-class
+// "Discovery Preparation" section (two tables + a short pointer to the
+// separate, detailed Discovery Guidebook generated after approval) instead of
+// folding that content as bullets inside a generic recommendation section —
+// see the shared contract (src/lib/deliverables/shared/artifact-contracts.ts)
+// for the canonical 9-section list both pipelines read from.
 const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
@@ -92,70 +95,88 @@ const MOVES_CHARTER: DeliverableStructure = {
     "Approve chartering of the move (a funded discovery & design gate, NOT a build authorization).",
   sections: [
     s(
-      "exec_summary",
-      "Executive Summary & Decision Ask",
-      "One tight section: the problem, why it matters now, the preliminary value hypothesis (labelled PRELIMINARY), and the approval requested. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
+      "charter_decision",
+      "Charter Decision",
+      "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus a concise executive decision summary. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("exec_summary")} words. Use one paragraph plus a small decision box; do not add subsections.`,
+      `Keep this section under ${charterSectionMaxWords("charter_decision")} words. Use one short paragraph plus a small decision box; do not add subsections.`,
     ),
     s(
-      "problem_opportunity",
-      "Problem / Opportunity Being Chartered",
-      "Define the business problem or opportunity in plain English, including the trigger, affected business area, and the consequence of doing nothing. Do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
+      "opportunity_context",
+      "Opportunity & Business Context",
+      "Why this Move is being considered, why it matters now, the business opportunity or challenge, and expected business value direction. Only approved P0 capture, sponsor input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("problem_opportunity")} words. This is hypothesis framing, not P2 findings.`,
+      `Keep this section under ${charterSectionMaxWords("opportunity_context")} words. This is hypothesis framing, not P2 findings.`,
     ),
     s(
-      "sponsor_commitment",
-      "Sponsor, Decision Rights & Change Commitment",
-      "Capture accountable role/title, operating owners, decision rights, review cadence, and the commitment to drive business-process change and measurement. Use roles/titles; do not invent named people.",
+      "intended_outcomes",
+      "Intended Outcomes",
+      "The business outcomes Discovery is intended to evaluate — objectives, not commitments or validated findings.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("sponsor_commitment")} words. Use a compact role/title table; no narrative role biographies.`,
+      `Keep this section under ${charterSectionMaxWords("intended_outcomes")} words. Do not state these as validated results.`,
     ),
     s(
       "scope",
-      "Scope & Out-of-Scope",
-      "Explicit in-scope / out-of-scope boundary — specific business process, user cohort, capability, system/data domain, and decision boundary. Keep future-state design out of the charter.",
+      "Scope & Out of Scope",
+      "A simple two-column table: In Scope / Out of Scope. Keep future-state design out of the charter.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("scope")} words. Use a simple in/out/adjacent table.`,
+      `Keep this section under ${charterSectionMaxWords("scope")} words. Use a simple two-column table.`,
     ),
     s(
-      "success_criteria",
-      "Success Criteria & Value Hypothesis",
-      "Define success as a four-part commitment: business outcomes, key metrics, post-deployment measurement approach, and the business-process changes required. Label every baseline/target/value figure as cited, PRELIMINARY_ESTIMATE, or [CLIENT TO COMPLETE].",
+      "success_measures",
+      "Success Measures",
+      "How the organization will determine whether Discovery was successful. Do not invent current-state baselines, target metrics, or financial benefits.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("success_criteria")} words. Use a compact table; do not build the P4 business case here.`,
+      `Keep this section under ${charterSectionMaxWords("success_measures")} words. Do not build the P4 business case here.`,
     ),
     s(
-      "kill_criterion",
-      "Risks, Dependencies & Kill Criteria",
-      "Top risks, issues, dependencies, and a specific observable condition that would stop or redirect the Move. Keep the register to the highest-signal items.",
+      "sponsorship_governance",
+      "Sponsorship & Governance",
+      "Executive sponsor, decision authority, working team, and governance cadence (if known). Use roles/titles; do not invent named people. Unknown items labeled Client Decision Required.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("kill_criterion")} words. Include only the top 3-5 risks/dependencies plus the kill criterion.`,
+      `Keep this section under ${charterSectionMaxWords("sponsorship_governance")} words. Use a compact role/title table; no narrative role biographies.`,
     ),
     s(
-      "recommendation",
-      "Recommendation & P2 Handoff",
-      "Give the clear recommendation: approve the charter to start P2 discovery, approve with caveats, or hold. Include the immediate next actions, evidence families, workshops, and owner roles P2 must complete before any design or build decision.",
+      "known_constraints_dependencies",
+      "Known Constraints & Dependencies",
+      "Only constraints and dependencies already supported by approved evidence — do not infer risks. Unknown items labeled To Validate During Discovery.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("recommendation")} words. Use bullets grouped by business, process, systems/data, controls, and value.`,
+      `Keep this section under ${charterSectionMaxWords("known_constraints_dependencies")} words. Include only constraints/dependencies actually supported by evidence.`,
+    ),
+    s(
+      "discovery_preparation",
+      "Discovery Preparation",
+      "Sets expectations for the Discovery phase — not the assessment itself. An executive table (Area / What to Expect / What We Need From You / Priority) across Business Process, People & Governance, Technology, Data, Performance, and Risk & Controls; a second table of typical Discovery activities and durations; then a short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be generated after Charter approval. Do not embed that detailed material here.",
+      "mixed",
+      [],
+      `Keep this section under ${charterSectionMaxWords("discovery_preparation")} words. Two tables plus one short closing paragraph — no interview questionnaires or workshop agendas here.`,
+    ),
+    s(
+      "authorization_next_steps",
+      "Authorization & Immediate Next Steps",
+      "Charter decision, immediate actions, conditions (if any), and the expected transition into P2.",
+      "mixed",
+      [],
+      `Keep this section under ${charterSectionMaxWords("authorization_next_steps")} words. Use bullets grouped by decision, actions, and conditions.`,
     ),
   ],
   requiredSectionKeys: [
-    "exec_summary",
-    "problem_opportunity",
-    "sponsor_commitment",
+    "charter_decision",
+    "opportunity_context",
+    "intended_outcomes",
     "scope",
-    "success_criteria",
-    "kill_criterion",
-    "recommendation",
+    "success_measures",
+    "sponsorship_governance",
+    "known_constraints_dependencies",
+    "discovery_preparation",
+    "authorization_next_steps",
   ],
   fixedStructure: true,
   forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],
