@@ -91,19 +91,19 @@ describe("document-generation-policy", () => {
     expect(estimateMaxPassOutputTokens()).toBe(66000);
   });
 
-  it("uses compact default section and synthesis budgets for P1 charters", () => {
+  it("gives P1 charters the same generous token budget as any other deliverable — word count enforces conciseness, not a starved token ceiling", () => {
     expect(
       resolvePassTokenBudget({
         pass: "section_draft",
         deliverableType: "Program Charter",
       }),
-    ).toBe(900);
+    ).toBe(12000);
     expect(
       resolvePassTokenBudget({
         pass: "synthesis",
         deliverableType: "charter",
       }),
-    ).toBe(1200);
+    ).toBe(6000);
     expect(
       resolvePassTokenBudget({
         pass: "section_draft",
@@ -112,7 +112,7 @@ describe("document-generation-policy", () => {
     ).toBe(12000);
   });
 
-  it("still lets operators override compact charter pass budgets deliberately", () => {
+  it("lets operators override any pass budget, including charter's, via env", () => {
     process.env.ABARVA_DOCGEN_PASS_SECTION_DRAFT_MAX_TOKENS = "1500";
     expect(
       resolvePassTokenBudget({

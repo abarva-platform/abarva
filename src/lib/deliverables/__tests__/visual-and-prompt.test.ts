@@ -451,6 +451,6 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(modelTokenBudgetForArtifact("discovery_report")).toBeGreaterThan(
       modelTokenBudgetForArtifact("charter"),
     );
-    expect(modelTokenBudgetForArtifact("charter")).toBeLessThanOrEqual(6000);
+    expect(modelTokenBudgetForArtifact("charter")).toBeLessThanOrEqual(10000);
   });
 });

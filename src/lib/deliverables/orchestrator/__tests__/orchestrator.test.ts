@@ -186,7 +186,7 @@ describe("multi-pass prompt builder", () => {
     });
     for (const prompt of [draft.user, rewrite.user]) {
       expect(prompt).toMatch(/CONCISE APPROVAL-INSTRUMENT RULES/);
-      expect(prompt).toMatch(/1,600 words/);
+      expect(prompt).toMatch(/1,300 words/);
       expect(prompt).toMatch(
         /Do not include a cover letter, table of contents, appendix narrative/i,
       );
@@ -243,7 +243,7 @@ describe("multi-pass prompt builder", () => {
       },
     });
     expect(p.user).toMatch(/CONCISE SECTION RULES/);
-    expect(p.user).toMatch(/Hard cap for this section: 150 body words/);
+    expect(p.user).toMatch(/Hard cap for this section: 125 body words/);
     expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
     expect(p.user).toMatch(/do NOT write any other section/i);
     expect(p.user).toMatch(/Do not write P2 current-state findings/i);

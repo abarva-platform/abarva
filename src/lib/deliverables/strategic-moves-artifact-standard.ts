@@ -72,7 +72,11 @@ const DEPTH_BY_ARTIFACT: Partial<
   charter: {
     targetWords: "900-1,100",
     minWords: 700,
-    maxTokens: 3000,
+    // Generous on tokens, firm on words (2026-07-25): the word ceiling
+    // (hardMaxWords) is what enforces conciseness; a starved token budget
+    // would only constrain the model's ability to reason/draft before
+    // compressing to that word count, which hurts quality, not just length.
+    maxTokens: 8000,
     hardMaxWords: 1300,
   },
   discovery_report: {

@@ -36,9 +36,13 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::charter": {
     // Concise commitment instrument — the P1 Charter approves discovery/design;
     // it must not become a 40-page strategy or solution report. Hard ceiling.
+    // Aligned to the golden-bar pipeline's charter standard (2026-07-25) —
+    // target 900-1,100 words, hard maximum 1,300, so the two pipelines don't
+    // diverge on the same artifact type. See docs/architecture/
+    // MOVES_DUAL_PIPELINE_AUDIT.md for the full reconciliation context.
     minSections: 7,
     minBodyWords: 900, // ~2 pages
-    targetBodyWordsMax: 1_600, // ~3-4 pages; a charter is a gate memo, not a report
+    targetBodyWordsMax: 1_300, // ~2-3 pages; a charter is a gate memo, not a report
     enforceMaxAsBlocker: true,
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
