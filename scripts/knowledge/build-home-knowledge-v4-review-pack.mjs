@@ -409,6 +409,64 @@ function compactRows(rows, limit, keys) {
   });
 }
 
+// Stable, citable fact base for the industry-comparison job (JOB 2 below).
+// Distinct from compactRows()'s generic picked-field approach because this
+// specifically needs a STABLE ID per row so Claude can cite a real
+// benchmark_refs value instead of writing "the industry assumes..." with
+// nothing to check it against -- mirrors evidence_index's evidence_id
+// contract. Tenant CSV schemas are not uniform: meridian-health's
+// 15_industry_context_patterns.csv uses a newer record_id/context_item
+// shape; every other tenant uses an older pattern_name/original_row_id
+// shape. pick() across both rather than assuming one -- the previous
+// picked-key list (industry_context, pattern_name, signals,
+// business_function, module_next_actions, benchmark_range, known_failure_modes)
+// matched neither schema's actual column names for the fields that mattered
+// (the pattern's own name/title), so Claude was receiving fact-base rows
+// with no identifiable pattern and no citable ID.
+function buildIndustryFactBase(pack) {
+  const rows = rowsFor(pack, "industry");
+  return rows.slice(0, 18).map((row, index) => {
+    const patternName = pick(row, ["pattern_name", "context_item", "business_name"]);
+    if (!patternName) return null;
+    return {
+      pattern_id: pick(row, ["record_id", "original_row_id"]) || `pattern-${index + 1}`,
+      pattern_name: patternName,
+      industry: pick(row, ["industry_context", "industry"]),
+      signals: pick(row, ["signals", "business_context", "applicability"]),
+      evidence_basis: pick(row, ["evidence_basis"]),
+      caveats: pick(row, ["caveats", "known_gaps"]),
+      module_next_actions: pick(row, ["module_next_actions"]),
+    };
+  }).filter(Boolean);
+}
+
+// Same stable-ID need as buildIndustryFactBase, for the metric rows a
+// pattern's comparison may cite. has_real_value is derived from whether a
+// real value is present in baseline/actual/target text -- not from the
+// baseline_available/actual_available flag columns, which only exist on
+// meridian-health's newer 14_metrics_outcomes.csv schema and are simply
+// absent (not false) on every other tenant's metrics file.
+function buildMetricsFactBase(pack) {
+  const rows = rowsFor(pack, "metrics");
+  return rows.slice(0, 40).map((row, index) => {
+    const metricName = pick(row, ["metric_name", "name", "use_case"]);
+    if (!metricName) return null;
+    const baselineValue = pick(row, ["baseline_value"]);
+    const actualValue = pick(row, ["actual_value"]);
+    const targetValue = pick(row, ["target_value"]);
+    return {
+      metric_id: pick(row, ["record_id", "original_row_id"]) || `metric-${index + 1}`,
+      metric_name: metricName,
+      business_function: pick(row, ["business_function", "metric_domain"]),
+      baseline_value: baselineValue || null,
+      actual_value: actualValue || null,
+      target_value: targetValue || null,
+      has_real_value: Boolean(baselineValue || actualValue),
+      known_gaps: pick(row, ["known_gaps", "caveat"]),
+    };
+  }).filter(Boolean);
+}
+
 function mergeDimensionCatalog(pack) {
   const byKey = new Map((pack.design_slots?.DIMS ?? []).map((dimension) => [dimension.key, dimension]));
   return expandedDimensionCatalog.map((entry) => {
@@ -533,14 +591,8 @@ function buildTenantContextPacket(pack, sourceHash) {
         "risk_or_gap", "risk_name", "control", "metric_boundary", "owner",
         "known_gaps", "forbidden_claims",
       ]),
-      metrics_outcomes: compactRows(rowsFor(pack, "metrics"), 18, [
-        "metric_name", "name", "baseline_metric", "baseline_value", "target_metric",
-        "target_range", "value_boundary", "known_gaps",
-      ]),
-      industry_patterns: compactRows(rowsFor(pack, "industry"), 18, [
-        "industry_context", "pattern_name", "signals", "business_function",
-        "module_next_actions", "benchmark_range", "known_failure_modes",
-      ]),
+      metrics_outcomes: buildMetricsFactBase(pack),
+      industry_patterns: buildIndustryFactBase(pack),
       process_evidence: compactRows(rowsFor(pack, "opev"), 20, [
         "process", "subprocess", "activity", "decision", "business_function",
         "systems_used", "data_used", "pain_point", "root_cause", "known_gaps",
@@ -991,6 +1043,7 @@ function makePrompt(pass, packet, assembled) {
     // doing its own comparison against a real fact base. Pulled out here as
     // an explicit, named input for job 2 below.
     const industryFactBase = packet.business_context_samples.industry_patterns ?? [];
+    const metricsFactBase = packet.business_context_samples.metrics_outcomes ?? [];
     return {
       task: "Enterprise Book — one enterprise knowledge book, not 38 pages",
       contract_version: DIMENSION_DATASET_BINDINGS_VERSION,
@@ -1002,9 +1055,38 @@ function makePrompt(pass, packet, assembled) {
         "JOB 1 -- UNDERSTAND THE ENTERPRISE. Read context_packet fully: what this tenant " +
         "actually does, how it is organized, where its real data is thin versus thick.\n" +
         "JOB 2 -- COMPARE WITH THE INDUSTRY. industry_fact_base below is a real, structured " +
-        "set of industry patterns and benchmarks -- not decoration and not something to " +
-        "restate. For each pattern that is actually relevant to this tenant, judge whether " +
-        "this tenant is ahead of, behind, or at that pattern, and say so specifically. Do " +
+        "set of industry patterns -- not decoration and not something to restate. For each " +
+        "pattern actually relevant to this tenant, cite it by pattern_id in benchmark_refs " +
+        "and evaluate the tenant separately across up to seven dimensions: " +
+        "strategic_intent, operational_capability, data_foundation, technology_readiness, " +
+        "governance_and_controls, measurement_and_value, scale_readiness. Only include the " +
+        "dimensions that pattern actually bears on. Make a calibrated, independent judgment " +
+        "per dimension -- do not default to 'behind', and do not manufacture balance by " +
+        "forcing variety across positions either. A tenant that is genuinely behind on " +
+        "every relevant dimension of a pattern stays behind on all of them; the defect this " +
+        "rule exists to prevent is not 'everything says behind', it is collapsing a REAL " +
+        "mix (strong in one dimension, weak in another) into one flat label. Set " +
+        "overall_position to 'mixed' whenever the per-dimension positions actually differ " +
+        "(some ahead-or-at_parity, some behind) -- never 'behind' when a dimension is ahead " +
+        "or at_parity, and never 'ahead'/'at_parity' when a dimension is behind. Before " +
+        "writing each comparison, reconcile it against this book's own material_advantages " +
+        "and material_gaps (jobs 1/3): if the same capability appears in " +
+        "material_advantages, set advantage_to_preserve to name it and explain which " +
+        "distinct dimensions still trail -- never describe a capability elsewhere called an " +
+        "advantage as wholly behind with no acknowledgment. Where metrics_fact_base below " +
+        "contains a metric genuinely about this pattern (matched by topic, not by name " +
+        "string), cite its metric_id and report ONLY the real baseline_value/actual_value/" +
+        "target_value it carries, with evidence_status 'available' (has_real_value: true) " +
+        "or 'partial'/'missing' otherwise plus a required_next_step naming what baseline is " +
+        "needed. Never invent a metric, a prior-period value, a trend direction, a " +
+        "confidence rating, or a benchmark range that is not present in metrics_fact_base or " +
+        "industry_fact_base -- the data model does not yet capture historical or external- " +
+        "benchmark figures, so do not imply one exists. Each pattern's explanation text must " +
+        "do real analytical work (what the fact base's yardstick requires, what the tenant " +
+        "specifically has, what is missing or stronger, why the difference matters) and must " +
+        "not reuse the same opening sentence structure as another pattern's explanation in " +
+        "this book -- vary the construction, this is advisory judgment, not a filled-in " +
+        "template. Do " +
         "not summarize the fact base; use it as a yardstick.\n" +
         "JOB 3 -- IDENTIFY THE FEW MATERIAL GAPS AND ADVANTAGES. From jobs 1-2, name the " +
         "small number of differences that actually matter to leadership -- material_gaps " +
@@ -1063,10 +1145,38 @@ function makePrompt(pass, packet, assembled) {
           "title", "thesis", "narrative_arc", "strategic_agenda", "strategic_tensions",
         ],
         industry_comparison_shape:
-          "An array, job 2's output. Each item: {pattern, this_tenant_position " +
-          "(ahead|behind|at_parity|not_applicable), specifics, evidence_refs}. One item " +
-          "per industry_fact_base pattern that is actually relevant -- skip patterns that " +
-          "don't apply rather than forcing a position on all of them.",
+          "An array, job 2's output. One item per industry_fact_base pattern that is " +
+          "actually relevant -- skip patterns that don't apply rather than forcing a " +
+          "position on all of them. Each item: {pattern_id (the cited industry_fact_base " +
+          "pattern_id), pattern (its name), overall_position " +
+          "(ahead|at_parity|mixed|behind|not_applicable), dimensions, metrics, " +
+          "advantage_to_preserve, gap_to_close, executive_implication, benchmark_refs}. " +
+          "dimensions: array of {dimension (strategic_intent|operational_capability|" +
+          "data_foundation|technology_readiness|governance_and_controls|" +
+          "measurement_and_value|scale_readiness), position " +
+          "(ahead|at_parity|behind|not_evidenced|not_applicable), explanation, " +
+          "evidence_refs} -- only the dimensions this pattern actually bears on, each " +
+          "independently judged (see the HARD RULE on overall_position below). metrics: " +
+          "OPTIONAL array, only when a metrics_fact_base row is genuinely about this " +
+          "pattern -- {metric_id, metric_name, baseline_value, actual_value, target_value, " +
+          "evidence_status (available|partial|missing), required_next_step, evidence_refs}. " +
+          "baseline_value/actual_value/target_value must be copied verbatim from that " +
+          "metrics_fact_base row (null if the row doesn't carry one) -- never a number you " +
+          "computed or estimated. evidence_status 'available' only when has_real_value is " +
+          "true on that row; otherwise 'partial' or 'missing' with required_next_step " +
+          "naming the baseline needed. Omit metrics entirely for a pattern with no " +
+          "genuinely matching metric row -- do not force one. advantage_to_preserve/" +
+          "gap_to_close: short strings, omit (or null) when not applicable -- " +
+          "advantage_to_preserve must be set whenever this pattern's capability also " +
+          "appears in material_advantages. benchmark_refs: >=1 industry_fact_base " +
+          "pattern_id -- required, never a comparison with no cited benchmark.\n" +
+          "HARD RULE on overall_position, checked mechanically: it must reflect the " +
+          "dimensions actually judged (ignoring not_evidenced/not_applicable) -- all " +
+          "behind means overall_position 'behind', all ahead means 'ahead', all at_parity " +
+          "means 'at_parity', ANY mix of behind with ahead-or-at_parity means 'mixed'. " +
+          "overall_position 'behind' while advantage_to_preserve is set is also invalid -- " +
+          "that is the exact contradiction (a stated advantage flattened into a wholesale " +
+          "'behind' label) this schema exists to prevent.",
         material_gaps_and_advantages_shape:
           "material_gaps and material_advantages: job 3's output, each an array of " +
           "{id, statement, why_it_matters_to_leadership, applies_to_dimensions, " +
@@ -1096,12 +1206,15 @@ function makePrompt(pass, packet, assembled) {
         hard_limits:
           "sections: exactly one entry per book_sections id, headline <= 12 words, " +
           "narrative 2-4 sentences. material_gaps/material_advantages: 3-7 items each. " +
-          "industry_comparison: one item per genuinely relevant pattern, skip the rest. " +
+          "industry_comparison: one item per genuinely relevant pattern, skip the rest; " +
+          "benchmark_refs values: pattern_id from industry_fact_base only. metrics[].metric_id " +
+          "values: metric_id from metrics_fact_base only. dimensions[].evidence_refs and " +
+          "conclusions' evidence_refs: evidence_id from evidence_index only -- an ID not in " +
+          "the relevant list is invalid, never invent one. " +
           "conclusions: aim for the number of genuinely distinct enterprise-level facts/" +
           "inferences that exist in the source data -- not 38, not one per dimension; " +
-          "reuse via applies_to_dimensions instead of restating. evidence_refs values: " +
-          "evidence_id from evidence_index only -- an ID not in that list is invalid, " +
-          "never invent one. Every single conclusion, no exceptions: evidence_status " +
+          "reuse via applies_to_dimensions instead of restating. Every single conclusion, " +
+          "no exceptions: evidence_status " +
           "'evidenced' with evidence_refs: [] is invalid and will fail the candidate -- " +
           "see the HARD RULE above. No generic introductions, no restated navigation labels, no " +
           "raw records, no methodology explanations. This is a real strategic synthesis, " +
@@ -1120,6 +1233,7 @@ function makePrompt(pass, packet, assembled) {
       book_sections: BOOK_SECTION_IDS,
       dimension_chapters: DIMENSION_BOOK_CHAPTERS,
       industry_fact_base: industryFactBase,
+      metrics_fact_base: metricsFactBase,
       // Unlike every downstream pass, this call has no upstream story
       // architecture to lean on -- it is the first (and, for dimension
       // content, only) call. It needs the same full raw context the OLD
@@ -2313,9 +2427,17 @@ async function processTenant(client, tenantKey) {
 
     assembled.execution_trace = executionTrace;
     const bookValidation = validateIntegratedManifest(
-      { dimensions: assembled.dimensions, enterprise_story_integrated: assembled.enterprise_story_integrated },
+      {
+        dimensions: assembled.dimensions,
+        enterprise_story_integrated: assembled.enterprise_story_integrated,
+        enterprise_book: assembled.enterprise_book,
+      },
       packet,
-      { bindings: DIMENSION_DATASET_BINDINGS },
+      {
+        bindings: DIMENSION_DATASET_BINDINGS,
+        industryFactBase: packet.business_context_samples.industry_patterns ?? [],
+        metricsFactBase: packet.business_context_samples.metrics_outcomes ?? [],
+      },
     );
     assembled.validation = { status: bookValidation.status === "pass" ? "candidate_review_ready" : "candidate_failed", violations: bookValidation.failures };
     writeJson(path.join(tenantDir, "candidate-home-knowledge-v4.json"), assembled);

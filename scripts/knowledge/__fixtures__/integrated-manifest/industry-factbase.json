@@ -1,0 +1,10 @@
+{
+  "industryFactBase": [
+    { "pattern_id": "PAT-FIX-0001", "pattern_name": "Fixture industry pattern one" },
+    { "pattern_id": "PAT-FIX-0002", "pattern_name": "Fixture industry pattern two" }
+  ],
+  "metricsFactBase": [
+    { "metric_id": "MET-FIX-0001", "metric_name": "Fixture metric with a real value", "has_real_value": true },
+    { "metric_id": "MET-FIX-0002", "metric_name": "Fixture metric with no real value", "has_real_value": false }
+  ]
+}

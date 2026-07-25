@@ -15,6 +15,12 @@ const fixturesDir = path.join(path.dirname(__filename), "..", "__fixtures__", "i
 
 const packet = JSON.parse(fs.readFileSync(path.join(fixturesDir, "packet.json"), "utf8"));
 const bindings = JSON.parse(fs.readFileSync(path.join(fixturesDir, "bindings.json"), "utf8"));
+// Only exercised by fixtures whose candidate carries enterprise_book --
+// harmless no-op for every other fixture, which has no enterprise_book key
+// for checkIndustryComparison() to find.
+const { industryFactBase, metricsFactBase } = JSON.parse(
+  fs.readFileSync(path.join(fixturesDir, "industry-factbase.json"), "utf8"),
+);
 
 function loadCandidate(name) {
   return JSON.parse(fs.readFileSync(path.join(fixturesDir, `${name}.json`), "utf8"));
@@ -53,12 +59,31 @@ const cases = [
   // The honest-disclosure marker itself must say what's missing -- an empty
   // gap note is the same silent omission the rule above exists to catch.
   { fixture: "not-evidenced-missing-gap-note", expectStatus: "fail", expectRuleIds: ["missing_evidence_gap_note"] },
+  // Real production defect (Meridian/skyharbor-air/first-capital,
+  // 2026-07-25): industry_comparison collapsed a genuinely mixed
+  // dimensional record (e.g. at-parity on operational capability, behind
+  // on governance) into one flat "behind" label, and contradicted
+  // material_advantages in the process. These fixtures reproduce the exact
+  // defect shape and the fix's boundaries -- see docs/releases/records/
+  // 2026-07-25-home-v4-industry-comparison-fix.md.
+  { fixture: "industry-comparison-flat-behind-despite-mixed", expectStatus: "fail", expectRuleIds: ["industry_comparison_overall_position_inconsistent"] },
+  { fixture: "industry-comparison-advantage-contradiction", expectStatus: "fail", expectRuleIds: ["industry_comparison_advantage_contradiction"] },
+  { fixture: "industry-comparison-missing-benchmark-ref", expectStatus: "fail", expectRuleIds: ["industry_comparison_missing_benchmark_ref"] },
+  { fixture: "industry-comparison-judgment-without-evidence", expectStatus: "fail", expectRuleIds: ["industry_comparison_judgment_without_evidence"] },
+  { fixture: "industry-comparison-forbidden-metric-field", expectStatus: "fail", expectRuleIds: ["industry_comparison_forbidden_metric_field"] },
+  { fixture: "industry-comparison-metric-fabricated-availability", expectStatus: "fail", expectRuleIds: ["industry_comparison_metric_fabricated_availability"] },
+  // A genuinely mixed, internally-consistent, evidence-backed comparison
+  // must PASS -- proves the fix does not just fail everything or force an
+  // artificial spread.
+  { fixture: "industry-comparison-valid-mixed", expectStatus: "pass", expectRuleIds: [] },
+  // Templated phrasing across rows is a warning, not a hard failure.
+  { fixture: "industry-comparison-repetitive-phrasing", expectStatus: "pass", expectRuleIds: ["repetitive_comparison_phrasing"] },
 ];
 
 let failed = 0;
 for (const testCase of cases) {
   const candidate = loadCandidate(testCase.fixture);
-  const result = validateIntegratedManifest(candidate, packet, { bindings });
+  const result = validateIntegratedManifest(candidate, packet, { bindings, industryFactBase, metricsFactBase });
   const foundTypes = new Set([...result.failures, ...result.warnings].map((f) => f.type));
   const statusOk = result.status === testCase.expectStatus;
   const missingRuleIds = testCase.expectRuleIds.filter((id) => !foundTypes.has(id));
