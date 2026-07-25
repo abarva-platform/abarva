@@ -23,6 +23,7 @@ import type {
   SourceEventGateCriterion,
 } from "@/lib/source/canvas-substrate/types";
 import type { SourceStageKey } from "@/lib/source/types";
+import type { VendorProposalFactRecord } from "@/lib/source/vendor-proposals/types";
 
 /**
  * Audit receipt persisted to body_generation_metadata after an Anthropic
@@ -142,6 +143,15 @@ export interface SourceGenerationContext {
    * unmapped or the archetype framework has no playbook for it.
    */
   archetypeAdvisory?: string | null;
+  /**
+   * Accepted VendorProposalFacts for this event (all vendors) — the governed
+   * vendor-proposal ingestion foundation (PR 3,
+   * ADR-0013-source-modernization-baseline.md). Read via
+   * getAuthoritativeVendorProposalFacts, so this NEVER includes a candidate,
+   * rejected, or superseded fact — only ones a human has explicitly accepted
+   * as authoritative. Empty array when no facts have been accepted yet.
+   */
+  authoritativeVendorProposalFacts?: VendorProposalFactRecord[];
 }
 
 /**
