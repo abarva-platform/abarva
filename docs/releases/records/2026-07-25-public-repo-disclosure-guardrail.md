@@ -61,4 +61,7 @@ Revert the merge commit.
 
 ## Known Gaps
 
-None known.
+None known — this is a documentation-only guardrail with no code enforcement. A future
+improvement worth considering is an automated lint/CI check that greps staged commit messages and
+PR bodies for real-tenant-name patterns outside the known synthetic-fixture list, so the guardrail
+isn't purely dependent on every agent remembering to read this section of `AGENTS.md`.
