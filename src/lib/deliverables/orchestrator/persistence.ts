@@ -113,6 +113,32 @@ function qualityScore(result: OrchestrationResult): number {
   return Math.max(0.5, Math.round((1 - warnings * 0.1) * 100) / 100);
 }
 
+/**
+ * Per-generation metrics captured on every artifact, regardless of pass/block
+ * outcome — so a real sample of Charters (and other artifact types) can be
+ * reviewed empirically before the word-count bands are tightened further
+ * (see advisoryBandMax in quality-bar-registry.ts). `pageEstimate` is a rough
+ * ~500-words-per-executive-page heuristic, not a real pagination result.
+ */
+function buildGenerationMetrics(
+  result: OrchestrationResult,
+): Record<string, unknown> | undefined {
+  const m = result.quality?.metrics;
+  if (!m) return undefined;
+  return {
+    bodyWordCount: m.bodyWordCount,
+    sectionCount: m.sectionCount,
+    tableCount: m.tableCount,
+    pageEstimate: Math.max(1, Math.ceil(m.bodyWordCount / 500)),
+    readingTimeMinutes: m.readingTimeMinutes,
+    qualityScore: qualityScore(result),
+    wordBand: m.wordBand,
+    manualEditNeeded: m.manualEditNeeded,
+    warningCount: result.quality?.warnings.length ?? 0,
+    blockerCount: result.quality?.blockers.length ?? 0,
+  };
+}
+
 function renderedVisualsPresent(html: string): boolean {
   return (
     /class=["'][^"']*\bvisual-exhibit\b/i.test(html) ||
@@ -287,7 +313,9 @@ export async function persistDeliverable(
       deliverableKey: contractDeliverableKey,
     });
     if (!assessment.clientReady) {
-      const blockingFindings = assessment.quality.findings.filter((f) => f.severity === "block");
+      const blockingFindings = assessment.quality.findings.filter(
+        (f) => f.severity === "block",
+      );
       const reasons = blockingFindings.map((f) => f.dimension).join(", ");
       // TEMPORARY DIAGNOSTIC (2026-07-09): non_mechanical_writing has recurred live
       // post-fix on a DIFFERENT term than the FIN-BASE-P2 collision already fixed, and
@@ -298,18 +326,26 @@ export async function persistDeliverable(
       // the residual leak class is understood and fixed, or keep as a standing
       // diagnostic if it proves broadly useful.
       for (const f of blockingFindings) {
-        if (f.dimension !== "non_mechanical_writing" || !f.detail?.length) continue;
+        if (f.dimension !== "non_mechanical_writing" || !f.detail?.length)
+          continue;
         for (const term of f.detail) {
           const bareTerm = term.replace(/\s*×\d+$/, "");
-          const idx = contractInput.narrativeText.toLowerCase().indexOf(bareTerm.toLowerCase());
+          const idx = contractInput.narrativeText
+            .toLowerCase()
+            .indexOf(bareTerm.toLowerCase());
           const snippet =
             idx >= 0
-              ? contractInput.narrativeText.slice(Math.max(0, idx - 60), idx + bareTerm.length + 60)
+              ? contractInput.narrativeText.slice(
+                  Math.max(0, idx - 60),
+                  idx + bareTerm.length + 60,
+                )
               : null;
           console.warn(
             `[persistDeliverable][non_mechanical_writing] matchedTerm=${JSON.stringify(term)} ` +
               `deliverableKey=${contractDeliverableKey} clientId=${opts.clientId} sourceArtifactRef=${opts.sourceArtifactRef}` +
-              (snippet ? ` snippet=${JSON.stringify(snippet)}` : " snippet=<not found in narrativeText>"),
+              (snippet
+                ? ` snippet=${JSON.stringify(snippet)}`
+                : " snippet=<not found in narrativeText>"),
           );
         }
       }
@@ -389,17 +425,25 @@ export async function persistDeliverable(
   // Persist the FULL structured document alongside the canonical deliverable
   // key so later human approval writes back to the correct deliverables_v2 slot
   // without guessing from a generated title.
+  const generationMetrics = buildGenerationMetrics(result);
+
   return save(input, rendered, {
     deliverableTypeKey: resolvedDeliverableTypeKey,
     deliverableType: result.brief.deliverableType,
     registryKey: resolvedDeliverableTypeKey,
     renderableDoc: renderableDocWithType,
-    ...(opts.generationLineage ? { generationLineage: opts.generationLineage } : {}),
+    ...(generationMetrics ? { generationMetrics } : {}),
+    ...(opts.generationLineage
+      ? { generationLineage: opts.generationLineage }
+      : {}),
     ...(opts.structuredModels?.architectureModel
       ? { architectureModel: opts.structuredModels.architectureModel }
       : {}),
     ...(opts.structuredModels?.structuredArchitectureBrief
-      ? { structuredArchitectureBrief: opts.structuredModels.structuredArchitectureBrief }
+      ? {
+          structuredArchitectureBrief:
+            opts.structuredModels.structuredArchitectureBrief,
+        }
       : {}),
   });
 }

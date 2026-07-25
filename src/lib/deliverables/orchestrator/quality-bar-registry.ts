@@ -44,6 +44,11 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     minSections: CHARTER_CONTRACT.sections.length,
     minBodyWords: CHARTER_CONTRACT.wordBudget.minWords,
     targetBodyWordsMax: CHARTER_CONTRACT.wordBudget.hardMaxWords,
+    // 2026-07-25: two independent live generations landed 170-200 words past
+    // hardMaxWords with strong quality — block only past the true ceiling and
+    // let the target act as a discipline signal in between. See
+    // advisoryMaxWords in artifact-contracts.ts for the rationale.
+    advisoryBandMax: CHARTER_CONTRACT.wordBudget.advisoryMaxWords,
     enforceMaxAsBlocker: true,
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,

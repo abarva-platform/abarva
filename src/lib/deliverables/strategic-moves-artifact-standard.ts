@@ -169,9 +169,7 @@ export function maximumWordCountForArtifact(
   artifact: DeliverableKey,
 ): number | undefined {
   const standard = depthStandardForArtifact(artifact);
-  return (
-    standard.hardMaxWords ?? maxWordsFromTargetRange(standard.targetWords)
-  );
+  return standard.hardMaxWords ?? maxWordsFromTargetRange(standard.targetWords);
 }
 
 export function premiumGoldenBarOptionsForArtifact(
@@ -181,6 +179,7 @@ export function premiumGoldenBarOptionsForArtifact(
   minimumWordCount?: number;
   maximumWordCount?: number;
   enforceMaximumWordCount?: boolean;
+  advisoryMaximumWordCount?: number;
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -203,6 +202,12 @@ export function premiumGoldenBarOptionsForArtifact(
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
       maximumWordCount,
       enforceMaximumWordCount,
+      ...(artifact === "charter"
+        ? {
+            advisoryMaximumWordCount:
+              CHARTER_CONTRACT.wordBudget.advisoryMaxWords,
+          }
+        : {}),
       forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
       ...(artifact === "discovery_report" && context
         ? {

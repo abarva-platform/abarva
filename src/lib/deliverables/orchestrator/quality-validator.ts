@@ -46,12 +46,12 @@ function wordCount(s: string): number {
 function looksTruncated(markdown: string): boolean {
   const trimmed = markdown.trim();
   if (trimmed.length < 200) return false; // short sections aren't truncation evidence
-  const lines = trimmed.split('\n');
-  const lastLine = (lines[lines.length - 1] ?? '').trim();
+  const lines = trimmed.split("\n");
+  const lastLine = (lines[lines.length - 1] ?? "").trim();
   // complete markdown structures end without sentence punctuation — not truncation
   if (/^[#>|]/.test(lastLine)) return false; // heading / blockquote / table row
   if (/^([-*+]|\d+[.)])\s/.test(lastLine)) return false; // list item
-  if (lastLine.includes('|')) return false; // table row (with or without leading pipe)
+  if (lastLine.includes("|")) return false; // table row (with or without leading pipe)
   if (/[*_`)\]}]$/.test(lastLine)) return false; // bold/italic/code/link/paren/brace close
   const last = trimmed[trimmed.length - 1];
   // acceptable prose endings: sentence punctuation, closing bracket/quote, or table pipe
@@ -142,9 +142,20 @@ export function validateDeliverableQuality(
       `document too short: ${bodyWordCount} words; minimum ${qb.minBodyWords}`,
     );
   if (qb.targetBodyWordsMax && bodyWordCount > qb.targetBodyWordsMax) {
-    const message = `document too long for this artifact: ${bodyWordCount} words; target ceiling ${qb.targetBodyWordsMax} — use the target range as a discipline boundary, not permission to omit necessary analysis; do not add filler or generic prose to reach it, but a document this far past its ceiling usually means sections drifted off the decision this artifact exists to support`;
-    if (qb.enforceMaxAsBlocker) blockers.push(message);
-    else warnings.push(message);
+    const withinAdvisoryBand =
+      qb.advisoryBandMax !== undefined && bodyWordCount <= qb.advisoryBandMax;
+    if (withinAdvisoryBand) {
+      warnings.push(
+        `Advisory: this document is ${bodyWordCount} words, slightly longer than the recommended executive target (${qb.targetBodyWordsMax}) but remains within the acceptable review range (up to ${qb.advisoryBandMax}).`,
+      );
+    } else {
+      const bandNote = qb.advisoryBandMax
+        ? ` (advisory band up to ${qb.advisoryBandMax})`
+        : "";
+      const message = `document too long for this artifact: ${bodyWordCount} words; target ceiling ${qb.targetBodyWordsMax}${bandNote} — use the target range as a discipline boundary, not permission to omit necessary analysis; do not add filler or generic prose to reach it, but a document this far past its ceiling usually means sections drifted off the decision this artifact exists to support`;
+      if (qb.enforceMaxAsBlocker) blockers.push(message);
+      else warnings.push(message);
+    }
   }
   if (qb.requiresSourceRegister && !hasSourceRegister)
     blockers.push("no source register");
@@ -239,6 +250,15 @@ export function validateDeliverableQuality(
       "no evidence gaps/assumptions/client-to-complete markers detected — what remains unproven should be stated, not implied away",
     );
 
+  const wordBand: QualityValidationResult["metrics"]["wordBand"] = (() => {
+    if (bodyWordCount < qb.minBodyWords) return "under";
+    if (!qb.targetBodyWordsMax) return "n/a";
+    if (bodyWordCount <= qb.targetBodyWordsMax) return "pass";
+    if (qb.advisoryBandMax && bodyWordCount <= qb.advisoryBandMax)
+      return "advisory";
+    return "excessive";
+  })();
+
   return {
     pass: blockers.length === 0,
     blockers,
@@ -257,6 +277,9 @@ export function validateDeliverableQuality(
       hasCentralTension,
       hasOptionsConsidered,
       hasEvidenceGapsNoted,
+      readingTimeMinutes: Math.max(1, Math.round(bodyWordCount / 200)),
+      manualEditNeeded: warnings.length > 0 || blockers.length > 0,
+      wordBand,
     },
   };
 }
