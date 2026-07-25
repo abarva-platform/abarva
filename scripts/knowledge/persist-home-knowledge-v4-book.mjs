@@ -52,6 +52,7 @@ const candidateDir = getArg("--candidate-dir", process.env.HOME_KNOWLEDGE_V4_CAN
 const requestedTenant = getArg("--tenant", process.env.HOME_KNOWLEDGE_V4_TENANT ?? "all");
 const approveTenant = getArg("--approve", null);
 const approvedBy = getArg("--approved-by", process.env.HOME_KNOWLEDGE_V4_APPROVER ?? null);
+const summaryPathOverride = getArg("--summary-path", process.env.HOME_KNOWLEDGE_V4_PERSIST_SUMMARY_PATH ?? null);
 const writeDb = args.has("--write-db");
 const dryRun = !writeDb;
 
@@ -102,6 +103,40 @@ function discoverCandidateFiles() {
     .filter((tenant) => !requested || requested.has(tenant))
     .map((tenant) => ({ tenant, file: path.join(tenantsRoot, tenant, "candidate-home-knowledge-v4.json") }))
     .filter((item) => fs.existsSync(item.file));
+}
+
+function defaultSummaryPath() {
+  return path.join(repoRoot, "docs/audits/artifacts", `home-knowledge-v4-persist-${dryRun ? "dry-run" : "write"}.json`);
+}
+
+function tmpSummaryPath() {
+  return path.join("/tmp", `home-knowledge-v4-persist-${dryRun ? "dry-run" : "write"}.json`);
+}
+
+function writeSummary(results) {
+  const preferredPath = summaryPathOverride ? path.resolve(summaryPathOverride) : defaultSummaryPath();
+  const fallbackPath = tmpSummaryPath();
+  const payload = `${JSON.stringify(results, null, 2)}\n`;
+  for (const [index, summaryPath] of [preferredPath, fallbackPath].entries()) {
+    try {
+      fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
+      fs.writeFileSync(summaryPath, payload);
+      const label = summaryPath.startsWith(repoRoot) ? path.relative(repoRoot, summaryPath) : summaryPath;
+      if (index > 0) {
+        console.warn(`[home-v4-persist] preferred summary path was not writable; used ${label}`);
+      } else {
+        console.log(`[home-v4-persist] summary written to ${label}`);
+      }
+      return summaryPath;
+    } catch (error) {
+      if (index === 0) {
+        console.warn(`[home-v4-persist] summary path not writable (${summaryPath}): ${error.message}`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  return null;
 }
 
 function buildPackRow(rawText, candidate) {
@@ -253,10 +288,7 @@ async function main() {
     if (client) await client.end();
   }
 
-  const summaryPath = path.join(repoRoot, "docs/audits/artifacts", `home-knowledge-v4-persist-${dryRun ? "dry-run" : "write"}.json`);
-  fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
-  fs.writeFileSync(summaryPath, `${JSON.stringify(results, null, 2)}\n`);
-  console.log(`[home-v4-persist] summary written to ${path.relative(repoRoot, summaryPath)}`);
+  writeSummary(results);
 }
 
 main().catch((error) => {
