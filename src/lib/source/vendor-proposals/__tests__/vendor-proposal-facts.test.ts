@@ -7,7 +7,14 @@ import {
   listCandidateVendorProposalFacts,
   listVendorProposalFacts,
   rejectVendorProposalFact,
+  type VendorProposalFactsIdentity,
 } from "../vendor-proposal-facts";
+
+const identity: VendorProposalFactsIdentity = {
+  tenantKey: "apexretail",
+  role: "member",
+  userId: "clerk-user-1",
+};
 
 const factRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: "fact-1",
@@ -37,6 +44,8 @@ const factRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
 const reviewRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: "review-1",
   fact_id: "fact-1",
+  client_key: "apexretail",
+  source_event_id: "event-1",
   review_status: "accepted",
   rationale: "Matches vendor proposal PDF page 4.",
   reviewed_by: "clerk-user-1",
@@ -44,73 +53,85 @@ const reviewRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
   ...overrides,
 });
 
+/** Housekeeping queries withVendorProposalFactsSession issues before every
+ * caller query — never consume the test's data queue for these. */
+function isHousekeeping(sql: string): boolean {
+  return sql.includes("set_config") || sql.includes("SET LOCAL ROLE");
+}
+
 /**
- * A minimal chainable fake matching the subset of the fluent client this
- * module uses. `responses` is consumed in call order — each `.from()` call
- * pops the next canned response, which resolves identically whichever
- * terminal method is invoked (`.maybeSingle()`, `.single()`, direct await,
- * or `.order()` chains for list reads).
+ * A minimal fake run() — `queuedResults` is consumed in order by every
+ * non-housekeeping query. Also records every call (including housekeeping)
+ * so tests can assert the tenant-context mechanism actually fires.
  */
-function fakeDb(responses: Array<{ data: unknown; error: unknown }>) {
-  const queue = [...responses];
-  const fromCalls: string[] = [];
-  const insertCalls: unknown[] = [];
-
-  const from = jest.fn((table: string) => {
-    fromCalls.push(table);
-    const next = () => queue.shift() ?? { data: null, error: null };
-    const chain: Record<string, unknown> = {
-      select: () => chain,
-      insert: (payload: unknown) => {
-        insertCalls.push(payload);
-        return chain;
-      },
-      eq: () => chain,
-      in: () => chain,
-      order: () => chain,
-      limit: () => chain,
-      single: async () => next(),
-      maybeSingle: async () => next(),
-    };
-    (chain as unknown as { then: unknown }).then = (
-      resolve: (value: unknown) => unknown,
-    ) => resolve(next());
-    return chain;
+function fakeRun(queuedResults: unknown[][]) {
+  const queue = [...queuedResults];
+  const calls: { sql: string; params: unknown[] }[] = [];
+  const run = jest.fn(async (sql: string, params: unknown[] = []) => {
+    calls.push({ sql, params });
+    if (isHousekeeping(sql)) return [];
+    return queue.shift() ?? [];
   });
+  return { run, calls };
+}
 
-  return { from, fromCalls, insertCalls };
+let currentRun: ReturnType<typeof fakeRun>["run"] = jest.fn(
+  async (sql: string, params?: unknown[]) => {
+    void sql;
+    void params;
+    return [];
+  },
+);
+
+jest.mock("@/lib/data-plane/read-adapters/azureSession", () => ({
+  createTxSession: () => (fn: (run: unknown) => Promise<unknown>) =>
+    fn(currentRun),
+}));
+
+function useFake(queuedResults: unknown[][]) {
+  const fake = fakeRun(queuedResults);
+  currentRun = fake.run;
+  return fake;
 }
 
 describe("vendor-proposal-facts repository", () => {
+  describe("tenant-context mechanism", () => {
+    it("sets request.jwt.claims and SET LOCAL ROLE authenticated before every query", async () => {
+      const fake = useFake([[factRow()]]);
+      await listVendorProposalFacts(identity, { eventId: "event-1" });
+      const sqlCalls = fake.calls.map((c) => c.sql);
+      expect(sqlCalls[0]).toContain("set_config");
+      expect(fake.calls[0]?.params[0]).toContain('"tenant_key":"apexretail"');
+      expect(sqlCalls[1]).toBe("SET LOCAL ROLE authenticated");
+      expect(sqlCalls[2]).toContain("SELECT");
+    });
+  });
+
   describe("insertVendorProposalFacts", () => {
     it("short-circuits on an empty input list", async () => {
-      const db = fakeDb([]);
-      const result = await insertVendorProposalFacts([], db as never);
+      const fake = useFake([]);
+      const result = await insertVendorProposalFacts(identity, []);
       expect(result).toEqual({ ok: true, records: [] });
-      expect(db.from).not.toHaveBeenCalled();
+      expect(fake.run).not.toHaveBeenCalled();
     });
 
     it("inserts candidate facts and maps rows back to camelCase", async () => {
-      const db = fakeDb([{ data: [factRow()], error: null }]);
-      const result = await insertVendorProposalFacts(
-        [
-          {
-            clientKey: "apexretail",
-            sourceEventId: "event-1",
-            vendorKey: "vendor-a",
-            proposalArtifactId: "artifact-1",
-            factKey: "unit_price",
-            valueNumeric: 120000,
-            unit: "year",
-            currency: "USD",
-            sourceQuote: "Price: $120,000/year",
-            confidence: "low",
-            extractionMethod: "parsed_text",
-            createdBy: "clerk-user-1",
-          },
-        ],
-        db as never,
-      );
+      useFake([[factRow()]]);
+      const result = await insertVendorProposalFacts(identity, [
+        {
+          sourceEventId: "event-1",
+          vendorKey: "vendor-a",
+          proposalArtifactId: "artifact-1",
+          factKey: "unit_price",
+          valueNumeric: 120000,
+          unit: "year",
+          currency: "USD",
+          sourceQuote: "Price: $120,000/year",
+          confidence: "low",
+          extractionMethod: "parsed_text",
+          createdBy: "clerk-user-1",
+        },
+      ]);
       expect(result.ok).toBe(true);
       if (!result.ok) throw new Error("expected ok result");
       expect(result.records[0]).toMatchObject({
@@ -125,77 +146,57 @@ describe("vendor-proposal-facts repository", () => {
 
   describe("getAuthoritativeVendorProposalFacts", () => {
     it("excludes a fact with no review row — unreviewed facts are never authoritative", async () => {
-      const db = fakeDb([
-        { data: [factRow()], error: null }, // listVendorProposalFacts
-        { data: [], error: null }, // getLatestVendorProposalFactReviewsByFactIds
-      ]);
-      const result = await getAuthoritativeVendorProposalFacts(
-        { eventId: "event-1", clientKey: "apexretail" },
-        db as never,
-      );
+      useFake([[factRow()], []]);
+      const result = await getAuthoritativeVendorProposalFacts(identity, {
+        eventId: "event-1",
+      });
       expect(result).toEqual([]);
     });
 
     it("includes a fact whose latest review is accepted", async () => {
-      const db = fakeDb([
-        { data: [factRow()], error: null },
-        { data: [reviewRow({ review_status: "accepted" })], error: null },
-      ]);
-      const result = await getAuthoritativeVendorProposalFacts(
-        { eventId: "event-1", clientKey: "apexretail" },
-        db as never,
-      );
+      useFake([[factRow()], [reviewRow({ review_status: "accepted" })]]);
+      const result = await getAuthoritativeVendorProposalFacts(identity, {
+        eventId: "event-1",
+      });
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe("fact-1");
     });
 
     it("excludes a fact whose latest review is rejected", async () => {
-      const db = fakeDb([
-        { data: [factRow()], error: null },
-        { data: [reviewRow({ review_status: "rejected" })], error: null },
-      ]);
-      const result = await getAuthoritativeVendorProposalFacts(
-        { eventId: "event-1", clientKey: "apexretail" },
-        db as never,
-      );
+      useFake([[factRow()], [reviewRow({ review_status: "rejected" })]]);
+      const result = await getAuthoritativeVendorProposalFacts(identity, {
+        eventId: "event-1",
+      });
       expect(result).toEqual([]);
     });
 
     it("excludes a fact whose latest review is superseded — superseded facts are never authoritative", async () => {
-      const db = fakeDb([
-        { data: [factRow()], error: null },
-        { data: [reviewRow({ review_status: "superseded" })], error: null },
-      ]);
-      const result = await getAuthoritativeVendorProposalFacts(
-        { eventId: "event-1", clientKey: "apexretail" },
-        db as never,
-      );
+      useFake([[factRow()], [reviewRow({ review_status: "superseded" })]]);
+      const result = await getAuthoritativeVendorProposalFacts(identity, {
+        eventId: "event-1",
+      });
       expect(result).toEqual([]);
     });
 
     it("keeps only the latest review per fact when several review rows exist", async () => {
-      const db = fakeDb([
-        { data: [factRow()], error: null },
-        {
-          data: [
-            reviewRow({
-              id: "review-2",
-              review_status: "superseded",
-              reviewed_at: "2026-07-25T02:00:00.000Z",
-            }),
-            reviewRow({
-              id: "review-1",
-              review_status: "accepted",
-              reviewed_at: "2026-07-25T01:00:00.000Z",
-            }),
-          ],
-          error: null,
-        },
+      useFake([
+        [factRow()],
+        [
+          reviewRow({
+            id: "review-2",
+            review_status: "superseded",
+            reviewed_at: "2026-07-25T02:00:00.000Z",
+          }),
+          reviewRow({
+            id: "review-1",
+            review_status: "accepted",
+            reviewed_at: "2026-07-25T01:00:00.000Z",
+          }),
+        ],
       ]);
-      const result = await getAuthoritativeVendorProposalFacts(
-        { eventId: "event-1", clientKey: "apexretail" },
-        db as never,
-      );
+      const result = await getAuthoritativeVendorProposalFacts(identity, {
+        eventId: "event-1",
+      });
       // Rows arrive latest-first (superseded), so the fact is NOT authoritative.
       expect(result).toEqual([]);
     });
@@ -203,17 +204,13 @@ describe("vendor-proposal-facts repository", () => {
 
   describe("listCandidateVendorProposalFacts", () => {
     it("returns only facts with no review row (the review queue)", async () => {
-      const db = fakeDb([
-        {
-          data: [factRow({ id: "fact-1" }), factRow({ id: "fact-2" })],
-          error: null,
-        },
-        { data: [reviewRow({ fact_id: "fact-1" })], error: null },
+      useFake([
+        [factRow({ id: "fact-1" }), factRow({ id: "fact-2" })],
+        [reviewRow({ fact_id: "fact-1" })],
       ]);
-      const result = await listCandidateVendorProposalFacts(
-        { eventId: "event-1", clientKey: "apexretail" },
-        db as never,
-      );
+      const result = await listCandidateVendorProposalFacts(identity, {
+        eventId: "event-1",
+      });
       expect(result.map((f) => f.id)).toEqual(["fact-2"]);
     });
   });
@@ -238,190 +235,137 @@ describe("vendor-proposal-facts repository", () => {
 
   describe("acceptVendorProposalFact", () => {
     it("accepts a fact with no supersession — inserts exactly one review row", async () => {
-      const db = fakeDb([
-        { data: factRow({ supersedes_fact_id: null }), error: null }, // fetch fact
-        { data: reviewRow(), error: null }, // insert accepted review
+      const fake = useFake([
+        [factRow({ supersedes_fact_id: null })], // fetch fact
+        [reviewRow()], // insert accepted review
       ]);
-      const result = await acceptVendorProposalFact(
-        {
-          factId: "fact-1",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "Confirmed against page 4.",
-          reviewedBy: "clerk-user-1",
-        },
-        db as never,
-      );
+      const result = await acceptVendorProposalFact(identity, {
+        factId: "fact-1",
+        eventId: "event-1",
+        rationale: "Confirmed against page 4.",
+        reviewedBy: "clerk-user-1",
+      });
       expect(result.ok).toBe(true);
-      expect(db.fromCalls).toEqual([
-        "source_vendor_proposal_facts",
-        "source_vendor_proposal_fact_reviews",
-      ]);
-      expect(db.insertCalls).toHaveLength(1);
+      const dataCalls = fake.calls.filter((c) => !isHousekeeping(c.sql));
+      expect(dataCalls).toHaveLength(2);
+      expect(dataCalls[1]!.sql).toContain(
+        "INSERT INTO source_vendor_proposal_fact_reviews",
+      );
     });
 
     it("returns fact_not_found across a tenant boundary — cross-tenant denial", async () => {
-      const db = fakeDb([
-        { data: factRow({ client_key: "meridian" }), error: null },
-      ]);
-      const result = await acceptVendorProposalFact(
-        {
-          factId: "fact-1",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "x",
-          reviewedBy: "u",
-        },
-        db as never,
-      );
+      // The WHERE clause itself filters by client_key, so a cross-tenant
+      // fact never comes back from the fake — same as a real RLS-backed query.
+      useFake([[]]);
+      const result = await acceptVendorProposalFact(identity, {
+        factId: "fact-1",
+        eventId: "event-1",
+        rationale: "x",
+        reviewedBy: "u",
+      });
       expect(result).toEqual({ ok: false, error: "fact_not_found" });
     });
 
     it("returns fact_not_found across an event boundary — cross-event denial", async () => {
-      const db = fakeDb([
-        { data: factRow({ source_event_id: "event-other" }), error: null },
-      ]);
-      const result = await acceptVendorProposalFact(
-        {
-          factId: "fact-1",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "x",
-          reviewedBy: "u",
-        },
-        db as never,
-      );
+      useFake([[]]);
+      const result = await acceptVendorProposalFact(identity, {
+        factId: "fact-1",
+        eventId: "event-1",
+        rationale: "x",
+        reviewedBy: "u",
+      });
       expect(result).toEqual({ ok: false, error: "fact_not_found" });
     });
 
     it("atomically supersedes the prior accepted fact when accepting a revision", async () => {
-      const db = fakeDb([
-        {
-          data: factRow({ id: "fact-2", supersedes_fact_id: "fact-1" }),
-          error: null,
-        }, // fetch new fact
-        { data: reviewRow({ id: "review-2", fact_id: "fact-2" }), error: null }, // insert accepted review for fact-2
-        { data: factRow({ id: "fact-1" }), error: null }, // fetch superseded fact-1 (same tenant/event)
-        { data: null, error: null }, // insert superseded review for fact-1
+      const fake = useFake([
+        [factRow({ id: "fact-2", supersedes_fact_id: "fact-1" })], // fetch new fact
+        [reviewRow({ id: "review-2", fact_id: "fact-2" })], // insert accepted review for fact-2
+        [factRow({ id: "fact-1" })], // fetch superseded fact-1 (same tenant/event)
+        [], // insert superseded review for fact-1
       ]);
-      const result = await acceptVendorProposalFact(
-        {
-          factId: "fact-2",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "Revised pricing supersedes the prior submission.",
-          reviewedBy: "clerk-user-1",
-        },
-        db as never,
-      );
-      expect(result.ok).toBe(true);
-      expect(db.insertCalls).toHaveLength(2);
-      expect(db.insertCalls[1]).toMatchObject({
-        fact_id: "fact-1",
-        review_status: "superseded",
+      const result = await acceptVendorProposalFact(identity, {
+        factId: "fact-2",
+        eventId: "event-1",
+        rationale: "Revised pricing supersedes the prior submission.",
+        reviewedBy: "clerk-user-1",
       });
+      expect(result.ok).toBe(true);
+      const dataCalls = fake.calls.filter((c) => !isHousekeeping(c.sql));
+      expect(dataCalls).toHaveLength(4);
+      expect(dataCalls[3]!.sql).toContain(
+        "INSERT INTO source_vendor_proposal_fact_reviews",
+      );
+      expect(dataCalls[3]!.params).toContain("fact-1");
     });
 
     it("does not supersede across a tenant boundary even if supersedesFactId is set", async () => {
-      const db = fakeDb([
-        {
-          data: factRow({ id: "fact-2", supersedes_fact_id: "fact-1" }),
-          error: null,
-        },
-        { data: reviewRow({ id: "review-2", fact_id: "fact-2" }), error: null },
-        {
-          data: factRow({ id: "fact-1", client_key: "meridian" }),
-          error: null,
-        }, // superseded fact belongs to a DIFFERENT tenant
+      // The superseded-fact lookup is ALSO tenant/event-scoped in SQL — a
+      // cross-tenant supersedes_fact_id target simply returns no row.
+      const fake = useFake([
+        [factRow({ id: "fact-2", supersedes_fact_id: "fact-1" })],
+        [reviewRow({ id: "review-2", fact_id: "fact-2" })],
+        [], // superseded-fact lookup returns nothing (belongs to another tenant)
       ]);
-      const result = await acceptVendorProposalFact(
-        {
-          factId: "fact-2",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "x",
-          reviewedBy: "clerk-user-1",
-        },
-        db as never,
-      );
+      const result = await acceptVendorProposalFact(identity, {
+        factId: "fact-2",
+        eventId: "event-1",
+        rationale: "x",
+        reviewedBy: "clerk-user-1",
+      });
       expect(result.ok).toBe(true);
-      // Only the accept insert happened — no cross-tenant superseded write.
-      expect(db.insertCalls).toHaveLength(1);
+      const dataCalls = fake.calls.filter((c) => !isHousekeeping(c.sql));
+      // Only 3 data calls: fetch fact, insert accept, failed superseded lookup.
+      // No 4th insert — no cross-tenant superseded write.
+      expect(dataCalls).toHaveLength(3);
     });
   });
 
   describe("rejectVendorProposalFact", () => {
     it("rejects a fact — never mutates the fact row, only inserts a review", async () => {
-      const db = fakeDb([
-        {
-          data: {
-            id: "fact-1",
-            source_event_id: "event-1",
-            client_key: "apexretail",
-          },
-          error: null,
-        },
-        { data: reviewRow({ review_status: "rejected" }), error: null },
-      ]);
-      const result = await rejectVendorProposalFact(
-        {
-          factId: "fact-1",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "Not corroborated by the proposal document.",
-          reviewedBy: "clerk-user-1",
-        },
-        db as never,
-      );
+      useFake([[{ id: "fact-1" }], [reviewRow({ review_status: "rejected" })]]);
+      const result = await rejectVendorProposalFact(identity, {
+        factId: "fact-1",
+        eventId: "event-1",
+        rationale: "Not corroborated by the proposal document.",
+        reviewedBy: "clerk-user-1",
+      });
       expect(result.ok).toBe(true);
       if (!result.ok) throw new Error("expected ok result");
       expect(result.record.reviewStatus).toBe("rejected");
     });
 
     it("returns fact_not_found across a tenant boundary — cross-tenant denial", async () => {
-      const db = fakeDb([
-        {
-          data: {
-            id: "fact-1",
-            source_event_id: "event-1",
-            client_key: "meridian",
-          },
-          error: null,
-        },
-      ]);
-      const result = await rejectVendorProposalFact(
-        {
-          factId: "fact-1",
-          eventId: "event-1",
-          clientKey: "apexretail",
-          rationale: "x",
-          reviewedBy: "u",
-        },
-        db as never,
-      );
+      useFake([[]]);
+      const result = await rejectVendorProposalFact(identity, {
+        factId: "fact-1",
+        eventId: "event-1",
+        rationale: "x",
+        reviewedBy: "u",
+      });
       expect(result).toEqual({ ok: false, error: "fact_not_found" });
     });
   });
 
   describe("listVendorProposalFacts / getLatestVendorProposalFactReviewsByFactIds error handling", () => {
-    it("listVendorProposalFacts returns an empty array on a query error, never throws", async () => {
-      const db = fakeDb([{ data: null, error: { message: "boom" } }]);
+    it("listVendorProposalFacts returns an empty array on a thrown error, never throws", async () => {
+      currentRun = jest.fn(async (sql: string) => {
+        if (isHousekeeping(sql)) return [];
+        throw new Error("boom");
+      });
       await expect(
-        listVendorProposalFacts(
-          { eventId: "event-1", clientKey: "apexretail" },
-          db as never,
-        ),
+        listVendorProposalFacts(identity, { eventId: "event-1" }),
       ).resolves.toEqual([]);
     });
 
     it("getLatestVendorProposalFactReviewsByFactIds short-circuits on an empty id list", async () => {
-      const db = fakeDb([]);
+      const fake = useFake([]);
       const result = await getLatestVendorProposalFactReviewsByFactIds(
+        identity,
         [],
-        db as never,
       );
       expect(result.size).toBe(0);
-      expect(db.from).not.toHaveBeenCalled();
+      expect(fake.run).not.toHaveBeenCalled();
     });
   });
 });

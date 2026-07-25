@@ -100,21 +100,24 @@ jest.mock("@/lib/source/artifact-registry/upload-text-extraction", () => ({
   extractSourceUploadText: (input: unknown) => extractSourceUploadText(input),
 }));
 
-const insertVendorProposalFacts = jest.fn(async (inputs: unknown[]) => ({
-  ok: true,
-  records: inputs.map((input, index) => ({
-    id: `fact-${index + 1}`,
-    ...(input as Record<string, unknown>),
-  })),
-}));
-const getAuthoritativeVendorProposalFacts = jest.fn<Promise<unknown[]>, []>(
-  async () => [],
+const insertVendorProposalFacts = jest.fn(
+  async (identity: unknown, inputs: unknown[]) => ({
+    ok: true,
+    records: inputs.map((input, index) => ({
+      id: `fact-${index + 1}`,
+      ...(input as Record<string, unknown>),
+    })),
+  }),
 );
+const getAuthoritativeVendorProposalFacts = jest.fn<
+  Promise<unknown[]>,
+  [unknown, unknown]
+>(async () => []);
 jest.mock("@/lib/source/vendor-proposals/vendor-proposal-facts", () => ({
-  insertVendorProposalFacts: (inputs: unknown[]) =>
-    insertVendorProposalFacts(inputs),
-  getAuthoritativeVendorProposalFacts: () =>
-    getAuthoritativeVendorProposalFacts(),
+  insertVendorProposalFacts: (identity: unknown, inputs: unknown[]) =>
+    insertVendorProposalFacts(identity, inputs),
+  getAuthoritativeVendorProposalFacts: (identity: unknown, input: unknown) =>
+    getAuthoritativeVendorProposalFacts(identity, input),
 }));
 
 import { POST } from "../route";
@@ -157,9 +160,9 @@ beforeEach(() => {
     warnings: [],
   });
   getAuthoritativeVendorProposalFacts.mockResolvedValue([]);
-  insertVendorProposalFacts.mockImplementation(async (inputs) => ({
+  insertVendorProposalFacts.mockImplementation(async (_identity, inputs) => ({
     ok: true,
-    records: inputs.map((input, index) => ({
+    records: (inputs as unknown[]).map((input, index) => ({
       id: `fact-${index + 1}`,
       ...(input as Record<string, unknown>),
     })),
@@ -218,12 +221,12 @@ describe("POST /api/v1/source/:eventId/vendor-proposals/:vendorKey/ingest", () =
     expect(json.ok).toBe(true);
     expect(json.candidateFactsInserted).toBe(2);
     expect(insertVendorProposalFacts).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantKey: "apexretail" }),
       expect.arrayContaining([
         expect.objectContaining({
           vendorKey: "vendor-a",
           factKey: "price",
           valueNumeric: 120000,
-          clientKey: "apexretail",
           sourceEventId: "11111111-1111-1111-1111-111111111111",
           supersedesFactId: null,
         }),
@@ -286,6 +289,7 @@ describe("POST /api/v1/source/:eventId/vendor-proposals/:vendorKey/ingest", () =
     );
     expect(res.status).toBe(200);
     expect(insertVendorProposalFacts).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantKey: "apexretail" }),
       expect.arrayContaining([
         expect.objectContaining({
           factKey: "price",

@@ -48,7 +48,7 @@ function isCanonicalClientAdminEmail(
 }
 
 export async function POST(request: Request, { params }: RouteCtx) {
-  let tenancy;
+  let tenancy: Awaited<ReturnType<typeof requireTenancy>> | undefined;
   let tenancyError: unknown = null;
   try {
     tenancy = await requireTenancy();
@@ -120,13 +120,19 @@ export async function POST(request: Request, { params }: RouteCtx) {
       );
     }
 
-    const result = await rejectVendorProposalFact({
-      factId,
-      eventId: persistedEvent.id,
-      clientKey: effectiveClientKey,
-      rationale,
-      reviewedBy: tenancy?.userId ?? currentUser?.clerkUserId ?? "unknown",
-    });
+    const result = await rejectVendorProposalFact(
+      {
+        tenantKey: effectiveClientKey,
+        role: tenancy?.role ?? "member",
+        userId: tenancy?.userId ?? currentUser?.clerkUserId ?? "unknown",
+      },
+      {
+        factId,
+        eventId: persistedEvent.id,
+        rationale,
+        reviewedBy: tenancy?.userId ?? currentUser?.clerkUserId ?? "unknown",
+      },
+    );
     if (!result.ok) {
       const status = result.error === "fact_not_found" ? 404 : 500;
       return jsonError(status, result.error);

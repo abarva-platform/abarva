@@ -26,6 +26,7 @@ import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { resolveArchetypeForEvent } from "@/lib/source/archetypes/event-archetype-resolver";
 import { buildArchetypeAdvisoryBlock } from "./archetype-advisory";
 import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposals/vendor-proposal-facts";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import type { SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
 import type {
   SourceAppInventoryEntry,
@@ -92,6 +93,12 @@ export async function buildSourceGenerationContext(
 
   // The substrate queries take a UUID. event.id is always a UUID
   // even when the URL slug is a code.
+  // Real, server-resolved identity for the tenant-scoped vendor-proposal-
+  // facts session (RLS/tenant-isolation workstream, PR A) — never a
+  // client-supplied value. currentUser is Clerk-session-derived, same as
+  // every vendor-proposal-facts route.
+  const currentUser = await getCurrentUser().catch(() => null);
+
   const [
     artifactStates,
     gateCriteria,
@@ -104,10 +111,14 @@ export async function buildSourceGenerationContext(
     listEvidenceStatesForEvent(substrateEventId),
     listUploadedEvidenceForGeneration(substrateEventId),
     activeClient?.key
-      ? getAuthoritativeVendorProposalFacts({
-          eventId: substrateEventId,
-          clientKey: activeClient.key,
-        }).catch(() => [])
+      ? getAuthoritativeVendorProposalFacts(
+          {
+            tenantKey: activeClient.key,
+            role: currentUser?.primaryRole ?? "member",
+            userId: currentUser?.clerkUserId ?? "unknown",
+          },
+          { eventId: substrateEventId },
+        ).catch(() => [])
       : Promise.resolve([]),
   ]);
 

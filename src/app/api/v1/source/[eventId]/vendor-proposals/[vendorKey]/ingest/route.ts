@@ -265,22 +265,31 @@ export async function POST(request: Request, { params }: RouteCtx) {
       extractionMethod: extractionMethodForMime(mimeType),
     });
 
+    // Real, server-resolved identity — never trusted from the request. This
+    // is what withVendorProposalFactsSession sets as request.jwt.claims and
+    // SET LOCAL ROLE authenticated, so Postgres RLS enforces this same
+    // tenant scope independently of the WHERE clauses below.
+    const identity = {
+      tenantKey: effectiveClientKey,
+      role: tenancy?.role ?? "member",
+      userId: tenancy?.userId ?? currentUser?.clerkUserId ?? "unknown",
+    };
+
     // Auto-detect supersession: a new candidate sharing (vendorKey, factKey)
     // with an already-ACCEPTED fact for this event is a revision, not a
     // duplicate — stamp supersedesFactId so accepting it later atomically
     // supersedes the old one (see acceptVendorProposalFact).
-    const currentlyAccepted = await getAuthoritativeVendorProposalFacts({
-      eventId: persistedEvent.id,
-      clientKey: effectiveClientKey,
-      vendorKey,
-    });
+    const currentlyAccepted = await getAuthoritativeVendorProposalFacts(
+      identity,
+      { eventId: persistedEvent.id, vendorKey },
+    );
     const acceptedByFactKey = new Map(
       currentlyAccepted.map((fact) => [fact.factKey, fact.id]),
     );
 
     const insertResult = await insertVendorProposalFacts(
+      identity,
       rawCandidates.map((candidate) => ({
-        clientKey: effectiveClientKey,
         sourceEventId: persistedEvent.id,
         vendorKey,
         proposalArtifactId: artifact.id,
