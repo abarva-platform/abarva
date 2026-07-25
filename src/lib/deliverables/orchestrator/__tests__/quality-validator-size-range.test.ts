@@ -110,7 +110,9 @@ describe("quality validator — narrative spine (advisory)", () => {
     });
     const doc = goodDocument();
     doc.sourceRegister = [];
-    doc.generatedSections.forEach((s) => (s.bodyMarkdown = "Neutral status update with no framing."));
+    doc.generatedSections.forEach(
+      (s) => (s.bodyMarkdown = "Neutral status update with no framing."),
+    );
     const res = validateDeliverableQuality(doc, req);
     expect(res.pass).toBe(true); // advisory only — never blocks
     expect(res.warnings.join(" ")).toMatch(/central tension/i);
@@ -118,7 +120,10 @@ describe("quality validator — narrative spine (advisory)", () => {
 
   it("does not warn when central-tension language is present", () => {
     const req = amsRfpRequest({
-      qualityBar: { ...amsRfpRequest().qualityBar, requiresCentralTension: true },
+      qualityBar: {
+        ...amsRfpRequest().qualityBar,
+        requiresCentralTension: true,
+      },
     });
     const doc = goodDocument();
     doc.generatedSections[0].bodyMarkdown =
@@ -129,7 +134,10 @@ describe("quality validator — narrative spine (advisory)", () => {
 
   it("warns when requiresOptionsConsidered is set but no options framing is present", () => {
     const req = amsRfpRequest({
-      qualityBar: { ...amsRfpRequest().qualityBar, requiresOptionsConsidered: true },
+      qualityBar: {
+        ...amsRfpRequest().qualityBar,
+        requiresOptionsConsidered: true,
+      },
     });
     const res = validateDeliverableQuality(goodDocument(), req);
     expect(res.warnings.join(" ")).toMatch(/options-considered/i);
@@ -137,11 +145,17 @@ describe("quality validator — narrative spine (advisory)", () => {
 
   it("warns when requiresEvidenceGapsNoted is set but nothing is marked missing/assumed/client-to-complete", () => {
     const req = amsRfpRequest({
-      qualityBar: { ...amsRfpRequest().qualityBar, requiresEvidenceGapsNoted: true, minBodyWords: 0 },
+      qualityBar: {
+        ...amsRfpRequest().qualityBar,
+        requiresEvidenceGapsNoted: true,
+        minBodyWords: 0,
+      },
     });
     const doc = goodDocument();
     doc.clientCompleteChecklist = [];
-    doc.generatedSections.forEach((s) => (s.bodyMarkdown = "Fully confirmed content with no open items."));
+    doc.generatedSections.forEach(
+      (s) => (s.bodyMarkdown = "Fully confirmed content with no open items."),
+    );
     const res = validateDeliverableQuality(doc, req);
     expect(res.warnings.join(" ")).toMatch(/evidence gaps/i);
   });
@@ -161,8 +175,99 @@ describe("quality validator — narrative spine (advisory)", () => {
     const doc = goodDocument();
     doc.clientCompleteChecklist = [];
     doc.sourceRegister = [];
-    doc.generatedSections.forEach((s) => (s.bodyMarkdown = "Plain content, no spine, no gaps noted."));
+    doc.generatedSections.forEach(
+      (s) => (s.bodyMarkdown = "Plain content, no spine, no gaps noted."),
+    );
     const res = validateDeliverableQuality(doc, req);
     expect(res.pass).toBe(true);
+  });
+
+  describe("advisoryBandMax — the band between target ceiling and the true block", () => {
+    function bandedReq() {
+      return amsRfpRequest({
+        qualityBar: {
+          ...amsRfpRequest().qualityBar,
+          minBodyWords: 50,
+          targetBodyWordsMax: 1_300,
+          advisoryBandMax: 1_500,
+          enforceMaxAsBlocker: true,
+        },
+      });
+    }
+
+    function bodyWordCount(doc: ReturnType<typeof goodDocument>): number {
+      return doc.generatedSections
+        .map((s) => `${s.title}\n${s.bodyMarkdown}`)
+        .join("\n\n")
+        .trim()
+        .split(/\s+/).length;
+    }
+
+    /** Pads the fixture's already-valid document (citations, decision
+     * language, etc. intact) with period-terminated filler up to `words`
+     * total, instead of replacing content — replacing loses the citations/
+     * decision-section signals other blockers depend on. */
+    function docWithWordCount(words: number) {
+      const doc = goodDocument();
+      const currentWords = bodyWordCount(doc);
+      const padWords = Math.max(0, words - currentWords);
+      const last = doc.generatedSections[doc.generatedSections.length - 1];
+      last.bodyMarkdown = `${last.bodyMarkdown}\n\n${longBody(padWords)}.`;
+      return doc;
+    }
+
+    it("passes cleanly at/under the target ceiling", () => {
+      const res = validateDeliverableQuality(
+        docWithWordCount(1_200),
+        bandedReq(),
+      );
+      expect(res.pass).toBe(true);
+      expect(res.warnings.join(" ")).not.toMatch(/advisory/i);
+      expect(res.metrics.wordBand).toBe("pass");
+    });
+
+    it("does not block between the target ceiling and advisoryBandMax — advisory only", () => {
+      const res = validateDeliverableQuality(
+        docWithWordCount(1_450),
+        bandedReq(),
+      );
+      expect(res.pass).toBe(true);
+      expect(res.blockers.join(" ")).not.toMatch(/too long/i);
+      expect(res.warnings.join(" ")).toMatch(/advisory/i);
+      expect(res.metrics.wordBand).toBe("advisory");
+      expect(res.metrics.manualEditNeeded).toBe(true);
+    });
+
+    it("blocks once bodyWordCount crosses advisoryBandMax", () => {
+      const res = validateDeliverableQuality(
+        docWithWordCount(1_600),
+        bandedReq(),
+      );
+      expect(res.pass).toBe(false);
+      expect(res.blockers.join(" ")).toMatch(/too long/i);
+      expect(res.metrics.wordBand).toBe("excessive");
+    });
+  });
+
+  describe("metrics — readingTimeMinutes and wordBand always populate", () => {
+    it("computes readingTimeMinutes at ~200 words/minute, floor of 1", () => {
+      const req = amsRfpRequest();
+      const res = validateDeliverableQuality(goodDocument(), req);
+      expect(res.metrics.readingTimeMinutes).toBeGreaterThanOrEqual(1);
+    });
+
+    it("reports wordBand 'n/a' for artifact types with no targetBodyWordsMax", () => {
+      const req = amsRfpRequest(); // fixture qualityBar has no targetBodyWordsMax
+      const res = validateDeliverableQuality(goodDocument(), req);
+      expect(res.metrics.wordBand).toBe("n/a");
+    });
+
+    it("reports wordBand 'under' when below minBodyWords", () => {
+      const req = amsRfpRequest({
+        qualityBar: { ...amsRfpRequest().qualityBar, minBodyWords: 100_000 },
+      });
+      const res = validateDeliverableQuality(goodDocument(), req);
+      expect(res.metrics.wordBand).toBe("under");
+    });
   });
 });

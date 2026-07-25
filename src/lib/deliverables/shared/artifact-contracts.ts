@@ -38,8 +38,23 @@ export interface ArtifactWordBudget {
   minWords: number;
   /** The range to aim for when evidence/context is rich. */
   targetWords: { min: number; max: number };
-  /** Hard ceiling — a real quality-gate blocker, not the target range's own upper bound. */
+  /**
+   * Target ceiling — crossing it is a discipline signal for the prompt and an
+   * advisory in the quality gate, not by itself an export block. See
+   * `advisoryMaxWords` for where blocking actually starts.
+   */
   hardMaxWords: number;
+  /**
+   * True hard ceiling. 2026-07-25: per live-generation review, two independent
+   * real runs both landed 170-200 words past `hardMaxWords` (1471, 1505) with
+   * strong narrative quality — aggressively compressing to force compliance
+   * with a number the section-budget math doesn't yet reliably hit would trade
+   * quality for a target that's still being empirically tuned. Reads
+   * 900-1,100 as ideal, 1,101-hardMaxWords as pass, hardMaxWords-this value as
+   * pass-with-advisory, and only above this value as a block. Revisit once a
+   * meaningful sample of real Charters shows where quality actually holds.
+   */
+  advisoryMaxWords: number;
 }
 
 export interface ArtifactSectionContract {
@@ -91,6 +106,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
     minWords: 900,
     targetWords: { min: 900, max: 1_100 },
     hardMaxWords: 1_300,
+    advisoryMaxWords: 1_500,
   },
   /**
    * Single canonical output-token ceiling for generating this artifact.
@@ -138,8 +154,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
     {
       key: "scope",
       title: "Scope & Out of Scope",
-      intent:
-        "A simple two-column table: In Scope / Out of Scope. Concise.",
+      intent: "A simple two-column table: In Scope / Out of Scope. Concise.",
       maxWords: 150,
     },
     {

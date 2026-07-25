@@ -146,7 +146,9 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
   });
 
   it("fails premium P2 when exact metrics exist but are not used", () => {
-    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(
+      " ",
+    );
     const r = meetsGoldenBar(
       `<html><body>
         <svg><text>Current-state architecture diagram</text></svg>
@@ -171,7 +173,9 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
   });
 
   it("fails premium P2 when exception taxonomy exists but is ignored", () => {
-    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(
+      " ",
+    );
     const r = meetsGoldenBar(
       `<html><body>
         <svg><text>Current-state architecture diagram</text></svg>
@@ -187,7 +191,11 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
       "discovery_report",
       {
         minimumWordCount: 2500,
-        requiredTaxonomyTerms: ["Missing PO", "Price mismatch", "Payment hold / control review"],
+        requiredTaxonomyTerms: [
+          "Missing PO",
+          "Price mismatch",
+          "Payment hold / control review",
+        ],
       },
     );
     expect(r.pass).toBe(false);
@@ -199,7 +207,9 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
   });
 
   it("fails premium P2 when the client-facing body exposes a raw Move ID label", () => {
-    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(
+      " ",
+    );
     const r = meetsGoldenBar(
       `<html><body>
         <p>Move ID: 6f91c9a9</p>
@@ -223,7 +233,9 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
   });
 
   it("passes evidence-specific premium P2 when exact evidence and taxonomy are used", () => {
-    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(
+      " ",
+    );
     const r = meetsGoldenBar(
       `<html><body>
         <p>Workstream: Vendor Invoice Exception Handling Redesign</p>
@@ -241,7 +253,11 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
       {
         minimumWordCount: 2500,
         requiredExactEvidenceTerms: ["1,872", "2,345", "7.4"],
-        requiredTaxonomyTerms: ["Missing PO", "Price mismatch", "Payment hold / control review"],
+        requiredTaxonomyTerms: [
+          "Missing PO",
+          "Price mismatch",
+          "Payment hold / control review",
+        ],
         forbidClientFacingRawIds: true,
       },
     );
@@ -270,6 +286,41 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     expect(r.overMaximumWordCount).toBe(true);
     expect(r.pass).toBe(false);
     expect(r.reasons.join(" ")).toMatch(/blocks acceptance/i);
+  });
+
+  it("does not block within the advisory band, but blocks once it's crossed", () => {
+    const words = (n: number) =>
+      Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
+    const withinBand = meetsGoldenBar(
+      `<html><body><svg></svg><table></table><p>${words(30)}</p></body></html>`,
+      undefined,
+      {
+        maximumWordCount: 20,
+        enforceMaximumWordCount: true,
+        advisoryMaximumWordCount: 40,
+      },
+    );
+    expect(withinBand.overMaximumWordCount).toBe(true);
+    expect(withinBand.pass).toBe(true);
+    expect(withinBand.reasons.join(" ")).toMatch(/advisory/i);
+
+    const pastBand = meetsGoldenBar(
+      `<html><body><svg></svg><table></table><p>${words(50)}</p></body></html>`,
+      undefined,
+      {
+        maximumWordCount: 20,
+        enforceMaximumWordCount: true,
+        advisoryMaximumWordCount: 40,
+      },
+    );
+    expect(pastBand.pass).toBe(false);
+    expect(pastBand.reasons.join(" ")).toMatch(/blocks acceptance/i);
+  });
+
+  it("wires the Charter's advisory word band from the shared contract", () => {
+    expect(
+      premiumGoldenBarOptionsForArtifact("charter").advisoryMaximumWordCount,
+    ).toBe(1_500);
   });
 
   it("enforces rendered-size ceilings for concise Moves decision artifacts only", () => {
@@ -376,7 +427,9 @@ describe("duplicate section headings (informational — does not block pass)", (
 
   it("findDuplicateSectionHeadings returns an empty array when every heading is unique", () => {
     expect(
-      findDuplicateSectionHeadings("<h2>Overview</h2><h2>Findings</h2><h3>Next Steps</h3>"),
+      findDuplicateSectionHeadings(
+        "<h2>Overview</h2><h2>Findings</h2><h3>Next Steps</h3>",
+      ),
     ).toEqual([]);
   });
 
@@ -389,7 +442,9 @@ describe("duplicate section headings (informational — does not block pass)", (
       </body></html>`,
     );
     expect(r.duplicateSectionHeadings).toEqual(["Current State Overview"]);
-    expect(r.reasons.join(" ")).toMatch(/repeats section headings.*Current State Overview/i);
+    expect(r.reasons.join(" ")).toMatch(
+      /repeats section headings.*Current State Overview/i,
+    );
     expect(r.pass).toBe(true);
     expect(r.qualityScore).toBeLessThan(92);
   });

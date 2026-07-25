@@ -122,6 +122,15 @@ export interface QualityBar {
   targetBodyWordsMax?: number;
   /** true = crossing targetBodyWordsMax blocks export; false/undefined = warning only. */
   enforceMaxAsBlocker?: boolean;
+  /**
+   * When set, a document between `targetBodyWordsMax` and this value is an
+   * advisory (does not block export) even when `enforceMaxAsBlocker` is true —
+   * only crossing THIS value blocks. Lets a concise artifact's ceiling stay a
+   * discipline signal without punishing a slightly-long-but-high-quality draft
+   * while the prompt/section budgets that should keep it under the target are
+   * still being tuned against real generations.
+   */
+  advisoryBandMax?: number;
   requiresCitations: boolean;
   requiresDecisionSection: boolean;
   requiresRecommendation: boolean;
@@ -361,6 +370,14 @@ export interface QualityValidationResult {
     hasCentralTension: boolean;
     hasOptionsConsidered: boolean;
     hasEvidenceGapsNoted: boolean;
+    /** ~200 words/minute executive reading pace, rounded up to at least 1. */
+    readingTimeMinutes: number;
+    /** true whenever any advisory/warning fired — a signal to track whether the
+     * artifact needed a human touch before it could ship, across a sample of
+     * real generations. */
+    manualEditNeeded: boolean;
+    /** Where bodyWordCount landed relative to the artifact's word bands. */
+    wordBand: "under" | "ideal" | "pass" | "advisory" | "excessive" | "n/a";
   };
 }
 

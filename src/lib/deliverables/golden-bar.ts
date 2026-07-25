@@ -50,6 +50,14 @@ export interface GoldenBarOptions {
    */
   maximumWordCount?: number;
   enforceMaximumWordCount?: boolean;
+  /**
+   * When set, a document between `maximumWordCount` and this value is an
+   * advisory (does not block acceptance) even when `enforceMaximumWordCount`
+   * is true — only crossing THIS value blocks. See the matching
+   * `advisoryBandMax` field in the orchestrator's QualityBar for the
+   * rationale (2026-07-25 live-generation review).
+   */
+  advisoryMaximumWordCount?: number;
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -93,12 +101,17 @@ const QUANTIFIED_CLAIM_PATTERN =
   /[^.!?]*(?:\$\s?[\d][\d,]*(?:\.\d+)?\s?(?:k|m|bn|million|billion)?\b|\b\d+(?:\.\d+)?\s?%)[^.!?]*[.!?]/gi;
 
 /** Quantified ($/%) sentences with no nearby evidence-qualifying language. */
-export function findUnsupportedQuantifiedClaims(plainText: string, limit = 20): string[] {
+export function findUnsupportedQuantifiedClaims(
+  plainText: string,
+  limit = 20,
+): string[] {
   const sentences = plainText.match(QUANTIFIED_CLAIM_PATTERN) ?? [];
   const flagged: string[] = [];
   for (const sentence of sentences) {
     const lower = sentence.toLowerCase();
-    const qualified = EVIDENCE_QUALIFYING_PHRASES.some((phrase) => lower.includes(phrase));
+    const qualified = EVIDENCE_QUALIFYING_PHRASES.some((phrase) =>
+      lower.includes(phrase),
+    );
     if (!qualified) {
       flagged.push(sentence.trim().slice(0, 160));
       if (flagged.length >= limit) break;
@@ -285,10 +298,24 @@ export function meetsGoldenBar(
   const overMaximumWordCount = Boolean(
     options.maximumWordCount && wordCount > options.maximumWordCount,
   );
+  const withinAdvisoryBand = Boolean(
+    overMaximumWordCount &&
+    options.advisoryMaximumWordCount &&
+    wordCount <= options.advisoryMaximumWordCount,
+  );
+  const overAdvisoryBand = Boolean(
+    options.advisoryMaximumWordCount &&
+    wordCount > options.advisoryMaximumWordCount,
+  );
   if (overMaximumWordCount) {
-    const enforcement = options.enforceMaximumWordCount
+    const blocks =
+      options.enforceMaximumWordCount &&
+      (!options.advisoryMaximumWordCount || overAdvisoryBand);
+    const enforcement = blocks
       ? "blocks acceptance"
-      : "informational — does not block";
+      : withinAdvisoryBand
+        ? "advisory — within acceptable review range, does not block"
+        : "informational — does not block";
     reasons.push(
       `runs long: artifact has ${wordCount} words; target ceiling is ${options.maximumWordCount} (${enforcement})`,
     );
@@ -330,7 +357,8 @@ export function meetsGoldenBar(
     options.forbidClientFacingRawIds === true
       ? [
           /\bmove\s+id\s*:/i.test(text) ? "Move ID:" : undefined,
-          /\bmove\s*id\b/i.test(text) && /[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i.test(text)
+          /\bmove\s*id\b/i.test(text) &&
+          /[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i.test(text)
             ? "Move UUID"
             : undefined,
         ].filter((value): value is string => Boolean(value))
@@ -361,7 +389,8 @@ export function meetsGoldenBar(
     (!options.minimumWordCount || wordCount >= options.minimumWordCount) &&
     (!options.maximumWordCount ||
       !options.enforceMaximumWordCount ||
-      wordCount <= options.maximumWordCount) &&
+      wordCount <= options.maximumWordCount ||
+      withinAdvisoryBand) &&
     forbiddenLanguageHits.length === 0 &&
     missingExactEvidenceTerms.length === 0 &&
     missingTaxonomyTerms.length === 0 &&
