@@ -23,6 +23,11 @@ import {
   type SolutionContext,
 } from "@/lib/programs/solution-context";
 import { sanitizeClientFacingArtifactHtml } from "./client-facing-artifact-sanitize";
+import {
+  deriveRoadmapLifecycle,
+  roadmapLifecycleSentence,
+  type RoadmapLifecycle,
+} from "./roadmap-lifecycle";
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
 import {
@@ -379,6 +384,10 @@ function insertAfterBodyOpen(html: string, addition: string): string {
 export function formatDraftCaveatText(args: {
   draftCaveats: readonly GenerationBlocker[];
   contextCaveats: readonly string[];
+  /** The single unified lifecycle state (PR2). When present, its sentence is the
+   *  banner intro so the banner never drifts from the artifact's real state. */
+  lifecycle?: RoadmapLifecycle;
+  phase?: number;
 }): string {
   // Governance-state accuracy (roadmap governed-artifact-sync review): the open
   // items MUST be derived from real gate/approval state — never a hardcoded
@@ -386,15 +395,19 @@ export function formatDraftCaveatText(args: {
   // Move whose charter is signed off is a false governance statement. We build
   // the list purely from the state-derived `draftCaveats` (from
   // assertPhaseReadyForGeneration) plus the real context readiness gaps.
+  const intro =
+    args.lifecycle && typeof args.phase === "number"
+      ? roadmapLifecycleSentence(args.lifecycle, args.phase)
+      : STRATEGIC_MOVES_DRAFT_CAVEAT;
   const gateReasons = args.draftCaveats.map((caveat) => caveat.reason);
   const contextReasons = args.contextCaveats.map(
     (missing) => `${missing} is not yet captured or approved for final use.`,
   );
   const openItems = [...gateReasons, ...contextReasons];
   if (openItems.length === 0) {
-    return STRATEGIC_MOVES_DRAFT_CAVEAT;
+    return intro;
   }
-  return `${STRATEGIC_MOVES_DRAFT_CAVEAT} Open items before this phase is finalized: ${openItems.join("; ")}.`;
+  return `${intro} Open items before this phase is finalized: ${openItems.join("; ")}.`;
 }
 
 function renderDraftCaveatHtml(caveat: string): string {
@@ -513,11 +526,27 @@ export async function generateArtifact(
     }
   }
 
+  // PR2 — the artifact's lifecycle state comes from ONE source. A draft is a
+  // review draft generated after entry + capture, before the exit gate (that is
+  // exactly what `draftOnly` means from assertPhaseReadyForGeneration). The
+  // banner sentence is derived from this state so it can never drift.
+  const lifecycle: RoadmapLifecycle | undefined =
+    generationMode === "draft"
+      ? deriveRoadmapLifecycle({
+          phase: args.phase,
+          entryGateApproved: true, // the draft path is only reached once the phase is entered
+          captureComplete: true, // …and capture is complete
+          exitGateApproved: gate.gateApproved,
+          artifactGenerated: true,
+        })
+      : undefined;
   const draftCaveatText =
     generationMode === "draft"
       ? formatDraftCaveatText({
           draftCaveats: gate.draftCaveats,
           contextCaveats,
+          lifecycle,
+          phase: args.phase,
         })
       : undefined;
 

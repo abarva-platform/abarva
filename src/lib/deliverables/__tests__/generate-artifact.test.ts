@@ -3,6 +3,7 @@ import {
   formatDraftCaveatText,
   type GenerateArtifactDeps,
 } from "../generate-artifact";
+import { deriveRoadmapLifecycle } from "../roadmap-lifecycle";
 
 describe("formatDraftCaveatText — governance-state accuracy", () => {
   const exitPending = {
@@ -35,6 +36,29 @@ describe("formatDraftCaveatText — governance-state accuracy", () => {
     expect(text).toMatch(/pre-exit-gate review draft/i);
     expect(text).not.toMatch(/still required/i);
     expect(text).not.toMatch(/Open items before this phase is finalized/i);
+  });
+
+  it("uses the unified lifecycle sentence as the banner intro when a lifecycle is supplied (PR2)", () => {
+    const lifecycle = deriveRoadmapLifecycle({
+      phase: 4,
+      entryGateApproved: true,
+      captureComplete: true,
+      exitGateApproved: false,
+      artifactGenerated: true,
+    });
+    const text = formatDraftCaveatText({
+      draftCaveats: [],
+      contextCaveats: [],
+      lifecycle,
+      phase: 4,
+    });
+    // Banner comes from the single lifecycle source — the exact review-draft wording.
+    expect(text).toMatch(
+      /Review draft generated after Phase 4 entry and capture completion/i,
+    );
+    expect(text).not.toMatch(
+      /no generation until the (gate|Phase 4 gate) is approved/i,
+    );
   });
 });
 
