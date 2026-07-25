@@ -457,10 +457,16 @@ function dataFor(pack: HomeKnowledgeDesignContractPack, key?: string) {
   return key ? pack.design_slots.DATA?.[key] : undefined;
 }
 
+// A dimension may only ever show evidence explicitly linked to IT --
+// EVID[key] is that per-dimension bucket. It must never fall back to the
+// pack-wide EVIDENCE list when a dimension has no bucket of its own: that
+// list backs the separate, whole-tenant "Evidence Sources" tab (the no-key
+// call below), and silently substituting it here presented real citations
+// (e.g. "AWS Analytics Foundation") as if they specifically supported
+// dimensions they have no connection to (e.g. "Enterprise Thesis").
 function evidenceFor(pack: HomeKnowledgeDesignContractPack, key?: string) {
-  return key
-    ? (pack.design_slots.EVID?.[key] ?? pack.design_slots.EVIDENCE ?? [])
-    : (pack.design_slots.EVIDENCE ?? []);
+  if (!key) return pack.design_slots.EVIDENCE ?? [];
+  return pack.design_slots.EVID?.[key] ?? [];
 }
 
 function metricFacts(pack: HomeKnowledgeDesignContractPack) {
@@ -676,15 +682,11 @@ function dimensionVisualChart(
       label: item.value === max ? "strongest signal" : "",
       fill: toneColor(item.tone),
     }));
-  if (values.length) return values;
-  return [
-    {
-      name: toneLabel(dimension?.status),
-      value: tone(dimension?.status) === "ready" ? 82 : tone(dimension?.status) === "weak" ? 34 : 58,
-      label: toneLabel(dimension?.status),
-      fill: toneColor(dimension?.status),
-    },
-  ];
+  // No real data rows for this dimension -- return empty rather than the
+  // old single-bar "Directional" stub, which rendered identically across
+  // every under-generated dimension and looked like a real coverage signal.
+  // The caller shows an honest empty state instead of a chart.
+  return values;
 }
 
 function caseItems(pack: HomeKnowledgeDesignContractPack) {
@@ -727,9 +729,12 @@ function sourceRows(pack: HomeKnowledgeDesignContractPack, key?: string) {
       owner: noMechanics(
         source.loaded_by || source.source_owner || "Owner not captured",
       ),
-      supports: noMechanics(
-        source.supports || source.facts || "Supports the context boundary",
-      ),
+      // No generic reassurance when the source itself doesn't state what it
+      // supports -- an unstated relationship must render as unstated, not
+      // as a vague claim of support the source never actually made.
+      supports: source.supports || source.facts
+        ? noMechanics(source.supports || source.facts)
+        : null,
       size: noMechanics(source.size || source.fields || "Coverage not stated"),
       gap: noMechanics(source.missing || "No source-specific caveat captured"),
     }));
@@ -1884,6 +1889,20 @@ export function HomeEnterpriseBriefApp({
           height: 220px;
           margin-top: 12px;
         }
+        .heb-chart-empty {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          margin: 0;
+          border: 1px dashed ${COLORS.lineStrong};
+          border-radius: 10px;
+          padding: 18px;
+          color: ${COLORS.muted};
+          background: rgba(255, 253, 248, 0.62);
+          font-size: 13px;
+          text-align: center;
+        }
         .heb-visual-head {
           display: flex;
           justify-content: space-between;
@@ -2519,7 +2538,7 @@ function DimensionView({
         <div className="heb-chart heb-chart-compact">
           {visualType === "relationship_graph" ? (
             <MiniRelationshipVisual chart={chart} />
-          ) : (
+          ) : chart.length ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chart}
@@ -2545,6 +2564,13 @@ function DimensionView({
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            // No real data rows exist for this dimension -- an honest empty
+            // state, not the old single hardcoded "Directional" bar that
+            // rendered identically regardless of dimension.
+            <p className="heb-chart-empty">
+              No dataset rows are available yet to chart for this dimension.
+            </p>
           )}
         </div>
         {visual?.annotations?.length ? (
@@ -2600,11 +2626,16 @@ function DimensionView({
         </article>
         <article className="heb-card">
           <span className="heb-section-label">Source proof</span>
-          {sources.slice(0, 3).map((source) => (
-            <p key={source.name}>
-              <strong>{source.name}</strong>: {source.supports}
-            </p>
-          ))}
+          {sources.length ? (
+            sources.slice(0, 3).map((source) => (
+              <p key={source.name}>
+                <strong>{source.name}</strong>:{" "}
+                {source.supports ?? "No explicit relationship stated for this source."}
+              </p>
+            ))
+          ) : (
+            <p>No dimension-specific evidence has been linked yet.</p>
+          )}
         </article>
       </section>
     </>
