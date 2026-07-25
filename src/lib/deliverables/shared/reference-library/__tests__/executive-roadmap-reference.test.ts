@@ -18,7 +18,7 @@ describe("EXECUTIVE_ROADMAP_REFERENCE — REF_EXECUTIVE_ROADMAP contract shape",
     expect(EXECUTIVE_ROADMAP_REFERENCE.maxWorkstreams).toBe(6);
   });
 
-  it("requires every roadmap item to carry outcome/activity/dependency/gate/owner/timing/measure", () => {
+  it("requires every roadmap item to carry outcome/activity/dependency/gate/owner/timing/measure/evidenceStatus", () => {
     expect(EXECUTIVE_ROADMAP_REFERENCE.requiredItemFields).toEqual([
       "outcome",
       "majorActivity",
@@ -27,7 +27,36 @@ describe("EXECUTIVE_ROADMAP_REFERENCE — REF_EXECUTIVE_ROADMAP contract shape",
       "ownerRole",
       "timing",
       "successMeasure",
+      "evidenceStatus",
     ]);
+  });
+
+  it("leads every horizon with the outcome achieved, not the activity", () => {
+    for (const horizon of EXECUTIVE_ROADMAP_REFERENCE.horizons) {
+      expect(EXECUTIVE_ROADMAP_REFERENCE.horizonOutcomes[horizon]).toBeTruthy();
+    }
+  });
+
+  it("defines canonical decision gates and value milestones", () => {
+    expect(EXECUTIVE_ROADMAP_REFERENCE.decisionGates.length).toBeGreaterThan(0);
+    expect(EXECUTIVE_ROADMAP_REFERENCE.valueMilestones.length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("rejects a bare category-label title and requires a message-led one", () => {
+    const rule = EXECUTIVE_ROADMAP_REFERENCE.titleRule;
+    expect(
+      rule.genericTitleForbiddenPatterns.some((re) =>
+        re.test("Execution Roadmap"),
+      ),
+    ).toBe(true);
+    expect(
+      rule.genericTitleForbiddenPatterns.some((re) => re.test(rule.example)),
+    ).toBe(false);
+    expect(rule.example.split(/\s+/).length).toBeGreaterThanOrEqual(
+      rule.minTitleWords,
+    );
   });
 
   it("forbids sprint numbers, Gantt language, day/week counters, and explicit calendar dates", () => {

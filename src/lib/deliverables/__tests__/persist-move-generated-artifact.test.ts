@@ -89,6 +89,7 @@ describe("persistMoveGeneratedArtifact", () => {
           unsupportedClaimSignals: ["Cycle time improves by 40% next quarter."],
           duplicateSectionHeadings: [],
           forbiddenContentHits: [],
+          titleReadsAsGenericLabel: false,
           qualityScore: 89,
         },
         generationMode: "draft",

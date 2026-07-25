@@ -243,6 +243,21 @@ export function validateDeliverableQuality(
       );
     }
   }
+  // ── story-first title enforcement (roadmap fast-follow, 2026-07-25) ──
+  // A technically compliant exhibit is not enough if the title is still a
+  // bare category label — the title must be the executive conclusion.
+  if (qb.titleRule) {
+    const title = doc.title.trim();
+    const isGeneric = qb.titleRule.genericForbiddenPatterns.some((re) =>
+      re.test(title),
+    );
+    const titleWordCount = title.split(/\s+/).filter(Boolean).length;
+    if (isGeneric || titleWordCount < qb.titleRule.minWords) {
+      warnings.push(
+        `title "${title}" reads as a category label, not an executive conclusion — state the sequencing thesis in the title itself`,
+      );
+    }
+  }
   const avgSectionWords = sectionCount
     ? Math.round(bodyWordCount / sectionCount)
     : 0;

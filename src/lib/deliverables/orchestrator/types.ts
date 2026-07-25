@@ -159,6 +159,16 @@ export interface QualityBar {
    * body. Advisory-only for the same reason as requiredExhibitElementsByKind.
    */
   forbiddenContentPatterns?: readonly RegExp[];
+  /**
+   * Story-first title enforcement (roadmap story-first fast-follow,
+   * 2026-07-25): the artifact title must be the executive conclusion, not a
+   * bare category label ("Execution Roadmap"). Advisory-only pending proof
+   * on real generations, same as the other reference-contract checks above.
+   */
+  titleRule?: {
+    genericForbiddenPatterns: readonly RegExp[];
+    minWords: number;
+  };
   tone: "board_grade_consulting";
 }
 
