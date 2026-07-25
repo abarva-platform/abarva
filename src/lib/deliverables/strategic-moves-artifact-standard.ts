@@ -16,8 +16,16 @@ import {
 export const STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC =
   "docs/design/strategic-moves/ARTIFACT_GENERATION_STANDARD.md";
 
+// The draft caveat intro must NOT assert specific upstream items ("sponsor
+// assignment, charter signoff") as still-outstanding — those may already be
+// complete, and printing them as open on a governed artifact is a false
+// governance statement (see the roadmap governed-artifact-sync review). The
+// intro states only the one thing a draft always means: it is a pre-exit-gate
+// review draft, not final until this phase's exit gate is approved. The
+// concrete, currently-open items are appended separately from real gate state
+// (see `formatDraftCaveatText`).
 export const STRATEGIC_MOVES_DRAFT_CAVEAT =
-  "This is a pre-gate review draft generated from available evidence. It is intended for sponsor review, workshop preparation, and refinement. It is not final or board-ready until sponsor assignment, charter signoff, and phase gate approval are completed.";
+  "This is a pre-exit-gate review draft generated from the approved evidence and captured inputs for this phase. It is intended for sponsor review and refinement, and is not final or board-ready until this phase's exit gate is approved.";
 
 export const STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS = [
   "kernel",

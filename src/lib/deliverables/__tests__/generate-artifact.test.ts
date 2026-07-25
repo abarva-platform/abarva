@@ -1,6 +1,46 @@
-import { generateArtifact, type GenerateArtifactDeps } from "../generate-artifact";
+import {
+  generateArtifact,
+  formatDraftCaveatText,
+  type GenerateArtifactDeps,
+} from "../generate-artifact";
 
-const ENOUGH_WORDS = Array.from({ length: 2600 }, (_, i) => `future${i}`).join(" ");
+describe("formatDraftCaveatText — governance-state accuracy", () => {
+  const exitPending = {
+    code: "gate_not_approved" as const,
+    phase: 4,
+    reason:
+      "Phase 4 exit approval is still pending — this is a pre-exit review draft (generating for review before the exit gate is intentional).",
+    severity: "hard" as const,
+  };
+
+  it("never emits hardcoded 'still required' governance claims", () => {
+    const text = formatDraftCaveatText({
+      draftCaveats: [exitPending],
+      contextCaveats: [],
+    });
+    // The false-by-construction hardcoded claims must be gone.
+    expect(text).not.toMatch(/sponsor assignment is still required/i);
+    expect(text).not.toMatch(/charter signoff is still required/i);
+    expect(text).not.toMatch(/phase gate approval is still required/i);
+    // The real, state-derived open item is carried, with non-contradictory wording.
+    expect(text).toMatch(/exit approval is still pending/i);
+    expect(text).not.toMatch(/no generation until the gate is approved/i);
+  });
+
+  it("returns only the intro when there are no real open items (no invented gaps)", () => {
+    const text = formatDraftCaveatText({
+      draftCaveats: [],
+      contextCaveats: [],
+    });
+    expect(text).toMatch(/pre-exit-gate review draft/i);
+    expect(text).not.toMatch(/still required/i);
+    expect(text).not.toMatch(/Open items before this phase is finalized/i);
+  });
+});
+
+const ENOUGH_WORDS = Array.from({ length: 2600 }, (_, i) => `future${i}`).join(
+  " ",
+);
 
 const GOOD_ARCH_HTML = `<html><body>
 <h1>P3 Draft — based on approved P2 diagnostic for design shaping</h1>
@@ -32,7 +72,8 @@ function deps(over: Partial<GenerateArtifactDeps> = {}): GenerateArtifactDeps {
       gateApproved: async () => true,
     },
     contextSources: {
-      retrieveCurrentState: async () => "Epic Clarity/Caboodle on SQL Server, Tableau",
+      retrieveCurrentState: async () =>
+        "Epic Clarity/Caboodle on SQL Server, Tableau",
       loadPriorDigests: async () => [
         {
           useCase: "unify clinical + claims",
@@ -51,7 +92,12 @@ function deps(over: Partial<GenerateArtifactDeps> = {}): GenerateArtifactDeps {
 describe("generateArtifact — the integration keystone", () => {
   it("generates a client-ready architecture when gate+context+bar all pass", async () => {
     const r = await generateArtifact(
-      { moveId: "m", tenantKey: "meridian", phase: 3, artifact: "target_state_architecture" },
+      {
+        moveId: "m",
+        tenantKey: "meridian",
+        phase: 3,
+        artifact: "target_state_architecture",
+      },
       deps(),
     );
     expect(r.status).toBe("generated");
@@ -60,10 +106,21 @@ describe("generateArtifact — the integration keystone", () => {
   it("blocks_gate (409) when the gate is not approved — no generation", async () => {
     let modelCalled = false;
     const r = await generateArtifact(
-      { moveId: "m", tenantKey: "t", phase: 3, artifact: "target_state_architecture" },
+      {
+        moveId: "m",
+        tenantKey: "t",
+        phase: 3,
+        artifact: "target_state_architecture",
+      },
       deps({
-        gateSources: { captureComplete: async () => ({ complete: true, missing: [] }), gateApproved: async () => false },
-        callModel: async () => { modelCalled = true; return GOOD_ARCH_HTML; },
+        gateSources: {
+          captureComplete: async () => ({ complete: true, missing: [] }),
+          gateApproved: async () => false,
+        },
+        callModel: async () => {
+          modelCalled = true;
+          return GOOD_ARCH_HTML;
+        },
       }),
     );
     expect(r.status).toBe("blocked_gate");
@@ -72,19 +129,29 @@ describe("generateArtifact — the integration keystone", () => {
 
   it("blocks_context for architecture when no option was approved (P3a)", async () => {
     const r = await generateArtifact(
-      { moveId: "m", tenantKey: "t", phase: 3, artifact: "target_state_architecture" },
+      {
+        moveId: "m",
+        tenantKey: "t",
+        phase: 3,
+        artifact: "target_state_architecture",
+      },
       deps({
         contextSources: {
           retrieveCurrentState: async () => "Epic...",
           loadPriorDigests: async () => [
-            { useCase: "x", kpis: [{ name: "k", domain: "clinical" }], gaps: ["g"] }, // no chosenOption
+            {
+              useCase: "x",
+              kpis: [{ name: "k", domain: "clinical" }],
+              gaps: ["g"],
+            }, // no chosenOption
           ],
           loadDecisions: async () => [],
         },
       }),
     );
     expect(r.status).toBe("blocked_context");
-    if (r.status === "blocked_context") expect(r.missing.join(" ")).toMatch(/chosenOption/);
+    if (r.status === "blocked_context")
+      expect(r.missing.join(" ")).toMatch(/chosenOption/);
   });
 
   it("blocks a P3 architecture draft until a solution option is approved", async () => {
@@ -115,7 +182,11 @@ describe("generateArtifact — the integration keystone", () => {
             Payment hold / control review creates duplicate-payment risk.
           `,
           loadPriorDigests: async () => [
-            { useCase: "AP exception redesign", kpis: [{ name: "cycle time", domain: "financial" }], gaps: ["payment hold governance inconsistent"] },
+            {
+              useCase: "AP exception redesign",
+              kpis: [{ name: "cycle time", domain: "financial" }],
+              gaps: ["payment hold governance inconsistent"],
+            },
           ],
           loadDecisions: async () => [],
         },
@@ -129,8 +200,16 @@ describe("generateArtifact — the integration keystone", () => {
 
   it("blocks_quality when the model returns prose (fails the golden bar) — saved as draft", async () => {
     const r = await generateArtifact(
-      { moveId: "m", tenantKey: "t", phase: 3, artifact: "target_state_architecture" },
-      deps({ callModel: async () => "<html><body><p>just prose, no diagrams</p></body></html>" }),
+      {
+        moveId: "m",
+        tenantKey: "t",
+        phase: 3,
+        artifact: "target_state_architecture",
+      },
+      deps({
+        callModel: async () =>
+          "<html><body><p>just prose, no diagrams</p></body></html>",
+      }),
     );
     expect(r.status).toBe("blocked_quality");
     if (r.status === "blocked_quality") expect(r.goldenBar.pass).toBe(false);
@@ -151,14 +230,21 @@ describe("generateArtifact — the integration keystone", () => {
     </body></html>`;
 
     const r = await generateArtifact(
-      { moveId: "m", tenantKey: "meridian", phase: 3, artifact: "target_state_architecture" },
+      {
+        moveId: "m",
+        tenantKey: "meridian",
+        phase: 3,
+        artifact: "target_state_architecture",
+      },
       deps({ callModel: async () => missingTableHtml }),
     );
 
     expect(r.status).toBe("generated");
     if (r.status === "generated") {
       expect(r.goldenBar.pass).toBe(true);
-      expect(r.html).toContain("Architecture Decision Records / Tradeoff Table");
+      expect(r.html).toContain(
+        "Architecture Decision Records / Tradeoff Table",
+      );
       expect(r.html).toContain("KPI-to-Capability Traceability");
       expect(r.html).toContain("Current-to-Future Logic Table");
       expect(r.html).toContain("Human + AI Role Model");
@@ -172,7 +258,9 @@ describe("generateArtifact — the integration keystone", () => {
   });
 
   it("completes P2 evidence baseline when Claude omits first-class metrics and taxonomy", async () => {
-    const enoughWords = Array.from({ length: 2600 }, (_, i) => `word${i}`).join(" ");
+    const enoughWords = Array.from({ length: 2600 }, (_, i) => `word${i}`).join(
+      " ",
+    );
     const p2HtmlWithoutEvidence = `<html><body>
       <h1>Discovery & Diagnostic Readout</h1>
       <svg><text>Current-state architecture diagram</text></svg>
@@ -206,7 +294,8 @@ describe("generateArtifact — the integration keystone", () => {
           loadPriorDigests: async () => [
             {
               useCase: "Vendor Invoice Exception Handling Redesign",
-              valueHypothesis: "Reduce manual touch, cycle time, and control risk.",
+              valueHypothesis:
+                "Reduce manual touch, cycle time, and control risk.",
             },
           ],
           loadDecisions: async () => [],
@@ -228,7 +317,9 @@ describe("generateArtifact — the integration keystone", () => {
   });
 
   it("sanitizes internal implementation language before the golden bar and persistence", async () => {
-    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(
+      " ",
+    );
     const p2HtmlWithInternalTerms = `<html><body>
       <h1>Discovery & Diagnostic Readout</h1>
       <p>This request uses 1,872 monthly exceptions, 2,345 manual touch hours, and 7.4 average resolution days.</p>
@@ -265,7 +356,8 @@ describe("generateArtifact — the integration keystone", () => {
           loadPriorDigests: async () => [
             {
               useCase: "Vendor Invoice Exception Handling Redesign",
-              valueHypothesis: "Reduce manual touch, cycle time, and control risk.",
+              valueHypothesis:
+                "Reduce manual touch, cycle time, and control risk.",
             },
           ],
           loadDecisions: async () => [],

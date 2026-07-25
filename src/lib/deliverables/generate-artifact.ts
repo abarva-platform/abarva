@@ -18,7 +18,10 @@ import {
   assembleMoveSolutionContext,
   type SolutionContextSources,
 } from "@/lib/programs/assemble-solution-context";
-import { architectureMayProceed, type SolutionContext } from "@/lib/programs/solution-context";
+import {
+  architectureMayProceed,
+  type SolutionContext,
+} from "@/lib/programs/solution-context";
 import { sanitizeClientFacingArtifactHtml } from "./client-facing-artifact-sanitize";
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
@@ -58,7 +61,12 @@ export type GenerateArtifactResult =
     }
   | { status: "blocked_gate"; httpStatus: 409; blockers: GenerationBlocker[] }
   | { status: "blocked_context"; missing: string[] }
-  | { status: "blocked_quality"; html: string; goldenBar: GoldenBarResult; context: SolutionContext };
+  | {
+      status: "blocked_quality";
+      html: string;
+      goldenBar: GoldenBarResult;
+      context: SolutionContext;
+    };
 
 function escapeHtml(value: string | undefined): string {
   return (value?.trim() || "Not captured in Solution Context")
@@ -81,7 +89,9 @@ function capabilityForKpi(name: string, domain: string): string {
   if (/cost|margin|claim|leakage|payment|finance/.test(lower + domain)) {
     return "Claims, finance, and contract-conformed Lakehouse marts with governed cost-of-care measures";
   }
-  if (/call|agent|member|experience|prior|auth|utilization/.test(lower + domain)) {
+  if (
+    /call|agent|member|experience|prior|auth|utilization/.test(lower + domain)
+  ) {
     return "Operational event and member-interaction data product for workflow automation and agent assist";
   }
   return "Governed Lakehouse data product and semantic metric layer";
@@ -89,7 +99,10 @@ function capabilityForKpi(name: string, domain: string): string {
 
 function renderArchitectureTableCompletion(ctx: SolutionContext): string {
   const decisions = ctx.decisions.length
-    ? ctx.decisions.slice(-3).map((d) => `${d.decision}: ${d.rationale}`).join("; ")
+    ? ctx.decisions
+        .slice(-3)
+        .map((d) => `${d.decision}: ${d.rationale}`)
+        .join("; ")
     : "P3 option approval and phase gates captured in the Move workflow";
   const kpis = ctx.kpis?.length
     ? ctx.kpis
@@ -250,11 +263,17 @@ function renderArchitectureTableCompletion(ctx: SolutionContext): string {
 </section>`;
 }
 
-function renderDiscoveryEvidenceBaselineCompletion(ctx: SolutionContext): string | undefined {
+function renderDiscoveryEvidenceBaselineCompletion(
+  ctx: SolutionContext,
+): string | undefined {
   const metrics = ctx.metricsThatMatter ?? [];
   const taxonomy = ctx.evidenceTaxonomy ?? [];
   const missingInputs = ctx.clientActionableMissingInputs ?? [];
-  if (metrics.length === 0 && taxonomy.length === 0 && missingInputs.length === 0) {
+  if (
+    metrics.length === 0 &&
+    taxonomy.length === 0 &&
+    missingInputs.length === 0
+  ) {
     return undefined;
   }
 
@@ -346,32 +365,36 @@ function renderDiscoveryEvidenceBaselineCompletion(ctx: SolutionContext): string
 }
 
 function insertBeforeBodyClose(html: string, addition: string): string {
-  if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${addition}</body>`);
+  if (/<\/body>/i.test(html))
+    return html.replace(/<\/body>/i, `${addition}</body>`);
   return `${html}${addition}`;
 }
 
 function insertAfterBodyOpen(html: string, addition: string): string {
-  if (/<body[^>]*>/i.test(html)) return html.replace(/<body[^>]*>/i, (match) => `${match}${addition}`);
+  if (/<body[^>]*>/i.test(html))
+    return html.replace(/<body[^>]*>/i, (match) => `${match}${addition}`);
   return `${addition}${html}`;
 }
 
-function formatDraftCaveatText(args: {
+export function formatDraftCaveatText(args: {
   draftCaveats: readonly GenerationBlocker[];
   contextCaveats: readonly string[];
 }): string {
+  // Governance-state accuracy (roadmap governed-artifact-sync review): the open
+  // items MUST be derived from real gate/approval state — never a hardcoded
+  // "still required" list. Printing "charter signoff is still required" on a
+  // Move whose charter is signed off is a false governance statement. We build
+  // the list purely from the state-derived `draftCaveats` (from
+  // assertPhaseReadyForGeneration) plus the real context readiness gaps.
   const gateReasons = args.draftCaveats.map((caveat) => caveat.reason);
   const contextReasons = args.contextCaveats.map(
     (missing) => `${missing} is not yet captured or approved for final use.`,
   );
-  const required = [
-    "sponsor assignment is still required",
-    "charter signoff is still required",
-    "phase gate approval is still required",
-    "baseline capture may still require sponsor ratification if the gate review marks it incomplete",
-    ...gateReasons,
-    ...contextReasons,
-  ];
-  return `${STRATEGIC_MOVES_DRAFT_CAVEAT} Open gate items: ${required.join("; ")}.`;
+  const openItems = [...gateReasons, ...contextReasons];
+  if (openItems.length === 0) {
+    return STRATEGIC_MOVES_DRAFT_CAVEAT;
+  }
+  return `${STRATEGIC_MOVES_DRAFT_CAVEAT} Open items before this phase is finalized: ${openItems.join("; ")}.`;
 }
 
 function renderDraftCaveatHtml(caveat: string): string {
@@ -384,12 +407,12 @@ function renderDraftCaveatHtml(caveat: string): string {
 function hasEnoughDraftContext(ctx: SolutionContext): boolean {
   return Boolean(
     ctx.useCase ||
-      ctx.useCaseCandidate ||
-      ctx.problemSeed ||
-      ctx.currentState ||
-      ctx.scope ||
-      ctx.valueHypothesis ||
-      ctx.evidenceNeeds?.length,
+    ctx.useCaseCandidate ||
+    ctx.problemSeed ||
+    ctx.currentState ||
+    ctx.scope ||
+    ctx.valueHypothesis ||
+    ctx.evidenceNeeds?.length,
   );
 }
 
@@ -405,17 +428,26 @@ function completeMandatoryExhibits(args: {
       args.goldenBar.missingTaxonomyTerms.length > 0)
   ) {
     const completion = renderDiscoveryEvidenceBaselineCompletion(args.context);
-    return completion ? insertBeforeBodyClose(args.html, completion) : undefined;
+    return completion
+      ? insertBeforeBodyClose(args.html, completion)
+      : undefined;
   }
   if (args.artifact !== "target_state_architecture") return undefined;
-  if (args.goldenBar.hasDataGap || args.goldenBar.proseOnly || args.goldenBar.svgCount === 0) {
+  if (
+    args.goldenBar.hasDataGap ||
+    args.goldenBar.proseOnly ||
+    args.goldenBar.svgCount === 0
+  ) {
     return undefined;
   }
   const onlyMissingTables =
     args.goldenBar.missingVisuals.length === 0 &&
     args.goldenBar.missingTables.length > 0;
   if (!onlyMissingTables) return undefined;
-  return insertBeforeBodyClose(args.html, renderArchitectureTableCompletion(args.context));
+  return insertBeforeBodyClose(
+    args.html,
+    renderArchitectureTableCompletion(args.context),
+  );
 }
 
 /** Generate one artifact end to end. Persist `generated` as client-ready, everything else as draft. */
@@ -443,24 +475,38 @@ export async function generateArtifact(
     },
     deps.gateSources,
   );
-  if (!gate.ready) return { status: "blocked_gate", httpStatus: 409, blockers: gate.blockers };
+  if (!gate.ready)
+    return { status: "blocked_gate", httpStatus: 409, blockers: gate.blockers };
 
   // 2) Assemble the REAL cumulative context (kills [DATA GAP]).
   const assembled = await assembleMoveSolutionContext(
-    { moveId: args.moveId, tenantKey: args.tenantKey, targetPhase: args.phase, ...(args.useCaseQuery ? { useCaseQuery: args.useCaseQuery } : {}) },
+    {
+      moveId: args.moveId,
+      tenantKey: args.tenantKey,
+      targetPhase: args.phase,
+      ...(args.useCaseQuery ? { useCaseQuery: args.useCaseQuery } : {}),
+    },
     deps.contextSources,
   );
   const ctx = assembled.context;
 
   // 3) Readiness — phase inputs present; architecture needs an approved option.
-  const contextCaveats = assembled.readiness.ready ? [] : assembled.readiness.missing;
+  const contextCaveats = assembled.readiness.ready
+    ? []
+    : assembled.readiness.missing;
   if (!assembled.readiness.ready) {
     if (generationMode !== "draft" || !hasEnoughDraftContext(ctx)) {
-      return { status: "blocked_context", missing: assembled.readiness.missing };
+      return {
+        status: "blocked_context",
+        missing: assembled.readiness.missing,
+      };
     }
   }
   const profile = getDeliverableProfile(args.artifact);
-  if (profile.renderer === "html_architecture" && args.artifact !== "solution_approach_options") {
+  if (
+    profile.renderer === "html_architecture" &&
+    args.artifact !== "solution_approach_options"
+  ) {
     const archOk = architectureMayProceed(ctx);
     if (!archOk.ready) {
       return { status: "blocked_context", missing: archOk.missing };
@@ -491,9 +537,13 @@ export async function generateArtifact(
     generationMode,
     maxTokens: modelTokenBudgetForArtifact(args.artifact),
   });
-  const draftCaveatHtml = draftCaveatText ? renderDraftCaveatHtml(draftCaveatText) : undefined;
+  const draftCaveatHtml = draftCaveatText
+    ? renderDraftCaveatHtml(draftCaveatText)
+    : undefined;
   const html = sanitizeClientFacingArtifactHtml(
-    draftCaveatHtml ? insertAfterBodyOpen(modelHtml, draftCaveatHtml) : modelHtml,
+    draftCaveatHtml
+      ? insertAfterBodyOpen(modelHtml, draftCaveatHtml)
+      : modelHtml,
   );
 
   // 6) Quality bar — must be a real visual artifact, no [DATA GAP], required exhibits present.
@@ -510,7 +560,8 @@ export async function generateArtifact(
       context: ctx,
     });
     if (completedHtml) {
-      const sanitizedCompletedHtml = sanitizeClientFacingArtifactHtml(completedHtml);
+      const sanitizedCompletedHtml =
+        sanitizeClientFacingArtifactHtml(completedHtml);
       const completedGoldenBar = meetsGoldenBar(
         sanitizedCompletedHtml,
         args.artifact,

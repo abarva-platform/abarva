@@ -74,7 +74,10 @@ export async function POST(
   );
   if (!selected?.id) {
     return Response.json(
-      { error: "bad_request", detail: "chosenOption must match one supplied option with a stable id." },
+      {
+        error: "bad_request",
+        detail: "chosenOption must match one supplied option with a stable id.",
+      },
       { status: 400 },
     );
   }
@@ -83,11 +86,25 @@ export async function POST(
     "Human reviewer approved the option that will drive target architecture.";
   const decisionId = randomUUID();
   const decisionVersion = now;
+  // Audit record: keeps the raw actor id for lineage/hash integrity. This is
+  // ops-facing (stored in decisionLineage.structured_data), never rendered
+  // into a client-facing artifact directly.
   const decision = {
     phase: 3,
     decision: `Approved solution option: ${chosenOption}`,
     rationale,
     approvedBy: ctx.userId,
+    approvedAt: now,
+  };
+  // Client-facing record: an internal DB user id must never appear in an
+  // executive artifact (roadmap governed-artifact-sync review). Reference the
+  // approver by role, with the decision id as the auditable back-reference.
+  const clientSafeDecision = {
+    phase: 3,
+    decision: `Approved solution option: ${chosenOption}`,
+    rationale,
+    approvedByRole: "sponsor",
+    auditReference: decisionId,
     approvedAt: now,
   };
   const rejectedOptions = options
@@ -100,7 +117,10 @@ export async function POST(
         body.rejectedOptionReasons?.[option.id]?.trim() ||
         `Not selected because the approved rationale favored ${selected.name}.`,
     }));
-  const decisionPacketWithoutHash: Omit<ApprovedSolutionApproach, "decisionHash"> = {
+  const decisionPacketWithoutHash: Omit<
+    ApprovedSolutionApproach,
+    "decisionHash"
+  > = {
     decisionId,
     decisionVersion,
     selectedOptionId: selected.id,
@@ -127,39 +147,46 @@ export async function POST(
     options,
     chosenOption,
     tradeoffsAccepted: body.tradeoffsAccepted,
-    decisions: [decision],
+    // Feed the CLIENT-SAFE decision (role, not user id) into the context that
+    // binds to generated artifacts. The audit `decision` with the raw actor id
+    // stays in `decisionLineage` only.
+    decisions: [clientSafeDecision],
     humanApprovalNotes: [
-      `P3a solution option approved by ${ctx.userId} at ${now}: ${chosenOption}`,
+      `P3 solution option approved by the sponsor at ${now}: ${chosenOption} (audit ref ${decisionId}).`,
     ],
   };
 
-  const { deliverableId, versionId } = await completeDeliverable(ctx, programId, {
-    deliverableTypeKey: "solution_approach_options",
-    title: "Approved Solution Approach Option",
-    content: [
-      "# Approved Solution Approach Option",
-      "",
-      `Chosen option: ${chosenOption}`,
-      "",
-      `Rationale: ${solutionContextDigest.decisions[0].rationale}`,
-    ].join("\n"),
-    moduleKey: "design",
-    signOff: true,
-    structuredData: {
-      phase: 3,
-      artifact: "solution_approach_options",
-      output_format: "approval_digest",
-      mode: "solution_option_approval",
-      solutionContextDigest,
-      decisionLineage,
+  const { deliverableId, versionId } = await completeDeliverable(
+    ctx,
+    programId,
+    {
+      deliverableTypeKey: "solution_approach_options",
+      title: "Approved Solution Approach Option",
+      content: [
+        "# Approved Solution Approach Option",
+        "",
+        `Chosen option: ${chosenOption}`,
+        "",
+        `Rationale: ${solutionContextDigest.decisions[0].rationale}`,
+      ].join("\n"),
+      moduleKey: "design",
+      signOff: true,
+      structuredData: {
+        phase: 3,
+        artifact: "solution_approach_options",
+        output_format: "approval_digest",
+        mode: "solution_option_approval",
+        solutionContextDigest,
+        decisionLineage,
+      },
+      provenanceMap: {
+        program: program.name,
+        phase: 3,
+        artifact: "solution_approach_options",
+        approval: "chosen_option",
+      },
     },
-    provenanceMap: {
-      program: program.name,
-      phase: 3,
-      artifact: "solution_approach_options",
-      approval: "chosen_option",
-    },
-  });
+  );
 
   // A successfully persisted new decision invalidates every authoritative P3b
   // output built from the prior basis. Historical versions remain auditable;

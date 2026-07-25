@@ -4,7 +4,9 @@ import {
   type GateReadinessSources,
 } from "../assert-phase-ready";
 
-const sources = (over: Partial<GateReadinessSources> = {}): GateReadinessSources => ({
+const sources = (
+  over: Partial<GateReadinessSources> = {},
+): GateReadinessSources => ({
   captureComplete: async () => ({ complete: true, missing: [] }),
   gateApproved: async () => true,
   ...over,
@@ -12,7 +14,10 @@ const sources = (over: Partial<GateReadinessSources> = {}): GateReadinessSources
 
 describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no generation)", () => {
   it("ready when capture complete AND gate approved", async () => {
-    const r = await assertPhaseReadyForGeneration({ moveId: "m", phase: 3 }, sources());
+    const r = await assertPhaseReadyForGeneration(
+      { moveId: "m", phase: 3 },
+      sources(),
+    );
     expect(r.ready).toBe(true);
     expect(r.generationMode).toBe("final");
     expect(r.gateApproved).toBe(true);
@@ -24,7 +29,12 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
   it("blocks (409) with structured blockers when capture is incomplete", async () => {
     const r = await assertPhaseReadyForGeneration(
       { moveId: "m", phase: 3 },
-      sources({ captureComplete: async () => ({ complete: false, missing: ["KPI baseline"] }) }),
+      sources({
+        captureComplete: async () => ({
+          complete: false,
+          missing: ["KPI baseline"],
+        }),
+      }),
     );
     expect(r.ready).toBe(false);
     expect(statusForReadiness(r)).toBe(409);
@@ -40,6 +50,11 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
     expect(r.ready).toBe(false);
     expect(r.blockers.some((b) => b.code === "gate_not_approved")).toBe(true);
     expect(r.draftOnly).toBe(false);
+    // When generation is genuinely blocked, "no generation until approved" is
+    // the correct, non-contradictory message.
+    expect(
+      r.blockers.find((b) => b.code === "gate_not_approved")?.reason,
+    ).toMatch(/no generation until the gate is approved/i);
   });
 
   it("allows a pre-gate draft when capture is complete but the gate is not approved", async () => {
@@ -60,6 +75,14 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
         severity: "hard",
       }),
     ]);
+    // The caveat CARRIED INTO the draft must not contradict the draft's own
+    // existence: it states the exit approval is pending, never "no generation
+    // until approved" (which the just-generated draft would contradict).
+    const draftReason = r.draftCaveats[0]?.reason ?? "";
+    expect(draftReason).toMatch(/exit approval is still pending/i);
+    expect(draftReason).not.toMatch(
+      /no generation until the gate is approved/i,
+    );
   });
 
   it("does not allow a pre-gate draft when capture itself is incomplete", async () => {
@@ -67,7 +90,10 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
       { moveId: "m", phase: 1, generationMode: "draft" },
       sources({
         gateApproved: async () => false,
-        captureComplete: async () => ({ complete: false, missing: ["Sponsor review module"] }),
+        captureComplete: async () => ({
+          complete: false,
+          missing: ["Sponsor review module"],
+        }),
       }),
     );
     expect(r.ready).toBe(false);
@@ -84,7 +110,10 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
       { moveId: "m", phase: 3, generationMode: "draft" },
       sources({
         gateApproved: async () => false,
-        captureComplete: async () => ({ complete: false, missing: ["P3 modules"] }),
+        captureComplete: async () => ({
+          complete: false,
+          missing: ["P3 modules"],
+        }),
         priorPhaseDraftApproval: async () => ({
           approved: true,
           caveats: ["P2 is approved only for P3 draft shaping."],
@@ -122,7 +151,9 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
   it("allows retry on an already-approved phase, but never bypasses an unapproved gate", async () => {
     const approvedRetry = await assertPhaseReadyForGeneration(
       { moveId: "m", phase: 3, allowApprovedRetry: true },
-      sources({ captureComplete: async () => ({ complete: false, missing: ["x"] }) }),
+      sources({
+        captureComplete: async () => ({ complete: false, missing: ["x"] }),
+      }),
     );
     expect(approvedRetry.ready).toBe(true); // approved → retry allowed
 

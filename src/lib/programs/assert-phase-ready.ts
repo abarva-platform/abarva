@@ -25,7 +25,10 @@ export interface PhaseGenerationReadiness {
 
 export interface GateReadinessSources {
   /** Is the phase capture complete (the "N of M" state)? */
-  captureComplete: (moveId: string, phase: number) => Promise<{ complete: boolean; missing: string[] }>;
+  captureComplete: (
+    moveId: string,
+    phase: number,
+  ) => Promise<{ complete: boolean; missing: string[] }>;
   /** Has the phase gate been approved? */
   gateApproved: (moveId: string, phase: number) => Promise<boolean>;
   /**
@@ -59,10 +62,25 @@ export async function assertPhaseReadyForGeneration(
   const blockers: GenerationBlocker[] = [];
 
   const approved = await sources.gateApproved(moveId, phase);
+  // Two distinct reason strings for the same unapproved gate, because they are
+  // read in two opposite situations and one string cannot be truthful in both
+  // (roadmap governed-artifact-sync review):
+  //   - `gateBlocker` is used when generation is actually BLOCKED (no draft
+  //     path): "no generation until the gate is approved" is then correct.
+  //   - `gateDraftCaveat` is carried INTO a draft that was intentionally
+  //     generated before the exit gate. Saying "no generation until approved"
+  //     there is self-contradictory (the draft exists), so it states the real
+  //     situation: this phase's exit approval is still pending.
   const gateBlocker: GenerationBlocker = {
     code: "gate_not_approved",
     phase,
     reason: `Phase ${phase} gate is not approved — no generation until the gate is approved.`,
+    severity: "hard",
+  };
+  const gateDraftCaveat: GenerationBlocker = {
+    code: "gate_not_approved",
+    phase,
+    reason: `Phase ${phase} exit approval is still pending — this is a pre-exit review draft (generating for review before the exit gate is intentional).`,
     severity: "hard",
   };
 
@@ -79,8 +97,15 @@ export async function assertPhaseReadyForGeneration(
     };
   }
 
-  if (!approved && generationMode === "draft" && sources.priorPhaseDraftApproval) {
-    const priorDraftApproval = await sources.priorPhaseDraftApproval(moveId, phase);
+  if (
+    !approved &&
+    generationMode === "draft" &&
+    sources.priorPhaseDraftApproval
+  ) {
+    const priorDraftApproval = await sources.priorPhaseDraftApproval(
+      moveId,
+      phase,
+    );
     if (priorDraftApproval.approved) {
       return {
         ready: true,
@@ -90,7 +115,7 @@ export async function assertPhaseReadyForGeneration(
         gateApproved: false,
         draftOnly: true,
         draftCaveats: [
-          gateBlocker,
+          gateDraftCaveat,
           ...priorDraftApproval.caveats.map(
             (reason): GenerationBlocker => ({
               code: "gate_not_approved",
@@ -123,7 +148,7 @@ export async function assertPhaseReadyForGeneration(
         generationMode,
         gateApproved: false,
         draftOnly: true,
-        draftCaveats: [gateBlocker],
+        draftCaveats: [gateDraftCaveat],
       };
     }
     blockers.push(gateBlocker);
