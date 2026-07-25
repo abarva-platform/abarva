@@ -88,10 +88,22 @@ a prompt-conciseness choice for chat, not a business rule, and is preserved unch
 - `npx jest` on `evidence-context.test.ts`, `evidence-flexible-extraction.test.ts`,
   `moves-generate-deps.test.ts`, `assemble-solution-context.test.ts`, `generate-artifact.test.ts`,
   `nexus.test.ts` — pass (31/31).
-- `node scripts/release-check.mjs --base origin/main --head HEAD` — pass (see PR).
-- Live signed-in proof — not yet run; planned immediately after deploy against the real MEMBER AI
-  ASSIST Move (or another accessible tenant): confirm a P3+ generation prompt's evidence ledger
-  contains only current-phase evidence, not evidence carried in verbatim from earlier phases.
+- `node scripts/release-check.mjs --base origin/main --head HEAD` — pass.
+- Live signed-in proof — **attempted, blocked on missing test data, not a code failure.** Signed in
+  as the Meridian tenant and called `GET
+  /api/programs/workspace/cd51e4fe-b5c4-4024-bc46-73afaff4e4b7/evidence-readiness` (a read-only
+  endpoint that queries the same `program_evidence_items` ⋈ `program_evidence_reviews
+  (decision='approved')` join this fix relies on) against the real MEMBER AI ASSIST Move. Result:
+  `requiredCovered: 0`, `requiredMissing: 4`, every family's `evidenceIds: []` — **zero approved
+  evidence rows currently exist for this Move**, across any phase. This confirms the pre-fix
+  finding from the original audit (15 files visible in the vault UI were never captured into
+  `program_evidence_items` because they went through the old ungoverned upload path) and further
+  confirms nothing has been re-uploaded through the now-governed pipeline since. There is
+  currently no real cross-phase evidence data on this Move to prove phase-scoping against — the
+  fix is unit-tested (including a dedicated phase-scoping test case) and deployed, but an
+  end-to-end live proof needs at least one approved evidence item in two different phases, which
+  does not yet exist. Flagging back to the requester rather than fabricating upload activity on a
+  Move that is under an active fabrication-incident dispute.
 
 ## Rollout Plan
 
@@ -100,11 +112,17 @@ migration — pure application-code change to prompt assembly.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — run
+  [30141969949](https://github.com/abarva-platform/abarva/actions/runs/30141969949), `success`.
 - Shared runtime mutators: none (no `az containerapp` commands run directly)
-- ACA runtime invariant: to be verified after deploy
-- Live signed-in proof required: yes — confirm phase-scoped evidence retrieval behaves as designed
-  against a real Move with evidence approved across more than one phase
+- ACA runtime invariant: **verified** — workflow's own "Verify ACA runtime invariant" step
+  confirmed `expectedImage == templateImage == activeImage` at
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:c88b514fa866a1e463be67094c8e4f957bcaeb0f866a0b8826b238b66d68a83e`,
+  and both `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event` read back the same digest
+  after update.
+- Live signed-in proof required: yes — attempted; blocked on missing test data (see QA/Validation).
+  Deploy itself is proven live; the phase-scoping *behavior* against real cross-phase evidence is
+  not yet demonstrated because no such evidence currently exists on any accessible Move.
 
 ## Rollback Plan
 
@@ -113,8 +131,12 @@ pre-existing column, not newly added here.
 
 ## Audit Evidence
 
-- PR: to be opened
-- Live proof: to be captured post-deploy
+- PR: [#5575](https://github.com/abarva-platform/abarva/pull/5575), merged `f3fffc0`
+- Deploy: [run 30141969949](https://github.com/abarva-platform/abarva/actions/runs/30141969949),
+  image digest `sha256:c88b514fa866a1e463be67094c8e4f957bcaeb0f866a0b8826b238b66d68a83e`
+- Evidence-state check: `GET /api/programs/workspace/cd51e4fe-b5c4-4024-bc46-73afaff4e4b7/evidence-readiness`
+  on the real MEMBER AI ASSIST Move (signed in as the Meridian tenant), 2026-07-25 — returned
+  `requiredCovered: 0`, all families `evidenceIds: []`.
 
 ## Known Gaps
 
