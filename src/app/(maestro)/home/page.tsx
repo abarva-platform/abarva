@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 
 import { HomeEnterpriseBriefApp } from "@/components/home/HomeEnterpriseBriefApp";
+import { HomeV4ExplorerShell } from "@/components/home/v4/HomeV4ExplorerShell";
 import { AppShell } from "@/components/shell/AppShell";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
@@ -15,6 +16,7 @@ import {
   readHomeKnowledgeDesignContractForTenant,
   readHomeKnowledgeDesignContractForTenantFromPostgres,
 } from "@/lib/home/home-knowledge-design-contract";
+import { readHomeKnowledgeV4PackForTenantFromPostgres } from "@/lib/home/home-knowledge-v4-pack";
 import { deriveHomeRelationshipEdges } from "@/lib/home/derive-relationship-edges";
 import { readDerivedRelationshipGraphEdges } from "@/lib/home/read-derived-relationship-graph";
 
@@ -153,6 +155,36 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const clientOption = displayClientKey
     ? getClientOption(displayClientKey)
     : null;
+
+  // Book-mode V4 takes precedence over V2 when an approved pack exists for
+  // this tenant -- same homeTenantKey, same proxy-enforced scoping, no
+  // separate query param or admin gate (that pattern belongs to
+  // /home/v4-preview's candidate-review use case, not live serving). Every
+  // tenant without an approved V4 pack (the default, until explicitly
+  // approved per tenant) falls through to the unchanged V2 read below.
+  const v4Pack = await withHomePageTimeout(
+    "Home Knowledge Pack v4 (book mode)",
+    readHomeKnowledgeV4PackForTenantFromPostgres(homeTenantKey),
+    null,
+  );
+  if (v4Pack) {
+    return (
+      <AppShell
+        surface="home"
+        topBarProps={{
+          tenantName: activeTenantName,
+          showLocked: Boolean(activeClient?.key),
+          context: clientOption?.vertical
+            ? `Knowledge · ${clientOption.vertical}`
+            : "Knowledge",
+        }}
+        hasTenantKey={Boolean(activeClient?.key)}
+      >
+        <HomeV4ExplorerShell candidate={v4Pack} />
+      </AppShell>
+    );
+  }
+
   const fileDesignContract =
     readHomeKnowledgeDesignContractForTenant(homeTenantKey);
   const postgresDesignContract = await withHomePageTimeout(

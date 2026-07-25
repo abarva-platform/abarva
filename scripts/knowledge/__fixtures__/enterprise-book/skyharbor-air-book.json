@@ -1,1292 +1,524 @@
 {
-  "book_version": "enterprise-book-v2-2026-07-24",
   "executive_narrative": {
-    "title": "SkyHarbor Enterprise Book",
-    "thesis": "fixture"
+    "title": "SkyHarbor Air: Turning a Wide Operating Footprint into a Governed AI Advantage",
+    "thesis": "SkyHarbor Air has the scale, functional breadth, and initiative appetite of an airline ready to industrialize AI in irregular-operations recovery, crew, and customer reaccommodation \u2014 but today it is running that ambition on planning-grade, uncertified context. The governing argument for leadership is that the binding constraint is not a shortage of AI ideas; it is the absence of certified data lineage, named accountability, and measured baselines that would let any one idea become a defensible, funded workflow. The move that matters is to convert a handful of high-value operational decisions into evidence-backed, owned use cases before scaling a platform around them.",
+    "narrative_arc": "SkyHarbor operates as a complex global carrier spanning flight operations, crew, MRO, ground ops, commercial, loyalty, cargo, and an IROPS control center \u2014 a footprint where AI value in the industry concentrates in disruption recovery. The tenant has already named seven-plus initiative themes aligned to exactly those industry patterns, which is genuinely ahead of a carrier with no AI agenda. But every downstream requirement \u2014 certified disruption lineage, crew-legality data, outcome baselines, control evidence, and clear owners \u2014 is still directional or missing, so no use case can yet be underwritten. The resolution is sequencing: treat the platform and lakehouse as a consequence of proven decisions, not a precondition, and spend the next cycle certifying the two or three operational workflows where SkyHarbor's pattern alignment is strongest.",
+    "strategic_agenda": [
+      "Certify the operational data and lineage behind IROPS, crew, and reaccommodation before funding platform build-out.",
+      "Assign named business owners and decision rights to each candidate AI workflow, closing the ownership and accountability gap.",
+      "Establish measured operational and customer baselines so promised benefit can be tested against measured value.",
+      "Make vendor and AMS economics transparent enough to know what modernization and AI actually cost and displace.",
+      "Sequence mainframe and MQ modernization against the specific workflows that depend on it, not as generic tech debt."
+    ],
+    "strategic_tensions": [
+      "Ambition versus evidence: the AI agenda is real, but the certified data and baselines to justify investment are not yet loaded.",
+      "Platform-first instinct versus decision-first discipline: the target lakehouse is attractive but should follow proven workflows, not precede them.",
+      "Managed-services dependency versus control: NorthSky/AMS delivery anchors operations while scope, SLAs, and exit terms remain unvalidated.",
+      "Breadth versus focus: a wide functional footprint invites uniform coverage, but value concentrates in a few disruption-recovery decisions."
+    ]
   },
+  "industry_comparison": [
+    {
+      "pattern": "IROPS AI recovery cockpit industry pattern",
+      "this_tenant_position": "behind",
+      "specifics": "SkyHarbor has an explicit Operations Control Center / IROPS function and a named recovery-cockpit initiative theme, so intent is aligned. But no production IROPS AI or autonomous recovery outcome is proven and the underlying disruption lineage is uncertified, leaving the carrier behind carriers running a live, governed cockpit.",
+      "evidence_refs": []
+    },
+    {
+      "pattern": "Crew recovery decision support industry pattern",
+      "this_tenant_position": "behind",
+      "specifics": "Crew is a first-class function with dedicated crew systems and a crew-legality recovery initiative, so the building blocks exist. Crew-legality data and decision support remain directional and unvalidated, so the carrier trails the pattern's operating standard.",
+      "evidence_refs": []
+    },
+    {
+      "pattern": "Customer reaccommodation and notification assist industry pattern",
+      "this_tenant_position": "behind",
+      "specifics": "Customer Operations, CRM, and loyalty systems are present and a reaccommodation/notification assist theme is named, but no certified customer-experience baseline exists to measure notification quality or reaccommodation speed against.",
+      "evidence_refs": []
+    },
+    {
+      "pattern": "Mainframe and MQ modernization sequencing industry pattern",
+      "this_tenant_position": "at_parity",
+      "specifics": "SkyHarbor carries mainframe and distributed legacy in commercial, HR, and revenue-accounting cores and has an explicit modernization-sequencing theme with governed modernization-options evidence, placing it roughly at parity \u2014 aware and planning, not yet executing.",
+      "evidence_refs": [
+        "EVID-SHA-0007"
+      ]
+    },
+    {
+      "pattern": "Tower value tracking for IROPS outcomes industry pattern",
+      "this_tenant_position": "behind",
+      "specifics": "No certified operational, financial, or customer baselines are loaded, so promised versus measured value cannot yet be tracked. The Tower value-tracking discipline is aspired to but not evidenced.",
+      "evidence_refs": []
+    },
+    {
+      "pattern": "Operations data foundation for airline AI industry pattern",
+      "this_tenant_position": "behind",
+      "specifics": "Key operational domains \u2014 disruption lineage, bag scans, maintenance events, transcripts \u2014 lack certification, and the AWS airline lakehouse is target-state rather than confirmed current-state, so the data foundation trails the pattern.",
+      "evidence_refs": [
+        "EVID-SHA-0005"
+      ]
+    },
+    {
+      "pattern": "Vendor and AMS economics transparency industry pattern",
+      "this_tenant_position": "behind",
+      "specifics": "NorthSky Managed Services anchors AMS/IMS delivery but scope, SLAs, and exit terms are unvalidated, and contract economics are not loaded \u2014 the carrier lacks the vendor transparency the pattern expects.",
+      "evidence_refs": []
+    }
+  ],
+  "material_gaps": [
+    {
+      "id": "GAP-1",
+      "statement": "The operational data domains that every priority AI workflow depends on \u2014 disruption lineage, crew legality, bag scans, maintenance events, transcripts \u2014 are uncertified.",
+      "why_it_matters_to_leadership": "Without certified lineage, no IROPS, crew, or reaccommodation use case can be underwritten or safely automated; this is the single largest blocker to converting ambition into funded delivery.",
+      "applies_to_dimensions": [
+        "data",
+        "data_quality_lineage",
+        "ai",
+        "identity_semantic",
+        "opev"
+      ],
+      "evidence_refs": [
+        "EVID-SHA-0005"
+      ]
+    },
+    {
+      "id": "GAP-2",
+      "statement": "No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.",
+      "why_it_matters_to_leadership": "Leadership cannot test promised benefit against measured value, so business cases and Tower value tracking remain hypothetical and un-fundable at scale.",
+      "applies_to_dimensions": [
+        "metrics",
+        "value_streams",
+        "programs",
+        "ai",
+        "budget"
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "GAP-3",
+      "statement": "Content ownership and data-governance accountability are unassigned across critical use cases, and roughly a quarter of applications lack a named owner.",
+      "why_it_matters_to_leadership": "Unowned decisions and assets mean no one can approve, control, or be held to an AI workflow \u2014 accountability must be assigned before scaling.",
+      "applies_to_dimensions": [
+        "org",
+        "decision_rights",
+        "apps",
+        "risks"
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "GAP-4",
+      "statement": "Managed-services scope, SLAs, and exit terms for NorthSky/AMS delivery are unvalidated, and contract economics are not loaded.",
+      "why_it_matters_to_leadership": "A large share of operational and IT delivery runs through a dependency whose cost, obligations, and switching terms leadership cannot yet see \u2014 a material commercial and continuity exposure.",
+      "applies_to_dimensions": [
+        "ms",
+        "vendors",
+        "service_delivery",
+        "budget"
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "GAP-5",
+      "statement": "Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes are claimed.",
+      "why_it_matters_to_leadership": "Every conclusion in this book is directional until source-owner validation occurs; leadership should decide directionally now and gate spend on certification.",
+      "applies_to_dimensions": [
+        "evidence",
+        "metrics",
+        "risks",
+        "programs"
+      ],
+      "evidence_refs": []
+    }
+  ],
+  "material_advantages": [
+    {
+      "id": "ADV-1",
+      "statement": "SkyHarbor's active initiative themes map directly onto the highest-value airline AI patterns \u2014 IROPS recovery, crew, reaccommodation, and modernization sequencing.",
+      "why_it_matters_to_leadership": "The carrier does not need to discover where AI creates value; it already has aligned intent, so the work is certification and sequencing rather than strategy invention.",
+      "applies_to_dimensions": [
+        "programs",
+        "ai",
+        "industry",
+        "value_streams"
+      ],
+      "evidence_refs": [
+        "EVID-SHA-0006"
+      ]
+    },
+    {
+      "id": "ADV-2",
+      "statement": "The enterprise has a genuine IROPS control center and dedicated crew, MRO, and customer operations functions \u2014 the organizational anchors the top patterns require.",
+      "why_it_matters_to_leadership": "Recovery workflows have a natural owning home, shortening the path from a proven use case to an operational decision that a real function will run.",
+      "applies_to_dimensions": [
+        "functions",
+        "capabilities",
+        "divisions",
+        "front_middle_back"
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "ADV-3",
+      "statement": "Application ownership is already captured or confidently derived for roughly three-quarters of the estate.",
+      "why_it_matters_to_leadership": "A majority-owned estate is a workable starting point for accountability; closing the remaining quarter is a bounded, finite task rather than a greenfield build.",
+      "applies_to_dimensions": [
+        "apps",
+        "org"
+      ],
+      "evidence_refs": [
+        "EVID-SHA-0004"
+      ]
+    },
+    {
+      "id": "ADV-4",
+      "statement": "Modernization sequencing is backed by governed modernization-options evidence, not just intent.",
+      "why_it_matters_to_leadership": "Leadership can make defensible mainframe/MQ decisions now, tied to the workflows that depend on them, rather than treating legacy as undifferentiated debt.",
+      "applies_to_dimensions": [
+        "tech_lifecycle",
+        "infra",
+        "architecture_dependencies"
+      ],
+      "evidence_refs": [
+        "EVID-SHA-0007"
+      ]
+    }
+  ],
   "sections": {
     "business_context": {
-      "headline": "Full-service carrier spanning passenger, cargo, loyalty, maintenance, and digital operations",
-      "narrative": "SkyHarbor Air operates as a complex global passenger airline with cargo, loyalty, maintenance, and digital operations. This profile sets the economics: asset-intensive, safety-regulated, and disruption-sensitive. The profile is loaded context; operating scale figures require validation before any are presented as certified baselines."
+      "headline": "A global carrier positioned where airline AI value concentrates",
+      "narrative": "SkyHarbor Air is a complex global passenger airline spanning cargo, loyalty, maintenance, and digital operations, with the functional breadth of a full-service carrier. Its structure places it squarely where industry AI value concentrates \u2014 irregular-operations recovery, crew, and customer reaccommodation. The profile is directional and the substrate is planning-grade, so scale and segment claims should be validated with source owners before external use. What is decision-ready today is direction; what must be validated is every specific operational and financial baseline."
     },
     "operating_model": {
-      "headline": "Divisions align to functions, but cross-unit recovery accountability is unassigned",
-      "narrative": "SkyHarbor's divisions map coherently to flight operations, crew, maintenance, ground, cargo, loyalty, and commercial functions. What is not yet evidenced is which division holds end-to-end accountability when a disruption crosses unit boundaries, the exact point where recovery value is won or lost."
+      "headline": "Clear functions, unresolved ownership and decision rights",
+      "narrative": "The operating model shows well-formed functions \u2014 flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center \u2014 each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop."
     },
     "capabilities": {
-      "headline": "Flight ops, crew, customer, maintenance, and sourcing carry the AI-relevant workflows",
-      "narrative": "The functions most relevant to bounded AI workflows are flight operations, crew management, customer experience, maintenance, and sourcing. These align directly to the recovery prize and to loaded programs. Each is a candidate host for a bounded, measured workflow rather than a platform ambition."
+      "headline": "Recovery-relevant capabilities exist but are unproven",
+      "narrative": "Crew planning, disruption recovery, maintenance, customer handling, and sourcing are the AI-relevant capabilities, and each has a real functional home. Their maturity is directional: the capabilities are present but no production outcome demonstrates them at the standard the industry patterns assume. The near-term task is proving two or three capabilities to a certified standard, not cataloguing all of them."
     },
     "value_streams": {
-      "headline": "The disruption-to-recovery value stream is where cost and NPS are won or lost",
-      "narrative": "The dominant value stream is disruption-to-recovery: detect, decide, reassign crew, reaccommodate passengers, and settle. Value leaks at each stage through decision latency and rework. Program value promised against this stream is not yet matched by measured value, so the stream's economics remain directional."
+      "headline": "Value concentrates in disruption recovery, not spread evenly",
+      "narrative": "The economically material value streams cluster around IROPS recovery, crew legality, and customer reaccommodation \u2014 where minutes and rebookings translate to cost and loyalty. Programs and budget signals point at these streams, but without measured baselines the promised value cannot be tested. Leadership should resist uniform investment and concentrate on the few streams where pattern alignment is strongest."
     },
     "applications_context": {
-      "headline": "A broad estate spans reservations, crew, maintenance, baggage, CRM, loyalty, ITSM, and data platforms",
-      "narrative": "The application estate spans the full operational spine, from reservations and crew to maintenance, baggage, loyalty, and data platforms, with commercial and ground-ops functions carrying the largest system concentrations. Ownership is directionally established for most of the estate through matched joins rather than source capture, so it should be treated as directional coverage, not certified ac"
+      "headline": "Broad multi-cloud estate, three-quarters with named owners",
+      "narrative": "The application estate spans reservations, crew, maintenance, baggage, CRM, loyalty, ITSM, and data platforms across AWS, Azure, GCP, SaaS, private cloud, and mainframe hosting, with a mix of tier-1 and lower-criticality systems. Ownership is captured or confidently derived for about three-quarters of applications, giving a workable accountability base. Closing the remaining ownership gap is a bounded task that directly enables AI governance."
     },
     "data_context": {
-      "headline": "Disruption lineage, bag scans, maintenance events, and transcripts lack certification",
-      "narrative": "The data domains that matter most for recovery, disruption lineage, bag scans, maintenance events, and contact transcripts, are precisely the ones that lack certified lineage. Until these are certified, no AI recovery claim can be proven. This is the highest-leverage evidence investment on the agenda."
+      "headline": "Priority operational data domains lack certification",
+      "narrative": "The data domains that matter most for AI \u2014 disruption lineage, bag scans, maintenance events, and customer transcripts \u2014 are present but uncertified. This is the binding constraint: no priority workflow can be underwritten until lineage and quality are established for its inputs. The target AWS lakehouse is aspirational and should follow, not precede, certified domains."
     },
     "technology_context": {
-      "headline": "The AWS airline data lakehouse is target-state, not certified current-state",
-      "narrative": "The AWS airline data lakehouse is a target-state platform ambition, not a certified current-state capability. Real-time operational AI depends on current-state platform readiness, which mixes mainframe, private cloud, and AWS. Leadership should treat the lakehouse as a destination and sequence it behind proven operational demand."
+      "headline": "Legacy cores and target lakehouse both need sequencing",
+      "narrative": "The estate mixes mainframe and distributed legacy cores with modern cloud platforms, and a target-state AWS airline lakehouse whose current-state certification is unconfirmed. Modernization sequencing for mainframe and MQ is backed by governed options evidence, so decisions can be defensible. Technology investment should be tied to the specific workflows that depend on it rather than pursued as generic modernization."
     },
     "vendor_context": {
-      "headline": "A small set of vendors anchors critical operational and IT delivery",
-      "narrative": "A concentrated set of vendors, including a NorthSky-type managed-services anchor and an AeroCore-type provider, underpins critical operational and IT delivery. This concentration is directional; annual run-rate, renewal timing, and criticality must be validated before dependency exposure and negotiating leverage can be asserted with confidence."
+      "headline": "Managed-services dependency without validated economics",
+      "narrative": "Multiple strategic vendors and a managed-services partner anchor operational and IT delivery. Scope, SLAs, exit terms, and contract economics for the AMS/IMS relationship are unvalidated, leaving a material commercial and continuity exposure. Making vendor and AMS economics transparent is a prerequisite for judging what modernization and AI truly cost."
     },
     "risk_context": {
-      "headline": "Risk concentrates in contract gaps, uncertified lineage, and unvalidated AI controls",
-      "narrative": "Risk concentrates across managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls, with control status weakest exactly where recovery value is highest. Severity and control maturity are directional from the loaded register; the pattern is clear enough to prioritize control remediation on the recovery path."
+      "headline": "Risk clusters in contracts, lineage, and AI governance",
+      "narrative": "The most material risks span managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls. These are not distinct problems but three faces of the same evidence deficit that blocks safe scaling. Control status is directional; severity and ownership must be validated before any workflow is automated."
     },
     "portfolio_context": {
-      "headline": "Run-versus-change split reveals how much capacity is free for transformation",
-      "narrative": "The IT budget's run-versus-change and capex-versus-opex split determines how much capacity is genuinely available for transformation versus consumed by keeping the lights on. This split is loaded and directional; the run-heavy pattern typical of legacy-carrier estates should be confirmed before transformation funding assumptions are set."
+      "headline": "Aligned initiatives, unmeasured value",
+      "narrative": "The initiative portfolio maps cleanly onto the highest-value airline AI patterns, which is a genuine strength. But promised benefit cannot yet be tested against measured value because no certified baselines exist, and budget run/change economics need validation. The portfolio decision is which two or three initiatives to certify first, not how many to launch."
     },
     "ai_opportunity_context": {
-      "headline": "IROPS recovery, crew-legality decision support, and reaccommodation assist lead the candidate set",
-      "narrative": "The leading AI candidates are bounded recovery workflows: IROPS AI recovery, crew-legality decision support, and passenger reaccommodation and notification assist. Each aligns to loaded functions and industry patterns, and each must be human-in-the-loop with an auditable path. None is yet an outcome; all are early ideas or evidence requests pending a measured baseline."
+      "headline": "Right opportunities, planning-grade readiness",
+      "narrative": "The AI opportunities align with IROPS recovery, crew, and reaccommodation \u2014 exactly where the industry realizes value. Each remains planning-grade until its required systems, data, controls, owners, and value evidence are confirmed. The path to qualification is certification and ownership, and every candidate should be treated as an evidence request, not a funded program."
     },
     "evidence_context": {
-      "headline": "Current evidence is planning-grade and synthetic; no production outcomes are claimed",
-      "narrative": "The current evidence base is planning-grade and largely synthetic, with mixed freshness and trust status. No production-certified data, contracts, or outcomes are claimed. This is the honest starting point: leadership should read every directional claim as a hypothesis to validate, and prioritize converting the most decision-critical evidence to governed-real."
+      "headline": "Planning-grade and synthetic, not yet board-grade",
+      "narrative": "Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes are claimed. Many available locators are low-specificity placeholders that support general direction but not precise claims. Leadership should read this book as a decision-shaping instrument and gate funding on source-owner validation."
     },
     "relationships_context": {
-      "headline": "Functions, systems, and data domains connect on the recovery path, but ownership nodes are unassigned",
-      "narrative": "The loaded relationships show how functions depend on systems and data domains to execute recovery, with feed and usage links across the estate. The critical gap is that ownership nodes read 'to be confirmed' on exactly the paths where recovery value concentrates. The relationships are source-backed at planning grade; ownership must be assigned before they support real-time decisions."
+      "headline": "System and function links mapped, alignment unproven",
+      "narrative": "Relationship evidence links functions to systems and systems to integrations across the estate, and shows initiatives running on the upgrade-candidate substrate. CIO, CTO, and CDAO teams share overlapping priorities, but cross-functional alignment is not yet evidenced. The relationship graph is a planning-grade scaffold for reasoning across the enterprise, not a certified operating map."
     }
   },
   "conclusions": [
     {
-      "id": "C001",
-      "statement": "Network-airline value leakage concentrates in IROPS recovery, not in steady-state flying.",
-      "theme": "enterprise_thesis",
-      "evidence_refs": [
-        "EVID-SHA-0003"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "enterprise_thesis"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C002",
-      "statement": "Loaded functions span Flight Ops, Crew, Maintenance, Customer, Cargo, and Loyalty, aligning to recovery workflows.",
-      "theme": "enterprise_thesis",
+      "id": "CON-1",
+      "statement": "SkyHarbor's binding constraint on AI value is not a shortage of ideas but the absence of certified data lineage, named owners, and measured baselines behind its priority workflows.",
+      "theme": "governing_thesis",
       "evidence_refs": [],
       "evidence_status": "not_evidenced",
       "applies_to_dimensions": [
-        "enterprise_thesis"
+        "enterprise_thesis",
+        "ai",
+        "data",
+        "metrics",
+        "org"
       ],
-      "confidence": "loaded_fact"
+      "confidence": "strategic_inference"
     },
     {
-      "id": "C003",
-      "statement": "No production IROPS AI outcome is evidenced; the case remains directional.",
-      "theme": "enterprise_thesis",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "enterprise_thesis"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C004",
-      "statement": "Recovery value stalls without one cross-functional owner accountable end-to-end.",
-      "theme": "leadership_agenda",
+      "id": "CON-2",
+      "statement": "The initiative portfolio aligns with the highest-value airline AI patterns, so the work is certification and sequencing rather than strategy discovery.",
+      "theme": "advantage",
       "evidence_refs": [
         "EVID-SHA-0006"
       ],
       "evidence_status": "evidenced",
       "applies_to_dimensions": [
-        "leadership_agenda"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C005",
-      "statement": "Data-lineage certification is the precondition for any provable AI recovery value.",
-      "theme": "leadership_agenda",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "leadership_agenda"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C006",
-      "statement": "One bounded, measured pilot should precede network scale.",
-      "theme": "leadership_agenda",
-      "evidence_refs": [
-        "EVID-SHA-0004"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "leadership_agenda"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C007",
-      "statement": "A coherent function-to-system-to-program map exists at planning grade.",
-      "theme": "proven_strengths",
-      "evidence_refs": [
-        "EVID-SHA-0004"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "proven_strengths"
-      ],
-      "confidence": "derived_measure"
-    },
-    {
-      "id": "C-SHARED-OWNERSHIP",
-      "statement": "Application ownership is directionally established for most of the estate via matched joins, not source-captured.",
-      "theme": "proven_strengths",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "apps",
-        "org",
-        "rel"
-      ],
-      "confidence": "derived_measure"
-    },
-    {
-      "id": "C009",
-      "statement": "Promised program benefit is not yet matched by measured value.",
-      "theme": "proven_strengths",
-      "evidence_refs": [
-        "EVID-SHA-0008"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "proven_strengths"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C010",
-      "statement": "Key operational data domains lack certified lineage, making AI recovery value unprovable.",
-      "theme": "structural_constraints",
-      "evidence_refs": [
-        "EVID-SHA-0112"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "structural_constraints"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C011",
-      "statement": "Managed-services dependency can lock economics and slow AI enablement if data rights are unclear.",
-      "theme": "structural_constraints",
-      "evidence_refs": [
-        "EVID-SHA-0106"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "structural_constraints"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C012",
-      "statement": "Batch-settlement and packaged reservations estates constrain real-time operational AI.",
-      "theme": "structural_constraints",
-      "evidence_refs": [
-        "EVID-SHA-0007"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "structural_constraints"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C013",
-      "statement": "Recovery decisions appear distributed across IROPS, crew, and customer functions.",
-      "theme": "interview_signals",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "interview_signals"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C015",
-      "statement": "The carrier spans passenger, cargo, loyalty, and maintenance lines of business.",
-      "theme": "profile",
-      "evidence_refs": [
-        "EVID-SHA-0001"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "profile"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C016",
-      "statement": "Operating scale figures are not yet certified as baselines.",
-      "theme": "profile",
-      "evidence_refs": [
-        "EVID-SHA-0001"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "profile"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C017",
-      "statement": "Divisions align to loaded operating functions.",
-      "theme": "divisions",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "divisions"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C018",
-      "statement": "Cross-unit recovery accountability is unassigned.",
-      "theme": "divisions",
-      "evidence_refs": [
-        "EVID-SHA-0006"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "divisions"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C019",
-      "statement": "Recovery workflows traverse front, middle, and back office layers.",
-      "theme": "front_middle_back",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "front_middle_back"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C020",
-      "statement": "Value leaks at inter-layer handoffs, not within single teams.",
-      "theme": "front_middle_back",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "front_middle_back"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C021",
-      "statement": "Five functions concentrate the AI-relevant recovery workflows.",
-      "theme": "functions",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "functions"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C022",
-      "statement": "Crew management carries the highest legality and safety sensitivity.",
-      "theme": "functions",
-      "evidence_refs": [
-        "EVID-SHA-0100"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "functions"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C023",
-      "statement": "Decision support, legality assurance, and reaccommodation are the core recovery capabilities.",
-      "theme": "capabilities",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "capabilities"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C024",
-      "statement": "Legality assurance must carry an auditable path to satisfy regulators.",
-      "theme": "capabilities",
-      "evidence_refs": [
-        "EVID-SHA-0100"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "capabilities"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C027",
-      "statement": "Approval and override rights for crew-facing recommendations are undefined.",
-      "theme": "decision_rights",
-      "evidence_refs": [
-        "EVID-SHA-0103"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "decision_rights"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C028",
-      "statement": "Auditable decision logic is a regulatory expectation.",
-      "theme": "decision_rights",
-      "evidence_refs": [
-        "EVID-SHA-0100"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "decision_rights"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C029",
-      "statement": "Four role families are the primary human-in-the-loop decision points.",
-      "theme": "workforce",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "workforce"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C030",
-      "statement": "Crew planners are the highest-sensitivity augmentation point.",
-      "theme": "workforce",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "workforce"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C031",
-      "statement": "Global footprint implies multi-jurisdiction regulatory and data constraints.",
-      "theme": "geography",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "geography"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C032",
-      "statement": "Entity and geography structure is not yet evidenced.",
-      "theme": "geography",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "geography"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C033",
-      "statement": "Disruption-to-recovery is the highest-leakage value stream.",
-      "theme": "value_streams",
-      "evidence_refs": [
-        "EVID-SHA-0105"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
+        "programs",
+        "ai",
+        "industry",
         "value_streams"
       ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C034",
-      "statement": "Promised value against this stream lacks measured confirmation.",
-      "theme": "value_streams",
-      "evidence_refs": [
-        "EVID-SHA-0123"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "value_streams"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C035",
-      "statement": "Crew reassignment, reaccommodation, and maintenance triage are discrete bounded processes.",
-      "theme": "business_processes",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "business_processes"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C036",
-      "statement": "Each process has a definable baseline and control path.",
-      "theme": "business_processes",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "business_processes"
-      ],
       "confidence": "industry_pattern"
     },
     {
-      "id": "C037",
-      "statement": "Reaccommodation and notification are the highest-impact disruption journey moments.",
-      "theme": "journeys",
-      "evidence_refs": [
-        "EVID-SHA-0105"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "journeys"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C038",
-      "statement": "No measured NPS or cost outcome exists for these moments yet.",
-      "theme": "journeys",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "journeys"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C039",
-      "statement": "Contract gaps, uncertified lineage, and unvalidated controls are interlocking exposures.",
-      "theme": "opev",
-      "evidence_refs": [
-        "EVID-SHA-0106"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "opev"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C040",
-      "statement": "Process evidence is planning-grade, not production-certified.",
-      "theme": "opev",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "opev"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C041",
-      "statement": "Managed-services leverage concentrates delivery and data-access risk.",
-      "theme": "service_delivery",
-      "evidence_refs": [
-        "EVID-SHA-0106"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "service_delivery"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C042",
-      "statement": "Data-access rights required for AI enablement are unvalidated.",
-      "theme": "service_delivery",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "service_delivery"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C043",
-      "statement": "Commercial and ground-ops functions carry the largest application concentrations.",
-      "theme": "apps",
-      "evidence_refs": [
-        "EVID-SHA-0004"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "apps"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C045",
-      "statement": "Estate criticality on the recovery path is not yet certified.",
-      "theme": "apps",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "apps"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C046",
-      "statement": "The recovery-critical data domains lack certified lineage.",
-      "theme": "data",
-      "evidence_refs": [
-        "EVID-SHA-0112"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "data"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C047",
-      "statement": "Lineage certification is the highest-leverage evidence investment.",
-      "theme": "data",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "data"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C048",
-      "statement": "Extensive feed and usage integration links are loaded across the estate.",
-      "theme": "integrations",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "integrations"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C049",
-      "statement": "Recovery-path integration completeness is unproven.",
-      "theme": "integrations",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "integrations"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C050",
-      "statement": "The lakehouse is a target-state ambition, not certified current-state.",
-      "theme": "infra",
-      "evidence_refs": [
-        "EVID-SHA-0102"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "infra"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C051",
-      "statement": "Current-state platform mixes mainframe, private cloud, and AWS.",
-      "theme": "infra",
+      "id": "CON-3",
+      "statement": "Priority operational data domains \u2014 disruption lineage, crew legality, bag scans, maintenance events, transcripts \u2014 are uncertified, blocking underwriting of any recovery workflow.",
+      "theme": "gap",
       "evidence_refs": [
         "EVID-SHA-0005"
       ],
       "evidence_status": "evidenced",
       "applies_to_dimensions": [
-        "infra"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C052",
-      "statement": "Recovery depends on a multi-hop system-and-feed dependency chain.",
-      "theme": "architecture_dependencies",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "architecture_dependencies"
+        "data",
+        "data_quality_lineage",
+        "identity_semantic",
+        "ai",
+        "opev"
       ],
       "confidence": "strategic_inference"
     },
     {
-      "id": "C053",
-      "statement": "Dependency reliability and latency on the recovery path are unproven.",
-      "theme": "architecture_dependencies",
+      "id": "CON-4",
+      "statement": "No certified operational, financial, or customer baselines exist, so promised benefit cannot be tested against measured value.",
+      "theme": "gap",
       "evidence_refs": [],
       "evidence_status": "not_evidenced",
       "applies_to_dimensions": [
-        "architecture_dependencies"
+        "metrics",
+        "value_streams",
+        "programs",
+        "budget"
       ],
       "confidence": "missing_evidence"
     },
     {
-      "id": "C054",
-      "statement": "Legacy mainframe and MQ coexist with modern platforms.",
-      "theme": "tech_lifecycle",
+      "id": "CON-5",
+      "statement": "Application ownership is captured or confidently derived for roughly three-quarters of the estate, giving a workable accountability base with a bounded remaining gap.",
+      "theme": "advantage",
+      "evidence_refs": [
+        "EVID-SHA-0004"
+      ],
+      "evidence_status": "not_evidenced",
+      "applies_to_dimensions": [
+        "apps",
+        "org"
+      ],
+      "confidence": "derived_measure"
+    },
+    {
+      "id": "CON-6",
+      "statement": "Content ownership, data-governance accountability, and decision rights across critical AI workflows are unassigned.",
+      "theme": "gap",
+      "evidence_refs": [],
+      "evidence_status": "not_evidenced",
+      "applies_to_dimensions": [
+        "org",
+        "decision_rights",
+        "risks"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-7",
+      "statement": "Managed-services scope, SLAs, exit terms, and contract economics are unvalidated, leaving a material commercial and continuity exposure.",
+      "theme": "gap",
+      "evidence_refs": [],
+      "evidence_status": "not_evidenced",
+      "applies_to_dimensions": [
+        "ms",
+        "vendors",
+        "service_delivery",
+        "budget"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-8",
+      "statement": "Mainframe and MQ modernization is backed by governed options evidence and should be sequenced against the specific workflows that depend on it, not treated as generic tech debt.",
+      "theme": "advantage",
       "evidence_refs": [
         "EVID-SHA-0007"
       ],
       "evidence_status": "evidenced",
       "applies_to_dimensions": [
-        "tech_lifecycle"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C055",
-      "statement": "Lifecycle timing constrains the pace of operational AI.",
-      "theme": "tech_lifecycle",
-      "evidence_refs": [
-        "EVID-SHA-0114"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "tech_lifecycle"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C056",
-      "statement": "Lineage certification gates board-grade AI recovery decisions.",
-      "theme": "data_quality_lineage",
-      "evidence_refs": [
-        "EVID-SHA-0112"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "data_quality_lineage"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C057",
-      "statement": "Data quality cannot be asserted without certified lineage.",
-      "theme": "data_quality_lineage",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "data_quality_lineage"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C058",
-      "statement": "Consistent cross-system entity resolution is required for recovery.",
-      "theme": "identity_semantic",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "identity_semantic"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C059",
-      "statement": "Semantic and identity foundations are not yet evidenced as proven.",
-      "theme": "identity_semantic",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "identity_semantic"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C060",
-      "statement": "Control status is weakest where recovery value is highest.",
-      "theme": "risks",
-      "evidence_refs": [
-        "EVID-SHA-0100"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "risks"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C061",
-      "statement": "Contract, lineage, and AI-control risks dominate the register.",
-      "theme": "risks",
-      "evidence_refs": [
-        "EVID-SHA-0118"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "risks"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C062",
-      "statement": "Evidence is planning-grade and synthetic with mixed trust status.",
-      "theme": "evidence",
-      "evidence_refs": [
-        "EVID-SHA-0008"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "evidence"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C063",
-      "statement": "No production-certified outcome is claimed.",
-      "theme": "evidence",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "evidence"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C064",
-      "statement": "Vendor dependency concentrates in a small set of anchors.",
-      "theme": "vendors",
-      "evidence_refs": [
-        "EVID-SHA-0106"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "vendors"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C065",
-      "statement": "Run-rate, renewal, and criticality need validation.",
-      "theme": "vendors",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "vendors"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C066",
-      "statement": "Managed services anchor AMS and IMS delivery.",
-      "theme": "ms",
-      "evidence_refs": [
-        "EVID-SHA-0106"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "ms"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C067",
-      "statement": "Scope, SLAs, and exit terms are unvalidated.",
-      "theme": "ms",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "ms"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C068",
-      "statement": "Run-versus-change split determines transformation capacity.",
-      "theme": "budget",
-      "evidence_refs": [
-        "EVID-SHA-0001"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "budget"
-      ],
-      "confidence": "derived_measure"
-    },
-    {
-      "id": "C069",
-      "statement": "Run-heavy legacy pattern should be confirmed before funding assumptions.",
-      "theme": "budget",
-      "evidence_refs": [
-        "EVID-SHA-0104"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "budget"
+        "tech_lifecycle",
+        "infra",
+        "architecture_dependencies"
       ],
       "confidence": "industry_pattern"
     },
     {
-      "id": "C070",
-      "statement": "Programs align to recovery workflows across sourcing, ops, CX, and analytics.",
-      "theme": "programs",
+      "id": "CON-9",
+      "statement": "The target AWS airline lakehouse is aspirational; the platform should follow proven, certified workflows rather than precede them.",
+      "theme": "sequencing",
       "evidence_refs": [
-        "EVID-SHA-0105"
+        "EVID-SHA-0005"
       ],
-      "evidence_status": "evidenced",
+      "evidence_status": "not_evidenced",
       "applies_to_dimensions": [
-        "programs"
-      ],
-      "confidence": "loaded_fact"
-    },
-    {
-      "id": "C071",
-      "statement": "Promised benefit is not matched by measured value.",
-      "theme": "programs",
-      "evidence_refs": [
-        "EVID-SHA-0129"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "programs"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C072",
-      "statement": "Scale decisions are pending evidence.",
-      "theme": "programs",
-      "evidence_refs": [
-        "EVID-SHA-0006"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "programs"
-      ],
-      "confidence": "derived_measure"
-    },
-    {
-      "id": "C073",
-      "statement": "IROPS recovery, crew-legality support, and reaccommodation assist are the leading bounded candidates.",
-      "theme": "ai",
-      "evidence_refs": [
-        "EVID-SHA-0113"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "ai"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C074",
-      "statement": "Crew-facing AI must be human-in-the-loop with an auditable path.",
-      "theme": "ai",
-      "evidence_refs": [
-        "EVID-SHA-0103"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
+        "infra",
+        "architecture_dependencies",
+        "data",
         "ai"
       ],
       "confidence": "strategic_inference"
     },
     {
-      "id": "C075",
-      "statement": "No AI recovery outcome is yet evidenced.",
-      "theme": "ai",
+      "id": "CON-10",
+      "statement": "Current evidence is planning-grade and synthetic; conclusions are directional until source-owner validation, and low-specificity locators cannot support precise claims.",
+      "theme": "evidence_boundary",
       "evidence_refs": [],
       "evidence_status": "not_evidenced",
       "applies_to_dimensions": [
-        "ai"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C076",
-      "statement": "No certified operational, financial, or CX baseline exists.",
-      "theme": "metrics",
-      "evidence_refs": [
-        "EVID-SHA-0008"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "metrics"
-      ],
-      "confidence": "missing_evidence"
-    },
-    {
-      "id": "C077",
-      "statement": "Baselines are the precondition for proving recovery value.",
-      "theme": "metrics",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "metrics"
-      ],
-      "confidence": "strategic_inference"
-    },
-    {
-      "id": "C078",
-      "statement": "IROPS sensitivity and crew-legality complexity define the risk landscape.",
-      "theme": "industry",
-      "evidence_refs": [
-        "EVID-SHA-0118"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "industry"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C079",
-      "statement": "Managed-services dependency is a common transformation constraint.",
-      "theme": "industry",
-      "evidence_refs": [
-        "EVID-SHA-0106"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "industry"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C080",
-      "statement": "Five expert lenses guard distinct controls on the recovery path.",
-      "theme": "lenses",
-      "evidence_refs": [
-        "EVID-SHA-0103"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
+        "evidence",
+        "metrics",
+        "risks",
         "lenses"
       ],
-      "confidence": "strategic_inference"
+      "confidence": "missing_evidence"
     },
     {
-      "id": "C081",
-      "statement": "Safety and AI-ethics lenses are critical for crew-facing workflows.",
-      "theme": "lenses",
-      "evidence_refs": [
-        "EVID-SHA-0100"
-      ],
-      "evidence_status": "evidenced",
-      "applies_to_dimensions": [
-        "lenses"
-      ],
-      "confidence": "industry_pattern"
-    },
-    {
-      "id": "C082",
-      "statement": "Functions depend on systems and data domains along the recovery path.",
-      "theme": "rel",
+      "id": "CON-11",
+      "statement": "A genuine IROPS control center and dedicated crew, MRO, and customer operations functions give recovery workflows a natural owning home.",
+      "theme": "advantage",
       "evidence_refs": [],
       "evidence_status": "not_evidenced",
       "applies_to_dimensions": [
-        "rel"
+        "functions",
+        "capabilities",
+        "divisions",
+        "front_middle_back"
       ],
       "confidence": "loaded_fact"
-    },
-    {
-      "id": "C084",
-      "statement": "Cross-functional CIO/CTO/CDAO alignment is not yet evidenced.",
-      "theme": "rel",
-      "evidence_refs": [],
-      "evidence_status": "not_evidenced",
-      "applies_to_dimensions": [
-        "rel"
-      ],
-      "confidence": "missing_evidence"
     }
   ],
-  "decisions": [],
-  "recommendations": [
+  "decisions": [
     {
-      "id": "R001",
-      "statement": "Anchor the transformation on a measured disruption-cost and recovery-time baseline before any scale commitment.",
+      "id": "DEC-1",
+      "statement": "Select two or three priority operational workflows (IROPS recovery, crew legality, reaccommodation) to certify to funding-grade before any platform build-out.",
       "applies_to_dimensions": [
-        "enterprise_thesis"
-      ]
-    },
-    {
-      "id": "R002",
-      "statement": "Convene a decision workshop to confirm owners and evidence gates for all five leadership decisions.",
-      "applies_to_dimensions": [
-        "leadership_agenda"
-      ]
-    },
-    {
-      "id": "R003",
-      "statement": "Select one function where loaded context can be certified into a measured baseline first.",
-      "applies_to_dimensions": [
-        "proven_strengths"
-      ]
-    },
-    {
-      "id": "R004",
-      "statement": "Prioritize certification of the data domains on the critical recovery path before any AI build.",
-      "applies_to_dimensions": [
-        "structural_constraints"
-      ]
-    },
-    {
-      "id": "R005",
-      "statement": "Run structured interviews to confirm who owns each stage of the recovery decision.",
-      "applies_to_dimensions": [
-        "interview_signals"
-      ]
-    },
-    {
-      "id": "R006",
-      "statement": "Validate operating-scale figures before they anchor any business case.",
-      "applies_to_dimensions": [
-        "profile"
-      ]
-    },
-    {
-      "id": "R007",
-      "statement": "Define which division owns disruption recovery across unit boundaries.",
-      "applies_to_dimensions": [
-        "divisions"
-      ]
-    },
-    {
-      "id": "R008",
-      "statement": "Map recovery handoffs across office layers to locate latency.",
-      "applies_to_dimensions": [
-        "front_middle_back"
-      ]
-    },
-    {
-      "id": "R009",
-      "statement": "Shortlist one bounded workflow per priority function for qualification.",
-      "applies_to_dimensions": [
-        "functions"
-      ]
-    },
-    {
-      "id": "R010",
-      "statement": "Define the minimum capability set for one governed recovery workflow.",
-      "applies_to_dimensions": [
-        "capabilities"
-      ]
-    },
-    {
-      "id": "R011",
-      "statement": "Assign accountable owners for IROPS recovery, crew legality, and data governance.",
-      "applies_to_dimensions": [
-        "org"
-      ]
-    },
-    {
-      "id": "R012",
-      "statement": "Define approval and override rights for each recovery decision stage.",
-      "applies_to_dimensions": [
-        "decision_rights"
-      ]
-    },
-    {
-      "id": "R013",
-      "statement": "Validate role-level readiness with function leaders before pilot.",
-      "applies_to_dimensions": [
-        "workforce"
-      ]
-    },
-    {
-      "id": "R014",
-      "statement": "Map legal entities and data-residency rules affecting recovery.",
-      "applies_to_dimensions": [
-        "geography"
-      ]
-    },
-    {
-      "id": "R015",
-      "statement": "Baseline cost and latency at each recovery stage.",
-      "applies_to_dimensions": [
-        "value_streams"
-      ]
-    },
-    {
-      "id": "R016",
-      "statement": "Select the process with the clearest baseline for first qualification.",
-      "applies_to_dimensions": [
-        "business_processes"
-      ]
-    },
-    {
-      "id": "R017",
-      "statement": "Establish an NPS and cost baseline for the reaccommodation moment.",
-      "applies_to_dimensions": [
-        "journeys"
-      ]
-    },
-    {
-      "id": "R018",
-      "statement": "Define one certification gate covering contracts, lineage, and controls.",
-      "applies_to_dimensions": [
-        "opev"
-      ]
-    },
-    {
-      "id": "R019",
-      "statement": "Commission a managed-services scope, SLA, and data-rights review.",
-      "applies_to_dimensions": [
-        "service_delivery"
-      ]
-    },
-    {
-      "id": "R020",
-      "statement": "Confirm owner and criticality for recovery-path applications.",
-      "applies_to_dimensions": [
-        "apps"
-      ]
-    },
-    {
-      "id": "R021",
-      "statement": "Fund lineage certification for disruption, crew, bag, and maintenance domains.",
-      "applies_to_dimensions": [
+        "ai",
+        "value_streams",
+        "programs",
         "data"
       ]
     },
     {
-      "id": "R022",
-      "statement": "Trace and test the integration path for one recovery workflow.",
+      "id": "DEC-2",
+      "statement": "Assign named business owners and decision rights to each candidate AI workflow and to the remaining unowned applications.",
       "applies_to_dimensions": [
-        "integrations"
+        "org",
+        "decision_rights",
+        "apps"
       ]
     },
     {
-      "id": "R023",
-      "statement": "Confirm current-state platform readiness for the recovery path.",
+      "id": "DEC-3",
+      "statement": "Gate all AI and platform funding on certified data lineage and measured baselines for the target workflow's inputs.",
       "applies_to_dimensions": [
-        "infra"
-      ]
-    },
-    {
-      "id": "R024",
-      "statement": "Map and stress-test the recovery-path dependency chain.",
-      "applies_to_dimensions": [
-        "architecture_dependencies"
-      ]
-    },
-    {
-      "id": "R025",
-      "statement": "Set the mainframe/MQ vs. lakehouse sequencing stance.",
-      "applies_to_dimensions": [
-        "tech_lifecycle"
-      ]
-    },
-    {
-      "id": "R026",
-      "statement": "Certify lineage and define quality thresholds for recovery data.",
-      "applies_to_dimensions": [
-        "data_quality_lineage"
-      ]
-    },
-    {
-      "id": "R027",
-      "statement": "Define the minimum entity-resolution scope for one workflow.",
-      "applies_to_dimensions": [
-        "identity_semantic"
-      ]
-    },
-    {
-      "id": "R028",
-      "statement": "Prioritize control remediation for the highest-severity recovery risks.",
-      "applies_to_dimensions": [
-        "risks"
-      ]
-    },
-    {
-      "id": "R029",
-      "statement": "Prioritize the evidence items on the critical recovery decision path.",
-      "applies_to_dimensions": [
-        "evidence"
-      ]
-    },
-    {
-      "id": "R030",
-      "statement": "Confirm run-rate and renewal timing for critical vendors.",
-      "applies_to_dimensions": [
-        "vendors"
-      ]
-    },
-    {
-      "id": "R031",
-      "statement": "Commission a managed-services scope, economics, and data-rights review.",
-      "applies_to_dimensions": [
-        "ms"
-      ]
-    },
-    {
-      "id": "R032",
-      "statement": "Validate the run/change split and identify freed capacity.",
-      "applies_to_dimensions": [
+        "data",
+        "data_quality_lineage",
+        "metrics",
         "budget"
       ]
     },
     {
-      "id": "R033",
-      "statement": "Score each program by promised-versus-measured value and readiness.",
+      "id": "DEC-4",
+      "statement": "Commission a validation of AMS/IMS scope, SLAs, exit terms, and contract economics before committing to modernization or AI at scale.",
       "applies_to_dimensions": [
-        "programs"
+        "ms",
+        "vendors",
+        "service_delivery"
       ]
-    },
+    }
+  ],
+  "recommendations": [
     {
-      "id": "R034",
-      "statement": "Select and scope one crew-legality-safe recovery pilot.",
+      "id": "REC-1",
+      "statement": "Stand up an operations data-foundation effort that certifies disruption lineage, crew-legality, and reaccommodation inputs as the first delivery, ahead of lakehouse expansion.",
       "applies_to_dimensions": [
+        "data",
+        "data_quality_lineage",
+        "infra",
         "ai"
       ]
     },
     {
-      "id": "R035",
-      "statement": "Commission a measured baseline for the target recovery workflow.",
+      "id": "REC-2",
+      "statement": "Establish measured operational and customer baselines so Tower value tracking can test promised against measured benefit.",
       "applies_to_dimensions": [
-        "metrics"
+        "metrics",
+        "value_streams",
+        "programs"
       ]
     },
     {
-      "id": "R036",
-      "statement": "Test each industry pattern against SkyHarbor's measured operations.",
+      "id": "REC-3",
+      "statement": "Close the application-ownership gap and formalize data-governance accountability as a bounded, time-boxed program.",
       "applies_to_dimensions": [
-        "industry"
+        "apps",
+        "org",
+        "decision_rights"
       ]
     },
     {
-      "id": "R037",
-      "statement": "Confirm lens owners and their entry points into recovery decisions.",
+      "id": "REC-4",
+      "statement": "Sequence mainframe and MQ modernization explicitly against the workflows that depend on it, using the governed options evidence.",
       "applies_to_dimensions": [
-        "lenses"
-      ]
-    },
-    {
-      "id": "R038",
-      "statement": "Resolve 'to be confirmed' ownership nodes on the recovery path.",
-      "applies_to_dimensions": [
-        "rel"
+        "tech_lifecycle",
+        "infra",
+        "architecture_dependencies"
       ]
     }
   ],
-  "open_questions": []
+  "open_questions": [
+    {
+      "id": "OQ-1",
+      "statement": "Which specific operational and customer baselines can source owners certify now, and which require new instrumentation?",
+      "applies_to_dimensions": [
+        "metrics",
+        "value_streams",
+        "opev"
+      ]
+    },
+    {
+      "id": "OQ-2",
+      "statement": "What are the actual AMS/IMS scope boundaries, SLA commitments, exit terms, and annual economics?",
+      "applies_to_dimensions": [
+        "ms",
+        "vendors",
+        "service_delivery",
+        "budget"
+      ]
+    },
+    {
+      "id": "OQ-3",
+      "statement": "Who will own each priority AI workflow and its governing data, and with what decision rights?",
+      "applies_to_dimensions": [
+        "org",
+        "decision_rights",
+        "ai"
+      ]
+    },
+    {
+      "id": "OQ-4",
+      "statement": "Is the AWS airline lakehouse current-state or target-state, and what is certified today?",
+      "applies_to_dimensions": [
+        "infra",
+        "architecture_dependencies",
+        "data"
+      ]
+    }
+  ],
+  "book_version": "real-paid-run-2026-07-25"
 }

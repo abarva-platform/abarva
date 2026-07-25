@@ -140,6 +140,122 @@ export interface HomeV4EvidenceTab extends HomeV4DimensionTabCommon {
   next_evidence_request?: string;
 }
 
+// --- Book-mode content (enterprise_book / renderDimensionsFromBook()) ---
+//
+// Book mode (scripts/knowledge/build-home-knowledge-v4-review-pack.mjs,
+// HOME_KNOWLEDGE_V4_BOOK_MODE=true) replaces the per-dimension Claude calls
+// above with one shared enterprise_book plus a deterministic renderer.
+// Every dimension gets the book-mode fields below; only the 6 dimensions
+// bound to a real dataset (see DIMENSION_DATASET_BINDINGS) also get
+// primary_visual/visual_binding/data_binding -- the other 32 are narrative
+// content read alongside the book's shared sections, with no chart at all.
+// This is why primary_visual is optional, not a gap to paper over.
+
+export interface HomeV4BookKeyInsight {
+  statement: string;
+  evidence_refs: string[];
+  evidence_status?: "evidenced" | "not_evidenced" | string;
+}
+
+export interface HomeV4BookGapOrAdvantage {
+  statement: string;
+  why_it_matters: string;
+  evidence_refs: string[];
+}
+
+export interface HomeV4DataBinding {
+  dataset_id: string;
+}
+
+export interface HomeV4VisualBinding {
+  dataset_id: string;
+  visual_type: HomeV4ChartVisualType;
+  dimension: string;
+  measure: string;
+  filters: unknown[];
+  sort?: "ascending" | "descending";
+  limit?: number;
+  title: string;
+  annotation_instruction: string;
+  format?: string;
+  orientation?: string;
+  interpretation?: string;
+}
+
+// Deterministic counts-only summary (see deriveGraphBinding() /
+// GRAPH_ELIGIBLE_DIMENSIONS in the generator) -- not yet rendered as an
+// actual graph visual. Rendered as an informational summary; see
+// HomeV4GraphBindingSummary.
+export interface HomeV4GraphBinding {
+  relationship_source: string;
+  projection_type: string;
+  node_count: number;
+  edge_count: number;
+  relationship_types?: string[];
+  [key: string]: unknown;
+}
+
+export interface HomeV4EnterpriseNarrative {
+  title: string;
+  thesis: string;
+  narrative_arc: string;
+  strategic_agenda: string[];
+  strategic_tensions: string[];
+}
+
+export interface HomeV4IndustryComparisonItem {
+  pattern: string;
+  this_tenant_position: string;
+  specifics: string;
+  evidence_refs: string[];
+}
+
+export interface HomeV4MaterialItem {
+  id: string;
+  statement: string;
+  why_it_matters_to_leadership: string;
+  applies_to_dimensions: string[];
+}
+
+export interface HomeV4BookSection {
+  headline: string;
+  narrative: string;
+}
+
+export interface HomeV4Conclusion {
+  id: string;
+  statement: string;
+  theme?: string;
+  evidence_refs: string[];
+  evidence_status?: string;
+  applies_to_dimensions: string[];
+  confidence?: string;
+}
+
+export interface HomeV4DecisionOrRecommendation {
+  id: string;
+  statement: string;
+  applies_to_dimensions: string[];
+}
+
+export interface HomeV4OpenQuestion {
+  id: string;
+  statement: string;
+  applies_to_dimensions: string[];
+}
+
+export interface HomeV4EnterpriseBook {
+  executive_narrative: HomeV4EnterpriseNarrative;
+  industry_comparison: HomeV4IndustryComparisonItem[];
+  material_gaps: HomeV4MaterialItem[];
+  material_advantages: HomeV4MaterialItem[];
+  sections: Record<string, HomeV4BookSection>;
+  conclusions: HomeV4Conclusion[];
+  decisions: HomeV4DecisionOrRecommendation[];
+  recommendations: HomeV4DecisionOrRecommendation[];
+  open_questions: HomeV4OpenQuestion[];
+}
+
 export interface HomeV4Dimension {
   dimension_key: string;
   executive_title: string;
@@ -148,8 +264,26 @@ export interface HomeV4Dimension {
   relationship_tab?: HomeV4RelationshipTab;
   gaps_tab?: HomeV4GapsTab;
   evidence_tab?: HomeV4EvidenceTab;
-  primary_visual: HomeV4PrimaryVisual;
+  // Required pre-book-mode (every Claude-authored dimension carried one);
+  // absent for the 32/38 book-mode dimensions with no dataset binding.
+  primary_visual?: HomeV4PrimaryVisual;
   module_implications?: unknown;
+  // Book-mode-only fields (see comment above). All additive/optional so
+  // pre-book-mode candidates are unaffected.
+  chapter?: string;
+  headline?: string;
+  executive_takeaway?: string;
+  key_insights?: HomeV4BookKeyInsight[];
+  material_gaps?: HomeV4BookGapOrAdvantage[];
+  material_advantages?: HomeV4BookGapOrAdvantage[];
+  strategic_implication?: string;
+  recommended_actions?: string[];
+  related_dimensions?: string[];
+  confidence_statement?: string;
+  open_questions?: string[];
+  data_binding?: HomeV4DataBinding;
+  visual_binding?: HomeV4VisualBinding;
+  graph_binding?: HomeV4GraphBinding;
 }
 
 // --- Change & Transformation content (industry_change / use_cases / relationships) ---
@@ -230,4 +364,10 @@ export interface HomeV4Candidate {
   industry_change?: HomeV4IndustryChange;
   use_cases?: HomeV4UseCaseBatch[];
   relationships?: { graph_projections: HomeV4GraphProjection[] };
+  // Present only for book-mode candidates (HOME_KNOWLEDGE_V4_BOOK_MODE=true).
+  // Its presence is the signal HomeV4ExplorerShell uses to switch into
+  // book-mode rendering (overview landing page, book-mode dimension pages,
+  // industry_change/use_cases/relationships nav items hidden rather than
+  // shown empty).
+  enterprise_book?: HomeV4EnterpriseBook;
 }

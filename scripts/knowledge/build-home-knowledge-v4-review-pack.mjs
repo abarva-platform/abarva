@@ -65,6 +65,14 @@ const integratedMode =
 // paying for another full tenant generation.
 const replayTarget = getArg("--validate-candidate", null);
 const replayMode = Boolean(replayTarget);
+// Offline re-render: take an already-generated (real, Claude-produced)
+// candidate's stored enterprise_book and re-run the pure-code
+// renderDimensionsFromBook() against it using today's dataset registry --
+// no Claude call. This is how a deterministic-renderer change (a new
+// VISUAL_RENDER_RULES entry, a resolveVisualDataPoints fix) gets proven
+// against real candidates already on disk without paying for regeneration.
+const reresolveTarget = getArg("--reresolve-visuals", null);
+const reresolveMode = Boolean(reresolveTarget);
 // Offline cost ledger: every stored response already carries its `usage` block,
 // so the true call/token/cost accounting of a past run can be reconstructed
 // without rerunning anything. A paid run should never be authorised against an
@@ -1787,6 +1795,109 @@ const VISUAL_RENDER_RULES = {
   },
 };
 
+function readCsvRows(relativePath) {
+  const fullPath = path.join(repoRoot, relativePath);
+  if (!fs.existsSync(fullPath)) return [];
+  const lines = fs.readFileSync(fullPath, "utf8").trim().split("\n").map((l) => l.replace(/\r$/, ""));
+  const header = lines[0].split(",");
+  return lines.slice(1).map((line) => {
+    const cells = line.split(",");
+    return Object.fromEntries(header.map((h, i) => [h, cells[i] ?? ""]));
+  });
+}
+
+// Real per-row label column for the one visual_type (scatter_2x2, currently
+// only programs_full) that plots individual rows rather than a grouped
+// aggregate.
+const DATASET_LABEL_COLUMN = {
+  applications_full: "application_name",
+  vendors_full: "vendor_name",
+  programs_full: "initiative_name",
+  risk_register: "risk_id",
+  evidence_registry: "evidence_item_id",
+  budget_summary: "line_id",
+};
+
+// Real per-row legacy fallback -- same rationale as loadTenantEvidenceIndex:
+// skyharbor-air's evidence rows never captured review_state directly
+// (pre-2026-07-25 schema gap, not a parsing bug); every other tenant does.
+// skyharbor's legacy_trust_status uses "usable" where the canonical column
+// uses "approved" for the same real state -- normalize so the resulting
+// chart groups consistently across tenants instead of fragmenting into an
+// extra label for skyharbor-air alone.
+const DIMENSION_VALUE_FALLBACK = {
+  evidence_registry: {
+    review_state: (row) =>
+      row.review_state || (row.legacy_trust_status === "usable" ? "approved" : row.legacy_trust_status),
+  },
+};
+
+function resolveDimensionValue(row, datasetId, dimension) {
+  const fallback = DIMENSION_VALUE_FALLBACK[datasetId]?.[dimension];
+  return fallback ? fallback(row) : row[dimension];
+}
+
+// The single function anywhere in this codebase that turns a declarative
+// visual_binding pointer into real numbers. Claude never sees or influences
+// this -- it runs entirely after generation, reading the exact same real
+// CSV deterministic_dataset_registry already names for this dataset_id, via
+// registry.evidence_source (a single source of truth for the file path,
+// not a second hardcoded map). Verified: T01/F12 have no rollup rows for
+// any tenant (view is a single constant, is_rollup_of always empty), so
+// summing every row for a numeric measure is safe -- no double-counting.
+//
+// scatter_2x2 (today, only programs_full) is handled as individual points
+// (x = promised_benefit_usd, y = the bound measure) rather than grouped:
+// visual_binding.dimension for that dataset is "stage," a categorical
+// value, and grouping by it would not produce a meaningful two-axis plot.
+// Every other governed visual_type groups by visual_binding.dimension and
+// aggregates visual_binding.measure (row count, or the sum of a real
+// numeric column).
+function resolveVisualDataPoints(visualBinding, packet) {
+  if (!visualBinding?.dataset_id) return [];
+  const registryEntry = (packet.deterministic_dataset_registry ?? []).find((d) => d.dataset_id === visualBinding.dataset_id);
+  if (!registryEntry?.evidence_source) return [];
+  const rows = readCsvRows(registryEntry.evidence_source);
+  if (rows.length === 0) return [];
+
+  if (visualBinding.visual_type === "scatter_2x2") {
+    const labelCol = DATASET_LABEL_COLUMN[visualBinding.dataset_id] ?? visualBinding.dimension;
+    return rows
+      .map((row) => {
+        const dimensionValue = resolveDimensionValue(row, visualBinding.dataset_id, visualBinding.dimension);
+        return {
+          label: row[labelCol] || dimensionValue || "",
+          x: Number(row.promised_benefit_usd) || 0,
+          y: Number(row[visualBinding.measure]) || 0,
+          series: dimensionValue || "",
+          classification: "loaded_fact",
+          source_basis: registryEntry.grain,
+        };
+      })
+      .filter((p) => p.label)
+      .sort((a, b) => b.y - a.y)
+      .slice(0, visualBinding.limit ?? 8);
+  }
+
+  const groups = new Map();
+  for (const row of rows) {
+    const key = resolveDimensionValue(row, visualBinding.dataset_id, visualBinding.dimension);
+    if (!key) continue;
+    const current = groups.get(key) ?? 0;
+    const increment = visualBinding.measure === "count" ? 1 : (Number(row[visualBinding.measure]) || 0);
+    groups.set(key, current + increment);
+  }
+  return Array.from(groups.entries())
+    .map(([label, value]) => ({
+      label,
+      value,
+      classification: "loaded_fact",
+      source_basis: registryEntry.grain,
+    }))
+    .sort((a, b) => (visualBinding.sort === "ascending" ? a.value - b.value : b.value - a.value))
+    .slice(0, visualBinding.limit ?? 7);
+}
+
 // Purposeful, not decorative: relationship_samples has real edges only for
 // the tech/dependency cluster (confirmed against skyharbor-air: 40 real
 // rows, 78 unique named nodes, 4 real relationship types -- owns/uses/
@@ -1970,6 +2081,29 @@ export function renderDimensionsFromBook(book, packet) {
           interpretation: section.narrative
             ? `Deterministic view of ${binding.primary_dataset}, read alongside "${chapter}."`
             : `Deterministic view of ${binding.primary_dataset}.`,
+        };
+        // Resolve the pointer into real numbers here, in the generator,
+        // once -- so the shipped candidate carries a fully-formed
+        // HomeV4ChartVisual (existing shape the live renderer already
+        // knows how to draw) alongside the declarative visual_binding.
+        // The renderer itself needs zero changes; every new aggregation
+        // rule lives in this one already-governed function.
+        const dataPoints = resolveVisualDataPoints(dimension.visual_binding, packet);
+        const registryEntry = (packet.deterministic_dataset_registry ?? []).find((d) => d.dataset_id === binding.primary_dataset);
+        dimension.primary_visual = {
+          visual_type: rule.visual_type,
+          title: rule.title,
+          executive_question: rule.annotation_instruction,
+          classification: dataPoints.length > 0 ? "loaded_fact" : "missing_evidence",
+          data_points: dataPoints,
+          encoding: rule.visual_type === "scatter_2x2"
+            ? { x: "promised_benefit_usd", y: rule.measure, series: rule.dimension }
+            : { x: rule.dimension, y: rule.measure },
+          annotation: rule.annotation_instruction,
+          evidence_boundary: registryEntry
+            ? `Computed directly from ${registryEntry.row_count} real records (${registryEntry.grain}); no model-generated values.`
+            : `Computed directly from the tenant's real records; no model-generated values.`,
+          empty_state: `No ${rule.dimension} data available in ${binding.primary_dataset} for this view.`,
         };
       }
     }
@@ -2985,6 +3119,83 @@ async function runReplay() {
   if (failed.length > 0) process.exitCode = 1;
 }
 
+async function runReresolveVisuals() {
+  const files = discoverCandidateFiles(reresolveTarget);
+  ensureDir(outDir);
+  console.log(`[home-v4-reresolve] re-rendering ${files.length} real candidate(s) against today's dataset registry, no Claude calls`);
+  const results = [];
+  for (const file of files) {
+    const candidate = JSON.parse(fs.readFileSync(file, "utf8"));
+    const tenantKey = candidate.tenant?.canonical_key;
+    if (!tenantKey) {
+      console.log(`[home-v4-reresolve]   [SKIP] ${file}: no tenant.canonical_key`);
+      continue;
+    }
+    if (!candidate.enterprise_book) {
+      console.log(`[home-v4-reresolve]   [SKIP] ${tenantKey}: not a book-mode candidate (no enterprise_book)`);
+      continue;
+    }
+    const sourceFile = path.join(repoRoot, "datasets", "tenant-inputs", tenantKey, "approved-content", "home", "design-contract-pack.json");
+    const sourceText = fs.readFileSync(sourceFile, "utf8");
+    const applicationOwnershipFacts = loadTenantApplicationOwnershipFacts(tenantKey);
+    const sourceHash = sha256(sourceText + (applicationOwnershipFacts?.raw_hash ?? ""));
+    const pack = JSON.parse(sourceText);
+    pack.__source_file = sourceFile;
+    pack.__application_ownership_facts = applicationOwnershipFacts;
+    const packet = buildTenantContextPacket(pack, sourceHash);
+    packet.deterministic_dataset_registry = loadTenantDatasetRegistry(tenantKey);
+    packet.evidence_index = loadTenantEvidenceIndex(tenantKey);
+
+    // Book mode is validated by validateIntegratedManifest(), not the
+    // legacy full-candidate validateCandidate() (which checks fields --
+    // relationships.graph_projections, dimension.summary_tab -- that book
+    // mode deliberately doesn't produce). Match processTenant()'s real
+    // book-mode validation call exactly.
+    const bookValidate = (dims) => {
+      const result = validateIntegratedManifest(
+        { dimensions: dims, enterprise_story_integrated: candidate.enterprise_book?.executive_narrative ?? null },
+        packet,
+        { bindings: DIMENSION_DATASET_BINDINGS },
+      );
+      return { status: result.status === "pass" ? "candidate_review_ready" : "candidate_failed", violations: result.failures };
+    };
+    const before = bookValidate(candidate.dimensions);
+    candidate.dimensions = renderDimensionsFromBook(candidate.enterprise_book, packet);
+    const after = bookValidate(candidate.dimensions);
+    candidate.validation = after;
+
+    const tenantDir = path.join(outDir, "tenants", tenantKey);
+    ensureDir(tenantDir);
+    const outFile = path.join(tenantDir, "candidate-home-knowledge-v4.json");
+    writeJson(outFile, candidate);
+    results.push({
+      tenant_key: tenantKey,
+      before_status: before.status,
+      before_violation_count: before.violations.length,
+      after_status: after.status,
+      after_violation_count: after.violations.length,
+      out_file: path.relative(repoRoot, outFile),
+    });
+    console.log(
+      `[home-v4-reresolve] ${tenantKey}: ${before.status}(${before.violations.length}) -> ${after.status}(${after.violations.length}) -- ${path.relative(repoRoot, outFile)}`,
+    );
+  }
+  writeJson(path.join(outDir, "reresolve-visuals.json"), {
+    reresolved_at: new Date().toISOString(),
+    source: path.resolve(reresolveTarget),
+    claude_calls: 0,
+    results,
+  });
+  const failed = results.filter((r) => r.after_status !== "candidate_review_ready");
+  console.log("");
+  console.log(
+    failed.length === 0
+      ? `HOME_V4_RERESOLVE_VERDICT: ALL_REVIEW_READY (${results.length} candidates)`
+      : `HOME_V4_RERESOLVE_VERDICT: FAILED (${failed.length}/${results.length} candidates)`,
+  );
+  if (failed.length > 0) process.exitCode = 1;
+}
+
 // Published Opus list pricing, USD per million tokens. Override with
 // HOME_V4_PRICE_* when a negotiated rate applies.
 // Opus 4.8 list pricing: $5/MTok input, $25/MTok output. Cache writes bill at
@@ -3144,6 +3355,10 @@ async function main() {
   }
   if (replayMode) {
     await runReplay();
+    return;
+  }
+  if (reresolveMode) {
+    await runReresolveVisuals();
     return;
   }
   if (!packetOnly && !preflightMode && !process.env.ANTHROPIC_API_KEY) {
