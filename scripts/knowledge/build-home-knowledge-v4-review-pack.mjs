@@ -1135,7 +1135,31 @@ function makePrompt(pass, packet, assembled) {
         "with evidence_refs: [] -- claiming support while citing none. WRONG: evidence_status " +
         "omitted entirely -- silence is not disclosure. If you are not certain a claim is " +
         "evidenced, default to (b); a smaller number of honestly-marked conclusions is " +
-        "correct, a larger number of falsely-evidenced ones is not. OVERRIDE NOTICE: " +
+        "correct, a larger number of falsely-evidenced ones is not.\n" +
+        "HARD RULE, checked mechanically after you respond, every industry_comparison " +
+        "dimensions[] entry, no exceptions -- this is the SAME contract as the conclusion " +
+        "HARD RULE above, applied to job 2's dimensional judgments, not a lesser standard: " +
+        "any dimensions[] entry whose position is 'ahead', 'at_parity', or 'behind' -- that " +
+        "is, any entry that actually asserts a comparison, an advantage, a disadvantage, or " +
+        "any other evaluative judgment about this tenant relative to the pattern -- MUST " +
+        "carry evidence_refs with >=1 real ID from evidence_index that actually supports " +
+        "THIS specific dimensional judgment. If you do not have evidence that specifically " +
+        "supports judging this dimension ahead/at_parity/behind, you have exactly one " +
+        "correct move: set position: 'not_evidenced' with evidence_refs: [] -- do NOT assert " +
+        "the evaluative position anyway and leave evidence_refs empty, and do NOT invent or " +
+        "stretch an evidence_id that doesn't specifically establish this dimension's claim. " +
+        "RIGHT: {dimension: 'operational_capability', position: 'at_parity', evidence_refs: " +
+        "['EVID-1234']} where EVID-1234 actually documents the operational capability being " +
+        "judged. RIGHT: {dimension: 'scale_readiness', position: 'not_evidenced', " +
+        "evidence_refs: []} when no such evidence exists -- an honestly-unevaluated dimension " +
+        "is correct and expected, not a gap to paper over. WRONG (the exact defect this rule " +
+        "exists to catch): {dimension: 'governance_and_controls', position: 'behind', " +
+        "evidence_refs: []} -- asserting a real evaluative judgment with nothing behind it. " +
+        "This applies to every dimensions[] entry in every industry_comparison item, with no " +
+        "exceptions for entries that feel obviously true from context_packet -- if it isn't " +
+        "in evidence_index, it isn't evidence_refs-eligible, and the position must be " +
+        "'not_evidenced' instead.\n" +
+        "OVERRIDE NOTICE: " +
         "common.visual_contract_rules described the OLD per-dimension chart contract used " +
         "elsewhere in this pipeline -- it has been removed from this payload and does not " +
         "apply here.",
@@ -1156,7 +1180,9 @@ function makePrompt(pass, packet, assembled) {
           "measurement_and_value|scale_readiness), position " +
           "(ahead|at_parity|behind|not_evidenced|not_applicable), explanation, " +
           "evidence_refs} -- only the dimensions this pattern actually bears on, each " +
-          "independently judged (see the HARD RULE on overall_position below). metrics: " +
+          "independently judged (see the HARD RULE on overall_position below AND the HARD " +
+          "RULE on dimensions[].evidence_refs above -- evidence_refs is required whenever " +
+          "position is ahead/at_parity/behind, not optional detail). metrics: " +
           "OPTIONAL array, only when a metrics_fact_base row is genuinely about this " +
           "pattern -- {metric_id, metric_name, baseline_value, actual_value, target_value, " +
           "evidence_status (available|partial|missing), required_next_step, evidence_refs}. " +
