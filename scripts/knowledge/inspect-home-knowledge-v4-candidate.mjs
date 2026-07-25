@@ -32,6 +32,11 @@ const getArg = (name, fallback = null) => {
 
 const packId = getArg("--id", process.env.HOME_KNOWLEDGE_V4_INSPECT_ID ?? null);
 const tenantKey = getArg("--tenant", process.env.HOME_KNOWLEDGE_V4_INSPECT_TENANT ?? null);
+// --full additionally selects render_pack -- the actual generated narrative
+// content (enterprise_book + dimensions), needed for a real qualitative
+// content review, not just the quality-report/validation-issues diagnostic
+// this script originally existed for.
+const full = argv.includes("--full") || process.env.HOME_KNOWLEDGE_V4_INSPECT_FULL === "true";
 
 function connectionString() {
   return process.env.ABARVA_AZURE_DATABASE_URL ?? process.env.AZURE_DATABASE_URL ?? process.env.DATABASE_URL ?? null;
@@ -57,21 +62,19 @@ async function main() {
   const client = new Client(pgOptions(dbUrl));
   await client.connect();
   try {
-    const result = packId
-      ? await client.query(
-          `SELECT id, tenant_key, tenant_name, pack_version, status, artifact_type,
+    const columns = `id, tenant_key, tenant_name, pack_version, status, artifact_type,
                   content_hash, generator_version, generated_model, claude_prompt_version,
                   claude_prompt_hash, validation_status, quality_report, validation_issues,
-                  created_at, updated_at, approved_by, approved_at, effective_from, effective_to
+                  created_at, updated_at, approved_by, approved_at, effective_from, effective_to${full ? ", render_pack" : ""}`;
+    const result = packId
+      ? await client.query(
+          `SELECT ${columns}
              FROM public.home_knowledge_packs
             WHERE id = $1`,
           [packId],
         )
       : await client.query(
-          `SELECT id, tenant_key, tenant_name, pack_version, status, artifact_type,
-                  content_hash, generator_version, generated_model, claude_prompt_version,
-                  claude_prompt_hash, validation_status, quality_report, validation_issues,
-                  created_at, updated_at, approved_by, approved_at, effective_from, effective_to
+          `SELECT ${columns}
              FROM public.home_knowledge_packs
             WHERE tenant_key = $1 AND artifact_type = 'NexusHomeKnowledgePackV4Book'
             ORDER BY created_at DESC LIMIT 1`,
