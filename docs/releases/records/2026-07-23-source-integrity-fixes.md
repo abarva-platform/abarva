@@ -6,7 +6,10 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean.
+`released` — merged to `main` via [#5600](https://github.com/abarva-platform/abarva/pull/5600)
+(squash-merge `86b4ffe9302e4350447ee330c0c5f135eeca5318`), all 20 CI checks passed. ACA deploy and
+live signed-in proof still pending — see QA / Validation and Deployment Authority; this record does
+not claim live-proven status until those checks are captured.
 
 ## Plain-English Summary
 
@@ -90,8 +93,11 @@ roadmap, each closing a gap the audit found and cited with exact code references
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
   — zero errors.
 - `pass` — `npx eslint` on all ten touched/added files — clean.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
-- `pending` — live signed-in proof — after merge/deploy: (a) attempt a chat-save with a bogus
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — 10 release-relevant
+  files, this release record found and matched.
+- `pass` — all 20 required CI checks on PR #5600 (typecheck, ESLint, architecture rules, migration
+  drift, gitleaks, bundle/Lighthouse budgets, hygiene gate, tenant allowlist, etc.).
+- `pending` — live signed-in proof — after deploy: (a) attempt a chat-save with a bogus
   artifact code and confirm 400; (b) attempt generating `d24_decision_brief` on an event with no
   scorecard/pricing workbook and confirm the upstream-block 409; (c) render a BAFO Question Pack
   or Market Scan artifact and confirm the governance banner now appears; (d) confirm a
@@ -120,8 +126,9 @@ restores the four previously-open gaps exactly as the audit found them.
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- Deploy run and live proof: to be recorded after merge/deploy.
+- PR: [#5600](https://github.com/abarva-platform/abarva/pull/5600), squash-merged
+  `86b4ffe9302e4350447ee330c0c5f135eeca5318`, 2026-07-25.
+- Deploy run and live proof: to be recorded after ACA deploy.
 - Baseline audit this release closes items from:
   `docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md` (Pipeline Drift Report items D1/D2,
   Approval State Machine section, Visual/Rendering section).
