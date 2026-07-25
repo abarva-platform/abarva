@@ -39,6 +39,8 @@ export interface GoldenBarResult {
   duplicateSectionHeadings: string[];
   /** Content matching `forbiddenContentPatterns` (sprint numbers, Gantt language, etc.). Informational only. */
   forbiddenContentHits: string[];
+  /** True when the rendered `<h1>` reads as a generic category label rather than an executive conclusion. Informational only. */
+  titleReadsAsGenericLabel: boolean;
   /** Deterministic 0-100 score derived from the checks above — replaces the old fixed 96/null. */
   qualityScore: number;
 }
@@ -69,6 +71,15 @@ export interface GoldenBarOptions {
    * Informational only — same caution as `overMaximumWordCount` unenforced.
    */
   forbiddenContentPatterns?: readonly RegExp[];
+  /**
+   * Story-first title enforcement (roadmap fast-follow, 2026-07-25) —
+   * mirrors the orchestrator's matching `titleRule` on QualityBar. Checked
+   * against the artifact's rendered `<h1>`. Informational only.
+   */
+  titleRule?: {
+    genericForbiddenPatterns: readonly RegExp[];
+    minWords: number;
+  };
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -340,6 +351,23 @@ export function meetsGoldenBar(
       `content reads like an implementation schedule, not an executive artifact: ${forbiddenContentHits.slice(0, 3).join(", ")} (informational — does not block)`,
     );
   }
+  let titleReadsAsGenericLabel = false;
+  if (options.titleRule) {
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    const title = (h1Match?.[1] ?? "").replace(/<[^>]+>/g, " ").trim();
+    const isGeneric = options.titleRule.genericForbiddenPatterns.some((re) =>
+      re.test(title),
+    );
+    const titleWordCount = title.split(/\s+/).filter(Boolean).length;
+    titleReadsAsGenericLabel =
+      isGeneric ||
+      (title.length > 0 && titleWordCount < options.titleRule.minWords);
+    if (titleReadsAsGenericLabel) {
+      reasons.push(
+        `title "${title}" reads as a category label, not an executive conclusion (informational — does not block)`,
+      );
+    }
+  }
   const duplicateSectionHeadings = findDuplicateSectionHeadings(html);
   if (duplicateSectionHeadings.length) {
     reasons.push(
@@ -440,6 +468,7 @@ export function meetsGoldenBar(
     overMaximumWordCount,
     unsupportedClaimSignals,
     forbiddenContentHits,
+    titleReadsAsGenericLabel,
     duplicateSectionHeadings,
     qualityScore,
   };

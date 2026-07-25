@@ -207,6 +207,10 @@ export function premiumGoldenBarOptionsForArtifact(
   enforceMaximumWordCount?: boolean;
   advisoryMaximumWordCount?: number;
   forbiddenContentPatterns?: readonly RegExp[];
+  titleRule?: {
+    genericForbiddenPatterns: readonly RegExp[];
+    minWords: number;
+  };
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -315,6 +319,12 @@ export function premiumGoldenBarOptionsForArtifact(
       ? {
           forbiddenContentPatterns:
             EXECUTIVE_ROADMAP_REFERENCE.forbiddenPatterns,
+          titleRule: {
+            genericForbiddenPatterns:
+              EXECUTIVE_ROADMAP_REFERENCE.titleRule
+                .genericTitleForbiddenPatterns,
+            minWords: EXECUTIVE_ROADMAP_REFERENCE.titleRule.minTitleWords,
+          },
         }
       : {}),
   };
@@ -761,8 +771,16 @@ Length discipline:
 function p4RoadmapAssignment(ctx?: SolutionContext): string {
   const ref = EXECUTIVE_ROADMAP_REFERENCE;
   const moveReference = ctx ? clientMoveReference(ctx) : "this Move";
+  const horizonOutcomeLines = ref.horizons
+    .map((h) => `  - ${h}: ${ref.horizonOutcomes[h]}`)
+    .join("\n");
   return `PHASE-SPECIFIC ASSIGNMENT — EXECUTIVE TRANSITION ROADMAP (REF_EXECUTIVE_ROADMAP)
 Purpose: ${ref.purpose.replace(/^Show/, "show")} for ${moveReference}.
+
+Title — the title IS the executive conclusion, not a category label:
+- Do not title this artifact any of: ${ref.titleRule.genericTitleForbiddenPatterns.map((p) => p.source).join(", ")}.
+- Write a message-led title of at least ${ref.titleRule.minTitleWords} words stating the sequencing
+  thesis, e.g.: "${ref.titleRule.example}."
 
 Executive storytelling mandate — this is a sequencing ARGUMENT, not a schedule:
 - Executive question this artifact answers: ${ref.story.executiveQuestion}
@@ -771,18 +789,25 @@ Executive storytelling mandate — this is a sequencing ARGUMENT, not a schedule
 - Write as a senior advisor explaining the sequence to an executive. Lead with the conclusion (why
   this order), then support it. Do not sound like a template, checklist, or project-plan export.
 
-Structure — horizons across the top, workstreams down the side:
+Structure — horizons across the top, workstreams down the side. Each horizon leads with the
+outcome achieved, never the activity:
+${horizonOutcomeLines}
 - Horizons (use exactly these ${ref.maxHorizons}, in order): ${ref.horizons.join(" → ")}.
 - Workstreams (use at most ${ref.maxWorkstreams} of): ${ref.workstreams.join(", ")}.
-- At most ${ref.maxActivitiesPerCell} major activities per horizon/workstream cell.
-- Every roadmap item must carry: ${ref.requiredItemFields.join(", ")}.
-- Show decision gates (diamond) between horizons and dependencies (dashed) explicitly — this
-  roadmap does not advance to the next horizon without a named gate decision.
+- At most ${ref.maxActivitiesPerCell} major activities per horizon/workstream cell, and activities
+  must appear beneath the horizon's outcome statement, never in place of it.
+- Every roadmap item must carry: ${ref.requiredItemFields.join(", ")}. For evidenceStatus, use one
+  of: approved, recommended, illustrative, client_decision_required, evidence_required — never let
+  an unconfirmed sequence read as committed.
+- Show decision gates (diamond) between horizons and dependencies (dashed) explicitly. Use these
+  named gates where applicable: ${ref.decisionGates.join("; ")}.
+- Show value milestones (proof of realized value, not technical completion) where applicable: ${ref.valueMilestones.join("; ")}.
 
 Forbidden — this must read as an executive sequencing argument, not an implementation schedule:
 - No sprint numbers, no day/week counters, no explicit calendar dates unless the client has
   approved specific committed dates.
 - No Gantt-chart-style task lists. Use outcome language, not task-list language.
+- No named owners, durations, or task dependencies that aren't backed by evidence in context.
 
 Length discipline:
 - Target ${P3_P4_WORD_BAND_CONTRACTS.roadmap.minWords.toLocaleString()}-${P3_P4_WORD_BAND_CONTRACTS.roadmap.targetWordsMax.toLocaleString()} rendered words.

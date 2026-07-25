@@ -42,11 +42,29 @@ export interface ExecutiveStoryContract {
   ];
 }
 
+/** Per-item evidence label — the roadmap must never make an uncertain
+ * sequence look committed. Every item's timing/dependency claim must be
+ * traceable to one of these. */
+export type RoadmapEvidenceStatus =
+  | "approved"
+  | "recommended"
+  | "illustrative"
+  | "client_decision_required"
+  | "evidence_required";
+
 export interface RoadmapReference {
   purpose: string;
   audience: string;
   whenToUse: { phase: 4; required: true };
   story: ExecutiveStoryContract;
+  /** The title itself must be the executive conclusion, not a category
+   * label — "Execution Roadmap" alone fails this contract. */
+  titleRule: {
+    requiresMessageLedTitle: true;
+    minTitleWords: number;
+    genericTitleForbiddenPatterns: readonly RegExp[];
+    example: string;
+  };
   horizons: readonly [
     "Mobilize",
     "Establish Foundation",
@@ -54,6 +72,9 @@ export interface RoadmapReference {
     "Scale and Optimize",
   ];
   maxHorizons: number;
+  /** The state achieved in each horizon, stated outcome-first — activities
+   * may appear beneath these but must never lead the horizon. */
+  horizonOutcomes: Readonly<Record<string, string>>;
   workstreams: readonly [
     "Business & Process",
     "Technology",
@@ -74,7 +95,14 @@ export interface RoadmapReference {
     "ownerRole",
     "timing",
     "successMeasure",
+    "evidenceStatus",
   ];
+  /** Canonical named gate decisions between horizons — a roadmap without
+   * these reads as a colorful Gantt chart, not an executive sequencing
+   * argument. */
+  decisionGates: readonly string[];
+  /** Milestones proving realized value, not just technical completion. */
+  valueMilestones: readonly string[];
   /** Patterns that turn an executive roadmap into an implementation schedule
    * — matched case-insensitively against generated content. */
   forbiddenPatterns: readonly RegExp[];
@@ -110,6 +138,19 @@ export const EXECUTIVE_ROADMAP_REFERENCE: RoadmapReference = {
       "The sponsor can repeat back why the sequence is ordered this way, and what they're being asked to approve now.",
     narrativeArc: ["context", "tension", "evidence", "implication", "decision"],
   },
+  titleRule: {
+    requiresMessageLedTitle: true,
+    minTitleWords: 8,
+    genericTitleForbiddenPatterns: [
+      /^execution roadmap$/i,
+      /^executive roadmap$/i,
+      /^p4 roadmap$/i,
+      /^roadmap$/i,
+      /^transition roadmap$/i,
+    ],
+    example:
+      "A four-stage transition builds the foundation first, proves priority value, and scales only after controls are established",
+  },
   horizons: [
     "Mobilize",
     "Establish Foundation",
@@ -117,6 +158,15 @@ export const EXECUTIVE_ROADMAP_REFERENCE: RoadmapReference = {
     "Scale and Optimize",
   ],
   maxHorizons: 4,
+  horizonOutcomes: {
+    Mobilize: "Sponsorship, funding and decision rights established.",
+    "Establish Foundation":
+      "Trusted data, governance and delivery foundation operational.",
+    "Deliver Priority Outcomes":
+      "Priority outcome proven with measurable business value.",
+    "Scale and Optimize":
+      "Repeatable operating model extends value across the portfolio.",
+  },
   workstreams: [
     "Business & Process",
     "Technology",
@@ -135,6 +185,21 @@ export const EXECUTIVE_ROADMAP_REFERENCE: RoadmapReference = {
     "ownerRole",
     "timing",
     "successMeasure",
+    "evidenceStatus",
+  ],
+  decisionGates: [
+    "Funding authorized",
+    "Foundation readiness confirmed",
+    "Pilot value validated",
+    "Controls approved",
+    "Scale decision made",
+  ],
+  valueMilestones: [
+    "Baseline approved",
+    "First measurable result demonstrated",
+    "Adoption threshold achieved",
+    "Control effectiveness validated",
+    "Benefits accepted by Finance",
   ],
   forbiddenPatterns: [
     /\bsprint\s?\d*/i,

@@ -181,6 +181,11 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
       },
     ],
     forbiddenContentPatterns: EXECUTIVE_ROADMAP_REFERENCE.forbiddenPatterns,
+    titleRule: {
+      genericForbiddenPatterns:
+        EXECUTIVE_ROADMAP_REFERENCE.titleRule.genericTitleForbiddenPatterns,
+      minWords: EXECUTIVE_ROADMAP_REFERENCE.titleRule.minTitleWords,
+    },
   },
   "moves::estimate_model": {
     // P4 financial model is table/workbook-led. It should explain assumptions
