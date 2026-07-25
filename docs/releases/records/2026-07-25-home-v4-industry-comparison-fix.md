@@ -6,9 +6,10 @@
 
 ## Status
 
-`candidate` — prompt/schema/validator/renderer fix, zero-cost-verified. Regenerating any tenant
-against the fixed contract is a separate, scoped action after this merges and deploys, per the
-standing pattern for this class of fix.
+`live-proven` — merged, deployed, and live-verified: skyharbor-air and meridian-health both
+render correctly post-deploy with no regression (legacy-shape fallback confirmed working).
+Regenerating a tenant against the new calibrated contract remains a separate, scoped follow-up
+action, not part of this release.
 
 ## Plain-English Summary
 
@@ -130,23 +131,27 @@ Root-causing this against the actual data (not just the output) found two compou
   heap OOM'd on the unrelated full-project size in this environment -- CI runners are unaffected),
   zero errors; confirmed `/home/v4-preview` is in the route output.
 - `pass` — Full-project `tsc --noEmit` with the same expanded heap, zero errors.
-- `partial` — Local browser check: confirmed the route compiles and the server returns a real `200`
+- `pass` — Local browser check: confirmed the route compiles and the server returns a real `200`
   for `/home/v4-preview?tenant=meridian-health` (not a 404/500) against a temporary, uncommitted
   local-only fixture patch carrying the new calibrated shape (reverted via `git checkout` before
-  finishing, never staged or pushed). Could not visually confirm the rendered table in this
-  environment -- no valid local Clerk credentials, so `isPlatformAdminSession()`-gated pages are
-  unreachable here, the same standing limitation as every other live-route UI change this session.
-  Live signed-in verification required post-deploy (see Rollout Plan).
+  finishing, never staged or pushed).
+- `pass` — **Live signed-in verification, post-deploy**: PR merged (`71e3088d`), `aca-main-deploy.yml`
+  run `30168592967` completed successfully (image build, revision health, traffic shift, ACA
+  runtime invariant, and production health endpoint all verified by the workflow itself). Signed-in
+  platform-admin confirmed `/home/v4-preview` renders correctly for both skyharbor-air and
+  meridian-health with no regression -- the legacy-shape fallback (old flat card, `this_tenant_
+  position`/`specifics`) is rendering exactly as it did before this change, for the two candidates
+  approved before this fix shipped.
 
 ## Rollout Plan
 
-1. Merge → `aca-main-deploy.yml` builds and deploys automatically. No data changes ship with this
-   merge -- the fix only takes effect on the next candidate a tenant generates.
-2. Live signed-in check: confirm `/home/v4-preview` still renders skyharbor-air and meridian-health
-   correctly (legacy-shape fallback, unregressed).
-3. Separate, explicit, scoped action per tenant (not part of this merge): regenerate a tenant's
-   candidate against the fixed prompt, retrieve its fresh `industry_comparison` via
-   `home:knowledge-v4:inspect-candidate`, and confirm by inspection that positions are genuinely
+1. `done` — Merge → `aca-main-deploy.yml` built and deployed automatically. No data changes shipped
+   with this merge -- the fix only takes effect on the next candidate a tenant generates.
+2. `done` — Live signed-in check: confirmed `/home/v4-preview` still renders skyharbor-air and
+   meridian-health correctly (legacy-shape fallback, unregressed).
+3. `not yet started` — Separate, explicit, scoped action per tenant (not part of this merge):
+   regenerate a tenant's candidate against the fixed prompt, retrieve its fresh `industry_comparison`
+   via `home:knowledge-v4:inspect-candidate`, and confirm by inspection that positions are genuinely
    differentiated, benchmark_refs resolve, and the payment-integrity-style advantage/gap split
    renders correctly before treating that tenant's candidate as review-ready.
 
@@ -155,8 +160,8 @@ Root-causing this against the actual data (not just the output) found two compou
 - Repo-owned deploy workflow: `aca-main-deploy.yml`, triggered by merge.
 - Shared runtime mutators: none in this PR. No tenant is regenerated or approved as part of this
   merge.
-- Live signed-in proof required: yes — renderer change on an existing admin route. Required to
-  confirm no regression to the two tenants' currently-live content (see Rollout Plan step 2).
+- Live signed-in proof required: yes — renderer change on an existing admin route. Confirmed (see
+  QA / Validation and Rollout Plan step 2).
 
 ## Rollback Plan
 
@@ -188,6 +193,6 @@ approved under the new contract as part of this change.
   range + source + date, trend derived from dated observations) is tracked as a separate workstream
   and requires its own dataset manifest under `docs/governance/dataset-manifests/` per the New
   Dataset Onboarding Policy before any loading begins.
-- Live signed-in browser proof of the renderer (both the legacy-shape no-regression check and,
-  once a tenant is regenerated, the new calibrated table) is the explicit open item before this
-  record can be marked proven (see QA / Validation and Rollout Plan).
+- The new calibrated table itself has not yet been seen live -- only the legacy-shape fallback has
+  been proven in production, since no tenant has been regenerated under the new contract yet. That
+  is Rollout Plan step 3, a separate scoped action.
