@@ -220,6 +220,18 @@ export function validateIntegratedManifest(candidate, packet, options = {}) {
         });
         continue;
       }
+      // The honest-disclosure marker itself must say what's missing, not
+      // just flag that something is -- an empty gap note is functionally the
+      // same silent omission the rule above exists to catch.
+      if (insight.evidence_status === "not_evidenced" && !String(insight.evidence_gap_note ?? "").trim()) {
+        failures.push({
+          severity: "fail",
+          type: "missing_evidence_gap_note",
+          dimension_key: key,
+          message: `key_insight "${(insight.statement ?? "").slice(0, 60)}..." is marked evidence_status: "not_evidenced" but has no evidence_gap_note explaining what evidence is missing.`,
+        });
+        continue;
+      }
       // Semantic weakness check: every cited ID resolves, but if EVERY one
       // of them is a low-specificity placeholder locator, that is too weak
       // to actually establish a precise claim -- flag it, don't silently

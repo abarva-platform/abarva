@@ -1040,7 +1040,20 @@ function makePrompt(pass, packet, assembled) {
         "genuinely supports, or mark evidence_status: 'not_evidenced' instead of citing a " +
         "citation-shaped ID that doesn't actually establish the specific fact. Never treat " +
         "a broad supports category (risk/budget/value/adoption/architecture/governance) as " +
-        "license to cite it for any claim in that category. OVERRIDE NOTICE: " +
+        "license to cite it for any claim in that category.\n" +
+        "HARD RULE, checked mechanically after you respond, every conclusion, no exceptions: " +
+        "evidence_refs and evidence_status are a pair, not two independent fields -- exactly " +
+        "one of these two states is valid, nothing else:\n" +
+        "  (a) evidence_refs has >=1 real ID from evidence_index that actually supports THIS " +
+        "statement, AND evidence_status: 'evidenced'.\n" +
+        "  (b) evidence_refs is [], AND evidence_status: 'not_evidenced', AND " +
+        "evidence_gap_note names in one short phrase what evidence would be needed (e.g. " +
+        "'no source document ties initiatives to named executive sponsors').\n" +
+        "WRONG (a real defect this exact rule exists to catch): evidence_status: 'evidenced' " +
+        "with evidence_refs: [] -- claiming support while citing none. WRONG: evidence_status " +
+        "omitted entirely -- silence is not disclosure. If you are not certain a claim is " +
+        "evidenced, default to (b); a smaller number of honestly-marked conclusions is " +
+        "correct, a larger number of falsely-evidenced ones is not. OVERRIDE NOTICE: " +
         "common.visual_contract_rules described the OLD per-dimension chart contract used " +
         "elsewhere in this pipeline -- it has been removed from this payload and does not " +
         "apply here.",
@@ -1066,14 +1079,16 @@ function makePrompt(pass, packet, assembled) {
           "dimension that reads this section -- not a per-dimension takeaway.",
         conclusions_shape:
           "An array of shared enterprise conclusions -- job 4/5's supporting detail. Each: " +
-          "{id, statement, theme, evidence_refs, evidence_status, applies_to_dimensions, " +
-          "confidence}. applies_to_dimensions: 1 or more dimension_key values from " +
-          "dimension_catalog -- tag every dimension this conclusion is actually relevant " +
-          "to, not just one. evidence_status: 'evidenced' only if evidence_refs contains " +
-          "at least one sufficiently specific ID for this exact statement; otherwise " +
-          "'not_evidenced' with an empty evidence_refs array. confidence: one of " +
-          "loaded_fact, derived_measure, industry_pattern, strategic_inference, " +
-          "missing_evidence.",
+          "{id, statement, theme, evidence_refs, evidence_status, evidence_gap_note, " +
+          "applies_to_dimensions, confidence}. applies_to_dimensions: 1 or more " +
+          "dimension_key values from dimension_catalog -- tag every dimension this " +
+          "conclusion is actually relevant to, not just one. evidence_status: 'evidenced' " +
+          "only if evidence_refs contains at least one sufficiently specific ID for this " +
+          "exact statement; otherwise 'not_evidenced' with an empty evidence_refs array " +
+          "and a filled-in evidence_gap_note (see the HARD RULE above -- this is checked " +
+          "mechanically, not a style preference). evidence_gap_note: omit only when " +
+          "evidence_status is 'evidenced'. confidence: one of loaded_fact, derived_measure, " +
+          "industry_pattern, strategic_inference, missing_evidence.",
         decisions_recommendations_open_questions_shape:
           "decisions, recommendations, and open_questions are each an array of " +
           "{id, statement, applies_to_dimensions}. Keep each list focused -- a handful " +
@@ -1086,7 +1101,9 @@ function makePrompt(pass, packet, assembled) {
           "inferences that exist in the source data -- not 38, not one per dimension; " +
           "reuse via applies_to_dimensions instead of restating. evidence_refs values: " +
           "evidence_id from evidence_index only -- an ID not in that list is invalid, " +
-          "never invent one. No generic introductions, no restated navigation labels, no " +
+          "never invent one. Every single conclusion, no exceptions: evidence_status " +
+          "'evidenced' with evidence_refs: [] is invalid and will fail the candidate -- " +
+          "see the HARD RULE above. No generic introductions, no restated navigation labels, no " +
           "raw records, no methodology explanations. This is a real strategic synthesis, " +
           "not a compressed manifest -- use the room available for genuine analytical " +
           "depth in jobs 2-4, not for repeating the same point across many conclusions. " +
@@ -2046,6 +2063,7 @@ export function renderDimensionsFromBook(book, packet) {
         statement: c.statement ?? "",
         evidence_refs: Array.isArray(c.evidence_refs) ? c.evidence_refs : [],
         evidence_status: c.evidence_status ?? (Array.isArray(c.evidence_refs) && c.evidence_refs.length > 0 ? "evidenced" : "not_evidenced"),
+        ...(c.evidence_gap_note ? { evidence_gap_note: c.evidence_gap_note } : {}),
       })),
       // Job 3 output (material_gaps/material_advantages), filtered to this
       // dimension the same way conclusions are -- these are the "few things

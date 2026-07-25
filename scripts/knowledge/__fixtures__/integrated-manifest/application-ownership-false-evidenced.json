@@ -17,9 +17,9 @@
       "key_insights": [
         {
           "statement": "First fixture insight for enterprise_thesis.",
-          "evidence_refs": [],
-          "evidence_status": "not_evidenced",
-          "evidence_gap_note": "No source document in evidence_index covers this claim."
+          "evidence_refs": [
+            "EVID-FIX-0001"
+          ]
         },
         {
           "statement": "Second fixture insight for enterprise_thesis.",
@@ -586,16 +586,9 @@
       "executive_takeaway": "A concise, non-numeric executive takeaway for the apps dimension used only for fixture testing.",
       "key_insights": [
         {
-          "statement": "First fixture insight for apps.",
-          "evidence_refs": [
-            "EVID-FIX-0001"
-          ]
-        },
-        {
-          "statement": "Second fixture insight for apps.",
-          "evidence_refs": [
-            "EVID-FIX-0002"
-          ]
+          "statement": "Application ownership is fully captured on source records, giving complete accountability coverage.",
+          "evidence_refs": [],
+          "evidence_status": "evidenced"
         }
       ],
       "strategic_implication": "Fixture strategic implication for apps.",

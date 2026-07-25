@@ -37,9 +37,22 @@ const cases = [
   // not fabrication) but must produce a warning distinct from a hard fail.
   { fixture: "weak-evidence-specificity", expectStatus: "pass", expectRuleIds: ["weak_evidence_specificity"] },
   // An honest "no evidence exists for this" disclosure (empty evidence_refs
-  // + evidence_status: not_evidenced) must NOT be treated as the silent
-  // omission insight_without_evidence normally catches.
+  // + evidence_status: not_evidenced + a real evidence_gap_note) must NOT be
+  // treated as the silent omission insight_without_evidence normally
+  // catches.
   { fixture: "honest-not-evidenced", expectStatus: "pass", expectRuleIds: [] },
+  // Real production defect (first-capital, 2026-07-25): Claude wrote
+  // evidence_status: "evidenced" with evidence_refs: [] -- claiming support
+  // while citing none. These three fixtures reproduce the exact three
+  // claim patterns from that failure (see docs/releases/records/
+  // 2026-07-25-home-v4-evidence-contract-fix.md) to prove the fix holds
+  // against the real defect shape, not just a synthetic one.
+  { fixture: "franchise-breadth-false-evidenced", expectStatus: "fail", expectRuleIds: ["insight_without_evidence"] },
+  { fixture: "relationship-sponsor-linkage-false-evidenced", expectStatus: "fail", expectRuleIds: ["insight_without_evidence"] },
+  { fixture: "application-ownership-false-evidenced", expectStatus: "fail", expectRuleIds: ["insight_without_evidence"] },
+  // The honest-disclosure marker itself must say what's missing -- an empty
+  // gap note is the same silent omission the rule above exists to catch.
+  { fixture: "not-evidenced-missing-gap-note", expectStatus: "fail", expectRuleIds: ["missing_evidence_gap_note"] },
 ];
 
 let failed = 0;
