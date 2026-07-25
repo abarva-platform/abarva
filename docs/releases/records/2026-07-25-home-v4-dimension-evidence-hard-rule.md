@@ -60,7 +60,14 @@ are unchanged -- this PR fixes the prompt to meet the existing bar, not the bar 
 
 ## Client Applicability
 
-- Internal only.
+- Internal only, no client-visible surface changes. This PR edits the prompt sent to Claude during
+  the operator-triggered book-mode generation job; it does not touch any route, component, or API
+  a signed-in tenant user can reach. The candidates it produces land in `home_knowledge_packs` with
+  `status: candidate`, visible only on the platform-admin-gated `/home/v4-preview` review route --
+  no tenant's live `/home` experience changes as a result of this fix or the regeneration it
+  enables. skyharbor-air and meridian-health's currently-approved, currently-live candidates are
+  untouched; the new regenerated candidates supersede only the earlier `candidate`-status rows from
+  today's first regeneration attempt, not anything approved.
 
 ## Changes Included
 
