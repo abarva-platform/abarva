@@ -208,11 +208,53 @@ export interface HomeV4EnterpriseNarrative {
   strategic_tensions: string[];
 }
 
-export interface HomeV4IndustryComparisonItem {
-  pattern: string;
-  this_tenant_position: string;
-  specifics: string;
+export type HomeV4IndustryOverallPosition = "ahead" | "at_parity" | "mixed" | "behind" | "not_applicable";
+export type HomeV4IndustryDimensionKey =
+  | "strategic_intent"
+  | "operational_capability"
+  | "data_foundation"
+  | "technology_readiness"
+  | "governance_and_controls"
+  | "measurement_and_value"
+  | "scale_readiness";
+export type HomeV4IndustryDimensionPosition = "ahead" | "at_parity" | "behind" | "not_evidenced" | "not_applicable";
+
+export interface HomeV4IndustryComparisonDimension {
+  dimension: HomeV4IndustryDimensionKey | string;
+  position: HomeV4IndustryDimensionPosition;
+  explanation: string;
   evidence_refs: string[];
+}
+
+export interface HomeV4IndustryComparisonMetric {
+  metric_id?: string;
+  metric_name: string;
+  baseline_value?: string | null;
+  actual_value?: string | null;
+  target_value?: string | null;
+  evidence_status: "available" | "partial" | "missing";
+  required_next_step?: string;
+  evidence_refs?: string[];
+}
+
+export interface HomeV4IndustryComparisonItem {
+  pattern_id?: string;
+  pattern: string;
+  // Calibrated dimensional shape (2026-07-25 fix). Optional so already-
+  // approved candidates generated before this fix -- currently live for
+  // skyharbor-air and meridian-health -- keep rendering via the legacy
+  // fields below until they are regenerated.
+  overall_position?: HomeV4IndustryOverallPosition;
+  dimensions?: HomeV4IndustryComparisonDimension[];
+  metrics?: HomeV4IndustryComparisonMetric[];
+  advantage_to_preserve?: string | null;
+  gap_to_close?: string | null;
+  executive_implication?: string;
+  benchmark_refs?: string[];
+  // Legacy flat shape (pre-2026-07-25 candidates).
+  this_tenant_position?: string;
+  specifics?: string;
+  evidence_refs?: string[];
 }
 
 export interface HomeV4MaterialItem {
