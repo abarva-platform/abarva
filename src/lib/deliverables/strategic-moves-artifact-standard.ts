@@ -4,6 +4,7 @@ import {
   CHARTER_PLACEHOLDER_LABELS,
   P3_P4_WORD_BAND_CONTRACTS,
 } from "@/lib/deliverables/shared/artifact-contracts";
+import { EXECUTIVE_ROADMAP_REFERENCE } from "@/lib/deliverables/shared/reference-library/executive-roadmap-reference";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import { renderPhaseDeliverablePackagePrompt } from "@/lib/programs/phase-deliverable-package-contract";
 import type { SolutionContext } from "@/lib/programs/solution-context";
@@ -205,6 +206,7 @@ export function premiumGoldenBarOptionsForArtifact(
   maximumWordCount?: number;
   enforceMaximumWordCount?: boolean;
   advisoryMaximumWordCount?: number;
+  forbiddenContentPatterns?: readonly RegExp[];
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -306,6 +308,15 @@ export function premiumGoldenBarOptionsForArtifact(
     enforceMaximumWordCount,
     ...(advisoryMaximumWordCount ? { advisoryMaximumWordCount } : {}),
     forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
+    // REF_EXECUTIVE_ROADMAP pilot (2026-07-25) — mirrors the orchestrator's
+    // forbiddenContentPatterns for the same artifact type, so both pipelines
+    // flag the same "this reads like an implementation schedule" signal.
+    ...(artifact === "execution_roadmap"
+      ? {
+          forbiddenContentPatterns:
+            EXECUTIVE_ROADMAP_REFERENCE.forbiddenPatterns,
+        }
+      : {}),
   };
 }
 
@@ -738,6 +749,46 @@ Length discipline:
 - Do not repeat the full target architecture or operating model.`;
 }
 
+/**
+ * REF_EXECUTIVE_ROADMAP pilot (2026-07-25) — before this, `execution_roadmap`
+ * had no dedicated prompt at all here and fell through to
+ * `genericPhaseAssignment(4)`'s one shared P4 sentence. This reads the single
+ * shared contract (shared/reference-library/executive-roadmap-reference.ts)
+ * so the orchestrator's MOVES_ROADMAP brief and this pipeline can never
+ * silently diverge on what a roadmap must show, the way word budgets did
+ * before the earlier reconciliation work this session.
+ */
+function p4RoadmapAssignment(ctx?: SolutionContext): string {
+  const ref = EXECUTIVE_ROADMAP_REFERENCE;
+  const moveReference = ctx ? clientMoveReference(ctx) : "this Move";
+  return `PHASE-SPECIFIC ASSIGNMENT — EXECUTIVE TRANSITION ROADMAP (REF_EXECUTIVE_ROADMAP)
+Purpose: ${ref.purpose.replace(/^Show/, "show")} for ${moveReference}.
+
+Executive storytelling mandate — this is a sequencing ARGUMENT, not a schedule:
+- Executive question this artifact answers: ${ref.story.executiveQuestion}
+- Core message (state this as the opening thesis, in your own words, never the bare word "Roadmap"): ${ref.story.coreMessage}
+- Decision required of the sponsor: ${ref.story.decisionRequired}
+- Write as a senior advisor explaining the sequence to an executive. Lead with the conclusion (why
+  this order), then support it. Do not sound like a template, checklist, or project-plan export.
+
+Structure — horizons across the top, workstreams down the side:
+- Horizons (use exactly these ${ref.maxHorizons}, in order): ${ref.horizons.join(" → ")}.
+- Workstreams (use at most ${ref.maxWorkstreams} of): ${ref.workstreams.join(", ")}.
+- At most ${ref.maxActivitiesPerCell} major activities per horizon/workstream cell.
+- Every roadmap item must carry: ${ref.requiredItemFields.join(", ")}.
+- Show decision gates (diamond) between horizons and dependencies (dashed) explicitly — this
+  roadmap does not advance to the next horizon without a named gate decision.
+
+Forbidden — this must read as an executive sequencing argument, not an implementation schedule:
+- No sprint numbers, no day/week counters, no explicit calendar dates unless the client has
+  approved specific committed dates.
+- No Gantt-chart-style task lists. Use outcome language, not task-list language.
+
+Length discipline:
+- Target ${P3_P4_WORD_BAND_CONTRACTS.roadmap.minWords.toLocaleString()}-${P3_P4_WORD_BAND_CONTRACTS.roadmap.targetWordsMax.toLocaleString()} rendered words.
+- Do not repeat the full target architecture, operating model, or business case.`;
+}
+
 function genericPhaseAssignment(phase: number): string {
   const byPhase: Record<number, string> = {
     0: "Frame the opportunity, evidence, value hypothesis, known/unknowns, and P1 recommendation.",
@@ -764,6 +815,8 @@ export function phaseAssignmentForArtifact(args: {
     return p3OperatingModelAssignment(args.context);
   if (args.artifact === "sourcing_strategy")
     return p3SourcingStrategyAssignment(args.context);
+  if (args.artifact === "execution_roadmap")
+    return p4RoadmapAssignment(args.context);
   return genericPhaseAssignment(args.phase);
 }
 

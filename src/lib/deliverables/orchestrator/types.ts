@@ -141,6 +141,24 @@ export interface QualityBar {
   requiresCentralTension?: boolean; // what tension/problem the document is resolving
   requiresOptionsConsidered?: boolean; // real alternatives weighed, not one path presented as inevitable
   requiresEvidenceGapsNoted?: boolean; // what remains unproven must be stated, not implied away
+  /**
+   * Reference-contract enforcement (REF_EXECUTIVE_ROADMAP pilot, 2026-07-25):
+   * per-exhibit-kind required elements, presence-checked against the matching
+   * exhibit's rendered description. `expectedExhibits[].requiredElements`
+   * (types.ts, used since the 2026-07-15 pilot) was only ever read into the
+   * PROMPT — never actually validated. This is the first real check; start
+   * advisory-only (warning, not blocker) until proven on real generations.
+   */
+  requiredExhibitElementsByKind?: {
+    kind: string;
+    elements: readonly string[];
+  }[];
+  /**
+   * Content patterns that must NOT appear (e.g. sprint numbers, Gantt-style
+   * task lists in an executive roadmap) — matched against the full rendered
+   * body. Advisory-only for the same reason as requiredExhibitElementsByKind.
+   */
+  forbiddenContentPatterns?: readonly RegExp[];
   tone: "board_grade_consulting";
 }
 
@@ -196,7 +214,8 @@ export interface ExpectedExhibit {
     | "conceptual_architecture" // business/capability model: personas, capabilities, channels, trust boundaries, outcomes
     | "logical_architecture" // solution components: experience/orchestration/agents/models/context/integration/data/identity/observability/governance/human-in-the-loop
     | "physical_architecture" // deployable services: cloud boundaries, regions, networks, runtimes, endpoints, data platforms, queues, secrets, CI/CD
-    | "agent_orchestration"; // the explicit trigger→router→planner→context→tool→model→gate→approval→action→trace flow
+    | "agent_orchestration" // the explicit trigger→router→planner→context→tool→model→gate→approval→action→trace flow
+    | "roadmap"; // P4 executive roadmap — horizons × workstreams with decision gates, not a Gantt chart. See REF_EXECUTIVE_ROADMAP (shared/reference-library/executive-roadmap-reference.ts).
   purpose: string;
   preferredFormat: OutputFormat; // e.g. wide matrices → 'xlsx'
   /**

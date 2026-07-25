@@ -20,6 +20,7 @@ import {
   CHARTER_CONTRACT,
   P3_P4_WORD_BAND_CONTRACTS,
 } from "@/lib/deliverables/shared/artifact-contracts";
+import { EXECUTIVE_ROADMAP_REFERENCE } from "@/lib/deliverables/shared/reference-library/executive-roadmap-reference";
 
 /** Spreads a shared P3/P4 word-band contract's numbers into QualityBar's
  * shape, so quality-validator.ts's banded logic (pass/advisory/block) applies
@@ -162,6 +163,24 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     minSections: 6,
     ...wordBandFrom("roadmap"),
     requiresEvidenceGapsNoted: true,
+    // REF_EXECUTIVE_ROADMAP pilot (2026-07-25): the roadmap must argue why
+    // this sequence de-risks the Move (EXECUTIVE_ROADMAP_REFERENCE.story),
+    // not just list horizons — reuses the same TENSION_RE heuristic already
+    // proven for Charter/business_case rather than a new check.
+    requiresCentralTension: true,
+    requiredExhibitElementsByKind: [
+      {
+        kind: "roadmap",
+        elements: [
+          ...EXECUTIVE_ROADMAP_REFERENCE.horizons,
+          "decision gate",
+          "dependency",
+          "owner",
+          "success measure",
+        ],
+      },
+    ],
+    forbiddenContentPatterns: EXECUTIVE_ROADMAP_REFERENCE.forbiddenPatterns,
   },
   "moves::estimate_model": {
     // P4 financial model is table/workbook-led. It should explain assumptions

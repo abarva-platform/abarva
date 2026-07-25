@@ -1,0 +1,81 @@
+{
+  "_comment": "Illustrative RoadmapReference-shaped data (synthetic fixture, not a real client) — shows the required item fields per requiredItemFields in executive-roadmap-reference.ts. The current renderer draws from the model's free-text exhibit description, not structured JSON like this; this file documents the target shape a future structured-data renderer could consume.",
+  "coreMessage": "A four-stage transition establishes trusted data first, proves value in one function, then scales safely.",
+  "horizons": [
+    {
+      "name": "Mobilize",
+      "workstreams": {
+        "Business & Process": [
+          {
+            "outcome": "Sponsor and steering committee confirmed",
+            "majorActivity": "Charter signoff and governance cadence set",
+            "dependency": "None",
+            "decisionOrGate": "Charter approval",
+            "ownerRole": "Sponsor",
+            "timing": "Immediate",
+            "successMeasure": "Charter signed"
+          }
+        ],
+        "Data": [
+          {
+            "outcome": "Trusted data source identified",
+            "majorActivity": "Data quality baseline assessment",
+            "dependency": "Access to source systems",
+            "decisionOrGate": "Data readiness gate",
+            "ownerRole": "Data lead",
+            "timing": "Early",
+            "successMeasure": "Baseline quality score established"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Establish Foundation",
+      "workstreams": {
+        "Technology": [
+          {
+            "outcome": "Core platform integration proven",
+            "majorActivity": "Pilot integration with one system of record",
+            "dependency": "Data readiness gate passed",
+            "decisionOrGate": "Platform go/no-go",
+            "ownerRole": "Technology lead",
+            "timing": "Mid",
+            "successMeasure": "Integration test passes"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Deliver Priority Outcomes",
+      "workstreams": {
+        "AI / Automation": [
+          {
+            "outcome": "First member-service outcome demonstrated",
+            "majorActivity": "Deploy agent-assist to one contact-center function",
+            "dependency": "Platform go/no-go passed",
+            "decisionOrGate": "Value demonstration gate",
+            "ownerRole": "Operations lead",
+            "timing": "Later",
+            "successMeasure": "Handle-time reduction validated against baseline"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Scale and Optimize",
+      "workstreams": {
+        "Change & Adoption": [
+          {
+            "outcome": "Enterprise-wide adoption",
+            "majorActivity": "Extend to remaining functions with change management support",
+            "dependency": "Value demonstration gate passed",
+            "decisionOrGate": "Scale approval",
+            "ownerRole": "Sponsor",
+            "timing": "Final",
+            "successMeasure": "Adoption rate across all functions"
+          }
+        ]
+      }
+    }
+  ]
+}
