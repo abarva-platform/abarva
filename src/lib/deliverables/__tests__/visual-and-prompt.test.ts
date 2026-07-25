@@ -257,19 +257,21 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     });
     expect(p.user).toContain("STRATEGIC MOVES PREMIUM ARTIFACT BRIEF");
     expect(p.user).toContain("PHASE-SPECIFIC ASSIGNMENT — P1 MOVE CHARTER");
-    expect(p.user).toContain("concise charter brief / gate decision record");
+    expect(p.user).toContain(
+      "authorizes and bounds the Discovery phase for this Move",
+    );
     expect(p.user).toContain("Document presentation standard");
     expect(p.user).toContain("Target 900-1,100 body words");
     expect(p.user).toContain("Hard maximum 1,300 body words");
     expect(p.user).toContain("Charter Decision box");
-    expect(p.user).toContain("Discovery Questions and Evidence Required");
+    expect(p.user).toContain("Discovery Preparation table");
+    expect(p.user).toContain("Discovery Activities table");
     expect(p.user).toContain("Target depth: 900-1,100 words");
-    expect(p.user).toContain(
-      "Do not invent current-state process, system landscape",
-    );
-    expect(p.user).toContain("Client decision required");
-    expect(p.user).toContain("Hypothesis to test in P2");
-    expect(p.user).toContain("Evidence required for P2");
+    expect(p.user).toContain("Discovery Preparation");
+    expect(p.user).toContain("Discovery Guidebook");
+    expect(p.user).toContain("Client Decision Required");
+    expect(p.user).toContain("To Validate During Discovery");
+    expect(p.user).toContain("Evidence Required for P2");
   });
 
   it("P1 package contract stays compact and does not ask for a board-pack charter", () => {

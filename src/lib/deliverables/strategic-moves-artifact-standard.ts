@@ -79,11 +79,12 @@ const DEPTH_BY_ARTIFACT: Partial<
   charter: {
     targetWords: `${CHARTER_CONTRACT.wordBudget.targetWords.min}-${CHARTER_CONTRACT.wordBudget.targetWords.max.toLocaleString()}`,
     minWords: CHARTER_CONTRACT.wordBudget.minWords,
-    // Generous on tokens, firm on words (2026-07-25): the word ceiling
-    // (hardMaxWords) is what enforces conciseness; a starved token budget
-    // would only constrain the model's ability to reason/draft before
-    // compressing to that word count, which hurts quality, not just length.
-    maxTokens: 8000,
+    // Reconciled 2026-07-25: 4,000 tokens is generous enough for structured
+    // content/tables well above the 1,300-word hard ceiling, without being
+    // unbounded — unbounded raises latency, cost, and the odds of
+    // over-generation followed by truncation/rejection. Read from the shared
+    // contract so it can't drift from the orchestrator pipeline's copy again.
+    maxTokens: CHARTER_CONTRACT.maxOutputTokens,
     hardMaxWords: CHARTER_CONTRACT.wordBudget.hardMaxWords,
   },
   discovery_report: {
@@ -362,39 +363,60 @@ function clientMoveReference(ctx: SolutionContext): string {
 function p1Assignment(): string {
   const wb = CHARTER_CONTRACT.wordBudget;
   const labels = CHARTER_PLACEHOLDER_LABELS;
+  const requiredSections = CHARTER_CONTRACT.sections
+    .map((s, i) => `${i + 1}. ${s.title} — ${s.intent}`)
+    .join("\n");
   const presentationElements = CHARTER_CONTRACT.presentationElements
     .map((element, i) => `${i + 1}. ${element}`)
     .join("\n");
   return `PHASE-SPECIFIC ASSIGNMENT — P1 MOVE CHARTER
-Purpose: record the approved P0 bet well enough to authorize P2 Discovery.
-This is a concise charter brief / gate decision record, not a discovery report, solution design,
-architecture, roadmap, estimate, operating model, RACI appendix, or board pack.
+Create an executive Charter that authorizes and bounds the Discovery phase for this Move.
 
-The artifact must answer:
-- what problem or opportunity P0 captured
-- what short Move name and transformation pattern were approved
-- which sponsor/title and operating-owner roles are accountable
-- what is in scope, out of scope, and adjacent
-- what directional outcomes and success criteria P2 must validate
-- what assumptions, caveats, and missing evidence remain
-- what P2 evidence families, sessions, and client inputs are needed next
+The Charter is a governance document. It authorizes the work, defines its purpose and boundaries,
+aligns sponsors, and prepares the client for Discovery.
 
-You consume only structured P0 capture, approved enterprise context, and sponsor input. Never
-invent information that should have been collected in P0. Every sentence in this Charter must be
-traceable to one of those three sources. If a required section cannot be populated from them, do
-not fabricate content for it — write one of these exact labels instead, whichever fits:
+The Charter is not a diagnostic report, solution design, architecture document, business case,
+implementation roadmap, or project plan.
+
+Near the beginning of the Charter, include this statement verbatim:
+"${CHARTER_CONTRACT.boundaryStatement}"
+
+Required sections, in order:
+${requiredSections}
+
+For "${CHARTER_CONTRACT.sections[7]?.title}" specifically: this section prepares the client for
+Discovery — it does not perform the assessment. Include an executive table (Area / What to Expect /
+What We Need From You / Priority) covering Business Process, People & Governance, Technology, Data,
+Performance, and Risk & Controls; then a second table of typical Discovery activities and their
+typical duration (e.g. Executive Sponsor Session ~60 minutes, Business Process Workshop ~90 minutes,
+Technology Review ~60 minutes, Data Review ~60 minutes, Validation & Readout ~60 minutes); then a
+short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be
+generated after Charter approval — containing interview questionnaires, workshop agendas, guided
+templates, evidence checklists, and data-capture instructions. Do not embed that detailed material
+in the Charter itself.
+
+You consume only approved P0 structured capture, approved enterprise context, approved evidence,
+and explicit sponsor input. Never invent information that should have been collected in P0. Every
+sentence in this Charter must be traceable to one of those sources. If a required section cannot be
+populated from them, do not fabricate content for it — write one of these exact labels instead,
+whichever fits:
 - "${labels.clientDecisionRequired}" (a decision only the client/sponsor can make)
-- "${labels.hypothesisToTestInP2}" (a plausible direction that P2 discovery must validate)
+- "${labels.toValidateDuringDiscovery}" (something Discovery itself must confirm — not a risk you infer)
 - "${labels.evidenceRequiredForP2}" (a fact that only P2 evidence collection can supply)
 No Charter section should ever require P2 evidence to be considered complete — a section that is
 honestly incomplete, labeled as above, is correct; a section that is confidently wrong is not.
+Never invent current-state findings, root causes, architecture, solution recommendations,
+technology selections, roadmaps, operating models, costs, benefits, named owners, dates, baselines,
+or financial estimates. Do not use placeholder text such as [DATA GAP].
+Every quantitative statement must include its evidence citation in the same sentence, or be
+explicitly labeled as an assumption requiring validation.
 
 Document presentation standard
-Produce an executive-quality Charter designed for approximately 2-3 pages.
+Produce an executive-quality Charter designed for approximately ${CHARTER_CONTRACT.estimatedRenderedPages} pages.
 - Target ${wb.targetWords.min}-${wb.targetWords.max.toLocaleString()} body words.
 - Hard maximum ${wb.hardMaxWords.toLocaleString()} body words.
 - Use concise executive prose, short paragraphs, and descriptive headings.
-- Use no more than three tables.
+- Use no more than ${CHARTER_CONTRACT.maxSubstantiveTables} substantive tables.
 - Prefer tables where they improve decision clarity; do not convert every section into a table.
 - Keep table cells concise and scannable.
 - Do not repeat the same information in prose and tables.
@@ -404,17 +426,12 @@ Required presentation elements:
 ${presentationElements}
 
 Rendering requirements (content-level — exact border width, colors, fonts, margins, padding, cover
-treatment, and footer are enforced by the document renderer, not by you):
+treatment, headers, and footers are enforced by the document renderer, not by you):
 - Use clear section hierarchy and consistent heading levels.
 - Use bordered tables with a distinct header row.
 - Keep the document free of markdown symbols, raw HTML, code fences, and formatting instructions.
 - Do not use excessive bolding, colored callouts, icons, or decorative graphics.
-
-Hard limits:
-- Do not invent current-state process, system landscape, org structure, baseline metrics, risks,
-  solution options, architecture, roadmap, operating model, estimates, owners, names, or dates.
-- If a detail is useful but not proved yet, use one of the three exact labels above — never write
-  a vague hedge like "To validate in P2" in place of them.`;
+- Focus on producing concise, structured executive content rather than presentation markup.`;
 }
 
 function p2Assignment(): string {

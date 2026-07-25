@@ -44,13 +44,15 @@ export interface CharterPreflightResult {
  * inference; it should use one of the three placeholder labels instead.
  */
 const CHARTER_SECTION_TO_P0_CAPTURE_KEYS: Readonly<Record<string, string[]>> = {
-  exec_summary: ["problem_statement", "initial_value_hypothesis"],
-  problem_opportunity: ["business_trigger", "problem_statement"],
-  sponsor_commitment: ["stakeholder_owner_view"],
+  charter_decision: ["problem_statement", "initial_value_hypothesis"],
+  opportunity_context: ["business_trigger", "problem_statement"],
+  intended_outcomes: ["outcomes_success"],
   scope: ["affected_function_process", "scope_out"],
-  success_criteria: ["initial_value_hypothesis", "outcomes_success"],
-  kill_criterion: ["missing_evidence_open_questions"],
-  recommendation: ["recommendation_to_advance"],
+  success_measures: ["outcomes_success"],
+  sponsorship_governance: ["stakeholder_owner_view"],
+  known_constraints_dependencies: ["missing_evidence_open_questions"],
+  discovery_preparation: ["discovery_questions", "known_evidence"],
+  authorization_next_steps: ["recommendation_to_advance"],
 };
 
 function hasContent(value: string | undefined): boolean {

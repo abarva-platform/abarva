@@ -12,10 +12,13 @@ describe("resolveQualityBar", () => {
     expect(qb.enforceMaxAsBlocker).toBe(true);
     // the Charter's whole point is staying concise — its band must be
     // materially smaller than the architecture doc's.
-    expect(qb.minSections).toBe(7);
-    // Aligned to the shared contract's floor (src/lib/deliverables/shared/
-    // artifact-contracts.ts) — matches the golden-bar pipeline's own floor.
-    expect(qb.minBodyWords).toBe(700);
+    // 9 sections since the 2026-07-25 redesign (Discovery Preparation as its
+    // own first-class section) — see shared/artifact-contracts.ts.
+    expect(qb.minSections).toBe(9);
+    // Aligned to the shared contract (src/lib/deliverables/shared/
+    // artifact-contracts.ts) — reconciled 2026-07-25 to equal the target
+    // range's own minimum, not a looser historical value.
+    expect(qb.minBodyWords).toBe(900);
     expect(qb.targetBodyWordsMax!).toBe(1_300);
   });
 

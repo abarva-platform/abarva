@@ -128,8 +128,8 @@ describe("assembleDeliverable", () => {
     });
     const sections: RenderableSection[] = [
       {
-        key: "recommendation",
-        title: "Recommendation & P2 Handoff",
+        key: "authorization_next_steps",
+        title: "Authorization & Immediate Next Steps",
         bodyMarkdown:
           "Approve P2 Discovery with the charter scope, evidence families, and caveats carried forward as the governed source of truth.",
         groundingMode: "mixed",

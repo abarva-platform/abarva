@@ -18,11 +18,15 @@ describe("computeCharterPreflight", () => {
 
     expect(result.ready).toBe(true);
     expect(result.missingRequiredInputs).toEqual([]);
-    expect(result.sourceCoverageBySection.exec_summary.status).toBe("complete");
-    expect(result.sourceCoverageBySection.exec_summary.sourceRefs).toEqual([
-      "p0_capture:problem_statement",
-      "p0_capture:initial_value_hypothesis",
-    ]);
+    expect(result.sourceCoverageBySection.charter_decision.status).toBe(
+      "complete",
+    );
+    expect(result.sourceCoverageBySection.charter_decision.sourceRefs).toEqual(
+      ["p0_capture:problem_statement", "p0_capture:initial_value_hypothesis"],
+    );
+    expect(result.sourceCoverageBySection.discovery_preparation.status).toBe(
+      "complete",
+    );
   });
 
   it("marks a section missing when none of its backing P0 keys have content", () => {
@@ -31,14 +35,14 @@ describe("computeCharterPreflight", () => {
     });
 
     expect(result.ready).toBe(false);
-    expect(result.missingRequiredInputs).toContain("sponsor_commitment");
+    expect(result.missingRequiredInputs).toContain("sponsorship_governance");
     expect(result.missingRequiredInputs).toContain("scope");
-    expect(result.sourceCoverageBySection.sponsor_commitment.status).toBe(
+    expect(result.sourceCoverageBySection.sponsorship_governance.status).toBe(
       "missing",
     );
-    expect(result.sourceCoverageBySection.sponsor_commitment.sourceRefs).toEqual(
-      [],
-    );
+    expect(
+      result.sourceCoverageBySection.sponsorship_governance.sourceRefs,
+    ).toEqual([]);
   });
 
   it("marks a section partial when only some of its backing P0 keys have content", () => {
@@ -47,21 +51,25 @@ describe("computeCharterPreflight", () => {
       // initial_value_hypothesis intentionally absent
     });
 
-    expect(result.sourceCoverageBySection.exec_summary.status).toBe("partial");
+    expect(result.sourceCoverageBySection.charter_decision.status).toBe(
+      "partial",
+    );
     // A partial section is not "missing" — it does not block readiness.
-    expect(result.missingRequiredInputs).not.toContain("exec_summary");
+    expect(result.missingRequiredInputs).not.toContain("charter_decision");
   });
 
-  it("covers exactly the Charter's 7 sections", () => {
+  it("covers exactly the Charter's 9 sections (redesigned 2026-07-25)", () => {
     const result = computeCharterPreflight({});
     expect(Object.keys(result.sourceCoverageBySection)).toEqual([
-      "exec_summary",
-      "problem_opportunity",
-      "sponsor_commitment",
+      "charter_decision",
+      "opportunity_context",
+      "intended_outcomes",
       "scope",
-      "success_criteria",
-      "kill_criterion",
-      "recommendation",
+      "success_measures",
+      "sponsorship_governance",
+      "known_constraints_dependencies",
+      "discovery_preparation",
+      "authorization_next_steps",
     ]);
   });
 });

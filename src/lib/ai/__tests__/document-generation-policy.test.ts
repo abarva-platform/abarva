@@ -91,19 +91,20 @@ describe("document-generation-policy", () => {
     expect(estimateMaxPassOutputTokens()).toBe(66000);
   });
 
-  it("gives P1 charters the same generous token budget as any other deliverable — word count enforces conciseness, not a starved token ceiling", () => {
+  it("gives P1 charters the canonical 4,000-token ceiling from the shared contract — generous, but not unbounded", () => {
     expect(
       resolvePassTokenBudget({
         pass: "section_draft",
         deliverableType: "Program Charter",
       }),
-    ).toBe(12000);
+    ).toBe(4000);
     expect(
       resolvePassTokenBudget({
         pass: "synthesis",
         deliverableType: "charter",
       }),
-    ).toBe(6000);
+    ).toBe(4000);
+    // Every other deliverable type still gets the generic per-profile default.
     expect(
       resolvePassTokenBudget({
         pass: "section_draft",

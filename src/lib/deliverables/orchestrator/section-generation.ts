@@ -334,8 +334,16 @@ function fallbackRecommendation(
   const supplied = synth.recommendation?.trim();
   if (supplied && supplied.split(/\s+/).length >= 12) return supplied;
 
+  // Matches "Authorization & Immediate Next Steps" (the Charter's redesigned
+  // 2026-07-25 closing section) as well as the older "recommendation"/
+  // "handoff" naming other deliverable types still use. Deliberately does NOT
+  // match bare "decision" — the Charter's own "Charter Decision" section
+  // would otherwise be picked up first (wrong section: that's the up-front
+  // authorize/hold call, not the closing recommendation/next-steps content).
   const recommendationSection = sections.find((s) =>
-    /recommendation|handoff|decision/i.test(`${s.key} ${s.title}`),
+    /recommendation|handoff|authorization|next.?steps/i.test(
+      `${s.key} ${s.title}`,
+    ),
   );
   const firstSentence = recommendationSection?.bodyMarkdown
     .replace(/[#*_`>|-]/g, " ")

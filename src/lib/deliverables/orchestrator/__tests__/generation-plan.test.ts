@@ -207,40 +207,45 @@ describe("MOVES_CHARTER structure (phase discipline)", () => {
     expect(structure).toBeTruthy();
     expect(structure.sections.map((s) => s.key)).not.toContain("current_state");
     expect(structure.requiredSectionKeys).not.toContain("current_state");
-    // decision/commitment sections are present
+    // decision/commitment sections are present (redesigned 2026-07-25 — see
+    // src/lib/deliverables/shared/artifact-contracts.ts's CHARTER_CONTRACT)
     for (const k of [
-      "sponsor_commitment",
-      "success_criteria",
-      "kill_criterion",
+      "sponsorship_governance",
+      "success_measures",
+      "known_constraints_dependencies",
+      "discovery_preparation",
     ]) {
       expect(structure.sections.map((s) => s.key)).toContain(k);
     }
     expect(structure.fixedStructure).toBe(true);
-    expect(structure.sections).toHaveLength(7);
+    expect(structure.sections).toHaveLength(9);
     expect((structure.forbiddenSectionTopics ?? []).join(" ")).toMatch(
       /target state/i,
     );
   });
 
-  it("requires the four-part success-criteria model and change-ready sponsorship", () => {
+  it("gives Discovery Preparation its own first-class section instead of folding it into a generic recommendation", () => {
     const structure = getDeliverableStructure("moves", "charter")!;
-    const sc = structure.sections.find((s) => s.key === "success_criteria")!;
-    expect(sc).toBeTruthy();
-    expect(structure.requiredSectionKeys).toContain("success_criteria");
-    // outcomes + metrics + post-deployment measurement + business-process change
-    expect(sc.intent).toMatch(/outcome/i);
-    expect(sc.intent).toMatch(/baseline/i);
-    expect(sc.intent).toMatch(
-      /measure(d|ment)? after|after.*deploy|post-go-live|post-deployment/i,
-    );
-    expect(sc.intent).toMatch(/process.?change|business-process/i);
-    // sponsor commitment carries change readiness + commitment to drive process change
-    const sponsor = structure.sections.find(
-      (s) => s.key === "sponsor_commitment",
+    const dp = structure.sections.find(
+      (s) => s.key === "discovery_preparation",
     )!;
-    expect(sponsor.intent).toMatch(
-      /change readiness|drive the business-process|process change/i,
-    );
+    expect(dp).toBeTruthy();
+    expect(structure.requiredSectionKeys).toContain("discovery_preparation");
+    expect(dp.intent).toMatch(/Discovery Guidebook/i);
+    expect(dp.intent).toMatch(/Business Process/i);
+    expect(dp.intent).toMatch(/typical Discovery activities/i);
+
+    const success = structure.sections.find(
+      (s) => s.key === "success_measures",
+    )!;
+    expect(success.intent).toMatch(/do not invent/i);
+    expect(success.intent).toMatch(/baseline/i);
+
+    const sponsor = structure.sections.find(
+      (s) => s.key === "sponsorship_governance",
+    )!;
+    expect(sponsor.intent).toMatch(/decision authority/i);
+    expect(sponsor.intent).toMatch(/Client Decision Required/i);
   });
 
   it("surfaces the forbidden topics on the composed charter brief", () => {
