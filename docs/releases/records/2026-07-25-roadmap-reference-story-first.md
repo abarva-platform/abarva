@@ -132,3 +132,79 @@ Revert the merge commit. No schema/data changes.
   is no check that a generated roadmap item's `evidenceStatus` value is actually one of the five
   allowed labels, only that the prompt asks for it). A structural per-item validator is real
   follow-up scope once real generations exist to calibrate against.
+
+## Live Proof — one real governed Move to P4, both pipelines (2026-07-25, added post-merge)
+
+**Status of this pilot after live proof: pilot / live-proven vertical slice — NOT a finished
+artifact system.** The broader reference library (the other ~19 references) and the Executive Deck
+family remain sequenced behind this closure.
+
+**How it was proven.** A single real Move — `Charter Reconciliation Live Proof - It`
+(id `3fc8e69f-ec3c-4f41-9311-2cf997d3e7f6`, Meridian healthcare composite demo tenant, archetype
+`ai_product_enablement`) — was advanced through the **entire governed workflow P0 → P4** using only
+the authenticated product API (the exact actions the UI performs), with **zero fabricated client
+facts**. Every governance gate was enforced honestly:
+
+- P1 Charter: generated, sponsor-signed-off, gate closed.
+- P2 Understand Current State: Discovery & Diagnose Report (q90) + Root Cause Worksheet (q100)
+  generated, reviewed, accepted; the **`p2_readiness_cleared` evidence-integrity gate correctly
+  rejected** a placeholder recommendation containing "stop" — resolved honestly by writing a real
+  proceed decision that reclassifies open items as non-blocking P3 caveats (Evidence required /
+  Client decision required), **not** by faking clearance.
+- P3 Choose the Approach: solution-option approval sub-gate satisfied (governed agent-assist chosen
+  over autonomous / manual-only, tradeoffs + caveats recorded); Target-State Architecture (q90) and
+  Solution Design (q90) generated and signed off as authoritative; gate closed.
+- P4 Build the Plan: capture written with evidence-disciplined content (relative horizons, no dates,
+  Illustrative/Recommended estimates, no fabricated owners/durations).
+
+**Both roadmap pipelines were then run and inspected against the full closure checklist.**
+
+| Checklist item | Legacy golden-bar (`execution_roadmap`, HTML, artifact `c8123330…`, q83, 4,628 words, 5 SVGs) | Orchestrator (`move_board_pack`, artifact `48dc0b3f…`, q80, 12,739 words, 4 SVGs) |
+|---|---|---|
+| Message-led title (executive conclusion, not a label) | **PASS** — h1: "A four-horizon transition that builds the foundation first, proves value in one contact-center function, and only then earns the right to scale" | **FAIL** — h1: "Charter Reconciliation Live Proof — Executive Roadmap" (move name + category label; the advisory `titleRule` warns but does not block) |
+| Horizons lead with an achieved outcome, not a task list | **PASS** — "Mobilize → Sponsorship, funding, rights"; "Establish Foundation → Trusted data + control loop"; "Deliver Priority Outcome → One function live, measurable result" | **PASS** — all four horizons present, outcome-oriented |
+| Narrative and visual tell the same story | **PASS** — recommendation exhibit ("Fund the foundation and one proving function only; gate scale behind proven value") matches the h1 thesis | **PASS** — consistent, though denser |
+| Decision gates explicit + visually prominent | **PASS** — "five gates", ◆ diamond markers, dedicated gate/dependency exhibit | **PASS** — section 7 "Phase Gates & Milestones" + roadmap exhibit |
+| Value milestones present | **PASS** — "five value milestones" named | **PARTIAL** — milestones present as a concept but the specific value-milestone vocabulary (baseline approved / first measurable result / adoption threshold / control effectiveness / benefits accepted) did not surface |
+| Evidence status / uncertainty visible | **PASS** — all four labels present (Illustrative, Recommended, Evidence required, Client decision required), shown on the dependency exhibit | **PARTIAL** — Illustrative / Recommended / Evidence required present; "Client decision required" absent |
+| No false precision (no dates/sprints/named owners/durations) | **PASS** — "3/6/9/12" explicitly "Illustrative — not committed dates"; owners shown as "[client input]" | **PASS** — no sprint/gantt/day/week/calendar-date patterns |
+| Not a Gantt / delivery plan | **PASS** — reads as an executive decision artifact | **PASS-with-caveat** — "Phases & Work Packages" / "Critical Path" framing leans slightly more plan-like, but not a Gantt |
+| `svgRoadmapExhibit` grid renders (horizons × workstreams, gate diamonds) — the PR #5596 renderer | not this pipeline's path (golden-bar renders its own executive SVGs) | **PASS** — HTML contains `data-kind="roadmap"`; the dedicated roadmap exhibit renderer fires **live in production** |
+| Understandable by an executive in under a minute | **PASS** — message-led title + recommendation box + one-line "why this order" | **WEAKER** — 12,739 words is comprehensive but not a sub-minute read |
+| Legible at document size, no clipping/overflow (HTML) | **PASS** — SVGs render at full size (e.g. timeline 1168×375) with real fills, no clipping | **PASS** (HTML); DOCX is the native board-pack format |
+| Both pipelines materially equivalent advisory depth | **NOT EQUIVALENT (honest finding)** — see below | |
+
+**Pipeline-parity finding (reported plainly).** The two pipelines are **not** materially equivalent
+in story discipline. The legacy golden-bar roadmap is the stronger *executive-story-led* artifact:
+tight (4.6k words), a genuine message-led title, all four evidence-status labels, all five named
+value milestones. The orchestrator roadmap is more *comprehensive* (12.7k words) and is the one that
+renders the new `svgRoadmapExhibit` grid, but its h1 is a category label rather than a message-led
+headline, its value-milestone/evidence vocabulary is thinner, and its length works against the
+"under a minute" executive read. Both received the same `p4RoadmapAssignment` story-first prompt
+(PR #5599); the divergence is in how each pipeline's downstream rendering/decomposition applies it.
+
+**Artifact identifiers (this Move).** Legacy roadmap HTML `c8123330-231e-4f96-9faf-9308033429c8`
+(q83) + editable DOCX `cb10e415-9cf1-46fc-9600-96cb4ba23bf1` (q83); orchestrator roadmap
+`48dc0b3f-0531-4a83-82a6-1ead302753df` (q80, DOCX board pack, HTML via `?format=html`). P3 design
+evidence: Target-State Architecture `dfd56260…` (q90), Solution Design `6171136e…` (q90).
+
+**Screenshots.** The legacy roadmap's message-led header (title + AI-draft disclaimer + sequencing
+argument) was captured in the signed-in browser. Full-page section screenshots below the fold were
+degraded by a `document.write` repaint quirk in the review harness (not a roadmap/renderer defect —
+`getBoundingClientRect` confirmed every exhibit renders at full size with real fills and no
+clipping); structural extraction of all exhibit text/labels stands in as the machine-checked proof.
+
+**Two workflow defects observed during the proof — tracked separately, NOT roadmap-reference
+failures** (neither blocked generation or rendering): (1) the phase-workspace UI shows stale
+status after successful server-side actions until a hard reload; (2) step-navigation clicks
+intermittently fail to register/refresh. Both are spawned as their own follow-up tasks.
+
+**Remaining limitations after live proof.** (a) The orchestrator pipeline does not yet adopt the
+message-led title or the full value-milestone/evidence-label vocabulary — the `titleRule` and
+reference-element checks are advisory (warn-only), so they surface the gap without enforcing it; a
+future increment should either graduate these to blockers once calibrated, or align the
+orchestrator's title/section rendering to the reference. (b) PDF export was not separately captured
+in this pass (DOCX exists for both pipelines). (c) Pipeline parity remains an open item: the
+document-level contract is shared, but the two pipelines still produce materially different
+story-discipline — the same convergence caution recorded for the `target_state_architecture` word
+floor applies here.
