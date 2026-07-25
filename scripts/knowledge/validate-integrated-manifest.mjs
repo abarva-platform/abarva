@@ -48,6 +48,13 @@ export function validateIntegratedManifest(candidate, packet, options = {}) {
   const datasets = new Map((packet.deterministic_dataset_registry ?? []).map((d) => [d.dataset_id, d]));
   const datasetIds = new Set(datasets.keys());
   const evidenceIds = new Set((packet.evidence_index ?? []).map((e) => e.evidence_id));
+  // specificity: "low" for a real, ID-resolvable evidence row whose locator
+  // is only a generic placeholder (e.g. "synthetic locator 4") -- valid
+  // enough to resolve, too generic to actually establish a specific claim.
+  // Review finding: 72 of 80 real skyharbor-air evidence rows are this
+  // shape. ID resolution alone (the check above/below) cannot see this;
+  // this is a distinct, additional semantic check.
+  const evidenceSpecificity = new Map((packet.evidence_index ?? []).map((e) => [e.evidence_id, e.specificity ?? "high"]));
   const bindings = options.bindings ?? {};
 
   if (!candidate.enterprise_story_integrated && !candidate.enterprise_story) {
@@ -164,12 +171,30 @@ export function validateIntegratedManifest(candidate, packet, options = {}) {
       }
     }
     for (const insight of dim.key_insights ?? []) {
-      if (!insight.evidence_refs || insight.evidence_refs.length === 0) {
+      const refs = insight.evidence_refs ?? [];
+      // An empty evidence_refs array is only acceptable when it is an
+      // HONEST "not_evidenced" marker (the contract this pass now asks for),
+      // not a silent omission -- those are materially different: one
+      // discloses the gap, the other hides it.
+      if (refs.length === 0 && insight.evidence_status !== "not_evidenced") {
         failures.push({
           severity: "fail",
           type: "insight_without_evidence",
           dimension_key: key,
-          message: `key_insight "${(insight.statement ?? "").slice(0, 60)}..." has no evidence_refs.`,
+          message: `key_insight "${(insight.statement ?? "").slice(0, 60)}..." has no evidence_refs and no evidence_status: "not_evidenced" marker.`,
+        });
+        continue;
+      }
+      // Semantic weakness check: every cited ID resolves, but if EVERY one
+      // of them is a low-specificity placeholder locator, that is too weak
+      // to actually establish a precise claim -- flag it, don't silently
+      // accept ID-resolution as sufficient support.
+      if (refs.length > 0 && refs.every((r) => evidenceSpecificity.get(r) === "low") && insight.evidence_status !== "not_evidenced") {
+        warnings.push({
+          severity: "warn",
+          type: "weak_evidence_specificity",
+          dimension_key: key,
+          message: `key_insight "${(insight.statement ?? "").slice(0, 60)}..." is supported only by low-specificity placeholder evidence (${refs.join(", ")}) -- technically resolved, but too generic to establish this specific claim.`,
         });
       }
     }

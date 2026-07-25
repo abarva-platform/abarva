@@ -75,6 +75,52 @@ export function assertEnterpriseBookPromptPreflight(prompt, packet) {
     fail("preflight.dimension_count_mismatch", `prompt.dimension_catalog has ${dims.length} entries, expected ${EXPECTED_DIMENSION_COUNT}.`);
   }
 
+  // 6b. the dimension_catalog must carry only clean identity/routing
+  // metadata (key, name, business_source_coverage) -- never the legacy
+  // `summary`/`status` fields, which are sourced from a 19-entry legacy DIMS
+  // array with confirmed real contamination (duplicate summaries shared
+  // across unrelated dimension keys for skyharbor-air). This is the direct,
+  // structural proof for review item 4: not "we promise not to trust it,"
+  // but "the field is not present to trust."
+  for (const entry of dims) {
+    if (Object.hasOwn(entry, "summary")) {
+      fail(
+        "preflight.dimension_catalog_carries_contaminated_summary",
+        `dimension_catalog entry "${entry.key}" carries a "summary" field -- book mode must send only clean identity/routing metadata, never the legacy narrative summary.`,
+        { dimension_key: entry.key },
+      );
+    }
+    if (Object.hasOwn(entry, "status")) {
+      fail(
+        "preflight.dimension_catalog_carries_contaminated_status",
+        `dimension_catalog entry "${entry.key}" carries a "status" field from the legacy merge.`,
+        { dimension_key: entry.key },
+      );
+    }
+  }
+
+  // 6c. book_sections must be present and non-trivial, and the schema must
+  // request sections/conclusions -- NOT a per-dimension "dimension_notes"
+  // object. This is the structural proof for review item 2: Claude's
+  // requested output has no field shaped like "one object per dimension."
+  const bookSections = prompt.book_sections;
+  if (!Array.isArray(bookSections) || bookSections.length === 0) {
+    fail("preflight.book_sections_missing", "prompt.book_sections is missing or empty.");
+  }
+  const requestedFields = prompt.output_requirements?.fields ?? [];
+  if (!requestedFields.includes("sections")) {
+    fail("preflight.sections_field_not_requested", "output_requirements.fields does not include 'sections'.");
+  }
+  if (!requestedFields.includes("conclusions")) {
+    fail("preflight.conclusions_field_not_requested", "output_requirements.fields does not include 'conclusions'.");
+  }
+  if (requestedFields.includes("dimension_notes")) {
+    fail(
+      "preflight.legacy_dimension_notes_field_requested",
+      "output_requirements.fields includes 'dimension_notes' -- this is the v1 per-dimension shape this architecture was reviewed away from; book mode must request shared sections/conclusions instead.",
+    );
+  }
+
   // 7. the OLD chart contract must be structurally absent, same as the
   // integrated preflight's check.
   if (Object.hasOwn(prompt.common ?? {}, "visual_contract_rules")) {
@@ -108,11 +154,11 @@ export function assertEnterpriseBookPromptPreflight(prompt, packet) {
     }
   }
 
-  // 9. Prose fields (dimension_notes_shape, hard_limits, instruction) may
-  // name a forbidden field ONLY inside an explicit prohibition -- "never
-  // include X" / "must not include X" / "do not include X". A mention with
-  // no such guard nearby is treated as silently permitting it.
-  const proseFields = ["instruction", "dimension_notes_shape", "hard_limits"];
+  // 9. Prose fields may name a forbidden field ONLY inside an explicit
+  // prohibition -- "never include X" / "must not include X" / "do not
+  // include X". A mention with no such guard nearby is treated as silently
+  // permitting it.
+  const proseFields = ["instruction", "sections_shape", "conclusions_shape", "hard_limits"];
   const prohibitionPattern = /\b(never|must not|do not|don't|cannot)\s+(include|contain|use|choose|write|return)\b/i;
   for (const key of proseFields) {
     const text = asString(prompt[key] ?? requirements[key]);

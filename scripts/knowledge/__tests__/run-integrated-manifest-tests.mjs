@@ -32,6 +32,14 @@ const cases = [
   { fixture: "duplicated-dimension", expectStatus: "fail", expectRuleIds: ["duplicate_dimension_key"] },
   { fixture: "risks-unapproved-dataset", expectStatus: "fail", expectRuleIds: ["unresolved_dataset_binding"] },
   { fixture: "unknown-visual-dimension-or-measure", expectStatus: "fail", expectRuleIds: ["unknown_visual_field"] },
+  // Enterprise Book review item 5: a technically-resolved evidence ID whose
+  // only support is a low-specificity placeholder must still PASS (it is
+  // not fabrication) but must produce a warning distinct from a hard fail.
+  { fixture: "weak-evidence-specificity", expectStatus: "pass", expectRuleIds: ["weak_evidence_specificity"] },
+  // An honest "no evidence exists for this" disclosure (empty evidence_refs
+  // + evidence_status: not_evidenced) must NOT be treated as the silent
+  // omission insight_without_evidence normally catches.
+  { fixture: "honest-not-evidenced", expectStatus: "pass", expectRuleIds: [] },
 ];
 
 let failed = 0;

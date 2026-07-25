@@ -72,6 +72,12 @@
       "evidence_id": "EVID-FIX-0002",
       "source_family": "fixture",
       "title": "Fixture evidence two"
+    },
+    {
+      "evidence_id": "EVID-FIX-0003",
+      "source_family": "fixture",
+      "title": "synthetic locator 9",
+      "specificity": "low"
     }
   ]
 }
