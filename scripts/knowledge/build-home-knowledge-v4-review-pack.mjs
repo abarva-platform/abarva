@@ -3401,11 +3401,40 @@ async function main() {
     concurrency,
   });
   console.log(`[home-v4] writing review artifacts to ${outDir}`);
+  // One tenant's generation failure (a Claude API error, a source-data bug,
+  // an unexpected exception) must not silently take every other tenant down
+  // with it -- runPool itself has no per-item error isolation (a rejection
+  // propagates straight through Promise.all). Catch here, write a real
+  // generation-failed.json marker (so persist-home-knowledge-v4-book.mjs can
+  // log a generation_failed job_runs row for this tenant instead of finding
+  // nothing and staying silent), and let every other tenant keep going.
+  let anyGenerationFailed = false;
   const results = await runPool(tenants, async (tenant) => {
     console.log(`[home-v4] generating ${tenant}`);
-    const result = await processTenant(client, tenant);
-    console.log(`[home-v4] done ${tenant}: ${result.validation_status}, visuals=${result.visual_contract_count}, findings=${result.violation_count}`);
-    return result;
+    try {
+      const result = await processTenant(client, tenant);
+      console.log(`[home-v4] done ${tenant}: ${result.validation_status}, visuals=${result.visual_contract_count}, findings=${result.violation_count}`);
+      return result;
+    } catch (error) {
+      anyGenerationFailed = true;
+      const tenantDir = path.join(outDir, "tenants", tenant);
+      ensureDir(tenantDir);
+      writeJson(path.join(tenantDir, "generation-failed.json"), {
+        tenant_key: tenant,
+        error_message: error instanceof Error ? error.message : String(error),
+        failed_at: new Date().toISOString(),
+      });
+      console.log(`[home-v4] FAILED ${tenant}: ${error instanceof Error ? error.message : error}`);
+      return {
+        tenant_key: tenant,
+        display_name: tenant,
+        validation_status: "generation_failed",
+        violation_count: 0,
+        visual_contract_count: 0,
+        prompt_count: 0,
+        tenant_dir: path.relative(outDir, tenantDir),
+      };
+    }
   }, concurrency);
   writeJson(path.join(outDir, "tenant-results.json"), results);
   writeText(path.join(outDir, "tenant-results.csv"), csv(results));
@@ -3438,6 +3467,12 @@ async function main() {
   writeText(path.join(outDir, "PROMPT_AND_OUTPUT_REVIEW_DIGEST.md"), `${digest}\n`);
   emitAcaProofBundleIfRequested(outDir);
   console.log(`[home-v4] complete ${outDir}`);
+  // Non-zero exit signals "at least one tenant failed" for the job's own
+  // logs, without throwing -- every successfully-generated tenant's
+  // candidate JSON is already written to disk at this point, and the
+  // canary-and-persist chain must still run persist against them (see that
+  // npm script's own comment for why it no longer uses `&&`).
+  if (anyGenerationFailed) process.exitCode = 1;
 }
 
 main().catch((error) => {
