@@ -58,6 +58,18 @@ const dryRun = !writeDb;
 const ARTIFACT_TYPE = "NexusHomeKnowledgePackV4Book";
 const GENERATED_BY = "build-home-knowledge-v4-review-pack.mjs";
 
+function requestedTenantSet() {
+  if (requestedTenant === "all") return null;
+  const tenants = requestedTenant
+    .split(",")
+    .map((tenant) => tenant.trim())
+    .filter(Boolean);
+  if (tenants.length === 0) {
+    throw new Error("--tenant / HOME_KNOWLEDGE_V4_TENANT did not include any tenant keys.");
+  }
+  return new Set(tenants);
+}
+
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
@@ -85,8 +97,9 @@ function discoverCandidateFiles() {
   if (!fs.existsSync(tenantsRoot)) {
     throw new Error(`No tenants/ directory found under --candidate-dir ${candidateDir}`);
   }
+  const requested = requestedTenantSet();
   return fs.readdirSync(tenantsRoot)
-    .filter((tenant) => requestedTenant === "all" || tenant === requestedTenant)
+    .filter((tenant) => !requested || requested.has(tenant))
     .map((tenant) => ({ tenant, file: path.join(tenantsRoot, tenant, "candidate-home-knowledge-v4.json") }))
     .filter((item) => fs.existsSync(item.file));
 }
