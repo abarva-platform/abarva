@@ -14,7 +14,7 @@ Strategic Moves was recently hardened into a phase-driven advisory system: typed
 contracts, explicit stage boundaries, shared word/token budgets, evidence lineage, and distinct
 draft/review/approve/publish states (though Moves itself still runs two parallel generation
 pipelines today — `docs/architecture/MOVES_DUAL_PIPELINE_AUDIT.md` — so this baseline targets the
-governing *principles*, not Moves' current code verbatim).
+governing _principles_, not Moves' current code verbatim).
 
 A comprehensive, code-grounded audit of the Source module against that same standard is recorded
 in [`docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md`](../../audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md).
@@ -57,7 +57,7 @@ isolation depends entirely on undifferentiated application-code filtering.
    - **PR 5+ — Differentiated client value**: the audit's Section I records a parallel,
      client-facing vision (pricing normalization/scenario/outlier analytics, a negotiation
      cockpit, provenance-labeled industry insight, continuous stage-specific insight generation)
-     scoped explicitly *on top of* PRs 2-5, not instead of them — every part of it depends on the
+     scoped explicitly _on top of_ PRs 2-5, not instead of them — every part of it depends on the
      evidence spine (PR 3) being real first. This is what "the Moves standard" should look like
      once achieved for Source, not a separate initiative.
 3. The raw-`pg.Pool`/vestigial-RLS finding is **not** folded into the integrity-fix PR as a normal
@@ -75,10 +75,25 @@ isolation depends entirely on undifferentiated application-code filtering.
    check, and the existing deterministic calculations are reused rather than rewritten — only the
    fixture-shaped facts feeding them are replaced with parsed, reviewed evidence.
 
+## Amendment (2026-07-25) — PR 3 delivered scope
+
+PR 3 (governed vendor-proposal ingestion foundation) shipped as
+`docs/releases/records/2026-07-25-vendor-proposal-facts-foundation.md`, deliberately narrower than
+this ADR's original fact-type list. The `VendorProposalFact` model, its three-state lifecycle
+(candidate/accepted/rejected-or-superseded), tenant+event isolation, and the governed read
+accessor wired into d16/d19/d22/d24 and aVa-context availability are all delivered as specified.
+The extractor itself covers a small allowlist (price, rate, discount, SLA, uptime, term, payment,
+warranty, support, penalty) rather than this ADR's full envisioned taxonomy (requirement
+response, commitment, assumption, exception, dependency, missing response, timeline, staffing,
+exclusion) — proving one complete vertical slice end-to-end, per the explicit closure instruction,
+rather than building broad extraction coverage before the governed contract itself was proven.
+Extending the extractor's fact-type coverage is a named, explicit follow-up, not a silently
+dropped requirement — see that release record's Known Gaps.
+
 ## Consequences
 
 - Presentation-layer work (visuals, storytelling, richer document generation) is deliberately
-  sequenced *after* the evidence spine is trustworthy, not before — a real cost in visible near-
+  sequenced _after_ the evidence spine is trustworthy, not before — a real cost in visible near-
   term polish, accepted because a well-designed artifact built on ungoverned evidence is a bigger
   long-term liability than a plain artifact built on governed evidence.
 - Every future Source modernization PR should reference this ADR and the underlying audit in its

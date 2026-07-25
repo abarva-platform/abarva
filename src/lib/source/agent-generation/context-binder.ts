@@ -12,21 +12,26 @@ import {
   listArtifactStatesForEvent,
   listEvidenceStatesForEvent,
   listGateCriterionStatesForEvent,
-} from '@/lib/source/canvas-substrate/queries';
+} from "@/lib/source/canvas-substrate/queries";
 import {
   getSourcingEvent,
   isUuid,
   resolveSourceEventUuidForClient,
-} from '@/lib/source/queries';
-import { canonicalClientDisplayName } from '@/lib/client-config';
-import { getActiveClientRow } from '@/lib/active-client';
-import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
-import { listAppInventoryRecords } from '@/lib/admin/setup-data-broker';
-import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
-import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
-import { buildArchetypeAdvisoryBlock } from './archetype-advisory';
-import type { SourceCategoryId } from '@/lib/source/taxonomy/category-taxonomy';
-import type { SourceAppInventoryEntry, SourceGenerationContext, SourceGenerationUploadedArtifact } from './types';
+} from "@/lib/source/queries";
+import { canonicalClientDisplayName } from "@/lib/client-config";
+import { getActiveClientRow } from "@/lib/active-client";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
+import { listAppInventoryRecords } from "@/lib/admin/setup-data-broker";
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { resolveArchetypeForEvent } from "@/lib/source/archetypes/event-archetype-resolver";
+import { buildArchetypeAdvisoryBlock } from "./archetype-advisory";
+import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposals/vendor-proposal-facts";
+import type { SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
+import type {
+  SourceAppInventoryEntry,
+  SourceGenerationContext,
+  SourceGenerationUploadedArtifact,
+} from "./types";
 
 /**
  * Build the read-only context snapshot for a generation call.
@@ -41,10 +46,7 @@ export async function buildSourceGenerationContext(
   const activeClient = await getActiveClientRow(
     options.requestedClientId,
   ).catch(() => null);
-  let event = await getSourcingEvent(
-    eventIdOrCode,
-    options.requestedClientId,
-  );
+  let event = await getSourcingEvent(eventIdOrCode, options.requestedClientId);
   if (!event && activeClient) {
     const resolvedEventId = await resolveSourceEventUuidForClient(
       eventIdOrCode,
@@ -90,13 +92,24 @@ export async function buildSourceGenerationContext(
 
   // The substrate queries take a UUID. event.id is always a UUID
   // even when the URL slug is a code.
-  const [artifactStates, gateCriteria, evidence, uploadedEvidence] =
-    await Promise.all([
+  const [
+    artifactStates,
+    gateCriteria,
+    evidence,
+    uploadedEvidence,
+    authoritativeVendorProposalFacts,
+  ] = await Promise.all([
     listArtifactStatesForEvent(substrateEventId),
     listGateCriterionStatesForEvent(substrateEventId),
     listEvidenceStatesForEvent(substrateEventId),
-      listUploadedEvidenceForGeneration(substrateEventId),
-    ]);
+    listUploadedEvidenceForGeneration(substrateEventId),
+    activeClient?.key
+      ? getAuthoritativeVendorProposalFacts({
+          eventId: substrateEventId,
+          clientKey: activeClient.key,
+        }).catch(() => [])
+      : Promise.resolve([]),
+  ]);
 
   // Pull the company's application inventory through the sanctioned broker seam
   // so d04 pre-populates from the real systems estate instead of a blank stub.
@@ -109,8 +122,8 @@ export async function buildSourceGenerationContext(
   const appInventoryRows = substrateKey
     ? await listAppInventoryRecords(substrateKey).catch(() => [])
     : [];
-  const enterpriseAppInventory: SourceAppInventoryEntry[] = appInventoryRows.map(
-    (row) => ({
+  const enterpriseAppInventory: SourceAppInventoryEntry[] =
+    appInventoryRows.map((row) => ({
       appId: row.recordId,
       name: row.name,
       tier: row.tier,
@@ -118,8 +131,7 @@ export async function buildSourceGenerationContext(
       vendor: row.vendor,
       criticality: row.criticality,
       notes: row.notes,
-    }),
-  );
+    }));
 
   // Revive the dormant archetype playbook: resolve the event's sourcing
   // archetype from its live classifier category (event_type as fallback) and
@@ -135,7 +147,7 @@ export async function buildSourceGenerationContext(
   );
 
   return {
-    tenantKey: activeClient?.key ?? 'unknown',
+    tenantKey: activeClient?.key ?? "unknown",
     tenantName,
     event: {
       id: substrateEventId,
@@ -159,6 +171,7 @@ export async function buildSourceGenerationContext(
     uploadedEvidence,
     archetypeAdvisory,
     enterpriseAppInventory,
+    authoritativeVendorProposalFacts,
   };
 }
 
@@ -189,7 +202,13 @@ function resolveSourceGenerationTenantName(args: {
     return eventDerivedName;
   }
 
-  return canonicalName ?? activeClientName ?? eventAccountName ?? eventDerivedName ?? 'AbarVa Client';
+  return (
+    canonicalName ??
+    activeClientName ??
+    eventAccountName ??
+    eventDerivedName ??
+    "AbarVa Client"
+  );
 }
 
 function cleanTenantLabel(value: string | null | undefined): string | null {
@@ -200,9 +219,9 @@ function cleanTenantLabel(value: string | null | undefined): string | null {
 function isDemoPlaceholder(value: string | null): boolean {
   return Boolean(
     value &&
-      /\b(?:retail|healthcare|financial services|clinical technology|airline|industrial)\s+demo\b/i.test(
-        value,
-      ),
+    /\b(?:retail|healthcare|financial services|clinical technology|airline|industrial)\s+demo\b/i.test(
+      value,
+    ),
   );
 }
 
@@ -210,8 +229,8 @@ function inferSourceEventTenantName(args: {
   eventCode?: string | null;
   eventName?: string | null;
 }): string | null {
-  const text = `${args.eventCode ?? ''} ${args.eventName ?? ''}`;
-  if (/\bSKYH\b|SkyHarbor/i.test(text)) return 'Airline Demo';
+  const text = `${args.eventCode ?? ""} ${args.eventName ?? ""}`;
+  if (/\bSKYH\b|SkyHarbor/i.test(text)) return "Airline Demo";
   return null;
 }
 
@@ -226,9 +245,9 @@ const INTERNAL_METADATA_LINE_RE =
 
 export function sanitizeArtifactBodyForExport(body: string): string {
   return body
-    .split('\n')
+    .split("\n")
     .filter((line) => !INTERNAL_METADATA_LINE_RE.test(line.trim()))
-    .join('\n')
+    .join("\n")
     .trimStart();
 }
 
@@ -262,9 +281,9 @@ export function collectUpstreamBodies(
 function extractTrigger(scope: string | null | undefined): string | null {
   if (!scope) return null;
   const triggerLine = scope
-    .split('\n')
+    .split("\n")
     .find((line) => /trigger|why\s*now/i.test(line));
-  return triggerLine?.replace(/^[^:]*:\s*/, '').trim() || null;
+  return triggerLine?.replace(/^[^:]*:\s*/, "").trim() || null;
 }
 
 async function listUploadedEvidenceForGeneration(
@@ -272,13 +291,13 @@ async function listUploadedEvidenceForGeneration(
 ): Promise<SourceGenerationUploadedArtifact[]> {
   const supabase = getAzureReadFluentClient();
   const { data: artifactRows, error: artifactError } = await supabase
-    .from('source_artifacts')
+    .from("source_artifacts")
     .select(
-      'id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin',
+      "id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin",
     )
-    .eq('source_event_id', sourceEventId)
-    .eq('source_origin', 'uploaded')
-    .order('created_at', { ascending: false })
+    .eq("source_event_id", sourceEventId)
+    .eq("source_origin", "uploaded")
+    .order("created_at", { ascending: false })
     .limit(200);
   if (artifactError || !artifactRows?.length) return [];
 
@@ -289,8 +308,8 @@ async function listUploadedEvidenceForGeneration(
       original_name?: unknown;
       source_origin?: unknown;
     };
-    if (String(typed.source_origin ?? 'uploaded') !== 'uploaded') continue;
-    const key = String(typed.original_name ?? typed.id ?? '')
+    if (String(typed.source_origin ?? "uploaded") !== "uploaded") continue;
+    const key = String(typed.original_name ?? typed.id ?? "")
       .toLowerCase()
       .trim();
     if (!key || latestRowsByName.has(key)) continue;
@@ -298,37 +317,39 @@ async function listUploadedEvidenceForGeneration(
   }
   const latestArtifactRows = Array.from(latestRowsByName.values()).sort(
     (a, b) => {
-      const left = String((a as { created_at?: unknown }).created_at ?? '');
-      const right = String((b as { created_at?: unknown }).created_at ?? '');
+      const left = String((a as { created_at?: unknown }).created_at ?? "");
+      const right = String((b as { created_at?: unknown }).created_at ?? "");
       return left.localeCompare(right);
     },
   );
 
   const artifactIds = latestArtifactRows
-    .map((row) => String((row as { id?: unknown }).id ?? ''))
+    .map((row) => String((row as { id?: unknown }).id ?? ""))
     .filter(Boolean);
   if (artifactIds.length === 0) return [];
 
   const [chunksResult, factsResult] = await Promise.all([
     supabase
-      .from('source_artifact_chunks')
-      .select('artifact_id, chunk_text, chunk_kind, confidence')
-      .in('artifact_id', artifactIds)
-      .order('confidence', { ascending: false })
+      .from("source_artifact_chunks")
+      .select("artifact_id, chunk_text, chunk_kind, confidence")
+      .in("artifact_id", artifactIds)
+      .order("confidence", { ascending: false })
       .limit(160),
     supabase
-      .from('source_artifact_facts')
-      .select('artifact_id, fact_type, fact_key, fact_value, confidence')
-      .in('artifact_id', artifactIds)
-      .order('confidence', { ascending: false })
+      .from("source_artifact_facts")
+      .select("artifact_id, fact_type, fact_key, fact_value, confidence")
+      .in("artifact_id", artifactIds)
+      .order("confidence", { ascending: false })
       .limit(160),
   ]);
 
   const chunksByArtifact = new Map<string, string[]>();
   for (const row of chunksResult.data ?? []) {
-    const artifactId = String((row as { artifact_id?: unknown }).artifact_id ?? '');
-    const chunkText = String((row as { chunk_text?: unknown }).chunk_text ?? '')
-      .replace(/\s+/g, ' ')
+    const artifactId = String(
+      (row as { artifact_id?: unknown }).artifact_id ?? "",
+    );
+    const chunkText = String((row as { chunk_text?: unknown }).chunk_text ?? "")
+      .replace(/\s+/g, " ")
       .trim();
     if (!artifactId || !chunkText) continue;
     const list = chunksByArtifact.get(artifactId) ?? [];
@@ -346,12 +367,12 @@ async function listUploadedEvidenceForGeneration(
       fact_key?: unknown;
       fact_value?: unknown;
     };
-    const artifactId = String(typed.artifact_id ?? '');
+    const artifactId = String(typed.artifact_id ?? "");
     if (!artifactId) continue;
-    const factType = String(typed.fact_type ?? 'fact');
-    const factKey = String(typed.fact_key ?? 'unknown');
+    const factType = String(typed.fact_type ?? "fact");
+    const factKey = String(typed.fact_key ?? "unknown");
     const factValue =
-      typeof typed.fact_value === 'string'
+      typeof typed.fact_value === "string"
         ? typed.fact_value
         : JSON.stringify(typed.fact_value ?? {});
     const list = factsByArtifact.get(artifactId) ?? [];
@@ -369,16 +390,16 @@ async function listUploadedEvidenceForGeneration(
       source_format: string | null;
       parse_status: string | null;
       evidence_state: string | null;
-      stage_key: SourceGenerationUploadedArtifact['stageKey'];
+      stage_key: SourceGenerationUploadedArtifact["stageKey"];
     };
     return {
       id: typed.id,
       originalName: typed.original_name ?? typed.id,
-      artifactFamily: typed.artifact_family ?? 'other',
-      sourceFormat: typed.source_format ?? 'unknown',
-      parseStatus: typed.parse_status ?? 'pending',
-      evidenceState: typed.evidence_state ?? 'unparsed',
-      stageKey: typed.stage_key ?? 'strategy',
+      artifactFamily: typed.artifact_family ?? "other",
+      sourceFormat: typed.source_format ?? "unknown",
+      parseStatus: typed.parse_status ?? "pending",
+      evidenceState: typed.evidence_state ?? "unparsed",
+      stageKey: typed.stage_key ?? "strategy",
       chunkExcerpts: chunksByArtifact.get(typed.id) ?? [],
       factSummaries: factsByArtifact.get(typed.id) ?? [],
     };

@@ -2160,6 +2160,9 @@ Writing and format requirements:
         "— UPLOADED / PARSED EVALUATION EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
+        "— ACCEPTED VENDOR PROPOSAL FACTS (governed, human-reviewed) —",
+        formatAuthoritativeVendorProposalFacts(ctx),
+        "",
         "— REQUIRED SCORECARD CONTROLS —",
         formatEvaluationScorecardRequirements(),
         "",
@@ -2655,6 +2658,11 @@ Writing requirements:
       lines.push("— UPLOADED / PARSED PRICING EVIDENCE —");
       lines.push(formatUploadedEvidence(ctx));
       lines.push("");
+      lines.push(
+        "— ACCEPTED VENDOR PROPOSAL FACTS (governed, human-reviewed) —",
+      );
+      lines.push(formatAuthoritativeVendorProposalFacts(ctx));
+      lines.push("");
       lines.push("— REQUIRED COST SECTIONS —");
       lines.push(formatPricingCostSections());
       lines.push("");
@@ -2896,6 +2904,9 @@ Writing and format requirements:
         "— UPLOADED / PARSED BAFO EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
+        "— ACCEPTED VENDOR PROPOSAL FACTS (governed, human-reviewed) —",
+        formatAuthoritativeVendorProposalFacts(ctx),
+        "",
         "— REQUIRED BAFO QUESTION FIELDS —",
         formatBafoQuestionFields(),
         "",
@@ -3094,6 +3105,12 @@ If the evaluation scorecard (d16) or pricing workbook (d19) has not been authore
         lines.push(evidenceBlock);
         lines.push("");
       }
+
+      lines.push(
+        "— ACCEPTED VENDOR PROPOSAL FACTS (governed, human-reviewed) —",
+        formatAuthoritativeVendorProposalFacts(ctx),
+        "",
+      );
 
       if (ctx.archetypeAdvisory) {
         lines.push(
@@ -4256,6 +4273,37 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
       return lines.join("\n");
     })
     .join("\n\n");
+}
+
+/**
+ * Accepted VendorProposalFacts for this event (PR 3,
+ * ADR-0013-source-modernization-baseline.md). NEVER includes a candidate,
+ * rejected, or superseded fact — ctx.authoritativeVendorProposalFacts is
+ * already filtered to accepted-only by getAuthoritativeVendorProposalFacts
+ * at the context-binder layer. An empty array means no vendor proposal
+ * facts have been accepted yet, not that none were ever extracted.
+ */
+function formatAuthoritativeVendorProposalFacts(
+  ctx: SourceGenerationContext,
+): string {
+  const facts = ctx.authoritativeVendorProposalFacts ?? [];
+  if (facts.length === 0) {
+    return "(no vendor proposal facts have been accepted as authoritative yet)";
+  }
+  return facts
+    .map((fact) => {
+      const value =
+        fact.valueNumeric !== null
+          ? `${fact.currency ?? ""}${fact.valueNumeric}${fact.unit ? ` ${fact.unit}` : ""}`.trim()
+          : (fact.valueText ?? "(no value captured)");
+      return [
+        `- ${fact.vendorKey} · ${fact.factKey}: ${value}`,
+        fact.sourceQuote ? `  quote: "${fact.sourceQuote}"` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n");
 }
 
 interface RfpEvidenceCoverageRule {
