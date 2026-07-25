@@ -1,0 +1,578 @@
+{
+  "executive_narrative": {
+    "title": "Meridian Health System: Winning the AI Race Requires Winning the Governance Race First",
+    "thesis": "Meridian has substantial, credible AI ambition and a rich system estate \u2014 but every one of its seven flagship use cases is blocked by the same four foundational gaps: no certified data foundation, no formal governance operating model, no certified semantic layer, and no patient/member identity spine. The governing argument is that Meridian should stop treating individual AI use cases as fundable investments and instead fund the shared foundation once, as the gating decision that unlocks the whole portfolio.",
+    "narrative_arc": "Meridian is an integrated delivery network and health plan with deep clinical, claims, pharmacy, finance, and member-service operations anchored on Epic and a broad analytics estate. Leadership across the C-suite has converged on a coherent seven-use-case agenda. The estate is operationally strong but analytically fragmented, and the target cloud/lakehouse direction remains aspirational rather than production-certified. Because the same foundational gaps recur across every use case, the constraint is not idea quality \u2014 it is a missing shared foundation and the ownership to build it. The decision in front of leadership is sequencing: fund the foundation and governance first, then release use cases in dependency order.",
+    "strategic_agenda": [
+      "Convert the shared foundation (certified data platform, governance operating model, semantic layer, identity spine) into a single funded program, not seven parallel bets.",
+      "Assign decision-grade ownership to each use case; today executive intent is clear but accountable owners are not confirmed.",
+      "Establish measured baselines before any value is claimed, so business cases become finance-attested rather than planning-grade.",
+      "Sequence use-case release: foundation and AI/LLM governance first; cost transparency and payment integrity in parallel next; call center and provider quality following; automated close last, gated on a certified finance semantic layer."
+    ],
+    "strategic_tensions": [
+      "Executive demand for near-term AI wins versus the reality that no use case can responsibly claim value until baselines and governance exist.",
+      "A run-heavy budget and maintenance-bound managed services posture versus the change capacity a foundation program requires.",
+      "Broad, high-confidence evidence of intent versus the absence of production-certified platform and value evidence."
+    ]
+  },
+  "industry_comparison": [
+    {
+      "pattern": "Unified clinical + claims data foundation (certified medallion, identity spine, claims/pharmacy harmonization)",
+      "this_tenant_position": "behind",
+      "specifics": "The industry pattern assumes a certified foundation with a loaded patient/member identity spine as table stakes for population health and cost analytics. Meridian has the source systems (Epic Clarity/Caboodle, claims, pharmacy) but no certified medallion architecture and no identity spine loaded; the AWS/Databricks target is aspirational, not ready.",
+      "evidence_refs": [
+        "MER-AI-001-EV-1"
+      ]
+    },
+    {
+      "pattern": "Governed data foundation for AI/LLM automation (governance operating model, certified semantic layer, AI audit trail)",
+      "this_tenant_position": "behind",
+      "specifics": "The pattern treats a formal governance operating model and certified semantic layer as prerequisites for any production AI workflow. Meridian has neither in governed form, and AI audit trail and data quality rules are not yet evidenced \u2014 so its 26 active AI use cases cannot progress to production.",
+      "evidence_refs": [
+        "MER-AI-002-EV-2"
+      ]
+    },
+    {
+      "pattern": "Contact center optimization (governed transcripts, real-time integration, certified intent taxonomy, member identity linkage)",
+      "this_tenant_position": "behind",
+      "specifics": "Contact center and CRM are current-core but ungoverned for analytics: transcript governance is unevidenced, real-time integration unproven, and intent taxonomy uncertified. Meridian holds the operational assets but not the governed layer the pattern requires.",
+      "evidence_refs": [
+        "MER-AI-003-EV-3"
+      ]
+    },
+    {
+      "pattern": "Provider quality and performance (unified measure logic, proven attribution, certified contract linkage)",
+      "this_tenant_position": "behind",
+      "specifics": "HEDIS/STAR measure logic is fragmented across BI tools, attribution ownership is unproven, and provider contract linkage is uncertified. The pattern expects single-source measure governance; Meridian's logic lives in duplicated Tableau/Power BI extracts.",
+      "evidence_refs": [
+        "MER-AI-004-EV-4"
+      ]
+    },
+    {
+      "pattern": "End-to-end cost transparency (digitized provider contracts, claims/GL alignment, certified margin model)",
+      "this_tenant_position": "behind",
+      "specifics": "Provider contract terms are not digitized in governed form \u2014 the single largest blocker \u2014 and claims/GL calendar alignment and margin semantics are uncertified. Meridian trails the pattern most sharply here despite executive priority.",
+      "evidence_refs": [
+        "MER-AI-005-EV-5"
+      ]
+    },
+    {
+      "pattern": "Payment integrity and leakage reduction (governed rules/model lineage, provider entity resolution, recovery tracking)",
+      "this_tenant_position": "behind",
+      "specifics": "A SAS estate performs detection today, but rules and model lineage are ungoverned and provider entity resolution is unproven. Meridian has a working capability the pattern assumes, but without the lineage and recovery evidence needed to defend or scale it.",
+      "evidence_refs": [
+        "MER-AI-006-EV-6"
+      ]
+    },
+    {
+      "pattern": "Automated close and reporting (certified finance semantic layer, integrated close workflow, formalized metric governance)",
+      "this_tenant_position": "behind",
+      "specifics": "Close and reporting carry a heavy manual maintenance load with no certified finance semantic layer and no formalized metric governance. This use case sits last in the dependency chain and is the least ready against the pattern.",
+      "evidence_refs": [
+        "MER-AI-007-EV-7"
+      ]
+    }
+  ],
+  "material_gaps": [
+    {
+      "id": "GAP-1",
+      "statement": "Four foundational gaps \u2014 no certified data foundation, no governance operating model, no certified semantic layer, no identity spine \u2014 block all seven use cases simultaneously.",
+      "why_it_matters_to_leadership": "This turns seven separate funding debates into one gating decision: nothing downstream can be responsibly funded or measured until the shared foundation exists.",
+      "applies_to_dimensions": [
+        "ai",
+        "data",
+        "identity_semantic",
+        "data_quality_lineage",
+        "programs",
+        "rel",
+        "risks"
+      ],
+      "evidence_refs": [
+        "MER-AI-001-EV-1",
+        "MER-AI-002-EV-2"
+      ]
+    },
+    {
+      "id": "GAP-2",
+      "statement": "The target AWS/Databricks lakehouse is an aspirational direction, not a production-certified platform.",
+      "why_it_matters_to_leadership": "Any roadmap that assumes the platform already exists will overstate readiness; the foundation must be built and certified before use-case value can be claimed.",
+      "applies_to_dimensions": [
+        "apps",
+        "infra",
+        "architecture_dependencies",
+        "tech_lifecycle"
+      ],
+      "evidence_refs": [
+        "MER-AI-001-EV-1"
+      ]
+    },
+    {
+      "id": "GAP-3",
+      "statement": "Executive use-case intent is clear, but decision-grade ownership and accountable owners are not yet confirmed.",
+      "why_it_matters_to_leadership": "Without named owners and decision rights, use cases cannot advance past planning and foundation funding lacks a single accountable sponsor.",
+      "applies_to_dimensions": [
+        "org",
+        "decision_rights",
+        "workforce",
+        "leadership_agenda"
+      ],
+      "evidence_refs": [
+        "MER-AI-008-EV-8"
+      ]
+    },
+    {
+      "id": "GAP-4",
+      "statement": "No use case has a measured baseline; all value hypotheses remain planning-grade and finance-unattested.",
+      "why_it_matters_to_leadership": "Leadership cannot claim savings or prioritize by ROI until baselines exist and finance signs off \u2014 this governs the credibility of the entire portfolio.",
+      "applies_to_dimensions": [
+        "budget",
+        "metrics",
+        "value_streams",
+        "programs",
+        "ai"
+      ],
+      "evidence_refs": [
+        "MER-AI-009-EV-9"
+      ]
+    },
+    {
+      "id": "GAP-5",
+      "statement": "Provider contract terms are not digitized in governed form, blocking both cost transparency and provider quality.",
+      "why_it_matters_to_leadership": "A single governed contract asset unlocks two high-priority use cases at once, making it a disproportionately high-leverage foundation investment.",
+      "applies_to_dimensions": [
+        "data",
+        "value_streams",
+        "rel"
+      ],
+      "evidence_refs": [
+        "MER-AI-005-EV-5"
+      ]
+    },
+    {
+      "id": "GAP-6",
+      "statement": "The IT budget is run-heavy and managed services are maintenance-bound, constraining change capacity for a foundation program.",
+      "why_it_matters_to_leadership": "The foundation cannot be delivered inside current change capacity; leadership must rebalance run/change or reshape sourcing to create delivery room.",
+      "applies_to_dimensions": [
+        "budget",
+        "ms",
+        "vendors",
+        "service_delivery"
+      ],
+      "evidence_refs": [
+        "MER-AI-010-EV-10"
+      ]
+    }
+  ],
+  "material_advantages": [
+    {
+      "id": "ADV-1",
+      "statement": "Meridian has a substantial, operationally critical system estate \u2014 Epic anchoring clinical, plus claims, pharmacy, CRM, contact center, GL, and a broad analytics estate \u2014 not a thin greenfield.",
+      "why_it_matters_to_leadership": "The source data for every use case already exists inside owned systems; the work is governance and harmonization, not acquisition.",
+      "applies_to_dimensions": [
+        "apps",
+        "infra",
+        "data",
+        "profile"
+      ],
+      "evidence_refs": [
+        "MER-AI-011-EV-11"
+      ]
+    },
+    {
+      "id": "ADV-2",
+      "statement": "Application ownership is fully captured across the core application inventory.",
+      "why_it_matters_to_leadership": "Named application owners give leadership a real starting point for assigning use-case accountability, shortening the path from intent to decision-grade ownership.",
+      "applies_to_dimensions": [
+        "apps",
+        "org"
+      ],
+      "evidence_refs": [
+        "MER-AI-012-EV-12"
+      ]
+    },
+    {
+      "id": "ADV-3",
+      "statement": "Leadership has already converged on a coherent, prioritized seven-use-case agenda with cross-C-suite sponsorship intent.",
+      "why_it_matters_to_leadership": "The hard alignment work is largely done; leadership can move directly to sequencing and foundation funding rather than debating scope.",
+      "applies_to_dimensions": [
+        "ai",
+        "programs",
+        "leadership_agenda",
+        "interview_signals"
+      ],
+      "evidence_refs": [
+        "MER-AI-013-EV-13"
+      ]
+    },
+    {
+      "id": "ADV-4",
+      "statement": "A working payment-integrity detection capability already exists on the SAS estate.",
+      "why_it_matters_to_leadership": "Unlike net-new use cases, this one has an operating baseline to build from \u2014 governing its lineage could yield defensible recoveries sooner than others.",
+      "applies_to_dimensions": [
+        "ai",
+        "value_streams",
+        "vendors"
+      ],
+      "evidence_refs": [
+        "MER-AI-006-EV-6"
+      ]
+    }
+  ],
+  "sections": {
+    "business_context": {
+      "headline": "An integrated delivery network and health plan modernizing for AI",
+      "narrative": "Meridian Health System is an integrated delivery network and health plan spanning clinical delivery, health-plan operations, pharmacy, finance, member service, and analytics. Its profile is partially evidenced: business model and system landscape are well understood, while sizing, geography, and leadership fields carry explicit planning assumptions rather than attested facts. Against healthcare industry patterns, Meridian sits behind on every foundational dimension despite strong operational scale. The strategic frame is a modernization enterprise building the governed foundation for AI at scale."
+    },
+    "operating_model": {
+      "headline": "Clear domain ownership, unconfirmed use-case accountability",
+      "narrative": "Meridian operates through seven functional domains, each with a named C-suite operating model \u2014 from CDAO-led analytics to Health Plan COO payer operations and CFO finance/actuarial. Executive interviews show consistent, cross-functional priority on the same use-case agenda. However, decision-grade ownership for individual use cases and for the shared foundation is not yet confirmed, leaving intent ahead of accountability. Assigning owners and decision rights is the operating-model prerequisite for advancing anything past planning."
+    },
+    "capabilities": {
+      "headline": "Strong functional capabilities, fragmented analytical ones",
+      "narrative": "Meridian's functional capabilities across clinical, payer, quality, finance, and member service are operationally mature and system-supported. The gap is analytical: measure logic, lineage, and semantics are fragmented across BI tools rather than governed centrally. Closing this gap is less about new capability and more about consolidating and certifying what already exists."
+    },
+    "value_streams": {
+      "headline": "High-value streams identified, none yet baselined",
+      "narrative": "Seven value streams \u2014 from cost transparency to payment integrity to automated close \u2014 are identified and consistently prioritized by leadership. None has a measured baseline, and every value hypothesis explicitly forbids a realized-value claim until tower evidence and finance sign-off exist. Provider contract digitization is the single highest-leverage move, unlocking two streams at once."
+    },
+    "applications_context": {
+      "headline": "Operationally critical estate, analytically fragmented",
+      "narrative": "The application estate is substantial and business-critical, anchored on Epic Hyperspace/Clarity/Caboodle with claims, pharmacy, CRM, contact center, GL, and a broad Tableau/Power BI/SAS/SQL analytics landscape. Ownership is fully captured across the core inventory, giving a real basis for accountability. The estate's weakness is fragmentation and duplicated reporting, not absence of systems."
+    },
+    "data_context": {
+      "headline": "Rich source data, missing governed foundation",
+      "narrative": "Meridian's data spans EMR, claims, pharmacy, prior-auth, quality, contract, and finance domains \u2014 the raw material for all seven use cases. The blockers are foundational: no certified medallion architecture, no identity spine, unproven claims/pharmacy harmonization, and uncertified semantics. The data exists; the governed foundation that makes it trustworthy does not yet."
+    },
+    "technology_context": {
+      "headline": "On-prem core today, target cloud platform aspirational",
+      "narrative": "Meridian runs its production workloads on established on-prem platforms, with AWS and Databricks positioned as target direction rather than certified current-state foundations. No medallion architecture is implemented. Roadmaps must treat the target platform as something to build and certify, not something to assume."
+    },
+    "vendor_context": {
+      "headline": "Active vendor estate, unresolved contract and integration risk",
+      "narrative": "The vendor portfolio spans Epic/Cogito, SQL/Power BI, Tableau, SAS, and outsourced analytics managed services, with target AWS/Databricks not yet implemented in governed form. Managed services are heavily maintenance-bound, limiting net-new delivery capacity. Integration to a governed lakehouse is unproven across the estate, and commercial terms are largely unevidenced."
+    },
+    "risk_context": {
+      "headline": "Foundational gaps are the dominant enterprise risk",
+      "narrative": "Meridian's active risk register is dominated by unmitigated foundational gaps that each carry a baseline-required-before-value-claim boundary. These are structural constraints, not incidents: they block value realization across every use case at once. Explicit forbidden-claim boundaries mean no production, savings, or outcome claims can be made until evidence closes."
+    },
+    "portfolio_context": {
+      "headline": "Run-heavy budget, planning-grade program portfolio",
+      "narrative": "The FY26 IT budget is run-heavy and change-light, and the flagship program portfolio is uniformly in planning, blocked by shared evidence gaps. No initiative has a funded, evidence-gated business case with a measured baseline. Rebalancing capacity toward the foundation is the portfolio-level unlock."
+    },
+    "ai_opportunity_context": {
+      "headline": "Broad AI ambition gated by absent foundations",
+      "narrative": "Meridian has catalogued a large AI opportunity set with a focused active subset, all mapped to the seven use cases. Every one is blocked by the same foundational gaps, so the constraint is readiness, not idea quality. Governance and the data foundation are the prerequisites that convert ambition into production."
+    },
+    "evidence_context": {
+      "headline": "Broad, high-confidence intent evidence; thin value evidence",
+      "narrative": "Meridian's evidence base is broad and strongly supports enterprise profile, system inventory, and executive use-case intent. It is directional on platform readiness and value hypotheses, and it confirms no production AI readiness, certified architecture, or realized savings. Most supporting evidence is low-specificity, so precise value claims must wait for baselines and owner sign-off."
+    },
+    "relationships_context": {
+      "headline": "One dependency chain: foundation gates the portfolio",
+      "narrative": "The relationship evidence shows the same structure repeated across use cases: source systems feed use cases, but shared foundational gaps sit on the critical path of each. Lakehouse and AI/LLM governance are prerequisite nodes for the majority of downstream use cases. This is why the enterprise should fund the foundation once rather than seven times."
+    }
+  },
+  "conclusions": [
+    {
+      "id": "CON-1",
+      "statement": "The same four foundational gaps block all seven use cases simultaneously, making the shared foundation a single gating decision rather than seven independent bets.",
+      "theme": "foundation_first",
+      "evidence_refs": [
+        "MER-AI-001-EV-1",
+        "MER-AI-002-EV-2"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "ai",
+        "data",
+        "programs",
+        "rel",
+        "risks",
+        "identity_semantic"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-2",
+      "statement": "The AWS/Databricks lakehouse and medallion architecture are aspirational targets, not certified production foundations.",
+      "theme": "platform_readiness",
+      "evidence_refs": [
+        "MER-AI-001-EV-1"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "apps",
+        "infra",
+        "architecture_dependencies",
+        "tech_lifecycle"
+      ],
+      "confidence": "loaded_fact"
+    },
+    {
+      "id": "CON-3",
+      "statement": "No use case has a measured baseline, so all value hypotheses remain planning-grade and cannot be claimed as realized savings.",
+      "theme": "value_discipline",
+      "evidence_refs": [
+        "MER-AI-009-EV-9"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "budget",
+        "metrics",
+        "value_streams",
+        "ai",
+        "programs"
+      ],
+      "confidence": "derived_measure"
+    },
+    {
+      "id": "CON-4",
+      "statement": "Executive intent is aligned and cross-functional, but decision-grade use-case ownership is not yet confirmed.",
+      "theme": "accountability",
+      "evidence_refs": [
+        "MER-AI-008-EV-8"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "org",
+        "decision_rights",
+        "workforce",
+        "leadership_agenda",
+        "interview_signals"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-5",
+      "statement": "Application ownership is fully captured across the core inventory, providing a concrete basis for assigning use-case accountability.",
+      "theme": "accountability",
+      "evidence_refs": [
+        "MER-AI-012-EV-12"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "apps",
+        "org"
+      ],
+      "confidence": "loaded_fact"
+    },
+    {
+      "id": "CON-6",
+      "statement": "Provider contract digitization is a high-leverage foundation move because it unblocks both cost transparency and provider quality at once.",
+      "theme": "sequencing",
+      "evidence_refs": [
+        "MER-AI-005-EV-5"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "data",
+        "value_streams",
+        "rel"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-7",
+      "statement": "A run-heavy budget and maintenance-bound managed services posture constrain the change capacity a foundation program requires.",
+      "theme": "capacity",
+      "evidence_refs": [
+        "MER-AI-010-EV-10"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "budget",
+        "ms",
+        "vendors",
+        "service_delivery"
+      ],
+      "confidence": "derived_measure"
+    },
+    {
+      "id": "CON-8",
+      "statement": "The source system estate is substantial and business-critical, so the work ahead is governance and harmonization rather than system acquisition.",
+      "theme": "asset_strength",
+      "evidence_refs": [
+        "MER-AI-011-EV-11"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "apps",
+        "infra",
+        "data",
+        "profile"
+      ],
+      "confidence": "loaded_fact"
+    },
+    {
+      "id": "CON-9",
+      "statement": "Sequencing is determined by dependency: foundation and AI/LLM governance first, cost transparency and payment integrity in parallel next, call center and provider quality following, automated close last.",
+      "theme": "sequencing",
+      "evidence_refs": [
+        "MER-AI-002-EV-2",
+        "MER-AI-007-EV-7"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "programs",
+        "ai",
+        "value_streams",
+        "rel"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-10",
+      "statement": "Payment integrity has a working detection capability today, giving it a nearer-term path than net-new use cases once its lineage is governed.",
+      "theme": "asset_strength",
+      "evidence_refs": [
+        "MER-AI-006-EV-6"
+      ],
+      "evidence_status": "evidenced",
+      "applies_to_dimensions": [
+        "ai",
+        "value_streams",
+        "vendors"
+      ],
+      "confidence": "strategic_inference"
+    },
+    {
+      "id": "CON-11",
+      "statement": "The evidence base strongly supports intent and inventory but confirms no production AI readiness or realized value, and most support is low-specificity.",
+      "theme": "evidence_maturity",
+      "evidence_refs": [
+        "MER-AI-014-EV-14"
+      ],
+      "evidence_status": "not_evidenced",
+      "applies_to_dimensions": [
+        "evidence",
+        "lenses",
+        "metrics"
+      ],
+      "confidence": "missing_evidence"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "DEC-1",
+      "statement": "Approve the shared foundation (certified data platform, governance operating model, semantic layer, identity spine) as a single funded program that gates the use-case portfolio.",
+      "applies_to_dimensions": [
+        "programs",
+        "data",
+        "identity_semantic",
+        "ai",
+        "budget"
+      ]
+    },
+    {
+      "id": "DEC-2",
+      "statement": "Assign a named accountable owner and decision rights to each use case and to the foundation program before advancing any past planning.",
+      "applies_to_dimensions": [
+        "org",
+        "decision_rights",
+        "workforce",
+        "leadership_agenda"
+      ]
+    },
+    {
+      "id": "DEC-3",
+      "statement": "Adopt the dependency-based release sequence and prioritize provider contract digitization as an early high-leverage foundation move.",
+      "applies_to_dimensions": [
+        "programs",
+        "value_streams",
+        "data",
+        "rel"
+      ]
+    },
+    {
+      "id": "DEC-4",
+      "statement": "Rebalance run/change and reshape managed services scope to create the delivery capacity the foundation program requires.",
+      "applies_to_dimensions": [
+        "budget",
+        "ms",
+        "vendors",
+        "service_delivery"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "REC-1",
+      "statement": "Stand up a formal data governance operating model and certified semantic layer as the first foundation workstream, since they gate the AI/LLM use cases.",
+      "applies_to_dimensions": [
+        "data",
+        "identity_semantic",
+        "data_quality_lineage",
+        "ai"
+      ]
+    },
+    {
+      "id": "REC-2",
+      "statement": "Require a measured baseline and finance sign-off as the gate for any use case to move from planning to funded delivery.",
+      "applies_to_dimensions": [
+        "budget",
+        "metrics",
+        "value_streams",
+        "programs"
+      ]
+    },
+    {
+      "id": "REC-3",
+      "statement": "Certify the target AWS/Databricks foundation and identity spine before roadmapping downstream use cases as ready-to-scale.",
+      "applies_to_dimensions": [
+        "infra",
+        "apps",
+        "architecture_dependencies",
+        "tech_lifecycle"
+      ]
+    },
+    {
+      "id": "REC-4",
+      "statement": "Govern the existing SAS payment-integrity lineage to pursue defensible near-term recoveries while the broader foundation is built.",
+      "applies_to_dimensions": [
+        "ai",
+        "value_streams",
+        "vendors"
+      ]
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "OQ-1",
+      "statement": "What is the funded cost and realistic timeline to certify the shared foundation, and who is its single accountable sponsor?",
+      "applies_to_dimensions": [
+        "programs",
+        "budget",
+        "org",
+        "decision_rights"
+      ]
+    },
+    {
+      "id": "OQ-2",
+      "statement": "What are the measured operational baselines (AHT, close cycle time, leakage rate, quality measures) that value cases must be built on?",
+      "applies_to_dimensions": [
+        "metrics",
+        "value_streams",
+        "opev"
+      ]
+    },
+    {
+      "id": "OQ-3",
+      "statement": "What are the actual vendor commercial terms and renewal exposures across the analytics and target-platform estate?",
+      "applies_to_dimensions": [
+        "vendors",
+        "ms",
+        "budget"
+      ]
+    },
+    {
+      "id": "OQ-4",
+      "statement": "Can current change capacity absorb the foundation program, or is a run/change or sourcing reset required first?",
+      "applies_to_dimensions": [
+        "budget",
+        "ms",
+        "service_delivery"
+      ]
+    }
+  ],
+  "book_version": "real-paid-run-2026-07-25"
+}

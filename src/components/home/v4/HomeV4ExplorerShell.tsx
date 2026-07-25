@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { COLORS } from "@/components/home/HomeEnterpriseBriefApp";
 import { HomeV4ApplicationsGrid } from "./HomeV4ApplicationsGrid";
+import { HomeV4BookOverview, HomeV4BookOverviewStyles, HomeV4GraphBindingSummary } from "./HomeV4BookOverview";
 import { HomeV4Explorer, type HomeV4ExplorerGroup } from "./HomeV4Explorer";
 import {
   CandidateUseCasesPage,
@@ -28,7 +29,19 @@ const CHANGE_TRANSFORMATION_GROUP: HomeV4ExplorerGroup = {
   ],
 };
 
+// Book mode (candidate.enterprise_book present) never populates
+// industry_change/use_cases/relationships -- those 4 passes are explicitly
+// skipped (see bookModeExecutionTrace() in the generator). Showing their nav
+// items would just be dead links, so book mode gets its own group instead of
+// CHANGE_TRANSFORMATION_GROUP -- explicit degradation, not a silent gap.
+const BOOK_OVERVIEW_GROUP: HomeV4ExplorerGroup = {
+  title: "Executive Book",
+  defaultOpen: true,
+  items: [{ key: "book_overview", label: "Executive Narrative", tone: "green" }],
+};
+
 export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate }) {
+  const isBookMode = Boolean(candidate.enterprise_book);
   const enterpriseContextGroup: HomeV4ExplorerGroup = {
     title: "Enterprise Context",
     defaultOpen: false,
@@ -39,7 +52,7 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
     })),
   };
 
-  const [selectedKey, setSelectedKey] = useState("industry_movements");
+  const [selectedKey, setSelectedKey] = useState(isBookMode ? "book_overview" : "industry_movements");
   const businessChangeImpact = candidate.relationships?.graph_projections.find(
     (p) => p.projection_type === "business_change_impact",
   );
@@ -47,11 +60,14 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
   return (
     <div className="heb-v4-explorer-shell">
       <HomeV4Explorer
-        groups={[CHANGE_TRANSFORMATION_GROUP, enterpriseContextGroup]}
+        groups={[isBookMode ? BOOK_OVERVIEW_GROUP : CHANGE_TRANSFORMATION_GROUP, enterpriseContextGroup]}
         selectedKey={selectedKey}
         onSelect={setSelectedKey}
       />
       <main className="heb-v4-explorer-main">
+        {selectedKey === "book_overview" && candidate.enterprise_book ? (
+          <HomeV4BookOverview book={candidate.enterprise_book} />
+        ) : null}
         {selectedKey === "industry_movements" && candidate.industry_change ? (
           <IndustryMovementsPage industryChange={candidate.industry_change} />
         ) : null}
@@ -76,15 +92,23 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
                   {dimension.summary_tab?.executive_read ? (
                     <p className="heb-v4-preview-summary">{dimension.summary_tab.executive_read}</p>
                   ) : null}
-                  <HomeV4VisualRenderer visual={dimension.primary_visual} />
+                  {dimension.headline && !dimension.summary_tab ? (
+                    <p className="heb-v4-preview-summary">
+                      <strong>{dimension.headline}</strong>
+                      {dimension.executive_takeaway ? ` -- ${dimension.executive_takeaway}` : ""}
+                    </p>
+                  ) : null}
+                  {dimension.primary_visual ? <HomeV4VisualRenderer visual={dimension.primary_visual} /> : null}
                   {dimension.data_tab?.full_rows?.length ? (
                     <HomeV4ApplicationsGrid rows={dimension.data_tab.full_rows} />
                   ) : null}
+                  {dimension.graph_binding ? <HomeV4GraphBindingSummary binding={dimension.graph_binding} /> : null}
                 </div>
               ))
           : null}
       </main>
       <HomeV4ChangeTransformationStyles />
+      <HomeV4BookOverviewStyles />
       <style jsx global>{`
         .heb-v4-explorer-shell {
           display: flex;

@@ -1,0 +1,23 @@
+[
+  {
+    "tenant_key": "first-capital",
+    "tenant_name": "FS Demo",
+    "pack_version": "home-pack-v4-book-first-capital-a441c606f440cb85",
+    "validation_status": "pass",
+    "db_status": "artifact-only (no --write-db)"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health System",
+    "pack_version": "home-pack-v4-book-meridian-health-4b3ab60f9d4a7204",
+    "validation_status": "pass",
+    "db_status": "artifact-only (no --write-db)"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "tenant_name": "Airline Demo",
+    "pack_version": "home-pack-v4-book-skyharbor-air-206598955981e910",
+    "validation_status": "pass",
+    "db_status": "artifact-only (no --write-db)"
+  }
+]
