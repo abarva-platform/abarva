@@ -57,12 +57,24 @@ export interface ArtifactDepthStandard {
   targetWords: string;
   minWords: number;
   maxTokens: number;
+  /**
+   * A hard word ceiling distinct from the target range's upper bound (e.g.
+   * target "900-1,100" but a hard maximum of 1,300 to allow headroom before
+   * blocking). When absent, `maximumWordCountForArtifact` falls back to the
+   * target range's own upper bound, as before.
+   */
+  hardMaxWords?: number;
 }
 
 const DEPTH_BY_ARTIFACT: Partial<
   Record<DeliverableKey, ArtifactDepthStandard>
 > = {
-  charter: { targetWords: "700-1,200", minWords: 450, maxTokens: 6000 },
+  charter: {
+    targetWords: "900-1,100",
+    minWords: 700,
+    maxTokens: 3000,
+    hardMaxWords: 1300,
+  },
   discovery_report: {
     targetWords: "3,000-5,000",
     minWords: 2500,
@@ -144,8 +156,9 @@ function maxWordsFromTargetRange(targetWords: string): number | undefined {
 export function maximumWordCountForArtifact(
   artifact: DeliverableKey,
 ): number | undefined {
-  return maxWordsFromTargetRange(
-    depthStandardForArtifact(artifact).targetWords,
+  const standard = depthStandardForArtifact(artifact);
+  return (
+    standard.hardMaxWords ?? maxWordsFromTargetRange(standard.targetWords)
   );
 }
 
@@ -350,17 +363,45 @@ The artifact must answer:
 - what assumptions, caveats, and missing evidence remain
 - what P2 evidence families, sessions, and client inputs are needed next
 
-Required structures:
-- Charter At-a-Glance table
-- Scope In / Out / Adjacent table
-- Decision Rights by Role/Title table
-- P2 Evidence Plan and Assumptions-to-Validate table
+You consume only structured P0 capture, approved enterprise context, and sponsor input. Never
+invent information that should have been collected in P0. Every sentence in this Charter must be
+traceable to one of those three sources. If a required section cannot be populated from them, do
+not fabricate content for it — write one of these exact labels instead, whichever fits:
+- "Client decision required" (a decision only the client/sponsor can make)
+- "Hypothesis to test in P2" (a plausible direction that P2 discovery must validate)
+- "Evidence required for P2" (a fact that only P2 evidence collection can supply)
+No Charter section should ever require P2 evidence to be considered complete — a section that is
+honestly incomplete, labeled as above, is correct; a section that is confidently wrong is not.
+
+Document presentation standard
+Produce an executive-quality Charter designed for approximately 2-3 pages.
+- Target 900-1,100 body words.
+- Hard maximum 1,300 body words.
+- Use concise executive prose, short paragraphs, and descriptive headings.
+- Use no more than three tables.
+- Prefer tables where they improve decision clarity; do not convert every section into a table.
+- Keep table cells concise and scannable.
+- Do not repeat the same information in prose and tables.
+- Do not create empty rows, placeholder sections, or decorative content.
+
+Required presentation elements:
+1. A prominent Charter Decision box at the beginning.
+2. A two-column Scope / Out of Scope table.
+3. A structured Discovery Questions and Evidence Required table.
+4. A short Authorization and Immediate Next Steps section at the end.
+
+Rendering requirements (content-level — exact border width, colors, fonts, margins, padding, cover
+treatment, and footer are enforced by the document renderer, not by you):
+- Use clear section hierarchy and consistent heading levels.
+- Use bordered tables with a distinct header row.
+- Keep the document free of markdown symbols, raw HTML, code fences, and formatting instructions.
+- Do not use excessive bolding, colored callouts, icons, or decorative graphics.
 
 Hard limits:
-- Target 700-1,200 words.
 - Do not invent current-state process, system landscape, org structure, baseline metrics, risks,
   solution options, architecture, roadmap, operating model, estimates, owners, names, or dates.
-- If a detail is useful but not proved yet, write "To validate in P2."`;
+- If a detail is useful but not proved yet, use one of the three exact labels above — never write
+  a vague hedge like "To validate in P2" in place of them.`;
 }
 
 function p2Assignment(): string {

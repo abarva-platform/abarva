@@ -35,7 +35,10 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('resolved_program_archetype: programArchetype');
     expect(source).toContain('sponsor_candidate: input.sponsor');
     expect(source).toContain('resolved_sponsor_candidate:');
-    expect(source).toContain('scope_boundary: input.scopeBoundary');
+    expect(source).toContain('scope_in: input.scopeIn');
+    expect(source).toContain('scope_out: input.scopeOut');
+    expect(source).toContain('outcomes_success: input.outcomesSuccess');
+    expect(source).toContain('discovery_questions: input.discoveryQuestions');
     expect(source).toContain('evidence_family: input.evidenceFamily');
     expect(source).toContain('value_hypothesis: input.targetOutcome');
     expect(source).toContain('foundation_readiness: input.timeline');
@@ -142,8 +145,12 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('accepted_by_user_id: tenancy.userId');
   });
 
-  it('accepts extended scaffold fields scopeBoundary and evidenceFamily', () => {
+  it('accepts extended scaffold fields including the P0 scope/outcomes/discovery split', () => {
     expect(source).toContain('scopeBoundary?: string | null');
+    expect(source).toContain('scopeIn?: string | null');
+    expect(source).toContain('scopeOut?: string | null');
+    expect(source).toContain('outcomesSuccess?: string | null');
+    expect(source).toContain('discoveryQuestions?: string | null');
     expect(source).toContain('evidenceFamily?: string | null');
     expect(source).toContain('fromInitiativeId?: string | null');
     expect(source).toContain('fromGapUsd?: number | null');

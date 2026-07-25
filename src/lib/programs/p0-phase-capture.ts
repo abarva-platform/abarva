@@ -16,6 +16,13 @@ export interface P0PhaseCaptureSource {
   charter?: Record<string, unknown> | null;
 }
 
+function readScaffoldOrCharter(
+  charter: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+): string {
+  return readScaffoldString(charter, ...keys) || readCharterString(charter, ...keys);
+}
+
 export interface P0PhaseCapturePersistResult {
   complete: boolean;
   missing: string[];
@@ -60,9 +67,22 @@ export function buildP0PhaseCaptureValues(
     clean(source.problemStatement) ||
     readScaffoldString(charter, "problem_statement", "problemStatement") ||
     readCharterString(charter, "problem_statement", "problemStatement");
-  const scope =
-    readScaffoldString(charter, "scope_boundary", "scopeBoundary") ||
-    readCharterString(charter, "scope_boundary", "scopeBoundary", "initial_scope");
+  // Prefer the split scope-in/scope-out fields; fall back to the legacy
+  // blended scope_boundary for Moves originated before the split.
+  const scopeIn =
+    readScaffoldOrCharter(charter, "scope_in", "scopeIn") ||
+    readScaffoldOrCharter(charter, "scope_boundary", "scopeBoundary");
+  const scopeOut = readScaffoldOrCharter(charter, "scope_out", "scopeOut");
+  const outcomesSuccess = readScaffoldOrCharter(
+    charter,
+    "outcomes_success",
+    "outcomesSuccess",
+  );
+  const discoveryQuestions = readScaffoldOrCharter(
+    charter,
+    "discovery_questions",
+    "discoveryQuestions",
+  );
   const valueHypothesis =
     clean(source.targetOutcome) ||
     readScaffoldString(charter, "value_hypothesis", "valueHypothesis") ||
@@ -88,13 +108,23 @@ export function buildP0PhaseCaptureValues(
     readCharterString(charter, "archetype", "classification", "resolved_program_archetype");
   const moveName = clean(source.name);
   const enoughForRecommendation =
-    problem && scope && valueHypothesis && sponsor && evidence && foundation;
+    problem &&
+    scopeIn &&
+    valueHypothesis &&
+    sponsor &&
+    evidence &&
+    foundation &&
+    outcomesSuccess &&
+    discoveryQuestions;
 
   return {
     business_trigger: problem,
     problem_statement: problem,
-    affected_function_process: scope || archetype || moveName,
+    affected_function_process: scopeIn || archetype || moveName,
+    scope_out: scopeOut,
     initial_value_hypothesis: valueHypothesis,
+    outcomes_success: outcomesSuccess,
+    discovery_questions: discoveryQuestions,
     stakeholder_owner_view: sponsor,
     known_evidence: [evidence, foundation].filter(Boolean).join("\n\n"),
     missing_evidence_open_questions: foundation

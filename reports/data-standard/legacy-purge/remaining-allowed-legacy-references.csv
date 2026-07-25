@@ -449,6 +449,7 @@ legacy-v-dimension-token,src/lib/home/__tests__/v6-context-browser.test.ts,non-l
 legacy-v-file-name,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/__tests__/v7-context-browser.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/__tests__/v7-context-browser.test.ts,non-loader historical reference
+legacy-v-dimension-token,src/lib/home/home-knowledge-v4-pack.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/home/know/__tests__/v6-home-know-response.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference

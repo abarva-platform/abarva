@@ -105,11 +105,14 @@ function selectP0Tab(step: number) {
   const labels = [
     /business problem or opportunity/i,
     /transformation pattern/i,
-    /executive sponsor/i,
-    /move scope and guardrails/i,
+    /executive sponsor and decision authority/i,
+    /in scope/i,
+    /out of scope/i,
     /value hypothesis/i,
+    /intended outcomes and success criteria/i,
+    /discovery questions and hypotheses to test/i,
     /evidence families to collect/i,
-    /evidence families to collect/i,
+    /foundation readiness, constraints, and dependencies/i,
   ];
   fireEvent.click(screen.getByRole("button", { name: labels[step - 1] }));
 }
@@ -122,12 +125,9 @@ function submitP0Section(container: HTMLElement, step: number, value: string) {
   expect(input).not.toBeNull();
   fireEvent.change(input!, { target: { value } });
   fireEvent.click(
-    screen.getByRole("button", {
-      name:
-        step === 7
-          ? /submit readiness|update readiness/i
-          : /submit section|update section/i,
-    }),
+    screen.getAllByRole("button", {
+      name: /submit section|update section|submit readiness|update readiness/i,
+    })[0],
   );
 }
 
@@ -142,11 +142,11 @@ describe("StrategicMoveOriginateClient", () => {
     mockFetchWithChatArtifact("");
   });
 
-  it("requires all seven Move brief sections before promotion", async () => {
+  it("requires all ten Move brief sections before promotion", async () => {
     const fourSectionProgress =
       "Captured four fields. [[artifact:brief-progress]]" +
       JSON.stringify({
-        fieldsTotal: 7,
+        fieldsTotal: 10,
         fieldsFilled: 4,
         fields: [
           {
@@ -168,8 +168,8 @@ describe("StrategicMoveOriginateClient", () => {
             value: "CIO",
           },
           {
-            id: "scope-boundary",
-            label: "Scope / boundary",
+            id: "scope-in",
+            label: "In scope",
             status: "filled",
             value: "Application managed services only.",
           },
@@ -199,7 +199,7 @@ describe("StrategicMoveOriginateClient", () => {
       name: /^approve and build$/i,
     });
     expect(approveButton).toBeDisabled();
-    expect(screen.getAllByText("0 of 7")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("0 of 10")[0]).toBeInTheDocument();
     expect(
       screen.getByText(/Describe the business problem or opportunity/i),
     ).toBeInTheDocument();
@@ -211,7 +211,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     await waitFor(() => {
       expect(
-        screen.getAllByText(/4 of 7 complete/i)[0],
+        screen.getAllByText(/4 of 10 complete/i)[0],
       ).toBeInTheDocument();
     });
 
@@ -229,8 +229,8 @@ describe("StrategicMoveOriginateClient", () => {
     const staleArtifact =
       "Captured all fields with a stale sponsor. [[artifact:brief-progress]]" +
       JSON.stringify({
-        fieldsTotal: 7,
-        fieldsFilled: 7,
+        fieldsTotal: 10,
+        fieldsFilled: 10,
         fields: [
           {
             id: "problem-statement",
@@ -251,10 +251,16 @@ describe("StrategicMoveOriginateClient", () => {
             value: "Dr. Anita Krishnamurthy",
           },
           {
-            id: "scope-boundary",
-            label: "Scope / boundary",
+            id: "scope-in",
+            label: "In scope",
             status: "filled",
             value: "Bank connectivity.",
+          },
+          {
+            id: "scope-out",
+            label: "Out of scope",
+            status: "filled",
+            value: "Changing the ERP core.",
           },
           {
             id: "evidence-family",
@@ -267,6 +273,18 @@ describe("StrategicMoveOriginateClient", () => {
             label: "Value hypothesis seed",
             status: "filled",
             value: "Cleaner cash visibility.",
+          },
+          {
+            id: "outcomes-success",
+            label: "Intended outcomes and success criteria",
+            status: "filled",
+            value: "Faster cash visibility, validated against baseline.",
+          },
+          {
+            id: "discovery-questions",
+            label: "Discovery questions and hypotheses to test",
+            status: "filled",
+            value: "Hypothesis: reconciliation delay traces to bank feed lag.",
           },
           {
             id: "foundation-readiness",
@@ -282,12 +300,17 @@ describe("StrategicMoveOriginateClient", () => {
         "Treasury visibility and payment-control risk across banks and SAP feeds.",
       archetype: "Treasury modernization and finance-controls move.",
       "sponsor-candidate": "CFO and Treasurer, with CIO support.",
-      "scope-boundary":
+      "scope-in":
         "Treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence.",
+      "scope-out": "Changing the ERP core in this move.",
       "evidence-family":
         "Finance systems, treasury operations, risk and controls, vendor/contracts, data readiness.",
       "value-hypothesis":
         "Faster cash visibility and cleaner payment-control evidence.",
+      "outcomes-success":
+        "Faster cash visibility, validated against a P2 baseline.",
+      "discovery-questions":
+        "Hypothesis: reconciliation delay traces to bank feed lag.",
       "foundation-readiness":
         "Kyriba rollout is underway, but bank connectivity and SOX evidence need validation.",
     };
@@ -324,7 +347,7 @@ describe("StrategicMoveOriginateClient", () => {
     render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
     openAvaDock();
 
-    const prompt = `Create a strategic Move named "Kyriba Treasury Controls Proof" for Lakeshore Holdings' Kyriba treasury rollout. The business problem is treasury visibility and payment-control risk across banks, SAP feeds, signers, payment formats, and SOX evidence. Sponsor candidate: CFO and Treasurer, with CIO support. Scope: treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move. Evidence family: finance systems, treasury operations, risk and controls, vendor/contracts, data readiness. Value hypothesis: faster cash visibility, lower manual reconciliation effort, cleaner payment-control evidence, and better board confidence. Foundation readiness: Kyriba rollout is underway, but data lineage, bank connectivity inventory, signer controls, and SOX evidence need validation.`;
+    const prompt = `Create a strategic Move named "Kyriba Treasury Controls Proof" for Lakeshore Holdings' Kyriba treasury rollout. The business problem is treasury visibility and payment-control risk across banks, SAP feeds, signers, payment formats, and SOX evidence. Sponsor candidate: CFO and Treasurer, with CIO support. Scope: treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move. Evidence family: finance systems, treasury operations, risk and controls, vendor/contracts, data readiness. Value hypothesis: faster cash visibility, lower manual reconciliation effort, cleaner payment-control evidence, and better board confidence. Outcomes: faster cash visibility, validated against a P2 baseline. Discovery questions: hypothesis that reconciliation delay traces to bank feed lag. Foundation readiness: Kyriba rollout is underway, but data lineage, bank connectivity inventory, signer controls, and SOX evidence need validation.`;
 
     await act(async () => {
       sendDockMessage(prompt);
@@ -385,7 +408,10 @@ describe("StrategicMoveOriginateClient", () => {
       "Contact Center Agent Assist — agent augmentation for member-service operations.",
       "Chief Operating Officer, with CDIO as data/platform co-sponsor.",
       "Claims status, prior authorization status, benefits and eligibility, CRM history, and agent knowledge lookup.",
+      "Clinical decisions and appeals adjudication.",
       "Reduce avoidable handle time, repeat contact, transfers, and manual rework while improving answer consistency.",
+      "Lower handle time and fewer transfers, validated against a P2 baseline.",
+      "Hypothesis: most repeat contacts trace to a handful of intents. Question: which systems do agents use per intent?",
       "Call metrics, CRM history, claims samples, prior authorization samples, benefits and eligibility samples, systems inventory, controls, and value assumptions.",
       "CRM, claims, eligibility, prior authorization, knowledge, identity, audit, data quality, and PHI controls need validation.",
     ];
@@ -473,7 +499,10 @@ describe("StrategicMoveOriginateClient", () => {
       "Contact Center Agent Assist.",
       "COO.",
       "Member-service call center workflows.",
+      "Clinical decisions.",
       "Reduce handle time and repeat contact.",
+      "Lower handle time, validated against baseline.",
+      "Hypothesis: repeat contacts trace to a few intents.",
       "Call metrics and CRM history.",
       "CRM, claims, eligibility, and PHI controls need validation.",
     ].forEach((value, index) => {
@@ -552,7 +581,7 @@ describe("StrategicMoveOriginateClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("keeps P0 promotion blocked until all 7 sections are captured", async () => {
+    it("keeps P0 promotion blocked until all 10 sections are captured", async () => {
       const { container } = render(
         <StrategicMoveOriginateClient tenantName="Meridian Health" />,
       );
@@ -573,7 +602,7 @@ describe("StrategicMoveOriginateClient", () => {
 
       expect(approveButton).toBeDisabled();
       expect(
-        screen.getAllByText(/1 of 7 complete/i)[0],
+        screen.getAllByText(/1 of 10 complete/i)[0],
       ).toBeInTheDocument();
     });
   });

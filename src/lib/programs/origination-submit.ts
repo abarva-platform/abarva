@@ -58,8 +58,16 @@ export interface SubmitOriginationBriefInput {
   sponsor: string;
   lead?: string | null;
   matchedPatternId?: string | null;
-  // Extended scaffold fields (steps 4–5)
+  // Extended scaffold fields (steps 4–9). `scopeBoundary` is the legacy
+  // blended field (kept for backward-compatible reads of older callers);
+  // `scopeIn`/`scopeOut` are the current split fields the P0 scaffold
+  // captures — when present they are the source of truth and `scopeBoundary`
+  // is derived from them for anything still reading the old shape.
   scopeBoundary?: string | null;
+  scopeIn?: string | null;
+  scopeOut?: string | null;
+  outcomesSuccess?: string | null;
+  discoveryQuestions?: string | null;
   evidenceFamily?: string | null;
   // From "Shape into a Move →" initiative context
   fromInitiativeId?: string | null;
@@ -534,7 +542,22 @@ function buildOriginationCharter(
       // approval/permission plumbing.
       sponsor_candidate: input.sponsor,
       resolved_sponsor_candidate: `${sponsor.name}${sponsor.role ? ` · ${sponsor.role}` : ""}`,
-      scope_boundary: input.scopeBoundary ?? null,
+      // scope_boundary stays populated (from the split fields when present)
+      // for any reader still on the pre-split shape (e.g. p0-brief/route.ts's
+      // fallback default text).
+      scope_boundary:
+        input.scopeIn || input.scopeOut
+          ? [
+              input.scopeIn ? `In: ${input.scopeIn}` : null,
+              input.scopeOut ? `Out: ${input.scopeOut}` : null,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : (input.scopeBoundary ?? null),
+      scope_in: input.scopeIn ?? null,
+      scope_out: input.scopeOut ?? null,
+      outcomes_success: input.outcomesSuccess ?? null,
+      discovery_questions: input.discoveryQuestions ?? null,
       evidence_family: input.evidenceFamily ?? null,
       value_hypothesis: input.targetOutcome ?? null,
       foundation_readiness: input.timeline ?? null,
@@ -627,6 +650,10 @@ export async function submitOriginationBrief(
       optionalText(rawInput.lead) ?? requiredText(rawInput.sponsor, "sponsor"),
     matchedPatternId: optionalText(rawInput.matchedPatternId),
     scopeBoundary: optionalText(rawInput.scopeBoundary),
+    scopeIn: optionalText(rawInput.scopeIn),
+    scopeOut: optionalText(rawInput.scopeOut),
+    outcomesSuccess: optionalText(rawInput.outcomesSuccess),
+    discoveryQuestions: optionalText(rawInput.discoveryQuestions),
     evidenceFamily: optionalText(rawInput.evidenceFamily),
     fromInitiativeId: optionalText(rawInput.fromInitiativeId),
     fromGapUsd:

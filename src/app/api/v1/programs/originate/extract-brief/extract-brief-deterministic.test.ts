@@ -17,8 +17,9 @@ Foundation readiness: Kyriba rollout is underway, but data lineage, bank connect
         "Create a strategic Move for Lakeshore Holdings' Kyriba treasury rollout. The business problem is treasury visibility and payment-control risk across banks, SAP feeds, signers, payment formats, and SOX evidence.",
       archetype: "Treasury modernization and finance-controls move.",
       "sponsor-candidate": "CFO and Treasurer, with CIO support.",
-      "scope-boundary":
-        "treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move.",
+      "scope-in":
+        "treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence;",
+      "scope-out": "changing the ERP core in this move.",
       "evidence-family":
         "finance systems, treasury operations, risk and controls, vendor/contracts, data readiness.",
       "value-hypothesis":
@@ -36,9 +37,10 @@ Foundation readiness: Kyriba rollout is underway, but data lineage, bank connect
     expect(fields["sponsor-candidate"]).toBe(
       "CFO and Treasurer, with CIO support.",
     );
-    expect(fields["scope-boundary"]).toBe(
-      "treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move.",
+    expect(fields["scope-in"]).toBe(
+      "treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence;",
     );
+    expect(fields["scope-out"]).toBe("changing the ERP core in this move.");
     expect(fields["evidence-family"]).toBe(
       "finance systems, treasury operations, risk and controls, vendor/contracts, data readiness.",
     );

@@ -11,7 +11,10 @@ describe("phase-capture-contract", () => {
       "business_trigger",
       "problem_statement",
       "affected_function_process",
+      "scope_out",
       "initial_value_hypothesis",
+      "outcomes_success",
+      "discovery_questions",
       "stakeholder_owner_view",
       "known_evidence",
       "missing_evidence_open_questions",
@@ -26,7 +29,7 @@ describe("phase-capture-contract", () => {
       problem_statement: "Exception handling is fragmented.",
     });
     expect(result.complete).toBe(false);
-    expect(result.missing).toContain("Affected function/process");
+    expect(result.missing).toContain("In scope");
     expect(result.missing).toContain("Recommendation to advance");
   });
 
