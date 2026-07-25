@@ -70,6 +70,7 @@ describe("persistMoveGeneratedArtifact", () => {
           gaps: ["Sponsor approval required."],
           decisions: [],
           humanApprovalNotes: [],
+          evidencePackets: [],
         },
         goldenBar: {
           pass: true,

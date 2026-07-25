@@ -10,6 +10,7 @@ import {
   isDocumentIntelligenceConfigured,
   parsePdfWithDocumentIntelligenceLayout,
 } from "@/lib/ingestion/document-intelligence-layout";
+import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import type { TenancyCtx } from "./types.db";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 
@@ -21,6 +22,39 @@ export type EvidenceType =
   | "architecture_inventory"
   | "uploaded_artifact"
   | "move_context_extract_attached";
+
+export interface EvidenceTableExtract {
+  title: string;
+  headers: string[];
+  rows: string[][];
+}
+
+export interface EvidenceCitation {
+  /** A short, verbatim (or near-verbatim) quote from the source file. */
+  quote: string;
+  /** Where in the file this came from, e.g. a sheet/row range, a heading, a page. */
+  locator: string;
+}
+
+/**
+ * The flexible, Move-specific content an uploaded file actually contains —
+ * additive to the fixed decisions/risks/action_items/baseline_candidates shape
+ * below, and NOT constrained to a predefined per-domain schema. Populated by
+ * `extractFlexibleEvidenceEnvelope` (LLM-based); absent when that step is
+ * unavailable or fails, so ingestion never hard-depends on it.
+ */
+export interface FlexibleEvidenceEnvelope {
+  /** What this file actually shows, in the file's own terms — not forced into a fixed taxonomy. */
+  observations: string[];
+  /** Any tabular data worth carrying forward as structured rows, not flattened prose. */
+  tables: EvidenceTableExtract[];
+  /** Assumptions this file states or implies, distinct from decisions already made. */
+  assumptions: string[];
+  /** Questions this file raises but does not answer. */
+  openQuestions: string[];
+  /** Verbatim citations a deliverable can point to, instead of a generic category label. */
+  citations: EvidenceCitation[];
+}
 
 export interface ExtractedProgramEvidence {
   evidenceType: EvidenceType;
@@ -35,6 +69,8 @@ export interface ExtractedProgramEvidence {
     attendees: string[];
     parse_method: string;
     warnings: string[];
+    /** Optional — see FlexibleEvidenceEnvelope. */
+    flexible?: FlexibleEvidenceEnvelope;
   };
   confidence: number;
 }
@@ -239,6 +275,98 @@ export function extractProgramEvidenceFromText(args: {
     },
     confidence: normalized ? 0.78 : 0.3,
   };
+}
+
+const FLEXIBLE_EXTRACTION_MODEL =
+  process.env.EVIDENCE_EXTRACTION_MODEL ?? "claude-haiku-4-5-20251001";
+const MAX_TEXT_FOR_FLEXIBLE_EXTRACTION = 12_000;
+
+const FLEXIBLE_EXTRACTION_SYSTEM_PROMPT = `You extract what an uploaded evidence file actually
+contains — you do not force it into a fixed category taxonomy. Read the text and produce a strict
+JSON object with this exact shape and nothing else:
+{
+  "observations": string[],   // what this file actually shows, in its own terms (max 12)
+  "tables": [{"title": string, "headers": string[], "rows": string[][]}],  // any tabular data worth carrying forward (max 4 tables, max 20 rows each)
+  "assumptions": string[],    // assumptions the file states or implies (max 8)
+  "openQuestions": string[],  // questions the file raises but does not answer (max 8)
+  "citations": [{"quote": string, "locator": string}]  // short verbatim quotes + where they came from, e.g. a heading or row range (max 10)
+}
+Only extract what is actually present in the text — never invent a finding, a number, or a citation
+that is not there. If a field has nothing to report, return an empty array for it. Return JSON only,
+no markdown fences, no commentary.`;
+
+/**
+ * Flexible, Move-specific extraction of an uploaded evidence file's real content —
+ * additive to the deterministic decisions/risks/action_items/baseline_candidates
+ * parser above. Runs through the audited Anthropic egress path (per AGENTS.md);
+ * on any failure (no API key, quota, malformed response) this returns null and
+ * the caller proceeds without it — ingestion never hard-depends on this step.
+ */
+export async function extractFlexibleEvidenceEnvelope(args: {
+  tenantId: string;
+  userId?: string;
+  filename: string;
+  text: string;
+}): Promise<FlexibleEvidenceEnvelope | null> {
+  const text = args.text.trim();
+  if (!text || !process.env.ANTHROPIC_API_KEY) return null;
+  try {
+    const truncated = text.slice(0, MAX_TEXT_FOR_FLEXIBLE_EXTRACTION);
+    const userContent = `Filename: ${args.filename}\n\nText:\n${truncated}`;
+    const { client: anthropic } = await getAuditedAnthropicClient({
+      tenantId: args.tenantId,
+      userId: args.userId,
+      workflow: "moves-evidence-flexible-extraction",
+      model: FLEXIBLE_EXTRACTION_MODEL,
+      prompt: [FLEXIBLE_EXTRACTION_SYSTEM_PROMPT, userContent].join("\n\n"),
+      dataClass: "confidential",
+      metadata: { filename: args.filename },
+    });
+    const result = await anthropic.messages.create({
+      model: FLEXIBLE_EXTRACTION_MODEL,
+      max_tokens: 2000,
+      temperature: 0,
+      system: FLEXIBLE_EXTRACTION_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userContent }],
+    });
+    const responseText =
+      result.content.find((b) => b.type === "text")?.text ?? "{}";
+    const parsed = JSON.parse(
+      responseText.replace(/^```(?:json)?\s*|\s*```$/g, ""),
+    ) as Partial<FlexibleEvidenceEnvelope>;
+    return {
+      observations: Array.isArray(parsed.observations)
+        ? parsed.observations.slice(0, 12).map(String)
+        : [],
+      tables: Array.isArray(parsed.tables)
+        ? parsed.tables.slice(0, 4).map((t) => ({
+            title: String((t as EvidenceTableExtract)?.title ?? "Table"),
+            headers: Array.isArray((t as EvidenceTableExtract)?.headers)
+              ? (t as EvidenceTableExtract).headers.map(String)
+              : [],
+            rows: Array.isArray((t as EvidenceTableExtract)?.rows)
+              ? (t as EvidenceTableExtract).rows
+                  .slice(0, 20)
+                  .map((row) => (Array.isArray(row) ? row.map(String) : []))
+              : [],
+          }))
+        : [],
+      assumptions: Array.isArray(parsed.assumptions)
+        ? parsed.assumptions.slice(0, 8).map(String)
+        : [],
+      openQuestions: Array.isArray(parsed.openQuestions)
+        ? parsed.openQuestions.slice(0, 8).map(String)
+        : [],
+      citations: Array.isArray(parsed.citations)
+        ? parsed.citations.slice(0, 10).map((c) => ({
+            quote: String((c as EvidenceCitation)?.quote ?? ""),
+            locator: String((c as EvidenceCitation)?.locator ?? ""),
+          }))
+        : [],
+    };
+  } catch {
+    return null;
+  }
 }
 
 function withParseMetadata(
@@ -541,6 +669,33 @@ export function evidenceForUnsupportedAttachment(args: {
       ],
     },
     confidence: 0.4,
+  };
+}
+
+/**
+ * Enrich an already-parsed evidence result with the flexible, Move-specific
+ * envelope (observations/tables/assumptions/openQuestions/citations). Callers
+ * that don't pass tenant/user context get the evidence back unchanged — this
+ * is purely additive and never required for ingestion to succeed.
+ */
+export async function enrichWithFlexibleEvidenceEnvelope(
+  evidence: ExtractedProgramEvidence,
+  args: { tenantId: string; userId?: string },
+): Promise<ExtractedProgramEvidence> {
+  if (!evidence.extractedText) return evidence;
+  const flexible = await extractFlexibleEvidenceEnvelope({
+    tenantId: args.tenantId,
+    userId: args.userId,
+    filename: evidence.title,
+    text: evidence.extractedText,
+  });
+  if (!flexible) return evidence;
+  return {
+    ...evidence,
+    extractedStructured: {
+      ...evidence.extractedStructured,
+      flexible,
+    },
   };
 }
 
