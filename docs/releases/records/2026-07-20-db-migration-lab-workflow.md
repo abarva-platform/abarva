@@ -23,7 +23,7 @@ migration-backed feature could deploy successfully and then fail at runtime the 
 route reads or writes the missing column.
 
 This release adds a governed, `workflow_dispatch`-only GitHub Actions workflow
-(`.github/workflows/db-migration-lab.yml`) that is the *only* sanctioned way to apply a
+(`.github/workflows/db-migration-lab.yml`) that is the _only_ sanctioned way to apply a
 migration to the shared lab/production Postgres database. It never runs automatically on
 push or merge — a merged migration file sits pending until an operator deliberately
 dispatches this workflow and a required-reviewer GitHub Environment approves it. The
@@ -128,10 +128,10 @@ touched.
 - `.github/workflows/db-migration-lab.yml` (third pass) — "Migration ledger" now runs
   in `status` mode too, not just `apply`. It is a pure read; seeing the full applied-
   migration ledger during preflight (not just the pending list) is real evidence for
-  investigating *why* a migration is pending before ever approving an apply.
+  investigating _why_ a migration is pending before ever approving an apply.
 - `.github/workflows/db-migration-lab.yml` (fourth pass — mode fail-closed hardening):
   a real incident during this release's own apply (a dispatch that omitted `-f
-  mode=apply` silently ran `mode=status` instead, because `required: true` with a
+mode=apply` silently ran `mode=status` instead, because `required: true` with a
   `default:` still lets GitHub Actions fall through to the default on omission)
   motivated this fix.
   - Removed `default: status` from the `mode` input entirely — every dispatch (UI or
@@ -147,17 +147,17 @@ touched.
 ## QA / Validation
 
 - `pass` — `npx jest scripts/ops/__tests__/submit-aca-operator-job.test.ts
-  src/scripts/__tests__/run-migrations.test.ts` — 47/47 passed.
+src/scripts/__tests__/run-migrations.test.ts` — 47/47 passed.
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p
-  tsconfig.json` — clean.
+tsconfig.json` — clean.
 - `pass` — `npx eslint scripts/ops/submit-aca-operator-job.mjs
-  scripts/ops/__tests__/submit-aca-operator-job.test.ts` — clean.
+scripts/ops/__tests__/submit-aca-operator-job.test.ts` — clean.
 - `pass` — YAML syntax of `db-migration-lab.yml` validated with `js-yaml` (no
   `actionlint` available in this environment).
 - `pass` — **mode fail-closed real verification.** After merge, `gh workflow run
-  db-migration-lab.yml --ref main` (no `-f mode=...`) was attempted for real. Result:
+db-migration-lab.yml --ref main` (no `-f mode=...`) was attempted for real. Result:
   `could not create workflow dispatch event: HTTP 422: Required input 'mode' not
-  provided`. The GitHub API rejected the dispatch outright — no workflow run was even
+provided`. The GitHub API rejected the dispatch outright — no workflow run was even
   created. This is exactly the incident this fix closes: the earlier silent-status
   dispatch is no longer possible.
 - `pass` — **Isolated Postgres integration test**, real `postgres:16-alpine` via Docker:
@@ -165,7 +165,7 @@ touched.
   tampered already-applied migration file and clears once restored; advisory lock
   correctly blocks a concurrent `db:migrate:ci` with exit-1 while held (verified with a
   genuinely long-lived `pg_advisory_lock` session, not a self-releasing one-shot `psql
-  -c`) and succeeds once released.
+-c`) and succeeds once released.
 - `NOT YET PROVEN` — **The real ACA-job pathway end-to-end.** The isolated-Postgres test
   above proves `run-migrations.ts` itself is correct. It does not prove that
   `submit-aca-operator-job.mjs` invoking `db:migrate:ci` inside the real
@@ -256,7 +256,7 @@ existing call sites' behavior when `--plan-only` isn't passed.
 - **Real GitHub Actions run**, not just local verification:
   [db-migration-ci-selftest.yml run 29773166993](https://github.com/abarva-platform/abarva/actions/runs/29773166993)
   — triggered automatically by this PR's own `pull_request` path filter, `conclusion:
-  success`, all 17 steps green in 1m21s, including Apply, Schema readback, Migration
+success`, all 17 steps green in 1m21s, including Apply, Schema readback, Migration
   ledger, and Repository readback against a real disposable GitHub Actions Postgres
   service container.
 - **Real `status` dispatch #1** ([run 29780099664](https://github.com/abarva-platform/abarva/actions/runs/29780099664)):
@@ -306,22 +306,22 @@ existing call sites' behavior when `--plan-only` isn't passed.
   - Schema readback: `"migrations": 275` (272 + 3, exact match), `"publicTables": 422`.
   - Repository readback (real `getSourceStageGuidebook()` call, not raw SQL):
     `{"ok":true,"stageKey":"strategy","clientKey":null,"title":"Strategy Gate
-    Review","status":"published","sectionCount":5,"version":1}` — confirms the table,
+Review","status":"published","sectionCount":5,"version":1}` — confirms the table,
     the seeded row, `client_key IS NULL` as designed, `stage_key = "strategy"`, and
     that the real application code path can read it.
   - Affected-feature health: `{"ok":true,"checks":{"postgres":true,
-    "direct_postgres":true}}`.
+"direct_postgres":true}}`.
   - Migration ledger post-apply: `totalApplied: 275`, latest entry
     `20260720131500_source_stage_guidebooks_seed_strategy.sql` with real sha256
     `47a741a3b5cafdfeae5a726b5c2d83bb175637970bca34919e7bf7d2044fb012` (matches the
     hash independently computed during local/CI verification earlier).
   - Audit chain: `{"workflowRunId":"29789097644","commitSha":
-    "0b59e44bc4612d0fe4402ce86cf13007303ba156","operator":"anandsundaram-hash",
-    "migrationName":"20260720131500_source_stage_guidebooks_seed_strategy.sql",
-    "migrationSha256":"47a741a3b5...","totalMigrationsApplied":275,
-    "databaseTarget":"ca-abarva-web-lab-eastus (rg-abarva-controlplane-lab-eastus)",
-    "applicationRevision":"ca-abarva-web-lab-eastus--m0b59e44b","imageDigest":
-    "...@sha256:2c88e2d7dcacd95a397e441a8f2e009d0c31f5e7205cbc8a962efe8f60f7f624"}`.
+"0b59e44bc4612d0fe4402ce86cf13007303ba156","operator":"anandsundaram-hash",
+"migrationName":"20260720131500_source_stage_guidebooks_seed_strategy.sql",
+"migrationSha256":"47a741a3b5...","totalMigrationsApplied":275,
+"databaseTarget":"ca-abarva-web-lab-eastus (rg-abarva-controlplane-lab-eastus)",
+"applicationRevision":"ca-abarva-web-lab-eastus--m0b59e44b","imageDigest":
+"...@sha256:2c88e2d7dcacd95a397e441a8f2e009d0c31f5e7205cbc8a962efe8f60f7f624"}`.
   - Idle verification post-apply: `{"idleVerified":true,"problems":[]}`.
   - Both migrations are purely additive (`CREATE TABLE IF NOT EXISTS`,
     `INSERT ... ON CONFLICT DO NOTHING`) — no existing table, row, or schema touched.
@@ -360,3 +360,18 @@ existing call sites' behavior when `--plan-only` isn't passed.
   client data-plane migrations will need the same lane. This release deliberately scopes
   to proving the pattern once (lab environment, Source's own pending migration) rather
   than generalizing it before it has been exercised for real.
+- **OPEN (2026-07-25): `verifyIdle()`/`restoreIdle()` false-fail on a concurrent, unrelated
+  execution of the shared job.** During the `2026-07-25-vendor-proposal-facts-foundation`
+  apply (see that release record), two dispatches reported step-level failure — both times
+  the underlying `db:migrate:ci`/`db:migrate:dry` step itself completed cleanly inside the
+  container (confirmed in the container log: "✓ 8 migrations applied" / correct pending
+  list), but the wrapper's post-check saw a _different_, unrelated execution of
+  `job-abarva-private-operator-eus` still `Running` at verification time (started by another
+  concurrent dispatcher, not by this run) and reported that as this run's failure. This is
+  an operational observability defect in the shared job's idle-verification, not a
+  migration-correctness defect — the actual schema mutation is durable and was independently
+  confirmed via a subsequent clean `status` dispatch showing "No pending migrations." A real
+  follow-up: `verifyIdle()` should distinguish "some execution of this shared job is
+  non-idle" from "the execution _this run started_ did not return to idle," e.g. by
+  tracking and checking only the specific execution name/ID this run itself launched,
+  rather than scanning all executions of the shared job indiscriminately.
