@@ -1,0 +1,17 @@
+{
+  "dataset_id": "internal-golden",
+  "title": "AbarVa Golden Health System — Golden Move fixture tenant",
+  "client_key": "internal-golden",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "internal_fixture_synthetic_generation",
+  "ingestion_method": "admin_bulk_loader",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 981,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-07-24",
+  "notes": "Permanent, internal-only Golden Move regression/demo/proof fixture tenant, created per docs/architecture/MOVES_OPERATING_MODEL.md's Golden Move proposal so that MEMBER AI ASSIST (a real, disputed Move under active fabrication-incident remediation) and no real client tenant ever needs to be touched again for Moves regression, demo, or evidence phase-scoping testing. `internal-golden` is entirely fictional/synthetic (AbarVa Golden Health System, a healthcare archetype at the $50B+ / 180-220 application / 35-50 initiative substrate volumetric standard), contains no real PHI/PII, and is deliberately excluded from every client-facing surface by construction: it is registered in src/config/tenants/CANONICAL_TENANTS.ts for governance purposes only and is NOT added to src/lib/client-config.ts's ALL_CLIENTS, so it never appears in any client picker, persona switcher, or client-facing portfolio/report. Setup-data content lives at repo-root internal-golden-data/ (14 segments, mirroring meridian-data/) and is loaded via src/scripts/setup-data/load-internal-golden-setup-data.ts into the same data-inventory tables other tenants use; expected_object_count of 981 matches that loader's --dry-run output exactly. This PR is code/config only — no `tenant:bootstrap --tenant internal-golden --apply` run and no data-plane mutation has occurred yet; see the accompanying release record for the required follow-up (a real --apply run plus creating and walking the actual Golden Move through P0-P2 with real synthetic evidence) which must be run by a human with real data-plane credentials or dispatched as an ACA data-build job, not from this sandboxed environment."
+}

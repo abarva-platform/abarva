@@ -1,0 +1,5 @@
+authority_id,approver_person_id,role,threshold_usd,notes
+auth:golden:001,person:golden:daniel-oyelaran,CFO,25000000,Board approval required above this threshold
+auth:golden:002,person:golden:mei-fujimoto,CIO,5000000,CIO discretionary capital
+auth:golden:003,person:golden:aisha-boateng,CDAO,1500000,Data platform discretionary
+auth:golden:004,person:golden:helena-kowalczyk,COO,3000000,Operations discretionary

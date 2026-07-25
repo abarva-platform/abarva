@@ -47,8 +47,8 @@ import process from 'node:process';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 
-type TenantKey = 'apexretail' | 'meridian' | 'arcturus' | 'lakeshore';
-const CANONICAL_TENANTS: ReadonlyArray<TenantKey> = ['apexretail', 'meridian', 'arcturus', 'lakeshore'];
+type TenantKey = 'apexretail' | 'meridian' | 'arcturus' | 'lakeshore' | 'internal-golden';
+const CANONICAL_TENANTS: ReadonlyArray<TenantKey> = ['apexretail', 'meridian', 'arcturus', 'lakeshore', 'internal-golden'];
 
 interface CliArgs {
   tenant: TenantKey | null;
@@ -208,6 +208,7 @@ const SETUP_DATA_LOADERS: Record<TenantKey, string> = {
   meridian: 'src/scripts/setup-data/load-meridian-setup-data.ts',
   arcturus: 'src/scripts/setup-data/load-firstcapital-setup-data.ts',
   lakeshore: 'src/scripts/lakeshore/rehearse-governed-load.ts',
+  'internal-golden': 'src/scripts/setup-data/load-internal-golden-setup-data.ts',
 };
 
 function setupDataArgs(tenant: TenantKey, loader: string, apply: boolean): string[] {

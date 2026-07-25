@@ -1,0 +1,488 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "integrations": [
+    {
+      "integration_id": "integ:golden:001",
+      "source_system_id": "system:golden:clinical_reporting-001",
+      "target_system_id": "system:golden:member_services-004",
+      "pattern": "batch",
+      "data_domain": "clinical_ehr",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:002",
+      "source_system_id": "system:golden:revenue_cycle-002",
+      "target_system_id": "system:golden:supply_chain-011",
+      "pattern": "real-time",
+      "data_domain": "clinical_reporting",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:003",
+      "source_system_id": "system:golden:claims_admin-003",
+      "target_system_id": "system:golden:actuarial-018",
+      "pattern": "event-driven",
+      "data_domain": "revenue_cycle",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:004",
+      "source_system_id": "system:golden:member_services-004",
+      "target_system_id": "system:golden:member_services-025",
+      "pattern": "batch",
+      "data_domain": "claims_admin",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:005",
+      "source_system_id": "system:golden:population_health-005",
+      "target_system_id": "system:golden:supply_chain-032",
+      "pattern": "real-time",
+      "data_domain": "member_services",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:006",
+      "source_system_id": "system:golden:data_platform-006",
+      "target_system_id": "system:golden:actuarial-039",
+      "pattern": "event-driven",
+      "data_domain": "population_health",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:007",
+      "source_system_id": "system:golden:security-007",
+      "target_system_id": "system:golden:member_services-046",
+      "pattern": "batch",
+      "data_domain": "data_platform",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:008",
+      "source_system_id": "system:golden:infrastructure-008",
+      "target_system_id": "system:golden:supply_chain-053",
+      "pattern": "real-time",
+      "data_domain": "security",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:009",
+      "source_system_id": "system:golden:hr_workforce-009",
+      "target_system_id": "system:golden:actuarial-060",
+      "pattern": "event-driven",
+      "data_domain": "infrastructure",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:010",
+      "source_system_id": "system:golden:finance_erp-010",
+      "target_system_id": "system:golden:member_services-067",
+      "pattern": "batch",
+      "data_domain": "hr_workforce",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:011",
+      "source_system_id": "system:golden:supply_chain-011",
+      "target_system_id": "system:golden:supply_chain-074",
+      "pattern": "real-time",
+      "data_domain": "finance_erp",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:012",
+      "source_system_id": "system:golden:telehealth-012",
+      "target_system_id": "system:golden:actuarial-081",
+      "pattern": "event-driven",
+      "data_domain": "supply_chain",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:013",
+      "source_system_id": "system:golden:pharmacy-013",
+      "target_system_id": "system:golden:member_services-088",
+      "pattern": "batch",
+      "data_domain": "telehealth",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:014",
+      "source_system_id": "system:golden:imaging-014",
+      "target_system_id": "system:golden:supply_chain-095",
+      "pattern": "real-time",
+      "data_domain": "pharmacy",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:015",
+      "source_system_id": "system:golden:lab-015",
+      "target_system_id": "system:golden:actuarial-102",
+      "pattern": "event-driven",
+      "data_domain": "imaging",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:016",
+      "source_system_id": "system:golden:care_management-016",
+      "target_system_id": "system:golden:member_services-109",
+      "pattern": "batch",
+      "data_domain": "lab",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:017",
+      "source_system_id": "system:golden:provider_network-017",
+      "target_system_id": "system:golden:supply_chain-116",
+      "pattern": "real-time",
+      "data_domain": "care_management",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:018",
+      "source_system_id": "system:golden:actuarial-018",
+      "target_system_id": "system:golden:actuarial-123",
+      "pattern": "event-driven",
+      "data_domain": "provider_network",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:019",
+      "source_system_id": "system:golden:digital_front_door-019",
+      "target_system_id": "system:golden:member_services-130",
+      "pattern": "batch",
+      "data_domain": "actuarial",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:020",
+      "source_system_id": "system:golden:ai_ml_platform-020",
+      "target_system_id": "system:golden:supply_chain-137",
+      "pattern": "real-time",
+      "data_domain": "digital_front_door",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:021",
+      "source_system_id": "system:golden:clinical_ehr-021",
+      "target_system_id": "system:golden:actuarial-144",
+      "pattern": "event-driven",
+      "data_domain": "ai_ml_platform",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:022",
+      "source_system_id": "system:golden:clinical_reporting-022",
+      "target_system_id": "system:golden:member_services-151",
+      "pattern": "batch",
+      "data_domain": "clinical_ehr",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:023",
+      "source_system_id": "system:golden:revenue_cycle-023",
+      "target_system_id": "system:golden:supply_chain-158",
+      "pattern": "real-time",
+      "data_domain": "clinical_reporting",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:024",
+      "source_system_id": "system:golden:claims_admin-024",
+      "target_system_id": "system:golden:actuarial-165",
+      "pattern": "event-driven",
+      "data_domain": "revenue_cycle",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:025",
+      "source_system_id": "system:golden:member_services-025",
+      "target_system_id": "system:golden:member_services-172",
+      "pattern": "batch",
+      "data_domain": "claims_admin",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:026",
+      "source_system_id": "system:golden:population_health-026",
+      "target_system_id": "system:golden:supply_chain-179",
+      "pattern": "real-time",
+      "data_domain": "member_services",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:027",
+      "source_system_id": "system:golden:data_platform-027",
+      "target_system_id": "system:golden:actuarial-186",
+      "pattern": "event-driven",
+      "data_domain": "population_health",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:028",
+      "source_system_id": "system:golden:security-028",
+      "target_system_id": "system:golden:member_services-193",
+      "pattern": "batch",
+      "data_domain": "data_platform",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:029",
+      "source_system_id": "system:golden:infrastructure-029",
+      "target_system_id": "system:golden:supply_chain-200",
+      "pattern": "real-time",
+      "data_domain": "security",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:030",
+      "source_system_id": "system:golden:hr_workforce-030",
+      "target_system_id": "system:golden:security-007",
+      "pattern": "event-driven",
+      "data_domain": "infrastructure",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:031",
+      "source_system_id": "system:golden:finance_erp-031",
+      "target_system_id": "system:golden:imaging-014",
+      "pattern": "batch",
+      "data_domain": "hr_workforce",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:032",
+      "source_system_id": "system:golden:supply_chain-032",
+      "target_system_id": "system:golden:clinical_ehr-021",
+      "pattern": "real-time",
+      "data_domain": "finance_erp",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:033",
+      "source_system_id": "system:golden:telehealth-033",
+      "target_system_id": "system:golden:security-028",
+      "pattern": "event-driven",
+      "data_domain": "supply_chain",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:034",
+      "source_system_id": "system:golden:pharmacy-034",
+      "target_system_id": "system:golden:imaging-035",
+      "pattern": "batch",
+      "data_domain": "telehealth",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:035",
+      "source_system_id": "system:golden:imaging-035",
+      "target_system_id": "system:golden:clinical_ehr-042",
+      "pattern": "real-time",
+      "data_domain": "pharmacy",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:036",
+      "source_system_id": "system:golden:lab-036",
+      "target_system_id": "system:golden:security-049",
+      "pattern": "event-driven",
+      "data_domain": "imaging",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:037",
+      "source_system_id": "system:golden:care_management-037",
+      "target_system_id": "system:golden:imaging-056",
+      "pattern": "batch",
+      "data_domain": "lab",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:038",
+      "source_system_id": "system:golden:provider_network-038",
+      "target_system_id": "system:golden:clinical_ehr-063",
+      "pattern": "real-time",
+      "data_domain": "care_management",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:039",
+      "source_system_id": "system:golden:actuarial-039",
+      "target_system_id": "system:golden:security-070",
+      "pattern": "event-driven",
+      "data_domain": "provider_network",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:040",
+      "source_system_id": "system:golden:digital_front_door-040",
+      "target_system_id": "system:golden:imaging-077",
+      "pattern": "batch",
+      "data_domain": "actuarial",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:041",
+      "source_system_id": "system:golden:ai_ml_platform-041",
+      "target_system_id": "system:golden:clinical_ehr-084",
+      "pattern": "real-time",
+      "data_domain": "digital_front_door",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:042",
+      "source_system_id": "system:golden:clinical_ehr-042",
+      "target_system_id": "system:golden:security-091",
+      "pattern": "event-driven",
+      "data_domain": "ai_ml_platform",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:043",
+      "source_system_id": "system:golden:clinical_reporting-043",
+      "target_system_id": "system:golden:imaging-098",
+      "pattern": "batch",
+      "data_domain": "clinical_ehr",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:044",
+      "source_system_id": "system:golden:revenue_cycle-044",
+      "target_system_id": "system:golden:clinical_ehr-105",
+      "pattern": "real-time",
+      "data_domain": "clinical_reporting",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:045",
+      "source_system_id": "system:golden:claims_admin-045",
+      "target_system_id": "system:golden:security-112",
+      "pattern": "event-driven",
+      "data_domain": "revenue_cycle",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:046",
+      "source_system_id": "system:golden:member_services-046",
+      "target_system_id": "system:golden:imaging-119",
+      "pattern": "batch",
+      "data_domain": "claims_admin",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:047",
+      "source_system_id": "system:golden:population_health-047",
+      "target_system_id": "system:golden:clinical_ehr-126",
+      "pattern": "real-time",
+      "data_domain": "member_services",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:048",
+      "source_system_id": "system:golden:data_platform-048",
+      "target_system_id": "system:golden:security-133",
+      "pattern": "event-driven",
+      "data_domain": "population_health",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:049",
+      "source_system_id": "system:golden:security-049",
+      "target_system_id": "system:golden:imaging-140",
+      "pattern": "batch",
+      "data_domain": "data_platform",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:050",
+      "source_system_id": "system:golden:infrastructure-050",
+      "target_system_id": "system:golden:clinical_ehr-147",
+      "pattern": "real-time",
+      "data_domain": "security",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:051",
+      "source_system_id": "system:golden:hr_workforce-051",
+      "target_system_id": "system:golden:security-154",
+      "pattern": "event-driven",
+      "data_domain": "infrastructure",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:052",
+      "source_system_id": "system:golden:finance_erp-052",
+      "target_system_id": "system:golden:imaging-161",
+      "pattern": "batch",
+      "data_domain": "hr_workforce",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:053",
+      "source_system_id": "system:golden:supply_chain-053",
+      "target_system_id": "system:golden:clinical_ehr-168",
+      "pattern": "real-time",
+      "data_domain": "finance_erp",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:054",
+      "source_system_id": "system:golden:telehealth-054",
+      "target_system_id": "system:golden:security-175",
+      "pattern": "event-driven",
+      "data_domain": "supply_chain",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:055",
+      "source_system_id": "system:golden:pharmacy-055",
+      "target_system_id": "system:golden:imaging-182",
+      "pattern": "batch",
+      "data_domain": "telehealth",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:056",
+      "source_system_id": "system:golden:imaging-056",
+      "target_system_id": "system:golden:clinical_ehr-189",
+      "pattern": "real-time",
+      "data_domain": "pharmacy",
+      "criticality": "Low"
+    },
+    {
+      "integration_id": "integ:golden:057",
+      "source_system_id": "system:golden:lab-057",
+      "target_system_id": "system:golden:security-196",
+      "pattern": "event-driven",
+      "data_domain": "imaging",
+      "criticality": "Critical"
+    },
+    {
+      "integration_id": "integ:golden:058",
+      "source_system_id": "system:golden:care_management-058",
+      "target_system_id": "system:golden:claims_admin-003",
+      "pattern": "batch",
+      "data_domain": "lab",
+      "criticality": "High"
+    },
+    {
+      "integration_id": "integ:golden:059",
+      "source_system_id": "system:golden:provider_network-059",
+      "target_system_id": "system:golden:finance_erp-010",
+      "pattern": "real-time",
+      "data_domain": "care_management",
+      "criticality": "Medium"
+    },
+    {
+      "integration_id": "integ:golden:060",
+      "source_system_id": "system:golden:actuarial-060",
+      "target_system_id": "system:golden:provider_network-017",
+      "pattern": "event-driven",
+      "data_domain": "provider_network",
+      "criticality": "Low"
+    }
+  ]
+}

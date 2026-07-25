@@ -1,0 +1,308 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "risk_action_decisions": [
+    {
+      "id": "risk:golden:001",
+      "kind": "risk",
+      "programs": [
+        "golden-member-ai-assist-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 001.",
+      "owner_person_id": "person:golden:daniel-oyelaran",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:002",
+      "kind": "action",
+      "programs": [
+        "golden-epic-oracle-rationalization-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 002.",
+      "owner_person_id": "person:golden:mei-fujimoto",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:003",
+      "kind": "risk",
+      "programs": [
+        "golden-claims-automation-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 003.",
+      "owner_person_id": "person:golden:tobias-lindqvist",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:004",
+      "kind": "action",
+      "programs": [
+        "golden-data-platform-modernization-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 004.",
+      "owner_person_id": "person:golden:aisha-boateng",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:005",
+      "kind": "risk",
+      "programs": [
+        "golden-population-health-2-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 005.",
+      "owner_person_id": "person:golden:ravi-chandrasekaran",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:006",
+      "kind": "action",
+      "programs": [
+        "golden-digital-front-door-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 006.",
+      "owner_person_id": "person:golden:helena-kowalczyk",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:007",
+      "kind": "risk",
+      "programs": [
+        "golden-telehealth-expansion-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 007.",
+      "owner_person_id": "person:golden:samuel-brightwater",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:008",
+      "kind": "action",
+      "programs": [
+        "golden-security-modernization-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 008.",
+      "owner_person_id": "person:golden:renata-alves",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:009",
+      "kind": "risk",
+      "programs": [
+        "golden-revenue-cycle-transform-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 009.",
+      "owner_person_id": "person:golden:oliver-mackenzie",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:010",
+      "kind": "action",
+      "programs": [
+        "golden-ai-governance-council-01"
+      ],
+      "description": "Synthetic Golden Move risk/action item 010.",
+      "owner_person_id": "person:golden:felicia-nakashima",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:011",
+      "kind": "risk",
+      "programs": [
+        "golden-member-ai-assist-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 011.",
+      "owner_person_id": "person:golden:benedict-osei",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:012",
+      "kind": "action",
+      "programs": [
+        "golden-epic-oracle-rationalization-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 012.",
+      "owner_person_id": "person:golden:carmen-delrio",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:013",
+      "kind": "risk",
+      "programs": [
+        "golden-claims-automation-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 013.",
+      "owner_person_id": "person:golden:isadora-veltri",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:014",
+      "kind": "action",
+      "programs": [
+        "golden-data-platform-modernization-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 014.",
+      "owner_person_id": "person:golden:noor-haidari",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:015",
+      "kind": "risk",
+      "programs": [
+        "golden-population-health-2-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 015.",
+      "owner_person_id": "person:golden:walter-pemberton",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:016",
+      "kind": "action",
+      "programs": [
+        "golden-digital-front-door-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 016.",
+      "owner_person_id": "person:golden:yolanda-esparza",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:017",
+      "kind": "risk",
+      "programs": [
+        "golden-telehealth-expansion-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 017.",
+      "owner_person_id": "person:golden:desmond-attah",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:018",
+      "kind": "action",
+      "programs": [
+        "golden-security-modernization-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 018.",
+      "owner_person_id": "person:golden:daniel-oyelaran",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:019",
+      "kind": "risk",
+      "programs": [
+        "golden-revenue-cycle-transform-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 019.",
+      "owner_person_id": "person:golden:mei-fujimoto",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:020",
+      "kind": "action",
+      "programs": [
+        "golden-ai-governance-council-02"
+      ],
+      "description": "Synthetic Golden Move risk/action item 020.",
+      "owner_person_id": "person:golden:tobias-lindqvist",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:021",
+      "kind": "risk",
+      "programs": [
+        "golden-member-ai-assist-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 021.",
+      "owner_person_id": "person:golden:aisha-boateng",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:022",
+      "kind": "action",
+      "programs": [
+        "golden-epic-oracle-rationalization-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 022.",
+      "owner_person_id": "person:golden:ravi-chandrasekaran",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:023",
+      "kind": "risk",
+      "programs": [
+        "golden-claims-automation-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 023.",
+      "owner_person_id": "person:golden:helena-kowalczyk",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:024",
+      "kind": "action",
+      "programs": [
+        "golden-data-platform-modernization-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 024.",
+      "owner_person_id": "person:golden:samuel-brightwater",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:025",
+      "kind": "risk",
+      "programs": [
+        "golden-population-health-2-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 025.",
+      "owner_person_id": "person:golden:renata-alves",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:026",
+      "kind": "action",
+      "programs": [
+        "golden-digital-front-door-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 026.",
+      "owner_person_id": "person:golden:oliver-mackenzie",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:027",
+      "kind": "risk",
+      "programs": [
+        "golden-telehealth-expansion-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 027.",
+      "owner_person_id": "person:golden:felicia-nakashima",
+      "status": "closed"
+    },
+    {
+      "id": "risk:golden:028",
+      "kind": "action",
+      "programs": [
+        "golden-security-modernization-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 028.",
+      "owner_person_id": "person:golden:benedict-osei",
+      "status": "open"
+    },
+    {
+      "id": "risk:golden:029",
+      "kind": "risk",
+      "programs": [
+        "golden-revenue-cycle-transform-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 029.",
+      "owner_person_id": "person:golden:carmen-delrio",
+      "status": "mitigated"
+    },
+    {
+      "id": "risk:golden:030",
+      "kind": "action",
+      "programs": [
+        "golden-ai-governance-council-03"
+      ],
+      "description": "Synthetic Golden Move risk/action item 030.",
+      "owner_person_id": "person:golden:isadora-veltri",
+      "status": "closed"
+    }
+  ]
+}

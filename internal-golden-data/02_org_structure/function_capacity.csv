@@ -1,0 +1,11 @@
+function_id,function_name,owner_person_id,fte_count,criticality
+fn:golden:clinical-ops,Clinical Operations,person:golden:samuel-brightwater,21000,critical
+fn:golden:health-plan-ops,Health Plan Operations,person:golden:carmen-delrio,3400,critical
+fn:golden:claims-benefits,Claims and Benefits Administration,person:golden:carmen-delrio,1800,high
+fn:golden:member-services,Member Services,person:golden:renata-alves,1200,high
+fn:golden:finance-actuarial,Finance and Actuarial,person:golden:daniel-oyelaran,640,high
+fn:golden:data-analytics,Enterprise Data and Analytics,person:golden:aisha-boateng,210,high
+fn:golden:it-application-services,IT Application Services,person:golden:benedict-osei,190,critical
+fn:golden:it-infrastructure,IT Infrastructure and Cloud,person:golden:desmond-attah,140,critical
+fn:golden:security-risk,Security and Risk,person:golden:ravi-chandrasekaran,65,critical
+fn:golden:shared-services,Shared Services,person:golden:felicia-nakashima,480,medium

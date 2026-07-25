@@ -1,0 +1,176 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "industry_signals": [
+    {
+      "signal_id": "industry:golden:001",
+      "theme": "payer-provider convergence",
+      "summary": "Synthetic healthcare-industry benchmark signal 001 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:002",
+      "theme": "AI in claims",
+      "summary": "Synthetic healthcare-industry benchmark signal 002 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:003",
+      "theme": "ambient documentation adoption",
+      "summary": "Synthetic healthcare-industry benchmark signal 003 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:004",
+      "theme": "value-based care expansion",
+      "summary": "Synthetic healthcare-industry benchmark signal 004 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:005",
+      "theme": "cybersecurity regulation",
+      "summary": "Synthetic healthcare-industry benchmark signal 005 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:006",
+      "theme": "payer-provider convergence",
+      "summary": "Synthetic healthcare-industry benchmark signal 006 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:007",
+      "theme": "AI in claims",
+      "summary": "Synthetic healthcare-industry benchmark signal 007 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:008",
+      "theme": "ambient documentation adoption",
+      "summary": "Synthetic healthcare-industry benchmark signal 008 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:009",
+      "theme": "value-based care expansion",
+      "summary": "Synthetic healthcare-industry benchmark signal 009 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:010",
+      "theme": "cybersecurity regulation",
+      "summary": "Synthetic healthcare-industry benchmark signal 010 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:011",
+      "theme": "payer-provider convergence",
+      "summary": "Synthetic healthcare-industry benchmark signal 011 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:012",
+      "theme": "AI in claims",
+      "summary": "Synthetic healthcare-industry benchmark signal 012 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:013",
+      "theme": "ambient documentation adoption",
+      "summary": "Synthetic healthcare-industry benchmark signal 013 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:014",
+      "theme": "value-based care expansion",
+      "summary": "Synthetic healthcare-industry benchmark signal 014 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:015",
+      "theme": "cybersecurity regulation",
+      "summary": "Synthetic healthcare-industry benchmark signal 015 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:016",
+      "theme": "payer-provider convergence",
+      "summary": "Synthetic healthcare-industry benchmark signal 016 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:017",
+      "theme": "AI in claims",
+      "summary": "Synthetic healthcare-industry benchmark signal 017 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:018",
+      "theme": "ambient documentation adoption",
+      "summary": "Synthetic healthcare-industry benchmark signal 018 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:019",
+      "theme": "value-based care expansion",
+      "summary": "Synthetic healthcare-industry benchmark signal 019 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:020",
+      "theme": "cybersecurity regulation",
+      "summary": "Synthetic healthcare-industry benchmark signal 020 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:021",
+      "theme": "payer-provider convergence",
+      "summary": "Synthetic healthcare-industry benchmark signal 021 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:022",
+      "theme": "AI in claims",
+      "summary": "Synthetic healthcare-industry benchmark signal 022 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:023",
+      "theme": "ambient documentation adoption",
+      "summary": "Synthetic healthcare-industry benchmark signal 023 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:024",
+      "theme": "value-based care expansion",
+      "summary": "Synthetic healthcare-industry benchmark signal 024 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:025",
+      "theme": "cybersecurity regulation",
+      "summary": "Synthetic healthcare-industry benchmark signal 025 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:026",
+      "theme": "payer-provider convergence",
+      "summary": "Synthetic healthcare-industry benchmark signal 026 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:027",
+      "theme": "AI in claims",
+      "summary": "Synthetic healthcare-industry benchmark signal 027 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    },
+    {
+      "signal_id": "industry:golden:028",
+      "theme": "ambient documentation adoption",
+      "summary": "Synthetic healthcare-industry benchmark signal 028 for Golden Move fixture context.",
+      "source": "synthetic_benchmark_generation"
+    }
+  ]
+}

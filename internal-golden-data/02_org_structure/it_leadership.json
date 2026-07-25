@@ -1,0 +1,68 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "it_leadership": [
+    {
+      "id": "person:golden:mei-fujimoto",
+      "role": "CIO",
+      "org": "Technology",
+      "direct_reports": 6
+    },
+    {
+      "id": "person:golden:tobias-lindqvist",
+      "role": "CTO",
+      "org": "Technology",
+      "direct_reports": 5
+    },
+    {
+      "id": "person:golden:aisha-boateng",
+      "role": "CDAO",
+      "org": "Data & Analytics",
+      "direct_reports": 4
+    },
+    {
+      "id": "person:golden:ravi-chandrasekaran",
+      "role": "CISO",
+      "org": "Security",
+      "direct_reports": 5
+    },
+    {
+      "id": "person:golden:benedict-osei",
+      "role": "VP Application Services",
+      "org": "Technology",
+      "direct_reports": 8
+    },
+    {
+      "id": "person:golden:oliver-mackenzie",
+      "role": "VP Innovation",
+      "org": "Technology",
+      "direct_reports": 3
+    },
+    {
+      "id": "person:golden:noor-haidari",
+      "role": "Director, Clinical Systems",
+      "org": "Technology",
+      "direct_reports": 9
+    },
+    {
+      "id": "person:golden:walter-pemberton",
+      "role": "Director, Data Platform",
+      "org": "Data & Analytics",
+      "direct_reports": 7
+    },
+    {
+      "id": "person:golden:yolanda-esparza",
+      "role": "Director, Member Digital Experience",
+      "org": "Technology",
+      "direct_reports": 6
+    },
+    {
+      "id": "person:golden:desmond-attah",
+      "role": "Director, Infrastructure & Cloud",
+      "org": "Technology",
+      "direct_reports": 10
+    }
+  ]
+}

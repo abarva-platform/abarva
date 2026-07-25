@@ -1,0 +1,121 @@
+spend_id,system_id,domain,spend_category,amount_usd,fiscal_year,attestation_status
+spend:golden:001,system:golden:clinical_reporting-001,clinical_reporting,Transform,200000,FY2026,Finance-attested
+spend:golden:002,system:golden:revenue_cycle-002,revenue_cycle,Run,241000,FY2026,Planning estimate
+spend:golden:003,system:golden:claims_admin-003,claims_admin,Run,282000,FY2026,Planning estimate
+spend:golden:004,system:golden:member_services-004,member_services,Transform,323000,FY2026,Planning estimate
+spend:golden:005,system:golden:population_health-005,population_health,Run,364000,FY2026,Finance-attested
+spend:golden:006,system:golden:data_platform-006,data_platform,Run,405000,FY2026,Planning estimate
+spend:golden:007,system:golden:security-007,security,Transform,446000,FY2026,Planning estimate
+spend:golden:008,system:golden:infrastructure-008,infrastructure,Run,487000,FY2026,Planning estimate
+spend:golden:009,system:golden:hr_workforce-009,hr_workforce,Run,528000,FY2026,Finance-attested
+spend:golden:010,system:golden:finance_erp-010,finance_erp,Transform,569000,FY2026,Planning estimate
+spend:golden:011,system:golden:supply_chain-011,supply_chain,Run,610000,FY2026,Planning estimate
+spend:golden:012,system:golden:telehealth-012,telehealth,Run,651000,FY2026,Planning estimate
+spend:golden:013,system:golden:pharmacy-013,pharmacy,Transform,692000,FY2026,Finance-attested
+spend:golden:014,system:golden:imaging-014,imaging,Run,733000,FY2026,Planning estimate
+spend:golden:015,system:golden:lab-015,lab,Run,774000,FY2026,Planning estimate
+spend:golden:016,system:golden:care_management-016,care_management,Transform,815000,FY2026,Planning estimate
+spend:golden:017,system:golden:provider_network-017,provider_network,Run,856000,FY2026,Finance-attested
+spend:golden:018,system:golden:actuarial-018,actuarial,Run,897000,FY2026,Planning estimate
+spend:golden:019,system:golden:digital_front_door-019,digital_front_door,Transform,938000,FY2026,Planning estimate
+spend:golden:020,system:golden:ai_ml_platform-020,ai_ml_platform,Run,979000,FY2026,Planning estimate
+spend:golden:021,system:golden:clinical_ehr-021,clinical_ehr,Run,1020000,FY2026,Finance-attested
+spend:golden:022,system:golden:clinical_reporting-022,clinical_reporting,Transform,1061000,FY2026,Planning estimate
+spend:golden:023,system:golden:revenue_cycle-023,revenue_cycle,Run,1102000,FY2026,Planning estimate
+spend:golden:024,system:golden:claims_admin-024,claims_admin,Run,1143000,FY2026,Planning estimate
+spend:golden:025,system:golden:member_services-025,member_services,Transform,1184000,FY2026,Finance-attested
+spend:golden:026,system:golden:population_health-026,population_health,Run,1225000,FY2026,Planning estimate
+spend:golden:027,system:golden:data_platform-027,data_platform,Run,1266000,FY2026,Planning estimate
+spend:golden:028,system:golden:security-028,security,Transform,1307000,FY2026,Planning estimate
+spend:golden:029,system:golden:infrastructure-029,infrastructure,Run,1348000,FY2026,Finance-attested
+spend:golden:030,system:golden:hr_workforce-030,hr_workforce,Run,1389000,FY2026,Planning estimate
+spend:golden:031,system:golden:finance_erp-031,finance_erp,Transform,1430000,FY2026,Planning estimate
+spend:golden:032,system:golden:supply_chain-032,supply_chain,Run,1471000,FY2026,Planning estimate
+spend:golden:033,system:golden:telehealth-033,telehealth,Run,1512000,FY2026,Finance-attested
+spend:golden:034,system:golden:pharmacy-034,pharmacy,Transform,1553000,FY2026,Planning estimate
+spend:golden:035,system:golden:imaging-035,imaging,Run,1594000,FY2026,Planning estimate
+spend:golden:036,system:golden:lab-036,lab,Run,1635000,FY2026,Planning estimate
+spend:golden:037,system:golden:care_management-037,care_management,Transform,1676000,FY2026,Finance-attested
+spend:golden:038,system:golden:provider_network-038,provider_network,Run,1717000,FY2026,Planning estimate
+spend:golden:039,system:golden:actuarial-039,actuarial,Run,1758000,FY2026,Planning estimate
+spend:golden:040,system:golden:digital_front_door-040,digital_front_door,Transform,1799000,FY2026,Planning estimate
+spend:golden:041,system:golden:ai_ml_platform-041,ai_ml_platform,Run,1840000,FY2026,Finance-attested
+spend:golden:042,system:golden:clinical_ehr-042,clinical_ehr,Run,1881000,FY2026,Planning estimate
+spend:golden:043,system:golden:clinical_reporting-043,clinical_reporting,Transform,1922000,FY2026,Planning estimate
+spend:golden:044,system:golden:revenue_cycle-044,revenue_cycle,Run,1963000,FY2026,Planning estimate
+spend:golden:045,system:golden:claims_admin-045,claims_admin,Run,2004000,FY2026,Finance-attested
+spend:golden:046,system:golden:member_services-046,member_services,Transform,2045000,FY2026,Planning estimate
+spend:golden:047,system:golden:population_health-047,population_health,Run,2086000,FY2026,Planning estimate
+spend:golden:048,system:golden:data_platform-048,data_platform,Run,2127000,FY2026,Planning estimate
+spend:golden:049,system:golden:security-049,security,Transform,2168000,FY2026,Finance-attested
+spend:golden:050,system:golden:infrastructure-050,infrastructure,Run,2209000,FY2026,Planning estimate
+spend:golden:051,system:golden:hr_workforce-051,hr_workforce,Run,2250000,FY2026,Planning estimate
+spend:golden:052,system:golden:finance_erp-052,finance_erp,Transform,2291000,FY2026,Planning estimate
+spend:golden:053,system:golden:supply_chain-053,supply_chain,Run,2332000,FY2026,Finance-attested
+spend:golden:054,system:golden:telehealth-054,telehealth,Run,2373000,FY2026,Planning estimate
+spend:golden:055,system:golden:pharmacy-055,pharmacy,Transform,2414000,FY2026,Planning estimate
+spend:golden:056,system:golden:imaging-056,imaging,Run,2455000,FY2026,Planning estimate
+spend:golden:057,system:golden:lab-057,lab,Run,2496000,FY2026,Finance-attested
+spend:golden:058,system:golden:care_management-058,care_management,Transform,2537000,FY2026,Planning estimate
+spend:golden:059,system:golden:provider_network-059,provider_network,Run,2578000,FY2026,Planning estimate
+spend:golden:060,system:golden:actuarial-060,actuarial,Run,2619000,FY2026,Planning estimate
+spend:golden:061,system:golden:digital_front_door-061,digital_front_door,Transform,2660000,FY2026,Finance-attested
+spend:golden:062,system:golden:ai_ml_platform-062,ai_ml_platform,Run,2701000,FY2026,Planning estimate
+spend:golden:063,system:golden:clinical_ehr-063,clinical_ehr,Run,2742000,FY2026,Planning estimate
+spend:golden:064,system:golden:clinical_reporting-064,clinical_reporting,Transform,2783000,FY2026,Planning estimate
+spend:golden:065,system:golden:revenue_cycle-065,revenue_cycle,Run,2824000,FY2026,Finance-attested
+spend:golden:066,system:golden:claims_admin-066,claims_admin,Run,2865000,FY2026,Planning estimate
+spend:golden:067,system:golden:member_services-067,member_services,Transform,2906000,FY2026,Planning estimate
+spend:golden:068,system:golden:population_health-068,population_health,Run,2947000,FY2026,Planning estimate
+spend:golden:069,system:golden:data_platform-069,data_platform,Run,2988000,FY2026,Finance-attested
+spend:golden:070,system:golden:security-070,security,Transform,3029000,FY2026,Planning estimate
+spend:golden:071,system:golden:infrastructure-071,infrastructure,Run,3070000,FY2026,Planning estimate
+spend:golden:072,system:golden:hr_workforce-072,hr_workforce,Run,3111000,FY2026,Planning estimate
+spend:golden:073,system:golden:finance_erp-073,finance_erp,Transform,3152000,FY2026,Finance-attested
+spend:golden:074,system:golden:supply_chain-074,supply_chain,Run,3193000,FY2026,Planning estimate
+spend:golden:075,system:golden:telehealth-075,telehealth,Run,3234000,FY2026,Planning estimate
+spend:golden:076,system:golden:pharmacy-076,pharmacy,Transform,3275000,FY2026,Planning estimate
+spend:golden:077,system:golden:imaging-077,imaging,Run,3316000,FY2026,Finance-attested
+spend:golden:078,system:golden:lab-078,lab,Run,3357000,FY2026,Planning estimate
+spend:golden:079,system:golden:care_management-079,care_management,Transform,3398000,FY2026,Planning estimate
+spend:golden:080,system:golden:provider_network-080,provider_network,Run,3439000,FY2026,Planning estimate
+spend:golden:081,system:golden:actuarial-081,actuarial,Run,3480000,FY2026,Finance-attested
+spend:golden:082,system:golden:digital_front_door-082,digital_front_door,Transform,3521000,FY2026,Planning estimate
+spend:golden:083,system:golden:ai_ml_platform-083,ai_ml_platform,Run,3562000,FY2026,Planning estimate
+spend:golden:084,system:golden:clinical_ehr-084,clinical_ehr,Run,3603000,FY2026,Planning estimate
+spend:golden:085,system:golden:clinical_reporting-085,clinical_reporting,Transform,3644000,FY2026,Finance-attested
+spend:golden:086,system:golden:revenue_cycle-086,revenue_cycle,Run,3685000,FY2026,Planning estimate
+spend:golden:087,system:golden:claims_admin-087,claims_admin,Run,3726000,FY2026,Planning estimate
+spend:golden:088,system:golden:member_services-088,member_services,Transform,3767000,FY2026,Planning estimate
+spend:golden:089,system:golden:population_health-089,population_health,Run,3808000,FY2026,Finance-attested
+spend:golden:090,system:golden:data_platform-090,data_platform,Run,3849000,FY2026,Planning estimate
+spend:golden:091,system:golden:security-091,security,Transform,3890000,FY2026,Planning estimate
+spend:golden:092,system:golden:infrastructure-092,infrastructure,Run,3931000,FY2026,Planning estimate
+spend:golden:093,system:golden:hr_workforce-093,hr_workforce,Run,3972000,FY2026,Finance-attested
+spend:golden:094,system:golden:finance_erp-094,finance_erp,Transform,4013000,FY2026,Planning estimate
+spend:golden:095,system:golden:supply_chain-095,supply_chain,Run,4054000,FY2026,Planning estimate
+spend:golden:096,system:golden:telehealth-096,telehealth,Run,4095000,FY2026,Planning estimate
+spend:golden:097,system:golden:pharmacy-097,pharmacy,Transform,4136000,FY2026,Finance-attested
+spend:golden:098,system:golden:imaging-098,imaging,Run,4177000,FY2026,Planning estimate
+spend:golden:099,system:golden:lab-099,lab,Run,218000,FY2026,Planning estimate
+spend:golden:100,system:golden:care_management-100,care_management,Transform,259000,FY2026,Planning estimate
+spend:golden:101,system:golden:provider_network-101,provider_network,Run,300000,FY2026,Finance-attested
+spend:golden:102,system:golden:actuarial-102,actuarial,Run,341000,FY2026,Planning estimate
+spend:golden:103,system:golden:digital_front_door-103,digital_front_door,Transform,382000,FY2026,Planning estimate
+spend:golden:104,system:golden:ai_ml_platform-104,ai_ml_platform,Run,423000,FY2026,Planning estimate
+spend:golden:105,system:golden:clinical_ehr-105,clinical_ehr,Run,464000,FY2026,Finance-attested
+spend:golden:106,system:golden:clinical_reporting-106,clinical_reporting,Transform,505000,FY2026,Planning estimate
+spend:golden:107,system:golden:revenue_cycle-107,revenue_cycle,Run,546000,FY2026,Planning estimate
+spend:golden:108,system:golden:claims_admin-108,claims_admin,Run,587000,FY2026,Planning estimate
+spend:golden:109,system:golden:member_services-109,member_services,Transform,628000,FY2026,Finance-attested
+spend:golden:110,system:golden:population_health-110,population_health,Run,669000,FY2026,Planning estimate
+spend:golden:111,system:golden:data_platform-111,data_platform,Run,710000,FY2026,Planning estimate
+spend:golden:112,system:golden:security-112,security,Transform,751000,FY2026,Planning estimate
+spend:golden:113,system:golden:infrastructure-113,infrastructure,Run,792000,FY2026,Finance-attested
+spend:golden:114,system:golden:hr_workforce-114,hr_workforce,Run,833000,FY2026,Planning estimate
+spend:golden:115,system:golden:finance_erp-115,finance_erp,Transform,874000,FY2026,Planning estimate
+spend:golden:116,system:golden:supply_chain-116,supply_chain,Run,915000,FY2026,Planning estimate
+spend:golden:117,system:golden:telehealth-117,telehealth,Run,956000,FY2026,Finance-attested
+spend:golden:118,system:golden:pharmacy-118,pharmacy,Transform,997000,FY2026,Planning estimate
+spend:golden:119,system:golden:imaging-119,imaging,Run,1038000,FY2026,Planning estimate
+spend:golden:120,system:golden:lab-120,lab,Run,1079000,FY2026,Planning estimate
