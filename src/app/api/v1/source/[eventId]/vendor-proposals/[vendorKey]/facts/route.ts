@@ -48,9 +48,10 @@ const VALID_STATUSES: VendorProposalFactCurrentStatus[] = [
 ];
 
 export async function GET(request: Request, { params }: RouteCtx) {
+  let tenancy: Awaited<ReturnType<typeof requireTenancy>> | undefined;
   let tenancyError: unknown = null;
   try {
-    await requireTenancy();
+    tenancy = await requireTenancy();
   } catch (err) {
     tenancyError = err;
   }
@@ -95,12 +96,17 @@ export async function GET(request: Request, { params }: RouteCtx) {
         ? (requestedStatus as VendorProposalFactCurrentStatus)
         : null;
 
-    const facts = await listVendorProposalFacts({
+    const identity = {
+      tenantKey: effectiveClientKey,
+      role: tenancy?.role ?? "member",
+      userId: tenancy?.userId ?? currentUser?.clerkUserId ?? "unknown",
+    };
+    const facts = await listVendorProposalFacts(identity, {
       eventId: persistedEvent.id,
-      clientKey: effectiveClientKey,
       vendorKey,
     });
     const reviews = await getLatestVendorProposalFactReviewsByFactIds(
+      identity,
       facts.map((f) => f.id),
     );
 

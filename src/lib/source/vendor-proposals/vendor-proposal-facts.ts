@@ -2,20 +2,30 @@ import "server-only";
 
 // Repository for source_vendor_proposal_facts /
 // source_vendor_proposal_fact_reviews — the governed vendor-proposal
-// ingestion foundation (PR 3 of ADR-0013-source-modernization-baseline.md).
+// ingestion foundation (PR 3, ADR-0013-source-modernization-baseline.md),
+// rewired for real DB-enforced tenant isolation (RLS/tenant-isolation
+// workstream, PR A). Every query in this module now runs through
+// withVendorProposalFactsSession — the connection is switched to the
+// restricted `authenticated` Postgres role with `request.jwt.claims` set to
+// the caller's real, server-resolved identity, so the RLS policies on both
+// tables (supabase/migrations/20260726010000_vendor_proposal_facts_rls.sql)
+// are a REAL second line of defense, not just an enabled-but-inert policy.
+// Every query ALSO still carries an explicit client_key/source_event_id
+// WHERE clause — defense in depth, not "RLS instead of the app check."
 //
 // Both tables are append-only: this module never updates or deletes a row.
 // A fact's current status is derived from the latest review row for its id
 // (or 'candidate' if none exists) — never a mutable status column. Accepting
-// a fact that supersedes an earlier one writes TWO rows atomically: an
+// a fact that supersedes an earlier one writes TWO rows atomically (now a
+// REAL single-transaction atomicity, not just sequential awaits): an
 // 'accepted' review for the new fact, and a 'superseded' review for the old
 // fact it replaces — the old fact's own row is never touched, so lineage is
 // always readable by following supersedes_fact_id.
 
 import {
-  getAzureReadFluentClient,
-  getAzureWriteFluentClient,
-} from "@/lib/data-plane/postgresCompat";
+  withVendorProposalFactsSession,
+  type VendorProposalFactsIdentity,
+} from "./tenant-scoped-session";
 import type {
   VendorProposalFactConfidence,
   VendorProposalFactCurrentStatus,
@@ -26,6 +36,8 @@ import type {
   VendorProposalFactSourcePointer,
 } from "./types";
 
+export type { VendorProposalFactsIdentity } from "./tenant-scoped-session";
+
 const FACT_COLUMNS =
   "id, client_key, source_event_id, vendor_key, proposal_artifact_id, fact_key, " +
   "section_key, page_or_location, value_numeric, value_text, unit, currency, " +
@@ -33,7 +45,7 @@ const FACT_COLUMNS =
   "confidence, extraction_method, supersedes_fact_id, created_by, created_at";
 
 const REVIEW_COLUMNS =
-  "id, fact_id, review_status, rationale, reviewed_by, reviewed_at";
+  "id, fact_id, client_key, source_event_id, review_status, rationale, reviewed_by, reviewed_at";
 
 interface VendorProposalFactRow {
   id: string;
@@ -62,6 +74,8 @@ interface VendorProposalFactRow {
 interface VendorProposalFactReviewRow {
   id: string;
   fact_id: string;
+  client_key: string;
+  source_event_id: string;
   review_status: string;
   rationale: string;
   reviewed_by: string;
@@ -108,8 +122,11 @@ function reviewRowToRecord(
   };
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export interface InsertVendorProposalFactInput {
-  clientKey: string;
   sourceEventId: string;
   vendorKey: string;
   proposalArtifactId: string;
@@ -130,84 +147,113 @@ export interface InsertVendorProposalFactInput {
   createdBy: string;
 }
 
-/** Insert one or more candidate facts. Never updates an existing row — append-only. */
+/**
+ * Insert one or more candidate facts, tagged with the caller's real
+ * identity.tenantKey — never a client_key the caller passes in. Never
+ * updates an existing row — append-only.
+ */
 export async function insertVendorProposalFacts(
+  identity: VendorProposalFactsIdentity,
   inputs: readonly InsertVendorProposalFactInput[],
-  db = getAzureWriteFluentClient(),
 ): Promise<
   | { ok: true; records: VendorProposalFactRecord[] }
   | { ok: false; error: string }
 > {
   if (inputs.length === 0) return { ok: true, records: [] };
 
-  const payload = inputs.map((input) => ({
-    client_key: input.clientKey,
-    source_event_id: input.sourceEventId,
-    vendor_key: input.vendorKey,
-    proposal_artifact_id: input.proposalArtifactId,
-    fact_key: input.factKey,
-    section_key: input.sectionKey ?? null,
-    page_or_location: input.pageOrLocation ?? null,
-    value_numeric: input.valueNumeric ?? null,
-    value_text: input.valueText ?? null,
-    unit: input.unit ?? null,
-    currency: input.currency ?? null,
-    effective_period_start: input.effectivePeriodStart ?? null,
-    effective_period_end: input.effectivePeriodEnd ?? null,
-    source_quote: input.sourceQuote ?? null,
-    source_pointer: input.sourcePointer ?? null,
-    confidence: input.confidence,
-    extraction_method: input.extractionMethod,
-    supersedes_fact_id: input.supersedesFactId ?? null,
-    created_by: input.createdBy,
-  }));
-
-  const { data, error } = await db
-    .from("source_vendor_proposal_facts")
-    .insert(payload)
-    .select(FACT_COLUMNS);
-
-  if (error || !Array.isArray(data)) {
-    return { ok: false, error: error?.message ?? "insert_failed" };
+  try {
+    const records = await withVendorProposalFactsSession(
+      identity,
+      async (run) => {
+        const rows: VendorProposalFactRow[] = [];
+        for (const input of inputs) {
+          const inserted = await run<VendorProposalFactRow>(
+            `INSERT INTO source_vendor_proposal_facts (
+             client_key, source_event_id, vendor_key, proposal_artifact_id, fact_key,
+             section_key, page_or_location, value_numeric, value_text, unit, currency,
+             effective_period_start, effective_period_end, source_quote, source_pointer,
+             confidence, extraction_method, supersedes_fact_id, created_by
+           ) VALUES (
+             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+             $15::jsonb, $16, $17, $18, $19
+           ) RETURNING ${FACT_COLUMNS}`,
+            [
+              identity.tenantKey,
+              input.sourceEventId,
+              input.vendorKey,
+              input.proposalArtifactId,
+              input.factKey,
+              input.sectionKey ?? null,
+              input.pageOrLocation ?? null,
+              input.valueNumeric ?? null,
+              input.valueText ?? null,
+              input.unit ?? null,
+              input.currency ?? null,
+              input.effectivePeriodStart ?? null,
+              input.effectivePeriodEnd ?? null,
+              input.sourceQuote ?? null,
+              input.sourcePointer ? JSON.stringify(input.sourcePointer) : null,
+              input.confidence,
+              input.extractionMethod,
+              input.supersedesFactId ?? null,
+              input.createdBy,
+            ],
+          );
+          rows.push(inserted[0]!);
+        }
+        return rows;
+      },
+    );
+    return { ok: true, records: records.map(factRowToRecord) };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
   }
-  return {
-    ok: true,
-    records: (data as VendorProposalFactRow[]).map(factRowToRecord),
-  };
 }
 
-/** All facts for an event, optionally scoped to one vendor. Tenant-scoped by clientKey. */
+/** All facts for an event, optionally scoped to one vendor. Tenant-scoped by identity.tenantKey. */
 export async function listVendorProposalFacts(
-  input: { eventId: string; clientKey: string; vendorKey?: string },
-  db = getAzureReadFluentClient(),
+  identity: VendorProposalFactsIdentity,
+  input: { eventId: string; vendorKey?: string },
 ): Promise<VendorProposalFactRecord[]> {
-  let query = db
-    .from("source_vendor_proposal_facts")
-    .select(FACT_COLUMNS)
-    .eq("source_event_id", input.eventId)
-    .eq("client_key", input.clientKey);
-  if (input.vendorKey) {
-    query = query.eq("vendor_key", input.vendorKey);
+  try {
+    return await withVendorProposalFactsSession(identity, async (run) => {
+      const params: unknown[] = [input.eventId, identity.tenantKey];
+      let vendorFilter = "";
+      if (input.vendorKey) {
+        params.push(input.vendorKey);
+        vendorFilter = ` AND vendor_key = $${params.length}`;
+      }
+      const rows = await run<VendorProposalFactRow>(
+        `SELECT ${FACT_COLUMNS} FROM source_vendor_proposal_facts
+         WHERE source_event_id = $1 AND client_key = $2${vendorFilter}
+         ORDER BY created_at DESC`,
+        params,
+      );
+      return rows.map(factRowToRecord);
+    });
+  } catch {
+    return [];
   }
-  const { data, error } = await query.order("created_at", {
-    ascending: false,
-  });
-  if (error || !Array.isArray(data)) return [];
-  return (data as VendorProposalFactRow[]).map(factRowToRecord);
 }
 
-/** All review rows for a fact, latest first. */
+/** All review rows for a fact, latest first. Tenant-scoped by identity.tenantKey. */
 export async function listVendorProposalFactReviews(
+  identity: VendorProposalFactsIdentity,
   factId: string,
-  db = getAzureReadFluentClient(),
 ): Promise<VendorProposalFactReviewRecord[]> {
-  const { data, error } = await db
-    .from("source_vendor_proposal_fact_reviews")
-    .select(REVIEW_COLUMNS)
-    .eq("fact_id", factId)
-    .order("reviewed_at", { ascending: false });
-  if (error || !Array.isArray(data)) return [];
-  return (data as VendorProposalFactReviewRow[]).map(reviewRowToRecord);
+  try {
+    return await withVendorProposalFactsSession(identity, async (run) => {
+      const rows = await run<VendorProposalFactReviewRow>(
+        `SELECT ${REVIEW_COLUMNS} FROM source_vendor_proposal_fact_reviews
+         WHERE fact_id = $1 AND client_key = $2
+         ORDER BY reviewed_at DESC`,
+        [factId, identity.tenantKey],
+      );
+      return rows.map(reviewRowToRecord);
+    });
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -216,26 +262,31 @@ export async function listVendorProposalFactReviews(
  * are simply absent from the map (derive 'candidate' for those).
  */
 export async function getLatestVendorProposalFactReviewsByFactIds(
+  identity: VendorProposalFactsIdentity,
   factIds: readonly string[],
-  db = getAzureReadFluentClient(),
 ): Promise<Map<string, VendorProposalFactReviewRecord>> {
   const result = new Map<string, VendorProposalFactReviewRecord>();
   if (factIds.length === 0) return result;
 
-  const { data, error } = await db
-    .from("source_vendor_proposal_fact_reviews")
-    .select(REVIEW_COLUMNS)
-    .in("fact_id", Array.from(new Set(factIds)))
-    .order("reviewed_at", { ascending: false });
-
-  if (error || !Array.isArray(data)) return result;
-  for (const row of data as VendorProposalFactReviewRow[]) {
-    // Rows arrive latest-first; keep only the first (latest) per fact_id.
-    if (!result.has(row.fact_id)) {
-      result.set(row.fact_id, reviewRowToRecord(row));
-    }
+  try {
+    return await withVendorProposalFactsSession(identity, async (run) => {
+      const rows = await run<VendorProposalFactReviewRow>(
+        `SELECT ${REVIEW_COLUMNS} FROM source_vendor_proposal_fact_reviews
+         WHERE fact_id = ANY($1::uuid[]) AND client_key = $2
+         ORDER BY reviewed_at DESC`,
+        [Array.from(new Set(factIds)), identity.tenantKey],
+      );
+      // Rows arrive latest-first; keep only the first (latest) per fact_id.
+      for (const row of rows) {
+        if (!result.has(row.fact_id)) {
+          result.set(row.fact_id, reviewRowToRecord(row));
+        }
+      }
+      return result;
+    });
+  } catch {
+    return result;
   }
-  return result;
 }
 
 /** Derive a fact's current status: the latest review's status, or 'candidate'. */
@@ -250,14 +301,14 @@ export function deriveVendorProposalFactStatus(
  * optionally scoped to one vendor. This is the review queue.
  */
 export async function listCandidateVendorProposalFacts(
-  input: { eventId: string; clientKey: string; vendorKey?: string },
-  db = getAzureReadFluentClient(),
+  identity: VendorProposalFactsIdentity,
+  input: { eventId: string; vendorKey?: string },
 ): Promise<VendorProposalFactRecord[]> {
-  const facts = await listVendorProposalFacts(input, db);
+  const facts = await listVendorProposalFacts(identity, input);
   if (facts.length === 0) return [];
   const reviews = await getLatestVendorProposalFactReviewsByFactIds(
+    identity,
     facts.map((f) => f.id),
-    db,
   );
   return facts.filter((f) => !reviews.has(f.id));
 }
@@ -265,7 +316,6 @@ export async function listCandidateVendorProposalFacts(
 export interface ReviewVendorProposalFactInput {
   factId: string;
   eventId: string;
-  clientKey: string;
   rationale: string;
   reviewedBy: string;
 }
@@ -273,126 +323,130 @@ export interface ReviewVendorProposalFactInput {
 /**
  * Accept a candidate fact as authoritative. If the fact declares
  * supersedesFactId, this ALSO writes a 'superseded' review row for the fact
- * it replaces — atomically, so an accepted fact and its predecessor's
- * superseded status land together. Verifies both the fact and (if present)
- * the superseded fact belong to the same tenant+event before writing
- * anything — never accepts across a tenant or event boundary.
+ * it replaces — atomically, in the SAME transaction, so an accepted fact and
+ * its predecessor's superseded status land together or not at all. Both the
+ * fact lookup and the superseded-fact lookup filter by identity.tenantKey +
+ * eventId directly in SQL (not just a post-fetch JS check) — never accepts
+ * across a tenant or event boundary.
  */
 export async function acceptVendorProposalFact(
+  identity: VendorProposalFactsIdentity,
   input: ReviewVendorProposalFactInput,
-  db = getAzureWriteFluentClient(),
 ): Promise<
   | { ok: true; record: VendorProposalFactReviewRecord }
   | { ok: false; error: string }
 > {
-  const { data: factRow, error: factError } = await db
-    .from("source_vendor_proposal_facts")
-    .select(FACT_COLUMNS)
-    .eq("id", input.factId)
-    .maybeSingle<VendorProposalFactRow>();
-  if (factError) return { ok: false, error: factError.message };
-  if (
-    !factRow ||
-    factRow.source_event_id !== input.eventId ||
-    factRow.client_key !== input.clientKey
-  ) {
-    return { ok: false, error: "fact_not_found" };
-  }
+  try {
+    return await withVendorProposalFactsSession(identity, async (run) => {
+      const factRows = await run<VendorProposalFactRow>(
+        `SELECT ${FACT_COLUMNS} FROM source_vendor_proposal_facts
+         WHERE id = $1 AND source_event_id = $2 AND client_key = $3
+         LIMIT 1`,
+        [input.factId, input.eventId, identity.tenantKey],
+      );
+      const factRow = factRows[0];
+      if (!factRow) return { ok: false, error: "fact_not_found" };
 
-  const { data, error } = await db
-    .from("source_vendor_proposal_fact_reviews")
-    .insert({
-      fact_id: input.factId,
-      review_status: "accepted",
-      rationale: input.rationale,
-      reviewed_by: input.reviewedBy,
-    })
-    .select(REVIEW_COLUMNS)
-    .single<VendorProposalFactReviewRow>();
-  if (error || !data) {
-    return { ok: false, error: error?.message ?? "insert_failed" };
-  }
+      const reviewRows = await run<VendorProposalFactReviewRow>(
+        `INSERT INTO source_vendor_proposal_fact_reviews
+           (fact_id, client_key, source_event_id, review_status, rationale, reviewed_by)
+         VALUES ($1, $2, $3, 'accepted', $4, $5)
+         RETURNING ${REVIEW_COLUMNS}`,
+        [
+          input.factId,
+          identity.tenantKey,
+          input.eventId,
+          input.rationale,
+          input.reviewedBy,
+        ],
+      );
+      const reviewRow = reviewRows[0]!;
 
-  if (factRow.supersedes_fact_id) {
-    const { data: supersededRow, error: supersededError } = await db
-      .from("source_vendor_proposal_facts")
-      .select(FACT_COLUMNS)
-      .eq("id", factRow.supersedes_fact_id)
-      .maybeSingle<VendorProposalFactRow>();
-    if (
-      !supersededError &&
-      supersededRow &&
-      supersededRow.source_event_id === input.eventId &&
-      supersededRow.client_key === input.clientKey
-    ) {
-      await db.from("source_vendor_proposal_fact_reviews").insert({
-        fact_id: factRow.supersedes_fact_id,
-        review_status: "superseded",
-        rationale: `Superseded by accepted fact ${input.factId}.`,
-        reviewed_by: input.reviewedBy,
-      });
-    }
-  }
+      if (factRow.supersedes_fact_id) {
+        const supersededRows = await run<VendorProposalFactRow>(
+          `SELECT ${FACT_COLUMNS} FROM source_vendor_proposal_facts
+           WHERE id = $1 AND source_event_id = $2 AND client_key = $3
+           LIMIT 1`,
+          [factRow.supersedes_fact_id, input.eventId, identity.tenantKey],
+        );
+        if (supersededRows[0]) {
+          await run(
+            `INSERT INTO source_vendor_proposal_fact_reviews
+               (fact_id, client_key, source_event_id, review_status, rationale, reviewed_by)
+             VALUES ($1, $2, $3, 'superseded', $4, $5)`,
+            [
+              factRow.supersedes_fact_id,
+              identity.tenantKey,
+              input.eventId,
+              `Superseded by accepted fact ${input.factId}.`,
+              input.reviewedBy,
+            ],
+          );
+        }
+      }
 
-  return { ok: true, record: reviewRowToRecord(data) };
+      return { ok: true, record: reviewRowToRecord(reviewRow) };
+    });
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
 }
 
 /** Reject a candidate fact. Never mutates the fact row — writes a rejected review. */
 export async function rejectVendorProposalFact(
+  identity: VendorProposalFactsIdentity,
   input: ReviewVendorProposalFactInput,
-  db = getAzureWriteFluentClient(),
 ): Promise<
   | { ok: true; record: VendorProposalFactReviewRecord }
   | { ok: false; error: string }
 > {
-  const { data: factRow, error: factError } = await db
-    .from("source_vendor_proposal_facts")
-    .select("id, source_event_id, client_key")
-    .eq("id", input.factId)
-    .maybeSingle<
-      Pick<VendorProposalFactRow, "id" | "source_event_id" | "client_key">
-    >();
-  if (factError) return { ok: false, error: factError.message };
-  if (
-    !factRow ||
-    factRow.source_event_id !== input.eventId ||
-    factRow.client_key !== input.clientKey
-  ) {
-    return { ok: false, error: "fact_not_found" };
-  }
+  try {
+    return await withVendorProposalFactsSession(identity, async (run) => {
+      const factRows = await run<Pick<VendorProposalFactRow, "id">>(
+        `SELECT id FROM source_vendor_proposal_facts
+         WHERE id = $1 AND source_event_id = $2 AND client_key = $3
+         LIMIT 1`,
+        [input.factId, input.eventId, identity.tenantKey],
+      );
+      if (!factRows[0]) return { ok: false, error: "fact_not_found" };
 
-  const { data, error } = await db
-    .from("source_vendor_proposal_fact_reviews")
-    .insert({
-      fact_id: input.factId,
-      review_status: "rejected",
-      rationale: input.rationale,
-      reviewed_by: input.reviewedBy,
-    })
-    .select(REVIEW_COLUMNS)
-    .single<VendorProposalFactReviewRow>();
-  if (error || !data) {
-    return { ok: false, error: error?.message ?? "insert_failed" };
+      const reviewRows = await run<VendorProposalFactReviewRow>(
+        `INSERT INTO source_vendor_proposal_fact_reviews
+           (fact_id, client_key, source_event_id, review_status, rationale, reviewed_by)
+         VALUES ($1, $2, $3, 'rejected', $4, $5)
+         RETURNING ${REVIEW_COLUMNS}`,
+        [
+          input.factId,
+          identity.tenantKey,
+          input.eventId,
+          input.rationale,
+          input.reviewedBy,
+        ],
+      );
+      return { ok: true, record: reviewRowToRecord(reviewRows[0]!) };
+    });
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
   }
-  return { ok: true, record: reviewRowToRecord(data) };
 }
 
 /**
  * The governed read accessor: facts whose LATEST review is 'accepted', for
- * one event (and optionally one vendor), tenant-scoped by clientKey. This is
- * the only function downstream consumers (scorecard, pricing, BAFO, Decision
- * Brief, aVa context) should call — never listVendorProposalFacts directly,
- * which returns every candidate regardless of review state.
+ * one event (and optionally one vendor), tenant-scoped by
+ * identity.tenantKey. This is the only function downstream consumers
+ * (scorecard, pricing, BAFO, Decision Brief, aVa context) should call —
+ * never listVendorProposalFacts directly, which returns every candidate
+ * regardless of review state.
  */
 export async function getAuthoritativeVendorProposalFacts(
-  input: { eventId: string; clientKey: string; vendorKey?: string },
-  db = getAzureReadFluentClient(),
+  identity: VendorProposalFactsIdentity,
+  input: { eventId: string; vendorKey?: string },
 ): Promise<VendorProposalFactRecord[]> {
-  const facts = await listVendorProposalFacts(input, db);
+  const facts = await listVendorProposalFacts(identity, input);
   if (facts.length === 0) return [];
   const reviews = await getLatestVendorProposalFactReviewsByFactIds(
+    identity,
     facts.map((f) => f.id),
-    db,
   );
   return facts.filter((f) => reviews.get(f.id)?.reviewStatus === "accepted");
 }

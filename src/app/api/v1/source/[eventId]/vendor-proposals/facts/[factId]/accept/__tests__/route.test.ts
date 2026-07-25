@@ -51,7 +51,7 @@ type AcceptResult =
   | { ok: false; error: string };
 
 const acceptVendorProposalFact = jest.fn(
-  async (input: unknown): Promise<AcceptResult> => ({
+  async (identity: unknown, input: unknown): Promise<AcceptResult> => ({
     ok: true,
     record: {
       id: "review-1",
@@ -65,7 +65,8 @@ const acceptVendorProposalFact = jest.fn(
 );
 
 jest.mock("@/lib/source/vendor-proposals/vendor-proposal-facts", () => ({
-  acceptVendorProposalFact: (input: unknown) => acceptVendorProposalFact(input),
+  acceptVendorProposalFact: (identity: unknown, input: unknown) =>
+    acceptVendorProposalFact(identity, input),
 }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -111,7 +112,7 @@ const ctx = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  acceptVendorProposalFact.mockImplementation(async (input) => ({
+  acceptVendorProposalFact.mockImplementation(async (_identity, input) => ({
     ok: true,
     record: {
       id: "review-1",
@@ -139,9 +140,13 @@ describe("POST /api/v1/source/:eventId/vendor-proposals/facts/:factId/accept", (
     expect(res.status).toBe(200);
     expect(acceptVendorProposalFact).toHaveBeenCalledWith(
       expect.objectContaining({
+        tenantKey: "apexretail",
+        role: "maestro",
+        userId: "clerk-user-1",
+      }),
+      expect.objectContaining({
         factId: "fact-1",
         eventId: "11111111-1111-1111-1111-111111111111",
-        clientKey: "apexretail",
         rationale: "Matches proposal page 4.",
         reviewedBy: "clerk-user-1",
       }),
