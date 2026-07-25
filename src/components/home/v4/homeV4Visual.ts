@@ -155,6 +155,11 @@ export interface HomeV4BookKeyInsight {
   statement: string;
   evidence_refs: string[];
   evidence_status?: "evidenced" | "not_evidenced" | string;
+  // Required by the generation contract whenever evidence_status is
+  // "not_evidenced" -- what evidence would be needed, in one short phrase.
+  // An honest "no evidence" marker with no explanation is the same silent
+  // omission the marker exists to prevent.
+  evidence_gap_note?: string;
 }
 
 export interface HomeV4BookGapOrAdvantage {
@@ -228,6 +233,7 @@ export interface HomeV4Conclusion {
   theme?: string;
   evidence_refs: string[];
   evidence_status?: string;
+  evidence_gap_note?: string;
   applies_to_dimensions: string[];
   confidence?: string;
 }
