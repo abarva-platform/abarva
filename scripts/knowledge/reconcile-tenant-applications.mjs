@@ -101,8 +101,12 @@ function reconcileTenant(tenantKey) {
       owner_caveat: hasDirectOwner
         ? "Directly captured on the source application record (F05), not derived."
         : (ownership?.caveat || null),
-      source_file: `tower-standardized-v1/${folder}/family-2-technology-estate/F05_applications-systems.csv` +
-        (!hasDirectOwner && ownership ? ` + family-8-semantic-enrichment/F19_team-application-ownership.csv` : ""),
+      // Business-facing provenance label, not a literal source-adapter path --
+      // product-layer code/committed fixtures must not embed
+      // tower-standardized-v1 paths directly (source adapters own source
+      // formats; see AGENTS.md's layer boundaries).
+      source_file: "Tenant application inventory" +
+        (!hasDirectOwner && ownership ? " + team ownership derivation" : ""),
     };
   });
 
