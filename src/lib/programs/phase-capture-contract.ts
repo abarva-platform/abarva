@@ -38,20 +38,38 @@ const P0_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "affected_function_process",
-    label: "Affected function/process",
-    description: "The function, process, queue, or operating area in scope.",
+    label: "In scope",
+    description: "The function, process, queue, cohort, or operating area this Move covers.",
+    required: true,
+  },
+  {
+    key: "scope_out",
+    label: "Out of scope",
+    description: "What this Move explicitly excludes.",
     required: true,
   },
   {
     key: "initial_value_hypothesis",
     label: "Initial value hypothesis",
-    description: "The directional value mechanism to test during Charter and Discovery.",
+    description: "The pain, the directional value, and the causal mechanism to test during Charter and Discovery.",
+    required: true,
+  },
+  {
+    key: "outcomes_success",
+    label: "Intended outcomes / success criteria",
+    description: "The outcomes this Move should create and how P2 discovery will know they were validated.",
+    required: true,
+  },
+  {
+    key: "discovery_questions",
+    label: "Discovery questions / hypotheses to test",
+    description: "What is believed but unproven, and what P2 must go answer.",
     required: true,
   },
   {
     key: "stakeholder_owner_view",
     label: "Stakeholder / owner view",
-    description: "Sponsor candidate, operating owner, decision owner, or role-level accountability.",
+    description: "Sponsor candidate, decision authority, operating owner, or role-level accountability.",
     required: true,
   },
   {
@@ -63,7 +81,7 @@ const P0_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   {
     key: "missing_evidence_open_questions",
     label: "Missing evidence / open questions",
-    description: "Known gaps, caveats, client-to-complete items, or unresolved questions.",
+    description: "Known gaps, caveats, client-to-complete items, unresolved questions, constraints, or dependencies.",
     required: true,
   },
   {

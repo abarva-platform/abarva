@@ -3,7 +3,7 @@
 // StrategicMoveOriginateClient · Strategic Moves Originate (P0)
 //
 // Two-pane origination workspace: Nexus chat on the left drives a
-// reactive 7-section scaffold on the right. Uses /api/chat/agent with
+// reactive 10-section scaffold on the right. Uses /api/chat/agent with
 // surface '/strategic-moves/new' and agentName 'Nexus'.
 //
 // The agent receives the T-P0 phase pack + AH-ORIG-1–6 rules via the
@@ -48,9 +48,12 @@ type ScaffoldFieldId =
   | "problem-statement"
   | "archetype"
   | "sponsor-candidate"
-  | "scope-boundary"
-  | "evidence-family"
+  | "scope-in"
+  | "scope-out"
   | "value-hypothesis"
+  | "outcomes-success"
+  | "discovery-questions"
+  | "evidence-family"
   | "foundation-readiness";
 
 interface BriefState {
@@ -62,9 +65,12 @@ const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
   "problem-statement": "",
   archetype: "",
   "sponsor-candidate": "",
-  "scope-boundary": "",
-  "evidence-family": "",
+  "scope-in": "",
+  "scope-out": "",
   "value-hypothesis": "",
+  "outcomes-success": "",
+  "discovery-questions": "",
+  "evidence-family": "",
   "foundation-readiness": "",
 };
 
@@ -88,9 +94,9 @@ const SCAFFOLD_DEFS: Array<{
     label: "Business problem or opportunity",
     step: 1,
     group: "Frame",
-    help: "Tell the story in plain English — a note, an email thread, or a problem statement is enough.",
+    help: "Tell the story in plain English, and say why now — a note, an email thread, or a problem statement is enough.",
     placeholder:
-      "Members experience long calls and inconsistent answers because agents navigate multiple systems...",
+      "Members experience long calls and inconsistent answers because agents navigate multiple systems. Why now: a new leadership mandate and a spike in escalations this quarter.",
   },
   {
     id: "archetype",
@@ -103,48 +109,75 @@ const SCAFFOLD_DEFS: Array<{
   },
   {
     id: "sponsor-candidate",
-    label: "Executive sponsor",
+    label: "Executive sponsor and decision authority",
     step: 3,
     group: "Govern",
-    help: "Capture the sponsoring role and title — no named-person resolution required.",
+    help: "Capture the sponsoring role/title and who has authority to approve scope, investment, and design decisions — no named-person resolution required.",
     placeholder:
-      "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor.",
+      "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor. Decision authority: COO approves scope and investment; CDIO approves architecture.",
   },
   {
-    id: "scope-boundary",
-    label: "Move scope and guardrails",
+    id: "scope-in",
+    label: "In scope",
     step: 4,
     group: "Govern",
-    help: "What this Move covers, and what it explicitly does not.",
+    help: "What this Move covers — business areas, cohorts, processes, or systems.",
     placeholder:
-      "In: claims status, prior auth status, benefits/eligibility, CRM history, agent knowledge lookup. Out: clinical decisions, appeals adjudication, provider contracts.",
+      "Claims status, prior auth status, benefits/eligibility, CRM history, agent knowledge lookup for the member-services contact center.",
+  },
+  {
+    id: "scope-out",
+    label: "Out of scope",
+    step: 5,
+    group: "Govern",
+    help: "What this Move explicitly excludes — say it plainly so P1 doesn't have to guess.",
+    placeholder:
+      "Clinical decisions, appeals adjudication, provider contracts, and any function outside member-services contact center operations.",
   },
   {
     id: "value-hypothesis",
     label: "Value hypothesis",
-    step: 5,
+    step: 6,
     group: "Readiness",
-    help: "Directional value the Move should create — ranged, not a promise.",
+    help: "Directional value the Move should create — ranged, not a promise. Name the pain, the direction of value, and why you believe the mechanism works.",
     placeholder:
-      "Reduce avoidable handle time, repeat contact, transfers, and manual rework while improving first-call resolution and answer consistency.",
+      "Pain: high handle time and repeat contact. Value direction: reduce avoidable handle time and improve first-call resolution. Mechanism: agent-assist surfaces the right answer from the right system before the agent has to search.",
+  },
+  {
+    id: "outcomes-success",
+    label: "Intended outcomes and success criteria",
+    step: 7,
+    group: "Readiness",
+    help: "What outcomes you want, and how P2 discovery will know they're validated.",
+    placeholder:
+      "Outcomes: lower handle time, fewer transfers, better answer consistency. P2 must validate: baseline handle time/transfer rate, and that the improvement is attributable to agent-assist, not seasonal variation.",
+  },
+  {
+    id: "discovery-questions",
+    label: "Discovery questions and hypotheses to test",
+    step: 8,
+    group: "Readiness",
+    help: "What you believe but haven't proven, and what P2 needs to go find out.",
+    placeholder:
+      "Hypothesis: most repeat contacts trace to 3-4 recurring intents. Questions: which systems do agents actually use per intent? What's the real average handle time by intent today?",
   },
   {
     id: "evidence-family",
     label: "Evidence families to collect",
-    step: 6,
+    step: 9,
     group: "Readiness",
-    help: "Name the evidence families P1 and P2 will gather. The same step also captures the foundation assumptions P2 must prove.",
+    help: "Name the evidence families P1 and P2 will gather.",
     placeholder:
       "Member-service metrics, call transcripts/intent taxonomy, CRM history, claims/auth/benefits samples, knowledge base, systems inventory, controls, value assumptions.",
   },
   {
     id: "foundation-readiness",
-    label: "Foundation readiness",
-    step: 7,
+    label: "Foundation readiness, constraints, and dependencies",
+    step: 10,
     group: "Readiness",
-    help: "Capture the platform, data, control, and governance assumptions that P2 must prove.",
+    help: "Capture the platform, data, control, and governance assumptions P2 must prove, plus any known constraints or dependencies on other work.",
     placeholder:
-      "Trusted access to CRM, claims, eligibility/benefits, prior authorization, policy/knowledge, identity/access, audit logs, data freshness, quality, semantic definitions, and PHI controls.",
+      "Trusted access to CRM, claims, eligibility/benefits, prior authorization, policy/knowledge, identity/access, audit logs, data freshness, quality, semantic definitions, and PHI controls. Depends on the Q3 CRM migration completing first.",
   },
 ];
 
@@ -153,8 +186,20 @@ const P0_STAGE_GROUPS: Array<{
   stepIds: P0StepId[];
 }> = [
   { label: "Frame", stepIds: ["problem-statement", "archetype"] },
-  { label: "Govern", stepIds: ["sponsor-candidate", "scope-boundary"] },
-  { label: "Readiness", stepIds: ["value-hypothesis", "evidence-family"] },
+  {
+    label: "Govern",
+    stepIds: ["sponsor-candidate", "scope-in", "scope-out"],
+  },
+  {
+    label: "Readiness",
+    stepIds: [
+      "value-hypothesis",
+      "outcomes-success",
+      "discovery-questions",
+      "evidence-family",
+      "foundation-readiness",
+    ],
+  },
   { label: "Approve", stepIds: ["approve-build"] },
 ];
 
@@ -191,7 +236,8 @@ const INLINE_FIELD_LABELS: Array<{
     id: "sponsor-candidate",
     labels: ["sponsor candidate", "sponsor"],
   },
-  { id: "scope-boundary", labels: ["scope", "scope boundary"] },
+  { id: "scope-in", labels: ["in scope", "scope in", "scope"] },
+  { id: "scope-out", labels: ["out of scope", "scope out"] },
   {
     id: "evidence-family",
     labels: ["evidence family", "evidence families", "evidence"],
@@ -201,8 +247,16 @@ const INLINE_FIELD_LABELS: Array<{
     labels: ["value hypothesis", "value", "outcome hypothesis"],
   },
   {
+    id: "outcomes-success",
+    labels: ["intended outcomes", "success criteria", "outcomes"],
+  },
+  {
+    id: "discovery-questions",
+    labels: ["discovery questions", "hypotheses to test", "hypotheses"],
+  },
+  {
     id: "foundation-readiness",
-    labels: ["foundation readiness", "readiness"],
+    labels: ["foundation readiness", "readiness", "constraints", "dependencies"],
   },
 ];
 
@@ -488,7 +542,10 @@ export function StrategicMoveOriginateClient({
               sponsor: brief.fields["sponsor-candidate"] || null,
               lead: null,
               crossProgramDependencies: [],
-              scopeBoundary: brief.fields["scope-boundary"] || null,
+              scopeIn: brief.fields["scope-in"] || null,
+              scopeOut: brief.fields["scope-out"] || null,
+              outcomesSuccess: brief.fields["outcomes-success"] || null,
+              discoveryQuestions: brief.fields["discovery-questions"] || null,
               evidenceFamily: brief.fields["evidence-family"] || null,
               foundationReadiness: brief.fields["foundation-readiness"] || null,
             },
@@ -887,7 +944,10 @@ export function StrategicMoveOriginateClient({
             lead: brief.fields["sponsor-candidate"],
             matchedPatternId: null,
             // Extended scaffold fields
-            scopeBoundary: brief.fields["scope-boundary"] || null,
+            scopeIn: brief.fields["scope-in"] || null,
+            scopeOut: brief.fields["scope-out"] || null,
+            outcomesSuccess: brief.fields["outcomes-success"] || null,
+            discoveryQuestions: brief.fields["discovery-questions"] || null,
             evidenceFamily: brief.fields["evidence-family"] || null,
             // Origination chat transcript → persisted to turns table
             originationTurns,
@@ -1014,7 +1074,8 @@ export function StrategicMoveOriginateClient({
                   Discard this move?
                 </h3>
                 <p className={styles.confirmDialogBody}>
-                  You&rsquo;ve captured {filledCount} of 7 sections (
+                  You&rsquo;ve captured {filledCount} of {REQUIRED_FIELD_COUNT}{" "}
+                  sections (
                   {requiredFilled} of {REQUIRED_FIELD_COUNT} required). Save as
                   a draft to come back, or discard and start fresh.
                 </p>
@@ -1206,7 +1267,7 @@ function P0OriginationContractCanvas({
     : canPromote;
   const readinessFilled =
     brief.fields["foundation-readiness"].trim().length > 0;
-  const activeStepNumber = isApproveStep ? 7 : activeP0Def?.step ?? 1;
+  const activeStepNumber = isApproveStep ? REQUIRED_FIELD_COUNT : activeP0Def?.step ?? 1;
   const moveName = deriveStrategicMoveName(brief.programName, brief.fields);
 
   return (
@@ -1235,7 +1296,9 @@ function P0OriginationContractCanvas({
             className={styles.p0ProgressPill}
           >
             <div className={styles.p0ProgressPillHead}>
-              <span>{requiredFilled} / 7</span>
+              <span>
+                {requiredFilled} / {REQUIRED_FIELD_COUNT}
+              </span>
               <small>steps ready</small>
             </div>
             <div className={styles.p0ProgressTrack} aria-hidden>
@@ -1317,7 +1380,7 @@ function P0OriginationContractCanvas({
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
                   ? "All steps complete · approve in Approvals"
-                  : `${requiredFilled} of 7 complete · finish required steps`}
+                  : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} complete · finish required steps`}
               </div>
             </aside>
 
@@ -1332,7 +1395,7 @@ function P0OriginationContractCanvas({
                   {activeFilled ? "✓" : ""}
                 </span>
                 <span className={styles.p0ContractStepMeta}>
-                  Step {activeStepNumber} of 7
+                  Step {activeStepNumber} of {REQUIRED_FIELD_COUNT}
                 </span>
                 <h2>
                   {isApproveStep
@@ -1438,7 +1501,7 @@ function P0OriginationContractCanvas({
                         <p>{brief.fields["foundation-readiness"]}</p>
                       ) : null}
                       <textarea
-                        id="orig-canvas-brief-section-7-input"
+                        id="orig-canvas-brief-section-10-input"
                         className={styles.p0AnswerInput}
                         value={draftFields["foundation-readiness"]}
                         placeholder={
@@ -1557,7 +1620,7 @@ function P0ApproveDetail({
         <span>
           {canPromote
             ? "All steps complete — runs Approve and Build."
-            : `${requiredFilled} of 7 complete — finish the remaining P0 answers.`}
+            : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} complete — finish the remaining P0 answers.`}
         </span>
       </div>
       {submitError ? (

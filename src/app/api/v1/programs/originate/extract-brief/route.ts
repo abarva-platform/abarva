@@ -23,9 +23,12 @@ const FIELD_IDS = [
   "problem-statement",
   "archetype",
   "sponsor-candidate",
-  "scope-boundary",
-  "evidence-family",
+  "scope-in",
+  "scope-out",
   "value-hypothesis",
+  "outcomes-success",
+  "discovery-questions",
+  "evidence-family",
   "foundation-readiness",
 ] as const;
 
@@ -45,9 +48,13 @@ const LABEL_TO_FIELD: Array<{ field: FieldId; labels: string[] }> = [
   { field: "archetype", labels: ["archetype", "classification"] },
   {
     field: "sponsor-candidate",
-    labels: ["sponsor candidate", "sponsor", "owner"],
+    labels: ["sponsor candidate", "sponsor", "owner", "decision authority"],
   },
-  { field: "scope-boundary", labels: ["scope", "scope boundary", "boundary"] },
+  {
+    field: "scope-in",
+    labels: ["in scope", "scope in", "scope", "boundary"],
+  },
+  { field: "scope-out", labels: ["out of scope", "scope out"] },
   {
     field: "evidence-family",
     labels: ["evidence family", "evidence families", "evidence"],
@@ -57,8 +64,22 @@ const LABEL_TO_FIELD: Array<{ field: FieldId; labels: string[] }> = [
     labels: ["value hypothesis", "value", "outcome hypothesis"],
   },
   {
+    field: "outcomes-success",
+    labels: ["intended outcomes", "success criteria", "outcomes"],
+  },
+  {
+    field: "discovery-questions",
+    labels: ["discovery questions", "hypotheses to test", "hypotheses"],
+  },
+  {
     field: "foundation-readiness",
-    labels: ["foundation readiness", "readiness", "foundation"],
+    labels: [
+      "foundation readiness",
+      "readiness",
+      "foundation",
+      "constraints",
+      "dependencies",
+    ],
   },
 ];
 
@@ -171,21 +192,24 @@ export function extractDeterministicBriefFields(
 }
 
 function extractionPrompt(conversationText: string): string {
-  return `You extract a 7-section origination brief for a Strategic Move from a conversation between a user and the Nexus agent. Return ONLY a JSON object.
+  return `You extract a 10-section origination brief for a Strategic Move from a conversation between a user and the Nexus agent. Return ONLY a JSON object.
 
 CONVERSATION
 """
 ${conversationText}
 """
 
-Return a JSON object whose keys are a subset of EXACTLY these seven ids, including a key ONLY when the conversation clearly establishes that section:
-- "problem-statement" — the bet / hypothesis (the problem and the testable claim)
+Return a JSON object whose keys are a subset of EXACTLY these ten ids, including a key ONLY when the conversation clearly establishes that section:
+- "problem-statement" — the bet / hypothesis (the problem, why now, and the testable claim)
 - "archetype" — archetype classification of the Move
-- "sponsor-candidate" — ONLY if a specific sponsor is named (a real person/role explicitly named); omit if merely "likely" or unnamed
-- "scope-boundary" — what is in-scope and out-of-scope
+- "sponsor-candidate" — ONLY if a specific sponsor is named (a real person/role explicitly named); omit if merely "likely" or unnamed. Include decision authority (who approves scope/investment/design) if stated.
+- "scope-in" — what is explicitly in scope (business areas, cohorts, processes, systems)
+- "scope-out" — what is explicitly out of scope
+- "value-hypothesis" — the value hypothesis: the pain, the direction of value, and the causal mechanism (size + that it is unvalidated)
+- "outcomes-success" — intended outcomes and how P2 discovery will know they were validated
+- "discovery-questions" — hypotheses to test and open questions P2 discovery must answer
 - "evidence-family" — the evidence/data families that will ground the work
-- "value-hypothesis" — the value hypothesis (size + that it is unvalidated)
-- "foundation-readiness" — readiness of data/platform/governance foundations
+- "foundation-readiness" — readiness of data/platform/governance foundations, plus any known constraints or dependencies on other work
 
 RULES
 - Values are concise strings (one or two sentences max), written as settled brief content, not as questions.
