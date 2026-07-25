@@ -69,7 +69,10 @@ describe("quality validator — size range (ceiling)", () => {
 
   it.each([
     ["business_case", 12_000],
-    ["roadmap", 12_000],
+    // roadmap's advisory band now extends to 12,700 words (2026-07-25
+    // reconciliation) — use a count that exceeds that, not just the old
+    // 11,000 target ceiling, to still exercise the true block.
+    ["roadmap", 13_000],
     ["handoff_pack", 12_000],
     ["value_measurement_contract", 5_000],
   ] as const)(

@@ -244,3 +244,115 @@ export function getArtifactContract(
 export function sectionWordCapTotal(contract: ArtifactContract): number {
   return contract.sections.reduce((sum, s) => sum + s.maxWords, 0);
 }
+
+// ── P3/P4 word-band reconciliation (2026-07-25) ──
+//
+// Auditing golden-bar's DEPTH_BY_ARTIFACT against the orchestrator's
+// quality-bar-registry.ts found the SAME class of bug the Charter contract
+// fixed, except worse for three types: the two pipelines didn't just differ,
+// they CONTRADICTED each other — orchestrator's floor for target_state_
+// architecture (9,000) sat above golden-bar's own ceiling (6,000); orchestrator's
+// floor for business_case and roadmap (5,000 each) exactly equalled golden-bar's
+// ceiling, so the same document could be "too short" on one pipeline and
+// "too long" on the other. estimate_model/value_model had no golden-bar entry
+// at all (golden-bar's DeliverableKey names them financial_model/
+// tower_metrics_plan) and silently fell back to a generic band.
+//
+// This module is the single reconciled source for these types' word bands,
+// mirroring the Charter pattern: both pipelines read the same numbers instead
+// of keeping their own copies. The orchestrator's numbers were treated as
+// authoritative where they conflicted — each has a specific, reasoned comment
+// in quality-bar-registry.ts (e.g. "four architecture-view exhibits alone
+// justify real depth" for target_state_architecture) that golden-bar's older,
+// unexplained ranges do not carry.
+//
+// `advisoryMaxWords` follows the same ~15% headroom ratio empirically observed
+// on Charter's two live overshoots (1,300 target → 1,500 advisory ceiling) —
+// there is no live-generation sample for these types yet, so this ratio is a
+// reasoned starting point, not a measured one. Types with `enforceMaxAsBlocker:
+// false` (target_state_architecture) never block on word count at all, so
+// their advisoryMaxWords is informational only (documents the ratio, changes
+// no runtime behavior).
+export interface WordBandContract {
+  /** Canonical orchestrator deliverableType key (quality-bar-registry.ts). */
+  deliverableType: string;
+  minWords: number;
+  targetWordsMax: number;
+  /** True hard ceiling — advisory below this, blocks above (only when enforceMaxAsBlocker). */
+  advisoryMaxWords: number;
+  /** false for substantial/analytical types (see CHARTER_CONTRACT.advisoryMaxWords rationale). */
+  enforceMaxAsBlocker: boolean;
+  maxOutputTokens: number;
+}
+
+export const P3_P4_WORD_BAND_CONTRACTS: Readonly<
+  Record<string, WordBandContract>
+> = {
+  target_state_architecture: {
+    deliverableType: "target_state_architecture",
+    minWords: 9_000,
+    targetWordsMax: 16_000,
+    advisoryMaxWords: 18_400, // informational only — enforceMaxAsBlocker is false
+    enforceMaxAsBlocker: false,
+    maxOutputTokens: 36_000,
+  },
+  solution_design: {
+    deliverableType: "solution_design",
+    minWords: 2_800,
+    targetWordsMax: 5_200,
+    advisoryMaxWords: 6_000,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 36_000,
+  },
+  operating_model_design: {
+    deliverableType: "operating_model_design",
+    minWords: 2_400,
+    targetWordsMax: 4_600,
+    advisoryMaxWords: 5_300,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 30_000,
+  },
+  sourcing_strategy: {
+    deliverableType: "sourcing_strategy",
+    minWords: 1_800,
+    targetWordsMax: 3_600,
+    advisoryMaxWords: 4_200,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 24_000,
+  },
+  business_case: {
+    deliverableType: "business_case",
+    minWords: 5_000,
+    targetWordsMax: 9_500,
+    advisoryMaxWords: 11_000,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 32_000,
+  },
+  /** golden-bar's DeliverableKey calls this `execution_roadmap`. */
+  roadmap: {
+    deliverableType: "roadmap",
+    minWords: 5_000,
+    targetWordsMax: 11_000,
+    advisoryMaxWords: 12_700,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 32_000,
+  },
+  /** golden-bar's DeliverableKey calls this `financial_model`. */
+  estimate_model: {
+    deliverableType: "estimate_model",
+    minWords: 1_600,
+    targetWordsMax: 4_200,
+    advisoryMaxWords: 4_800,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 30_000,
+  },
+  /** golden-bar's DeliverableKey calls this `tower_metrics_plan`. */
+  value_model: {
+    deliverableType: "value_model",
+    minWords: 1_800,
+    targetWordsMax: 4_600,
+    advisoryMaxWords: 5_300,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 30_000,
+  },
+};
