@@ -12,7 +12,9 @@ describe("sanitizeClientFacingArtifactHtml", () => {
 
     expect(html).toContain("<strong>Priority 1</strong> — blocks the decision");
     expect(html).toContain("Priority 2 inputs improve sizing");
-    expect(html).toContain("enterprise data foundation should support agent assist");
+    expect(html).toContain(
+      "enterprise data foundation should support agent assist",
+    );
     expect(html).toContain("Appendix A — Source Register");
     expect(html).not.toMatch(/\bP1\b/);
     expect(html).not.toMatch(/\bP2 inputs\b/i);
@@ -61,6 +63,29 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html.match(/Source Register/g)).toHaveLength(1);
   });
 
+  it("redacts a labeled internal actor UUID from client-facing text but never structural ids or URLs", () => {
+    const html = sanitizeClientFacingArtifactHtml(`
+      <div id="d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0">
+        <p>Approved decision — approver id d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0.</p>
+        <p>Approved by d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0 on FY2026.</p>
+        <a href="/api/v1/artifacts/48dc0b3f-0531-4a83-82a6-1ead302753df">Open</a>
+      </div>
+    `);
+    // The leaked actor id in visible text is redacted…
+    expect(html).toContain("(audit reference on file)");
+    expect(html).not.toMatch(
+      /approver id\s+d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0/i,
+    );
+    expect(html).not.toMatch(
+      /Approved by\s+d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0/i,
+    );
+    // …while the element id and the download URL (both UUIDs) are untouched.
+    expect(html).toContain('id="d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0"');
+    expect(html).toContain(
+      "/api/v1/artifacts/48dc0b3f-0531-4a83-82a6-1ead302753df",
+    );
+  });
+
   it("removes residual internal vocabulary and bare phase shorthand without corrupting references", () => {
     const html = sanitizeClientFacingArtifactHtml(`
       <p>P2 should verify enterprise_context_chunks against the Source Register.</p>
@@ -68,7 +93,9 @@ describe("sanitizeClientFacingArtifactHtml", () => {
       <h2>Appendix A — Source Register</h2>
     `);
 
-    expect(html).toContain("discovery should verify enterprise evidence against the evidence appendix");
+    expect(html).toContain(
+      "discovery should verify enterprise evidence against the evidence appendix",
+    );
     expect(html).toContain("Client Input Checklist");
     expect(html).toContain("08_p2_controls.csv");
     expect(html).toContain("DP2");
