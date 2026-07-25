@@ -323,6 +323,29 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     ).toBe(1_500);
   });
 
+  it("flags implementation-schedule language on the roadmap (REF_EXECUTIVE_ROADMAP) — informational only", () => {
+    const html = `<html><body><svg></svg><table></table><p>${Array.from(
+      { length: 30 },
+      (_, i) => `word${i}`,
+    ).join(" ")} Sprint 3 delivers the cutover on Day 45.</p></body></html>`;
+    const options = premiumGoldenBarOptionsForArtifact("execution_roadmap");
+    expect(options.forbiddenContentPatterns?.length).toBeGreaterThan(0);
+    // No artifactKey passed — isolates this check from the separate,
+    // pre-existing visualContractFor exhibit requirement for this type.
+    const r = meetsGoldenBar(html, undefined, options);
+    expect(r.forbiddenContentHits.length).toBeGreaterThan(0);
+    expect(r.reasons.join(" ")).toMatch(/implementation schedule/i);
+    // informational only — never blocks pass on its own
+    expect(r.pass).toBe(true);
+  });
+
+  it("does not flag other artifact types with the roadmap's forbidden patterns", () => {
+    expect(
+      premiumGoldenBarOptionsForArtifact("business_case")
+        .forbiddenContentPatterns,
+    ).toBeUndefined();
+  });
+
   it("enforces rendered-size ceilings for concise Moves decision artifacts only", () => {
     expect(
       premiumGoldenBarOptionsForArtifact("solution_design")

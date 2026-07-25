@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1494 480" role="img" aria-label="Executive Transition Roadmap — gold standard">
+  <!-- Gold-standard REF_EXECUTIVE_ROADMAP exemplar. Synthetic data, not a real client.
+       Matches rendering-rules.md exactly: 4 horizons, 6 workstreams, decision-gate
+       diamonds between horizons, dashed dependency legend, no sprint/Gantt language. -->
+  <rect x="0" y="0" width="1494" height="480" fill="#F8F7F4"/>
+
+  <!-- Horizon headers -->
+  <rect x="190" y="16" width="314" height="32" rx="6" fill="#F1EEE7"/>
+  <text x="347" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700">Mobilize</text>
+  <rect x="510" y="16" width="314" height="32" rx="6" fill="#F1EEE7"/>
+  <text x="667" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700">Establish Foundation</text>
+  <rect x="830" y="16" width="314" height="32" rx="6" fill="#F1EEE7"/>
+  <text x="987" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700">Deliver Priority Outcomes</text>
+  <rect x="1150" y="16" width="314" height="32" rx="6" fill="#F1EEE7"/>
+  <text x="1307" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700">Scale and Optimize</text>
+
+  <!-- Decision gates between horizons -->
+  <path d="M501 28 L509 36 L501 44 L493 36 Z" fill="#FDF6E3" stroke="#E8CF8A" stroke-width="1.5"/>
+  <path d="M821 28 L829 36 L821 44 L813 36 Z" fill="#FDF6E3" stroke="#E8CF8A" stroke-width="1.5"/>
+  <path d="M1141 28 L1149 36 L1141 44 L1133 36 Z" fill="#FDF6E3" stroke="#E8CF8A" stroke-width="1.5"/>
+
+  <!-- Workstream rows -->
+  <!-- Row 1: Business & Process -->
+  <text x="12" y="88" font-family="sans-serif" font-size="11" font-weight="700">Business &amp; Process</text>
+  <rect x="190" y="56" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="200" y="88" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Charter signoff; governance cadence set (owner: Sponsor)</text>
+  <rect x="510" y="56" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="520" y="88" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="830" y="56" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="840" y="88" font-family="sans-serif" font-size="9.5" fill="#6F6A61">First outcome demonstrated in one function</text>
+  <rect x="1150" y="56" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="1160" y="88" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Enterprise-wide operating model adopted</text>
+
+  <!-- Row 2: Technology -->
+  <text x="12" y="152" font-family="sans-serif" font-size="11" font-weight="700">Technology</text>
+  <rect x="190" y="120" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="200" y="152" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="510" y="120" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="520" y="152" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Core platform integration proven with one system of record</text>
+  <rect x="830" y="120" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="840" y="152" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Integration extended to priority systems</text>
+  <rect x="1150" y="120" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="1160" y="152" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Platform hardened for enterprise scale</text>
+
+  <!-- Row 3: Data -->
+  <text x="12" y="216" font-family="sans-serif" font-size="11" font-weight="700">Data</text>
+  <rect x="190" y="184" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="200" y="216" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Trusted data source identified; quality baseline set (owner: Data lead)</text>
+  <rect x="510" y="184" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="520" y="216" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="830" y="184" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="840" y="216" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Quality signals feed live agent-assist</text>
+  <rect x="1150" y="184" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="1160" y="216" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Data governance extended enterprise-wide</text>
+
+  <!-- Row 4: AI / Automation -->
+  <text x="12" y="280" font-family="sans-serif" font-size="11" font-weight="700">AI / Automation</text>
+  <rect x="190" y="248" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="200" y="280" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="510" y="248" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="520" y="280" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="830" y="248" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="840" y="280" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Agent-assist deployed to one contact-center function (owner: Operations lead)</text>
+  <rect x="1150" y="248" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="1160" y="280" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Agent-assist extended to all functions</text>
+
+  <!-- Row 5: Governance & Controls -->
+  <text x="12" y="344" font-family="sans-serif" font-size="11" font-weight="700">Governance &amp; Controls</text>
+  <rect x="190" y="312" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="200" y="344" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Steering committee cadence established</text>
+  <rect x="510" y="312" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="520" y="344" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Model-risk and control review gate defined</text>
+  <rect x="830" y="312" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="840" y="344" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="1150" y="312" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="1160" y="344" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Enterprise controls audited</text>
+
+  <!-- Row 6: Change & Adoption -->
+  <text x="12" y="408" font-family="sans-serif" font-size="11" font-weight="700">Change &amp; Adoption</text>
+  <rect x="190" y="376" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="200" y="408" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="510" y="376" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="520" y="408" font-family="sans-serif" font-size="9.5" fill="#6F6A61">(use judgment — no clause matched)</text>
+  <rect x="830" y="376" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="840" y="408" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Frontline training for the first function</text>
+  <rect x="1150" y="376" width="314" height="56" rx="6" fill="#fff" stroke="#E6E2DA"/>
+  <text x="1160" y="408" font-family="sans-serif" font-size="9.5" fill="#6F6A61">Enterprise-wide adoption program (owner: Change lead)</text>
+
+  <!-- Legend -->
+  <path d="M40 454 L48 460 L40 466 L32 460 Z" fill="#FDF6E3" stroke="#E8CF8A" stroke-width="1.5"/>
+  <text x="58" y="464" font-family="sans-serif" font-size="10" fill="#6F6A61">decision gate</text>
+  <path d="M180 460 L220 460" stroke="#6F6A61" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="228" y="464" font-family="sans-serif" font-size="10" fill="#6F6A61">dependency</text>
+</svg>

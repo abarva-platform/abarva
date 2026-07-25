@@ -214,6 +214,35 @@ export function validateDeliverableQuality(
     warnings.push(
       "document lacks exhibits — consider decision/architecture/roadmap visuals",
     );
+  // ── reference-contract enforcement (REF_EXECUTIVE_ROADMAP pilot) ──
+  // requiredExhibitElements were only ever read into the prompt before this;
+  // this is the first real check that the generated exhibit actually
+  // contains them. Advisory-only until proven on real generations.
+  for (const spec of qb.requiredExhibitElementsByKind ?? []) {
+    const matching = doc.exhibits.filter((e) => e.kind === spec.kind);
+    if (matching.length === 0) continue;
+    for (const exhibit of matching) {
+      const haystack = `${exhibit.title} ${exhibit.description}`.toLowerCase();
+      const missing = spec.elements.filter(
+        (el) => !haystack.includes(el.toLowerCase()),
+      );
+      if (missing.length > 0) {
+        warnings.push(
+          `${spec.kind} exhibit "${exhibit.title}" is missing required elements: ${missing.join(", ")}`,
+        );
+      }
+    }
+  }
+  if (qb.forbiddenContentPatterns?.length) {
+    const hits = qb.forbiddenContentPatterns
+      .map((re) => body.match(re)?.[0])
+      .filter((m): m is string => Boolean(m));
+    if (hits.length > 0) {
+      warnings.push(
+        `content reads like an implementation schedule, not an executive artifact: found ${hits.slice(0, 3).join(", ")}`,
+      );
+    }
+  }
   const avgSectionWords = sectionCount
     ? Math.round(bodyWordCount / sectionCount)
     : 0;

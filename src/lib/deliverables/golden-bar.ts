@@ -37,6 +37,8 @@ export interface GoldenBarResult {
    * profile risks a new generation-blocking failure on a live Move.
    */
   duplicateSectionHeadings: string[];
+  /** Content matching `forbiddenContentPatterns` (sprint numbers, Gantt language, etc.). Informational only. */
+  forbiddenContentHits: string[];
   /** Deterministic 0-100 score derived from the checks above — replaces the old fixed 96/null. */
   qualityScore: number;
 }
@@ -58,6 +60,15 @@ export interface GoldenBarOptions {
    * rationale (2026-07-25 live-generation review).
    */
   advisoryMaximumWordCount?: number;
+  /**
+   * Content patterns that must NOT appear (e.g. sprint numbers, Gantt-style
+   * task lists in an executive roadmap) — REF_EXECUTIVE_ROADMAP pilot,
+   * 2026-07-25. Mirrors the orchestrator's `forbiddenContentPatterns` on
+   * QualityBar so both pipelines enforce the same rule instead of silently
+   * diverging the way word budgets did before this session's reconciliation.
+   * Informational only — same caution as `overMaximumWordCount` unenforced.
+   */
+  forbiddenContentPatterns?: readonly RegExp[];
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
@@ -321,6 +332,14 @@ export function meetsGoldenBar(
     );
   }
   const unsupportedClaimSignals = findUnsupportedQuantifiedClaims(text);
+  const forbiddenContentHits = (options.forbiddenContentPatterns ?? [])
+    .map((re) => text.match(re)?.[0])
+    .filter((m): m is string => Boolean(m));
+  if (forbiddenContentHits.length) {
+    reasons.push(
+      `content reads like an implementation schedule, not an executive artifact: ${forbiddenContentHits.slice(0, 3).join(", ")} (informational — does not block)`,
+    );
+  }
   const duplicateSectionHeadings = findDuplicateSectionHeadings(html);
   if (duplicateSectionHeadings.length) {
     reasons.push(
@@ -420,6 +439,7 @@ export function meetsGoldenBar(
     reasons,
     overMaximumWordCount,
     unsupportedClaimSignals,
+    forbiddenContentHits,
     duplicateSectionHeadings,
     qualityScore,
   };
