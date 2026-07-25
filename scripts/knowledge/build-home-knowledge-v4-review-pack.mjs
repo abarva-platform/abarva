@@ -1406,32 +1406,49 @@ function loadTenantApplicationOwnershipFacts(tenantKey) {
   const f05Path = path.join(repoRoot, "tower-standardized-v1", tstFolder, "family-2-technology-estate/F05_applications-systems.csv");
   if (!fs.existsSync(f05Path)) return null;
   const f05Text = fs.readFileSync(f05Path, "utf8");
+  // F05 canonical column order (normalized 2026-07-25, one schema for every
+  // tenant): application_id=0, application_name=1, domain=2,
+  // primary_business_owner=3. Some tenants (e.g. skyharbor-air) never
+  // directly captured an owner on F05 -- real data absence, not a parsing
+  // bug -- and instead have it via a governed join to
+  // F19_team-application-ownership.csv. Fall back to that join PER ROW
+  // whenever primary_business_owner is blank, regardless of which tenant;
+  // the F19 file exists for every tenant, not just the ones with a
+  // pre-2026-07-25 legacy F05 schema.
   const rows = f05Text.trim().split("\n").slice(1).map((line) => line.replace(/\r$/, ""));
   const totalCount = rows.length;
-  const isLegacySchema = f05Text.split("\n")[0].startsWith("app_id");
-  let ownedCount = 0;
-  if (isLegacySchema) {
-    const f19Path = path.join(repoRoot, "tower-standardized-v1", tstFolder, "family-8-semantic-enrichment/F19_team-application-ownership.csv");
-    if (fs.existsSync(f19Path)) {
-      const f19Text = fs.readFileSync(f19Path, "utf8");
-      ownedCount = f19Text
-        .trim()
-        .split("\n")
-        .slice(1)
-        .filter((line) => line.split(",")[4]).length; // business_owner_role column
+  const f19Path = path.join(repoRoot, "tower-standardized-v1", tstFolder, "family-8-semantic-enrichment/F19_team-application-ownership.csv");
+  const f19OwnerById = new Map();
+  let usedF19Fallback = false;
+  if (fs.existsSync(f19Path)) {
+    const f19Lines = fs.readFileSync(f19Path, "utf8").trim().split("\n").slice(1).map((l) => l.replace(/\r$/, ""));
+    for (const line of f19Lines) {
+      const cells = line.split(",");
+      const applicationId = cells[1]; // tenant_key=0, application_id=1
+      const businessOwnerRole = cells[4]; // business_owner_role=4
+      if (applicationId && businessOwnerRole) f19OwnerById.set(applicationId, businessOwnerRole);
     }
-  } else {
-    ownedCount = rows.filter((line) => line.split(",")[3]).length; // primary_business_owner column
   }
+  const ownedCount = rows.filter((line) => {
+    const cells = line.split(",");
+    const applicationId = cells[0];
+    const primaryBusinessOwner = cells[3];
+    if (primaryBusinessOwner) return true;
+    if (f19OwnerById.has(applicationId)) {
+      usedF19Fallback = true;
+      return true;
+    }
+    return false;
+  }).length;
   return {
-    source_files: isLegacySchema
+    source_files: usedF19Fallback
       ? [`tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`, `tower-standardized-v1/${tstFolder}/family-8-semantic-enrichment/F19_team-application-ownership.csv`]
       : [`tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`],
     total_applications: totalCount,
     applications_with_named_owner: ownedCount,
     owner_coverage_pct: Math.round((ownedCount / totalCount) * 100),
-    ownership_maturity: isLegacySchema
-      ? "Derived from a team/domain-matched join, not directly captured on the source record. Carries an explicit confidence score per row."
+    ownership_maturity: usedF19Fallback
+      ? "Directly captured where present on the source application record; derived from a team/domain-matched join (with an explicit confidence score per row) where not."
       : "Directly captured on the source application record.",
     raw_hash: sha256(f05Text),
   };
@@ -1445,12 +1462,15 @@ const TST_TENANT_FOLDER = {
   "lakeshore-holdings": "lakeshore-industries",
 };
 
-// Deterministic dataset registry (spec Section 2, "DETERMINISTIC DATASET
-// REGISTRY"): every dataset here has been directly opened and its content
-// verified this session -- real named vendors/risks/initiatives/evidence,
-// not just file existence. Claude references dataset_id; it never
-// reproduces the rows. Only datasets actually verified go in this list --
-// no placeholder entries for datasets not yet checked.
+// F05/F11/T09/T10 were normalized to one canonical column schema across all
+// 5 tower-standardized-v1 tenants on 2026-07-25 (previously skyharbor-air
+// used a different, older schema than the other 4 for all four files, and
+// apex-retail had a third, F11-specific variant -- a real bug caught by a
+// zero-cost dry run before any paid call: blindly reading skyharbor's
+// column names against the other schema produced undefined values and
+// crashed loadTenantEvidenceIndex). T01 (programs) and F12 (budget) were
+// already identical across all tenants. No dataset needs per-tenant schema
+// branching any more; every tenant reads the same column names.
 function loadTenantDatasetRegistry(tenantKey) {
   const tstFolder = TST_TENANT_FOLDER[tenantKey];
   if (!tstFolder) return [];
@@ -1465,8 +1485,8 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per application",
       business_definition: "The tenant's application inventory: hosting, criticality, vendor, run cost, modernization plan, and owner where known.",
       row_count: rows,
-      available_dimensions: ["category", "business_function", "deployment", "lifecycle_stage", "criticality", "vendor"],
-      available_measures: ["run_cost_fy26_usd", "integration_count", "count"],
+      available_dimensions: ["domain", "platform_type", "hosting_model", "environment", "criticality", "modernization_state"],
+      available_measures: ["annual_run_cost_usd", "integration_count", "count"],
       approved_visual_types: ["horizontal_bar", "treemap", "heatmap"],
       evidence_source: `tower-standardized-v1/${tstFolder}/family-2-technology-estate/F05_applications-systems.csv`,
     });
@@ -1478,10 +1498,10 @@ function loadTenantDatasetRegistry(tenantKey) {
     registry.push({
       dataset_id: "vendors_full",
       grain: "one row per vendor contract",
-      business_definition: "Vendor name, scope, annual run rate, renewal date, and criticality.",
+      business_definition: "Vendor name, category, annual contract value, renewal date, and criticality.",
       row_count: rows,
-      available_dimensions: ["scope", "criticality"],
-      available_measures: ["annual_run_rate_usd", "count"],
+      available_dimensions: ["category", "criticality", "commercial_risk"],
+      available_measures: ["annual_contract_value_usd", "count"],
       approved_visual_types: ["horizontal_bar", "treemap"],
       evidence_source: `tower-standardized-v1/${tstFolder}/family-4-financial-commercial/F11_vendors-contracts-licenses.csv`,
     });
@@ -1508,9 +1528,9 @@ function loadTenantDatasetRegistry(tenantKey) {
     registry.push({
       dataset_id: "risk_register",
       grain: "one row per identified risk",
-      business_definition: "Risk type, severity, control status, owner role, mitigation, linked evidence.",
+      business_definition: "Risk domain, severity, control status, owner role, and any exception/gap noted against it.",
       row_count: rows,
-      available_dimensions: ["risk_type", "severity", "control_status", "owner_role"],
+      available_dimensions: ["risk_domain", "severity", "control_status", "owner_role"],
       available_measures: ["count"],
       approved_visual_types: ["heatmap", "horizontal_bar"],
       evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T09_risk-governance.csv`,
@@ -1523,9 +1543,9 @@ function loadTenantDatasetRegistry(tenantKey) {
     registry.push({
       dataset_id: "evidence_registry",
       grain: "one row per evidence item",
-      business_definition: "Source document, claim supported, freshness status, trust status.",
+      business_definition: "Evidence item linked to a specific initiative_id, with a review state and a numeric confidence score.",
       row_count: rows,
-      available_dimensions: ["source_type", "claim_supported", "freshness_status", "trust_status"],
+      available_dimensions: ["review_state", "initiative_id"],
       available_measures: ["count"],
       approved_visual_types: ["evidence_timeline"],
       evidence_source: `tower-standardized-v1/${tstFolder}/ai-control-tower/T10_evidence-items.csv`,
@@ -1540,6 +1560,7 @@ function loadTenantDatasetRegistry(tenantKey) {
       grain: "one row per budget line",
       business_definition: "Budget area, run/change split, capex/opex split, owner team.",
       row_count: rows,
+      // Confirmed identical schema across all tenants -- no per-family branch needed.
       available_dimensions: ["budget_area", "spend_type"],
       available_measures: ["budget_fy26_usd", "run_budget_fy26_usd", "change_budget_fy26_usd", "capex_budget_fy26_usd", "opex_budget_fy26_usd"],
       approved_visual_types: ["waterfall", "stacked_bar"],
@@ -1550,22 +1571,24 @@ function loadTenantDatasetRegistry(tenantKey) {
   return registry;
 }
 
-// Matches the literal placeholder locator text found in real source CSVs
-// (confirmed: 72 of 80 rows for skyharbor-air's T10_evidence-items.csv).
-// These are real, ID-resolvable evidence rows -- not fabricated -- but the
-// locator itself carries no descriptive content beyond a sequence number,
-// so an ID passing this test is too weak to support a precise, specific
-// claim on its own. Named exactly so a validator or prompt can key off it.
-const LOW_SPECIFICITY_LOCATOR_PATTERN = /^synthetic locator \d+$/i;
+// Matches placeholder locator text confirmed in real source CSVs: skyharbor-
+// air's legacy rows used the literal phrase "synthetic locator N" (72 of 80
+// rows); the majority schema's source_locator instead uses bare "section
+// N.N" references (confirmed for first-capital-financial and meridian-health)
+// -- real, but just as non-descriptive on its own: a citation that resolves
+// to "see section 5.4" doesn't establish whether that section actually
+// supports THIS claim any better than a sequence number does. Both count as
+// low specificity. Named exactly so a validator or prompt can key off it.
+const LOW_SPECIFICITY_LOCATOR_PATTERN = /^(synthetic locator \d+|section \d+(\.\d+)*)$/i;
 
 // Compact, real evidence index (spec Section "Wire the real evidence
-// registry into the prompt") -- sourced from T10_evidence-items.csv, the
-// same file registered as evidence_registry above. Ships IDs, source
-// family, title, supported claims, period, confidence, and specificity --
-// never the full row set. Claude cites evidence_id values from this list;
-// the validator (validate-integrated-manifest.mjs) rejects any ID that
-// isn't in it, and separately flags conclusions whose only support is
-// low-specificity.
+// registry into the prompt") -- sourced from T10_evidence-items.csv (one
+// canonical schema across all 5 tenants as of 2026-07-25), the same file
+// registered as evidence_registry above. Ships IDs, source family, title,
+// supported claims, period, confidence, and specificity -- never the full
+// row set. Claude cites evidence_id values from this list; the validator
+// (validate-integrated-manifest.mjs) rejects any ID that isn't in it, and
+// separately flags conclusions whose only support is low-specificity.
 function loadTenantEvidenceIndex(tenantKey) {
   const tstFolder = TST_TENANT_FOLDER[tenantKey];
   if (!tstFolder) return [];
@@ -1576,14 +1599,21 @@ function loadTenantEvidenceIndex(tenantKey) {
   return lines.slice(1).map((line) => {
     const cells = line.split(",");
     const row = Object.fromEntries(header.map((h, i) => [h, cells[i] ?? ""]));
-    const title = row.locator || row.source_path || row.evidence_id;
+    // legacy_* columns are populated only for rows normalized from
+    // skyharbor-air's pre-2026-07-25 schema, which never captured
+    // review_state/confidence/initiative_id/source_timestamp; fall back to
+    // them per-row rather than per-tenant, since the column set is now
+    // identical for every tenant regardless of which was actually captured.
+    const title = row.source_locator || row.source_document || row.evidence_item_id;
     return {
-      evidence_id: row.evidence_id,
-      source_family: row.source_type || "unspecified",
+      evidence_id: row.evidence_item_id,
+      source_family: row.legacy_source_type || "tenant_document",
       title,
-      supports: [row.claim_supported].filter(Boolean),
-      period: null, // not captured in source -- do not infer
-      confidence: row.trust_status === "usable" ? "governed-real" : "needs-review",
+      supports: [row.initiative_id || row.legacy_claim_supported].filter(Boolean),
+      period: row.source_timestamp || null,
+      confidence: row.review_state === "approved" || row.legacy_trust_status === "usable"
+        ? "governed-real"
+        : "needs-review",
       specificity: LOW_SPECIFICITY_LOCATOR_PATTERN.test(title.trim()) ? "low" : "high",
     };
   });
@@ -1714,19 +1744,22 @@ const DIMENSION_BOOK_CHAPTERS = {
 
 // Deterministic visual construction. dataset_id -> a fixed visual_binding
 // template. The renderer fills these in for the 6 governed dimensions; every
-// other dimension gets no visual_binding, same as before. Values are the
-// same dimension/measure/visual_type combinations Claude itself chose well
-// in the 2026-07-24 paid integrated run -- proven good picks, now code-owned
-// so they can never be fabricated or drift between runs.
+// other dimension gets no visual_binding, same as before. Dimension/measure
+// names here must match loadTenantDatasetRegistry()'s available_dimensions/
+// available_measures exactly -- validate-integrated-manifest.mjs's
+// unknown_visual_field check enforces this at zero cost, which is how a
+// stale field name (this block referenced skyharbor-air's pre-2026-07-25
+// column names after the F05/F11/T09/T10 normalization) gets caught before
+// any paid call rather than silently producing a broken visual_binding.
 const VISUAL_RENDER_RULES = {
   applications_full: {
-    visual_type: "treemap", dimension: "business_function", measure: "count", limit: 7,
-    title: "Application concentration by business function",
-    annotation_instruction: "Emphasize the functions with the largest system footprint",
+    visual_type: "treemap", dimension: "domain", measure: "count", limit: 7,
+    title: "Application concentration by domain",
+    annotation_instruction: "Emphasize the domains with the largest system footprint",
   },
   vendors_full: {
-    visual_type: "horizontal_bar", dimension: "scope", measure: "annual_run_rate_usd", limit: 7,
-    title: "Vendor concentration by run rate",
+    visual_type: "horizontal_bar", dimension: "category", measure: "annual_contract_value_usd", limit: 7,
+    title: "Vendor concentration by contract value",
     annotation_instruction: "Emphasize the largest delivery dependency",
     format: "currency", orientation: "horizontal",
   },
@@ -1737,14 +1770,14 @@ const VISUAL_RENDER_RULES = {
     format: "currency",
   },
   risk_register: {
-    visual_type: "heatmap", dimension: "risk_type", measure: "count", limit: 5,
-    title: "Risk intensity by type and control status",
+    visual_type: "heatmap", dimension: "risk_domain", measure: "count", limit: 5,
+    title: "Risk intensity by domain and control status",
     annotation_instruction: "Emphasize high-severity risks with weak control status",
   },
   evidence_registry: {
-    visual_type: "evidence_timeline", dimension: "trust_status", measure: "count", limit: 7,
-    title: "From planning-grade to board-grade evidence",
-    annotation_instruction: "Emphasize items needing review versus governed-real",
+    visual_type: "evidence_timeline", dimension: "review_state", measure: "count", limit: 7,
+    title: "From review-required to approved evidence",
+    annotation_instruction: "Emphasize items still needing review versus approved",
   },
   budget_summary: {
     visual_type: "stacked_bar", dimension: "budget_area", measure: "budget_fy26_usd", limit: 5,
@@ -1975,21 +2008,28 @@ async function processTenant(client, tenantKey) {
     };
   }
   if (preflightMode) {
-    const fixturePath = path.join(repoRoot, "scripts", "knowledge", "__fixtures__", `story-architecture-${tenantKey}.json`);
-    if (!fs.existsSync(fixturePath)) {
-      throw new Error(
-        `No story-architecture preflight fixture for "${tenantKey}" at ${path.relative(repoRoot, fixturePath)}. ` +
-        "Preflight mode never calls Claude, so it needs a real, previously-captured story architecture on disk to stand in for Call 1's output.",
-      );
+    // enterprise_book has no story_architecture input (see makePrompt's
+    // "enterprise_book" branch) -- it's the first call, not a downstream
+    // one, so book-mode preflight never needs the fixture the legacy/
+    // integrated preflight path requires to stand in for Call 1's output.
+    let assembled = { tenant: packet.tenant };
+    if (!bookMode) {
+      const fixturePath = path.join(repoRoot, "scripts", "knowledge", "__fixtures__", `story-architecture-${tenantKey}.json`);
+      if (!fs.existsSync(fixturePath)) {
+        throw new Error(
+          `No story-architecture preflight fixture for "${tenantKey}" at ${path.relative(repoRoot, fixturePath)}. ` +
+          "Preflight mode never calls Claude, so it needs a real, previously-captured story architecture on disk to stand in for Call 1's output.",
+        );
+      }
+      const storyArchitect = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+      assembled = {
+        tenant: packet.tenant,
+        story_architect: storyArchitect,
+        story_architecture_id: storyArchitect.story_architecture_id ?? `home-v4-${tenantKey}-${sourceHash.slice(0, 10)}`,
+        story_architecture_version: promptContractVersion,
+        story_architecture_hash: sha256(JSON.stringify(storyArchitect)),
+      };
     }
-    const storyArchitect = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-    const assembled = {
-      tenant: packet.tenant,
-      story_architect: storyArchitect,
-      story_architecture_id: storyArchitect.story_architecture_id ?? `home-v4-${tenantKey}-${sourceHash.slice(0, 10)}`,
-      story_architecture_version: promptContractVersion,
-      story_architecture_hash: sha256(JSON.stringify(storyArchitect)),
-    };
     const pass = bookMode
       ? { id: "01-enterprise-book", type: "enterprise_book" }
       : { id: "05-integrated-dimensions", type: "integrated_dimensions" };

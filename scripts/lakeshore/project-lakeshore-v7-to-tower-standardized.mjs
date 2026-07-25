@@ -1,4 +1,30 @@
 #!/usr/bin/env node
+//
+// STALE -- DO NOT RUN without fixing f05Headers/f11Headers first (2026-07-25).
+//
+// tower-standardized-v1/{F05,F11,T09,T10}_*.csv were normalized to one
+// canonical column schema across all 5 tenants on 2026-07-25 (see
+// docs/releases/records/ for that date's home-knowledge-v4 records, and
+// git history for the pre-normalization per-tenant schemas). This script's
+// own f05Headers/f11Headers (below) were ALREADY divergent from the live
+// on-disk files before that normalization -- they carry an
+// entity_id/entity_name/entity_scope/parent_entity_id/parent_entity_name/
+// portfolio_company_id/portfolio_company_name holdco-hierarchy prefix that
+// does not exist in any currently-live tower-standardized-v1 file for any
+// tenant, meaning this script has not been the actual source of the live
+// lakeshore-industries F05/F11 files for some time.
+//
+// If you re-run this script as-is, it WILL silently overwrite the governed,
+// normalized F05/F11 files for lakeshore-industries with this stale,
+// incompatible header shape -- undoing the 2026-07-25 normalization and
+// reintroducing a fourth, even-more-divergent schema. Before running: either
+// update f05Headers/f11Headers to match the current canonical schema (see
+// scripts/knowledge/build-home-knowledge-v4-review-pack.mjs's
+// loadTenantDatasetRegistry for the canonical column list), or confirm with
+// whoever owns the holdco-hierarchy projection whether that richer shape is
+// actually still wanted for lakeshore-industries and, if so, land it as a
+// deliberate schema change with the same normalization discipline applied
+// to every other tenant, not a silent overwrite from an unmaintained script.
 
 import fs from 'node:fs';
 import path from 'node:path';
