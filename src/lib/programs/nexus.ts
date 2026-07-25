@@ -158,7 +158,12 @@ export async function assembleContext(ctx: TenancyCtx, programId: string): Promi
     sb.from('deliverables_v2').select('id, title, status, deliverable_type_key').eq('engagement_id', programId).order('updated_at', { ascending: false }).limit(10),
     sb.from('maestro_oversight_flags').select('id, headline, severity').eq('engagement_id', programId).is('resolved_at', null).limit(10),
     sb.from('pattern_match_logs').select('pattern_key, match_context_jsonb').eq('engagement_id', programId).eq('acted_upon', true).order('acted_upon_at', { ascending: false }).limit(1),
-    listProgramEvidenceForPrompt(ctx, programId, 12).catch(() => []),
+    // Whole-Move context for the conversational agent, not a single phase's
+    // generation — intentionally unscoped (see listProgramEvidenceForPrompt's
+    // phase param doc), capped here for prompt size, not as a business rule.
+    listProgramEvidenceForPrompt(ctx, programId)
+      .then((items) => items.slice(0, 12))
+      .catch(() => []),
   ]);
 
   const patternKey = (patternQ.data as Array<{ pattern_key: string }> | null ?? [])[0]?.pattern_key;

@@ -153,7 +153,7 @@ export function createMovesGenerateArtifactDeps(
 ): GenerateArtifactDeps {
   return {
     contextSources: {
-      async retrieveCurrentState(tenantKey, _query, moveId) {
+      async retrieveCurrentState(tenantKey, _query, moveId, phase) {
         const bundle = await buildProgramsContextBundleAsync({
           tenantKey,
           programId: moveId,
@@ -164,8 +164,11 @@ export function createMovesGenerateArtifactDeps(
           requestedDomains: [...BROKER_DOMAINS],
         });
         const promptBlock = formatProgramsBrokerBundleForPrompt(bundle).trim();
+        // Scoped to the target phase — once a phase gates, its raw evidence is
+        // done; later phases inherit it via that phase's own finished,
+        // approved artifact (loadPriorDigests), not by re-reading raw files.
         const evidenceBlock = moveId
-          ? await listProgramEvidenceForPrompt(ctx, moveId, 20)
+          ? await listProgramEvidenceForPrompt(ctx, moveId, phase)
               .then(formatProgramEvidenceForPrompt)
               .catch(() => "")
           : "";
@@ -216,8 +219,8 @@ export function createMovesGenerateArtifactDeps(
         }
         return decisions;
       },
-      async loadEvidencePackets(moveId) {
-        return loadEvidencePacketsForMove(ctx, moveId, 20);
+      async loadEvidencePackets(moveId, phase) {
+        return loadEvidencePacketsForMove(ctx, moveId, phase);
       },
       async loadPhaseCapture(moveId, phase) {
         // The operator's saved phase capture: one program_modules row per

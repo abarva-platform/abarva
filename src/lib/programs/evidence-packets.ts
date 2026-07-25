@@ -10,13 +10,17 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
  * only), reshaped for `SolutionContext.evidencePackets` instead of a
  * flattened prompt string. Used by `createMovesGenerateArtifactDeps` to wire
  * `loadEvidencePackets` into `assembleMoveSolutionContext`.
+ *
+ * Scoped to `phase`: once a phase gates, its raw evidence is done — later
+ * phases inherit it through the phase's own finished, approved artifact (its
+ * `evidenceMap`/`PhaseDigest` citations), not by re-reading the raw files.
  */
 export async function loadEvidencePacketsForMove(
   ctx: TenancyCtx,
   moveId: string,
-  limit = 20,
+  phase: number,
 ): Promise<SolutionEvidencePacket[]> {
-  const items = await listProgramEvidenceForPrompt(ctx, moveId, limit);
+  const items = await listProgramEvidenceForPrompt(ctx, moveId, phase);
   return items.map((item) => ({
     evidenceId: item.id,
     title: item.title,

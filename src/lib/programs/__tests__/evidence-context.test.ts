@@ -65,12 +65,32 @@ describe('program evidence context prompt block', () => {
     expect(mockAzureSelect).toHaveBeenNthCalledWith(1, expect.objectContaining({
       table: 'program_evidence_reviews',
       where: { tenant_key: '', program_id: 'program-1', decision: 'approved' },
+      limit: 500,
     }));
     expect(mockAzureSelect).toHaveBeenNthCalledWith(2, expect.objectContaining({
       table: 'program_evidence_items',
       where: { program_id: 'program-1', id: { op: 'in', value: ['evidence-1'] } },
       orderBy: { column: 'created_at', direction: 'desc' },
-      limit: 8,
+      limit: 500,
+    }));
+  });
+
+  it('scopes the program_evidence_items query to a specific phase when provided', async () => {
+    mockAzureSelect
+      .mockResolvedValueOnce([
+        { evidence_id: 'evidence-2', reviewed_at: '2026-05-03T00:00:00.000Z', updated_at: '2026-05-03T00:00:00.000Z' },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await listProgramEvidenceForPrompt(
+      { clientId: 'client-1', userId: 'user-1', role: 'program_user' },
+      'program-1',
+      2,
+    );
+
+    expect(mockAzureSelect).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      table: 'program_evidence_items',
+      where: { program_id: 'program-1', id: { op: 'in', value: ['evidence-2'] }, phase: 2 },
     }));
   });
 

@@ -98,10 +98,26 @@ function compactLine(value: string | null | undefined, limit = 420): string {
   return text.length > limit ? `${text.slice(0, limit)}...` : text;
 }
 
+// Not a business rule — evidence volume within a phase is not something we
+// cap (a phase can legitimately accumulate 10s of evidence files). This is a
+// pure safety ceiling against a runaway/unbounded query; it should never be
+// the reason a real evidence item is excluded from generation.
+const EVIDENCE_QUERY_SAFETY_CEILING = 500;
+
 export async function listProgramEvidenceForPrompt(
   ctx: TenancyCtx,
   programId: string,
-  limit = 8,
+  /**
+   * Scope to a specific phase's evidence — required for generation context.
+   * Once a phase gates, its raw evidence is done: what carries forward to
+   * later phases is the phase's finished, approved artifact (and its own
+   * citations back to that evidence via `evidenceMap`/`PhaseDigest`), not the
+   * raw files themselves re-surfacing in every later phase's prompt. Pass
+   * `undefined` only for tooling/inspection use cases that genuinely need
+   * every approved item across the whole Move (e.g. an admin evidence
+   * browser) — never for a generation call.
+   */
+  phase?: number,
 ): Promise<ProgramEvidencePromptItem[]> {
   if (!programId || !(await canReadProgram(ctx, programId))) return [];
 
@@ -119,7 +135,7 @@ export async function listProgramEvidenceForPrompt(
       decision: 'approved',
     },
     orderBy: { column: 'updated_at', direction: 'desc' },
-    limit: Math.max(limit * 3, 20),
+    limit: EVIDENCE_QUERY_SAFETY_CEILING,
   });
   const approvedAtByEvidenceId = new Map<string, string | null>();
   for (const row of reviewRows) {
@@ -148,9 +164,10 @@ export async function listProgramEvidenceForPrompt(
     where: {
       program_id: programId,
       id: { op: 'in', value: approvedEvidenceIds },
+      ...(phase !== undefined ? { phase } : {}),
     },
     orderBy: { column: 'created_at', direction: 'desc' },
-    limit,
+    limit: EVIDENCE_QUERY_SAFETY_CEILING,
   });
   return rows.map((row) => ({
     id: String(row.id),

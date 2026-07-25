@@ -22,6 +22,7 @@ export interface SolutionContextSources {
     tenantKey: string,
     query: string,
     moveId?: string,
+    phase?: number,
   ) => Promise<string>;
   /** Full structured digests from prior approved deliverables (NOT 1800-char clips). */
   loadPriorDigests: (moveId: string) => Promise<PhaseDigest[]>;
@@ -39,12 +40,17 @@ export interface SolutionContextSources {
     phase: number,
   ) => Promise<PhaseDigest | null>;
   /**
-   * Human-approved uploaded evidence for the Move, in first-class structured
-   * form (see `SolutionEvidencePacket`). Optional so existing callers/tests
-   * keep working unchanged; when present, generation and citations can point
-   * at real files instead of only a flattened current-state text blob.
+   * Human-approved uploaded evidence for the target phase, in first-class
+   * structured form (see `SolutionEvidencePacket`). Scoped to `targetPhase`
+   * — once a phase gates, its raw evidence is done; later phases inherit it
+   * through that phase's own finished, approved artifact (`loadPriorDigests`
+   * carries the citations forward), not by re-reading the raw files. Optional
+   * so existing callers/tests keep working unchanged.
    */
-  loadEvidencePackets?: (moveId: string) => Promise<SolutionEvidencePacket[]>;
+  loadEvidencePackets?: (
+    moveId: string,
+    phase: number,
+  ) => Promise<SolutionEvidencePacket[]>;
 }
 
 export interface AssembledContext {
@@ -90,7 +96,12 @@ export async function assembleMoveSolutionContext(
     `${args.tenantKey} current state estate`;
   const currentState =
     (
-      await sources.retrieveCurrentState(args.tenantKey, query, args.moveId)
+      await sources.retrieveCurrentState(
+        args.tenantKey,
+        query,
+        args.moveId,
+        args.targetPhase,
+      )
     )?.trim() ?? "";
   let currentStateBound =
     currentState.length > 0 && !currentState.startsWith("[MISSING");
@@ -144,7 +155,9 @@ export async function assembleMoveSolutionContext(
   // 4) fold human-approved evidence packets — deduped by evidenceId so a
   // packet already carried forward from a prior phase digest is not doubled.
   if (sources.loadEvidencePackets) {
-    const packets = await sources.loadEvidencePackets(args.moveId).catch(() => []);
+    const packets = await sources
+      .loadEvidencePackets(args.moveId, args.targetPhase)
+      .catch(() => []);
     const seen = new Set(ctx.evidencePackets.map((p) => p.evidenceId));
     const fresh = packets.filter((p) => !seen.has(p.evidenceId));
     if (fresh.length) ctx = applyPhaseDigest(ctx, { evidencePackets: fresh });
