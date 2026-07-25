@@ -31,6 +31,10 @@ import {
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
 import {
+  validateGovernanceConsistency,
+  type AuthoritativeGovernanceState,
+} from "./governance-contradiction-validator";
+import {
   modelTokenBudgetForArtifact,
   premiumGoldenBarOptionsForArtifact,
   STRATEGIC_MOVES_DRAFT_CAVEAT,
@@ -575,11 +579,48 @@ export async function generateArtifact(
       : modelHtml,
   );
 
+  // PR3 — blocking governance-contradiction check. A generated artifact must
+  // never assert a governance fact that contradicts the authoritative state
+  // (stale charter signoff, uncaptured-but-accepted architecture, false
+  // finality, "no generation until approved" on a generated artifact, or a
+  // leaked internal id). Any contradiction is a hard block, folded into the
+  // quality-bar result so existing callers treat it as a quality failure.
+  const governanceState: AuthoritativeGovernanceState = {
+    phase: args.phase,
+    charterSignedOff: ctx.decisions.some((d) => d.phase === 1),
+    architectureAccepted: Boolean(ctx.architecture?.trim()),
+    isReviewDraft: generationMode === "draft",
+    isFinal: generationMode === "final" && gate.gateApproved,
+  };
+  const governanceBlock = (
+    candidateHtml: string,
+    bar: GoldenBarResult,
+  ): GoldenBarResult => {
+    const violations = validateGovernanceConsistency(
+      candidateHtml,
+      governanceState,
+    );
+    if (violations.length === 0) return bar;
+    return {
+      ...bar,
+      pass: false,
+      reasons: [
+        ...bar.reasons,
+        ...violations.map(
+          (v) => `governance contradiction (${v.code}): ${v.detail}`,
+        ),
+      ],
+    };
+  };
+
   // 6) Quality bar — must be a real visual artifact, no [DATA GAP], required exhibits present.
-  const goldenBar = meetsGoldenBar(
+  const goldenBar = governanceBlock(
     html,
-    args.artifact,
-    premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
+    meetsGoldenBar(
+      html,
+      args.artifact,
+      premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
+    ),
   );
   if (!goldenBar.pass) {
     const completedHtml = completeMandatoryExhibits({
@@ -591,10 +632,13 @@ export async function generateArtifact(
     if (completedHtml) {
       const sanitizedCompletedHtml =
         sanitizeClientFacingArtifactHtml(completedHtml);
-      const completedGoldenBar = meetsGoldenBar(
+      const completedGoldenBar = governanceBlock(
         sanitizedCompletedHtml,
-        args.artifact,
-        premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
+        meetsGoldenBar(
+          sanitizedCompletedHtml,
+          args.artifact,
+          premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
+        ),
       );
       if (completedGoldenBar.pass) {
         return {
