@@ -1068,7 +1068,12 @@ function makePrompt(pass, packet, assembled) {
         "mix (strong in one dimension, weak in another) into one flat label. Set " +
         "overall_position to 'mixed' whenever the per-dimension positions actually differ " +
         "(some ahead-or-at_parity, some behind) -- never 'behind' when a dimension is ahead " +
-        "or at_parity, and never 'ahead'/'at_parity' when a dimension is behind. Before " +
+        "or at_parity, and never 'ahead'/'at_parity' when a dimension is behind. The inverse " +
+        "matters just as much: 'mixed' is not a more sophisticated or safer default -- if " +
+        "every dimension you actually judged (ignoring not_evidenced/not_applicable) landed " +
+        "on the exact same position, overall_position MUST equal that same position, not " +
+        "'mixed'. A single evaluated dimension, or several that all agree, is not a mix; " +
+        "'mixed' means real disagreement between dimensions exists, nothing else. Before " +
         "writing each comparison, reconcile it against this book's own material_advantages " +
         "and material_gaps (jobs 1/3): if the same capability appears in " +
         "material_advantages, set advantage_to_preserve to name it and explain which " +
