@@ -6,7 +6,14 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean.
+`released` — merged to `main` via [#5605](https://github.com/abarva-platform/abarva/pull/5605)
+(squash-merge `cdc1858c568c436ba641cb950bf536f3bbeb64d8`), all CI checks passed including "Fresh
+Postgres migration replay". Deployed (digest
+`sha256:b94bc8a8393d9734b454e0433aba42337d86e6b104cc80b6b61d7f0472014a48`), the governed migration
+lane applied the new tables (`db-migration-lab.yml`, `status` → `apply`, confirmed "No pending
+migrations" afterward), and the full closure criterion — ingest → extract → review → accept →
+non-silent supersession → lineage preserved — was proven live against `app.abarva.ai` with a real
+uploaded document. See QA / Validation for the exact evidence.
 
 ## Plain-English Summary
 
@@ -102,16 +109,41 @@ This release closes that gap with a real, governed, end-to-end vertical slice:
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
   — zero errors.
 - `pass` — `npx eslint` on all 17 touched/added files — zero errors, zero warnings.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
-- `pending` — governed migration lane (`db-migration-lab.yml`, `status` then `apply`) — this
-  release includes a new migration; must run before this feature is usable against the live
-  database.
-- `pending` — live signed-in proof — after merge/deploy/migration-apply: (a) ingest a real vendor
-  proposal document on a real event and confirm candidate facts appear in the review queue; (b)
-  accept one and confirm it appears in `getAuthoritativeVendorProposalFacts`; (c) re-ingest a
-  conflicting value for the same vendor+fact-key and confirm the new candidate carries
-  `supersedesFactId`; (d) accept the new one and confirm the old fact is now excluded from the
-  authoritative read while remaining visible via the raw facts list (lineage preserved).
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — 19 release-relevant
+  files, this release record found and matched.
+- `pass` — governed migration lane. First `status` dispatch correctly showed the new migration
+  absent (image not yet redeployed with the merge); after the ACA deploy completed, a second
+  `status` dispatch showed it pending (8 total, including 7 pre-existing unrelated migrations from
+  other already-merged PRs that had never been applied). Per explicit user decision, all 8 were
+  applied together as one batch (the lane has no per-migration selection — it applies whatever is
+  pending, and all 8 were already merged/reviewed via normal PR/CI). Two `apply` dispatches hit the
+  same shared-job collision documented earlier this session
+  (`job-abarva-private-operator-eus` — `verifyIdle()`/`restoreIdle()` failing because a
+  concurrent, unrelated execution was mid-flight); both times the underlying `db:migrate:ci` step
+  itself completed and applied cleanly ("✓ 8 migrations applied") — confirmed directly in the
+  container log — before the wrapper's own idle-verification false-failed on someone else's
+  concurrent job. A final `status` dispatch, run after the shared job returned to idle, confirmed
+  "✓ No pending migrations. Applied: 296 / 292" — proving the schema change is durably live,
+  independent of the wrapper's cosmetic reporting.
+- `pass` — live signed-in proof on `app.abarva.ai` (2026-07-25, post-deploy/post-migration), the
+  full closure criterion, against a real Meridian Health sourcing event, using the browser's
+  authenticated session (no synthetic mocks):
+  1. `POST .../vendor-proposals/acme-managed-services/ingest` with a real uploaded text file
+     ("Price: $185,000/year", "SLA: 99.9% uptime", "Warranty: 2 years...") → `200`,
+     `candidateFactsInserted: 3`, real fact rows with real `sourceQuote`s.
+  2. `GET .../facts?status=candidate` → all 3, confirming the review queue.
+  3. `POST .../facts/:factId/accept` on the price fact → `200`, real review row persisted.
+  4. `GET .../facts?status=candidate` → now 2 (the accepted one left the queue); `?status=accepted`
+     → exactly the 1 accepted fact.
+  5. Re-ingested a revised proposal with a conflicting price ($199,000) for the same
+     vendor+fact-key → the new candidate carried `supersedesFactId` pointing at the first
+     ($185,000) fact — proving non-silent supersession-detection, not a silent overwrite.
+  6. Accepted the revised ($199,000) fact → `?status=accepted` now shows only $199,000 (the old
+     $185,000 fact is gone from authoritative); `?status=superseded` shows exactly the old
+     $185,000 fact; the unfiltered `GET .../facts` still lists all 4 rows — full lineage
+     preserved, nothing destroyed. This is the exact closure criterion: "one real vendor proposal
+     can move from upload through governed fact review into downstream use, with no unreviewed,
+     superseded, cross-event, or cross-tenant facts treated as authoritative."
 
 ## Rollout Plan
 
@@ -128,11 +160,15 @@ auto-triggered by a code merge.
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none directly; the migration lane
   (`.github/workflows/db-migration-lab.yml`) is dispatched separately, `workflow_dispatch`-only.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be recorded after merge and deploy.
+- Approved image digest: `sha256:b94bc8a8393d9734b454e0433aba42337d86e6b104cc80b6b61d7f0472014a48`
+  (`acrabarvalab001.azurecr.io/abarva/web`), deployed via run
+  [30176284108](https://github.com/abarva-platform/abarva/actions/runs/30176284108), 100% traffic
+  shifted, runtime invariant + health endpoint verified in-workflow.
+- ACA runtime invariant: verified — template image, 100%-traffic revision image, and worker job
+  images match the digest above.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — see QA / Validation.
+- Live signed-in proof required: yes — captured, see QA / Validation.
 
 ## Rollback Plan
 
@@ -144,8 +180,15 @@ existing table, route, or generation prompt loses functionality if this release 
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- Deploy run, migration-apply run, and live proof: to be recorded after merge/deploy.
+- PR: [#5605](https://github.com/abarva-platform/abarva/pull/5605), squash-merged
+  `cdc1858c568c436ba641cb950bf536f3bbeb64d8`, 2026-07-25.
+- Deploy run: [30176284108](https://github.com/abarva-platform/abarva/actions/runs/30176284108).
+- Migration-apply run: [30176946160](https://github.com/abarva-platform/abarva/actions/runs/30176946160)
+  (`db:migrate:ci` applied all 8 pending migrations cleanly; the run's own reported failure was
+  the wrapper's `verifyIdle()` post-check colliding with an unrelated concurrent job execution —
+  confirmed by container log and a subsequent clean `status` dispatch showing zero pending).
+- Live proof: captured 2026-07-25 against `app.abarva.ai`, Meridian Health tenant — see QA /
+  Validation for the full request/response sequence.
 - Baseline audit this release closes items from:
   `docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md` (Evidence Upload/Parsing/Storage
   section — the `VendorProposalFact` type spec).
