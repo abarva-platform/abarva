@@ -632,11 +632,7 @@ export function AtlasDrawer({
           )}
         </button>
       </div>
-      <AgentActionApprovalNotice
-        tone="dark"
-        compact
-        style={{ marginTop: 8 }}
-      />
+      <AgentActionApprovalNotice tone="dark" compact style={{ marginTop: 8 }} />
       <AIResponsibilityFooter tone="dark" compact style={{ marginTop: 8 }} />
     </div>
   );
@@ -1252,6 +1248,33 @@ function DrawerChatBubble({
   );
 }
 
+// Source integrity fix, 2026-07-23: the chat-save route now requires a
+// real, registered artifact code (see
+// docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md, Pipeline Drift
+// Report item D1) instead of the free-text "agent_generated_packet" label
+// this used to send. Map the current stage to its primary d-code so
+// chat-authored content resolves to a real contract (section requirements,
+// banned-term profile) rather than bypassing every check.
+const STAGE_TO_PRIMARY_ARTIFACT_CODE: Record<string, string> = {
+  strategy: "d01_strategy_memo",
+  intake: "d01_strategy_memo",
+  scope: "d05_scope_memo",
+  rfp: "d09_rfp_pack",
+  rfp_rfi_package: "d09_rfp_pack",
+  responses: "d13_vendor_responses",
+  vendor_responses: "d13_vendor_responses",
+  evaluation: "d16_scorecard",
+  pricing: "d19_pricing_workbook",
+  bafo: "d22_bafo_question_pack",
+  orals_bafo: "d22_bafo_question_pack",
+  executive_decision: "d24_decision_brief",
+  selection: "d27_selection_memo",
+  transition: "d29_transition_plan",
+  contract_mobilization: "d29_transition_plan",
+  value: "d32_value_ledger",
+  value_realization: "d32_value_ledger",
+};
+
 function GeneratedSourceArtifactSave({
   text,
   sourceUploadContext,
@@ -1275,6 +1298,9 @@ function GeneratedSourceArtifactSave({
     setMessage(null);
     try {
       const title = `${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey} generated packet`;
+      const artifactCode =
+        STAGE_TO_PRIMARY_ARTIFACT_CODE[sourceUploadContext.stageKey] ??
+        "d01_strategy_memo";
       const response = await fetch(
         `/api/v1/source/${encodeURIComponent(sourceUploadContext.eventId)}/artifacts/generate`,
         {
@@ -1284,7 +1310,7 @@ function GeneratedSourceArtifactSave({
             title,
             content: cleaned,
             stageKey: sourceUploadContext.stageKey,
-            artifactKind: "agent_generated_packet",
+            artifactCode,
           }),
         },
       );

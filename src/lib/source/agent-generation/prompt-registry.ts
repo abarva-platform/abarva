@@ -12,10 +12,10 @@
 import type {
   SourceArtifactPromptTemplate,
   SourceGenerationContext,
-} from './types';
-import { buildAppInventoryPromptBlock } from './app-inventory';
-import { formatRequiredSectionsForPrompt } from './section-conformance';
-import { buildLanguagePolicyBlock } from '@/lib/source/documentation-standards/source-documentation-standards';
+} from "./types";
+import { buildAppInventoryPromptBlock } from "./app-inventory";
+import { formatRequiredSectionsForPrompt } from "./section-conformance";
+import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/source-documentation-standards";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -87,7 +87,8 @@ const VENDOR_RESPONSE_CONTROL_SECTIONS = [
   },
   {
     title: "Automation / Productivity Commitment Table",
-    purpose: "Prevent vague AI, automation, transformation, productivity, or efficiency promises.",
+    purpose:
+      "Prevent vague AI, automation, transformation, productivity, or efficiency promises.",
     columns: [
       "Use Case",
       "Baseline Volume",
@@ -107,7 +108,8 @@ const VENDOR_RESPONSE_CONTROL_SECTIONS = [
   },
   {
     title: "Structured Pricing Workbook",
-    purpose: "Make vendor pricing comparable across one-time, run, transition, transformation, tooling, governance, pass-through, optional-service, unit-rate, retained-cost, volume-pricing, productivity-credit, SLA-credit, and assumption sections.",
+    purpose:
+      "Make vendor pricing comparable across one-time, run, transition, transformation, tooling, governance, pass-through, optional-service, unit-rate, retained-cost, volume-pricing, productivity-credit, SLA-credit, and assumption sections.",
     columns: [
       "Cost Category",
       "Cost Description",
@@ -128,7 +130,8 @@ const VENDOR_RESPONSE_CONTROL_SECTIONS = [
   },
   {
     title: "Staffing and Location Model",
-    purpose: "Expose delivery model, rate-card, coverage, and staffing-mix risk.",
+    purpose:
+      "Expose delivery model, rate-card, coverage, and staffing-mix risk.",
     columns: [
       "Role",
       "Level",
@@ -669,7 +672,9 @@ function formatGovernanceReviewFields(): string {
 // extracts, etc.) so the draft can CITE it by filename. The consulting-grade
 // quality gate already sees this evidence and penalises drafts that ignore it;
 // without this block the draft is blind to evidence it is graded on.
-function formatDraftEvidenceContext(ctx: SourceGenerationContext): string | null {
+function formatDraftEvidenceContext(
+  ctx: SourceGenerationContext,
+): string | null {
   const items = ctx.uploadedEvidence ?? [];
   if (items.length === 0) return null;
   const lines = items.slice(0, 8).map((a) => {
@@ -833,7 +838,7 @@ Requirements:
   },
 
   d02_value_target_legacy: {
-    artifactCode: 'd02_value_target',
+    artifactCode: "d02_value_target",
     version: 1,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
@@ -860,22 +865,22 @@ Tone: tight, quantitative, 500-900 words. Model a low/high range around the inta
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
         ctx.event.estimatedValueUsd
           ? `Estimated value at stake (intake): $${ctx.event.estimatedValueUsd.toLocaleString()}`
-          : 'Estimated value at stake (intake): (not provided — frame the range qualitatively)',
-        '',
-        `Trigger / why-now: ${ctx.event.triggerDescription ?? '(not provided in intake)'}`,
-        '',
+          : "Estimated value at stake (intake): (not provided — frame the range qualitatively)",
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided in intake)"}`,
+        "",
         `Scope description from intake:`,
-        ctx.event.scopeDescription || '(not provided)',
-        '',
+        ctx.event.scopeDescription || "(not provided)",
+        "",
         `Draft the Value Target Brief per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
-        .join('\n');
+        .join("\n");
     },
   },
 
   d03_archetype_decision_legacy: {
-    artifactCode: 'd03_archetype_decision',
+    artifactCode: "d03_archetype_decision",
     version: 1,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
@@ -901,26 +906,26 @@ Tone: decisive, 400-800 words. Name the selected archetype — use the intake ar
         `Code: ${ctx.event.code}`,
         ctx.event.archetype
           ? `Archetype (intake): ${ctx.event.archetype}`
-          : 'Archetype (intake): (not provided — infer best fit and mark as inferred)',
+          : "Archetype (intake): (not provided — infer best fit and mark as inferred)",
         ctx.event.rigor ? `Rigor (intake): ${ctx.event.rigor}` : null,
         ctx.event.estimatedValueUsd
           ? `Estimated value at stake: $${ctx.event.estimatedValueUsd.toLocaleString()}`
           : null,
-        '',
-        `Trigger / why-now: ${ctx.event.triggerDescription ?? '(not provided in intake)'}`,
-        '',
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided in intake)"}`,
+        "",
         `Scope description from intake:`,
-        ctx.event.scopeDescription || '(not provided)',
-        '',
+        ctx.event.scopeDescription || "(not provided)",
+        "",
         `Draft the Archetype Decision Record per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
-        .join('\n');
+        .join("\n");
     },
   },
 
   d04_app_inv_legacy: {
-    artifactCode: 'd04_app_inv',
+    artifactCode: "d04_app_inv",
     version: 1,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
@@ -948,18 +953,18 @@ When no inventory is supplied, produce the §2 table framework (headers + a plac
         `Event: ${ctx.event.name}`,
         `Code: ${ctx.event.code}`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
-        '',
+        "",
         `Scope description from intake:`,
-        ctx.event.scopeDescription || '(not provided)',
-        '',
-        '— ENTERPRISE APPLICATION INVENTORY —',
-        '',
+        ctx.event.scopeDescription || "(not provided)",
+        "",
+        "— ENTERPRISE APPLICATION INVENTORY —",
+        "",
         buildAppInventoryPromptBlock(ctx.enterpriseAppInventory),
-        '',
+        "",
         `Draft the Application Inventory & Tiering per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
-        .join('\n');
+        .join("\n");
     },
   },
 
@@ -1065,9 +1070,21 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d04_app_inv", "Application Inventory", "application/service list and tiering");
-      bindOptional("d07_ticket_synth", "Ticket History Synthesis", "service demand and support-boundary signals");
-      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "event rationale and scope intent");
+      bindOptional(
+        "d04_app_inv",
+        "Application Inventory",
+        "application/service list and tiering",
+      );
+      bindOptional(
+        "d07_ticket_synth",
+        "Ticket History Synthesis",
+        "service demand and support-boundary signals",
+      );
+      bindOptional(
+        "d01_strategy_memo",
+        "Sourcing Strategy Memo",
+        "event rationale and scope intent",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -1143,9 +1160,21 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d06_excl_log", "Exclusion Log", "boundary risks and sponsor-review gaps");
-      bindOptional("d04_app_inv", "Application Inventory", "systems/towers that create scope ambiguity");
-      bindOptional("d07_ticket_synth", "Ticket History Synthesis", "service-demand risks and workload evidence");
+      bindOptional(
+        "d06_excl_log",
+        "Exclusion Log",
+        "boundary risks and sponsor-review gaps",
+      );
+      bindOptional(
+        "d04_app_inv",
+        "Application Inventory",
+        "systems/towers that create scope ambiguity",
+      );
+      bindOptional(
+        "d07_ticket_synth",
+        "Ticket History Synthesis",
+        "service-demand risks and workload evidence",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -1324,7 +1353,11 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d05_scope_memo"],
-    upstreamOptional: ["d09_rfp_pack", "d12_vendor_shortlist", "d01_strategy_memo"],
+    upstreamOptional: [
+      "d09_rfp_pack",
+      "d12_vendor_shortlist",
+      "d01_strategy_memo",
+    ],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
 You are drafting the RFI Summary (artifact d10_rfi_summary). This is the market-sensing record used when a pre-RFI or informal market scan was run before final vendor shortlist. It should convert vendor landscape signals into sourcing implications. It is not a substitute for vendor responses and must not pretend non-binding RFI signals are commitments.
@@ -1370,9 +1403,21 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d09_rfp_pack", "RFP Package", "issued requirements that market signals must map to");
-      bindOptional("d12_vendor_shortlist", "Vendor Shortlist", "shortlist implications if already drafted");
-      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "event mandate and market posture");
+      bindOptional(
+        "d09_rfp_pack",
+        "RFP Package",
+        "issued requirements that market signals must map to",
+      );
+      bindOptional(
+        "d12_vendor_shortlist",
+        "Vendor Shortlist",
+        "shortlist implications if already drafted",
+      );
+      bindOptional(
+        "d01_strategy_memo",
+        "Sourcing Strategy Memo",
+        "event mandate and market posture",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -1402,7 +1447,12 @@ Writing and format requirements:
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d09_rfp_pack"],
-    upstreamOptional: ["d10_rfi_summary", "d05_scope_memo", "d06_excl_log", "d11_response_checklist"],
+    upstreamOptional: [
+      "d10_rfi_summary",
+      "d05_scope_memo",
+      "d06_excl_log",
+      "d11_response_checklist",
+    ],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
 You are drafting the Vendor Shortlist (artifact d12_vendor_shortlist). This is the approved vendor invitation list with rationale, coverage fit, disqualification notes, conditions to invite, and approval owner. It gates the move from RFP to Responses. It must not invent vendors, approvals, or disqualifications.
@@ -1449,10 +1499,26 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d10_rfi_summary", "RFI Summary", "market-scan signals and shortlist implications");
-      bindOptional("d05_scope_memo", "Scope Memo", "coverage fit and scope boundary");
-      bindOptional("d06_excl_log", "Exclusion Log", "boundary conditions and vendor pricing caveats");
-      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "conditions vendors must satisfy");
+      bindOptional(
+        "d10_rfi_summary",
+        "RFI Summary",
+        "market-scan signals and shortlist implications",
+      );
+      bindOptional(
+        "d05_scope_memo",
+        "Scope Memo",
+        "coverage fit and scope boundary",
+      );
+      bindOptional(
+        "d06_excl_log",
+        "Exclusion Log",
+        "boundary conditions and vendor pricing caveats",
+      );
+      bindOptional(
+        "d11_response_checklist",
+        "Vendor Response Control Pack",
+        "conditions vendors must satisfy",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -1482,7 +1548,12 @@ Writing and format requirements:
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
-    upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth", "d09_rfp_pack"],
+    upstreamOptional: [
+      "d02_value_target",
+      "d04_app_inv",
+      "d07_ticket_synth",
+      "d09_rfp_pack",
+    ],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
 You are drafting the Vendor Response Control Pack (artifact d11_response_checklist). This is not a generic checklist. It is the vendor-facing response package that forces proposals to arrive structured, evidence-backed, comparable, commercially useful, and ready for evaluation, pricing normalization, challenge logs, and BAFO negotiation.
@@ -1561,17 +1632,23 @@ Writing and format requirements:
         lines.push("");
       }
       if (upstream.d02_value_target) {
-        lines.push("Value Target Brief (d02_value_target) — use to shape commercial claim controls:");
+        lines.push(
+          "Value Target Brief (d02_value_target) — use to shape commercial claim controls:",
+        );
         lines.push(upstream.d02_value_target);
         lines.push("");
       }
       if (upstream.d04_app_inv) {
-        lines.push("Application Inventory (d04_app_inv) — use to shape tower/application response fields:");
+        lines.push(
+          "Application Inventory (d04_app_inv) — use to shape tower/application response fields:",
+        );
         lines.push(upstream.d04_app_inv);
         lines.push("");
       }
       if (upstream.d07_ticket_synth) {
-        lines.push("Ticket History Synthesis (d07_ticket_synth) — use to shape SLA/volume response fields:");
+        lines.push(
+          "Ticket History Synthesis (d07_ticket_synth) — use to shape SLA/volume response fields:",
+        );
         lines.push(upstream.d07_ticket_synth);
         lines.push("");
       }
@@ -1669,7 +1746,9 @@ Writing and format requirements:
         lines.push("");
       }
       if (upstream.d14_qa_log) {
-        lines.push("Q&A Log (d14_qa_log) — use only if already published/evidenced:");
+        lines.push(
+          "Q&A Log (d14_qa_log) — use only if already published/evidenced:",
+        );
         lines.push(upstream.d14_qa_log);
         lines.push("");
       }
@@ -1755,7 +1834,9 @@ Writing and format requirements:
         lines.push("");
       }
       if (upstream.d13_vendor_responses) {
-        lines.push("Vendor Response Pack (d13_vendor_responses) — use only for evidenced follow-up questions:");
+        lines.push(
+          "Vendor Response Pack (d13_vendor_responses) — use only for evidenced follow-up questions:",
+        );
         lines.push(upstream.d13_vendor_responses);
         lines.push("");
       }
@@ -1838,7 +1919,9 @@ Writing and format requirements:
         lines.push("");
       }
       if (upstream.d14_qa_log) {
-        lines.push("Q&A Log (d14_qa_log) — use for binding addenda / changed response requirements:");
+        lines.push(
+          "Q&A Log (d14_qa_log) — use for binding addenda / changed response requirements:",
+        );
         lines.push(upstream.d14_qa_log);
         lines.push("");
       }
@@ -1924,10 +2007,26 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "evaluation priorities");
-      bindOptional("d05_scope_memo", "Scope Memo", "scope and service boundaries");
-      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "response fields that support criteria");
-      bindOptional("d15_response_completeness", "Response Completeness Report", "vendors admitted or conditionally admitted");
+      bindOptional(
+        "d01_strategy_memo",
+        "Sourcing Strategy Memo",
+        "evaluation priorities",
+      );
+      bindOptional(
+        "d05_scope_memo",
+        "Scope Memo",
+        "scope and service boundaries",
+      );
+      bindOptional(
+        "d11_response_checklist",
+        "Vendor Response Control Pack",
+        "response fields that support criteria",
+      );
+      bindOptional(
+        "d15_response_completeness",
+        "Response Completeness Report",
+        "vendors admitted or conditionally admitted",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -2027,10 +2126,26 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d09_rfp_pack", "RFP Package", "criteria as issued to vendors");
-      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "response fields that support criteria");
-      bindOptional("d14_qa_log", "Q&A Parity Log", "binding addenda that affect criteria or evidence");
-      bindOptional("d18_disqualification_log", "Disqualification Log", "vendors excluded before or during scoring");
+      bindOptional(
+        "d09_rfp_pack",
+        "RFP Package",
+        "criteria as issued to vendors",
+      );
+      bindOptional(
+        "d11_response_checklist",
+        "Vendor Response Control Pack",
+        "response fields that support criteria",
+      );
+      bindOptional(
+        "d14_qa_log",
+        "Q&A Parity Log",
+        "binding addenda that affect criteria or evidence",
+      );
+      bindOptional(
+        "d18_disqualification_log",
+        "Disqualification Log",
+        "vendors excluded before or during scoring",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -2118,11 +2233,31 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d09_rfp_pack", "RFP Package", "published rules and evaluation criteria");
-      bindOptional("d13_vendor_responses", "Vendor Response Pack", "submission evidence and exceptions");
-      bindOptional("d14_qa_log", "Q&A Parity Log", "binding addenda or changed rules");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "score thresholds and pass/fail flags");
-      bindOptional("d17_weight_log", "Weight Governance Record", "locked criteria and thresholds");
+      bindOptional(
+        "d09_rfp_pack",
+        "RFP Package",
+        "published rules and evaluation criteria",
+      );
+      bindOptional(
+        "d13_vendor_responses",
+        "Vendor Response Pack",
+        "submission evidence and exceptions",
+      );
+      bindOptional(
+        "d14_qa_log",
+        "Q&A Parity Log",
+        "binding addenda or changed rules",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "score thresholds and pass/fail flags",
+      );
+      bindOptional(
+        "d17_weight_log",
+        "Weight Governance Record",
+        "locked criteria and thresholds",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -2187,12 +2322,16 @@ Requirements:
       ].filter((line): line is string => line !== null);
 
       if (upstream.d05_scope_memo) {
-        lines.push("Approved Scope Memo (d05_scope_memo) — use as primary scope boundary:");
+        lines.push(
+          "Approved Scope Memo (d05_scope_memo) — use as primary scope boundary:",
+        );
         lines.push(upstream.d05_scope_memo);
         lines.push("");
       }
 
-      lines.push("— ENTERPRISE APPLICATION INVENTORY (company's loaded systems estate) —");
+      lines.push(
+        "— ENTERPRISE APPLICATION INVENTORY (company's loaded systems estate) —",
+      );
       lines.push("");
       lines.push(buildAppInventoryPromptBlock(ctx.enterpriseAppInventory));
       lines.push("");
@@ -2254,7 +2393,9 @@ Requirements:
       ].filter((line): line is string => line !== null);
 
       if (upstream.d05_scope_memo) {
-        lines.push("Approved Scope Memo (d05_scope_memo) — use as the tower/service-level boundary:");
+        lines.push(
+          "Approved Scope Memo (d05_scope_memo) — use as the tower/service-level boundary:",
+        );
         lines.push(upstream.d05_scope_memo);
         lines.push("");
       }
@@ -2344,12 +2485,36 @@ Writing requirements:
         lines.push("");
       };
 
-      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "mandate and rigor");
-      bindOptional("d02_value_target", "Value Target Brief", "value mechanics and confidence");
-      bindOptional("d04_app_inv", "Application Inventory", "application/system counts and criticality");
-      bindOptional("d07_ticket_synth", "Ticket History Synthesis", "volume and SLA basis");
-      bindOptional("d09_rfp_pack", "RFP Package", "pricing instructions already issued");
-      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "required pricing fields");
+      bindOptional(
+        "d01_strategy_memo",
+        "Sourcing Strategy Memo",
+        "mandate and rigor",
+      );
+      bindOptional(
+        "d02_value_target",
+        "Value Target Brief",
+        "value mechanics and confidence",
+      );
+      bindOptional(
+        "d04_app_inv",
+        "Application Inventory",
+        "application/system counts and criticality",
+      );
+      bindOptional(
+        "d07_ticket_synth",
+        "Ticket History Synthesis",
+        "volume and SLA basis",
+      );
+      bindOptional(
+        "d09_rfp_pack",
+        "RFP Package",
+        "pricing instructions already issued",
+      );
+      bindOptional(
+        "d11_response_checklist",
+        "Vendor Response Control Pack",
+        "required pricing fields",
+      );
 
       lines.push("— PRICING EVIDENCE STATE SUMMARY —");
       lines.push(formatEvidenceStates(ctx));
@@ -2443,14 +2608,46 @@ Writing requirements:
         lines.push("");
       };
 
-      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "mandate and value at stake");
-      bindOptional("d02_value_target", "Value Target Brief", "value target and confidence bands");
-      bindOptional("d05_scope_memo", "Scope Memo", "scope and service boundary");
-      bindOptional("d09_rfp_pack", "RFP Package", "pricing instructions issued to vendors");
-      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "pricing fields required");
-      bindOptional("d13_vendor_responses", "Vendor Responses", "submitted price evidence");
-      bindOptional("d15_response_completeness", "Response Completeness Report", "missing response fields");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "non-price context for BAFO questions");
+      bindOptional(
+        "d01_strategy_memo",
+        "Sourcing Strategy Memo",
+        "mandate and value at stake",
+      );
+      bindOptional(
+        "d02_value_target",
+        "Value Target Brief",
+        "value target and confidence bands",
+      );
+      bindOptional(
+        "d05_scope_memo",
+        "Scope Memo",
+        "scope and service boundary",
+      );
+      bindOptional(
+        "d09_rfp_pack",
+        "RFP Package",
+        "pricing instructions issued to vendors",
+      );
+      bindOptional(
+        "d11_response_checklist",
+        "Vendor Response Control Pack",
+        "pricing fields required",
+      );
+      bindOptional(
+        "d13_vendor_responses",
+        "Vendor Responses",
+        "submitted price evidence",
+      );
+      bindOptional(
+        "d15_response_completeness",
+        "Response Completeness Report",
+        "missing response fields",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "non-price context for BAFO questions",
+      );
 
       lines.push("— PRICING EVIDENCE STATE SUMMARY —");
       lines.push(formatEvidenceStates(ctx));
@@ -2540,11 +2737,31 @@ Writing requirements:
         lines.push("");
       };
 
-      bindOptional("d05_scope_memo", "Scope Memo", "scope ambiguity and change-order risk");
-      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "required fields vendors were asked to complete");
-      bindOptional("d13_vendor_responses", "Vendor Responses", "submitted claims and exceptions");
-      bindOptional("d15_response_completeness", "Response Completeness Report", "missing response fields");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "non-price tradeoffs that affect trap severity");
+      bindOptional(
+        "d05_scope_memo",
+        "Scope Memo",
+        "scope ambiguity and change-order risk",
+      );
+      bindOptional(
+        "d11_response_checklist",
+        "Vendor Response Control Pack",
+        "required fields vendors were asked to complete",
+      );
+      bindOptional(
+        "d13_vendor_responses",
+        "Vendor Responses",
+        "submitted claims and exceptions",
+      );
+      bindOptional(
+        "d15_response_completeness",
+        "Response Completeness Report",
+        "missing response fields",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "non-price tradeoffs that affect trap severity",
+      );
 
       lines.push("— PRICING EVIDENCE STATE SUMMARY —");
       lines.push(formatEvidenceStates(ctx));
@@ -2635,12 +2852,36 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d13_vendor_responses", "Vendor Responses", "submitted claims, terms, and exceptions");
-      bindOptional("d15_response_completeness", "Response Completeness Report", "missing mandatory fields and conditional admissions");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability gaps and finalist evaluation impact");
-      bindOptional("d17_weight_log", "Weight Governance Record", "locked scoring weights and pass/fail rules");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "normalized TCO and commercial gaps");
-      bindOptional("d21_assumption_set", "Locked Assumptions Record", "approved commercial basis");
+      bindOptional(
+        "d13_vendor_responses",
+        "Vendor Responses",
+        "submitted claims, terms, and exceptions",
+      );
+      bindOptional(
+        "d15_response_completeness",
+        "Response Completeness Report",
+        "missing mandatory fields and conditional admissions",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "capability gaps and finalist evaluation impact",
+      );
+      bindOptional(
+        "d17_weight_log",
+        "Weight Governance Record",
+        "locked scoring weights and pass/fail rules",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "normalized TCO and commercial gaps",
+      );
+      bindOptional(
+        "d21_assumption_set",
+        "Locked Assumptions Record",
+        "approved commercial basis",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -2725,10 +2966,26 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d20_trap_log", "Pricing Trap Log", "traps that BAFO should close or accept explicitly");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "before/after TCO and commercial baselines");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability and finalist-ranking impact");
-      bindOptional("d24_decision_brief", "Decision Brief", "draft decision implications, if already prepared");
+      bindOptional(
+        "d20_trap_log",
+        "Pricing Trap Log",
+        "traps that BAFO should close or accept explicitly",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "before/after TCO and commercial baselines",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "capability and finalist-ranking impact",
+      );
+      bindOptional(
+        "d24_decision_brief",
+        "Decision Brief",
+        "draft decision implications, if already prepared",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -2757,13 +3014,15 @@ Writing and format requirements:
     version: 1,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
-    upstreamRequired: [],
+    // The Decision Brief names a recommended vendor — it must not be draftable before the
+    // evaluation evidence that recommendation depends on exists. (Source integrity fix,
+    // 2026-07-23: see docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md, which found
+    // this was the only late-stage, vendor-naming artifact with upstreamRequired: [].)
+    upstreamRequired: ["d16_scorecard", "d19_pricing_workbook"],
     upstreamOptional: [
       "d01_strategy_memo",
       "d02_value_target",
       "d05_scope_memo",
-      "d16_scorecard",
-      "d19_pricing_workbook",
       "d22_bafo_question_pack",
     ],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
@@ -2801,7 +3060,9 @@ If the evaluation scorecard (d16) or pricing workbook (d19) has not been authore
       ].filter((line): line is string => line !== null);
 
       const bind = (code: string, label: string, driverNote: string) => {
-        lines.push(`${label} (${code})${driverNote ? ` — ${driverNote}` : ""}:`);
+        lines.push(
+          `${label} (${code})${driverNote ? ` — ${driverNote}` : ""}:`,
+        );
         lines.push(
           upstream[code] ??
             "(NOT YET AUTHORED — do not fabricate; surface as a gap to close)",
@@ -2810,7 +3071,11 @@ If the evaluation scorecard (d16) or pricing workbook (d19) has not been authore
       };
 
       bind("d01_strategy_memo", "Sourcing Strategy Memo", "the mandate for §2");
-      bind("d02_value_target", "Value Target Brief", "the value posture for §3");
+      bind(
+        "d02_value_target",
+        "Value Target Brief",
+        "the value posture for §3",
+      );
       bind("d05_scope_memo", "Scope Memo", "scope boundaries");
       bind(
         "d16_scorecard",
@@ -2847,18 +3112,18 @@ If the evaluation scorecard (d16) or pricing workbook (d19) has not been authore
   },
 
   d24_decision_brief_legacy: {
-    artifactCode: 'd24_decision_brief',
+    artifactCode: "d24_decision_brief",
     version: 1,
     model: DEFAULT_MODEL,
     maxTokens: 5000,
     upstreamRequired: [],
     upstreamOptional: [
-      'd01_strategy_memo',
-      'd02_value_target',
-      'd05_scope_memo',
-      'd16_scorecard',
-      'd19_pricing_workbook',
-      'd22_bafo_question_pack',
+      "d01_strategy_memo",
+      "d02_value_target",
+      "d05_scope_memo",
+      "d16_scorecard",
+      "d19_pricing_workbook",
+      "d22_bafo_question_pack",
     ],
     systemPrompt: `${SENTINEL_VOICE}
 
@@ -2889,26 +3154,45 @@ If the scorecard (d16) or pricing workbook (d19) has not been authored, DO NOT f
         ctx.event.estimatedValueUsd
           ? `Estimated value at stake: $${ctx.event.estimatedValueUsd.toLocaleString()}`
           : null,
-        '',
-        '— UPSTREAM EVENT CHAIN —',
-        '',
+        "",
+        "— UPSTREAM EVENT CHAIN —",
+        "",
       ].filter((line): line is string => line !== null);
 
       const bind = (code: string, label: string, driverNote: string) => {
-        lines.push(`${label} (${code})${driverNote ? ` — ${driverNote}` : ''}:`);
-        lines.push(upstream[code] ?? '(NOT YET AUTHORED — do not fabricate; surface as a gap)');
-        lines.push('');
+        lines.push(
+          `${label} (${code})${driverNote ? ` — ${driverNote}` : ""}:`,
+        );
+        lines.push(
+          upstream[code] ??
+            "(NOT YET AUTHORED — do not fabricate; surface as a gap)",
+        );
+        lines.push("");
       };
 
-      bind('d01_strategy_memo', 'Sourcing Strategy Memo', 'the mandate for §2');
-      bind('d02_value_target', 'Value Target Brief', 'the value posture for §3');
-      bind('d05_scope_memo', 'Scope Memo', 'scope boundaries');
-      bind('d16_scorecard', 'Evaluation Scorecard', 'capability/security/transition scores for §4');
-      bind('d19_pricing_workbook', 'Pricing Workbook', 'normalized TCO for §4');
-      bind('d22_bafo_question_pack', 'BAFO Question Pack', 'open concessions/clarifications');
+      bind("d01_strategy_memo", "Sourcing Strategy Memo", "the mandate for §2");
+      bind(
+        "d02_value_target",
+        "Value Target Brief",
+        "the value posture for §3",
+      );
+      bind("d05_scope_memo", "Scope Memo", "scope boundaries");
+      bind(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "capability/security/transition scores for §4",
+      );
+      bind("d19_pricing_workbook", "Pricing Workbook", "normalized TCO for §4");
+      bind(
+        "d22_bafo_question_pack",
+        "BAFO Question Pack",
+        "open concessions/clarifications",
+      );
 
-      lines.push('Draft the Atlas Decision Brief per the system prompt requirements.');
-      return lines.join('\n');
+      lines.push(
+        "Draft the Atlas Decision Brief per the system prompt requirements.",
+      );
+      return lines.join("\n");
     },
   },
 
@@ -2976,11 +3260,31 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability, security, and transition residuals");
-      bindOptional("d18_disqualification_log", "Disqualification Rationale", "threshold failures or no-evidenced-disqualification posture");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "financial exposure and normalized TCO basis");
-      bindOptional("d20_trap_log", "Pricing Trap Log", "unresolved or accepted commercial traps");
-      bindOptional("d22_bafo_question_pack", "BAFO Question Pack", "questions and proof requests that drove the BAFO round");
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "capability, security, and transition residuals",
+      );
+      bindOptional(
+        "d18_disqualification_log",
+        "Disqualification Rationale",
+        "threshold failures or no-evidenced-disqualification posture",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "financial exposure and normalized TCO basis",
+      );
+      bindOptional(
+        "d20_trap_log",
+        "Pricing Trap Log",
+        "unresolved or accepted commercial traps",
+      );
+      bindOptional(
+        "d22_bafo_question_pack",
+        "BAFO Question Pack",
+        "questions and proof requests that drove the BAFO round",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3066,11 +3370,31 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d17_weight_log", "Weight Governance Record", "locked criteria and scoring governance");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "scoring completion and reviewer coverage");
-      bindOptional("d18_disqualification_log", "Disqualification Rationale", "exclusions, appeals, or no-disqualification basis");
-      bindOptional("d21_assumption_set", "Locked Assumptions Record", "finance basis and pricing assumptions");
-      bindOptional("d23_bafo_round_log", "BAFO Round Log", "closed clarifications and written acceptances");
+      bindOptional(
+        "d17_weight_log",
+        "Weight Governance Record",
+        "locked criteria and scoring governance",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "scoring completion and reviewer coverage",
+      );
+      bindOptional(
+        "d18_disqualification_log",
+        "Disqualification Rationale",
+        "exclusions, appeals, or no-disqualification basis",
+      );
+      bindOptional(
+        "d21_assumption_set",
+        "Locked Assumptions Record",
+        "finance basis and pricing assumptions",
+      );
+      bindOptional(
+        "d23_bafo_round_log",
+        "BAFO Round Log",
+        "closed clarifications and written acceptances",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3165,10 +3489,26 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d23_bafo_round_log", "BAFO Round Log", "final concessions and written acceptances");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "normalized economics and final TCO basis");
-      bindOptional("d16_scorecard", "Evaluation Scorecard", "capability/evidence rationale behind the selected vendor");
-      bindOptional("d28_contract_record", "Contract Record", "signed contract evidence if already on file");
+      bindOptional(
+        "d23_bafo_round_log",
+        "BAFO Round Log",
+        "final concessions and written acceptances",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "normalized economics and final TCO basis",
+      );
+      bindOptional(
+        "d16_scorecard",
+        "Evaluation Scorecard",
+        "capability/evidence rationale behind the selected vendor",
+      );
+      bindOptional(
+        "d28_contract_record",
+        "Contract Record",
+        "signed contract evidence if already on file",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3250,10 +3590,26 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d24_decision_brief", "Decision Brief", "award rationale and sponsor conditions");
-      bindOptional("d25_risk_attestation", "Risk Attestation", "accepted risks and controls that must appear in the record");
-      bindOptional("d23_bafo_round_log", "BAFO Round Log", "final concessions and written acceptances");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "pricing baseline and commercial snapshot");
+      bindOptional(
+        "d24_decision_brief",
+        "Decision Brief",
+        "award rationale and sponsor conditions",
+      );
+      bindOptional(
+        "d25_risk_attestation",
+        "Risk Attestation",
+        "accepted risks and controls that must appear in the record",
+      );
+      bindOptional(
+        "d23_bafo_round_log",
+        "BAFO Round Log",
+        "final concessions and written acceptances",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "pricing baseline and commercial snapshot",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3352,12 +3708,36 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d24_decision_brief", "Decision Brief", "award rationale and conditions");
-      bindOptional("d25_risk_attestation", "Risk Attestation", "accepted residual risk and controls");
-      bindOptional("d26_steward_signoff", "Governance Sign-off Record", "sponsor/legal/finance approvals");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "transition fees and assumptions");
-      bindOptional("d20_trap_log", "Pricing Trap Log", "commercial traps that survive into transition");
-      bindOptional("d22_bafo_question_pack", "BAFO Question Pack", "vendor commitments from final negotiations");
+      bindOptional(
+        "d24_decision_brief",
+        "Decision Brief",
+        "award rationale and conditions",
+      );
+      bindOptional(
+        "d25_risk_attestation",
+        "Risk Attestation",
+        "accepted residual risk and controls",
+      );
+      bindOptional(
+        "d26_steward_signoff",
+        "Governance Sign-off Record",
+        "sponsor/legal/finance approvals",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "transition fees and assumptions",
+      );
+      bindOptional(
+        "d20_trap_log",
+        "Pricing Trap Log",
+        "commercial traps that survive into transition",
+      );
+      bindOptional(
+        "d22_bafo_question_pack",
+        "BAFO Question Pack",
+        "vendor commitments from final negotiations",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3439,9 +3819,21 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d27_selection_memo", "Selection Memo", "selected-vendor and transition authority");
-      bindOptional("d28_contract_record", "Contract Record", "contractual milestone obligations");
-      bindOptional("d31_kt_evidence", "Knowledge-Transfer Evidence", "KT completion evidence that affects go/no-go");
+      bindOptional(
+        "d27_selection_memo",
+        "Selection Memo",
+        "selected-vendor and transition authority",
+      );
+      bindOptional(
+        "d28_contract_record",
+        "Contract Record",
+        "contractual milestone obligations",
+      );
+      bindOptional(
+        "d31_kt_evidence",
+        "Knowledge-Transfer Evidence",
+        "KT completion evidence that affects go/no-go",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3522,9 +3914,21 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d27_selection_memo", "Selection Memo", "selected-vendor and scope handoff");
-      bindOptional("d28_contract_record", "Contract Record", "KT obligations and service-start dates");
-      bindOptional("d30_checkpoint_log", "Transition Checkpoint Cockpit", "go/no-go decisions and blockers");
+      bindOptional(
+        "d27_selection_memo",
+        "Selection Memo",
+        "selected-vendor and scope handoff",
+      );
+      bindOptional(
+        "d28_contract_record",
+        "Contract Record",
+        "KT obligations and service-start dates",
+      );
+      bindOptional(
+        "d30_checkpoint_log",
+        "Transition Checkpoint Cockpit",
+        "go/no-go decisions and blockers",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3619,13 +4023,41 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d02_value_target", "Value Target Brief", "original target and confidence bands");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "commercial baseline and normalized TCO");
-      bindOptional("d24_decision_brief", "Decision Brief", "approved value posture and award conditions");
-      bindOptional("d27_selection_memo", "Selection Memo", "selected-vendor and commitment basis");
-      bindOptional("d28_contract_record", "Contract Record", "contractual commitments and service dates");
-      bindOptional("d30_checkpoint_log", "Transition Checkpoint Cockpit", "transition readiness and blockers");
-      bindOptional("d31_kt_evidence", "Knowledge-Transfer Evidence", "handoff readiness and remaining KT gaps");
+      bindOptional(
+        "d02_value_target",
+        "Value Target Brief",
+        "original target and confidence bands",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "commercial baseline and normalized TCO",
+      );
+      bindOptional(
+        "d24_decision_brief",
+        "Decision Brief",
+        "approved value posture and award conditions",
+      );
+      bindOptional(
+        "d27_selection_memo",
+        "Selection Memo",
+        "selected-vendor and commitment basis",
+      );
+      bindOptional(
+        "d28_contract_record",
+        "Contract Record",
+        "contractual commitments and service dates",
+      );
+      bindOptional(
+        "d30_checkpoint_log",
+        "Transition Checkpoint Cockpit",
+        "transition readiness and blockers",
+      );
+      bindOptional(
+        "d31_kt_evidence",
+        "Knowledge-Transfer Evidence",
+        "handoff readiness and remaining KT gaps",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
@@ -3711,11 +4143,31 @@ Writing and format requirements:
         lines.push("");
       };
 
-      bindOptional("d29_transition_plan", "Transition Roadmap", "transition posture and Value handoff conditions");
-      bindOptional("d30_checkpoint_log", "Transition Checkpoint Cockpit", "open blockers and go/no-go history");
-      bindOptional("d31_kt_evidence", "Knowledge-Transfer Evidence", "handoff readiness and operational gaps");
-      bindOptional("d19_pricing_workbook", "Pricing Workbook", "commercial baseline context");
-      bindOptional("d24_decision_brief", "Decision Brief", "award conditions and executive commitments");
+      bindOptional(
+        "d29_transition_plan",
+        "Transition Roadmap",
+        "transition posture and Value handoff conditions",
+      );
+      bindOptional(
+        "d30_checkpoint_log",
+        "Transition Checkpoint Cockpit",
+        "open blockers and go/no-go history",
+      );
+      bindOptional(
+        "d31_kt_evidence",
+        "Knowledge-Transfer Evidence",
+        "handoff readiness and operational gaps",
+      );
+      bindOptional(
+        "d19_pricing_workbook",
+        "Pricing Workbook",
+        "commercial baseline context",
+      );
+      bindOptional(
+        "d24_decision_brief",
+        "Decision Brief",
+        "award conditions and executive commitments",
+      );
 
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
