@@ -1,5 +1,31 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
+# Start here: the data operating model
+
+**Before touching tenant data, templates, loaders, adapters, or any product surface, read
+[docs/architecture/ENTERPRISE_INFORMATION_ARCHITECTURE.md](docs/architecture/ENTERPRISE_INFORMATION_ARCHITECTURE.md).**
+
+It is the constitution for how information moves through the product, and it wins over any other
+document until amended. Four layers, and the boundaries are not negotiable:
+
+```
+1  CLIENT INTAKE      organised by WHO OWNS THE DATA, never by our schema
+2  SOURCE ADAPTERS    one per intake tab; the client never sees this
+3  CANONICAL MODEL    THE SOURCE OF TRUTH — every object has an ID
+4  PRODUCTS           Home · Tower · Moves · Source · Intelligence · Learn · Pricing
+```
+
+**No product owns data.** Tower does not own spend, Home does not own applications, Moves does not
+own programs, Source does not own vendors. Every product is a projection of layer 3.
+
+Two rules that have cost the most when broken:
+
+- **Identity is declared, never inferred.** Not from a directory name, not from a filename, not from
+  a folder's label. Tenancy comes from `datasets/tenant-inputs/tenant-input-registry.json`.
+- **Run `node scripts/tower/fact-lineage-report.mjs` before quoting any number.** It reports, per
+  metric per tenant, every file that asserts a value and whether they agree. If a figure is
+  `ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not quote it at all.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
@@ -94,6 +120,29 @@ Use these lanes consistently:
 - `experimental`: feature-flagged or non-default capability.
 
 If a PR changes release-relevant files, add or update a release record under `docs/releases/records/` using `docs/releases/templates/release-record-template.md`. The record must explain, in plain English, what changed, what layer changed, which clients are affected, what QA/validation was done, how it rolls out, how it rolls back, and what audit evidence exists. `npm run release:check` enforces this in CI; do not bypass it without explicit Anand approval.
+
+### Public-repo disclosure discipline (MANDATORY — all agents)
+
+`https://github.com/abarva-platform/abarva` is a **public** repository. Every commit message, PR
+title/body, code comment, and release record in it is visible to anyone — competitors, prospective
+pilot customers doing diligence, anyone browsing the org — not just the team.
+
+- Never write a real client's name, a real incident's narrative detail, a dispute/legal status, or
+  any other real-client-confidential fact into a commit message, PR title/body, code comment, or
+  release record. This applies even when referencing today's synthetic fixture tenants
+  (Meridian, Apex, Lakeshore, First Capital, and any future ones) out of habit — write the habit you
+  want once real client engagements exist, not the one that's harmless today only because the data
+  is fake.
+- If a change needs to reference an incident, defect, or process failure for context, point at an
+  internal, non-public tracker or doc by ID (e.g. an internal ticket number) rather than narrating
+  the specifics inline in a public artifact. If no such private tracker exists yet for a given
+  incident, describe the *mechanism* of the fix (what code path was wrong, what invariant was
+  missing) without describing the *narrative* (whose engagement it was, what the client-facing
+  consequence was, what dispute or remediation is ongoing).
+- Before dispatching a subagent (or writing anything yourself) that will produce a commit message,
+  PR body, code comment, or release record, check whether the content you're asking it to produce
+  would be safe if a stranger read it on a public GitHub page today. If unsure whether the repo's
+  visibility might change, or whether a given tenant is truly synthetic, ask rather than assume.
 
 ## V6 graph substrate guidance
 
