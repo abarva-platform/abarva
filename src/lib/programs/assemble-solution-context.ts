@@ -15,6 +15,11 @@ import {
   type ContextReadiness,
 } from "./solution-context";
 import { inferP2EvidenceSpecificity } from "@/lib/deliverables/evidence-specificity";
+import {
+  resolveAuthoritativeArchitecture,
+  architectureLineageNote,
+  type PriorDeliverable,
+} from "./prior-deliverable-precedence";
 
 export interface SolutionContextSources {
   /** Retrieve the tenant's real current-state estate (AgentContextBroker / enterprise_context). */
@@ -26,6 +31,16 @@ export interface SolutionContextSources {
   ) => Promise<string>;
   /** Full structured digests from prior approved deliverables (NOT 1800-char clips). */
   loadPriorDigests: (moveId: string) => Promise<PhaseDigest[]>;
+  /**
+   * Prior deliverables WITH acceptance status + Move/tenant scope + lineage, so
+   * the assembler can resolve authoritative architecture readiness by precedence
+   * and EXCLUDE non-authoritative material (candidate/rejected/superseded,
+   * cross-Move, cross-tenant). Optional so existing callers/tests keep working;
+   * when present, an accepted P3 architecture deliverable populates
+   * `ctx.architecture` with lineage instead of the readiness check falsely
+   * reporting architecture as "not captured" after it was signed off.
+   */
+  loadPriorDeliverables?: (moveId: string) => Promise<PriorDeliverable[]>;
   /** Approved gate decisions for the move. */
   loadDecisions: (moveId: string) => Promise<SolutionDecision[]>;
   /**
@@ -86,6 +101,28 @@ export async function assembleMoveSolutionContext(
   // 1) fold prior approved phase digests (full, structured) — cumulative memory.
   for (const digest of await sources.loadPriorDigests(args.moveId)) {
     ctx = applyPhaseDigest(ctx, digest);
+  }
+
+  // 1b) resolve authoritative architecture by precedence (PR1). An accepted P3
+  // architecture deliverable — same Move, same tenant, not superseded/rejected —
+  // makes `ctx.architecture` present WITH lineage, so the P4 readiness check
+  // stops falsely reporting "architecture not captured or approved" after it was
+  // signed off. Non-authoritative material (candidate/draft/rejected/superseded/
+  // cross-Move/cross-tenant) is excluded by the resolver and never binds here.
+  if (sources.loadPriorDeliverables && !ctx.architecture?.trim()) {
+    const priors = await sources
+      .loadPriorDeliverables(args.moveId)
+      .catch(() => [] as PriorDeliverable[]);
+    const resolved = resolveAuthoritativeArchitecture(priors, {
+      moveId: args.moveId,
+      tenantKey: args.tenantKey,
+    });
+    if (resolved) {
+      ctx = applyPhaseDigest(ctx, {
+        architecture: resolved.architecture,
+        humanApprovalNotes: [architectureLineageNote(resolved)],
+      });
+    }
   }
 
   // 2) bind the REAL current state from the broker — replaces [DATA GAP].
