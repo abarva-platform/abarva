@@ -6,9 +6,12 @@
 
 ## Status
 
-`candidate` — prompt fix only, zero-cost-verified. Regeneration proof across all three canary
-tenants is tracked in this same record and will be added once available (blocked on this PR
-deploying first, since the governed regeneration job runs against the deployed image).
+`candidate` — round 1 (this PR's original scope) deployed and regenerated: dropped 53 findings to
+2, with meridian-health fully clean. The 2 remaining findings were a second, distinct defect
+(`overall_position: 'mixed'` when every dimension actually agreed) rather than a recurrence of the
+evidence-loophole this PR targeted -- its fix is tracked as round 2 in this same record, in
+`2026-07-25-home-v4-overall-position-mixed-clarity.md`. Closure (zero unresolved findings across
+all three tenants) is not yet reached; tracked there.
 
 ## Plain-English Summary
 
@@ -81,7 +84,9 @@ are unchanged -- this PR fixes the prompt to meet the existing bar, not the bar 
   -- this PR only changes generation-time prompt text, not validator logic).
 - `pass` — `npm run home:knowledge-v4:test-prompt-preflight`: 6/6, including `real-current-prompt`.
 - `pass` — Full production `npm run build` and `tsc --noEmit` (expanded heap), zero errors.
-- `pending` — Real-content regeneration proof across all three canary tenants (see below).
+- `pass` — Real-content regeneration proof across all three canary tenants (see below): findings
+  dropped from 53 to 2, meridian-health fully clean. The 2 remaining findings are a distinct defect,
+  not a recurrence of this PR's target -- see `2026-07-25-home-v4-overall-position-mixed-clarity.md`.
 
 ## Real defect evidence (before this fix)
 
@@ -101,21 +106,35 @@ state -- they are superseded, not deleted, by the post-fix regeneration below.
 
 ## Post-fix regeneration proof
 
-_To be filled in after this PR merges, deploys, and the governed regeneration job runs against the
-new image. Closure criterion: zero unresolved `industry_comparison_*` validation findings across
-all three tenants, with no rule weakening, exclusion, severity downgrade, or tenant-specific bypass._
+Merged, deployed (`ac92205b`, `aca-main-deploy.yml` run `30175493110`, 6m4s, runtime invariant and
+health endpoint both verified), then regenerated all three tenants against the fixed prompt via the
+same governed ACA job:
+
+| Tenant | New Candidate ID | Findings | Breakdown |
+|---|---|---|---|
+| first-capital | `0e71b1e9-9ca9-4618-b8ee-52a8e7b55145` | 1 | 1x `industry_comparison_overall_position_inconsistent` (dimensions all `ahead`, overall_position wrongly `mixed`) |
+| meridian-health | `45e9cced-4c4c-4dbc-bdff-cee6ffbfed11` | 0 | `validation_status: pass`, `candidate_review_ready` |
+| skyharbor-air | `8f379020-0dd8-492a-815e-3a4747d81e99` | 1 | 1x `industry_comparison_overall_position_inconsistent` (dimensions all `behind`, overall_position wrongly `mixed`) |
+
+53 findings → 2, a 96% reduction, and the dimension-evidence HARD RULE this PR added produced zero
+`industry_comparison_judgment_without_evidence` findings across all three tenants -- the fix worked
+exactly as intended. The 2 remaining findings are NOT a recurrence: both are the inverse direction
+of the overall_position consistency rule (uniform dimensions mislabeled `mixed`, not mixed dimensions
+mislabeled uniform) -- a second, distinct prompt gap, fixed and regenerated in
+`2026-07-25-home-v4-overall-position-mixed-clarity.md`. These three candidate rows remain in
+`candidate` status (never approved) as the documented "after round 1 / before round 2" state.
 
 ## Rollout Plan
 
-1. Merge → `aca-main-deploy.yml` builds and deploys automatically.
-2. Governed ACA job, all three tenants, book mode: regenerate against the fixed prompt.
-3. Pull each fresh candidate's `quality_report` via `home:knowledge-v4:inspect-candidate` and
-   confirm `validation_status: pass` for all three before treating any as review-ready.
-4. Update this record's "Post-fix regeneration proof" section with the results. If any tenant still
-   fails, isolate and resolve that tenant specifically -- do not close until all three are clean or
-   the remaining failure is explicitly recorded as a separate, named issue.
-5. No approval, publication, or replacement of any currently-approved candidate happens as part of
-   this workstream.
+1. `done` — Merge → `aca-main-deploy.yml` built and deployed automatically.
+2. `done` — Governed ACA job, all three tenants, book mode: regenerated against the fixed prompt.
+3. `done` — Pulled each fresh candidate's `quality_report` via `home:knowledge-v4:inspect-candidate`.
+   meridian-health confirmed `validation_status: pass`; first-capital and skyharbor-air isolated to
+   one distinct, named remaining issue each (see Post-fix regeneration proof) -- resolved and
+   regenerated in `2026-07-25-home-v4-overall-position-mixed-clarity.md`, not suppressed here.
+4. `done` — This record's "Post-fix regeneration proof" section updated with the round-1 results.
+5. `done` — No approval, publication, or replacement of any currently-approved candidate happened as
+   part of this workstream.
 
 ## Deployment Authority
 

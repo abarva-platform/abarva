@@ -67,6 +67,11 @@ const cases = [
   // defect shape and the fix's boundaries -- see docs/releases/records/
   // 2026-07-25-home-v4-industry-comparison-fix.md.
   { fixture: "industry-comparison-flat-behind-despite-mixed", expectStatus: "fail", expectRuleIds: ["industry_comparison_overall_position_inconsistent"] },
+  // Real production defect (first-capital/skyharbor-air, 2026-07-25, second
+  // regeneration round): the inverse direction -- overall_position "mixed"
+  // when every judged dimension actually agreed. "mixed" is not a safer
+  // hedge; it must reflect genuine disagreement.
+  { fixture: "industry-comparison-mixed-despite-uniform", expectStatus: "fail", expectRuleIds: ["industry_comparison_overall_position_inconsistent"] },
   { fixture: "industry-comparison-advantage-contradiction", expectStatus: "fail", expectRuleIds: ["industry_comparison_advantage_contradiction"] },
   { fixture: "industry-comparison-missing-benchmark-ref", expectStatus: "fail", expectRuleIds: ["industry_comparison_missing_benchmark_ref"] },
   { fixture: "industry-comparison-judgment-without-evidence", expectStatus: "fail", expectRuleIds: ["industry_comparison_judgment_without_evidence"] },
