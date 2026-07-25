@@ -17,6 +17,8 @@ import {
   isWithinSizeLimit,
   MAX_ATTACHMENT_SIZE_BYTES,
 } from "@/lib/programs/attachments/mime";
+import { getProgramById } from "@/lib/programs/queries";
+import { ingestUploadedMoveEvidence } from "@/lib/programs/current-state-doc-ingest";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,6 +127,43 @@ export async function POST(
       metadata: { uploadedBy: ctx.email ?? null, mime: file.type || null },
     });
 
+    // Every uploaded_evidence/session_artifact file (evidence files and
+    // workshop/session notes alike — same family path, no special-casing)
+    // goes through the SAME governed pipeline the workspace chat upload uses:
+    // extract → classify → review → make available to generation. Without
+    // this, a file could sit in the vault marked "aligned" while remaining
+    // completely invisible to AI generation and phase gates — the exact gap
+    // the evidence-context audit found. Best-effort: a failure here never
+    // blocks the upload itself, since the blob/artifact record already saved.
+    let evidence: Awaited<ReturnType<typeof ingestUploadedMoveEvidence>> | null =
+      null;
+    let evidenceWarning: string | null = null;
+    if (family === "uploaded_evidence" || family === "session_artifact") {
+      try {
+        const program = await getProgramById(ctx, programId);
+        evidence = await ingestUploadedMoveEvidence(ctx, {
+          moveId: programId,
+          archetypeId:
+            program && typeof program.archetype === "string"
+              ? program.archetype
+              : null,
+          phase,
+          filename: file.name,
+          mimeType: file.type || "application/octet-stream",
+          buffer: body,
+          attachmentId: saved.artifactId,
+          declaredClassification: form.get("dataClassification"),
+        });
+      } catch (err) {
+        evidenceWarning = err instanceof Error ? err.message : String(err);
+        console.error("[artifacts/upload] evidence_ingestion_failed", {
+          artifactId: saved.artifactId,
+          programId,
+          message: evidenceWarning,
+        });
+      }
+    }
+
     return Response.json({
       ok: true,
       artifactId: saved.artifactId,
@@ -132,6 +171,19 @@ export async function POST(
       blobStored: saved.blobStored,
       family,
       artifactType,
+      evidence: evidence
+        ? {
+            id: evidence.evidenceId,
+            reviewId: evidence.reviewId,
+            reviewStatus: evidence.reviewState ?? "pending_review",
+            parseMethod: evidence.parseMethod,
+            warnings: evidence.warnings,
+            whatFound: evidence.whatFound,
+            whereUsed: evidence.whereUsed,
+          }
+        : evidenceWarning
+          ? { id: null, status: "not_captured", warning: evidenceWarning }
+          : undefined,
     });
   } catch (err) {
     return tenancyErrorResponse(err);

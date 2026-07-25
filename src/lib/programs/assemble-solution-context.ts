@@ -11,6 +11,7 @@ import {
   type SolutionContext,
   type PhaseDigest,
   type SolutionDecision,
+  type SolutionEvidencePacket,
   type ContextReadiness,
 } from "./solution-context";
 import { inferP2EvidenceSpecificity } from "@/lib/deliverables/evidence-specificity";
@@ -37,6 +38,13 @@ export interface SolutionContextSources {
     moveId: string,
     phase: number,
   ) => Promise<PhaseDigest | null>;
+  /**
+   * Human-approved uploaded evidence for the Move, in first-class structured
+   * form (see `SolutionEvidencePacket`). Optional so existing callers/tests
+   * keep working unchanged; when present, generation and citations can point
+   * at real files instead of only a flattened current-state text blob.
+   */
+  loadEvidencePackets?: (moveId: string) => Promise<SolutionEvidencePacket[]>;
 }
 
 export interface AssembledContext {
@@ -132,6 +140,15 @@ export async function assembleMoveSolutionContext(
   // 3) fold approved gate decisions.
   const decisions = await sources.loadDecisions(args.moveId);
   if (decisions.length) ctx = applyPhaseDigest(ctx, { decisions });
+
+  // 4) fold human-approved evidence packets — deduped by evidenceId so a
+  // packet already carried forward from a prior phase digest is not doubled.
+  if (sources.loadEvidencePackets) {
+    const packets = await sources.loadEvidencePackets(args.moveId).catch(() => []);
+    const seen = new Set(ctx.evidencePackets.map((p) => p.evidenceId));
+    const fresh = packets.filter((p) => !seen.has(p.evidenceId));
+    if (fresh.length) ctx = applyPhaseDigest(ctx, { evidencePackets: fresh });
+  }
 
   return {
     context: ctx,

@@ -39,6 +39,7 @@ describe("phase Word-equivalent deliverable", () => {
         ],
         decisions: [],
         humanApprovalNotes: [],
+        evidencePackets: [],
       },
     });
 

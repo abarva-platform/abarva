@@ -87,6 +87,12 @@ const lakeshoreLegalContext: ProgramContextBundle = {
       extractedText:
         'Lakeshore legal contract intake context spine; synthetic planning-grade demo data; contract obligation ownership and policy exception handling.',
       createdAt: '2026-07-08T00:00:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
     {
       id: 'e_baseline',
@@ -103,6 +109,12 @@ const lakeshoreLegalContext: ProgramContextBundle = {
       extractedText:
         '2,400 annual legal intake requests; 780 aged queue items; 860 status inquiries; missing field rework; policy exceptions.',
       createdAt: '2026-07-08T00:01:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
     {
       id: 'e_scenarios',
@@ -118,6 +130,12 @@ const lakeshoreLegalContext: ProgramContextBundle = {
       extractedText:
         'Option B CLM-embedded assisted triage and obligation extraction; avoid broad enterprise orchestration in phase one; attorney approval; privilege fence; approval matrix; audit trail.',
       createdAt: '2026-07-08T00:02:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
     {
       id: 'e_rate',
@@ -134,6 +152,12 @@ const lakeshoreLegalContext: ProgramContextBundle = {
       extractedText:
         '$950K-$1.45M CLM-assisted triage delivery scenario; $2.4M-$3.6M cross-system orchestration scenario; $620K-$980K offshore-heavy alternative with delivery risk; planning-grade, not final SOW.',
       createdAt: '2026-07-08T00:03:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
     {
       id: 'e_value',
@@ -149,6 +173,12 @@ const lakeshoreLegalContext: ProgramContextBundle = {
       extractedText:
         'Value assumptions are planning-grade; do not claim hard savings; cite rework reduction, fewer status inquiries, cycle-time relief, obligation-owner clarity, and finance caveat.',
       createdAt: '2026-07-08T00:04:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
   ],
 };
@@ -184,6 +214,12 @@ const contractOpsContext: ProgramContextBundle = {
       extractedText:
         'The contract operations baseline records 18,400 workflow requests, 3,120 exception loops, and 42% missing-routing-data rate.',
       createdAt: '2026-07-08T01:00:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
     {
       id: 'ops_scenarios',
@@ -199,6 +235,12 @@ const contractOpsContext: ProgramContextBundle = {
       extractedText:
         'Scenario B workflow-control layer costs $7.2M-$8.4M. Scenario C managed-services path costs $4.1M-$5.3M. Finance caveat: planning estimate only.',
       createdAt: '2026-07-08T01:01:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
     {
       id: 'ops_value',
@@ -214,6 +256,12 @@ const contractOpsContext: ProgramContextBundle = {
       extractedText:
         'Value model: 11-14% cycle-time relief and $9.6M-$12.2M first-year value range, pending finance validation.',
       createdAt: '2026-07-08T01:02:00.000Z',
+      approvedAt: null,
+      phase: null,
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
     },
   ],
 };

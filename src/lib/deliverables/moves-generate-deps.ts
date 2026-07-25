@@ -21,6 +21,7 @@ import {
   formatProgramEvidenceForPrompt,
   listProgramEvidenceForPrompt,
 } from "@/lib/programs/evidence-context";
+import { loadEvidencePacketsForMove } from "@/lib/programs/evidence-packets";
 import {
   buildProgramsContextBundleAsync,
   formatProgramsBrokerBundleForPrompt,
@@ -214,6 +215,9 @@ export function createMovesGenerateArtifactDeps(
           }
         }
         return decisions;
+      },
+      async loadEvidencePackets(moveId) {
+        return loadEvidencePacketsForMove(ctx, moveId, 20);
       },
       async loadPhaseCapture(moveId, phase) {
         // The operator's saved phase capture: one program_modules row per

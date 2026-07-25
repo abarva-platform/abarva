@@ -58,6 +58,28 @@ export interface SolutionMissingInputAction {
   gateImpact: string;
 }
 
+/**
+ * A human-approved uploaded evidence file, in first-class structured form —
+ * so generation and citation rendering can point at a real file instead of
+ * only a flattened text string. Cumulative: a Move accrues evidence over
+ * time, it never replaces what's already approved. Populated from
+ * `program_evidence_items`/`program_evidence_reviews` in
+ * `assembleMoveSolutionContext`; see `evidence-context.ts` for the DB-backed
+ * reader this mirrors.
+ */
+export interface SolutionEvidencePacket {
+  evidenceId: string;
+  title: string;
+  evidenceType: string;
+  phase: number | null;
+  summary: string | null;
+  observations: string[];
+  assumptions: string[];
+  openQuestions: string[];
+  citations: Array<{ quote: string; locator: string }>;
+  approvedAt: string | null;
+}
+
 /** The cumulative knowledge object, populated phase by phase. */
 export interface SolutionContext {
   moveId: string;
@@ -104,34 +126,46 @@ export interface SolutionContext {
   // cumulative
   decisions: SolutionDecision[];
   humanApprovalNotes: string[];
+  evidencePackets: SolutionEvidencePacket[];
 }
 
 /** A structured digest one phase writes back into the SolutionContext. */
 export type PhaseDigest = Partial<
-  Omit<SolutionContext, "moveId" | "tenantKey" | "decisions" | "humanApprovalNotes">
+  Omit<
+    SolutionContext,
+    "moveId" | "tenantKey" | "decisions" | "humanApprovalNotes" | "evidencePackets"
+  >
 > & {
   decisions?: SolutionDecision[];
   humanApprovalNotes?: string[];
+  evidencePackets?: SolutionEvidencePacket[];
 };
 
 export function emptySolutionContext(
   moveId: string,
   tenantKey: string,
 ): SolutionContext {
-  return { moveId, tenantKey, decisions: [], humanApprovalNotes: [] };
+  return {
+    moveId,
+    tenantKey,
+    decisions: [],
+    humanApprovalNotes: [],
+    evidencePackets: [],
+  };
 }
 
-/** Merge a phase digest into the context (append decisions/notes, overwrite fields). */
+/** Merge a phase digest into the context (append decisions/notes/evidence, overwrite fields). */
 export function applyPhaseDigest(
   ctx: SolutionContext,
   digest: PhaseDigest,
 ): SolutionContext {
-  const { decisions, humanApprovalNotes, ...fields } = digest;
+  const { decisions, humanApprovalNotes, evidencePackets, ...fields } = digest;
   return {
     ...ctx,
     ...fields,
     decisions: [...ctx.decisions, ...(decisions ?? [])],
     humanApprovalNotes: [...ctx.humanApprovalNotes, ...(humanApprovalNotes ?? [])],
+    evidencePackets: [...ctx.evidencePackets, ...(evidencePackets ?? [])],
   };
 }
 

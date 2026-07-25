@@ -43,16 +43,7 @@ import {
 import { getActiveClientRow } from "@/lib/active-client";
 import { clientKeyToBrokerTenantKey } from "@/lib/agent/tools/intelligence/_shared";
 import { extractAndChunk } from "@/lib/programs/doc-parser";
-import {
-  extractProgramEvidenceFromUploadBuffer,
-  recordProgramEvidence,
-} from "@/lib/programs/evidence-ingestion";
-import { ensureEvidenceReviewForUploadedEvidence } from "@/lib/programs/current-state-doc-ingest";
-import {
-  classifyUploadedMoveEvidence,
-  mergeMoveEvidenceClassification,
-} from "@/lib/programs/uploaded-move-evidence-classification";
-import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
+import { ingestUploadedMoveEvidence } from "@/lib/programs/current-state-doc-ingest";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
 import {
@@ -323,83 +314,32 @@ export async function POST(
   let evidenceWarnings: string[] = [];
   let evidenceWhatFound: string[] = [];
   let evidenceWhereUsed: string[] = [];
-  let evidenceReview:
-    | Awaited<ReturnType<typeof ensureEvidenceReviewForUploadedEvidence>>
-    | null = null;
+  let evidenceReviewId: string | null = null;
+  let evidenceReviewState: string | null = null;
   let discoveryReceipt: ExtractionReceipt | null = null;
   let discoveryReadiness: Awaited<
     ReturnType<typeof loadDiscoveryEvidenceReadiness>
   > | null = null;
   try {
-    const rawEvidence = await extractProgramEvidenceFromUploadBuffer({
-      filename,
-      mimeType,
-      buffer,
-      cacheScope: tenantKey,
-    });
-    const classification = classifyUploadedMoveEvidence({
-      filename,
-      phase: effectivePhase ?? null,
-      extractedText: rawEvidence.extractedText,
-      originalEvidenceType: rawEvidence.evidenceType,
-    });
-    const evidence = mergeMoveEvidenceClassification({
-      evidence: rawEvidence,
-      classification,
-      filename,
-    });
-    evidenceParseMethod = evidence.extractedStructured.parse_method;
-    evidenceWarnings = evidence.extractedStructured.warnings;
-    evidenceWhatFound = classification.whatFound;
-    evidenceWhereUsed = classification.whereUsed;
-    evidenceId = await recordProgramEvidence(ctx, {
-      ...evidence,
-      evidenceType: rawEvidence.evidenceType,
-      tenantKey,
-      programId: moveId,
-      attachmentId: record.id,
-      phase: effectivePhase ?? null,
-      stepId: null,
-    });
-    evidenceReview = await ensureEvidenceReviewForUploadedEvidence(ctx, {
+    const ingested = await ingestUploadedMoveEvidence(ctx, {
       moveId,
-      evidenceId,
-      familyKey:
-        classification.slotIds[0] ??
-        classification.evidenceType ??
-        rawEvidence.evidenceType,
       archetypeId:
         typeof program.archetype === "string" ? program.archetype : null,
       phase: effectivePhase ?? null,
       filename,
       mimeType,
-      parseMethod: evidenceParseMethod,
-      evidenceType: classification.evidenceType,
-      title: evidence.title,
-      confidence: evidence.confidence,
-      autoPromoted: false,
-      rationale:
-        "Workspace upload captured evidence and opened review before it can count toward readiness, context extract, or generation.",
-      sourceRef: {
-        source_type: classification.sourceType,
-        slot_ids: classification.slotIds,
-        artifact_consumers: classification.artifactConsumers,
-        what_found: classification.whatFound,
-        where_used: classification.whereUsed,
-      },
+      buffer,
+      attachmentId: record.id,
+      declaredClassification: formData.get("dataClassification"),
     });
-    try {
-      discoveryReceipt = await applyUploadedEvidenceToMove(ctx, {
-        programId: moveId,
-        evidence,
-        sourceFile: filename,
-      });
-    } catch (discErr) {
-      console.error("[workspace/upload] discovery_extraction_failed", {
-        moveId,
-        message: discErr instanceof Error ? discErr.message : String(discErr),
-      });
-    }
+    evidenceId = ingested.evidenceId;
+    evidenceParseMethod = ingested.parseMethod;
+    evidenceWarnings = ingested.warnings;
+    evidenceWhatFound = ingested.whatFound;
+    evidenceWhereUsed = ingested.whereUsed;
+    evidenceReviewId = ingested.reviewId;
+    evidenceReviewState = ingested.reviewState;
+    discoveryReceipt = ingested.discoveryReceipt;
     discoveryReadiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
   } catch (err) {
     evidenceWarning = err instanceof Error ? err.message : String(err);
@@ -431,17 +371,15 @@ export async function POST(
       evidence: evidenceId
         ? {
             id: evidenceId,
-            status: evidenceReview?.reviewState ?? "captured",
+            status: evidenceReviewState ?? "captured",
             parseMethod: evidenceParseMethod,
             warnings: evidenceWarnings,
             whatFound: evidenceWhatFound,
             whereUsed: evidenceWhereUsed,
-            reviewId: evidenceReview?.reviewId ?? null,
-            reviewStatus: evidenceReview?.reviewState ?? "pending_review",
+            reviewId: evidenceReviewId,
+            reviewStatus: evidenceReviewState ?? "pending_review",
             maturityLevel:
-              evidenceReview?.reviewState === "accepted"
-                ? "accepted"
-                : "uploaded",
+              evidenceReviewState === "accepted" ? "accepted" : "uploaded",
             attachmentStatus: "attached_to_move",
           }
         : { id: null, status: "not_captured", warning: evidenceWarning },

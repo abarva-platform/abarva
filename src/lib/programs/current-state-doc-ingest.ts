@@ -24,9 +24,17 @@ import type {
   StrategicMoveArchetype,
 } from "@/lib/programs/archetypes/types";
 import {
+  enrichWithFlexibleEvidenceEnvelope,
   extractProgramEvidenceFromUploadBuffer,
   recordProgramEvidence,
+  type ExtractedProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
+import {
+  classifyUploadedMoveEvidence,
+  mergeMoveEvidenceClassification,
+} from "@/lib/programs/uploaded-move-evidence-classification";
+import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
+import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import {
   evaluateSensitiveUpload,
@@ -210,23 +218,20 @@ export async function ingestCurrentStateDoc(
   const tenantKey = ctx.clientKey ?? "";
   const familyKey = args.family.key;
 
-  const evidence = await extractProgramEvidenceFromUploadBuffer({
+  const rawEvidence = await extractProgramEvidenceFromUploadBuffer({
     filename: args.filename,
     mimeType: args.mimeType,
     buffer: args.buffer,
     cacheScope: `${tenantKey}:${args.moveId}`,
   });
-  const parseMethod = evidence.extractedStructured.parse_method;
-  const warnings = evidence.extractedStructured.warnings ?? [];
-  const parsed = Boolean(
-    evidence.extractedText && evidence.extractedText.trim(),
-  );
 
   // Office-aware quarantine: DOCX/PPTX/XLSX are ZIP containers, so the route's
   // raw-byte pre-scan sees compressed bytes. Re-scan the DECODED text here,
-  // before any write or auto-promotion. Quarantine → nothing is persisted.
+  // before any write, auto-promotion, or further processing (including the
+  // flexible LLM enrichment below, which must never see quarantined text).
+  // Quarantine → nothing is persisted, nothing is sent anywhere else.
   const sensitivity = assessExtractedTextSensitivity(
-    [evidence.extractedText ?? "", evidence.summary ?? ""]
+    [rawEvidence.extractedText ?? "", rawEvidence.summary ?? ""]
       .filter(Boolean)
       .join("\n"),
     {
@@ -238,6 +243,16 @@ export async function ingestCurrentStateDoc(
   if (sensitivity.decision === "quarantine") {
     throw new QuarantinedDocumentError(sensitivity);
   }
+
+  const evidence = await enrichWithFlexibleEvidenceEnvelope(rawEvidence, {
+    tenantId: ctx.clientId,
+    userId: ctx.userId,
+  });
+  const parseMethod = evidence.extractedStructured.parse_method;
+  const warnings = evidence.extractedStructured.warnings ?? [];
+  const parsed = Boolean(
+    evidence.extractedText && evidence.extractedText.trim(),
+  );
 
   // Auto-promotion is allowed ONLY for a schema-validated structured KPI table on
   // a financial/value family from a spreadsheet/CSV source. Never for free-form.
@@ -476,6 +491,154 @@ export async function ensureEvidenceReviewForUploadedEvidence(
     reviewState: reviewStateForDecision(row.decision),
     autoPromoted: row.auto_promoted,
     idempotent: false,
+  };
+}
+
+export interface IngestUploadedMoveEvidenceArgs {
+  moveId: string;
+  archetypeId: string | null;
+  phase: number | null;
+  filename: string;
+  mimeType: string;
+  buffer: Buffer;
+  attachmentId?: string | null;
+  declaredClassification?: unknown;
+}
+
+export interface IngestUploadedMoveEvidenceResult {
+  evidenceId: string | null;
+  evidenceType: string | null;
+  parseMethod: string | null;
+  warnings: string[];
+  whatFound: string[];
+  whereUsed: string[];
+  reviewId: string | null;
+  reviewState: EnsureEvidenceReviewResult["reviewState"] | null;
+  quarantined: boolean;
+  discoveryReceipt: ExtractionReceipt | null;
+}
+
+/**
+ * THE single governed path for a Move-scoped file upload of unknown/inferred
+ * family — used by every upload surface (Files & Evidence vault, workspace
+ * chat paperclip, session/workshop notes) so every approved file goes through
+ * the same extraction → classification → review pipeline, per the evidence
+ * methodology audit. Never auto-approves free-form content; that stays a
+ * separate human step via `decideEvidenceReview`.
+ */
+export async function ingestUploadedMoveEvidence(
+  ctx: TenancyCtx,
+  args: IngestUploadedMoveEvidenceArgs,
+): Promise<IngestUploadedMoveEvidenceResult> {
+  const rawEvidence = await extractProgramEvidenceFromUploadBuffer({
+    filename: args.filename,
+    mimeType: args.mimeType,
+    buffer: args.buffer,
+    cacheScope: ctx.clientKey ?? undefined,
+  });
+  const classification = classifyUploadedMoveEvidence({
+    filename: args.filename,
+    phase: args.phase,
+    extractedText: rawEvidence.extractedText,
+    originalEvidenceType: rawEvidence.evidenceType,
+  });
+  const classifiedEvidence = mergeMoveEvidenceClassification({
+    evidence: rawEvidence,
+    classification,
+    filename: args.filename,
+  });
+
+  // Same office-aware re-scan as the current-state document path: the
+  // caller's own pre-upload scan (if any) only covers raw bytes, which is
+  // insufficient for ZIP-container formats. Quarantined text is never sent
+  // to the flexible extraction model, and the evidence is recorded with only
+  // its deterministic (non-LLM) fields so nothing sensitive leaves the
+  // deterministic parsing boundary.
+  const sensitivity = assessExtractedTextSensitivity(
+    [classifiedEvidence.extractedText ?? "", classifiedEvidence.summary ?? ""]
+      .filter(Boolean)
+      .join("\n"),
+    {
+      filename: args.filename,
+      mimeType: args.mimeType,
+      declaredClassification:
+        typeof args.declaredClassification === "string"
+          ? args.declaredClassification
+          : null,
+    },
+  );
+  const quarantined = sensitivity.decision === "quarantine";
+  const evidence: ExtractedProgramEvidence = quarantined
+    ? classifiedEvidence
+    : await enrichWithFlexibleEvidenceEnvelope(classifiedEvidence, {
+        tenantId: ctx.clientId,
+        userId: ctx.userId,
+      });
+
+  const evidenceId = await recordProgramEvidence(ctx, {
+    ...evidence,
+    evidenceType: rawEvidence.evidenceType,
+    tenantKey: ctx.clientKey ?? "",
+    programId: args.moveId,
+    attachmentId: args.attachmentId ?? null,
+    phase: args.phase,
+    stepId: null,
+  });
+
+  const evidenceReview = await ensureEvidenceReviewForUploadedEvidence(ctx, {
+    moveId: args.moveId,
+    evidenceId,
+    familyKey:
+      classification.slotIds[0] ??
+      classification.evidenceType ??
+      rawEvidence.evidenceType,
+    archetypeId: args.archetypeId,
+    phase: args.phase,
+    filename: args.filename,
+    mimeType: args.mimeType,
+    parseMethod: evidence.extractedStructured.parse_method,
+    evidenceType: classification.evidenceType,
+    title: evidence.title,
+    confidence: evidence.confidence,
+    autoPromoted: false,
+    rationale: quarantined
+      ? "Uploaded evidence flagged by the sensitive-data guard after extraction; recorded with deterministic parsing only, pending human review."
+      : "Uploaded evidence captured and opened for review before it counts toward readiness, context extract, or generation.",
+    sourceRef: {
+      source_type: classification.sourceType,
+      slot_ids: classification.slotIds,
+      artifact_consumers: classification.artifactConsumers,
+      what_found: classification.whatFound,
+      where_used: classification.whereUsed,
+      quarantined,
+    },
+  });
+
+  let discoveryReceipt: ExtractionReceipt | null = null;
+  try {
+    discoveryReceipt = await applyUploadedEvidenceToMove(ctx, {
+      programId: args.moveId,
+      evidence,
+      sourceFile: args.filename,
+    });
+  } catch (err) {
+    console.error("[ingestUploadedMoveEvidence] discovery_extraction_failed", {
+      moveId: args.moveId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  return {
+    evidenceId,
+    evidenceType: classification.evidenceType,
+    parseMethod: evidence.extractedStructured.parse_method,
+    warnings: evidence.extractedStructured.warnings ?? [],
+    whatFound: classification.whatFound,
+    whereUsed: classification.whereUsed,
+    reviewId: evidenceReview.reviewId,
+    reviewState: evidenceReview.reviewState,
+    quarantined,
+    discoveryReceipt,
   };
 }
 
