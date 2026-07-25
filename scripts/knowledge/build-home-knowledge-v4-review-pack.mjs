@@ -16,14 +16,29 @@ const outputSchemaVersion = "home-knowledge-v4-candidate-review-v2";
 const defaultOutDir = path.join(repoRoot, "reports", "home-knowledge-v4-review", runStamp);
 const outDir = getArg("--out-dir", defaultOutDir);
 const model = getArg("--model", process.env.HOME_KNOWLEDGE_V4_MODEL || "claude-opus-4-8");
+// Enterprise Book architecture: one call producing ONE enterprise story with
+// shared sections + tagged conclusions; all 38 dimension pages (including
+// every visual_binding) are then derived deterministically by
+// renderDimensionsFromBook(), never authored by Claude. Additive: gated
+// behind its own flag so the just-proven integrated path stays intact.
+// Declared here (ahead of maxTokens below) because book mode's real
+// five-jobs synthesis depth needs materially more output room than the
+// other, more compact pass types.
+const bookMode =
+  process.env.HOME_KNOWLEDGE_V4_BOOK_MODE === "true" || process.argv.includes("--book-mode");
 // Opus 4.8 allows 128K output. The old 12000 default was truncating tool calls
 // mid-generation: a call that hit the cap before emitting `client_visible`
 // returned a tool input of just `{"phase": ...}`, which the code read as an
 // empty response and retried in full. It failed hardest on the largest tenant
 // (Meridian, 4 of 16 calls) and not at all on the smallest — deterministic
 // scaling with tenant size, not flakiness. Streaming is required above ~16K or
-// the SDK hits an HTTP timeout.
-const maxTokens = Number(getArg("--max-tokens", process.env.HOME_KNOWLEDGE_V4_MAX_TOKENS || "32000"));
+// the SDK hits an HTTP timeout. Book mode defaults higher than the other pass
+// types: a real five-jobs synthesis (understand -> compare vs industry ->
+// material gaps/advantages -> integrated POV -> decisions/exhibits) across
+// 38 dimensions needs more room than a compact per-dimension manifest did,
+// and running into this cap is exactly the failure mode above -- explicit
+// --max-tokens still always wins.
+const maxTokens = Number(getArg("--max-tokens", process.env.HOME_KNOWLEDGE_V4_MAX_TOKENS || (bookMode ? "64000" : "32000")));
 const tenantArg = process.env.HOME_KNOWLEDGE_V4_TENANT || getArg("--tenant", "all");
 const concurrency = Math.max(1, Number(getArg("--concurrency", "2")));
 const reviewOnly = !process.argv.includes("--write-db");
@@ -44,14 +59,6 @@ const preflightMode = process.argv.includes("--preflight");
 // pass type and the deterministic_dataset_registry on the context packet.
 const integratedMode =
   process.env.HOME_KNOWLEDGE_V4_INTEGRATED === "true" || process.argv.includes("--integrated");
-// Enterprise Book architecture: one call producing ONE enterprise story with
-// per-dimension notes; all 38 dimension pages (including every visual_binding)
-// are then derived deterministically by renderDimensionsFromBook(), never
-// authored by Claude. Supersedes integratedMode's per-call visual authoring
-// -- see DIMENSION_BOOK_CHAPTERS / VISUAL_RENDER_RULES below. Additive: gated
-// behind its own flag so the just-proven integrated path stays intact.
-const bookMode =
-  process.env.HOME_KNOWLEDGE_V4_BOOK_MODE === "true" || process.argv.includes("--book-mode");
 // Offline replay: re-run every validator against already-generated candidate
 // JSON without calling Claude. This is the control point that lets a validator
 // or schema change be proven against stored output instead of being tested by
@@ -969,71 +976,113 @@ function makePrompt(pass, packet, assembled) {
       name: d.name,
       business_source_coverage: d.business_source_coverage,
     }));
+    // Review finding: industry comparison was previously buried as one more
+    // field inside context_packet, with no instruction to actually use it
+    // comparatively -- Claude was reusing pre-authored "industry
+    // realization" assertions from elsewhere in the pipeline rather than
+    // doing its own comparison against a real fact base. Pulled out here as
+    // an explicit, named input for job 2 below.
+    const industryFactBase = packet.business_context_samples.industry_patterns ?? [];
     return {
       task: "Enterprise Book — one enterprise knowledge book, not 38 pages",
       contract_version: DIMENSION_DATASET_BINDINGS_VERSION,
       instruction:
-        "Write ONE enterprise knowledge book: a governing executive narrative plus a " +
-        "small number of shared narrative sections (book_sections below), plus a flat " +
-        "list of enterprise conclusions, decisions, recommendations, and open questions " +
-        "-- each tagged with which dimension_keys it applies to. You are an enterprise " +
-        "architect writing one coherent document with 38 sections, not a page-layout " +
-        "engine authoring 38 independent pages. Do NOT write a separate object per " +
-        "dimension_key -- that field does not exist in your output schema. A conclusion " +
-        "that is true of both 'apps' and 'org' (for example, an ownership-coverage " +
-        "figure) must be written ONCE, tagged applies_to_dimensions: ['apps','org'] -- " +
-        "never write it twice with different wording. Tell one story with the data " +
-        "available; do not force uniform coverage onto a dimension that has little to " +
-        "say -- a section or dimension_key with few or no applicable conclusions should " +
-        "stay short, not be padded to match the others. You never choose a visual, " +
-        "chart, dataset field, or chart type for any dimension -- that is rendered " +
-        "deterministically after you respond. Never reproduce rows, records, or numeric " +
-        "series from any dataset; reference dataset facts only through evidence_refs " +
-        "against evidence_index. Evidence semantics: evidence_index entries vary in " +
-        "specificity -- some have a real descriptive title, many have only a generic " +
-        "placeholder locator (e.g. 'synthetic locator 4') behind a broad category tag. " +
-        "A technically valid evidence_id is not automatically sufficient support for a " +
-        "precise, specific claim. If the best available evidence for a conclusion is a " +
+        "You are a senior strategy partner producing an enterprise knowledge book, not a " +
+        "page-layout engine authoring 38 independent manifests. Do this in five explicit " +
+        "jobs, in order, and let the later jobs actually depend on the earlier ones -- " +
+        "this is a synthesis, not five unrelated sections:\n" +
+        "JOB 1 -- UNDERSTAND THE ENTERPRISE. Read context_packet fully: what this tenant " +
+        "actually does, how it is organized, where its real data is thin versus thick.\n" +
+        "JOB 2 -- COMPARE WITH THE INDUSTRY. industry_fact_base below is a real, structured " +
+        "set of industry patterns and benchmarks -- not decoration and not something to " +
+        "restate. For each pattern that is actually relevant to this tenant, judge whether " +
+        "this tenant is ahead of, behind, or at that pattern, and say so specifically. Do " +
+        "not summarize the fact base; use it as a yardstick.\n" +
+        "JOB 3 -- IDENTIFY THE FEW MATERIAL GAPS AND ADVANTAGES. From jobs 1-2, name the " +
+        "small number of differences that actually matter to leadership -- material_gaps " +
+        "and material_advantages below. 'Few' is deliberate: 3-7 of each, not one per " +
+        "dimension. A gap or advantage that doesn't change what leadership should decide " +
+        "does not belong here.\n" +
+        "JOB 4 -- DEVELOP AN INTEGRATED POINT OF VIEW. executive_narrative is your thesis: " +
+        "given jobs 1-3, what is the one governing argument, and what tensions does it " +
+        "have to resolve? Every later section and conclusion should trace back to this " +
+        "thesis, not contradict or ignore it.\n" +
+        "JOB 5 -- TRANSLATE THE POV INTO DECISIONS AND EXHIBITS. sections, conclusions, " +
+        "decisions, recommendations are where the thesis becomes specific and actionable. " +
+        "'Exhibits' -- charts and relationship/dependency graphs -- are NOT something you " +
+        "produce: for the 6 dimensions with a real governed dataset and the handful with " +
+        "real relationship evidence (the apps/technology/data dependency cluster), the " +
+        "renderer attaches a real chart or dependency graph deterministically after you " +
+        "respond, using the real underlying data. Your job is the interpretation those " +
+        "exhibits will sit next to, not the exhibit itself.\n" +
+        "Structural rules that apply throughout: a conclusion that is true of both 'apps' " +
+        "and 'org' (for example, an ownership-coverage figure) must be written ONCE, " +
+        "tagged applies_to_dimensions: ['apps','org'] -- never write it twice with " +
+        "different wording; that is the exact drift this architecture exists to prevent. " +
+        "Tell one story with the data available -- do not force uniform coverage onto a " +
+        "dimension that has little to say; a dimension with few applicable conclusions " +
+        "should stay short. Never reproduce rows, records, or numeric series from any " +
+        "dataset; reference dataset facts only through evidence_refs against " +
+        "evidence_index. Evidence semantics: evidence_index entries vary in specificity " +
+        "-- some have a real descriptive title, many have only a generic placeholder " +
+        "locator (e.g. 'synthetic locator 4') behind a broad category tag. A technically " +
+        "valid evidence_id is not automatically sufficient support for a precise, " +
+        "specific claim. If the best available evidence for a conclusion is a " +
         "low-specificity placeholder, either write a more general claim that placeholder " +
-        "genuinely supports, or mark evidence_status: 'not_evidenced' on that conclusion " +
-        "instead of citing a citation-shaped ID that doesn't actually establish the " +
-        "specific fact. Never treat a broad supports category (risk/budget/value/" +
-        "adoption/architecture/governance) as license to cite it for any claim in that " +
-        "category. OVERRIDE NOTICE: common.visual_contract_rules described the OLD " +
-        "per-dimension chart contract used elsewhere in this pipeline -- it has been " +
-        "removed from this payload and does not apply here.",
+        "genuinely supports, or mark evidence_status: 'not_evidenced' instead of citing a " +
+        "citation-shaped ID that doesn't actually establish the specific fact. Never treat " +
+        "a broad supports category (risk/budget/value/adoption/architecture/governance) as " +
+        "license to cite it for any claim in that category. OVERRIDE NOTICE: " +
+        "common.visual_contract_rules described the OLD per-dimension chart contract used " +
+        "elsewhere in this pipeline -- it has been removed from this payload and does not " +
+        "apply here.",
       output_requirements: {
-        fields: ["executive_narrative", "sections", "conclusions", "decisions", "recommendations", "open_questions"],
+        fields: ["executive_narrative", "industry_comparison", "material_gaps", "material_advantages", "sections", "conclusions", "decisions", "recommendations", "open_questions"],
         executive_narrative_fields: [
           "title", "thesis", "narrative_arc", "strategic_agenda", "strategic_tensions",
         ],
+        industry_comparison_shape:
+          "An array, job 2's output. Each item: {pattern, this_tenant_position " +
+          "(ahead|behind|at_parity|not_applicable), specifics, evidence_refs}. One item " +
+          "per industry_fact_base pattern that is actually relevant -- skip patterns that " +
+          "don't apply rather than forcing a position on all of them.",
+        material_gaps_and_advantages_shape:
+          "material_gaps and material_advantages: job 3's output, each an array of " +
+          "{id, statement, why_it_matters_to_leadership, applies_to_dimensions, " +
+          "evidence_refs}. 3-7 items each -- these are the few things that actually " +
+          "change a decision, not a complete inventory.",
         sections_shape:
           `An object keyed by book_sections id -- one entry for every id in book_sections ` +
           `below (${BOOK_SECTION_IDS.join(", ")}), no more, no fewer. Each entry: ` +
           "{headline, narrative}. narrative is 2-4 sentences of shared context for every " +
           "dimension that reads this section -- not a per-dimension takeaway.",
         conclusions_shape:
-          "An array of shared enterprise conclusions. Each: {id, statement, theme, " +
-          "evidence_refs, evidence_status, applies_to_dimensions, confidence}. " +
-          "applies_to_dimensions: 1 or more dimension_key values from dimension_catalog " +
-          "-- tag every dimension this conclusion is actually relevant to, not just one. " +
-          "evidence_status: 'evidenced' only if evidence_refs contains at least one " +
-          "sufficiently specific ID for this exact statement; otherwise 'not_evidenced' " +
-          "with an empty evidence_refs array. confidence: one of loaded_fact, " +
-          "derived_measure, industry_pattern, strategic_inference, missing_evidence.",
+          "An array of shared enterprise conclusions -- job 4/5's supporting detail. Each: " +
+          "{id, statement, theme, evidence_refs, evidence_status, applies_to_dimensions, " +
+          "confidence}. applies_to_dimensions: 1 or more dimension_key values from " +
+          "dimension_catalog -- tag every dimension this conclusion is actually relevant " +
+          "to, not just one. evidence_status: 'evidenced' only if evidence_refs contains " +
+          "at least one sufficiently specific ID for this exact statement; otherwise " +
+          "'not_evidenced' with an empty evidence_refs array. confidence: one of " +
+          "loaded_fact, derived_measure, industry_pattern, strategic_inference, " +
+          "missing_evidence.",
         decisions_recommendations_open_questions_shape:
           "decisions, recommendations, and open_questions are each an array of " +
           "{id, statement, applies_to_dimensions}. Keep each list focused -- a handful " +
           "of real leadership-relevant items, not one per dimension.",
         hard_limits:
           "sections: exactly one entry per book_sections id, headline <= 12 words, " +
-          "narrative 2-4 sentences. conclusions: aim for the number of genuinely " +
-          "distinct enterprise-level facts/inferences that exist in the source data -- " +
-          "not 38, not one per dimension; reuse via applies_to_dimensions instead of " +
-          "restating. evidence_refs values: evidence_id from evidence_index only -- an " +
-          "ID not in that list is invalid, never invent one. No generic introductions, " +
-          "no restated navigation labels, no raw records, no methodology explanations. " +
-          "Keep the whole response compact: target well under 24000 output tokens.",
+          "narrative 2-4 sentences. material_gaps/material_advantages: 3-7 items each. " +
+          "industry_comparison: one item per genuinely relevant pattern, skip the rest. " +
+          "conclusions: aim for the number of genuinely distinct enterprise-level facts/" +
+          "inferences that exist in the source data -- not 38, not one per dimension; " +
+          "reuse via applies_to_dimensions instead of restating. evidence_refs values: " +
+          "evidence_id from evidence_index only -- an ID not in that list is invalid, " +
+          "never invent one. No generic introductions, no restated navigation labels, no " +
+          "raw records, no methodology explanations. This is a real strategic synthesis, " +
+          "not a compressed manifest -- use the room available for genuine analytical " +
+          "depth in jobs 2-4, not for repeating the same point across many conclusions. " +
+          "Target well under 64000 output tokens.",
       },
       common: bookCommon,
       // No story_architecture input here, unlike every other pass type --
@@ -1045,6 +1094,7 @@ function makePrompt(pass, packet, assembled) {
       dimension_catalog: cleanDimensionCatalog,
       book_sections: BOOK_SECTION_IDS,
       dimension_chapters: DIMENSION_BOOK_CHAPTERS,
+      industry_fact_base: industryFactBase,
       // Unlike every downstream pass, this call has no upstream story
       // architecture to lean on -- it is the first (and, for dimension
       // content, only) call. It needs the same full raw context the OLD
@@ -1054,6 +1104,11 @@ function makePrompt(pass, packet, assembled) {
       material_aggregates: packet.business_context_samples.application_ownership_coverage
         ? { applications: packet.business_context_samples.application_ownership_coverage }
         : {},
+      // Real dependency/usage edges (not authored by Claude -- see
+      // deriveGraphBinding/GRAPH_ELIGIBLE_DIMENSIONS). Supplied here as
+      // INPUT so Claude's own conclusions about the apps/technology/data
+      // cluster are grounded in the real dependency shape, even though the
+      // graph_binding object itself is always renderer-owned.
       relationship_samples: packet.business_context_samples.relationship_samples,
       evidence_index: packet.evidence_index ?? [],
     };
@@ -1699,11 +1754,51 @@ const VISUAL_RENDER_RULES = {
   },
 };
 
+// Purposeful, not decorative: relationship_samples has real edges only for
+// the tech/dependency cluster (confirmed against skyharbor-air: 40 real
+// rows, 78 unique named nodes, 4 real relationship types -- owns/uses/
+// runs_on/feeds -- covering business-function-to-system and system-to-
+// integration chains). Every other dimension gets no graph_binding at all;
+// forcing a graph onto e.g. "vendors" or "budget" with no real edge data
+// would be exactly the kind of decoration-not-purpose the graph feature
+// must avoid.
+const GRAPH_ELIGIBLE_DIMENSIONS = new Set(["apps", "infra", "architecture_dependencies", "integrations", "data", "rel"]);
+
+// Same non-fabricable-pointer pattern as visual_binding: Claude never
+// writes this field. graph_binding is a real, code-computed SUMMARY of the
+// actual relationship_samples rows (counts, real relationship types) --
+// never the full node/edge list, matching how visual_binding points at a
+// dataset_id instead of embedding rows. The real graph rendering (e.g.
+// RelationshipTopologyGraph, already built and proven earlier this
+// session) reads relationship_samples/the graph substrate directly, not
+// this JSON.
+function deriveGraphBinding(key, packet) {
+  if (!GRAPH_ELIGIBLE_DIMENSIONS.has(key)) return null;
+  const rows = packet.business_context_samples?.relationship_samples ?? [];
+  if (rows.length === 0) {
+    return { relationship_source: "relationship_samples", node_count: 0, edge_count: 0, relationship_types: [], empty_state: "No relationship evidence loaded for this dimension yet." };
+  }
+  const nodeNames = new Set();
+  const types = new Set();
+  for (const row of rows) {
+    if (row.from_object_name) nodeNames.add(row.from_object_name);
+    if (row.to_object_name) nodeNames.add(row.to_object_name);
+    if (row.relationship_type) types.add(row.relationship_type);
+  }
+  return {
+    relationship_source: "relationship_samples",
+    projection_type: "dependency_map",
+    node_count: nodeNames.size,
+    edge_count: rows.length,
+    relationship_types: Array.from(types).sort(),
+  };
+}
+
 // Deterministic renderer: turns one EnterpriseBook object into the same
 // dimensions[] shape the rest of the pipeline (validator, review HTML,
 // downstream Home V4 consumers) already expects from the integrated_
-// dimensions pass. Claude supplies dimension_notes; every dataset/visual
-// field below is attached by code, never by the model.
+// dimensions pass. Claude supplies dimension_notes; every dataset/visual/
+// graph field below is attached by code, never by the model.
 // Zero-cost dry-run proof for item 1 of the Enterprise Book review: the
 // execution trace is fully deterministic (no field depends on what Claude
 // actually returns), so it can be produced and inspected before any paid
@@ -1760,6 +1855,8 @@ export function renderDimensionsFromBook(book, packet) {
   const decisions = Array.isArray(book?.decisions) ? book.decisions : [];
   const recommendations = Array.isArray(book?.recommendations) ? book.recommendations : [];
   const openQuestions = Array.isArray(book?.open_questions) ? book.open_questions : [];
+  const materialGaps = Array.isArray(book?.material_gaps) ? book.material_gaps : [];
+  const materialAdvantages = Array.isArray(book?.material_advantages) ? book.material_advantages : [];
   const registryById = new Map((packet.deterministic_dataset_registry ?? []).map((d) => [d.dataset_id, d]));
 
   const appliesTo = (item, key) => Array.isArray(item.applies_to_dimensions) && item.applies_to_dimensions.includes(key);
@@ -1792,6 +1889,8 @@ export function renderDimensionsFromBook(book, packet) {
     const relevantRecommendations = recommendations.filter((r) => appliesTo(r, key));
     const relevantDecisions = decisions.filter((d) => appliesTo(d, key));
     const relevantOpenQuestions = openQuestions.filter((q) => appliesTo(q, key));
+    const relevantGaps = materialGaps.filter((g) => appliesTo(g, key));
+    const relevantAdvantages = materialAdvantages.filter((a) => appliesTo(a, key));
 
     const dimension = {
       dimension_key: key,
@@ -1804,6 +1903,11 @@ export function renderDimensionsFromBook(book, packet) {
         evidence_refs: Array.isArray(c.evidence_refs) ? c.evidence_refs : [],
         evidence_status: c.evidence_status ?? (Array.isArray(c.evidence_refs) && c.evidence_refs.length > 0 ? "evidenced" : "not_evidenced"),
       })),
+      // Job 3 output (material_gaps/material_advantages), filtered to this
+      // dimension the same way conclusions are -- these are the "few things
+      // that actually matter," not restated once per dimension.
+      material_gaps: relevantGaps.map((g) => ({ statement: g.statement ?? "", why_it_matters: g.why_it_matters_to_leadership ?? "", evidence_refs: g.evidence_refs ?? [] })),
+      material_advantages: relevantAdvantages.map((a) => ({ statement: a.statement ?? "", why_it_matters: a.why_it_matters_to_leadership ?? "", evidence_refs: a.evidence_refs ?? [] })),
       strategic_implication: relevantDecisions.map((d) => d.statement ?? "").filter(Boolean).join(" "),
       recommended_actions: relevantRecommendations.map((r) => r.statement ?? "").filter(Boolean),
       evidence_refs: Array.from(new Set(relevantConclusions.flatMap((c) => c.evidence_refs ?? []))),
@@ -1836,6 +1940,8 @@ export function renderDimensionsFromBook(book, packet) {
         };
       }
     }
+    const graphBinding = deriveGraphBinding(key, packet);
+    if (graphBinding) dimension.graph_binding = graphBinding;
     return dimension;
   });
 }

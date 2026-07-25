@@ -41,6 +41,40 @@ function checkVisualBindingForFabrication(dim) {
   return failures;
 }
 
+// Same non-fabricable-pointer principle as visual_binding: graph_binding
+// must be a real, code-computed SUMMARY (counts, real relationship types)
+// -- never actual node/edge names or a full graph payload, which would
+// both leak raw data and give a model something to fabricate into.
+const GRAPH_BINDING_ALLOWED_KEYS = new Set([
+  "relationship_source", "projection_type", "node_count", "edge_count", "relationship_types", "empty_state",
+]);
+
+function checkGraphBindingForFabrication(dim) {
+  const gb = dim.graph_binding;
+  if (!gb || typeof gb !== "object") return [];
+  const failures = [];
+  for (const key of Object.keys(gb)) {
+    if (!GRAPH_BINDING_ALLOWED_KEYS.has(key)) {
+      failures.push({
+        severity: "fail",
+        type: "forbidden_graph_field",
+        dimension_key: dim.dimension_key,
+        field: key,
+        message: `graph_binding.${key} is not in the allowed summary shape (${Array.from(GRAPH_BINDING_ALLOWED_KEYS).join(", ")}) -- graph_binding must be a count/type summary, never raw nodes or edges.`,
+      });
+    }
+  }
+  if (Array.isArray(gb.node_count) || Array.isArray(gb.edge_count)) {
+    failures.push({
+      severity: "fail",
+      type: "forbidden_graph_field",
+      dimension_key: dim.dimension_key,
+      message: "graph_binding.node_count/edge_count must be numbers, not arrays -- an array here would mean actual node/edge data leaked in.",
+    });
+  }
+  return failures;
+}
+
 export function validateIntegratedManifest(candidate, packet, options = {}) {
   const failures = [];
   const warnings = [];
@@ -84,6 +118,7 @@ export function validateIntegratedManifest(candidate, packet, options = {}) {
 
     // Fabricated visual data -- the highest-priority check.
     failures.push(...checkVisualBindingForFabrication(dim));
+    failures.push(...checkGraphBindingForFabrication(dim));
 
     // Dataset bindings must resolve to a real, registered dataset_id.
     for (const bindingField of ["data_binding", "relationship_binding", "gap_binding"]) {

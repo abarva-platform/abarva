@@ -13,7 +13,7 @@
 import fs from "node:fs";
 
 const EXPECTED_DIMENSION_COUNT = 38;
-const VISUAL_FIELD_NAMES = ["visual_type", "data_points", "dataset_id", "encoding", "chart", "visual_binding"];
+const VISUAL_FIELD_NAMES = ["visual_type", "data_points", "dataset_id", "encoding", "chart", "visual_binding", "graph_binding", "node_count", "edge_count"];
 
 export function assertEnterpriseBookPromptPreflight(prompt, packet) {
   const failures = [];
@@ -119,6 +119,24 @@ export function assertEnterpriseBookPromptPreflight(prompt, packet) {
       "preflight.legacy_dimension_notes_field_requested",
       "output_requirements.fields includes 'dimension_notes' -- this is the v1 per-dimension shape this architecture was reviewed away from; book mode must request shared sections/conclusions instead.",
     );
+  }
+
+  // 6d. Five-jobs structure: the schema must actually request the outputs
+  // of jobs 2 and 3 (industry comparison, material gaps/advantages), not
+  // just job 4/5 (narrative + sections). A prompt that only asks for
+  // executive_narrative + sections/conclusions has reverted to "write a
+  // good story" without the explicit comparative-synthesis step.
+  for (const field of ["industry_comparison", "material_gaps", "material_advantages"]) {
+    if (!requestedFields.includes(field)) {
+      fail("preflight.five_jobs_field_not_requested", `output_requirements.fields does not include '${field}' -- job 2/3 of the five-jobs structure is not being requested.`);
+    }
+  }
+
+  // 6e. industry_fact_base must be a real, non-trivial, structured input --
+  // job 2 cannot compare against an empty or missing fact base.
+  const industryFactBase = prompt.industry_fact_base;
+  if (!Array.isArray(industryFactBase) || industryFactBase.length === 0) {
+    fail("preflight.industry_fact_base_missing", "prompt.industry_fact_base is missing or empty -- job 2 (compare with industry) has nothing to compare against.");
   }
 
   // 7. the OLD chart contract must be structurally absent, same as the
