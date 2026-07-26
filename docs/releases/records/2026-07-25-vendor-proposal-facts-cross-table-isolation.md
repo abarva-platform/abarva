@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean.
+`released` — merged, deployed, migrated, and live-verified on `app.abarva.ai`.
 
 ## Plain-English Summary
 
@@ -85,12 +85,35 @@ time. This release closes that class of gap:
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
   — zero errors.
 - `pass` — `npx eslint` on all touched/added files — zero errors, zero warnings.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
-- `pending` — governed migration lane (`status` then `apply`).
-- `pending` — live proof: PR C's regression harness and the workstream's final live
-  multi-tenant proof will exercise these triggers with real cross-tenant/cross-event fixtures
-  (attempting to violate them) — this release's own tests prove structure and the read-path
-  fix, not live trigger rejection with adversarial data.
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — Release Control
+  Gate, Azure deployment lane check, Deploy Authority Gate, Pilot Data Loader Gate all passed.
+- `pass` — CI on PR #5624 (20 checks), including "Fresh Postgres migration replay" (applies
+  this release's migration against an ephemeral Postgres from scratch).
+- `pass` — governed migration lane. `status` (workflow run
+  [30181174370](https://github.com/abarva-platform/abarva/actions/runs/30181174370)) confirmed
+  the migration was pending against the pre-merge image; `apply` (workflow run
+  [30181315526](https://github.com/abarva-platform/abarva/actions/runs/30181315526)) applied it
+  — the `Apply pending migrations`, `Schema readback`, `Migration ledger`, and `Repository
+  readback` steps all succeeded. The `Repository readback — artifact acceptances` step failed,
+  but this is the pre-existing, already-tracked `db:verify:source-artifact-acceptances`
+  non-idempotent synthetic-event bug (`duplicate key value violates unique constraint
+  "source_events_client_event_code_unique"` from a leftover fixture on a prior unrelated run,
+  not from this release's schema change) — confirmed unrelated by inspecting the container
+  execution log directly. A clean follow-up `status` dispatch (workflow run
+  [30181660475](https://github.com/abarva-platform/abarva/actions/runs/30181660475)) confirms
+  durability: the migration ledger's `latest` entry is
+  `20260726020000_vendor_proposal_facts_cross_table_consistency.sql`, applied at
+  `2026-07-26T00:35:32.056Z`, `totalApplied: 299`, and the dry-run preflight reports "No pending
+  migrations."
+- `pass` — live proof on `app.abarva.ai` (signed-in session, real tenant): a real vendor-proposal
+  ingest (`POST /api/v1/source/:eventId/vendor-proposals/:vendorKey/ingest`) against a real
+  Source event produced 4 candidate facts (`price`, `sla`, `support`, `warranty`), each of which
+  passed through the new `BEFORE INSERT` ownership-consistency trigger (client_key matched the
+  event's real client_key; proposal_artifact_id matched the same tenant and event) without
+  rejection, and a subsequent authenticated read (`GET .../facts`) returned all 4 rows —
+  confirming the new triggers do not break a legitimate, correctly-scoped write for any existing
+  caller. Adversarial cross-tenant/cross-event/cross-vendor rejection testing (attempting to
+  violate the triggers) remains PR C's explicit scope, immediately next in this workstream.
 
 ## Rollout Plan
 
@@ -103,8 +126,15 @@ existing, correctly-scoped caller.
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none directly; the migration lane is dispatched separately,
   `workflow_dispatch`-only.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be recorded after merge and deploy.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:7051006f307b0ad8b4019e2abc80a66d4e4d4ca04c213d167ffa3cf2cb4e7f1b`
+  (merge SHA `3b6840dc5868ebd51f886343da14eb0f10447b97`, ACA revision
+  `ca-abarva-web-lab-eastus--m3b6840dc`).
+- ACA runtime invariant: verified — deploy run
+  [30180977081](https://github.com/abarva-platform/abarva/actions/runs/30180977081)'s "Verify
+  ACA runtime invariant" step passed; the same digest is confirmed as the currently-deployed
+  image by the migration lane's own "Resolve currently-deployed image digest" step on the
+  subsequent `status`/`apply` runs.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes — see QA / Validation.
@@ -118,8 +148,14 @@ data is touched or migrated by this release.
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- Deploy run, migration-apply run, and live proof: to be recorded after merge/deploy.
+- PR: [#5624](https://github.com/abarva-platform/abarva/pull/5624) (merge commit
+  `3b6840dc5868ebd51f886343da14eb0f10447b97`).
+- Deploy run: [30180977081](https://github.com/abarva-platform/abarva/actions/runs/30180977081).
+- Migration-status run: [30181174370](https://github.com/abarva-platform/abarva/actions/runs/30181174370).
+- Migration-apply run: [30181315526](https://github.com/abarva-platform/abarva/actions/runs/30181315526).
+- Migration-durability confirmation run:
+  [30181660475](https://github.com/abarva-platform/abarva/actions/runs/30181660475).
+- Live proof: signed-in browser session against `https://app.abarva.ai` — see QA / Validation.
 - Baseline audit this release closes items from:
   `docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md`.
 - Sequencing decision: `docs/architecture/adr/ADR-0013-source-modernization-baseline.md`.
