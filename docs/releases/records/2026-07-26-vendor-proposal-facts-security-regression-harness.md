@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean, validated live against a real Postgres.
+`released` — merged, and its own new CI step ("Fresh Postgres migration replay") already ran
+green in a real GitHub Actions ephemeral Postgres.
 
 ## Plain-English Summary
 
@@ -101,10 +102,13 @@ access and the public application routes — route-only tests are not sufficient
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p
 tsconfig.json` — zero errors.
 - `pass` — `npx eslint` on all touched/added files — zero errors, zero warnings.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
-- `pending` — CI's own "Fresh Postgres migration replay" run of the new step (validated
-  locally against an equivalent ephemeral Postgres above; the CI run itself is the
-  authoritative confirmation this workstream's closure criterion requires).
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — Release Control
+  Gate, Azure deployment lane check, Deploy Authority Gate, Pilot Data Loader Gate all passed.
+- `pass` — CI on PR #5631 (all checks), including the new "Fresh Postgres migration replay"
+  step running for the first time in a real GitHub Actions ephemeral Postgres (workflow run
+  [30182625608](https://github.com/abarva-platform/abarva/actions/runs/30182625608)) — the
+  authoritative confirmation that the suite runs correctly outside the local Docker validation
+  above.
 - `pending` — the workstream's final live multi-tenant production proof (this release's own
   scope is the offline/CI regression harness, per the user's explicit PR sequencing — the live
   proof is a separate, final step of the workstream, not this release's QA).
@@ -134,8 +138,10 @@ behavior is affected either way — this release cannot regress a live system, o
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- CI run of the new "Fresh Postgres migration replay" step: to be recorded after PR open.
+- PR: [#5631](https://github.com/abarva-platform/abarva/pull/5631) (merge commit
+  `1b4bfbc9d7c76f4c0f79c5763762532bce4e8ea1`).
+- CI run of the new "Fresh Postgres migration replay" step:
+  [30182625608](https://github.com/abarva-platform/abarva/actions/runs/30182625608) — passed.
 - Local validation evidence (this pass): 11/11 scenarios green against a live ephemeral
   Postgres; negative control confirmed 5/11 scenarios correctly flip to `fail` when the PR B
   triggers are disabled, restoring to 11/11 green after re-applying the real migration.
