@@ -220,23 +220,26 @@ layer. Status at closure:
 - **Authoritative context-binding layer**: closed by PR B's `context-binder.ts` join-safety fix
   (`tenant_key` re-checked at every join hop) and PR3's `getAuthoritativeVendorProposalFacts`
   tests (tenant/event-pure, review-status-filtered reads).
-- **Live multi-tenant production layer**: proven with two REAL synthetic tenants at the
-  database layer (PR C's `vendor-proposal-facts-write-isolation-regression.sql`, run live
-  against a fully migrated Postgres, with a validated negative control confirming the suite
-  actually detects a disabled trigger rather than passing tautologically) and with two REAL
-  events at the live application-route layer against `app.abarva.ai` (same-tenant ingest/accept
-  succeeds; a real fact accessed via the wrong event's URL returns the identical `404
-  fact_not_found` as a fabricated, nonexistent UUID — no distinguishing signal either way;
-  denied attempts leave no partial writes; a sibling event's read is completely empty of the
-  other event's facts). **A second live, signed-in tenant session on `app.abarva.ai` could not
-  be obtained during this closure pass** — the app's sign-out control does not work (confirmed
-  live, a real defect, tracked separately for a fix) and the agent closing this workstream is
-  not permitted to authenticate as a second account itself. Per explicit user decision on
-  2026-07-26, the database-layer two-real-tenant proof (live Postgres, validated as a genuine
-  detector) together with the live two-real-event application-route proof is accepted as
-  satisfying the live multi-tenant production layer — the gap is a live-session availability
-  constraint on this pass, not a gap in the underlying enforcement, which the DB-layer proof
-  already exercises with real distinct tenants.
+- **Live multi-tenant production layer — partially proven, one documented limitation.**
+  Database-layer cross-tenant isolation was proven against two real synthetic tenants in
+  Postgres, including negative controls (PR C's
+  `vendor-proposal-facts-write-isolation-regression.sql`, run live against a fully migrated
+  Postgres, with a validated negative control confirming the suite actually detects a disabled
+  trigger rather than passing tautologically). The live application-route proof covered
+  same-tenant success, cross-event denial, UUID-guessing indistinguishability, and zero
+  partial writes — using two real events under the one tenant session available (same-tenant
+  ingest/accept succeeds; a real fact accessed via the wrong event's URL returns the identical
+  `404 fact_not_found` as a fabricated, nonexistent UUID; denied attempts leave no partial
+  writes; a sibling event's read is completely empty of the other event's facts). **A second
+  signed-in tenant session was unavailable** — the app's sign-out control does not work
+  (confirmed live, a real defect, tracked separately for a fix) and the agent closing this
+  workstream is not permitted to authenticate as a second account itself — so **the live
+  app-route cross-tenant check remains an explicitly documented limitation**, not something
+  this closure claims to have proven. Per explicit user decision on 2026-07-26, this
+  composition of evidence (DB-layer two-tenant proof with negative controls, plus the live
+  app-route proof of everything that did not require a second session) is accepted as
+  sufficient to close the workstream, with the live app-route cross-tenant gap named honestly
+  rather than closed over.
 
 No cross-tenant or cross-event fact can be read, mutated, accepted, rejected, superseded, or
 supplied to downstream artifacts through any path tested in PR A, PR B, or PR C — including
