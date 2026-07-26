@@ -1,0 +1,130 @@
+{
+  "generated_by": "scripts/data-build/evidence-v4-migration-dry-run.mjs",
+  "note": "Zero-write dry run. No active/current, registry, Postgres, or Home pack was modified.",
+  "tenants": [
+    {
+      "tenant_key": "apex-retail",
+      "predecessor_files_read": 1,
+      "file_level_failures": [],
+      "total_input_rows": 23,
+      "source_versions_created": 1,
+      "evidence_items_created": 14,
+      "interview_rows_migrated": 0,
+      "duplicates_with_proof": 0,
+      "unresolved_records": 0,
+      "conflicts_requiring_review": 8,
+      "disposition_counts": {
+        "migrated_evidence_item": 14,
+        "intentionally_excluded_with_reason": 1,
+        "conflict_requires_review": 8
+      },
+      "total_dispositioned_rows": 23,
+      "reconciliation_status": "RECONCILED",
+      "safe_to_proceed_to_semantic_validation": false
+    },
+    {
+      "tenant_key": "first-capital-financial",
+      "predecessor_files_read": 1,
+      "file_level_failures": [],
+      "total_input_rows": 267,
+      "source_versions_created": 2,
+      "evidence_items_created": 258,
+      "interview_rows_migrated": 216,
+      "duplicates_with_proof": 0,
+      "unresolved_records": 0,
+      "conflicts_requiring_review": 8,
+      "disposition_counts": {
+        "migrated_evidence_item": 42,
+        "intentionally_excluded_with_reason": 1,
+        "conflict_requires_review": 8,
+        "migrated_interview": 216
+      },
+      "total_dispositioned_rows": 267,
+      "reconciliation_status": "RECONCILED",
+      "safe_to_proceed_to_semantic_validation": false
+    },
+    {
+      "tenant_key": "lakeshore-holdings",
+      "predecessor_files_read": 1,
+      "file_level_failures": [],
+      "total_input_rows": 19,
+      "source_versions_created": 1,
+      "evidence_items_created": 10,
+      "interview_rows_migrated": 0,
+      "duplicates_with_proof": 0,
+      "unresolved_records": 0,
+      "conflicts_requiring_review": 8,
+      "disposition_counts": {
+        "migrated_evidence_item": 10,
+        "intentionally_excluded_with_reason": 1,
+        "conflict_requires_review": 8
+      },
+      "total_dispositioned_rows": 19,
+      "reconciliation_status": "RECONCILED",
+      "safe_to_proceed_to_semantic_validation": false
+    },
+    {
+      "tenant_key": "lakeshore-industries",
+      "predecessor_files_read": 2,
+      "file_level_failures": [],
+      "total_input_rows": 434,
+      "source_versions_created": 49,
+      "evidence_items_created": 376,
+      "interview_rows_migrated": 0,
+      "duplicates_with_proof": 0,
+      "unresolved_records": 0,
+      "conflicts_requiring_review": 8,
+      "disposition_counts": {
+        "migrated_source": 48,
+        "migrated_evidence_item": 376,
+        "intentionally_excluded_with_reason": 2,
+        "conflict_requires_review": 8
+      },
+      "total_dispositioned_rows": 434,
+      "reconciliation_status": "RECONCILED",
+      "safe_to_proceed_to_semantic_validation": false
+    },
+    {
+      "tenant_key": "meridian-health",
+      "predecessor_files_read": 4,
+      "file_level_failures": [],
+      "total_input_rows": 869,
+      "source_versions_created": 36,
+      "evidence_items_created": 865,
+      "interview_rows_migrated": 221,
+      "duplicates_with_proof": 0,
+      "unresolved_records": 0,
+      "conflicts_requiring_review": 0,
+      "disposition_counts": {
+        "migrated_evidence_item": 644,
+        "migrated_source": 4,
+        "migrated_interview": 221
+      },
+      "total_dispositioned_rows": 869,
+      "reconciliation_status": "RECONCILED",
+      "safe_to_proceed_to_semantic_validation": true
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "predecessor_files_read": 3,
+      "file_level_failures": [],
+      "total_input_rows": 352,
+      "source_versions_created": 26,
+      "evidence_items_created": 337,
+      "interview_rows_migrated": 216,
+      "duplicates_with_proof": 0,
+      "unresolved_records": 0,
+      "conflicts_requiring_review": 8,
+      "disposition_counts": {
+        "migrated_evidence_item": 121,
+        "migrated_source": 4,
+        "intentionally_excluded_with_reason": 3,
+        "conflict_requires_review": 8,
+        "migrated_interview": 216
+      },
+      "total_dispositioned_rows": 352,
+      "reconciliation_status": "RECONCILED",
+      "safe_to_proceed_to_semantic_validation": false
+    }
+  ]
+}

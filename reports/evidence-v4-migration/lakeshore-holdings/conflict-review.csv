@@ -1,0 +1,9 @@
+tenant_key,row_ref,reason
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#3,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#4,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#5,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#6,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#7,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#8,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#9,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
+lakeshore-holdings,datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv#10,"active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying"
