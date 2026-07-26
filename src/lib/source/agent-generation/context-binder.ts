@@ -109,7 +109,9 @@ export async function buildSourceGenerationContext(
     listArtifactStatesForEvent(substrateEventId),
     listGateCriterionStatesForEvent(substrateEventId),
     listEvidenceStatesForEvent(substrateEventId),
-    listUploadedEvidenceForGeneration(substrateEventId),
+    activeClient?.key
+      ? listUploadedEvidenceForGeneration(substrateEventId, activeClient.key)
+      : Promise.resolve([]),
     activeClient?.key
       ? getAuthoritativeVendorProposalFacts(
           {
@@ -297,8 +299,21 @@ function extractTrigger(scope: string | null | undefined): string | null {
   return triggerLine?.replace(/^[^:]*:\s*/, "").trim() || null;
 }
 
+/**
+ * Uploaded-evidence read for the generation context. tenantKey is REQUIRED
+ * and re-checked at every join hop below (source_artifacts, then
+ * source_artifact_chunks/source_artifact_facts) — never just trusted from
+ * sourceEventId alone. This closes a join-safety gap found during the
+ * RLS/tenant-isolation workstream's scope discovery: the artifact_id-keyed
+ * second hop previously carried no independent tenant check at all, relying
+ * entirely on the first hop's event scoping already being correct upstream.
+ * Defense in depth: `buildSourceGenerationContext` already resolves
+ * `substrateEventId` scoped to `activeClient.key` before calling this, so
+ * this is a second, independent check, not the only one.
+ */
 async function listUploadedEvidenceForGeneration(
   sourceEventId: string,
+  tenantKey: string,
 ): Promise<SourceGenerationUploadedArtifact[]> {
   const supabase = getAzureReadFluentClient();
   const { data: artifactRows, error: artifactError } = await supabase
@@ -307,6 +322,7 @@ async function listUploadedEvidenceForGeneration(
       "id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin",
     )
     .eq("source_event_id", sourceEventId)
+    .eq("tenant_key", tenantKey)
     .eq("source_origin", "uploaded")
     .order("created_at", { ascending: false })
     .limit(200);
@@ -344,12 +360,14 @@ async function listUploadedEvidenceForGeneration(
       .from("source_artifact_chunks")
       .select("artifact_id, chunk_text, chunk_kind, confidence")
       .in("artifact_id", artifactIds)
+      .eq("tenant_key", tenantKey)
       .order("confidence", { ascending: false })
       .limit(160),
     supabase
       .from("source_artifact_facts")
       .select("artifact_id, fact_type, fact_key, fact_value, confidence")
       .in("artifact_id", artifactIds)
+      .eq("tenant_key", tenantKey)
       .order("confidence", { ascending: false })
       .limit(160),
   ]);
