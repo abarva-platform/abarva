@@ -21,5 +21,6 @@ This directory stores durable architecture decisions. New ADRs should use `ADR-t
 | [ADR-0012-cmk-byok-readiness.md](ADR-0012-cmk-byok-readiness.md)                                               | CMK/BYOK Readiness                                          | Accepted | 2026-06-03 |
 | [ADR-0013-source-modernization-baseline.md](ADR-0013-source-modernization-baseline.md)                         | Source Modernization Baseline                               | Accepted | 2026-07-23 |
 | [ADR-0014-vendor-proposal-facts-rls-tenant-context.md](ADR-0014-vendor-proposal-facts-rls-tenant-context.md)   | Real DB-Enforced Tenant Isolation for Vendor-Proposal Facts | Accepted | 2026-07-25 |
+| [ADR-0015-source-artifact-contract.md](ADR-0015-source-artifact-contract.md)                                   | SourceArtifactContract: a Single Typed Contract for Stage/Artifact Eligibility | Accepted | 2026-07-26 |
 
 Note: the legacy `0001-canonical-pattern-storage.md` predates this framework. The `ADR-0001-*` series starts the governance ADR set requested on 2026-06-01.
