@@ -40,8 +40,61 @@ const BOOK_OVERVIEW_GROUP: HomeV4ExplorerGroup = {
   items: [{ key: "book_overview", label: "Executive Narrative", tone: "green" }],
 };
 
+// The real chapter structure the generator already guarantees complete
+// (DIMENSION_BOOK_CHAPTERS in build-home-knowledge-v4-review-pack.mjs, one
+// entry for every one of the 38 catalog dimensions, load-time-checked for
+// coverage). A flat 38-item list buried the book's actual narrative
+// structure; this renders the real chapters as a numbered table of
+// contents instead -- the generated content already has this shape, the
+// nav was just never built to reflect it. `enterprise_narrative`'s one
+// dimension (enterprise_thesis) is folded into the Executive Book group
+// above rather than getting its own single-item chapter.
+const BOOK_CHAPTER_ORDER: Array<{ chapter: string; title: string; numeral: string }> = [
+  { chapter: "business_context", title: "Enterprise Context", numeral: "I" },
+  { chapter: "operating_model", title: "Operating Model", numeral: "II" },
+  { chapter: "capabilities", title: "Capabilities", numeral: "III" },
+  { chapter: "value_streams", title: "Value Streams", numeral: "IV" },
+  { chapter: "technology_context", title: "Technology", numeral: "V" },
+  { chapter: "data_context", title: "Data Foundation", numeral: "VI" },
+  { chapter: "applications_context", title: "Applications & Systems", numeral: "VII" },
+  { chapter: "vendor_context", title: "Vendors & Economics", numeral: "VIII" },
+  { chapter: "risk_context", title: "Risk & Controls", numeral: "IX" },
+  { chapter: "evidence_context", title: "Evidence & Confidence", numeral: "X" },
+  { chapter: "ai_opportunity_context", title: "AI Opportunity", numeral: "XI" },
+  { chapter: "portfolio_context", title: "Portfolio & Investment", numeral: "XII" },
+  { chapter: "relationships_context", title: "Relationships", numeral: "XIII" },
+];
+
+// Pure and exported so its output can be asserted directly against real
+// fixture content without depending on the explorer's collapse/expand DOM
+// state (chapter groups default closed, same as the legacy flat group did,
+// so a static-markup snapshot alone can't prove every dimension landed in
+// the right chapter -- this can).
+export function buildBookChapterGroups(dimensions: HomeV4Candidate["dimensions"]): HomeV4ExplorerGroup[] {
+  return BOOK_CHAPTER_ORDER.map(({ chapter, title, numeral }) => {
+    const chapterDimensions = dimensions.filter((d) => d.chapter === chapter);
+    return {
+      title,
+      numberLabel: numeral,
+      variant: "toc" as const,
+      defaultOpen: false,
+      items: chapterDimensions.map((dimension) => ({
+        key: `dimension:${dimension.dimension_key}`,
+        label: dimension.executive_title,
+        // A dimension with no headline has none of its own gap/advantage/
+        // conclusion content (see pickDimensionHeadline in the generator)
+        // -- an honest visual signal in the TOC itself, not decoration.
+        tone: (dimension.headline ? "green" : "quiet") as "green" | "quiet",
+      })),
+    };
+  }).filter((group) => group.items.length > 0);
+}
+
 export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate }) {
   const isBookMode = Boolean(candidate.enterprise_book);
+
+  // Non-book candidates keep the old flat single-group nav (that shape,
+  // legacy V1 dimensions, has no `chapter` field to group by).
   const enterpriseContextGroup: HomeV4ExplorerGroup = {
     title: "Enterprise Context",
     defaultOpen: false,
@@ -52,6 +105,10 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
     })),
   };
 
+  const chapterGroups = buildBookChapterGroups(candidate.dimensions);
+
+  const groups = isBookMode ? [BOOK_OVERVIEW_GROUP, ...chapterGroups] : [CHANGE_TRANSFORMATION_GROUP, enterpriseContextGroup];
+
   const [selectedKey, setSelectedKey] = useState(isBookMode ? "book_overview" : "industry_movements");
   const businessChangeImpact = candidate.relationships?.graph_projections.find(
     (p) => p.projection_type === "business_change_impact",
@@ -60,7 +117,7 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
   return (
     <div className="heb-v4-explorer-shell">
       <HomeV4Explorer
-        groups={[isBookMode ? BOOK_OVERVIEW_GROUP : CHANGE_TRANSFORMATION_GROUP, enterpriseContextGroup]}
+        groups={groups}
         selectedKey={selectedKey}
         onSelect={setSelectedKey}
       />
