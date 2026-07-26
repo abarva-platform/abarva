@@ -173,8 +173,10 @@ describe("prose ⇄ structure consistency", () => {
     const r = parseRoadmapStructuredBlock(wrap(validOutput()));
     if (!r.ok) throw new Error("expected ok");
     const m = checkProseStructureConsistency({
+      // PR14: a genuine finality CLAIM about the artifact (not the bare word
+      // "final" — that no longer fires, to avoid false positives on real prose).
       prose:
-        "This roadmap is final and has been sponsor accepted and signed-off.",
+        "This roadmap is board-ready and approved for release; no further approvals are needed.",
       input: r.input,
       lifecycleState: "review_draft",
     });
