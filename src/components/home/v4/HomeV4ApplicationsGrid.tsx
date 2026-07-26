@@ -18,6 +18,74 @@ function distinctValues(rows: HomeV4ApplicationFullRow[], key: keyof HomeV4Appli
   return Array.from(values).sort();
 }
 
+function countBy(rows: HomeV4ApplicationFullRow[], key: keyof HomeV4ApplicationFullRow): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const value = row[key];
+    if (typeof value !== "string" || !value) continue;
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+}
+
+// A real portfolio-level summary computed from the same full_rows already
+// loaded for the grid below -- no new data plumbing, no invented
+// categories (e.g. no fabricated "cloud vs on-prem" bucketing over hosting
+// values that don't cleanly split that way; real hosting values are shown
+// as-is). Every number states its own real coverage rather than silently
+// treating a missing field as zero.
+function HomeV4ApplicationsPortfolioSummary({ rows }: { rows: HomeV4ApplicationFullRow[] }) {
+  const withCost = rows.filter((row) => row.annual_run_cost_usd != null);
+  const totalCost = withCost.reduce((sum, row) => sum + (row.annual_run_cost_usd ?? 0), 0);
+  const owned = rows.filter((row) => row.owner).length;
+  const criticalityMix = countBy(rows, "criticality");
+  const hostingMix = countBy(rows, "hosting");
+
+  return (
+    <div className="heb-v4-appgrid-summary">
+      <div className="heb-v4-appgrid-stat">
+        <span className="heb-v4-appgrid-stat-value">{rows.length.toLocaleString()}</span>
+        <span className="heb-v4-appgrid-stat-label">Applications in inventory</span>
+      </div>
+      <div className="heb-v4-appgrid-stat">
+        <span className="heb-v4-appgrid-stat-value">
+          {withCost.length > 0 ? `$${Math.round(totalCost / 1_000_000).toLocaleString()}M` : "—"}
+        </span>
+        <span className="heb-v4-appgrid-stat-label">
+          Annual run cost{withCost.length < rows.length ? ` (${withCost.length} of ${rows.length} apps)` : ""}
+        </span>
+      </div>
+      <div className="heb-v4-appgrid-stat">
+        <span className="heb-v4-appgrid-stat-value">
+          {rows.length > 0 ? `${Math.round((owned / rows.length) * 100)}%` : "—"}
+        </span>
+        <span className="heb-v4-appgrid-stat-label">Have a named owner on file</span>
+      </div>
+      <div className="heb-v4-appgrid-stat heb-v4-appgrid-stat-mix">
+        <span className="heb-v4-appgrid-stat-label">By criticality</span>
+        <span className="heb-v4-appgrid-stat-mix-row">
+          {criticalityMix.map(([value, count]) => (
+            <span key={value} className="heb-v4-appgrid-chip">
+              {value} <strong>{count}</strong>
+            </span>
+          ))}
+        </span>
+      </div>
+      <div className="heb-v4-appgrid-stat heb-v4-appgrid-stat-mix">
+        <span className="heb-v4-appgrid-stat-label">By hosting</span>
+        <span className="heb-v4-appgrid-stat-mix-row">
+          {hostingMix.slice(0, 4).map(([value, count]) => (
+            <span key={value} className="heb-v4-appgrid-chip">
+              {value} <strong>{count}</strong>
+            </span>
+          ))}
+          {hostingMix.length > 4 ? <span className="heb-v4-appgrid-chip-more">+{hostingMix.length - 4} more</span> : null}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRow[] }) {
   const [search, setSearch] = useState("");
   const [hostingFilter, setHostingFilter] = useState("");
@@ -55,6 +123,7 @@ export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRo
 
   return (
     <div className="heb-v4-appgrid">
+      <HomeV4ApplicationsPortfolioSummary rows={rows} />
       <div className="heb-v4-appgrid-head">
         <span className="heb-section-label">Full application inventory</span>
         <span className="heb-v4-appgrid-count">
@@ -176,6 +245,64 @@ export function HomeV4ApplicationsGrid({ rows }: { rows: HomeV4ApplicationFullRo
           display: flex;
           flex-direction: column;
           gap: 10px;
+        }
+        .heb-v4-appgrid-summary {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(120px, 1fr)) repeat(2, minmax(200px, 1.4fr));
+          gap: 10px;
+          padding: 14px 16px;
+          border: 1px solid ${COLORS.line};
+          border-radius: 10px;
+          background: ${COLORS.surface};
+          margin-bottom: 4px;
+        }
+        .heb-v4-appgrid-stat {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          min-width: 0;
+        }
+        .heb-v4-appgrid-stat-value {
+          font-family: Fraunces, Georgia, serif;
+          font-size: 22px;
+          color: ${COLORS.ink};
+          line-height: 1.1;
+        }
+        .heb-v4-appgrid-stat-label {
+          font-size: 10.5px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: ${COLORS.quiet};
+        }
+        .heb-v4-appgrid-stat-mix {
+          justify-content: center;
+        }
+        .heb-v4-appgrid-stat-mix-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 2px;
+        }
+        .heb-v4-appgrid-chip {
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: ${COLORS.rail};
+          font-size: 11px;
+          color: ${COLORS.muted};
+          white-space: nowrap;
+        }
+        .heb-v4-appgrid-chip strong {
+          color: ${COLORS.ink};
+        }
+        .heb-v4-appgrid-chip-more {
+          font-size: 11px;
+          color: ${COLORS.quiet};
+          align-self: center;
+        }
+        @media (max-width: 980px) {
+          .heb-v4-appgrid-summary {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
         .heb-v4-appgrid-head {
           display: flex;
