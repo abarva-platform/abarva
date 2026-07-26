@@ -68,6 +68,17 @@ async function mockQuery(sql: string, params: unknown[] = []): Promise<{ rows: A
     return { rows: [...byTenant.values()].sort((a, b) => (a.tenant_key as string).localeCompare(b.tenant_key as string)) };
   }
 
+  // getHomeKnowledgeV4LatestCandidateRenderPack -- checked before the history
+  // query below since both share the same WHERE/ORDER BY clause; this one
+  // is distinguished by selecting render_pack and a LIMIT 1.
+  if (q.includes("render_pack") && q.includes("LIMIT 1") && q.includes("ORDER BY created_at DESC")) {
+    const [tenantKey, artifactType] = params as [string, string];
+    const match = rows
+      .filter((r) => r.tenant_key === tenantKey && r.artifact_type === artifactType)
+      .sort((a, b) => (b.created_at as string).localeCompare(a.created_at as string))[0];
+    return { rows: match ? [match] : [] };
+  }
+
   // 2. listHomeKnowledgeV4PackHistoryForTenant
   if (q.includes("WHERE tenant_key = $1 AND artifact_type = $2 ORDER BY created_at DESC")) {
     const [tenantKey, artifactType] = params as [string, string];
@@ -211,6 +222,7 @@ process.env.DATABASE_URL = "postgres://mock/mock";
 
 import {
   approveHomeKnowledgeV4Candidate,
+  getHomeKnowledgeV4LatestCandidateRenderPack,
   HomeKnowledgeV4ApprovalError,
   listHomeKnowledgeV4CandidatesForReview,
   listHomeKnowledgeV4PackHistoryForTenant,
@@ -444,5 +456,58 @@ describe("listHomeKnowledgeV4PackHistoryForTenant", () => {
     mockRows.push(seedRow({ id: "b1", tenant_key: "tenant-b", created_at: "2026-07-25T00:00:00.000Z" }));
     const result = await listHomeKnowledgeV4PackHistoryForTenant("tenant-a");
     expect(result.map((r) => r.id)).toEqual(["a-new", "a-old"]);
+  });
+});
+
+describe("getHomeKnowledgeV4LatestCandidateRenderPack", () => {
+  it("returns the latest candidate's full render_pack for the requested tenant", async () => {
+    mockRows.push(
+      seedRow({
+        id: "sky-old",
+        tenant_key: "skyharbor-air",
+        created_at: "2026-07-25T00:00:00.000Z",
+        render_pack: { tenant: { canonical_key: "skyharbor-air" }, dimensions: [], version: "old" },
+      }),
+    );
+    mockRows.push(
+      seedRow({
+        id: "sky-new",
+        tenant_key: "skyharbor-air",
+        created_at: "2026-07-26T00:00:00.000Z",
+        pack_version: "home-pack-v4-book-skyharbor-air-new",
+        validation_status: "candidate_review_ready",
+        quality_report: { violations: [] },
+        render_pack: { tenant: { canonical_key: "skyharbor-air" }, dimensions: [{ dimension_key: "apps" }], version: "new" },
+      }),
+    );
+    const result = await getHomeKnowledgeV4LatestCandidateRenderPack("skyharbor-air");
+    expect(result?.id).toBe("sky-new");
+    expect(result?.pack_version).toBe("home-pack-v4-book-skyharbor-air-new");
+    expect((result?.render_pack as { version: string }).version).toBe("new");
+    expect(result?.violations).toEqual([]);
+  });
+
+  it("returns null when no row exists for the tenant, rather than another tenant's data", async () => {
+    mockRows.push(
+      seedRow({ id: "other", tenant_key: "meridian-health", render_pack: { tenant: { canonical_key: "meridian-health" }, dimensions: [] } }),
+    );
+    const result = await getHomeKnowledgeV4LatestCandidateRenderPack("skyharbor-air");
+    expect(result).toBeNull();
+  });
+
+  it("surfaces validation_status and finding count from the real row", async () => {
+    mockRows.push(
+      seedRow({
+        id: "failed-row",
+        tenant_key: "skyharbor-air",
+        status: "candidate",
+        validation_status: "candidate_failed",
+        quality_report: { violations: [{ type: "x", message: "y" }] },
+        render_pack: { tenant: { canonical_key: "skyharbor-air" }, dimensions: [] },
+      }),
+    );
+    const result = await getHomeKnowledgeV4LatestCandidateRenderPack("skyharbor-air");
+    expect(result?.validation_status).toBe("candidate_failed");
+    expect(result?.violations).toHaveLength(1);
   });
 });

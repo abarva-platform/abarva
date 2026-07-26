@@ -7,7 +7,11 @@ import { HomeV4ExplorerShell } from "@/components/home/v4/HomeV4ExplorerShell";
 import { HomeV4ReviewQueue } from "@/components/home/v4/HomeV4ReviewQueue";
 import type { HomeV4Candidate } from "@/components/home/v4/homeV4Visual";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
-import { listHomeKnowledgeV4CandidatesForReview, listHomeKnowledgeV4RecentJobRunFailures } from "@/lib/home/home-knowledge-v4-review";
+import {
+  getHomeKnowledgeV4LatestCandidateRenderPack,
+  listHomeKnowledgeV4CandidatesForReview,
+  listHomeKnowledgeV4RecentJobRunFailures,
+} from "@/lib/home/home-knowledge-v4-review";
 
 import skyharborFixture from "./_fixtures/skyharbor-air.json";
 import firstCapitalFixture from "./_fixtures/first-capital.json";
@@ -47,6 +51,12 @@ const FIXTURES: Record<string, HomeV4Candidate> = {
   "meridian-health": meridianFixture as unknown as HomeV4Candidate,
 };
 
+function isHomeV4CandidateShaped(value: unknown): value is HomeV4Candidate {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  return Boolean(candidate.tenant) && Array.isArray(candidate.dimensions);
+}
+
 export default async function HomeV4PreviewPage({
   searchParams,
 }: {
@@ -59,12 +69,19 @@ export default async function HomeV4PreviewPage({
 
   const params = (await searchParams) ?? {};
   const tenantKey = params.tenant && FIXTURES[params.tenant] ? params.tenant : "skyharbor-air";
-  const candidate = FIXTURES[tenantKey];
 
-  const [reviewCandidates, recentFailures] = await Promise.all([
+  const [reviewCandidates, recentFailures, dbCandidate] = await Promise.all([
     listHomeKnowledgeV4CandidatesForReview().catch(() => []),
     listHomeKnowledgeV4RecentJobRunFailures().catch(() => []),
+    getHomeKnowledgeV4LatestCandidateRenderPack(tenantKey).catch(() => null),
   ]);
+
+  // The explorer must never approve from a fixture-backed preview. Prefer
+  // the real, persisted database candidate whenever one exists and is
+  // shaped correctly; the static fixture is a fallback for a tenant that
+  // has never been generated at all, not a substitute for a real one.
+  const useDb = dbCandidate !== null && isHomeV4CandidateShaped(dbCandidate.render_pack);
+  const candidate = useDb ? (dbCandidate!.render_pack as HomeV4Candidate) : FIXTURES[tenantKey];
 
   return (
     <AppShell
@@ -85,6 +102,43 @@ export default async function HomeV4PreviewPage({
             </a>
           ))}
         </nav>
+      </div>
+      <div
+        className="heb-v4-preview-source-banner"
+        style={{
+          margin: "12px 0",
+          padding: "10px 14px",
+          borderRadius: 8,
+          fontSize: 12,
+          fontFamily: "monospace",
+          border: useDb ? "1px solid #2f6f4f" : "1px solid #a15c1c",
+          background: useDb ? "#eef7f1" : "#fdf3e7",
+          color: "#1a1a1a",
+        }}
+      >
+        <strong>{useDb ? "DB-BACKED" : "FIXTURE-BACKED (not approvable)"}</strong>
+        {" · tenant "}
+        <strong>{tenantKey}</strong>
+        {useDb && dbCandidate ? (
+          <>
+            {" · candidate "}
+            <strong>{dbCandidate.id}</strong>
+            {" · pack "}
+            <strong>{dbCandidate.pack_version}</strong>
+            {" · generated "}
+            <strong>{new Date(dbCandidate.created_at).toLocaleString()}</strong>
+            {" · validation "}
+            <strong>{dbCandidate.validation_status ?? "unknown"}</strong>
+            {" · status "}
+            <strong>{dbCandidate.status}</strong>
+            {dbCandidate.violations.length > 0 ? ` · ${dbCandidate.violations.length} finding(s)` : " · zero findings"}
+          </>
+        ) : (
+          <>
+            {" · no persisted candidate row found for this tenant, or it isn't shaped like a book-mode candidate"}
+            {" · rendering the static preview fixture instead — this content cannot be approved from here"}
+          </>
+        )}
       </div>
       <HomeV4ExplorerShell key={tenantKey} candidate={candidate} />
     </AppShell>
