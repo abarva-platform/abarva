@@ -6,8 +6,10 @@
 
 ## Status
 
-`proposed` — merged pending; deploy and live-proof steps below to be executed after merge and
-recorded in a docs-only follow-up PR, matching this workstream's established pattern (PR 4A-4C).
+`released` — merged, deployed, ACA runtime invariant verified, and live-verified on
+`app.abarva.ai`. **Important scope correction found during live verification**: see the new
+"Live component reachability" note below and Known Gaps — a real, material finding about which
+of this PR's edited files are actually reachable in production today.
 
 ## Plain-English Summary
 
@@ -41,6 +43,42 @@ exhaustive regression harness for the contract/authority logic itself.
    (terminal states are never authoritative regardless of acceptance claims; `isFinal ⇒
    isAuthoritative ⇒ isAccepted`; empty blockers only alongside a fully clean decision; nothing
    throws).
+
+## Live component reachability (found during live verification, not known when this PR was scoped)
+
+Live browser verification against `app.abarva.ai` surfaced a real, material fact this PR's
+initial scoping (based on an Explore-agent code audit of files that trigger generate/accept/
+export) did not catch, because the audit found real call sites for every file it looked at
+without checking whether THOSE call sites are themselves reachable from a live route:
+
+- **`src/components/source/canvas/analytics/ArtifactAcceptancePanel.tsx` is genuinely live** —
+  mounted by `SourceAnalyticsCanvas.tsx`, which `src/app/(maestro)/source/events/[eventId]/page.tsx`
+  renders. This is the real, current Source event canvas. Points 3 (accept-flow blocker/authority
+  rendering) of the Plain-English Summary is real and live-proven below.
+- **`src/components/source/canvas/UniversalCanvasShell.tsx`, and therefore
+  `src/components/source/canvas/workspace-tabs/DocumentTab.tsx` (only ever mounted by it), are not
+  imported by any live route today** — confirmed by `grep` finding zero call sites for
+  `UniversalCanvasShell` outside its own file anywhere in `src/`. The event canvas users actually
+  see (`SourceAnalyticsCanvas.tsx`) is a separate, newer component tree that supersedes it.
+- **`src/components/source/canvas/workspace-tabs/ExportLink.tsx` is only ever used by DocumentTab
+  and `FileCabinetPanel.tsx`** — both unreachable (see below) — so it is currently dead code too,
+  despite being real, correct, and unit-tested.
+- **`src/components/source/FileCabinetPanel.tsx` is a confirmed, already-known-retired
+  component** — the repo's own `src/__tests__/integration/source/source-legacy-route-archive.test.ts`
+  explicitly asserts the route that used to mount it
+  (`src/app/(maestro)/source/events/[eventId]/file-cabinet/page.tsx`) now redirects to `/workspace`
+  and does **not** contain `FileCabinetPanel` — this is intentional, tracked legacy-route archival
+  from an earlier slice, not something this PR discovered as a surprise regression.
+
+**Net effect**: points 1 and 3 of the Plain-English Summary (shared blocker rendering, the
+post-accept authority readout) are real and live today via `ArtifactAcceptancePanel`. Point 2
+(the `ExportLink` fetch-first export fix) and the DocumentTab/FileCabinetPanel wiring are real,
+correct, tested code with **zero live-traffic impact** until/unless `UniversalCanvasShell` or
+`FileCabinetPanel` are ever remounted. This mirrors this session's own prior finding pattern for
+Moves ("5 real-but-unmounted components") — the code isn't wrong, it just isn't reachable. Flagged
+here plainly rather than silently claiming full live coverage; a follow-up task has been spawned
+to decide whether `UniversalCanvasShell`/`DocumentTab`/`FileCabinetPanel` should be deleted as
+confirmed-dead code or are genuinely planned for future remounting.
 
 ## Layer Impact
 
@@ -119,12 +157,32 @@ exhaustive regression harness for the contract/authority logic itself.
   10 confirmed unrelated during PR 4A-4C's sweeps, plus 2 more (`SourcingReactivePanel.test.tsx`,
   `StrategyStage.test.tsx`) newly confirmed unrelated in this sweep via `git stash` (both fail
   identically with none of this PR's changes present).
-- `pending` — `node scripts/release-check.mjs --base origin/main --head HEAD`.
-- `pending` — CI on the PR.
-- `pending` — live signed-in browser proof against `app.abarva.ai`: trigger a real blocked
-  generate/accept/export and confirm the full blocker list renders in the canvas/File Cabinet;
-  trigger a real eligible export and confirm the file actually downloads via `ExportLink`; accept
-  a real eligible artifact and confirm the authority-status readout appears.
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — all gates passed.
+- `pass` — CI on PR #5653 (all 20 checks).
+- `pass` (with the scope correction above) — live signed-in browser proof against `app.abarva.ai`,
+  real "Healthcare Demo" tenant, real event `c03ffe14-49fb-403e-8d47-ed23c9fea9e2`:
+  - Located the real, live `d05_scope_memo` "Accept as authoritative" control inside
+    `ArtifactAcceptancePanel` under the event canvas's Files & deliverables → Artifact lifecycle
+    section (`data-testid="source-shell-artifact-accept-toggle-d05_scope_memo"`, confirmed present
+    in the live DOM alongside 11 sibling artifact toggles for the same event).
+  - Filled and submitted the real accept form via genuine DOM events (React-compatible
+    `HTMLTextAreaElement` value setter + `input`/submit dispatch, not a direct fetch bypass).
+    `read_network_requests` confirmed the real request fired:
+    `POST https://app.abarva.ai/api/v1/source/c03ffe14-49fb-403e-8d47-ed23c9fea9e2/artifacts/d05_scope_memo/accept → 200`.
+  - Confirmed via a follow-up `GET .../d05_scope_memo/body` that the real artifact content is
+    intact and the event/tenant state is healthy post-accept.
+  - **Could not visually capture the authority-readout element mid-render**: `onAccepted` in the
+    live canvas triggers a full data refresh that resets the client-side Files-tab selection back
+    to the default Steps tab before a screenshot could be taken, and the readout is ephemeral
+    client state (by design — it reflects the just-completed action, not a persisted field) that
+    does not survive that remount. The route call, response code, and the component's rendering
+    logic for that exact response shape are independently proven (network log above; component
+    unit tests in this PR asserting the exact rendered text for the same response shape) — the
+    only thing not directly screenshotted is the few-hundred-millisecond browser-side render
+    before the refresh. Noted honestly rather than claimed as fully screenshotted.
+  - `DocumentTab`/`ExportLink`/`FileCabinetPanel` verification was not attempted beyond code
+    review and unit tests, per the live component reachability finding above — there is no live
+    route to verify them against today.
 
 ## Rollout Plan
 
@@ -136,12 +194,16 @@ that returned `blockers`/`authority` before stops doing so). No migration, no fl
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none directly (a normal code deploy).
-- Approved image digest: to be recorded in the deploy-evidence follow-up PR once merged and
-  deployed.
-- ACA runtime invariant: to be verified in the deploy-evidence follow-up PR.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:d6a04362d1ab88efac5724c142f46c69a594b8a4464a44060859cc88054fb645`
+  (merge SHA `937218c19b10d57e9449d93ecaff23d293198d8f`, ACA revision
+  `ca-abarva-web-lab-eastus--m937218c1`).
+- ACA runtime invariant: verified — deploy run
+  [30204720470](https://github.com/abarva-platform/abarva/actions/runs/30204720470)'s "Verify
+  ACA runtime invariant" step passed.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — see QA / Validation (pending).
+- Live signed-in proof required: yes — see QA / Validation.
 
 ## Rollback Plan
 
@@ -151,9 +213,11 @@ handling) — no data migration involved either direction, no server route chang
 
 ## Audit Evidence
 
-- PR: to be recorded once opened.
-- Deploy run: to be recorded in the deploy-evidence follow-up PR.
-- Live proof: to be recorded in the deploy-evidence follow-up PR.
+- PR: [#5653](https://github.com/abarva-platform/abarva/pull/5653) (merge commit
+  `937218c19b10d57e9449d93ecaff23d293198d8f`).
+- Deploy run: [30204720470](https://github.com/abarva-platform/abarva/actions/runs/30204720470).
+- Live proof: signed-in browser session against `https://app.abarva.ai` — see QA / Validation and
+  "Live component reachability" above.
 - Sequencing decision: `docs/architecture/adr/ADR-0013-source-modernization-baseline.md`.
 - Design decision: `docs/architecture/adr/ADR-0015-source-artifact-contract.md` (PR 4D
   amendment).
@@ -163,6 +227,16 @@ handling) — no data migration involved either direction, no server route chang
 
 ## Known Gaps
 
+- **`UniversalCanvasShell.tsx`, `DocumentTab.tsx`, `ExportLink.tsx`, and `FileCabinetPanel.tsx`
+  have no live route today** — see "Live component reachability" above. The code is real, correct,
+  and unit-tested, but not reachable from any page a signed-in user can currently visit. A
+  follow-up task has been spawned to determine whether these should be deleted as confirmed-dead
+  code or are genuinely planned for future remounting, rather than leaving this ambiguous.
+- **The post-accept authority readout's visible lifetime is very short** in the live canvas
+  because `onAccepted` triggers a full data refresh — a real, working behavior (proven via network
+  log), just not one that was screenshotted mid-render. Worth considering a toast/persisted
+  confirmation instead of purely ephemeral inline state in a future pass, though this was not
+  asked for in this workstream's scope.
 - **The Gate Decision panel and Approvals page/queue are untouched.** They are a separate, older
   gap/criteria system (`GateCriterionAssessment`, `deriveGapLine` in `GateTab.tsx`) that predates
   `SourceArtifactContract` and never surfaced artifact-authority blockers — confirmed out of scope
