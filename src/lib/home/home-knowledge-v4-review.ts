@@ -143,6 +143,60 @@ export async function listHomeKnowledgeV4CandidatesForReview(): Promise<HomeKnow
   }
 }
 
+export interface HomeKnowledgeV4CandidateRenderPack {
+  id: string;
+  tenant_key: string;
+  pack_version: string;
+  status: string;
+  validation_status: string | null;
+  violations: HomeKnowledgeV4ReviewViolation[];
+  created_at: string;
+  render_pack: unknown;
+}
+
+// The real, persisted book-mode candidate for one tenant -- render_pack and
+// all -- not the review queue's summary row. /home/v4-preview's explorer
+// previously rendered only a build-time-bundled fixture file; approving a
+// candidate from that fixture would mean approving content nobody actually
+// re-read from the database. Returns null (never throws) on any failure or
+// absence so the caller can fall back to the fixture and say so honestly,
+// rather than crash the page.
+export async function getHomeKnowledgeV4LatestCandidateRenderPack(
+  tenantKey: string,
+): Promise<HomeKnowledgeV4CandidateRenderPack | null> {
+  const dbUrl = connectionString();
+  if (!dbUrl) return null;
+  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-candidate-render-pack-read"));
+  try {
+    await client.connect();
+    const result = await client.query(
+      `SELECT id, tenant_key, pack_version, status, validation_status, quality_report, created_at, render_pack
+         FROM public.home_knowledge_packs
+        WHERE tenant_key = $1 AND artifact_type = $2
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [tenantKey, ARTIFACT_TYPE],
+    );
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      tenant_key: row.tenant_key,
+      pack_version: row.pack_version,
+      status: row.status,
+      validation_status: row.validation_status,
+      violations: Array.isArray(row.quality_report?.violations) ? row.quality_report.violations : [],
+      created_at: row.created_at,
+      render_pack: row.render_pack,
+    };
+  } catch (error) {
+    console.warn("[home-v4-review] failed to read latest candidate render_pack", error);
+    return null;
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
 // Full version history for one tenant -- what the review-queue's "latest
 // row only" listing above deliberately omits. Needed for rollback: you can
 // only roll back to a pack you can see.
