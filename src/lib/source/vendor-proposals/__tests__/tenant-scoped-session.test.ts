@@ -58,4 +58,34 @@ describe("withVendorProposalFactsSession", () => {
       "source-vendor-proposal-facts",
     );
   });
+
+  // RLS/tenant-isolation workstream, PR C — service_role must only ever be
+  // reachable through the documented, hardcoded server_role_all_* Postgres
+  // policies, never through this application code path. identity.role is a
+  // logical app-level role (member/tenant_admin/maestro) that becomes the
+  // JWT `role` claim consumed by is_maestro()/current_user_role() — it must
+  // never influence the literal Postgres ROLE this module assumes, even if
+  // a caller (by bug or malice) passed the string "service_role" as that
+  // field.
+  it("always issues the literal 'SET LOCAL ROLE authenticated' regardless of identity.role — never derives the Postgres role from caller input", async () => {
+    for (const role of [
+      "member",
+      "tenant_admin",
+      "maestro",
+      "service_role",
+      "anon",
+    ]) {
+      runCalls.length = 0;
+      await withVendorProposalFactsSession(
+        { tenantKey: "apexretail", role, userId: "u1" },
+        async () => undefined,
+      );
+      expect(runCalls[1]!.sql).toBe("SET LOCAL ROLE authenticated");
+      const claims = JSON.parse(runCalls[0]!.params[0] as string);
+      expect(claims.role).toBe(role); // the JWT claim carries it through...
+      expect(runCalls.map((c) => c.sql).join("\n")).not.toContain(
+        "SET LOCAL ROLE service_role",
+      ); // ...but the connecting ROLE never does.
+    }
+  });
 });
