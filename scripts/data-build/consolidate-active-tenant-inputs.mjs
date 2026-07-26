@@ -230,7 +230,15 @@ const primaryKeyByDomain = {
   ai_automation_use_cases: ["use_case_name"],
   risks_controls: ["risk_or_control_name"],
   relationships: ["from_object_name", "relationship_type", "to_object_name"],
-  evidence_sources: ["source_file", "source_type"],
+  // source_type alone must never fracture identity: several distinct source
+  // artifacts can legitimately share a type (e.g. two different "interview"
+  // sources), and a blank source_type on some incoming rows would otherwise
+  // form its own spurious collision group separate from the real artifact.
+  // __sourceVersionKey (as_of_date, falling back to source_date) is included
+  // so two snapshots/versions of the same artifact don't collapse into one --
+  // temporary v3-compatibility identity only; see the v4-candidate schema's
+  // source_id/source_version_id for the real answer.
+  evidence_sources: ["source_file", "__sourceVersionKey"],
   metrics_outcomes: ["metric_name"],
   industry_context_patterns: ["pattern_name"],
   expert_lenses: ["lens_name"],
@@ -430,11 +438,65 @@ function mergeRows(existing, incoming, context, reports) {
   return existing;
 }
 
+// Confirmed defect (see reports/tenant-input-consolidation/latest/conflict-resolution-report.json,
+// evidence_sources entries): "source_file" means two different things depending on the domain. On
+// every other domain it is lineage metadata about where the CANONICAL ROW was consolidated from, so
+// overwriting it with the physical consolidation-time path is correct. On evidence_sources it is the
+// row's own BUSINESS IDENTITY -- the source artifact being registered -- and overwriting it collapsed
+// every row from the same input file onto the same identity, forcing multiple genuinely distinct
+// evidence-source records to merge via mergeRows()'s conflict resolution. Domain-specialized rather
+// than a blanket change, since every other domain's current behavior is correct as-is.
+const DOMAINS_WHERE_SOURCE_FILE_IS_BUSINESS_IDENTITY = new Set(["evidence_sources"]);
+
+// A v3 evidence_sources input with populated citation-level fields is not a
+// valid source-registry row -- it's a citation/observation from the
+// evidence_items concept that hasn't been split out yet (see the v4-candidate
+// template). Silently merging or silently treating each such row as its own
+// "source" both hide the real defect. Fail hard instead.
+const HYBRID_EVIDENCE_CITATION_FIELD_SIGNATURE = [
+  "evidence_id", "source_row_id", "evidence_location", "locator", "claim", "citation", "excerpt",
+];
+
+class HybridEvidenceContractError extends Error {
+  constructor(message, details) {
+    super(message);
+    this.name = "HybridEvidenceContractError";
+    this.code = "hybrid_evidence_contract";
+    this.details = details;
+  }
+}
+
+function assertNoHybridEvidenceCitationFields(domain, sourceRow, context) {
+  if (domain !== "evidence_sources") return;
+  const populatedCitationFields = HYBRID_EVIDENCE_CITATION_FIELD_SIGNATURE.filter((field) => {
+    const value = sourceRow[field];
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  });
+  if (populatedCitationFields.length > 0) {
+    throw new HybridEvidenceContractError(
+      `evidence_sources row carries citation-level field(s) [${populatedCitationFields.join(", ")}] -- this belongs in the evidence_items entity, not the source registry. Refusing to merge or promote it as a source. ${JSON.stringify(context)}`,
+      { populatedCitationFields, context },
+    );
+  }
+}
+
 function mapRow({ tenant, domain, templateColumns, sourceRow, sourcePath, packet, rowNumber, fileFingerprint }) {
+  assertNoHybridEvidenceCitationFields(domain, sourceRow, { tenantKey: tenant.tenantKey, sourcePath, rowNumber });
+
   const mapped = {};
   for (const column of templateColumns) {
     if (column === "tenant_key") {
       mapped[column] = tenant.tenantKey;
+    } else if (column === "source_file" && DOMAINS_WHERE_SOURCE_FILE_IS_BUSINESS_IDENTITY.has(domain)) {
+      // The row's own semantic source_file IS its business identity here --
+      // unlike every other domain, this must never fall back to the physical
+      // consolidation-time path. That fallback previously turned "the
+      // evidence source is unknown" into "the evidence source is
+      // 13_evidence_sources.csv itself" (confirmed self-reference in
+      // SkyHarbor's active rows). A row with no semantic source_file of its
+      // own is left empty and flagged via
+      // __validationFailure=missing_evidence_source_identity instead.
+      mapped[column] = firstValue(sourceRow, fieldAliases[column] ?? [column]);
     } else if (column === "source_file") {
       mapped[column] = sourcePath;
     } else {
@@ -455,6 +517,14 @@ function mapRow({ tenant, domain, templateColumns, sourceRow, sourcePath, packet
   mapped.source_fingerprint = fileFingerprint;
   mapped.consolidation_rule_used = "retained_from_active_source";
   mapped.conflict_status = "none";
+  if (DOMAINS_WHERE_SOURCE_FILE_IS_BUSINESS_IDENTITY.has(domain) && !mapped.source_file) {
+    mapped.__validationFailure = "missing_evidence_source_identity";
+  }
+  // Temporary v3-compatibility identity ONLY -- source_file alone would
+  // collapse two distinct snapshots/versions of the same artifact. Real
+  // per-version identity (source_id + source_version_id) belongs to the v4
+  // candidate schema; this is deliberately imperfect, not a final answer.
+  mapped.__sourceVersionKey = mapped.as_of_date || mapped.source_date || "";
   mapped.__precedence = sourcePrecedence(packet.packetId, sourcePath);
   mapped.__exactKey = exactKey(mapped);
   mapped.__businessKey = businessKey(domain, mapped);
@@ -611,6 +681,8 @@ function run() {
     rowDeduplication: [],
     sourcePrecedence: [],
     conflictResolution: [],
+    hybridEvidenceContractViolations: [],
+    missingEvidenceSourceIdentity: [],
     archivedActiveFiles: [],
     registryUpdate: { tenants: [] },
     guardrails: {
@@ -656,16 +728,39 @@ function run() {
 
         const fileFingerprint = fingerprint(text);
         parsed.rows.forEach((sourceRow, index) => {
-          const mapped = mapRow({
-            tenant,
-            domain,
-            templateColumns: template.columns,
-            sourceRow,
-            sourcePath,
-            packet,
-            rowNumber: index + 2,
-            fileFingerprint,
-          });
+          let mapped;
+          try {
+            mapped = mapRow({
+              tenant,
+              domain,
+              templateColumns: template.columns,
+              sourceRow,
+              sourcePath,
+              packet,
+              rowNumber: index + 2,
+              fileFingerprint,
+            });
+          } catch (error) {
+            if (error instanceof HybridEvidenceContractError) {
+              reports.hybridEvidenceContractViolations.push({
+                tenantKey: tenant.tenantKey,
+                domain,
+                sourcePath,
+                rowNumber: index + 2,
+                populatedCitationFields: error.details.populatedCitationFields,
+              });
+              return; // Row is rejected outright -- never merged, never promoted as its own source.
+            }
+            throw error;
+          }
+          if (mapped.__validationFailure === "missing_evidence_source_identity") {
+            reports.missingEvidenceSourceIdentity.push({
+              tenantKey: tenant.tenantKey,
+              domain,
+              sourcePath,
+              rowNumber: index + 2,
+            });
+          }
           const exact = mapped.__exactKey;
           const business = mapped.__businessKey || `${sourcePath}:${index + 2}`;
           if (exactSeenByDomain.get(domain).has(exact)) {
@@ -844,4 +939,9 @@ function run() {
   console.log(path.relative(repoRoot, path.join(outDir, "summary.md")));
 }
 
-run();
+export { mapRow, mergeRows, businessKey, exactKey, primaryKeyByDomain, DOMAINS_WHERE_SOURCE_FILE_IS_BUSINESS_IDENTITY, HybridEvidenceContractError };
+
+const isDirectlyExecuted = import.meta.url === `file://${process.argv[1]}`;
+if (isDirectlyExecuted) {
+  run();
+}
