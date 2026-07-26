@@ -385,6 +385,7 @@
     "home:knowledge-v4:persist-book:write": "node scripts/knowledge/persist-home-knowledge-v4-book.mjs --tenant=all --write-db",
     "home:knowledge-v4:persist-book:approve": "node scripts/knowledge/persist-home-knowledge-v4-book.mjs --write-db",
     "home:knowledge-v4:inspect-candidate": "node scripts/knowledge/inspect-home-knowledge-v4-candidate.mjs",
+    "home:knowledge-v4:lifecycle": "node scripts/knowledge/manage-home-knowledge-v4-lifecycle.mjs",
     "home:knowledge-v4:canary-and-persist-job": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --out-dir=/tmp/home-knowledge-v4-canary; node scripts/knowledge/persist-home-knowledge-v4-book.mjs --candidate-dir=/tmp/home-knowledge-v4-canary --write-db",
     "generate:knowledge-dimension-narratives": "npx tsx scripts/knowledge/generate-knowledge-dimension-narratives.ts",
     "audit:knowledge-dimension-narratives": "npx tsx scripts/knowledge/audit-knowledge-dimension-narratives.ts",
