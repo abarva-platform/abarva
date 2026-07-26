@@ -34,11 +34,11 @@ import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence
 import {
   buildSourceGenerationContext,
   collectUpstreamBodies,
-  findMissingUpstreamCodes,
   getPromptTemplate,
   type SourceGenerationContext,
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
+import { findUnsatisfiedRequiredUpstream } from "@/lib/source/contracts/upstream-satisfaction";
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
 import { generateD09ViaMapReduce } from "@/lib/source/agent-generation/d09-map-reduce";
@@ -416,12 +416,19 @@ export async function generateSourceArtifactDraft(
     );
   }
 
-  // Contract-driven eligibility (PR 4B, ADR-0015): stage eligibility (new —
-  // nothing previously checked this) plus the upstream-required gate
-  // (existing "does a non-empty body exist" check, now resolved through the
-  // shared resolver both generation routes use). Refuses with 409 + a
-  // structured blocker so the UI can surface a precise message.
-  const missingUpstream = findMissingUpstreamCodes(template, ctx);
+  // Contract-driven eligibility (PR 4B/4C, ADR-0015): stage eligibility (PR
+  // 4B) plus the upstream-required gate — PR 4C replaces the original "does
+  // a non-empty body exist" check (findMissingUpstreamCodes) with the real
+  // upstream-satisfaction resolver: a required upstream artifact must be
+  // ACCEPTED, AUTHORITATIVE, and non-superseded, not merely have a body. A
+  // candidate draft, a review-pending artifact, a rejected/blocked one, or a
+  // superseded version no longer satisfies the requirement — this is the
+  // shared resolver ask #6 required, so no route implements its own
+  // interpretation of "satisfied."
+  const missingUpstream = await findUnsatisfiedRequiredUpstream(
+    ctx,
+    template.upstreamRequired,
+  );
   const eligibility = evaluateGenerationEligibility({
     artifactCode,
     currentStage: ctx.event.currentStageKey,

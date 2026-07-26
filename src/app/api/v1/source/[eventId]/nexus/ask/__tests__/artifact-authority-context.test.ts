@@ -28,6 +28,48 @@ describe("Source nexus/ask artifact authority context", () => {
     expect(ROUTE_SOURCE).toContain("formatSourceArtifactAuditExcerpt");
   });
 
+  // PR 4C (ADR-0015): hasActiveAcceptance is now populated for real —
+  // previously no caller ever set it, so the SOURCE-SHELL-004 acceptance
+  // ledger had zero effect on which artifact this route treats as
+  // authoritative for d16/d19/d22/d24 and every other slot.
+  it("wires getLatestArtifactAcceptancesByArtifactIds into the authority-candidate builder", () => {
+    expect(ROUTE_SOURCE).toContain("getLatestArtifactAcceptancesByArtifactIds");
+    expect(ROUTE_SOURCE).toContain("hasActiveAcceptance: acceptanceByArtifactId.has(artifact.id)");
+  });
+
+  it("an artifact with an active acceptance record outranks a newer, unaccepted 'generated' draft in the same slot", () => {
+    // Confirms the precedence this route now actually exercises: acceptance
+    // (pool 2) outranks isCurrentAuthoritative/status/generated-origin
+    // (pools 3-5) — a scenario the pre-existing client-final-vs-superseded
+    // test above never covered.
+    const artifacts = [
+      {
+        id: "unaccepted-newer-draft",
+        lifecycleState: "current",
+        status: "draft",
+        sourceOrigin: "generated",
+        updatedAt: "2026-07-26T12:00:00.000Z", // newer
+        hasActiveAcceptance: false,
+        slotKey: "evaluation::d16_scorecard",
+      },
+      {
+        id: "accepted-older-draft",
+        lifecycleState: "current",
+        status: "draft",
+        sourceOrigin: "generated",
+        updatedAt: "2026-07-20T12:00:00.000Z", // older
+        hasActiveAcceptance: true,
+        slotKey: "evaluation::d16_scorecard",
+      },
+    ];
+    const slots = resolveAuthoritativeArtifactSlots(
+      artifacts,
+      (artifact) => artifact.slotKey,
+    );
+    expect(slots).toHaveLength(1);
+    expect(slots[0].authoritative.id).toBe("accepted-older-draft");
+  });
+
   it("keeps superseded same-slot draft chunks out of the substantive evidence set", () => {
     const artifacts = [
       {

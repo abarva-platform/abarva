@@ -64,6 +64,19 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   })),
 }));
 
+// PR 4C (ADR-0015): contract-driven export eligibility. Default to "already
+// accepted" so the pre-existing download-mechanics tests below (which
+// predate this gate and assert on substitution/format/filename behavior,
+// not governance) aren't incidentally blocked by the acceptance leg of the
+// check — their fixtures are updated to clear the governance-stage leg
+// explicitly (status/approvedBy) where the artifact code is client-facing.
+let mockHasAcceptance = true;
+jest.mock("@/lib/source/artifact-acceptances", () => ({
+  getLatestArtifactAcceptance: jest.fn(async () =>
+    mockHasAcceptance ? { id: "acc-1" } : null,
+  ),
+}));
+
 import { GET } from "../route";
 import { NextRequest } from "next/server";
 
@@ -82,6 +95,7 @@ beforeEach(() => {
   registryArtifact = null;
   artifactStateBody = null;
   blobDownloads = [];
+  mockHasAcceptance = true;
 });
 
 describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
@@ -99,6 +113,8 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
       sourceEventId: "event-1",
       artifactType: "d09_rfp_pack",
       artifactGroup: "generated",
+      status: "approved",
+      approvedBy: "user-1",
     };
     const res = await GET(req(), params("a1"));
     expect(res.status).toBe(200);
@@ -179,7 +195,8 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
       sourcingStage: "rfp",
       artifactType: "d09_rfp_pack",
       artifactGroup: "generated",
-      status: "draft",
+      status: "approved",
+      approvedBy: "user-1",
       lifecycleState: "current",
       isClientFinal: false,
       isCurrentAuthoritative: false,
@@ -232,7 +249,8 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
       sourcingStage: "rfp",
       artifactType: "d09_rfp_pack",
       artifactGroup: "generated",
-      status: "draft",
+      status: "approved",
+      approvedBy: "user-1",
       lifecycleState: "current",
       updatedAt: "2026-07-03T00:00:00.000Z",
     };
@@ -277,6 +295,8 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
       sourceEventId: "event-1",
       artifactType: "d09_rfp_pack",
       artifactGroup: "approval",
+      status: "approved",
+      approvedBy: "user-1",
     };
     const res = await GET(req(), params("a1"));
 
@@ -300,6 +320,8 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
       sourceEventId: "event-1",
       artifactType: "d05_scope_memo",
       artifactGroup: "generated",
+      status: "approved",
+      approvedBy: "user-1",
     };
     artifactSiblings = [
       {
@@ -340,6 +362,8 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
       sourceEventId: "event-1",
       artifactType: "d05_scope_memo",
       artifactGroup: "generated",
+      status: "approved",
+      approvedBy: "user-1",
     };
     artifactStateBody = "# Scope Memo\n\nInternal markdown source.";
 
@@ -403,5 +427,57 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
     );
     expect(res.headers.get("x-source-artifact-inline")).toBe("true");
     await expect(res.text()).resolves.toContain("Generated draft body");
+  });
+
+  // PR 4C (ADR-0015): contract-driven export eligibility applies to this
+  // route too — it is a second, independently-callable export surface
+  // alongside the unified render route, and the user's ask was explicit
+  // that no export/download route may decide eligibility on its own.
+  it("blocks download with a structured 409 when the client-facing artifact has not cleared export eligibility", async () => {
+    artifact = {
+      blobContainer: "source-artifacts",
+      blobPath: "p",
+      fileName: "AMS RFP.docx",
+      fileFormat: "docx",
+      version: 1,
+      sourceEventId: "event-1",
+      sourcingStage: "rfp",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      status: "draft",
+      lifecycleState: "current",
+    };
+    mockHasAcceptance = false;
+
+    const res = await GET(req(), params("a1"));
+
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe("export_not_eligible");
+    expect(body.governanceStage).toBe("ai_draft");
+    expect(blobDownloads).toEqual([]);
+  });
+
+  it("allows download once the client-facing artifact is approved for external use and accepted", async () => {
+    artifact = {
+      blobContainer: "source-artifacts",
+      blobPath: "p",
+      fileName: "AMS RFP.docx",
+      fileFormat: "docx",
+      version: 2,
+      sourceEventId: "event-1",
+      sourcingStage: "rfp",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      status: "approved",
+      approvedBy: "reviewer-1",
+      lifecycleState: "current",
+    };
+    mockHasAcceptance = true;
+
+    const res = await GET(req(), params("a1"));
+
+    expect(res.status).toBe(200);
+    expect(blobDownloads).toEqual([{ bucket: "source-artifacts", path: "p" }]);
   });
 });

@@ -39,6 +39,10 @@ import { resolveAuthoritativeArtifact } from "@/lib/source/client-final-artifact
 import { downloadArtifactBytes } from "@/lib/source/file-cabinet/blob-store";
 import { artifactContentDisposition } from "@/lib/source/file-cabinet/content-disposition";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getLatestArtifactAcceptance } from "@/lib/source/artifact-acceptances";
+import { resolveArtifactAuthority } from "@/lib/source/contracts/artifact-authority";
+import { getSourceArtifactContract } from "@/lib/source/contracts/registry";
 import {
   contentTypeFor,
   type ArtifactFileFormat,
@@ -198,6 +202,61 @@ async function renderArtifact(
       },
       { status: 404 },
     );
+  }
+
+  // Contract-driven export eligibility (PR 4C, ADR-0015). Only applies when
+  // the canonical code has a registered SourceArtifactContract (PR 4A's
+  // registry covers the 33 d-code artifacts; other rendered kinds are
+  // untouched by this gate, named explicitly rather than silently extended
+  // to codes this workstream never analyzed). When a contract exists AND
+  // the artifact has a linked source_artifacts row, export is blocked
+  // unless the resolved authority decision says it's eligible — e.g. a
+  // client-facing artifact still at ai_draft cannot export until it clears
+  // approved_for_external_use, matching the contract's exportEligibility
+  // rule. No linked artifact yet (nothing generated/uploaded) is not a
+  // governance concern this gate blocks — that fails naturally downstream.
+  const exportContract = getSourceArtifactContract(canonicalArtifactCode);
+  if (exportContract) {
+    const linkedArtifactId = ctx.artifactStates.find(
+      (state) => state.artifactCode === canonicalArtifactCode,
+    )?.linkedArtifactId;
+    if (linkedArtifactId) {
+      const [{ data: governanceRow }, latestAcceptance] = await Promise.all([
+        getAzureReadFluentClient()
+          .from("source_artifacts")
+          .select("status, lifecycle_state, approval_state, approved_by")
+          .eq("id", linkedArtifactId)
+          .maybeSingle<{
+            status: string | null;
+            lifecycle_state: string | null;
+            approval_state: string | null;
+            approved_by: string | null;
+          }>(),
+        getLatestArtifactAcceptance(linkedArtifactId),
+      ]);
+      if (governanceRow) {
+        const authority = resolveArtifactAuthority({
+          code: canonicalArtifactCode,
+          status: governanceRow.status,
+          lifecycleState: governanceRow.lifecycle_state,
+          approvalState: governanceRow.approval_state,
+          approvedBy: governanceRow.approved_by,
+          hasActiveAcceptance: latestAcceptance !== null,
+          eventStageKey: ctx.event.currentStageKey,
+        });
+        if (!authority.isExportEligible) {
+          return Response.json(
+            {
+              error: "export_not_eligible",
+              detail: `${canonicalArtifactCode} cannot be exported yet: ${authority.blockers.map((b) => b.detail).join(" ")}`,
+              governanceStage: authority.governanceStage,
+              blockers: authority.blockers,
+            },
+            { status: 409 },
+          );
+        }
+      }
+    }
   }
 
   // Build spec + render.

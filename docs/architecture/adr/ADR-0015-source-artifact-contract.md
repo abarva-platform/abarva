@@ -209,6 +209,140 @@ today only exists via `client-final-artifacts.ts`'s slot-based resolver
 (`resolveAuthoritativeArtifactSlots`), never wired to either generation route. A distinct,
 larger, separate follow-up.
 
+## Amendment (2026-07-26) — PR 4C: review, export, and downstream enforcement
+
+PR 4B enforced stage/upstream eligibility at generation time. PR 4C closes the distinction it
+surfaced: AI generation enforces stage + authoritative-upstream; human chat-save authoring may
+still create an out-of-sequence draft, but what it creates must not automatically become
+authoritative, exportable, or available to downstream decision artifacts. Concretely:
+
+**1. A new shared authority resolver — `src/lib/source/contracts/artifact-authority.ts`.**
+`resolveArtifactAuthority(input)` is now the one place that decides, for any artifact instance,
+whether it is `isDraft`, `isAccepted`, `isAuthoritative`, `isExportEligible`, or `isFinal`, plus a
+structured `blockers[]` list explaining why not. It composes two pre-existing, previously-unwired
+mechanisms rather than inventing new ones: `deriveSourceArtifactGovernanceStage()`
+(`artifact-governance.ts`, already correct, had exactly one call site before this PR — the accept
+route) and the contract's `exportEligibility`/`finalityConditions` fields (PR 4A, never read by
+any route before this PR). `upstreamCandidateSatisfiesRequirement(input)` is a one-line wrapper
+(`resolveArtifactAuthority(input).isAuthoritative`) — the single definition of "satisfies an
+upstream requirement" that every consumer now shares, per the ask that no route implement its own
+interpretation.
+
+**2. Root-cause finding: the acceptance ledger had zero effect on anything before this PR.**
+`source_artifact_acceptances` (built in a prior slice) and `resolveAuthoritativeArtifact`'s
+`hasActiveAcceptance` pool (also pre-existing, correctly designed) were never connected — no live
+caller anywhere in the repo ever populated `hasActiveAcceptance` on a candidate. Accepting an
+artifact inserted an audit-ledger row and nothing else. This PR wires it into every place authority
+is actually decided:
+   - **Accept route** (`accept/route.ts`): now resolves the artifact's `SourceArtifactContract`
+     first (404 `unsupported_artifact` if none is registered — no more accepting a code this
+     workstream has no opinion about), replaces the acceptance-authority permission check with
+     `accessPolicy?.[contract.acceptanceAuthority]` (contract-driven, though today's schema has
+     exactly one authority value so behavior is unchanged — the existing stronger permission bar
+     is preserved, not weakened), adds a genuinely new stage-eligibility gate before acceptance
+     (409 `stage_not_eligible` if the artifact's stage hasn't been reached), and returns the full
+     `ArtifactAuthorityDecision` in the success response instead of just the ledger row.
+   - **`nexus/ask/route.ts`**: `toArtifactAuthorityCandidate` now populates real
+     `hasActiveAcceptance` via a batch `getLatestArtifactAcceptancesByArtifactIds` lookup before
+     calling `resolveAuthoritativeArtifactSlots` — the pool-based resolver's acceptance pool
+     (pool 2, ranked above status/generated-origin) now actually has data. This is the mechanism
+     behind ask #5's "Source aVa evaluation/comparison contexts" — d16/d19/d22/d24 and every other
+     slot this route resolves now prefer an accepted artifact over a newer, unaccepted draft in
+     the same slot.
+   - **AI-generate route**: `findMissingUpstreamCodes` (body-presence only) replaced with
+     `findUnsatisfiedRequiredUpstream` (`src/lib/source/contracts/upstream-satisfaction.ts`),
+     which resolves each required upstream code's authority for real — draft, review-pending,
+     rejected (`status: "blocked"` — see point 4), and superseded upstream artifacts no longer
+     satisfy a requirement just because a body exists. `collectUpstreamBodies` (the function that
+     actually binds upstream text into the generation prompt) is intentionally left unchanged: it
+     is called with `[...upstreamRequired, ...upstreamOptional]` AFTER the new gate has already
+     confirmed every required code is authoritative, so binding its body is safe by construction;
+     optional codes still bind on "any body present," matching PR 4A's required-vs-optional
+     distinction. This function has exactly one live call site in the repo (this route) — the
+     broader "downstream chain used by exports or Decision Brief generation" ask #5 named does
+     not exist as a separate code path today: `spec-builder.ts` and every renderer render each
+     artifact's own already-generated body; they do not re-stitch other artifacts' content at
+     render time. The two enforcement points above (generation-time upstream authority + the
+     export-eligibility gate in point 3) are the complete set of places this chain passes through.
+   - **Vendor-proposal authoritative-fact context** (`getAuthoritativeVendorProposalFacts`,
+     bound into `ctx.authoritativeVendorProposalFacts` in `context-binder.ts`) already resolves
+     authority correctly — built in an earlier slice (PR3) with its own accept/reject ledger for
+     the separate `VendorProposalFact` model. Out of scope for this PR; named here only to confirm
+     it was checked, not silently skipped.
+
+**3. Contract-driven export eligibility — the render and download routes.** Both
+`[eventId]/artifacts/[artifactCode]/render/route.ts` (the unified render route) and
+`artifacts/[artifactId]/download/route.ts` (File Cabinet / Gate Decision panel / canvas Document
+tab) now resolve the linked artifact's `SourceArtifactContract` and, when one is registered, block
+with a structured `409 export_not_eligible` (governance stage + full `blockers[]`) whenever
+`resolveArtifactAuthority(...).isExportEligible` is false — e.g. a client-facing artifact still at
+`ai_draft` cannot export until it clears `approved_for_external_use`. The gate is skipped silently
+(not blocked) when no contract is registered for the code, or when nothing has been generated/
+linked yet — this PR does not extend new restrictions to artifact families it never analyzed, and
+"nothing to export yet" is a different failure mode the existing code already handles. Both routes'
+pre-existing test suites needed real fixture updates (several used draft/unapproved `d09_rfp_pack`
+and `d05_scope_memo` fixtures to test unrelated mechanics — substitution, format resolution,
+filename encoding) — those fixtures now carry `status: "approved", approvedBy` so they continue to
+exercise what they were built to test, and each route gained two new tests proving the gate itself
+(blocked when not eligible, allowed once accepted + approved for external use).
+
+**4. Rejected artifacts, honestly scoped.** No reject mechanism exists for general d0X Source
+artifacts (only the separate `VendorProposalFact` model has one). `resolveArtifactAuthority`
+treats `status === "blocked"` — an existing, currently-unused enum value — as the rejected/
+terminal-non-authoritative signal, alongside `lifecycleState === "superseded" | "retired"`. This is
+named explicitly as an honest, minimal interpretation of an existing field, not new reject
+infrastructure this PR was not asked to build.
+
+**5. Governance-banner text normalization across renderers — explicitly scoped OUT, inventoried
+rather than silently skipped.** Of the 20 `SourceDeliverableKind` values, renderers fall into three
+groups:
+   - **Shared narrative renderer** (`narrative-docx.ts` / `narrative-html.ts`) — backs 9 kinds
+     (strategy-memo, scope-memo, rfp-package, vendor-response-pack, pricing-workbook-summary,
+     decision-brief, selection-memo, demand-challenge, sourcing-approach, vendor-risk-pack). Calls
+     `sourceArtifactGovernanceBanner()` / a hardcoded `SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE`, both
+     unconditionally as if every rendered artifact is at `ai_draft` — this was true before this PR
+     (nothing computed a real stage at render time) and remains true after it, since PR 4C's export
+     gate blocks ineligible exports at the route level before rendering ever runs, but does not
+     change what the rendered banner *text* claims for artifacts that DO clear the gate.
+   - **Structured renderers wired to governance, same hardcoded-`'ai_draft'` limitation**:
+     app-inventory(+docx), bafo-question-pack-docx, market-scan-docx, pricing-template(+docx),
+     response-checklist(+docx), scorecard(+docx) — 6 dedicated renderer pairs.
+   - **Structured renderers with NO governance banner call at all**: tco-iceberg(+docx),
+     ai-clause-gap(+docx+html), renewal-decision(+docx), pricing-comparison(+docx), trap-log(+docx)
+     — 5 dedicated renderer pairs. These render with no draft/final banner of any kind today.
+
+   Making the banner *text* reflect the artifact's real governance stage requires threading a
+   computed `governanceStage` (or the full `ArtifactAuthorityDecision`) from
+   `buildSourceDeliverableSpec()` — which has the context needed to look up the linked artifact's
+   real row — down through `SourceDeliverableSpec` into all ~20 renderer call sites, replacing every
+   hardcoded literal and adding a banner call to the 5 kinds that have none. That is a real,
+   separate, mechanical plumbing change (new spec field + ~20 call-site edits + new tests per
+   renderer), not attempted here under the same PR as the authority resolver, the two export gates,
+   and the acceptance-ledger wiring above. Tracked as explicit follow-up (PR 4C-2 or folded into
+   PR 4D) rather than silently left unstated. The export **gate** (point 3) is the actual access-
+   control mechanism and is real and enforced now; the banner **text** inside a successfully-exported
+   file is the part still pending.
+
+**Preserving the human-authoring decision.** Chat-save is unchanged by this PR beyond PR 4B's
+stage-eligibility check: it can still create an out-of-sequence draft (`accept/__tests__/route.test.ts`
+and `[eventId]/artifacts/generate/__tests__/route.test.ts` both still pass unmodified). What
+changes is what that draft can *become*: it cannot be accepted before its stage is reached (accept
+route's new gate), cannot export until it clears the contract's governance-stage minimum (render/
+download gates), and does not satisfy an upstream requirement or win an authoritative slot until it
+actually is accepted (upstream-satisfaction.ts, nexus/ask wiring). Stage and upstream eligibility
+are enforced at acceptance/export/downstream-consumption time, not at save time — exactly as asked.
+
+**Required-tests coverage.** `artifact-authority.test.ts` (16 tests: draft/accepted/authoritative/
+export-eligible/final permutations, including out-of-sequence-draft-blocked-two-ways, rejected-
+via-`blocked`, superseded-never-authoritative, client-facing-vs-internal export minimums, finality
+requiring sibling sign-off); `upstream-satisfaction.test.ts` (6 tests, including the batched-no-N+1
+proof); `accept/route.test.ts` (+3: authority decision on success, stage-gated 409, unregistered-
+code 404); `nexus/ask` context test (+2: acceptance-wired structural proof, accepted-outranks-newer-
+draft precedence proof); `render/route.test.ts` (+2: blocked 409, eligible 200); `download/
+route.test.ts` (+2: blocked 409, eligible 200, plus 5 pre-existing fixtures updated to stay green
+under the new gate). Vendor-facing/client-facing export requiring stronger authority is proven by
+both new render/download tests using `d09_rfp_pack` (a real client-facing contract).
+
 ## References
 
 - `docs/architecture/adr/ADR-0013-source-modernization-baseline.md` — named this deliverable and
@@ -232,3 +366,13 @@ larger, separate follow-up.
   AI-generate route change.
 - `src/app/api/v1/source/[eventId]/artifacts/generate/route.ts` — PR 4B's chat-save route
   change.
+- `src/lib/source/contracts/artifact-authority.ts` — PR 4C's shared authority resolver.
+- `src/lib/source/contracts/upstream-satisfaction.ts` — PR 4C's real upstream-satisfaction check.
+- `src/lib/source/artifact-acceptances.ts` — the acceptance ledger PR 4C wires into authority.
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/accept/route.ts` — PR 4C's
+  contract-driven acceptance gate.
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts` and
+  `src/app/api/v1/source/artifacts/[artifactId]/download/route.ts` — PR 4C's export-eligibility
+  gates.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` — PR 4C's acceptance-aware authority
+  candidate wiring.

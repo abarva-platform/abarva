@@ -38,6 +38,12 @@ import {
   type ArtifactDownstreamContextPolicy,
   type ArtifactGatePreconditionStatus,
 } from "@/lib/source/artifact-acceptances";
+import { resolveArtifactAuthority } from "@/lib/source/contracts/artifact-authority";
+import {
+  getSourceArtifactContract,
+  isArtifactEligibleAtStage,
+} from "@/lib/source/contracts/registry";
+import { normalizeSourceStageKey } from "@/lib/source/constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,6 +109,21 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
 
   try {
     const { eventId, artifactCode } = await params;
+
+    // Contract-driven: reject an unregistered artifact code up front (PR 4C,
+    // ADR-0015) rather than proceeding to derive acceptance authority for a
+    // code the registry doesn't recognize.
+    const contract = getSourceArtifactContract(artifactCode);
+    if (!contract) {
+      return Response.json(
+        {
+          error: "unsupported_artifact",
+          detail: `No SourceArtifactContract registered for "${artifactCode}".`,
+        },
+        { status: 404 },
+      );
+    }
+
     const [activeClient, currentUser] = await Promise.all([
       getActiveClientRow().catch(() => null),
       getCurrentUser().catch(() => null),
@@ -208,8 +229,16 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       !activeClient &&
       isCanonicalClientAdminEmail(currentUser?.email) &&
       persistedEvent.client_key === effectiveClientKey;
+    // Contract-driven acceptance authority (PR 4C, ADR-0015): resolves from
+    // contract.acceptanceAuthority rather than a hardcoded permission name —
+    // today every contract entry resolves to the same, already-stronger
+    // `canApproveSourceStages` bar this route has used since the 2026-07-23
+    // integrity fix (see header comment); this indirection is what lets a
+    // future artifact type require a different capability without touching
+    // this route again.
     const canMutate = Boolean(
-      accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed,
+      accessPolicy?.[contract.acceptanceAuthority] ||
+        canonicalAdminFallbackAllowed,
     );
     if (!canMutate) {
       return Response.json(
@@ -283,6 +312,38 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       ? "authoritative"
       : "evidence";
 
+    // Contract-driven stage gate (PR 4C, ADR-0015): accepting an artifact
+    // before the event has reached its earliest eligible stage is refused —
+    // acceptance is exactly the moment PR 4B deliberately deferred stage
+    // enforcement to for a human-authored, possibly out-of-sequence draft.
+    // Saving remains unrestricted; becoming authoritative does not.
+    const eventStageKey =
+      normalizeSourceStageKey(artifactRow.stage_key) ?? "strategy";
+    if (!isArtifactEligibleAtStage(artifactCode, eventStageKey)) {
+      const decision = resolveArtifactAuthority({
+        code: artifactCode,
+        status: sourceArtifactRow.status,
+        lifecycleState: sourceArtifactRow.lifecycle_state,
+        approvalState: sourceArtifactRow.approval_state,
+        approvedBy: sourceArtifactRow.approved_by,
+        hasActiveAcceptance: false,
+        eventStageKey,
+      });
+      const stageBlocker = decision.blockers.find(
+        (b) => b.code === "stage_not_eligible",
+      );
+      return Response.json(
+        {
+          error: "stage_not_eligible",
+          detail:
+            stageBlocker?.detail ??
+            `${artifactCode} is not eligible to accept before stage "${contract.earliestEligibleStage}".`,
+          ...stageBlocker?.meta,
+        },
+        { status: 409 },
+      );
+    }
+
     const write = await insertArtifactAcceptance({
       artifactId: sourceArtifactRow.id,
       eventId: persistedEvent.id,
@@ -304,7 +365,26 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    return Response.json({ ok: true, acceptance: write.record });
+    // Report the artifact's resulting authority decision (PR 4C) so callers
+    // can distinguish "saved successfully" from "now authoritative" —
+    // e.g. an artifact accepted at a stage-eligible event is authoritative;
+    // one with unmet finality preconditions (a named sibling not yet
+    // accepted) is authoritative but not final.
+    const authority = resolveArtifactAuthority({
+      code: artifactCode,
+      status: sourceArtifactRow.status,
+      lifecycleState: sourceArtifactRow.lifecycle_state,
+      approvalState: sourceArtifactRow.approval_state,
+      approvedBy: sourceArtifactRow.approved_by,
+      hasActiveAcceptance: true,
+      eventStageKey,
+    });
+
+    return Response.json({
+      ok: true,
+      acceptance: write.record,
+      authority,
+    });
   } catch (err) {
     console.error(
       "[POST /api/v1/source/:eventId/artifacts/:artifactCode/accept]",

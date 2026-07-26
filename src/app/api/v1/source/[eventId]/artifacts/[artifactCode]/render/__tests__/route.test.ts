@@ -43,9 +43,24 @@ jest.mock("@/lib/auth/source-access-policy", () => ({
   })),
 }));
 
+let mockArtifactStates: Array<{
+  artifactCode: string;
+  linkedArtifactId: string | null;
+}> = [];
+let mockCurrentStageKey = "rfp";
+
 jest.mock("@/lib/source/agent-generation/server", () => ({
   buildSourceGenerationContext: jest.fn(async () => ({
-    event: { id: "event-1", code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026" },
+    event: {
+      id: "event-1",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      currentStageKey: mockCurrentStageKey,
+    },
+    // Empty by default — the PR 4C export-eligibility gate skips silently
+    // when nothing is linked yet (see route.ts), so the pre-existing
+    // client-final / generated-fallback tests below are unaffected by
+    // contract enforcement unless a test opts in via mockArtifactStates.
+    artifactStates: mockArtifactStates,
   })),
 }));
 
@@ -71,6 +86,32 @@ jest.mock("@/lib/source/file-cabinet/repository", () => ({
 
 jest.mock("@/lib/source/file-cabinet/blob-store", () => ({
   downloadArtifactBytes: jest.fn(async () => Buffer.from("client final docx")),
+}));
+
+let mockGovernanceRow: {
+  status: string | null;
+  lifecycle_state: string | null;
+  approval_state: string | null;
+  approved_by: string | null;
+} | null = null;
+
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureReadFluentClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: mockGovernanceRow, error: null }),
+        }),
+      }),
+    }),
+  }),
+}));
+
+let mockHasAcceptance = false;
+
+jest.mock("@/lib/source/artifact-acceptances", () => ({
+  getLatestArtifactAcceptance: async () =>
+    mockHasAcceptance ? { id: "acc-1" } : null,
 }));
 
 import { GET } from "../route";
@@ -139,6 +180,10 @@ function artifactFixture(
 beforeEach(() => {
   jest.clearAllMocks();
   mockArtifacts = [];
+  mockGovernanceRow = null;
+  mockHasAcceptance = false;
+  mockArtifactStates = [];
+  mockCurrentStageKey = "rfp";
 });
 
 describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
@@ -202,6 +247,70 @@ describe("GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render", () => {
     expect(res.headers.get("x-source-artifact-authoritative")).toBe(
       "generated-fallback",
     );
+    expect(mockRenderSourceDeliverable).toHaveBeenCalledTimes(1);
+  });
+
+  // PR 4C (ADR-0015): contract-driven export eligibility. d09_rfp_pack is a
+  // client-facing artifact, so it needs approved_for_external_use before it
+  // can export — being at ai_draft with no acceptance is not enough, even
+  // though the legacy client-final-vs-generated-fallback path above would
+  // otherwise happily stream it.
+  it("blocks export with a structured 409 when the linked artifact has not cleared the contract's export-eligibility bar", async () => {
+    mockArtifactStates = [
+      { artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" },
+    ];
+    mockGovernanceRow = {
+      status: "draft",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: null,
+    };
+    mockHasAcceptance = false;
+
+    const res = await GET(
+      req(
+        "https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=pdf",
+      ),
+      {
+        params: Promise.resolve({
+          eventId: "event-1",
+          artifactCode: "d09_rfp_pack",
+        }),
+      },
+    );
+
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe("export_not_eligible");
+    expect(body.governanceStage).toBe("ai_draft");
+    expect(mockRenderSourceDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("allows export once the linked artifact is approved for external use and accepted", async () => {
+    mockArtifactStates = [
+      { artifactCode: "d09_rfp_pack", linkedArtifactId: "artifact-1" },
+    ];
+    mockGovernanceRow = {
+      status: "approved",
+      lifecycle_state: "current",
+      approval_state: null,
+      approved_by: "reviewer-1",
+    };
+    mockHasAcceptance = true;
+
+    const res = await GET(
+      req(
+        "https://app.abarva.ai/api/v1/source/event-1/artifacts/d09_rfp_pack/render?format=pdf",
+      ),
+      {
+        params: Promise.resolve({
+          eventId: "event-1",
+          artifactCode: "d09_rfp_pack",
+        }),
+      },
+    );
+
+    expect(res.status).toBe(200);
     expect(mockRenderSourceDeliverable).toHaveBeenCalledTimes(1);
   });
 });

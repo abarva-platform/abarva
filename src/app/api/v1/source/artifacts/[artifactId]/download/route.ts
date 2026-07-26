@@ -11,6 +11,10 @@ import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getSourceArtifactRegistryRecord } from "@/lib/source/artifact-registry";
 import { resolveAuthoritativeArtifactSlots } from "@/lib/source/client-final-artifacts";
+import { normalizeSourceStageKey } from "@/lib/source/constants";
+import { getLatestArtifactAcceptance } from "@/lib/source/artifact-acceptances";
+import { resolveArtifactAuthority } from "@/lib/source/contracts/artifact-authority";
+import { getSourceArtifactContract } from "@/lib/source/contracts/registry";
 import {
   getSourceArtifact,
   listSourceArtifacts,
@@ -71,6 +75,9 @@ export async function GET(
       includeHistory: shouldIncludeHistory(req),
     });
     const effectiveRecord = authority.record;
+
+    const exportBlockedResponse = await checkExportEligibility(effectiveRecord);
+    if (exportBlockedResponse) return exportBlockedResponse;
 
     if (requestedFormat === "md") {
       return streamMarkdownSourceFromArtifactState(
@@ -178,6 +185,47 @@ async function resolveDownloadAuthorityRecord(args: {
       substituted: true,
     },
   };
+}
+
+// Contract-driven export eligibility (PR 4C, ADR-0015). Mirrors the same
+// check in the unified render/route.ts, applied here because this download
+// route is a second, independently-callable export surface (File Cabinet,
+// Gate Decision panel, canvas Document tab) — the user's ask was explicit
+// that no export/download route may decide authoritative-export eligibility
+// on its own. Only applies to codes with a registered SourceArtifactContract
+// (the 33 d-code artifacts); other file-cabinet content this workstream
+// never analyzed is untouched.
+async function checkExportEligibility(
+  record: SourceArtifactRecord,
+): Promise<Response | null> {
+  const canonicalCode = baseArtifactType(record.artifactType);
+  const contract = getSourceArtifactContract(canonicalCode);
+  if (!contract) return null;
+
+  const eventStageKey =
+    normalizeSourceStageKey(record.sourcingStage) ?? "strategy";
+  const hasActiveAcceptance =
+    (await getLatestArtifactAcceptance(record.id)) !== null;
+  const authority = resolveArtifactAuthority({
+    code: canonicalCode,
+    status: record.status,
+    lifecycleState: record.lifecycleState,
+    approvalState: record.approvalState,
+    approvedBy: record.approvedBy,
+    hasActiveAcceptance,
+    eventStageKey,
+  });
+  if (authority.isExportEligible) return null;
+
+  return Response.json(
+    {
+      error: "export_not_eligible",
+      detail: `${canonicalCode} cannot be exported yet: ${authority.blockers.map((b) => b.detail).join(" ")}`,
+      governanceStage: authority.governanceStage,
+      blockers: authority.blockers,
+    },
+    { status: 409 },
+  );
 }
 
 async function resolveFormatRecord(
