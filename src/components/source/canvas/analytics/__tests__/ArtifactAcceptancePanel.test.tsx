@@ -148,4 +148,98 @@ describe("ArtifactAcceptancePanel", () => {
     });
     expect(onAccepted).not.toHaveBeenCalled();
   });
+
+  // PR 4D (ADR-0015): a real 409 stage_not_eligible response from the
+  // accept route is a single flattened blocker, not a blockers[] array —
+  // it must still render through the same list rather than being dropped.
+  it("shows a real stage_not_eligible 409's detail sentence, not just a generic failure message", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        error: "stage_not_eligible",
+        detail:
+          'd24_decision_brief is not eligible to accept before stage "executive_decision".',
+        earliestEligibleStage: "executive_decision",
+        currentStage: "scope",
+      }),
+    });
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d24_decision_brief"
+        artifactName="Decision brief"
+        latestAcceptance={null}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d24_decision_brief"));
+    fireEvent.change(
+      screen.getByPlaceholderText("Why is this version being accepted now?"),
+      { target: { value: "Reviewed." } },
+    );
+    fireEvent.submit(
+      screen.getByTestId("source-shell-artifact-accept-form-d24_decision_brief"),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'd24_decision_brief is not eligible to accept before stage "executive_decision".',
+        ),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText("Stage")).toBeInTheDocument();
+  });
+
+  it("surfaces the real authority decision after a successful accept — authoritative but not yet export-eligible", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        acceptance: LATEST,
+        authority: {
+          code: "d05_scope_memo",
+          governanceStage: "human_review",
+          isDraft: false,
+          isAccepted: true,
+          isAuthoritative: true,
+          isExportEligible: false,
+          isFinal: false,
+          blockers: [
+            {
+              code: "governance_stage_below_export_minimum",
+              detail: "Below the required approval minimum.",
+            },
+          ],
+        },
+      }),
+    });
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d05_scope_memo"
+        artifactName="Scope memo"
+        latestAcceptance={null}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d05_scope_memo"));
+    fireEvent.change(
+      screen.getByPlaceholderText("Why is this version being accepted now?"),
+      { target: { value: "Reviewed and complete." } },
+    );
+    fireEvent.submit(
+      screen.getByTestId("source-shell-artifact-accept-form-d05_scope_memo"),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("source-shell-artifact-authority-d05_scope_memo"),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(
+        "Accepted and authoritative, but not yet cleared for export — see below.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Below the required approval minimum."),
+    ).toBeInTheDocument();
+  });
 });

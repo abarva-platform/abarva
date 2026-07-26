@@ -7,6 +7,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { ExportLink } from './canvas/workspace-tabs/ExportLink';
+import { ArtifactBlockerList } from './canvas/ArtifactBlockerList';
+import type { ArtifactBlockerLike } from '@/lib/source/contracts/blocker-copy';
 
 interface Artifact {
   id: string;
@@ -111,6 +114,9 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
   const [includeHistory, setIncludeHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [blockersByRowKey, setBlockersByRowKey] = useState<
+    Record<string, ArtifactBlockerLike[]>
+  >({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -220,19 +226,21 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={a.status.replace(/_/g, ' ')} color={STATUS_COLOR[a.status]} /></td>
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap', color: '#9a9a9a', fontSize: 11 }}>{formatFileCabinetDate(a.generatedAt)}</td>
                     <td style={{ padding: '9px 14px', whiteSpace: 'nowrap', textAlign: 'right' }}>
-                      <a
+                      <ExportLink
                         href={`/api/v1/source/artifacts/${a.id}/download${a.fileFormat === 'html' ? '?format=html' : ''}`}
-                        target={a.fileFormat === 'html' ? '_blank' : undefined}
-                        rel={a.fileFormat === 'html' ? 'noopener noreferrer' : undefined}
+                        mode={a.fileFormat === 'html' ? 'view' : 'download'}
                         style={{ color: '#fff', background: NAVY, padding: '5px 12px', borderRadius: 5, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}
+                        onBlocked={(blockers) =>
+                          setBlockersByRowKey((prev) => ({ ...prev, [a.id]: blockers }))
+                        }
                       >
                         {a.fileFormat === 'html' ? 'Preview' : 'Download'}
-                      </a>
+                      </ExportLink>
                       {exportReadyType ? EXPORT_READY_ARTIFACTS[exportReadyType]?.map((format) => (
-                        <a
+                        <ExportLink
                           key={format}
                           href={`/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(exportReadyType)}/render?format=${format}`}
-                          download
+                          mode="download"
                           style={{
                             marginLeft: 8,
                             color: NAVY,
@@ -244,10 +252,18 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                             fontSize: 12,
                             fontWeight: 600,
                           }}
+                          onBlocked={(blockers) =>
+                            setBlockersByRowKey((prev) => ({ ...prev, [a.id]: blockers }))
+                          }
                         >
                           {format.toUpperCase()}
-                        </a>
+                        </ExportLink>
                       )) : null}
+                      {(blockersByRowKey[a.id]?.length ?? 0) > 0 ? (
+                        <div style={{ marginTop: 6, textAlign: 'left' }}>
+                          <ArtifactBlockerList blockers={blockersByRowKey[a.id]} />
+                        </div>
+                      ) : null}
                     </td>
                   </tr>
                 );})}
