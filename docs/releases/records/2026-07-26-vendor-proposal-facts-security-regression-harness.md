@@ -109,17 +109,19 @@ tsconfig.json` — zero errors.
   [30182625608](https://github.com/abarva-platform/abarva/actions/runs/30182625608)) — the
   authoritative confirmation that the suite runs correctly outside the local Docker validation
   above.
-- `pass` — the workstream's final live multi-tenant production proof. Completed with two REAL
-  events against `app.abarva.ai` at the application-route layer (same-tenant ingest/accept
-  succeeds; a real fact accessed via the wrong event's URL returns an identical `404
-  fact_not_found` as a fabricated nonexistent UUID; denied attempts leave no partial writes; a
-  sibling event's read is empty of the other event's facts) — see ADR-0014's closure amendment
-  for the full evidence chain and citations. A second live, signed-in tenant session could not
-  be obtained (the app's sign-out control does not work — tracked separately — and the agent
-  is not permitted to authenticate a second account itself); per explicit user decision, the
-  two-real-tenant proof already completed at the database layer by this release's own suite is
-  accepted as satisfying the live multi-tenant requirement in place of a second live app
-  session.
+- `pass` (partial, with a documented limitation) — the workstream's live multi-tenant
+  production proof. Database-layer cross-tenant isolation was proven against two real
+  synthetic tenants in Postgres, including negative controls (this release's own suite). The
+  live application-route proof against `app.abarva.ai` covered same-tenant success, cross-event
+  denial, UUID-guessing indistinguishability, and zero partial writes — using two real events
+  under the one tenant session available (same-tenant ingest/accept succeeds; a real fact
+  accessed via the wrong event's URL returns an identical `404 fact_not_found` as a fabricated
+  nonexistent UUID; denied attempts leave no partial writes; a sibling event's read is empty of
+  the other event's facts). A second signed-in tenant session was unavailable (the app's
+  sign-out control does not work — tracked separately — and the agent is not permitted to
+  authenticate a second account itself), so **the live app-route cross-tenant check remains an
+  explicitly documented limitation** — see ADR-0014's closure amendment for the full evidence
+  chain and citations.
 
 ## Rollout Plan
 
@@ -137,8 +139,8 @@ migration or this suite's own files, plus the weekly Sunday schedule).
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: no for this release itself (offline/CI test infrastructure);
-  the workstream's separate live multi-tenant proof is now complete — see ADR-0014's closure
-  amendment.
+  the workstream's separate live multi-tenant proof is partial with a documented limitation —
+  see ADR-0014's closure amendment.
 
 ## Rollback Plan
 
@@ -172,9 +174,12 @@ behavior is affected either way — this release cannot regress a live system, o
   governed-read-contract exclusions (already proven by PR3's and PR B's own tests,
   `vendor-proposal-facts.test.ts` and `context-binder.test.ts`) — named explicitly rather than
   duplicated.
-- **The workstream's final live multi-tenant production proof is complete** — see ADR-0014's
-  closure amendment. The live application-route half used 2 real events (not 2 real tenants —
-  a second signed-in tenant session could not be obtained; the app's sign-out control is
-  broken, tracked separately) alongside the 2-real-tenant proof already completed at the
-  database layer by this release's own suite, accepted per explicit user decision as
-  satisfying the closure criterion.
+- **The live app-route cross-tenant check is an explicitly documented limitation, not a closed
+  item** — see ADR-0014's closure amendment. Database-layer cross-tenant isolation was proven
+  against two real synthetic tenants in Postgres, including negative controls. The live
+  application-route proof covered same-tenant success, cross-event denial, UUID-guessing
+  indistinguishability, and zero partial writes, using two real events under the one tenant
+  session available — it did not, and could not, cover a live cross-tenant application-route
+  check, because a second signed-in tenant session was unavailable (the app's sign-out control
+  is broken, tracked separately). Per explicit user decision, this composition of evidence is
+  accepted as sufficient to close the workstream, with the gap named rather than closed over.
