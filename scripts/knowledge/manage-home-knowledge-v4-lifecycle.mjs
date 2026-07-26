@@ -48,6 +48,13 @@ function usage() {
 
 Defaults to dry-run. Pass --write-db to actually mutate. Requires DATABASE_URL
 (or ABARVA_AZURE_DATABASE_URL / AZURE_DATABASE_URL).
+
+Every flag also has an env-var equivalent, for invocation through the governed
+ACA operator job (which only accepts a pinned npm script name, not ad-hoc
+flags): HOME_KNOWLEDGE_V4_LIFECYCLE_MODE (reject|retire|rollback),
+HOME_KNOWLEDGE_V4_LIFECYCLE_ID, HOME_KNOWLEDGE_V4_LIFECYCLE_TENANT,
+HOME_KNOWLEDGE_V4_LIFECYCLE_TARGET_ID, HOME_KNOWLEDGE_V4_LIFECYCLE_BY,
+HOME_KNOWLEDGE_V4_LIFECYCLE_REASON, HOME_KNOWLEDGE_V4_LIFECYCLE_WRITE_DB=true.
 `;
 }
 
@@ -154,23 +161,33 @@ async function rollback(client, { tenantKey, targetPackId, actor, reason }) {
 }
 
 async function main() {
-  const mode = args.has("--reject") ? "reject" : args.has("--retire") ? "retire" : args.has("--rollback") ? "rollback" : null;
+  // The governed ACA operator job (scripts/ops/submit-aca-operator-job.mjs)
+  // only accepts a pinned npm script name, not ad-hoc CLI flags -- tenant/
+  // action selection has to travel as env-var overrides passed via --env,
+  // same pattern as HOME_KNOWLEDGE_V4_TENANT on the persist script and
+  // HOME_KNOWLEDGE_V4_INSPECT_ID on the inspect script.
+  const envMode = process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_MODE;
+  const mode = args.has("--reject") ? "reject"
+    : args.has("--retire") ? "retire"
+    : args.has("--rollback") ? "rollback"
+    : envMode === "reject" || envMode === "retire" || envMode === "rollback" ? envMode
+    : null;
   if (!mode) {
     console.error(usage());
-    throw new Error("One of --reject, --retire, or --rollback is required.");
+    throw new Error("One of --reject, --retire, --rollback (or HOME_KNOWLEDGE_V4_LIFECYCLE_MODE) is required.");
   }
-  const actor = getArg("--by", null);
-  const reason = getArg("--reason", null);
+  const actor = getArg("--by", process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_BY ?? null);
+  const reason = getArg("--reason", process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_REASON ?? null);
   if (!actor || !reason) {
     console.error(usage());
     throw new Error("--by=<actor> and --reason=\"...\" are both required.");
   }
-  const writeDb = args.has("--write-db");
+  const writeDb = args.has("--write-db") || process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_WRITE_DB === "true";
 
   const options = {
-    packId: getArg("--id", null),
-    tenantKey: getArg("--tenant", null),
-    targetPackId: getArg("--target-id", null),
+    packId: getArg("--id", process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_ID ?? null),
+    tenantKey: getArg("--tenant", process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_TENANT ?? null),
+    targetPackId: getArg("--target-id", process.env.HOME_KNOWLEDGE_V4_LIFECYCLE_TARGET_ID ?? null),
     actor,
     reason,
   };
