@@ -2155,6 +2155,44 @@ export function dimensionRendererMapping() {
 // structurally impossible for the renderer to introduce the "same fact,
 // worded three different ways" drift that v1's dimension_notes shape
 // allowed Claude to introduce.
+function truncateToWords(text, maxWords) {
+  const words = (text ?? "").trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return words.join(" ");
+  return `${words.slice(0, maxWords).join(" ")}…`;
+}
+
+// A dimension's headline must be specific to THAT dimension, not to the
+// shared chapter it belongs to. `sections[chapter].headline` is one string
+// per chapter, deliberately shared across every dimension that chapter
+// covers (see sections_shape's own instruction: chapter narrative is
+// "shared context for every dimension that reads this section") -- using it
+// as a per-dimension headline made 8-14 unrelated dimensions show the exact
+// same headline verbatim, the same defect class as the V2 evidence-leak fix
+// (content scoped to one thing presented as if specific to another). Real
+// per-dimension material -- material_gaps/material_advantages/conclusions,
+// each already filtered to this exact dimension via applies_to_dimensions --
+// exists and is genuinely dimension-specific; derive the headline from it
+// deterministically instead. A dimension with none of its own reads as
+// empty (the caller's existing honest-empty-state handling), not as a
+// borrowed chapter headline.
+export function pickDimensionHeadline(relevantGaps, relevantAdvantages, relevantConclusions) {
+  // Gaps/advantages/conclusions are shared objects, each legitimately
+  // tagged to several dimensions via applies_to_dimensions -- picking the
+  // first match for two dimensions that both list the same item first
+  // still produces identical headlines for both. Prefer an item tagged to
+  // ONLY this dimension (a guaranteed-unique "primary owner") before
+  // falling back to the first broadly-shared match, so two dimensions that
+  // genuinely share one specific concern as their ONLY distinguishing
+  // content still differ whenever either has anything more specific of its
+  // own.
+  const exclusive = (items) => items.find((item) => (item.applies_to_dimensions ?? []).length === 1);
+  const source =
+    exclusive(relevantGaps) ?? exclusive(relevantAdvantages) ?? exclusive(relevantConclusions) ??
+    relevantGaps[0] ?? relevantAdvantages[0] ?? relevantConclusions[0];
+  if (!source?.statement) return "";
+  return truncateToWords(source.statement, 12);
+}
+
 export function renderDimensionsFromBook(book, packet) {
   const sections = book?.sections ?? {};
   const conclusions = Array.isArray(book?.conclusions) ? book.conclusions : [];
@@ -2202,7 +2240,7 @@ export function renderDimensionsFromBook(book, packet) {
       dimension_key: key,
       chapter,
       title: entry.name,
-      headline: section.headline ?? "",
+      headline: pickDimensionHeadline(relevantGaps, relevantAdvantages, relevantConclusions),
       executive_takeaway: section.narrative ?? "",
       key_insights: relevantConclusions.map((c) => ({
         statement: c.statement ?? "",
@@ -3628,6 +3666,13 @@ async function main() {
   if (anyGenerationFailed) process.exitCode = 1;
 }
 
+// Only auto-run when this file is executed directly (the CLI's own entry
+// point) -- never when it's imported for its pure exports (e.g.
+// renderDimensionsFromBook, pickDimensionHeadline) by a test or another
+// script, which would otherwise unconditionally hit main()'s
+// ANTHROPIC_API_KEY requirement and CLI arg parsing just from being loaded.
+const isDirectlyExecuted = import.meta.url === `file://${process.argv[1]}`;
+if (isDirectlyExecuted) {
 main().catch((error) => {
   console.error(error);
   try {
@@ -3646,3 +3691,4 @@ main().catch((error) => {
   }
   process.exit(1);
 });
+}
