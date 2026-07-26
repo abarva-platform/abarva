@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean.
+`released` — merged, deployed, and ACA runtime invariant verified. No live-behavior proof
+required (nothing calls this module yet — see Known Gaps).
 
 ## Plain-English Summary
 
@@ -95,7 +96,9 @@ existing registries rather than duplicating them into a fourth:
   confirmed unrelated: `git status` on this branch shows only new files added (this PR touches
   zero existing files besides the ADR README index), so these failures pre-exist on
   `origin/main` and are not a regression this PR introduced.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — Release Control
+  Gate, Azure deployment lane check, Deploy Authority Gate, Pilot Data Loader Gate all passed.
+- `pass` — CI on PR #5640 (all checks).
 
 ## Rollout Plan
 
@@ -107,8 +110,13 @@ PR 4C wires review/export/context-binding to it.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be recorded after merge and deploy.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:ae98c77bb45e6ed2fe82ea09ab888b61279cf865c237ab8510935bf2f5fdcdd5`
+  (merge SHA `930f00b1fa2be44d864f8014053f03aa76ff5108`, ACA revision
+  `ca-abarva-web-lab-eastus--m930f00b1`).
+- ACA runtime invariant: verified — deploy run
+  [30187589527](https://github.com/abarva-platform/abarva/actions/runs/30187589527)'s "Verify
+  ACA runtime invariant" step passed.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: no — this release adds no live-reachable code path (nothing
@@ -121,8 +129,9 @@ any live behavior.
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- Deploy run: to be recorded after merge/deploy.
+- PR: [#5640](https://github.com/abarva-platform/abarva/pull/5640) (merge commit
+  `930f00b1fa2be44d864f8014053f03aa76ff5108`).
+- Deploy run: [30187589527](https://github.com/abarva-platform/abarva/actions/runs/30187589527).
 - Sequencing decision: `docs/architecture/adr/ADR-0013-source-modernization-baseline.md`.
 - Design decision: `docs/architecture/adr/ADR-0015-source-artifact-contract.md`.
 - Prior workstream this follows: the RLS/tenant-isolation closure
