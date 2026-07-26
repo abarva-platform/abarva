@@ -56,7 +56,13 @@ jest.mock("@/lib/source/queries", () => ({
   scaffoldNewEventSubstrate: jest.fn(async () => undefined),
 }));
 
+// PR 4C: preserve the REAL SOURCE_ARTIFACT_SPECS export via requireActual —
+// the accept route now also resolves a SourceArtifactContract for the
+// artifact code, which (src/lib/source/contracts/build-registry.ts) needs
+// the real spec catalog to build at module load. Only specByCode's return
+// value is overridden, matching this test's original intent.
 jest.mock("@/lib/source/canonical-specs/artifact-specs", () => ({
+  ...jest.requireActual("@/lib/source/canonical-specs/artifact-specs"),
   specByCode: jest.fn((code: string) => ({
     gateDefining: code === "d04_app_inventory",
   })),
@@ -186,6 +192,51 @@ describe("POST /api/v1/source/:eventId/artifacts/:artifactCode/accept", () => {
         acceptedBy: "clerk-user-1",
       }),
     );
+  });
+
+  // PR 4C (ADR-0015): the accept route's authority is now contract-driven
+  // and includes the resulting ArtifactAuthorityDecision in the response.
+  it("returns the resulting authority decision on successful acceptance — accepted AND authoritative", async () => {
+    const res = await POST(
+      request({ approvalRationale: "Reviewed and complete." }),
+      ctx,
+    );
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as {
+      authority?: { isAccepted: boolean; isAuthoritative: boolean };
+    };
+    expect(json.authority?.isAccepted).toBe(true);
+    expect(json.authority?.isAuthoritative).toBe(true);
+  });
+
+  it("returns 409 stage_not_eligible when accepting before the artifact's earliest eligible stage — new in PR 4C, acceptance is not exempt from stage eligibility the way chat-save is", async () => {
+    const originalStageKey = artifactStateRow.stage_key;
+    artifactStateRow.stage_key = "strategy"; // before "rfp", d11's own stage
+    try {
+      const res = await POST(
+        request({ approvalRationale: "Too early." }),
+        ctx,
+      );
+      expect(res.status).toBe(409);
+      const json = (await res.json()) as { error?: string };
+      expect(json.error).toBe("stage_not_eligible");
+      expect(insertArtifactAcceptance).not.toHaveBeenCalled();
+    } finally {
+      artifactStateRow.stage_key = originalStageKey;
+    }
+  });
+
+  it("rejects an unregistered artifact code with a contract-not-found 404, before any DB lookups", async () => {
+    const res = await POST(request({ approvalRationale: "x" }), {
+      params: Promise.resolve({
+        eventId: "11111111-1111-1111-1111-111111111111",
+        artifactCode: "not_a_real_code",
+      }),
+    });
+    expect(res.status).toBe(404);
+    const json = (await res.json()) as { error?: string };
+    expect(json.error).toBe("unsupported_artifact");
+    expect(insertArtifactAcceptance).not.toHaveBeenCalled();
   });
 
   it("defaults optional enum fields when omitted", async () => {

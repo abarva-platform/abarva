@@ -56,6 +56,7 @@ import {
   resolveAuthoritativeArtifactSlots,
   type AuthoritativeArtifactCandidate,
 } from "@/lib/source/client-final-artifacts";
+import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -974,8 +975,21 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
   const artifacts = (
     (artifactRows as SourceArtifactContextRow[] | null) ?? []
   ).filter((artifact) => artifact.id);
+  // PR 4C (ADR-0015): populate hasActiveAcceptance for real — previously
+  // no caller of resolveAuthoritativeArtifact(Slots) ever populated this
+  // field, so the SOURCE-SHELL-004 acceptance ledger had zero effect on
+  // which artifact d16/d19/d22/d24 and the rest of aVa's downstream context
+  // treats as authoritative. This is the single highest-leverage fix for
+  // downstream-context enforcement: the pool-based resolver was already
+  // correctly designed (hasActiveAcceptance outranks status/isCurrentAuthoritative),
+  // it just needed real data.
+  const acceptanceByArtifactId = await getLatestArtifactAcceptancesByArtifactIds(
+    artifacts.map((artifact) => artifact.id),
+  );
   const artifactAuthoritySlots = resolveAuthoritativeArtifactSlots(
-    artifacts.map(toArtifactAuthorityCandidate),
+    artifacts.map((artifact) =>
+      toArtifactAuthorityCandidate(artifact, acceptanceByArtifactId),
+    ),
     (artifact) => artifact.slotKey,
   );
   const authoritativeArtifactIdSet = new Set(
@@ -1130,6 +1144,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
 
 function toArtifactAuthorityCandidate(
   artifact: SourceArtifactContextRow,
+  acceptanceByArtifactId: Map<string, unknown>,
 ): AuthoritativeArtifactCandidate & { slotKey: string } {
   return {
     id: artifact.id,
@@ -1145,6 +1160,9 @@ function toArtifactAuthorityCandidate(
     createdAt: artifact.created_at,
     updatedAt: artifact.updated_at,
     clientFinalAcceptedAt: artifact.client_final_accepted_at,
+    // PR 4C: real, not always-empty — see the loadSourceEventArtifactContext
+    // call site for why this now has actual data.
+    hasActiveAcceptance: acceptanceByArtifactId.has(artifact.id),
     slotKey: `${artifact.stage_key ?? "unknown"}::${artifact.artifact_kind ?? artifact.id}`,
   };
 }
