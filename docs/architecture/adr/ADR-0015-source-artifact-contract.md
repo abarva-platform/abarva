@@ -154,6 +154,61 @@ A full scope-discovery pass (not repeated here in detail) found:
 - **Name the type `StageArtifactContract`** (as originally proposed). Rejected in favor of
   `SourceArtifactContract` — ADR-0013 already committed to that name for this exact deliverable.
 
+## Amendment (2026-07-26) — PR 4B: generation and route enforcement
+
+PR 4A built the contract; nothing called it. PR 4B wires the two live generation entry points —
+`[eventId]/artifacts/[artifactCode]/generate/route.ts` (AI-generate) and
+`[eventId]/artifacts/generate/route.ts` (chat-save) — through a new shared resolver,
+`src/lib/source/contracts/generation-eligibility.ts`'s `evaluateGenerationEligibility()`.
+
+**What changed, concretely:**
+
+1. **Stage eligibility, genuinely new, applied to BOTH routes identically.** Previously nothing
+   checked whether an event's current stage permitted generating a given artifact at all — an
+   event still at `strategy` could generate a `d24_decision_brief` (stage `executive_decision`)
+   with no error. Both routes now call `isArtifactEligibleAtStage()` (via
+   `evaluateGenerationEligibility`) and return `409 stage_not_eligible` with the artifact's real
+   earliest eligible stage and the event's current stage in the response body. This is purely
+   additive — it blocks a request that nothing previously permitted meaningfully (no live route
+   or UI flow depends on generating a later-stage artifact from an earlier stage), and does not
+   remove any capability that worked before.
+2. **Upstream-required presence, consolidated on AI-generate, deliberately NOT extended to
+   chat-save.** The AI-generate route's existing `findMissingUpstreamCodes(template, ctx)` check
+   is unchanged in its exact response shape (`error: "upstream_required"`, same `detail` text,
+   same `missingUpstream` array) — this PR only adds the new stage check ahead of it, using the
+   same shared resolver so both blockers are computed through one function.
+   **Chat-save intentionally does not gate on missing upstream at all** — discovered mid-build:
+   an existing, real, currently-passing test in this route's own suite chat-saves a
+   `d09_rfp_pack` with zero upstream artifacts present, which is a legitimate use case (chat-save
+   persists content a human already wrote; unlike AI-generate, which drafts FROM upstream
+   evidence and is meaningless without it, chat-save is often used to capture notes or catch up
+   on documentation out of order). Applying the AI-generate route's upstream gate to chat-save
+   would have silently broken that real, tested behavior. This is a deliberate, named scope
+   boundary — not the full literal reading of "ensure chat-save and direct generation use the
+   same checks," which this ADR interprets as "the same STAGE-eligibility check," not "an
+   identical upstream-authoring gate regardless of each route's actual purpose."
+3. **Chat-save's independent stage→family mapping removed.** The route previously re-derived
+   `SourceArtifactFamily` from a hardcoded switch on the resolved stage key, independent of the
+   artifact code itself — a second, drift-prone stage→family mapping alongside
+   `canonical-specs/artifact-specs.ts`'s real one (which PR 4A's contract already exposes
+   correctly per code). Family now resolves from the contract (`contract.family`), falling back
+   to the caller's explicit override only if one is supplied — matching prior behavior for that
+   case, but now correct-by-construction for the common (no explicit override) case instead of
+   guessed from stage.
+4. **Both routes' existing test suites still pass unmodified** (chat-save: all 5 pre-existing
+   tests green with zero changes to their assertions) — proving these changes are additive to
+   the AI-generate route's response shape and non-breaking to chat-save's existing, tested
+   behavior. Two new tests were added proving the new stage gate actually rejects an ineligible
+   request and that chat-save's deliberate upstream-check exemption is real (a d09 with no
+   upstream still saves successfully).
+
+**Deliberately not attempted in this PR** (named explicitly, not silently deferred):
+tightening the upstream-presence check to "accepted authoritative" (the contract's fuller rule)
+— this needs a real, general definition of "accepted" for arbitrary d-code artifacts, which
+today only exists via `client-final-artifacts.ts`'s slot-based resolver
+(`resolveAuthoritativeArtifactSlots`), never wired to either generation route. A distinct,
+larger, separate follow-up.
+
 ## References
 
 - `docs/architecture/adr/ADR-0013-source-modernization-baseline.md` — named this deliverable and
@@ -170,5 +225,10 @@ A full scope-discovery pass (not repeated here in detail) found:
   `authoritativeUseMechanism`.
 - `src/lib/source/artifact-governance.ts` — the governance-stage/banner mechanism named in
   `exportEligibility`/`governanceBannerAudience`.
-- `src/lib/source/contracts/types.ts`, `build-registry.ts`, `schema.ts`, `registry.ts` — this
-  PR's implementation.
+- `src/lib/source/contracts/types.ts`, `build-registry.ts`, `schema.ts`, `registry.ts` — PR 4A's
+  implementation.
+- `src/lib/source/contracts/generation-eligibility.ts` — PR 4B's shared eligibility resolver.
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts` — PR 4B's
+  AI-generate route change.
+- `src/app/api/v1/source/[eventId]/artifacts/generate/route.ts` — PR 4B's chat-save route
+  change.
