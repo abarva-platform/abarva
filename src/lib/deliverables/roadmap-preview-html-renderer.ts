@@ -11,6 +11,7 @@ import "server-only";
 
 import {
   roadmapContractStamp,
+  opaqueMoveRef,
   type RoadmapEvidenceStatus,
   type RoadmapPresentationContract,
 } from "./roadmap-presentation-contract";
@@ -105,6 +106,6 @@ export function renderRoadmapPreviewHtml(
 <table><thead><tr><th>Dependency</th><th>Evidence status</th><th>Note</th></tr></thead><tbody>${deps}</tbody></table>
 <h2>Risks</h2><ul>${risks}</ul>
 <h2>Caveats</h2><ul>${caveats}</ul>
-<div class="stamp">${esc(roadmapContractStamp(contract))} · Move ${esc(contract.lineage.moveId)} · tenant ${esc(contract.lineage.tenantKey)}</div>
+<div class="stamp">${esc(roadmapContractStamp(contract))} · ${esc(opaqueMoveRef(contract.lineage.moveId))} · tenant ${esc(contract.lineage.tenantKey)}</div>
 </body></html>`;
 }
