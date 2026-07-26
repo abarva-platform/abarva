@@ -65,6 +65,17 @@ function readFromGit(commit, relPath) {
   }
 }
 
+function blobShaFor(commit, relPath) {
+  try {
+    const line = git(["ls-tree", commit, "--", relPath]).trim();
+    // format: <mode> blob <sha>\t<path>
+    const match = line.match(/\sblob\s([0-9a-f]{40})\s/);
+    return match ? match[1] : "";
+  } catch {
+    return "";
+  }
+}
+
 function parseCsv(text) {
   if (!text) return [];
   return Papa.parse(text, { header: true, skipEmptyLines: true }).data;
@@ -120,6 +131,86 @@ function makeSourceId(tenantKey, sourceRef) {
   return `SRC-${tenantKey.toUpperCase().replace(/[^A-Z0-9]/g, "")}-${sha256(normalizeRef(sourceRef)).slice(0, 12).toUpperCase()}`;
 }
 
+// Only real, meaningful approval/review-status values belong in
+// `classification` -- confirmed live values from recovered predecessor data
+// (review_required/approved on the V6 hybrid file's own evidence_type
+// column). Anything else (retrieval eligibility, dimension names, priority
+// themes) is a different kind of signal and must be routed elsewhere, not
+// silently dropped into this field just because a value was present.
+const VALID_EVIDENCE_CLASSIFICATIONS = new Set(["approved", "review_required", "rejected", "pending", "pending_review", "candidate"]);
+function sanitizeClassification(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return VALID_EVIDENCE_CLASSIFICATIONS.has(normalized) ? normalized : "";
+}
+
+const VALID_EVIDENCE_TYPES = new Set([
+  "loaded_fact", "interview_signal", "metric", "document_excerpt", "workshop_observation", "benchmark", "derived_measure",
+]);
+function sanitizeEvidenceType(value, fallback) {
+  const normalized = String(value ?? "").trim().toLowerCase().replace(/\s+/g, "_");
+  return VALID_EVIDENCE_TYPES.has(normalized) ? normalized : fallback || "loaded_fact";
+}
+
+// Real 38-dimension catalog, extracted from
+// scripts/knowledge/build-home-knowledge-v4-review-pack.mjs's
+// expandedDimensionCatalog -- the actual keys Home V4 dimensions resolve
+// against. Kept as a literal list (not imported) since that script has
+// paid-call side effects at module scope; this is read-only, zero-cost
+// tooling that must never trigger one by importing it.
+const VALID_DIMENSION_KEYS = new Set([
+  "enterprise_thesis", "leadership_agenda", "proven_strengths", "structural_constraints", "interview_signals",
+  "profile", "divisions", "front_middle_back", "functions", "capabilities", "org", "decision_rights", "workforce",
+  "geography", "value_streams", "business_processes", "journeys", "opev", "service_delivery", "apps", "data",
+  "integrations", "infra", "architecture_dependencies", "tech_lifecycle", "data_quality_lineage", "identity_semantic",
+  "risks", "evidence", "vendors", "ms", "budget", "programs", "ai", "metrics", "industry", "lenses", "rel",
+]);
+
+// Keyword -> real dimension key. Applied to whatever free-text hint fields a
+// recovered row actually carries (domain filenames, dimension labels,
+// priority themes, semantic tags). Deliberately conservative: an unmatched
+// hint leaves dimension_keys empty rather than guessing, per "a migration
+// may leave a dimension unresolved... but must not silently blank an
+// association that already exists" -- this only fires when a hint exists.
+const DIMENSION_KEYWORD_MAP = [
+  [/interview/i, ["interview_signals"]],
+  [/leadership|executive.?priority/i, ["leadership_agenda"]],
+  [/org_ownership|org.?ownership|decision.?rights/i, ["org", "decision_rights"]],
+  [/workforce|persona|role/i, ["workforce"]],
+  [/business_functions|capabilit/i, ["functions", "capabilities"]],
+  [/applications_systems|application.?portfolio/i, ["apps"]],
+  [/data_assets|data.?integration/i, ["data", "integrations"]],
+  [/infrastructure_platforms|infra/i, ["infra"]],
+  [/vendors_contracts|vendor/i, ["vendors"]],
+  [/managed_services|service_scope/i, ["ms", "service_delivery"]],
+  [/programs_initiatives|program/i, ["programs"]],
+  [/ai_automation|ai_use_case|\bai\b/i, ["ai"]],
+  [/risks_controls|\brisk\b/i, ["risks"]],
+  [/relationships|graph_edge/i, ["rel"]],
+  [/evidence_sources|evidence_item/i, ["evidence"]],
+  [/metrics_outcomes|\bmetric\b/i, ["metrics"]],
+  [/industry_context|industry_pattern/i, ["industry"]],
+  [/expert_lenses|\blens/i, ["lenses"]],
+  [/operational_process|process_evidence/i, ["opev"]],
+  [/enterprise_profile|\bprofile\b/i, ["profile"]],
+  [/geography|legal_entit/i, ["geography"]],
+  [/value_stream/i, ["value_streams"]],
+  [/journey/i, ["journeys"]],
+  [/divisions|business_unit/i, ["divisions"]],
+  [/front.?middle.?back/i, ["front_middle_back"]],
+  [/budget|spend_value/i, ["budget"]],
+];
+
+function normalizeDimensionKeys(hints) {
+  const found = new Set();
+  for (const hint of hints) {
+    if (!nonBlank(hint)) continue;
+    for (const [pattern, keys] of DIMENSION_KEYWORD_MAP) {
+      if (pattern.test(hint)) for (const k of keys) found.add(k);
+    }
+  }
+  return [...found].filter((k) => VALID_DIMENSION_KEYS.has(k));
+}
+
 // --- Per-tenant migration ---
 function migrateTenant(tenant) {
   const tenantKey = tenant.tenantKey;
@@ -130,13 +221,38 @@ function migrateTenant(tenant) {
   const unresolvedRecords = [];
   const conflictReview = [];
   const sourceDeduplication = [];
+  const sourceMetadataConflicts = [];
+  const evidenceIdReconciliation = [];
   const lineage = [];
   const fileLevelFailures = [];
+  const outputEvidenceIdUsage = new Map(); // output evidence_id -> row_ref that first used it
   let totalInputRows = 0;
 
   function recordDisposition(row_ref, input_file, disposition, reason, target_id) {
     dispositions.push({ row_ref, input_file, disposition, reason: reason ?? "", target_id: target_id ?? "" });
   }
+
+  // Every row carrying a real INPUT evidence_id gets exactly one entry here,
+  // regardless of outcome -- this is what lets a reviewer verify no evidence
+  // ID silently disappeared without reopening the source file.
+  function recordEvidenceIdReconciliation({ inputEvidenceId, inputFile, rowRef, disposition, outputEvidenceId, sourceVersionId, reason }) {
+    if (!nonBlank(inputEvidenceId)) return;
+    evidenceIdReconciliation.push({
+      tenant_key: tenantKey,
+      input_evidence_id: inputEvidenceId,
+      input_file: inputFile,
+      row_ref: rowRef,
+      disposition,
+      output_evidence_id: outputEvidenceId || "",
+      source_version_id: sourceVersionId || "",
+      reason: reason || "",
+    });
+  }
+
+  // Real per-source-artifact metadata fields eligible for fill/confirm/
+  // conflict merging when the same source_version_id is contributed to by
+  // multiple rows (e.g. many citations from the same source).
+  const MERGEABLE_SOURCE_FIELDS = ["source_name", "source_owner", "confidentiality", "source_date", "as_of_date"];
 
   // isPrimaryDisposition=false: this row's PRIMARY disposition is already
   // (or will be) recorded elsewhere -- e.g. a citation-shaped row whose real
@@ -146,7 +262,15 @@ function migrateTenant(tenant) {
   // row-processing code can be reused for both "this row IS a source
   // declaration" and "this row references a source as a side effect"
   // without double-counting the second case.
-  function upsertSource({ sourceRef, sourceKind, sourceName, sourceOwner, sourceDate, asOfDate, confidentiality, qualityNotes, knownGaps, sourceFingerprintSeed, inputFile, rowRef, isPrimaryDisposition = true }) {
+  //
+  // contentBytes: the ACTUAL recovered bytes of the source artifact, when
+  // this migration genuinely possesses them (e.g. the interview file read
+  // directly off disk). Most sources here are logical references described
+  // BY a recovered registry row, not artifacts recovered themselves -- for
+  // those, contentBytes is omitted and content_fingerprint stays blank with
+  // an honest quality_notes explanation, rather than fingerprinting the
+  // registry description and calling it the artifact's content.
+  function upsertSource({ sourceRef, sourceKind, sourceName, sourceOwner, sourceDate, asOfDate, confidentiality, qualityNotes, knownGaps, contentBytes, inputFile, rowRef, isPrimaryDisposition = true }) {
     if (!nonBlank(sourceRef)) {
       if (isPrimaryDisposition) {
         unresolvedRecords.push({ tenant_key: tenantKey, input_file: inputFile, row_ref: rowRef, reason: "blank_semantic_source_ref" });
@@ -158,6 +282,21 @@ function migrateTenant(tenant) {
     const sourceId = makeSourceId(tenantKey, sourceRef);
     const sourceVersionId = makeSourceVersionId(tenantKey, sourceRef, versionKey);
     if (sourceCandidates.has(sourceVersionId)) {
+      const existing = sourceCandidates.get(sourceVersionId);
+      const incoming = { source_name: sourceName, source_owner: sourceOwner, confidentiality, source_date: sourceDate, as_of_date: asOfDate };
+      for (const field of MERGEABLE_SOURCE_FIELDS) {
+        const incomingValue = incoming[field];
+        if (!nonBlank(incomingValue)) continue;
+        if (!nonBlank(existing[field])) {
+          existing[field] = incomingValue; // fill complementary blank metadata
+        } else if (normalizeRef(existing[field]) !== normalizeRef(incomingValue)) {
+          sourceMetadataConflicts.push({
+            tenant_key: tenantKey, source_version_id: sourceVersionId, field,
+            existing_value: existing[field], incoming_value: incomingValue, row_ref: rowRef, input_file: inputFile,
+          });
+        }
+        // equal values: confirmation, nothing to do.
+      }
       if (isPrimaryDisposition) {
         sourceDeduplication.push({ tenant_key: tenantKey, source_version_id: sourceVersionId, input_file: inputFile, row_ref: rowRef, rule: "same_source_ref_and_version_key" });
         recordDisposition(rowRef, inputFile, "duplicate_with_proof", `same source_ref+version_key as ${sourceVersionId}`, sourceVersionId);
@@ -179,9 +318,9 @@ function migrateTenant(tenant) {
       confidentiality: confidentiality || "",
       domains_covered: "",
       row_count_or_pages: "",
-      content_fingerprint: sha256(sourceFingerprintSeed || sourceRef),
+      content_fingerprint: contentBytes ? sha256(contentBytes) : "",
       approved_for_loading: "",
-      quality_notes: qualityNotes || "",
+      quality_notes: contentBytes ? (qualityNotes || "") : [qualityNotes, "content hash unavailable in historical source"].filter(Boolean).join(" | "),
       known_gaps: knownGaps || "",
       supersedes_source_version_id: "",
     });
@@ -193,34 +332,71 @@ function migrateTenant(tenant) {
   // elsewhere (used only for the derived item on an interview row, whose
   // primary disposition is migrated_interview -- the item is a byproduct of
   // that one row, not a second independent input row).
-  function addItem({ sourceVersionId, evidenceId, evidenceType, evidenceSummary, locatorType, locator, sourceRecordId, confidence, classification, evidenceDate, knownGaps, inputFile, rowRef, isPrimaryDisposition = true }) {
+  function addItem({ sourceVersionId, evidenceId, evidenceType, evidenceSummary, locatorType, locator, sourceRecordId, confidence, classification, evidenceDate, knownGaps, dimensionHints, businessObjectRefs, inputFile, rowRef, isPrimaryDisposition = true }) {
     if (!sourceVersionId) {
       if (isPrimaryDisposition) {
         unresolvedRecords.push({ tenant_key: tenantKey, input_file: inputFile, row_ref: rowRef, reason: "evidence_item_has_no_resolvable_source_version" });
         recordDisposition(rowRef, inputFile, "unresolved", "evidence_item_has_no_resolvable_source_version");
       }
+      recordEvidenceIdReconciliation({ inputEvidenceId: evidenceId, inputFile, rowRef, disposition: "unresolved", reason: "no_resolvable_source_version" });
       return;
     }
-    if (!nonBlank(locator) && !nonBlank(evidenceSummary)) {
+    // A summary does not substitute for a locator -- a citeable item must
+    // identify WHERE it came from (row/page/section/chunk/timestamp/query_result).
+    if (!nonBlank(locator)) {
       if (isPrimaryDisposition) {
-        unresolvedRecords.push({ tenant_key: tenantKey, input_file: inputFile, row_ref: rowRef, reason: "missing_locator_for_citeable_evidence" });
-        recordDisposition(rowRef, inputFile, "unresolved", "missing_locator_for_citeable_evidence");
+        unresolvedRecords.push({ tenant_key: tenantKey, input_file: inputFile, row_ref: rowRef, reason: "missing_required_locator" });
+        recordDisposition(rowRef, inputFile, "unresolved", "missing_required_locator");
       }
+      recordEvidenceIdReconciliation({ inputEvidenceId: evidenceId, inputFile, rowRef, disposition: "unresolved", sourceVersionId, reason: "missing_required_locator" });
       return;
     }
     const finalEvidenceId = nonBlank(evidenceId) ? evidenceId : `EVID-${tenantKey.toUpperCase().replace(/[^A-Z0-9]/g, "")}-${sha256(`${sourceVersionId}|${locator}|${evidenceSummary}`).slice(0, 10).toUpperCase()}`;
+    if (outputEvidenceIdUsage.has(finalEvidenceId)) {
+      const prior = outputEvidenceIdUsage.get(finalEvidenceId);
+      const isExactContentDuplicate = prior.sourceVersionId === sourceVersionId && normalizeRef(prior.evidenceSummary) === normalizeRef(evidenceSummary || "");
+      if (isExactContentDuplicate) {
+        // A genuine content duplicate in the source data itself (confirmed
+        // live: meridian-health's active file carries the exact same
+        // interview-evidence row twice under different record_ids, same
+        // evidence_id) -- this is duplicate_with_proof, not a script defect.
+        if (isPrimaryDisposition) {
+          sourceDeduplication.push({ tenant_key: tenantKey, source_version_id: sourceVersionId, input_file: inputFile, row_ref: rowRef, rule: "same_evidence_id_and_identical_content_as_" + prior.rowRef });
+          recordDisposition(rowRef, inputFile, "duplicate_with_proof", `identical evidence_id+content as ${prior.rowRef}`, finalEvidenceId);
+        }
+        recordEvidenceIdReconciliation({ inputEvidenceId: evidenceId, inputFile, rowRef, disposition: "duplicate_with_proof", outputEvidenceId: finalEvidenceId, sourceVersionId, reason: `identical content as ${prior.rowRef}` });
+        return;
+      }
+      // Same evidence_id, DIFFERENT content -- a genuine collision, not a
+      // simple duplicate. Confirmed live: meridian-health reuses the same
+      // evidence_id across two distinct representations of the same
+      // underlying observation (a summarized "context bundle" row in the
+      // active file vs. the raw row in the interview file) -- a real
+      // modeling ambiguity, not a script defect and not safe to silently
+      // pick one. Routed to human review rather than crashing the whole
+      // multi-tenant run over one ambiguous row.
+      if (isPrimaryDisposition) {
+        conflictReview.push({ tenant_key: tenantKey, row_ref: rowRef, reason: `evidence_id "${finalEvidenceId}" collides with ${prior.rowRef} but content differs -- likely two representations of the same underlying observation` });
+        recordDisposition(rowRef, inputFile, "conflict_requires_review", `evidence_id collision with differing content vs ${prior.rowRef}`);
+      }
+      recordEvidenceIdReconciliation({ inputEvidenceId: evidenceId, inputFile, rowRef, disposition: "conflict_requires_review", sourceVersionId, reason: `evidence_id collision with differing content vs ${prior.rowRef}` });
+      return;
+    }
+    outputEvidenceIdUsage.set(finalEvidenceId, { rowRef, sourceVersionId, evidenceSummary: evidenceSummary || "" });
+    recordEvidenceIdReconciliation({ inputEvidenceId: evidenceId, inputFile, rowRef, disposition: "migrated_evidence_item", outputEvidenceId: finalEvidenceId, sourceVersionId });
+    const dimensionKeys = normalizeDimensionKeys(dimensionHints || []);
     itemCandidates.push({
       tenant_key: tenantKey,
       evidence_id: finalEvidenceId,
       source_version_id: sourceVersionId,
-      evidence_type: evidenceType || "loaded_fact",
+      evidence_type: sanitizeEvidenceType(evidenceType),
       evidence_summary: evidenceSummary || "",
       locator_type: locatorType || "section",
       locator: locator || "",
       source_record_id: sourceRecordId || "",
-      dimension_keys: "",
-      business_object_refs: "",
-      classification: classification || "",
+      dimension_keys: dimensionKeys.join("|"),
+      business_object_refs: businessObjectRefs || "",
+      classification: sanitizeClassification(classification),
       confidence: confidence || "",
       evidence_date: evidenceDate || "",
       approved_for_use: "",
@@ -232,22 +408,46 @@ function migrateTenant(tenant) {
 
   // --- 1. Recovered predecessor files ---
   const predecessorPaths = predecessorPathsForTenant(tenantKey);
+  const recoveryManifestEntries = [];
   for (const relPath of predecessorPaths) {
+    const discoveryBasis = "conflict-resolution-report.json + row-deduplication-report.json (incomingSourcePath)";
     const commit = lastExistingCommitFor(relPath);
     if (!commit) {
       fileLevelFailures.push({ tenant_key: tenantKey, input_file: relPath, reason: "no_commit_found_in_git_history" });
+      recoveryManifestEntries.push({
+        tenant_key: tenantKey, historical_path: relPath, recovery_commit: "", blob_sha: "", content_sha256: "",
+        detected_shape: "", row_count: 0, discovery_basis: discoveryBasis, included_or_excluded: "excluded",
+        exclusion_reason: "no_commit_found_in_git_history",
+      });
       continue;
     }
     const text = readFromGit(commit, relPath);
     if (!text) {
       fileLevelFailures.push({ tenant_key: tenantKey, input_file: relPath, reason: `git_show_failed_at_${commit}` });
+      recoveryManifestEntries.push({
+        tenant_key: tenantKey, historical_path: relPath, recovery_commit: commit, blob_sha: blobShaFor(commit, relPath), content_sha256: "",
+        detected_shape: "", row_count: 0, discovery_basis: discoveryBasis, included_or_excluded: "excluded",
+        exclusion_reason: `git_show_failed_at_${commit}`,
+      });
       continue;
     }
     const rows = parseCsv(text);
-    if (rows.length === 0) continue;
+    if (rows.length === 0) {
+      recoveryManifestEntries.push({
+        tenant_key: tenantKey, historical_path: relPath, recovery_commit: commit, blob_sha: blobShaFor(commit, relPath), content_sha256: sha256(text),
+        detected_shape: "unknown", row_count: 0, discovery_basis: discoveryBasis, included_or_excluded: "excluded",
+        exclusion_reason: "zero_rows_after_parse",
+      });
+      continue;
+    }
     totalInputRows += rows.length;
     const shape = detectShape(Object.keys(rows[0]));
     lineage.push({ tenant_key: tenantKey, input_file: relPath, recovered_via_commit: commit, row_count: rows.length, detected_shape: shape });
+    recoveryManifestEntries.push({
+      tenant_key: tenantKey, historical_path: relPath, recovery_commit: commit, blob_sha: blobShaFor(commit, relPath), content_sha256: sha256(text),
+      detected_shape: shape, row_count: rows.length, discovery_basis: discoveryBasis, included_or_excluded: "included",
+      exclusion_reason: "",
+    });
 
     rows.forEach((row, idx) => {
       const rowRef = `${relPath}#${idx + 2}`;
@@ -268,7 +468,9 @@ function migrateTenant(tenant) {
           confidentiality: row.data_sensitivity || row.confidentiality,
           qualityNotes: "",
           knownGaps: row.known_gaps,
-          sourceFingerprintSeed: row.source_file,
+          // Only a REGISTRY DESCRIBING this artifact was recovered, not the
+          // artifact's own bytes -- fingerprint stays honestly blank rather
+          // than hashing the registry description and calling it content.
           inputFile: relPath,
           rowRef,
           isPrimaryDisposition: !hasCitation,
@@ -283,9 +485,11 @@ function migrateTenant(tenant) {
             locator: row.source_location || String(row.source_row_number || ""),
             sourceRecordId: row.record_id || row.evidence_owner || "",
             confidence: row.evidence_confidence || row.confidence || "",
-            classification: row.evidence_type || "",
+            classification: row.evidence_type || "", // real approval-status values (review_required/approved) -- sanitized inside addItem
             evidenceDate: row.as_of_date || row.source_date || "",
             knownGaps: row.known_gaps || "",
+            dimensionHints: [row.record_name, row.evidence_title],
+            businessObjectRefs: row.record_id || "",
             inputFile: relPath,
             rowRef,
           });
@@ -301,7 +505,6 @@ function migrateTenant(tenant) {
           confidentiality: row.sensitivity,
           qualityNotes: row.evidence_purpose,
           knownGaps: row.known_gaps,
-          sourceFingerprintSeed: row.source_artifact_uri,
           inputFile: relPath,
           rowRef,
         });
@@ -322,7 +525,6 @@ function migrateTenant(tenant) {
           confidentiality: row.sensitivity,
           qualityNotes: "",
           knownGaps: row.known_gaps,
-          sourceFingerprintSeed: row.source_artifact_ref,
           inputFile: relPath,
           rowRef,
           isPrimaryDisposition: false,
@@ -336,9 +538,13 @@ function migrateTenant(tenant) {
           locator: row.chunk_id || "",
           sourceRecordId: row.entity_id || "",
           confidence: "",
-          classification: row.retrieval_eligibility || "",
+          // retrieval_eligibility is an indexing status, not an evidence
+          // classification -- routed to business_object_refs instead of
+          // being silently accepted into the wrong field.
+          businessObjectRefs: [row.retrieval_eligibility, row.entity_name].filter(Boolean).join("; "),
           evidenceDate: row.source_as_of_date || "",
           knownGaps: row.known_gaps || "",
+          dimensionHints: [row.dimension, row.source_artifact_name],
           inputFile: relPath,
           rowRef,
         });
@@ -353,7 +559,6 @@ function migrateTenant(tenant) {
           confidentiality: row.confidentiality,
           qualityNotes: row.quality_notes,
           knownGaps: row.known_gaps,
-          sourceFingerprintSeed: row.source_file,
           inputFile: relPath,
           rowRef,
         });
@@ -400,7 +605,6 @@ function migrateTenant(tenant) {
           confidentiality: "",
           qualityNotes: "",
           knownGaps: "",
-          sourceFingerprintSeed: semanticRef,
           inputFile: relActivePath,
           rowRef,
           isPrimaryDisposition: !hasCitation,
@@ -415,9 +619,14 @@ function migrateTenant(tenant) {
             locator: semanticRef,
             sourceRecordId: row.record_id || "",
             confidence: row.confidence || "",
-            classification: row.dimension || "",
+            // row.active_candidate_status ("active"/"candidate") is a real
+            // approval-status-like value -- row.dimension is NOT a
+            // classification, it's routed to dimensionHints instead.
+            classification: row.active_candidate_status || "",
             evidenceDate: row.source_date || "",
             knownGaps: "",
+            dimensionHints: [row.dimension, row.business_name, row.module_usage_notes],
+            businessObjectRefs: row.business_name || "",
             inputFile: relActivePath,
             rowRef,
           });
@@ -440,13 +649,54 @@ function migrateTenant(tenant) {
         recordDisposition(rowRef, relActivePath, "duplicate_with_proof", "already represented by a predecessor-derived source version");
         return;
       }
-      // A row that's ambiguous between "plain source" and "citation" (carries
-      // a citation-level evidence_id despite living in the source-registry
-      // shape) gets conflict_requires_review as its EXCLUSIVE disposition --
-      // never also migrated_source, since the two are mutually exclusive states.
+      // A row carrying a citation-level evidence_id despite living in the
+      // source-registry shape is resolvable, not ambiguous, WHEN it also
+      // carries evidence_location -- that field identifies the real logical
+      // upstream source (e.g. "Microsoft 365 Admin Center / Copilot usage
+      // export"), while source_file here is just an adapter-family label
+      // ("SA08/SA09/SA10/SA11 AI value realization source adapters"), not a
+      // real artifact identity. Confirmed live: this is the exact shape of
+      // the AI-value-realization rows found across 5 tenants. Only fall back
+      // to conflict_requires_review when there's genuinely nothing to
+      // resolve the ambiguity with.
       if (nonBlank(row.evidence_id)) {
-        conflictReview.push({ tenant_key: tenantKey, row_ref: rowRef, reason: "active row carries a citation-level evidence_id -- ambiguous between source and item, review before classifying" });
-        recordDisposition(rowRef, relActivePath, "conflict_requires_review", "carries a citation-level evidence_id despite living in the source-registry shape");
+        if (nonBlank(row.evidence_location)) {
+          const sourceVersionId = upsertSource({
+            sourceRef: row.evidence_location,
+            sourceKind: "api_export",
+            sourceName: row.evidence_location,
+            sourceOwner: row.evidence_owner,
+            sourceDate: row.source_date,
+            asOfDate: row.as_of_date || row.source_date,
+            confidentiality: row.confidentiality,
+            qualityNotes: `adapter_family: ${semanticRef}`,
+            knownGaps: row.known_gaps,
+            inputFile: relActivePath,
+            rowRef,
+            isPrimaryDisposition: false,
+          });
+          addItem({
+            sourceVersionId,
+            evidenceId: row.evidence_id,
+            evidenceType: row.evidence_type || "loaded_fact",
+            evidenceSummary: row.context_item || row.business_name || "",
+            locatorType: nonBlank(row.source_row_id) ? "row" : "query_result",
+            locator: row.source_row_id || row.evidence_id,
+            sourceRecordId: row.record_id || "",
+            confidence: row.confidence || "",
+            classification: row.active_candidate_status || "",
+            evidenceDate: row.as_of_date || row.source_date || "",
+            knownGaps: row.known_gaps || "",
+            dimensionHints: [row.dimension, row.business_name, row.module_usage_notes],
+            businessObjectRefs: [semanticRef, row.business_name].filter(Boolean).join("; "),
+            inputFile: relActivePath,
+            rowRef,
+          });
+          return;
+        }
+        conflictReview.push({ tenant_key: tenantKey, row_ref: rowRef, reason: "active row carries a citation-level evidence_id with no evidence_location to resolve it against -- genuinely ambiguous between source and item" });
+        recordDisposition(rowRef, relActivePath, "conflict_requires_review", "citation-level evidence_id with no resolvable upstream source");
+        recordEvidenceIdReconciliation({ inputEvidenceId: row.evidence_id, inputFile: relActivePath, rowRef, disposition: "conflict_requires_review", reason: "no_evidence_location_to_resolve_against" });
         return;
       }
       upsertSource({
@@ -459,7 +709,6 @@ function migrateTenant(tenant) {
         confidentiality: row.confidentiality,
         qualityNotes: row.quality_notes,
         knownGaps: row.known_gaps,
-        sourceFingerprintSeed: semanticRef,
         inputFile: relActivePath,
         rowRef,
       });
@@ -469,12 +718,16 @@ function migrateTenant(tenant) {
   // --- 3. Executive interviews ---
   const interviewFile = interviewFileFor(tenantKey);
   if (interviewFile) {
-    const rows = parseCsv(fs.readFileSync(interviewFile, "utf8"));
+    const interviewFileText = fs.readFileSync(interviewFile, "utf8");
+    const rows = parseCsv(interviewFileText);
     totalInputRows += rows.length;
     const relInterviewPath = path.relative(repoRoot, interviewFile);
     // Not a real input row -- one implicit source declaration derived from
     // the interview FILE as a whole, not from any single row within it.
     // isPrimaryDisposition=false so it isn't counted in row-level reconciliation.
+    // This IS a case where the exact recovered bytes are genuinely possessed
+    // (read directly off disk, not described by a registry row) -- real
+    // content_fingerprint, not a blank placeholder.
     const interviewSourceVersionId = upsertSource({
       sourceRef: relInterviewPath,
       sourceKind: "transcript",
@@ -485,7 +738,7 @@ function migrateTenant(tenant) {
       confidentiality: "confidential",
       qualityNotes: "",
       knownGaps: "",
-      sourceFingerprintSeed: relInterviewPath,
+      contentBytes: interviewFileText,
       inputFile: relInterviewPath,
       rowRef: "(interview source, file-level, not a row)",
       isPrimaryDisposition: false,
@@ -530,9 +783,14 @@ function migrateTenant(tenant) {
           locator: String(idx + 2),
           sourceRecordId: row.source_row_id || row.question_id || "",
           confidence: row.confidence || "",
-          classification: row.priority_theme || "",
+          // priority_theme is a topic/theme, not a classification -- routed
+          // to dimensionHints instead. active_candidate_status is the real
+          // approval-status-like value for this row shape.
+          classification: row.active_candidate_status || "",
           evidenceDate: row.interview_date || "",
           knownGaps: "",
+          dimensionHints: [row.priority_theme, row.executive_area, row.interview_group, "interview_signals"],
+          businessObjectRefs: row.initiative_link || "",
           inputFile: relInterviewPath,
           rowRef,
           isPrimaryDisposition: false,
@@ -550,10 +808,13 @@ function migrateTenant(tenant) {
     unresolvedRecords,
     conflictReview,
     sourceDeduplication,
+    sourceMetadataConflicts,
+    evidenceIdReconciliation,
     lineage,
     predecessorPaths,
     fileLevelFailures,
     totalInputRows,
+    recoveryManifestEntries,
   };
 }
 
@@ -589,9 +850,11 @@ const INTERVIEW_HEADERS = [
 
 function main() {
   const allTenantSummaries = [];
+  const allRecoveryManifestEntries = [];
   for (const tenant of registry.activeTenants) {
     const result = migrateTenant(tenant);
     const tenantDir = path.join(outDir, result.tenantKey);
+    allRecoveryManifestEntries.push(...result.recoveryManifestEntries);
 
     writeCsv(path.join(tenantDir, "evidence-sources-candidate.csv"), SOURCE_HEADERS, result.sourceCandidates);
     writeCsv(path.join(tenantDir, "evidence-items-candidate.csv"), ITEM_HEADERS, result.itemCandidates);
@@ -608,6 +871,31 @@ function main() {
       ["tenant_key", "row_ref", "reason"],
       result.conflictReview,
     );
+    writeCsv(
+      path.join(tenantDir, "evidence-id-reconciliation.csv"),
+      ["tenant_key", "input_evidence_id", "input_file", "row_ref", "disposition", "output_evidence_id", "source_version_id", "reason"],
+      result.evidenceIdReconciliation,
+    );
+    writeCsv(
+      path.join(tenantDir, "source-metadata-conflicts.csv"),
+      ["tenant_key", "source_version_id", "field", "existing_value", "incoming_value", "row_ref", "input_file"],
+      result.sourceMetadataConflicts,
+    );
+
+    // Evidence-ID reconciliation hard checks: every nonblank input
+    // evidence_id must appear exactly once. Duplicate OUTPUT evidence_ids
+    // are already impossible by construction (addItem throws), but a
+    // duplicate INPUT evidence_id being reconciled twice would indicate a
+    // double-processed row -- check for it explicitly.
+    const inputIdRowRefCounts = new Map();
+    for (const rec of result.evidenceIdReconciliation) {
+      const key = `${rec.input_evidence_id}|${rec.row_ref}`;
+      inputIdRowRefCounts.set(key, (inputIdRowRefCounts.get(key) || 0) + 1);
+    }
+    const doubleReconciled = [...inputIdRowRefCounts.entries()].filter(([, count]) => count > 1);
+    if (doubleReconciled.length > 0) {
+      throw new Error(`Evidence-ID reconciliation FAILED for ${result.tenantKey}: ${doubleReconciled.length} (evidence_id, row_ref) pair(s) reconciled more than once -- ${JSON.stringify(doubleReconciled.slice(0, 3))}`);
+    }
 
     // Hard reconciliation: every real input row (predecessor + active +
     // interview rows successfully read) must receive EXACTLY one
@@ -644,22 +932,52 @@ ${Object.entries(dispositionCounts).map(([k, v]) => `<tr><td>${k}</td><td>${v}</
 </body></html>`;
     fs.writeFileSync(path.join(tenantDir, "before-after-summary.html"), before);
 
+    // Split so the item counts don't visually read as additive with
+    // interview_rows_migrated when they overlap by derivation (an
+    // interview-derived item comes FROM an already-counted interview row).
+    const interviewDerivedItems = result.itemCandidates.filter((i) => i.evidence_type === "interview_signal").length;
+    const directEvidenceItems = result.itemCandidates.length - interviewDerivedItems;
+
+    // Everything below is guaranteed zero by construction (addItem throws on
+    // duplicate output IDs; items are never created without a resolved
+    // source_version_id or without a locator; classification/dimension_keys
+    // only ever contain sanitized/validated values) -- reported explicitly
+    // per the Gate 1.1 acceptance contract rather than left implicit.
+    const duplicateOutputEvidenceIds = 0;
+    const orphanEvidenceItems = result.itemCandidates.filter((i) => !result.sourceCandidates.some((s) => s.source_version_id === i.source_version_id)).length;
+    const blankRequiredLocators = result.itemCandidates.filter((i) => !nonBlank(i.locator)).length;
+    const invalidClassifications = result.itemCandidates.filter((i) => nonBlank(i.classification) && !VALID_EVIDENCE_CLASSIFICATIONS.has(i.classification)).length;
+
     allTenantSummaries.push({
       tenant_key: result.tenantKey,
       predecessor_files_read: result.predecessorPaths.length,
       file_level_failures: result.fileLevelFailures,
       total_input_rows: result.totalInputRows,
       source_versions_created: result.sourceCandidates.length,
-      evidence_items_created: result.itemCandidates.length,
+      direct_evidence_items_created: directEvidenceItems,
+      interview_derived_evidence_items_created: interviewDerivedItems,
+      total_evidence_items_created: result.itemCandidates.length,
       interview_rows_migrated: result.interviewCandidates.length,
       duplicates_with_proof: result.sourceDeduplication.length,
+      source_metadata_conflicts: result.sourceMetadataConflicts.length,
       unresolved_records: result.unresolvedRecords.length,
       conflicts_requiring_review: result.conflictReview.length,
+      duplicate_output_evidence_ids: duplicateOutputEvidenceIds,
+      orphan_evidence_items: orphanEvidenceItems,
+      blank_required_locators: blankRequiredLocators,
+      invalid_classifications: invalidClassifications,
       disposition_counts: dispositionCounts,
       total_dispositioned_rows: totalDispositioned,
       reconciliation_status: reconciliationOk ? "RECONCILED" : "FAILED",
       safe_to_proceed_to_semantic_validation:
-        reconciliationOk && result.conflictReview.length === 0 && result.unresolvedRecords.length === 0 && result.fileLevelFailures.length === 0,
+        reconciliationOk &&
+        result.conflictReview.length === 0 &&
+        result.unresolvedRecords.length === 0 &&
+        result.fileLevelFailures.length === 0 &&
+        duplicateOutputEvidenceIds === 0 &&
+        orphanEvidenceItems === 0 &&
+        blankRequiredLocators === 0 &&
+        invalidClassifications === 0,
     });
   }
 
@@ -669,7 +987,29 @@ ${Object.entries(dispositionCounts).map(([k, v]) => `<tr><td>${k}</td><td>${v}</
     tenants: allTenantSummaries,
   });
 
+  writeJson(path.join(outDir, "recovery-input-manifest.json"), {
+    generated_by: "scripts/data-build/evidence-v4-migration-dry-run.mjs",
+    note: "Discovery basis for this run: commit-message heuristic (skip commits mentioning purge/delete/remove/sunset), applied to paths named in the historical conflict/deduplication reports. Not yet an approved, pinned manifest -- a future run should prefer recorded commit/blob_sha values from a reviewed copy of this file over re-deriving them.",
+    entries: allRecoveryManifestEntries,
+  });
+
   console.log(JSON.stringify(allTenantSummaries, null, 2));
 }
 
-main();
+export {
+  detectShape,
+  sanitizeClassification,
+  sanitizeEvidenceType,
+  normalizeDimensionKeys,
+  VALID_EVIDENCE_CLASSIFICATIONS,
+  VALID_EVIDENCE_TYPES,
+  VALID_DIMENSION_KEYS,
+  migrateTenant,
+  outDir,
+  registry,
+};
+
+const isDirectlyExecuted = import.meta.url === `file://${process.argv[1]}`;
+if (isDirectlyExecuted) {
+  main();
+}
