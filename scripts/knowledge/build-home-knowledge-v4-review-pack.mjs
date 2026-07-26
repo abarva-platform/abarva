@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { assertIntegratedPromptPreflight } from "./assert-integrated-prompt-preflight.mjs";
 import { assertEnterpriseBookPromptPreflight } from "./assert-enterprise-book-prompt-preflight.mjs";
 import { validateIntegratedManifest } from "./validate-integrated-manifest.mjs";
+import { buildApplicationFullRows } from "./reconcile-tenant-applications.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
@@ -155,7 +156,7 @@ function dimensionPassLabel(index) {
   return String(index + 1).padStart(2, "0");
 }
 
-const classificationEnum = [
+export const classificationEnum = [
   "loaded_fact",
   "derived_measure",
   "industry_pattern",
@@ -216,12 +217,77 @@ const requiredUseCaseFields = [
   "evidence_gate",
 ];
 
-const evidenceMaturityEnum = [
+export const evidenceMaturityEnum = [
   "source_backed",
   "directional",
   "needs_validation",
   "not_evidenced",
 ];
+
+// A single, known cross-field confusion, not a general fuzzy-matcher: Claude
+// sometimes writes evidence_maturity's legitimate "directional" value into a
+// dimension tab's `classification` field instead, even with the prompt guard
+// above -- both fields sit on the same evidence-shaped object, and the
+// prompt's own guidance ("if source data is directional rather than
+// measured, classification must be strategic_inference or industry_pattern")
+// names the correct mapping already. This is a producer-side fix, not a
+// validator weakening: classificationEnum never gains "directional" as an
+// allowed value, and any OTHER unrecognized classification still fails
+// validateClosedEnums/validateDimensionTabs exactly as before. Only this one
+// known, documented confusion is corrected before the gate runs; a genuinely
+// unknown/garbage value is not silently accepted.
+const DIRECTIONAL_CLASSIFICATION_REMAP = "strategic_inference";
+export function normalizeDirectionalClassification(value) {
+  return value === "directional" ? DIRECTIONAL_CLASSIFICATION_REMAP : value;
+}
+
+// Applies the one known remap to every classification-bearing field on a
+// legacy-shaped dimension (the five tab objects plus primary_visual) -- the
+// only place `evidence_tab` and its siblings exist; book mode's
+// renderDimensionsFromBook() output has no such field. Returns the corrected
+// dimensions array plus a count of how many fields were actually remapped,
+// so a real run logs what happened rather than silently laundering it.
+const LEGACY_DIMENSION_TAB_KEYS = ["summary_tab", "data_tab", "relationship_tab", "gaps_tab", "evidence_tab"];
+
+// Real gap, not a stylistic choice: the 900-row Applications & Systems
+// inventory (full_rows) was previously injected only into the static
+// /home/v4-preview fixture file, by reconcile-tenant-applications.mjs's CLI
+// side effect -- never into the actual candidate that gets persisted to
+// Postgres by the real generation pipeline. Any candidate approved and
+// served on the real /home route would have shipped with an empty
+// Applications & Systems grid. Attaches the same deterministic,
+// zero-Claude-cost computation onto the real book-mode candidate's `apps`
+// dimension, mirroring the fixture-side injection exactly.
+export function attachApplicationFullRows(dimensions, tenantKey) {
+  const appsDimension = (dimensions ?? []).find((d) => d.dimension_key === "apps");
+  if (!appsDimension) return dimensions;
+  const built = buildApplicationFullRows(tenantKey);
+  if (!built) return dimensions;
+  appsDimension.data_tab = appsDimension.data_tab ?? {};
+  appsDimension.data_tab.full_rows = built.fullRows;
+  return dimensions;
+}
+
+export function normalizeLegacyDimensionClassifications(dimensions) {
+  let remapped = 0;
+  const normalized = (dimensions ?? []).map((dimension) => {
+    if (!dimension || typeof dimension !== "object") return dimension;
+    const next = { ...dimension };
+    for (const tabKey of LEGACY_DIMENSION_TAB_KEYS) {
+      const tab = next[tabKey];
+      if (tab && typeof tab === "object" && !Array.isArray(tab) && tab.classification === "directional") {
+        next[tabKey] = { ...tab, classification: normalizeDirectionalClassification(tab.classification) };
+        remapped += 1;
+      }
+    }
+    if (next.primary_visual && typeof next.primary_visual === "object" && !Array.isArray(next.primary_visual) && next.primary_visual.classification === "directional") {
+      next.primary_visual = { ...next.primary_visual, classification: normalizeDirectionalClassification(next.primary_visual.classification) };
+      remapped += 1;
+    }
+    return next;
+  });
+  return { dimensions: normalized, remapped };
+}
 
 const businessObjectClassificationEnum = [
   "qualified_use_case",
@@ -669,6 +735,7 @@ function baseSystemPrompt() {
     `Use cases and business objects must also carry evidence_maturity using only: ${evidenceMaturityEnum.join(", ")}.`,
     `Use cases and business objects must carry business_object_classification using only: ${businessObjectClassificationEnum.join(", ")}.`,
     "Do not place business_object_classification values inside the content classification field.",
+    `The word "directional" describes evidence_maturity, never the content classification field. If a tab's or claim's underlying evidence is directional/unconfirmed rather than measured, its classification must be strategic_inference (a reasoned conclusion not yet measured) or industry_pattern (based on comparative industry data) -- never the literal value "directional". Only evidence_maturity may use "directional"; classification must always be one of: ${classificationEnum.join(", ")}.`,
     `Every primary_visual, dashboard_visual, benchmark_exhibit, evidence_visual, priority_matrix_visual, and graph_display_contract must use exactly one visual_type from this closed renderer enum: ${visualTypeEnum.join(", ")}.`,
     "Do not invent visual types. Do not use aliases such as graph_topology, topology_graph, status_heatmap, risk_matrix, priority_grid, dependency_graph, or landscape.",
     "For chart visuals, provide compact Recharts-ready data: no more than 7 visible marks for bars/points, no more than 5x5 heatmap cells, no dense labels, no raw record counts, no JSON intended for display.",
@@ -2617,6 +2684,7 @@ async function processTenant(client, tenantKey) {
     // and every per-dimension page is assembled deterministically.
     assembled.enterprise_story_integrated = bookResult?.executive_narrative ?? null;
     assembled.dimensions = renderDimensionsFromBook(bookResult, packet);
+    assembled.dimensions = attachApplicationFullRows(assembled.dimensions, tenantKey);
 
     const coherencePass = { id: "08-coherence-review", type: "coherence" };
     const coherenceContent = await callClaude(client, coherencePass, makePrompt(coherencePass, packet, assembled), tenantDir);
@@ -2731,6 +2799,11 @@ async function processTenant(client, tenantKey) {
   }
 
   assembled.execution_trace = executionTrace;
+  const { dimensions: normalizedDimensions, remapped } = normalizeLegacyDimensionClassifications(assembled.dimensions);
+  assembled.dimensions = normalizedDimensions;
+  if (remapped > 0) {
+    console.log(`[home-v4] ${tenantKey}: normalized ${remapped} tab/visual classification field(s) from "directional" to "${DIRECTIONAL_CLASSIFICATION_REMAP}" before validation.`);
+  }
   const validation = validateCandidate(assembled);
   assembled.validation = validation;
   writeJson(path.join(tenantDir, "candidate-home-knowledge-v4.json"), assembled);
@@ -2771,7 +2844,7 @@ function capFindings(findings, cap, source) {
   ];
 }
 
-function validateCandidate(candidate) {
+export function validateCandidate(candidate) {
   const violations = [];
   const visiblePayload = clientVisiblePayload(candidate);
   const raw = JSON.stringify(visiblePayload);
@@ -2906,7 +2979,7 @@ function collectDimensionObjects(candidate) {
   return dimensions;
 }
 
-function validateDimensionTabs(candidate) {
+export function validateDimensionTabs(candidate) {
   const findings = [];
   // A canary run (--dimensions) deliberately generates a subset. Checking
   // against the full 38-key catalog on a 3-dimension run produced 35 false
@@ -2995,7 +3068,7 @@ function validateUseCaseShape(candidate) {
   return capFindings(findings, 500, "validateUseCaseShape");
 }
 
-function validateClosedEnums(candidate) {
+export function validateClosedEnums(candidate) {
   const findings = [];
   const allowedClassifications = new Set(classificationEnum);
   const allowedEvidenceMaturity = new Set(evidenceMaturityEnum);
@@ -3500,6 +3573,7 @@ async function runReresolveVisuals() {
     };
     const before = bookValidate(candidate.dimensions);
     candidate.dimensions = renderDimensionsFromBook(candidate.enterprise_book, packet);
+    candidate.dimensions = attachApplicationFullRows(candidate.dimensions, tenantKey);
     const after = bookValidate(candidate.dimensions);
     candidate.validation = after;
 
