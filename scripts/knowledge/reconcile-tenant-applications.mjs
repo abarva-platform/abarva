@@ -57,13 +57,20 @@ function toNumberOrNull(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function reconcileTenant(tenantKey) {
+// Pure, side-effect-free computation, reused by two callers: this script's
+// own fixture-patching CLI below, and processTenant()'s book-mode branch in
+// build-home-knowledge-v4-review-pack.mjs, which needs the exact same
+// full_rows on the REAL Postgres-persisted candidate, not only on the
+// static preview fixture. Previously this computation lived only inline in
+// reconcileTenant() below and was never called from the real generation
+// pipeline -- a real gap: a freshly generated and persisted candidate had
+// no full_rows at all, only the fixture (patched here, as a side effect on
+// a JSON file) did.
+export function buildApplicationFullRows(tenantKey) {
   const folder = TENANT_FOLDER[tenantKey];
+  if (!folder) return null;
   const f05Path = path.join(tstRoot, folder, "family-2-technology-estate/F05_applications-systems.csv");
-  if (!fs.existsSync(f05Path)) {
-    console.log(`[${tenantKey}] no F05 file found at ${f05Path} -- skipping`);
-    return null;
-  }
+  if (!fs.existsSync(f05Path)) return null;
   const f05Rows = parseCsv(fs.readFileSync(f05Path, "utf8"));
 
   const f19Path = path.join(tstRoot, folder, "family-8-semantic-enrichment/F19_team-application-ownership.csv");
@@ -110,6 +117,17 @@ function reconcileTenant(tenantKey) {
     };
   });
 
+  return { fullRows, directCount, derivedCount };
+}
+
+function reconcileTenant(tenantKey) {
+  const built = buildApplicationFullRows(tenantKey);
+  if (!built) {
+    console.log(`[${tenantKey}] no F05 file found -- skipping`);
+    return null;
+  }
+  const { fullRows, directCount, derivedCount } = built;
+
   const ownedCount = fullRows.filter((r) => r.owner).length;
   console.log(
     `[${tenantKey}] ${fullRows.length} applications reconciled, ${ownedCount} with a real owner (${directCount} F05 direct capture, ${derivedCount} F19 derived join, confidence-scored)`,
@@ -134,26 +152,32 @@ function reconcileTenant(tenantKey) {
   return fullRows;
 }
 
-const results = {};
-for (const tenantKey of Object.keys(TENANT_FOLDER)) {
-  results[tenantKey] = reconcileTenant(tenantKey);
-}
+// Guarded so importing buildApplicationFullRows() from another script (the
+// real generation pipeline, or a test) never triggers this CLI's side
+// effect of patching every tenant's fixture file on disk.
+const isDirectlyExecuted = import.meta.url === `file://${process.argv[1]}`;
+if (isDirectlyExecuted) {
+  const results = {};
+  for (const tenantKey of Object.keys(TENANT_FOLDER)) {
+    results[tenantKey] = reconcileTenant(tenantKey);
+  }
 
-const summaryPath = path.join(repoRoot, "docs/audits/artifacts/tenant-application-reconciliation-2026-07-24.json");
-fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
-fs.writeFileSync(
-  summaryPath,
-  `${JSON.stringify(
-    Object.fromEntries(
-      Object.entries(results).map(([k, rows]) => [
-        k,
-        rows
-          ? { count: rows.length, ownedCount: rows.filter((r) => r.owner).length }
-          : { count: 0, note: "no F05 source file found" },
-      ]),
-    ),
-    null,
-    2,
-  )}\n`,
-);
-console.log(`\nSummary written to ${path.relative(repoRoot, summaryPath)}`);
+  const summaryPath = path.join(repoRoot, "docs/audits/artifacts/tenant-application-reconciliation-2026-07-24.json");
+  fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
+  fs.writeFileSync(
+    summaryPath,
+    `${JSON.stringify(
+      Object.fromEntries(
+        Object.entries(results).map(([k, rows]) => [
+          k,
+          rows
+            ? { count: rows.length, ownedCount: rows.filter((r) => r.owner).length }
+            : { count: 0, note: "no F05 source file found" },
+        ]),
+      ),
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`\nSummary written to ${path.relative(repoRoot, summaryPath)}`);
+}
