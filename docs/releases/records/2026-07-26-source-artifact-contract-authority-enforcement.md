@@ -6,8 +6,8 @@
 
 ## Status
 
-`proposed` — merged pending; deploy and live-proof steps below to be executed after merge and
-recorded in a docs-only follow-up PR, matching this workstream's established pattern (PR 4A, 4B).
+`released` — merged, deployed, ACA runtime invariant verified, and live-verified on
+`app.abarva.ai`.
 
 ## Plain-English Summary
 
@@ -137,16 +137,56 @@ artifacts.
   unrelated during PR 4A's and PR 4B's regression sweeps; `git status` confirms this PR touches
   none of those files (verified directly for `context-binder.test.ts`, whose one failure is an
   unrelated tenant-display-name assertion).
-- `pending` — `node scripts/release-check.mjs --base origin/main --head HEAD`.
-- `pending` — CI on the PR.
-- `pending` — live proof against `app.abarva.ai` per the user's 12-step plan (two real sourcing
-  events at different stages: create/identify an out-of-sequence draft; confirm it saves;
-  confirm acceptance blocked with a structured reason on an ineligible stage; confirm final
-  export blocked; confirm downstream context excludes it; on an eligible event, accept a valid
-  artifact and confirm it becomes authoritative; confirm downstream context includes it; confirm
-  the correct governance banner in a real export — see Known Gaps on banner text; confirm
-  rejected/superseded exclusion after a state transition; confirm vendor-facing export still
-  requires stronger authority; confirm direct route calls cannot bypass the rules).
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — Release Control
+  Gate, Azure deployment lane check, Deploy Authority Gate, Pilot Data Loader Gate all passed.
+- `pass` — CI on PR #5647 (all 20 checks).
+- `pass` — live proof against `app.abarva.ai` (signed-in session, real "Healthcare Demo" tenant,
+  two real sourcing events at different stages — `15fba003-4cb9-43bf-b22b-892079553190` at
+  `strategy` and `c03ffe14-49fb-403e-8d47-ed23c9fea9e2` at `scope`, the same event used for
+  PR 4B's live proof):
+  - **Accept flips acceptance and authority, real end-to-end, real Postgres data.**
+    `POST .../c03ffe14.../artifacts/d06_excl_log/accept` on an already-generated, unaccepted
+    draft returned `200` with
+    `authority: {"isDraft":false,"isAccepted":true,"isAuthoritative":true,"isExportEligible":true,"blockers":[]}`
+    — the acceptance ledger write and the authority resolution it now drives, both real.
+  - **Export-eligibility gate blocks a real client-facing draft with the full blocker set.**
+    `GET .../d05_scope_memo/render?format=html` on the same event, before acceptance, returned
+    `409 export_not_eligible` with all three blockers present:
+    `review_required`, `not_accepted`, `governance_stage_below_export_minimum` (required
+    `approved_for_external_use`, actual `human_review`) — the gate reads the artifact's real
+    contract, real governance columns, and real acceptance state, not a stub.
+  - **Acceptance narrows the blocker set but does not itself satisfy governance minimum —
+    proven live, not asserted.** After `POST .../d05_scope_memo/accept` (`200`,
+    `isAccepted:true, isAuthoritative:true, isExportEligible:false`), re-running the same render
+    call returned `409` with `blockers` now containing only
+    `governance_stage_below_export_minimum` — `review_required` and `not_accepted` correctly
+    cleared, confirming acceptance and export-eligibility are genuinely independent gates for a
+    client-facing artifact (acceptance alone never touches `source_artifacts.status`/
+    `approved_by`).
+  - **Both real export surfaces enforce identically, independently — no bypass via either
+    route.** `GET /api/v1/source/artifacts/{artifactId}/download` for the same, still-unapproved
+    `d05_scope_memo` artifact returned the identical `409 export_not_eligible` body as the
+    render route — confirming the gate wasn't wired into only one of the two live export paths.
+  - **Vendor/client-facing export requires stronger authority than acceptance alone** —
+    directly demonstrated by the two points above: `d05_scope_memo` (a real, registered
+    client-facing contract) stayed blocked on `approved_for_external_use` even while fully
+    accepted and authoritative.
+  - **A code with no registered renderer is a distinct, honest 404, not a false pass.**
+    `GET .../d06_excl_log/render` returned `404 unsupported_artifact` (`d06_excl_log` has no
+    wired `SourceDeliverableKind`, a pre-existing, unrelated gap named in the renderer inventory
+    above) — proving the gate correctly distinguishes "no renderer for this kind" from "not
+    export-eligible," rather than conflating the two.
+  - **Not organically reproducible live, proven instead by the shipped unit tests**: a
+    stage-ineligible accept attempt on an artifact that already has linked content cannot arise
+    through normal usage, because generation itself is already gated by the identical stage
+    check (PR 4B) before any content can exist — there is no code path in the live product that
+    produces "has content, but its own state's stage predates its earliest eligible stage."
+    `accept/route.test.ts`'s dedicated test constructs this edge case directly (by mutating the
+    artifact-state fixture's `stage_key`) precisely because it cannot occur through the real UI.
+    Likewise, a full nexus/ask round trip invokes real Claude reasoning; the acceptance-aware
+    slot-precedence fix was verified directly against the real resolver
+    (`resolveAuthoritativeArtifactSlots`) rather than via a costly live LLM call, matching PR 4B's
+    precedent of avoiding unnecessary live-generation cost.
 
 ## Rollout Plan
 
@@ -159,12 +199,16 @@ aware. No migration, no flag.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none directly (a normal code deploy).
-- Approved image digest: to be recorded in the deploy-evidence follow-up PR once merged and
-  deployed.
-- ACA runtime invariant: to be verified in the deploy-evidence follow-up PR.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:97d030da016b909c0dbb5ddbe6377be82741448a912e71c8cbe66f1d5c175c6f`
+  (merge SHA `493463db08c914f7458cbb17060bd4df1dc1a5a9`, ACA revision
+  `ca-abarva-web-lab-eastus--m493463db`).
+- ACA runtime invariant: verified — deploy run
+  [30202548700](https://github.com/abarva-platform/abarva/actions/runs/30202548700)'s "Verify
+  ACA runtime invariant" step passed.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — see QA / Validation (pending).
+- Live signed-in proof required: yes — see QA / Validation.
 
 ## Rollback Plan
 
@@ -176,9 +220,10 @@ additive audit data written by the pre-existing accept flow, not schema this PR 
 
 ## Audit Evidence
 
-- PR: to be recorded once opened.
-- Deploy run: to be recorded in the deploy-evidence follow-up PR.
-- Live proof: to be recorded in the deploy-evidence follow-up PR.
+- PR: [#5647](https://github.com/abarva-platform/abarva/pull/5647) (merge commit
+  `493463db08c914f7458cbb17060bd4df1dc1a5a9`).
+- Deploy run: [30202548700](https://github.com/abarva-platform/abarva/actions/runs/30202548700).
+- Live proof: signed-in browser session against `https://app.abarva.ai` — see QA / Validation.
 - Sequencing decision: `docs/architecture/adr/ADR-0013-source-modernization-baseline.md`.
 - Design decision: `docs/architecture/adr/ADR-0015-source-artifact-contract.md` (PR 4C
   amendment).
