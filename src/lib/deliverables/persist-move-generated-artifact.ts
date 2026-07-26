@@ -1,6 +1,9 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import { buildPersistedRoadmapRecord } from "@/lib/deliverables/roadmap-artifact-persistence";
 import type { GenerateArtifactResult } from "@/lib/deliverables/generate-artifact";
 import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { buildGeneratedPhaseDigest } from "@/lib/deliverables/generated-phase-digest";
@@ -44,7 +47,10 @@ function gateCaveatReasons(result: {
   ];
 }
 
-type GeneratedArtifactResult = Extract<GenerateArtifactResult, { status: "generated" }>;
+type GeneratedArtifactResult = Extract<
+  GenerateArtifactResult,
+  { status: "generated" }
+>;
 
 export interface PersistMoveGeneratedArtifactInput {
   ctx: TenancyCtx;
@@ -75,7 +81,10 @@ export async function persistMoveGeneratedArtifact({
   result,
 }: PersistMoveGeneratedArtifactInput): Promise<PersistMoveGeneratedArtifactResult> {
   const profile = getDeliverableProfile(artifact);
-  const deliverablePackageContract = getPhaseDeliverablePackageContract({ artifact, phase });
+  const deliverablePackageContract = getPhaseDeliverablePackageContract({
+    artifact,
+    phase,
+  });
   const phaseLabel = PHASE_LABEL[phase] ?? `P${phase}`;
   const artifactTitle = title ?? profile.title;
   const solutionContextDigest = buildGeneratedPhaseDigest({
@@ -138,6 +147,21 @@ export async function persistMoveGeneratedArtifact({
       draftOnly: result.draftOnly,
       draftCaveats: result.draftCaveats,
       contextCaveats: result.contextCaveats,
+      // PR10 — governed roadmap record (execution_roadmap, flag-gated). Stored
+      // ALONGSIDE the existing HTML deliverable so downloads can re-render the
+      // synchronized PPTX/DOCX/HTML from ONE persisted contract. A new
+      // generation creates a new version (never a silent overwrite).
+      ...(result.governedRoadmap?.ok
+        ? {
+            roadmap_governed_record: buildPersistedRoadmapRecord({
+              contract: result.governedRoadmap.contract,
+              provenance: result.governedRoadmap.provenance,
+              artifactId: `${program.id}:execution_roadmap`,
+              generationRunId: randomUUID(),
+              lifecycleStateVersion: `lc-${result.governedRoadmap.contract.lifecycleState}`,
+            }),
+          }
+        : {}),
     },
     provenanceMap: {
       program: program.name,
@@ -200,7 +224,9 @@ export async function persistMoveGeneratedArtifact({
       artifactStatus: draftStatusLabel,
       preliminaryCaveat: isPreGateDraft ? draftCaveat : null,
       openItems,
-      reviewStatus: isPreGateDraft ? "pre_gate_review_required" : "not_reviewed",
+      reviewStatus: isPreGateDraft
+        ? "pre_gate_review_required"
+        : "not_reviewed",
       clientFacingVersionLabel: "Version 1",
     },
   });
@@ -265,7 +291,9 @@ export async function persistMoveGeneratedArtifact({
       artifactStatus: draftStatusLabel,
       preliminaryCaveat: isPreGateDraft ? draftCaveat : null,
       openItems,
-      reviewStatus: isPreGateDraft ? "pre_gate_review_required" : "not_reviewed",
+      reviewStatus: isPreGateDraft
+        ? "pre_gate_review_required"
+        : "not_reviewed",
       clientFacingVersionLabel: "Version 1",
     },
   });
