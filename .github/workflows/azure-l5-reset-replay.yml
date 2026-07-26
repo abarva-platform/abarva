@@ -19,6 +19,8 @@ on:
       - "src/scripts/postgres-client-options.ts"
       - "src/scripts/run-migrations.ts"
       - "src/scripts/verify-azure-postgres-schema.ts"
+      - "tests/security/vendor-proposal-facts-write-isolation-regression.sql"
+      - "scripts/run-vendor-proposal-facts-write-isolation-regression.ts"
       - "package.json"
       - "package-lock.json"
   schedule:
@@ -70,3 +72,6 @@ jobs:
 
       - name: Verify schema baseline
         run: npm run db:azure:verify
+
+      - name: Vendor-proposal-facts write-isolation security regression
+        run: npm run test:vendor-proposal-facts-write-regression

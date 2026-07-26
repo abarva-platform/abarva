@@ -184,4 +184,31 @@ describe("POST /api/v1/source/:eventId/vendor-proposals/facts/:factId/accept", (
     expect(res.status).toBe(404);
     expect(acceptVendorProposalFact).not.toHaveBeenCalled();
   });
+
+  // RLS/tenant-isolation workstream, PR C — the route layer must deny a
+  // caller with no resolvable tenant context at all (not just a caller whose
+  // resolved tenant doesn't match the event's), the same failure mode the
+  // real requireTenancy() throws for a missing/invalid session.
+  it("returns 401 when no tenant context can be established at all (missing/unauthenticated)", async () => {
+    const { requireTenancy, tenancyErrorResponse } = jest.requireMock(
+      "@/lib/auth/tenancy",
+    ) as { requireTenancy: jest.Mock; tenancyErrorResponse: jest.Mock };
+    const { getActiveClientRow } = jest.requireMock("@/lib/active-client") as {
+      getActiveClientRow: jest.Mock;
+    };
+    const { getCurrentUser } = jest.requireMock("@/lib/auth/current-user") as {
+      getCurrentUser: jest.Mock;
+    };
+
+    requireTenancy.mockRejectedValueOnce(new Error("unauthenticated"));
+    getActiveClientRow.mockResolvedValueOnce(null);
+    getCurrentUser.mockResolvedValueOnce(null);
+    tenancyErrorResponse.mockReturnValueOnce(
+      Response.json({ error: "unauthenticated" }, { status: 401 }),
+    );
+
+    const res = await POST(request({ rationale: "x" }), ctx);
+    expect(res.status).toBe(401);
+    expect(acceptVendorProposalFact).not.toHaveBeenCalled();
+  });
 });

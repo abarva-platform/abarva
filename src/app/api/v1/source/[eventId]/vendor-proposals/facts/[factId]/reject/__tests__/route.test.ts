@@ -174,4 +174,29 @@ describe("POST /api/v1/source/:eventId/vendor-proposals/facts/:factId/reject", (
     const res = await POST(request({ rationale: "x" }), ctx);
     expect(res.status).toBe(404);
   });
+
+  // RLS/tenant-isolation workstream, PR C — same denial as the accept route
+  // when no tenant context can be established at all.
+  it("returns 401 when no tenant context can be established at all (missing/unauthenticated)", async () => {
+    const { requireTenancy, tenancyErrorResponse } = jest.requireMock(
+      "@/lib/auth/tenancy",
+    ) as { requireTenancy: jest.Mock; tenancyErrorResponse: jest.Mock };
+    const { getActiveClientRow } = jest.requireMock("@/lib/active-client") as {
+      getActiveClientRow: jest.Mock;
+    };
+    const { getCurrentUser } = jest.requireMock("@/lib/auth/current-user") as {
+      getCurrentUser: jest.Mock;
+    };
+
+    requireTenancy.mockRejectedValueOnce(new Error("unauthenticated"));
+    getActiveClientRow.mockResolvedValueOnce(null);
+    getCurrentUser.mockResolvedValueOnce(null);
+    tenancyErrorResponse.mockReturnValueOnce(
+      Response.json({ error: "unauthenticated" }, { status: 401 }),
+    );
+
+    const res = await POST(request({ rationale: "x" }), ctx);
+    expect(res.status).toBe(401);
+    expect(rejectVendorProposalFact).not.toHaveBeenCalled();
+  });
 });

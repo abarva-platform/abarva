@@ -152,6 +152,54 @@ first hop's `artifactIds` with no independent tenant check.
   inventing a second, parallel tenant-scoping mechanism would fragment the security model
   rather than extend the one that's already proven.
 
+## Amendment (2026-07-26) — PR C: security regression harness
+
+PR A and PR B built the enforcement (RLS policies, the tenant-context mechanism, the
+cross-table consistency triggers); neither shipped an automated regression suite that
+attempts real violations and proves they're rejected. `tests/security/rls-regression.sql`
+already auto-discovers `source_vendor_proposal_facts`/`_fact_reviews` (both carry a
+recognized `client_key` column) and proves plain list-isolation across every canonical
+tenant, but that suite is 100% SELECT-only by design — it does not, and by its own safety
+contract should not, attempt an INSERT.
+
+PR C adds `tests/security/vendor-proposal-facts-write-isolation-regression.sql` (run via
+`scripts/run-vendor-proposal-facts-write-isolation-regression.ts`,
+`npm run test:vendor-proposal-facts-write-regression`), the write-path complement: it creates
+two synthetic tenants' worth of fixtures inside one transaction, attempts a battery of
+adversarial writes as the `authenticated` role scoped to one tenant (cross-tenant
+supersession, cross-event fact-planting, cross-tenant artifact citation, cross-vendor
+supersession, cross-tenant accept/reject, missing-tenant-context reads, unauthenticated
+reads), asserts each is rejected exactly the way a nonexistent target would be rejected (a
+trigger exception naming only "does not reference a real X row" — never "belongs to a
+different tenant," which would confirm the target exists), and proves the documented
+`service_role` bypass still works as a positive control. The whole transaction is always
+rolled back — pass or fail — so nothing this suite creates is ever persisted, safe to run
+against a lab or production database exactly like `rls-regression.sql`.
+
+This was validated as a REAL detector, not a tautology: run against a live Postgres with the
+PR B triggers intact, all 11 scenarios pass; with the trigger functions replaced by
+no-op stubs (same names, so the prereq check still finds them), exactly the 5
+trigger-dependent scenarios flip to `fail` while the 4 RLS-only scenarios (which don't
+depend on the trigger) correctly stay `pass` — proving the suite has real, scenario-specific
+detection power rather than a single pass/fail bit.
+
+Wired into `.github/workflows/azure-l5-reset-replay.yml` (the "Fresh Postgres migration
+replay" job) as a step immediately after schema verification — this job already provisions a
+disposable, fully-migrated ephemeral Postgres per run, which this suite needs and no other CI
+lane in this repo reliably provides (the dedicated `rls-regression.yml` workflow's
+`lab-control`/`lab-context` targets have no configured secrets, a separate, already-tracked
+infra gap this PR does not fix).
+
+Complementing the DB-layer suite, the accept and reject routes each gained a test proving a
+caller with no resolvable tenant context at all (the real `requireTenancy()` failure mode for
+a missing/invalid session) is denied via `tenancyErrorResponse` (401), and
+`tenant-scoped-session.test.ts` gained a test proving `withVendorProposalFactsSession` always
+issues the literal `SET LOCAL ROLE authenticated` regardless of `identity.role` — a caller
+cannot influence the connecting Postgres role, only the JWT `role` claim, no matter what
+string is passed. Cross-tenant accept/reject at the route layer, and the governed-read-contract
+exclusions (candidate/rejected/superseded facts, tenant/event-pure downstream context), were
+already covered by PR3's and PR B's own tests and are not duplicated here.
+
 ## References
 
 - `docs/architecture/adr/ADR-0004-per-user-rls.md` — the original decision to adopt per-user
@@ -172,3 +220,8 @@ first hop's `artifactIds` with no independent tenant check.
   auto-discovering RLS regression suite these two tables now become subject to.
 - `supabase/migrations/20260726020000_vendor_proposal_facts_cross_table_consistency.sql` — PR
   B's migration (cross-table ownership-consistency triggers).
+- `tests/security/vendor-proposal-facts-write-isolation-regression.sql` /
+  `scripts/run-vendor-proposal-facts-write-isolation-regression.ts` — PR C's write-path
+  security regression suite.
+- `.github/workflows/azure-l5-reset-replay.yml` — where PR C's suite runs, against the
+  ephemeral Postgres this job already provisions.

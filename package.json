@@ -202,6 +202,7 @@
     "seed:skyharbor-artifacts": "npx tsx src/scripts/seed/seed-skyharbor-moves-source-artifacts.ts",
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "test:rls-regression": "npx tsx scripts/run-rls-regression.ts",
+    "test:vendor-proposal-facts-write-regression": "npx tsx scripts/run-vendor-proposal-facts-write-isolation-regression.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:ci": "npx tsx src/scripts/run-migrations.ts --ci",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
