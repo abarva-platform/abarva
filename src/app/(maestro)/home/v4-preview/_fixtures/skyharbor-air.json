@@ -1210,7 +1210,7 @@
       "dimension_key": "enterprise_thesis",
       "chapter": "executive_narrative",
       "title": "Enterprise Thesis",
-      "headline": "",
+      "headline": "SkyHarbor's binding constraint on AI value is not a shortage of ideas…",
       "executive_takeaway": "",
       "key_insights": [
         {
@@ -1237,7 +1237,7 @@
       "dimension_key": "leadership_agenda",
       "chapter": "operating_model",
       "title": "Leadership Agenda",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [],
       "material_gaps": [],
@@ -1253,7 +1253,7 @@
       "dimension_key": "proven_strengths",
       "chapter": "capabilities",
       "title": "Proven Strengths",
-      "headline": "Recovery-relevant capabilities exist but are unproven",
+      "headline": "",
       "executive_takeaway": "Crew planning, disruption recovery, maintenance, customer handling, and sourcing are the AI-relevant capabilities, and each has a real functional home. Their maturity is directional: the capabilities are present but no production outcome demonstrates them at the standard the industry patterns assume. The near-term task is proving two or three capabilities to a certified standard, not cataloguing all of them.",
       "key_insights": [],
       "material_gaps": [],
@@ -1269,7 +1269,7 @@
       "dimension_key": "structural_constraints",
       "chapter": "risk_context",
       "title": "Structural Constraints",
-      "headline": "Risk clusters in contracts, lineage, and AI governance",
+      "headline": "",
       "executive_takeaway": "The most material risks span managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls. These are not distinct problems but three faces of the same evidence deficit that blocks safe scaling. Control status is directional; severity and ownership must be validated before any workflow is automated.",
       "key_insights": [],
       "material_gaps": [],
@@ -1285,7 +1285,7 @@
       "dimension_key": "interview_signals",
       "chapter": "operating_model",
       "title": "Interview Signals",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [],
       "material_gaps": [],
@@ -1301,7 +1301,7 @@
       "dimension_key": "profile",
       "chapter": "business_context",
       "title": "Enterprise Profile",
-      "headline": "A global carrier positioned where airline AI value concentrates",
+      "headline": "",
       "executive_takeaway": "SkyHarbor Air is a complex global passenger airline spanning cargo, loyalty, maintenance, and digital operations, with the functional breadth of a full-service carrier. Its structure places it squarely where industry AI value concentrates — irregular-operations recovery, crew, and customer reaccommodation. The profile is directional and the substrate is planning-grade, so scale and segment claims should be validated with source owners before external use. What is decision-ready today is direction; what must be validated is every specific operational and financial baseline.",
       "key_insights": [],
       "material_gaps": [],
@@ -1317,7 +1317,7 @@
       "dimension_key": "divisions",
       "chapter": "operating_model",
       "title": "Divisions & Business Units",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "The enterprise has a genuine IROPS control center and dedicated crew, MRO,…",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [
         {
@@ -1349,7 +1349,7 @@
       "dimension_key": "front_middle_back",
       "chapter": "operating_model",
       "title": "Front / Middle / Back Office",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "The enterprise has a genuine IROPS control center and dedicated crew, MRO,…",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [
         {
@@ -1381,7 +1381,7 @@
       "dimension_key": "functions",
       "chapter": "capabilities",
       "title": "Business Functions",
-      "headline": "Recovery-relevant capabilities exist but are unproven",
+      "headline": "The enterprise has a genuine IROPS control center and dedicated crew, MRO,…",
       "executive_takeaway": "Crew planning, disruption recovery, maintenance, customer handling, and sourcing are the AI-relevant capabilities, and each has a real functional home. Their maturity is directional: the capabilities are present but no production outcome demonstrates them at the standard the industry patterns assume. The near-term task is proving two or three capabilities to a certified standard, not cataloguing all of them.",
       "key_insights": [
         {
@@ -1413,7 +1413,7 @@
       "dimension_key": "capabilities",
       "chapter": "capabilities",
       "title": "Business Capabilities",
-      "headline": "Recovery-relevant capabilities exist but are unproven",
+      "headline": "The enterprise has a genuine IROPS control center and dedicated crew, MRO,…",
       "executive_takeaway": "Crew planning, disruption recovery, maintenance, customer handling, and sourcing are the AI-relevant capabilities, and each has a real functional home. Their maturity is directional: the capabilities are present but no production outcome demonstrates them at the standard the industry patterns assume. The near-term task is proving two or three capabilities to a certified standard, not cataloguing all of them.",
       "key_insights": [
         {
@@ -1445,7 +1445,7 @@
       "dimension_key": "org",
       "chapter": "operating_model",
       "title": "Organization Ownership",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "Content ownership and data-governance accountability are unassigned across critical use cases, and…",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [
         {
@@ -1506,7 +1506,7 @@
       "dimension_key": "decision_rights",
       "chapter": "operating_model",
       "title": "Decision Rights",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "Content ownership and data-governance accountability are unassigned across critical use cases, and…",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [
         {
@@ -1541,7 +1541,7 @@
       "dimension_key": "workforce",
       "chapter": "operating_model",
       "title": "Workforce & Roles",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [],
       "material_gaps": [],
@@ -1557,7 +1557,7 @@
       "dimension_key": "geography",
       "chapter": "business_context",
       "title": "Geography & Legal Entities",
-      "headline": "A global carrier positioned where airline AI value concentrates",
+      "headline": "",
       "executive_takeaway": "SkyHarbor Air is a complex global passenger airline spanning cargo, loyalty, maintenance, and digital operations, with the functional breadth of a full-service carrier. Its structure places it squarely where industry AI value concentrates — irregular-operations recovery, crew, and customer reaccommodation. The profile is directional and the substrate is planning-grade, so scale and segment claims should be validated with source owners before external use. What is decision-ready today is direction; what must be validated is every specific operational and financial baseline.",
       "key_insights": [],
       "material_gaps": [],
@@ -1573,7 +1573,7 @@
       "dimension_key": "value_streams",
       "chapter": "value_streams",
       "title": "Value Streams",
-      "headline": "Value concentrates in disruption recovery, not spread evenly",
+      "headline": "No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.",
       "executive_takeaway": "The economically material value streams cluster around IROPS recovery, crew legality, and customer reaccommodation — where minutes and rebookings translate to cost and loyalty. Programs and budget signals point at these streams, but without measured baselines the promised value cannot be tested. Leadership should resist uniform investment and concentrate on the few streams where pattern alignment is strongest.",
       "key_insights": [
         {
@@ -1628,7 +1628,7 @@
       "dimension_key": "business_processes",
       "chapter": "operating_model",
       "title": "Business Processes",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [],
       "material_gaps": [],
@@ -1644,7 +1644,7 @@
       "dimension_key": "journeys",
       "chapter": "operating_model",
       "title": "Member / Customer Journeys",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [],
       "material_gaps": [],
@@ -1660,7 +1660,7 @@
       "dimension_key": "opev",
       "chapter": "operating_model",
       "title": "Operational Evidence",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "The operational data domains that every priority AI workflow depends on —…",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [
         {
@@ -1701,7 +1701,7 @@
       "dimension_key": "service_delivery",
       "chapter": "operating_model",
       "title": "Service Delivery Model",
-      "headline": "Clear functions, unresolved ownership and decision rights",
+      "headline": "Managed-services scope, SLAs, and exit terms for NorthSky/AMS delivery are unvalidated, and…",
       "executive_takeaway": "The operating model shows well-formed functions — flight ops, crew, MRO, ground ops, customer operations, and an IROPS control center — each with natural systems and roles. However, content ownership, data-governance accountability, and decision rights across critical AI workflows are not yet assigned. This is the gap between having an org chart and having accountable decisions. Leadership can assign owners directionally now; formal decision rights must be validated in workshop.",
       "key_insights": [
         {
@@ -1735,7 +1735,7 @@
       "dimension_key": "apps",
       "chapter": "applications_context",
       "title": "Applications & Systems",
-      "headline": "Broad multi-cloud estate, three-quarters with named owners",
+      "headline": "Content ownership and data-governance accountability are unassigned across critical use cases, and…",
       "executive_takeaway": "The application estate spans reservations, crew, maintenance, baggage, CRM, loyalty, ITSM, and data platforms across AWS, Azure, GCP, SaaS, private cloud, and mainframe hosting, with a mix of tier-1 and lower-criticality systems. Ownership is captured or confidently derived for about three-quarters of applications, giving a workable accountability base. Closing the remaining ownership gap is a bounded task that directly enables AI governance.",
       "key_insights": [
         {
@@ -18967,7 +18967,7 @@
       "dimension_key": "data",
       "chapter": "data_context",
       "title": "Data Domains",
-      "headline": "Priority operational data domains lack certification",
+      "headline": "The operational data domains that every priority AI workflow depends on —…",
       "executive_takeaway": "The data domains that matter most for AI — disruption lineage, bag scans, maintenance events, and customer transcripts — are present but uncertified. This is the binding constraint: no priority workflow can be underwritten until lineage and quality are established for its inputs. The target AWS lakehouse is aspirational and should follow, not precede, certified domains.",
       "key_insights": [
         {
@@ -19036,7 +19036,7 @@
       "dimension_key": "integrations",
       "chapter": "technology_context",
       "title": "Integrations",
-      "headline": "Legacy cores and target lakehouse both need sequencing",
+      "headline": "",
       "executive_takeaway": "The estate mixes mainframe and distributed legacy cores with modern cloud platforms, and a target-state AWS airline lakehouse whose current-state certification is unconfirmed. Modernization sequencing for mainframe and MQ is backed by governed options evidence, so decisions can be defensible. Technology investment should be tied to the specific workflows that depend on it rather than pursued as generic modernization.",
       "key_insights": [],
       "material_gaps": [],
@@ -19064,7 +19064,7 @@
       "dimension_key": "infra",
       "chapter": "technology_context",
       "title": "Infrastructure & Platforms",
-      "headline": "Legacy cores and target lakehouse both need sequencing",
+      "headline": "Modernization sequencing is backed by governed modernization-options evidence, not just intent.",
       "executive_takeaway": "The estate mixes mainframe and distributed legacy cores with modern cloud platforms, and a target-state AWS airline lakehouse whose current-state certification is unconfirmed. Modernization sequencing for mainframe and MQ is backed by governed options evidence, so decisions can be defensible. Technology investment should be tied to the specific workflows that depend on it rather than pursued as generic modernization.",
       "key_insights": [
         {
@@ -19128,7 +19128,7 @@
       "dimension_key": "architecture_dependencies",
       "chapter": "technology_context",
       "title": "Architecture Dependencies",
-      "headline": "Legacy cores and target lakehouse both need sequencing",
+      "headline": "Modernization sequencing is backed by governed modernization-options evidence, not just intent.",
       "executive_takeaway": "The estate mixes mainframe and distributed legacy cores with modern cloud platforms, and a target-state AWS airline lakehouse whose current-state certification is unconfirmed. Modernization sequencing for mainframe and MQ is backed by governed options evidence, so decisions can be defensible. Technology investment should be tied to the specific workflows that depend on it rather than pursued as generic modernization.",
       "key_insights": [
         {
@@ -19191,7 +19191,7 @@
       "dimension_key": "tech_lifecycle",
       "chapter": "technology_context",
       "title": "Technology Lifecycle",
-      "headline": "Legacy cores and target lakehouse both need sequencing",
+      "headline": "Modernization sequencing is backed by governed modernization-options evidence, not just intent.",
       "executive_takeaway": "The estate mixes mainframe and distributed legacy cores with modern cloud platforms, and a target-state AWS airline lakehouse whose current-state certification is unconfirmed. Modernization sequencing for mainframe and MQ is backed by governed options evidence, so decisions can be defensible. Technology investment should be tied to the specific workflows that depend on it rather than pursued as generic modernization.",
       "key_insights": [
         {
@@ -19230,7 +19230,7 @@
       "dimension_key": "data_quality_lineage",
       "chapter": "data_context",
       "title": "Data Quality & Lineage",
-      "headline": "Priority operational data domains lack certification",
+      "headline": "The operational data domains that every priority AI workflow depends on —…",
       "executive_takeaway": "The data domains that matter most for AI — disruption lineage, bag scans, maintenance events, and customer transcripts — are present but uncertified. This is the binding constraint: no priority workflow can be underwritten until lineage and quality are established for its inputs. The target AWS lakehouse is aspirational and should follow, not precede, certified domains.",
       "key_insights": [
         {
@@ -19271,7 +19271,7 @@
       "dimension_key": "identity_semantic",
       "chapter": "data_context",
       "title": "Identity & Semantic Foundations",
-      "headline": "Priority operational data domains lack certification",
+      "headline": "The operational data domains that every priority AI workflow depends on —…",
       "executive_takeaway": "The data domains that matter most for AI — disruption lineage, bag scans, maintenance events, and customer transcripts — are present but uncertified. This is the binding constraint: no priority workflow can be underwritten until lineage and quality are established for its inputs. The target AWS lakehouse is aspirational and should follow, not precede, certified domains.",
       "key_insights": [
         {
@@ -19310,7 +19310,7 @@
       "dimension_key": "risks",
       "chapter": "risk_context",
       "title": "Risks & Controls",
-      "headline": "Risk clusters in contracts, lineage, and AI governance",
+      "headline": "Content ownership and data-governance accountability are unassigned across critical use cases, and…",
       "executive_takeaway": "The most material risks span managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls. These are not distinct problems but three faces of the same evidence deficit that blocks safe scaling. Control status is directional; severity and ownership must be validated before any workflow is automated.",
       "key_insights": [
         {
@@ -19414,7 +19414,7 @@
       "dimension_key": "evidence",
       "chapter": "evidence_context",
       "title": "Evidence Sources",
-      "headline": "Planning-grade and synthetic, not yet board-grade",
+      "headline": "Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes…",
       "executive_takeaway": "Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes are claimed. Many available locators are low-specificity placeholders that support general direction but not precise claims. Leadership should read this book as a decision-shaping instrument and gate funding on source-owner validation.",
       "key_insights": [
         {
@@ -19488,7 +19488,7 @@
       "dimension_key": "vendors",
       "chapter": "vendor_context",
       "title": "Vendors & Contracts",
-      "headline": "Managed-services dependency without validated economics",
+      "headline": "Managed-services scope, SLAs, and exit terms for NorthSky/AMS delivery are unvalidated, and…",
       "executive_takeaway": "Multiple strategic vendors and a managed-services partner anchor operational and IT delivery. Scope, SLAs, exit terms, and contract economics for the AMS/IMS relationship are unvalidated, leaving a material commercial and continuity exposure. Making vendor and AMS economics transparent is a prerequisite for judging what modernization and AI truly cost.",
       "key_insights": [
         {
@@ -19596,7 +19596,7 @@
       "dimension_key": "ms",
       "chapter": "vendor_context",
       "title": "Managed Services",
-      "headline": "Managed-services dependency without validated economics",
+      "headline": "Managed-services scope, SLAs, and exit terms for NorthSky/AMS delivery are unvalidated, and…",
       "executive_takeaway": "Multiple strategic vendors and a managed-services partner anchor operational and IT delivery. Scope, SLAs, exit terms, and contract economics for the AMS/IMS relationship are unvalidated, leaving a material commercial and continuity exposure. Making vendor and AMS economics transparent is a prerequisite for judging what modernization and AI truly cost.",
       "key_insights": [
         {
@@ -19630,7 +19630,7 @@
       "dimension_key": "budget",
       "chapter": "portfolio_context",
       "title": "IT Budget, Spend & Value",
-      "headline": "Aligned initiatives, unmeasured value",
+      "headline": "No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.",
       "executive_takeaway": "The initiative portfolio maps cleanly onto the highest-value airline AI patterns, which is a genuine strength. But promised benefit cannot yet be tested against measured value because no certified baselines exist, and budget run/change economics need validation. The portfolio decision is which two or three initiatives to certify first, not how many to launch.",
       "key_insights": [
         {
@@ -19738,7 +19738,7 @@
       "dimension_key": "programs",
       "chapter": "portfolio_context",
       "title": "Programs & Initiatives",
-      "headline": "Aligned initiatives, unmeasured value",
+      "headline": "No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.",
       "executive_takeaway": "The initiative portfolio maps cleanly onto the highest-value airline AI patterns, which is a genuine strength. But promised benefit cannot yet be tested against measured value because no certified baselines exist, and budget run/change economics need validation. The portfolio decision is which two or three initiatives to certify first, not how many to launch.",
       "key_insights": [
         {
@@ -19892,7 +19892,7 @@
       "dimension_key": "ai",
       "chapter": "ai_opportunity_context",
       "title": "AI & Automation Use Cases",
-      "headline": "Right opportunities, planning-grade readiness",
+      "headline": "The operational data domains that every priority AI workflow depends on —…",
       "executive_takeaway": "The AI opportunities align with IROPS recovery, crew, and reaccommodation — exactly where the industry realizes value. Each remains planning-grade until its required systems, data, controls, owners, and value evidence are confirmed. The path to qualification is certification and ownership, and every candidate should be treated as an evidence request, not a funded program.",
       "key_insights": [
         {
@@ -19970,7 +19970,7 @@
       "dimension_key": "metrics",
       "chapter": "business_context",
       "title": "Metrics & Outcomes",
-      "headline": "A global carrier positioned where airline AI value concentrates",
+      "headline": "No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.",
       "executive_takeaway": "SkyHarbor Air is a complex global passenger airline spanning cargo, loyalty, maintenance, and digital operations, with the functional breadth of a full-service carrier. Its structure places it squarely where industry AI value concentrates — irregular-operations recovery, crew, and customer reaccommodation. The profile is directional and the substrate is planning-grade, so scale and segment claims should be validated with source owners before external use. What is decision-ready today is direction; what must be validated is every specific operational and financial baseline.",
       "key_insights": [
         {
@@ -20024,7 +20024,7 @@
       "dimension_key": "industry",
       "chapter": "business_context",
       "title": "Industry Patterns",
-      "headline": "A global carrier positioned where airline AI value concentrates",
+      "headline": "SkyHarbor's active initiative themes map directly onto the highest-value airline AI patterns…",
       "executive_takeaway": "SkyHarbor Air is a complex global passenger airline spanning cargo, loyalty, maintenance, and digital operations, with the functional breadth of a full-service carrier. Its structure places it squarely where industry AI value concentrates — irregular-operations recovery, crew, and customer reaccommodation. The profile is directional and the substrate is planning-grade, so scale and segment claims should be validated with source owners before external use. What is decision-ready today is direction; what must be validated is every specific operational and financial baseline.",
       "key_insights": [
         {
@@ -20062,7 +20062,7 @@
       "dimension_key": "lenses",
       "chapter": "evidence_context",
       "title": "Context Confidence",
-      "headline": "Planning-grade and synthetic, not yet board-grade",
+      "headline": "Current evidence is planning-grade and synthetic; conclusions are directional until source-owner validation,…",
       "executive_takeaway": "Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes are claimed. Many available locators are low-specificity placeholders that support general direction but not precise claims. Leadership should read this book as a decision-shaping instrument and gate funding on source-owner validation.",
       "key_insights": [
         {
@@ -20088,7 +20088,7 @@
       "dimension_key": "rel",
       "chapter": "relationships_context",
       "title": "Relationship Map",
-      "headline": "System and function links mapped, alignment unproven",
+      "headline": "",
       "executive_takeaway": "Relationship evidence links functions to systems and systems to integrations across the estate, and shows initiatives running on the upgrade-candidate substrate. CIO, CTO, and CDAO teams share overlapping priorities, but cross-functional alignment is not yet evidenced. The relationship graph is a planning-grade scaffold for reasoning across the enterprise, not a certified operating map.",
       "key_insights": [],
       "material_gaps": [],
@@ -20110,6 +20110,50 @@
           "runs_on",
           "uses"
         ]
+      },
+      "primary_visual": {
+        "visual_type": "relationship_graph",
+        "projection_type": "relationship_type_map",
+        "classification": "loaded_fact",
+        "node_groups": [
+          {
+            "group": "uses",
+            "examples": [
+              "Catering → Catering Hub 8",
+              "Finance → Finance Portal 12",
+              "Cargo → Cargo Service 372",
+              "DCS → DCS Service 306"
+            ],
+            "classification": "loaded_fact"
+          },
+          {
+            "group": "feeds",
+            "examples": [
+              "APP-0003 → INT-0067",
+              "INT-0212 → APP-0425",
+              "APP-0421 → INT-0450",
+              "APP-0532 → INT-0127"
+            ],
+            "classification": "loaded_fact"
+          },
+          {
+            "group": "runs_on",
+            "examples": [
+              "IROPS AI recovery cockpit: crew legality → skyharbor-air-v6-v7-upgrade-candidate-20260710",
+              "Mainframe and MQ modernization sequencing: batch settlement → skyharbor-air-v6-v7-upgrade-candidate-20260710"
+            ],
+            "classification": "loaded_fact"
+          },
+          {
+            "group": "owns",
+            "examples": [
+              "owner_to_confirm_in_workshop → Vendor and AMS economics transparency: vendor contract inventory"
+            ],
+            "classification": "loaded_fact"
+          }
+        ],
+        "edge_meaning": "Each group is a distinct type of dependency, ownership, or usage relationship connecting named systems and functions, read directly from source relationship records.",
+        "empty_state": "No relationship evidence loaded for this dimension yet."
       }
     }
   ],
@@ -20251,7 +20295,188 @@
     }
   ],
   "validation": {
-    "status": "candidate_review_ready",
-    "violations": []
+    "status": "candidate_failed",
+    "violations": [
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "enterprise_thesis",
+        "message": "key_insight \"SkyHarbor's binding constraint on AI value is not a shortage...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "divisions",
+        "message": "key_insight \"A genuine IROPS control center and dedicated crew, MRO, and ...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "front_middle_back",
+        "message": "key_insight \"A genuine IROPS control center and dedicated crew, MRO, and ...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "functions",
+        "message": "key_insight \"A genuine IROPS control center and dedicated crew, MRO, and ...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "capabilities",
+        "message": "key_insight \"A genuine IROPS control center and dedicated crew, MRO, and ...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "org",
+        "message": "key_insight \"SkyHarbor's binding constraint on AI value is not a shortage...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "org",
+        "message": "key_insight \"Application ownership is captured or confidently derived for...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "org",
+        "message": "key_insight \"Content ownership, data-governance accountability, and decis...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "decision_rights",
+        "message": "key_insight \"Content ownership, data-governance accountability, and decis...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "value_streams",
+        "message": "key_insight \"No certified operational, financial, or customer baselines e...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "service_delivery",
+        "message": "key_insight \"Managed-services scope, SLAs, exit terms, and contract econo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "apps",
+        "message": "key_insight \"Application ownership is captured or confidently derived for...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "data",
+        "message": "key_insight \"SkyHarbor's binding constraint on AI value is not a shortage...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "data",
+        "message": "key_insight \"The target AWS airline lakehouse is aspirational; the platfo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "infra",
+        "message": "key_insight \"The target AWS airline lakehouse is aspirational; the platfo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "architecture_dependencies",
+        "message": "key_insight \"The target AWS airline lakehouse is aspirational; the platfo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "risks",
+        "message": "key_insight \"Content ownership, data-governance accountability, and decis...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "risks",
+        "message": "key_insight \"Current evidence is planning-grade and synthetic; conclusion...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "evidence",
+        "message": "key_insight \"Current evidence is planning-grade and synthetic; conclusion...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "vendors",
+        "message": "key_insight \"Managed-services scope, SLAs, exit terms, and contract econo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "ms",
+        "message": "key_insight \"Managed-services scope, SLAs, exit terms, and contract econo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "budget",
+        "message": "key_insight \"No certified operational, financial, or customer baselines e...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "budget",
+        "message": "key_insight \"Managed-services scope, SLAs, exit terms, and contract econo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "programs",
+        "message": "key_insight \"No certified operational, financial, or customer baselines e...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "ai",
+        "message": "key_insight \"SkyHarbor's binding constraint on AI value is not a shortage...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "ai",
+        "message": "key_insight \"The target AWS airline lakehouse is aspirational; the platfo...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "metrics",
+        "message": "key_insight \"SkyHarbor's binding constraint on AI value is not a shortage...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "metrics",
+        "message": "key_insight \"No certified operational, financial, or customer baselines e...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "metrics",
+        "message": "key_insight \"Current evidence is planning-grade and synthetic; conclusion...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      },
+      {
+        "severity": "fail",
+        "type": "missing_evidence_gap_note",
+        "dimension_key": "lenses",
+        "message": "key_insight \"Current evidence is planning-grade and synthetic; conclusion...\" is marked evidence_status: \"not_evidenced\" but has no evidence_gap_note explaining what evidence is missing."
+      }
+    ]
   }
 }
