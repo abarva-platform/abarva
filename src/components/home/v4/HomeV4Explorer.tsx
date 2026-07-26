@@ -7,13 +7,20 @@ import { COLORS } from "@/components/home/HomeEnterpriseBriefApp";
 export interface HomeV4ExplorerItem {
   key: string;
   label: string;
-  tone?: "green" | "amber" | "red" | "blue";
+  tone?: "green" | "amber" | "red" | "blue" | "quiet";
 }
 
 export interface HomeV4ExplorerGroup {
   title: string;
   items: HomeV4ExplorerItem[];
   defaultOpen?: boolean;
+  // "toc" renders the group as a numbered book chapter (serif title, roman
+  // numeral) instead of the default uppercase tracked-sans admin-sidebar
+  // label -- used for the book-mode chapter groups, which are genuinely a
+  // table of contents for the generated enterprise_book, not an arbitrary
+  // admin nav grouping. Purely additive: existing groups render unchanged.
+  variant?: "toc";
+  numberLabel?: string;
 }
 
 const TONE_COLOR: Record<NonNullable<HomeV4ExplorerItem["tone"]>, string> = {
@@ -21,6 +28,7 @@ const TONE_COLOR: Record<NonNullable<HomeV4ExplorerItem["tone"]>, string> = {
   amber: COLORS.amber,
   red: COLORS.red,
   blue: COLORS.blue,
+  quiet: "transparent",
 };
 
 export function HomeV4Explorer({
@@ -40,15 +48,17 @@ export function HomeV4Explorer({
     <aside className="heb-v4-explorer" aria-label="Context Explorer">
       {groups.map((group) => {
         const isOpen = openGroups[group.title] ?? true;
+        const isToc = group.variant === "toc";
         return (
-          <div key={group.title} className="heb-v4-explorer-group">
+          <div key={group.title} className={isToc ? "heb-v4-explorer-group toc" : "heb-v4-explorer-group"}>
             <button
               type="button"
-              className="heb-v4-explorer-group-head"
+              className={isToc ? "heb-v4-explorer-group-head toc" : "heb-v4-explorer-group-head"}
               onClick={() => setOpenGroups((prev) => ({ ...prev, [group.title]: !isOpen }))}
               aria-expanded={isOpen}
             >
-              <span className={`heb-v4-explorer-disclosure${isOpen ? " open" : ""}`}>▶</span>
+              <span className={`heb-v4-explorer-disclosure${isOpen ? " open" : ""}${isToc ? " toc" : ""}`}>▶</span>
+              {isToc && group.numberLabel ? <em className="heb-v4-explorer-chapter-no">{group.numberLabel}</em> : null}
               {group.title}
             </button>
             {isOpen ? (
@@ -65,8 +75,9 @@ export function HomeV4Explorer({
                       onClick={() => onSelect(item.key)}
                     >
                       <span
-                        className="heb-v4-explorer-dot"
+                        className={item.tone === "quiet" ? "heb-v4-explorer-dot hollow" : "heb-v4-explorer-dot"}
                         style={{ background: TONE_COLOR[item.tone ?? "blue"] }}
+                        title={item.tone === "quiet" ? "Not yet authored for this candidate" : undefined}
                       />
                       {item.label}
                     </button>
@@ -93,6 +104,10 @@ export function HomeV4Explorer({
         .heb-v4-explorer-group {
           margin-bottom: 4px;
         }
+        .heb-v4-explorer-group.toc {
+          margin-bottom: 2px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
         .heb-v4-explorer-group-head {
           display: flex;
           align-items: center;
@@ -109,12 +124,33 @@ export function HomeV4Explorer({
           color: #6c778b;
           text-align: left;
         }
+        .heb-v4-explorer-group-head.toc {
+          padding: 9px 8px;
+          font-family: Fraunces, Georgia, serif;
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: 0;
+          text-transform: none;
+          color: ${COLORS.ink};
+        }
+        .heb-v4-explorer-chapter-no {
+          flex: none;
+          font-style: normal;
+          font-family: Fraunces, Georgia, serif;
+          font-size: 11px;
+          font-weight: 600;
+          color: ${COLORS.quiet};
+          min-width: 18px;
+        }
         .heb-v4-explorer-disclosure {
           display: inline-block;
           font-size: 8px;
           color: #8b887f;
           transition: transform 0.12s ease;
           transform: rotate(0deg);
+        }
+        .heb-v4-explorer-disclosure.toc {
+          color: ${COLORS.quiet};
         }
         .heb-v4-explorer-disclosure.open {
           transform: rotate(90deg);
@@ -150,6 +186,9 @@ export function HomeV4Explorer({
           height: 7px;
           border-radius: 999px;
           flex: none;
+        }
+        .heb-v4-explorer-dot.hollow {
+          border: 1px solid ${COLORS.lineStrong};
         }
       `}</style>
     </aside>
