@@ -93,6 +93,30 @@ authenticated` + `set_config('request.jwt.claims', ..., true)`) is exercised tod
    the app is real, valuable follow-up work, named explicitly rather than silently implied by
    this PR's narrower scope.
 
+## Amendment (2026-07-25) — PR B: cross-table and cross-event consistency
+
+PR A's RLS policies and immutable-ownership triggers guarantee a row's OWN tenant/event columns
+can never change after creation, and that only the caller's real tenant can read/insert rows
+tagged with that tenant. Neither guarantees the row's ownership columns were INTERNALLY
+CONSISTENT at insert time — a `source_event_id` pointing at a real event belonging to a
+different tenant than the row's own `client_key`, or a `supersedes_fact_id` pointing at a fact
+from a different tenant/event/vendor/fact-key, would pass PR A's checks (a FK only proves the
+referenced row exists, not that its tenant/event match). PR B closes this with `BEFORE INSERT`
+trigger functions (`supabase/migrations/20260726020000_vendor_proposal_facts_cross_table_consistency.sql`)
+on both tables, verifying: the fact's `client_key` matches its `source_event_id`'s real
+`source_events.client_key`; the fact's `proposal_artifact_id` belongs to the same tenant AND
+event (not just the same tenant); `supersedes_fact_id` references a fact with the identical
+tenant/event/vendor/fact-key (deliberately NOT the same `proposal_artifact_id` — a revision is
+expected to come from a different, newer document); and the review row's own tenant/event match
+the fact it reviews. This schema has no dedicated vendor/event-vendor authorization table
+(`vendor_key` is free-text, matching the rest of Source's vendor-lever fact model) — there is
+no vendor-authorization row to check beyond internal consistency, named honestly rather than
+fabricating a check against a table that doesn't exist. PR B also closed a join-safety gap found
+during scope discovery: `context-binder.ts`'s uploaded-evidence read re-checks `tenant_key` at
+BOTH join hops (the `source_artifacts` lookup, and the `artifact_id`-keyed
+`source_artifact_chunks`/`source_artifact_facts` reads) — previously the second hop trusted the
+first hop's `artifactIds` with no independent tenant check.
+
 ## Consequences
 
 - `source_vendor_proposal_facts`/`source_vendor_proposal_fact_reviews` are now the only Source
@@ -146,3 +170,5 @@ authenticated` + `set_config('request.jwt.claims', ..., true)`) is exercised tod
   mechanism.
 - `tests/security/rls-regression.sql` / `scripts/run-rls-regression.ts` — the existing
   auto-discovering RLS regression suite these two tables now become subject to.
+- `supabase/migrations/20260726020000_vendor_proposal_facts_cross_table_consistency.sql` — PR
+  B's migration (cross-table ownership-consistency triggers).
