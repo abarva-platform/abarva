@@ -150,7 +150,9 @@ function extractBlock(modelText: string): string | null {
 /** Convert the validated model block into the extractor's RoadmapStructuredInput.
  * Explicit critical dependencies are represented as synthetic cells so the
  * extractor surfaces them as dependencies without inventing anything. */
-function toStructuredInput(o: RoadmapStructuredOutput): RoadmapStructuredInput {
+export function structuredOutputToInput(
+  o: RoadmapStructuredOutput,
+): RoadmapStructuredInput {
   const dependencyCells = o.criticalDependencies.map((d) => ({
     workstream: "Critical dependency",
     horizon: d.note?.split("·")[1]?.trim() || o.cells[0]?.horizon || "Mobilize",
@@ -218,7 +220,7 @@ export function parseRoadmapStructuredBlock(
   return {
     ok: true,
     output: parsed.data,
-    input: toStructuredInput(parsed.data),
+    input: structuredOutputToInput(parsed.data),
   };
 }
 
