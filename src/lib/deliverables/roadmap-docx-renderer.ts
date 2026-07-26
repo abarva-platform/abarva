@@ -29,6 +29,7 @@ import { buildMultiColumnTable } from "@/lib/exports-shared/structured-docx-base
 
 import {
   roadmapContractStamp,
+  opaqueMoveRef,
   type RoadmapEvidenceStatus,
   type RoadmapPresentationContract,
 } from "./roadmap-presentation-contract";
@@ -67,7 +68,7 @@ export function buildRoadmapDetailDocument(
   const lifecycle = lifecycleFromContract(contract);
   const children = [
     eyebrowParagraph(
-      `${contract.lineage.tenantKey} · Move ${contract.lineage.moveId} · Phase ${contract.phase} · Executive Roadmap (detail)`,
+      `${contract.lineage.tenantKey} · ${opaqueMoveRef(contract.lineage.moveId)} · Phase ${contract.phase} · Executive Roadmap (detail)`,
     ),
     coverTitleParagraph(contract.executiveConclusion),
     coverSubtitleParagraph(`Sponsor decision: ${contract.sponsorDecision}`),
@@ -180,7 +181,7 @@ export function buildRoadmapDetailDocument(
     heading1("Appendix H — Lineage and provenance"),
     bodyParagraph([
       boldRun("Move: "),
-      bodyRun(contract.lineage.moveId),
+      bodyRun(opaqueMoveRef(contract.lineage.moveId)),
       boldRun("   Tenant: "),
       bodyRun(contract.lineage.tenantKey),
     ]),
@@ -202,7 +203,7 @@ export function buildRoadmapDetailDocument(
 
   return new Document({
     creator: "AbarVa · Moves",
-    title: `Executive Roadmap (detail) · Move ${contract.lineage.moveId}`,
+    title: `Executive Roadmap (detail) · ${opaqueMoveRef(contract.lineage.moveId)}`,
     description: `Roadmap detail · contract ${contract.contentHash}`,
     numbering: ORDERED_NUMBERING_CONFIG,
     sections: [

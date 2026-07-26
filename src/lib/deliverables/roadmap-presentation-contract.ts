@@ -134,3 +134,12 @@ export function roadmapContractStamp(
 ): string {
   return `roadmap-contract v${contract.contractVersion} · ${contract.contentHash}`;
 }
+
+/** An OPAQUE, stable public reference for a Move — a non-UUID token derived
+ * deterministically from the internal move id. Client-facing renderers use this
+ * instead of the raw `deliverables`/move UUID so no internal database id appears
+ * in a client artifact (PR16); the raw id stays in the restricted provenance JSON.
+ * Same move → same ref, so a client can still correlate outputs. */
+export function opaqueMoveRef(moveId: string): string {
+  return `move-${createHash("sha256").update(moveId).digest("hex").slice(0, 10)}`;
+}
