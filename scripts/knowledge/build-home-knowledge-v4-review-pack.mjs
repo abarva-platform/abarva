@@ -2070,33 +2070,128 @@ function resolveVisualDataPoints(visualBinding, packet) {
 // must avoid.
 const GRAPH_ELIGIBLE_DIMENSIONS = new Set(["apps", "infra", "architecture_dependencies", "integrations", "data", "rel"]);
 
+// relationship_samples is not one fixed shape across tenants -- confirmed by
+// direct inspection of real regenerated content: first-capital and
+// skyharbor-air carry real typed edges (from_object_name/to_object_name/
+// relationship_type), but meridian-health's underlying source data carries
+// a different real shape instead (business_name/use_case/affected_systems,
+// a semicolon-joined system list, no typed edges at all). The original
+// single-shape reader silently produced node_count: 0 on meridian-health --
+// not "no relationship evidence," a real counting bug reading fields that
+// never existed in that tenant's rows. Detect which shape a given row set
+// actually has and derive real counts from it either way.
+function hasTypedRelationshipEdges(rows) {
+  return rows.some((row) => row.relationship_type && (row.from_object_name || row.to_object_name));
+}
+
+function distinctAffectedSystems(row) {
+  return (row.affected_systems ?? "")
+    .split(";")
+    .map((s) => s.trim())
+    .filter((s) => s && s !== "Needs evidence");
+}
+
 // Same non-fabricable-pointer pattern as visual_binding: Claude never
 // writes this field. graph_binding is a real, code-computed SUMMARY of the
 // actual relationship_samples rows (counts, real relationship types) --
 // never the full node/edge list, matching how visual_binding points at a
-// dataset_id instead of embedding rows. The real graph rendering (e.g.
-// RelationshipTopologyGraph, already built and proven earlier this
-// session) reads relationship_samples/the graph substrate directly, not
-// this JSON.
-function deriveGraphBinding(key, packet) {
+// dataset_id instead of embedding rows.
+export function deriveGraphBinding(key, packet) {
   if (!GRAPH_ELIGIBLE_DIMENSIONS.has(key)) return null;
   const rows = packet.business_context_samples?.relationship_samples ?? [];
   if (rows.length === 0) {
     return { relationship_source: "relationship_samples", node_count: 0, edge_count: 0, relationship_types: [], empty_state: "No relationship evidence loaded for this dimension yet." };
   }
-  const nodeNames = new Set();
-  const types = new Set();
+  if (hasTypedRelationshipEdges(rows)) {
+    const nodeNames = new Set();
+    const types = new Set();
+    for (const row of rows) {
+      if (row.from_object_name) nodeNames.add(row.from_object_name);
+      if (row.to_object_name) nodeNames.add(row.to_object_name);
+      if (row.relationship_type) types.add(row.relationship_type);
+    }
+    return {
+      relationship_source: "relationship_samples",
+      projection_type: "dependency_map",
+      node_count: nodeNames.size,
+      edge_count: rows.length,
+      relationship_types: Array.from(types).sort(),
+    };
+  }
+  const systemNames = new Set();
+  const useCases = new Set();
   for (const row of rows) {
-    if (row.from_object_name) nodeNames.add(row.from_object_name);
-    if (row.to_object_name) nodeNames.add(row.to_object_name);
-    if (row.relationship_type) types.add(row.relationship_type);
+    for (const system of distinctAffectedSystems(row)) systemNames.add(system);
+    if (row.use_case) useCases.add(row.use_case);
   }
   return {
     relationship_source: "relationship_samples",
-    projection_type: "dependency_map",
-    node_count: nodeNames.size,
+    projection_type: "initiative_system_map",
+    node_count: systemNames.size,
     edge_count: rows.length,
-    relationship_types: Array.from(types).sort(),
+    relationship_types: Array.from(useCases).sort(),
+  };
+}
+
+// Builds a REAL relationship_graph primary_visual (node_groups/edge_meaning,
+// not just counts) for the `rel` dimension only -- the one dimension the
+// generic 38-catalog is actually about relationships. The same
+// relationship_samples rows back all 6 GRAPH_ELIGIBLE_DIMENSIONS; giving
+// apps/infra/architecture_dependencies/integrations/data an identical full
+// graph under a different label would be exactly the "one all-tenant
+// hairball repeated six times" the graph feature must avoid -- they keep
+// the honest counts-only summary above instead. Real groups, not
+// decoration: typed-edge tenants group by relationship_type (uses/owns/
+// runs_on/...), each with real from→to example pairs; the alternate-shape
+// tenant groups by use_case, each with the real systems its gaps affect.
+export function resolveRelationshipGraphVisual(packet) {
+  const rows = packet.business_context_samples?.relationship_samples ?? [];
+  if (rows.length === 0) return null;
+
+  if (hasTypedRelationshipEdges(rows)) {
+    const byType = new Map();
+    for (const row of rows) {
+      if (!row.relationship_type || !row.from_object_name || !row.to_object_name) continue;
+      if (!byType.has(row.relationship_type)) byType.set(row.relationship_type, []);
+      byType.get(row.relationship_type).push(`${row.from_object_name} → ${row.to_object_name}`);
+    }
+    const nodeGroups = Array.from(byType.entries()).map(([type, examples]) => ({
+      group: type,
+      examples: examples.slice(0, 4),
+      classification: "loaded_fact",
+    }));
+    if (nodeGroups.length === 0) return null;
+    return {
+      visual_type: "relationship_graph",
+      projection_type: "relationship_type_map",
+      classification: "loaded_fact",
+      node_groups: nodeGroups,
+      edge_meaning: "Each group is a distinct type of dependency, ownership, or usage relationship connecting named systems and functions, read directly from source relationship records.",
+      empty_state: "No relationship evidence loaded for this dimension yet.",
+    };
+  }
+
+  const byUseCase = new Map();
+  for (const row of rows) {
+    if (!row.use_case) continue;
+    if (!byUseCase.has(row.use_case)) byUseCase.set(row.use_case, new Set());
+    for (const system of distinctAffectedSystems(row)) byUseCase.get(row.use_case).add(system);
+  }
+  const nodeGroups = Array.from(byUseCase.entries())
+    .filter(([, systems]) => systems.size > 0)
+    .map(([useCase, systems]) => ({
+      group: useCase,
+      examples: Array.from(systems).slice(0, 4),
+      classification: "loaded_fact",
+    }));
+  if (nodeGroups.length === 0) return null;
+  return {
+    visual_type: "relationship_graph",
+    projection_type: "initiative_system_map",
+    classification: "loaded_fact",
+    node_groups: nodeGroups,
+    edge_meaning: "Each group is one strategic initiative with the named systems its risks and gaps are tied to, read directly from source relationship records.",
+    empty_state: "No relationship evidence loaded for this dimension yet.",
   };
 }
 
@@ -2310,6 +2405,14 @@ export function renderDimensionsFromBook(book, packet) {
     }
     const graphBinding = deriveGraphBinding(key, packet);
     if (graphBinding) dimension.graph_binding = graphBinding;
+    // `rel` never has a chart primary_visual (not in DIMENSION_DATASET_BINDINGS)
+    // -- safe to assign the real graph visual here without overwriting a
+    // chart. See resolveRelationshipGraphVisual's own comment for why the
+    // other 5 GRAPH_ELIGIBLE_DIMENSIONS keep the counts-only summary instead.
+    if (key === "rel" && !dimension.primary_visual) {
+      const graphVisual = resolveRelationshipGraphVisual(packet);
+      if (graphVisual) dimension.primary_visual = graphVisual;
+    }
     return dimension;
   });
 }
