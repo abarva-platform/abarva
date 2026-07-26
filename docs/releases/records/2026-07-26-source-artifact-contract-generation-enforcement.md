@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean.
+`released` — merged, deployed, ACA runtime invariant verified, and live-verified on
+`app.abarva.ai`.
 
 ## Plain-English Summary
 
@@ -80,14 +81,25 @@ the two live Source artifact-generation entry points through a new shared eligib
   2460 passing. 10 pre-existing failing suites — identical set, by name, to the ones confirmed
   unrelated during PR 4A's regression sweep; `git status` confirms this PR touches none of those
   files.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
-- `pending` — live proof against `app.abarva.ai`: the AI-generate route has no existing unit
-  test coverage (confirmed — no test file exists for
-  `[artifactCode]/generate/route.ts` anywhere in this repo, unlike chat-save). Live verification
-  is this release's primary proof for that route: a real, ineligible-stage generation request
-  against a real event returns `409 stage_not_eligible`; a real, eligible-stage request is not
-  newly blocked (reaches the same pre-existing behavior — either generation or the unchanged
-  `upstream_required` 409 — as before this PR).
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — Release Control
+  Gate, Azure deployment lane check, Deploy Authority Gate, Pilot Data Loader Gate all passed.
+- `pass` — CI on PR #5642 (all checks).
+- `pass` — live proof against `app.abarva.ai` (signed-in session, real event
+  `c03ffe14-49fb-403e-8d47-ed23c9fea9e2`, real "Healthcare Demo" tenant, currently at the
+  `scope` stage). The AI-generate route has no existing unit test coverage anywhere in this
+  repo, unlike chat-save, so this is that route's primary proof:
+  - **Ineligible-stage request**: `POST .../artifacts/d24_decision_brief/generate` (earliest
+    eligible stage `executive_decision`) returned the new blocker immediately:
+    `{"error":"stage_not_eligible","detail":"Executive Award Recommendation (d24_decision_brief)
+    is not eligible to generate before stage \"executive_decision\" — the event is currently at
+    \"scope\".","earliestEligibleStage":"executive_decision","currentStage":"scope"}` — exact
+    structured shape as designed, no side effects.
+  - **Eligible-stage request**: `POST .../artifacts/d06_excl_log/generate` (stage `scope`,
+    matching the event's real current stage) did NOT return `stage_not_eligible` and was still
+    running past 8 seconds (client-aborted, not server-failed) — proving it passed both the new
+    stage check and the pre-existing upstream check synchronously and moved on to real
+    generation work, exactly as it would have before this PR. No false block on a genuinely
+    eligible request.
 
 ## Rollout Plan
 
@@ -98,8 +110,13 @@ change on both generation routes (a new 409 case). No migration, no flag.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none directly (a normal code deploy).
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be recorded after merge and deploy.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:10c675ce1955cfefc37b08c235271b96a47cb4fd8529a3060160205e652e532f`
+  (merge SHA `46754f0886560bce4870fb7467cc2f543c2d4f40`, ACA revision
+  `ca-abarva-web-lab-eastus--m46754f08`).
+- ACA runtime invariant: verified — deploy run
+  [30188508738](https://github.com/abarva-platform/abarva/actions/runs/30188508738)'s "Verify
+  ACA runtime invariant" step passed.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes — see QA / Validation.
@@ -111,8 +128,10 @@ prior hardcoded family switch) — no data migration involved either direction.
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- Deploy run and live proof: to be recorded after merge/deploy.
+- PR: [#5642](https://github.com/abarva-platform/abarva/pull/5642) (merge commit
+  `46754f0886560bce4870fb7467cc2f543c2d4f40`).
+- Deploy run: [30188508738](https://github.com/abarva-platform/abarva/actions/runs/30188508738).
+- Live proof: signed-in browser session against `https://app.abarva.ai` — see QA / Validation.
 - Sequencing decision: `docs/architecture/adr/ADR-0013-source-modernization-baseline.md`.
 - Design decision: `docs/architecture/adr/ADR-0015-source-artifact-contract.md` (PR 4B
   amendment).
