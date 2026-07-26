@@ -1641,7 +1641,7 @@ const TST_TENANT_FOLDER = {
 // crashed loadTenantEvidenceIndex). T01 (programs) and F12 (budget) were
 // already identical across all tenants. No dataset needs per-tenant schema
 // branching any more; every tenant reads the same column names.
-function loadTenantDatasetRegistry(tenantKey) {
+export function loadTenantDatasetRegistry(tenantKey) {
   const tstFolder = TST_TENANT_FOLDER[tenantKey];
   if (!tstFolder) return [];
   const base = path.join(repoRoot, "tower-standardized-v1", tstFolder);
@@ -1796,7 +1796,7 @@ function loadTenantEvidenceIndex(tenantKey) {
 // every other dimension gets no binding, which is correct, not a gap to
 // silently paper over.
 const DIMENSION_DATASET_BINDINGS_VERSION = "v1-2026-07-24";
-const DIMENSION_DATASET_BINDINGS = {
+export const DIMENSION_DATASET_BINDINGS = {
   apps: { primary_dataset: "applications_full", evidence_families: ["applications", "cmdb", "architecture_deck"] },
   vendors: { primary_dataset: "vendors_full", evidence_families: ["vendors", "annual_report"] },
   programs: { primary_dataset: "programs_full", evidence_families: ["programs", "investor_day_deck"] },
@@ -1921,7 +1921,7 @@ const DIMENSION_BOOK_CHAPTERS = {
 // stale field name (this block referenced skyharbor-air's pre-2026-07-25
 // column names after the F05/F11/T09/T10 normalization) gets caught before
 // any paid call rather than silently producing a broken visual_binding.
-const VISUAL_RENDER_RULES = {
+export const VISUAL_RENDER_RULES = {
   applications_full: {
     visual_type: "treemap", dimension: "domain", measure: "count", limit: 7,
     title: "Application concentration by domain",
@@ -2015,7 +2015,30 @@ function resolveDimensionValue(row, datasetId, dimension) {
 // Every other governed visual_type groups by visual_binding.dimension and
 // aggregates visual_binding.measure (row count, or the sum of a real
 // numeric column).
-function resolveVisualDataPoints(visualBinding, packet) {
+// A CSV column existing and containing a blank string is not the same claim
+// as the column containing a real 0 -- confirmed against real source data:
+// meridian-health's F12 budget file has exactly one row, a deliberate
+// sentinel (line_id "MER-BUDGET-NOT-LOADED", spend_type "not_loaded",
+// budget_fy26_usd blank, notes "Tower projection intentionally avoids
+// invented budget values"). Treating a blank measure as 0 turned that
+// explicit "we do not have this number" signal into a fabricated $0 bar --
+// a chart that LOOKS like real data (real budget_area label, "loaded_fact"
+// classification, "no model-generated values" boundary text) but whose only
+// number was invented by `|| 0`, not read from the source. Same fabrication
+// risk hit programs_full's scatter (meridian-health: 0/7 rows have
+// promised_benefit_usd or measured_value_usd) -- silently plotting those as
+// (0, 0) reads as "measured and found to be zero," not "not measured."
+// Fix: a blank/missing numeric field excludes the row from that measure
+// entirely, rather than contributing a manufactured zero.
+function hasRealNumericValue(row, column) {
+  const raw = row[column];
+  if (raw === undefined || raw === null) return false;
+  const trimmed = String(raw).trim();
+  if (trimmed === "") return false;
+  return Number.isFinite(Number(trimmed));
+}
+
+export function resolveVisualDataPoints(visualBinding, packet) {
   if (!visualBinding?.dataset_id) return [];
   const registryEntry = (packet.deterministic_dataset_registry ?? []).find((d) => d.dataset_id === visualBinding.dataset_id);
   if (!registryEntry?.evidence_source) return [];
@@ -2025,12 +2048,13 @@ function resolveVisualDataPoints(visualBinding, packet) {
   if (visualBinding.visual_type === "scatter_2x2") {
     const labelCol = DATASET_LABEL_COLUMN[visualBinding.dataset_id] ?? visualBinding.dimension;
     return rows
+      .filter((row) => hasRealNumericValue(row, visualBinding.measure))
       .map((row) => {
         const dimensionValue = resolveDimensionValue(row, visualBinding.dataset_id, visualBinding.dimension);
         return {
           label: row[labelCol] || dimensionValue || "",
-          x: Number(row.promised_benefit_usd) || 0,
-          y: Number(row[visualBinding.measure]) || 0,
+          x: hasRealNumericValue(row, "promised_benefit_usd") ? Number(row.promised_benefit_usd) : 0,
+          y: Number(row[visualBinding.measure]),
           series: dimensionValue || "",
           classification: "loaded_fact",
           source_basis: registryEntry.grain,
@@ -2045,9 +2069,12 @@ function resolveVisualDataPoints(visualBinding, packet) {
   for (const row of rows) {
     const key = resolveDimensionValue(row, visualBinding.dataset_id, visualBinding.dimension);
     if (!key) continue;
-    const current = groups.get(key) ?? 0;
-    const increment = visualBinding.measure === "count" ? 1 : (Number(row[visualBinding.measure]) || 0);
-    groups.set(key, current + increment);
+    if (visualBinding.measure === "count") {
+      groups.set(key, (groups.get(key) ?? 0) + 1);
+      continue;
+    }
+    if (!hasRealNumericValue(row, visualBinding.measure)) continue;
+    groups.set(key, (groups.get(key) ?? 0) + Number(row[visualBinding.measure]));
   }
   return Array.from(groups.entries())
     .map(([label, value]) => ({
