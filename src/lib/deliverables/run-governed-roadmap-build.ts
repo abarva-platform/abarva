@@ -117,7 +117,11 @@ export async function runGovernedRoadmapBuild(
       deps.callModel(system, user, {
         artifact: "execution_roadmap",
         phase: 4,
-        maxTokens: 2000,
+        // The full 4-horizon × ≤6-workstream JSON contract needs generous
+        // headroom — a tight budget truncates the JSON mid-string
+        // (structured_output_malformed). Live run ffb9942a proved 2000 was too
+        // small (unterminated string at ~5113 chars); 8000 gives ample margin.
+        maxTokens: 8000,
       }),
   });
 
