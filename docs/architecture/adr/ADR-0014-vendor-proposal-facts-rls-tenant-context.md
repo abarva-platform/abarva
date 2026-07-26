@@ -200,6 +200,50 @@ string is passed. Cross-tenant accept/reject at the route layer, and the governe
 exclusions (candidate/rejected/superseded facts, tenant/event-pure downstream context), were
 already covered by PR3's and PR B's own tests and are not duplicated here.
 
+## Amendment (2026-07-26) — Workstream closure
+
+The RLS/tenant-isolation security workstream's closure criterion required proof at five
+layers: the database-policy layer, the foreign-key/ownership-integrity layer, the application
+route layer, the authoritative context-binding layer, and the live multi-tenant production
+layer. Status at closure:
+
+- **Database-policy layer**: closed by PR A (real `can_read_tenant_by_key()` RLS policies,
+  replacing `USING (true)`) and proven live by `tests/security/rls-regression.sql`'s
+  auto-discovery, which now covers both vendor-proposal-facts tables.
+- **Foreign-key/ownership-integrity layer**: closed by PR A (immutable-ownership triggers) and
+  PR B (cross-table ownership-consistency triggers — event, artifact, and supersession
+  consistency).
+- **Application route layer**: closed by PR A's tenant-scoped session mechanism (every
+  vendor-proposal-facts query now runs as `authenticated`, scoped to the caller's real,
+  server-resolved identity) and PR C's route-layer tests (missing-tenant-context denial,
+  cross-tenant/cross-event 404 consistency).
+- **Authoritative context-binding layer**: closed by PR B's `context-binder.ts` join-safety fix
+  (`tenant_key` re-checked at every join hop) and PR3's `getAuthoritativeVendorProposalFacts`
+  tests (tenant/event-pure, review-status-filtered reads).
+- **Live multi-tenant production layer**: proven with two REAL synthetic tenants at the
+  database layer (PR C's `vendor-proposal-facts-write-isolation-regression.sql`, run live
+  against a fully migrated Postgres, with a validated negative control confirming the suite
+  actually detects a disabled trigger rather than passing tautologically) and with two REAL
+  events at the live application-route layer against `app.abarva.ai` (same-tenant ingest/accept
+  succeeds; a real fact accessed via the wrong event's URL returns the identical `404
+  fact_not_found` as a fabricated, nonexistent UUID — no distinguishing signal either way;
+  denied attempts leave no partial writes; a sibling event's read is completely empty of the
+  other event's facts). **A second live, signed-in tenant session on `app.abarva.ai` could not
+  be obtained during this closure pass** — the app's sign-out control does not work (confirmed
+  live, a real defect, tracked separately for a fix) and the agent closing this workstream is
+  not permitted to authenticate as a second account itself. Per explicit user decision on
+  2026-07-26, the database-layer two-real-tenant proof (live Postgres, validated as a genuine
+  detector) together with the live two-real-event application-route proof is accepted as
+  satisfying the live multi-tenant production layer — the gap is a live-session availability
+  constraint on this pass, not a gap in the underlying enforcement, which the DB-layer proof
+  already exercises with real distinct tenants.
+
+No cross-tenant or cross-event fact can be read, mutated, accepted, rejected, superseded, or
+supplied to downstream artifacts through any path tested in PR A, PR B, or PR C — including
+when the caller knows the target record's real UUID. This closes the RLS/tenant-isolation
+workstream. Per the original sequencing decision, PR 4 (stage and artifact contracts) may now
+proceed.
+
 ## References
 
 - `docs/architecture/adr/ADR-0004-per-user-rls.md` — the original decision to adopt per-user

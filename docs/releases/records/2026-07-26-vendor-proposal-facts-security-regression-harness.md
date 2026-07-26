@@ -109,9 +109,17 @@ tsconfig.json` — zero errors.
   [30182625608](https://github.com/abarva-platform/abarva/actions/runs/30182625608)) — the
   authoritative confirmation that the suite runs correctly outside the local Docker validation
   above.
-- `pending` — the workstream's final live multi-tenant production proof (this release's own
-  scope is the offline/CI regression harness, per the user's explicit PR sequencing — the live
-  proof is a separate, final step of the workstream, not this release's QA).
+- `pass` — the workstream's final live multi-tenant production proof. Completed with two REAL
+  events against `app.abarva.ai` at the application-route layer (same-tenant ingest/accept
+  succeeds; a real fact accessed via the wrong event's URL returns an identical `404
+  fact_not_found` as a fabricated nonexistent UUID; denied attempts leave no partial writes; a
+  sibling event's read is empty of the other event's facts) — see ADR-0014's closure amendment
+  for the full evidence chain and citations. A second live, signed-in tenant session could not
+  be obtained (the app's sign-out control does not work — tracked separately — and the agent
+  is not permitted to authenticate a second account itself); per explicit user decision, the
+  two-real-tenant proof already completed at the database layer by this release's own suite is
+  accepted as satisfying the live multi-tenant requirement in place of a second live app
+  session.
 
 ## Rollout Plan
 
@@ -128,8 +136,9 @@ migration or this suite's own files, plus the weekly Sunday schedule).
 - ACA runtime invariant: N/A.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: no — this release is offline/CI test infrastructure; the
-  workstream's live multi-tenant proof is a separate, subsequent step.
+- Live signed-in proof required: no for this release itself (offline/CI test infrastructure);
+  the workstream's separate live multi-tenant proof is now complete — see ADR-0014's closure
+  amendment.
 
 ## Rollback Plan
 
@@ -163,6 +172,9 @@ behavior is affected either way — this release cannot regress a live system, o
   governed-read-contract exclusions (already proven by PR3's and PR B's own tests,
   `vendor-proposal-facts.test.ts` and `context-binder.test.ts`) — named explicitly rather than
   duplicated.
-- **The workstream's final live multi-tenant production proof (≥2 real tenants, ≥2 real
-  events, against the deployed app) is the next and last step after this release**, per the
-  user's explicit closure criterion — not this release's scope.
+- **The workstream's final live multi-tenant production proof is complete** — see ADR-0014's
+  closure amendment. The live application-route half used 2 real events (not 2 real tenants —
+  a second signed-in tenant session could not be obtained; the app's sign-out control is
+  broken, tracked separately) alongside the 2-real-tenant proof already completed at the
+  database layer by this release's own suite, accepted per explicit user decision as
+  satisfying the closure criterion.
