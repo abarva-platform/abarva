@@ -99,28 +99,14 @@ export function checkProseStructureConsistency(args: {
     }
   }
 
-  // 3) Milestones the prose names but the structure omits. Conservative: only
-  //    flag a prose line explicitly labelled a milestone whose salient words
-  //    appear in NO structured milestone.
-  const structureMilestoneWords = new Set(
-    (input.valueMilestones ?? []).flatMap((m) => normalizeWords(m.name)),
-  );
-  const proseMilestoneLines = prose
-    .split(/\n+/)
-    .filter((l) => /milestone/i.test(l) && l.trim().length > 12);
-  for (const line of proseMilestoneLines) {
-    const words = normalizeWords(line).filter((w) => w !== "milestone");
-    if (words.length < 2) continue;
-    const overlap = words.filter((w) => structureMilestoneWords.has(w)).length;
-    if (structureMilestoneWords.size > 0 && overlap === 0) {
-      mismatches.push({
-        code: "milestone_missing_from_structure",
-        detail: `A milestone described in the narrative has no counterpart in the structured value milestones: "${line.trim().slice(0, 80)}".`,
-        material: true,
-      });
-      break; // one is enough to require review
-    }
-  }
+  // 3) (removed in PR14) The milestone_missing_from_structure check lexically
+  //    compared prose "milestone" lines to structured milestone names. On real
+  //    board narratives it false-positived on section HEADERS ("Value Milestones
+  //    (Proof, Not Promises)") and generic mentions (live run 59389096). Matching
+  //    prose milestones to structured ones reliably is too lossy, so the check is
+  //    removed rather than left over-blocking. Horizon-count + control-gate +
+  //    dependency + lifecycle checks (below) are the reliable contradiction
+  //    signals and remain.
 
   // 4) Dependency the prose calls resolved but the structure marks unproven.
   for (const c of input.cells) {
@@ -153,8 +139,12 @@ export function checkProseStructureConsistency(args: {
   }
 
   // 5) Lifecycle/finality language vs the governed lifecycle state.
+  // Only genuine finality CLAIMS about THIS artifact count — NOT the bare word
+  // "final"/"finalized" (which appears innocuously in real board prose, e.g.
+  // "finalized the data model") and NOT a factual "charter signed off". PR14
+  // calibration: live run 59389096 false-positived on "final"/"finalized".
   const finalityInProse =
-    /(final(?:ized|ised)?\b|sponsor accepted|signed[- ]off|approved for release|ready for distribution)/.test(
+    /(approved for release|ready for (?:distribution|the board)|board[- ]ready|board[- ]approved|final(?:ized|ised)? and approved|signed off and approved|sponsor has accepted this|no further (?:changes|revisions|approvals) (?:are )?(?:needed|required))/.test(
       lower,
     );
   const draftInProse =
