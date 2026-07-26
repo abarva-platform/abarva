@@ -80,7 +80,11 @@ export function buildBookChapterGroups(dimensions: HomeV4Candidate["dimensions"]
       defaultOpen: false,
       items: chapterDimensions.map((dimension) => ({
         key: `dimension:${dimension.dimension_key}`,
-        label: dimension.executive_title,
+        // Book mode sets `title`, not `executive_title` (a distinct,
+        // legacy-only field -- see the HomeV4Dimension comment). Without
+        // this fallback, every book-mode nav item's label was blank text
+        // next to its dot -- a real bug, not a hypothetical one.
+        label: dimension.title ?? dimension.executive_title ?? "",
         // A dimension with no headline has none of its own gap/advantage/
         // conclusion content (see pickDimensionHeadline in the generator)
         // -- an honest visual signal in the TOC itself, not decoration.
@@ -100,7 +104,7 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
     defaultOpen: false,
     items: candidate.dimensions.map((dimension) => ({
       key: `dimension:${dimension.dimension_key}`,
-      label: dimension.executive_title,
+      label: dimension.executive_title ?? "",
       tone: "blue",
     })),
   };
@@ -143,27 +147,54 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
         {selectedKey.startsWith("dimension:")
           ? candidate.dimensions
               .filter((d) => `dimension:${d.dimension_key}` === selectedKey)
-              .map((dimension) => (
-                <div key={dimension.dimension_key} className="heb-v4-ct-page">
-                  <h1>{dimension.executive_title}</h1>
-                  {dimension.summary_tab?.executive_read ? (
-                    <p className="heb-v4-preview-summary">{dimension.summary_tab.executive_read}</p>
-                  ) : null}
-                  {dimension.headline && !dimension.summary_tab ? (
-                    <p className="heb-v4-preview-summary">
-                      <strong>{dimension.headline}</strong>
-                      {dimension.executive_takeaway ? ` -- ${dimension.executive_takeaway}` : ""}
-                    </p>
-                  ) : null}
-                  {dimension.primary_visual ? <HomeV4VisualRenderer visual={dimension.primary_visual} /> : null}
-                  {dimension.data_tab?.full_rows?.length ? (
-                    <HomeV4ApplicationsGrid rows={dimension.data_tab.full_rows} />
-                  ) : null}
-                  {dimension.graph_binding && !isHomeV4GraphVisual(dimension.primary_visual) ? (
-                    <HomeV4GraphBindingSummary binding={dimension.graph_binding} />
-                  ) : null}
-                </div>
-              ))
+              .map((dimension) => {
+                // A "quiet" dimension (no headline: see pickDimensionHeadline
+                // in the generator) has no gap/advantage/conclusion tagged to
+                // it specifically -- deliberate, so the same conclusion isn't
+                // restated 38 times. But that must never mean the page shows
+                // literally nothing but a title: every dimension belongs to
+                // exactly one book chapter (dimension.chapter), and that
+                // chapter always has a real, Claude-authored section
+                // narrative. Fall back to it, honestly labeled as shared
+                // chapter context rather than dimension-specific commentary,
+                // so no dimension page is ever genuinely blank.
+                const hasOwnContent = Boolean(dimension.summary_tab?.executive_read || dimension.headline);
+                const chapterSection = !hasOwnContent
+                  ? candidate.enterprise_book?.sections?.[dimension.chapter ?? ""]
+                  : null;
+                return (
+                  <div key={dimension.dimension_key} className="heb-v4-ct-page">
+                    <h1>{dimension.title ?? dimension.executive_title}</h1>
+                    {dimension.summary_tab?.executive_read ? (
+                      <p className="heb-v4-preview-summary">{dimension.summary_tab.executive_read}</p>
+                    ) : null}
+                    {dimension.headline && !dimension.summary_tab ? (
+                      <p className="heb-v4-preview-summary">
+                        <strong>{dimension.headline}</strong>
+                        {dimension.executive_takeaway ? ` -- ${dimension.executive_takeaway}` : ""}
+                      </p>
+                    ) : null}
+                    {chapterSection ? (
+                      <div className="heb-v4-dimension-chapter-fallback">
+                        <p className="heb-v4-dimension-chapter-fallback-label">
+                          No material-specific finding for this dimension yet — shown below is the shared chapter context it belongs to.
+                        </p>
+                        <p className="heb-v4-preview-summary">
+                          <strong>{chapterSection.headline}</strong>
+                          {chapterSection.narrative ? ` -- ${chapterSection.narrative}` : ""}
+                        </p>
+                      </div>
+                    ) : null}
+                    {dimension.primary_visual ? <HomeV4VisualRenderer visual={dimension.primary_visual} /> : null}
+                    {dimension.data_tab?.full_rows?.length ? (
+                      <HomeV4ApplicationsGrid rows={dimension.data_tab.full_rows} />
+                    ) : null}
+                    {dimension.graph_binding && !isHomeV4GraphVisual(dimension.primary_visual) ? (
+                      <HomeV4GraphBindingSummary binding={dimension.graph_binding} />
+                    ) : null}
+                  </div>
+                );
+              })
           : null}
       </main>
       <HomeV4ChangeTransformationStyles />
@@ -178,6 +209,20 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
           flex: 1;
           min-width: 0;
           padding: 28px 32px 64px;
+        }
+        .heb-v4-dimension-chapter-fallback {
+          padding: 14px 16px;
+          margin-bottom: 16px;
+          border: 1px solid ${COLORS.line};
+          border-radius: 8px;
+          background: ${COLORS.rail};
+        }
+        .heb-v4-dimension-chapter-fallback-label {
+          margin: 0 0 8px;
+          font-size: 11px;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: ${COLORS.muted};
         }
         .heb-v4-preview-summary {
           margin: 0 0 16px;

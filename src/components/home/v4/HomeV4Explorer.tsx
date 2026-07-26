@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { COLORS } from "@/components/home/HomeEnterpriseBriefApp";
 
@@ -43,6 +43,15 @@ export function HomeV4Explorer({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((g) => [g.title, g.defaultOpen ?? true])),
   );
+  // The sidebar is its own scroll container (position: sticky + its own
+  // overflow, so it can stay visible while the main content scrolls). That
+  // means expanding a group near the bottom reveals its items below the
+  // sidebar's own visible edge -- scrolling the main page does nothing,
+  // since it's a different scroll context. Confirmed as a real, reported
+  // "invisible submenu" -- nothing was actually broken, the newly-revealed
+  // list just wasn't brought into view. Scrolls the just-opened list into
+  // the sidebar's own viewport on expand.
+  const itemsRefs = useRef<Record<string, HTMLUListElement | null>>({});
 
   return (
     <aside className="heb-v4-explorer" aria-label="Context Explorer">
@@ -54,7 +63,15 @@ export function HomeV4Explorer({
             <button
               type="button"
               className={isToc ? "heb-v4-explorer-group-head toc" : "heb-v4-explorer-group-head"}
-              onClick={() => setOpenGroups((prev) => ({ ...prev, [group.title]: !isOpen }))}
+              onClick={() => {
+                const willOpen = !isOpen;
+                setOpenGroups((prev) => ({ ...prev, [group.title]: willOpen }));
+                if (willOpen) {
+                  requestAnimationFrame(() => {
+                    itemsRefs.current[group.title]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                  });
+                }
+              }}
               aria-expanded={isOpen}
             >
               <span className={`heb-v4-explorer-disclosure${isOpen ? " open" : ""}${isToc ? " toc" : ""}`}>▶</span>
@@ -62,11 +79,17 @@ export function HomeV4Explorer({
               {group.title}
             </button>
             {isOpen ? (
-              <ul className="heb-v4-explorer-items">
+              <ul
+                className="heb-v4-explorer-items"
+                ref={(el) => {
+                  itemsRefs.current[group.title] = el;
+                }}
+              >
                 {group.items.map((item) => (
                   <li key={item.key}>
                     <button
                       type="button"
+                      data-testid={`heb-v4-explorer-item-${item.key}`}
                       className={
                         item.key === selectedKey
                           ? "heb-v4-explorer-item selected"
