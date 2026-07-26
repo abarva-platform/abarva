@@ -94,9 +94,17 @@ export type FeatureFlagKey =
   | "moves_finder_shell_v1"
   | "moves_approvals_overview_v1"
   | "tower_command_center_v2"
-  | "moves_pricing_engine";
+  | "moves_pricing_engine"
+  | "moves_governed_roadmap_downloads";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "moves_governed_roadmap_downloads",
+    summary:
+      "2026-07-25: The P4 execution roadmap emits a governed structured-output block (validated + prose⇄structure consistency-checked), which is turned into ONE RoadmapPresentationContract and persisted with an immutable synchronization record (content hash, contract/schema/renderer versions, lineage, run id, supersession). Editable PPTX, editable DOCX and an HTML preview are then served from the SAME persisted contract via the governed download route — never regenerated independently — with tenant-scoped, non-enumerating refusals and restricted contract/provenance access. When off, roadmap generation and existing downloads behave byte-for-byte as before. Tenant opt-in; default off; Meridian first. Env: ABARVA_FEATURE_MOVES_GOVERNED_ROADMAP_DOWNLOADS_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
   {
     key: "tower_cxo_claude_story_blocks",
     summary:

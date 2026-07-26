@@ -27,7 +27,13 @@ import {
   deriveRoadmapLifecycle,
   roadmapLifecycleSentence,
   type RoadmapLifecycle,
+  type RoadmapLifecycleState,
 } from "./roadmap-lifecycle";
+import {
+  buildGovernedRoadmapArtifact,
+  type GovernedRoadmapResult,
+} from "./build-governed-roadmap-artifact";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
 import {
@@ -67,6 +73,10 @@ export type GenerateArtifactResult =
       draftCaveats: GenerationBlocker[];
       contextCaveats: string[];
       draftCaveatHtml?: string;
+      /** PR10 — governed structured roadmap output (execution_roadmap only,
+       * flag-gated). Present only when the model emitted a valid block and it
+       * passed validation; the persist layer stores it for governed downloads. */
+      governedRoadmap?: GovernedRoadmapResult;
     }
   | { status: "blocked_gate"; httpStatus: 409; blockers: GenerationBlocker[] }
   | { status: "blocked_context"; missing: string[] }
@@ -579,6 +589,47 @@ export async function generateArtifact(
       : modelHtml,
   );
 
+  // PR10 — governed structured-output for the execution roadmap. Flag-gated +
+  // additive + fully guarded: it reads the RAW model text (before HTML
+  // sanitization, so the sentinel block survives), runs the governed builder,
+  // and attaches the result. It NEVER throws into the generation path and NEVER
+  // alters `html` — when the flag is off, the model omitted the block, or the
+  // build fails, `governedRoadmap` is simply undefined and behavior is
+  // unchanged. The persist layer is what stores it; downloads re-render from it.
+  let governedRoadmap: GovernedRoadmapResult | undefined;
+  if (
+    args.artifact === "execution_roadmap" &&
+    isFeatureEnabled(
+      { clientKey: args.tenantKey },
+      "moves_governed_roadmap_downloads",
+    )
+  ) {
+    try {
+      const lifecycleState: RoadmapLifecycleState =
+        lifecycle?.state ??
+        (generationMode === "final" && gate.gateApproved
+          ? "exit_approved_final"
+          : "review_draft");
+      governedRoadmap = await buildGovernedRoadmapArtifact({
+        modelText: modelHtml,
+        pipeline: "golden_bar",
+        lineage: {
+          moveId: args.moveId,
+          tenantKey: args.tenantKey,
+          architectureRef: ctx.architecture
+            ? "accepted-p3-architecture"
+            : undefined,
+        },
+        lifecycleState,
+        phase: args.phase,
+        generatedAt: new Date().toISOString(),
+        authoritativeApprovedEvidence: false,
+      });
+    } catch {
+      governedRoadmap = undefined; // never let this disturb generation
+    }
+  }
+
   // PR3 — blocking governance-contradiction check. A generated artifact must
   // never assert a governance fact that contradicts the authoritative state
   // (stale charter signoff, uncaptured-but-accepted architecture, false
@@ -651,6 +702,7 @@ export async function generateArtifact(
           draftCaveats: gate.draftCaveats,
           contextCaveats,
           draftCaveatHtml,
+          governedRoadmap,
         };
       }
     }
@@ -667,5 +719,6 @@ export async function generateArtifact(
     draftCaveats: gate.draftCaveats,
     contextCaveats,
     draftCaveatHtml,
+    governedRoadmap,
   };
 }

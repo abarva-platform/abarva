@@ -5,6 +5,7 @@ import {
   P3_P4_WORD_BAND_CONTRACTS,
 } from "@/lib/deliverables/shared/artifact-contracts";
 import { EXECUTIVE_ROADMAP_REFERENCE } from "@/lib/deliverables/shared/reference-library/executive-roadmap-reference";
+import { roadmapStructuredOutputInstruction } from "@/lib/deliverables/roadmap-structured-output";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import { renderPhaseDeliverablePackagePrompt } from "@/lib/programs/phase-deliverable-package-contract";
 import type { SolutionContext } from "@/lib/programs/solution-context";
@@ -819,7 +820,8 @@ Forbidden — this must read as an executive sequencing argument, not an impleme
 
 Length discipline:
 - Target ${P3_P4_WORD_BAND_CONTRACTS.roadmap.minWords.toLocaleString()}-${P3_P4_WORD_BAND_CONTRACTS.roadmap.targetWordsMax.toLocaleString()} rendered words.
-- Do not repeat the full target architecture, operating model, or business case.`;
+- Do not repeat the full target architecture, operating model, or business case.
+${roadmapStructuredOutputInstruction()}`;
 }
 
 function genericPhaseAssignment(phase: number): string {
