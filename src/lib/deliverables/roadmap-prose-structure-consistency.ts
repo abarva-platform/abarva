@@ -140,13 +140,29 @@ export function checkProseStructureConsistency(args: {
 
   // 5) Lifecycle/finality language vs the governed lifecycle state.
   // Only genuine finality CLAIMS about THIS artifact count — NOT the bare word
-  // "final"/"finalized" (which appears innocuously in real board prose, e.g.
-  // "finalized the data model") and NOT a factual "charter signed off". PR14
-  // calibration: live run 59389096 false-positived on "final"/"finalized".
-  const finalityInProse =
-    /(approved for release|ready for (?:distribution|the board)|board[- ]ready|board[- ]approved|final(?:ized|ised)? and approved|signed off and approved|sponsor has accepted this|no further (?:changes|revisions|approvals) (?:are )?(?:needed|required))/.test(
-      lower,
-    );
+  // "final"/"finalized" (innocuous prose, PR14), and NOT a NEGATED finality
+  // phrase. Every draft narrative carries an AI-draft disclaimer — "It is NOT a
+  // final or board-ready artifact" — so a naive match false-positives on it
+  // (PR15, live run c285f43b). We only count a finality phrase that is NOT
+  // preceded by a negation within a short window.
+  const finalityPhrase =
+    /(approved for release|ready for (?:distribution|the board)|board[- ]ready|board[- ]approved|final(?:ized|ised)? and approved|signed off and approved|sponsor has accepted this|no further (?:changes|revisions|approvals) (?:are )?(?:needed|required))/gi;
+  let finalityInProse = false;
+  for (
+    let mm = finalityPhrase.exec(lower);
+    mm;
+    mm = finalityPhrase.exec(lower)
+  ) {
+    const window = lower.slice(Math.max(0, mm.index - 28), mm.index);
+    const negated =
+      /\b(not|never|no longer|isn'?t|aren'?t|doesn'?t|don'?t|does not|is not|are not|without)\b/.test(
+        window,
+      );
+    if (!negated) {
+      finalityInProse = true;
+      break;
+    }
+  }
   const draftInProse =
     /(review draft|draft for review|not yet approved|pending approval)/.test(
       lower,
