@@ -19,6 +19,7 @@ import type {
 import { renderEvidenceForPrompt } from "./source-register";
 import type { GovernedEvidenceItem } from "./types";
 import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
+import { roadmapStructuredOutputInstruction } from "@/lib/deliverables/roadmap-structured-output";
 
 const USE_CASE_TITLE: Record<string, string> = {
   AMS_IT_OUTSOURCING: "application management services and IT outsourcing",
@@ -33,7 +34,7 @@ function describeUseCase(archetype: string): string {
   );
 }
 
-function artifactHonestyDiscipline(
+export function artifactHonestyDiscipline(
   req: DeliverableIntelligenceRequest,
 ): string {
   if (req.module !== "moves") {
@@ -60,6 +61,7 @@ function artifactHonestyDiscipline(
       return [
         `HONEST ROADMAP MODE: Workstreams, gates, dependencies, owners, and sequencing may be recommended. Calendar dates, durations, and capacity commitments must be cited [n] or labeled [ASSUMPTION TO VALIDATE: indicative timeline pending capacity confirmation].`,
         `Use one Open Inputs Required table for capacity, date, or dependency inputs that must be confirmed.`,
+        roadmapStructuredOutputInstruction(),
       ].join(" ");
     case "value_measurement_contract":
       return [
