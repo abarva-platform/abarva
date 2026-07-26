@@ -306,7 +306,13 @@ export interface HomeV4EnterpriseBook {
 
 export interface HomeV4Dimension {
   dimension_key: string;
-  executive_title: string;
+  // Pre-book-mode candidates carry executive_title; book mode's
+  // renderDimensionsFromBook() sets `title` instead (a real, distinct field
+  // -- not a renamed duplicate). Both optional so the renderer can prefer
+  // whichever architecture actually populated it, rather than one field
+  // being silently required-but-empty for book mode.
+  executive_title?: string;
+  title?: string;
   summary_tab?: HomeV4SummaryTab;
   data_tab?: HomeV4DataTab;
   relationship_tab?: HomeV4RelationshipTab;

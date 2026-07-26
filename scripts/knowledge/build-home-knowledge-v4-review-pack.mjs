@@ -2007,7 +2007,16 @@ export const VISUAL_RENDER_RULES = {
     format: "currency",
   },
   risk_register: {
-    visual_type: "heatmap", dimension: "risk_domain", measure: "count", limit: 5,
+    // A heatmap is genuinely two-dimensional (row x col), unlike every
+    // other governed visual_type here, which groups by one dimension.
+    // secondary_dimension names the real second column (control_status is
+    // a real T09_risk-governance.csv field -- approved/conditional/
+    // review_required, confirmed against real source data) that
+    // resolveVisualDataPoints's heatmap branch groups by, alongside
+    // `dimension`, to build real (row, col) cells. Without it, every point
+    // collapsed into the same blank row/col key and rendered as one empty
+    // cell -- a real, previously-shipped bug, not a hypothetical one.
+    visual_type: "heatmap", dimension: "risk_domain", secondary_dimension: "control_status", measure: "count", limit: 5,
     title: "Risk intensity by domain and control status",
     annotation_instruction: "Emphasize high-severity risks with weak control status",
   },
@@ -2130,6 +2139,38 @@ export function resolveVisualDataPoints(visualBinding, packet) {
       .filter((p) => p.label)
       .sort((a, b) => b.y - a.y)
       .slice(0, visualBinding.limit ?? 8);
+  }
+
+  // A heatmap is genuinely two-dimensional -- HeatmapVisual builds its grid
+  // from data_points[].row/col, not label/value. The generic single-
+  // dimension branch below produces {label, value} only, so every point
+  // collapsed onto the same blank row/col key and rendered as one empty
+  // cell (a real, previously-shipped bug). Requires visualBinding to name
+  // a real secondary_dimension (see risk_register's VISUAL_RENDER_RULES
+  // entry) -- if one isn't configured, fall through to an honest empty
+  // array rather than guess at a fake second axis.
+  if (visualBinding.visual_type === "heatmap") {
+    if (!visualBinding.secondary_dimension) return [];
+    const cells = new Map();
+    for (const row of rows) {
+      const rowKey = resolveDimensionValue(row, visualBinding.dataset_id, visualBinding.dimension);
+      const colKey = resolveDimensionValue(row, visualBinding.dataset_id, visualBinding.secondary_dimension);
+      if (!rowKey || !colKey) continue;
+      const cellKey = `${rowKey}::${colKey}`;
+      const increment = visualBinding.measure === "count"
+        ? 1
+        : hasRealNumericValue(row, visualBinding.measure) ? Number(row[visualBinding.measure]) : 0;
+      if (visualBinding.measure !== "count" && increment === 0 && !hasRealNumericValue(row, visualBinding.measure)) continue;
+      const existing = cells.get(cellKey);
+      cells.set(cellKey, {
+        row: rowKey,
+        col: colKey,
+        value: (existing?.value ?? 0) + increment,
+        classification: "loaded_fact",
+        source_basis: registryEntry.grain,
+      });
+    }
+    return Array.from(cells.values());
   }
 
   const groups = new Map();
@@ -2466,6 +2507,7 @@ export function renderDimensionsFromBook(book, packet) {
           limit: rule.limit,
           title: rule.title,
           annotation_instruction: rule.annotation_instruction,
+          ...(rule.secondary_dimension ? { secondary_dimension: rule.secondary_dimension } : {}),
           ...(rule.format ? { format: rule.format } : {}),
           ...(rule.orientation ? { orientation: rule.orientation } : {}),
           interpretation: section.narrative
