@@ -6,7 +6,14 @@
 
 ## Status
 
-`candidate` — local tests/lint/typecheck clean.
+`released` — merged to `main` via [#5614](https://github.com/abarva-platform/abarva/pull/5614)
+(squash-merge `af83593be5ae6d2c8ffa1f45c735531fc43765bd`), all CI checks passed including "Fresh
+Postgres migration replay". Deployed, the governed migration lane applied the RLS/column/trigger
+migration (confirmed "No pending migrations" afterward), and the tenant-scoped session mechanism
+was live-verified end-to-end against `app.abarva.ai` — both read and a full ingest→accept write
+round-trip succeeded through the new `SET LOCAL ROLE authenticated` + RLS-backed path, with all
+prior data intact. The existing offline SQL RLS regression suite could not be run in this pass —
+see Known Gaps for the two pre-existing tooling blockers found and flagged separately.
 
 ## Plain-English Summary
 
@@ -109,14 +116,32 @@ This release fixes both halves for this one flow:
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
   — zero errors.
 - `pass` — `npx eslint` on all touched/added files — zero errors, zero warnings.
-- `pending` — `node scripts/release-check.mjs` — to run before PR open.
-- `pending` — governed migration lane (`status` then `apply`).
-- `pending` — the existing RLS regression suite (`npm run test:rls-regression` /
-  `scripts/run-rls-regression.ts`) auto-discovering `source_vendor_proposal_facts` and
-  `source_vendor_proposal_fact_reviews` and reporting `pass` (not `leak`) for both, post-merge
-  and post-migration-apply.
-- `pending` — live signed-in proof: confirm a real request through the vendor-proposal-facts
-  routes still succeeds end-to-end (same behavior as before, now DB-enforced underneath).
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — 15 release-relevant
+  files, this release record found and matched.
+- `pass` — all CI checks on PR #5614, including "Fresh Postgres migration replay" (confirms the
+  migration SQL — RLS policies, backfill, triggers — is valid against a real Postgres instance).
+- `pass` — governed migration lane: `status` → `apply` → `status`, confirmed
+  `20260726010000_vendor_proposal_facts_rls.sql` applied ("✓ Applied 1 pending migration"), then
+  a clean re-check showed "No pending migrations. Applied: 297 / 293". One unrelated step in the
+  same workflow run ("Repository readback — artifact acceptances", a pre-existing verifier for a
+  different, earlier feature) failed on a leftover non-idempotent synthetic row — confirmed via
+  container log this is unrelated to this migration and flagged as its own follow-up (see Known
+  Gaps) rather than silently ignored.
+- `pass` — live signed-in proof on `app.abarva.ai` (2026-07-25, post-deploy/post-migration),
+  proving the new `SET LOCAL ROLE authenticated` + RLS-backed session doesn't break the feature:
+  (a) `GET .../facts` returned `200` with all prior real data intact (the $199,000 accepted fact,
+  the $185,000 superseded fact from the PR 3 live-verification session); (b) a full real
+  ingest → accept write round-trip (a new "Warranty" fact, ingested then accepted) returned
+  `200`/`ok:true`/`reviewStatus: "accepted"` end-to-end.
+- `attempted, blocked` — the existing offline SQL RLS regression suite
+  (`tests/security/rls-regression.sql`) could not be run in this pass. Two pre-existing,
+  unrelated tooling gaps were found and flagged as separate follow-ups (not fixed here, out of
+  this PR's scope): (1) the governed ACA operator-job path fails with `ENOENT` because the
+  production Docker image doesn't bundle the `tests/` directory the script needs; (2) the
+  dedicated `rls-regression.yml` workflow's `lab-control`/`lab-context` targets have no
+  configured DSN secrets, and the `production` target failed with a connection error, almost
+  certainly because the production Postgres instance sits in a private VNet a GitHub-hosted
+  runner cannot reach. The live signed-in proof above is the substitute evidence for this pass.
 
 ## Rollout Plan
 
@@ -130,11 +155,15 @@ change beneath an already-shipped, already-tested feature.
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none directly; the migration lane is dispatched separately,
   `workflow_dispatch`-only.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be recorded after merge and deploy.
+- Approved image digest: `sha256:932cac4b6ce2979b3fd9e06c71c84ba381098da56c3c0ff31748eb9203a55e17`
+  (`acrabarvalab001.azurecr.io/abarva/web`), deployed via run
+  [30179251290](https://github.com/abarva-platform/abarva/actions/runs/30179251290), 100% traffic
+  shifted, runtime invariant + health endpoint verified in-workflow.
+- ACA runtime invariant: verified — template image, 100%-traffic revision image, and worker job
+  images match the digest above.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — see QA / Validation.
+- Live signed-in proof required: yes — captured, see QA / Validation.
 
 ## Rollback Plan
 
@@ -149,9 +178,15 @@ not part of this rollback path.
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
-- Deploy run, migration-apply run, RLS-regression-suite run, and live proof: to be recorded
-  after merge/deploy.
+- PR: [#5614](https://github.com/abarva-platform/abarva/pull/5614), squash-merged
+  `af83593be5ae6d2c8ffa1f45c735531fc43765bd`, 2026-07-25.
+- Deploy run: [30179251290](https://github.com/abarva-platform/abarva/actions/runs/30179251290).
+- Migration-apply run: [30179601682](https://github.com/abarva-platform/abarva/actions/runs/30179601682)
+  (migration itself applied cleanly per container log; the run's own reported failure was the
+  unrelated, pre-existing artifact-acceptances readback step, see QA / Validation).
+- RLS-regression-suite run: attempted, blocked by two pre-existing tooling gaps — see QA /
+  Validation and Known Gaps.
+- Live proof: captured 2026-07-25 against `app.abarva.ai` — see QA / Validation.
 - Baseline audit this release closes items from:
   `docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md` (the raw-`pg.Pool`/vestigial-RLS
   finding).
@@ -177,6 +212,17 @@ not part of this rollback path.
   guessing non-disclosure, service-role-only-path proof) is not part of this release** — this
   release's own tests cover the mechanism and the existing app-layer behaviors; the dedicated,
   broader security regression harness is PR C's explicit scope.
+- **The offline SQL RLS regression suite could not be run against this release** — two
+  pre-existing, unrelated tooling gaps were found and flagged as separate follow-ups (not this
+  PR's scope to fix): the ACA operator-job path can't reach `tests/security/rls-regression.sql`
+  (not bundled in the production image), and the dedicated `rls-regression.yml` workflow's
+  `production` target can't reach the private-VNet database from a GitHub-hosted runner (lab
+  targets have no configured DSN secrets at all). Live signed-in proof against the real app
+  substitutes for this pass; automated regression coverage for the new tables via that suite
+  remains open until those gaps are fixed.
+- **A pre-existing, unrelated verification step (artifact-acceptances readback) is currently
+  broken** — flagged separately; it fails on every `db-migration-lab.yml` dispatch (not just
+  this one) due to a leftover non-idempotent synthetic row, unrelated to this migration.
 - Connection overhead: every vendor-proposal-facts query now opens a real transaction
   (`BEGIN`/two `SET`s/…/`COMMIT`) instead of a bare pooled query — a small, acceptable latency
   cost for this flow's request volume, not measured/benchmarked in this release.
