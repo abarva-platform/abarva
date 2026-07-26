@@ -73,25 +73,46 @@ const BOOK_CHAPTER_ORDER: Array<{ chapter: string; title: string; numeral: strin
 export function buildBookChapterGroups(dimensions: HomeV4Candidate["dimensions"]): HomeV4ExplorerGroup[] {
   return BOOK_CHAPTER_ORDER.map(({ chapter, title, numeral }) => {
     const chapterDimensions = dimensions.filter((d) => d.chapter === chapter);
+    if (chapterDimensions.length === 0) return { title, numberLabel: numeral, variant: "toc" as const, defaultOpen: false, items: [] };
     return {
       title,
       numberLabel: numeral,
       variant: "toc" as const,
       defaultOpen: false,
-      items: chapterDimensions.map((dimension) => ({
-        key: `dimension:${dimension.dimension_key}`,
-        // Book mode sets `title`, not `executive_title` (a distinct,
-        // legacy-only field -- see the HomeV4Dimension comment). Without
-        // this fallback, every book-mode nav item's label was blank text
-        // next to its dot -- a real bug, not a hypothetical one.
-        label: dimension.title ?? dimension.executive_title ?? "",
-        // A dimension with no headline has none of its own gap/advantage/
-        // conclusion content (see pickDimensionHeadline in the generator)
-        // -- an honest visual signal in the TOC itself, not decoration.
-        tone: (dimension.headline ? "green" : "quiet") as "green" | "quiet",
-      })),
+      items: [
+        // Real bug found in live review: quiet dimensions (no headline of
+        // their own) fell back to their chapter's shared narrative -- but
+        // with nowhere else that narrative was shown, the SAME full
+        // paragraph got repasted verbatim onto every quiet dimension in a
+        // chapter. Clicking through "Leadership Agenda", "Interview
+        // Signals", etc. and seeing identical text looked broken even
+        // though it was honestly labeled. Fix: give each chapter one real
+        // page where its shared narrative lives, so dimension pages can
+        // link to it instead of repeating it.
+        {
+          key: `chapter:${chapter}`,
+          label: "Chapter Overview",
+          tone: "blue" as const,
+        },
+        ...chapterDimensions.map((dimension) => ({
+          key: `dimension:${dimension.dimension_key}`,
+          // Book mode sets `title`, not `executive_title` (a distinct,
+          // legacy-only field -- see the HomeV4Dimension comment). Without
+          // this fallback, every book-mode nav item's label was blank text
+          // next to its dot -- a real bug, not a hypothetical one.
+          label: dimension.title ?? dimension.executive_title ?? "",
+          // A dimension with no headline has none of its own gap/advantage/
+          // conclusion content (see pickDimensionHeadline in the generator)
+          // -- an honest visual signal in the TOC itself, not decoration.
+          tone: (dimension.headline ? "green" : "quiet") as "green" | "quiet",
+        })),
+      ],
     };
   }).filter((group) => group.items.length > 0);
+}
+
+export function chapterTitleFor(chapter: string): string {
+  return BOOK_CHAPTER_ORDER.find((c) => c.chapter === chapter)?.title ?? chapter;
 }
 
 export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate }) {
@@ -144,6 +165,25 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
         {selectedKey === "transformation_dependencies" && businessChangeImpact ? (
           <TransformationDependenciesPage projection={businessChangeImpact} />
         ) : null}
+        {selectedKey.startsWith("chapter:")
+          ? (() => {
+              const chapter = selectedKey.slice("chapter:".length);
+              const section = candidate.enterprise_book?.sections?.[chapter];
+              return (
+                <div className="heb-v4-ct-page">
+                  <h1>{chapterTitleFor(chapter)}</h1>
+                  {section ? (
+                    <p className="heb-v4-preview-summary">
+                      <strong>{section.headline}</strong>
+                      {section.narrative ? ` -- ${section.narrative}` : ""}
+                    </p>
+                  ) : (
+                    <p className="heb-v4-preview-summary">No chapter narrative available for this candidate.</p>
+                  )}
+                </div>
+              );
+            })()
+          : null}
         {selectedKey.startsWith("dimension:")
           ? candidate.dimensions
               .filter((d) => `dimension:${d.dimension_key}` === selectedKey)
@@ -151,17 +191,17 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
                 // A "quiet" dimension (no headline: see pickDimensionHeadline
                 // in the generator) has no gap/advantage/conclusion tagged to
                 // it specifically -- deliberate, so the same conclusion isn't
-                // restated 38 times. But that must never mean the page shows
-                // literally nothing but a title: every dimension belongs to
-                // exactly one book chapter (dimension.chapter), and that
-                // chapter always has a real, Claude-authored section
-                // narrative. Fall back to it, honestly labeled as shared
-                // chapter context rather than dimension-specific commentary,
-                // so no dimension page is ever genuinely blank.
+                // restated 38 times. That must never mean the page shows
+                // literally nothing but a title -- but repasting the full
+                // chapter narrative onto every quiet dimension in a chapter
+                // turned out just as bad: clicking through several
+                // differently-named pages and seeing identical paragraphs
+                // reads as broken/duplicated content, confirmed live. Instead:
+                // a short, honest note plus a real link to that chapter's one
+                // "Chapter Overview" page, where the shared narrative lives
+                // exactly once.
                 const hasOwnContent = Boolean(dimension.summary_tab?.executive_read || dimension.headline);
-                const chapterSection = !hasOwnContent
-                  ? candidate.enterprise_book?.sections?.[dimension.chapter ?? ""]
-                  : null;
+                const hasChapterSection = !hasOwnContent && Boolean(candidate.enterprise_book?.sections?.[dimension.chapter ?? ""]);
                 return (
                   <div key={dimension.dimension_key} className="heb-v4-ct-page">
                     <h1>{dimension.title ?? dimension.executive_title}</h1>
@@ -174,15 +214,18 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
                         {dimension.executive_takeaway ? ` -- ${dimension.executive_takeaway}` : ""}
                       </p>
                     ) : null}
-                    {chapterSection ? (
+                    {hasChapterSection ? (
                       <div className="heb-v4-dimension-chapter-fallback">
                         <p className="heb-v4-dimension-chapter-fallback-label">
-                          No material-specific finding for this dimension yet — shown below is the shared chapter context it belongs to.
+                          No material-specific finding for this dimension yet.
                         </p>
-                        <p className="heb-v4-preview-summary">
-                          <strong>{chapterSection.headline}</strong>
-                          {chapterSection.narrative ? ` -- ${chapterSection.narrative}` : ""}
-                        </p>
+                        <button
+                          type="button"
+                          className="heb-v4-dimension-chapter-fallback-link"
+                          onClick={() => setSelectedKey(`chapter:${dimension.chapter}`)}
+                        >
+                          View the {chapterTitleFor(dimension.chapter ?? "")} chapter context →
+                        </button>
                       </div>
                     ) : null}
                     {dimension.primary_visual ? <HomeV4VisualRenderer visual={dimension.primary_visual} /> : null}
@@ -223,6 +266,15 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
           letter-spacing: 0.04em;
           text-transform: uppercase;
           color: ${COLORS.muted};
+        }
+        .heb-v4-dimension-chapter-fallback-link {
+          padding: 0;
+          border: none;
+          background: none;
+          font-size: 13px;
+          color: ${COLORS.blue};
+          cursor: pointer;
+          text-decoration: underline;
         }
         .heb-v4-preview-summary {
           margin: 0 0 16px;

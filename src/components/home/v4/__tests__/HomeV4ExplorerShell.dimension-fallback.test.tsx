@@ -4,7 +4,7 @@
 /**
  * HomeV4ExplorerShell · quiet-dimension chapter fallback
  *
- * Real bug, confirmed live on a real approved candidate (skyharbor-air,
+ * Real bug #1, confirmed live on a real approved candidate (skyharbor-air,
  * regenerated and approved this session): a "quiet" dimension (no headline
  * -- see pickDimensionHeadline in the generator; most of the 38 real
  * dimensions have no conclusion/gap/advantage tagged to them specifically,
@@ -12,21 +12,28 @@
  * conditional block (summary_tab, headline, primary_visual, full_rows,
  * graph_binding) requires content that only a handful of dimensions per
  * tenant actually have, so most dimension pages were genuinely blank.
+ *
+ * Real bug #2, found in the SAME live walkthrough after fixing #1: the
+ * first fallback fell back to the chapter's shared narrative directly on
+ * the dimension page -- but with nowhere else that narrative was shown,
+ * every quiet dimension in a chapter (e.g. "Leadership Agenda", "Interview
+ * Signals") rendered the SAME full paragraph verbatim. Clicking through
+ * several differently-named nav items and seeing identical text read as
+ * broken/duplicated content, not an honest disclosure. Fix: each chapter
+ * gets one real "Chapter Overview" nav item/page where its shared narrative
+ * lives exactly once; quiet dimension pages show a short note plus a link
+ * to that page instead of repeating the paragraph.
+ *
  * Uses the real skyharbor-air fixture specifically: first-capital's fixture
  * happens to have a headline on every one of its 38 dimensions (confirmed
- * directly), so it can't exercise this real bug at all.
- *
- * Fix: a dimension with no dedicated content now falls back to its book
- * chapter's real, Claude-authored section narrative (candidate.
- * enterprise_book.sections[dimension.chapter]), honestly labeled as shared
- * chapter context rather than dimension-specific commentary.
+ * directly), so it can't exercise either bug at all.
  */
 
 import "@testing-library/jest-dom";
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
-import { buildBookChapterGroups, HomeV4ExplorerShell } from "../HomeV4ExplorerShell";
+import { buildBookChapterGroups, chapterTitleFor as chapterTitleForChapterKey, HomeV4ExplorerShell } from "../HomeV4ExplorerShell";
 import type { HomeV4Candidate } from "../homeV4Visual";
 import skyharborFixture from "@/app/(maestro)/home/v4-preview/_fixtures/skyharbor-air.json";
 
@@ -70,7 +77,7 @@ describe("<HomeV4ExplorerShell /> · quiet-dimension chapter fallback (real fixt
     expect(findQuietDimension()).toBeTruthy();
   });
 
-  it("never renders a dimension page with only a title -- a quiet dimension shows its chapter's real narrative", () => {
+  it("never renders a dimension page with only a title -- a quiet dimension shows a short note, not the full chapter text", () => {
     const quiet = findQuietDimension();
     if (!quiet) throw new Error("no quiet dimension found in skyharbor-air fixture -- fixture may have changed");
     const chapterSection = candidate.enterprise_book?.sections?.[quiet.chapter ?? ""];
@@ -87,7 +94,47 @@ describe("<HomeV4ExplorerShell /> · quiet-dimension chapter fallback (real fixt
     expect(
       main.getByText(/No material-specific finding for this dimension yet/i),
     ).toBeInTheDocument();
-    expect(main.getByText(new RegExp(chapterSection!.headline.slice(0, 20), "i"))).toBeInTheDocument();
+    // The dimension page itself must NOT repaste the chapter's full
+    // narrative -- that's what made multiple quiet dimensions in the same
+    // chapter show identical walls of text. It links out instead.
+    expect(main.queryByText(new RegExp(chapterSection!.headline.slice(0, 20), "i"))).not.toBeInTheDocument();
+    expect(main.getByRole("button", { name: /chapter context/i })).toBeInTheDocument();
+  });
+
+  it("clicking the chapter-context link navigates to a single page showing the chapter's shared narrative", () => {
+    const quiet = findQuietDimension();
+    if (!quiet) throw new Error("no quiet dimension found in skyharbor-air fixture -- fixture may have changed");
+    const chapterSection = candidate.enterprise_book?.sections?.[quiet.chapter ?? ""];
+    if (!chapterSection) throw new Error("quiet dimension's chapter has no shared narrative -- fixture may have changed");
+
+    render(<HomeV4ExplorerShell candidate={candidate} />);
+    openChapterAndSelectDimension(quiet.dimension_key);
+    fireEvent.click(screen.getByRole("button", { name: /chapter context/i }));
+
+    const main = within(screen.getByRole("main"));
+    expect(main.getByRole("heading", { name: chapterTitleForChapterKey(quiet.chapter!) })).toBeInTheDocument();
+    expect(main.getByText(new RegExp(chapterSection.headline.slice(0, 20), "i"))).toBeInTheDocument();
+  });
+
+  it("a second quiet dimension in the same chapter shows its own short note, not a repeated copy of the chapter text", () => {
+    const chapterOf = (d: (typeof candidate.dimensions)[number]) => d.chapter;
+    const quietOnes = candidate.dimensions.filter(
+      (d) => !d.headline && !d.summary_tab?.executive_read && d.dimension_key !== "enterprise_thesis" && d.chapter,
+    );
+    const first = quietOnes[0];
+    const second = quietOnes.find((d) => chapterOf(d) === chapterOf(first) && d.dimension_key !== first.dimension_key);
+    if (!first || !second) throw new Error("need two quiet dimensions in the same chapter -- fixture may have changed");
+
+    render(<HomeV4ExplorerShell candidate={candidate} />);
+    openChapterAndSelectDimension(second.dimension_key);
+
+    const main = within(screen.getByRole("main"));
+    expect(main.getByRole("heading", { name: (second.title ?? second.executive_title)! })).toBeInTheDocument();
+    // Only the short honest note + link, never the chapter's full sentence.
+    const chapterSection = candidate.enterprise_book?.sections?.[chapterOf(second) ?? ""];
+    if (chapterSection) {
+      expect(main.queryByText(new RegExp(chapterSection.headline.slice(0, 20), "i"))).not.toBeInTheDocument();
+    }
   });
 
   it("a dimension WITH its own headline does not show the chapter-fallback label", () => {
