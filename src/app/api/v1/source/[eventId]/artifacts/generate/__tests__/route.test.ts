@@ -228,6 +228,47 @@ describe("POST /api/v1/source/:eventId/artifacts/generate", () => {
     expect(call.fileCabinet.description).toEqual(expect.any(String));
   });
 
+  // PR 4B (ADR-0015): stage-eligibility, contract-driven, now enforced on
+  // chat-save too — previously nothing checked this at all.
+  it("returns 409 stage_not_eligible when the artifact's earliest eligible stage is after the event's resolved stage", async () => {
+    maybeSingleMock.mockResolvedValue({
+      data: {
+        id: EVENT_ID,
+        client_key: "apexretail",
+        current_stage_key: "strategy",
+      },
+      error: null,
+    });
+    const res = await POST(
+      request({
+        title: "Decision brief draft",
+        content: "Body",
+        // No explicit stageKey — resolves to the event's persisted stage (strategy).
+        artifactCode: "d24_decision_brief", // earliestEligibleStage = executive_decision
+      }),
+      CTX,
+    );
+    expect(res.status).toBe(409);
+    const json = (await res.json()) as { error?: string; detail?: string };
+    expect(json.error).toBe("stage_not_eligible");
+    expect(json.detail).toContain("executive_decision");
+    expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+  });
+
+  it("allows chat-save at the artifact's own eligible stage even with no upstream present — chat-save does not gate on missing upstream", async () => {
+    const res = await POST(
+      request({
+        title: "RFP draft",
+        content: "Body with no upstream artifacts authored yet.",
+        stageKey: "rfp",
+        artifactCode: "d09_rfp_pack", // requires d01, d05 upstream — none present in this test
+      }),
+      CTX,
+    );
+    expect(res.status).toBe(200);
+    expect(registerSourceArtifactUploadMock).toHaveBeenCalledTimes(1);
+  });
+
   it("returns 403 when the caller lacks Source artifact generation rights", async () => {
     loadUserSourceAccessPolicyMock.mockResolvedValue({
       canGenerateSourcingArtifacts: false,

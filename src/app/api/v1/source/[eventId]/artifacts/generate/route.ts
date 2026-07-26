@@ -34,6 +34,8 @@ import { verifyArtifactSections } from "@/lib/source/agent-generation/section-co
 import { scanForBannedTerms } from "@/lib/source/documentation-standards/source-documentation-standards";
 import { shortSourceArtifactCode } from "@/lib/source/agent-generation/quality-review";
 import { withComplianceReviewFlag } from "@/lib/source/artifact-governance";
+import { evaluateGenerationEligibility } from "@/lib/source/contracts/generation-eligibility";
+import { requireSourceArtifactContract } from "@/lib/source/contracts/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,33 +96,22 @@ function parseStageKey(value: unknown): SourceStageKey | undefined {
   throw new Error(`stageKey must be canonical Source stage, got ${parsed}`);
 }
 
-function parseArtifactFamily(
+// PR 4B (ADR-0015): previously re-derived the family from a hardcoded
+// stage → family switch independent of the artifact code itself — a
+// second, drift-prone stage→family mapping alongside canonical-specs/
+// artifact-specs.ts's real one. Now resolves from the SourceArtifactContract
+// (itself sourced from artifact-specs.ts), matching the code's own real
+// declaration rather than guessing from stage. A caller may still supply an
+// explicit override, matching prior behavior.
+function resolveArtifactFamily(
   value: unknown,
-  stageKey: SourceStageKey,
+  contractFamily: SourceArtifactFamily,
 ): SourceArtifactFamily {
   const parsed = parseOptionalString(value);
-  if (parsed && SOURCE_ARTIFACT_FAMILIES.has(parsed as SourceArtifactFamily))
+  if (parsed && SOURCE_ARTIFACT_FAMILIES.has(parsed as SourceArtifactFamily)) {
     return parsed as SourceArtifactFamily;
-  if (stageKey === "scope") return "scope_document";
-  if (
-    stageKey === "strategy" ||
-    stageKey === "sourcing_strategy" ||
-    stageKey === "intake"
-  )
-    return "sourcing_strategy";
-  if (stageKey === "rfp" || stageKey === "rfp_rfi_package") return "rfp";
-  if (stageKey === "responses" || stageKey === "vendor_responses")
-    return "proposal";
-  if (stageKey === "evaluation") return "scorecard";
-  if (stageKey === "pricing") return "pricing_workbook";
-  if (stageKey === "bafo" || stageKey === "orals_bafo") return "bafo";
-  if (stageKey === "executive_decision" || stageKey === "selection")
-    return "decision_brief";
-  if (stageKey === "transition" || stageKey === "contract_mobilization")
-    return "transition_risk_register";
-  if (stageKey === "value" || stageKey === "value_realization")
-    return "value_ledger";
-  return "other";
+  }
+  return contractFamily;
 }
 
 function parseDataClassification(
@@ -315,9 +306,34 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
   });
   if (!scope) return jsonError(403, "forbidden_event");
 
-  const artifactFamily = parseArtifactFamily(
+  // Contract-driven stage eligibility (PR 4B, ADR-0015): the same stage
+  // check the AI-generate route runs, now also applied to chat-authored/
+  // chat-saved content — closing the "chat-save and direct generation use
+  // different checks" gap for stage eligibility specifically. Deliberately
+  // NOT applying the missing-required-upstream gate here: unlike AI-generate
+  // (which drafts FROM upstream evidence and has no meaning without it),
+  // chat-save persists content a human already wrote, which may legitimately
+  // be authored out of order (catching up on documentation, capturing notes
+  // before the "required" upstream artifact exists yet). Confirmed by an
+  // existing, real test in this route's own suite that chat-saves a
+  // d09_rfp_pack with no upstream present — blocking that would break a
+  // currently-supported, legitimate use case, not just close a gap. Named
+  // explicitly as a deliberate scope boundary in the release record, not an
+  // oversight.
+  const contract = requireSourceArtifactContract(artifactCode);
+  const eligibility = evaluateGenerationEligibility({
+    artifactCode,
+    currentStage: scope.stageKey,
+    missingRequiredUpstreamCodes: [],
+  });
+  if (!eligibility.eligible) {
+    const [firstBlocker] = eligibility.blockers;
+    return jsonError(409, firstBlocker.code, firstBlocker.detail);
+  }
+
+  const artifactFamily = resolveArtifactFamily(
     body.artifactFamily,
-    scope.stageKey,
+    contract.family,
   );
   // Tie the persisted artifact to the real, validated registry code rather
   // than an arbitrary free-text kind — required so downstream lookups

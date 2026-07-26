@@ -96,6 +96,7 @@ import {
   SOURCE_AI_DRAFT_GOVERNANCE_DETAIL,
   withComplianceReviewFlag,
 } from "@/lib/source/artifact-governance";
+import { evaluateGenerationEligibility } from "@/lib/source/contracts/generation-eligibility";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -415,9 +416,26 @@ export async function generateSourceArtifactDraft(
     );
   }
 
-  // Upstream-required gate. Refuses with 409 + the missing codes so
-  // the UI can surface a precise "author X first" message.
+  // Contract-driven eligibility (PR 4B, ADR-0015): stage eligibility (new —
+  // nothing previously checked this) plus the upstream-required gate
+  // (existing "does a non-empty body exist" check, now resolved through the
+  // shared resolver both generation routes use). Refuses with 409 + a
+  // structured blocker so the UI can surface a precise message.
   const missingUpstream = findMissingUpstreamCodes(template, ctx);
+  const eligibility = evaluateGenerationEligibility({
+    artifactCode,
+    currentStage: ctx.event.currentStageKey,
+    missingRequiredUpstreamCodes: missingUpstream,
+  });
+  const stageBlocker = eligibility.blockers.find(
+    (b) => b.code === "stage_not_eligible",
+  );
+  if (stageBlocker) {
+    return Response.json(
+      { error: stageBlocker.code, detail: stageBlocker.detail, ...stageBlocker.meta },
+      { status: 409 },
+    );
+  }
   if (missingUpstream.length > 0) {
     return Response.json(
       {
