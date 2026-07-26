@@ -401,6 +401,7 @@ export function HomeV4VisualRenderer({ visual }: { visual: HomeV4PrimaryVisual }
         }
         .heb-v4-visual-head h4 {
           margin: 6px 0 4px;
+          font-family: Fraunces, Georgia, serif;
           font-size: 16px;
           line-height: 1.25;
           color: ${COLORS.ink};
