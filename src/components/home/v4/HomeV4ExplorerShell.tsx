@@ -15,7 +15,7 @@ import {
   TransformationDependenciesPage,
 } from "./HomeV4ChangeTransformationPages";
 import { HomeV4VisualRenderer } from "./HomeV4VisualRenderer";
-import type { HomeV4Candidate } from "./homeV4Visual";
+import { isHomeV4GraphVisual, type HomeV4Candidate } from "./homeV4Visual";
 
 const CHANGE_TRANSFORMATION_GROUP: HomeV4ExplorerGroup = {
   title: "Change & Transformation",
@@ -159,7 +159,9 @@ export function HomeV4ExplorerShell({ candidate }: { candidate: HomeV4Candidate 
                   {dimension.data_tab?.full_rows?.length ? (
                     <HomeV4ApplicationsGrid rows={dimension.data_tab.full_rows} />
                   ) : null}
-                  {dimension.graph_binding ? <HomeV4GraphBindingSummary binding={dimension.graph_binding} /> : null}
+                  {dimension.graph_binding && !isHomeV4GraphVisual(dimension.primary_visual) ? (
+                    <HomeV4GraphBindingSummary binding={dimension.graph_binding} />
+                  ) : null}
                 </div>
               ))
           : null}
