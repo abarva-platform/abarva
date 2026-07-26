@@ -184,6 +184,20 @@ describe("prose ⇄ structure consistency", () => {
       m.some((x) => x.code === "lifecycle_finality_mismatch" && x.material),
     ).toBe(true);
   });
+
+  it("does NOT flag a NEGATED finality phrase (the AI-draft disclaimer)", () => {
+    const r = parseRoadmapStructuredBlock(wrap(validOutput()));
+    if (!r.ok) throw new Error("expected ok");
+    const m = checkProseStructureConsistency({
+      // PR15: real draft narratives carry this disclaimer verbatim — it says the
+      // artifact is NOT board-ready, which is consistent with review_draft.
+      prose:
+        "It is not a final or board-ready artifact and does not constitute phase approval or sponsor signoff.",
+      input: r.input,
+      lifecycleState: "review_draft",
+    });
+    expect(m.some((x) => x.code === "lifecycle_finality_mismatch")).toBe(false);
+  });
 });
 
 describe("buildGovernedRoadmapArtifact — end to end", () => {
