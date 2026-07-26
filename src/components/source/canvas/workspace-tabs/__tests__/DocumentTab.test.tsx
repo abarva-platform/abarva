@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DocumentTab } from "../DocumentTab";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
@@ -295,5 +295,81 @@ describe("DocumentTab event documents", () => {
       "title",
       "Required sections present: Executive summary, Why now",
     );
+  });
+
+  // PR 4D (ADR-0015): every blocker in a multi-blocker generation response
+  // must render, not just the first sentence a caller happened to keep.
+  it("renders every blocker from a blocked generation attempt, with a scannable label each", async () => {
+    const onGenerateArtifact = jest.fn().mockResolvedValue({
+      ok: false,
+      error: "stage_not_eligible",
+      detail: "Not eligible yet.",
+      blockers: [
+        { code: "stage_not_eligible", detail: "Event has not reached this stage." },
+        { code: "missing_required_upstream", detail: "Author d05_scope_memo first." },
+      ],
+    });
+    render(
+      <DocumentTab
+        eventId="event-1"
+        stage="strategy"
+        artifacts={[baseArtifact]}
+        templateByCode={{ d01_strategy_memo: "# Strategy memo" }}
+        onGenerateArtifact={onGenerateArtifact}
+        generatableCodes={new Set(["d01_strategy_memo"])}
+      />,
+    );
+    fireEvent.click(
+      screen.getByTestId("source-canvas-document-body-generate-d01_strategy_memo"),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText("Event has not reached this stage."),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText("Author d05_scope_memo first.")).toBeInTheDocument();
+    expect(screen.getByText("Stage")).toBeInTheDocument();
+    expect(screen.getByText("Upstream")).toBeInTheDocument();
+  });
+
+  it("blocks a real 409 export attempt and shows its blockers instead of downloading the error body", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      headers: new Map(),
+      json: async () => ({
+        error: "export_not_eligible",
+        detail: "Cannot export yet.",
+        blockers: [
+          {
+            code: "governance_stage_below_export_minimum",
+            detail: "Below the required approval minimum.",
+          },
+        ],
+      }),
+    });
+    render(
+      <DocumentTab
+        eventId="event-1"
+        stage="strategy"
+        artifacts={[{ ...baseArtifact, body: "# Real authored content" }]}
+        templateByCode={{ d01_strategy_memo: "# Strategy memo" }}
+        docxGeneratableCodes={new Set(["d01_strategy_memo"])}
+        docxDownloadHref={() =>
+          "/api/v1/source/event-1/artifacts/d01_strategy_memo/render?format=docx"
+        }
+      />,
+    );
+    fireEvent.click(
+      screen.getByTestId(
+        "source-canvas-document-body-download-docx-d01_strategy_memo",
+      ),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText("Below the required approval minimum."),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText("Approval")).toBeInTheDocument();
   });
 });

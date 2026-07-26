@@ -176,6 +176,10 @@ import type {
 } from "@/lib/source/proposal-intelligence/types";
 import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence/mve-profile";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization/types";
+import {
+  normalizeArtifactBlockers,
+  type ArtifactBlockerLike,
+} from "@/lib/source/contracts/blocker-copy";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -736,7 +740,13 @@ export function UniversalCanvasShell({
     code: string,
   ): Promise<
     | { ok: true }
-    | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+    | {
+        ok: false;
+        error: string;
+        detail: string;
+        missingUpstream?: string[];
+        blockers?: ArtifactBlockerLike[];
+      }
   > => {
     setPendingGenerationByCode((prev) => ({ ...prev, [code]: true }));
     try {
@@ -757,11 +767,14 @@ export function UniversalCanvasShell({
         missingUpstream?: string[];
       } | null;
       if (!res.ok || !payload || payload.error) {
+        const detail =
+          payload?.detail ?? `Generation failed (HTTP ${res.status}).`;
         return {
           ok: false,
           error: payload?.error ?? "unknown",
-          detail: payload?.detail ?? `Generation failed (HTTP ${res.status}).`,
+          detail,
           missingUpstream: payload?.missingUpstream,
+          blockers: normalizeArtifactBlockers(payload, detail),
         };
       }
       if (payload.artifact) {

@@ -1,6 +1,12 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { UploadEventDocumentButton } from "./UploadEventDocumentButton";
 import { AcceptClientFinalButton } from "./AcceptClientFinalButton";
+import { ExportLink } from "./ExportLink";
+import { ArtifactBlockerList } from "../ArtifactBlockerList";
+import {
+  normalizeArtifactBlockers,
+  type ArtifactBlockerLike,
+} from "@/lib/source/contracts/blocker-copy";
 import {
   specByCode,
   type SourceArtifactSpec,
@@ -92,7 +98,13 @@ interface DocumentTabProps {
     code: string,
   ) => Promise<
     | { ok: true }
-    | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+    | {
+        ok: false;
+        error: string;
+        detail: string;
+        missingUpstream?: string[];
+        blockers?: ArtifactBlockerLike[];
+      }
   >;
   /** Set of codes the prompt registry knows how to generate. */
   generatableCodes?: ReadonlySet<string>;
@@ -614,7 +626,13 @@ interface ArtifactBodyEditorProps {
     code: string,
   ) => Promise<
     | { ok: true }
-    | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+    | {
+        ok: false;
+        error: string;
+        detail: string;
+        missingUpstream?: string[];
+        blockers?: ArtifactBlockerLike[];
+      }
   >;
   isGeneratable: boolean;
   generationPending: boolean;
@@ -657,7 +675,12 @@ function ArtifactBodyEditor({
   onClientFinalAccepted,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationBlockers, setGenerationBlockers] = useState<
+    ArtifactBlockerLike[]
+  >([]);
+  const [exportBlockers, setExportBlockers] = useState<ArtifactBlockerLike[]>(
+    [],
+  );
   // Seed the editor: real authored content > template starter.
   const seed = authoredBody ?? templateBody ?? "";
   const [draft, setDraft] = useState(seed);
@@ -670,19 +693,27 @@ function ArtifactBodyEditor({
     setPrevSeed(seed);
     setDraft(seed);
     setEditing(false);
-    setGenerationError(null);
+    setGenerationBlockers([]);
+    setExportBlockers([]);
   }
 
   const handleGenerate = async () => {
     if (!onGenerateArtifact) return;
-    setGenerationError(null);
+    setGenerationBlockers([]);
     const result = await onGenerateArtifact(artifact.artifactCode);
     if (!result.ok) {
-      const detail =
-        result.error === "upstream_required" && result.missingUpstream
-          ? `Author and approve these first: ${result.missingUpstream.join(", ")}`
-          : result.detail;
-      setGenerationError(detail);
+      setGenerationBlockers(
+        result.blockers && result.blockers.length > 0
+          ? result.blockers
+          : normalizeArtifactBlockers(
+              {
+                error: result.error,
+                detail: result.detail,
+                missingUpstream: result.missingUpstream,
+              },
+              result.detail,
+            ),
+      );
     }
   };
 
@@ -790,62 +821,72 @@ function ArtifactBodyEditor({
             />
           ) : null}
           {xlsxDownloadHref ? (
-            <a
+            <ExportLink
               href={xlsxDownloadHref}
-              data-testid={`source-canvas-document-body-download-xlsx-${artifact.artifactCode}`}
+              mode="download"
+              dataTestId={`source-canvas-document-body-download-xlsx-${artifact.artifactCode}`}
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
-              download
+              onBlocked={setExportBlockers}
             >
               Download workbook
-            </a>
+            </ExportLink>
           ) : null}
           {xlsxComparisonDownloadHref ? (
-            <a
+            <ExportLink
               href={xlsxComparisonDownloadHref}
-              data-testid={`source-canvas-document-body-download-xlsx-comparison-${artifact.artifactCode}`}
+              mode="download"
+              dataTestId={`source-canvas-document-body-download-xlsx-comparison-${artifact.artifactCode}`}
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
-              download
               title="Side-by-side comparison of vendor pricing submissions (currently demo mode)."
+              onBlocked={setExportBlockers}
             >
               Download comparison xlsx
-            </a>
+            </ExportLink>
           ) : null}
           {docxDownloadHref ? (
-            <a
+            <ExportLink
               href={docxDownloadHref}
-              data-testid={`source-canvas-document-body-download-docx-${artifact.artifactCode}`}
+              mode="download"
+              dataTestId={`source-canvas-document-body-download-docx-${artifact.artifactCode}`}
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
-              download
               title="Download as Word document."
+              onBlocked={setExportBlockers}
             >
               Download docx
-            </a>
+            </ExportLink>
           ) : null}
           {htmlViewHref ? (
-            <a
+            <ExportLink
               href={htmlViewHref}
-              data-testid={`source-canvas-document-body-view-html-${artifact.artifactCode}`}
+              mode="view"
+              dataTestId={`source-canvas-document-body-view-html-${artifact.artifactCode}`}
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
-              target="_blank"
-              rel="noopener noreferrer"
               title="View as a browser-readable HTML document — useful for sharing as a link, or printing to PDF from the browser."
+              onBlocked={setExportBlockers}
             >
               View HTML
-            </a>
+            </ExportLink>
           ) : null}
           {pdfDownloadHref ? (
-            <a
+            <ExportLink
               href={pdfDownloadHref}
-              data-testid={`source-canvas-document-body-download-pdf-${artifact.artifactCode}`}
+              mode="download"
+              dataTestId={`source-canvas-document-body-download-pdf-${artifact.artifactCode}`}
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
-              download
               title="Download as PDF — print-ready archival format with cover page, page numbers, and confidentiality footer."
+              onBlocked={setExportBlockers}
             >
               Download PDF
-            </a>
+            </ExportLink>
           ) : null}
         </div>
       </div>
+      {exportBlockers.length > 0 ? (
+        <ArtifactBlockerList
+          blockers={exportBlockers}
+          testIdPrefix={`source-canvas-document-body-export-${artifact.artifactCode}`}
+        />
+      ) : null}
       {draftGovernanceMessage ? (
         <div
           style={DRAFT_GOVERNANCE_BANNER_STYLE}
@@ -876,13 +917,14 @@ function ArtifactBodyEditor({
           {clientFinal.note ? <span>{clientFinal.note}</span> : null}
         </div>
       ) : null}
-      {generationError ? (
+      {generationBlockers.length > 0 ? (
         <div
-          role="alert"
           data-testid={`source-canvas-document-body-generation-error-${artifact.artifactCode}`}
-          style={GENERATION_ERROR_STYLE}
         >
-          Generation failed — {generationError}
+          <ArtifactBlockerList
+            blockers={generationBlockers}
+            testIdPrefix={`source-canvas-document-body-generation-${artifact.artifactCode}`}
+          />
         </div>
       ) : null}
       {reasoning && reasoning.status !== "disabled" ? (
@@ -1664,17 +1706,6 @@ const AUTHORITATIVE_BADGE_STYLE: CSSProperties = {
   color: "#1d4ed8",
   background: "rgba(29,78,216,0.08)",
   border: "1px solid rgba(29,78,216,0.22)",
-};
-
-const GENERATION_ERROR_STYLE: CSSProperties = {
-  borderRadius: CANVAS.RADIUS_TIGHT,
-  border: "1px solid rgba(186,117,23,0.30)",
-  background: "rgba(186,117,23,0.06)",
-  padding: "10px 12px",
-  fontFamily: CANVAS.SANS,
-  fontSize: 12.5,
-  color: "#A66400",
-  lineHeight: 1.5,
 };
 
 const READER_BADGE_STYLE: CSSProperties = {

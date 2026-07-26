@@ -343,6 +343,76 @@ route.test.ts` (+2: blocked 409, eligible 200, plus 5 pre-existing fixtures upda
 under the new gate). Vendor-facing/client-facing export requiring stronger authority is proven by
 both new render/download tests using `d09_rfp_pack` (a real client-facing contract).
 
+## Amendment (2026-07-26) — PR 4D: UI eligibility explanations and the stage × artifact regression harness
+
+PR 4C made every blocked action return a real, structured reason (`{code, detail, blockers}`).
+Nothing in the UI read any of it. Scoping (per an Explore-agent code-grounded audit of every
+Source component that triggers generate/accept/export or displays an artifact's status): DocumentTab's
+generate flow special-cased exactly one blocker code (`upstream_required`) and dropped everything
+else down to a single `detail` string; ArtifactAcceptancePanel's accept flow did the same;
+File Cabinet/Document-tab export links were bare `<a href download>` anchors with **no error
+handling at all** — a blocked export (PR 4C's real `409 export_not_eligible`) silently downloaded
+or opened the JSON error body as if it were the file. No shared component or mapping existed
+anywhere for turning a blocker code into UI copy.
+
+**What changed, concretely:**
+
+1. **`src/lib/source/contracts/blocker-copy.ts`** (new, isomorphic — no server-only imports) —
+   `normalizeArtifactBlockers(payload, fallbackDetail?)` reads either real route-response shape
+   (accept/render/download's `{blockers: [...]}` array, or the AI-generate route's single
+   flattened `{error, detail, ...meta}`) and always returns a `ArtifactBlockerLike[]`, so no
+   client call site needs to know which shape it's looking at. `blockerLabel(code)` maps each
+   known blocker code to a short, scannable badge (`Stage`, `Upstream`, `Acceptance`, `Review`,
+   `Approval`, `Sign-off`, ...), falling back to a generic title-cased reading of an unrecognized
+   code rather than throwing — new blocker codes the resolver adds later don't require a matching
+   UI release. This module does not rewrite the server's `detail` sentences (they were already
+   full, human-written prose aimed at being read directly) — it stops them from being dropped.
+2. **`ArtifactBlockerList`** (new, `src/components/source/canvas/`) — the one shared renderer for
+   a blocker list, used identically by every surface below. A multi-blocker response now shows
+   every reason, not just the first one a caller happened to keep.
+3. **`ExportLink`** (new, `src/components/source/canvas/workspace-tabs/`) — replaces the bare
+   `<a href download>` export pattern. Fetches first; a real 2xx response triggers an actual
+   Blob download/`window.open`; a blocked response reports its blockers to the caller instead of
+   downloading the error body. Wired into DocumentTab's five export anchors (xlsx, xlsx-comparison,
+   docx, html, pdf) and File Cabinet's two (registry download, export-ready render links).
+4. **DocumentTab** — `onGenerateArtifact`'s return type gained an additive `blockers?` field;
+   `handleGenerate` renders the full blocker list (via `ArtifactBlockerList`) instead of one
+   special-cased string; a new `exportBlockers` state (reset the same way `generationBlockers`
+   already was, on artifact switch) surfaces export-link failures next to the export buttons.
+5. **`ArtifactAcceptancePanel`** — the flat `error: string | null` state is now
+   `blockers: ArtifactBlockerLike[]`, rendered through the same shared list. The panel also now
+   reads the accept route's `authority` field (returned since PR 4C, read by no client before
+   this PR) and shows a real, contract-derived status line after a successful accept —
+   distinguishing "accepted and authoritative, cleared for export," "accepted and authoritative
+   but not yet cleared for export" (a client-facing artifact needs `approved_for_external_use`
+   separately from acceptance — a real, load-bearing distinction, not a hypothetical one), and
+   "accepted but not yet authoritative," each with any remaining blockers listed underneath. This
+   is the concrete "UI eligibility explanation" the user asked for: the UI now tells the person
+   accepting an artifact whether that action actually finished the job or not, instead of only
+   confirming the POST succeeded.
+6. **Full stage × artifact regression harness** —
+   `src/lib/source/contracts/__tests__/stage-artifact-regression-matrix.test.ts` (new). PR 4A-4C's
+   own suites are example-based (a handful of representative cases each). This file is
+   deliberately exhaustive: every registered artifact code × all 11 canonical stages for
+   `isArtifactEligibleAtStage`/`evaluateGenerationEligibility` monotonicity and agreement; every
+   code × every stage × every `{status, lifecycleState, hasActiveAcceptance}` combination that
+   actually drives governance-stage derivation and terminal-state detection, asserting the core
+   authority invariants (`isFinal ⇒ isAuthoritative ⇒ isAccepted`; a terminal artifact is never
+   accepted/authoritative/export-eligible/final regardless of acceptance; `isAccepted` only when
+   the caller actually passed an active acceptance and the artifact isn't terminal; empty
+   `blockers` only alongside a fully clean decision) hold universally and nothing throws. A change
+   that breaks eligibility/authority logic for even one code/stage/state combination the example
+   tests don't happen to pick will fail here.
+
+**Deliberately not attempted in this PR** (named explicitly): the Gate Decision panel and the
+Approvals page/queue are a separate, older gap/criteria system (`GateCriterionAssessment`,
+`deriveGapLine` in `GateTab.tsx`) that predates `SourceArtifactContract` and never surfaced
+artifact-authority blockers — they were out of scope for the Explore-agent audit's own finding and
+remain untouched. Governance-banner *text* normalization across the ~20 renderer kinds (PR 4C's
+Known Gaps) is still not attempted — the export **gate** (blocking an ineligible export) is what
+this and PR 4C wire; the *text* inside a file that does successfully export is separate, tracked
+follow-up.
+
 ## References
 
 - `docs/architecture/adr/ADR-0013-source-modernization-baseline.md` — named this deliverable and
@@ -376,3 +446,11 @@ both new render/download tests using `d09_rfp_pack` (a real client-facing contra
   gates.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` — PR 4C's acceptance-aware authority
   candidate wiring.
+- `src/lib/source/contracts/blocker-copy.ts` — PR 4D's client-safe blocker normalizer/labeler.
+- `src/components/source/canvas/ArtifactBlockerList.tsx` and
+  `src/components/source/canvas/workspace-tabs/ExportLink.tsx` — PR 4D's shared UI components.
+- `src/components/source/canvas/workspace-tabs/DocumentTab.tsx`,
+  `src/components/source/canvas/analytics/ArtifactAcceptancePanel.tsx`, and
+  `src/components/source/FileCabinetPanel.tsx` — PR 4D's wiring into the three live surfaces.
+- `src/lib/source/contracts/__tests__/stage-artifact-regression-matrix.test.ts` — PR 4D's
+  exhaustive stage × artifact regression harness.

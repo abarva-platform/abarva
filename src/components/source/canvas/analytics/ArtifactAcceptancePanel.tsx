@@ -3,6 +3,12 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { ANALYTICS } from "./analytics-tokens";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
+import type { ArtifactAuthorityDecision } from "@/lib/source/contracts/artifact-authority";
+import {
+  normalizeArtifactBlockers,
+  type ArtifactBlockerLike,
+} from "@/lib/source/contracts/blocker-copy";
+import { ArtifactBlockerList } from "../ArtifactBlockerList";
 
 // SOURCE-SHELL-004 — the "Artifact status" panel: an explicit, reasoned
 // "accept this artifact as authoritative" action, distinct from the stage
@@ -49,16 +55,24 @@ export function ArtifactAcceptancePanel({
 }: ArtifactAcceptancePanelProps) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [blockers, setBlockers] = useState<ArtifactBlockerLike[]>([]);
+  const [authority, setAuthority] = useState<ArtifactAuthorityDecision | null>(
+    null,
+  );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
+    setBlockers([]);
     const form = event.currentTarget;
     const formData = new FormData(form);
     const approvalRationale = String(formData.get("approvalRationale") ?? "").trim();
     if (!approvalRationale) {
-      setError("A reason for accepting this artifact is required.");
+      setBlockers([
+        {
+          code: "rationale_required",
+          detail: "A reason for accepting this artifact is required.",
+        },
+      ]);
       return;
     }
     setPending(true);
@@ -81,15 +95,25 @@ export function ArtifactAcceptancePanel({
         ok?: boolean;
         error?: string;
         detail?: string;
+        authority?: ArtifactAuthorityDecision;
       } | null;
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.detail ?? payload?.error ?? "Accepting the artifact failed.");
+        setBlockers(
+          normalizeArtifactBlockers(payload, "Accepting the artifact failed."),
+        );
+        return;
       }
       form.reset();
       setOpen(false);
+      setAuthority(payload.authority ?? null);
       onAccepted?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Accepting the artifact failed.");
+    } catch {
+      setBlockers([
+        {
+          code: "network_error",
+          detail: "Could not reach the server to accept this artifact.",
+        },
+      ]);
     } finally {
       setPending(false);
     }
@@ -153,11 +177,31 @@ export function ArtifactAcceptancePanel({
           </div>
         </div>
       ) : null}
+      {authority ? (
+        <div
+          data-testid={`source-shell-artifact-authority-${artifactCode}`}
+          style={AUTHORITY_STYLE}
+        >
+          {authority.isFinal
+            ? "Accepted, authoritative, and final."
+            : authority.isExportEligible
+              ? "Accepted and authoritative — cleared for export."
+              : authority.isAuthoritative
+                ? "Accepted and authoritative, but not yet cleared for export — see below."
+                : "Accepted, but not yet authoritative — see below."}
+          {authority.blockers.length > 0 ? (
+            <ArtifactBlockerList
+              blockers={authority.blockers}
+              testIdPrefix={`source-shell-artifact-authority-${artifactCode}`}
+            />
+          ) : null}
+        </div>
+      ) : null}
       <button
         type="button"
         onClick={() => {
           setOpen((v) => !v);
-          setError(null);
+          setBlockers([]);
         }}
         data-testid={`source-shell-artifact-accept-toggle-${artifactCode}`}
         style={TOGGLE_STYLE}
@@ -225,11 +269,10 @@ export function ArtifactAcceptancePanel({
               ))}
             </select>
           </label>
-          {error ? (
-            <div role="alert" style={ERROR_STYLE}>
-              {error}
-            </div>
-          ) : null}
+          <ArtifactBlockerList
+            blockers={blockers}
+            testIdPrefix={`source-shell-artifact-accept-${artifactCode}`}
+          />
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <button type="button" onClick={() => setOpen(false)} style={GHOST_STYLE}>
               Cancel
@@ -306,11 +349,15 @@ const PRIMARY_STYLE: CSSProperties = {
   cursor: "pointer",
 };
 
-const ERROR_STYLE: CSSProperties = {
-  border: "1px solid #fecaca",
+const AUTHORITY_STYLE: CSSProperties = {
+  marginTop: 8,
+  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
   borderRadius: ANALYTICS.RADIUS_SM,
-  background: "#fff1f2",
-  color: "#991b1b",
-  padding: "6px 8px",
+  background: ANALYTICS.GREEN_TINT,
+  color: ANALYTICS.GREEN_TEXT,
+  padding: "8px 10px",
   fontSize: 11.5,
+  fontWeight: 700,
+  display: "grid",
+  gap: 6,
 };
