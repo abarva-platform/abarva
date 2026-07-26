@@ -126,9 +126,8 @@ export function normalizeEvidenceStatus(raw: string | undefined): {
   if (key === "example" || key === "indicative" || key === "draft") {
     return { status: "illustrative", defaulted: false };
   }
-  if (key === "tbd" || key === "unknown" || key === "pending") {
-    return { status: "evidence_required", defaulted: true };
-  }
+  // Anything else unrecognized (including provisional tokens) defaults
+  // conservatively to evidence_required — never an unverified certainty.
   return { status: "evidence_required", defaulted: true };
 }
 
