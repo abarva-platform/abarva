@@ -10,10 +10,31 @@ import "server-only";
 import {
   authorizeRoadmapDownload,
   renderPersistedRoadmap,
+  type PersistedRoadmapRecord,
   type RoadmapDownloadFormat,
   type RoadmapDownloadRequester,
   type RoadmapDownloadTarget,
 } from "./roadmap-artifact-persistence";
+
+/** Provenance surfaced through response headers so a caller can retain a link by
+ * stable governed identifiers WITHOUT ever seeing `deliverables_v2.id`. */
+export function roadmapProvenanceHeaders(
+  record: PersistedRoadmapRecord,
+): Record<string, string> {
+  const s = record.sync;
+  return {
+    "x-roadmap-artifact-id": s.artifactId,
+    "x-roadmap-contract-version": s.contractVersion,
+    "x-roadmap-content-hash": s.contentHash,
+    "x-roadmap-lifecycle-state": record.contract.lifecycleState,
+    "x-roadmap-lifecycle-state-version": s.lifecycleStateVersion,
+    "x-roadmap-generation-run-id": s.generationRunId,
+    "x-roadmap-generated-at": s.generatedAt,
+    "x-roadmap-pipeline": s.pipeline,
+    "x-roadmap-version": String(s.version),
+    "x-roadmap-superseded": s.supersedesContentHash ? "supersedes" : "original",
+  };
+}
 
 export type RoadmapDownloadResponse =
   | {
