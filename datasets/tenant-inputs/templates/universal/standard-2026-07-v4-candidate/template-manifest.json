@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "templateSetId": "universal-tenant-input-standard-2026-07-v4-candidate",
+  "root": "datasets/tenant-inputs/templates/universal/standard-2026-07-v4-candidate",
+  "status": "draft-not-promoted",
+  "description": "Draft v4 revision of the universal tenant input standard. NOT the approved standard -- v3 (universal-tenant-input-standard-2026-07-v3) remains the only approved tenant input/template standard until this is explicitly reviewed and the registry's legacySourcePurge.allowedSourceOfTruth and policy.universalTemplateStandardV3IsOnlyApprovedStandard are updated to admit it. Versioned per standing instruction rather than silently redefining v3's meaning.",
+  "changeFromV3": "13_evidence_sources.csv is redefined as a pure source-artifact registry: one row per LOGICAL SOURCE ARTIFACT VERSION, with both a stable source_id (the logical source) and a required source_version_id (this snapshot). A new 19_executive_interviews.csv domain carries structured interview observations linked to source_version_id. A new 20_evidence_items.csv domain is a citation/observation ledger (one row per fact, excerpt, or interview signal extracted from a source), linked to evidence_sources via the REQUIRED source_version_id foreign key -- not source_id -- so history isn't overwritten when the same logical source reappears in a later snapshot. Domains 00-12 and 14-18 are carried forward from v3 unchanged -- see datasets/tenant-inputs/templates/universal/standard-2026-07-v3/template-manifest.json for their column definitions, which this draft does not duplicate to avoid drift between two copies of unchanged content.",
+  "unchangedDomainsSourcedFromV3": [
+    "00_enterprise_profile.csv", "01_business_functions.csv", "02_org_ownership.csv", "03_workforce_roles.csv",
+    "04_applications_systems.csv", "05_data_assets_integrations.csv", "06_infrastructure_platforms.csv",
+    "07_vendors_contracts.csv", "08_spend_value.csv", "09_programs_initiatives.csv", "10_ai_automation_use_cases.csv",
+    "11_risks_controls.csv", "12_relationships.csv", "14_metrics_outcomes.csv", "15_industry_context_patterns.csv",
+    "16_expert_lenses.csv", "17_service_scope_managed_services.csv", "18_operational_process_evidence.csv"
+  ],
+  "templates": [
+    {
+      "file": "13_evidence_sources.csv",
+      "required": true,
+      "entityMeaning": "One row per LOGICAL SOURCE ARTIFACT VERSION -- a CSV/workbook, contract document, interview transcript, workshop output, system export, API snapshot, benchmark report, etc, as it existed at a given snapshot/version. NOT one row per citation or observation -- see 20_evidence_items.csv for that. The same logical source can legitimately have multiple version rows over time without overwriting history.",
+      "primaryKey": "source_version_id",
+      "logicalGrouping": "source_id",
+      "evidenceItemForeignKey": "source_version_id",
+      "columns": [
+        "tenant_key",
+        "source_id",
+        "source_version_id",
+        "source_name",
+        "source_kind",
+        "source_ref",
+        "source_version",
+        "source_date",
+        "as_of_date",
+        "ingested_at",
+        "source_owner",
+        "confidentiality",
+        "domains_covered",
+        "row_count_or_pages",
+        "content_fingerprint",
+        "approved_for_loading",
+        "quality_notes",
+        "known_gaps",
+        "supersedes_source_version_id"
+      ],
+      "enumerations": {
+        "source_kind": ["csv", "workbook", "document", "transcript", "workshop", "api_export", "database_snapshot", "external_reference"]
+      },
+      "notes": "source_ref replaces v3's source_file -- an artifact is not always literally a file. The consolidation process must preserve source_ref as this row's semantic business identity; it must NEVER be overwritten with the physical path of the file being consolidated (that belongs in a separate lineage column, original_source_file, outside this template). source_kind (v3's source_type) is intentionally excluded from identity entirely -- multiple distinct artifacts, or multiple versions of one artifact, can share a kind. source_id example: SRC-SHA-EXEC-INTERVIEWS. source_version_id example: SRCV-SHA-EXEC-INTERVIEWS-20260725."
+    },
+    {
+      "file": "19_executive_interviews.csv",
+      "required": false,
+      "entityMeaning": "One row per structured interview observation (one question/answer from one stakeholder), linked to the source version representing the transcript, workbook, or interview export it came from.",
+      "primaryKey": "interview_id",
+      "referentialIntegrity": {
+        "source_version_id": "13_evidence_sources.csv#source_version_id"
+      },
+      "columns": [
+        "tenant_key",
+        "interview_id",
+        "source_version_id",
+        "interview_group",
+        "executive_area",
+        "stakeholder_role",
+        "question_id",
+        "question",
+        "answer",
+        "priority_theme",
+        "pain_point",
+        "initiative_link",
+        "business_priority",
+        "evidence_needed",
+        "interview_date",
+        "confidence",
+        "approval_status",
+        "known_gaps"
+      ],
+      "notes": "A tenant with no interview evidence has an empty canonical 19_executive_interviews.csv and an honest not_assessed result downstream for Leadership Agenda / Interview Signals -- never generic operating-model prose masquerading as interview findings. One interview source snapshot produces many interview rows, which in turn each produce one or more 20_evidence_items.csv rows with row-level locators."
+    },
+    {
+      "file": "20_evidence_items.csv",
+      "required": false,
+      "entityMeaning": "One row per individual citeable evidence unit -- a fact, excerpt, interview signal, metric, or observation extracted FROM a source version. Many evidence_items reference one evidence_source version.",
+      "primaryKey": "evidence_id",
+      "referentialIntegrity": {
+        "source_version_id": "13_evidence_sources.csv#source_version_id"
+      },
+      "columns": [
+        "tenant_key",
+        "evidence_id",
+        "source_version_id",
+        "evidence_type",
+        "evidence_summary",
+        "locator_type",
+        "locator",
+        "source_record_id",
+        "dimension_keys",
+        "business_object_refs",
+        "classification",
+        "confidence",
+        "evidence_date",
+        "approved_for_use",
+        "known_gaps",
+        "content_fingerprint"
+      ],
+      "enumerations": {
+        "evidence_type": ["loaded_fact", "interview_signal", "metric", "document_excerpt", "workshop_observation", "benchmark", "derived_measure"],
+        "locator_type": ["row", "page", "sheet_cell", "section", "chunk", "timestamp", "query_result", "row_set"]
+      },
+      "notes": "Foreign key is source_version_id, not source_id -- linking to a specific snapshot rather than the logical source keeps evidence provenance stable even when the same logical source is re-ingested later as a new version."
+    }
+  ],
+  "azureLanding": {
+    "container": "tenant-inputs",
+    "prefixPattern": "tenant-inputs/{tenant_key}/{intake_id}/raw/",
+    "validatedPrefixPattern": "tenant-inputs/{tenant_key}/{intake_id}/validated/",
+    "archivePrefixPattern": "tenant-inputs/archive/{tenant_key}/{intake_id}/",
+    "fileNamePattern": "{tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{revision}.csv"
+  },
+  "guardrails": {
+    "oneUniversalTemplateSet": true,
+    "industrySpecificForksAllowed": false,
+    "qualityGateRequiredBeforeLoad": true,
+    "activeLoadRequiresCanonicalRoot": true
+  }
+}
