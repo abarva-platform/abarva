@@ -1,0 +1,65 @@
+{
+  "version": "phase3c2e-publication-projection-jobs-v1.0.0",
+  "status": "contract_only",
+  "tenant_scope": "single_tenant_only",
+  "wildcard_tenant_allowed": false,
+  "requires": {
+    "tenant_key": true,
+    "release_id": true,
+    "approval_manifest_sha": true,
+    "image_digest": true,
+    "idempotency_key": true
+  },
+  "stages": [
+    {
+      "stage": "candidate_domain_publication",
+      "writes": [
+        "publication.domain_publication"
+      ],
+      "forbidden_reads": [
+        "hidden_truth",
+        "legacy_module_tables",
+        "old_demo_packs"
+      ]
+    },
+    {
+      "stage": "publication_validation",
+      "checks": [
+        "accepted_authority_only",
+        "critical_conflicts_zero",
+        "relationship_endpoints_exist",
+        "relationship_types_valid",
+        "evidence_refs_exist",
+        "no_candidate_or_rejected_rows"
+      ]
+    },
+    {
+      "stage": "projection_build",
+      "writes": [
+        "consumption.*",
+        "publication.projection_version"
+      ],
+      "atomicity": "build_inactive_projection_versions_first"
+    },
+    {
+      "stage": "projection_reconciliation",
+      "writes": [
+        "consumption.consumer_reconciliation_ledger",
+        "audit.lineage_event"
+      ],
+      "checks": [
+        "canonical_to_publication_hash",
+        "publication_to_consumption_hash",
+        "relationship_endpoint_set",
+        "evidence_reference_set",
+        "cube_query_contract",
+        "ava_packet_contract"
+      ]
+    },
+    {
+      "stage": "atomic_activation",
+      "function": "publication.activate_knowledge_baseline",
+      "failure_behavior": "preserve_previous_active_baseline"
+    }
+  ]
+}
