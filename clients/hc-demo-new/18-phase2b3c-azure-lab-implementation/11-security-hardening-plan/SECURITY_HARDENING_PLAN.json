@@ -1,0 +1,123 @@
+{
+  "schema": "abarva.phase2b3c.security-hardening-plan/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "tenant": {
+    "key": "hc-demo-new",
+    "displayName": "HC Demo New",
+    "shortCode": "hcdn",
+    "industryOverlay": "healthcare",
+    "primaryModuleProof": "clinical-operations"
+  },
+  "boundaries": {
+    "operationalStorage": "stabhcdemonewlab001",
+    "evaluatorStorage": "stabhcdemonewevallab001",
+    "database": "abarva_hc_demo_new_knowledge_lab",
+    "keyVault": "kv-abarva-hcdn-lab-001",
+    "containerAppsEnvironment": "cae-abarva-hcdn-lab-eus-001",
+    "evaluatorHiddenTruthContainers": [
+      "hidden-truth"
+    ],
+    "evaluatorCannotMutateKnowledge": true,
+    "ingestRuntimeCannotReadHiddenTruth": true
+  },
+  "rbac": {
+    "acrPull": [
+      "mi-hcdn-ingest-lab-001",
+      "mi-hcdn-review-lab-001",
+      "mi-hcdn-publish-lab-001",
+      "mi-hcdn-evaluator-lab-001",
+      "mi-hcdn-admin-lab-001"
+    ],
+    "storage": [
+      {
+        "scope": "stabhcdemonewlab001/raw",
+        "identity": "mi-hcdn-ingest-lab-001",
+        "role": "Storage Blob Data Contributor"
+      },
+      {
+        "scope": "stabhcdemonewlab001/published",
+        "identity": "mi-hcdn-publish-lab-001",
+        "role": "Storage Blob Data Reader"
+      },
+      {
+        "scope": "stabhcdemonewlab001/published",
+        "identity": "mi-hcdn-read-lab-001",
+        "role": "Storage Blob Data Reader"
+      },
+      {
+        "scope": "stabhcdemonewlab001/published",
+        "identity": "mi-hcdn-evaluator-lab-001",
+        "role": "Storage Blob Data Reader"
+      },
+      {
+        "scope": "stabhcdemonewlab001/audit",
+        "identity": "mi-hcdn-evaluator-lab-001",
+        "role": "Storage Blob Data Contributor"
+      },
+      {
+        "scope": "stabhcdemonewevallab001/hidden-truth",
+        "identity": "mi-hcdn-evaluator-lab-001",
+        "role": "Storage Blob Data Reader"
+      },
+      {
+        "scope": "stabhcdemonewevallab001/reconstruction-proof",
+        "identity": "mi-hcdn-evaluator-lab-001",
+        "role": "Storage Blob Data Contributor"
+      }
+    ],
+    "keyVault": [
+      "mi-hcdn-ingest-lab-001",
+      "mi-hcdn-review-lab-001",
+      "mi-hcdn-publish-lab-001",
+      "mi-hcdn-evaluator-lab-001",
+      "mi-hcdn-admin-lab-001"
+    ],
+    "databaseRoles": {
+      "ingest": "hc_demo_new_ingest",
+      "review": "hc_demo_new_reviewer",
+      "publish": "hc_demo_new_publisher",
+      "read": "hc_demo_new_reader",
+      "evaluator": "hc_demo_new_evaluator",
+      "admin": "hc_demo_new_admin"
+    }
+  },
+  "diagnostics": [
+    "PostgreSQL",
+    "Storage",
+    "Evaluator Storage",
+    "Key Vault",
+    "Container Apps Jobs"
+  ],
+  "storageProtection": {
+    "rawEvidence": {
+      "versioning": true,
+      "softDeleteDays": 30,
+      "immutability": "time-bound policy required before apply"
+    },
+    "evaluatorTruth": {
+      "versioning": true,
+      "softDeleteDays": 30,
+      "immutability": "time-bound policy required before apply"
+    },
+    "publicAccess": "disabled"
+  },
+  "budgetGuardrails": {
+    "monthlyWarningUsd": 300,
+    "monthlyStopReviewUsd": 500,
+    "createBudgetBeforeApply": true,
+    "tagsRequired": [
+      "tenantKey",
+      "environment",
+      "phase",
+      "owner"
+    ]
+  },
+  "whatIfGate": {
+    "required": true,
+    "parser": "phase2b3c2b-what-if-parser/v1",
+    "failOnDeletes": true,
+    "failOnOutOfScopeChanges": true,
+    "failOnPublicNetworkAccessEnabled": true,
+    "failOnMissingEvaluatorBoundary": true
+  }
+}

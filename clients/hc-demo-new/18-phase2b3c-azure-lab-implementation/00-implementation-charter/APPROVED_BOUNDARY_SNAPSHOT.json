@@ -1,55 +1,31 @@
 {
-  "tenant_key": "hc-demo-new",
-  "display_name": "HC Demo New",
+  "schema": "abarva.phase2b3c.approved-boundary-snapshot/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "tenantKey": "hc-demo-new",
+  "displayName": "HC Demo New",
   "environment": "lab",
-  "region": "eastus",
   "subscription": {
     "subscription_id": "701a8554-a166-46e9-bf13-743bc50e3b20",
     "subscription_display_name": "abarva-lab-sub",
-    "tenant_directory_id": "f5151b70-963c-4124-a888-20a50e8c2e2c",
-    "home_tenant_id": "f5151b70-963c-4124-a888-20a50e8c2e2c",
-    "active_azure_cli_account": {
-      "name": "anand.sundaram@thesundaram.com",
-      "type": "user"
-    },
-    "intended_region": "eastus",
-    "environment_name": "AzureCloud"
+    "tenant_directory_id": "f5151b70-963c-4124-a888-20a50e8c2e2c"
   },
   "control_plane": {
     "resource_group": "rg-abarva-hcdn-lab-eus-001",
     "virtual_network": "vnet-abarva-hcdn-lab-eus-001",
-    "container_apps_subnet": "snet-aca-hcdn-lab-eus-001",
-    "postgres_subnet": "snet-pg-hcdn-lab-eus-001",
-    "private_endpoint_subnet": "snet-pe-hcdn-lab-eus-001",
     "container_apps_environment": "cae-abarva-hcdn-lab-eus-001",
-    "log_analytics_workspace": "law-abarva-hcdn-lab-eus-001",
     "postgres_server": "pg-abarva-hc-demo-new-lab-eus-001",
     "postgres_database": "abarva_hc_demo_new_knowledge_lab",
     "storage_account": "stabhcdemonewlab001",
+    "evaluator_storage_account": "stabhcdemonewevallab001",
     "key_vault": "kv-abarva-hcdn-lab-001",
-    "service_bus": "sb-abarva-hcdn-lab-001",
-    "region": "eastus",
-    "vnet_cidr": "10.74.0.0/22",
-    "container_apps_subnet_cidr": "10.74.0.0/23",
-    "postgres_subnet_cidr": "10.74.2.0/27",
-    "private_endpoint_subnet_cidr": "10.74.2.32/27"
+    "log_analytics_workspace": "law-abarva-hcdn-lab-eus-001"
   },
   "container_image": {
     "registry_resource_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
     "registry_hostname": "acrabarvalab001.azurecr.io",
-    "registry_name": "acrabarvalab001",
-    "registry_sku": {
-      "name": "Premium",
-      "tier": "Premium"
-    },
     "repository": "abarva/web",
-    "image_digest": "sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8",
-    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8",
-    "source_tag_observed": [
-      "main-53a91c00"
-    ],
-    "manifest_timestamp": "2026-07-27T04:09:22.6075085Z",
-    "floating_tags_allowed": false
+    "image_digest": "sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160",
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160"
   },
   "managed_identities": [
     {
@@ -83,24 +59,50 @@
       "database_role": "hc_demo_new_admin"
     }
   ],
-  "container_apps_jobs": [
-    "job-hcdn-backfill-lab",
-    "job-hcdn-baseline-publish-lab",
-    "job-hcdn-domain-publish-lab",
-    "job-hcdn-entity-resolve-lab",
-    "job-hcdn-evidence-extract-lab",
-    "job-hcdn-home-readmodel-lab",
-    "job-hcdn-normalize-lab",
-    "job-hcdn-projection-build-lab",
-    "job-hcdn-reconcile-audit-lab",
-    "job-hcdn-review-apply-lab",
-    "job-hcdn-source-parse-lab",
-    "job-hcdn-source-register-lab",
-    "job-hcdn-validate-lab"
-  ],
-  "feature_sequence": {
-    "service_bus_event_orchestration": false,
-    "azure_ai_search": false,
-    "first_vertical_slice_execution": "manual governed ACA Job executions with persisted checkpoints"
-  }
+  "database_roles": {
+    "ingest": "hc_demo_new_ingest",
+    "review": "hc_demo_new_reviewer",
+    "publish": "hc_demo_new_publisher",
+    "read": "hc_demo_new_reader",
+    "evaluator": "hc_demo_new_evaluator",
+    "admin": "hc_demo_new_admin"
+  },
+  "apply_blocked": true,
+  "display_name": "HC Demo New",
+  "tenant_key": "hc-demo-new",
+  "controlPlane": {
+    "resourceGroup": "rg-abarva-hcdn-lab-eus-001",
+    "vnet": "vnet-abarva-hcdn-lab-eus-001",
+    "containerAppsEnvironment": "cae-abarva-hcdn-lab-eus-001",
+    "postgresServer": "pg-abarva-hc-demo-new-lab-eus-001",
+    "database": "abarva_hc_demo_new_knowledge_lab",
+    "storage": "stabhcdemonewlab001",
+    "evaluatorStorage": "stabhcdemonewevallab001",
+    "keyVault": "kv-abarva-hcdn-lab-001",
+    "logAnalytics": "law-abarva-hcdn-lab-eus-001"
+  },
+  "image": {
+    "registryResourceId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
+    "registryHostname": "acrabarvalab001.azurecr.io",
+    "repository": "abarva/web",
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160",
+    "digest": "sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160"
+  },
+  "managedIdentities": {
+    "ingest": "mi-hcdn-ingest-lab-001",
+    "review": "mi-hcdn-review-lab-001",
+    "publish": "mi-hcdn-publish-lab-001",
+    "read": "mi-hcdn-read-lab-001",
+    "evaluator": "mi-hcdn-evaluator-lab-001",
+    "admin": "mi-hcdn-admin-lab-001"
+  },
+  "databaseRoles": {
+    "ingest": "hc_demo_new_ingest",
+    "review": "hc_demo_new_reviewer",
+    "publish": "hc_demo_new_publisher",
+    "read": "hc_demo_new_reader",
+    "evaluator": "hc_demo_new_evaluator",
+    "admin": "hc_demo_new_admin"
+  },
+  "applyBlocked": true
 }

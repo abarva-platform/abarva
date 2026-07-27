@@ -1,0 +1,83 @@
+tenant:
+  display_name: Airline Demo New
+  tenant_key: airline-demo-new
+  short_code: airdn
+  industry_overlay: airline
+  primary_module_proof: technology-procurement
+environment:
+  name: lab
+  region: eastus
+subscription:
+  id: 701a8554-a166-46e9-bf13-743bc50e3b20
+  display_name: abarva-lab-sub
+  tenant_directory_id: f5151b70-963c-4124-a888-20a50e8c2e2c
+control_plane:
+  resource_group: rg-abarva-airdn-lab-eus-001
+  virtual_network: vnet-abarva-airdn-lab-eus-001
+  container_apps_subnet: snet-aca-airdn-lab-eus-001
+  postgres_subnet: snet-pg-airdn-lab-eus-001
+  private_endpoint_subnet: snet-pe-airdn-lab-eus-001
+  container_apps_environment: cae-abarva-airdn-lab-eus-001
+  log_analytics_workspace: law-abarva-airdn-lab-eus-001
+network:
+  vnet_cidr: 10.75.0.0/22
+  container_apps_subnet_cidr: 10.75.0.0/23
+  postgres_subnet_cidr: 10.75.2.0/27
+  private_endpoint_subnet_cidr: 10.75.2.32/27
+database:
+  server_name: pg-abarva-airdn-lab-eus-001
+  database_name: abarva_airline_demo_new_knowledge_lab
+storage:
+  account_name: stabairdnlabeus001
+  evaluator_account_name: stabairdnevallab001
+  tenant_root: airline-demo-new
+key_vault:
+  name: kv-abarva-airdn-lab-001
+container_image:
+  registry_resource_id: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001
+  registry_hostname: acrabarvalab001.azurecr.io
+  repository: abarva/web
+  image_digest: sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
+  image: acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
+managed_identities:
+    ingest: mi-airdn-ingest-lab-001
+    review: mi-airdn-review-lab-001
+    publish: mi-airdn-publish-lab-001
+    read: mi-airdn-read-lab-001
+    evaluator: mi-airdn-evaluator-lab-001
+    admin: mi-airdn-admin-lab-001
+database_roles:
+    ingest: airline_demo_new_ingest
+    review: airline_demo_new_reviewer
+    publish: airline_demo_new_publisher
+    read: airline_demo_new_reader
+    evaluator: airline_demo_new_evaluator
+    admin: airline_demo_new_admin
+container_apps_jobs:
+    job-airdn-source-register-lab: job-airdn-source-register-lab
+    job-airdn-source-parse-lab: job-airdn-source-parse-lab
+    job-airdn-evidence-extract-lab: job-airdn-evidence-extract-lab
+    job-airdn-normalize-lab: job-airdn-normalize-lab
+    job-airdn-entity-resolve-lab: job-airdn-entity-resolve-lab
+    job-airdn-validate-lab: job-airdn-validate-lab
+    job-airdn-review-apply-lab: job-airdn-review-apply-lab
+    job-airdn-domain-publish-lab: job-airdn-domain-publish-lab
+    job-airdn-baseline-publish-lab: job-airdn-baseline-publish-lab
+    job-airdn-projection-build-lab: job-airdn-projection-build-lab
+    job-airdn-home-readmodel-lab: job-airdn-home-readmodel-lab
+    job-airdn-backfill-lab: job-airdn-backfill-lab
+    job-airdn-reconcile-audit-lab: job-airdn-reconcile-audit-lab
+safety:
+  allow_tenant_all: false
+  expected_tenant_key: airline-demo-new
+  require_database_name_match: true
+  require_storage_account_match: true
+  require_evaluator_storage_account_match: true
+  require_manifest_hash_match: true
+  allow_cross_database_queries: false
+  require_subscription_match: true
+  require_digest_pinned_image: true
+  prohibit_public_postgres: true
+  prohibit_public_storage: true
+  prohibit_public_evaluator_storage: true
+  prohibit_hidden_truth_from_ingest_runtime: true

@@ -1,0 +1,5 @@
+service,zone,private_endpoint,status
+operational blob storage,privatelink.blob.core.windows.net,pe-stabhcdemonewlab001-blob,planned
+evaluator blob storage,privatelink.blob.core.windows.net,pe-stabhcdemonewevallab001-blob,planned
+key vault,privatelink.vaultcore.azure.net,pe-kv-abarva-hcdn-lab-001-vault,planned
+postgres,privatelink.postgres.database.azure.com,delegated-flexible-server,planned

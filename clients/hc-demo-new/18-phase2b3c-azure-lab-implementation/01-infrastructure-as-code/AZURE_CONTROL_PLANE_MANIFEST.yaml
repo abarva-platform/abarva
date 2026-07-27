@@ -3,6 +3,7 @@ tenant:
   tenant_key: hc-demo-new
   short_code: hcdn
   industry_overlay: healthcare
+  primary_module_proof: clinical-operations
 environment:
   name: lab
   region: eastus
@@ -10,7 +11,6 @@ subscription:
   id: 701a8554-a166-46e9-bf13-743bc50e3b20
   display_name: abarva-lab-sub
   tenant_directory_id: f5151b70-963c-4124-a888-20a50e8c2e2c
-  active_cli_account: anand.sundaram@thesundaram.com
 control_plane:
   resource_group: rg-abarva-hcdn-lab-eus-001
   virtual_network: vnet-abarva-hcdn-lab-eus-001
@@ -29,20 +29,16 @@ database:
   database_name: abarva_hc_demo_new_knowledge_lab
 storage:
   account_name: stabhcdemonewlab001
+  evaluator_account_name: stabhcdemonewevallab001
   tenant_root: hc-demo-new
 key_vault:
   name: kv-abarva-hcdn-lab-001
-service_bus:
-  name: sb-abarva-hcdn-lab-001
-  enabled_initially: false
-azure_ai_search:
-  enabled_initially: false
 container_image:
   registry_resource_id: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001
   registry_hostname: acrabarvalab001.azurecr.io
   repository: abarva/web
-  image_digest: sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8
-  image: acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8
+  image_digest: sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
+  image: acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
 managed_identities:
     ingest: mi-hcdn-ingest-lab-001
     review: mi-hcdn-review-lab-001
@@ -58,31 +54,30 @@ database_roles:
     evaluator: hc_demo_new_evaluator
     admin: hc_demo_new_admin
 container_apps_jobs:
-    job-hcdn-backfill-lab: job-hcdn-backfill-lab
-    job-hcdn-baseline-publish-lab: job-hcdn-baseline-publish-lab
-    job-hcdn-domain-publish-lab: job-hcdn-domain-publish-lab
-    job-hcdn-entity-resolve-lab: job-hcdn-entity-resolve-lab
-    job-hcdn-evidence-extract-lab: job-hcdn-evidence-extract-lab
-    job-hcdn-home-readmodel-lab: job-hcdn-home-readmodel-lab
-    job-hcdn-normalize-lab: job-hcdn-normalize-lab
-    job-hcdn-projection-build-lab: job-hcdn-projection-build-lab
-    job-hcdn-reconcile-audit-lab: job-hcdn-reconcile-audit-lab
-    job-hcdn-review-apply-lab: job-hcdn-review-apply-lab
-    job-hcdn-source-parse-lab: job-hcdn-source-parse-lab
     job-hcdn-source-register-lab: job-hcdn-source-register-lab
+    job-hcdn-source-parse-lab: job-hcdn-source-parse-lab
+    job-hcdn-evidence-extract-lab: job-hcdn-evidence-extract-lab
+    job-hcdn-normalize-lab: job-hcdn-normalize-lab
+    job-hcdn-entity-resolve-lab: job-hcdn-entity-resolve-lab
     job-hcdn-validate-lab: job-hcdn-validate-lab
-processes:
-  load_process: hc-demo-new-knowledge-load-v1
-  publication_process: hc-demo-new-knowledge-publication-v1
-  projection_process: hc-demo-new-projection-build-v1
+    job-hcdn-review-apply-lab: job-hcdn-review-apply-lab
+    job-hcdn-domain-publish-lab: job-hcdn-domain-publish-lab
+    job-hcdn-baseline-publish-lab: job-hcdn-baseline-publish-lab
+    job-hcdn-projection-build-lab: job-hcdn-projection-build-lab
+    job-hcdn-home-readmodel-lab: job-hcdn-home-readmodel-lab
+    job-hcdn-backfill-lab: job-hcdn-backfill-lab
+    job-hcdn-reconcile-audit-lab: job-hcdn-reconcile-audit-lab
 safety:
   allow_tenant_all: false
   expected_tenant_key: hc-demo-new
   require_database_name_match: true
   require_storage_account_match: true
+  require_evaluator_storage_account_match: true
   require_manifest_hash_match: true
   allow_cross_database_queries: false
   require_subscription_match: true
   require_digest_pinned_image: true
   prohibit_public_postgres: true
   prohibit_public_storage: true
+  prohibit_public_evaluator_storage: true
+  prohibit_hidden_truth_from_ingest_runtime: true

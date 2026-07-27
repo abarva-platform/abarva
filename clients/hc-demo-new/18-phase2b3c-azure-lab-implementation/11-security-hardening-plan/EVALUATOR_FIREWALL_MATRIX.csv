@@ -1,0 +1,6 @@
+actor,identity,hidden_truth_read,published_reconstruction_read,knowledge_mutation
+parser_ingest,mi-hcdn-ingest-lab-001,no,no,candidate-only
+reviewer,mi-hcdn-review-lab-001,no,no,review-decision-only
+publisher,mi-hcdn-publish-lab-001,no,yes,accepted-publication-only
+runtime_reader,mi-hcdn-read-lab-001,no,yes,no
+evaluator,mi-hcdn-evaluator-lab-001,yes,yes,no
