@@ -1,6 +1,6 @@
 # Airline Demo New Phase 1 Azure Infrastructure Execution Package
 
-Status: plan and live what-if package only. This package does not apply Azure infrastructure, land source files, run parser jobs, apply database migrations, publish a Knowledge Baseline, deploy Cube, wire product routes, or shift runtime traffic.
+Status: clean `eastus2` empty infrastructure applied and zero-data certification recorded. This package does not land source files, run parser jobs, apply database migrations, publish a Knowledge Baseline, deploy Cube, wire product routes, or shift runtime traffic.
 
 This package prepares the empty private Azure data plane for Airline Demo New using the short-code resource names approved for the lab execution lane.
 
@@ -23,10 +23,13 @@ Airline source data is still blocked by the source-corpus quality gate. This pac
 ## Evidence
 
 - Raw live what-if output: `02-preapply-report/what-if-20260727.txt`
+- Clean `eastus2` what-if output: `02-preapply-report/what-if-clean-eastus2-20260727.txt`
 - Machine-readable safety gate: `02-preapply-report/WHAT_IF_SAFETY_GATE.json`
 - Pre-apply report: `02-preapply-report/PRE_APPLY_REPORT.json`
 - Destructive-change report: `02-preapply-report/DESTRUCTIVE_CHANGE_REPORT.json`
+- Clean apply record: `03-apply-record/APPLY_CLEAN_EASTUS2_20260727.md`
+- Zero-data certification: `04-zero-data-certification/ZERO_DATA_CERTIFICATION_CLEAN_EASTUS2_20260727.json`
 
 ## Next Gate
 
-After review, the next authorized action is empty infrastructure apply only. Source landing remains blocked until the Airline source release passes and is frozen.
+The next authorized action is shared PostgreSQL migrations/RLS against the empty tenant database, followed by generic projection conformance fixtures. Source landing remains blocked until the Airline source release passes and is frozen.

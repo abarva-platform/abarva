@@ -1,0 +1,7 @@
+{
+  "defaultAction": "Deny",
+  "enableRbacAuthorization": true,
+  "location": "eastus2",
+  "name": "kv-abarva-airdn-lab-eus2",
+  "publicNetworkAccess": "Disabled"
+}

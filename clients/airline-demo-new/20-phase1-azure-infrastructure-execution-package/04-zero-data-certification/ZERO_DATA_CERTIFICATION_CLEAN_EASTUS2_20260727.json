@@ -1,0 +1,111 @@
+{
+  "tenant_key": "airline-demo-new",
+  "certification_id": "airline-demo-new-zero-data-clean-eastus2-20260727",
+  "status": "pass_with_private_network_limits",
+  "checked_at_utc": "2026-07-27T20:40:00Z",
+  "subscription": {
+    "name": "abarva-lab-sub",
+    "id": "701a8554-a166-46e9-bf13-743bc50e3b20"
+  },
+  "deployment": {
+    "name": "airdn-phase1-zero-data-apply-clean-eastus2-20260727",
+    "region": "eastus2",
+    "resource_group": "rg-abarva-airdn-lab-eus2-001",
+    "provisioning_state": "Succeeded",
+    "duration": "PT7M8.8334589S",
+    "correlation_id": "540b583d-5db4-4de3-9ead-df8072634f37",
+    "raw_output": "../03-apply-record/APPLY_CLEAN_EASTUS2_20260727.json"
+  },
+  "resource_inventory": {
+    "resource_group_resource_count": 38,
+    "deployment_output_resource_count": 59,
+    "evidence": "resource-inventory-clean-eastus2-20260727.json"
+  },
+  "postgres": {
+    "server": "pg-abarva-airdn-lab-eus2-001",
+    "database": "abarva_airline_demo_new_knowledge_lab",
+    "state": "Ready",
+    "version": "16",
+    "public_network_access": "Disabled",
+    "databases_observed": [
+      "azure_maintenance",
+      "postgres",
+      "azure_sys",
+      "abarva_airline_demo_new_knowledge_lab"
+    ],
+    "migrations_applied": false,
+    "source_tables_expected": false,
+    "evidence": [
+      "postgres-clean-eastus2-20260727.json",
+      "postgres-databases-clean-eastus2-20260727.json"
+    ]
+  },
+  "storage": {
+    "operational_account": {
+      "name": "stabairdnlabeus2001",
+      "public_network_access": "Disabled",
+      "default_action": "Deny",
+      "allow_blob_public_access": false,
+      "data_plane_list_from_local": "blocked_by_network_rules",
+      "evidence": [
+        "storage-stabairdnlabeus2001-clean-eastus2-20260727.json",
+        "operational-containers-clean-eastus2-20260727.exit",
+        "operational-containers-clean-eastus2-20260727.stderr"
+      ]
+    },
+    "evaluator_account": {
+      "name": "stabairdnevaleus2001",
+      "public_network_access": "Disabled",
+      "default_action": "Deny",
+      "allow_blob_public_access": false,
+      "data_plane_list_from_local": "blocked_by_network_rules",
+      "evidence": [
+        "storage-stabairdnevaleus2001-clean-eastus2-20260727.json",
+        "evaluator-containers-clean-eastus2-20260727.exit",
+        "evaluator-containers-clean-eastus2-20260727.stderr"
+      ]
+    }
+  },
+  "key_vault": {
+    "name": "kv-abarva-airdn-lab-eus2",
+    "public_network_access": "Disabled",
+    "default_action": "Deny",
+    "rbac_authorization": true,
+    "evidence": "keyvault-clean-eastus2-20260727.json"
+  },
+  "private_networking": {
+    "private_endpoint_count": 3,
+    "private_endpoint_states": "Approved",
+    "evidence": "private-endpoints-clean-eastus2-20260727.json"
+  },
+  "managed_identities": {
+    "count": 6,
+    "acr_pull_grants": "confirmed_for_each_identity",
+    "evidence": [
+      "managed-identities-clean-eastus2-20260727.json",
+      "acr-pull-assignments-by-identity-clean-eastus2-20260727.jsonl"
+    ]
+  },
+  "aca_jobs": {
+    "job_count": 13,
+    "all_jobs_manual_trigger": true,
+    "executions_observed": 0,
+    "source_landing_jobs_executed": false,
+    "parser_jobs_executed": false,
+    "publication_jobs_executed": false,
+    "evidence": [
+      "jobs-clean-eastus2-20260727.json",
+      "all-job-executions-clean-eastus2-20260727.txt"
+    ]
+  },
+  "non_mutation_assertions": {
+    "source_files_landed": false,
+    "evaluator_truth_landed": false,
+    "parser_waves_run": false,
+    "postgres_migrations_rls_applied": false,
+    "knowledge_baseline_published": false,
+    "home_source_cube_ava_consumption_proven": false,
+    "shared_web_runtime_changed": false
+  },
+  "next_authorized_gate": "Apply shared PostgreSQL migrations/RLS to the empty tenant database, then prove generic projection conformance fixtures. Source landing remains blocked until the Airline source audit passes and the source release is frozen."
+}
