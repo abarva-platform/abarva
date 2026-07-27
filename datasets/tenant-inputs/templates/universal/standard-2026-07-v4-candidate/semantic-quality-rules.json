@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "ruleSetId": "tenant-input-semantic-quality-2026-07",
+  "description": "Gate 2 of the evidence-v4 workstream. Declarative, domain-specific semantic-quality rules answering a different question than quality-depth-rules.json's minRows: not 'are there enough rows' but 'is the content substantive, distinct, connected, and usable'. A row count alone must never, by itself, produce semantic_pass -- see tenant-input-semantic-quality.mjs, which is the only reader of this file.",
+  "appliesToTemplateSets": [
+    "universal-tenant-input-standard-2026-07-v3",
+    "universal-tenant-input-standard-2026-07-v4-candidate"
+  ],
+  "effectiveDomainSet": {
+    "unchangedFromV3": [
+      "enterprise_profile", "business_functions", "org_ownership", "workforce_roles",
+      "applications_systems", "data_assets_integrations", "infrastructure_platforms",
+      "vendors_contracts", "spend_value", "programs_initiatives", "ai_automation_use_cases",
+      "risks_controls", "relationships", "metrics_outcomes", "industry_context_patterns",
+      "expert_lenses", "service_scope_managed_services", "operational_process_evidence"
+    ],
+    "revisedInV4": ["evidence_sources"],
+    "v4Additions": ["evidence_items", "executive_interviews"]
+  },
+  "auxiliaryNoncanonicalDomains": [
+    "SA02_IT_Finance_Budget_Spend_Extract", "SA04_Program_Portfolio_Extract",
+    "SA08_AI_Benefits_Realization_Usage_Ledger", "SA09_AI_Tool_Usage_Feed",
+    "SA10_AI_Value_Interview_Evidence", "SA11_AI_KPI_Operational_Outcome_Feed"
+  ],
+  "commonEnumerations": {
+    "confidence": ["high", "medium", "low"]
+  },
+  "placeholderPatterns": [
+    "^tbd$", "^t\\.b\\.d\\.?$", "^unknown$", "^n/?a$", "^none$", "^not loaded$", "^not provided$",
+    "^owner to confirm$", "^baseline required$", "^evidence needed$", "^pending$", "^tbc$",
+    "^to be confirmed$", "^to be determined$", "^placeholder$", "^sample$", "^lorem ipsum",
+    "^see above$", "^see notes$", "^n\\.?a\\.?$", "^-$", "^--$"
+  ],
+  "defaultThresholds": {
+    "minimumIdentityCoveragePct": 90,
+    "minimumSubstantiveCoveragePct": 60,
+    "maximumPlaceholderRatePct": 15,
+    "maximumLineageOnlyRatePct": 10,
+    "maximumNormalizedDuplicateRatePct": 15,
+    "minimumOwnerCoveragePct": 50,
+    "minimumDateCoveragePct": 70,
+    "minimumConfidenceCoveragePct": 70
+  },
+  "domains": {
+    "enterprise_profile": {
+      "numericPrefix": "00",
+      "identityFields": ["entity_name"],
+      "requiredFields": ["entity_name", "industry"],
+      "substantiveFields": [
+        "revenue_usd", "employee_count", "headquarters", "business_model", "customer_segments",
+        "mission", "vision", "strategic_priorities", "leadership_team", "operating_regions"
+      ],
+      "substantiveMinCount": 4,
+      "isSingleRowProfile": true,
+      "minimumDistinctIdentities": 1,
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "notes": "One row per tenant. Substantive bar is higher (4 of 10) since this is the whole-company profile, not a line item."
+    },
+    "business_functions": {
+      "numericPrefix": "01",
+      "identityFields": ["function_name"],
+      "requiredFields": ["function_name"],
+      "substantiveFields": [
+        "executive_owner", "business_capabilities", "criticality", "annual_budget_usd",
+        "current_state_notes", "target_state_notes"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "executive_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "org_ownership": {
+      "numericPrefix": "02",
+      "identityFields": ["org_unit", "leader_name_or_role"],
+      "requiredFields": [],
+      "substantiveFields": [
+        "decision_rights", "owned_functions", "owned_systems", "owned_data_domains",
+        "location_scope", "parent_org_unit"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "leader_name_or_role",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "workforce_roles": {
+      "numericPrefix": "03",
+      "identityFields": ["persona_or_role"],
+      "requiredFields": ["persona_or_role"],
+      "substantiveFields": [
+        "role_count", "function_name", "skills", "pain_points", "automation_opportunity",
+        "location_model", "employment_type"
+      ],
+      "substantiveMinCount": 2,
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "applications_systems": {
+      "numericPrefix": "04",
+      "identityFields": ["system_name"],
+      "requiredFields": ["system_name"],
+      "substantiveFields": [
+        "system_type", "system_category", "business_function", "criticality", "business_owner",
+        "technology_owner", "vendor", "lifecycle_state", "data_domains", "deployment_model"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "business_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "referentialIntegrity": [
+        { "field": "vendor", "resolvesToDomain": "vendors_contracts", "resolvesToField": "vendor_name" }
+      ]
+    },
+    "data_assets_integrations": {
+      "numericPrefix": "05",
+      "identityFields": ["data_asset_name"],
+      "requiredFields": ["data_asset_name"],
+      "substantiveFields": [
+        "data_domain", "source_system", "target_system", "integration_type", "data_owner",
+        "data_steward", "quality_status", "analytics_usage"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "data_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "referentialIntegrity": [
+        { "field": "source_system", "resolvesToDomain": "applications_systems", "resolvesToField": "system_name" },
+        { "field": "target_system", "resolvesToDomain": "applications_systems", "resolvesToField": "system_name" }
+      ]
+    },
+    "infrastructure_platforms": {
+      "numericPrefix": "06",
+      "identityFields": ["platform_name"],
+      "requiredFields": ["platform_name"],
+      "substantiveFields": [
+        "platform_type", "hosting_model", "technology_stack", "operational_owner", "criticality",
+        "lifecycle_state", "capacity_or_scale", "constraints"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "operational_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "vendors_contracts": {
+      "numericPrefix": "07",
+      "identityFields": ["vendor_name", "contract_name"],
+      "requiredFields": [],
+      "substantiveFields": [
+        "service_category", "contract_owner", "annual_spend_usd", "renewal_date",
+        "commercial_model", "supported_systems", "supported_functions", "risk_rating"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "contract_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "referentialIntegrity": [
+        { "field": "supported_systems", "resolvesToDomain": "applications_systems", "resolvesToField": "system_name", "mode": "list_any_match" }
+      ]
+    },
+    "spend_value": {
+      "numericPrefix": "08",
+      "identityFields": ["spend_category"],
+      "requiredFields": ["spend_category"],
+      "substantiveFields": [
+        "cost_center_or_owner", "annual_spend_usd", "run_change_transform_split",
+        "vendor_internal_split", "value_driver", "savings_opportunity_usd", "calculation_basis"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "cost_center_or_owner",
+      "dateField": "source_date",
+      "confidenceField": null,
+      "notes": "v3 spend_value has no confidence column."
+    },
+    "programs_initiatives": {
+      "numericPrefix": "09",
+      "identityFields": ["program_name"],
+      "requiredFields": ["program_name"],
+      "substantiveFields": [
+        "business_sponsor", "technology_owner", "objective", "phase", "status",
+        "target_outcomes", "dependencies", "risks", "budget_usd", "expected_value_usd"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "business_sponsor",
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "referentialIntegrity": [
+        { "field": "business_sponsor", "resolvesToDomain": "org_ownership", "resolvesToField": "leader_name_or_role" }
+      ]
+    },
+    "ai_automation_use_cases": {
+      "numericPrefix": "10",
+      "identityFields": ["use_case_name"],
+      "requiredFields": ["use_case_name"],
+      "substantiveFields": [
+        "business_function", "process_area", "ai_pattern", "current_status", "value_hypothesis",
+        "required_data", "required_systems", "risk_controls"
+      ],
+      "substantiveMinCount": 2,
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "referentialIntegrity": [
+        { "field": "required_systems", "resolvesToDomain": "applications_systems", "resolvesToField": "system_name", "mode": "list_any_match" },
+        { "field": "required_data", "resolvesToDomain": "data_assets_integrations", "resolvesToField": "data_asset_name", "mode": "list_any_match" }
+      ]
+    },
+    "risks_controls": {
+      "numericPrefix": "11",
+      "identityFields": ["risk_or_control_name"],
+      "requiredFields": ["risk_or_control_name"],
+      "substantiveFields": [
+        "risk_domain", "business_function", "systems_impacted", "severity", "likelihood",
+        "control_owner", "control_status", "mitigation_plan"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "control_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "relationships": {
+      "numericPrefix": "12",
+      "identityFields": ["from_object_name"],
+      "requiredFields": ["from_object_type", "from_object_name", "relationship_type", "to_object_type", "to_object_name"],
+      "substantiveFields": ["relationship_strength", "evidence_basis", "current_state_or_target_state"],
+      "substantiveMinCount": 1,
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "isEdgeDomain": true,
+      "notes": "Identity is the edge, not a single entity name; required_fields carries most of the structural meaning, so the substantive bar is lower (1 of 3)."
+    },
+    "evidence_sources": {
+      "numericPrefix": "13",
+      "special": "evidence_sources",
+      "identityFields": ["source_ref", "source_id"],
+      "requiredFields": ["source_id", "source_version_id", "source_ref", "source_kind"],
+      "ownerField": "source_owner",
+      "dateField": "source_date",
+      "confidenceField": null,
+      "enumerations": {
+        "source_kind": ["csv", "workbook", "document", "transcript", "workshop", "api_export", "database_snapshot", "external_reference", "context_bundle", "registry_snapshot"]
+      }
+    },
+    "metrics_outcomes": {
+      "numericPrefix": "14",
+      "identityFields": ["metric_name"],
+      "requiredFields": ["metric_name"],
+      "substantiveFields": [
+        "metric_domain", "business_function", "definition", "baseline_value", "target_value",
+        "owner", "data_source", "calculation_basis"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence",
+      "referentialIntegrity": [
+        { "field": "data_source", "resolvesToDomain": "applications_systems", "resolvesToField": "system_name" }
+      ]
+    },
+    "industry_context_patterns": {
+      "numericPrefix": "15",
+      "identityFields": ["pattern_name"],
+      "requiredFields": ["pattern_name"],
+      "substantiveFields": ["business_context", "applicability", "evidence_basis", "caveats", "module_next_actions"],
+      "substantiveRule": "identityPlusField(business_context)AndAtLeastOneOf(applicability,evidence_basis,caveats,module_next_actions)",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "expert_lenses": {
+      "numericPrefix": "16",
+      "identityFields": ["lens_name"],
+      "requiredFields": ["lens_name"],
+      "substantiveFields": ["expert_role", "questions_to_answer", "required_inputs", "decision_use", "limitations"],
+      "substantiveMinCount": 2,
+      "ownerField": "expert_role",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "service_scope_managed_services": {
+      "numericPrefix": "17",
+      "identityFields": ["service_name", "service_tower"],
+      "requiredFields": [],
+      "substantiveFields": [
+        "scope_description", "in_scope_functions", "in_scope_systems", "current_provider",
+        "service_volume", "sla_or_kpi", "run_cost_usd"
+      ],
+      "substantiveMinCount": 2,
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "operational_process_evidence": {
+      "numericPrefix": "18",
+      "identityFields": ["process_name"],
+      "requiredFields": ["process_name"],
+      "substantiveFields": [
+        "process_owner", "systems_used", "volume_metric", "cycle_time", "pain_points",
+        "control_points", "automation_candidate"
+      ],
+      "substantiveMinCount": 2,
+      "ownerField": "process_owner",
+      "dateField": "source_date",
+      "confidenceField": "confidence"
+    },
+    "evidence_items": {
+      "special": "evidence_items",
+      "identityFields": ["evidence_id"],
+      "requiredFields": ["evidence_id", "source_version_id", "evidence_summary", "locator_type", "locator", "evidence_type"],
+      "confidenceField": "confidence",
+      "enumerations": {
+        "evidence_type": ["loaded_fact", "interview_signal", "metric", "document_excerpt", "workshop_observation", "benchmark", "derived_measure"],
+        "locator_type": ["row", "page", "sheet_cell", "section", "chunk", "timestamp", "query_result", "row_set"],
+        "classification": ["approved", "review_required", "rejected", "pending", "pending_review", "candidate", ""]
+      }
+    },
+    "executive_interviews": {
+      "special": "executive_interviews",
+      "identityFields": ["interview_id"],
+      "requiredFields": ["interview_id", "source_version_id", "stakeholder_role", "question", "answer"],
+      "substantiveFields": ["priority_theme", "pain_point", "initiative_link", "business_priority", "evidence_needed"],
+      "substantiveMinCount": 1,
+      "confidenceField": "confidence",
+      "enumerations": {
+        "confidence": ["high", "medium", "low"],
+        "approval_status": ["approved", "review_required", "rejected", "pending", "pending_review", "candidate", ""]
+      },
+      "notApplicableWhen": "zero rows for this tenant -- a tenant with no interview evidence is not_applicable, not a blocker, per the v4-candidate manifest's own note."
+    }
+  }
+}
