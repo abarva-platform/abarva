@@ -1,0 +1,15 @@
+source_publication,publication_ref_field,read_model,consumer,first_wave,reconciliation_method
+publication.enterprise_publication_v1,publication.enterprise_brief_ref,consumption.enterprise_brief_v1,Home / Knowledge,wave_1_enterprise,content_hash + key-set parity
+"knowledge.organization, metrics.metric_observation",publication.enterprise_identity_ref,consumption.enterprise_identity_v1,Home / aVa,wave_1_enterprise,content_hash + key-set parity
+"knowledge.interview, knowledge.fact_assertion",publication.executive_perspective_ref,consumption.executive_perspective_v1,Home / Intelligence,domain_wave,content_hash + key-set parity
+publication.strategic_publication_v1,publication.strategic_interpretation_ref,consumption.strategic_interpretation_v1,Home / aVa,domain_wave,content_hash + key-set parity
+publication.domain_publication_v1,publication.domain_summary_ref,consumption.domain_summary_v1,Home Explore,domain_wave,content_hash + key-set parity
+knowledge.application,publication.application_inventory_ref,consumption.application_inventory_v1,Home / Source / Intelligence,domain_wave,content_hash + key-set parity
+"knowledge.vendor, knowledge.contract",publication.vendor_contract_inventory_ref,consumption.vendor_contract_inventory_v1,Home / Source / Tower,domain_wave,content_hash + key-set parity
+"metrics.metric_definition, metrics.metric_observation",publication.metric_observation_ref,consumption.metric_observation_v1,Cube / Tower / Home,domain_wave,content_hash + key-set parity
+knowledge.relationship_assertion,publication.relationship_node_ref,consumption.relationship_node_v1,Home Relationships / aVa,relationship_or_final_wave,content_hash + key-set parity
+knowledge.relationship_assertion,publication.relationship_edge_ref,consumption.relationship_edge_v1,Home Relationships / aVa,relationship_or_final_wave,content_hash + key-set parity
+evidence.evidence_fragment,publication.relationship_evidence_ref,consumption.relationship_evidence_v1,Evidence / aVa,relationship_or_final_wave,content_hash + key-set parity
+governance.evidence_gap,publication.evidence_gap_ref,consumption.evidence_gap_v1,Home / Source / Moves,relationship_or_final_wave,content_hash + key-set parity
+publication.active_knowledge_baseline,publication.search_document_ref,consumption.search_document_v1,Nexus search / aVa,relationship_or_final_wave,content_hash + key-set parity
+"publication.active_knowledge_baseline, consumption.*",publication.module_knowledge_packet_ref,consumption.module_knowledge_packet_v1,aVa / module APIs,relationship_or_final_wave,content_hash + key-set parity

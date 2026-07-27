@@ -1,0 +1,2 @@
+{"kind":"sheet","id":"ws/aznpnk","name":"Cube Measures","index":0,"range":"A1:H15","address":"A1:H15","tables":1}
+{"kind":"table","sheet":"Cube Measures","address":"A1:H15","rows":15,"cols":8,"values":[["Cube Measure and Dimension Catalog",null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],["cube_domain","measure_name","definition","sql_source_rule","unit","null_behavior","authority_minimum","dimensions"]],"valuesTruncated":true,"valuesPreviewRows":3,"valuesPreviewCols":8,"valuesPreviewAddress":"A1:H3"}

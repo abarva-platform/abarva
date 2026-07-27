@@ -1,0 +1,2 @@
+{"kind":"sheet","id":"ws/sy6n7p","name":"Canonical Mapping","index":0,"range":"A1:F15","address":"A1:F15","tables":1}
+{"kind":"table","sheet":"Canonical Mapping","address":"A1:F15","rows":15,"cols":6,"values":[["Canonical to Publication Mapping",null,null,null,null,null],[null,null,null,null,null,null],["canonical_source","domain_publication","read_model","consumers","business_purpose","mapping_confidence"]],"valuesTruncated":true,"valuesPreviewRows":3,"valuesPreviewCols":6,"valuesPreviewAddress":"A1:F3"}

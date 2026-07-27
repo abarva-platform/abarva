@@ -1,0 +1,134 @@
+{
+  "package": "phase3c2d-consumption-contracts",
+  "version": "phase3c2d-consumption-contracts-v1.0.0",
+  "generated": "2026-07-27",
+  "status": "pass",
+  "executionBoundary": "No Azure apply, PostgreSQL migration, source landing, parser run, publication run, Cube deploy, product wiring or runtime deployment.",
+  "requiredFiles": 14,
+  "missingRequiredFiles": [],
+  "projectionCount": 14,
+  "availabilityStates": [
+    "available",
+    "not_loaded",
+    "not_measured",
+    "withheld",
+    "conflicting",
+    "stale",
+    "candidate",
+    "accepted",
+    "superseded",
+    "not_applicable"
+  ],
+  "files": [
+    {
+      "path": "AVA_KNOWLEDGE_PACKET_MAPPING.xlsx",
+      "bytes": 5419,
+      "sha256": "9336aaa767b9d22f859eaa94c1a537b84c915f59ac56fc2333c88c9659bf6d2a"
+    },
+    {
+      "path": "AVA_KNOWLEDGE_PACKET_MAPPING.xlsx.inspect.ndjson",
+      "bytes": 26472,
+      "sha256": "42f1e8fd172eaa17cdae866f910a2a77b3f3dfe173c0e2be121588dbb5e35d66"
+    },
+    {
+      "path": "CANONICAL_TO_PUBLICATION_MAPPING.xlsx",
+      "bytes": 5550,
+      "sha256": "d046a50cd0fb2e0f02db9ccfdb33ad60f0d6584e137b13ffff50b42ebb488eb7"
+    },
+    {
+      "path": "CANONICAL_TO_PUBLICATION_MAPPING.xlsx.inspect.ndjson",
+      "bytes": 43357,
+      "sha256": "7b756a2731b9e2355330b4f13092f1b5a6cba2659df0a8427486838c42318c62"
+    },
+    {
+      "path": "CONSUMPTION_OBJECT_AND_FIELD_CONTRACT.xlsx",
+      "bytes": 6001,
+      "sha256": "d6161f2936c411772b85dada6d307e2a839a8835575524d905fbc7a8de54da60"
+    },
+    {
+      "path": "CONSUMPTION_OBJECT_AND_FIELD_CONTRACT.xlsx.inspect.ndjson",
+      "bytes": 61504,
+      "sha256": "ccaa4ac7adb6c2db0bc60f6722ffaa9013f0b13d9828a879dbd26798237b2a57"
+    },
+    {
+      "path": "CONSUMPTION_PROJECTION_REGISTRY.json",
+      "bytes": 11991,
+      "sha256": "de340feab313daae5342c15e056c690124d0ddfca5895227ccb0f0f50e1abcb9"
+    },
+    {
+      "path": "CONSUMPTION_RECONCILIATION_TEST_PLAN.md",
+      "bytes": 1025,
+      "sha256": "a4a0243301f9bc532fcde1f0e67763a944116e5821989d0d016949c8f2c60d8f"
+    },
+    {
+      "path": "CONSUMPTION_REFRESH_DEPENDENCY_GRAPH.json",
+      "bytes": 3444,
+      "sha256": "39e592496825a366f716496f9df4c9a4af859d3a2fbbcab3b75c086cc4cbdec8"
+    },
+    {
+      "path": "CUBE_MEASURE_AND_DIMENSION_CATALOG.xlsx",
+      "bytes": 6073,
+      "sha256": "fb0a120fffd756c30295bb425de346cc552e581bedc58fbb5d5b07ef5d311e6b"
+    },
+    {
+      "path": "CUBE_MEASURE_AND_DIMENSION_CATALOG.xlsx.inspect.ndjson",
+      "bytes": 56975,
+      "sha256": "e4ecb0872727d5e4556c1dd479ac4440f2d9e372587e3a8c5c335a7f72778465"
+    },
+    {
+      "path": "CUBE_SEMANTIC_MODEL_CONTRACT.md",
+      "bytes": 1138,
+      "sha256": "56459c82fb6cc19890dbe5585eea55cbf38e5f845cde4fb9b97691f3ee5d4bc4"
+    },
+    {
+      "path": "HOME_KNOWLEDGE_READ_MODEL_DDL.sql",
+      "bytes": 10142,
+      "sha256": "c81edb507131d2cc6d87381bd420a3097b1df7a6a2b57a0b95a458cad403e042"
+    },
+    {
+      "path": "LAST_KNOWN_GOOD_AND_ROLLBACK_CONTRACT.md",
+      "bytes": 610,
+      "sha256": "7c9146762a30beadc3e91182259fd9db7b3ddf5e6cf93f7d3d8cb83fc2db6b66"
+    },
+    {
+      "path": "MODULE_CONSUMPTION_MAPPING.xlsx",
+      "bytes": 5547,
+      "sha256": "e7cde7dcec6a4f15fe15f0fa9285a0459d88b034458e96af28fa4c855fe9032c"
+    },
+    {
+      "path": "MODULE_CONSUMPTION_MAPPING.xlsx.inspect.ndjson",
+      "bytes": 21704,
+      "sha256": "125b9ee092984acb1ba482062e764cbdffdb3c3a3ab423178aa38a21b8ca953a"
+    },
+    {
+      "path": "PARTIAL_DATA_AND_EMPTY_STATE_CONTRACT.md",
+      "bytes": 807,
+      "sha256": "3b9904798c76fd4e0a7d23074a3e6cd1240cfc59ca887ee8bcc19fe1687fcbfa"
+    },
+    {
+      "path": "POSTGRES_AGE_EVALUATION_PLAN.md",
+      "bytes": 5030,
+      "sha256": "c28ba2e48e090979cb3d0f861d04f6e12ad24de10e40610ece73f5a93bd3ebc4"
+    },
+    {
+      "path": "PUBLICATION_TO_READ_MODEL_LINEAGE.csv",
+      "bytes": 2576,
+      "sha256": "a5ec8816846b36e1e2c77b23128267840196e98e50549429ffa422fc4463480a"
+    },
+    {
+      "path": "PUBLICATION_TO_READ_MODEL_LINEAGE.xlsx",
+      "bytes": 5605,
+      "sha256": "173bd359a2a09f1687628e795ea0fc52a1604bce1d09a66c3e16fb24f9c1a8b5"
+    },
+    {
+      "path": "PUBLICATION_TO_READ_MODEL_LINEAGE.xlsx.inspect.ndjson",
+      "bytes": 49428,
+      "sha256": "ff25accce44dc2e3deff7989f2730acf35c6ef082cfe3dc21cff5f86e0152f87"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1556,
+      "sha256": "61f15cc418cbb81366a5daa83fcedaa74cce2e885a6df13dfe3351cf4058a733"
+    }
+  ]
+}
