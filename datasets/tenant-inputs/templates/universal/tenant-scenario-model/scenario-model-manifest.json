@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "modelId": "tenant-scenario-model-2026-07",
+  "status": "draft-not-promoted",
+  "description": "Gate 2.1 Phase B. A single connected graph of typed entities with stable IDs, one per tenant scenario. Every canonical CSV row (v3 domains, the revised v4 evidence_sources, and the v4 additions evidence_items/executive_interviews) is a PROJECTION of exactly one entity in this graph, never an independently invented row. References between entities resolve by stable ID first; a CSV column that is contractually a free-text name (per the already-approved v3/v4-candidate schemas) is populated by resolving the reference to its target entity's display_field at projection time -- the ID itself is preserved in the parallel scenario-id-crosswalk.csv this model requires every generator to emit, so ID-based cross-referencing is possible without a breaking change to the approved v3 column set. This directly answers the audit_rule_defect findings from Gate 2.1 Phase A (e.g. applications_systems.vendor vs vendors_contracts.vendor_name having no shared join key): the join key now exists in the graph and the crosswalk, even where the legacy CSV column remains name-based.",
+  "idFormat": {
+    "pattern": "{TYPE_PREFIX}-{NNN}",
+    "notes": "Zero-padded 3-digit sequence per tenant per entity type, e.g. LEADER-006, SYS-021, PRG-014, matching the format given in the Gate 2.1 architectural decision. IDs are stable for the lifetime of a scenario version -- regenerating a scenario must reuse the same ID for the same logical entity, not renumber.",
+    "scope": "per-tenant: two different tenants may both have a SYS-021, but within one tenant's scenario every ID is unique across ALL entity types, not just within one type."
+  },
+  "requiredGeneratorOutputs": [
+    "the canonical CSV projections for every entity (per entityTypes[].projectsTo below)",
+    "scenario-graph.json -- every entity, its fields, and its reference fields, keyed by stable ID",
+    "scenario-id-crosswalk.csv -- columns: entity_type, stable_id, display_name, projected_domain, projected_row_identity"
+  ],
+  "entityTypes": {
+    "enterprise": {
+      "idPrefix": "ENT",
+      "displayField": "entity_name",
+      "fields": ["entity_name", "industry", "sub_industry", "revenue_usd", "employee_count", "headquarters", "operating_regions", "business_model", "customer_segments", "mission", "vision", "strategic_priorities", "leadership_team"],
+      "referenceFields": [],
+      "projectsTo": [{ "domain": "enterprise_profile", "cardinality": "one_per_tenant" }]
+    },
+    "business_unit": {
+      "idPrefix": "BU",
+      "displayField": "org_unit",
+      "fields": ["org_unit", "role_level", "location_scope"],
+      "referenceFields": [
+        { "field": "parent_business_unit_ref", "refType": "business_unit", "required": false },
+        { "field": "leader_ref", "refType": "leader", "required": false },
+        { "field": "owned_function_refs", "refType": "function", "cardinality": "many", "required": false },
+        { "field": "owned_system_refs", "refType": "application", "cardinality": "many", "required": false },
+        { "field": "owned_data_asset_refs", "refType": "data_asset", "cardinality": "many", "required": false }
+      ],
+      "projectsTo": [{ "domain": "org_ownership", "columns": { "org_unit": "org_unit", "parent_org_unit": "parent_business_unit_ref->org_unit", "leader_name_or_role": "leader_ref->display_name", "role_level": "role_level", "owned_functions": "owned_function_refs->display_name[]", "owned_systems": "owned_system_refs->display_name[]", "owned_data_domains": "owned_data_asset_refs->data_domain[]", "location_scope": "location_scope" } }]
+    },
+    "function": {
+      "idPrefix": "FN",
+      "displayField": "function_name",
+      "fields": ["function_name", "business_capabilities", "criticality", "annual_budget_usd", "fte_count", "outsourced_support", "current_state_notes", "target_state_notes"],
+      "referenceFields": [
+        { "field": "parent_function_ref", "refType": "function", "required": false },
+        { "field": "executive_owner_ref", "refType": "leader", "required": false }
+      ],
+      "projectsTo": [{ "domain": "business_functions", "columns": { "function_name": "function_name", "parent_function": "parent_function_ref->function_name", "executive_owner": "executive_owner_ref->display_name" } }]
+    },
+    "leader": {
+      "idPrefix": "LEADER",
+      "displayField": "display_name",
+      "fields": ["display_name", "title", "role_family"],
+      "referenceFields": [],
+      "projectsTo": [
+        { "domain": "org_ownership", "note": "referenced as leader_ref by business_unit, not a standalone row" },
+        { "domain": "business_functions", "note": "referenced as executive_owner_ref" },
+        { "domain": "programs_initiatives", "note": "referenced as business_sponsor_ref/technology_owner_ref" }
+      ]
+    },
+    "workforce_role": {
+      "idPrefix": "ROLE",
+      "displayField": "persona_or_role",
+      "fields": ["persona_or_role", "role_count", "location_model", "employment_type", "vendor_supported", "skills", "pain_points", "automation_opportunity"],
+      "referenceFields": [{ "field": "function_ref", "refType": "function", "required": true }],
+      "projectsTo": [{ "domain": "workforce_roles", "columns": { "persona_or_role": "persona_or_role", "function_name": "function_ref->function_name" } }]
+    },
+    "application": {
+      "idPrefix": "SYS",
+      "displayField": "system_name",
+      "fields": ["system_name", "system_type", "system_category", "system_scope", "deployment_model", "hosting_location", "lifecycle_state", "criticality", "interfaces_count"],
+      "referenceFields": [
+        { "field": "business_function_ref", "refType": "function", "required": false },
+        { "field": "business_owner_ref", "refType": "leader", "required": false },
+        { "field": "technology_owner_ref", "refType": "leader", "required": false },
+        { "field": "vendor_ref", "refType": "vendor", "required": false },
+        { "field": "data_domain_refs", "refType": "data_asset", "cardinality": "many", "required": false }
+      ],
+      "projectsTo": [{ "domain": "applications_systems", "columns": { "system_name": "system_name", "business_function": "business_function_ref->function_name", "business_owner": "business_owner_ref->display_name", "technology_owner": "technology_owner_ref->display_name", "vendor": "vendor_ref->vendor_name" } }]
+    },
+    "platform": {
+      "idPrefix": "PLAT",
+      "displayField": "platform_name",
+      "fields": ["platform_name", "platform_type", "hosting_model", "data_center_or_region", "technology_stack", "criticality", "lifecycle_state", "capacity_or_scale", "constraints", "future_target_flag"],
+      "referenceFields": [{ "field": "operational_owner_ref", "refType": "leader", "required": false }],
+      "projectsTo": [{ "domain": "infrastructure_platforms", "columns": { "platform_name": "platform_name", "operational_owner": "operational_owner_ref->display_name" } }]
+    },
+    "data_asset": {
+      "idPrefix": "DATA",
+      "displayField": "data_asset_name",
+      "fields": ["data_asset_name", "data_domain", "platform_or_database", "refresh_frequency", "quality_status", "regulated_data_flag", "analytics_usage"],
+      "referenceFields": [
+        { "field": "data_owner_ref", "refType": "leader", "required": false },
+        { "field": "data_steward_ref", "refType": "leader", "required": false }
+      ],
+      "projectsTo": [{ "domain": "data_assets_integrations", "columns": { "data_asset_name": "data_asset_name", "data_domain": "data_domain", "data_owner": "data_owner_ref->display_name", "data_steward": "data_steward_ref->display_name" } }]
+    },
+    "integration": {
+      "idPrefix": "XINT",
+      "displayField": "computed",
+      "fields": ["integration_type", "current_state_or_target_state"],
+      "referenceFields": [
+        { "field": "source_system_ref", "refType": ["application", "data_asset"], "required": true },
+        { "field": "target_system_ref", "refType": ["application", "data_asset"], "required": true },
+        { "field": "data_asset_ref", "refType": "data_asset", "required": true }
+      ],
+      "projectsTo": [{ "domain": "data_assets_integrations", "note": "one integration entity = one row's source_system/target_system/integration_type; shares the row with its data_asset_ref's own fields", "columns": { "source_system": "source_system_ref->display_name", "target_system": "target_system_ref->display_name", "integration_type": "integration_type" } }]
+    },
+    "vendor": {
+      "idPrefix": "VENDOR",
+      "displayField": "vendor_name",
+      "fields": ["vendor_name"],
+      "referenceFields": [],
+      "projectsTo": [{ "domain": "vendors_contracts", "note": "one vendor may have many contract rows; vendor_name repeats across them" }]
+    },
+    "contract": {
+      "idPrefix": "CONTRACT",
+      "displayField": "contract_name",
+      "fields": ["contract_name", "service_category", "annual_spend_usd", "term_start", "term_end", "renewal_date", "commercial_model", "risk_rating"],
+      "referenceFields": [
+        { "field": "vendor_ref", "refType": "vendor", "required": true },
+        { "field": "business_owner_ref", "refType": "leader", "required": false },
+        { "field": "contract_owner_ref", "refType": "leader", "required": false },
+        { "field": "supported_system_refs", "refType": "application", "cardinality": "many", "required": false },
+        { "field": "supported_function_refs", "refType": "function", "cardinality": "many", "required": false }
+      ],
+      "projectsTo": [{ "domain": "vendors_contracts", "columns": { "vendor_name": "vendor_ref->vendor_name", "contract_name": "contract_name", "business_owner": "business_owner_ref->display_name", "contract_owner": "contract_owner_ref->display_name", "supported_systems": "supported_system_refs->display_name[]", "supported_functions": "supported_function_refs->function_name[]" } }]
+    },
+    "spend_line": {
+      "idPrefix": "SPEND",
+      "displayField": "spend_category",
+      "fields": ["spend_category", "annual_spend_usd", "run_change_transform_split", "vendor_internal_split", "value_driver", "savings_opportunity_usd", "calculation_basis"],
+      "referenceFields": [{ "field": "cost_center_owner_ref", "refType": "leader", "required": false }],
+      "projectsTo": [{ "domain": "spend_value", "columns": { "spend_category": "spend_category", "cost_center_or_owner": "cost_center_owner_ref->display_name" } }]
+    },
+    "program": {
+      "idPrefix": "PRG",
+      "displayField": "program_name",
+      "fields": ["program_name", "objective", "scope", "status", "phase", "target_outcomes", "dependencies", "risks", "budget_usd", "expected_value_usd"],
+      "referenceFields": [
+        { "field": "sponsor_ref", "refType": "leader", "required": true },
+        { "field": "technology_owner_ref", "refType": "leader", "required": false },
+        { "field": "system_refs", "refType": "application", "cardinality": "many", "required": false },
+        { "field": "data_refs", "refType": "data_asset", "cardinality": "many", "required": false },
+        { "field": "vendor_refs", "refType": "vendor", "cardinality": "many", "required": false },
+        { "field": "metric_refs", "refType": "metric", "cardinality": "many", "required": false },
+        { "field": "risk_refs", "refType": "risk", "cardinality": "many", "required": false }
+      ],
+      "projectsTo": [{ "domain": "programs_initiatives", "columns": { "program_name": "program_name", "business_sponsor": "sponsor_ref->display_name", "technology_owner": "technology_owner_ref->display_name" } }]
+    },
+    "ai_use_case": {
+      "idPrefix": "AI",
+      "displayField": "use_case_name",
+      "fields": ["use_case_name", "process_area", "ai_pattern", "current_status", "value_hypothesis", "human_approval_points"],
+      "referenceFields": [
+        { "field": "business_function_ref", "refType": "function", "required": false },
+        { "field": "required_system_refs", "refType": "application", "cardinality": "many", "required": false },
+        { "field": "required_data_refs", "refType": "data_asset", "cardinality": "many", "required": false },
+        { "field": "risk_control_refs", "refType": "risk", "cardinality": "many", "required": false }
+      ],
+      "projectsTo": [{ "domain": "ai_automation_use_cases", "columns": { "use_case_name": "use_case_name", "business_function": "business_function_ref->function_name", "required_systems": "required_system_refs->display_name[]", "required_data": "required_data_refs->display_name[]" } }]
+    },
+    "risk": {
+      "idPrefix": "RISK",
+      "displayField": "risk_or_control_name",
+      "fields": ["risk_or_control_name", "risk_domain", "severity", "likelihood", "control_status", "evidence_required", "mitigation_plan"],
+      "referenceFields": [
+        { "field": "business_function_ref", "refType": "function", "required": false },
+        { "field": "systems_impacted_refs", "refType": "application", "cardinality": "many", "required": false },
+        { "field": "control_owner_ref", "refType": "leader", "required": false }
+      ],
+      "projectsTo": [{ "domain": "risks_controls", "columns": { "risk_or_control_name": "risk_or_control_name", "business_function": "business_function_ref->function_name", "systems_impacted": "systems_impacted_refs->display_name[]", "control_owner": "control_owner_ref->display_name" } }]
+    },
+    "metric": {
+      "idPrefix": "METRIC",
+      "displayField": "metric_name",
+      "fields": ["metric_name", "metric_domain", "definition", "baseline_value", "baseline_period", "target_value", "calculation_basis"],
+      "referenceFields": [
+        { "field": "business_function_ref", "refType": "function", "required": false },
+        { "field": "owner_ref", "refType": "leader", "required": false },
+        { "field": "data_source_ref", "refType": "application", "required": false }
+      ],
+      "projectsTo": [{ "domain": "metrics_outcomes", "columns": { "metric_name": "metric_name", "business_function": "business_function_ref->function_name", "owner": "owner_ref->display_name", "data_source": "data_source_ref->display_name" } }]
+    },
+    "process": {
+      "idPrefix": "PROC",
+      "displayField": "process_name",
+      "fields": ["process_name", "volume_metric", "cycle_time", "pain_points", "control_points", "automation_candidate"],
+      "referenceFields": [
+        { "field": "business_function_ref", "refType": "function", "required": false },
+        { "field": "process_owner_ref", "refType": "leader", "required": false },
+        { "field": "systems_used_refs", "refType": "application", "cardinality": "many", "required": false }
+      ],
+      "projectsTo": [{ "domain": "operational_process_evidence", "columns": { "process_name": "process_name", "business_function": "business_function_ref->function_name", "process_owner": "process_owner_ref->display_name", "systems_used": "systems_used_refs->display_name[]" } }]
+    },
+    "managed_service": {
+      "idPrefix": "MSVC",
+      "displayField": "service_name",
+      "fields": ["service_tower", "service_name", "scope_description", "current_provider", "service_volume", "sla_or_kpi", "run_cost_usd", "target_state_option"],
+      "referenceFields": [
+        { "field": "in_scope_function_refs", "refType": "function", "cardinality": "many", "required": false },
+        { "field": "in_scope_system_refs", "refType": "application", "cardinality": "many", "required": false },
+        { "field": "current_provider_vendor_ref", "refType": "vendor", "required": false }
+      ],
+      "projectsTo": [{ "domain": "service_scope_managed_services", "columns": { "service_name": "service_name", "in_scope_functions": "in_scope_function_refs->function_name[]", "in_scope_systems": "in_scope_system_refs->display_name[]", "current_provider": "current_provider_vendor_ref->vendor_name" } }]
+    },
+    "industry_pattern": {
+      "idPrefix": "PATTERN",
+      "displayField": "pattern_name",
+      "fields": ["pattern_name", "industry", "business_context", "applicability", "evidence_basis", "caveats"],
+      "referenceFields": [],
+      "projectsTo": [{ "domain": "industry_context_patterns", "columns": { "pattern_name": "pattern_name" } }]
+    },
+    "expert_lens": {
+      "idPrefix": "LENS",
+      "displayField": "lens_name",
+      "fields": ["lens_name", "expert_role", "questions_to_answer", "required_inputs", "decision_use", "limitations"],
+      "referenceFields": [],
+      "projectsTo": [{ "domain": "expert_lenses", "columns": { "lens_name": "lens_name" } }]
+    },
+    "interview": {
+      "idPrefix": "IVW",
+      "displayField": "computed",
+      "fields": ["question", "answer", "priority_theme", "pain_point", "business_priority", "evidence_needed", "interview_date", "confidence", "approval_status"],
+      "referenceFields": [
+        { "field": "source_ref", "refType": "evidence_source", "required": true },
+        { "field": "stakeholder_ref", "refType": ["leader", "workforce_role"], "required": true },
+        { "field": "initiative_ref", "refType": ["program", "ai_use_case"], "required": false }
+      ],
+      "projectsTo": [{ "domain": "executive_interviews", "columns": { "source_version_id": "source_ref->stable_id", "stakeholder_role": "stakeholder_ref->title_or_role", "initiative_link": "initiative_ref->display_name" } }]
+    },
+    "evidence_source": {
+      "idPrefix": "SRC",
+      "displayField": "source_name",
+      "fields": ["source_name", "source_kind", "source_ref", "source_date", "as_of_date", "confidentiality", "domains_covered", "quality_notes", "known_gaps"],
+      "referenceFields": [{ "field": "source_owner_ref", "refType": "leader", "required": false }],
+      "projectsTo": [{ "domain": "evidence_sources", "columns": { "source_name": "source_name", "source_owner": "source_owner_ref->display_name" } }]
+    },
+    "evidence_item": {
+      "idPrefix": "EVID",
+      "displayField": "computed",
+      "fields": ["evidence_summary", "locator_type", "locator", "classification", "confidence", "evidence_date"],
+      "referenceFields": [
+        { "field": "source_ref", "refType": "evidence_source", "required": true },
+        { "field": "subject_refs", "refType": "any", "cardinality": "many", "required": false, "note": "the business object(s) this evidence is about -- projects to business_object_refs" }
+      ],
+      "projectsTo": [{ "domain": "evidence_items", "columns": { "source_version_id": "source_ref->stable_id", "business_object_refs": "subject_refs->display_name[]" } }]
+    },
+    "relationship": {
+      "idPrefix": "REL",
+      "displayField": "computed",
+      "fields": ["relationship_type", "relationship_strength", "evidence_basis", "current_state_or_target_state"],
+      "referenceFields": [
+        { "field": "from_ref", "refType": "any", "required": true },
+        { "field": "to_ref", "refType": "any", "required": true }
+      ],
+      "projectsTo": [{ "domain": "relationships", "columns": { "from_object_type": "from_ref->entity_type", "from_object_name": "from_ref->display_name", "to_object_type": "to_ref->entity_type", "to_object_name": "to_ref->display_name" } }]
+    }
+  }
+}
