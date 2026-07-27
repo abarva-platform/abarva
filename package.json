@@ -50,6 +50,8 @@
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
     "test:hcdn-job-runner": "node scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs",
+    "generate:hcdn-security-plan": "node scripts/knowledge/build-phase2b3c-security-plan.mjs",
+    "test:hcdn-security-plan": "node scripts/knowledge/__tests__/run-phase2b3c-security-plan-tests.mjs",
     "audit:nexus-navigation": "node scripts/audit/nexus-navigation-contract.mjs",
     "release:deploy-authority:check": "node scripts/release-control/check-deploy-authority-policy.mjs",
     "deploy:aca-runtime-invariant": "node scripts/deploy/check-aca-runtime-invariant.mjs",

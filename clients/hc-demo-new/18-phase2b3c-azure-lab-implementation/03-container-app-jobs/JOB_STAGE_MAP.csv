@@ -1,14 +1,11 @@
 stage,approved_process_name,reserved_aca_job_name,managed_identity,database_role,status
 01_register_source,hc-demo-new-source-register-v1,job-hcdn-source-register-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
-02_store_immutable_source_version,hc-demo-new-source-register-v1,job-hcdn-source-register-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 03_parse_source,hc-demo-new-source-parse-v1,job-hcdn-source-parse-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 04_extract_evidence,hc-demo-new-evidence-extract-v1,job-hcdn-evidence-extract-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 05_normalize_values,hc-demo-new-knowledge-normalize-v1,job-hcdn-normalize-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 06_resolve_identity,hc-demo-new-entity-resolve-v1,job-hcdn-entity-resolve-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 07_validate_semantics,hc-demo-new-knowledge-validate-v1,job-hcdn-validate-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
-08_detect_conflicts_changes,hc-demo-new-knowledge-validate-v1,job-hcdn-validate-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 09_route_review_quarantine,hc-demo-new-knowledge-review-v1,job-hcdn-review-apply-lab,mi-hcdn-review-lab-001,hc_demo_new_reviewer,plan_only_ready
-10_accept_reject,hc-demo-new-knowledge-review-v1,job-hcdn-review-apply-lab,mi-hcdn-review-lab-001,hc_demo_new_reviewer,plan_only_ready
 11_publish_domain,hc-demo-new-domain-publish-v1,job-hcdn-domain-publish-lab,mi-hcdn-publish-lab-001,hc_demo_new_publisher,plan_only_ready
 12_publish_baseline,hc-demo-new-baseline-publish-v1,job-hcdn-baseline-publish-lab,mi-hcdn-publish-lab-001,hc_demo_new_publisher,plan_only_ready
 13_build_module_projections,hc-demo-new-projection-build-v1,job-hcdn-projection-build-lab,mi-hcdn-publish-lab-001,hc_demo_new_publisher,plan_only_ready

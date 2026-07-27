@@ -1,0 +1,20 @@
+{
+  "schema": "abarva.phase2b3c.security-hardening-validation/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "tenantKey": "hc-demo-new",
+  "checks": {
+    "tenant_key_matches": true,
+    "evaluator_storage_separate": true,
+    "hidden_truth_blocked_from_ingest_runtime": true,
+    "evaluator_cannot_mutate_knowledge": true,
+    "acr_pull_rbac_planned": true,
+    "storage_keyvault_rbac_planned": true,
+    "private_dns_matrix_present": true,
+    "diagnostics_matrix_present": true,
+    "what_if_gate_present": true,
+    "zero_data_gate_present": true,
+    "no_legacy_airline_tenant_key": true,
+    "no_legacy_airline_display_name": true
+  },
+  "passed": true
+}
