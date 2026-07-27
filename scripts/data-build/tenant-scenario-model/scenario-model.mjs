@@ -92,8 +92,19 @@ function displayNameOf(graph, id) {
 // a real entity of an allowed type. This is what Phase C/D/G run before
 // treating a generated scenario as usable -- a graph with unresolved
 // references must not silently become CSV rows. ---
+// Sentinel for "this required reference genuinely cannot be resolved from
+// the source data, and that has been confirmed, not assumed." A caller
+// (e.g. an adapter translating a non-canonical tenant schema) sets a
+// reference field to this value instead of either fabricating a guessed
+// reference or leaving the field silently blank. validateGraph treats it as
+// a disclosed warning, not a validation failure -- distinct from simply
+// omitting the field, which for a required reference remains a hard error
+// (an omission with no explanation is not the same as a confirmed gap).
+const UNRESOLVED_REF = "__unresolved__";
+
 function validateGraph(graph) {
   const errors = [];
+  const warnings = [];
   for (const [id, entity] of graph.entities) {
     const def = manifest.entityTypes[entity.entityType];
     if (!def) {
@@ -106,8 +117,12 @@ function validateGraph(graph) {
     }
     for (const refDef of def.referenceFields || []) {
       const value = entity.refs[refDef.field];
+      if (value === UNRESOLVED_REF) {
+        warnings.push({ id, warning: `reference field "${refDef.field}" is explicitly marked unresolved -- required=${Boolean(refDef.required)}` });
+        continue;
+      }
       if (refDef.required && !value) {
-        errors.push({ id, error: `missing required reference field "${refDef.field}"` });
+        errors.push({ id, error: `missing required reference field "${refDef.field}" (use UNRESOLVED_REF to disclose a confirmed gap instead of omitting it)` });
         continue;
       }
       if (!value) continue;
@@ -125,7 +140,7 @@ function validateGraph(graph) {
       }
     }
   }
-  return { valid: errors.length === 0, errors };
+  return { valid: errors.length === 0, errors, warnings };
 }
 
 // --- Projection: resolve one entity's fields + reference fields into a flat
@@ -142,7 +157,7 @@ function resolveMapping(graph, entity, mappingValue) {
   const isList = accessorRaw.endsWith("[]");
   const accessor = isList ? accessorRaw.slice(0, -2) : accessorRaw;
   const refValue = entity.refs[refField];
-  if (!refValue) return "";
+  if (!refValue || refValue === UNRESOLVED_REF) return "";
   const ids = Array.isArray(refValue) ? refValue : [refValue];
   const resolved = ids.map((refId) => {
     if (accessor === "stable_id") return refId;
@@ -198,4 +213,5 @@ export {
   projectEntity,
   resolveMapping,
   buildCrosswalk,
+  UNRESOLVED_REF,
 };
