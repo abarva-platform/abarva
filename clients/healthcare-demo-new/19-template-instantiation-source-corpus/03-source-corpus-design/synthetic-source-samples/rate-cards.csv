@@ -1,0 +1,217 @@
+rate_card_id,lot_id,service_tower,bidder,role_family,delivery_location,level,value_disclosure_mode,source_id
+RATE-HCDN-LOT-HCDN-01-A-01,LOT-HCDN-01,Clinical and Epic AMS,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-02,LOT-HCDN-01,Clinical and Epic AMS,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-03,LOT-HCDN-01,Clinical and Epic AMS,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-04,LOT-HCDN-01,Clinical and Epic AMS,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-05,LOT-HCDN-01,Clinical and Epic AMS,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-06,LOT-HCDN-01,Clinical and Epic AMS,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-07,LOT-HCDN-01,Clinical and Epic AMS,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-A-08,LOT-HCDN-01,Clinical and Epic AMS,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-01-B-01,LOT-HCDN-01,Clinical and Epic AMS,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-02,LOT-HCDN-01,Clinical and Epic AMS,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-03,LOT-HCDN-01,Clinical and Epic AMS,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-04,LOT-HCDN-01,Clinical and Epic AMS,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-05,LOT-HCDN-01,Clinical and Epic AMS,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-06,LOT-HCDN-01,Clinical and Epic AMS,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-07,LOT-HCDN-01,Clinical and Epic AMS,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-B-08,LOT-HCDN-01,Clinical and Epic AMS,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-01-C-01,LOT-HCDN-01,Clinical and Epic AMS,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-02,LOT-HCDN-01,Clinical and Epic AMS,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-03,LOT-HCDN-01,Clinical and Epic AMS,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-04,LOT-HCDN-01,Clinical and Epic AMS,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-05,LOT-HCDN-01,Clinical and Epic AMS,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-06,LOT-HCDN-01,Clinical and Epic AMS,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-07,LOT-HCDN-01,Clinical and Epic AMS,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-01-C-08,LOT-HCDN-01,Clinical and Epic AMS,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-A-01,LOT-HCDN-02,Payer Platform Operations,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-02,LOT-HCDN-02,Payer Platform Operations,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-03,LOT-HCDN-02,Payer Platform Operations,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-04,LOT-HCDN-02,Payer Platform Operations,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-05,LOT-HCDN-02,Payer Platform Operations,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-06,LOT-HCDN-02,Payer Platform Operations,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-07,LOT-HCDN-02,Payer Platform Operations,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-A-08,LOT-HCDN-02,Payer Platform Operations,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-02-B-01,LOT-HCDN-02,Payer Platform Operations,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-02,LOT-HCDN-02,Payer Platform Operations,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-03,LOT-HCDN-02,Payer Platform Operations,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-04,LOT-HCDN-02,Payer Platform Operations,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-05,LOT-HCDN-02,Payer Platform Operations,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-06,LOT-HCDN-02,Payer Platform Operations,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-07,LOT-HCDN-02,Payer Platform Operations,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-B-08,LOT-HCDN-02,Payer Platform Operations,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-02-C-01,LOT-HCDN-02,Payer Platform Operations,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-02,LOT-HCDN-02,Payer Platform Operations,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-03,LOT-HCDN-02,Payer Platform Operations,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-04,LOT-HCDN-02,Payer Platform Operations,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-05,LOT-HCDN-02,Payer Platform Operations,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-06,LOT-HCDN-02,Payer Platform Operations,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-07,LOT-HCDN-02,Payer Platform Operations,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-02-C-08,LOT-HCDN-02,Payer Platform Operations,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-A-01,LOT-HCDN-03,Data Analytics and AI,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-02,LOT-HCDN-03,Data Analytics and AI,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-03,LOT-HCDN-03,Data Analytics and AI,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-04,LOT-HCDN-03,Data Analytics and AI,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-05,LOT-HCDN-03,Data Analytics and AI,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-06,LOT-HCDN-03,Data Analytics and AI,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-07,LOT-HCDN-03,Data Analytics and AI,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-A-08,LOT-HCDN-03,Data Analytics and AI,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-03-B-01,LOT-HCDN-03,Data Analytics and AI,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-02,LOT-HCDN-03,Data Analytics and AI,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-03,LOT-HCDN-03,Data Analytics and AI,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-04,LOT-HCDN-03,Data Analytics and AI,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-05,LOT-HCDN-03,Data Analytics and AI,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-06,LOT-HCDN-03,Data Analytics and AI,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-07,LOT-HCDN-03,Data Analytics and AI,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-B-08,LOT-HCDN-03,Data Analytics and AI,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-03-C-01,LOT-HCDN-03,Data Analytics and AI,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-02,LOT-HCDN-03,Data Analytics and AI,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-03,LOT-HCDN-03,Data Analytics and AI,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-04,LOT-HCDN-03,Data Analytics and AI,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-05,LOT-HCDN-03,Data Analytics and AI,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-06,LOT-HCDN-03,Data Analytics and AI,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-07,LOT-HCDN-03,Data Analytics and AI,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-03-C-08,LOT-HCDN-03,Data Analytics and AI,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-A-01,LOT-HCDN-04,Revenue Cycle Technology,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-02,LOT-HCDN-04,Revenue Cycle Technology,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-03,LOT-HCDN-04,Revenue Cycle Technology,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-04,LOT-HCDN-04,Revenue Cycle Technology,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-05,LOT-HCDN-04,Revenue Cycle Technology,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-06,LOT-HCDN-04,Revenue Cycle Technology,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-07,LOT-HCDN-04,Revenue Cycle Technology,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-A-08,LOT-HCDN-04,Revenue Cycle Technology,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-04-B-01,LOT-HCDN-04,Revenue Cycle Technology,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-02,LOT-HCDN-04,Revenue Cycle Technology,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-03,LOT-HCDN-04,Revenue Cycle Technology,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-04,LOT-HCDN-04,Revenue Cycle Technology,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-05,LOT-HCDN-04,Revenue Cycle Technology,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-06,LOT-HCDN-04,Revenue Cycle Technology,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-07,LOT-HCDN-04,Revenue Cycle Technology,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-B-08,LOT-HCDN-04,Revenue Cycle Technology,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-04-C-01,LOT-HCDN-04,Revenue Cycle Technology,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-02,LOT-HCDN-04,Revenue Cycle Technology,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-03,LOT-HCDN-04,Revenue Cycle Technology,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-04,LOT-HCDN-04,Revenue Cycle Technology,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-05,LOT-HCDN-04,Revenue Cycle Technology,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-06,LOT-HCDN-04,Revenue Cycle Technology,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-07,LOT-HCDN-04,Revenue Cycle Technology,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-04-C-08,LOT-HCDN-04,Revenue Cycle Technology,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-A-01,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-02,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-03,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-04,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-05,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-06,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-07,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-A-08,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-05-B-01,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-02,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-03,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-04,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-05,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-06,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-07,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-B-08,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-05-C-01,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-02,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-03,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-04,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-05,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-06,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-07,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-05-C-08,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-A-01,LOT-HCDN-06,Workplace and Contact Center,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-02,LOT-HCDN-06,Workplace and Contact Center,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-03,LOT-HCDN-06,Workplace and Contact Center,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-04,LOT-HCDN-06,Workplace and Contact Center,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-05,LOT-HCDN-06,Workplace and Contact Center,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-06,LOT-HCDN-06,Workplace and Contact Center,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-07,LOT-HCDN-06,Workplace and Contact Center,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-A-08,LOT-HCDN-06,Workplace and Contact Center,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-06-B-01,LOT-HCDN-06,Workplace and Contact Center,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-02,LOT-HCDN-06,Workplace and Contact Center,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-03,LOT-HCDN-06,Workplace and Contact Center,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-04,LOT-HCDN-06,Workplace and Contact Center,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-05,LOT-HCDN-06,Workplace and Contact Center,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-06,LOT-HCDN-06,Workplace and Contact Center,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-07,LOT-HCDN-06,Workplace and Contact Center,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-B-08,LOT-HCDN-06,Workplace and Contact Center,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-06-C-01,LOT-HCDN-06,Workplace and Contact Center,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-02,LOT-HCDN-06,Workplace and Contact Center,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-03,LOT-HCDN-06,Workplace and Contact Center,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-04,LOT-HCDN-06,Workplace and Contact Center,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-05,LOT-HCDN-06,Workplace and Contact Center,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-06,LOT-HCDN-06,Workplace and Contact Center,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-07,LOT-HCDN-06,Workplace and Contact Center,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-06-C-08,LOT-HCDN-06,Workplace and Contact Center,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-A-01,LOT-HCDN-07,Security Identity and Compliance,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-02,LOT-HCDN-07,Security Identity and Compliance,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-03,LOT-HCDN-07,Security Identity and Compliance,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-04,LOT-HCDN-07,Security Identity and Compliance,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-05,LOT-HCDN-07,Security Identity and Compliance,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-06,LOT-HCDN-07,Security Identity and Compliance,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-07,LOT-HCDN-07,Security Identity and Compliance,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-A-08,LOT-HCDN-07,Security Identity and Compliance,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-07-B-01,LOT-HCDN-07,Security Identity and Compliance,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-02,LOT-HCDN-07,Security Identity and Compliance,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-03,LOT-HCDN-07,Security Identity and Compliance,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-04,LOT-HCDN-07,Security Identity and Compliance,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-05,LOT-HCDN-07,Security Identity and Compliance,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-06,LOT-HCDN-07,Security Identity and Compliance,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-07,LOT-HCDN-07,Security Identity and Compliance,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-B-08,LOT-HCDN-07,Security Identity and Compliance,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-07-C-01,LOT-HCDN-07,Security Identity and Compliance,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-02,LOT-HCDN-07,Security Identity and Compliance,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-03,LOT-HCDN-07,Security Identity and Compliance,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-04,LOT-HCDN-07,Security Identity and Compliance,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-05,LOT-HCDN-07,Security Identity and Compliance,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-06,LOT-HCDN-07,Security Identity and Compliance,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-07,LOT-HCDN-07,Security Identity and Compliance,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-07-C-08,LOT-HCDN-07,Security Identity and Compliance,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-A-01,LOT-HCDN-08,Integration and Interoperability,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-02,LOT-HCDN-08,Integration and Interoperability,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-03,LOT-HCDN-08,Integration and Interoperability,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-04,LOT-HCDN-08,Integration and Interoperability,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-05,LOT-HCDN-08,Integration and Interoperability,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-06,LOT-HCDN-08,Integration and Interoperability,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-07,LOT-HCDN-08,Integration and Interoperability,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-A-08,LOT-HCDN-08,Integration and Interoperability,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-08-B-01,LOT-HCDN-08,Integration and Interoperability,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-02,LOT-HCDN-08,Integration and Interoperability,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-03,LOT-HCDN-08,Integration and Interoperability,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-04,LOT-HCDN-08,Integration and Interoperability,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-05,LOT-HCDN-08,Integration and Interoperability,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-06,LOT-HCDN-08,Integration and Interoperability,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-07,LOT-HCDN-08,Integration and Interoperability,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-B-08,LOT-HCDN-08,Integration and Interoperability,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-08-C-01,LOT-HCDN-08,Integration and Interoperability,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-02,LOT-HCDN-08,Integration and Interoperability,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-03,LOT-HCDN-08,Integration and Interoperability,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-04,LOT-HCDN-08,Integration and Interoperability,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-05,LOT-HCDN-08,Integration and Interoperability,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-06,LOT-HCDN-08,Integration and Interoperability,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-07,LOT-HCDN-08,Integration and Interoperability,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-08-C-08,LOT-HCDN-08,Integration and Interoperability,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-A-01,LOT-HCDN-09,ERP and Corporate Platforms,A,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-02,LOT-HCDN-09,ERP and Corporate Platforms,A,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-03,LOT-HCDN-09,ERP and Corporate Platforms,A,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-04,LOT-HCDN-09,ERP and Corporate Platforms,A,data engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-05,LOT-HCDN-09,ERP and Corporate Platforms,A,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-06,LOT-HCDN-09,ERP and Corporate Platforms,A,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-07,LOT-HCDN-09,ERP and Corporate Platforms,A,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-A-08,LOT-HCDN-09,ERP and Corporate Platforms,A,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-A
+RATE-HCDN-LOT-HCDN-09-B-01,LOT-HCDN-09,ERP and Corporate Platforms,B,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-02,LOT-HCDN-09,ERP and Corporate Platforms,B,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-03,LOT-HCDN-09,ERP and Corporate Platforms,B,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-04,LOT-HCDN-09,ERP and Corporate Platforms,B,data engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-05,LOT-HCDN-09,ERP and Corporate Platforms,B,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-06,LOT-HCDN-09,ERP and Corporate Platforms,B,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-07,LOT-HCDN-09,ERP and Corporate Platforms,B,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-B-08,LOT-HCDN-09,ERP and Corporate Platforms,B,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-B
+RATE-HCDN-LOT-HCDN-09-C-01,LOT-HCDN-09,ERP and Corporate Platforms,C,SQL/BI engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-02,LOT-HCDN-09,ERP and Corporate Platforms,C,claims ops analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-03,LOT-HCDN-09,ERP and Corporate Platforms,C,UM nurse reviewer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-04,LOT-HCDN-09,ERP and Corporate Platforms,C,data engineer,onsite,junior,exact,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-05,LOT-HCDN-09,ERP and Corporate Platforms,C,cloud engineer,nearshore,mid,range,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-06,LOT-HCDN-09,ERP and Corporate Platforms,C,service desk analyst,offshore,senior,indexed,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-07,LOT-HCDN-09,ERP and Corporate Platforms,C,security engineer,hybrid,lead,withheld,SRC-HCDN-RATE-C
+RATE-HCDN-LOT-HCDN-09-C-08,LOT-HCDN-09,ERP and Corporate Platforms,C,integration engineer,onsite,junior,exact,SRC-HCDN-RATE-C

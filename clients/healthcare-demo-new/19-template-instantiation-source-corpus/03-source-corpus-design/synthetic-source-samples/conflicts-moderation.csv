@@ -1,0 +1,19 @@
+moderation_id,lot_id,service_tower,conflict_type,conflict_summary,resolution_path,owner_role
+MOD-HCDN-LOT-HCDN-01-001,LOT-HCDN-01,Clinical and Epic AMS,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-01-002,LOT-HCDN-01,Clinical and Epic AMS,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-02-001,LOT-HCDN-02,Payer Platform Operations,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-02-002,LOT-HCDN-02,Payer Platform Operations,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-03-001,LOT-HCDN-03,Data Analytics and AI,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-03-002,LOT-HCDN-03,Data Analytics and AI,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-04-001,LOT-HCDN-04,Revenue Cycle Technology,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-04-002,LOT-HCDN-04,Revenue Cycle Technology,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-05-001,LOT-HCDN-05,Cloud Infrastructure and Data Center,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-05-002,LOT-HCDN-05,Cloud Infrastructure and Data Center,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-06-001,LOT-HCDN-06,Workplace and Contact Center,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-06-002,LOT-HCDN-06,Workplace and Contact Center,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-07-001,LOT-HCDN-07,Security Identity and Compliance,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-07-002,LOT-HCDN-07,Security Identity and Compliance,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-08-001,LOT-HCDN-08,Integration and Interoperability,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-08-002,LOT-HCDN-08,Integration and Interoperability,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement
+MOD-HCDN-LOT-HCDN-09-001,LOT-HCDN-09,ERP and Corporate Platforms,score disagreement,clinical continuity vs transformation ambition,moderation required,executive sponsor
+MOD-HCDN-LOT-HCDN-09-002,LOT-HCDN-09,ERP and Corporate Platforms,commercial conflict,pricing improvement conflicts with transition assumptions,finance/procurement review,CFO/procurement

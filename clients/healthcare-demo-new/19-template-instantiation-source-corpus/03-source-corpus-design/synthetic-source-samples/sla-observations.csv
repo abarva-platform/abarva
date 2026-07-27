@@ -1,0 +1,217 @@
+sla_observation_id,lot_id,service_tower,metric,status,value_disclosure_mode,source_id
+SLA-HCDN-LOT-HCDN-01-001,LOT-HCDN-01,Clinical and Epic AMS,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-01-002,LOT-HCDN-01,Clinical and Epic AMS,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-01-003,LOT-HCDN-01,Clinical and Epic AMS,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-01-004,LOT-HCDN-01,Clinical and Epic AMS,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-01-005,LOT-HCDN-01,Clinical and Epic AMS,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-01-006,LOT-HCDN-01,Clinical and Epic AMS,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-01-007,LOT-HCDN-01,Clinical and Epic AMS,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-01-008,LOT-HCDN-01,Clinical and Epic AMS,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-01-009,LOT-HCDN-01,Clinical and Epic AMS,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-01-010,LOT-HCDN-01,Clinical and Epic AMS,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-01-011,LOT-HCDN-01,Clinical and Epic AMS,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-01-012,LOT-HCDN-01,Clinical and Epic AMS,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-01-013,LOT-HCDN-01,Clinical and Epic AMS,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-01-014,LOT-HCDN-01,Clinical and Epic AMS,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-01-015,LOT-HCDN-01,Clinical and Epic AMS,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-01-016,LOT-HCDN-01,Clinical and Epic AMS,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-01-017,LOT-HCDN-01,Clinical and Epic AMS,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-01-018,LOT-HCDN-01,Clinical and Epic AMS,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-01-019,LOT-HCDN-01,Clinical and Epic AMS,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-01-020,LOT-HCDN-01,Clinical and Epic AMS,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-01-021,LOT-HCDN-01,Clinical and Epic AMS,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-01-022,LOT-HCDN-01,Clinical and Epic AMS,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-01-023,LOT-HCDN-01,Clinical and Epic AMS,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-01-024,LOT-HCDN-01,Clinical and Epic AMS,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-02-001,LOT-HCDN-02,Payer Platform Operations,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-02-002,LOT-HCDN-02,Payer Platform Operations,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-02-003,LOT-HCDN-02,Payer Platform Operations,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-02-004,LOT-HCDN-02,Payer Platform Operations,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-02-005,LOT-HCDN-02,Payer Platform Operations,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-02-006,LOT-HCDN-02,Payer Platform Operations,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-02-007,LOT-HCDN-02,Payer Platform Operations,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-02-008,LOT-HCDN-02,Payer Platform Operations,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-02-009,LOT-HCDN-02,Payer Platform Operations,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-02-010,LOT-HCDN-02,Payer Platform Operations,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-02-011,LOT-HCDN-02,Payer Platform Operations,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-02-012,LOT-HCDN-02,Payer Platform Operations,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-02-013,LOT-HCDN-02,Payer Platform Operations,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-02-014,LOT-HCDN-02,Payer Platform Operations,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-02-015,LOT-HCDN-02,Payer Platform Operations,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-02-016,LOT-HCDN-02,Payer Platform Operations,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-02-017,LOT-HCDN-02,Payer Platform Operations,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-02-018,LOT-HCDN-02,Payer Platform Operations,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-02-019,LOT-HCDN-02,Payer Platform Operations,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-02-020,LOT-HCDN-02,Payer Platform Operations,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-02-021,LOT-HCDN-02,Payer Platform Operations,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-02-022,LOT-HCDN-02,Payer Platform Operations,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-02-023,LOT-HCDN-02,Payer Platform Operations,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-02-024,LOT-HCDN-02,Payer Platform Operations,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-03-001,LOT-HCDN-03,Data Analytics and AI,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-03-002,LOT-HCDN-03,Data Analytics and AI,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-03-003,LOT-HCDN-03,Data Analytics and AI,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-03-004,LOT-HCDN-03,Data Analytics and AI,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-03-005,LOT-HCDN-03,Data Analytics and AI,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-03-006,LOT-HCDN-03,Data Analytics and AI,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-03-007,LOT-HCDN-03,Data Analytics and AI,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-03-008,LOT-HCDN-03,Data Analytics and AI,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-03-009,LOT-HCDN-03,Data Analytics and AI,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-03-010,LOT-HCDN-03,Data Analytics and AI,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-03-011,LOT-HCDN-03,Data Analytics and AI,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-03-012,LOT-HCDN-03,Data Analytics and AI,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-03-013,LOT-HCDN-03,Data Analytics and AI,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-03-014,LOT-HCDN-03,Data Analytics and AI,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-03-015,LOT-HCDN-03,Data Analytics and AI,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-03-016,LOT-HCDN-03,Data Analytics and AI,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-03-017,LOT-HCDN-03,Data Analytics and AI,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-03-018,LOT-HCDN-03,Data Analytics and AI,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-03-019,LOT-HCDN-03,Data Analytics and AI,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-03-020,LOT-HCDN-03,Data Analytics and AI,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-03-021,LOT-HCDN-03,Data Analytics and AI,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-03-022,LOT-HCDN-03,Data Analytics and AI,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-03-023,LOT-HCDN-03,Data Analytics and AI,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-03-024,LOT-HCDN-03,Data Analytics and AI,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-04-001,LOT-HCDN-04,Revenue Cycle Technology,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-04-002,LOT-HCDN-04,Revenue Cycle Technology,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-04-003,LOT-HCDN-04,Revenue Cycle Technology,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-04-004,LOT-HCDN-04,Revenue Cycle Technology,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-04-005,LOT-HCDN-04,Revenue Cycle Technology,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-04-006,LOT-HCDN-04,Revenue Cycle Technology,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-04-007,LOT-HCDN-04,Revenue Cycle Technology,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-04-008,LOT-HCDN-04,Revenue Cycle Technology,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-04-009,LOT-HCDN-04,Revenue Cycle Technology,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-04-010,LOT-HCDN-04,Revenue Cycle Technology,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-04-011,LOT-HCDN-04,Revenue Cycle Technology,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-04-012,LOT-HCDN-04,Revenue Cycle Technology,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-04-013,LOT-HCDN-04,Revenue Cycle Technology,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-04-014,LOT-HCDN-04,Revenue Cycle Technology,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-04-015,LOT-HCDN-04,Revenue Cycle Technology,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-04-016,LOT-HCDN-04,Revenue Cycle Technology,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-04-017,LOT-HCDN-04,Revenue Cycle Technology,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-04-018,LOT-HCDN-04,Revenue Cycle Technology,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-04-019,LOT-HCDN-04,Revenue Cycle Technology,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-04-020,LOT-HCDN-04,Revenue Cycle Technology,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-04-021,LOT-HCDN-04,Revenue Cycle Technology,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-04-022,LOT-HCDN-04,Revenue Cycle Technology,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-04-023,LOT-HCDN-04,Revenue Cycle Technology,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-04-024,LOT-HCDN-04,Revenue Cycle Technology,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-05-001,LOT-HCDN-05,Cloud Infrastructure and Data Center,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-05-002,LOT-HCDN-05,Cloud Infrastructure and Data Center,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-05-003,LOT-HCDN-05,Cloud Infrastructure and Data Center,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-05-004,LOT-HCDN-05,Cloud Infrastructure and Data Center,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-05-005,LOT-HCDN-05,Cloud Infrastructure and Data Center,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-05-006,LOT-HCDN-05,Cloud Infrastructure and Data Center,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-05-007,LOT-HCDN-05,Cloud Infrastructure and Data Center,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-05-008,LOT-HCDN-05,Cloud Infrastructure and Data Center,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-05-009,LOT-HCDN-05,Cloud Infrastructure and Data Center,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-05-010,LOT-HCDN-05,Cloud Infrastructure and Data Center,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-05-011,LOT-HCDN-05,Cloud Infrastructure and Data Center,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-05-012,LOT-HCDN-05,Cloud Infrastructure and Data Center,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-05-013,LOT-HCDN-05,Cloud Infrastructure and Data Center,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-05-014,LOT-HCDN-05,Cloud Infrastructure and Data Center,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-05-015,LOT-HCDN-05,Cloud Infrastructure and Data Center,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-05-016,LOT-HCDN-05,Cloud Infrastructure and Data Center,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-05-017,LOT-HCDN-05,Cloud Infrastructure and Data Center,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-05-018,LOT-HCDN-05,Cloud Infrastructure and Data Center,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-05-019,LOT-HCDN-05,Cloud Infrastructure and Data Center,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-05-020,LOT-HCDN-05,Cloud Infrastructure and Data Center,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-05-021,LOT-HCDN-05,Cloud Infrastructure and Data Center,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-05-022,LOT-HCDN-05,Cloud Infrastructure and Data Center,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-05-023,LOT-HCDN-05,Cloud Infrastructure and Data Center,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-05-024,LOT-HCDN-05,Cloud Infrastructure and Data Center,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-06-001,LOT-HCDN-06,Workplace and Contact Center,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-06-002,LOT-HCDN-06,Workplace and Contact Center,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-06-003,LOT-HCDN-06,Workplace and Contact Center,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-06-004,LOT-HCDN-06,Workplace and Contact Center,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-06-005,LOT-HCDN-06,Workplace and Contact Center,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-06-006,LOT-HCDN-06,Workplace and Contact Center,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-06-007,LOT-HCDN-06,Workplace and Contact Center,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-06-008,LOT-HCDN-06,Workplace and Contact Center,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-06-009,LOT-HCDN-06,Workplace and Contact Center,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-06-010,LOT-HCDN-06,Workplace and Contact Center,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-06-011,LOT-HCDN-06,Workplace and Contact Center,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-06-012,LOT-HCDN-06,Workplace and Contact Center,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-06-013,LOT-HCDN-06,Workplace and Contact Center,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-06-014,LOT-HCDN-06,Workplace and Contact Center,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-06-015,LOT-HCDN-06,Workplace and Contact Center,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-06-016,LOT-HCDN-06,Workplace and Contact Center,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-06-017,LOT-HCDN-06,Workplace and Contact Center,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-06-018,LOT-HCDN-06,Workplace and Contact Center,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-06-019,LOT-HCDN-06,Workplace and Contact Center,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-06-020,LOT-HCDN-06,Workplace and Contact Center,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-06-021,LOT-HCDN-06,Workplace and Contact Center,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-06-022,LOT-HCDN-06,Workplace and Contact Center,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-06-023,LOT-HCDN-06,Workplace and Contact Center,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-06-024,LOT-HCDN-06,Workplace and Contact Center,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-07-001,LOT-HCDN-07,Security Identity and Compliance,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-07-002,LOT-HCDN-07,Security Identity and Compliance,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-07-003,LOT-HCDN-07,Security Identity and Compliance,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-07-004,LOT-HCDN-07,Security Identity and Compliance,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-07-005,LOT-HCDN-07,Security Identity and Compliance,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-07-006,LOT-HCDN-07,Security Identity and Compliance,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-07-007,LOT-HCDN-07,Security Identity and Compliance,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-07-008,LOT-HCDN-07,Security Identity and Compliance,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-07-009,LOT-HCDN-07,Security Identity and Compliance,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-07-010,LOT-HCDN-07,Security Identity and Compliance,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-07-011,LOT-HCDN-07,Security Identity and Compliance,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-07-012,LOT-HCDN-07,Security Identity and Compliance,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-07-013,LOT-HCDN-07,Security Identity and Compliance,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-07-014,LOT-HCDN-07,Security Identity and Compliance,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-07-015,LOT-HCDN-07,Security Identity and Compliance,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-07-016,LOT-HCDN-07,Security Identity and Compliance,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-07-017,LOT-HCDN-07,Security Identity and Compliance,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-07-018,LOT-HCDN-07,Security Identity and Compliance,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-07-019,LOT-HCDN-07,Security Identity and Compliance,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-07-020,LOT-HCDN-07,Security Identity and Compliance,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-07-021,LOT-HCDN-07,Security Identity and Compliance,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-07-022,LOT-HCDN-07,Security Identity and Compliance,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-07-023,LOT-HCDN-07,Security Identity and Compliance,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-07-024,LOT-HCDN-07,Security Identity and Compliance,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-08-001,LOT-HCDN-08,Integration and Interoperability,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-08-002,LOT-HCDN-08,Integration and Interoperability,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-08-003,LOT-HCDN-08,Integration and Interoperability,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-08-004,LOT-HCDN-08,Integration and Interoperability,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-08-005,LOT-HCDN-08,Integration and Interoperability,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-08-006,LOT-HCDN-08,Integration and Interoperability,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-08-007,LOT-HCDN-08,Integration and Interoperability,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-08-008,LOT-HCDN-08,Integration and Interoperability,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-08-009,LOT-HCDN-08,Integration and Interoperability,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-08-010,LOT-HCDN-08,Integration and Interoperability,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-08-011,LOT-HCDN-08,Integration and Interoperability,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-08-012,LOT-HCDN-08,Integration and Interoperability,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-08-013,LOT-HCDN-08,Integration and Interoperability,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-08-014,LOT-HCDN-08,Integration and Interoperability,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-08-015,LOT-HCDN-08,Integration and Interoperability,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-08-016,LOT-HCDN-08,Integration and Interoperability,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-08-017,LOT-HCDN-08,Integration and Interoperability,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-08-018,LOT-HCDN-08,Integration and Interoperability,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-08-019,LOT-HCDN-08,Integration and Interoperability,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-08-020,LOT-HCDN-08,Integration and Interoperability,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-08-021,LOT-HCDN-08,Integration and Interoperability,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-08-022,LOT-HCDN-08,Integration and Interoperability,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-08-023,LOT-HCDN-08,Integration and Interoperability,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-08-024,LOT-HCDN-08,Integration and Interoperability,availability,met,exact,SRC-HCDN-SLA-024
+SLA-HCDN-LOT-HCDN-09-001,LOT-HCDN-09,ERP and Corporate Platforms,incident response,missed,range,SRC-HCDN-SLA-001
+SLA-HCDN-LOT-HCDN-09-002,LOT-HCDN-09,ERP and Corporate Platforms,batch completion,at risk,indexed,SRC-HCDN-SLA-002
+SLA-HCDN-LOT-HCDN-09-003,LOT-HCDN-09,ERP and Corporate Platforms,claim turnaround,not measured,exact,SRC-HCDN-SLA-003
+SLA-HCDN-LOT-HCDN-09-004,LOT-HCDN-09,ERP and Corporate Platforms,prior-auth SLA,met,range,SRC-HCDN-SLA-004
+SLA-HCDN-LOT-HCDN-09-005,LOT-HCDN-09,ERP and Corporate Platforms,contact-center service level,missed,indexed,SRC-HCDN-SLA-005
+SLA-HCDN-LOT-HCDN-09-006,LOT-HCDN-09,ERP and Corporate Platforms,availability,at risk,exact,SRC-HCDN-SLA-006
+SLA-HCDN-LOT-HCDN-09-007,LOT-HCDN-09,ERP and Corporate Platforms,incident response,not measured,range,SRC-HCDN-SLA-007
+SLA-HCDN-LOT-HCDN-09-008,LOT-HCDN-09,ERP and Corporate Platforms,batch completion,met,indexed,SRC-HCDN-SLA-008
+SLA-HCDN-LOT-HCDN-09-009,LOT-HCDN-09,ERP and Corporate Platforms,claim turnaround,missed,exact,SRC-HCDN-SLA-009
+SLA-HCDN-LOT-HCDN-09-010,LOT-HCDN-09,ERP and Corporate Platforms,prior-auth SLA,at risk,range,SRC-HCDN-SLA-010
+SLA-HCDN-LOT-HCDN-09-011,LOT-HCDN-09,ERP and Corporate Platforms,contact-center service level,not measured,indexed,SRC-HCDN-SLA-011
+SLA-HCDN-LOT-HCDN-09-012,LOT-HCDN-09,ERP and Corporate Platforms,availability,met,exact,SRC-HCDN-SLA-012
+SLA-HCDN-LOT-HCDN-09-013,LOT-HCDN-09,ERP and Corporate Platforms,incident response,missed,range,SRC-HCDN-SLA-013
+SLA-HCDN-LOT-HCDN-09-014,LOT-HCDN-09,ERP and Corporate Platforms,batch completion,at risk,indexed,SRC-HCDN-SLA-014
+SLA-HCDN-LOT-HCDN-09-015,LOT-HCDN-09,ERP and Corporate Platforms,claim turnaround,not measured,exact,SRC-HCDN-SLA-015
+SLA-HCDN-LOT-HCDN-09-016,LOT-HCDN-09,ERP and Corporate Platforms,prior-auth SLA,met,range,SRC-HCDN-SLA-016
+SLA-HCDN-LOT-HCDN-09-017,LOT-HCDN-09,ERP and Corporate Platforms,contact-center service level,missed,indexed,SRC-HCDN-SLA-017
+SLA-HCDN-LOT-HCDN-09-018,LOT-HCDN-09,ERP and Corporate Platforms,availability,at risk,exact,SRC-HCDN-SLA-018
+SLA-HCDN-LOT-HCDN-09-019,LOT-HCDN-09,ERP and Corporate Platforms,incident response,not measured,range,SRC-HCDN-SLA-019
+SLA-HCDN-LOT-HCDN-09-020,LOT-HCDN-09,ERP and Corporate Platforms,batch completion,met,indexed,SRC-HCDN-SLA-020
+SLA-HCDN-LOT-HCDN-09-021,LOT-HCDN-09,ERP and Corporate Platforms,claim turnaround,missed,exact,SRC-HCDN-SLA-021
+SLA-HCDN-LOT-HCDN-09-022,LOT-HCDN-09,ERP and Corporate Platforms,prior-auth SLA,at risk,range,SRC-HCDN-SLA-022
+SLA-HCDN-LOT-HCDN-09-023,LOT-HCDN-09,ERP and Corporate Platforms,contact-center service level,not measured,indexed,SRC-HCDN-SLA-023
+SLA-HCDN-LOT-HCDN-09-024,LOT-HCDN-09,ERP and Corporate Platforms,availability,met,exact,SRC-HCDN-SLA-024

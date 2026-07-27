@@ -1,0 +1,36 @@
+{
+  "tenant_key": "healthcare-demo-new",
+  "design_assumptions": [
+    "Approximately 80% of covered lives are Medicare or Medicare Advantage for this synthetic tenant only.",
+    "Azure hosts the current data foundation and a few live AI/use-case workloads.",
+    "Leadership is likely to pivot future agentic and transformational use cases toward AWS.",
+    "Epic and on-prem SQL Server/legacy EDW remain operationally critical."
+  ],
+  "objects": [
+    {
+      "truth_id": "TRUTH-HCDN-001",
+      "object_type": "population_mix",
+      "value": "80% Medicare/MA synthetic assumption"
+    },
+    {
+      "truth_id": "TRUTH-HCDN-002",
+      "object_type": "platform_anchor",
+      "value": "Epic-centered clinical/revenue-cycle environment"
+    },
+    {
+      "truth_id": "TRUTH-HCDN-003",
+      "object_type": "analytics_debt",
+      "value": "large on-prem SQL Server/SSIS/SSRS/legacy EDW estate"
+    },
+    {
+      "truth_id": "TRUTH-HCDN-004",
+      "object_type": "cloud_posture",
+      "value": "Azure current foundation; AWS future agentic/transformation pivot"
+    },
+    {
+      "truth_id": "TRUTH-HCDN-005",
+      "object_type": "source_event",
+      "value": "healthcare data/analytics modernization plus payer operations sourcing event"
+    }
+  ]
+}

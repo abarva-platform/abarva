@@ -1,0 +1,17 @@
+source_id,source_name,owner_role,format,maps_to_templates
+SRC-HCDN-ENT-001,Enterprise profile and operating model,CIO/strategy office,PDF/XLSX,enterprise_profile; strategy_goals_objectives
+SRC-HCDN-EPIC-001,Epic module/environment inventory,Epic platform team,CSV/XLSX,epic_module_environment_extracts; applications_environments
+SRC-HCDN-INT-001,Interface engine inventory,Integration team,CSV/XLSX,interfaces; relationships
+SRC-HCDN-SQL-001,SQL Server/EDW/SSIS/SSAS/SSRS inventory,Data platform team,CSV/XLSX,sql_server_analytics_estate; data_analytics_ai
+SRC-HCDN-PAYER-001,Claims/enrollment/member platform inventory,Health plan technology,CSV/XLSX,payer_platforms; member_service
+SRC-HCDN-STARS-001,Stars/HEDIS/CAHPS/RAF workbook,Quality and Stars office,XLSX,kpi_definitions_observations; quality_stars
+SRC-HCDN-CONT-001,Vendor and contract register,Vendor management,CSV/XLSX,vendors_contracts
+SRC-HCDN-SOW-001,MSA/SOW/BAA documents,Procurement/legal,PDF/DOCX,contract_terms; source_event
+SRC-HCDN-RATE-001,Rate-card and staffing workbook,Procurement/finance,XLSX,pricing_workbook; rate_card_staffing
+SRC-HCDN-INV-001,Invoice and change-order extracts,AP/finance,CSV/XLSX,invoice_change_order_extract
+SRC-HCDN-SLA-001,"SLA, ticket and operational reports",ITSM/vendor management,CSV/XLSX,sla_incident_ticket_history
+SRC-HCDN-PROP-001,Vendor proposal A,Bidder A,PDF/XLSX,vendor_proposal_intake
+SRC-HCDN-PROP-002,Vendor proposal B,Bidder B,PDF/XLSX,vendor_proposal_intake
+SRC-HCDN-PROP-003,Vendor proposal C,Bidder C,PDF/XLSX,vendor_proposal_intake
+SRC-HCDN-BAFO-001,BAFO response package,Shortlisted bidders,DOCX/XLSX,bafo_response_template
+SRC-HCDN-INTVW-001,Executive interviews,C-suite and service owners,transcripts,executive_interviews

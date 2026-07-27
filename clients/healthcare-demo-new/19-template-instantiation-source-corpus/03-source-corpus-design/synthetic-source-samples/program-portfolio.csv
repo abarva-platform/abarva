@@ -1,0 +1,221 @@
+program_id,program_name,owning_function,phase,business_outcome,benefit_disclosure_mode,dependency_family
+PROG-HCDN-0001,RAF capture program 0001,Revenue Cycle,P1 charter,medical cost trend reduction,range,SQL/EDW dependency family
+PROG-HCDN-0002,Epic analytics modernization program 0002,Patient Access,P2 discovery,access improvement,indexed,claims dependency family
+PROG-HCDN-0003,SQL mart rationalization program 0003,Interoperability,P3 option,cash acceleration,trend-only,contract dependency family
+PROG-HCDN-0004,Azure data foundation program 0004,Population Health,P4 plan,platform resilience,withheld,cloud dependency family
+PROG-HCDN-0005,AWS agentic strategy program 0005,Health Plan Operations,P5 execute,data readiness,exact,vendor dependency family
+PROG-HCDN-0006,prior authorization modernization program 0006,Medicare Advantage,P0 idea,risk reduction,range,workforce dependency family
+PROG-HCDN-0007,patient access transformation program 0007,Claims Operations,P1 charter,operating-model change,indexed,Epic dependency family
+PROG-HCDN-0008,revenue-cycle automation program 0008,Utilization Management,P2 discovery,quality incentive attainment,trend-only,SQL/EDW dependency family
+PROG-HCDN-0009,payment integrity program 0009,Member Services,P3 option,medical cost trend reduction,withheld,claims dependency family
+PROG-HCDN-0010,care-gap closure program 0010,Quality and Stars,P4 plan,access improvement,exact,contract dependency family
+PROG-HCDN-0011,cloud migration program 0011,Risk Adjustment,P5 execute,cash acceleration,range,cloud dependency family
+PROG-HCDN-0012,Stars uplift program 0012,Care Management,P0 idea,platform resilience,indexed,vendor dependency family
+PROG-HCDN-0013,RAF capture program 0013,Finance,P1 charter,data readiness,trend-only,workforce dependency family
+PROG-HCDN-0014,Epic analytics modernization program 0014,Coding,P2 discovery,risk reduction,withheld,Epic dependency family
+PROG-HCDN-0015,SQL mart rationalization program 0015,Payer Contracting,P3 option,operating-model change,exact,SQL/EDW dependency family
+PROG-HCDN-0016,Azure data foundation program 0016,Digital Front Door,P4 plan,quality incentive attainment,range,claims dependency family
+PROG-HCDN-0017,AWS agentic strategy program 0017,Contact Center,P5 execute,medical cost trend reduction,indexed,contract dependency family
+PROG-HCDN-0018,prior authorization modernization program 0018,Ambulatory Care,P0 idea,access improvement,trend-only,cloud dependency family
+PROG-HCDN-0019,patient access transformation program 0019,Emergency Department,P1 charter,cash acceleration,withheld,vendor dependency family
+PROG-HCDN-0020,revenue-cycle automation program 0020,Inpatient,P2 discovery,platform resilience,exact,workforce dependency family
+PROG-HCDN-0021,payment integrity program 0021,Surgery,P3 option,data readiness,range,Epic dependency family
+PROG-HCDN-0022,care-gap closure program 0022,Imaging,P4 plan,risk reduction,indexed,SQL/EDW dependency family
+PROG-HCDN-0023,cloud migration program 0023,Lab,P5 execute,operating-model change,trend-only,claims dependency family
+PROG-HCDN-0024,Stars uplift program 0024,Pharmacy,P0 idea,quality incentive attainment,withheld,contract dependency family
+PROG-HCDN-0025,RAF capture program 0025,Oncology,P1 charter,medical cost trend reduction,exact,cloud dependency family
+PROG-HCDN-0026,Epic analytics modernization program 0026,Cardiology,P2 discovery,access improvement,range,vendor dependency family
+PROG-HCDN-0027,SQL mart rationalization program 0027,Data and Analytics,P3 option,cash acceleration,indexed,workforce dependency family
+PROG-HCDN-0028,Azure data foundation program 0028,Clinical Analytics,P4 plan,platform resilience,trend-only,Epic dependency family
+PROG-HCDN-0029,AWS agentic strategy program 0029,Actuarial,P5 execute,data readiness,withheld,SQL/EDW dependency family
+PROG-HCDN-0030,prior authorization modernization program 0030,Departmental Reporting,P0 idea,risk reduction,exact,claims dependency family
+PROG-HCDN-0031,patient access transformation program 0031,AI Transformation,P1 charter,operating-model change,range,contract dependency family
+PROG-HCDN-0032,revenue-cycle automation program 0032,Technology,P2 discovery,quality incentive attainment,indexed,cloud dependency family
+PROG-HCDN-0033,payment integrity program 0033,Security,P3 option,medical cost trend reduction,trend-only,vendor dependency family
+PROG-HCDN-0034,care-gap closure program 0034,Procurement,P4 plan,access improvement,withheld,workforce dependency family
+PROG-HCDN-0035,cloud migration program 0035,HR,P5 execute,cash acceleration,exact,Epic dependency family
+PROG-HCDN-0036,Stars uplift program 0036,Supply Chain,P0 idea,platform resilience,range,SQL/EDW dependency family
+PROG-HCDN-0037,RAF capture program 0037,Privacy,P1 charter,data readiness,indexed,claims dependency family
+PROG-HCDN-0038,Epic analytics modernization program 0038,Compliance,P2 discovery,risk reduction,trend-only,contract dependency family
+PROG-HCDN-0039,SQL mart rationalization program 0039,Provider Network,P3 option,operating-model change,withheld,cloud dependency family
+PROG-HCDN-0040,Azure data foundation program 0040,Value-Based Care,P4 plan,quality incentive attainment,exact,vendor dependency family
+PROG-HCDN-0041,AWS agentic strategy program 0041,Clinical Operations,P5 execute,medical cost trend reduction,range,workforce dependency family
+PROG-HCDN-0042,prior authorization modernization program 0042,Revenue Cycle,P0 idea,access improvement,indexed,Epic dependency family
+PROG-HCDN-0043,patient access transformation program 0043,Patient Access,P1 charter,cash acceleration,trend-only,SQL/EDW dependency family
+PROG-HCDN-0044,revenue-cycle automation program 0044,Interoperability,P2 discovery,platform resilience,withheld,claims dependency family
+PROG-HCDN-0045,payment integrity program 0045,Population Health,P3 option,data readiness,exact,contract dependency family
+PROG-HCDN-0046,care-gap closure program 0046,Health Plan Operations,P4 plan,risk reduction,range,cloud dependency family
+PROG-HCDN-0047,cloud migration program 0047,Medicare Advantage,P5 execute,operating-model change,indexed,vendor dependency family
+PROG-HCDN-0048,Stars uplift program 0048,Claims Operations,P0 idea,quality incentive attainment,trend-only,workforce dependency family
+PROG-HCDN-0049,RAF capture program 0049,Utilization Management,P1 charter,medical cost trend reduction,withheld,Epic dependency family
+PROG-HCDN-0050,Epic analytics modernization program 0050,Member Services,P2 discovery,access improvement,exact,SQL/EDW dependency family
+PROG-HCDN-0051,SQL mart rationalization program 0051,Quality and Stars,P3 option,cash acceleration,range,claims dependency family
+PROG-HCDN-0052,Azure data foundation program 0052,Risk Adjustment,P4 plan,platform resilience,indexed,contract dependency family
+PROG-HCDN-0053,AWS agentic strategy program 0053,Care Management,P5 execute,data readiness,trend-only,cloud dependency family
+PROG-HCDN-0054,prior authorization modernization program 0054,Finance,P0 idea,risk reduction,withheld,vendor dependency family
+PROG-HCDN-0055,patient access transformation program 0055,Coding,P1 charter,operating-model change,exact,workforce dependency family
+PROG-HCDN-0056,revenue-cycle automation program 0056,Payer Contracting,P2 discovery,quality incentive attainment,range,Epic dependency family
+PROG-HCDN-0057,payment integrity program 0057,Digital Front Door,P3 option,medical cost trend reduction,indexed,SQL/EDW dependency family
+PROG-HCDN-0058,care-gap closure program 0058,Contact Center,P4 plan,access improvement,trend-only,claims dependency family
+PROG-HCDN-0059,cloud migration program 0059,Ambulatory Care,P5 execute,cash acceleration,withheld,contract dependency family
+PROG-HCDN-0060,Stars uplift program 0060,Emergency Department,P0 idea,platform resilience,exact,cloud dependency family
+PROG-HCDN-0061,RAF capture program 0061,Inpatient,P1 charter,data readiness,range,vendor dependency family
+PROG-HCDN-0062,Epic analytics modernization program 0062,Surgery,P2 discovery,risk reduction,indexed,workforce dependency family
+PROG-HCDN-0063,SQL mart rationalization program 0063,Imaging,P3 option,operating-model change,trend-only,Epic dependency family
+PROG-HCDN-0064,Azure data foundation program 0064,Lab,P4 plan,quality incentive attainment,withheld,SQL/EDW dependency family
+PROG-HCDN-0065,AWS agentic strategy program 0065,Pharmacy,P5 execute,medical cost trend reduction,exact,claims dependency family
+PROG-HCDN-0066,prior authorization modernization program 0066,Oncology,P0 idea,access improvement,range,contract dependency family
+PROG-HCDN-0067,patient access transformation program 0067,Cardiology,P1 charter,cash acceleration,indexed,cloud dependency family
+PROG-HCDN-0068,revenue-cycle automation program 0068,Data and Analytics,P2 discovery,platform resilience,trend-only,vendor dependency family
+PROG-HCDN-0069,payment integrity program 0069,Clinical Analytics,P3 option,data readiness,withheld,workforce dependency family
+PROG-HCDN-0070,care-gap closure program 0070,Actuarial,P4 plan,risk reduction,exact,Epic dependency family
+PROG-HCDN-0071,cloud migration program 0071,Departmental Reporting,P5 execute,operating-model change,range,SQL/EDW dependency family
+PROG-HCDN-0072,Stars uplift program 0072,AI Transformation,P0 idea,quality incentive attainment,indexed,claims dependency family
+PROG-HCDN-0073,RAF capture program 0073,Technology,P1 charter,medical cost trend reduction,trend-only,contract dependency family
+PROG-HCDN-0074,Epic analytics modernization program 0074,Security,P2 discovery,access improvement,withheld,cloud dependency family
+PROG-HCDN-0075,SQL mart rationalization program 0075,Procurement,P3 option,cash acceleration,exact,vendor dependency family
+PROG-HCDN-0076,Azure data foundation program 0076,HR,P4 plan,platform resilience,range,workforce dependency family
+PROG-HCDN-0077,AWS agentic strategy program 0077,Supply Chain,P5 execute,data readiness,indexed,Epic dependency family
+PROG-HCDN-0078,prior authorization modernization program 0078,Privacy,P0 idea,risk reduction,trend-only,SQL/EDW dependency family
+PROG-HCDN-0079,patient access transformation program 0079,Compliance,P1 charter,operating-model change,withheld,claims dependency family
+PROG-HCDN-0080,revenue-cycle automation program 0080,Provider Network,P2 discovery,quality incentive attainment,exact,contract dependency family
+PROG-HCDN-0081,payment integrity program 0081,Value-Based Care,P3 option,medical cost trend reduction,range,cloud dependency family
+PROG-HCDN-0082,care-gap closure program 0082,Clinical Operations,P4 plan,access improvement,indexed,vendor dependency family
+PROG-HCDN-0083,cloud migration program 0083,Revenue Cycle,P5 execute,cash acceleration,trend-only,workforce dependency family
+PROG-HCDN-0084,Stars uplift program 0084,Patient Access,P0 idea,platform resilience,withheld,Epic dependency family
+PROG-HCDN-0085,RAF capture program 0085,Interoperability,P1 charter,data readiness,exact,SQL/EDW dependency family
+PROG-HCDN-0086,Epic analytics modernization program 0086,Population Health,P2 discovery,risk reduction,range,claims dependency family
+PROG-HCDN-0087,SQL mart rationalization program 0087,Health Plan Operations,P3 option,operating-model change,indexed,contract dependency family
+PROG-HCDN-0088,Azure data foundation program 0088,Medicare Advantage,P4 plan,quality incentive attainment,trend-only,cloud dependency family
+PROG-HCDN-0089,AWS agentic strategy program 0089,Claims Operations,P5 execute,medical cost trend reduction,withheld,vendor dependency family
+PROG-HCDN-0090,prior authorization modernization program 0090,Utilization Management,P0 idea,access improvement,exact,workforce dependency family
+PROG-HCDN-0091,patient access transformation program 0091,Member Services,P1 charter,cash acceleration,range,Epic dependency family
+PROG-HCDN-0092,revenue-cycle automation program 0092,Quality and Stars,P2 discovery,platform resilience,indexed,SQL/EDW dependency family
+PROG-HCDN-0093,payment integrity program 0093,Risk Adjustment,P3 option,data readiness,trend-only,claims dependency family
+PROG-HCDN-0094,care-gap closure program 0094,Care Management,P4 plan,risk reduction,withheld,contract dependency family
+PROG-HCDN-0095,cloud migration program 0095,Finance,P5 execute,operating-model change,exact,cloud dependency family
+PROG-HCDN-0096,Stars uplift program 0096,Coding,P0 idea,quality incentive attainment,range,vendor dependency family
+PROG-HCDN-0097,RAF capture program 0097,Payer Contracting,P1 charter,medical cost trend reduction,indexed,workforce dependency family
+PROG-HCDN-0098,Epic analytics modernization program 0098,Digital Front Door,P2 discovery,access improvement,trend-only,Epic dependency family
+PROG-HCDN-0099,SQL mart rationalization program 0099,Contact Center,P3 option,cash acceleration,withheld,SQL/EDW dependency family
+PROG-HCDN-0100,Azure data foundation program 0100,Ambulatory Care,P4 plan,platform resilience,exact,claims dependency family
+PROG-HCDN-0101,AWS agentic strategy program 0101,Emergency Department,P5 execute,data readiness,range,contract dependency family
+PROG-HCDN-0102,prior authorization modernization program 0102,Inpatient,P0 idea,risk reduction,indexed,cloud dependency family
+PROG-HCDN-0103,patient access transformation program 0103,Surgery,P1 charter,operating-model change,trend-only,vendor dependency family
+PROG-HCDN-0104,revenue-cycle automation program 0104,Imaging,P2 discovery,quality incentive attainment,withheld,workforce dependency family
+PROG-HCDN-0105,payment integrity program 0105,Lab,P3 option,medical cost trend reduction,exact,Epic dependency family
+PROG-HCDN-0106,care-gap closure program 0106,Pharmacy,P4 plan,access improvement,range,SQL/EDW dependency family
+PROG-HCDN-0107,cloud migration program 0107,Oncology,P5 execute,cash acceleration,indexed,claims dependency family
+PROG-HCDN-0108,Stars uplift program 0108,Cardiology,P0 idea,platform resilience,trend-only,contract dependency family
+PROG-HCDN-0109,RAF capture program 0109,Data and Analytics,P1 charter,data readiness,withheld,cloud dependency family
+PROG-HCDN-0110,Epic analytics modernization program 0110,Clinical Analytics,P2 discovery,risk reduction,exact,vendor dependency family
+PROG-HCDN-0111,SQL mart rationalization program 0111,Actuarial,P3 option,operating-model change,range,workforce dependency family
+PROG-HCDN-0112,Azure data foundation program 0112,Departmental Reporting,P4 plan,quality incentive attainment,indexed,Epic dependency family
+PROG-HCDN-0113,AWS agentic strategy program 0113,AI Transformation,P5 execute,medical cost trend reduction,trend-only,SQL/EDW dependency family
+PROG-HCDN-0114,prior authorization modernization program 0114,Technology,P0 idea,access improvement,withheld,claims dependency family
+PROG-HCDN-0115,patient access transformation program 0115,Security,P1 charter,cash acceleration,exact,contract dependency family
+PROG-HCDN-0116,revenue-cycle automation program 0116,Procurement,P2 discovery,platform resilience,range,cloud dependency family
+PROG-HCDN-0117,payment integrity program 0117,HR,P3 option,data readiness,indexed,vendor dependency family
+PROG-HCDN-0118,care-gap closure program 0118,Supply Chain,P4 plan,risk reduction,trend-only,workforce dependency family
+PROG-HCDN-0119,cloud migration program 0119,Privacy,P5 execute,operating-model change,withheld,Epic dependency family
+PROG-HCDN-0120,Stars uplift program 0120,Compliance,P0 idea,quality incentive attainment,exact,SQL/EDW dependency family
+PROG-HCDN-0121,RAF capture program 0121,Provider Network,P1 charter,medical cost trend reduction,range,claims dependency family
+PROG-HCDN-0122,Epic analytics modernization program 0122,Value-Based Care,P2 discovery,access improvement,indexed,contract dependency family
+PROG-HCDN-0123,SQL mart rationalization program 0123,Clinical Operations,P3 option,cash acceleration,trend-only,cloud dependency family
+PROG-HCDN-0124,Azure data foundation program 0124,Revenue Cycle,P4 plan,platform resilience,withheld,vendor dependency family
+PROG-HCDN-0125,AWS agentic strategy program 0125,Patient Access,P5 execute,data readiness,exact,workforce dependency family
+PROG-HCDN-0126,prior authorization modernization program 0126,Interoperability,P0 idea,risk reduction,range,Epic dependency family
+PROG-HCDN-0127,patient access transformation program 0127,Population Health,P1 charter,operating-model change,indexed,SQL/EDW dependency family
+PROG-HCDN-0128,revenue-cycle automation program 0128,Health Plan Operations,P2 discovery,quality incentive attainment,trend-only,claims dependency family
+PROG-HCDN-0129,payment integrity program 0129,Medicare Advantage,P3 option,medical cost trend reduction,withheld,contract dependency family
+PROG-HCDN-0130,care-gap closure program 0130,Claims Operations,P4 plan,access improvement,exact,cloud dependency family
+PROG-HCDN-0131,cloud migration program 0131,Utilization Management,P5 execute,cash acceleration,range,vendor dependency family
+PROG-HCDN-0132,Stars uplift program 0132,Member Services,P0 idea,platform resilience,indexed,workforce dependency family
+PROG-HCDN-0133,RAF capture program 0133,Quality and Stars,P1 charter,data readiness,trend-only,Epic dependency family
+PROG-HCDN-0134,Epic analytics modernization program 0134,Risk Adjustment,P2 discovery,risk reduction,withheld,SQL/EDW dependency family
+PROG-HCDN-0135,SQL mart rationalization program 0135,Care Management,P3 option,operating-model change,exact,claims dependency family
+PROG-HCDN-0136,Azure data foundation program 0136,Finance,P4 plan,quality incentive attainment,range,contract dependency family
+PROG-HCDN-0137,AWS agentic strategy program 0137,Coding,P5 execute,medical cost trend reduction,indexed,cloud dependency family
+PROG-HCDN-0138,prior authorization modernization program 0138,Payer Contracting,P0 idea,access improvement,trend-only,vendor dependency family
+PROG-HCDN-0139,patient access transformation program 0139,Digital Front Door,P1 charter,cash acceleration,withheld,workforce dependency family
+PROG-HCDN-0140,revenue-cycle automation program 0140,Contact Center,P2 discovery,platform resilience,exact,Epic dependency family
+PROG-HCDN-0141,payment integrity program 0141,Ambulatory Care,P3 option,data readiness,range,SQL/EDW dependency family
+PROG-HCDN-0142,care-gap closure program 0142,Emergency Department,P4 plan,risk reduction,indexed,claims dependency family
+PROG-HCDN-0143,cloud migration program 0143,Inpatient,P5 execute,operating-model change,trend-only,contract dependency family
+PROG-HCDN-0144,Stars uplift program 0144,Surgery,P0 idea,quality incentive attainment,withheld,cloud dependency family
+PROG-HCDN-0145,RAF capture program 0145,Imaging,P1 charter,medical cost trend reduction,exact,vendor dependency family
+PROG-HCDN-0146,Epic analytics modernization program 0146,Lab,P2 discovery,access improvement,range,workforce dependency family
+PROG-HCDN-0147,SQL mart rationalization program 0147,Pharmacy,P3 option,cash acceleration,indexed,Epic dependency family
+PROG-HCDN-0148,Azure data foundation program 0148,Oncology,P4 plan,platform resilience,trend-only,SQL/EDW dependency family
+PROG-HCDN-0149,AWS agentic strategy program 0149,Cardiology,P5 execute,data readiness,withheld,claims dependency family
+PROG-HCDN-0150,prior authorization modernization program 0150,Data and Analytics,P0 idea,risk reduction,exact,contract dependency family
+PROG-HCDN-0151,patient access transformation program 0151,Clinical Analytics,P1 charter,operating-model change,range,cloud dependency family
+PROG-HCDN-0152,revenue-cycle automation program 0152,Actuarial,P2 discovery,quality incentive attainment,indexed,vendor dependency family
+PROG-HCDN-0153,payment integrity program 0153,Departmental Reporting,P3 option,medical cost trend reduction,trend-only,workforce dependency family
+PROG-HCDN-0154,care-gap closure program 0154,AI Transformation,P4 plan,access improvement,withheld,Epic dependency family
+PROG-HCDN-0155,cloud migration program 0155,Technology,P5 execute,cash acceleration,exact,SQL/EDW dependency family
+PROG-HCDN-0156,Stars uplift program 0156,Security,P0 idea,platform resilience,range,claims dependency family
+PROG-HCDN-0157,RAF capture program 0157,Procurement,P1 charter,data readiness,indexed,contract dependency family
+PROG-HCDN-0158,Epic analytics modernization program 0158,HR,P2 discovery,risk reduction,trend-only,cloud dependency family
+PROG-HCDN-0159,SQL mart rationalization program 0159,Supply Chain,P3 option,operating-model change,withheld,vendor dependency family
+PROG-HCDN-0160,Azure data foundation program 0160,Privacy,P4 plan,quality incentive attainment,exact,workforce dependency family
+PROG-HCDN-0161,AWS agentic strategy program 0161,Compliance,P5 execute,medical cost trend reduction,range,Epic dependency family
+PROG-HCDN-0162,prior authorization modernization program 0162,Provider Network,P0 idea,access improvement,indexed,SQL/EDW dependency family
+PROG-HCDN-0163,patient access transformation program 0163,Value-Based Care,P1 charter,cash acceleration,trend-only,claims dependency family
+PROG-HCDN-0164,revenue-cycle automation program 0164,Clinical Operations,P2 discovery,platform resilience,withheld,contract dependency family
+PROG-HCDN-0165,payment integrity program 0165,Revenue Cycle,P3 option,data readiness,exact,cloud dependency family
+PROG-HCDN-0166,care-gap closure program 0166,Patient Access,P4 plan,risk reduction,range,vendor dependency family
+PROG-HCDN-0167,cloud migration program 0167,Interoperability,P5 execute,operating-model change,indexed,workforce dependency family
+PROG-HCDN-0168,Stars uplift program 0168,Population Health,P0 idea,quality incentive attainment,trend-only,Epic dependency family
+PROG-HCDN-0169,RAF capture program 0169,Health Plan Operations,P1 charter,medical cost trend reduction,withheld,SQL/EDW dependency family
+PROG-HCDN-0170,Epic analytics modernization program 0170,Medicare Advantage,P2 discovery,access improvement,exact,claims dependency family
+PROG-HCDN-0171,SQL mart rationalization program 0171,Claims Operations,P3 option,cash acceleration,range,contract dependency family
+PROG-HCDN-0172,Azure data foundation program 0172,Utilization Management,P4 plan,platform resilience,indexed,cloud dependency family
+PROG-HCDN-0173,AWS agentic strategy program 0173,Member Services,P5 execute,data readiness,trend-only,vendor dependency family
+PROG-HCDN-0174,prior authorization modernization program 0174,Quality and Stars,P0 idea,risk reduction,withheld,workforce dependency family
+PROG-HCDN-0175,patient access transformation program 0175,Risk Adjustment,P1 charter,operating-model change,exact,Epic dependency family
+PROG-HCDN-0176,revenue-cycle automation program 0176,Care Management,P2 discovery,quality incentive attainment,range,SQL/EDW dependency family
+PROG-HCDN-0177,payment integrity program 0177,Finance,P3 option,medical cost trend reduction,indexed,claims dependency family
+PROG-HCDN-0178,care-gap closure program 0178,Coding,P4 plan,access improvement,trend-only,contract dependency family
+PROG-HCDN-0179,cloud migration program 0179,Payer Contracting,P5 execute,cash acceleration,withheld,cloud dependency family
+PROG-HCDN-0180,Stars uplift program 0180,Digital Front Door,P0 idea,platform resilience,exact,vendor dependency family
+PROG-HCDN-0181,RAF capture program 0181,Contact Center,P1 charter,data readiness,range,workforce dependency family
+PROG-HCDN-0182,Epic analytics modernization program 0182,Ambulatory Care,P2 discovery,risk reduction,indexed,Epic dependency family
+PROG-HCDN-0183,SQL mart rationalization program 0183,Emergency Department,P3 option,operating-model change,trend-only,SQL/EDW dependency family
+PROG-HCDN-0184,Azure data foundation program 0184,Inpatient,P4 plan,quality incentive attainment,withheld,claims dependency family
+PROG-HCDN-0185,AWS agentic strategy program 0185,Surgery,P5 execute,medical cost trend reduction,exact,contract dependency family
+PROG-HCDN-0186,prior authorization modernization program 0186,Imaging,P0 idea,access improvement,range,cloud dependency family
+PROG-HCDN-0187,patient access transformation program 0187,Lab,P1 charter,cash acceleration,indexed,vendor dependency family
+PROG-HCDN-0188,revenue-cycle automation program 0188,Pharmacy,P2 discovery,platform resilience,trend-only,workforce dependency family
+PROG-HCDN-0189,payment integrity program 0189,Oncology,P3 option,data readiness,withheld,Epic dependency family
+PROG-HCDN-0190,care-gap closure program 0190,Cardiology,P4 plan,risk reduction,exact,SQL/EDW dependency family
+PROG-HCDN-0191,cloud migration program 0191,Data and Analytics,P5 execute,operating-model change,range,claims dependency family
+PROG-HCDN-0192,Stars uplift program 0192,Clinical Analytics,P0 idea,quality incentive attainment,indexed,contract dependency family
+PROG-HCDN-0193,RAF capture program 0193,Actuarial,P1 charter,medical cost trend reduction,trend-only,cloud dependency family
+PROG-HCDN-0194,Epic analytics modernization program 0194,Departmental Reporting,P2 discovery,access improvement,withheld,vendor dependency family
+PROG-HCDN-0195,SQL mart rationalization program 0195,AI Transformation,P3 option,cash acceleration,exact,workforce dependency family
+PROG-HCDN-0196,Azure data foundation program 0196,Technology,P4 plan,platform resilience,range,Epic dependency family
+PROG-HCDN-0197,AWS agentic strategy program 0197,Security,P5 execute,data readiness,indexed,SQL/EDW dependency family
+PROG-HCDN-0198,prior authorization modernization program 0198,Procurement,P0 idea,risk reduction,trend-only,claims dependency family
+PROG-HCDN-0199,patient access transformation program 0199,HR,P1 charter,operating-model change,withheld,contract dependency family
+PROG-HCDN-0200,revenue-cycle automation program 0200,Supply Chain,P2 discovery,quality incentive attainment,exact,cloud dependency family
+PROG-HCDN-0201,payment integrity program 0201,Privacy,P3 option,medical cost trend reduction,range,vendor dependency family
+PROG-HCDN-0202,care-gap closure program 0202,Compliance,P4 plan,access improvement,indexed,workforce dependency family
+PROG-HCDN-0203,cloud migration program 0203,Provider Network,P5 execute,cash acceleration,trend-only,Epic dependency family
+PROG-HCDN-0204,Stars uplift program 0204,Value-Based Care,P0 idea,platform resilience,withheld,SQL/EDW dependency family
+PROG-HCDN-0205,RAF capture program 0205,Clinical Operations,P1 charter,data readiness,exact,claims dependency family
+PROG-HCDN-0206,Epic analytics modernization program 0206,Revenue Cycle,P2 discovery,risk reduction,range,contract dependency family
+PROG-HCDN-0207,SQL mart rationalization program 0207,Patient Access,P3 option,operating-model change,indexed,cloud dependency family
+PROG-HCDN-0208,Azure data foundation program 0208,Interoperability,P4 plan,quality incentive attainment,trend-only,vendor dependency family
+PROG-HCDN-0209,AWS agentic strategy program 0209,Population Health,P5 execute,medical cost trend reduction,withheld,workforce dependency family
+PROG-HCDN-0210,prior authorization modernization program 0210,Health Plan Operations,P0 idea,access improvement,exact,Epic dependency family
+PROG-HCDN-0211,patient access transformation program 0211,Medicare Advantage,P1 charter,cash acceleration,range,SQL/EDW dependency family
+PROG-HCDN-0212,revenue-cycle automation program 0212,Claims Operations,P2 discovery,platform resilience,indexed,claims dependency family
+PROG-HCDN-0213,payment integrity program 0213,Utilization Management,P3 option,data readiness,trend-only,contract dependency family
+PROG-HCDN-0214,care-gap closure program 0214,Member Services,P4 plan,risk reduction,withheld,cloud dependency family
+PROG-HCDN-0215,cloud migration program 0215,Quality and Stars,P5 execute,operating-model change,exact,vendor dependency family
+PROG-HCDN-0216,Stars uplift program 0216,Risk Adjustment,P0 idea,quality incentive attainment,range,workforce dependency family
+PROG-HCDN-0217,RAF capture program 0217,Care Management,P1 charter,medical cost trend reduction,indexed,Epic dependency family
+PROG-HCDN-0218,Epic analytics modernization program 0218,Finance,P2 discovery,access improvement,trend-only,SQL/EDW dependency family
+PROG-HCDN-0219,SQL mart rationalization program 0219,Coding,P3 option,cash acceleration,withheld,claims dependency family
+PROG-HCDN-0220,Azure data foundation program 0220,Payer Contracting,P4 plan,platform resilience,exact,contract dependency family

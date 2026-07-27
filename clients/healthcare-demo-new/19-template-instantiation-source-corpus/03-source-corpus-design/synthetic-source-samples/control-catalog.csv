@@ -1,0 +1,2501 @@
+control_id,control_name,business_function,control_status,source_id
+CTRL-HCDN-0001,measure attestation,Revenue Cycle,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0002,CMS submission control,Patient Access,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0003,change control,Interoperability,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0004,data lineage certification,Population Health,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0005,vendor BAA review,Health Plan Operations,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0006,resilience test,Medicare Advantage,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0007,incident review,Claims Operations,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0008,financial approval,Utilization Management,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0009,privacy review,Member Services,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0010,model-risk review,Quality and Stars,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0011,PHI access review,Risk Adjustment,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0012,measure attestation,Care Management,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0013,CMS submission control,Finance,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0014,change control,Coding,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0015,data lineage certification,Payer Contracting,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0016,vendor BAA review,Digital Front Door,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0017,resilience test,Contact Center,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0018,incident review,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0019,financial approval,Emergency Department,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0020,privacy review,Inpatient,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0021,model-risk review,Surgery,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0022,PHI access review,Imaging,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0023,measure attestation,Lab,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0024,CMS submission control,Pharmacy,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0025,change control,Oncology,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0026,data lineage certification,Cardiology,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0027,vendor BAA review,Data and Analytics,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0028,resilience test,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0029,incident review,Actuarial,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0030,financial approval,Departmental Reporting,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0031,privacy review,AI Transformation,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0032,model-risk review,Technology,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0033,PHI access review,Security,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0034,measure attestation,Procurement,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0035,CMS submission control,HR,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0036,change control,Supply Chain,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0037,data lineage certification,Privacy,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0038,vendor BAA review,Compliance,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0039,resilience test,Provider Network,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-0040,incident review,Value-Based Care,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-0041,financial approval,Clinical Operations,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-0042,privacy review,Revenue Cycle,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-0043,model-risk review,Patient Access,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-0044,PHI access review,Interoperability,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-0045,measure attestation,Population Health,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-0046,CMS submission control,Health Plan Operations,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-0047,change control,Medicare Advantage,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-0048,data lineage certification,Claims Operations,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-0049,vendor BAA review,Utilization Management,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-0050,resilience test,Member Services,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-0051,incident review,Quality and Stars,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-0052,financial approval,Risk Adjustment,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-0053,privacy review,Care Management,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-0054,model-risk review,Finance,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-0055,PHI access review,Coding,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-0056,measure attestation,Payer Contracting,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-0057,CMS submission control,Digital Front Door,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-0058,change control,Contact Center,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-0059,data lineage certification,Ambulatory Care,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-0060,vendor BAA review,Emergency Department,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-0061,resilience test,Inpatient,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-0062,incident review,Surgery,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-0063,financial approval,Imaging,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-0064,privacy review,Lab,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-0065,model-risk review,Pharmacy,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-0066,PHI access review,Oncology,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-0067,measure attestation,Cardiology,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-0068,CMS submission control,Data and Analytics,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-0069,change control,Clinical Analytics,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-0070,data lineage certification,Actuarial,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-0071,vendor BAA review,Departmental Reporting,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-0072,resilience test,AI Transformation,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-0073,incident review,Technology,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-0074,financial approval,Security,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-0075,privacy review,Procurement,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-0076,model-risk review,HR,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-0077,PHI access review,Supply Chain,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-0078,measure attestation,Privacy,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-0079,CMS submission control,Compliance,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-0080,change control,Provider Network,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-0081,data lineage certification,Value-Based Care,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-0082,vendor BAA review,Clinical Operations,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-0083,resilience test,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-0084,incident review,Patient Access,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-0085,financial approval,Interoperability,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-0086,privacy review,Population Health,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-0087,model-risk review,Health Plan Operations,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-0088,PHI access review,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-0089,measure attestation,Claims Operations,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-0090,CMS submission control,Utilization Management,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-0091,change control,Member Services,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-0092,data lineage certification,Quality and Stars,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-0093,vendor BAA review,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-0094,resilience test,Care Management,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-0095,incident review,Finance,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-0096,financial approval,Coding,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-0097,privacy review,Payer Contracting,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-0098,model-risk review,Digital Front Door,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-0099,PHI access review,Contact Center,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-0100,measure attestation,Ambulatory Care,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-0101,CMS submission control,Emergency Department,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-0102,change control,Inpatient,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-0103,data lineage certification,Surgery,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-0104,vendor BAA review,Imaging,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-0105,resilience test,Lab,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-0106,incident review,Pharmacy,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-0107,financial approval,Oncology,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-0108,privacy review,Cardiology,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-0109,model-risk review,Data and Analytics,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-0110,PHI access review,Clinical Analytics,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-0111,measure attestation,Actuarial,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-0112,CMS submission control,Departmental Reporting,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-0113,change control,AI Transformation,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-0114,data lineage certification,Technology,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-0115,vendor BAA review,Security,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-0116,resilience test,Procurement,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-0117,incident review,HR,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-0118,financial approval,Supply Chain,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-0119,privacy review,Privacy,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-0120,model-risk review,Compliance,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-0121,PHI access review,Provider Network,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-0122,measure attestation,Value-Based Care,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-0123,CMS submission control,Clinical Operations,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-0124,change control,Revenue Cycle,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-0125,data lineage certification,Patient Access,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-0126,vendor BAA review,Interoperability,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-0127,resilience test,Population Health,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-0128,incident review,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-0129,financial approval,Medicare Advantage,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-0130,privacy review,Claims Operations,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-0131,model-risk review,Utilization Management,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-0132,PHI access review,Member Services,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-0133,measure attestation,Quality and Stars,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-0134,CMS submission control,Risk Adjustment,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-0135,change control,Care Management,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-0136,data lineage certification,Finance,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-0137,vendor BAA review,Coding,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-0138,resilience test,Payer Contracting,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-0139,incident review,Digital Front Door,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-0140,financial approval,Contact Center,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-0141,privacy review,Ambulatory Care,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-0142,model-risk review,Emergency Department,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-0143,PHI access review,Inpatient,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-0144,measure attestation,Surgery,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-0145,CMS submission control,Imaging,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-0146,change control,Lab,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-0147,data lineage certification,Pharmacy,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-0148,vendor BAA review,Oncology,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-0149,resilience test,Cardiology,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-0150,incident review,Data and Analytics,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-0151,financial approval,Clinical Analytics,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-0152,privacy review,Actuarial,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-0153,model-risk review,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-0154,PHI access review,AI Transformation,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-0155,measure attestation,Technology,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-0156,CMS submission control,Security,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-0157,change control,Procurement,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-0158,data lineage certification,HR,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-0159,vendor BAA review,Supply Chain,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-0160,resilience test,Privacy,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-0161,incident review,Compliance,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0162,financial approval,Provider Network,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0163,privacy review,Value-Based Care,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0164,model-risk review,Clinical Operations,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0165,PHI access review,Revenue Cycle,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0166,measure attestation,Patient Access,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0167,CMS submission control,Interoperability,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0168,change control,Population Health,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0169,data lineage certification,Health Plan Operations,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0170,vendor BAA review,Medicare Advantage,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0171,resilience test,Claims Operations,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0172,incident review,Utilization Management,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0173,financial approval,Member Services,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0174,privacy review,Quality and Stars,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0175,model-risk review,Risk Adjustment,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0176,PHI access review,Care Management,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0177,measure attestation,Finance,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0178,CMS submission control,Coding,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0179,change control,Payer Contracting,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0180,data lineage certification,Digital Front Door,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0181,vendor BAA review,Contact Center,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0182,resilience test,Ambulatory Care,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0183,incident review,Emergency Department,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0184,financial approval,Inpatient,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0185,privacy review,Surgery,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0186,model-risk review,Imaging,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0187,PHI access review,Lab,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0188,measure attestation,Pharmacy,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0189,CMS submission control,Oncology,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0190,change control,Cardiology,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0191,data lineage certification,Data and Analytics,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0192,vendor BAA review,Clinical Analytics,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0193,resilience test,Actuarial,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0194,incident review,Departmental Reporting,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0195,financial approval,AI Transformation,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0196,privacy review,Technology,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0197,model-risk review,Security,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0198,PHI access review,Procurement,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0199,measure attestation,HR,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-0200,CMS submission control,Supply Chain,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-0201,change control,Privacy,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-0202,data lineage certification,Compliance,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-0203,vendor BAA review,Provider Network,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-0204,resilience test,Value-Based Care,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-0205,incident review,Clinical Operations,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-0206,financial approval,Revenue Cycle,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-0207,privacy review,Patient Access,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-0208,model-risk review,Interoperability,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-0209,PHI access review,Population Health,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-0210,measure attestation,Health Plan Operations,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-0211,CMS submission control,Medicare Advantage,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-0212,change control,Claims Operations,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-0213,data lineage certification,Utilization Management,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-0214,vendor BAA review,Member Services,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-0215,resilience test,Quality and Stars,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-0216,incident review,Risk Adjustment,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-0217,financial approval,Care Management,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-0218,privacy review,Finance,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-0219,model-risk review,Coding,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-0220,PHI access review,Payer Contracting,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-0221,measure attestation,Digital Front Door,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-0222,CMS submission control,Contact Center,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-0223,change control,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-0224,data lineage certification,Emergency Department,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-0225,vendor BAA review,Inpatient,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-0226,resilience test,Surgery,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-0227,incident review,Imaging,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-0228,financial approval,Lab,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-0229,privacy review,Pharmacy,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-0230,model-risk review,Oncology,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-0231,PHI access review,Cardiology,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-0232,measure attestation,Data and Analytics,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-0233,CMS submission control,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-0234,change control,Actuarial,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-0235,data lineage certification,Departmental Reporting,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-0236,vendor BAA review,AI Transformation,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-0237,resilience test,Technology,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-0238,incident review,Security,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-0239,financial approval,Procurement,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-0240,privacy review,HR,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-0241,model-risk review,Supply Chain,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-0242,PHI access review,Privacy,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-0243,measure attestation,Compliance,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-0244,CMS submission control,Provider Network,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-0245,change control,Value-Based Care,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-0246,data lineage certification,Clinical Operations,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-0247,vendor BAA review,Revenue Cycle,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-0248,resilience test,Patient Access,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-0249,incident review,Interoperability,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-0250,financial approval,Population Health,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-0251,privacy review,Health Plan Operations,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-0252,model-risk review,Medicare Advantage,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-0253,PHI access review,Claims Operations,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-0254,measure attestation,Utilization Management,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-0255,CMS submission control,Member Services,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-0256,change control,Quality and Stars,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-0257,data lineage certification,Risk Adjustment,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-0258,vendor BAA review,Care Management,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-0259,resilience test,Finance,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-0260,incident review,Coding,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-0261,financial approval,Payer Contracting,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-0262,privacy review,Digital Front Door,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-0263,model-risk review,Contact Center,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-0264,PHI access review,Ambulatory Care,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-0265,measure attestation,Emergency Department,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-0266,CMS submission control,Inpatient,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-0267,change control,Surgery,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-0268,data lineage certification,Imaging,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-0269,vendor BAA review,Lab,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-0270,resilience test,Pharmacy,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-0271,incident review,Oncology,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-0272,financial approval,Cardiology,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-0273,privacy review,Data and Analytics,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-0274,model-risk review,Clinical Analytics,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-0275,PHI access review,Actuarial,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-0276,measure attestation,Departmental Reporting,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-0277,CMS submission control,AI Transformation,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-0278,change control,Technology,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-0279,data lineage certification,Security,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-0280,vendor BAA review,Procurement,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-0281,resilience test,HR,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-0282,incident review,Supply Chain,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-0283,financial approval,Privacy,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-0284,privacy review,Compliance,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-0285,model-risk review,Provider Network,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-0286,PHI access review,Value-Based Care,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-0287,measure attestation,Clinical Operations,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-0288,CMS submission control,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-0289,change control,Patient Access,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-0290,data lineage certification,Interoperability,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-0291,vendor BAA review,Population Health,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-0292,resilience test,Health Plan Operations,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-0293,incident review,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-0294,financial approval,Claims Operations,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-0295,privacy review,Utilization Management,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-0296,model-risk review,Member Services,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-0297,PHI access review,Quality and Stars,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-0298,measure attestation,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-0299,CMS submission control,Care Management,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-0300,change control,Finance,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-0301,data lineage certification,Coding,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-0302,vendor BAA review,Payer Contracting,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-0303,resilience test,Digital Front Door,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-0304,incident review,Contact Center,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-0305,financial approval,Ambulatory Care,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-0306,privacy review,Emergency Department,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-0307,model-risk review,Inpatient,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-0308,PHI access review,Surgery,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-0309,measure attestation,Imaging,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-0310,CMS submission control,Lab,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-0311,change control,Pharmacy,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-0312,data lineage certification,Oncology,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-0313,vendor BAA review,Cardiology,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-0314,resilience test,Data and Analytics,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-0315,incident review,Clinical Analytics,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-0316,financial approval,Actuarial,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-0317,privacy review,Departmental Reporting,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-0318,model-risk review,AI Transformation,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-0319,PHI access review,Technology,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-0320,measure attestation,Security,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-0321,CMS submission control,Procurement,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0322,change control,HR,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0323,data lineage certification,Supply Chain,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0324,vendor BAA review,Privacy,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0325,resilience test,Compliance,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0326,incident review,Provider Network,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0327,financial approval,Value-Based Care,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0328,privacy review,Clinical Operations,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0329,model-risk review,Revenue Cycle,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0330,PHI access review,Patient Access,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0331,measure attestation,Interoperability,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0332,CMS submission control,Population Health,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0333,change control,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0334,data lineage certification,Medicare Advantage,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0335,vendor BAA review,Claims Operations,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0336,resilience test,Utilization Management,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0337,incident review,Member Services,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0338,financial approval,Quality and Stars,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0339,privacy review,Risk Adjustment,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0340,model-risk review,Care Management,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0341,PHI access review,Finance,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0342,measure attestation,Coding,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0343,CMS submission control,Payer Contracting,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0344,change control,Digital Front Door,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0345,data lineage certification,Contact Center,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0346,vendor BAA review,Ambulatory Care,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0347,resilience test,Emergency Department,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0348,incident review,Inpatient,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0349,financial approval,Surgery,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0350,privacy review,Imaging,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0351,model-risk review,Lab,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0352,PHI access review,Pharmacy,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0353,measure attestation,Oncology,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0354,CMS submission control,Cardiology,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0355,change control,Data and Analytics,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0356,data lineage certification,Clinical Analytics,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0357,vendor BAA review,Actuarial,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0358,resilience test,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0359,incident review,AI Transformation,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-0360,financial approval,Technology,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-0361,privacy review,Security,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-0362,model-risk review,Procurement,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-0363,PHI access review,HR,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-0364,measure attestation,Supply Chain,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-0365,CMS submission control,Privacy,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-0366,change control,Compliance,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-0367,data lineage certification,Provider Network,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-0368,vendor BAA review,Value-Based Care,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-0369,resilience test,Clinical Operations,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-0370,incident review,Revenue Cycle,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-0371,financial approval,Patient Access,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-0372,privacy review,Interoperability,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-0373,model-risk review,Population Health,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-0374,PHI access review,Health Plan Operations,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-0375,measure attestation,Medicare Advantage,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-0376,CMS submission control,Claims Operations,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-0377,change control,Utilization Management,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-0378,data lineage certification,Member Services,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-0379,vendor BAA review,Quality and Stars,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-0380,resilience test,Risk Adjustment,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-0381,incident review,Care Management,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-0382,financial approval,Finance,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-0383,privacy review,Coding,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-0384,model-risk review,Payer Contracting,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-0385,PHI access review,Digital Front Door,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-0386,measure attestation,Contact Center,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-0387,CMS submission control,Ambulatory Care,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-0388,change control,Emergency Department,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-0389,data lineage certification,Inpatient,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-0390,vendor BAA review,Surgery,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-0391,resilience test,Imaging,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-0392,incident review,Lab,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-0393,financial approval,Pharmacy,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-0394,privacy review,Oncology,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-0395,model-risk review,Cardiology,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-0396,PHI access review,Data and Analytics,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-0397,measure attestation,Clinical Analytics,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-0398,CMS submission control,Actuarial,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-0399,change control,Departmental Reporting,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-0400,data lineage certification,AI Transformation,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-0401,vendor BAA review,Technology,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-0402,resilience test,Security,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-0403,incident review,Procurement,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-0404,financial approval,HR,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-0405,privacy review,Supply Chain,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-0406,model-risk review,Privacy,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-0407,PHI access review,Compliance,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-0408,measure attestation,Provider Network,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-0409,CMS submission control,Value-Based Care,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-0410,change control,Clinical Operations,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-0411,data lineage certification,Revenue Cycle,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-0412,vendor BAA review,Patient Access,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-0413,resilience test,Interoperability,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-0414,incident review,Population Health,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-0415,financial approval,Health Plan Operations,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-0416,privacy review,Medicare Advantage,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-0417,model-risk review,Claims Operations,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-0418,PHI access review,Utilization Management,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-0419,measure attestation,Member Services,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-0420,CMS submission control,Quality and Stars,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-0421,change control,Risk Adjustment,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-0422,data lineage certification,Care Management,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-0423,vendor BAA review,Finance,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-0424,resilience test,Coding,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-0425,incident review,Payer Contracting,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-0426,financial approval,Digital Front Door,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-0427,privacy review,Contact Center,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-0428,model-risk review,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-0429,PHI access review,Emergency Department,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-0430,measure attestation,Inpatient,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-0431,CMS submission control,Surgery,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-0432,change control,Imaging,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-0433,data lineage certification,Lab,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-0434,vendor BAA review,Pharmacy,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-0435,resilience test,Oncology,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-0436,incident review,Cardiology,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-0437,financial approval,Data and Analytics,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-0438,privacy review,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-0439,model-risk review,Actuarial,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-0440,PHI access review,Departmental Reporting,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-0441,measure attestation,AI Transformation,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-0442,CMS submission control,Technology,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-0443,change control,Security,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-0444,data lineage certification,Procurement,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-0445,vendor BAA review,HR,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-0446,resilience test,Supply Chain,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-0447,incident review,Privacy,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-0448,financial approval,Compliance,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-0449,privacy review,Provider Network,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-0450,model-risk review,Value-Based Care,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-0451,PHI access review,Clinical Operations,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-0452,measure attestation,Revenue Cycle,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-0453,CMS submission control,Patient Access,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-0454,change control,Interoperability,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-0455,data lineage certification,Population Health,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-0456,vendor BAA review,Health Plan Operations,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-0457,resilience test,Medicare Advantage,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-0458,incident review,Claims Operations,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-0459,financial approval,Utilization Management,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-0460,privacy review,Member Services,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-0461,model-risk review,Quality and Stars,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-0462,PHI access review,Risk Adjustment,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-0463,measure attestation,Care Management,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-0464,CMS submission control,Finance,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-0465,change control,Coding,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-0466,data lineage certification,Payer Contracting,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-0467,vendor BAA review,Digital Front Door,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-0468,resilience test,Contact Center,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-0469,incident review,Ambulatory Care,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-0470,financial approval,Emergency Department,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-0471,privacy review,Inpatient,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-0472,model-risk review,Surgery,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-0473,PHI access review,Imaging,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-0474,measure attestation,Lab,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-0475,CMS submission control,Pharmacy,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-0476,change control,Oncology,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-0477,data lineage certification,Cardiology,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-0478,vendor BAA review,Data and Analytics,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-0479,resilience test,Clinical Analytics,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-0480,incident review,Actuarial,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-0481,financial approval,Departmental Reporting,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0482,privacy review,AI Transformation,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0483,model-risk review,Technology,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0484,PHI access review,Security,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0485,measure attestation,Procurement,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0486,CMS submission control,HR,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0487,change control,Supply Chain,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0488,data lineage certification,Privacy,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0489,vendor BAA review,Compliance,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0490,resilience test,Provider Network,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0491,incident review,Value-Based Care,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0492,financial approval,Clinical Operations,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0493,privacy review,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0494,model-risk review,Patient Access,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0495,PHI access review,Interoperability,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0496,measure attestation,Population Health,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0497,CMS submission control,Health Plan Operations,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0498,change control,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0499,data lineage certification,Claims Operations,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0500,vendor BAA review,Utilization Management,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0501,resilience test,Member Services,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0502,incident review,Quality and Stars,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0503,financial approval,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0504,privacy review,Care Management,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0505,model-risk review,Finance,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0506,PHI access review,Coding,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0507,measure attestation,Payer Contracting,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0508,CMS submission control,Digital Front Door,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0509,change control,Contact Center,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0510,data lineage certification,Ambulatory Care,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0511,vendor BAA review,Emergency Department,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0512,resilience test,Inpatient,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0513,incident review,Surgery,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0514,financial approval,Imaging,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0515,privacy review,Lab,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0516,model-risk review,Pharmacy,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0517,PHI access review,Oncology,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0518,measure attestation,Cardiology,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0519,CMS submission control,Data and Analytics,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-0520,change control,Clinical Analytics,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-0521,data lineage certification,Actuarial,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-0522,vendor BAA review,Departmental Reporting,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-0523,resilience test,AI Transformation,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-0524,incident review,Technology,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-0525,financial approval,Security,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-0526,privacy review,Procurement,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-0527,model-risk review,HR,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-0528,PHI access review,Supply Chain,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-0529,measure attestation,Privacy,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-0530,CMS submission control,Compliance,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-0531,change control,Provider Network,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-0532,data lineage certification,Value-Based Care,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-0533,vendor BAA review,Clinical Operations,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-0534,resilience test,Revenue Cycle,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-0535,incident review,Patient Access,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-0536,financial approval,Interoperability,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-0537,privacy review,Population Health,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-0538,model-risk review,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-0539,PHI access review,Medicare Advantage,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-0540,measure attestation,Claims Operations,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-0541,CMS submission control,Utilization Management,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-0542,change control,Member Services,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-0543,data lineage certification,Quality and Stars,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-0544,vendor BAA review,Risk Adjustment,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-0545,resilience test,Care Management,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-0546,incident review,Finance,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-0547,financial approval,Coding,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-0548,privacy review,Payer Contracting,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-0549,model-risk review,Digital Front Door,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-0550,PHI access review,Contact Center,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-0551,measure attestation,Ambulatory Care,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-0552,CMS submission control,Emergency Department,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-0553,change control,Inpatient,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-0554,data lineage certification,Surgery,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-0555,vendor BAA review,Imaging,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-0556,resilience test,Lab,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-0557,incident review,Pharmacy,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-0558,financial approval,Oncology,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-0559,privacy review,Cardiology,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-0560,model-risk review,Data and Analytics,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-0561,PHI access review,Clinical Analytics,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-0562,measure attestation,Actuarial,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-0563,CMS submission control,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-0564,change control,AI Transformation,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-0565,data lineage certification,Technology,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-0566,vendor BAA review,Security,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-0567,resilience test,Procurement,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-0568,incident review,HR,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-0569,financial approval,Supply Chain,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-0570,privacy review,Privacy,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-0571,model-risk review,Compliance,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-0572,PHI access review,Provider Network,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-0573,measure attestation,Value-Based Care,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-0574,CMS submission control,Clinical Operations,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-0575,change control,Revenue Cycle,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-0576,data lineage certification,Patient Access,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-0577,vendor BAA review,Interoperability,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-0578,resilience test,Population Health,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-0579,incident review,Health Plan Operations,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-0580,financial approval,Medicare Advantage,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-0581,privacy review,Claims Operations,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-0582,model-risk review,Utilization Management,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-0583,PHI access review,Member Services,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-0584,measure attestation,Quality and Stars,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-0585,CMS submission control,Risk Adjustment,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-0586,change control,Care Management,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-0587,data lineage certification,Finance,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-0588,vendor BAA review,Coding,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-0589,resilience test,Payer Contracting,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-0590,incident review,Digital Front Door,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-0591,financial approval,Contact Center,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-0592,privacy review,Ambulatory Care,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-0593,model-risk review,Emergency Department,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-0594,PHI access review,Inpatient,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-0595,measure attestation,Surgery,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-0596,CMS submission control,Imaging,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-0597,change control,Lab,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-0598,data lineage certification,Pharmacy,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-0599,vendor BAA review,Oncology,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-0600,resilience test,Cardiology,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-0601,incident review,Data and Analytics,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-0602,financial approval,Clinical Analytics,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-0603,privacy review,Actuarial,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-0604,model-risk review,Departmental Reporting,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-0605,PHI access review,AI Transformation,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-0606,measure attestation,Technology,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-0607,CMS submission control,Security,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-0608,change control,Procurement,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-0609,data lineage certification,HR,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-0610,vendor BAA review,Supply Chain,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-0611,resilience test,Privacy,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-0612,incident review,Compliance,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-0613,financial approval,Provider Network,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-0614,privacy review,Value-Based Care,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-0615,model-risk review,Clinical Operations,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-0616,PHI access review,Revenue Cycle,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-0617,measure attestation,Patient Access,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-0618,CMS submission control,Interoperability,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-0619,change control,Population Health,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-0620,data lineage certification,Health Plan Operations,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-0621,vendor BAA review,Medicare Advantage,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-0622,resilience test,Claims Operations,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-0623,incident review,Utilization Management,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-0624,financial approval,Member Services,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-0625,privacy review,Quality and Stars,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-0626,model-risk review,Risk Adjustment,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-0627,PHI access review,Care Management,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-0628,measure attestation,Finance,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-0629,CMS submission control,Coding,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-0630,change control,Payer Contracting,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-0631,data lineage certification,Digital Front Door,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-0632,vendor BAA review,Contact Center,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-0633,resilience test,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-0634,incident review,Emergency Department,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-0635,financial approval,Inpatient,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-0636,privacy review,Surgery,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-0637,model-risk review,Imaging,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-0638,PHI access review,Lab,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-0639,measure attestation,Pharmacy,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-0640,CMS submission control,Oncology,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-0641,change control,Cardiology,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0642,data lineage certification,Data and Analytics,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0643,vendor BAA review,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0644,resilience test,Actuarial,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0645,incident review,Departmental Reporting,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0646,financial approval,AI Transformation,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0647,privacy review,Technology,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0648,model-risk review,Security,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0649,PHI access review,Procurement,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0650,measure attestation,HR,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0651,CMS submission control,Supply Chain,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0652,change control,Privacy,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0653,data lineage certification,Compliance,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0654,vendor BAA review,Provider Network,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0655,resilience test,Value-Based Care,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0656,incident review,Clinical Operations,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0657,financial approval,Revenue Cycle,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0658,privacy review,Patient Access,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0659,model-risk review,Interoperability,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0660,PHI access review,Population Health,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0661,measure attestation,Health Plan Operations,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0662,CMS submission control,Medicare Advantage,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0663,change control,Claims Operations,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0664,data lineage certification,Utilization Management,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0665,vendor BAA review,Member Services,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0666,resilience test,Quality and Stars,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0667,incident review,Risk Adjustment,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0668,financial approval,Care Management,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0669,privacy review,Finance,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0670,model-risk review,Coding,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0671,PHI access review,Payer Contracting,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0672,measure attestation,Digital Front Door,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0673,CMS submission control,Contact Center,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0674,change control,Ambulatory Care,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0675,data lineage certification,Emergency Department,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0676,vendor BAA review,Inpatient,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0677,resilience test,Surgery,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0678,incident review,Imaging,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0679,financial approval,Lab,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-0680,privacy review,Pharmacy,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-0681,model-risk review,Oncology,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-0682,PHI access review,Cardiology,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-0683,measure attestation,Data and Analytics,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-0684,CMS submission control,Clinical Analytics,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-0685,change control,Actuarial,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-0686,data lineage certification,Departmental Reporting,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-0687,vendor BAA review,AI Transformation,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-0688,resilience test,Technology,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-0689,incident review,Security,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-0690,financial approval,Procurement,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-0691,privacy review,HR,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-0692,model-risk review,Supply Chain,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-0693,PHI access review,Privacy,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-0694,measure attestation,Compliance,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-0695,CMS submission control,Provider Network,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-0696,change control,Value-Based Care,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-0697,data lineage certification,Clinical Operations,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-0698,vendor BAA review,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-0699,resilience test,Patient Access,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-0700,incident review,Interoperability,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-0701,financial approval,Population Health,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-0702,privacy review,Health Plan Operations,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-0703,model-risk review,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-0704,PHI access review,Claims Operations,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-0705,measure attestation,Utilization Management,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-0706,CMS submission control,Member Services,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-0707,change control,Quality and Stars,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-0708,data lineage certification,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-0709,vendor BAA review,Care Management,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-0710,resilience test,Finance,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-0711,incident review,Coding,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-0712,financial approval,Payer Contracting,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-0713,privacy review,Digital Front Door,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-0714,model-risk review,Contact Center,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-0715,PHI access review,Ambulatory Care,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-0716,measure attestation,Emergency Department,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-0717,CMS submission control,Inpatient,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-0718,change control,Surgery,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-0719,data lineage certification,Imaging,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-0720,vendor BAA review,Lab,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-0721,resilience test,Pharmacy,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-0722,incident review,Oncology,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-0723,financial approval,Cardiology,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-0724,privacy review,Data and Analytics,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-0725,model-risk review,Clinical Analytics,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-0726,PHI access review,Actuarial,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-0727,measure attestation,Departmental Reporting,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-0728,CMS submission control,AI Transformation,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-0729,change control,Technology,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-0730,data lineage certification,Security,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-0731,vendor BAA review,Procurement,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-0732,resilience test,HR,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-0733,incident review,Supply Chain,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-0734,financial approval,Privacy,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-0735,privacy review,Compliance,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-0736,model-risk review,Provider Network,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-0737,PHI access review,Value-Based Care,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-0738,measure attestation,Clinical Operations,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-0739,CMS submission control,Revenue Cycle,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-0740,change control,Patient Access,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-0741,data lineage certification,Interoperability,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-0742,vendor BAA review,Population Health,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-0743,resilience test,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-0744,incident review,Medicare Advantage,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-0745,financial approval,Claims Operations,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-0746,privacy review,Utilization Management,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-0747,model-risk review,Member Services,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-0748,PHI access review,Quality and Stars,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-0749,measure attestation,Risk Adjustment,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-0750,CMS submission control,Care Management,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-0751,change control,Finance,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-0752,data lineage certification,Coding,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-0753,vendor BAA review,Payer Contracting,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-0754,resilience test,Digital Front Door,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-0755,incident review,Contact Center,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-0756,financial approval,Ambulatory Care,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-0757,privacy review,Emergency Department,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-0758,model-risk review,Inpatient,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-0759,PHI access review,Surgery,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-0760,measure attestation,Imaging,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-0761,CMS submission control,Lab,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-0762,change control,Pharmacy,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-0763,data lineage certification,Oncology,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-0764,vendor BAA review,Cardiology,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-0765,resilience test,Data and Analytics,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-0766,incident review,Clinical Analytics,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-0767,financial approval,Actuarial,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-0768,privacy review,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-0769,model-risk review,AI Transformation,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-0770,PHI access review,Technology,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-0771,measure attestation,Security,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-0772,CMS submission control,Procurement,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-0773,change control,HR,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-0774,data lineage certification,Supply Chain,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-0775,vendor BAA review,Privacy,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-0776,resilience test,Compliance,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-0777,incident review,Provider Network,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-0778,financial approval,Value-Based Care,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-0779,privacy review,Clinical Operations,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-0780,model-risk review,Revenue Cycle,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-0781,PHI access review,Patient Access,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-0782,measure attestation,Interoperability,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-0783,CMS submission control,Population Health,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-0784,change control,Health Plan Operations,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-0785,data lineage certification,Medicare Advantage,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-0786,vendor BAA review,Claims Operations,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-0787,resilience test,Utilization Management,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-0788,incident review,Member Services,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-0789,financial approval,Quality and Stars,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-0790,privacy review,Risk Adjustment,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-0791,model-risk review,Care Management,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-0792,PHI access review,Finance,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-0793,measure attestation,Coding,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-0794,CMS submission control,Payer Contracting,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-0795,change control,Digital Front Door,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-0796,data lineage certification,Contact Center,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-0797,vendor BAA review,Ambulatory Care,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-0798,resilience test,Emergency Department,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-0799,incident review,Inpatient,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-0800,financial approval,Surgery,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-0801,privacy review,Imaging,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0802,model-risk review,Lab,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0803,PHI access review,Pharmacy,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0804,measure attestation,Oncology,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0805,CMS submission control,Cardiology,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0806,change control,Data and Analytics,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0807,data lineage certification,Clinical Analytics,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0808,vendor BAA review,Actuarial,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0809,resilience test,Departmental Reporting,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0810,incident review,AI Transformation,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0811,financial approval,Technology,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0812,privacy review,Security,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0813,model-risk review,Procurement,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0814,PHI access review,HR,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0815,measure attestation,Supply Chain,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0816,CMS submission control,Privacy,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0817,change control,Compliance,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0818,data lineage certification,Provider Network,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0819,vendor BAA review,Value-Based Care,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0820,resilience test,Clinical Operations,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0821,incident review,Revenue Cycle,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0822,financial approval,Patient Access,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0823,privacy review,Interoperability,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0824,model-risk review,Population Health,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0825,PHI access review,Health Plan Operations,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0826,measure attestation,Medicare Advantage,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0827,CMS submission control,Claims Operations,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0828,change control,Utilization Management,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0829,data lineage certification,Member Services,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0830,vendor BAA review,Quality and Stars,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0831,resilience test,Risk Adjustment,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0832,incident review,Care Management,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0833,financial approval,Finance,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0834,privacy review,Coding,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0835,model-risk review,Payer Contracting,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0836,PHI access review,Digital Front Door,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0837,measure attestation,Contact Center,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0838,CMS submission control,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0839,change control,Emergency Department,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-0840,data lineage certification,Inpatient,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-0841,vendor BAA review,Surgery,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-0842,resilience test,Imaging,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-0843,incident review,Lab,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-0844,financial approval,Pharmacy,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-0845,privacy review,Oncology,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-0846,model-risk review,Cardiology,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-0847,PHI access review,Data and Analytics,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-0848,measure attestation,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-0849,CMS submission control,Actuarial,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-0850,change control,Departmental Reporting,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-0851,data lineage certification,AI Transformation,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-0852,vendor BAA review,Technology,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-0853,resilience test,Security,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-0854,incident review,Procurement,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-0855,financial approval,HR,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-0856,privacy review,Supply Chain,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-0857,model-risk review,Privacy,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-0858,PHI access review,Compliance,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-0859,measure attestation,Provider Network,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-0860,CMS submission control,Value-Based Care,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-0861,change control,Clinical Operations,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-0862,data lineage certification,Revenue Cycle,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-0863,vendor BAA review,Patient Access,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-0864,resilience test,Interoperability,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-0865,incident review,Population Health,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-0866,financial approval,Health Plan Operations,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-0867,privacy review,Medicare Advantage,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-0868,model-risk review,Claims Operations,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-0869,PHI access review,Utilization Management,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-0870,measure attestation,Member Services,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-0871,CMS submission control,Quality and Stars,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-0872,change control,Risk Adjustment,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-0873,data lineage certification,Care Management,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-0874,vendor BAA review,Finance,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-0875,resilience test,Coding,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-0876,incident review,Payer Contracting,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-0877,financial approval,Digital Front Door,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-0878,privacy review,Contact Center,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-0879,model-risk review,Ambulatory Care,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-0880,PHI access review,Emergency Department,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-0881,measure attestation,Inpatient,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-0882,CMS submission control,Surgery,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-0883,change control,Imaging,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-0884,data lineage certification,Lab,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-0885,vendor BAA review,Pharmacy,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-0886,resilience test,Oncology,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-0887,incident review,Cardiology,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-0888,financial approval,Data and Analytics,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-0889,privacy review,Clinical Analytics,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-0890,model-risk review,Actuarial,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-0891,PHI access review,Departmental Reporting,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-0892,measure attestation,AI Transformation,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-0893,CMS submission control,Technology,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-0894,change control,Security,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-0895,data lineage certification,Procurement,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-0896,vendor BAA review,HR,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-0897,resilience test,Supply Chain,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-0898,incident review,Privacy,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-0899,financial approval,Compliance,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-0900,privacy review,Provider Network,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-0901,model-risk review,Value-Based Care,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-0902,PHI access review,Clinical Operations,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-0903,measure attestation,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-0904,CMS submission control,Patient Access,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-0905,change control,Interoperability,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-0906,data lineage certification,Population Health,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-0907,vendor BAA review,Health Plan Operations,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-0908,resilience test,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-0909,incident review,Claims Operations,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-0910,financial approval,Utilization Management,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-0911,privacy review,Member Services,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-0912,model-risk review,Quality and Stars,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-0913,PHI access review,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-0914,measure attestation,Care Management,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-0915,CMS submission control,Finance,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-0916,change control,Coding,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-0917,data lineage certification,Payer Contracting,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-0918,vendor BAA review,Digital Front Door,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-0919,resilience test,Contact Center,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-0920,incident review,Ambulatory Care,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-0921,financial approval,Emergency Department,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-0922,privacy review,Inpatient,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-0923,model-risk review,Surgery,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-0924,PHI access review,Imaging,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-0925,measure attestation,Lab,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-0926,CMS submission control,Pharmacy,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-0927,change control,Oncology,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-0928,data lineage certification,Cardiology,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-0929,vendor BAA review,Data and Analytics,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-0930,resilience test,Clinical Analytics,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-0931,incident review,Actuarial,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-0932,financial approval,Departmental Reporting,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-0933,privacy review,AI Transformation,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-0934,model-risk review,Technology,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-0935,PHI access review,Security,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-0936,measure attestation,Procurement,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-0937,CMS submission control,HR,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-0938,change control,Supply Chain,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-0939,data lineage certification,Privacy,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-0940,vendor BAA review,Compliance,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-0941,resilience test,Provider Network,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-0942,incident review,Value-Based Care,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-0943,financial approval,Clinical Operations,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-0944,privacy review,Revenue Cycle,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-0945,model-risk review,Patient Access,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-0946,PHI access review,Interoperability,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-0947,measure attestation,Population Health,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-0948,CMS submission control,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-0949,change control,Medicare Advantage,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-0950,data lineage certification,Claims Operations,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-0951,vendor BAA review,Utilization Management,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-0952,resilience test,Member Services,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-0953,incident review,Quality and Stars,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-0954,financial approval,Risk Adjustment,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-0955,privacy review,Care Management,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-0956,model-risk review,Finance,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-0957,PHI access review,Coding,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-0958,measure attestation,Payer Contracting,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-0959,CMS submission control,Digital Front Door,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-0960,change control,Contact Center,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-0961,data lineage certification,Ambulatory Care,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-0962,vendor BAA review,Emergency Department,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-0963,resilience test,Inpatient,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-0964,incident review,Surgery,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-0965,financial approval,Imaging,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-0966,privacy review,Lab,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-0967,model-risk review,Pharmacy,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-0968,PHI access review,Oncology,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-0969,measure attestation,Cardiology,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-0970,CMS submission control,Data and Analytics,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-0971,change control,Clinical Analytics,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-0972,data lineage certification,Actuarial,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-0973,vendor BAA review,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-0974,resilience test,AI Transformation,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-0975,incident review,Technology,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-0976,financial approval,Security,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-0977,privacy review,Procurement,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-0978,model-risk review,HR,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-0979,PHI access review,Supply Chain,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-0980,measure attestation,Privacy,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-0981,CMS submission control,Compliance,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-0982,change control,Provider Network,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-0983,data lineage certification,Value-Based Care,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-0984,vendor BAA review,Clinical Operations,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-0985,resilience test,Revenue Cycle,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-0986,incident review,Patient Access,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-0987,financial approval,Interoperability,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-0988,privacy review,Population Health,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-0989,model-risk review,Health Plan Operations,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-0990,PHI access review,Medicare Advantage,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-0991,measure attestation,Claims Operations,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-0992,CMS submission control,Utilization Management,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-0993,change control,Member Services,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-0994,data lineage certification,Quality and Stars,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-0995,vendor BAA review,Risk Adjustment,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-0996,resilience test,Care Management,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-0997,incident review,Finance,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-0998,financial approval,Coding,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-0999,privacy review,Payer Contracting,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1000,model-risk review,Digital Front Door,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1001,PHI access review,Contact Center,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1002,measure attestation,Ambulatory Care,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1003,CMS submission control,Emergency Department,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1004,change control,Inpatient,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1005,data lineage certification,Surgery,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1006,vendor BAA review,Imaging,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1007,resilience test,Lab,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1008,incident review,Pharmacy,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1009,financial approval,Oncology,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1010,privacy review,Cardiology,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1011,model-risk review,Data and Analytics,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1012,PHI access review,Clinical Analytics,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1013,measure attestation,Actuarial,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1014,CMS submission control,Departmental Reporting,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1015,change control,AI Transformation,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1016,data lineage certification,Technology,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1017,vendor BAA review,Security,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1018,resilience test,Procurement,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1019,incident review,HR,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1020,financial approval,Supply Chain,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1021,privacy review,Privacy,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1022,model-risk review,Compliance,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1023,PHI access review,Provider Network,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1024,measure attestation,Value-Based Care,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1025,CMS submission control,Clinical Operations,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1026,change control,Revenue Cycle,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1027,data lineage certification,Patient Access,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1028,vendor BAA review,Interoperability,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1029,resilience test,Population Health,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1030,incident review,Health Plan Operations,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1031,financial approval,Medicare Advantage,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1032,privacy review,Claims Operations,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1033,model-risk review,Utilization Management,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1034,PHI access review,Member Services,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1035,measure attestation,Quality and Stars,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1036,CMS submission control,Risk Adjustment,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1037,change control,Care Management,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1038,data lineage certification,Finance,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1039,vendor BAA review,Coding,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-1040,resilience test,Payer Contracting,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-1041,incident review,Digital Front Door,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-1042,financial approval,Contact Center,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-1043,privacy review,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-1044,model-risk review,Emergency Department,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-1045,PHI access review,Inpatient,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-1046,measure attestation,Surgery,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-1047,CMS submission control,Imaging,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-1048,change control,Lab,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-1049,data lineage certification,Pharmacy,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-1050,vendor BAA review,Oncology,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-1051,resilience test,Cardiology,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-1052,incident review,Data and Analytics,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-1053,financial approval,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-1054,privacy review,Actuarial,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-1055,model-risk review,Departmental Reporting,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-1056,PHI access review,AI Transformation,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-1057,measure attestation,Technology,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-1058,CMS submission control,Security,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-1059,change control,Procurement,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-1060,data lineage certification,HR,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-1061,vendor BAA review,Supply Chain,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-1062,resilience test,Privacy,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-1063,incident review,Compliance,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-1064,financial approval,Provider Network,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-1065,privacy review,Value-Based Care,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-1066,model-risk review,Clinical Operations,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-1067,PHI access review,Revenue Cycle,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-1068,measure attestation,Patient Access,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-1069,CMS submission control,Interoperability,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-1070,change control,Population Health,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-1071,data lineage certification,Health Plan Operations,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-1072,vendor BAA review,Medicare Advantage,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-1073,resilience test,Claims Operations,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-1074,incident review,Utilization Management,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-1075,financial approval,Member Services,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-1076,privacy review,Quality and Stars,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-1077,model-risk review,Risk Adjustment,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-1078,PHI access review,Care Management,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-1079,measure attestation,Finance,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-1080,CMS submission control,Coding,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-1081,change control,Payer Contracting,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-1082,data lineage certification,Digital Front Door,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-1083,vendor BAA review,Contact Center,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-1084,resilience test,Ambulatory Care,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-1085,incident review,Emergency Department,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-1086,financial approval,Inpatient,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-1087,privacy review,Surgery,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-1088,model-risk review,Imaging,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-1089,PHI access review,Lab,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-1090,measure attestation,Pharmacy,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-1091,CMS submission control,Oncology,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-1092,change control,Cardiology,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-1093,data lineage certification,Data and Analytics,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-1094,vendor BAA review,Clinical Analytics,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-1095,resilience test,Actuarial,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-1096,incident review,Departmental Reporting,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-1097,financial approval,AI Transformation,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-1098,privacy review,Technology,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-1099,model-risk review,Security,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-1100,PHI access review,Procurement,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-1101,measure attestation,HR,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-1102,CMS submission control,Supply Chain,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-1103,change control,Privacy,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-1104,data lineage certification,Compliance,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-1105,vendor BAA review,Provider Network,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-1106,resilience test,Value-Based Care,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-1107,incident review,Clinical Operations,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-1108,financial approval,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-1109,privacy review,Patient Access,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-1110,model-risk review,Interoperability,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-1111,PHI access review,Population Health,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-1112,measure attestation,Health Plan Operations,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-1113,CMS submission control,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-1114,change control,Claims Operations,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-1115,data lineage certification,Utilization Management,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-1116,vendor BAA review,Member Services,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-1117,resilience test,Quality and Stars,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-1118,incident review,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-1119,financial approval,Care Management,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-1120,privacy review,Finance,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-1121,model-risk review,Coding,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-1122,PHI access review,Payer Contracting,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-1123,measure attestation,Digital Front Door,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-1124,CMS submission control,Contact Center,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-1125,change control,Ambulatory Care,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-1126,data lineage certification,Emergency Department,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-1127,vendor BAA review,Inpatient,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-1128,resilience test,Surgery,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-1129,incident review,Imaging,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-1130,financial approval,Lab,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-1131,privacy review,Pharmacy,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-1132,model-risk review,Oncology,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-1133,PHI access review,Cardiology,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-1134,measure attestation,Data and Analytics,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-1135,CMS submission control,Clinical Analytics,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-1136,change control,Actuarial,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-1137,data lineage certification,Departmental Reporting,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-1138,vendor BAA review,AI Transformation,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-1139,resilience test,Technology,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-1140,incident review,Security,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-1141,financial approval,Procurement,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-1142,privacy review,HR,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-1143,model-risk review,Supply Chain,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-1144,PHI access review,Privacy,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-1145,measure attestation,Compliance,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-1146,CMS submission control,Provider Network,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-1147,change control,Value-Based Care,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-1148,data lineage certification,Clinical Operations,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-1149,vendor BAA review,Revenue Cycle,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-1150,resilience test,Patient Access,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-1151,incident review,Interoperability,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-1152,financial approval,Population Health,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-1153,privacy review,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-1154,model-risk review,Medicare Advantage,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-1155,PHI access review,Claims Operations,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-1156,measure attestation,Utilization Management,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-1157,CMS submission control,Member Services,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-1158,change control,Quality and Stars,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-1159,data lineage certification,Risk Adjustment,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1160,vendor BAA review,Care Management,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1161,resilience test,Finance,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1162,incident review,Coding,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1163,financial approval,Payer Contracting,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1164,privacy review,Digital Front Door,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1165,model-risk review,Contact Center,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1166,PHI access review,Ambulatory Care,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1167,measure attestation,Emergency Department,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1168,CMS submission control,Inpatient,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1169,change control,Surgery,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1170,data lineage certification,Imaging,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1171,vendor BAA review,Lab,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1172,resilience test,Pharmacy,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1173,incident review,Oncology,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1174,financial approval,Cardiology,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1175,privacy review,Data and Analytics,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1176,model-risk review,Clinical Analytics,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1177,PHI access review,Actuarial,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1178,measure attestation,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1179,CMS submission control,AI Transformation,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1180,change control,Technology,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1181,data lineage certification,Security,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1182,vendor BAA review,Procurement,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1183,resilience test,HR,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1184,incident review,Supply Chain,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1185,financial approval,Privacy,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1186,privacy review,Compliance,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1187,model-risk review,Provider Network,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1188,PHI access review,Value-Based Care,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1189,measure attestation,Clinical Operations,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1190,CMS submission control,Revenue Cycle,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1191,change control,Patient Access,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1192,data lineage certification,Interoperability,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1193,vendor BAA review,Population Health,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1194,resilience test,Health Plan Operations,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1195,incident review,Medicare Advantage,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1196,financial approval,Claims Operations,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1197,privacy review,Utilization Management,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1198,model-risk review,Member Services,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1199,PHI access review,Quality and Stars,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-1200,measure attestation,Risk Adjustment,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-1201,CMS submission control,Care Management,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-1202,change control,Finance,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-1203,data lineage certification,Coding,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-1204,vendor BAA review,Payer Contracting,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-1205,resilience test,Digital Front Door,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-1206,incident review,Contact Center,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-1207,financial approval,Ambulatory Care,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-1208,privacy review,Emergency Department,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-1209,model-risk review,Inpatient,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-1210,PHI access review,Surgery,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-1211,measure attestation,Imaging,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-1212,CMS submission control,Lab,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-1213,change control,Pharmacy,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-1214,data lineage certification,Oncology,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-1215,vendor BAA review,Cardiology,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-1216,resilience test,Data and Analytics,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-1217,incident review,Clinical Analytics,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-1218,financial approval,Actuarial,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-1219,privacy review,Departmental Reporting,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-1220,model-risk review,AI Transformation,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-1221,PHI access review,Technology,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-1222,measure attestation,Security,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-1223,CMS submission control,Procurement,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-1224,change control,HR,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-1225,data lineage certification,Supply Chain,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-1226,vendor BAA review,Privacy,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-1227,resilience test,Compliance,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-1228,incident review,Provider Network,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-1229,financial approval,Value-Based Care,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-1230,privacy review,Clinical Operations,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-1231,model-risk review,Revenue Cycle,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-1232,PHI access review,Patient Access,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-1233,measure attestation,Interoperability,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-1234,CMS submission control,Population Health,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-1235,change control,Health Plan Operations,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-1236,data lineage certification,Medicare Advantage,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-1237,vendor BAA review,Claims Operations,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-1238,resilience test,Utilization Management,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-1239,incident review,Member Services,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-1240,financial approval,Quality and Stars,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-1241,privacy review,Risk Adjustment,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-1242,model-risk review,Care Management,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-1243,PHI access review,Finance,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-1244,measure attestation,Coding,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-1245,CMS submission control,Payer Contracting,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-1246,change control,Digital Front Door,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-1247,data lineage certification,Contact Center,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-1248,vendor BAA review,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-1249,resilience test,Emergency Department,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-1250,incident review,Inpatient,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-1251,financial approval,Surgery,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-1252,privacy review,Imaging,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-1253,model-risk review,Lab,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-1254,PHI access review,Pharmacy,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-1255,measure attestation,Oncology,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-1256,CMS submission control,Cardiology,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-1257,change control,Data and Analytics,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-1258,data lineage certification,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-1259,vendor BAA review,Actuarial,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-1260,resilience test,Departmental Reporting,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-1261,incident review,AI Transformation,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-1262,financial approval,Technology,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-1263,privacy review,Security,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-1264,model-risk review,Procurement,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-1265,PHI access review,HR,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-1266,measure attestation,Supply Chain,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-1267,CMS submission control,Privacy,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-1268,change control,Compliance,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-1269,data lineage certification,Provider Network,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-1270,vendor BAA review,Value-Based Care,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-1271,resilience test,Clinical Operations,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-1272,incident review,Revenue Cycle,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-1273,financial approval,Patient Access,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-1274,privacy review,Interoperability,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-1275,model-risk review,Population Health,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-1276,PHI access review,Health Plan Operations,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-1277,measure attestation,Medicare Advantage,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-1278,CMS submission control,Claims Operations,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-1279,change control,Utilization Management,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-1280,data lineage certification,Member Services,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-1281,vendor BAA review,Quality and Stars,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-1282,resilience test,Risk Adjustment,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-1283,incident review,Care Management,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-1284,financial approval,Finance,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-1285,privacy review,Coding,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-1286,model-risk review,Payer Contracting,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-1287,PHI access review,Digital Front Door,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-1288,measure attestation,Contact Center,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-1289,CMS submission control,Ambulatory Care,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-1290,change control,Emergency Department,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-1291,data lineage certification,Inpatient,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-1292,vendor BAA review,Surgery,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-1293,resilience test,Imaging,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-1294,incident review,Lab,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-1295,financial approval,Pharmacy,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-1296,privacy review,Oncology,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-1297,model-risk review,Cardiology,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-1298,PHI access review,Data and Analytics,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-1299,measure attestation,Clinical Analytics,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-1300,CMS submission control,Actuarial,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-1301,change control,Departmental Reporting,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-1302,data lineage certification,AI Transformation,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-1303,vendor BAA review,Technology,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-1304,resilience test,Security,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-1305,incident review,Procurement,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-1306,financial approval,HR,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-1307,privacy review,Supply Chain,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-1308,model-risk review,Privacy,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-1309,PHI access review,Compliance,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-1310,measure attestation,Provider Network,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-1311,CMS submission control,Value-Based Care,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-1312,change control,Clinical Operations,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-1313,data lineage certification,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-1314,vendor BAA review,Patient Access,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-1315,resilience test,Interoperability,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-1316,incident review,Population Health,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-1317,financial approval,Health Plan Operations,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-1318,privacy review,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-1319,model-risk review,Claims Operations,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1320,PHI access review,Utilization Management,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1321,measure attestation,Member Services,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1322,CMS submission control,Quality and Stars,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1323,change control,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1324,data lineage certification,Care Management,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1325,vendor BAA review,Finance,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1326,resilience test,Coding,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1327,incident review,Payer Contracting,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1328,financial approval,Digital Front Door,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1329,privacy review,Contact Center,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1330,model-risk review,Ambulatory Care,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1331,PHI access review,Emergency Department,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1332,measure attestation,Inpatient,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1333,CMS submission control,Surgery,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1334,change control,Imaging,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1335,data lineage certification,Lab,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1336,vendor BAA review,Pharmacy,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1337,resilience test,Oncology,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1338,incident review,Cardiology,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1339,financial approval,Data and Analytics,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1340,privacy review,Clinical Analytics,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1341,model-risk review,Actuarial,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1342,PHI access review,Departmental Reporting,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1343,measure attestation,AI Transformation,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1344,CMS submission control,Technology,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1345,change control,Security,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1346,data lineage certification,Procurement,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1347,vendor BAA review,HR,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1348,resilience test,Supply Chain,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1349,incident review,Privacy,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1350,financial approval,Compliance,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1351,privacy review,Provider Network,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1352,model-risk review,Value-Based Care,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1353,PHI access review,Clinical Operations,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1354,measure attestation,Revenue Cycle,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1355,CMS submission control,Patient Access,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1356,change control,Interoperability,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1357,data lineage certification,Population Health,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1358,vendor BAA review,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1359,resilience test,Medicare Advantage,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-1360,incident review,Claims Operations,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-1361,financial approval,Utilization Management,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-1362,privacy review,Member Services,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-1363,model-risk review,Quality and Stars,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-1364,PHI access review,Risk Adjustment,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-1365,measure attestation,Care Management,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-1366,CMS submission control,Finance,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-1367,change control,Coding,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-1368,data lineage certification,Payer Contracting,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-1369,vendor BAA review,Digital Front Door,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-1370,resilience test,Contact Center,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-1371,incident review,Ambulatory Care,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-1372,financial approval,Emergency Department,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-1373,privacy review,Inpatient,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-1374,model-risk review,Surgery,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-1375,PHI access review,Imaging,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-1376,measure attestation,Lab,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-1377,CMS submission control,Pharmacy,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-1378,change control,Oncology,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-1379,data lineage certification,Cardiology,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-1380,vendor BAA review,Data and Analytics,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-1381,resilience test,Clinical Analytics,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-1382,incident review,Actuarial,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-1383,financial approval,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-1384,privacy review,AI Transformation,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-1385,model-risk review,Technology,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-1386,PHI access review,Security,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-1387,measure attestation,Procurement,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-1388,CMS submission control,HR,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-1389,change control,Supply Chain,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-1390,data lineage certification,Privacy,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-1391,vendor BAA review,Compliance,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-1392,resilience test,Provider Network,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-1393,incident review,Value-Based Care,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-1394,financial approval,Clinical Operations,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-1395,privacy review,Revenue Cycle,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-1396,model-risk review,Patient Access,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-1397,PHI access review,Interoperability,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-1398,measure attestation,Population Health,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-1399,CMS submission control,Health Plan Operations,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-1400,change control,Medicare Advantage,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-1401,data lineage certification,Claims Operations,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-1402,vendor BAA review,Utilization Management,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-1403,resilience test,Member Services,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-1404,incident review,Quality and Stars,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-1405,financial approval,Risk Adjustment,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-1406,privacy review,Care Management,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-1407,model-risk review,Finance,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-1408,PHI access review,Coding,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-1409,measure attestation,Payer Contracting,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-1410,CMS submission control,Digital Front Door,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-1411,change control,Contact Center,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-1412,data lineage certification,Ambulatory Care,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-1413,vendor BAA review,Emergency Department,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-1414,resilience test,Inpatient,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-1415,incident review,Surgery,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-1416,financial approval,Imaging,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-1417,privacy review,Lab,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-1418,model-risk review,Pharmacy,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-1419,PHI access review,Oncology,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-1420,measure attestation,Cardiology,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-1421,CMS submission control,Data and Analytics,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-1422,change control,Clinical Analytics,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-1423,data lineage certification,Actuarial,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-1424,vendor BAA review,Departmental Reporting,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-1425,resilience test,AI Transformation,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-1426,incident review,Technology,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-1427,financial approval,Security,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-1428,privacy review,Procurement,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-1429,model-risk review,HR,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-1430,PHI access review,Supply Chain,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-1431,measure attestation,Privacy,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-1432,CMS submission control,Compliance,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-1433,change control,Provider Network,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-1434,data lineage certification,Value-Based Care,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-1435,vendor BAA review,Clinical Operations,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-1436,resilience test,Revenue Cycle,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-1437,incident review,Patient Access,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-1438,financial approval,Interoperability,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-1439,privacy review,Population Health,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-1440,model-risk review,Health Plan Operations,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-1441,PHI access review,Medicare Advantage,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-1442,measure attestation,Claims Operations,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-1443,CMS submission control,Utilization Management,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-1444,change control,Member Services,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-1445,data lineage certification,Quality and Stars,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-1446,vendor BAA review,Risk Adjustment,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-1447,resilience test,Care Management,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-1448,incident review,Finance,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-1449,financial approval,Coding,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-1450,privacy review,Payer Contracting,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-1451,model-risk review,Digital Front Door,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-1452,PHI access review,Contact Center,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-1453,measure attestation,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-1454,CMS submission control,Emergency Department,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-1455,change control,Inpatient,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-1456,data lineage certification,Surgery,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-1457,vendor BAA review,Imaging,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-1458,resilience test,Lab,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-1459,incident review,Pharmacy,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-1460,financial approval,Oncology,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-1461,privacy review,Cardiology,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-1462,model-risk review,Data and Analytics,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-1463,PHI access review,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-1464,measure attestation,Actuarial,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-1465,CMS submission control,Departmental Reporting,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-1466,change control,AI Transformation,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-1467,data lineage certification,Technology,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-1468,vendor BAA review,Security,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-1469,resilience test,Procurement,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-1470,incident review,HR,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-1471,financial approval,Supply Chain,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-1472,privacy review,Privacy,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-1473,model-risk review,Compliance,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-1474,PHI access review,Provider Network,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-1475,measure attestation,Value-Based Care,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-1476,CMS submission control,Clinical Operations,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-1477,change control,Revenue Cycle,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-1478,data lineage certification,Patient Access,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-1479,vendor BAA review,Interoperability,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1480,resilience test,Population Health,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1481,incident review,Health Plan Operations,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1482,financial approval,Medicare Advantage,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1483,privacy review,Claims Operations,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1484,model-risk review,Utilization Management,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1485,PHI access review,Member Services,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1486,measure attestation,Quality and Stars,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1487,CMS submission control,Risk Adjustment,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1488,change control,Care Management,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1489,data lineage certification,Finance,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1490,vendor BAA review,Coding,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1491,resilience test,Payer Contracting,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1492,incident review,Digital Front Door,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1493,financial approval,Contact Center,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1494,privacy review,Ambulatory Care,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1495,model-risk review,Emergency Department,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1496,PHI access review,Inpatient,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1497,measure attestation,Surgery,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1498,CMS submission control,Imaging,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1499,change control,Lab,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1500,data lineage certification,Pharmacy,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1501,vendor BAA review,Oncology,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1502,resilience test,Cardiology,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1503,incident review,Data and Analytics,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1504,financial approval,Clinical Analytics,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1505,privacy review,Actuarial,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1506,model-risk review,Departmental Reporting,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1507,PHI access review,AI Transformation,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1508,measure attestation,Technology,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1509,CMS submission control,Security,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1510,change control,Procurement,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1511,data lineage certification,HR,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1512,vendor BAA review,Supply Chain,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1513,resilience test,Privacy,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1514,incident review,Compliance,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1515,financial approval,Provider Network,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1516,privacy review,Value-Based Care,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1517,model-risk review,Clinical Operations,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1518,PHI access review,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1519,measure attestation,Patient Access,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-1520,CMS submission control,Interoperability,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-1521,change control,Population Health,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-1522,data lineage certification,Health Plan Operations,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-1523,vendor BAA review,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-1524,resilience test,Claims Operations,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-1525,incident review,Utilization Management,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-1526,financial approval,Member Services,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-1527,privacy review,Quality and Stars,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-1528,model-risk review,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-1529,PHI access review,Care Management,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-1530,measure attestation,Finance,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-1531,CMS submission control,Coding,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-1532,change control,Payer Contracting,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-1533,data lineage certification,Digital Front Door,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-1534,vendor BAA review,Contact Center,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-1535,resilience test,Ambulatory Care,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-1536,incident review,Emergency Department,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-1537,financial approval,Inpatient,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-1538,privacy review,Surgery,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-1539,model-risk review,Imaging,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-1540,PHI access review,Lab,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-1541,measure attestation,Pharmacy,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-1542,CMS submission control,Oncology,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-1543,change control,Cardiology,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-1544,data lineage certification,Data and Analytics,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-1545,vendor BAA review,Clinical Analytics,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-1546,resilience test,Actuarial,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-1547,incident review,Departmental Reporting,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-1548,financial approval,AI Transformation,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-1549,privacy review,Technology,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-1550,model-risk review,Security,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-1551,PHI access review,Procurement,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-1552,measure attestation,HR,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-1553,CMS submission control,Supply Chain,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-1554,change control,Privacy,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-1555,data lineage certification,Compliance,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-1556,vendor BAA review,Provider Network,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-1557,resilience test,Value-Based Care,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-1558,incident review,Clinical Operations,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-1559,financial approval,Revenue Cycle,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-1560,privacy review,Patient Access,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-1561,model-risk review,Interoperability,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-1562,PHI access review,Population Health,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-1563,measure attestation,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-1564,CMS submission control,Medicare Advantage,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-1565,change control,Claims Operations,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-1566,data lineage certification,Utilization Management,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-1567,vendor BAA review,Member Services,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-1568,resilience test,Quality and Stars,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-1569,incident review,Risk Adjustment,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-1570,financial approval,Care Management,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-1571,privacy review,Finance,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-1572,model-risk review,Coding,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-1573,PHI access review,Payer Contracting,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-1574,measure attestation,Digital Front Door,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-1575,CMS submission control,Contact Center,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-1576,change control,Ambulatory Care,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-1577,data lineage certification,Emergency Department,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-1578,vendor BAA review,Inpatient,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-1579,resilience test,Surgery,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-1580,incident review,Imaging,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-1581,financial approval,Lab,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-1582,privacy review,Pharmacy,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-1583,model-risk review,Oncology,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-1584,PHI access review,Cardiology,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-1585,measure attestation,Data and Analytics,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-1586,CMS submission control,Clinical Analytics,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-1587,change control,Actuarial,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-1588,data lineage certification,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-1589,vendor BAA review,AI Transformation,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-1590,resilience test,Technology,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-1591,incident review,Security,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-1592,financial approval,Procurement,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-1593,privacy review,HR,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-1594,model-risk review,Supply Chain,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-1595,PHI access review,Privacy,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-1596,measure attestation,Compliance,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-1597,CMS submission control,Provider Network,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-1598,change control,Value-Based Care,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-1599,data lineage certification,Clinical Operations,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-1600,vendor BAA review,Revenue Cycle,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-1601,resilience test,Patient Access,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-1602,incident review,Interoperability,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-1603,financial approval,Population Health,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-1604,privacy review,Health Plan Operations,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-1605,model-risk review,Medicare Advantage,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-1606,PHI access review,Claims Operations,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-1607,measure attestation,Utilization Management,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-1608,CMS submission control,Member Services,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-1609,change control,Quality and Stars,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-1610,data lineage certification,Risk Adjustment,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-1611,vendor BAA review,Care Management,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-1612,resilience test,Finance,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-1613,incident review,Coding,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-1614,financial approval,Payer Contracting,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-1615,privacy review,Digital Front Door,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-1616,model-risk review,Contact Center,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-1617,PHI access review,Ambulatory Care,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-1618,measure attestation,Emergency Department,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-1619,CMS submission control,Inpatient,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-1620,change control,Surgery,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-1621,data lineage certification,Imaging,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-1622,vendor BAA review,Lab,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-1623,resilience test,Pharmacy,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-1624,incident review,Oncology,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-1625,financial approval,Cardiology,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-1626,privacy review,Data and Analytics,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-1627,model-risk review,Clinical Analytics,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-1628,PHI access review,Actuarial,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-1629,measure attestation,Departmental Reporting,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-1630,CMS submission control,AI Transformation,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-1631,change control,Technology,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-1632,data lineage certification,Security,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-1633,vendor BAA review,Procurement,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-1634,resilience test,HR,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-1635,incident review,Supply Chain,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-1636,financial approval,Privacy,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-1637,privacy review,Compliance,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-1638,model-risk review,Provider Network,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-1639,PHI access review,Value-Based Care,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1640,measure attestation,Clinical Operations,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1641,CMS submission control,Revenue Cycle,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1642,change control,Patient Access,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1643,data lineage certification,Interoperability,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1644,vendor BAA review,Population Health,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1645,resilience test,Health Plan Operations,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1646,incident review,Medicare Advantage,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1647,financial approval,Claims Operations,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1648,privacy review,Utilization Management,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1649,model-risk review,Member Services,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1650,PHI access review,Quality and Stars,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1651,measure attestation,Risk Adjustment,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1652,CMS submission control,Care Management,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1653,change control,Finance,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1654,data lineage certification,Coding,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1655,vendor BAA review,Payer Contracting,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1656,resilience test,Digital Front Door,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1657,incident review,Contact Center,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1658,financial approval,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1659,privacy review,Emergency Department,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1660,model-risk review,Inpatient,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1661,PHI access review,Surgery,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1662,measure attestation,Imaging,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1663,CMS submission control,Lab,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1664,change control,Pharmacy,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1665,data lineage certification,Oncology,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1666,vendor BAA review,Cardiology,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1667,resilience test,Data and Analytics,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1668,incident review,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1669,financial approval,Actuarial,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1670,privacy review,Departmental Reporting,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1671,model-risk review,AI Transformation,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1672,PHI access review,Technology,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1673,measure attestation,Security,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1674,CMS submission control,Procurement,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1675,change control,HR,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1676,data lineage certification,Supply Chain,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1677,vendor BAA review,Privacy,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1678,resilience test,Compliance,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1679,incident review,Provider Network,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-1680,financial approval,Value-Based Care,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-1681,privacy review,Clinical Operations,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-1682,model-risk review,Revenue Cycle,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-1683,PHI access review,Patient Access,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-1684,measure attestation,Interoperability,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-1685,CMS submission control,Population Health,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-1686,change control,Health Plan Operations,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-1687,data lineage certification,Medicare Advantage,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-1688,vendor BAA review,Claims Operations,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-1689,resilience test,Utilization Management,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-1690,incident review,Member Services,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-1691,financial approval,Quality and Stars,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-1692,privacy review,Risk Adjustment,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-1693,model-risk review,Care Management,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-1694,PHI access review,Finance,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-1695,measure attestation,Coding,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-1696,CMS submission control,Payer Contracting,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-1697,change control,Digital Front Door,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-1698,data lineage certification,Contact Center,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-1699,vendor BAA review,Ambulatory Care,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-1700,resilience test,Emergency Department,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-1701,incident review,Inpatient,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-1702,financial approval,Surgery,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-1703,privacy review,Imaging,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-1704,model-risk review,Lab,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-1705,PHI access review,Pharmacy,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-1706,measure attestation,Oncology,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-1707,CMS submission control,Cardiology,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-1708,change control,Data and Analytics,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-1709,data lineage certification,Clinical Analytics,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-1710,vendor BAA review,Actuarial,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-1711,resilience test,Departmental Reporting,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-1712,incident review,AI Transformation,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-1713,financial approval,Technology,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-1714,privacy review,Security,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-1715,model-risk review,Procurement,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-1716,PHI access review,HR,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-1717,measure attestation,Supply Chain,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-1718,CMS submission control,Privacy,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-1719,change control,Compliance,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-1720,data lineage certification,Provider Network,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-1721,vendor BAA review,Value-Based Care,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-1722,resilience test,Clinical Operations,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-1723,incident review,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-1724,financial approval,Patient Access,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-1725,privacy review,Interoperability,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-1726,model-risk review,Population Health,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-1727,PHI access review,Health Plan Operations,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-1728,measure attestation,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-1729,CMS submission control,Claims Operations,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-1730,change control,Utilization Management,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-1731,data lineage certification,Member Services,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-1732,vendor BAA review,Quality and Stars,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-1733,resilience test,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-1734,incident review,Care Management,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-1735,financial approval,Finance,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-1736,privacy review,Coding,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-1737,model-risk review,Payer Contracting,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-1738,PHI access review,Digital Front Door,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-1739,measure attestation,Contact Center,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-1740,CMS submission control,Ambulatory Care,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-1741,change control,Emergency Department,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-1742,data lineage certification,Inpatient,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-1743,vendor BAA review,Surgery,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-1744,resilience test,Imaging,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-1745,incident review,Lab,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-1746,financial approval,Pharmacy,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-1747,privacy review,Oncology,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-1748,model-risk review,Cardiology,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-1749,PHI access review,Data and Analytics,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-1750,measure attestation,Clinical Analytics,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-1751,CMS submission control,Actuarial,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-1752,change control,Departmental Reporting,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-1753,data lineage certification,AI Transformation,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-1754,vendor BAA review,Technology,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-1755,resilience test,Security,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-1756,incident review,Procurement,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-1757,financial approval,HR,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-1758,privacy review,Supply Chain,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-1759,model-risk review,Privacy,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-1760,PHI access review,Compliance,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-1761,measure attestation,Provider Network,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-1762,CMS submission control,Value-Based Care,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-1763,change control,Clinical Operations,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-1764,data lineage certification,Revenue Cycle,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-1765,vendor BAA review,Patient Access,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-1766,resilience test,Interoperability,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-1767,incident review,Population Health,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-1768,financial approval,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-1769,privacy review,Medicare Advantage,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-1770,model-risk review,Claims Operations,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-1771,PHI access review,Utilization Management,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-1772,measure attestation,Member Services,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-1773,CMS submission control,Quality and Stars,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-1774,change control,Risk Adjustment,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-1775,data lineage certification,Care Management,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-1776,vendor BAA review,Finance,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-1777,resilience test,Coding,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-1778,incident review,Payer Contracting,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-1779,financial approval,Digital Front Door,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-1780,privacy review,Contact Center,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-1781,model-risk review,Ambulatory Care,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-1782,PHI access review,Emergency Department,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-1783,measure attestation,Inpatient,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-1784,CMS submission control,Surgery,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-1785,change control,Imaging,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-1786,data lineage certification,Lab,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-1787,vendor BAA review,Pharmacy,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-1788,resilience test,Oncology,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-1789,incident review,Cardiology,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-1790,financial approval,Data and Analytics,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-1791,privacy review,Clinical Analytics,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-1792,model-risk review,Actuarial,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-1793,PHI access review,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-1794,measure attestation,AI Transformation,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-1795,CMS submission control,Technology,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-1796,change control,Security,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-1797,data lineage certification,Procurement,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-1798,vendor BAA review,HR,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-1799,resilience test,Supply Chain,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1800,incident review,Privacy,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1801,financial approval,Compliance,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1802,privacy review,Provider Network,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1803,model-risk review,Value-Based Care,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1804,PHI access review,Clinical Operations,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1805,measure attestation,Revenue Cycle,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1806,CMS submission control,Patient Access,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1807,change control,Interoperability,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1808,data lineage certification,Population Health,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1809,vendor BAA review,Health Plan Operations,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1810,resilience test,Medicare Advantage,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1811,incident review,Claims Operations,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1812,financial approval,Utilization Management,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1813,privacy review,Member Services,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1814,model-risk review,Quality and Stars,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1815,PHI access review,Risk Adjustment,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1816,measure attestation,Care Management,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1817,CMS submission control,Finance,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1818,change control,Coding,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1819,data lineage certification,Payer Contracting,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1820,vendor BAA review,Digital Front Door,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1821,resilience test,Contact Center,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1822,incident review,Ambulatory Care,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1823,financial approval,Emergency Department,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1824,privacy review,Inpatient,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1825,model-risk review,Surgery,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1826,PHI access review,Imaging,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1827,measure attestation,Lab,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1828,CMS submission control,Pharmacy,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1829,change control,Oncology,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1830,data lineage certification,Cardiology,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1831,vendor BAA review,Data and Analytics,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1832,resilience test,Clinical Analytics,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1833,incident review,Actuarial,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1834,financial approval,Departmental Reporting,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1835,privacy review,AI Transformation,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1836,model-risk review,Technology,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1837,PHI access review,Security,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1838,measure attestation,Procurement,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1839,CMS submission control,HR,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-1840,change control,Supply Chain,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-1841,data lineage certification,Privacy,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-1842,vendor BAA review,Compliance,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-1843,resilience test,Provider Network,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-1844,incident review,Value-Based Care,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-1845,financial approval,Clinical Operations,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-1846,privacy review,Revenue Cycle,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-1847,model-risk review,Patient Access,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-1848,PHI access review,Interoperability,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-1849,measure attestation,Population Health,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-1850,CMS submission control,Health Plan Operations,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-1851,change control,Medicare Advantage,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-1852,data lineage certification,Claims Operations,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-1853,vendor BAA review,Utilization Management,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-1854,resilience test,Member Services,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-1855,incident review,Quality and Stars,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-1856,financial approval,Risk Adjustment,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-1857,privacy review,Care Management,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-1858,model-risk review,Finance,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-1859,PHI access review,Coding,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-1860,measure attestation,Payer Contracting,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-1861,CMS submission control,Digital Front Door,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-1862,change control,Contact Center,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-1863,data lineage certification,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-1864,vendor BAA review,Emergency Department,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-1865,resilience test,Inpatient,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-1866,incident review,Surgery,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-1867,financial approval,Imaging,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-1868,privacy review,Lab,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-1869,model-risk review,Pharmacy,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-1870,PHI access review,Oncology,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-1871,measure attestation,Cardiology,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-1872,CMS submission control,Data and Analytics,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-1873,change control,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-1874,data lineage certification,Actuarial,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-1875,vendor BAA review,Departmental Reporting,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-1876,resilience test,AI Transformation,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-1877,incident review,Technology,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-1878,financial approval,Security,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-1879,privacy review,Procurement,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-1880,model-risk review,HR,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-1881,PHI access review,Supply Chain,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-1882,measure attestation,Privacy,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-1883,CMS submission control,Compliance,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-1884,change control,Provider Network,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-1885,data lineage certification,Value-Based Care,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-1886,vendor BAA review,Clinical Operations,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-1887,resilience test,Revenue Cycle,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-1888,incident review,Patient Access,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-1889,financial approval,Interoperability,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-1890,privacy review,Population Health,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-1891,model-risk review,Health Plan Operations,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-1892,PHI access review,Medicare Advantage,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-1893,measure attestation,Claims Operations,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-1894,CMS submission control,Utilization Management,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-1895,change control,Member Services,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-1896,data lineage certification,Quality and Stars,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-1897,vendor BAA review,Risk Adjustment,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-1898,resilience test,Care Management,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-1899,incident review,Finance,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-1900,financial approval,Coding,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-1901,privacy review,Payer Contracting,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-1902,model-risk review,Digital Front Door,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-1903,PHI access review,Contact Center,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-1904,measure attestation,Ambulatory Care,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-1905,CMS submission control,Emergency Department,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-1906,change control,Inpatient,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-1907,data lineage certification,Surgery,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-1908,vendor BAA review,Imaging,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-1909,resilience test,Lab,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-1910,incident review,Pharmacy,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-1911,financial approval,Oncology,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-1912,privacy review,Cardiology,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-1913,model-risk review,Data and Analytics,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-1914,PHI access review,Clinical Analytics,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-1915,measure attestation,Actuarial,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-1916,CMS submission control,Departmental Reporting,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-1917,change control,AI Transformation,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-1918,data lineage certification,Technology,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-1919,vendor BAA review,Security,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-1920,resilience test,Procurement,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-1921,incident review,HR,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-1922,financial approval,Supply Chain,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-1923,privacy review,Privacy,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-1924,model-risk review,Compliance,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-1925,PHI access review,Provider Network,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-1926,measure attestation,Value-Based Care,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-1927,CMS submission control,Clinical Operations,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-1928,change control,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-1929,data lineage certification,Patient Access,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-1930,vendor BAA review,Interoperability,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-1931,resilience test,Population Health,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-1932,incident review,Health Plan Operations,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-1933,financial approval,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-1934,privacy review,Claims Operations,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-1935,model-risk review,Utilization Management,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-1936,PHI access review,Member Services,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-1937,measure attestation,Quality and Stars,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-1938,CMS submission control,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-1939,change control,Care Management,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-1940,data lineage certification,Finance,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-1941,vendor BAA review,Coding,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-1942,resilience test,Payer Contracting,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-1943,incident review,Digital Front Door,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-1944,financial approval,Contact Center,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-1945,privacy review,Ambulatory Care,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-1946,model-risk review,Emergency Department,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-1947,PHI access review,Inpatient,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-1948,measure attestation,Surgery,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-1949,CMS submission control,Imaging,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-1950,change control,Lab,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-1951,data lineage certification,Pharmacy,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-1952,vendor BAA review,Oncology,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-1953,resilience test,Cardiology,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-1954,incident review,Data and Analytics,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-1955,financial approval,Clinical Analytics,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-1956,privacy review,Actuarial,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-1957,model-risk review,Departmental Reporting,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-1958,PHI access review,AI Transformation,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-1959,measure attestation,Technology,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-1960,CMS submission control,Security,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-1961,change control,Procurement,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-1962,data lineage certification,HR,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-1963,vendor BAA review,Supply Chain,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-1964,resilience test,Privacy,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-1965,incident review,Compliance,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-1966,financial approval,Provider Network,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-1967,privacy review,Value-Based Care,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-1968,model-risk review,Clinical Operations,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-1969,PHI access review,Revenue Cycle,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-1970,measure attestation,Patient Access,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-1971,CMS submission control,Interoperability,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-1972,change control,Population Health,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-1973,data lineage certification,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-1974,vendor BAA review,Medicare Advantage,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-1975,resilience test,Claims Operations,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-1976,incident review,Utilization Management,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-1977,financial approval,Member Services,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-1978,privacy review,Quality and Stars,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-1979,model-risk review,Risk Adjustment,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-1980,PHI access review,Care Management,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-1981,measure attestation,Finance,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-1982,CMS submission control,Coding,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-1983,change control,Payer Contracting,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-1984,data lineage certification,Digital Front Door,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-1985,vendor BAA review,Contact Center,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-1986,resilience test,Ambulatory Care,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-1987,incident review,Emergency Department,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-1988,financial approval,Inpatient,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-1989,privacy review,Surgery,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-1990,model-risk review,Imaging,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-1991,PHI access review,Lab,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-1992,measure attestation,Pharmacy,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-1993,CMS submission control,Oncology,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-1994,change control,Cardiology,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-1995,data lineage certification,Data and Analytics,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-1996,vendor BAA review,Clinical Analytics,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-1997,resilience test,Actuarial,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-1998,incident review,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-1999,financial approval,AI Transformation,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-2000,privacy review,Technology,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-2001,model-risk review,Security,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-2002,PHI access review,Procurement,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-2003,measure attestation,HR,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-2004,CMS submission control,Supply Chain,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-2005,change control,Privacy,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-2006,data lineage certification,Compliance,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-2007,vendor BAA review,Provider Network,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-2008,resilience test,Value-Based Care,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-2009,incident review,Clinical Operations,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-2010,financial approval,Revenue Cycle,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-2011,privacy review,Patient Access,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-2012,model-risk review,Interoperability,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-2013,PHI access review,Population Health,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-2014,measure attestation,Health Plan Operations,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-2015,CMS submission control,Medicare Advantage,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-2016,change control,Claims Operations,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-2017,data lineage certification,Utilization Management,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-2018,vendor BAA review,Member Services,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-2019,resilience test,Quality and Stars,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-2020,incident review,Risk Adjustment,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-2021,financial approval,Care Management,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-2022,privacy review,Finance,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-2023,model-risk review,Coding,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-2024,PHI access review,Payer Contracting,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-2025,measure attestation,Digital Front Door,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-2026,CMS submission control,Contact Center,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-2027,change control,Ambulatory Care,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-2028,data lineage certification,Emergency Department,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-2029,vendor BAA review,Inpatient,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-2030,resilience test,Surgery,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-2031,incident review,Imaging,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-2032,financial approval,Lab,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-2033,privacy review,Pharmacy,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-2034,model-risk review,Oncology,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-2035,PHI access review,Cardiology,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-2036,measure attestation,Data and Analytics,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-2037,CMS submission control,Clinical Analytics,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-2038,change control,Actuarial,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-2039,data lineage certification,Departmental Reporting,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-2040,vendor BAA review,AI Transformation,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-2041,resilience test,Technology,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-2042,incident review,Security,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-2043,financial approval,Procurement,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-2044,privacy review,HR,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-2045,model-risk review,Supply Chain,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-2046,PHI access review,Privacy,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-2047,measure attestation,Compliance,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-2048,CMS submission control,Provider Network,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-2049,change control,Value-Based Care,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-2050,data lineage certification,Clinical Operations,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-2051,vendor BAA review,Revenue Cycle,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-2052,resilience test,Patient Access,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-2053,incident review,Interoperability,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-2054,financial approval,Population Health,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-2055,privacy review,Health Plan Operations,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-2056,model-risk review,Medicare Advantage,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-2057,PHI access review,Claims Operations,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-2058,measure attestation,Utilization Management,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-2059,CMS submission control,Member Services,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-2060,change control,Quality and Stars,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-2061,data lineage certification,Risk Adjustment,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-2062,vendor BAA review,Care Management,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-2063,resilience test,Finance,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-2064,incident review,Coding,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-2065,financial approval,Payer Contracting,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-2066,privacy review,Digital Front Door,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-2067,model-risk review,Contact Center,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-2068,PHI access review,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-2069,measure attestation,Emergency Department,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-2070,CMS submission control,Inpatient,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-2071,change control,Surgery,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-2072,data lineage certification,Imaging,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-2073,vendor BAA review,Lab,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-2074,resilience test,Pharmacy,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-2075,incident review,Oncology,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-2076,financial approval,Cardiology,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-2077,privacy review,Data and Analytics,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-2078,model-risk review,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-2079,PHI access review,Actuarial,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-2080,measure attestation,Departmental Reporting,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-2081,CMS submission control,AI Transformation,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-2082,change control,Technology,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-2083,data lineage certification,Security,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-2084,vendor BAA review,Procurement,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-2085,resilience test,HR,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-2086,incident review,Supply Chain,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-2087,financial approval,Privacy,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-2088,privacy review,Compliance,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-2089,model-risk review,Provider Network,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-2090,PHI access review,Value-Based Care,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-2091,measure attestation,Clinical Operations,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-2092,CMS submission control,Revenue Cycle,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-2093,change control,Patient Access,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-2094,data lineage certification,Interoperability,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-2095,vendor BAA review,Population Health,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-2096,resilience test,Health Plan Operations,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-2097,incident review,Medicare Advantage,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-2098,financial approval,Claims Operations,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-2099,privacy review,Utilization Management,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-2100,model-risk review,Member Services,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-2101,PHI access review,Quality and Stars,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-2102,measure attestation,Risk Adjustment,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-2103,CMS submission control,Care Management,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-2104,change control,Finance,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-2105,data lineage certification,Coding,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-2106,vendor BAA review,Payer Contracting,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-2107,resilience test,Digital Front Door,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-2108,incident review,Contact Center,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-2109,financial approval,Ambulatory Care,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-2110,privacy review,Emergency Department,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-2111,model-risk review,Inpatient,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-2112,PHI access review,Surgery,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-2113,measure attestation,Imaging,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-2114,CMS submission control,Lab,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-2115,change control,Pharmacy,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-2116,data lineage certification,Oncology,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-2117,vendor BAA review,Cardiology,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-2118,resilience test,Data and Analytics,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-2119,incident review,Clinical Analytics,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-2120,financial approval,Actuarial,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-2121,privacy review,Departmental Reporting,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-2122,model-risk review,AI Transformation,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-2123,PHI access review,Technology,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-2124,measure attestation,Security,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-2125,CMS submission control,Procurement,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-2126,change control,HR,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-2127,data lineage certification,Supply Chain,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-2128,vendor BAA review,Privacy,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-2129,resilience test,Compliance,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-2130,incident review,Provider Network,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-2131,financial approval,Value-Based Care,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-2132,privacy review,Clinical Operations,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-2133,model-risk review,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-2134,PHI access review,Patient Access,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-2135,measure attestation,Interoperability,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-2136,CMS submission control,Population Health,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-2137,change control,Health Plan Operations,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-2138,data lineage certification,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-2139,vendor BAA review,Claims Operations,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-2140,resilience test,Utilization Management,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-2141,incident review,Member Services,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-2142,financial approval,Quality and Stars,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-2143,privacy review,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-2144,model-risk review,Care Management,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-2145,PHI access review,Finance,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-2146,measure attestation,Coding,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-2147,CMS submission control,Payer Contracting,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-2148,change control,Digital Front Door,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-2149,data lineage certification,Contact Center,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-2150,vendor BAA review,Ambulatory Care,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-2151,resilience test,Emergency Department,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-2152,incident review,Inpatient,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-2153,financial approval,Surgery,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-2154,privacy review,Imaging,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-2155,model-risk review,Lab,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-2156,PHI access review,Pharmacy,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-2157,measure attestation,Oncology,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-2158,CMS submission control,Cardiology,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-2159,change control,Data and Analytics,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-2160,data lineage certification,Clinical Analytics,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-2161,vendor BAA review,Actuarial,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-2162,resilience test,Departmental Reporting,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-2163,incident review,AI Transformation,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-2164,financial approval,Technology,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-2165,privacy review,Security,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-2166,model-risk review,Procurement,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-2167,PHI access review,HR,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-2168,measure attestation,Supply Chain,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-2169,CMS submission control,Privacy,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-2170,change control,Compliance,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-2171,data lineage certification,Provider Network,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-2172,vendor BAA review,Value-Based Care,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-2173,resilience test,Clinical Operations,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-2174,incident review,Revenue Cycle,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-2175,financial approval,Patient Access,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-2176,privacy review,Interoperability,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-2177,model-risk review,Population Health,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-2178,PHI access review,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-2179,measure attestation,Medicare Advantage,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-2180,CMS submission control,Claims Operations,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-2181,change control,Utilization Management,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-2182,data lineage certification,Member Services,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-2183,vendor BAA review,Quality and Stars,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-2184,resilience test,Risk Adjustment,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-2185,incident review,Care Management,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-2186,financial approval,Finance,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-2187,privacy review,Coding,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-2188,model-risk review,Payer Contracting,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-2189,PHI access review,Digital Front Door,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-2190,measure attestation,Contact Center,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-2191,CMS submission control,Ambulatory Care,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-2192,change control,Emergency Department,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-2193,data lineage certification,Inpatient,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-2194,vendor BAA review,Surgery,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-2195,resilience test,Imaging,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-2196,incident review,Lab,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-2197,financial approval,Pharmacy,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-2198,privacy review,Oncology,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-2199,model-risk review,Cardiology,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-2200,PHI access review,Data and Analytics,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-2201,measure attestation,Clinical Analytics,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-2202,CMS submission control,Actuarial,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-2203,change control,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-2204,data lineage certification,AI Transformation,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-2205,vendor BAA review,Technology,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-2206,resilience test,Security,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-2207,incident review,Procurement,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-2208,financial approval,HR,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-2209,privacy review,Supply Chain,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-2210,model-risk review,Privacy,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-2211,PHI access review,Compliance,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-2212,measure attestation,Provider Network,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-2213,CMS submission control,Value-Based Care,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-2214,change control,Clinical Operations,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-2215,data lineage certification,Revenue Cycle,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-2216,vendor BAA review,Patient Access,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-2217,resilience test,Interoperability,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-2218,incident review,Population Health,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-2219,financial approval,Health Plan Operations,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-2220,privacy review,Medicare Advantage,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-2221,model-risk review,Claims Operations,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-2222,PHI access review,Utilization Management,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-2223,measure attestation,Member Services,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-2224,CMS submission control,Quality and Stars,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-2225,change control,Risk Adjustment,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-2226,data lineage certification,Care Management,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-2227,vendor BAA review,Finance,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-2228,resilience test,Coding,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-2229,incident review,Payer Contracting,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-2230,financial approval,Digital Front Door,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-2231,privacy review,Contact Center,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-2232,model-risk review,Ambulatory Care,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-2233,PHI access review,Emergency Department,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-2234,measure attestation,Inpatient,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-2235,CMS submission control,Surgery,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-2236,change control,Imaging,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-2237,data lineage certification,Lab,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-2238,vendor BAA review,Pharmacy,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-2239,resilience test,Oncology,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-2240,incident review,Cardiology,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-2241,financial approval,Data and Analytics,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-2242,privacy review,Clinical Analytics,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-2243,model-risk review,Actuarial,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-2244,PHI access review,Departmental Reporting,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-2245,measure attestation,AI Transformation,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-2246,CMS submission control,Technology,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-2247,change control,Security,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-2248,data lineage certification,Procurement,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-2249,vendor BAA review,HR,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-2250,resilience test,Supply Chain,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-2251,incident review,Privacy,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-2252,financial approval,Compliance,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-2253,privacy review,Provider Network,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-2254,model-risk review,Value-Based Care,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-2255,PHI access review,Clinical Operations,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-2256,measure attestation,Revenue Cycle,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-2257,CMS submission control,Patient Access,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-2258,change control,Interoperability,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-2259,data lineage certification,Population Health,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-2260,vendor BAA review,Health Plan Operations,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-2261,resilience test,Medicare Advantage,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-2262,incident review,Claims Operations,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-2263,financial approval,Utilization Management,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-2264,privacy review,Member Services,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-2265,model-risk review,Quality and Stars,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-2266,PHI access review,Risk Adjustment,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-2267,measure attestation,Care Management,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-2268,CMS submission control,Finance,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-2269,change control,Coding,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-2270,data lineage certification,Payer Contracting,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-2271,vendor BAA review,Digital Front Door,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-2272,resilience test,Contact Center,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-2273,incident review,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-2274,financial approval,Emergency Department,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-2275,privacy review,Inpatient,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-2276,model-risk review,Surgery,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-2277,PHI access review,Imaging,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-2278,measure attestation,Lab,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-2279,CMS submission control,Pharmacy,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-2280,change control,Oncology,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-2281,data lineage certification,Cardiology,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-2282,vendor BAA review,Data and Analytics,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-2283,resilience test,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-2284,incident review,Actuarial,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-2285,financial approval,Departmental Reporting,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-2286,privacy review,AI Transformation,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-2287,model-risk review,Technology,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-2288,PHI access review,Security,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-2289,measure attestation,Procurement,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-2290,CMS submission control,HR,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-2291,change control,Supply Chain,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-2292,data lineage certification,Privacy,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-2293,vendor BAA review,Compliance,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-2294,resilience test,Provider Network,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-2295,incident review,Value-Based Care,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-2296,financial approval,Clinical Operations,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-2297,privacy review,Revenue Cycle,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-2298,model-risk review,Patient Access,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-2299,PHI access review,Interoperability,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-2300,measure attestation,Population Health,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-2301,CMS submission control,Health Plan Operations,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-2302,change control,Medicare Advantage,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-2303,data lineage certification,Claims Operations,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-2304,vendor BAA review,Utilization Management,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-2305,resilience test,Member Services,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-2306,incident review,Quality and Stars,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-2307,financial approval,Risk Adjustment,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-2308,privacy review,Care Management,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-2309,model-risk review,Finance,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-2310,PHI access review,Coding,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-2311,measure attestation,Payer Contracting,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-2312,CMS submission control,Digital Front Door,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-2313,change control,Contact Center,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-2314,data lineage certification,Ambulatory Care,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-2315,vendor BAA review,Emergency Department,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-2316,resilience test,Inpatient,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-2317,incident review,Surgery,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-2318,financial approval,Imaging,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-2319,privacy review,Lab,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-2320,model-risk review,Pharmacy,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-2321,PHI access review,Oncology,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-2322,measure attestation,Cardiology,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-2323,CMS submission control,Data and Analytics,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-2324,change control,Clinical Analytics,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-2325,data lineage certification,Actuarial,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-2326,vendor BAA review,Departmental Reporting,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-2327,resilience test,AI Transformation,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-2328,incident review,Technology,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-2329,financial approval,Security,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-2330,privacy review,Procurement,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-2331,model-risk review,HR,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-2332,PHI access review,Supply Chain,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-2333,measure attestation,Privacy,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-2334,CMS submission control,Compliance,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-2335,change control,Provider Network,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-2336,data lineage certification,Value-Based Care,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-2337,vendor BAA review,Clinical Operations,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-2338,resilience test,Revenue Cycle,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-2339,incident review,Patient Access,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-2340,financial approval,Interoperability,designed,SRC-HCDN-CTRL-101
+CTRL-HCDN-2341,privacy review,Population Health,operating,SRC-HCDN-CTRL-102
+CTRL-HCDN-2342,model-risk review,Health Plan Operations,gap,SRC-HCDN-CTRL-103
+CTRL-HCDN-2343,PHI access review,Medicare Advantage,needs evidence,SRC-HCDN-CTRL-104
+CTRL-HCDN-2344,measure attestation,Claims Operations,candidate,SRC-HCDN-CTRL-105
+CTRL-HCDN-2345,CMS submission control,Utilization Management,designed,SRC-HCDN-CTRL-106
+CTRL-HCDN-2346,change control,Member Services,operating,SRC-HCDN-CTRL-107
+CTRL-HCDN-2347,data lineage certification,Quality and Stars,gap,SRC-HCDN-CTRL-108
+CTRL-HCDN-2348,vendor BAA review,Risk Adjustment,needs evidence,SRC-HCDN-CTRL-109
+CTRL-HCDN-2349,resilience test,Care Management,candidate,SRC-HCDN-CTRL-110
+CTRL-HCDN-2350,incident review,Finance,designed,SRC-HCDN-CTRL-111
+CTRL-HCDN-2351,financial approval,Coding,operating,SRC-HCDN-CTRL-112
+CTRL-HCDN-2352,privacy review,Payer Contracting,gap,SRC-HCDN-CTRL-113
+CTRL-HCDN-2353,model-risk review,Digital Front Door,needs evidence,SRC-HCDN-CTRL-114
+CTRL-HCDN-2354,PHI access review,Contact Center,candidate,SRC-HCDN-CTRL-115
+CTRL-HCDN-2355,measure attestation,Ambulatory Care,designed,SRC-HCDN-CTRL-116
+CTRL-HCDN-2356,CMS submission control,Emergency Department,operating,SRC-HCDN-CTRL-117
+CTRL-HCDN-2357,change control,Inpatient,gap,SRC-HCDN-CTRL-118
+CTRL-HCDN-2358,data lineage certification,Surgery,needs evidence,SRC-HCDN-CTRL-119
+CTRL-HCDN-2359,vendor BAA review,Imaging,candidate,SRC-HCDN-CTRL-120
+CTRL-HCDN-2360,resilience test,Lab,designed,SRC-HCDN-CTRL-121
+CTRL-HCDN-2361,incident review,Pharmacy,operating,SRC-HCDN-CTRL-122
+CTRL-HCDN-2362,financial approval,Oncology,gap,SRC-HCDN-CTRL-123
+CTRL-HCDN-2363,privacy review,Cardiology,needs evidence,SRC-HCDN-CTRL-124
+CTRL-HCDN-2364,model-risk review,Data and Analytics,candidate,SRC-HCDN-CTRL-125
+CTRL-HCDN-2365,PHI access review,Clinical Analytics,designed,SRC-HCDN-CTRL-126
+CTRL-HCDN-2366,measure attestation,Actuarial,operating,SRC-HCDN-CTRL-127
+CTRL-HCDN-2367,CMS submission control,Departmental Reporting,gap,SRC-HCDN-CTRL-128
+CTRL-HCDN-2368,change control,AI Transformation,needs evidence,SRC-HCDN-CTRL-129
+CTRL-HCDN-2369,data lineage certification,Technology,candidate,SRC-HCDN-CTRL-130
+CTRL-HCDN-2370,vendor BAA review,Security,designed,SRC-HCDN-CTRL-131
+CTRL-HCDN-2371,resilience test,Procurement,operating,SRC-HCDN-CTRL-132
+CTRL-HCDN-2372,incident review,HR,gap,SRC-HCDN-CTRL-133
+CTRL-HCDN-2373,financial approval,Supply Chain,needs evidence,SRC-HCDN-CTRL-134
+CTRL-HCDN-2374,privacy review,Privacy,candidate,SRC-HCDN-CTRL-135
+CTRL-HCDN-2375,model-risk review,Compliance,designed,SRC-HCDN-CTRL-136
+CTRL-HCDN-2376,PHI access review,Provider Network,operating,SRC-HCDN-CTRL-137
+CTRL-HCDN-2377,measure attestation,Value-Based Care,gap,SRC-HCDN-CTRL-138
+CTRL-HCDN-2378,CMS submission control,Clinical Operations,needs evidence,SRC-HCDN-CTRL-139
+CTRL-HCDN-2379,change control,Revenue Cycle,candidate,SRC-HCDN-CTRL-140
+CTRL-HCDN-2380,data lineage certification,Patient Access,designed,SRC-HCDN-CTRL-141
+CTRL-HCDN-2381,vendor BAA review,Interoperability,operating,SRC-HCDN-CTRL-142
+CTRL-HCDN-2382,resilience test,Population Health,gap,SRC-HCDN-CTRL-143
+CTRL-HCDN-2383,incident review,Health Plan Operations,needs evidence,SRC-HCDN-CTRL-144
+CTRL-HCDN-2384,financial approval,Medicare Advantage,candidate,SRC-HCDN-CTRL-145
+CTRL-HCDN-2385,privacy review,Claims Operations,designed,SRC-HCDN-CTRL-146
+CTRL-HCDN-2386,model-risk review,Utilization Management,operating,SRC-HCDN-CTRL-147
+CTRL-HCDN-2387,PHI access review,Member Services,gap,SRC-HCDN-CTRL-148
+CTRL-HCDN-2388,measure attestation,Quality and Stars,needs evidence,SRC-HCDN-CTRL-149
+CTRL-HCDN-2389,CMS submission control,Risk Adjustment,candidate,SRC-HCDN-CTRL-150
+CTRL-HCDN-2390,change control,Care Management,designed,SRC-HCDN-CTRL-151
+CTRL-HCDN-2391,data lineage certification,Finance,operating,SRC-HCDN-CTRL-152
+CTRL-HCDN-2392,vendor BAA review,Coding,gap,SRC-HCDN-CTRL-153
+CTRL-HCDN-2393,resilience test,Payer Contracting,needs evidence,SRC-HCDN-CTRL-154
+CTRL-HCDN-2394,incident review,Digital Front Door,candidate,SRC-HCDN-CTRL-155
+CTRL-HCDN-2395,financial approval,Contact Center,designed,SRC-HCDN-CTRL-156
+CTRL-HCDN-2396,privacy review,Ambulatory Care,operating,SRC-HCDN-CTRL-157
+CTRL-HCDN-2397,model-risk review,Emergency Department,gap,SRC-HCDN-CTRL-158
+CTRL-HCDN-2398,PHI access review,Inpatient,needs evidence,SRC-HCDN-CTRL-159
+CTRL-HCDN-2399,measure attestation,Surgery,candidate,SRC-HCDN-CTRL-160
+CTRL-HCDN-2400,CMS submission control,Imaging,designed,SRC-HCDN-CTRL-001
+CTRL-HCDN-2401,change control,Lab,operating,SRC-HCDN-CTRL-002
+CTRL-HCDN-2402,data lineage certification,Pharmacy,gap,SRC-HCDN-CTRL-003
+CTRL-HCDN-2403,vendor BAA review,Oncology,needs evidence,SRC-HCDN-CTRL-004
+CTRL-HCDN-2404,resilience test,Cardiology,candidate,SRC-HCDN-CTRL-005
+CTRL-HCDN-2405,incident review,Data and Analytics,designed,SRC-HCDN-CTRL-006
+CTRL-HCDN-2406,financial approval,Clinical Analytics,operating,SRC-HCDN-CTRL-007
+CTRL-HCDN-2407,privacy review,Actuarial,gap,SRC-HCDN-CTRL-008
+CTRL-HCDN-2408,model-risk review,Departmental Reporting,needs evidence,SRC-HCDN-CTRL-009
+CTRL-HCDN-2409,PHI access review,AI Transformation,candidate,SRC-HCDN-CTRL-010
+CTRL-HCDN-2410,measure attestation,Technology,designed,SRC-HCDN-CTRL-011
+CTRL-HCDN-2411,CMS submission control,Security,operating,SRC-HCDN-CTRL-012
+CTRL-HCDN-2412,change control,Procurement,gap,SRC-HCDN-CTRL-013
+CTRL-HCDN-2413,data lineage certification,HR,needs evidence,SRC-HCDN-CTRL-014
+CTRL-HCDN-2414,vendor BAA review,Supply Chain,candidate,SRC-HCDN-CTRL-015
+CTRL-HCDN-2415,resilience test,Privacy,designed,SRC-HCDN-CTRL-016
+CTRL-HCDN-2416,incident review,Compliance,operating,SRC-HCDN-CTRL-017
+CTRL-HCDN-2417,financial approval,Provider Network,gap,SRC-HCDN-CTRL-018
+CTRL-HCDN-2418,privacy review,Value-Based Care,needs evidence,SRC-HCDN-CTRL-019
+CTRL-HCDN-2419,model-risk review,Clinical Operations,candidate,SRC-HCDN-CTRL-020
+CTRL-HCDN-2420,PHI access review,Revenue Cycle,designed,SRC-HCDN-CTRL-021
+CTRL-HCDN-2421,measure attestation,Patient Access,operating,SRC-HCDN-CTRL-022
+CTRL-HCDN-2422,CMS submission control,Interoperability,gap,SRC-HCDN-CTRL-023
+CTRL-HCDN-2423,change control,Population Health,needs evidence,SRC-HCDN-CTRL-024
+CTRL-HCDN-2424,data lineage certification,Health Plan Operations,candidate,SRC-HCDN-CTRL-025
+CTRL-HCDN-2425,vendor BAA review,Medicare Advantage,designed,SRC-HCDN-CTRL-026
+CTRL-HCDN-2426,resilience test,Claims Operations,operating,SRC-HCDN-CTRL-027
+CTRL-HCDN-2427,incident review,Utilization Management,gap,SRC-HCDN-CTRL-028
+CTRL-HCDN-2428,financial approval,Member Services,needs evidence,SRC-HCDN-CTRL-029
+CTRL-HCDN-2429,privacy review,Quality and Stars,candidate,SRC-HCDN-CTRL-030
+CTRL-HCDN-2430,model-risk review,Risk Adjustment,designed,SRC-HCDN-CTRL-031
+CTRL-HCDN-2431,PHI access review,Care Management,operating,SRC-HCDN-CTRL-032
+CTRL-HCDN-2432,measure attestation,Finance,gap,SRC-HCDN-CTRL-033
+CTRL-HCDN-2433,CMS submission control,Coding,needs evidence,SRC-HCDN-CTRL-034
+CTRL-HCDN-2434,change control,Payer Contracting,candidate,SRC-HCDN-CTRL-035
+CTRL-HCDN-2435,data lineage certification,Digital Front Door,designed,SRC-HCDN-CTRL-036
+CTRL-HCDN-2436,vendor BAA review,Contact Center,operating,SRC-HCDN-CTRL-037
+CTRL-HCDN-2437,resilience test,Ambulatory Care,gap,SRC-HCDN-CTRL-038
+CTRL-HCDN-2438,incident review,Emergency Department,needs evidence,SRC-HCDN-CTRL-039
+CTRL-HCDN-2439,financial approval,Inpatient,candidate,SRC-HCDN-CTRL-040
+CTRL-HCDN-2440,privacy review,Surgery,designed,SRC-HCDN-CTRL-041
+CTRL-HCDN-2441,model-risk review,Imaging,operating,SRC-HCDN-CTRL-042
+CTRL-HCDN-2442,PHI access review,Lab,gap,SRC-HCDN-CTRL-043
+CTRL-HCDN-2443,measure attestation,Pharmacy,needs evidence,SRC-HCDN-CTRL-044
+CTRL-HCDN-2444,CMS submission control,Oncology,candidate,SRC-HCDN-CTRL-045
+CTRL-HCDN-2445,change control,Cardiology,designed,SRC-HCDN-CTRL-046
+CTRL-HCDN-2446,data lineage certification,Data and Analytics,operating,SRC-HCDN-CTRL-047
+CTRL-HCDN-2447,vendor BAA review,Clinical Analytics,gap,SRC-HCDN-CTRL-048
+CTRL-HCDN-2448,resilience test,Actuarial,needs evidence,SRC-HCDN-CTRL-049
+CTRL-HCDN-2449,incident review,Departmental Reporting,candidate,SRC-HCDN-CTRL-050
+CTRL-HCDN-2450,financial approval,AI Transformation,designed,SRC-HCDN-CTRL-051
+CTRL-HCDN-2451,privacy review,Technology,operating,SRC-HCDN-CTRL-052
+CTRL-HCDN-2452,model-risk review,Security,gap,SRC-HCDN-CTRL-053
+CTRL-HCDN-2453,PHI access review,Procurement,needs evidence,SRC-HCDN-CTRL-054
+CTRL-HCDN-2454,measure attestation,HR,candidate,SRC-HCDN-CTRL-055
+CTRL-HCDN-2455,CMS submission control,Supply Chain,designed,SRC-HCDN-CTRL-056
+CTRL-HCDN-2456,change control,Privacy,operating,SRC-HCDN-CTRL-057
+CTRL-HCDN-2457,data lineage certification,Compliance,gap,SRC-HCDN-CTRL-058
+CTRL-HCDN-2458,vendor BAA review,Provider Network,needs evidence,SRC-HCDN-CTRL-059
+CTRL-HCDN-2459,resilience test,Value-Based Care,candidate,SRC-HCDN-CTRL-060
+CTRL-HCDN-2460,incident review,Clinical Operations,designed,SRC-HCDN-CTRL-061
+CTRL-HCDN-2461,financial approval,Revenue Cycle,operating,SRC-HCDN-CTRL-062
+CTRL-HCDN-2462,privacy review,Patient Access,gap,SRC-HCDN-CTRL-063
+CTRL-HCDN-2463,model-risk review,Interoperability,needs evidence,SRC-HCDN-CTRL-064
+CTRL-HCDN-2464,PHI access review,Population Health,candidate,SRC-HCDN-CTRL-065
+CTRL-HCDN-2465,measure attestation,Health Plan Operations,designed,SRC-HCDN-CTRL-066
+CTRL-HCDN-2466,CMS submission control,Medicare Advantage,operating,SRC-HCDN-CTRL-067
+CTRL-HCDN-2467,change control,Claims Operations,gap,SRC-HCDN-CTRL-068
+CTRL-HCDN-2468,data lineage certification,Utilization Management,needs evidence,SRC-HCDN-CTRL-069
+CTRL-HCDN-2469,vendor BAA review,Member Services,candidate,SRC-HCDN-CTRL-070
+CTRL-HCDN-2470,resilience test,Quality and Stars,designed,SRC-HCDN-CTRL-071
+CTRL-HCDN-2471,incident review,Risk Adjustment,operating,SRC-HCDN-CTRL-072
+CTRL-HCDN-2472,financial approval,Care Management,gap,SRC-HCDN-CTRL-073
+CTRL-HCDN-2473,privacy review,Finance,needs evidence,SRC-HCDN-CTRL-074
+CTRL-HCDN-2474,model-risk review,Coding,candidate,SRC-HCDN-CTRL-075
+CTRL-HCDN-2475,PHI access review,Payer Contracting,designed,SRC-HCDN-CTRL-076
+CTRL-HCDN-2476,measure attestation,Digital Front Door,operating,SRC-HCDN-CTRL-077
+CTRL-HCDN-2477,CMS submission control,Contact Center,gap,SRC-HCDN-CTRL-078
+CTRL-HCDN-2478,change control,Ambulatory Care,needs evidence,SRC-HCDN-CTRL-079
+CTRL-HCDN-2479,data lineage certification,Emergency Department,candidate,SRC-HCDN-CTRL-080
+CTRL-HCDN-2480,vendor BAA review,Inpatient,designed,SRC-HCDN-CTRL-081
+CTRL-HCDN-2481,resilience test,Surgery,operating,SRC-HCDN-CTRL-082
+CTRL-HCDN-2482,incident review,Imaging,gap,SRC-HCDN-CTRL-083
+CTRL-HCDN-2483,financial approval,Lab,needs evidence,SRC-HCDN-CTRL-084
+CTRL-HCDN-2484,privacy review,Pharmacy,candidate,SRC-HCDN-CTRL-085
+CTRL-HCDN-2485,model-risk review,Oncology,designed,SRC-HCDN-CTRL-086
+CTRL-HCDN-2486,PHI access review,Cardiology,operating,SRC-HCDN-CTRL-087
+CTRL-HCDN-2487,measure attestation,Data and Analytics,gap,SRC-HCDN-CTRL-088
+CTRL-HCDN-2488,CMS submission control,Clinical Analytics,needs evidence,SRC-HCDN-CTRL-089
+CTRL-HCDN-2489,change control,Actuarial,candidate,SRC-HCDN-CTRL-090
+CTRL-HCDN-2490,data lineage certification,Departmental Reporting,designed,SRC-HCDN-CTRL-091
+CTRL-HCDN-2491,vendor BAA review,AI Transformation,operating,SRC-HCDN-CTRL-092
+CTRL-HCDN-2492,resilience test,Technology,gap,SRC-HCDN-CTRL-093
+CTRL-HCDN-2493,incident review,Security,needs evidence,SRC-HCDN-CTRL-094
+CTRL-HCDN-2494,financial approval,Procurement,candidate,SRC-HCDN-CTRL-095
+CTRL-HCDN-2495,privacy review,HR,designed,SRC-HCDN-CTRL-096
+CTRL-HCDN-2496,model-risk review,Supply Chain,operating,SRC-HCDN-CTRL-097
+CTRL-HCDN-2497,PHI access review,Privacy,gap,SRC-HCDN-CTRL-098
+CTRL-HCDN-2498,measure attestation,Compliance,needs evidence,SRC-HCDN-CTRL-099
+CTRL-HCDN-2499,CMS submission control,Provider Network,candidate,SRC-HCDN-CTRL-100
+CTRL-HCDN-2500,change control,Value-Based Care,designed,SRC-HCDN-CTRL-101

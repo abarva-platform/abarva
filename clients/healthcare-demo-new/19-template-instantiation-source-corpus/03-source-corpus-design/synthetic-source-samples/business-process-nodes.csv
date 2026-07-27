@@ -1,0 +1,14 @@
+process_id,process_name,owning_function
+PROC-HCDN-001,Medicare Advantage care-gap closure,Quality and Stars
+PROC-HCDN-002,RAF chart review and coding capture,Risk Adjustment
+PROC-HCDN-003,Prior authorization turnaround,Utilization Management
+PROC-HCDN-004,Claims adjudication and encounter submission,Claims Operations
+PROC-HCDN-005,Revenue-cycle denial recovery,Revenue Cycle
+PROC-HCDN-006,Patient access and referral scheduling,Patient Access
+PROC-HCDN-007,Clinical documentation and Epic extract flow,Clinical Operations
+PROC-HCDN-008,Pharmacy adherence outreach,Pharmacy
+PROC-HCDN-009,Provider directory maintenance,Provider Network
+PROC-HCDN-010,Contact center member service,Member Services
+PROC-HCDN-011,SQL mart reconciliation,Data and Analytics
+PROC-HCDN-012,Azure current AI use-case monitoring,AI Transformation
+PROC-HCDN-013,AWS future agentic-use-case portfolio intake,AI Transformation

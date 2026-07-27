@@ -1,0 +1,651 @@
+kpi_id,kpi_name,owner_function,population,disclosure_mode,direction,evidence_state,source_data_product_id,definition_state,source_id
+KPI-HCDN-0001,Medication adherence measure 0001,Revenue Cycle,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00002,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0002,Diabetes HbA1c control measure 0002,Patient Access,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00003,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0003,Breast cancer screening measure 0003,Interoperability,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00004,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0004,CAHPS getting care quickly measure 0004,Population Health,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00005,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0005,RAF coding completeness measure 0005,Health Plan Operations,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00006,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0006,Encounter submission acceptance measure 0006,Medicare Advantage,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00007,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0007,Care-gap closure measure 0007,Claims Operations,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00008,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0008,Readmission rate measure 0008,Utilization Management,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00009,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0009,Length of stay measure 0009,Member Services,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00010,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0010,ED throughput measure 0010,Quality and Stars,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00011,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0011,Surgery utilization measure 0011,Risk Adjustment,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00012,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0012,Bed occupancy measure 0012,Care Management,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00013,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0013,Referral leakage measure 0013,Finance,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00014,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0014,Prior-auth turnaround measure 0014,Coding,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00015,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0015,Denial rate measure 0015,Payer Contracting,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00016,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0016,Clean-claim rate measure 0016,Digital Front Door,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00017,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0017,Days in A/R measure 0017,Contact Center,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00018,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0018,Contact-center service level measure 0018,Ambulatory Care,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00019,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0019,Member retention measure 0019,Emergency Department,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00020,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0020,Provider-directory accuracy measure 0020,Inpatient,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00021,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0021,Network adequacy measure 0021,Surgery,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00022,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0022,Claims leakage measure 0022,Imaging,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00023,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0023,Medical cost trend measure 0023,Lab,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00024,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0024,Quality incentive attainment measure 0024,Pharmacy,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00025,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0025,Digital adoption measure 0025,Oncology,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00026,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0026,Patient access cycle time measure 0026,Cardiology,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00027,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0027,Platform availability measure 0027,Data and Analytics,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00028,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0028,SQL batch success measure 0028,Clinical Analytics,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00029,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0029,Epic extract latency measure 0029,Actuarial,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00030,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0030,Azure use-case adoption measure 0030,Departmental Reporting,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00031,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0031,AWS transformation readiness measure 0031,AI Transformation,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00032,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0032,Star Rating overall measure 0032,Technology,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00033,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0033,Medication adherence measure 0033,Security,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00034,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0034,Diabetes HbA1c control measure 0034,Procurement,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00035,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0035,Breast cancer screening measure 0035,HR,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00036,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0036,CAHPS getting care quickly measure 0036,Supply Chain,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00037,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0037,RAF coding completeness measure 0037,Privacy,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00038,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0038,Encounter submission acceptance measure 0038,Compliance,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00039,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0039,Care-gap closure measure 0039,Provider Network,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00040,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0040,Readmission rate measure 0040,Value-Based Care,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00041,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0041,Length of stay measure 0041,Clinical Operations,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00042,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0042,ED throughput measure 0042,Revenue Cycle,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00043,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0043,Surgery utilization measure 0043,Patient Access,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00044,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0044,Bed occupancy measure 0044,Interoperability,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00045,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0045,Referral leakage measure 0045,Population Health,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00046,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0046,Prior-auth turnaround measure 0046,Health Plan Operations,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00047,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0047,Denial rate measure 0047,Medicare Advantage,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00048,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0048,Clean-claim rate measure 0048,Claims Operations,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00049,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0049,Days in A/R measure 0049,Utilization Management,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00050,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0050,Contact-center service level measure 0050,Member Services,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00051,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0051,Member retention measure 0051,Quality and Stars,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00052,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0052,Provider-directory accuracy measure 0052,Risk Adjustment,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00053,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0053,Network adequacy measure 0053,Care Management,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00054,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0054,Claims leakage measure 0054,Finance,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00055,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0055,Medical cost trend measure 0055,Coding,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00056,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0056,Quality incentive attainment measure 0056,Payer Contracting,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00057,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0057,Digital adoption measure 0057,Digital Front Door,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00058,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0058,Patient access cycle time measure 0058,Contact Center,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00059,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0059,Platform availability measure 0059,Ambulatory Care,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00060,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0060,SQL batch success measure 0060,Emergency Department,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00061,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0061,Epic extract latency measure 0061,Inpatient,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00062,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0062,Azure use-case adoption measure 0062,Surgery,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00063,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0063,AWS transformation readiness measure 0063,Imaging,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00064,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0064,Star Rating overall measure 0064,Lab,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00065,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0065,Medication adherence measure 0065,Pharmacy,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00066,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0066,Diabetes HbA1c control measure 0066,Oncology,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00067,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0067,Breast cancer screening measure 0067,Cardiology,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00068,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0068,CAHPS getting care quickly measure 0068,Data and Analytics,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00069,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0069,RAF coding completeness measure 0069,Clinical Analytics,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00070,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0070,Encounter submission acceptance measure 0070,Actuarial,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00071,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0071,Care-gap closure measure 0071,Departmental Reporting,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00072,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0072,Readmission rate measure 0072,AI Transformation,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00073,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0073,Length of stay measure 0073,Technology,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00074,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0074,ED throughput measure 0074,Security,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00075,exclusions to confirm,SRC-HCDN-KPI-075
+KPI-HCDN-0075,Surgery utilization measure 0075,Procurement,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00076,latency to confirm,SRC-HCDN-KPI-076
+KPI-HCDN-0076,Bed occupancy measure 0076,HR,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00077,regulatory use,SRC-HCDN-KPI-077
+KPI-HCDN-0077,Referral leakage measure 0077,Supply Chain,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00078,contractual incentive use,SRC-HCDN-KPI-078
+KPI-HCDN-0078,Prior-auth turnaround measure 0078,Privacy,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00079,numerator in source,SRC-HCDN-KPI-079
+KPI-HCDN-0079,Denial rate measure 0079,Compliance,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00080,denominator in source,SRC-HCDN-KPI-080
+KPI-HCDN-0080,Clean-claim rate measure 0080,Provider Network,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00081,exclusions to confirm,SRC-HCDN-KPI-081
+KPI-HCDN-0081,Days in A/R measure 0081,Value-Based Care,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00082,latency to confirm,SRC-HCDN-KPI-082
+KPI-HCDN-0082,Contact-center service level measure 0082,Clinical Operations,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00083,regulatory use,SRC-HCDN-KPI-083
+KPI-HCDN-0083,Member retention measure 0083,Revenue Cycle,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00084,contractual incentive use,SRC-HCDN-KPI-084
+KPI-HCDN-0084,Provider-directory accuracy measure 0084,Patient Access,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00085,numerator in source,SRC-HCDN-KPI-085
+KPI-HCDN-0085,Network adequacy measure 0085,Interoperability,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00086,denominator in source,SRC-HCDN-KPI-086
+KPI-HCDN-0086,Claims leakage measure 0086,Population Health,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00087,exclusions to confirm,SRC-HCDN-KPI-087
+KPI-HCDN-0087,Medical cost trend measure 0087,Health Plan Operations,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00088,latency to confirm,SRC-HCDN-KPI-088
+KPI-HCDN-0088,Quality incentive attainment measure 0088,Medicare Advantage,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00089,regulatory use,SRC-HCDN-KPI-089
+KPI-HCDN-0089,Digital adoption measure 0089,Claims Operations,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00090,contractual incentive use,SRC-HCDN-KPI-090
+KPI-HCDN-0090,Patient access cycle time measure 0090,Utilization Management,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00091,numerator in source,SRC-HCDN-KPI-091
+KPI-HCDN-0091,Platform availability measure 0091,Member Services,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00092,denominator in source,SRC-HCDN-KPI-092
+KPI-HCDN-0092,SQL batch success measure 0092,Quality and Stars,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00093,exclusions to confirm,SRC-HCDN-KPI-093
+KPI-HCDN-0093,Epic extract latency measure 0093,Risk Adjustment,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00094,latency to confirm,SRC-HCDN-KPI-094
+KPI-HCDN-0094,Azure use-case adoption measure 0094,Care Management,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00095,regulatory use,SRC-HCDN-KPI-095
+KPI-HCDN-0095,AWS transformation readiness measure 0095,Finance,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00096,contractual incentive use,SRC-HCDN-KPI-096
+KPI-HCDN-0096,Star Rating overall measure 0096,Coding,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00097,numerator in source,SRC-HCDN-KPI-001
+KPI-HCDN-0097,Medication adherence measure 0097,Payer Contracting,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00098,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0098,Diabetes HbA1c control measure 0098,Digital Front Door,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00099,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0099,Breast cancer screening measure 0099,Contact Center,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00100,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0100,CAHPS getting care quickly measure 0100,Ambulatory Care,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00101,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0101,RAF coding completeness measure 0101,Emergency Department,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00102,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0102,Encounter submission acceptance measure 0102,Inpatient,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00103,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0103,Care-gap closure measure 0103,Surgery,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00104,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0104,Readmission rate measure 0104,Imaging,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00105,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0105,Length of stay measure 0105,Lab,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00106,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0106,ED throughput measure 0106,Pharmacy,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00107,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0107,Surgery utilization measure 0107,Oncology,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00108,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0108,Bed occupancy measure 0108,Cardiology,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00109,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0109,Referral leakage measure 0109,Data and Analytics,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00110,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0110,Prior-auth turnaround measure 0110,Clinical Analytics,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00111,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0111,Denial rate measure 0111,Actuarial,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00112,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0112,Clean-claim rate measure 0112,Departmental Reporting,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00113,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0113,Days in A/R measure 0113,AI Transformation,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00114,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0114,Contact-center service level measure 0114,Technology,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00115,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0115,Member retention measure 0115,Security,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00116,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0116,Provider-directory accuracy measure 0116,Procurement,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00117,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0117,Network adequacy measure 0117,HR,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00118,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0118,Claims leakage measure 0118,Supply Chain,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00119,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0119,Medical cost trend measure 0119,Privacy,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00120,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0120,Quality incentive attainment measure 0120,Compliance,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00121,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0121,Digital adoption measure 0121,Provider Network,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00122,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0122,Patient access cycle time measure 0122,Value-Based Care,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00123,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0123,Platform availability measure 0123,Clinical Operations,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00124,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0124,SQL batch success measure 0124,Revenue Cycle,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00125,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0125,Epic extract latency measure 0125,Patient Access,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00126,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0126,Azure use-case adoption measure 0126,Interoperability,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00127,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0127,AWS transformation readiness measure 0127,Population Health,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00128,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0128,Star Rating overall measure 0128,Health Plan Operations,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00129,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0129,Medication adherence measure 0129,Medicare Advantage,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00130,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0130,Diabetes HbA1c control measure 0130,Claims Operations,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00131,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0131,Breast cancer screening measure 0131,Utilization Management,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00132,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0132,CAHPS getting care quickly measure 0132,Member Services,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00133,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0133,RAF coding completeness measure 0133,Quality and Stars,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00134,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0134,Encounter submission acceptance measure 0134,Risk Adjustment,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00135,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0135,Care-gap closure measure 0135,Care Management,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00136,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0136,Readmission rate measure 0136,Finance,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00137,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0137,Length of stay measure 0137,Coding,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00138,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0138,ED throughput measure 0138,Payer Contracting,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00139,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0139,Surgery utilization measure 0139,Digital Front Door,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00140,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0140,Bed occupancy measure 0140,Contact Center,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00141,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0141,Referral leakage measure 0141,Ambulatory Care,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00142,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0142,Prior-auth turnaround measure 0142,Emergency Department,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00143,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0143,Denial rate measure 0143,Inpatient,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00144,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0144,Clean-claim rate measure 0144,Surgery,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00145,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0145,Days in A/R measure 0145,Imaging,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00146,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0146,Contact-center service level measure 0146,Lab,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00147,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0147,Member retention measure 0147,Pharmacy,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00148,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0148,Provider-directory accuracy measure 0148,Oncology,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00149,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0149,Network adequacy measure 0149,Cardiology,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00150,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0150,Claims leakage measure 0150,Data and Analytics,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00151,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0151,Medical cost trend measure 0151,Clinical Analytics,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00152,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0152,Quality incentive attainment measure 0152,Actuarial,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00153,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0153,Digital adoption measure 0153,Departmental Reporting,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00154,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0154,Patient access cycle time measure 0154,AI Transformation,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00155,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0155,Platform availability measure 0155,Technology,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00156,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0156,SQL batch success measure 0156,Security,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00157,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0157,Epic extract latency measure 0157,Procurement,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00158,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0158,Azure use-case adoption measure 0158,HR,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00159,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0159,AWS transformation readiness measure 0159,Supply Chain,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00160,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0160,Star Rating overall measure 0160,Privacy,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00161,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0161,Medication adherence measure 0161,Compliance,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00162,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0162,Diabetes HbA1c control measure 0162,Provider Network,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00163,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0163,Breast cancer screening measure 0163,Value-Based Care,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00164,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0164,CAHPS getting care quickly measure 0164,Clinical Operations,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00165,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0165,RAF coding completeness measure 0165,Revenue Cycle,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00166,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0166,Encounter submission acceptance measure 0166,Patient Access,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00167,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0167,Care-gap closure measure 0167,Interoperability,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00168,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0168,Readmission rate measure 0168,Population Health,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00169,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0169,Length of stay measure 0169,Health Plan Operations,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00170,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0170,ED throughput measure 0170,Medicare Advantage,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00171,exclusions to confirm,SRC-HCDN-KPI-075
+KPI-HCDN-0171,Surgery utilization measure 0171,Claims Operations,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00172,latency to confirm,SRC-HCDN-KPI-076
+KPI-HCDN-0172,Bed occupancy measure 0172,Utilization Management,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00173,regulatory use,SRC-HCDN-KPI-077
+KPI-HCDN-0173,Referral leakage measure 0173,Member Services,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00174,contractual incentive use,SRC-HCDN-KPI-078
+KPI-HCDN-0174,Prior-auth turnaround measure 0174,Quality and Stars,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00175,numerator in source,SRC-HCDN-KPI-079
+KPI-HCDN-0175,Denial rate measure 0175,Risk Adjustment,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00176,denominator in source,SRC-HCDN-KPI-080
+KPI-HCDN-0176,Clean-claim rate measure 0176,Care Management,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00177,exclusions to confirm,SRC-HCDN-KPI-081
+KPI-HCDN-0177,Days in A/R measure 0177,Finance,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00178,latency to confirm,SRC-HCDN-KPI-082
+KPI-HCDN-0178,Contact-center service level measure 0178,Coding,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00179,regulatory use,SRC-HCDN-KPI-083
+KPI-HCDN-0179,Member retention measure 0179,Payer Contracting,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00180,contractual incentive use,SRC-HCDN-KPI-084
+KPI-HCDN-0180,Provider-directory accuracy measure 0180,Digital Front Door,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00181,numerator in source,SRC-HCDN-KPI-085
+KPI-HCDN-0181,Network adequacy measure 0181,Contact Center,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00182,denominator in source,SRC-HCDN-KPI-086
+KPI-HCDN-0182,Claims leakage measure 0182,Ambulatory Care,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00183,exclusions to confirm,SRC-HCDN-KPI-087
+KPI-HCDN-0183,Medical cost trend measure 0183,Emergency Department,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00184,latency to confirm,SRC-HCDN-KPI-088
+KPI-HCDN-0184,Quality incentive attainment measure 0184,Inpatient,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00185,regulatory use,SRC-HCDN-KPI-089
+KPI-HCDN-0185,Digital adoption measure 0185,Surgery,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00186,contractual incentive use,SRC-HCDN-KPI-090
+KPI-HCDN-0186,Patient access cycle time measure 0186,Imaging,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00187,numerator in source,SRC-HCDN-KPI-091
+KPI-HCDN-0187,Platform availability measure 0187,Lab,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00188,denominator in source,SRC-HCDN-KPI-092
+KPI-HCDN-0188,SQL batch success measure 0188,Pharmacy,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00189,exclusions to confirm,SRC-HCDN-KPI-093
+KPI-HCDN-0189,Epic extract latency measure 0189,Oncology,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00190,latency to confirm,SRC-HCDN-KPI-094
+KPI-HCDN-0190,Azure use-case adoption measure 0190,Cardiology,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00191,regulatory use,SRC-HCDN-KPI-095
+KPI-HCDN-0191,AWS transformation readiness measure 0191,Data and Analytics,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00192,contractual incentive use,SRC-HCDN-KPI-096
+KPI-HCDN-0192,Star Rating overall measure 0192,Clinical Analytics,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00193,numerator in source,SRC-HCDN-KPI-001
+KPI-HCDN-0193,Medication adherence measure 0193,Actuarial,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00194,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0194,Diabetes HbA1c control measure 0194,Departmental Reporting,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00195,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0195,Breast cancer screening measure 0195,AI Transformation,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00196,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0196,CAHPS getting care quickly measure 0196,Technology,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00197,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0197,RAF coding completeness measure 0197,Security,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00198,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0198,Encounter submission acceptance measure 0198,Procurement,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00199,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0199,Care-gap closure measure 0199,HR,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00200,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0200,Readmission rate measure 0200,Supply Chain,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00201,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0201,Length of stay measure 0201,Privacy,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00202,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0202,ED throughput measure 0202,Compliance,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00203,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0203,Surgery utilization measure 0203,Provider Network,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00204,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0204,Bed occupancy measure 0204,Value-Based Care,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00205,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0205,Referral leakage measure 0205,Clinical Operations,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00206,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0206,Prior-auth turnaround measure 0206,Revenue Cycle,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00207,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0207,Denial rate measure 0207,Patient Access,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00208,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0208,Clean-claim rate measure 0208,Interoperability,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00209,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0209,Days in A/R measure 0209,Population Health,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00210,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0210,Contact-center service level measure 0210,Health Plan Operations,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00211,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0211,Member retention measure 0211,Medicare Advantage,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00212,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0212,Provider-directory accuracy measure 0212,Claims Operations,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00213,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0213,Network adequacy measure 0213,Utilization Management,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00214,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0214,Claims leakage measure 0214,Member Services,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00215,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0215,Medical cost trend measure 0215,Quality and Stars,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00216,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0216,Quality incentive attainment measure 0216,Risk Adjustment,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00217,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0217,Digital adoption measure 0217,Care Management,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00218,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0218,Patient access cycle time measure 0218,Finance,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00219,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0219,Platform availability measure 0219,Coding,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00220,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0220,SQL batch success measure 0220,Payer Contracting,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00221,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0221,Epic extract latency measure 0221,Digital Front Door,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00222,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0222,Azure use-case adoption measure 0222,Contact Center,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00223,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0223,AWS transformation readiness measure 0223,Ambulatory Care,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00224,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0224,Star Rating overall measure 0224,Emergency Department,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00225,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0225,Medication adherence measure 0225,Inpatient,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00226,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0226,Diabetes HbA1c control measure 0226,Surgery,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00227,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0227,Breast cancer screening measure 0227,Imaging,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00228,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0228,CAHPS getting care quickly measure 0228,Lab,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00229,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0229,RAF coding completeness measure 0229,Pharmacy,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00230,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0230,Encounter submission acceptance measure 0230,Oncology,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00231,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0231,Care-gap closure measure 0231,Cardiology,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00232,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0232,Readmission rate measure 0232,Data and Analytics,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00233,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0233,Length of stay measure 0233,Clinical Analytics,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00234,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0234,ED throughput measure 0234,Actuarial,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00235,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0235,Surgery utilization measure 0235,Departmental Reporting,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00236,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0236,Bed occupancy measure 0236,AI Transformation,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00237,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0237,Referral leakage measure 0237,Technology,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00238,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0238,Prior-auth turnaround measure 0238,Security,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00239,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0239,Denial rate measure 0239,Procurement,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00240,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0240,Clean-claim rate measure 0240,HR,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00241,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0241,Days in A/R measure 0241,Supply Chain,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00242,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0242,Contact-center service level measure 0242,Privacy,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00243,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0243,Member retention measure 0243,Compliance,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00244,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0244,Provider-directory accuracy measure 0244,Provider Network,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00245,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0245,Network adequacy measure 0245,Value-Based Care,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00246,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0246,Claims leakage measure 0246,Clinical Operations,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00247,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0247,Medical cost trend measure 0247,Revenue Cycle,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00248,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0248,Quality incentive attainment measure 0248,Patient Access,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00249,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0249,Digital adoption measure 0249,Interoperability,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00250,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0250,Patient access cycle time measure 0250,Population Health,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00251,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0251,Platform availability measure 0251,Health Plan Operations,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00252,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0252,SQL batch success measure 0252,Medicare Advantage,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00253,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0253,Epic extract latency measure 0253,Claims Operations,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00254,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0254,Azure use-case adoption measure 0254,Utilization Management,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00255,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0255,AWS transformation readiness measure 0255,Member Services,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00256,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0256,Star Rating overall measure 0256,Quality and Stars,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00257,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0257,Medication adherence measure 0257,Risk Adjustment,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00258,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0258,Diabetes HbA1c control measure 0258,Care Management,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00259,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0259,Breast cancer screening measure 0259,Finance,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00260,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0260,CAHPS getting care quickly measure 0260,Coding,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00261,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0261,RAF coding completeness measure 0261,Payer Contracting,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00262,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0262,Encounter submission acceptance measure 0262,Digital Front Door,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00263,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0263,Care-gap closure measure 0263,Contact Center,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00264,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0264,Readmission rate measure 0264,Ambulatory Care,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00265,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0265,Length of stay measure 0265,Emergency Department,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00266,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0266,ED throughput measure 0266,Inpatient,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00267,exclusions to confirm,SRC-HCDN-KPI-075
+KPI-HCDN-0267,Surgery utilization measure 0267,Surgery,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00268,latency to confirm,SRC-HCDN-KPI-076
+KPI-HCDN-0268,Bed occupancy measure 0268,Imaging,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00269,regulatory use,SRC-HCDN-KPI-077
+KPI-HCDN-0269,Referral leakage measure 0269,Lab,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00270,contractual incentive use,SRC-HCDN-KPI-078
+KPI-HCDN-0270,Prior-auth turnaround measure 0270,Pharmacy,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00271,numerator in source,SRC-HCDN-KPI-079
+KPI-HCDN-0271,Denial rate measure 0271,Oncology,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00272,denominator in source,SRC-HCDN-KPI-080
+KPI-HCDN-0272,Clean-claim rate measure 0272,Cardiology,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00273,exclusions to confirm,SRC-HCDN-KPI-081
+KPI-HCDN-0273,Days in A/R measure 0273,Data and Analytics,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00274,latency to confirm,SRC-HCDN-KPI-082
+KPI-HCDN-0274,Contact-center service level measure 0274,Clinical Analytics,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00275,regulatory use,SRC-HCDN-KPI-083
+KPI-HCDN-0275,Member retention measure 0275,Actuarial,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00276,contractual incentive use,SRC-HCDN-KPI-084
+KPI-HCDN-0276,Provider-directory accuracy measure 0276,Departmental Reporting,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00277,numerator in source,SRC-HCDN-KPI-085
+KPI-HCDN-0277,Network adequacy measure 0277,AI Transformation,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00278,denominator in source,SRC-HCDN-KPI-086
+KPI-HCDN-0278,Claims leakage measure 0278,Technology,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00279,exclusions to confirm,SRC-HCDN-KPI-087
+KPI-HCDN-0279,Medical cost trend measure 0279,Security,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00280,latency to confirm,SRC-HCDN-KPI-088
+KPI-HCDN-0280,Quality incentive attainment measure 0280,Procurement,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00281,regulatory use,SRC-HCDN-KPI-089
+KPI-HCDN-0281,Digital adoption measure 0281,HR,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00282,contractual incentive use,SRC-HCDN-KPI-090
+KPI-HCDN-0282,Patient access cycle time measure 0282,Supply Chain,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00283,numerator in source,SRC-HCDN-KPI-091
+KPI-HCDN-0283,Platform availability measure 0283,Privacy,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00284,denominator in source,SRC-HCDN-KPI-092
+KPI-HCDN-0284,SQL batch success measure 0284,Compliance,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00285,exclusions to confirm,SRC-HCDN-KPI-093
+KPI-HCDN-0285,Epic extract latency measure 0285,Provider Network,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00286,latency to confirm,SRC-HCDN-KPI-094
+KPI-HCDN-0286,Azure use-case adoption measure 0286,Value-Based Care,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00287,regulatory use,SRC-HCDN-KPI-095
+KPI-HCDN-0287,AWS transformation readiness measure 0287,Clinical Operations,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00288,contractual incentive use,SRC-HCDN-KPI-096
+KPI-HCDN-0288,Star Rating overall measure 0288,Revenue Cycle,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00289,numerator in source,SRC-HCDN-KPI-001
+KPI-HCDN-0289,Medication adherence measure 0289,Patient Access,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00290,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0290,Diabetes HbA1c control measure 0290,Interoperability,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00291,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0291,Breast cancer screening measure 0291,Population Health,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00292,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0292,CAHPS getting care quickly measure 0292,Health Plan Operations,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00293,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0293,RAF coding completeness measure 0293,Medicare Advantage,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00294,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0294,Encounter submission acceptance measure 0294,Claims Operations,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00295,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0295,Care-gap closure measure 0295,Utilization Management,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00296,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0296,Readmission rate measure 0296,Member Services,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00297,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0297,Length of stay measure 0297,Quality and Stars,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00298,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0298,ED throughput measure 0298,Risk Adjustment,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00299,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0299,Surgery utilization measure 0299,Care Management,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00300,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0300,Bed occupancy measure 0300,Finance,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00301,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0301,Referral leakage measure 0301,Coding,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00302,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0302,Prior-auth turnaround measure 0302,Payer Contracting,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00303,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0303,Denial rate measure 0303,Digital Front Door,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00304,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0304,Clean-claim rate measure 0304,Contact Center,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00305,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0305,Days in A/R measure 0305,Ambulatory Care,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00306,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0306,Contact-center service level measure 0306,Emergency Department,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00307,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0307,Member retention measure 0307,Inpatient,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00308,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0308,Provider-directory accuracy measure 0308,Surgery,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00309,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0309,Network adequacy measure 0309,Imaging,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00310,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0310,Claims leakage measure 0310,Lab,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00311,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0311,Medical cost trend measure 0311,Pharmacy,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00312,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0312,Quality incentive attainment measure 0312,Oncology,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00313,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0313,Digital adoption measure 0313,Cardiology,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00314,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0314,Patient access cycle time measure 0314,Data and Analytics,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00315,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0315,Platform availability measure 0315,Clinical Analytics,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00316,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0316,SQL batch success measure 0316,Actuarial,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00317,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0317,Epic extract latency measure 0317,Departmental Reporting,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00318,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0318,Azure use-case adoption measure 0318,AI Transformation,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00319,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0319,AWS transformation readiness measure 0319,Technology,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00320,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0320,Star Rating overall measure 0320,Security,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00321,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0321,Medication adherence measure 0321,Procurement,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00322,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0322,Diabetes HbA1c control measure 0322,HR,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00323,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0323,Breast cancer screening measure 0323,Supply Chain,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00324,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0324,CAHPS getting care quickly measure 0324,Privacy,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00325,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0325,RAF coding completeness measure 0325,Compliance,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00326,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0326,Encounter submission acceptance measure 0326,Provider Network,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00327,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0327,Care-gap closure measure 0327,Value-Based Care,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00328,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0328,Readmission rate measure 0328,Clinical Operations,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00329,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0329,Length of stay measure 0329,Revenue Cycle,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00330,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0330,ED throughput measure 0330,Patient Access,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00331,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0331,Surgery utilization measure 0331,Interoperability,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00332,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0332,Bed occupancy measure 0332,Population Health,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00333,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0333,Referral leakage measure 0333,Health Plan Operations,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00334,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0334,Prior-auth turnaround measure 0334,Medicare Advantage,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00335,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0335,Denial rate measure 0335,Claims Operations,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00336,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0336,Clean-claim rate measure 0336,Utilization Management,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00337,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0337,Days in A/R measure 0337,Member Services,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00338,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0338,Contact-center service level measure 0338,Quality and Stars,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00339,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0339,Member retention measure 0339,Risk Adjustment,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00340,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0340,Provider-directory accuracy measure 0340,Care Management,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00341,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0341,Network adequacy measure 0341,Finance,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00342,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0342,Claims leakage measure 0342,Coding,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00343,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0343,Medical cost trend measure 0343,Payer Contracting,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00344,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0344,Quality incentive attainment measure 0344,Digital Front Door,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00345,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0345,Digital adoption measure 0345,Contact Center,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00346,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0346,Patient access cycle time measure 0346,Ambulatory Care,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00347,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0347,Platform availability measure 0347,Emergency Department,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00348,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0348,SQL batch success measure 0348,Inpatient,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00349,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0349,Epic extract latency measure 0349,Surgery,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00350,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0350,Azure use-case adoption measure 0350,Imaging,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00351,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0351,AWS transformation readiness measure 0351,Lab,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00352,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0352,Star Rating overall measure 0352,Pharmacy,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00353,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0353,Medication adherence measure 0353,Oncology,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00354,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0354,Diabetes HbA1c control measure 0354,Cardiology,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00355,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0355,Breast cancer screening measure 0355,Data and Analytics,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00356,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0356,CAHPS getting care quickly measure 0356,Clinical Analytics,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00357,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0357,RAF coding completeness measure 0357,Actuarial,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00358,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0358,Encounter submission acceptance measure 0358,Departmental Reporting,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00359,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0359,Care-gap closure measure 0359,AI Transformation,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00360,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0360,Readmission rate measure 0360,Technology,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00361,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0361,Length of stay measure 0361,Security,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00362,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0362,ED throughput measure 0362,Procurement,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00363,exclusions to confirm,SRC-HCDN-KPI-075
+KPI-HCDN-0363,Surgery utilization measure 0363,HR,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00364,latency to confirm,SRC-HCDN-KPI-076
+KPI-HCDN-0364,Bed occupancy measure 0364,Supply Chain,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00365,regulatory use,SRC-HCDN-KPI-077
+KPI-HCDN-0365,Referral leakage measure 0365,Privacy,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00366,contractual incentive use,SRC-HCDN-KPI-078
+KPI-HCDN-0366,Prior-auth turnaround measure 0366,Compliance,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00367,numerator in source,SRC-HCDN-KPI-079
+KPI-HCDN-0367,Denial rate measure 0367,Provider Network,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00368,denominator in source,SRC-HCDN-KPI-080
+KPI-HCDN-0368,Clean-claim rate measure 0368,Value-Based Care,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00369,exclusions to confirm,SRC-HCDN-KPI-081
+KPI-HCDN-0369,Days in A/R measure 0369,Clinical Operations,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00370,latency to confirm,SRC-HCDN-KPI-082
+KPI-HCDN-0370,Contact-center service level measure 0370,Revenue Cycle,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00371,regulatory use,SRC-HCDN-KPI-083
+KPI-HCDN-0371,Member retention measure 0371,Patient Access,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00372,contractual incentive use,SRC-HCDN-KPI-084
+KPI-HCDN-0372,Provider-directory accuracy measure 0372,Interoperability,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00373,numerator in source,SRC-HCDN-KPI-085
+KPI-HCDN-0373,Network adequacy measure 0373,Population Health,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00374,denominator in source,SRC-HCDN-KPI-086
+KPI-HCDN-0374,Claims leakage measure 0374,Health Plan Operations,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00375,exclusions to confirm,SRC-HCDN-KPI-087
+KPI-HCDN-0375,Medical cost trend measure 0375,Medicare Advantage,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00376,latency to confirm,SRC-HCDN-KPI-088
+KPI-HCDN-0376,Quality incentive attainment measure 0376,Claims Operations,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00377,regulatory use,SRC-HCDN-KPI-089
+KPI-HCDN-0377,Digital adoption measure 0377,Utilization Management,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00378,contractual incentive use,SRC-HCDN-KPI-090
+KPI-HCDN-0378,Patient access cycle time measure 0378,Member Services,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00379,numerator in source,SRC-HCDN-KPI-091
+KPI-HCDN-0379,Platform availability measure 0379,Quality and Stars,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00380,denominator in source,SRC-HCDN-KPI-092
+KPI-HCDN-0380,SQL batch success measure 0380,Risk Adjustment,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00381,exclusions to confirm,SRC-HCDN-KPI-093
+KPI-HCDN-0381,Epic extract latency measure 0381,Care Management,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00382,latency to confirm,SRC-HCDN-KPI-094
+KPI-HCDN-0382,Azure use-case adoption measure 0382,Finance,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00383,regulatory use,SRC-HCDN-KPI-095
+KPI-HCDN-0383,AWS transformation readiness measure 0383,Coding,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00384,contractual incentive use,SRC-HCDN-KPI-096
+KPI-HCDN-0384,Star Rating overall measure 0384,Payer Contracting,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00385,numerator in source,SRC-HCDN-KPI-001
+KPI-HCDN-0385,Medication adherence measure 0385,Digital Front Door,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00386,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0386,Diabetes HbA1c control measure 0386,Contact Center,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00387,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0387,Breast cancer screening measure 0387,Ambulatory Care,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00388,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0388,CAHPS getting care quickly measure 0388,Emergency Department,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00389,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0389,RAF coding completeness measure 0389,Inpatient,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00390,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0390,Encounter submission acceptance measure 0390,Surgery,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00391,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0391,Care-gap closure measure 0391,Imaging,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00392,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0392,Readmission rate measure 0392,Lab,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00393,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0393,Length of stay measure 0393,Pharmacy,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00394,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0394,ED throughput measure 0394,Oncology,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00395,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0395,Surgery utilization measure 0395,Cardiology,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00396,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0396,Bed occupancy measure 0396,Data and Analytics,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00397,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0397,Referral leakage measure 0397,Clinical Analytics,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00398,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0398,Prior-auth turnaround measure 0398,Actuarial,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00399,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0399,Denial rate measure 0399,Departmental Reporting,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00400,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0400,Clean-claim rate measure 0400,AI Transformation,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00401,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0401,Days in A/R measure 0401,Technology,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00402,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0402,Contact-center service level measure 0402,Security,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00403,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0403,Member retention measure 0403,Procurement,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00404,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0404,Provider-directory accuracy measure 0404,HR,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00405,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0405,Network adequacy measure 0405,Supply Chain,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00406,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0406,Claims leakage measure 0406,Privacy,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00407,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0407,Medical cost trend measure 0407,Compliance,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00408,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0408,Quality incentive attainment measure 0408,Provider Network,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00409,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0409,Digital adoption measure 0409,Value-Based Care,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00410,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0410,Patient access cycle time measure 0410,Clinical Operations,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00411,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0411,Platform availability measure 0411,Revenue Cycle,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00412,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0412,SQL batch success measure 0412,Patient Access,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00413,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0413,Epic extract latency measure 0413,Interoperability,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00414,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0414,Azure use-case adoption measure 0414,Population Health,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00415,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0415,AWS transformation readiness measure 0415,Health Plan Operations,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00416,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0416,Star Rating overall measure 0416,Medicare Advantage,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00417,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0417,Medication adherence measure 0417,Claims Operations,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00418,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0418,Diabetes HbA1c control measure 0418,Utilization Management,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00419,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0419,Breast cancer screening measure 0419,Member Services,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00420,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0420,CAHPS getting care quickly measure 0420,Quality and Stars,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00421,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0421,RAF coding completeness measure 0421,Risk Adjustment,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00422,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0422,Encounter submission acceptance measure 0422,Care Management,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00423,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0423,Care-gap closure measure 0423,Finance,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00424,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0424,Readmission rate measure 0424,Coding,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00425,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0425,Length of stay measure 0425,Payer Contracting,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00426,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0426,ED throughput measure 0426,Digital Front Door,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00427,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0427,Surgery utilization measure 0427,Contact Center,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00428,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0428,Bed occupancy measure 0428,Ambulatory Care,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00429,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0429,Referral leakage measure 0429,Emergency Department,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00430,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0430,Prior-auth turnaround measure 0430,Inpatient,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00431,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0431,Denial rate measure 0431,Surgery,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00432,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0432,Clean-claim rate measure 0432,Imaging,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00433,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0433,Days in A/R measure 0433,Lab,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00434,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0434,Contact-center service level measure 0434,Pharmacy,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00435,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0435,Member retention measure 0435,Oncology,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00436,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0436,Provider-directory accuracy measure 0436,Cardiology,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00437,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0437,Network adequacy measure 0437,Data and Analytics,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00438,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0438,Claims leakage measure 0438,Clinical Analytics,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00439,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0439,Medical cost trend measure 0439,Actuarial,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00440,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0440,Quality incentive attainment measure 0440,Departmental Reporting,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00441,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0441,Digital adoption measure 0441,AI Transformation,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00442,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0442,Patient access cycle time measure 0442,Technology,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00443,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0443,Platform availability measure 0443,Security,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00444,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0444,SQL batch success measure 0444,Procurement,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00445,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0445,Epic extract latency measure 0445,HR,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00446,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0446,Azure use-case adoption measure 0446,Supply Chain,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00447,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0447,AWS transformation readiness measure 0447,Privacy,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00448,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0448,Star Rating overall measure 0448,Compliance,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00449,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0449,Medication adherence measure 0449,Provider Network,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00450,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0450,Diabetes HbA1c control measure 0450,Value-Based Care,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00451,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0451,Breast cancer screening measure 0451,Clinical Operations,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00452,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0452,CAHPS getting care quickly measure 0452,Revenue Cycle,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00453,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0453,RAF coding completeness measure 0453,Patient Access,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00454,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0454,Encounter submission acceptance measure 0454,Interoperability,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00455,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0455,Care-gap closure measure 0455,Population Health,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00456,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0456,Readmission rate measure 0456,Health Plan Operations,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00457,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0457,Length of stay measure 0457,Medicare Advantage,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00458,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0458,ED throughput measure 0458,Claims Operations,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00459,exclusions to confirm,SRC-HCDN-KPI-075
+KPI-HCDN-0459,Surgery utilization measure 0459,Utilization Management,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00460,latency to confirm,SRC-HCDN-KPI-076
+KPI-HCDN-0460,Bed occupancy measure 0460,Member Services,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00461,regulatory use,SRC-HCDN-KPI-077
+KPI-HCDN-0461,Referral leakage measure 0461,Quality and Stars,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00462,contractual incentive use,SRC-HCDN-KPI-078
+KPI-HCDN-0462,Prior-auth turnaround measure 0462,Risk Adjustment,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00463,numerator in source,SRC-HCDN-KPI-079
+KPI-HCDN-0463,Denial rate measure 0463,Care Management,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00464,denominator in source,SRC-HCDN-KPI-080
+KPI-HCDN-0464,Clean-claim rate measure 0464,Finance,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00465,exclusions to confirm,SRC-HCDN-KPI-081
+KPI-HCDN-0465,Days in A/R measure 0465,Coding,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00466,latency to confirm,SRC-HCDN-KPI-082
+KPI-HCDN-0466,Contact-center service level measure 0466,Payer Contracting,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00467,regulatory use,SRC-HCDN-KPI-083
+KPI-HCDN-0467,Member retention measure 0467,Digital Front Door,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00468,contractual incentive use,SRC-HCDN-KPI-084
+KPI-HCDN-0468,Provider-directory accuracy measure 0468,Contact Center,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00469,numerator in source,SRC-HCDN-KPI-085
+KPI-HCDN-0469,Network adequacy measure 0469,Ambulatory Care,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00470,denominator in source,SRC-HCDN-KPI-086
+KPI-HCDN-0470,Claims leakage measure 0470,Emergency Department,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00471,exclusions to confirm,SRC-HCDN-KPI-087
+KPI-HCDN-0471,Medical cost trend measure 0471,Inpatient,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00472,latency to confirm,SRC-HCDN-KPI-088
+KPI-HCDN-0472,Quality incentive attainment measure 0472,Surgery,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00473,regulatory use,SRC-HCDN-KPI-089
+KPI-HCDN-0473,Digital adoption measure 0473,Imaging,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00474,contractual incentive use,SRC-HCDN-KPI-090
+KPI-HCDN-0474,Patient access cycle time measure 0474,Lab,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00475,numerator in source,SRC-HCDN-KPI-091
+KPI-HCDN-0475,Platform availability measure 0475,Pharmacy,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00476,denominator in source,SRC-HCDN-KPI-092
+KPI-HCDN-0476,SQL batch success measure 0476,Oncology,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00477,exclusions to confirm,SRC-HCDN-KPI-093
+KPI-HCDN-0477,Epic extract latency measure 0477,Cardiology,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00478,latency to confirm,SRC-HCDN-KPI-094
+KPI-HCDN-0478,Azure use-case adoption measure 0478,Data and Analytics,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00479,regulatory use,SRC-HCDN-KPI-095
+KPI-HCDN-0479,AWS transformation readiness measure 0479,Clinical Analytics,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00480,contractual incentive use,SRC-HCDN-KPI-096
+KPI-HCDN-0480,Star Rating overall measure 0480,Actuarial,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00481,numerator in source,SRC-HCDN-KPI-001
+KPI-HCDN-0481,Medication adherence measure 0481,Departmental Reporting,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00482,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0482,Diabetes HbA1c control measure 0482,AI Transformation,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00483,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0483,Breast cancer screening measure 0483,Technology,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00484,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0484,CAHPS getting care quickly measure 0484,Security,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00485,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0485,RAF coding completeness measure 0485,Procurement,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00486,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0486,Encounter submission acceptance measure 0486,HR,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00487,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0487,Care-gap closure measure 0487,Supply Chain,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00488,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0488,Readmission rate measure 0488,Privacy,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00489,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0489,Length of stay measure 0489,Compliance,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00490,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0490,ED throughput measure 0490,Provider Network,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00491,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0491,Surgery utilization measure 0491,Value-Based Care,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00492,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0492,Bed occupancy measure 0492,Clinical Operations,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00493,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0493,Referral leakage measure 0493,Revenue Cycle,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00494,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0494,Prior-auth turnaround measure 0494,Patient Access,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00495,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0495,Denial rate measure 0495,Interoperability,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00496,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0496,Clean-claim rate measure 0496,Population Health,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00497,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0497,Days in A/R measure 0497,Health Plan Operations,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00498,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0498,Contact-center service level measure 0498,Medicare Advantage,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00499,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0499,Member retention measure 0499,Claims Operations,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00500,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0500,Provider-directory accuracy measure 0500,Utilization Management,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00501,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0501,Network adequacy measure 0501,Member Services,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00502,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0502,Claims leakage measure 0502,Quality and Stars,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00503,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0503,Medical cost trend measure 0503,Risk Adjustment,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00504,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0504,Quality incentive attainment measure 0504,Care Management,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00505,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0505,Digital adoption measure 0505,Finance,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00506,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0506,Patient access cycle time measure 0506,Coding,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00507,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0507,Platform availability measure 0507,Payer Contracting,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00508,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0508,SQL batch success measure 0508,Digital Front Door,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00509,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0509,Epic extract latency measure 0509,Contact Center,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00510,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0510,Azure use-case adoption measure 0510,Ambulatory Care,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00511,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0511,AWS transformation readiness measure 0511,Emergency Department,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00512,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0512,Star Rating overall measure 0512,Inpatient,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00513,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0513,Medication adherence measure 0513,Surgery,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00514,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0514,Diabetes HbA1c control measure 0514,Imaging,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00515,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0515,Breast cancer screening measure 0515,Lab,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00516,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0516,CAHPS getting care quickly measure 0516,Pharmacy,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00517,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0517,RAF coding completeness measure 0517,Oncology,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00518,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0518,Encounter submission acceptance measure 0518,Cardiology,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00519,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0519,Care-gap closure measure 0519,Data and Analytics,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00520,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0520,Readmission rate measure 0520,Clinical Analytics,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00521,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0521,Length of stay measure 0521,Actuarial,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00522,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0522,ED throughput measure 0522,Departmental Reporting,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00523,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0523,Surgery utilization measure 0523,AI Transformation,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00524,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0524,Bed occupancy measure 0524,Technology,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00525,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0525,Referral leakage measure 0525,Security,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00526,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0526,Prior-auth turnaround measure 0526,Procurement,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00527,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0527,Denial rate measure 0527,HR,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00528,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0528,Clean-claim rate measure 0528,Supply Chain,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00529,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0529,Days in A/R measure 0529,Privacy,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00530,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0530,Contact-center service level measure 0530,Compliance,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00531,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0531,Member retention measure 0531,Provider Network,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00532,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0532,Provider-directory accuracy measure 0532,Value-Based Care,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00533,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0533,Network adequacy measure 0533,Clinical Operations,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00534,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0534,Claims leakage measure 0534,Revenue Cycle,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00535,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0535,Medical cost trend measure 0535,Patient Access,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00536,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0536,Quality incentive attainment measure 0536,Interoperability,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00537,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0537,Digital adoption measure 0537,Population Health,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00538,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0538,Patient access cycle time measure 0538,Health Plan Operations,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00539,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0539,Platform availability measure 0539,Medicare Advantage,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00540,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0540,SQL batch success measure 0540,Claims Operations,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00541,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0541,Epic extract latency measure 0541,Utilization Management,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00542,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0542,Azure use-case adoption measure 0542,Member Services,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00543,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0543,AWS transformation readiness measure 0543,Quality and Stars,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00544,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0544,Star Rating overall measure 0544,Risk Adjustment,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00545,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0545,Medication adherence measure 0545,Care Management,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00546,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0546,Diabetes HbA1c control measure 0546,Finance,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00547,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0547,Breast cancer screening measure 0547,Coding,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00548,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0548,CAHPS getting care quickly measure 0548,Payer Contracting,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00549,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0549,RAF coding completeness measure 0549,Digital Front Door,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00550,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0550,Encounter submission acceptance measure 0550,Contact Center,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00551,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0551,Care-gap closure measure 0551,Ambulatory Care,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00552,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0552,Readmission rate measure 0552,Emergency Department,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00553,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0553,Length of stay measure 0553,Inpatient,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00554,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0554,ED throughput measure 0554,Surgery,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00555,exclusions to confirm,SRC-HCDN-KPI-075
+KPI-HCDN-0555,Surgery utilization measure 0555,Imaging,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00556,latency to confirm,SRC-HCDN-KPI-076
+KPI-HCDN-0556,Bed occupancy measure 0556,Lab,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00557,regulatory use,SRC-HCDN-KPI-077
+KPI-HCDN-0557,Referral leakage measure 0557,Pharmacy,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00558,contractual incentive use,SRC-HCDN-KPI-078
+KPI-HCDN-0558,Prior-auth turnaround measure 0558,Oncology,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00559,numerator in source,SRC-HCDN-KPI-079
+KPI-HCDN-0559,Denial rate measure 0559,Cardiology,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00560,denominator in source,SRC-HCDN-KPI-080
+KPI-HCDN-0560,Clean-claim rate measure 0560,Data and Analytics,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00561,exclusions to confirm,SRC-HCDN-KPI-081
+KPI-HCDN-0561,Days in A/R measure 0561,Clinical Analytics,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00562,latency to confirm,SRC-HCDN-KPI-082
+KPI-HCDN-0562,Contact-center service level measure 0562,Actuarial,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00563,regulatory use,SRC-HCDN-KPI-083
+KPI-HCDN-0563,Member retention measure 0563,Departmental Reporting,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00564,contractual incentive use,SRC-HCDN-KPI-084
+KPI-HCDN-0564,Provider-directory accuracy measure 0564,AI Transformation,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00565,numerator in source,SRC-HCDN-KPI-085
+KPI-HCDN-0565,Network adequacy measure 0565,Technology,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00566,denominator in source,SRC-HCDN-KPI-086
+KPI-HCDN-0566,Claims leakage measure 0566,Security,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00567,exclusions to confirm,SRC-HCDN-KPI-087
+KPI-HCDN-0567,Medical cost trend measure 0567,Procurement,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00568,latency to confirm,SRC-HCDN-KPI-088
+KPI-HCDN-0568,Quality incentive attainment measure 0568,HR,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00569,regulatory use,SRC-HCDN-KPI-089
+KPI-HCDN-0569,Digital adoption measure 0569,Supply Chain,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00570,contractual incentive use,SRC-HCDN-KPI-090
+KPI-HCDN-0570,Patient access cycle time measure 0570,Privacy,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00571,numerator in source,SRC-HCDN-KPI-091
+KPI-HCDN-0571,Platform availability measure 0571,Compliance,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00572,denominator in source,SRC-HCDN-KPI-092
+KPI-HCDN-0572,SQL batch success measure 0572,Provider Network,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00573,exclusions to confirm,SRC-HCDN-KPI-093
+KPI-HCDN-0573,Epic extract latency measure 0573,Value-Based Care,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00574,latency to confirm,SRC-HCDN-KPI-094
+KPI-HCDN-0574,Azure use-case adoption measure 0574,Clinical Operations,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00575,regulatory use,SRC-HCDN-KPI-095
+KPI-HCDN-0575,AWS transformation readiness measure 0575,Revenue Cycle,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00576,contractual incentive use,SRC-HCDN-KPI-096
+KPI-HCDN-0576,Star Rating overall measure 0576,Patient Access,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00577,numerator in source,SRC-HCDN-KPI-001
+KPI-HCDN-0577,Medication adherence measure 0577,Interoperability,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00578,denominator in source,SRC-HCDN-KPI-002
+KPI-HCDN-0578,Diabetes HbA1c control measure 0578,Population Health,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00579,exclusions to confirm,SRC-HCDN-KPI-003
+KPI-HCDN-0579,Breast cancer screening measure 0579,Health Plan Operations,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00580,latency to confirm,SRC-HCDN-KPI-004
+KPI-HCDN-0580,CAHPS getting care quickly measure 0580,Medicare Advantage,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00581,regulatory use,SRC-HCDN-KPI-005
+KPI-HCDN-0581,RAF coding completeness measure 0581,Claims Operations,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00582,contractual incentive use,SRC-HCDN-KPI-006
+KPI-HCDN-0582,Encounter submission acceptance measure 0582,Utilization Management,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00583,numerator in source,SRC-HCDN-KPI-007
+KPI-HCDN-0583,Care-gap closure measure 0583,Member Services,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00584,denominator in source,SRC-HCDN-KPI-008
+KPI-HCDN-0584,Readmission rate measure 0584,Quality and Stars,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00585,exclusions to confirm,SRC-HCDN-KPI-009
+KPI-HCDN-0585,Length of stay measure 0585,Risk Adjustment,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00586,latency to confirm,SRC-HCDN-KPI-010
+KPI-HCDN-0586,ED throughput measure 0586,Care Management,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00587,regulatory use,SRC-HCDN-KPI-011
+KPI-HCDN-0587,Surgery utilization measure 0587,Finance,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00588,contractual incentive use,SRC-HCDN-KPI-012
+KPI-HCDN-0588,Bed occupancy measure 0588,Coding,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00589,numerator in source,SRC-HCDN-KPI-013
+KPI-HCDN-0589,Referral leakage measure 0589,Payer Contracting,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00590,denominator in source,SRC-HCDN-KPI-014
+KPI-HCDN-0590,Prior-auth turnaround measure 0590,Digital Front Door,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00591,exclusions to confirm,SRC-HCDN-KPI-015
+KPI-HCDN-0591,Denial rate measure 0591,Contact Center,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00592,latency to confirm,SRC-HCDN-KPI-016
+KPI-HCDN-0592,Clean-claim rate measure 0592,Ambulatory Care,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00593,regulatory use,SRC-HCDN-KPI-017
+KPI-HCDN-0593,Days in A/R measure 0593,Emergency Department,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00594,contractual incentive use,SRC-HCDN-KPI-018
+KPI-HCDN-0594,Contact-center service level measure 0594,Inpatient,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00595,numerator in source,SRC-HCDN-KPI-019
+KPI-HCDN-0595,Member retention measure 0595,Surgery,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00596,denominator in source,SRC-HCDN-KPI-020
+KPI-HCDN-0596,Provider-directory accuracy measure 0596,Imaging,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00597,exclusions to confirm,SRC-HCDN-KPI-021
+KPI-HCDN-0597,Network adequacy measure 0597,Lab,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00598,latency to confirm,SRC-HCDN-KPI-022
+KPI-HCDN-0598,Claims leakage measure 0598,Pharmacy,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00599,regulatory use,SRC-HCDN-KPI-023
+KPI-HCDN-0599,Medical cost trend measure 0599,Oncology,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00600,contractual incentive use,SRC-HCDN-KPI-024
+KPI-HCDN-0600,Quality incentive attainment measure 0600,Cardiology,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00601,numerator in source,SRC-HCDN-KPI-025
+KPI-HCDN-0601,Digital adoption measure 0601,Data and Analytics,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00602,denominator in source,SRC-HCDN-KPI-026
+KPI-HCDN-0602,Patient access cycle time measure 0602,Clinical Analytics,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00603,exclusions to confirm,SRC-HCDN-KPI-027
+KPI-HCDN-0603,Platform availability measure 0603,Actuarial,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00604,latency to confirm,SRC-HCDN-KPI-028
+KPI-HCDN-0604,SQL batch success measure 0604,Departmental Reporting,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00605,regulatory use,SRC-HCDN-KPI-029
+KPI-HCDN-0605,Epic extract latency measure 0605,AI Transformation,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00606,contractual incentive use,SRC-HCDN-KPI-030
+KPI-HCDN-0606,Azure use-case adoption measure 0606,Technology,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00607,numerator in source,SRC-HCDN-KPI-031
+KPI-HCDN-0607,AWS transformation readiness measure 0607,Security,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00608,denominator in source,SRC-HCDN-KPI-032
+KPI-HCDN-0608,Star Rating overall measure 0608,Procurement,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00609,exclusions to confirm,SRC-HCDN-KPI-033
+KPI-HCDN-0609,Medication adherence measure 0609,HR,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00610,latency to confirm,SRC-HCDN-KPI-034
+KPI-HCDN-0610,Diabetes HbA1c control measure 0610,Supply Chain,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00611,regulatory use,SRC-HCDN-KPI-035
+KPI-HCDN-0611,Breast cancer screening measure 0611,Privacy,Exchange,range,binary gate,industry pattern only,DATA-HCDN-00612,contractual incentive use,SRC-HCDN-KPI-036
+KPI-HCDN-0612,CAHPS getting care quickly measure 0612,Compliance,Employer group,indexed,higher is better,source-backed candidate,DATA-HCDN-00613,numerator in source,SRC-HCDN-KPI-037
+KPI-HCDN-0613,RAF coding completeness measure 0613,Provider Network,Dual eligible,trend-only,lower is better,needs owner signoff,DATA-HCDN-00614,denominator in source,SRC-HCDN-KPI-038
+KPI-HCDN-0614,Encounter submission acceptance measure 0614,Value-Based Care,Specialty/supplemental,withheld,within threshold,conflicting source,DATA-HCDN-00615,exclusions to confirm,SRC-HCDN-KPI-039
+KPI-HCDN-0615,Care-gap closure measure 0615,Clinical Operations,Provider enterprise,exact,binary gate,industry pattern only,DATA-HCDN-00616,latency to confirm,SRC-HCDN-KPI-040
+KPI-HCDN-0616,Readmission rate measure 0616,Revenue Cycle,Medicare Advantage,range,higher is better,source-backed candidate,DATA-HCDN-00617,regulatory use,SRC-HCDN-KPI-041
+KPI-HCDN-0617,Length of stay measure 0617,Patient Access,Commercial,indexed,lower is better,needs owner signoff,DATA-HCDN-00618,contractual incentive use,SRC-HCDN-KPI-042
+KPI-HCDN-0618,ED throughput measure 0618,Interoperability,Medicaid,trend-only,within threshold,conflicting source,DATA-HCDN-00619,numerator in source,SRC-HCDN-KPI-043
+KPI-HCDN-0619,Surgery utilization measure 0619,Population Health,Exchange,withheld,binary gate,industry pattern only,DATA-HCDN-00620,denominator in source,SRC-HCDN-KPI-044
+KPI-HCDN-0620,Bed occupancy measure 0620,Health Plan Operations,Employer group,exact,higher is better,source-backed candidate,DATA-HCDN-00621,exclusions to confirm,SRC-HCDN-KPI-045
+KPI-HCDN-0621,Referral leakage measure 0621,Medicare Advantage,Dual eligible,range,lower is better,needs owner signoff,DATA-HCDN-00622,latency to confirm,SRC-HCDN-KPI-046
+KPI-HCDN-0622,Prior-auth turnaround measure 0622,Claims Operations,Specialty/supplemental,indexed,within threshold,conflicting source,DATA-HCDN-00623,regulatory use,SRC-HCDN-KPI-047
+KPI-HCDN-0623,Denial rate measure 0623,Utilization Management,Provider enterprise,trend-only,binary gate,industry pattern only,DATA-HCDN-00624,contractual incentive use,SRC-HCDN-KPI-048
+KPI-HCDN-0624,Clean-claim rate measure 0624,Member Services,Medicare Advantage,withheld,higher is better,source-backed candidate,DATA-HCDN-00625,numerator in source,SRC-HCDN-KPI-049
+KPI-HCDN-0625,Days in A/R measure 0625,Quality and Stars,Commercial,exact,lower is better,needs owner signoff,DATA-HCDN-00626,denominator in source,SRC-HCDN-KPI-050
+KPI-HCDN-0626,Contact-center service level measure 0626,Risk Adjustment,Medicaid,range,within threshold,conflicting source,DATA-HCDN-00627,exclusions to confirm,SRC-HCDN-KPI-051
+KPI-HCDN-0627,Member retention measure 0627,Care Management,Exchange,indexed,binary gate,industry pattern only,DATA-HCDN-00628,latency to confirm,SRC-HCDN-KPI-052
+KPI-HCDN-0628,Provider-directory accuracy measure 0628,Finance,Employer group,trend-only,higher is better,source-backed candidate,DATA-HCDN-00629,regulatory use,SRC-HCDN-KPI-053
+KPI-HCDN-0629,Network adequacy measure 0629,Coding,Dual eligible,withheld,lower is better,needs owner signoff,DATA-HCDN-00630,contractual incentive use,SRC-HCDN-KPI-054
+KPI-HCDN-0630,Claims leakage measure 0630,Payer Contracting,Specialty/supplemental,exact,within threshold,conflicting source,DATA-HCDN-00631,numerator in source,SRC-HCDN-KPI-055
+KPI-HCDN-0631,Medical cost trend measure 0631,Digital Front Door,Provider enterprise,range,binary gate,industry pattern only,DATA-HCDN-00632,denominator in source,SRC-HCDN-KPI-056
+KPI-HCDN-0632,Quality incentive attainment measure 0632,Contact Center,Medicare Advantage,indexed,higher is better,source-backed candidate,DATA-HCDN-00633,exclusions to confirm,SRC-HCDN-KPI-057
+KPI-HCDN-0633,Digital adoption measure 0633,Ambulatory Care,Commercial,trend-only,lower is better,needs owner signoff,DATA-HCDN-00634,latency to confirm,SRC-HCDN-KPI-058
+KPI-HCDN-0634,Patient access cycle time measure 0634,Emergency Department,Medicaid,withheld,within threshold,conflicting source,DATA-HCDN-00635,regulatory use,SRC-HCDN-KPI-059
+KPI-HCDN-0635,Platform availability measure 0635,Inpatient,Exchange,exact,binary gate,industry pattern only,DATA-HCDN-00636,contractual incentive use,SRC-HCDN-KPI-060
+KPI-HCDN-0636,SQL batch success measure 0636,Surgery,Employer group,range,higher is better,source-backed candidate,DATA-HCDN-00637,numerator in source,SRC-HCDN-KPI-061
+KPI-HCDN-0637,Epic extract latency measure 0637,Imaging,Dual eligible,indexed,lower is better,needs owner signoff,DATA-HCDN-00638,denominator in source,SRC-HCDN-KPI-062
+KPI-HCDN-0638,Azure use-case adoption measure 0638,Lab,Specialty/supplemental,trend-only,within threshold,conflicting source,DATA-HCDN-00639,exclusions to confirm,SRC-HCDN-KPI-063
+KPI-HCDN-0639,AWS transformation readiness measure 0639,Pharmacy,Provider enterprise,withheld,binary gate,industry pattern only,DATA-HCDN-00640,latency to confirm,SRC-HCDN-KPI-064
+KPI-HCDN-0640,Star Rating overall measure 0640,Oncology,Medicare Advantage,exact,higher is better,source-backed candidate,DATA-HCDN-00641,regulatory use,SRC-HCDN-KPI-065
+KPI-HCDN-0641,Medication adherence measure 0641,Cardiology,Commercial,range,lower is better,needs owner signoff,DATA-HCDN-00642,contractual incentive use,SRC-HCDN-KPI-066
+KPI-HCDN-0642,Diabetes HbA1c control measure 0642,Data and Analytics,Medicaid,indexed,within threshold,conflicting source,DATA-HCDN-00643,numerator in source,SRC-HCDN-KPI-067
+KPI-HCDN-0643,Breast cancer screening measure 0643,Clinical Analytics,Exchange,trend-only,binary gate,industry pattern only,DATA-HCDN-00644,denominator in source,SRC-HCDN-KPI-068
+KPI-HCDN-0644,CAHPS getting care quickly measure 0644,Actuarial,Employer group,withheld,higher is better,source-backed candidate,DATA-HCDN-00645,exclusions to confirm,SRC-HCDN-KPI-069
+KPI-HCDN-0645,RAF coding completeness measure 0645,Departmental Reporting,Dual eligible,exact,lower is better,needs owner signoff,DATA-HCDN-00646,latency to confirm,SRC-HCDN-KPI-070
+KPI-HCDN-0646,Encounter submission acceptance measure 0646,AI Transformation,Specialty/supplemental,range,within threshold,conflicting source,DATA-HCDN-00647,regulatory use,SRC-HCDN-KPI-071
+KPI-HCDN-0647,Care-gap closure measure 0647,Technology,Provider enterprise,indexed,binary gate,industry pattern only,DATA-HCDN-00648,contractual incentive use,SRC-HCDN-KPI-072
+KPI-HCDN-0648,Readmission rate measure 0648,Security,Medicare Advantage,trend-only,higher is better,source-backed candidate,DATA-HCDN-00649,numerator in source,SRC-HCDN-KPI-073
+KPI-HCDN-0649,Length of stay measure 0649,Procurement,Commercial,withheld,lower is better,needs owner signoff,DATA-HCDN-00650,denominator in source,SRC-HCDN-KPI-074
+KPI-HCDN-0650,ED throughput measure 0650,HR,Medicaid,exact,within threshold,conflicting source,DATA-HCDN-00651,exclusions to confirm,SRC-HCDN-KPI-075

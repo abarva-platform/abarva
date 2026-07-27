@@ -1,0 +1,28 @@
+response_id,proposal_id,lot_id,service_tower,bidder,response_summary,risk_or_exception,source_id
+RESP-HCDN-LOT-HCDN-01-A-001,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,Clinical and Epic AMS,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-01-B-001,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,Clinical and Epic AMS,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-01-C-001,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,Clinical and Epic AMS,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-02-A-001,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,Payer Platform Operations,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-02-B-001,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,Payer Platform Operations,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-02-C-001,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,Payer Platform Operations,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-03-A-001,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,Data Analytics and AI,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-03-B-001,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,Data Analytics and AI,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-03-C-001,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,Data Analytics and AI,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-04-A-001,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,Revenue Cycle Technology,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-04-B-001,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,Revenue Cycle Technology,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-04-C-001,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,Revenue Cycle Technology,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-05-A-001,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,Cloud Infrastructure and Data Center,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-05-B-001,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,Cloud Infrastructure and Data Center,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-05-C-001,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,Cloud Infrastructure and Data Center,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-06-A-001,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,Workplace and Contact Center,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-06-B-001,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,Workplace and Contact Center,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-06-C-001,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,Workplace and Contact Center,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-07-A-001,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,Security Identity and Compliance,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-07-B-001,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,Security Identity and Compliance,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-07-C-001,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,Security Identity and Compliance,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-08-A-001,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,Integration and Interoperability,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-08-B-001,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,Integration and Interoperability,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-08-C-001,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,Integration and Interoperability,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C
+RESP-HCDN-LOT-HCDN-09-A-001,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,ERP and Corporate Platforms,A,continuity-led operating model,slower modernization,SRC-HCDN-PROP-A
+RESP-HCDN-LOT-HCDN-09-B-001,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,ERP and Corporate Platforms,B,automation and transformation-led operating model,higher transition dependency,SRC-HCDN-PROP-B
+RESP-HCDN-LOT-HCDN-09-C-001,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,ERP and Corporate Platforms,C,hybrid risk-balanced operating model,governance intensity,SRC-HCDN-PROP-C

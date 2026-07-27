@@ -1,0 +1,4 @@
+layer,visibility,contains,must_not_contain
+parser_visible_source_corpus,parser and reviewer,"client-style extracts, docs and ambiguous evidence",restricted canonical answers
+hidden_canonical_truth,restricted evaluator only,known synthetic truth and expected reconstruction,model-visible prompt context
+source_to_truth_crosswalk,restricted evaluator only,expected mapping from source facts to truth IDs,product runtime context

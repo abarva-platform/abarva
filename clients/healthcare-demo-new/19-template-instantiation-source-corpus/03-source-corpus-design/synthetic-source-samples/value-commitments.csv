@@ -1,0 +1,136 @@
+value_commitment_id,proposal_id,lot_id,bidder,value_lever,value_disclosure_mode,evidence_state
+VALUE-HCDN-LOT-HCDN-01-A-01,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-01-A-02,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-01-A-03,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-01-A-04,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-01-A-05,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-01-B-01,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-01-B-02,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-01-B-03,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-01-B-04,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-01-B-05,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-01-C-01,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-01-C-02,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-01-C-03,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-01-C-04,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-01-C-05,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-02-A-01,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-02-A-02,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-02-A-03,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-02-A-04,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-02-A-05,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-02-B-01,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-02-B-02,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-02-B-03,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-02-B-04,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-02-B-05,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-02-C-01,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-02-C-02,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-02-C-03,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-02-C-04,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-02-C-05,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-03-A-01,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-03-A-02,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-03-A-03,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-03-A-04,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-03-A-05,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-03-B-01,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-03-B-02,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-03-B-03,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-03-B-04,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-03-B-05,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-03-C-01,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-03-C-02,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-03-C-03,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-03-C-04,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-03-C-05,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-04-A-01,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-04-A-02,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-04-A-03,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-04-A-04,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-04-A-05,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-04-B-01,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-04-B-02,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-04-B-03,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-04-B-04,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-04-B-05,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-04-C-01,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-04-C-02,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-04-C-03,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-04-C-04,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-04-C-05,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-05-A-01,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-05-A-02,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-05-A-03,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-05-A-04,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-05-A-05,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-05-B-01,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-05-B-02,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-05-B-03,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-05-B-04,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-05-B-05,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-05-C-01,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-05-C-02,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-05-C-03,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-05-C-04,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-05-C-05,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-06-A-01,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-06-A-02,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-06-A-03,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-06-A-04,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-06-A-05,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-06-B-01,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-06-B-02,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-06-B-03,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-06-B-04,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-06-B-05,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-06-C-01,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-06-C-02,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-06-C-03,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-06-C-04,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-06-C-05,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-07-A-01,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-07-A-02,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-07-A-03,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-07-A-04,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-07-A-05,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-07-B-01,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-07-B-02,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-07-B-03,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-07-B-04,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-07-B-05,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-07-C-01,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-07-C-02,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-07-C-03,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-07-C-04,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-07-C-05,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-08-A-01,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-08-A-02,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-08-A-03,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-08-A-04,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-08-A-05,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-08-B-01,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-08-B-02,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-08-B-03,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-08-B-04,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-08-B-05,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-08-C-01,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-08-C-02,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-08-C-03,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-08-C-04,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-08-C-05,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-09-A-01,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-09-A-02,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-09-A-03,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-09-A-04,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-09-A-05,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-09-B-01,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-09-B-02,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-09-B-03,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-09-B-04,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-09-B-05,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,run-cost reduction,range,assumption dependent
+VALUE-HCDN-LOT-HCDN-09-C-01,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,quality uplift enablement,range,source-backed candidate
+VALUE-HCDN-LOT-HCDN-09-C-02,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,cycle-time reduction,indexed,assumption dependent
+VALUE-HCDN-LOT-HCDN-09-C-03,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,automation productivity,trend-only,finance review needed
+VALUE-HCDN-LOT-HCDN-09-C-04,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,incident reduction,exact,source-backed candidate
+VALUE-HCDN-LOT-HCDN-09-C-05,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,run-cost reduction,range,assumption dependent

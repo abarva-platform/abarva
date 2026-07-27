@@ -1,0 +1,781 @@
+risk_id,risk_name,business_function,severity,response,linked_control_id
+RISK-HCDN-0001,RAF evidence gap,Revenue Cycle,high,monitor,CTRL-HCDN-0002
+RISK-HCDN-0002,PHI/privacy exposure,Patient Access,medium,accept pending evidence,CTRL-HCDN-0003
+RISK-HCDN-0003,claims leakage,Interoperability,low,requires executive decision,CTRL-HCDN-0004
+RISK-HCDN-0004,prior-auth SLA breach,Population Health,critical,mitigate,CTRL-HCDN-0005
+RISK-HCDN-0005,provider-directory inaccuracy,Health Plan Operations,high,monitor,CTRL-HCDN-0006
+RISK-HCDN-0006,SQL Server end-of-life,Medicare Advantage,medium,accept pending evidence,CTRL-HCDN-0007
+RISK-HCDN-0007,measure definition conflict,Claims Operations,low,requires executive decision,CTRL-HCDN-0008
+RISK-HCDN-0008,cloud cost overrun,Utilization Management,critical,mitigate,CTRL-HCDN-0009
+RISK-HCDN-0009,vendor concentration,Member Services,high,monitor,CTRL-HCDN-0010
+RISK-HCDN-0010,Epic upgrade disruption,Quality and Stars,medium,accept pending evidence,CTRL-HCDN-0011
+RISK-HCDN-0011,AWS/Azure operating-model conflict,Risk Adjustment,low,requires executive decision,CTRL-HCDN-0012
+RISK-HCDN-0012,Star Rating degradation,Care Management,critical,mitigate,CTRL-HCDN-0013
+RISK-HCDN-0013,RAF evidence gap,Finance,high,monitor,CTRL-HCDN-0014
+RISK-HCDN-0014,PHI/privacy exposure,Coding,medium,accept pending evidence,CTRL-HCDN-0015
+RISK-HCDN-0015,claims leakage,Payer Contracting,low,requires executive decision,CTRL-HCDN-0016
+RISK-HCDN-0016,prior-auth SLA breach,Digital Front Door,critical,mitigate,CTRL-HCDN-0017
+RISK-HCDN-0017,provider-directory inaccuracy,Contact Center,high,monitor,CTRL-HCDN-0018
+RISK-HCDN-0018,SQL Server end-of-life,Ambulatory Care,medium,accept pending evidence,CTRL-HCDN-0019
+RISK-HCDN-0019,measure definition conflict,Emergency Department,low,requires executive decision,CTRL-HCDN-0020
+RISK-HCDN-0020,cloud cost overrun,Inpatient,critical,mitigate,CTRL-HCDN-0021
+RISK-HCDN-0021,vendor concentration,Surgery,high,monitor,CTRL-HCDN-0022
+RISK-HCDN-0022,Epic upgrade disruption,Imaging,medium,accept pending evidence,CTRL-HCDN-0023
+RISK-HCDN-0023,AWS/Azure operating-model conflict,Lab,low,requires executive decision,CTRL-HCDN-0024
+RISK-HCDN-0024,Star Rating degradation,Pharmacy,critical,mitigate,CTRL-HCDN-0025
+RISK-HCDN-0025,RAF evidence gap,Oncology,high,monitor,CTRL-HCDN-0026
+RISK-HCDN-0026,PHI/privacy exposure,Cardiology,medium,accept pending evidence,CTRL-HCDN-0027
+RISK-HCDN-0027,claims leakage,Data and Analytics,low,requires executive decision,CTRL-HCDN-0028
+RISK-HCDN-0028,prior-auth SLA breach,Clinical Analytics,critical,mitigate,CTRL-HCDN-0029
+RISK-HCDN-0029,provider-directory inaccuracy,Actuarial,high,monitor,CTRL-HCDN-0030
+RISK-HCDN-0030,SQL Server end-of-life,Departmental Reporting,medium,accept pending evidence,CTRL-HCDN-0031
+RISK-HCDN-0031,measure definition conflict,AI Transformation,low,requires executive decision,CTRL-HCDN-0032
+RISK-HCDN-0032,cloud cost overrun,Technology,critical,mitigate,CTRL-HCDN-0033
+RISK-HCDN-0033,vendor concentration,Security,high,monitor,CTRL-HCDN-0034
+RISK-HCDN-0034,Epic upgrade disruption,Procurement,medium,accept pending evidence,CTRL-HCDN-0035
+RISK-HCDN-0035,AWS/Azure operating-model conflict,HR,low,requires executive decision,CTRL-HCDN-0036
+RISK-HCDN-0036,Star Rating degradation,Supply Chain,critical,mitigate,CTRL-HCDN-0037
+RISK-HCDN-0037,RAF evidence gap,Privacy,high,monitor,CTRL-HCDN-0038
+RISK-HCDN-0038,PHI/privacy exposure,Compliance,medium,accept pending evidence,CTRL-HCDN-0039
+RISK-HCDN-0039,claims leakage,Provider Network,low,requires executive decision,CTRL-HCDN-0040
+RISK-HCDN-0040,prior-auth SLA breach,Value-Based Care,critical,mitigate,CTRL-HCDN-0041
+RISK-HCDN-0041,provider-directory inaccuracy,Clinical Operations,high,monitor,CTRL-HCDN-0042
+RISK-HCDN-0042,SQL Server end-of-life,Revenue Cycle,medium,accept pending evidence,CTRL-HCDN-0043
+RISK-HCDN-0043,measure definition conflict,Patient Access,low,requires executive decision,CTRL-HCDN-0044
+RISK-HCDN-0044,cloud cost overrun,Interoperability,critical,mitigate,CTRL-HCDN-0045
+RISK-HCDN-0045,vendor concentration,Population Health,high,monitor,CTRL-HCDN-0046
+RISK-HCDN-0046,Epic upgrade disruption,Health Plan Operations,medium,accept pending evidence,CTRL-HCDN-0047
+RISK-HCDN-0047,AWS/Azure operating-model conflict,Medicare Advantage,low,requires executive decision,CTRL-HCDN-0048
+RISK-HCDN-0048,Star Rating degradation,Claims Operations,critical,mitigate,CTRL-HCDN-0049
+RISK-HCDN-0049,RAF evidence gap,Utilization Management,high,monitor,CTRL-HCDN-0050
+RISK-HCDN-0050,PHI/privacy exposure,Member Services,medium,accept pending evidence,CTRL-HCDN-0051
+RISK-HCDN-0051,claims leakage,Quality and Stars,low,requires executive decision,CTRL-HCDN-0052
+RISK-HCDN-0052,prior-auth SLA breach,Risk Adjustment,critical,mitigate,CTRL-HCDN-0053
+RISK-HCDN-0053,provider-directory inaccuracy,Care Management,high,monitor,CTRL-HCDN-0054
+RISK-HCDN-0054,SQL Server end-of-life,Finance,medium,accept pending evidence,CTRL-HCDN-0055
+RISK-HCDN-0055,measure definition conflict,Coding,low,requires executive decision,CTRL-HCDN-0056
+RISK-HCDN-0056,cloud cost overrun,Payer Contracting,critical,mitigate,CTRL-HCDN-0057
+RISK-HCDN-0057,vendor concentration,Digital Front Door,high,monitor,CTRL-HCDN-0058
+RISK-HCDN-0058,Epic upgrade disruption,Contact Center,medium,accept pending evidence,CTRL-HCDN-0059
+RISK-HCDN-0059,AWS/Azure operating-model conflict,Ambulatory Care,low,requires executive decision,CTRL-HCDN-0060
+RISK-HCDN-0060,Star Rating degradation,Emergency Department,critical,mitigate,CTRL-HCDN-0061
+RISK-HCDN-0061,RAF evidence gap,Inpatient,high,monitor,CTRL-HCDN-0062
+RISK-HCDN-0062,PHI/privacy exposure,Surgery,medium,accept pending evidence,CTRL-HCDN-0063
+RISK-HCDN-0063,claims leakage,Imaging,low,requires executive decision,CTRL-HCDN-0064
+RISK-HCDN-0064,prior-auth SLA breach,Lab,critical,mitigate,CTRL-HCDN-0065
+RISK-HCDN-0065,provider-directory inaccuracy,Pharmacy,high,monitor,CTRL-HCDN-0066
+RISK-HCDN-0066,SQL Server end-of-life,Oncology,medium,accept pending evidence,CTRL-HCDN-0067
+RISK-HCDN-0067,measure definition conflict,Cardiology,low,requires executive decision,CTRL-HCDN-0068
+RISK-HCDN-0068,cloud cost overrun,Data and Analytics,critical,mitigate,CTRL-HCDN-0069
+RISK-HCDN-0069,vendor concentration,Clinical Analytics,high,monitor,CTRL-HCDN-0070
+RISK-HCDN-0070,Epic upgrade disruption,Actuarial,medium,accept pending evidence,CTRL-HCDN-0071
+RISK-HCDN-0071,AWS/Azure operating-model conflict,Departmental Reporting,low,requires executive decision,CTRL-HCDN-0072
+RISK-HCDN-0072,Star Rating degradation,AI Transformation,critical,mitigate,CTRL-HCDN-0073
+RISK-HCDN-0073,RAF evidence gap,Technology,high,monitor,CTRL-HCDN-0074
+RISK-HCDN-0074,PHI/privacy exposure,Security,medium,accept pending evidence,CTRL-HCDN-0075
+RISK-HCDN-0075,claims leakage,Procurement,low,requires executive decision,CTRL-HCDN-0076
+RISK-HCDN-0076,prior-auth SLA breach,HR,critical,mitigate,CTRL-HCDN-0077
+RISK-HCDN-0077,provider-directory inaccuracy,Supply Chain,high,monitor,CTRL-HCDN-0078
+RISK-HCDN-0078,SQL Server end-of-life,Privacy,medium,accept pending evidence,CTRL-HCDN-0079
+RISK-HCDN-0079,measure definition conflict,Compliance,low,requires executive decision,CTRL-HCDN-0080
+RISK-HCDN-0080,cloud cost overrun,Provider Network,critical,mitigate,CTRL-HCDN-0081
+RISK-HCDN-0081,vendor concentration,Value-Based Care,high,monitor,CTRL-HCDN-0082
+RISK-HCDN-0082,Epic upgrade disruption,Clinical Operations,medium,accept pending evidence,CTRL-HCDN-0083
+RISK-HCDN-0083,AWS/Azure operating-model conflict,Revenue Cycle,low,requires executive decision,CTRL-HCDN-0084
+RISK-HCDN-0084,Star Rating degradation,Patient Access,critical,mitigate,CTRL-HCDN-0085
+RISK-HCDN-0085,RAF evidence gap,Interoperability,high,monitor,CTRL-HCDN-0086
+RISK-HCDN-0086,PHI/privacy exposure,Population Health,medium,accept pending evidence,CTRL-HCDN-0087
+RISK-HCDN-0087,claims leakage,Health Plan Operations,low,requires executive decision,CTRL-HCDN-0088
+RISK-HCDN-0088,prior-auth SLA breach,Medicare Advantage,critical,mitigate,CTRL-HCDN-0089
+RISK-HCDN-0089,provider-directory inaccuracy,Claims Operations,high,monitor,CTRL-HCDN-0090
+RISK-HCDN-0090,SQL Server end-of-life,Utilization Management,medium,accept pending evidence,CTRL-HCDN-0091
+RISK-HCDN-0091,measure definition conflict,Member Services,low,requires executive decision,CTRL-HCDN-0092
+RISK-HCDN-0092,cloud cost overrun,Quality and Stars,critical,mitigate,CTRL-HCDN-0093
+RISK-HCDN-0093,vendor concentration,Risk Adjustment,high,monitor,CTRL-HCDN-0094
+RISK-HCDN-0094,Epic upgrade disruption,Care Management,medium,accept pending evidence,CTRL-HCDN-0095
+RISK-HCDN-0095,AWS/Azure operating-model conflict,Finance,low,requires executive decision,CTRL-HCDN-0096
+RISK-HCDN-0096,Star Rating degradation,Coding,critical,mitigate,CTRL-HCDN-0097
+RISK-HCDN-0097,RAF evidence gap,Payer Contracting,high,monitor,CTRL-HCDN-0098
+RISK-HCDN-0098,PHI/privacy exposure,Digital Front Door,medium,accept pending evidence,CTRL-HCDN-0099
+RISK-HCDN-0099,claims leakage,Contact Center,low,requires executive decision,CTRL-HCDN-0100
+RISK-HCDN-0100,prior-auth SLA breach,Ambulatory Care,critical,mitigate,CTRL-HCDN-0101
+RISK-HCDN-0101,provider-directory inaccuracy,Emergency Department,high,monitor,CTRL-HCDN-0102
+RISK-HCDN-0102,SQL Server end-of-life,Inpatient,medium,accept pending evidence,CTRL-HCDN-0103
+RISK-HCDN-0103,measure definition conflict,Surgery,low,requires executive decision,CTRL-HCDN-0104
+RISK-HCDN-0104,cloud cost overrun,Imaging,critical,mitigate,CTRL-HCDN-0105
+RISK-HCDN-0105,vendor concentration,Lab,high,monitor,CTRL-HCDN-0106
+RISK-HCDN-0106,Epic upgrade disruption,Pharmacy,medium,accept pending evidence,CTRL-HCDN-0107
+RISK-HCDN-0107,AWS/Azure operating-model conflict,Oncology,low,requires executive decision,CTRL-HCDN-0108
+RISK-HCDN-0108,Star Rating degradation,Cardiology,critical,mitigate,CTRL-HCDN-0109
+RISK-HCDN-0109,RAF evidence gap,Data and Analytics,high,monitor,CTRL-HCDN-0110
+RISK-HCDN-0110,PHI/privacy exposure,Clinical Analytics,medium,accept pending evidence,CTRL-HCDN-0111
+RISK-HCDN-0111,claims leakage,Actuarial,low,requires executive decision,CTRL-HCDN-0112
+RISK-HCDN-0112,prior-auth SLA breach,Departmental Reporting,critical,mitigate,CTRL-HCDN-0113
+RISK-HCDN-0113,provider-directory inaccuracy,AI Transformation,high,monitor,CTRL-HCDN-0114
+RISK-HCDN-0114,SQL Server end-of-life,Technology,medium,accept pending evidence,CTRL-HCDN-0115
+RISK-HCDN-0115,measure definition conflict,Security,low,requires executive decision,CTRL-HCDN-0116
+RISK-HCDN-0116,cloud cost overrun,Procurement,critical,mitigate,CTRL-HCDN-0117
+RISK-HCDN-0117,vendor concentration,HR,high,monitor,CTRL-HCDN-0118
+RISK-HCDN-0118,Epic upgrade disruption,Supply Chain,medium,accept pending evidence,CTRL-HCDN-0119
+RISK-HCDN-0119,AWS/Azure operating-model conflict,Privacy,low,requires executive decision,CTRL-HCDN-0120
+RISK-HCDN-0120,Star Rating degradation,Compliance,critical,mitigate,CTRL-HCDN-0121
+RISK-HCDN-0121,RAF evidence gap,Provider Network,high,monitor,CTRL-HCDN-0122
+RISK-HCDN-0122,PHI/privacy exposure,Value-Based Care,medium,accept pending evidence,CTRL-HCDN-0123
+RISK-HCDN-0123,claims leakage,Clinical Operations,low,requires executive decision,CTRL-HCDN-0124
+RISK-HCDN-0124,prior-auth SLA breach,Revenue Cycle,critical,mitigate,CTRL-HCDN-0125
+RISK-HCDN-0125,provider-directory inaccuracy,Patient Access,high,monitor,CTRL-HCDN-0126
+RISK-HCDN-0126,SQL Server end-of-life,Interoperability,medium,accept pending evidence,CTRL-HCDN-0127
+RISK-HCDN-0127,measure definition conflict,Population Health,low,requires executive decision,CTRL-HCDN-0128
+RISK-HCDN-0128,cloud cost overrun,Health Plan Operations,critical,mitigate,CTRL-HCDN-0129
+RISK-HCDN-0129,vendor concentration,Medicare Advantage,high,monitor,CTRL-HCDN-0130
+RISK-HCDN-0130,Epic upgrade disruption,Claims Operations,medium,accept pending evidence,CTRL-HCDN-0131
+RISK-HCDN-0131,AWS/Azure operating-model conflict,Utilization Management,low,requires executive decision,CTRL-HCDN-0132
+RISK-HCDN-0132,Star Rating degradation,Member Services,critical,mitigate,CTRL-HCDN-0133
+RISK-HCDN-0133,RAF evidence gap,Quality and Stars,high,monitor,CTRL-HCDN-0134
+RISK-HCDN-0134,PHI/privacy exposure,Risk Adjustment,medium,accept pending evidence,CTRL-HCDN-0135
+RISK-HCDN-0135,claims leakage,Care Management,low,requires executive decision,CTRL-HCDN-0136
+RISK-HCDN-0136,prior-auth SLA breach,Finance,critical,mitigate,CTRL-HCDN-0137
+RISK-HCDN-0137,provider-directory inaccuracy,Coding,high,monitor,CTRL-HCDN-0138
+RISK-HCDN-0138,SQL Server end-of-life,Payer Contracting,medium,accept pending evidence,CTRL-HCDN-0139
+RISK-HCDN-0139,measure definition conflict,Digital Front Door,low,requires executive decision,CTRL-HCDN-0140
+RISK-HCDN-0140,cloud cost overrun,Contact Center,critical,mitigate,CTRL-HCDN-0141
+RISK-HCDN-0141,vendor concentration,Ambulatory Care,high,monitor,CTRL-HCDN-0142
+RISK-HCDN-0142,Epic upgrade disruption,Emergency Department,medium,accept pending evidence,CTRL-HCDN-0143
+RISK-HCDN-0143,AWS/Azure operating-model conflict,Inpatient,low,requires executive decision,CTRL-HCDN-0144
+RISK-HCDN-0144,Star Rating degradation,Surgery,critical,mitigate,CTRL-HCDN-0145
+RISK-HCDN-0145,RAF evidence gap,Imaging,high,monitor,CTRL-HCDN-0146
+RISK-HCDN-0146,PHI/privacy exposure,Lab,medium,accept pending evidence,CTRL-HCDN-0147
+RISK-HCDN-0147,claims leakage,Pharmacy,low,requires executive decision,CTRL-HCDN-0148
+RISK-HCDN-0148,prior-auth SLA breach,Oncology,critical,mitigate,CTRL-HCDN-0149
+RISK-HCDN-0149,provider-directory inaccuracy,Cardiology,high,monitor,CTRL-HCDN-0150
+RISK-HCDN-0150,SQL Server end-of-life,Data and Analytics,medium,accept pending evidence,CTRL-HCDN-0151
+RISK-HCDN-0151,measure definition conflict,Clinical Analytics,low,requires executive decision,CTRL-HCDN-0152
+RISK-HCDN-0152,cloud cost overrun,Actuarial,critical,mitigate,CTRL-HCDN-0153
+RISK-HCDN-0153,vendor concentration,Departmental Reporting,high,monitor,CTRL-HCDN-0154
+RISK-HCDN-0154,Epic upgrade disruption,AI Transformation,medium,accept pending evidence,CTRL-HCDN-0155
+RISK-HCDN-0155,AWS/Azure operating-model conflict,Technology,low,requires executive decision,CTRL-HCDN-0156
+RISK-HCDN-0156,Star Rating degradation,Security,critical,mitigate,CTRL-HCDN-0157
+RISK-HCDN-0157,RAF evidence gap,Procurement,high,monitor,CTRL-HCDN-0158
+RISK-HCDN-0158,PHI/privacy exposure,HR,medium,accept pending evidence,CTRL-HCDN-0159
+RISK-HCDN-0159,claims leakage,Supply Chain,low,requires executive decision,CTRL-HCDN-0160
+RISK-HCDN-0160,prior-auth SLA breach,Privacy,critical,mitigate,CTRL-HCDN-0161
+RISK-HCDN-0161,provider-directory inaccuracy,Compliance,high,monitor,CTRL-HCDN-0162
+RISK-HCDN-0162,SQL Server end-of-life,Provider Network,medium,accept pending evidence,CTRL-HCDN-0163
+RISK-HCDN-0163,measure definition conflict,Value-Based Care,low,requires executive decision,CTRL-HCDN-0164
+RISK-HCDN-0164,cloud cost overrun,Clinical Operations,critical,mitigate,CTRL-HCDN-0165
+RISK-HCDN-0165,vendor concentration,Revenue Cycle,high,monitor,CTRL-HCDN-0166
+RISK-HCDN-0166,Epic upgrade disruption,Patient Access,medium,accept pending evidence,CTRL-HCDN-0167
+RISK-HCDN-0167,AWS/Azure operating-model conflict,Interoperability,low,requires executive decision,CTRL-HCDN-0168
+RISK-HCDN-0168,Star Rating degradation,Population Health,critical,mitigate,CTRL-HCDN-0169
+RISK-HCDN-0169,RAF evidence gap,Health Plan Operations,high,monitor,CTRL-HCDN-0170
+RISK-HCDN-0170,PHI/privacy exposure,Medicare Advantage,medium,accept pending evidence,CTRL-HCDN-0171
+RISK-HCDN-0171,claims leakage,Claims Operations,low,requires executive decision,CTRL-HCDN-0172
+RISK-HCDN-0172,prior-auth SLA breach,Utilization Management,critical,mitigate,CTRL-HCDN-0173
+RISK-HCDN-0173,provider-directory inaccuracy,Member Services,high,monitor,CTRL-HCDN-0174
+RISK-HCDN-0174,SQL Server end-of-life,Quality and Stars,medium,accept pending evidence,CTRL-HCDN-0175
+RISK-HCDN-0175,measure definition conflict,Risk Adjustment,low,requires executive decision,CTRL-HCDN-0176
+RISK-HCDN-0176,cloud cost overrun,Care Management,critical,mitigate,CTRL-HCDN-0177
+RISK-HCDN-0177,vendor concentration,Finance,high,monitor,CTRL-HCDN-0178
+RISK-HCDN-0178,Epic upgrade disruption,Coding,medium,accept pending evidence,CTRL-HCDN-0179
+RISK-HCDN-0179,AWS/Azure operating-model conflict,Payer Contracting,low,requires executive decision,CTRL-HCDN-0180
+RISK-HCDN-0180,Star Rating degradation,Digital Front Door,critical,mitigate,CTRL-HCDN-0181
+RISK-HCDN-0181,RAF evidence gap,Contact Center,high,monitor,CTRL-HCDN-0182
+RISK-HCDN-0182,PHI/privacy exposure,Ambulatory Care,medium,accept pending evidence,CTRL-HCDN-0183
+RISK-HCDN-0183,claims leakage,Emergency Department,low,requires executive decision,CTRL-HCDN-0184
+RISK-HCDN-0184,prior-auth SLA breach,Inpatient,critical,mitigate,CTRL-HCDN-0185
+RISK-HCDN-0185,provider-directory inaccuracy,Surgery,high,monitor,CTRL-HCDN-0186
+RISK-HCDN-0186,SQL Server end-of-life,Imaging,medium,accept pending evidence,CTRL-HCDN-0187
+RISK-HCDN-0187,measure definition conflict,Lab,low,requires executive decision,CTRL-HCDN-0188
+RISK-HCDN-0188,cloud cost overrun,Pharmacy,critical,mitigate,CTRL-HCDN-0189
+RISK-HCDN-0189,vendor concentration,Oncology,high,monitor,CTRL-HCDN-0190
+RISK-HCDN-0190,Epic upgrade disruption,Cardiology,medium,accept pending evidence,CTRL-HCDN-0191
+RISK-HCDN-0191,AWS/Azure operating-model conflict,Data and Analytics,low,requires executive decision,CTRL-HCDN-0192
+RISK-HCDN-0192,Star Rating degradation,Clinical Analytics,critical,mitigate,CTRL-HCDN-0193
+RISK-HCDN-0193,RAF evidence gap,Actuarial,high,monitor,CTRL-HCDN-0194
+RISK-HCDN-0194,PHI/privacy exposure,Departmental Reporting,medium,accept pending evidence,CTRL-HCDN-0195
+RISK-HCDN-0195,claims leakage,AI Transformation,low,requires executive decision,CTRL-HCDN-0196
+RISK-HCDN-0196,prior-auth SLA breach,Technology,critical,mitigate,CTRL-HCDN-0197
+RISK-HCDN-0197,provider-directory inaccuracy,Security,high,monitor,CTRL-HCDN-0198
+RISK-HCDN-0198,SQL Server end-of-life,Procurement,medium,accept pending evidence,CTRL-HCDN-0199
+RISK-HCDN-0199,measure definition conflict,HR,low,requires executive decision,CTRL-HCDN-0200
+RISK-HCDN-0200,cloud cost overrun,Supply Chain,critical,mitigate,CTRL-HCDN-0201
+RISK-HCDN-0201,vendor concentration,Privacy,high,monitor,CTRL-HCDN-0202
+RISK-HCDN-0202,Epic upgrade disruption,Compliance,medium,accept pending evidence,CTRL-HCDN-0203
+RISK-HCDN-0203,AWS/Azure operating-model conflict,Provider Network,low,requires executive decision,CTRL-HCDN-0204
+RISK-HCDN-0204,Star Rating degradation,Value-Based Care,critical,mitigate,CTRL-HCDN-0205
+RISK-HCDN-0205,RAF evidence gap,Clinical Operations,high,monitor,CTRL-HCDN-0206
+RISK-HCDN-0206,PHI/privacy exposure,Revenue Cycle,medium,accept pending evidence,CTRL-HCDN-0207
+RISK-HCDN-0207,claims leakage,Patient Access,low,requires executive decision,CTRL-HCDN-0208
+RISK-HCDN-0208,prior-auth SLA breach,Interoperability,critical,mitigate,CTRL-HCDN-0209
+RISK-HCDN-0209,provider-directory inaccuracy,Population Health,high,monitor,CTRL-HCDN-0210
+RISK-HCDN-0210,SQL Server end-of-life,Health Plan Operations,medium,accept pending evidence,CTRL-HCDN-0211
+RISK-HCDN-0211,measure definition conflict,Medicare Advantage,low,requires executive decision,CTRL-HCDN-0212
+RISK-HCDN-0212,cloud cost overrun,Claims Operations,critical,mitigate,CTRL-HCDN-0213
+RISK-HCDN-0213,vendor concentration,Utilization Management,high,monitor,CTRL-HCDN-0214
+RISK-HCDN-0214,Epic upgrade disruption,Member Services,medium,accept pending evidence,CTRL-HCDN-0215
+RISK-HCDN-0215,AWS/Azure operating-model conflict,Quality and Stars,low,requires executive decision,CTRL-HCDN-0216
+RISK-HCDN-0216,Star Rating degradation,Risk Adjustment,critical,mitigate,CTRL-HCDN-0217
+RISK-HCDN-0217,RAF evidence gap,Care Management,high,monitor,CTRL-HCDN-0218
+RISK-HCDN-0218,PHI/privacy exposure,Finance,medium,accept pending evidence,CTRL-HCDN-0219
+RISK-HCDN-0219,claims leakage,Coding,low,requires executive decision,CTRL-HCDN-0220
+RISK-HCDN-0220,prior-auth SLA breach,Payer Contracting,critical,mitigate,CTRL-HCDN-0221
+RISK-HCDN-0221,provider-directory inaccuracy,Digital Front Door,high,monitor,CTRL-HCDN-0222
+RISK-HCDN-0222,SQL Server end-of-life,Contact Center,medium,accept pending evidence,CTRL-HCDN-0223
+RISK-HCDN-0223,measure definition conflict,Ambulatory Care,low,requires executive decision,CTRL-HCDN-0224
+RISK-HCDN-0224,cloud cost overrun,Emergency Department,critical,mitigate,CTRL-HCDN-0225
+RISK-HCDN-0225,vendor concentration,Inpatient,high,monitor,CTRL-HCDN-0226
+RISK-HCDN-0226,Epic upgrade disruption,Surgery,medium,accept pending evidence,CTRL-HCDN-0227
+RISK-HCDN-0227,AWS/Azure operating-model conflict,Imaging,low,requires executive decision,CTRL-HCDN-0228
+RISK-HCDN-0228,Star Rating degradation,Lab,critical,mitigate,CTRL-HCDN-0229
+RISK-HCDN-0229,RAF evidence gap,Pharmacy,high,monitor,CTRL-HCDN-0230
+RISK-HCDN-0230,PHI/privacy exposure,Oncology,medium,accept pending evidence,CTRL-HCDN-0231
+RISK-HCDN-0231,claims leakage,Cardiology,low,requires executive decision,CTRL-HCDN-0232
+RISK-HCDN-0232,prior-auth SLA breach,Data and Analytics,critical,mitigate,CTRL-HCDN-0233
+RISK-HCDN-0233,provider-directory inaccuracy,Clinical Analytics,high,monitor,CTRL-HCDN-0234
+RISK-HCDN-0234,SQL Server end-of-life,Actuarial,medium,accept pending evidence,CTRL-HCDN-0235
+RISK-HCDN-0235,measure definition conflict,Departmental Reporting,low,requires executive decision,CTRL-HCDN-0236
+RISK-HCDN-0236,cloud cost overrun,AI Transformation,critical,mitigate,CTRL-HCDN-0237
+RISK-HCDN-0237,vendor concentration,Technology,high,monitor,CTRL-HCDN-0238
+RISK-HCDN-0238,Epic upgrade disruption,Security,medium,accept pending evidence,CTRL-HCDN-0239
+RISK-HCDN-0239,AWS/Azure operating-model conflict,Procurement,low,requires executive decision,CTRL-HCDN-0240
+RISK-HCDN-0240,Star Rating degradation,HR,critical,mitigate,CTRL-HCDN-0241
+RISK-HCDN-0241,RAF evidence gap,Supply Chain,high,monitor,CTRL-HCDN-0242
+RISK-HCDN-0242,PHI/privacy exposure,Privacy,medium,accept pending evidence,CTRL-HCDN-0243
+RISK-HCDN-0243,claims leakage,Compliance,low,requires executive decision,CTRL-HCDN-0244
+RISK-HCDN-0244,prior-auth SLA breach,Provider Network,critical,mitigate,CTRL-HCDN-0245
+RISK-HCDN-0245,provider-directory inaccuracy,Value-Based Care,high,monitor,CTRL-HCDN-0246
+RISK-HCDN-0246,SQL Server end-of-life,Clinical Operations,medium,accept pending evidence,CTRL-HCDN-0247
+RISK-HCDN-0247,measure definition conflict,Revenue Cycle,low,requires executive decision,CTRL-HCDN-0248
+RISK-HCDN-0248,cloud cost overrun,Patient Access,critical,mitigate,CTRL-HCDN-0249
+RISK-HCDN-0249,vendor concentration,Interoperability,high,monitor,CTRL-HCDN-0250
+RISK-HCDN-0250,Epic upgrade disruption,Population Health,medium,accept pending evidence,CTRL-HCDN-0251
+RISK-HCDN-0251,AWS/Azure operating-model conflict,Health Plan Operations,low,requires executive decision,CTRL-HCDN-0252
+RISK-HCDN-0252,Star Rating degradation,Medicare Advantage,critical,mitigate,CTRL-HCDN-0253
+RISK-HCDN-0253,RAF evidence gap,Claims Operations,high,monitor,CTRL-HCDN-0254
+RISK-HCDN-0254,PHI/privacy exposure,Utilization Management,medium,accept pending evidence,CTRL-HCDN-0255
+RISK-HCDN-0255,claims leakage,Member Services,low,requires executive decision,CTRL-HCDN-0256
+RISK-HCDN-0256,prior-auth SLA breach,Quality and Stars,critical,mitigate,CTRL-HCDN-0257
+RISK-HCDN-0257,provider-directory inaccuracy,Risk Adjustment,high,monitor,CTRL-HCDN-0258
+RISK-HCDN-0258,SQL Server end-of-life,Care Management,medium,accept pending evidence,CTRL-HCDN-0259
+RISK-HCDN-0259,measure definition conflict,Finance,low,requires executive decision,CTRL-HCDN-0260
+RISK-HCDN-0260,cloud cost overrun,Coding,critical,mitigate,CTRL-HCDN-0261
+RISK-HCDN-0261,vendor concentration,Payer Contracting,high,monitor,CTRL-HCDN-0262
+RISK-HCDN-0262,Epic upgrade disruption,Digital Front Door,medium,accept pending evidence,CTRL-HCDN-0263
+RISK-HCDN-0263,AWS/Azure operating-model conflict,Contact Center,low,requires executive decision,CTRL-HCDN-0264
+RISK-HCDN-0264,Star Rating degradation,Ambulatory Care,critical,mitigate,CTRL-HCDN-0265
+RISK-HCDN-0265,RAF evidence gap,Emergency Department,high,monitor,CTRL-HCDN-0266
+RISK-HCDN-0266,PHI/privacy exposure,Inpatient,medium,accept pending evidence,CTRL-HCDN-0267
+RISK-HCDN-0267,claims leakage,Surgery,low,requires executive decision,CTRL-HCDN-0268
+RISK-HCDN-0268,prior-auth SLA breach,Imaging,critical,mitigate,CTRL-HCDN-0269
+RISK-HCDN-0269,provider-directory inaccuracy,Lab,high,monitor,CTRL-HCDN-0270
+RISK-HCDN-0270,SQL Server end-of-life,Pharmacy,medium,accept pending evidence,CTRL-HCDN-0271
+RISK-HCDN-0271,measure definition conflict,Oncology,low,requires executive decision,CTRL-HCDN-0272
+RISK-HCDN-0272,cloud cost overrun,Cardiology,critical,mitigate,CTRL-HCDN-0273
+RISK-HCDN-0273,vendor concentration,Data and Analytics,high,monitor,CTRL-HCDN-0274
+RISK-HCDN-0274,Epic upgrade disruption,Clinical Analytics,medium,accept pending evidence,CTRL-HCDN-0275
+RISK-HCDN-0275,AWS/Azure operating-model conflict,Actuarial,low,requires executive decision,CTRL-HCDN-0276
+RISK-HCDN-0276,Star Rating degradation,Departmental Reporting,critical,mitigate,CTRL-HCDN-0277
+RISK-HCDN-0277,RAF evidence gap,AI Transformation,high,monitor,CTRL-HCDN-0278
+RISK-HCDN-0278,PHI/privacy exposure,Technology,medium,accept pending evidence,CTRL-HCDN-0279
+RISK-HCDN-0279,claims leakage,Security,low,requires executive decision,CTRL-HCDN-0280
+RISK-HCDN-0280,prior-auth SLA breach,Procurement,critical,mitigate,CTRL-HCDN-0281
+RISK-HCDN-0281,provider-directory inaccuracy,HR,high,monitor,CTRL-HCDN-0282
+RISK-HCDN-0282,SQL Server end-of-life,Supply Chain,medium,accept pending evidence,CTRL-HCDN-0283
+RISK-HCDN-0283,measure definition conflict,Privacy,low,requires executive decision,CTRL-HCDN-0284
+RISK-HCDN-0284,cloud cost overrun,Compliance,critical,mitigate,CTRL-HCDN-0285
+RISK-HCDN-0285,vendor concentration,Provider Network,high,monitor,CTRL-HCDN-0286
+RISK-HCDN-0286,Epic upgrade disruption,Value-Based Care,medium,accept pending evidence,CTRL-HCDN-0287
+RISK-HCDN-0287,AWS/Azure operating-model conflict,Clinical Operations,low,requires executive decision,CTRL-HCDN-0288
+RISK-HCDN-0288,Star Rating degradation,Revenue Cycle,critical,mitigate,CTRL-HCDN-0289
+RISK-HCDN-0289,RAF evidence gap,Patient Access,high,monitor,CTRL-HCDN-0290
+RISK-HCDN-0290,PHI/privacy exposure,Interoperability,medium,accept pending evidence,CTRL-HCDN-0291
+RISK-HCDN-0291,claims leakage,Population Health,low,requires executive decision,CTRL-HCDN-0292
+RISK-HCDN-0292,prior-auth SLA breach,Health Plan Operations,critical,mitigate,CTRL-HCDN-0293
+RISK-HCDN-0293,provider-directory inaccuracy,Medicare Advantage,high,monitor,CTRL-HCDN-0294
+RISK-HCDN-0294,SQL Server end-of-life,Claims Operations,medium,accept pending evidence,CTRL-HCDN-0295
+RISK-HCDN-0295,measure definition conflict,Utilization Management,low,requires executive decision,CTRL-HCDN-0296
+RISK-HCDN-0296,cloud cost overrun,Member Services,critical,mitigate,CTRL-HCDN-0297
+RISK-HCDN-0297,vendor concentration,Quality and Stars,high,monitor,CTRL-HCDN-0298
+RISK-HCDN-0298,Epic upgrade disruption,Risk Adjustment,medium,accept pending evidence,CTRL-HCDN-0299
+RISK-HCDN-0299,AWS/Azure operating-model conflict,Care Management,low,requires executive decision,CTRL-HCDN-0300
+RISK-HCDN-0300,Star Rating degradation,Finance,critical,mitigate,CTRL-HCDN-0301
+RISK-HCDN-0301,RAF evidence gap,Coding,high,monitor,CTRL-HCDN-0302
+RISK-HCDN-0302,PHI/privacy exposure,Payer Contracting,medium,accept pending evidence,CTRL-HCDN-0303
+RISK-HCDN-0303,claims leakage,Digital Front Door,low,requires executive decision,CTRL-HCDN-0304
+RISK-HCDN-0304,prior-auth SLA breach,Contact Center,critical,mitigate,CTRL-HCDN-0305
+RISK-HCDN-0305,provider-directory inaccuracy,Ambulatory Care,high,monitor,CTRL-HCDN-0306
+RISK-HCDN-0306,SQL Server end-of-life,Emergency Department,medium,accept pending evidence,CTRL-HCDN-0307
+RISK-HCDN-0307,measure definition conflict,Inpatient,low,requires executive decision,CTRL-HCDN-0308
+RISK-HCDN-0308,cloud cost overrun,Surgery,critical,mitigate,CTRL-HCDN-0309
+RISK-HCDN-0309,vendor concentration,Imaging,high,monitor,CTRL-HCDN-0310
+RISK-HCDN-0310,Epic upgrade disruption,Lab,medium,accept pending evidence,CTRL-HCDN-0311
+RISK-HCDN-0311,AWS/Azure operating-model conflict,Pharmacy,low,requires executive decision,CTRL-HCDN-0312
+RISK-HCDN-0312,Star Rating degradation,Oncology,critical,mitigate,CTRL-HCDN-0313
+RISK-HCDN-0313,RAF evidence gap,Cardiology,high,monitor,CTRL-HCDN-0314
+RISK-HCDN-0314,PHI/privacy exposure,Data and Analytics,medium,accept pending evidence,CTRL-HCDN-0315
+RISK-HCDN-0315,claims leakage,Clinical Analytics,low,requires executive decision,CTRL-HCDN-0316
+RISK-HCDN-0316,prior-auth SLA breach,Actuarial,critical,mitigate,CTRL-HCDN-0317
+RISK-HCDN-0317,provider-directory inaccuracy,Departmental Reporting,high,monitor,CTRL-HCDN-0318
+RISK-HCDN-0318,SQL Server end-of-life,AI Transformation,medium,accept pending evidence,CTRL-HCDN-0319
+RISK-HCDN-0319,measure definition conflict,Technology,low,requires executive decision,CTRL-HCDN-0320
+RISK-HCDN-0320,cloud cost overrun,Security,critical,mitigate,CTRL-HCDN-0321
+RISK-HCDN-0321,vendor concentration,Procurement,high,monitor,CTRL-HCDN-0322
+RISK-HCDN-0322,Epic upgrade disruption,HR,medium,accept pending evidence,CTRL-HCDN-0323
+RISK-HCDN-0323,AWS/Azure operating-model conflict,Supply Chain,low,requires executive decision,CTRL-HCDN-0324
+RISK-HCDN-0324,Star Rating degradation,Privacy,critical,mitigate,CTRL-HCDN-0325
+RISK-HCDN-0325,RAF evidence gap,Compliance,high,monitor,CTRL-HCDN-0326
+RISK-HCDN-0326,PHI/privacy exposure,Provider Network,medium,accept pending evidence,CTRL-HCDN-0327
+RISK-HCDN-0327,claims leakage,Value-Based Care,low,requires executive decision,CTRL-HCDN-0328
+RISK-HCDN-0328,prior-auth SLA breach,Clinical Operations,critical,mitigate,CTRL-HCDN-0329
+RISK-HCDN-0329,provider-directory inaccuracy,Revenue Cycle,high,monitor,CTRL-HCDN-0330
+RISK-HCDN-0330,SQL Server end-of-life,Patient Access,medium,accept pending evidence,CTRL-HCDN-0331
+RISK-HCDN-0331,measure definition conflict,Interoperability,low,requires executive decision,CTRL-HCDN-0332
+RISK-HCDN-0332,cloud cost overrun,Population Health,critical,mitigate,CTRL-HCDN-0333
+RISK-HCDN-0333,vendor concentration,Health Plan Operations,high,monitor,CTRL-HCDN-0334
+RISK-HCDN-0334,Epic upgrade disruption,Medicare Advantage,medium,accept pending evidence,CTRL-HCDN-0335
+RISK-HCDN-0335,AWS/Azure operating-model conflict,Claims Operations,low,requires executive decision,CTRL-HCDN-0336
+RISK-HCDN-0336,Star Rating degradation,Utilization Management,critical,mitigate,CTRL-HCDN-0337
+RISK-HCDN-0337,RAF evidence gap,Member Services,high,monitor,CTRL-HCDN-0338
+RISK-HCDN-0338,PHI/privacy exposure,Quality and Stars,medium,accept pending evidence,CTRL-HCDN-0339
+RISK-HCDN-0339,claims leakage,Risk Adjustment,low,requires executive decision,CTRL-HCDN-0340
+RISK-HCDN-0340,prior-auth SLA breach,Care Management,critical,mitigate,CTRL-HCDN-0341
+RISK-HCDN-0341,provider-directory inaccuracy,Finance,high,monitor,CTRL-HCDN-0342
+RISK-HCDN-0342,SQL Server end-of-life,Coding,medium,accept pending evidence,CTRL-HCDN-0343
+RISK-HCDN-0343,measure definition conflict,Payer Contracting,low,requires executive decision,CTRL-HCDN-0344
+RISK-HCDN-0344,cloud cost overrun,Digital Front Door,critical,mitigate,CTRL-HCDN-0345
+RISK-HCDN-0345,vendor concentration,Contact Center,high,monitor,CTRL-HCDN-0346
+RISK-HCDN-0346,Epic upgrade disruption,Ambulatory Care,medium,accept pending evidence,CTRL-HCDN-0347
+RISK-HCDN-0347,AWS/Azure operating-model conflict,Emergency Department,low,requires executive decision,CTRL-HCDN-0348
+RISK-HCDN-0348,Star Rating degradation,Inpatient,critical,mitigate,CTRL-HCDN-0349
+RISK-HCDN-0349,RAF evidence gap,Surgery,high,monitor,CTRL-HCDN-0350
+RISK-HCDN-0350,PHI/privacy exposure,Imaging,medium,accept pending evidence,CTRL-HCDN-0351
+RISK-HCDN-0351,claims leakage,Lab,low,requires executive decision,CTRL-HCDN-0352
+RISK-HCDN-0352,prior-auth SLA breach,Pharmacy,critical,mitigate,CTRL-HCDN-0353
+RISK-HCDN-0353,provider-directory inaccuracy,Oncology,high,monitor,CTRL-HCDN-0354
+RISK-HCDN-0354,SQL Server end-of-life,Cardiology,medium,accept pending evidence,CTRL-HCDN-0355
+RISK-HCDN-0355,measure definition conflict,Data and Analytics,low,requires executive decision,CTRL-HCDN-0356
+RISK-HCDN-0356,cloud cost overrun,Clinical Analytics,critical,mitigate,CTRL-HCDN-0357
+RISK-HCDN-0357,vendor concentration,Actuarial,high,monitor,CTRL-HCDN-0358
+RISK-HCDN-0358,Epic upgrade disruption,Departmental Reporting,medium,accept pending evidence,CTRL-HCDN-0359
+RISK-HCDN-0359,AWS/Azure operating-model conflict,AI Transformation,low,requires executive decision,CTRL-HCDN-0360
+RISK-HCDN-0360,Star Rating degradation,Technology,critical,mitigate,CTRL-HCDN-0361
+RISK-HCDN-0361,RAF evidence gap,Security,high,monitor,CTRL-HCDN-0362
+RISK-HCDN-0362,PHI/privacy exposure,Procurement,medium,accept pending evidence,CTRL-HCDN-0363
+RISK-HCDN-0363,claims leakage,HR,low,requires executive decision,CTRL-HCDN-0364
+RISK-HCDN-0364,prior-auth SLA breach,Supply Chain,critical,mitigate,CTRL-HCDN-0365
+RISK-HCDN-0365,provider-directory inaccuracy,Privacy,high,monitor,CTRL-HCDN-0366
+RISK-HCDN-0366,SQL Server end-of-life,Compliance,medium,accept pending evidence,CTRL-HCDN-0367
+RISK-HCDN-0367,measure definition conflict,Provider Network,low,requires executive decision,CTRL-HCDN-0368
+RISK-HCDN-0368,cloud cost overrun,Value-Based Care,critical,mitigate,CTRL-HCDN-0369
+RISK-HCDN-0369,vendor concentration,Clinical Operations,high,monitor,CTRL-HCDN-0370
+RISK-HCDN-0370,Epic upgrade disruption,Revenue Cycle,medium,accept pending evidence,CTRL-HCDN-0371
+RISK-HCDN-0371,AWS/Azure operating-model conflict,Patient Access,low,requires executive decision,CTRL-HCDN-0372
+RISK-HCDN-0372,Star Rating degradation,Interoperability,critical,mitigate,CTRL-HCDN-0373
+RISK-HCDN-0373,RAF evidence gap,Population Health,high,monitor,CTRL-HCDN-0374
+RISK-HCDN-0374,PHI/privacy exposure,Health Plan Operations,medium,accept pending evidence,CTRL-HCDN-0375
+RISK-HCDN-0375,claims leakage,Medicare Advantage,low,requires executive decision,CTRL-HCDN-0376
+RISK-HCDN-0376,prior-auth SLA breach,Claims Operations,critical,mitigate,CTRL-HCDN-0377
+RISK-HCDN-0377,provider-directory inaccuracy,Utilization Management,high,monitor,CTRL-HCDN-0378
+RISK-HCDN-0378,SQL Server end-of-life,Member Services,medium,accept pending evidence,CTRL-HCDN-0379
+RISK-HCDN-0379,measure definition conflict,Quality and Stars,low,requires executive decision,CTRL-HCDN-0380
+RISK-HCDN-0380,cloud cost overrun,Risk Adjustment,critical,mitigate,CTRL-HCDN-0381
+RISK-HCDN-0381,vendor concentration,Care Management,high,monitor,CTRL-HCDN-0382
+RISK-HCDN-0382,Epic upgrade disruption,Finance,medium,accept pending evidence,CTRL-HCDN-0383
+RISK-HCDN-0383,AWS/Azure operating-model conflict,Coding,low,requires executive decision,CTRL-HCDN-0384
+RISK-HCDN-0384,Star Rating degradation,Payer Contracting,critical,mitigate,CTRL-HCDN-0385
+RISK-HCDN-0385,RAF evidence gap,Digital Front Door,high,monitor,CTRL-HCDN-0386
+RISK-HCDN-0386,PHI/privacy exposure,Contact Center,medium,accept pending evidence,CTRL-HCDN-0387
+RISK-HCDN-0387,claims leakage,Ambulatory Care,low,requires executive decision,CTRL-HCDN-0388
+RISK-HCDN-0388,prior-auth SLA breach,Emergency Department,critical,mitigate,CTRL-HCDN-0389
+RISK-HCDN-0389,provider-directory inaccuracy,Inpatient,high,monitor,CTRL-HCDN-0390
+RISK-HCDN-0390,SQL Server end-of-life,Surgery,medium,accept pending evidence,CTRL-HCDN-0391
+RISK-HCDN-0391,measure definition conflict,Imaging,low,requires executive decision,CTRL-HCDN-0392
+RISK-HCDN-0392,cloud cost overrun,Lab,critical,mitigate,CTRL-HCDN-0393
+RISK-HCDN-0393,vendor concentration,Pharmacy,high,monitor,CTRL-HCDN-0394
+RISK-HCDN-0394,Epic upgrade disruption,Oncology,medium,accept pending evidence,CTRL-HCDN-0395
+RISK-HCDN-0395,AWS/Azure operating-model conflict,Cardiology,low,requires executive decision,CTRL-HCDN-0396
+RISK-HCDN-0396,Star Rating degradation,Data and Analytics,critical,mitigate,CTRL-HCDN-0397
+RISK-HCDN-0397,RAF evidence gap,Clinical Analytics,high,monitor,CTRL-HCDN-0398
+RISK-HCDN-0398,PHI/privacy exposure,Actuarial,medium,accept pending evidence,CTRL-HCDN-0399
+RISK-HCDN-0399,claims leakage,Departmental Reporting,low,requires executive decision,CTRL-HCDN-0400
+RISK-HCDN-0400,prior-auth SLA breach,AI Transformation,critical,mitigate,CTRL-HCDN-0401
+RISK-HCDN-0401,provider-directory inaccuracy,Technology,high,monitor,CTRL-HCDN-0402
+RISK-HCDN-0402,SQL Server end-of-life,Security,medium,accept pending evidence,CTRL-HCDN-0403
+RISK-HCDN-0403,measure definition conflict,Procurement,low,requires executive decision,CTRL-HCDN-0404
+RISK-HCDN-0404,cloud cost overrun,HR,critical,mitigate,CTRL-HCDN-0405
+RISK-HCDN-0405,vendor concentration,Supply Chain,high,monitor,CTRL-HCDN-0406
+RISK-HCDN-0406,Epic upgrade disruption,Privacy,medium,accept pending evidence,CTRL-HCDN-0407
+RISK-HCDN-0407,AWS/Azure operating-model conflict,Compliance,low,requires executive decision,CTRL-HCDN-0408
+RISK-HCDN-0408,Star Rating degradation,Provider Network,critical,mitigate,CTRL-HCDN-0409
+RISK-HCDN-0409,RAF evidence gap,Value-Based Care,high,monitor,CTRL-HCDN-0410
+RISK-HCDN-0410,PHI/privacy exposure,Clinical Operations,medium,accept pending evidence,CTRL-HCDN-0411
+RISK-HCDN-0411,claims leakage,Revenue Cycle,low,requires executive decision,CTRL-HCDN-0412
+RISK-HCDN-0412,prior-auth SLA breach,Patient Access,critical,mitigate,CTRL-HCDN-0413
+RISK-HCDN-0413,provider-directory inaccuracy,Interoperability,high,monitor,CTRL-HCDN-0414
+RISK-HCDN-0414,SQL Server end-of-life,Population Health,medium,accept pending evidence,CTRL-HCDN-0415
+RISK-HCDN-0415,measure definition conflict,Health Plan Operations,low,requires executive decision,CTRL-HCDN-0416
+RISK-HCDN-0416,cloud cost overrun,Medicare Advantage,critical,mitigate,CTRL-HCDN-0417
+RISK-HCDN-0417,vendor concentration,Claims Operations,high,monitor,CTRL-HCDN-0418
+RISK-HCDN-0418,Epic upgrade disruption,Utilization Management,medium,accept pending evidence,CTRL-HCDN-0419
+RISK-HCDN-0419,AWS/Azure operating-model conflict,Member Services,low,requires executive decision,CTRL-HCDN-0420
+RISK-HCDN-0420,Star Rating degradation,Quality and Stars,critical,mitigate,CTRL-HCDN-0421
+RISK-HCDN-0421,RAF evidence gap,Risk Adjustment,high,monitor,CTRL-HCDN-0422
+RISK-HCDN-0422,PHI/privacy exposure,Care Management,medium,accept pending evidence,CTRL-HCDN-0423
+RISK-HCDN-0423,claims leakage,Finance,low,requires executive decision,CTRL-HCDN-0424
+RISK-HCDN-0424,prior-auth SLA breach,Coding,critical,mitigate,CTRL-HCDN-0425
+RISK-HCDN-0425,provider-directory inaccuracy,Payer Contracting,high,monitor,CTRL-HCDN-0426
+RISK-HCDN-0426,SQL Server end-of-life,Digital Front Door,medium,accept pending evidence,CTRL-HCDN-0427
+RISK-HCDN-0427,measure definition conflict,Contact Center,low,requires executive decision,CTRL-HCDN-0428
+RISK-HCDN-0428,cloud cost overrun,Ambulatory Care,critical,mitigate,CTRL-HCDN-0429
+RISK-HCDN-0429,vendor concentration,Emergency Department,high,monitor,CTRL-HCDN-0430
+RISK-HCDN-0430,Epic upgrade disruption,Inpatient,medium,accept pending evidence,CTRL-HCDN-0431
+RISK-HCDN-0431,AWS/Azure operating-model conflict,Surgery,low,requires executive decision,CTRL-HCDN-0432
+RISK-HCDN-0432,Star Rating degradation,Imaging,critical,mitigate,CTRL-HCDN-0433
+RISK-HCDN-0433,RAF evidence gap,Lab,high,monitor,CTRL-HCDN-0434
+RISK-HCDN-0434,PHI/privacy exposure,Pharmacy,medium,accept pending evidence,CTRL-HCDN-0435
+RISK-HCDN-0435,claims leakage,Oncology,low,requires executive decision,CTRL-HCDN-0436
+RISK-HCDN-0436,prior-auth SLA breach,Cardiology,critical,mitigate,CTRL-HCDN-0437
+RISK-HCDN-0437,provider-directory inaccuracy,Data and Analytics,high,monitor,CTRL-HCDN-0438
+RISK-HCDN-0438,SQL Server end-of-life,Clinical Analytics,medium,accept pending evidence,CTRL-HCDN-0439
+RISK-HCDN-0439,measure definition conflict,Actuarial,low,requires executive decision,CTRL-HCDN-0440
+RISK-HCDN-0440,cloud cost overrun,Departmental Reporting,critical,mitigate,CTRL-HCDN-0441
+RISK-HCDN-0441,vendor concentration,AI Transformation,high,monitor,CTRL-HCDN-0442
+RISK-HCDN-0442,Epic upgrade disruption,Technology,medium,accept pending evidence,CTRL-HCDN-0443
+RISK-HCDN-0443,AWS/Azure operating-model conflict,Security,low,requires executive decision,CTRL-HCDN-0444
+RISK-HCDN-0444,Star Rating degradation,Procurement,critical,mitigate,CTRL-HCDN-0445
+RISK-HCDN-0445,RAF evidence gap,HR,high,monitor,CTRL-HCDN-0446
+RISK-HCDN-0446,PHI/privacy exposure,Supply Chain,medium,accept pending evidence,CTRL-HCDN-0447
+RISK-HCDN-0447,claims leakage,Privacy,low,requires executive decision,CTRL-HCDN-0448
+RISK-HCDN-0448,prior-auth SLA breach,Compliance,critical,mitigate,CTRL-HCDN-0449
+RISK-HCDN-0449,provider-directory inaccuracy,Provider Network,high,monitor,CTRL-HCDN-0450
+RISK-HCDN-0450,SQL Server end-of-life,Value-Based Care,medium,accept pending evidence,CTRL-HCDN-0451
+RISK-HCDN-0451,measure definition conflict,Clinical Operations,low,requires executive decision,CTRL-HCDN-0452
+RISK-HCDN-0452,cloud cost overrun,Revenue Cycle,critical,mitigate,CTRL-HCDN-0453
+RISK-HCDN-0453,vendor concentration,Patient Access,high,monitor,CTRL-HCDN-0454
+RISK-HCDN-0454,Epic upgrade disruption,Interoperability,medium,accept pending evidence,CTRL-HCDN-0455
+RISK-HCDN-0455,AWS/Azure operating-model conflict,Population Health,low,requires executive decision,CTRL-HCDN-0456
+RISK-HCDN-0456,Star Rating degradation,Health Plan Operations,critical,mitigate,CTRL-HCDN-0457
+RISK-HCDN-0457,RAF evidence gap,Medicare Advantage,high,monitor,CTRL-HCDN-0458
+RISK-HCDN-0458,PHI/privacy exposure,Claims Operations,medium,accept pending evidence,CTRL-HCDN-0459
+RISK-HCDN-0459,claims leakage,Utilization Management,low,requires executive decision,CTRL-HCDN-0460
+RISK-HCDN-0460,prior-auth SLA breach,Member Services,critical,mitigate,CTRL-HCDN-0461
+RISK-HCDN-0461,provider-directory inaccuracy,Quality and Stars,high,monitor,CTRL-HCDN-0462
+RISK-HCDN-0462,SQL Server end-of-life,Risk Adjustment,medium,accept pending evidence,CTRL-HCDN-0463
+RISK-HCDN-0463,measure definition conflict,Care Management,low,requires executive decision,CTRL-HCDN-0464
+RISK-HCDN-0464,cloud cost overrun,Finance,critical,mitigate,CTRL-HCDN-0465
+RISK-HCDN-0465,vendor concentration,Coding,high,monitor,CTRL-HCDN-0466
+RISK-HCDN-0466,Epic upgrade disruption,Payer Contracting,medium,accept pending evidence,CTRL-HCDN-0467
+RISK-HCDN-0467,AWS/Azure operating-model conflict,Digital Front Door,low,requires executive decision,CTRL-HCDN-0468
+RISK-HCDN-0468,Star Rating degradation,Contact Center,critical,mitigate,CTRL-HCDN-0469
+RISK-HCDN-0469,RAF evidence gap,Ambulatory Care,high,monitor,CTRL-HCDN-0470
+RISK-HCDN-0470,PHI/privacy exposure,Emergency Department,medium,accept pending evidence,CTRL-HCDN-0471
+RISK-HCDN-0471,claims leakage,Inpatient,low,requires executive decision,CTRL-HCDN-0472
+RISK-HCDN-0472,prior-auth SLA breach,Surgery,critical,mitigate,CTRL-HCDN-0473
+RISK-HCDN-0473,provider-directory inaccuracy,Imaging,high,monitor,CTRL-HCDN-0474
+RISK-HCDN-0474,SQL Server end-of-life,Lab,medium,accept pending evidence,CTRL-HCDN-0475
+RISK-HCDN-0475,measure definition conflict,Pharmacy,low,requires executive decision,CTRL-HCDN-0476
+RISK-HCDN-0476,cloud cost overrun,Oncology,critical,mitigate,CTRL-HCDN-0477
+RISK-HCDN-0477,vendor concentration,Cardiology,high,monitor,CTRL-HCDN-0478
+RISK-HCDN-0478,Epic upgrade disruption,Data and Analytics,medium,accept pending evidence,CTRL-HCDN-0479
+RISK-HCDN-0479,AWS/Azure operating-model conflict,Clinical Analytics,low,requires executive decision,CTRL-HCDN-0480
+RISK-HCDN-0480,Star Rating degradation,Actuarial,critical,mitigate,CTRL-HCDN-0481
+RISK-HCDN-0481,RAF evidence gap,Departmental Reporting,high,monitor,CTRL-HCDN-0482
+RISK-HCDN-0482,PHI/privacy exposure,AI Transformation,medium,accept pending evidence,CTRL-HCDN-0483
+RISK-HCDN-0483,claims leakage,Technology,low,requires executive decision,CTRL-HCDN-0484
+RISK-HCDN-0484,prior-auth SLA breach,Security,critical,mitigate,CTRL-HCDN-0485
+RISK-HCDN-0485,provider-directory inaccuracy,Procurement,high,monitor,CTRL-HCDN-0486
+RISK-HCDN-0486,SQL Server end-of-life,HR,medium,accept pending evidence,CTRL-HCDN-0487
+RISK-HCDN-0487,measure definition conflict,Supply Chain,low,requires executive decision,CTRL-HCDN-0488
+RISK-HCDN-0488,cloud cost overrun,Privacy,critical,mitigate,CTRL-HCDN-0489
+RISK-HCDN-0489,vendor concentration,Compliance,high,monitor,CTRL-HCDN-0490
+RISK-HCDN-0490,Epic upgrade disruption,Provider Network,medium,accept pending evidence,CTRL-HCDN-0491
+RISK-HCDN-0491,AWS/Azure operating-model conflict,Value-Based Care,low,requires executive decision,CTRL-HCDN-0492
+RISK-HCDN-0492,Star Rating degradation,Clinical Operations,critical,mitigate,CTRL-HCDN-0493
+RISK-HCDN-0493,RAF evidence gap,Revenue Cycle,high,monitor,CTRL-HCDN-0494
+RISK-HCDN-0494,PHI/privacy exposure,Patient Access,medium,accept pending evidence,CTRL-HCDN-0495
+RISK-HCDN-0495,claims leakage,Interoperability,low,requires executive decision,CTRL-HCDN-0496
+RISK-HCDN-0496,prior-auth SLA breach,Population Health,critical,mitigate,CTRL-HCDN-0497
+RISK-HCDN-0497,provider-directory inaccuracy,Health Plan Operations,high,monitor,CTRL-HCDN-0498
+RISK-HCDN-0498,SQL Server end-of-life,Medicare Advantage,medium,accept pending evidence,CTRL-HCDN-0499
+RISK-HCDN-0499,measure definition conflict,Claims Operations,low,requires executive decision,CTRL-HCDN-0500
+RISK-HCDN-0500,cloud cost overrun,Utilization Management,critical,mitigate,CTRL-HCDN-0501
+RISK-HCDN-0501,vendor concentration,Member Services,high,monitor,CTRL-HCDN-0502
+RISK-HCDN-0502,Epic upgrade disruption,Quality and Stars,medium,accept pending evidence,CTRL-HCDN-0503
+RISK-HCDN-0503,AWS/Azure operating-model conflict,Risk Adjustment,low,requires executive decision,CTRL-HCDN-0504
+RISK-HCDN-0504,Star Rating degradation,Care Management,critical,mitigate,CTRL-HCDN-0505
+RISK-HCDN-0505,RAF evidence gap,Finance,high,monitor,CTRL-HCDN-0506
+RISK-HCDN-0506,PHI/privacy exposure,Coding,medium,accept pending evidence,CTRL-HCDN-0507
+RISK-HCDN-0507,claims leakage,Payer Contracting,low,requires executive decision,CTRL-HCDN-0508
+RISK-HCDN-0508,prior-auth SLA breach,Digital Front Door,critical,mitigate,CTRL-HCDN-0509
+RISK-HCDN-0509,provider-directory inaccuracy,Contact Center,high,monitor,CTRL-HCDN-0510
+RISK-HCDN-0510,SQL Server end-of-life,Ambulatory Care,medium,accept pending evidence,CTRL-HCDN-0511
+RISK-HCDN-0511,measure definition conflict,Emergency Department,low,requires executive decision,CTRL-HCDN-0512
+RISK-HCDN-0512,cloud cost overrun,Inpatient,critical,mitigate,CTRL-HCDN-0513
+RISK-HCDN-0513,vendor concentration,Surgery,high,monitor,CTRL-HCDN-0514
+RISK-HCDN-0514,Epic upgrade disruption,Imaging,medium,accept pending evidence,CTRL-HCDN-0515
+RISK-HCDN-0515,AWS/Azure operating-model conflict,Lab,low,requires executive decision,CTRL-HCDN-0516
+RISK-HCDN-0516,Star Rating degradation,Pharmacy,critical,mitigate,CTRL-HCDN-0517
+RISK-HCDN-0517,RAF evidence gap,Oncology,high,monitor,CTRL-HCDN-0518
+RISK-HCDN-0518,PHI/privacy exposure,Cardiology,medium,accept pending evidence,CTRL-HCDN-0519
+RISK-HCDN-0519,claims leakage,Data and Analytics,low,requires executive decision,CTRL-HCDN-0520
+RISK-HCDN-0520,prior-auth SLA breach,Clinical Analytics,critical,mitigate,CTRL-HCDN-0521
+RISK-HCDN-0521,provider-directory inaccuracy,Actuarial,high,monitor,CTRL-HCDN-0522
+RISK-HCDN-0522,SQL Server end-of-life,Departmental Reporting,medium,accept pending evidence,CTRL-HCDN-0523
+RISK-HCDN-0523,measure definition conflict,AI Transformation,low,requires executive decision,CTRL-HCDN-0524
+RISK-HCDN-0524,cloud cost overrun,Technology,critical,mitigate,CTRL-HCDN-0525
+RISK-HCDN-0525,vendor concentration,Security,high,monitor,CTRL-HCDN-0526
+RISK-HCDN-0526,Epic upgrade disruption,Procurement,medium,accept pending evidence,CTRL-HCDN-0527
+RISK-HCDN-0527,AWS/Azure operating-model conflict,HR,low,requires executive decision,CTRL-HCDN-0528
+RISK-HCDN-0528,Star Rating degradation,Supply Chain,critical,mitigate,CTRL-HCDN-0529
+RISK-HCDN-0529,RAF evidence gap,Privacy,high,monitor,CTRL-HCDN-0530
+RISK-HCDN-0530,PHI/privacy exposure,Compliance,medium,accept pending evidence,CTRL-HCDN-0531
+RISK-HCDN-0531,claims leakage,Provider Network,low,requires executive decision,CTRL-HCDN-0532
+RISK-HCDN-0532,prior-auth SLA breach,Value-Based Care,critical,mitigate,CTRL-HCDN-0533
+RISK-HCDN-0533,provider-directory inaccuracy,Clinical Operations,high,monitor,CTRL-HCDN-0534
+RISK-HCDN-0534,SQL Server end-of-life,Revenue Cycle,medium,accept pending evidence,CTRL-HCDN-0535
+RISK-HCDN-0535,measure definition conflict,Patient Access,low,requires executive decision,CTRL-HCDN-0536
+RISK-HCDN-0536,cloud cost overrun,Interoperability,critical,mitigate,CTRL-HCDN-0537
+RISK-HCDN-0537,vendor concentration,Population Health,high,monitor,CTRL-HCDN-0538
+RISK-HCDN-0538,Epic upgrade disruption,Health Plan Operations,medium,accept pending evidence,CTRL-HCDN-0539
+RISK-HCDN-0539,AWS/Azure operating-model conflict,Medicare Advantage,low,requires executive decision,CTRL-HCDN-0540
+RISK-HCDN-0540,Star Rating degradation,Claims Operations,critical,mitigate,CTRL-HCDN-0541
+RISK-HCDN-0541,RAF evidence gap,Utilization Management,high,monitor,CTRL-HCDN-0542
+RISK-HCDN-0542,PHI/privacy exposure,Member Services,medium,accept pending evidence,CTRL-HCDN-0543
+RISK-HCDN-0543,claims leakage,Quality and Stars,low,requires executive decision,CTRL-HCDN-0544
+RISK-HCDN-0544,prior-auth SLA breach,Risk Adjustment,critical,mitigate,CTRL-HCDN-0545
+RISK-HCDN-0545,provider-directory inaccuracy,Care Management,high,monitor,CTRL-HCDN-0546
+RISK-HCDN-0546,SQL Server end-of-life,Finance,medium,accept pending evidence,CTRL-HCDN-0547
+RISK-HCDN-0547,measure definition conflict,Coding,low,requires executive decision,CTRL-HCDN-0548
+RISK-HCDN-0548,cloud cost overrun,Payer Contracting,critical,mitigate,CTRL-HCDN-0549
+RISK-HCDN-0549,vendor concentration,Digital Front Door,high,monitor,CTRL-HCDN-0550
+RISK-HCDN-0550,Epic upgrade disruption,Contact Center,medium,accept pending evidence,CTRL-HCDN-0551
+RISK-HCDN-0551,AWS/Azure operating-model conflict,Ambulatory Care,low,requires executive decision,CTRL-HCDN-0552
+RISK-HCDN-0552,Star Rating degradation,Emergency Department,critical,mitigate,CTRL-HCDN-0553
+RISK-HCDN-0553,RAF evidence gap,Inpatient,high,monitor,CTRL-HCDN-0554
+RISK-HCDN-0554,PHI/privacy exposure,Surgery,medium,accept pending evidence,CTRL-HCDN-0555
+RISK-HCDN-0555,claims leakage,Imaging,low,requires executive decision,CTRL-HCDN-0556
+RISK-HCDN-0556,prior-auth SLA breach,Lab,critical,mitigate,CTRL-HCDN-0557
+RISK-HCDN-0557,provider-directory inaccuracy,Pharmacy,high,monitor,CTRL-HCDN-0558
+RISK-HCDN-0558,SQL Server end-of-life,Oncology,medium,accept pending evidence,CTRL-HCDN-0559
+RISK-HCDN-0559,measure definition conflict,Cardiology,low,requires executive decision,CTRL-HCDN-0560
+RISK-HCDN-0560,cloud cost overrun,Data and Analytics,critical,mitigate,CTRL-HCDN-0561
+RISK-HCDN-0561,vendor concentration,Clinical Analytics,high,monitor,CTRL-HCDN-0562
+RISK-HCDN-0562,Epic upgrade disruption,Actuarial,medium,accept pending evidence,CTRL-HCDN-0563
+RISK-HCDN-0563,AWS/Azure operating-model conflict,Departmental Reporting,low,requires executive decision,CTRL-HCDN-0564
+RISK-HCDN-0564,Star Rating degradation,AI Transformation,critical,mitigate,CTRL-HCDN-0565
+RISK-HCDN-0565,RAF evidence gap,Technology,high,monitor,CTRL-HCDN-0566
+RISK-HCDN-0566,PHI/privacy exposure,Security,medium,accept pending evidence,CTRL-HCDN-0567
+RISK-HCDN-0567,claims leakage,Procurement,low,requires executive decision,CTRL-HCDN-0568
+RISK-HCDN-0568,prior-auth SLA breach,HR,critical,mitigate,CTRL-HCDN-0569
+RISK-HCDN-0569,provider-directory inaccuracy,Supply Chain,high,monitor,CTRL-HCDN-0570
+RISK-HCDN-0570,SQL Server end-of-life,Privacy,medium,accept pending evidence,CTRL-HCDN-0571
+RISK-HCDN-0571,measure definition conflict,Compliance,low,requires executive decision,CTRL-HCDN-0572
+RISK-HCDN-0572,cloud cost overrun,Provider Network,critical,mitigate,CTRL-HCDN-0573
+RISK-HCDN-0573,vendor concentration,Value-Based Care,high,monitor,CTRL-HCDN-0574
+RISK-HCDN-0574,Epic upgrade disruption,Clinical Operations,medium,accept pending evidence,CTRL-HCDN-0575
+RISK-HCDN-0575,AWS/Azure operating-model conflict,Revenue Cycle,low,requires executive decision,CTRL-HCDN-0576
+RISK-HCDN-0576,Star Rating degradation,Patient Access,critical,mitigate,CTRL-HCDN-0577
+RISK-HCDN-0577,RAF evidence gap,Interoperability,high,monitor,CTRL-HCDN-0578
+RISK-HCDN-0578,PHI/privacy exposure,Population Health,medium,accept pending evidence,CTRL-HCDN-0579
+RISK-HCDN-0579,claims leakage,Health Plan Operations,low,requires executive decision,CTRL-HCDN-0580
+RISK-HCDN-0580,prior-auth SLA breach,Medicare Advantage,critical,mitigate,CTRL-HCDN-0581
+RISK-HCDN-0581,provider-directory inaccuracy,Claims Operations,high,monitor,CTRL-HCDN-0582
+RISK-HCDN-0582,SQL Server end-of-life,Utilization Management,medium,accept pending evidence,CTRL-HCDN-0583
+RISK-HCDN-0583,measure definition conflict,Member Services,low,requires executive decision,CTRL-HCDN-0584
+RISK-HCDN-0584,cloud cost overrun,Quality and Stars,critical,mitigate,CTRL-HCDN-0585
+RISK-HCDN-0585,vendor concentration,Risk Adjustment,high,monitor,CTRL-HCDN-0586
+RISK-HCDN-0586,Epic upgrade disruption,Care Management,medium,accept pending evidence,CTRL-HCDN-0587
+RISK-HCDN-0587,AWS/Azure operating-model conflict,Finance,low,requires executive decision,CTRL-HCDN-0588
+RISK-HCDN-0588,Star Rating degradation,Coding,critical,mitigate,CTRL-HCDN-0589
+RISK-HCDN-0589,RAF evidence gap,Payer Contracting,high,monitor,CTRL-HCDN-0590
+RISK-HCDN-0590,PHI/privacy exposure,Digital Front Door,medium,accept pending evidence,CTRL-HCDN-0591
+RISK-HCDN-0591,claims leakage,Contact Center,low,requires executive decision,CTRL-HCDN-0592
+RISK-HCDN-0592,prior-auth SLA breach,Ambulatory Care,critical,mitigate,CTRL-HCDN-0593
+RISK-HCDN-0593,provider-directory inaccuracy,Emergency Department,high,monitor,CTRL-HCDN-0594
+RISK-HCDN-0594,SQL Server end-of-life,Inpatient,medium,accept pending evidence,CTRL-HCDN-0595
+RISK-HCDN-0595,measure definition conflict,Surgery,low,requires executive decision,CTRL-HCDN-0596
+RISK-HCDN-0596,cloud cost overrun,Imaging,critical,mitigate,CTRL-HCDN-0597
+RISK-HCDN-0597,vendor concentration,Lab,high,monitor,CTRL-HCDN-0598
+RISK-HCDN-0598,Epic upgrade disruption,Pharmacy,medium,accept pending evidence,CTRL-HCDN-0599
+RISK-HCDN-0599,AWS/Azure operating-model conflict,Oncology,low,requires executive decision,CTRL-HCDN-0600
+RISK-HCDN-0600,Star Rating degradation,Cardiology,critical,mitigate,CTRL-HCDN-0601
+RISK-HCDN-0601,RAF evidence gap,Data and Analytics,high,monitor,CTRL-HCDN-0602
+RISK-HCDN-0602,PHI/privacy exposure,Clinical Analytics,medium,accept pending evidence,CTRL-HCDN-0603
+RISK-HCDN-0603,claims leakage,Actuarial,low,requires executive decision,CTRL-HCDN-0604
+RISK-HCDN-0604,prior-auth SLA breach,Departmental Reporting,critical,mitigate,CTRL-HCDN-0605
+RISK-HCDN-0605,provider-directory inaccuracy,AI Transformation,high,monitor,CTRL-HCDN-0606
+RISK-HCDN-0606,SQL Server end-of-life,Technology,medium,accept pending evidence,CTRL-HCDN-0607
+RISK-HCDN-0607,measure definition conflict,Security,low,requires executive decision,CTRL-HCDN-0608
+RISK-HCDN-0608,cloud cost overrun,Procurement,critical,mitigate,CTRL-HCDN-0609
+RISK-HCDN-0609,vendor concentration,HR,high,monitor,CTRL-HCDN-0610
+RISK-HCDN-0610,Epic upgrade disruption,Supply Chain,medium,accept pending evidence,CTRL-HCDN-0611
+RISK-HCDN-0611,AWS/Azure operating-model conflict,Privacy,low,requires executive decision,CTRL-HCDN-0612
+RISK-HCDN-0612,Star Rating degradation,Compliance,critical,mitigate,CTRL-HCDN-0613
+RISK-HCDN-0613,RAF evidence gap,Provider Network,high,monitor,CTRL-HCDN-0614
+RISK-HCDN-0614,PHI/privacy exposure,Value-Based Care,medium,accept pending evidence,CTRL-HCDN-0615
+RISK-HCDN-0615,claims leakage,Clinical Operations,low,requires executive decision,CTRL-HCDN-0616
+RISK-HCDN-0616,prior-auth SLA breach,Revenue Cycle,critical,mitigate,CTRL-HCDN-0617
+RISK-HCDN-0617,provider-directory inaccuracy,Patient Access,high,monitor,CTRL-HCDN-0618
+RISK-HCDN-0618,SQL Server end-of-life,Interoperability,medium,accept pending evidence,CTRL-HCDN-0619
+RISK-HCDN-0619,measure definition conflict,Population Health,low,requires executive decision,CTRL-HCDN-0620
+RISK-HCDN-0620,cloud cost overrun,Health Plan Operations,critical,mitigate,CTRL-HCDN-0621
+RISK-HCDN-0621,vendor concentration,Medicare Advantage,high,monitor,CTRL-HCDN-0622
+RISK-HCDN-0622,Epic upgrade disruption,Claims Operations,medium,accept pending evidence,CTRL-HCDN-0623
+RISK-HCDN-0623,AWS/Azure operating-model conflict,Utilization Management,low,requires executive decision,CTRL-HCDN-0624
+RISK-HCDN-0624,Star Rating degradation,Member Services,critical,mitigate,CTRL-HCDN-0625
+RISK-HCDN-0625,RAF evidence gap,Quality and Stars,high,monitor,CTRL-HCDN-0626
+RISK-HCDN-0626,PHI/privacy exposure,Risk Adjustment,medium,accept pending evidence,CTRL-HCDN-0627
+RISK-HCDN-0627,claims leakage,Care Management,low,requires executive decision,CTRL-HCDN-0628
+RISK-HCDN-0628,prior-auth SLA breach,Finance,critical,mitigate,CTRL-HCDN-0629
+RISK-HCDN-0629,provider-directory inaccuracy,Coding,high,monitor,CTRL-HCDN-0630
+RISK-HCDN-0630,SQL Server end-of-life,Payer Contracting,medium,accept pending evidence,CTRL-HCDN-0631
+RISK-HCDN-0631,measure definition conflict,Digital Front Door,low,requires executive decision,CTRL-HCDN-0632
+RISK-HCDN-0632,cloud cost overrun,Contact Center,critical,mitigate,CTRL-HCDN-0633
+RISK-HCDN-0633,vendor concentration,Ambulatory Care,high,monitor,CTRL-HCDN-0634
+RISK-HCDN-0634,Epic upgrade disruption,Emergency Department,medium,accept pending evidence,CTRL-HCDN-0635
+RISK-HCDN-0635,AWS/Azure operating-model conflict,Inpatient,low,requires executive decision,CTRL-HCDN-0636
+RISK-HCDN-0636,Star Rating degradation,Surgery,critical,mitigate,CTRL-HCDN-0637
+RISK-HCDN-0637,RAF evidence gap,Imaging,high,monitor,CTRL-HCDN-0638
+RISK-HCDN-0638,PHI/privacy exposure,Lab,medium,accept pending evidence,CTRL-HCDN-0639
+RISK-HCDN-0639,claims leakage,Pharmacy,low,requires executive decision,CTRL-HCDN-0640
+RISK-HCDN-0640,prior-auth SLA breach,Oncology,critical,mitigate,CTRL-HCDN-0641
+RISK-HCDN-0641,provider-directory inaccuracy,Cardiology,high,monitor,CTRL-HCDN-0642
+RISK-HCDN-0642,SQL Server end-of-life,Data and Analytics,medium,accept pending evidence,CTRL-HCDN-0643
+RISK-HCDN-0643,measure definition conflict,Clinical Analytics,low,requires executive decision,CTRL-HCDN-0644
+RISK-HCDN-0644,cloud cost overrun,Actuarial,critical,mitigate,CTRL-HCDN-0645
+RISK-HCDN-0645,vendor concentration,Departmental Reporting,high,monitor,CTRL-HCDN-0646
+RISK-HCDN-0646,Epic upgrade disruption,AI Transformation,medium,accept pending evidence,CTRL-HCDN-0647
+RISK-HCDN-0647,AWS/Azure operating-model conflict,Technology,low,requires executive decision,CTRL-HCDN-0648
+RISK-HCDN-0648,Star Rating degradation,Security,critical,mitigate,CTRL-HCDN-0649
+RISK-HCDN-0649,RAF evidence gap,Procurement,high,monitor,CTRL-HCDN-0650
+RISK-HCDN-0650,PHI/privacy exposure,HR,medium,accept pending evidence,CTRL-HCDN-0651
+RISK-HCDN-0651,claims leakage,Supply Chain,low,requires executive decision,CTRL-HCDN-0652
+RISK-HCDN-0652,prior-auth SLA breach,Privacy,critical,mitigate,CTRL-HCDN-0653
+RISK-HCDN-0653,provider-directory inaccuracy,Compliance,high,monitor,CTRL-HCDN-0654
+RISK-HCDN-0654,SQL Server end-of-life,Provider Network,medium,accept pending evidence,CTRL-HCDN-0655
+RISK-HCDN-0655,measure definition conflict,Value-Based Care,low,requires executive decision,CTRL-HCDN-0656
+RISK-HCDN-0656,cloud cost overrun,Clinical Operations,critical,mitigate,CTRL-HCDN-0657
+RISK-HCDN-0657,vendor concentration,Revenue Cycle,high,monitor,CTRL-HCDN-0658
+RISK-HCDN-0658,Epic upgrade disruption,Patient Access,medium,accept pending evidence,CTRL-HCDN-0659
+RISK-HCDN-0659,AWS/Azure operating-model conflict,Interoperability,low,requires executive decision,CTRL-HCDN-0660
+RISK-HCDN-0660,Star Rating degradation,Population Health,critical,mitigate,CTRL-HCDN-0661
+RISK-HCDN-0661,RAF evidence gap,Health Plan Operations,high,monitor,CTRL-HCDN-0662
+RISK-HCDN-0662,PHI/privacy exposure,Medicare Advantage,medium,accept pending evidence,CTRL-HCDN-0663
+RISK-HCDN-0663,claims leakage,Claims Operations,low,requires executive decision,CTRL-HCDN-0664
+RISK-HCDN-0664,prior-auth SLA breach,Utilization Management,critical,mitigate,CTRL-HCDN-0665
+RISK-HCDN-0665,provider-directory inaccuracy,Member Services,high,monitor,CTRL-HCDN-0666
+RISK-HCDN-0666,SQL Server end-of-life,Quality and Stars,medium,accept pending evidence,CTRL-HCDN-0667
+RISK-HCDN-0667,measure definition conflict,Risk Adjustment,low,requires executive decision,CTRL-HCDN-0668
+RISK-HCDN-0668,cloud cost overrun,Care Management,critical,mitigate,CTRL-HCDN-0669
+RISK-HCDN-0669,vendor concentration,Finance,high,monitor,CTRL-HCDN-0670
+RISK-HCDN-0670,Epic upgrade disruption,Coding,medium,accept pending evidence,CTRL-HCDN-0671
+RISK-HCDN-0671,AWS/Azure operating-model conflict,Payer Contracting,low,requires executive decision,CTRL-HCDN-0672
+RISK-HCDN-0672,Star Rating degradation,Digital Front Door,critical,mitigate,CTRL-HCDN-0673
+RISK-HCDN-0673,RAF evidence gap,Contact Center,high,monitor,CTRL-HCDN-0674
+RISK-HCDN-0674,PHI/privacy exposure,Ambulatory Care,medium,accept pending evidence,CTRL-HCDN-0675
+RISK-HCDN-0675,claims leakage,Emergency Department,low,requires executive decision,CTRL-HCDN-0676
+RISK-HCDN-0676,prior-auth SLA breach,Inpatient,critical,mitigate,CTRL-HCDN-0677
+RISK-HCDN-0677,provider-directory inaccuracy,Surgery,high,monitor,CTRL-HCDN-0678
+RISK-HCDN-0678,SQL Server end-of-life,Imaging,medium,accept pending evidence,CTRL-HCDN-0679
+RISK-HCDN-0679,measure definition conflict,Lab,low,requires executive decision,CTRL-HCDN-0680
+RISK-HCDN-0680,cloud cost overrun,Pharmacy,critical,mitigate,CTRL-HCDN-0681
+RISK-HCDN-0681,vendor concentration,Oncology,high,monitor,CTRL-HCDN-0682
+RISK-HCDN-0682,Epic upgrade disruption,Cardiology,medium,accept pending evidence,CTRL-HCDN-0683
+RISK-HCDN-0683,AWS/Azure operating-model conflict,Data and Analytics,low,requires executive decision,CTRL-HCDN-0684
+RISK-HCDN-0684,Star Rating degradation,Clinical Analytics,critical,mitigate,CTRL-HCDN-0685
+RISK-HCDN-0685,RAF evidence gap,Actuarial,high,monitor,CTRL-HCDN-0686
+RISK-HCDN-0686,PHI/privacy exposure,Departmental Reporting,medium,accept pending evidence,CTRL-HCDN-0687
+RISK-HCDN-0687,claims leakage,AI Transformation,low,requires executive decision,CTRL-HCDN-0688
+RISK-HCDN-0688,prior-auth SLA breach,Technology,critical,mitigate,CTRL-HCDN-0689
+RISK-HCDN-0689,provider-directory inaccuracy,Security,high,monitor,CTRL-HCDN-0690
+RISK-HCDN-0690,SQL Server end-of-life,Procurement,medium,accept pending evidence,CTRL-HCDN-0691
+RISK-HCDN-0691,measure definition conflict,HR,low,requires executive decision,CTRL-HCDN-0692
+RISK-HCDN-0692,cloud cost overrun,Supply Chain,critical,mitigate,CTRL-HCDN-0693
+RISK-HCDN-0693,vendor concentration,Privacy,high,monitor,CTRL-HCDN-0694
+RISK-HCDN-0694,Epic upgrade disruption,Compliance,medium,accept pending evidence,CTRL-HCDN-0695
+RISK-HCDN-0695,AWS/Azure operating-model conflict,Provider Network,low,requires executive decision,CTRL-HCDN-0696
+RISK-HCDN-0696,Star Rating degradation,Value-Based Care,critical,mitigate,CTRL-HCDN-0697
+RISK-HCDN-0697,RAF evidence gap,Clinical Operations,high,monitor,CTRL-HCDN-0698
+RISK-HCDN-0698,PHI/privacy exposure,Revenue Cycle,medium,accept pending evidence,CTRL-HCDN-0699
+RISK-HCDN-0699,claims leakage,Patient Access,low,requires executive decision,CTRL-HCDN-0700
+RISK-HCDN-0700,prior-auth SLA breach,Interoperability,critical,mitigate,CTRL-HCDN-0701
+RISK-HCDN-0701,provider-directory inaccuracy,Population Health,high,monitor,CTRL-HCDN-0702
+RISK-HCDN-0702,SQL Server end-of-life,Health Plan Operations,medium,accept pending evidence,CTRL-HCDN-0703
+RISK-HCDN-0703,measure definition conflict,Medicare Advantage,low,requires executive decision,CTRL-HCDN-0704
+RISK-HCDN-0704,cloud cost overrun,Claims Operations,critical,mitigate,CTRL-HCDN-0705
+RISK-HCDN-0705,vendor concentration,Utilization Management,high,monitor,CTRL-HCDN-0706
+RISK-HCDN-0706,Epic upgrade disruption,Member Services,medium,accept pending evidence,CTRL-HCDN-0707
+RISK-HCDN-0707,AWS/Azure operating-model conflict,Quality and Stars,low,requires executive decision,CTRL-HCDN-0708
+RISK-HCDN-0708,Star Rating degradation,Risk Adjustment,critical,mitigate,CTRL-HCDN-0709
+RISK-HCDN-0709,RAF evidence gap,Care Management,high,monitor,CTRL-HCDN-0710
+RISK-HCDN-0710,PHI/privacy exposure,Finance,medium,accept pending evidence,CTRL-HCDN-0711
+RISK-HCDN-0711,claims leakage,Coding,low,requires executive decision,CTRL-HCDN-0712
+RISK-HCDN-0712,prior-auth SLA breach,Payer Contracting,critical,mitigate,CTRL-HCDN-0713
+RISK-HCDN-0713,provider-directory inaccuracy,Digital Front Door,high,monitor,CTRL-HCDN-0714
+RISK-HCDN-0714,SQL Server end-of-life,Contact Center,medium,accept pending evidence,CTRL-HCDN-0715
+RISK-HCDN-0715,measure definition conflict,Ambulatory Care,low,requires executive decision,CTRL-HCDN-0716
+RISK-HCDN-0716,cloud cost overrun,Emergency Department,critical,mitigate,CTRL-HCDN-0717
+RISK-HCDN-0717,vendor concentration,Inpatient,high,monitor,CTRL-HCDN-0718
+RISK-HCDN-0718,Epic upgrade disruption,Surgery,medium,accept pending evidence,CTRL-HCDN-0719
+RISK-HCDN-0719,AWS/Azure operating-model conflict,Imaging,low,requires executive decision,CTRL-HCDN-0720
+RISK-HCDN-0720,Star Rating degradation,Lab,critical,mitigate,CTRL-HCDN-0721
+RISK-HCDN-0721,RAF evidence gap,Pharmacy,high,monitor,CTRL-HCDN-0722
+RISK-HCDN-0722,PHI/privacy exposure,Oncology,medium,accept pending evidence,CTRL-HCDN-0723
+RISK-HCDN-0723,claims leakage,Cardiology,low,requires executive decision,CTRL-HCDN-0724
+RISK-HCDN-0724,prior-auth SLA breach,Data and Analytics,critical,mitigate,CTRL-HCDN-0725
+RISK-HCDN-0725,provider-directory inaccuracy,Clinical Analytics,high,monitor,CTRL-HCDN-0726
+RISK-HCDN-0726,SQL Server end-of-life,Actuarial,medium,accept pending evidence,CTRL-HCDN-0727
+RISK-HCDN-0727,measure definition conflict,Departmental Reporting,low,requires executive decision,CTRL-HCDN-0728
+RISK-HCDN-0728,cloud cost overrun,AI Transformation,critical,mitigate,CTRL-HCDN-0729
+RISK-HCDN-0729,vendor concentration,Technology,high,monitor,CTRL-HCDN-0730
+RISK-HCDN-0730,Epic upgrade disruption,Security,medium,accept pending evidence,CTRL-HCDN-0731
+RISK-HCDN-0731,AWS/Azure operating-model conflict,Procurement,low,requires executive decision,CTRL-HCDN-0732
+RISK-HCDN-0732,Star Rating degradation,HR,critical,mitigate,CTRL-HCDN-0733
+RISK-HCDN-0733,RAF evidence gap,Supply Chain,high,monitor,CTRL-HCDN-0734
+RISK-HCDN-0734,PHI/privacy exposure,Privacy,medium,accept pending evidence,CTRL-HCDN-0735
+RISK-HCDN-0735,claims leakage,Compliance,low,requires executive decision,CTRL-HCDN-0736
+RISK-HCDN-0736,prior-auth SLA breach,Provider Network,critical,mitigate,CTRL-HCDN-0737
+RISK-HCDN-0737,provider-directory inaccuracy,Value-Based Care,high,monitor,CTRL-HCDN-0738
+RISK-HCDN-0738,SQL Server end-of-life,Clinical Operations,medium,accept pending evidence,CTRL-HCDN-0739
+RISK-HCDN-0739,measure definition conflict,Revenue Cycle,low,requires executive decision,CTRL-HCDN-0740
+RISK-HCDN-0740,cloud cost overrun,Patient Access,critical,mitigate,CTRL-HCDN-0741
+RISK-HCDN-0741,vendor concentration,Interoperability,high,monitor,CTRL-HCDN-0742
+RISK-HCDN-0742,Epic upgrade disruption,Population Health,medium,accept pending evidence,CTRL-HCDN-0743
+RISK-HCDN-0743,AWS/Azure operating-model conflict,Health Plan Operations,low,requires executive decision,CTRL-HCDN-0744
+RISK-HCDN-0744,Star Rating degradation,Medicare Advantage,critical,mitigate,CTRL-HCDN-0745
+RISK-HCDN-0745,RAF evidence gap,Claims Operations,high,monitor,CTRL-HCDN-0746
+RISK-HCDN-0746,PHI/privacy exposure,Utilization Management,medium,accept pending evidence,CTRL-HCDN-0747
+RISK-HCDN-0747,claims leakage,Member Services,low,requires executive decision,CTRL-HCDN-0748
+RISK-HCDN-0748,prior-auth SLA breach,Quality and Stars,critical,mitigate,CTRL-HCDN-0749
+RISK-HCDN-0749,provider-directory inaccuracy,Risk Adjustment,high,monitor,CTRL-HCDN-0750
+RISK-HCDN-0750,SQL Server end-of-life,Care Management,medium,accept pending evidence,CTRL-HCDN-0751
+RISK-HCDN-0751,measure definition conflict,Finance,low,requires executive decision,CTRL-HCDN-0752
+RISK-HCDN-0752,cloud cost overrun,Coding,critical,mitigate,CTRL-HCDN-0753
+RISK-HCDN-0753,vendor concentration,Payer Contracting,high,monitor,CTRL-HCDN-0754
+RISK-HCDN-0754,Epic upgrade disruption,Digital Front Door,medium,accept pending evidence,CTRL-HCDN-0755
+RISK-HCDN-0755,AWS/Azure operating-model conflict,Contact Center,low,requires executive decision,CTRL-HCDN-0756
+RISK-HCDN-0756,Star Rating degradation,Ambulatory Care,critical,mitigate,CTRL-HCDN-0757
+RISK-HCDN-0757,RAF evidence gap,Emergency Department,high,monitor,CTRL-HCDN-0758
+RISK-HCDN-0758,PHI/privacy exposure,Inpatient,medium,accept pending evidence,CTRL-HCDN-0759
+RISK-HCDN-0759,claims leakage,Surgery,low,requires executive decision,CTRL-HCDN-0760
+RISK-HCDN-0760,prior-auth SLA breach,Imaging,critical,mitigate,CTRL-HCDN-0761
+RISK-HCDN-0761,provider-directory inaccuracy,Lab,high,monitor,CTRL-HCDN-0762
+RISK-HCDN-0762,SQL Server end-of-life,Pharmacy,medium,accept pending evidence,CTRL-HCDN-0763
+RISK-HCDN-0763,measure definition conflict,Oncology,low,requires executive decision,CTRL-HCDN-0764
+RISK-HCDN-0764,cloud cost overrun,Cardiology,critical,mitigate,CTRL-HCDN-0765
+RISK-HCDN-0765,vendor concentration,Data and Analytics,high,monitor,CTRL-HCDN-0766
+RISK-HCDN-0766,Epic upgrade disruption,Clinical Analytics,medium,accept pending evidence,CTRL-HCDN-0767
+RISK-HCDN-0767,AWS/Azure operating-model conflict,Actuarial,low,requires executive decision,CTRL-HCDN-0768
+RISK-HCDN-0768,Star Rating degradation,Departmental Reporting,critical,mitigate,CTRL-HCDN-0769
+RISK-HCDN-0769,RAF evidence gap,AI Transformation,high,monitor,CTRL-HCDN-0770
+RISK-HCDN-0770,PHI/privacy exposure,Technology,medium,accept pending evidence,CTRL-HCDN-0771
+RISK-HCDN-0771,claims leakage,Security,low,requires executive decision,CTRL-HCDN-0772
+RISK-HCDN-0772,prior-auth SLA breach,Procurement,critical,mitigate,CTRL-HCDN-0773
+RISK-HCDN-0773,provider-directory inaccuracy,HR,high,monitor,CTRL-HCDN-0774
+RISK-HCDN-0774,SQL Server end-of-life,Supply Chain,medium,accept pending evidence,CTRL-HCDN-0775
+RISK-HCDN-0775,measure definition conflict,Privacy,low,requires executive decision,CTRL-HCDN-0776
+RISK-HCDN-0776,cloud cost overrun,Compliance,critical,mitigate,CTRL-HCDN-0777
+RISK-HCDN-0777,vendor concentration,Provider Network,high,monitor,CTRL-HCDN-0778
+RISK-HCDN-0778,Epic upgrade disruption,Value-Based Care,medium,accept pending evidence,CTRL-HCDN-0779
+RISK-HCDN-0779,AWS/Azure operating-model conflict,Clinical Operations,low,requires executive decision,CTRL-HCDN-0780
+RISK-HCDN-0780,Star Rating degradation,Revenue Cycle,critical,mitigate,CTRL-HCDN-0781

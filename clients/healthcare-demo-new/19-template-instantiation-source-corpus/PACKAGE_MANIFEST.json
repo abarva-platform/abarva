@@ -1,0 +1,362 @@
+{
+  "package": "healthcare-demo-new-template-instantiation-source-corpus",
+  "generated": "2026-07-27",
+  "status": "candidate_review_package_no_azure_no_runtime_change_semantic_audit_passed",
+  "files": [
+    {
+      "path": "01-template-workbooks/HC_AIRLINE_TEMPLATE_AND_MODEL_PARITY_MATRIX.xlsx",
+      "bytes": 4225,
+      "sha256": "1374868ff7a708d577538bc7fee6d8860cc6e262562c61e3506150b51f85b279"
+    },
+    {
+      "path": "01-template-workbooks/HC_ENTERPRISE_SCALE_TARGETS.xlsx",
+      "bytes": 4339,
+      "sha256": "e7500e3865964d2f9b01be0a8712f331ae25ba6e2b35e8b5b4dcbaee6e120544"
+    },
+    {
+      "path": "01-template-workbooks/HC_EPIC_PLATFORM_CATALOG.xlsx",
+      "bytes": 9630,
+      "sha256": "429f3190ab6730fc31295a491df10aefde7c75be384dc3f4b8fd70f273acac3f"
+    },
+    {
+      "path": "01-template-workbooks/HC_HEALTHCARE_INDUSTRY_OVERLAY.xlsx",
+      "bytes": 4457,
+      "sha256": "e7f091b6f8a50d5c1f1bdd1b84898a5001e459fe33c34771c6dc74d58d1ef5f7"
+    },
+    {
+      "path": "01-template-workbooks/HC_INTERVIEW_ARCHITECTURE.xlsx",
+      "bytes": 4937,
+      "sha256": "aae80adf3c731b193ef465cf0dd1ddff372c268e862a6ecfd2b51ac628ffb3ae"
+    },
+    {
+      "path": "01-template-workbooks/HC_KPI_STARS_HEDIS_CATALOG.xlsx",
+      "bytes": 39024,
+      "sha256": "ca090153b798e69cc5575deb1f9539d4e14edbbdb3bcec1ba2e4b879d562f6c3"
+    },
+    {
+      "path": "01-template-workbooks/HC_MEDICARE_MA_OVERLAY.xlsx",
+      "bytes": 4150,
+      "sha256": "d31e47069e96be0cc1d2d0ca398a0148267f88883f4d3d4872434aecfb00ed28"
+    },
+    {
+      "path": "01-template-workbooks/HC_RELATIONSHIP_DICTIONARY.xlsx",
+      "bytes": 30164,
+      "sha256": "2a2029d0f0a977c9e635f46c556e42a06ea8bdada44ef191352176fbadfdb5cf"
+    },
+    {
+      "path": "01-template-workbooks/HC_SOURCE_REQUEST_LIST.xlsx",
+      "bytes": 6600,
+      "sha256": "b6d4117c964c23783466ade0785d0e2473649dbe87b960a2ef4c5c6a78c83cce"
+    },
+    {
+      "path": "01-template-workbooks/HC_SQL_SERVER_ANALYTICS_ESTATE.xlsx",
+      "bytes": 39750,
+      "sha256": "bccace5794e835c19a04c86fe735ddde4d5e161daeb730d99794db91c9fe03f4"
+    },
+    {
+      "path": "01-template-workbooks/HC_TEMPLATE_CATALOG.xlsx",
+      "bytes": 6884,
+      "sha256": "9e26c030f279a10ccfc88be1424851f85ce291c6bfc687210fa3ddec0b4bf5a4"
+    },
+    {
+      "path": "01-template-workbooks/HC_UNIVERSAL_CORE_INSTANTIATION.xlsx",
+      "bytes": 4379,
+      "sha256": "7d7d4b87ee1f19711d3d0dbf5e780d035d5fa553dd7b7ee6729424761e6efa18"
+    },
+    {
+      "path": "01-template-workbooks/HC_VENDOR_CONTRACT_PORTFOLIO.xlsx",
+      "bytes": 168174,
+      "sha256": "1712825c44b764c899926915c1f2253a3cb320abec7a3b3273638cbf2e28e4a3"
+    },
+    {
+      "path": "02-synthetic-enterprise/HC_4_6_WEEK_CASE_STUDY_PLAN.md",
+      "bytes": 873,
+      "sha256": "566f7b500f1df2ab5011dc09e1f596857e946b77a6d24ee9d7b755087425c7d3"
+    },
+    {
+      "path": "02-synthetic-enterprise/HC_HIDDEN_TRUTH_DESIGN.md",
+      "bytes": 857,
+      "sha256": "d8244ce2e4e1aca7a4bc2a0c052cfff88dca521a8560aac707c192f41df81f87"
+    },
+    {
+      "path": "02-synthetic-enterprise/HC_SYNTHETIC_ENTERPRISE_PROFILE.md",
+      "bytes": 1148,
+      "sha256": "e82a6a2ada4fbdc84ea432fe1280b561667f2c74c80b80c4081b5aa7ab748a56"
+    },
+    {
+      "path": "03-source-corpus-design/HC_DATASET_MANIFEST_SCHEMA.json",
+      "bytes": 449,
+      "sha256": "c1a7d0140f9b9396b5c9e30319af38d038989915514ff24bf3268bfd6d5017e3"
+    },
+    {
+      "path": "03-source-corpus-design/HC_SOURCE_CORPUS_PLAN.md",
+      "bytes": 2427,
+      "sha256": "c179cc11deb701ec31a997dff88c1e8fb9d7ba476215b47735c3b3a1df68023c"
+    },
+    {
+      "path": "03-source-corpus-design/HC_SOURCE_FAMILY_STRATEGY.md",
+      "bytes": 454,
+      "sha256": "6be770582450bb992db6afd02dc4b4726ac8ee207daf455b8b696841d0ce5093"
+    },
+    {
+      "path": "03-source-corpus-design/HC_SYNTHETIC_DEPTH_REQUIREMENTS.md",
+      "bytes": 758,
+      "sha256": "c91559529452aebd8fad2632088c021fb92991ba611b311bc9fa9dc5d8da37d9"
+    },
+    {
+      "path": "03-source-corpus-design/SOURCE_LAYER_BOUNDARY_MATRIX.csv",
+      "bytes": 426,
+      "sha256": "be8df545e9906771759f7e8130fc3127dbff52ca6226093a3fd1b5ed016ea76b"
+    },
+    {
+      "path": "03-source-corpus-design/parser-visible-source-manifest.csv",
+      "bytes": 1746,
+      "sha256": "494c95ce85af5cb7b75b53e02782e9cc866da970dcd72387d1d679be42409d01"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/application-platform-inventory.csv",
+      "bytes": 522710,
+      "sha256": "f0f2cc9b9821941f29a94772d80493c7b62b25ff4ef7b4951031a11d7fec35bd"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/assumptions-register.csv",
+      "bytes": 16111,
+      "sha256": "e2ca75b49bc975ef766f184a8310b308b5969e8e1f4dcd8f7682b857bbc8c553"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/bafo-questions.csv",
+      "bytes": 17792,
+      "sha256": "69c9859f444de63a3e0952bd712547a3690538b69b191ae5f1a30bcd00d9b865"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/bafo-responses.csv",
+      "bytes": 17553,
+      "sha256": "695149e3359669845173b7b22eee6de45da0bca7c4cae5b89e31b6d84472872e"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/bi-report-catalog.csv",
+      "bytes": 933131,
+      "sha256": "e358de4c943aa65420d4239b70532e493404eef4dccfc72519654ecdf5262b1b"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/business-process-nodes.csv",
+      "bytes": 900,
+      "sha256": "9c1934ddb02677ad868f3be6ebac5b72ab689e42b541d8adb36e15de7703db79"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/change-orders.csv",
+      "bytes": 11241,
+      "sha256": "bcbb09b6a9046cbd7a0cfe73378d6b7949ef2ef72bd198a832742cab024b7e11"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/cloud-infrastructure-inventory.csv",
+      "bytes": 2403898,
+      "sha256": "c2fda5b7691546af6a9e47aec04150e15a8cc5dbaad2ee61974b3194eb36eb26"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/conflicts-moderation.csv",
+      "bytes": 3294,
+      "sha256": "b04ba3ebcf03c38826e10e2922b19cd23f31ea81f90094dbdd4f0d0775d76852"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/control-catalog.csv",
+      "bytes": 188886,
+      "sha256": "385abc43951ed12ded087ad482962f3a702714b0074fb45cd3afadc06470856b"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/data-analytics-ai-landscape.csv",
+      "bytes": 393803,
+      "sha256": "2671b922479bb10f98a41e154a9adf420e5fa9e304b9adba0f40fe4463d7e03f"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/epic-module-environment-inventory.csv",
+      "bytes": 16962,
+      "sha256": "2489a1e03bf05455b60713e95e627ebc560b8c6b463d2151bd6b8b107bb06ee4"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/evaluation-criteria.csv",
+      "bytes": 12054,
+      "sha256": "61fbf2d3cb6d100247f1695d32e43554c9140ef66455cdfe25e99b5427db6623"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/evaluator-scores.csv",
+      "bytes": 36132,
+      "sha256": "48dd22f9aa925dc0cedddfaaf5ebb84ebfd7be5c2592ccec99fbc81fca4630c3"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/exceptions-register.csv",
+      "bytes": 16217,
+      "sha256": "c56ed34603ff191ba89d457d778d44a222dcd8a6d55b8b13ae95aaaaf674acc7"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/executive-decisions.csv",
+      "bytes": 4033,
+      "sha256": "45fd2ed5b53fd2fca724aa3edee49e279a9aab9951f19f571fe51018fbbb364e"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/incidents-tickets.csv",
+      "bytes": 25415,
+      "sha256": "644c932c4b0a64a4de3f5cff562886a9a3241398e9fb7c34521463ddb5516071"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/interface-feed-inventory.csv",
+      "bytes": 1222750,
+      "sha256": "54372c596dee52c017f8db964dca1154bcbb6294b88d02ae3cb5517ef67e537f"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/invoice-lines.csv",
+      "bytes": 30854,
+      "sha256": "36e475c5fe15a09f5838c7a23d4ef76366408179beb3ef7abe14a5e516d7a967"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/kpi-stars-hedis-catalog.csv",
+      "bytes": 114079,
+      "sha256": "33e1e456214918be5af58c1d3ce70454549be35be38c58c1d51111f458085651"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/pricing-lines.csv",
+      "bytes": 52658,
+      "sha256": "51254d15967aaad6365287d8e86599c5b5e918ca27363feef946f09aedadf559"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-proposal-evidence.csv",
+      "bytes": 7093,
+      "sha256": "aece07661f213f3899171b5986667bc496852137f8877d8b6a156ed368fbd437"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/program-portfolio.csv",
+      "bytes": 28461,
+      "sha256": "4506ce1c0515a1ed1b71e37bd08616d50bba0cca8be9435f6a0826f837560049"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/proposal-facts.csv",
+      "bytes": 20324,
+      "sha256": "bb6a0e6194aea85ed4acf48bb49c6c697252f0a95fca244051ecca2a2622e9a6"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/proposal-requirements.csv",
+      "bytes": 16085,
+      "sha256": "ae2a6157b01884012e0e7f3c26725ca2c0f1e20b076bf7cc92976891efd7c9d1"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/proposal-responses.csv",
+      "bytes": 4777,
+      "sha256": "f0933ffba946ecabd731f79f32be869aee841bc4dc5d66499f1a5b3a04378521"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/rate-cards.csv",
+      "bytes": 26965,
+      "sha256": "6756300eb363fbae230a598af05a06a7d8dedc4c4cd532e9e8cb8eb43c8f47d1"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/reconstruction-ledger.csv",
+      "bytes": 75690,
+      "sha256": "d5c1fc3e7cdf8c88c68b767c89d07b40e1e5e9c48be64abbf4d45a9ba56c4b1d"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/relationship-load-template.csv",
+      "bytes": 13505668,
+      "sha256": "8ab5f46499ce6d5b8d39277b675c0e95564238a3c8cad8eb6cb4b837ec23796a"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/revised-pricing.csv",
+      "bytes": 40895,
+      "sha256": "567c1d06a2e42459ee65aeeb2755ac36b4032fb98d68e31f4aaf30af2296275d"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/risk-register.csv",
+      "bytes": 71085,
+      "sha256": "e62906615057ab594f715185b668158b5c2fd6d3abe425fa73c40ade10b70b89"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/service-volume-baseline.csv",
+      "bytes": 47647,
+      "sha256": "b316e67d791dcc190d25c373a60b3ed9eea62b12b1c4c40f8fd574486be8c95d"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/sla-observations.csv",
+      "bytes": 24962,
+      "sha256": "31836036c9849844093708bb96e4e2dd32ff29ed9b1487b369bc6c519729be8e"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/sql-server-analytics-estate.csv",
+      "bytes": 275518,
+      "sha256": "b64aa9c7edc140f2e766d881970e06e3b8390a22292cfc6d895c31a574242900"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/staffing-pyramids.csv",
+      "bytes": 27656,
+      "sha256": "ea3eba3eef219929332e427836bedd7cca7a53d644017b46d9bacb70324e8fc4"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/technology-workforce-roster.csv",
+      "bytes": 1221791,
+      "sha256": "743b5809eab9049d0bc8e13bc9afaa3bc3632c4bfa95d89cbd5fffb392439ce1"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/transition-commitments.csv",
+      "bytes": 14401,
+      "sha256": "a2318d2537252a947c42b9f79cf3d8a8a1a6a98d095bb73a4a6cd346df1b94a0"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/value-commitments.csv",
+      "bytes": 15971,
+      "sha256": "7b48cb1997b9f2940bd39d675d653cf57d54b545c0a5e6ae845dc712c478a14b"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/vendor-contract-register.csv",
+      "bytes": 575376,
+      "sha256": "96d7f11313ab3dd55e78ff3ed9c01e87c02c9b3a8db942df9cda5b2a5e53ba06"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/vendor-register.csv",
+      "bytes": 63612,
+      "sha256": "bbd552f304606c3469e61eda4d2de659c424c918143f5979135d96b2298010bf"
+    },
+    {
+      "path": "04-restricted-evaluator-design/hidden-canonical-truth-sample.json",
+      "bytes": 1262,
+      "sha256": "a79e2b5ec6e2ca3488c138162a555c03cd6c4de308bc70ba7d43a26dca9470a4"
+    },
+    {
+      "path": "04-restricted-evaluator-design/source-to-truth-crosswalk.csv",
+      "bytes": 642,
+      "sha256": "4097e4b9684cc29eef8466a5f786f221449491e8d22daa857473f0d8492fdedc"
+    },
+    {
+      "path": "05-validation/DECISION_MEMO.md",
+      "bytes": 1362,
+      "sha256": "be87de7fe2c59242698f235fa94c4b4f87da6b26989b92a7e5807e90855c8e4b"
+    },
+    {
+      "path": "05-validation/INDEPENDENT_SEMANTIC_AUDIT_REPORT.md",
+      "bytes": 2580,
+      "sha256": "1f890d1c243597206327364afa329eab22e8c8bd45a8f026b39ca3fb050aa1a2"
+    },
+    {
+      "path": "05-validation/VALIDATION_REPORT.md",
+      "bytes": 1921,
+      "sha256": "ade071c73c86c0638f4ac836dec38086f2858b10cefee56e84880f75bd25b835"
+    },
+    {
+      "path": "05-validation/independent-semantic-audit.json",
+      "bytes": 12417,
+      "sha256": "bf94445d184fb3c4545b90f1cfbe32e7d31a61c880497d1f2a3e4ddf14670cab"
+    },
+    {
+      "path": "05-validation/validation-summary.json",
+      "bytes": 2837,
+      "sha256": "b45866dd41258adb160121bfb1ff421f51f516fe3888d7074f2b311149b05032"
+    },
+    {
+      "path": "06-review-package/REVIEW_INDEX.html",
+      "bytes": 956,
+      "sha256": "b8b15740726ee0b994ee9ed6fdc87cce7b88c675843b40deb694b47d73318a1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 570,
+      "sha256": "add1b079264826ea9290f8f5b18c414e6be96d78bf75a8819a5c4e5e008719ce"
+    }
+  ]
+}

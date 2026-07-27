@@ -1,0 +1,91 @@
+change_order_id,lot_id,service_tower,contract_id,change_type,status,source_id
+CO-HCDN-LOT-HCDN-01-001,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-01-002,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-01-003,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-01-004,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-01-005,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-01-006,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-01-007,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-01-008,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-01-009,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-01-010,LOT-HCDN-01,Clinical and Epic AMS,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-02-001,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-02-002,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-02-003,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-02-004,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-02-005,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-02-006,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-02-007,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-02-008,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-02-009,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-02-010,LOT-HCDN-02,Payer Platform Operations,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-03-001,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-03-002,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-03-003,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-03-004,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-03-005,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-03-006,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-03-007,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-03-008,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-03-009,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-03-010,LOT-HCDN-03,Data Analytics and AI,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-04-001,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-04-002,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-04-003,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-04-004,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-04-005,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-04-006,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-04-007,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-04-008,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-04-009,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-04-010,LOT-HCDN-04,Revenue Cycle Technology,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-05-001,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-05-002,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-05-003,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-05-004,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-05-005,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-05-006,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-05-007,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-05-008,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-05-009,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-05-010,LOT-HCDN-05,Cloud Infrastructure and Data Center,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-06-001,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-06-002,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-06-003,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-06-004,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-06-005,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-06-006,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-06-007,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-06-008,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-06-009,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-06-010,LOT-HCDN-06,Workplace and Contact Center,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-07-001,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-07-002,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-07-003,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-07-004,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-07-005,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-07-006,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-07-007,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-07-008,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-07-009,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-07-010,LOT-HCDN-07,Security Identity and Compliance,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-08-001,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-08-002,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-08-003,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-08-004,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-08-005,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-08-006,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-08-007,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-08-008,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-08-009,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-08-010,LOT-HCDN-08,Integration and Interoperability,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
+CO-HCDN-LOT-HCDN-09-001,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0014,urgent remediation,pending,SRC-HCDN-CO-001
+CO-HCDN-LOT-HCDN-09-002,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0027,cloud migration,disputed,SRC-HCDN-CO-002
+CO-HCDN-LOT-HCDN-09-003,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0040,interface remediation,needs evidence,SRC-HCDN-CO-003
+CO-HCDN-LOT-HCDN-09-004,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0053,Epic upgrade support,approved,SRC-HCDN-CO-004
+CO-HCDN-LOT-HCDN-09-005,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0066,scope expansion,pending,SRC-HCDN-CO-005
+CO-HCDN-LOT-HCDN-09-006,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0079,urgent remediation,disputed,SRC-HCDN-CO-006
+CO-HCDN-LOT-HCDN-09-007,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0092,cloud migration,needs evidence,SRC-HCDN-CO-007
+CO-HCDN-LOT-HCDN-09-008,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0105,interface remediation,approved,SRC-HCDN-CO-008
+CO-HCDN-LOT-HCDN-09-009,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0118,Epic upgrade support,pending,SRC-HCDN-CO-009
+CO-HCDN-LOT-HCDN-09-010,LOT-HCDN-09,ERP and Corporate Platforms,CONT-HCDN-0131,scope expansion,disputed,SRC-HCDN-CO-010
