@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a static audit package for existing Moves, Source, and Tower persisted objects. It inventories module-relevant persisted objects parsed from migration DDL, uses focused code references only as consumer evidence, classifies each item as operational, canonical-promotion candidate, shared-consumption projection, archive, or replacement candidate, and documents the target integration pattern for later controlled migration planning.
+This release adds a static audit package for existing Moves, Source, and Tower persisted objects. It inventories module-relevant persisted objects parsed from migration DDL, uses focused code references only as consumer evidence, classifies each item as operational, provisional canonical-promotion candidate, shared-consumption projection, archive, or replacement candidate, and documents the target integration pattern for later controlled migration planning.
 
 ## Layer Impact
 
@@ -42,7 +42,8 @@ This release adds a static audit package for existing Moves, Source, and Tower p
 - PASS: `node scripts/audit/build-module-migration-sunset-backlog.mjs`
 - PASS: CSV sanity check confirmed row and column counts for all generated matrices.
 - PASS: independent classification review corrected code-reference false positives and confirmed the stricter baseline: 131 persisted objects; 72 retain operational; 38 promote/link; 16 shared consumption projections; 5 archive.
-- PASS: final row-level spot check confirmed one row per persisted object, one disposition per object, typed table/view posture, promotion targets, projection guidance, archive handling, and explicit static/live verification boundaries.
+- PASS: final row-level spot check confirmed one row per persisted object, one disposition per object, typed table/view posture, provisional promotion families, projection guidance, archive handling, and explicit static/live verification boundaries.
+- PASS: targeted correction patch replaced coarse canonical targets with provisional object families plus mapping confidence, clarified projection-catalog scope, reconciled 131 audit rows to 129 backlog rows, and narrowed the Moves orchestrator sunset target so the durable run ledger is retained.
 - PASS: generated separate migration/sunset planning backlog package; planning only, no migration authorization.
 - PASS: `node --check scripts/audit/build-module-data-integration-audit.mjs && node --check scripts/audit/build-module-data-integration-workbooks.mjs && node --check scripts/audit/build-module-migration-sunset-backlog.mjs`
 - PASS: `npm run release:check`
@@ -75,5 +76,6 @@ Revert the audit scripts and generated report artifacts. No runtime, database, A
 ## Known Gaps
 
 - Static audit only. Live row counts, RLS catalog status, null rates, duplicates, stale rows, and broken references require a later read-only database audit.
+- Canonical object families are provisional until live row profiling, tenant/RLS inspection, lineage validation, and publication-framework proof are complete.
 - No migration, API cutover, Cube model, dashboard change, tenant move, or Azure mutation is included.
 - The migration/sunset backlog records future path-level candidates only. It does not authorize migration, backfill, dual-write, cutover, archive, drop, or runtime changes.

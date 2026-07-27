@@ -17,7 +17,8 @@ const csvHeaders = {
     "current_writers",
     "current_readers",
     "target_operational_owner",
-    "canonical_promotion_target",
+    "provisional_canonical_object_family",
+    "mapping_confidence",
     "target_consumption_projection",
     "migration_method",
     "historical_backfill",
@@ -48,7 +49,8 @@ const csvHeaders = {
   promotionMatrix: [
     "module",
     "schema_table",
-    "canonical_target",
+    "provisional_canonical_object_family",
+    "mapping_confidence",
     "current_authority",
     "identity_map_required",
     "publication_trigger",
@@ -64,6 +66,7 @@ const csvHeaders = {
     "module",
     "source_object",
     "projection_family",
+    "catalog_scope",
     "intended_consumers",
     "refresh_trigger",
     "current_authority",
@@ -225,7 +228,9 @@ function objectBacklogRows(inventory) {
       current_writers: "Live writer inspection required; static audit records focused consumers only",
       current_readers: row.current_consumers,
       target_operational_owner: row.future_classification === "retain_operational" ? row.module : `${row.module} until publication`,
-      canonical_promotion_target: row.future_classification === "promote_link_canonical_knowledge" ? row.canonical_equivalent : "",
+      provisional_canonical_object_family:
+        row.future_classification === "promote_link_canonical_knowledge" ? canonicalFamily(row) : "",
+      mapping_confidence: row.future_classification === "promote_link_canonical_knowledge" ? row.mapping_confidence : "",
       target_consumption_projection:
         row.future_classification === "project_shared_consumption" ? inferProjectionName(row) : "",
       migration_method: migrationMethod(row),
@@ -245,12 +250,17 @@ function objectBacklogRows(inventory) {
 
 function inferProjectionName(row) {
   const name = row.schema_table.replace(/^public\./, "").replace(/^cio_tower\./, "").replace(/^intelligence_v7\./, "");
-  if (row.canonical_equivalent.includes("metric")) return `consumption.metric_${name}`;
-  if (row.canonical_equivalent.includes("evidence")) return `consumption.evidence_${name}`;
-  if (row.canonical_equivalent.includes("program")) return `consumption.program_${name}`;
-  if (row.canonical_equivalent.includes("relationship")) return `consumption.relationship_${name}`;
-  if (row.canonical_equivalent.includes("context_pack")) return `consumption.context_${name}`;
+  const family = canonicalFamily(row);
+  if (family.includes("metric")) return `consumption.metric_${name}`;
+  if (family.includes("evidence")) return `consumption.evidence_${name}`;
+  if (family.includes("program")) return `consumption.program_${name}`;
+  if (family.includes("relationship")) return `consumption.relationship_${name}`;
+  if (family.includes("context_pack")) return `consumption.context_${name}`;
   return `consumption.${name}`;
+}
+
+function canonicalFamily(row) {
+  return row.provisional_canonical_object_family || row.canonical_equivalent || "to_be_mapped_after_live_profile";
 }
 
 function migrationMethod(row) {
@@ -289,7 +299,8 @@ function promotionRows(inventory) {
     .map((row) => ({
       module: row.module,
       schema_table: row.schema_table,
-      canonical_target: row.canonical_equivalent,
+      provisional_canonical_object_family: canonicalFamily(row),
+      mapping_confidence: row.mapping_confidence || "unresolved",
       current_authority: row.system_of_record,
       identity_map_required: "governance.object_identity_map",
       publication_trigger: "accepted/reviewed/published row state plus tenant and lineage validation",
@@ -310,6 +321,8 @@ function projectionRows(inventory) {
       module: row.module,
       source_object: row.schema_table,
       projection_family: inferProjectionName(row),
+      catalog_scope:
+        "Current discovered persisted-object projection candidate only; Source and Moves target projections belong to the later Module Integration Target Plan",
       intended_consumers: "Nexus; aVa; Cube; Superset; Observable; module dashboards; exports",
       refresh_trigger: "Domain publication/outbox or controlled materialization run after source reconciliation",
       current_authority: row.system_of_record,
@@ -344,12 +357,12 @@ function legacySunsetRows() {
       current_readers: "Moves orchestration, review, and artifact display consumers to be verified live",
       why_it_exists: "Supports generated artifacts from automated phase execution",
       convergence_problem: "May write different structured_data shapes than golden-bar path",
-      target_state: "Both generation engines emit one typed artifact contract into one lifecycle",
-      sunset_sequence: "ACTIVE -> DUAL_RUN -> NEW_READ_PRIMARY -> LEGACY_READ_ONLY -> ARCHIVED -> DROPPED",
+      target_state: "Retain deliverable_runs as operations.job_run or equivalent durable generation ledger; migrate/link generated_artifacts into the common deliverable lifecycle and make it non-authoritative after parity",
+      sunset_sequence: "deliverable_runs: RETAIN_OPERATIONAL; generated_artifacts: ACTIVE -> DUAL_RUN -> NEW_READ_PRIMARY -> LEGACY_READ_ONLY -> ARCHIVED -> DROPPED",
       required_business_event_telemetry: "moves.deliverable_signed_off; moves.gate_approved; moves.program_published",
       read_only_observation_period: "60 days after typed contract parity",
-      archive_requirement: "Retain run evidence and model/prompt lineage as audit history",
-      drop_authorization: "Explicit later approval after historical artifact backfill",
+      archive_requirement: "Retain run evidence and model/prompt lineage as audit history; only generated_artifacts authority may be archived after parity and retention gates",
+      drop_authorization: "No drop of durable run ledger authorized; generated_artifacts retirement requires explicit later approval after historical artifact backfill",
       status: "path_level_candidate",
     },
     {
@@ -481,7 +494,8 @@ function foundationRows() {
       current_writers: "none",
       current_readers: "future canonical publications and projections",
       target_operational_owner: "Governance",
-      canonical_promotion_target: "governance.object_identity_map",
+      provisional_canonical_object_family: "governance.object_identity_map",
+      mapping_confidence: "confirmed",
       target_consumption_projection: "",
       migration_method: "Design and approve before any module migration",
       historical_backfill: "none until identity policy is approved",
@@ -502,7 +516,8 @@ function foundationRows() {
       current_writers: "none",
       current_readers: "future publication adapters",
       target_operational_owner: "Governance",
-      canonical_promotion_target: "governance.module_publication_outbox",
+      provisional_canonical_object_family: "governance.module_publication_outbox",
+      mapping_confidence: "confirmed",
       target_consumption_projection: "",
       migration_method: "Implement after Healthcare publication lifecycle proves out",
       historical_backfill: "none before approved replay strategy",
@@ -523,7 +538,8 @@ function foundationRows() {
       current_writers: "module-specific formula paths",
       current_readers: "Tower, Source, Moves, aVa, future BI",
       target_operational_owner: "Governance + metric owner",
-      canonical_promotion_target: "knowledge.metric_definition",
+      provisional_canonical_object_family: "knowledge.metric_definition",
+      mapping_confidence: "confirmed",
       target_consumption_projection: "consumption.metric_observation_*",
       migration_method: "Separate definition from observation; publish formula versions before observations",
       historical_backfill: "Backfill current definitions first, then observations",
@@ -542,7 +558,7 @@ function foundationRows() {
 function writeMarkdownFiles(summary) {
   const common = `> Planning package derived from PR #5679's 131-object static audit. This package does not authorize migration, backfill, dual-write, cutover, archive, drop, Azure mutation, Postgres mutation, or product runtime changes.\n\n`;
   const files = {
-    "MODULE_MIGRATION_SUNSET_BACKLOG_SUMMARY.md": `# Module Migration and Sunset Backlog Summary\n\n${common}## Current-State Baseline\n\nPR #5679 remains the factual baseline: ${summary.inventoryRows} persisted objects, with ${summary.byClassification.retain_operational} retained operational, ${summary.byClassification.promote_link_canonical_knowledge} promotion/link candidates, ${summary.byClassification.project_shared_consumption} shared-consumption projections, ${summary.byClassification.archive} archive items, and ${summary.byClassification.replace || 0} immediate replace items.\n\n## Key Interpretation\n\n\`replace = 0\` means no persisted object is safe to remove today. It does not mean there are no paths to sunset. The path-level backlog separately tracks duplicate deliverable truth, direct context writeback, legacy source/mart construction, duplicated reporting logic, identity duplication, and telemetry gaps.\n\n## Required Sequence\n\n1. Merge the factual audit baseline only after approval.\n2. Keep Healthcare execution separate until it certifies the Knowledge publication and consumption path.\n3. Add business-event telemetry before module dual-run.\n4. Build shared foundation: identity map, promotion outbox, publication lifecycle, projection registry, metric-definition contract, audit stream, reconciliation framework.\n5. Migrate by wave with shadow reads, parity proof, rollback, and explicit destructive-change approval.\n`,
+    "MODULE_MIGRATION_SUNSET_BACKLOG_SUMMARY.md": `# Module Migration and Sunset Backlog Summary\n\n${common}## Current-State Baseline\n\nPR #5679 remains the factual baseline: ${summary.inventoryRows} persisted objects, with ${summary.byClassification.retain_operational} retained operational, ${summary.byClassification.promote_link_canonical_knowledge} promotion/link candidates, ${summary.byClassification.project_shared_consumption} shared-consumption projections, ${summary.byClassification.archive} archive items, and ${summary.byClassification.replace || 0} immediate replace items.\n\n## Key Interpretation\n\n\`replace = 0\` means no persisted object is safe to remove today. It does not mean there are no paths to sunset. The path-level backlog separately tracks duplicate deliverable truth, direct context writeback, legacy source/mart construction, duplicated reporting logic, identity duplication, and telemetry gaps.\n\nCanonical object families in this package are provisional until live row profiling, tenant/RLS inspection, lineage validation, and publication-framework proof are complete. Rows that cannot be safely classified from static DDL use \`to_be_mapped_after_live_profile\` and \`mapping_confidence=unresolved\`.\n\n## Count Reconciliation\n\nNo audited persisted object disappeared between the 131-row inventory and the 129-row migration backlog.\n\n- Audited persisted objects: 131.\n- Archive-only objects excluded from migration backlog rows: 5.\n- Audited persisted objects represented in migration backlog rows: 126.\n- Wave 0 shared-foundation prerequisite rows added: 3.\n- Total migration backlog rows: 129.\n\nThe net difference of 2 is arithmetic from excluding 5 archive-only objects and adding 3 non-persisted foundation prerequisites, not two missing audit records.\n\n## Projection Catalog Scope\n\nThe shared consumption projection catalog records the current persisted-object projection candidates discovered by this static audit. The current 16 candidates are Tower-shaped because they are the existing persisted objects discovered in the audit. Source and Moves target projections, such as moves portfolio, decision register, value realization, source event summary, vendor comparison, contract exposure, and transition commitments, belong to the later Module Integration Target Plan.\n\n## Required Sequence\n\n1. Merge the factual audit baseline only after approval.\n2. Keep Healthcare execution separate until it certifies the Knowledge publication and consumption path.\n3. Add business-event telemetry before module dual-run.\n4. Build shared foundation: identity map, promotion outbox, publication lifecycle, projection registry, metric-definition contract, audit stream, reconciliation framework.\n5. Migrate by wave with shadow reads, parity proof, rollback, and explicit destructive-change approval.\n`,
     "CROSS_MODULE_IDENTITY_MAP_DESIGN.md": `# Cross-Module Identity Map Design\n\n${common}## Purpose\n\nPreserve module-local IDs while linking reviewed enterprise-significant objects to stable canonical references. The identity map is not a bulk copy of module workflow state.\n\n## Required Fields\n\n| Field | Requirement |\n| --- | --- |\n| tenant_key | Required tenant fence from session/runtime identity |\n| module | Moves, Source, Tower, or future module |\n| local_object_type | Domain object type such as vendor, contract, program, decision, risk, control, metric, outcome, evidence, application, sourcing_event |\n| local_object_ref | Module-local primary identifier |\n| canonical_object_type | Canonical Knowledge family |\n| canonical_object_ref | Stable canonical ID after review |\n| match_method | exact, deterministic, reviewed, manual, or rejected |\n| match_confidence | Confidence tier and score where available |\n| review_state | candidate, approved, rejected, superseded |\n| valid_from / valid_to | Temporal boundary |\n| evidence_refs | Source/evidence/provenance references supporting the link |\n| created_by / reviewed_by | Accountability |\n\n## Rules\n\n- Identity is declared and reviewed, not inferred from filenames or display labels.\n- Local IDs are retained for workflow rollback and audit history.\n- No consumer may use canonical reads until the link is approved and parity-tested.\n`,
     "MODULE_PUBLICATION_AND_OUTBOX_CONTRACT.md": `# Module Publication and Outbox Contract\n\n${common}## Contract\n\nModules own workflow state. A module publishes only accepted, reviewed, or attested enterprise-significant events to a governed outbox. Canonical Knowledge and shared projections consume from the outbox after validation.\n\n## Outbox Fields\n\n| Field | Requirement |\n| --- | --- |\n| event_id | Immutable event identifier |\n| tenant_key | Required tenant fence |\n| module | Emitting module |\n| business_event | Source, Moves, Tower, or cross-module event name |\n| local_object_type / local_object_ref | Domain-local object reference |\n| canonical_object_type | Intended target family |\n| payload | Typed publication payload |\n| evidence_refs | Source/evidence/provenance links |\n| review_state | candidate, approved, rejected, superseded |\n| idempotency_key | Required for replay safety |\n| emitted_at / processed_at | Audit timestamps |\n\n## Stop Conditions\n\n- Missing tenant key.\n- Missing evidence lineage for a material fact.\n- Unreviewed fact attempting canonical promotion.\n- Cross-tenant object reference.\n- Conflicting metric definition or unit.\n`,
     "MODULE_DUAL_RUN_RECONCILIATION_PLAN.md": `# Module Dual-Run Reconciliation Plan\n\n${common}## Dual-Run Rule\n\nEvery consumer cutover must compare old module reads with new canonical/projection reads under the same tenant, time period, filters, and user path.\n\n## Required Reconciliation Dimensions\n\n- Row count and object count.\n- Tenant fence.\n- Local ID to canonical ID map.\n- Source lineage and evidence refs.\n- Metric period, unit, formula version, and basis.\n- Headline values and material thresholds.\n- aVa answer packet fields.\n- Export and dashboard visual parity.\n\n## Go / No-Go\n\nNo consumer switches to new reads until parity is accepted, rollback is tested, and business-event telemetry proves the old path can be observed during the read-only window.\n`,
@@ -575,6 +591,12 @@ async function main() {
         sourcePr: 5679,
         scope: "planning backlog only; no migration authorization",
         migrationBacklogRows: migrationRows.length,
+        auditedPersistedObjects: inventory.length,
+        auditedObjectBacklogRows: objectBacklogRows(inventory).length,
+        archiveOnlyObjectsExcludedFromMigrationRows: inventory.filter((row) => row.future_classification === "archive").length,
+        foundationPrerequisiteRowsAdded: foundationRows().length,
+        countReconciliation:
+          "131 audited persisted objects - 5 archive-only objects + 3 Wave 0 foundation prerequisites = 129 migration backlog rows; no audited persisted object is missing.",
         legacySunsetRows: legacySunsetRows().length,
         promotionRows: promotionRows(inventory).length,
         projectionRows: projectionRows(inventory).length,

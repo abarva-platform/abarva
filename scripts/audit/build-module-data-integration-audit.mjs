@@ -199,6 +199,13 @@ const classificationOverrides = new Map(
 
 const canonicalOverrides = new Map(
   [
+    ["public.ai_control_actions", "knowledge.action_or_decision"],
+    ["public.ai_control_benefit_realization", "knowledge.metric_observation"],
+    ["public.ai_control_context_facts", "knowledge.fact_assertion"],
+    ["public.ai_control_context_relationships", "knowledge.relationship_assertion"],
+    ["public.ai_control_evidence_items", "knowledge.evidence"],
+    ["public.ai_control_persona_productivity", "knowledge.metric_observation"],
+    ["public.ai_control_tool_usage_monthly", "knowledge.metric_observation"],
     ["cio_tower.facts", "knowledge.metric_observation"],
     ["cio_tower.measure_results", "knowledge.metric_observation"],
     ["cio_tower.measures", "knowledge.metric_definition"],
@@ -210,16 +217,35 @@ const canonicalOverrides = new Map(
     ["public.source_artifact_acceptances", "knowledge.evidence_acceptance"],
     ["public.source_artifact_chunks", "knowledge.evidence_chunk"],
     ["public.source_artifact_facts", "knowledge.fact"],
+    ["public.source_contract_evidence_manifests", "knowledge.evidence_manifest"],
+    ["public.source_contract_evidence_metrics", "knowledge.metric_observation"],
+    ["public.source_contract_evidence_rows", "knowledge.evidence_fragment_or_contract_fact_assertion"],
+    ["public.source_contract_optimization_findings", "knowledge.contract_finding"],
+    ["public.source_contract_optimization_levers", "knowledge.value_driver_or_commercial_lever"],
+    ["public.source_contract_optimization_profiles", "knowledge.contract_profile"],
     ["public.source_event_facts", "knowledge.fact"],
+    ["public.source_meeting_outcomes", "to_be_mapped_after_live_profile"],
+    ["public.source_value_chain", "knowledge.value_flow_step"],
+    ["public.source_value_levers", "knowledge.value_driver_or_lever"],
+    ["public.source_value_lines", "to_be_mapped_after_live_profile"],
+    ["public.source_value_states", "knowledge.value_state_or_readiness"],
+    ["public.source_vendor_commitments", "knowledge.commercial_commitment"],
+    ["public.source_vendor_proposal_facts", "knowledge.proposal_fact_assertion"],
     ["public.source_vendor_proposal_fact_reviews", "governance.review_state"],
     ["public.tower_cmdb_cis", "knowledge.application"],
     ["public.tower_cmdb_dependencies", "knowledge.relationship_projection"],
     ["public.tower_dora_metrics", "knowledge.metric_observation"],
     ["public.tower_program_financials", "knowledge.metric_observation"],
     ["public.tower_vendor_spend", "knowledge.metric_observation"],
+    ["public.vendor_contracts", "knowledge.contract"],
     ["public.use_cases", "knowledge.program"],
   ].map(([name, value]) => [name.toLowerCase(), value]),
 );
+
+const unresolvedCanonicalMappings = new Set([
+  "public.source_meeting_outcomes",
+  "public.source_value_lines",
+]);
 
 function walk(dir, predicate = () => true) {
   if (!fs.existsSync(dir)) return [];
@@ -326,20 +352,27 @@ function classificationFor({ fullName, module, objectKind, columns }) {
   return ["retain_operational", "Needed for domain workflow unless a later live data review proves it obsolete."];
 }
 
-function canonicalEquivalent(fullName) {
+function canonicalMapping(fullName) {
   const name = fullName.toLowerCase();
   const override = canonicalOverrides.get(name);
-  if (override) return override;
-  if (name.includes("vendor") || name.includes("supplier")) return "knowledge.vendor";
-  if (name.includes("contract") || name.includes("agreement")) return "knowledge.contract";
-  if (name.includes("program") || name.includes("initiative") || name.includes("move")) return "knowledge.program";
-  if (name.includes("metric") || name.includes("kpi") || name.includes("outcome") || name.includes("value")) return "knowledge.metric";
-  if (name.includes("decision")) return "knowledge.decision";
-  if (name.includes("risk") || name.includes("control")) return "knowledge.risk_control";
-  if (name.includes("artifact") || name.includes("evidence")) return "knowledge.evidence";
-  if (name.includes("application") || name.includes("app")) return "knowledge.application";
-  if (name.includes("tenant") || name.includes("client")) return "governance.tenant";
-  return "to_be_mapped";
+  if (override) {
+    return {
+      family: override,
+      confidence: unresolvedCanonicalMappings.has(name) ? "unresolved" : "provisional",
+    };
+  }
+  if (name.includes("vendor") || name.includes("supplier")) return { family: "knowledge.vendor", confidence: "provisional" };
+  if (name.includes("contract") || name.includes("agreement")) return { family: "knowledge.contract", confidence: "provisional" };
+  if (name.includes("program") || name.includes("initiative") || name.includes("move")) return { family: "knowledge.program", confidence: "provisional" };
+  if (name.includes("metric") || name.includes("kpi")) return { family: "knowledge.metric_observation", confidence: "provisional" };
+  if (name.includes("outcome")) return { family: "knowledge.outcome", confidence: "provisional" };
+  if (name.includes("value")) return { family: "to_be_mapped_after_live_profile", confidence: "unresolved" };
+  if (name.includes("decision")) return { family: "knowledge.decision", confidence: "provisional" };
+  if (name.includes("risk") || name.includes("control")) return { family: "knowledge.risk_control", confidence: "provisional" };
+  if (name.includes("artifact") || name.includes("evidence")) return { family: "knowledge.evidence", confidence: "provisional" };
+  if (name.includes("application") || name.includes("app")) return { family: "knowledge.application", confidence: "provisional" };
+  if (name.includes("tenant") || name.includes("client")) return { family: "governance.tenant", confidence: "provisional" };
+  return { family: "to_be_mapped_after_live_profile", confidence: "unresolved" };
 }
 
 function complexityFor(row) {
@@ -486,6 +519,7 @@ function buildInventory() {
     const temporalCols = obj.columns.filter((col) => /(created_at|updated_at|valid_from|valid_to|effective|period|date|history|version)/i.test(col));
     const evidenceCols = obj.columns.filter((col) => /(source|evidence|artifact|lineage|provenance|citation|confidence)/i.test(col));
     const tenantCols = obj.columns.filter((col) => /(tenant|client|org|organization|user_id|owner_id)/i.test(col));
+    const canonical = canonicalMapping(obj.fullName);
     const tenantIsolation =
       rls.get(obj.fullName) || tenantCols.length
         ? `${rls.get(obj.fullName) ? "RLS/policy marker observed" : "tenant/user column observed"} (${tenantCols.join("; ") || "policy only"})`
@@ -508,7 +542,8 @@ function buildInventory() {
       metrics_produced: /(metric|kpi|value|budget|spend|cost|outcome|sla|dora|financial)/i.test(obj.fullName)
         ? "Metric/value/cost family candidate"
         : "",
-      canonical_equivalent: canonicalEquivalent(obj.fullName),
+      provisional_canonical_object_family: canonical.family,
+      mapping_confidence: canonical.confidence,
       future_classification: futureClassification,
       classification_rationale: rationale,
       migration_complexity: "",
@@ -538,7 +573,7 @@ function buildMatrices(inventory) {
     ["Evidence/Artifact", /evidence|artifact|source|lineage/i],
   ];
   const collisions = identityFamilies.map(([family, pattern]) => {
-    const hits = inventory.filter((row) => pattern.test(`${row.schema_table} ${row.primary_business_keys} ${row.main_relationships} ${row.canonical_equivalent}`));
+    const hits = inventory.filter((row) => pattern.test(`${row.schema_table} ${row.primary_business_keys} ${row.main_relationships} ${row.provisional_canonical_object_family}`));
     const modules = [...new Set(hits.map((row) => row.module))].sort();
     return {
       object_family: family,
@@ -555,7 +590,8 @@ function buildMatrices(inventory) {
     .map((row) => ({
       module: row.module,
       schema_table: row.schema_table,
-      canonical_equivalent: row.canonical_equivalent,
+      provisional_canonical_object_family: row.provisional_canonical_object_family,
+      mapping_confidence: row.mapping_confidence,
       promotion_trigger: "Approved/accepted/published state plus evidence lineage and tenant identity verified",
       required_crosswalk: "governance.object_identity_map",
       lineage_required: "source/evidence/provenance fields or outbox payload evidence",
@@ -578,7 +614,7 @@ function buildMatrices(inventory) {
   const metricDuplication = inventory
     .filter((row) => /(metric|kpi|outcome|value|budget|spend|cost|sla|dora|financial|measure)/i.test(`${row.schema_table} ${row.metrics_produced}`))
     .map((row) => ({
-      metric_family: row.canonical_equivalent === "knowledge.metric" ? inferMetricFamily(row.schema_table) : row.canonical_equivalent,
+      metric_family: row.provisional_canonical_object_family === "knowledge.metric_observation" ? inferMetricFamily(row.schema_table) : row.provisional_canonical_object_family,
       module: row.module,
       schema_table: row.schema_table,
       current_role: row.business_purpose,
@@ -673,7 +709,8 @@ function main() {
     "data_quality",
     "current_consumers",
     "metrics_produced",
-    "canonical_equivalent",
+    "provisional_canonical_object_family",
+    "mapping_confidence",
     "future_classification",
     "classification_rationale",
     "migration_complexity",
@@ -695,7 +732,8 @@ function main() {
   writeCsv("CANONICAL_PROMOTION_MATRIX.csv", matrices.promotion, [
     "module",
     "schema_table",
-    "canonical_equivalent",
+    "provisional_canonical_object_family",
+    "mapping_confidence",
     "promotion_trigger",
     "required_crosswalk",
     "lineage_required",
