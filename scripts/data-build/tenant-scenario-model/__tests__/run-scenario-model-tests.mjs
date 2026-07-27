@@ -14,6 +14,7 @@ import {
   validateGraph,
   projectEntity,
   buildCrosswalk,
+  UNRESOLVED_REF,
 } from "../scenario-model.mjs";
 import { semanticRules } from "../../../audit/tenant-input-semantic-quality.mjs";
 
@@ -121,6 +122,21 @@ assert(parseStableId("not-an-id-at-all") === null, "parseStableId returns null f
   addEntity(graph, "program", { program_name: "Missing required sponsor" }, {});
   const validation = validateGraph(graph);
   assert(validation.valid === false, "a missing required reference field fails validation");
+}
+
+// --- UNRESOLVED_REF: a disclosed, confirmed gap is a warning, not an error ---
+{
+  const graph = createGraph("fixture-tenant");
+  addEntity(graph, "program", { program_name: "Source data has no sponsor field at all" }, { sponsor_ref: UNRESOLVED_REF });
+  const validation = validateGraph(graph);
+  assert(validation.valid === true, "an explicitly UNRESOLVED_REF required reference does not fail validation (it's a disclosed gap, not an omission)");
+  assert(validation.warnings.some((w) => w.warning.includes("sponsor_ref") && w.warning.includes("unresolved")), "the unresolved reference is still surfaced as a warning, not silently dropped");
+}
+{
+  const graph = createGraph("fixture-tenant");
+  const program = addEntity(graph, "program", { program_name: "Unresolved sponsor projects blank, not a crash" }, { sponsor_ref: UNRESOLVED_REF });
+  const row = projectEntity(graph, program, "programs_initiatives");
+  assert(row.business_sponsor === "", "projecting an entity with an UNRESOLVED_REF reference produces a blank column, not a thrown error or a stray sentinel string");
 }
 {
   const graph = createGraph("fixture-tenant");
