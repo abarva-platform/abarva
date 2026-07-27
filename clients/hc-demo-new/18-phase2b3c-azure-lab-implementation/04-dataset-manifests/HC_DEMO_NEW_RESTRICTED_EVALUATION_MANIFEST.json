@@ -1,0 +1,510 @@
+{
+  "dataset_id": "hc-demo-new-restricted-evaluator-assets-phase2b3c",
+  "tenant_key": "hc-demo-new",
+  "restriction": "evaluator_only",
+  "assets": [
+    {
+      "restricted_asset_id": "a88351c2a6c692a5",
+      "relative_path": "11-phase2b1-hidden-ground-truth/README.md",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "8c2159fc5149349289693af33479072a9a43222f3198a2d5e94cd682b305373d"
+    },
+    {
+      "restricted_asset_id": "67939cfa3a0fac27",
+      "relative_path": "11-phase2b1-hidden-ground-truth/aliases/controlled_aliases.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "0529d0b035213a6a1f015b0cac2fa702975588df71c345be06464ec5f5a740b3"
+    },
+    {
+      "restricted_asset_id": "41eba469454ed57b",
+      "relative_path": "11-phase2b1-hidden-ground-truth/aliases/controlled_conflicts.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "3e08c18d9ee3fc22f3735e66684231209376cd1ab1cf834c4777e86218df1d5b"
+    },
+    {
+      "restricted_asset_id": "26826c13c8eb3565",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/ai_automation_use_cases.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "ab6d4783e8d542e19bf94fd09038bfb5a0c4a12a01960fc96604b092b7927746"
+    },
+    {
+      "restricted_asset_id": "3d8cce842b4599e5",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/application_modules_environments.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "d87cfcdd44db439d23f7b36d7dd3fa0f99b85fc9c3b6b0b9304cb919d2a7cdb2"
+    },
+    {
+      "restricted_asset_id": "418f2b11c3c996ea",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/applications.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "baf2fa9ca768e1547329de2d031e2061afd59901f89f8f5030494cbcfa1e255b"
+    },
+    {
+      "restricted_asset_id": "b3a0831386c99b14",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/bi_reports_dashboards.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "f1a96a5e22306b581dfa4a4ecdbb879ac3bcaa9f080dd55a44bbf1fe7a1ac9de"
+    },
+    {
+      "restricted_asset_id": "c26b2e568a19b660",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/capabilities.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "e9183a44d35fd69b82555b3583841bcf591297567e7784c2c16cfbaa15ab324d"
+    },
+    {
+      "restricted_asset_id": "5c9116aae85f1b4b",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/cloud_platform_resources.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "77cbf0bda99c965222d8fb30fde6fedbcb60d13d5f02aab696f7e53feb891626"
+    },
+    {
+      "restricted_asset_id": "0c55804977df2f2d",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/controls.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "3f337785c4e4b3c60f4abea19541ec1f613d53b1518559fee33711ccc2e55ff1"
+    },
+    {
+      "restricted_asset_id": "951fc57f8c075e5a",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/data_assets.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "4478742e787014119447b913101e618fccd7716e6cbb438d430138412718ed64"
+    },
+    {
+      "restricted_asset_id": "76ca6a71bd65ad25",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/data_domains.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "36ffe37147be7749a30d44580a66cbee1311a52fcb6b5f1ea7f86d6417cdfffd"
+    },
+    {
+      "restricted_asset_id": "eac2402d813318e0",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/data_pipelines.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "b750a5fdf12e99eded75793275347011a790c2f86c9f8b3164a75096a52ae702"
+    },
+    {
+      "restricted_asset_id": "229c426d0880a1d5",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/data_products.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "b45f5c1334fa7834eaeaf3482ebd995b8ff3231dd8833d7797167777973c28b2"
+    },
+    {
+      "restricted_asset_id": "d56a25f0f1e4120f",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/enterprise_profile.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "465b0863da2a157c04ab6cf8888b48e0393499f11b0b2941f3046b121808e4f5"
+    },
+    {
+      "restricted_asset_id": "3cbdc9ebd0364cfa",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/facilities.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "d0cff4f03ebf0fc702e78b9532dd2ea318d93d53197a2131ab128f3b9330791f"
+    },
+    {
+      "restricted_asset_id": "6d4bb36777763884",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/integrations.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "d24cd53d4b78af5d301aa2f63d624953a9f49195123258a7fd5d288e459b7d88"
+    },
+    {
+      "restricted_asset_id": "e5c453a606a8a44c",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/legal_entities.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "a465e7caed6d3a4fed6dd38fdc2faa9a08ce32df66d4de19c5936bff5a810d16"
+    },
+    {
+      "restricted_asset_id": "703c2d99a0d93411",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/material_contracts.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "b6b2c2fa401b424957a00dfd635e3942523797fc6778de58c7e3c98014a914a4"
+    },
+    {
+      "restricted_asset_id": "bdbd7ddcb8cd3510",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/organization_units.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "074e5b41618622c91168971272cfded510bc343cea39a243e32a76b22079eb6a"
+    },
+    {
+      "restricted_asset_id": "878ae53ff3b75133",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/processes.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "4c252fdec25c3256eeede2bf2e9712b98ba5e6028516cd15110f46b219339f62"
+    },
+    {
+      "restricted_asset_id": "1888aefdd8097808",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/programs_initiatives.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "d05769e4fb51126f2ea8660a2b36d2ac8b30bacc38e0eb53d6a0c047f27d0070"
+    },
+    {
+      "restricted_asset_id": "9a6bdc714fb21bf0",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/regions.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "31b2fb9c967ad5e68d814227db585ae6ef5115eddfa9f0c1bb22af4750049bda"
+    },
+    {
+      "restricted_asset_id": "5ea5bd0cba99d94f",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/risks.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "5b47b46a7f01f40a7611059ad381fe13a2a723c32a7407f814a854cc6195f6e6"
+    },
+    {
+      "restricted_asset_id": "c83a4802a2798c77",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/semantic_models.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "d2cc4ea559ab2399eb3d4d58e6615db9221fa2d77d4df7b8b19e14afc7be3c53"
+    },
+    {
+      "restricted_asset_id": "e83fc86362bc3595",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/service_lines.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "57efb1ab898103c09ef147b219aaefabfa252b30ec5fe06983ec19155575f3ac"
+    },
+    {
+      "restricted_asset_id": "36b3f9fa93ec447a",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/strategic_priorities.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "e1d3cd62ec4114e022035002756c2044e4bbf3b4d4a8ebbf46fd0bc4e6a954f0"
+    },
+    {
+      "restricted_asset_id": "198d88189afec6cf",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/vendors.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "4417dcca904c0a11f4592f2a81bd89a4926b4d88372f49be99e109516c2b18f3"
+    },
+    {
+      "restricted_asset_id": "f0e12e825cacf1c2",
+      "relative_path": "11-phase2b1-hidden-ground-truth/canonical-registries/workforce_roles.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "f60e46791381e08e04d31a41371589008a5ecad4d0e341dc2bf6680247993e5e"
+    },
+    {
+      "restricted_asset_id": "283ee11ab80f5afc",
+      "relative_path": "11-phase2b1-hidden-ground-truth/data-dictionary/field_dictionary.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "be044424356dd1804c6346568a8f067a7f6965f392ca21e8800760e36a250f9e"
+    },
+    {
+      "restricted_asset_id": "c9aa9d157f135b4d",
+      "relative_path": "11-phase2b1-hidden-ground-truth/expected-review-outcomes/expected_review_outcomes.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "092853af85d81c8049a1040c674686d06922cba9d438a483ef5d105f08d69c4c"
+    },
+    {
+      "restricted_asset_id": "ac92ead34d4d85f3",
+      "relative_path": "11-phase2b1-hidden-ground-truth/facts/enterprise_anchors.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "e9649682efdd23df74e882191d1b789ace8f98c07f375e9d8345ef925e16d832"
+    },
+    {
+      "restricted_asset_id": "79aeadd238449a94",
+      "relative_path": "11-phase2b1-hidden-ground-truth/facts/it_spend_reconciliation.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "2adb61bb1786970e64424844419876523409531dd757cdeaa57257d045e04874"
+    },
+    {
+      "restricted_asset_id": "a1a6a9d282fa089d",
+      "relative_path": "11-phase2b1-hidden-ground-truth/generation-profile.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "893bb12c62574f85c4ed7a05336fb34e36b09e18411750da1e10a5c2db653299"
+    },
+    {
+      "restricted_asset_id": "35d587f0fac723f6",
+      "relative_path": "11-phase2b1-hidden-ground-truth/generator-version.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "64e11e473e48c0e25f448030c815e1733bc8e4b064576779cb38a6a6e17e1f1f"
+    },
+    {
+      "restricted_asset_id": "afa58a0a5512ab83",
+      "relative_path": "11-phase2b1-hidden-ground-truth/metrics/kpi_definitions.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "9f14cbf2b548227888bf23dec05029996032eb321d3d393fb2dc2418b3ae0a34"
+    },
+    {
+      "restricted_asset_id": "61da96025cb9ed63",
+      "relative_path": "11-phase2b1-hidden-ground-truth/metrics/kpi_internal_truth.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "a7b0b6e5db7aa8dfc80a19b9ca222c2c98b5e68543038e890aec9577fbbcbbc8"
+    },
+    {
+      "restricted_asset_id": "e4dd08844f6aad4a",
+      "relative_path": "11-phase2b1-hidden-ground-truth/relationships/governed_relationships.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "4be4e1085fb69ca665739ab40f5fe4ee21192185b0321f6a25914ec071c71894"
+    },
+    {
+      "restricted_asset_id": "c39f58808c76594e",
+      "relative_path": "11-phase2b1-hidden-ground-truth/snapshots/hidden_truth_snapshot.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "89b70daabe19e8da8b169caceb1c5b783239b3728b19ba7f1629c5a803798406"
+    },
+    {
+      "restricted_asset_id": "82ca04abe3781af0",
+      "relative_path": "11-phase2b1-hidden-ground-truth/source-precedence/source_plan.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "2942fdc5f00a0eb2e185a994856a73066f88da55854ca6786b37c1f9cab811bf"
+    },
+    {
+      "restricted_asset_id": "a1809b182e0d68a6",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/MANIFEST_AND_CHECKSUMS.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "4e40888693f631f787a3ee1e92f3ab834c8aaeb14f91941681b666514a213ac2"
+    },
+    {
+      "restricted_asset_id": "dc6985503122035c",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/PHASE_2B1_DECISION_MEMO.md",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "ba34bcf28859f73b53e0d8006b851b1075657cd67121f7effa560697d6f2de1a"
+    },
+    {
+      "restricted_asset_id": "780272a700065d12",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/PHASE_2B1_VALIDATION_SUMMARY.md",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "d15e771d921755542beaf89a4560802ae498b850f3b0b50891ffc1d32ddd2a06"
+    },
+    {
+      "restricted_asset_id": "8ac2ec3b21468b85",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/SEMANTIC_REALISM_SAMPLE_REPORT.md",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "2e4e483382e9df3b1434601b995997de4e4c4eb9b0b34233389185184375b2bc"
+    },
+    {
+      "restricted_asset_id": "45551ca64508ee20",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/completeness-report.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "e0a9d1dfbb7fca24d6af2890f0aae3c878755cb84adfccaf9bf0a1cbd7ba5f49"
+    },
+    {
+      "restricted_asset_id": "0940d81308a3e2c6",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/financial-reconciliation-report.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "02ab28446f24d1a6171518cdf700269bcf95c1377872565fc30e9454af040f65"
+    },
+    {
+      "restricted_asset_id": "9ac215f80992430a",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/kpi-integrity-report.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "63ed9e9e98e2534de70d7dfe9140f27bc53685b083ede831e0d87f8a79e53f85"
+    },
+    {
+      "restricted_asset_id": "fab3552455c4d9b8",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/phase2b1-validation.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "b758bdad6b24ebe984552bbb1194aa7bc0ba2816f8902c3be30eeff815f6fc58"
+    },
+    {
+      "restricted_asset_id": "e596a5db52ec78ed",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/phi-safety-report.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "c48a13762a80a2e0d659d243d667eab32739ac6d211ca6bfe2ab6c123e6fcc93"
+    },
+    {
+      "restricted_asset_id": "cb78cafbc53276fc",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/realism-distribution-report.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "f658df1ad401c88c48e18dce94501e091fbed2045d0ffdb0ace9557207f0f1a8"
+    },
+    {
+      "restricted_asset_id": "214eb9e64cb2e0cd",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/relationship-integrity-report.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "c6e2477b4a25980220629ce744528f2e9cfc5f4147a058b55cbdfc6eeec089d0"
+    },
+    {
+      "restricted_asset_id": "834dbdef91caf9c2",
+      "relative_path": "11-phase2b1-hidden-ground-truth/validation/semantic-realism-sample-results.json",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "2d5cfaf97577162099712f55f4d15d9289241e2512abeef0a486bd0bb00d2bf0"
+    },
+    {
+      "restricted_asset_id": "272ca8731799f5fc",
+      "relative_path": "15-phase2b2d-final-parser-certification/corrected-source-artifacts/06-source-id-crosswalk-restricted/source-id-crosswalk.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "b0f9ae3011ab22a51d1f438500e9761a1d8a08aab7aa34e8a1da493ab200df18"
+    },
+    {
+      "restricted_asset_id": "9d60aa7d5fb2a2bd",
+      "relative_path": "15-phase2b2d-final-parser-certification/corrected-source-artifacts/11-restricted-expected-results/controlled-conflict-expected-results.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "8d15069c081a12d40732cad31b938cb569fffd24254eb4d3e064f48667415b91"
+    },
+    {
+      "restricted_asset_id": "a1a30d07bbb3ba62",
+      "relative_path": "15-phase2b2d-final-parser-certification/corrected-source-artifacts/11-restricted-expected-results/parser-hidden-answer-key-fields.csv",
+      "restriction": "evaluator_only",
+      "parser_visible": false,
+      "claude_visible": false,
+      "runtime_visible": false,
+      "sha256": "7512c04c1aa575b783c304cfdcc1fdc28a8766b6bff8d721b5461204d38b8f8f"
+    }
+  ],
+  "access_contract": {
+    "parser_visible": false,
+    "claude_visible": false,
+    "runtime_visible": false,
+    "home_visible": false,
+    "module_visible": false,
+    "allowed_use": "post-run reconstruction scoring, conflict validation, leakage checks, and evaluator-only reports"
+  }
+}

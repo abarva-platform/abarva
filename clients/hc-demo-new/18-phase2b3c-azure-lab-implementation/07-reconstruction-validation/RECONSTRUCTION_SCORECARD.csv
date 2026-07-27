@@ -1,0 +1,3 @@
+scope,total_expected,total_reconstructed,exact,partial,missing,conflict,leakage_findings,status
+patient_access,0,0,0,0,0,0,0,not_run
+full_corpus,0,0,0,0,0,0,0,not_run

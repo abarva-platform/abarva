@@ -1,0 +1,6 @@
+{
+  "status": "not_published",
+  "reason": "no Azure source-to-knowledge run has executed",
+  "tenant_key": "hc-demo-new",
+  "baseline_id": null
+}
