@@ -1,6 +1,6 @@
 # Airline Demo New Phase 1 Azure Infrastructure Execution Package
 
-Status: clean `eastus2` empty infrastructure applied and zero-data certification recorded. This package does not land source files, run parser jobs, apply database migrations, publish a Knowledge Baseline, deploy Cube, wire product routes, or shift runtime traffic.
+Status: clean `eastus2` empty infrastructure applied, zero-data certification recorded, shared PostgreSQL schema/RLS applied, and generic projection conformance proven. This package does not land source files, run parser jobs, publish a real Knowledge Baseline, deploy Cube, wire product routes, or shift runtime traffic.
 
 This package prepares the empty private Azure data plane for Airline Demo New using the short-code resource names approved for the lab execution lane.
 
@@ -29,7 +29,8 @@ Airline source data is still blocked by the source-corpus quality gate. This pac
 - Destructive-change report: `02-preapply-report/DESTRUCTIVE_CHANGE_REPORT.json`
 - Clean apply record: `03-apply-record/APPLY_CLEAN_EASTUS2_20260727.md`
 - Zero-data certification: `04-zero-data-certification/ZERO_DATA_CERTIFICATION_CLEAN_EASTUS2_20260727.json`
+- Shared PostgreSQL/RLS/conformance record: `05-postgres-migration-rls/POSTGRES_MIGRATION_RLS_CONFORMANCE_20260727.json`
 
 ## Next Gate
 
-The next authorized action is shared PostgreSQL migrations/RLS against the empty tenant database, followed by generic projection conformance fixtures. Source landing remains blocked until the Airline source release passes and is frozen.
+Shared PostgreSQL schema/RLS and rollback-only generic projection conformance are complete. Source landing remains blocked until the Airline source release passes independent semantic audit and is frozen.

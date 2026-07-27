@@ -1,0 +1,23 @@
+containers:
+  - name: airdn-job
+    image: postgres:16-alpine
+    command:
+      - /bin/sh
+    args:
+      - -lc
+      - |
+        set -eu
+        wget -qO /tmp/002_shared_rls.sql https://raw.githubusercontent.com/abarva-platform/abarva/9308992a6e4835a4e25c2667f2e2c93aa06d32c4/clients/shared/21-phase3c2e-executable-data-layer/sql/002_shared_knowledge_publication_consumption_rls.sql
+        PGPASSWORD=$PGPASSWORD psql -v ON_ERROR_STOP=1 -h $PGHOST -U $PGUSER -d $PGDATABASE -f /tmp/002_shared_rls.sql
+        PGPASSWORD=$PGPASSWORD psql -v ON_ERROR_STOP=1 -h $PGHOST -U $PGUSER -d $PGDATABASE -Atc "select 'rls_tables=' || count(*) || ',missing=' || count(*) filter (where not rls_enabled or not rls_forced or policy_count = 0) from governance.rls_table_coverage;"
+    env:
+      - name: PGHOST
+        value: pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com
+      - name: PGPORT
+        value: "5432"
+      - name: PGUSER
+        value: airdn_admin
+      - name: PGDATABASE
+        value: abarva_airline_demo_new_knowledge_lab
+      - name: PGPASSWORD
+        secretRef: pg-admin-password

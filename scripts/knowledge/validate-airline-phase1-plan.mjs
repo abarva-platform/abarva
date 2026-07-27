@@ -22,6 +22,7 @@ const params = read(`${ROOT}/01-infrastructure-as-code/airdn.lab.bicepparam`);
 const whatIf = read(`${ROOT}/02-preapply-report/what-if-clean-eastus2-20260727.txt`);
 const safety = readJson(`${ROOT}/02-preapply-report/WHAT_IF_SAFETY_GATE.json`);
 const preApply = readJson(`${ROOT}/02-preapply-report/PRE_APPLY_REPORT.json`);
+const postgresConformance = readJson(`${ROOT}/05-postgres-migration-rls/POSTGRES_MIGRATION_RLS_CONFORMANCE_20260727.json`);
 const blockedManifest = readJson("clients/airline-demo-new/execution/airline-demo-new-source-corpus-v1.0.0.blocked-manifest.json");
 
 const requiredNames = [
@@ -70,6 +71,28 @@ assert.equal(preApply.sourceCorpus.publicationAllowed, false);
 assert.equal(preApply.migration.migrationApplyAllowedInThisPackage, false);
 assert.equal(blockedManifest.release_state, "blocked_before_phase_0_freeze");
 assert.ok(blockedManifest.disallowed_actions.includes("provision_tenant_infrastructure_for_load"));
+
+assert.equal(postgresConformance.tenantKey, "airline-demo-new");
+assert.equal(postgresConformance.schemaMigration.status, "passed");
+assert.equal(postgresConformance.schemaMigration.schemasCreatedOrVerified, 10);
+assert.equal(postgresConformance.rowLevelSecurity.status, "passed");
+assert.equal(postgresConformance.rowLevelSecurity.tenantScopedTables, 47);
+assert.equal(postgresConformance.rowLevelSecurity.missingRlsPolicyTables, 0);
+assert.equal(postgresConformance.genericProjectionConformance.status, "passed");
+assert.equal(postgresConformance.genericProjectionConformance.crossTenantRlsBlocked, true);
+assert.equal(postgresConformance.genericProjectionConformance.relationshipValidation.brokenFromEndpoint, 0);
+assert.equal(postgresConformance.genericProjectionConformance.relationshipValidation.brokenToEndpoint, 0);
+assert.equal(postgresConformance.genericProjectionConformance.relationshipValidation.inactiveOrCandidateEdges, 0);
+assert.equal(postgresConformance.genericProjectionConformance.relationshipValidation.missingEdgeEvidence, 0);
+assert.equal(postgresConformance.genericProjectionConformance.relationshipNeighborCount, 1);
+assert.equal(postgresConformance.genericProjectionConformance.activeBaselinesInsideFixture, 1);
+assert.equal(postgresConformance.genericProjectionConformance.fixtureRowsAfterRollback, 0);
+assert.equal(postgresConformance.genericProjectionConformance.sourceLanding, false);
+assert.equal(postgresConformance.genericProjectionConformance.evaluatorTruthLanding, false);
+assert.equal(postgresConformance.genericProjectionConformance.parserJobs, false);
+assert.equal(postgresConformance.genericProjectionConformance.publishedKnowledgeBaseline, false);
+assert.equal(postgresConformance.genericProjectionConformance.productRuntimeWiring, false);
+assert.equal(postgresConformance.sourceReleaseGate.sourceLandingAllowed, false);
 
 assert.match(foundation, /publicNetworkAccess: 'Disabled'/);
 assert.match(foundation, /allowBlobPublicAccess: false/);
