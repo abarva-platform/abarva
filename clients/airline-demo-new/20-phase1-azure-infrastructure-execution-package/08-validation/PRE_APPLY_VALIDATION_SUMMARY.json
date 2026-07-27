@@ -23,6 +23,10 @@
       "status": "pass"
     },
     {
+      "name": "acr_pull_role_assignments",
+      "status": "pass"
+    },
+    {
       "name": "required_resource_names",
       "status": "pass"
     },

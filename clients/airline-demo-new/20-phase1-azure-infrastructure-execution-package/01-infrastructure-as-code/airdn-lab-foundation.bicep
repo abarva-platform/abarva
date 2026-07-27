@@ -3,15 +3,14 @@ targetScope = 'resourceGroup'
 param location string
 param postgresLocation string
 param tenantId string
-param subscriptionId string
 param tags object
 @secure()
 param postgresAdministratorLoginPassword string
 
 var tenantKey = 'airline-demo-new'
-var registryServer = 'acrabarvalab001.azurecr.io'
-var imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160'
 var postgresAdminLogin = 'airdn_admin'
+var operationalStorageAccountName = 'stabairdnlabeus2001'
+var evaluatorStorageAccountName = 'stabairdnevaleus2001'
 var storageContainers = [
   'raw'
   'source-manifests'
@@ -30,24 +29,8 @@ var evaluatorStorageContainers = [
   'evaluation-results'
   'audit'
 ]
-var jobs = [
-  { name: 'job-airdn-backfill-lab', process: 'airline-demo-new-knowledge-backfill-v1', identityKey: 'ingest', stage: '15_backfill_replay' }
-  { name: 'job-airdn-baseline-publish-lab', process: 'airline-demo-new-baseline-publish-v1', identityKey: 'publish', stage: '12_publish_baseline' }
-  { name: 'job-airdn-domain-publish-lab', process: 'airline-demo-new-domain-publish-v1', identityKey: 'publish', stage: '11_publish_domain' }
-  { name: 'job-airdn-entity-resolve-lab', process: 'airline-demo-new-entity-resolve-v1', identityKey: 'ingest', stage: '06_resolve_identity' }
-  { name: 'job-airdn-evidence-extract-lab', process: 'airline-demo-new-evidence-extract-v1', identityKey: 'ingest', stage: '04_extract_evidence' }
-  { name: 'job-airdn-home-readmodel-lab', process: 'airline-demo-new-home-readmodel-v1', identityKey: 'publish', stage: '14_refresh_home_readmodel' }
-  { name: 'job-airdn-normalize-lab', process: 'airline-demo-new-knowledge-normalize-v1', identityKey: 'ingest', stage: '05_normalize_values' }
-  { name: 'job-airdn-projection-build-lab', process: 'airline-demo-new-projection-build-v1', identityKey: 'publish', stage: '13_build_module_projections' }
-  { name: 'job-airdn-reconcile-audit-lab', process: 'airline-demo-new-reconciliation-audit-v1', identityKey: 'evaluator', stage: '16_reconciliation_audit' }
-  { name: 'job-airdn-review-apply-lab', process: 'airline-demo-new-knowledge-review-v1', identityKey: 'review', stage: '09_route_review_quarantine' }
-  { name: 'job-airdn-source-parse-lab', process: 'airline-demo-new-source-parse-v1', identityKey: 'ingest', stage: '03_parse_source' }
-  { name: 'job-airdn-source-register-lab', process: 'airline-demo-new-source-register-v1', identityKey: 'ingest', stage: '01_register_source' }
-  { name: 'job-airdn-validate-lab', process: 'airline-demo-new-knowledge-validate-v1', identityKey: 'ingest', stage: '07_validate_semantics' }
-]
-
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
-  name: 'law-abarva-airdn-lab-eus-001'
+  name: 'law-abarva-airdn-lab-eus2-001'
   location: location
   tags: tags
   properties: {
@@ -57,14 +40,14 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
 }
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
-  name: 'vnet-abarva-airdn-lab-eus-001'
+  name: 'vnet-abarva-airdn-lab-eus2-001'
   location: location
   tags: tags
   properties: {
     addressSpace: { addressPrefixes: [ '10.75.0.0/22' ] }
     subnets: [
       {
-        name: 'snet-aca-airdn-lab-eus-001'
+        name: 'snet-aca-airdn-lab-eus2-001'
         properties: {
           addressPrefix: '10.75.0.0/23'
           delegations: [
@@ -77,7 +60,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
         }
       }
       {
-        name: 'snet-pg-airdn-lab-eus-001'
+        name: 'snet-pg-airdn-lab-eus2-001'
         properties: {
           addressPrefix: '10.75.2.0/27'
           delegations: [
@@ -90,7 +73,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
         }
       }
       {
-        name: 'snet-pe-airdn-lab-eus-001'
+        name: 'snet-pe-airdn-lab-eus2-001'
         properties: {
           addressPrefix: '10.75.2.32/27'
           privateEndpointNetworkPolicies: 'Disabled'
@@ -102,17 +85,17 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
 
 resource acaSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
   parent: vnet
-  name: 'snet-aca-airdn-lab-eus-001'
+  name: 'snet-aca-airdn-lab-eus2-001'
 }
 
 resource pgSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
   parent: vnet
-  name: 'snet-pg-airdn-lab-eus-001'
+  name: 'snet-pg-airdn-lab-eus2-001'
 }
 
 resource peSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
   parent: vnet
-  name: 'snet-pe-airdn-lab-eus-001'
+  name: 'snet-pe-airdn-lab-eus2-001'
 }
 
 resource ingestIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { name: 'mi-airdn-ingest-lab-001', location: location, tags: tags }
@@ -122,17 +105,8 @@ resource readIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-
 resource evaluatorIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { name: 'mi-airdn-evaluator-lab-001', location: location, tags: tags }
 resource adminIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { name: 'mi-airdn-admin-lab-001', location: location, tags: tags }
 
-var identityIds = {
-  ingest: ingestIdentity.id
-  review: reviewIdentity.id
-  publish: publishIdentity.id
-  read: readIdentity.id
-  evaluator: evaluatorIdentity.id
-  admin: adminIdentity.id
-}
-
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: 'stabairdnlabeus001'
+  name: operationalStorageAccountName
   location: location
   tags: union(tags, { tenantKey: tenantKey })
   sku: { name: 'Standard_LRS' }
@@ -169,7 +143,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 }]
 
 resource evaluatorStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: 'stabairdnevallab001'
+  name: evaluatorStorageAccountName
   location: location
   tags: union(tags, { tenantKey: tenantKey, boundary: 'restricted-evaluator' })
   sku: { name: 'Standard_LRS' }
@@ -206,7 +180,7 @@ resource evaluatorContainers 'Microsoft.Storage/storageAccounts/blobServices/con
 }]
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: 'kv-abarva-airdn-lab-001'
+  name: 'kv-abarva-airdn-lab-eus2'
   location: location
   tags: tags
   properties: {
@@ -272,7 +246,7 @@ resource postgresDb 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-12
 }
 
 resource cae 'Microsoft.App/managedEnvironments@2024-03-01' = {
-  name: 'cae-abarva-airdn-lab-eus-001'
+  name: 'cae-abarva-airdn-lab-eus2-001'
   location: location
   tags: tags
   properties: {
@@ -304,51 +278,8 @@ resource cae 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
-resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
-  name: job.name
-  location: location
-  tags: union(tags, { process: job.process, tenantKey: tenantKey })
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${identityIds[job.identityKey]}': {}
-    }
-  }
-  properties: {
-    environmentId: cae.id
-    configuration: {
-      triggerType: 'Manual'
-      replicaTimeout: 3600
-      replicaRetryLimit: 1
-      manualTriggerConfig: { parallelism: 1, replicaCompletionCount: 1 }
-      registries: [
-        { server: registryServer, identity: identityIds[job.identityKey] }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: 'airdn-job'
-          image: imageName
-          command: [ '/bin/sh' ]
-          args: [ '-lc', 'node scripts/knowledge/hcdn-job-runner.mjs --tenant airline-demo-new --process ${job.process}' ]
-          env: [
-            { name: 'ABARVA_TENANT_KEY', value: tenantKey }
-            { name: 'ABARVA_AIRDN_PROCESS', value: job.process }
-            { name: 'ABARVA_AIRDN_STAGE', value: job.stage }
-            { name: 'ABARVA_AIRDN_DATABASE', value: 'abarva_airline_demo_new_knowledge_lab' }
-            { name: 'ABARVA_AIRDN_STORAGE_ACCOUNT', value: 'stabairdnlabeus001' }
-            { name: 'ABARVA_AIRDN_EVALUATOR_STORAGE_ACCOUNT', value: 'stabairdnevallab001' }
-          ]
-          resources: { cpu: json('0.5'), memory: '1Gi' }
-        }
-      ]
-    }
-  }
-}]
-
 resource storagePe 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: 'pe-stabairdnlabeus001-blob'
+  name: 'pe-stabairdnlabeus2001-blob'
   location: location
   tags: tags
   properties: {
@@ -359,8 +290,24 @@ resource storagePe 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   }
 }
 
+output containerAppsEnvironmentId string = cae.id
+output operationalStorageAccountName string = operationalStorageAccountName
+output evaluatorStorageAccountName string = evaluatorStorageAccountName
+output ingestIdentityId string = ingestIdentity.id
+output reviewIdentityId string = reviewIdentity.id
+output publishIdentityId string = publishIdentity.id
+output readIdentityId string = readIdentity.id
+output evaluatorIdentityId string = evaluatorIdentity.id
+output adminIdentityId string = adminIdentity.id
+output ingestPrincipalId string = ingestIdentity.properties.principalId
+output reviewPrincipalId string = reviewIdentity.properties.principalId
+output publishPrincipalId string = publishIdentity.properties.principalId
+output readPrincipalId string = readIdentity.properties.principalId
+output evaluatorPrincipalId string = evaluatorIdentity.properties.principalId
+output adminPrincipalId string = adminIdentity.properties.principalId
+
 resource evaluatorStoragePe 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: 'pe-stabairdnevallab001-blob'
+  name: 'pe-stairdnevaleus2001-blob'
   location: location
   tags: union(tags, { boundary: 'restricted-evaluator' })
   properties: {
@@ -372,7 +319,7 @@ resource evaluatorStoragePe 'Microsoft.Network/privateEndpoints@2023-11-01' = {
 }
 
 resource keyVaultPe 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: 'pe-kv-abarva-airdn-lab-001-vault'
+  name: 'pe-kv-abarva-airdn-lab-eus2-vault'
   location: location
   tags: tags
   properties: {

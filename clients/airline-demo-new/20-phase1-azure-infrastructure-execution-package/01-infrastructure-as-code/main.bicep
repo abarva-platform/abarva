@@ -1,8 +1,7 @@
 targetScope = 'subscription'
 
-param location string = 'eastus'
+param location string = 'eastus2'
 param postgresLocation string = 'eastus2'
-param subscriptionId string
 param tenantId string
 param resourceGroupName string
 param tags object
@@ -20,9 +19,46 @@ module lab './airdn-lab-foundation.bicep' = {
     location: location
     postgresLocation: postgresLocation
     tenantId: tenantId
-    subscriptionId: subscriptionId
     tags: tags
     postgresAdministratorLoginPassword: postgresAdministratorLoginPassword
+  }
+}
+
+module acrPull './airdn-acr-pull.bicep' = {
+  name: 'airdn-acr-pull-plan'
+  scope: resourceGroup('rg-abarva-controlplane-lab-eastus')
+  params: {
+    principalIds: [
+      lab.outputs.ingestPrincipalId
+      lab.outputs.reviewPrincipalId
+      lab.outputs.publishPrincipalId
+      lab.outputs.readPrincipalId
+      lab.outputs.evaluatorPrincipalId
+      lab.outputs.adminPrincipalId
+    ]
+  }
+}
+
+module jobs './airdn-lab-jobs.bicep' = {
+  name: 'airdn-lab-jobs-plan'
+  scope: resourceGroup(resourceGroupName)
+  dependsOn: [
+    acrPull
+  ]
+  params: {
+    location: location
+    tags: tags
+    containerAppsEnvironmentId: lab.outputs.containerAppsEnvironmentId
+    operationalStorageAccountName: lab.outputs.operationalStorageAccountName
+    evaluatorStorageAccountName: lab.outputs.evaluatorStorageAccountName
+    identityIds: {
+      ingest: lab.outputs.ingestIdentityId
+      review: lab.outputs.reviewIdentityId
+      publish: lab.outputs.publishIdentityId
+      read: lab.outputs.readIdentityId
+      evaluator: lab.outputs.evaluatorIdentityId
+      admin: lab.outputs.adminIdentityId
+    }
   }
 }
 

@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release candidate creates the plan and live Azure what-if evidence for the empty Airline Demo New private data plane. It proves the planned deployment is scoped to Airline infrastructure names, records the first empty-infrastructure apply attempt, and adds the corrected retry plan. The first apply did not complete because PostgreSQL Flexible Server provisioning is restricted in `eastus` for the active subscription. The retry plan routes PostgreSQL to `eastus2`, where this subscription already has Flexible Server capacity. Source files, parser jobs, migrations, publication and product runtime wiring remain blocked until the empty apply and zero-data certification pass.
+This release candidate creates the plan and live Azure what-if evidence for the empty Airline Demo New private data plane. It proves the planned deployment is scoped to Airline infrastructure names, records the failed apply attempts, and adds the corrected clean `eastus2` plan. The first apply did not complete because PostgreSQL Flexible Server provisioning is restricted in `eastus` for the active subscription. The split-region retry was rejected because PostgreSQL cannot use a delegated subnet from a VNet in another region and ACA jobs needed explicit ACR pull grants. The active plan creates a clean `eastus2` data-plane resource group and grants `AcrPull` before creating jobs. Source files, parser jobs, migrations, publication and product runtime wiring remain blocked until the empty apply and zero-data certification pass.
 
 ## Layer Impact
 
@@ -19,7 +19,7 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 - Source adapters: no source landing or parser execution.
 - Canonical model: no database migration and no accepted Knowledge writes.
 - Products: no Home, Source, Tower, Moves, Intelligence/aVa, Cube, or runtime wiring.
-- Azure infrastructure: plan package plus failed/canceled empty apply attempt evidence plus corrected live retry what-if; not a certified environment until the retry apply passes.
+- Azure infrastructure: plan package plus failed apply evidence plus corrected live clean `eastus2` what-if; not a certified environment until the clean apply passes.
 
 ## Client Applicability
 
@@ -33,12 +33,16 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/main.bicep`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn-lab-foundation.bicep`
+- `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn-acr-pull.bicep`
+- `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn-lab-jobs.bicep`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn.lab.bicepparam`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-20260727.txt`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-eastus2-20260727.txt`
+- `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-clean-eastus2-20260727.txt`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/WHAT_IF_SAFETY_GATE.json`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.md`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.json`
+- `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_RETRY_SPLIT_REGION_20260727.md`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/04-zero-data-certification/ZERO_DATA_CERTIFICATION_20260727.json`
 - `scripts/knowledge/validate-airline-phase1-plan.mjs`
 
@@ -48,7 +52,8 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 - Pass: `az bicep build --file clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn-lab-foundation.bicep`
 - Pass: original live Azure what-if, create-only, 53 creates, 0 deletes, 0 modifies.
 - Blocked: empty infrastructure apply attempted as `airdn-phase1-zero-data-apply-20260727`; PostgreSQL Flexible Server failed in `eastus` with subscription regional provisioning restriction; deployment was canceled after evidence capture.
-- Pass: revised live Azure retry what-if using `postgresLocation = eastus2`: 15 creates, 0 deletes, 4 provider-computed no-op modifies, 0 unsafe modifies.
+- Failed/superseded: split-region apply retry proved PostgreSQL cannot use an `eastus` VNet from an `eastus2` server and ACA jobs need explicit `AcrPull`.
+- Pass: clean `eastus2` live Azure what-if: 53 creates, 0 deletes, 0 modifies, 6 expected unsupported diagnostics for ACR role assignments whose principal IDs are known only after identity creation.
 - Blocked: zero-data certification is not complete because PostgreSQL is absent.
 - Pass: `node scripts/knowledge/validate-airline-phase1-plan.mjs`
 - Pass: `npm run release:check`
@@ -56,7 +61,7 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 
 ## Rollout Plan
 
-Merge as a plan and apply-evidence package after review. The next action is to retry the empty infrastructure apply from the revised `eastus2` PostgreSQL plan, then run zero-data certification. Source landing, migrations, parser jobs, Knowledge publication, Cube deployment, and runtime wiring remain blocked until that certification passes.
+Merge as a plan and apply-evidence package after review. The next action is to retry the empty infrastructure apply from the clean `eastus2` plan, then run zero-data certification. Source landing, migrations, parser jobs, Knowledge publication, Cube deployment, and runtime wiring remain blocked until that certification passes.
 
 ## Deployment Authority
 
@@ -70,23 +75,26 @@ Merge as a plan and apply-evidence package after review. The next action is to r
 
 ## Rollback Plan
 
-The first apply attempt created partial zero-data resources and was canceled. The revised what-if is an idempotent retry plan that accounts for existing resources and routes PostgreSQL to `eastus2`. No source data rollback is required because no source files, migrations, parser jobs or publication jobs were run.
+The first apply attempt created partial zero-data resources in `rg-abarva-airdn-lab-eus-001` and was canceled. The split-region retry was rejected and is superseded. The active plan uses a clean `eastus2` resource group, `rg-abarva-airdn-lab-eus2-001`. No source data rollback is required because no source files, migrations, parser jobs or publication jobs were run.
 
 ## Audit Evidence
 
 - Raw live what-if output: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-20260727.txt`
 - Revised retry what-if output: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-eastus2-20260727.txt`
+- Clean `eastus2` what-if output: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-clean-eastus2-20260727.txt`
 - Machine-readable safety gate: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/WHAT_IF_SAFETY_GATE.json`
 - Pre-apply report: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/PRE_APPLY_REPORT.json`
 - Apply attempt record: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.md`
 - Apply attempt JSON: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.json`
+- Split-region retry failure record: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_RETRY_SPLIT_REGION_20260727.md`
 - Zero-data certification record: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/04-zero-data-certification/ZERO_DATA_CERTIFICATION_20260727.json`
 
 ## Known Gaps
 
 - Airline source corpus remains blocked before freeze.
 - Empty Azure apply was attempted and blocked by PostgreSQL regional provisioning restriction in `eastus`; deployment canceled after evidence capture.
-- Revised retry plan routes PostgreSQL to `eastus2`; empty retry apply is still pending.
+- Clean `eastus2` plan is ready; empty retry apply is still pending.
+- Partial `eastus` zero-data resource group remains as cleanup debt and must not be used for source landing or publication.
 - No database migration was run.
 - No source files were landed.
 - No Knowledge Baseline was published.
