@@ -2,21 +2,40 @@
   "package": "airline-demo-new-template-instantiation-source-corpus",
   "phase": "phase2b3c-airline-source-corpus-design",
   "generated": "2026-07-27",
-  "status": "large_enterprise_design_plus_synthetic_source_samples_no_azure_no_runtime_change",
+  "status": "semantic_repair_pass_candidate_for_freeze_review_no_azure_no_runtime_change",
+  "generated_by": "scripts/knowledge/build-airline-source-corpus-repair.mjs",
   "scale": {
-    "applications": 1495,
+    "apps": 1495,
     "integrations": 6200,
-    "infrastructure_rows": 10000,
+    "infra": 10000,
     "data_products": 1250,
     "bi_reports": 6200,
     "vendors": 420,
     "contracts": 820,
-    "technology_workforce": 9500,
+    "workforce": 9500,
     "programs": 190,
     "risks": 650,
     "controls": 1900,
-    "kpis_slas": 420,
+    "kpis": 420,
+    "ops": 420,
     "relationships": 60000
+  },
+  "safety_gates": {
+    "no_azure_apply": true,
+    "no_postgres_migration": true,
+    "no_source_landing": true,
+    "no_product_runtime_change": true,
+    "evaluator_truth_separate": true,
+    "hidden_truth_not_parser_visible": true
+  },
+  "semantic_audit": {
+    "status": "pass",
+    "blockers": [],
+    "endpoint_issue_count": 0,
+    "relationship_origin_type_count": 14,
+    "application_origin_share": 0.05,
+    "hidden_truth_objects": 311,
+    "source_to_truth_crosswalk_rows": 338
   },
   "files": [
     {
@@ -126,13 +145,13 @@
     },
     {
       "path": "03-source-corpus-design/parser-visible-source-manifest.csv",
-      "bytes": 2846,
-      "sha256": "da9f96d549679b15d80a61ce8501789d6d3611ca2fa2590dee75f34ca4a97928"
+      "bytes": 2724,
+      "sha256": "05d858e59f34d8c83bf9c07f35c31f0942db1b726d96f40f39abb6c240b259a0"
     },
     {
       "path": "03-source-corpus-design/synthetic-source-samples/application-platform-inventory.csv",
-      "bytes": 457525,
-      "sha256": "ca0d5b6791a0e39963153d4986f172f53ec7123e350edddc134de1076eb4c413"
+      "bytes": 467337,
+      "sha256": "08ed0d908e6fc76e97b3609775e799c5bdf0cefd9817856d069117457d6f8a77"
     },
     {
       "path": "03-source-corpus-design/synthetic-source-samples/bi-report-catalog.csv",
@@ -170,14 +189,64 @@
       "sha256": "ed5a8273e053f1c1fab53fa9509314a894bf4f6a6dfd066e2d2956a719d041a2"
     },
     {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-assumptions-exceptions.csv",
+      "bytes": 6400,
+      "sha256": "1d210032ce82e824b179cc0635379137f56dd425e775372e96defa4a8a587743"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-bafo-revisions.csv",
+      "bytes": 5520,
+      "sha256": "3e4535c310137414861384776322c4557d6bb704b22801ae460487e15ac1f065"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-evaluation-scorecards.csv",
+      "bytes": 4635,
+      "sha256": "876f03845ce065f348793c0b0ff752cf8276108c0e3ce10b97e32505441d0c67"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-incumbent-baseline.csv",
+      "bytes": 1838,
+      "sha256": "294cfc88d4c78ddd95c28cf83487d969229de90f1b983d2c515a3361caf4f005"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-invoice-change-order-history.csv",
+      "bytes": 1079,
+      "sha256": "18264d0030adfc6999d5902c500b6e6bb9ad123b60a0ee5a37773c00da227937"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-proposal-pricing-schedules.csv",
+      "bytes": 3565,
+      "sha256": "87187d2ab294e935497a27f92c3ddb4a982e57334013ee0ddafd023c0926bce4"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-rate-cards.csv",
+      "bytes": 1956,
+      "sha256": "1e6f9176ebd0cf7b2d11df14222be64d0ba7a290d05c77eb5cc6b73a846303c1"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-sla-incident-history.csv",
+      "bytes": 1108,
+      "sha256": "b9cd32cd629dd8dfbfb5b5de19ee123ff5f2d1ee52d15ab551666dbbe19e2832"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-transition-commitments.csv",
+      "bytes": 6775,
+      "sha256": "d35fe2b7bf273f76bcabda4fc046ec0be67d83a9a5d5e25173466f02634fd6e7"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/procurement-vendor-proposals.csv",
+      "bytes": 7535,
+      "sha256": "413d1b9ab2474ed84a8298755e4b3c5b11afb929a251636eb7ce6f6aef60b9f8"
+    },
+    {
       "path": "03-source-corpus-design/synthetic-source-samples/program-portfolio.csv",
       "bytes": 23582,
       "sha256": "a1ce0db0c4072de51cc85e3f83ef5980646c9fc769a346e86f8f2cd65169b0df"
     },
     {
       "path": "03-source-corpus-design/synthetic-source-samples/relationship-load-template.csv",
-      "bytes": 9317424,
-      "sha256": "f20495a7fdaa2c03959ed3ca59e1f9415f141d0f0471ecbf1dbf0e48d641db88"
+      "bytes": 9297308,
+      "sha256": "7482886b3151c82b330b5f68d3441df645decdba55bf280bae1bbdc8413955b9"
     },
     {
       "path": "03-source-corpus-design/synthetic-source-samples/risk-register.csv",
@@ -196,8 +265,8 @@
     },
     {
       "path": "03-source-corpus-design/synthetic-source-samples/vendor-contract-register.csv",
-      "bytes": 185523,
-      "sha256": "4b1ec5d20486ea90f0897349d9283797b1c79c4fc7c3ed07a35957377b0e90a5"
+      "bytes": 562040,
+      "sha256": "a92e9e6b09a9d4a1071b9bd934b8f3eacc964345eefe6d18c56aeee4376be47e"
     },
     {
       "path": "03-source-corpus-design/synthetic-source-samples/vendor-register.csv",
@@ -206,23 +275,33 @@
     },
     {
       "path": "04-restricted-evaluator-design/hidden-canonical-truth-sample.json",
-      "bytes": 870,
-      "sha256": "96fcfa851010fbfb08ab17d87cf8e3f7ac91e92ed63142e4bf92d9f32a98a518"
+      "bytes": 87370,
+      "sha256": "a462da6fe47dcad59444e99e8ef9525be210fc406bbf47f87394a27794ff65dc"
     },
     {
       "path": "04-restricted-evaluator-design/source-to-truth-crosswalk.csv",
-      "bytes": 598,
-      "sha256": "c84ebc292f309f9fd0cfcdea5fc1b70113e7d0d99a8d0cd8bf34b6e4dc73f023"
+      "bytes": 36913,
+      "sha256": "f739e8d628e38e3d50c4884ed92d46ff1e7f00f2374e3c452740d03ca126a860"
     },
     {
       "path": "05-validation/DECISION_MEMO.md",
-      "bytes": 1720,
-      "sha256": "f5141e1d53262c21d6323b66d6f178e268d861e4406e35b25e92f0bc1a4cb8e0"
+      "bytes": 1845,
+      "sha256": "e562d804857700b72458b1745ea320a5d7409bd429f4381ed9cbf3259835177d"
+    },
+    {
+      "path": "05-validation/INDEPENDENT_SEMANTIC_AUDIT_REPORT.md",
+      "bytes": 2308,
+      "sha256": "b67c213febf3e2fae3a3cd9811d0965e0e033f2927bc22d00356aff250260548"
     },
     {
       "path": "05-validation/VALIDATION_REPORT.md",
       "bytes": 2343,
       "sha256": "d0ed6198e911306e014c86a4a09252e352cecfc1574d5096bd2c2e7f9be2ed7a"
+    },
+    {
+      "path": "05-validation/independent-semantic-audit.json",
+      "bytes": 3193,
+      "sha256": "374c5fa1c32ba555a154e0c6954dc1b43317b26a884d7468d1ed499bc9239bf7"
     },
     {
       "path": "05-validation/validation-summary.json",
@@ -231,13 +310,8 @@
     },
     {
       "path": "06-review-package/REVIEW_INDEX.html",
-      "bytes": 2562,
-      "sha256": "8571cda4aa6b4c7e260095d9651d342c95fde92f84e99c16e5e485aea35f965f"
-    },
-    {
-      "path": "PACKAGE_MANIFEST.json",
-      "bytes": 9211,
-      "sha256": "e21b68cc13bd37d2af446bbcfdb9c979a1ea606d17ac4be9bdd6faef9dbd7ee1"
+      "bytes": 2331,
+      "sha256": "f1d61b58a80dfca889ec2957c56a51a8dbe5b8411c5ea2e18b2c283cad337acc"
     },
     {
       "path": "README.md",

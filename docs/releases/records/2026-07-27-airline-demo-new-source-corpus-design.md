@@ -14,6 +14,8 @@ Adds a design-only template and source-corpus package with large global-carrier-
 
 ## Layer Impact
 
+- Release lane: `client-data-lane`.
+
 - Client intake: defines practical client-facing workbooks, source requests, interviews, KPIs and relationship inputs.
 - Source adapters: documents the parser-visible source corpus and the generated Source artifacts expected later.
 - Canonical model: preserves universal entity, fact, relationship, metric, evidence, review and publication contracts as the source of truth.
@@ -34,8 +36,8 @@ Adds a design-only template and source-corpus package with large global-carrier-
 
 ## QA / Validation
 
-- Generated package validation report confirms required outputs, tenant boundary, overlay separation, procurement scope coverage, relationship typing, hidden-truth boundary and no Azure/runtime mutation commands.
-- Independent semantic audit holds approval until enterprise coherence, relationship depth, procurement evidence and source-to-truth reconstructability are remediated.
+- Package generation validation: `pass` for required outputs, tenant boundary, overlay separation, procurement scope coverage, relationship typing, hidden-truth boundary and no Azure/runtime mutation commands.
+- Independent semantic audit: `blocked` / semantic hold until enterprise coherence, relationship depth, procurement evidence and source-to-truth reconstructability are remediated.
 - Manual repository isolation: created in a clean worktree from `origin/main`.
 
 ## Rollout Plan

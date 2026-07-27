@@ -54,6 +54,7 @@
     "test:hcdn-security-plan": "node scripts/knowledge/__tests__/run-phase2b3c-security-plan-tests.mjs",
     "generate:hcdn-postgres-plan": "node scripts/knowledge/build-phase2b3c-postgres-plan.mjs",
     "test:hcdn-postgres-plan": "node scripts/knowledge/__tests__/run-phase2b3c-postgres-plan-tests.mjs",
+    "test:airline-source-corpus-repair": "node scripts/knowledge/build-airline-source-corpus-repair.mjs",
     "audit:nexus-navigation": "node scripts/audit/nexus-navigation-contract.mjs",
     "release:deploy-authority:check": "node scripts/release-control/check-deploy-authority-policy.mjs",
     "deploy:aca-runtime-invariant": "node scripts/deploy/check-aca-runtime-invariant.mjs",
