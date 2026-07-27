@@ -1,0 +1,92 @@
+version: phase3c2e-cube-consumption-model-v1.0.0
+status: contract_only
+source_boundary: consumption_only
+forbidden_sources:
+  - source_registry
+  - evidence
+  - working
+  - knowledge
+  - metrics
+  - governance
+  - publication
+  - audit
+  - operations
+  - current_module_tables
+  - legacy_demo_packs
+  - hidden_truth
+common_dimensions:
+  - tenant_key
+  - knowledge_baseline_ref
+  - domain_publication_ref
+  - projection_contract_version
+  - as_of_date
+  - authority_state
+  - freshness_state
+  - availability_state
+models:
+  - name: EnterpriseKnowledge
+    sql_table: consumption.enterprise_brief_v1
+    measures:
+      - name: evidence_coverage_pct
+        type: number
+        sql: evidence_coverage * 100
+      - name: open_critical_gap_count
+        type: count
+        sql_table: consumption.evidence_gap_v1
+        filter: "payload->>'severity' = 'critical'"
+  - name: ApplicationPortfolio
+    sql_table: consumption.application_inventory_v1
+    measures:
+      - name: application_count
+        type: count
+      - name: critical_application_count
+        type: count
+        filter: "payload->>'criticality' = 'critical'"
+      - name: end_of_life_application_count
+        type: count
+        filter: "payload->>'lifecycle_state' = 'end_of_life'"
+      - name: unowned_application_count
+        type: count
+        filter: "coalesce(payload->>'owner_ref','') = ''"
+  - name: TechnologyEstate
+    sql_table: consumption.technology_estate_v1
+    measures:
+      - name: integration_count
+        type: count
+        sql_table: consumption.relationship_edge_v1
+        filter: "relationship_type_ref in ('integrates_with','feeds','depends_on')"
+  - name: DataAnalyticsEstate
+    sql_table: consumption.data_product_inventory_v1
+    measures:
+      - name: data_product_count
+        type: count
+  - name: VendorContractPortfolio
+    sql_table: consumption.vendor_contract_inventory_v1
+    measures:
+      - name: vendor_count
+        type: count_distinct
+        sql: "payload->>'vendor_ref'"
+      - name: active_contract_count
+        type: count
+        filter: "payload->>'contract_state' = 'active'"
+      - name: contract_renewal_exposure
+        type: sum
+        sql: "nullif(payload->>'renewal_exposure_usd','')::numeric"
+      - name: vendor_concentration_pct
+        type: number
+        sql: "null"
+  - name: RelationshipGraph
+    sql_table: consumption.relationship_edge_v1
+    measures:
+      - name: accepted_relationship_count
+        type: count
+        filter: "authority_state = 'accepted'"
+  - name: ProgramRiskControl
+    sql_table: consumption.module_knowledge_packet_v1
+    measures:
+      - name: program_at_risk_count
+        type: count
+        filter: "payload->>'risk_state' = 'at_risk'"
+      - name: decision_readiness_score
+        type: avg
+        sql: "nullif(payload->>'decision_readiness_score','')::numeric"
