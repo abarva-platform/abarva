@@ -1,0 +1,950 @@
+{
+  "counts": {
+    "apps": 1495,
+    "integrations": 6200,
+    "infra": 10000,
+    "data": 1250,
+    "bi": 6200,
+    "vendors": 420,
+    "contracts": 820,
+    "workforce": 9500,
+    "programs": 190,
+    "risks": 650,
+    "controls": 1900,
+    "kpis": 420,
+    "ops": 420,
+    "relationships": 60000
+  },
+  "enterpriseRealism": {
+    "businessFunctions": [
+      {
+        "value": "Cargo",
+        "count": 101
+      },
+      {
+        "value": "Procurement",
+        "count": 101
+      },
+      {
+        "value": "Data and AI",
+        "count": 101
+      },
+      {
+        "value": "Workplace",
+        "count": 101
+      },
+      {
+        "value": "Flight Operations",
+        "count": 101
+      },
+      {
+        "value": "Crew Operations",
+        "count": 99
+      },
+      {
+        "value": "Airport Operations",
+        "count": 99
+      },
+      {
+        "value": "Commercial",
+        "count": 99
+      },
+      {
+        "value": "Corporate Finance",
+        "count": 99
+      },
+      {
+        "value": "Technology",
+        "count": 99
+      },
+      {
+        "value": "Cybersecurity",
+        "count": 99
+      },
+      {
+        "value": "Service Management",
+        "count": 99
+      },
+      {
+        "value": "Operations Control",
+        "count": 99
+      },
+      {
+        "value": "Technical Operations",
+        "count": 99
+      },
+      {
+        "value": "Passenger Service",
+        "count": 99
+      }
+    ],
+    "appFamilies": [
+      {
+        "value": "Airport station gate ramp baggage",
+        "count": 160
+      },
+      {
+        "value": "Home-grown departmental acquired legacy",
+        "count": 155
+      },
+      {
+        "value": "Data analytics AI integration products",
+        "count": 145
+      },
+      {
+        "value": "Maintenance engineering MRO supply chain",
+        "count": 125
+      },
+      {
+        "value": "Passenger service reservation ticketing reaccommodation",
+        "count": 125
+      },
+      {
+        "value": "Digital commerce mobile web contact center",
+        "count": 125
+      },
+      {
+        "value": "Infrastructure network workplace observability",
+        "count": 115
+      },
+      {
+        "value": "Flight operations and IROPS",
+        "count": 110
+      },
+      {
+        "value": "Crew planning pairing rostering recovery",
+        "count": 105
+      },
+      {
+        "value": "ERP finance procurement HR supply chain",
+        "count": 100
+      },
+      {
+        "value": "Revenue management pricing inventory loyalty",
+        "count": 90
+      },
+      {
+        "value": "Cybersecurity identity risk compliance",
+        "count": 75
+      },
+      {
+        "value": "Cargo operations tracking billing capacity",
+        "count": 65
+      }
+    ],
+    "hosting": [
+      {
+        "value": "owned data center",
+        "count": 177
+      },
+      {
+        "value": "AWS workload",
+        "count": 177
+      },
+      {
+        "value": "SaaS",
+        "count": 177
+      },
+      {
+        "value": "legacy UNIX/AIX",
+        "count": 177
+      },
+      {
+        "value": "mainframe z/OS",
+        "count": 177
+      },
+      {
+        "value": "edge/station",
+        "count": 122
+      },
+      {
+        "value": "hybrid",
+        "count": 122
+      },
+      {
+        "value": "private cloud",
+        "count": 122
+      },
+      {
+        "value": "colocation",
+        "count": 122
+      },
+      {
+        "value": "Azure workload",
+        "count": 122
+      }
+    ],
+    "appStacks": [
+      {
+        "value": "container/Kubernetes",
+        "count": 103
+      },
+      {
+        "value": "Snowflake-style cloud warehouse",
+        "count": 102
+      },
+      {
+        "value": "Java/.NET custom",
+        "count": 102
+      },
+      {
+        "value": "SAP Ariba/Concur/BW/BTP",
+        "count": 102
+      },
+      {
+        "value": "Hadoop remnant",
+        "count": 101
+      },
+      {
+        "value": "BI/reporting platform",
+        "count": 100
+      },
+      {
+        "value": "Teradata-scale EDW",
+        "count": 81
+      },
+      {
+        "value": "security/IAM stack",
+        "count": 80
+      },
+      {
+        "value": "SAP S/4HANA",
+        "count": 80
+      },
+      {
+        "value": "Kafka/event streaming",
+        "count": 78
+      },
+      {
+        "value": "Service management platform",
+        "count": 78
+      },
+      {
+        "value": "AIX/UNIX middleware",
+        "count": 78
+      },
+      {
+        "value": "legacy SAP ECC",
+        "count": 69
+      },
+      {
+        "value": "API gateway/iPaaS",
+        "count": 69
+      },
+      {
+        "value": "Databricks-style lakehouse",
+        "count": 68
+      },
+      {
+        "value": "Oracle/SQL Server",
+        "count": 68
+      },
+      {
+        "value": "mainframe batch scheduler",
+        "count": 68
+      },
+      {
+        "value": "COBOL/CICS/DB2/MQ",
+        "count": 68
+      }
+    ],
+    "infraStacks": [
+      {
+        "value": "Java/.NET custom",
+        "count": 556
+      },
+      {
+        "value": "SAP S/4HANA",
+        "count": 556
+      },
+      {
+        "value": "legacy SAP ECC",
+        "count": 556
+      },
+      {
+        "value": "SAP Ariba/Concur/BW/BTP",
+        "count": 556
+      },
+      {
+        "value": "Teradata-scale EDW",
+        "count": 556
+      },
+      {
+        "value": "Databricks-style lakehouse",
+        "count": 556
+      },
+      {
+        "value": "Snowflake-style cloud warehouse",
+        "count": 556
+      },
+      {
+        "value": "Kafka/event streaming",
+        "count": 556
+      },
+      {
+        "value": "Oracle/SQL Server",
+        "count": 556
+      },
+      {
+        "value": "Hadoop remnant",
+        "count": 556
+      },
+      {
+        "value": "Service management platform",
+        "count": 555
+      },
+      {
+        "value": "mainframe batch scheduler",
+        "count": 555
+      },
+      {
+        "value": "container/Kubernetes",
+        "count": 555
+      },
+      {
+        "value": "AIX/UNIX middleware",
+        "count": 555
+      },
+      {
+        "value": "API gateway/iPaaS",
+        "count": 555
+      },
+      {
+        "value": "BI/reporting platform",
+        "count": 555
+      },
+      {
+        "value": "security/IAM stack",
+        "count": 555
+      },
+      {
+        "value": "COBOL/CICS/DB2/MQ",
+        "count": 555
+      }
+    ],
+    "dataPatterns": [
+      {
+        "value": "cloud lakehouse + BI marts",
+        "count": 157
+      },
+      {
+        "value": "EDW + pricing marts",
+        "count": 157
+      },
+      {
+        "value": "ERP/MRO marts + historical stores",
+        "count": 156
+      },
+      {
+        "value": "ERP + planning + spend analytics",
+        "count": 156
+      },
+      {
+        "value": "event streaming + operational dashboards",
+        "count": 156
+      },
+      {
+        "value": "security lake + workflow analytics",
+        "count": 156
+      },
+      {
+        "value": "operational store + analytics marts",
+        "count": 156
+      },
+      {
+        "value": "Teradata-scale EDW + streaming lakehouse",
+        "count": 156
+      }
+    ],
+    "airlineTermCoverage": {
+      "Passenger Service": 216,
+      "Operations Control": 99,
+      "Crew Operations": 99,
+      "Technical Operations": 99,
+      "Airport Operations": 99,
+      "Cargo": 162,
+      "Commercial": 99,
+      "Flight operations and IROPS": 110,
+      "Reservations and departure control": 0,
+      "Maintenance engineering and MRO": 0,
+      "Airport baggage and ground ops": 0,
+      "Cargo and network planning": 0,
+      "Loyalty digital commerce contact center": 0
+    },
+    "note": "Counts show breadth. First-row sampling and distributions suggest cyclic generation rather than domain-modeled coherence; many Flight Operations family records rotate through finance/cyber/service management functions."
+  },
+  "relationshipDepth": {
+    "fromTypes": [
+      {
+        "value": "application",
+        "count": 60000
+      }
+    ],
+    "toTypes": [
+      {
+        "value": "data_product",
+        "count": 6000
+      },
+      {
+        "value": "vendor",
+        "count": 6000
+      },
+      {
+        "value": "contract",
+        "count": 6000
+      },
+      {
+        "value": "kpi",
+        "count": 6000
+      },
+      {
+        "value": "service_tower",
+        "count": 6000
+      },
+      {
+        "value": "business_process",
+        "count": 6000
+      },
+      {
+        "value": "risk",
+        "count": 6000
+      },
+      {
+        "value": "control",
+        "count": 6000
+      },
+      {
+        "value": "infrastructure",
+        "count": 6000
+      },
+      {
+        "value": "application",
+        "count": 6000
+      }
+    ],
+    "relationshipTypes": [
+      {
+        "value": "depends_on",
+        "count": 6000
+      },
+      {
+        "value": "supports_capability",
+        "count": 6000
+      },
+      {
+        "value": "provides_data_to",
+        "count": 6000
+      },
+      {
+        "value": "covered_by_contract",
+        "count": 6000
+      },
+      {
+        "value": "measured_by_kpi",
+        "count": 6000
+      },
+      {
+        "value": "served_by_tower",
+        "count": 6000
+      },
+      {
+        "value": "has_risk",
+        "count": 6000
+      },
+      {
+        "value": "controlled_by",
+        "count": 6000
+      },
+      {
+        "value": "hosted_on",
+        "count": 6000
+      },
+      {
+        "value": "integrates_with",
+        "count": 6000
+      }
+    ],
+    "scopes": [
+      {
+        "value": "source_event",
+        "count": 12000
+      },
+      {
+        "value": "technology",
+        "count": 12000
+      },
+      {
+        "value": "operations",
+        "count": 12000
+      },
+      {
+        "value": "commercial",
+        "count": 12000
+      },
+      {
+        "value": "enterprise",
+        "count": 12000
+      }
+    ],
+    "businessMeanings": [
+      {
+        "value": "commercial decision support",
+        "count": 10000
+      },
+      {
+        "value": "transition dependency",
+        "count": 10000
+      },
+      {
+        "value": "value measurement path",
+        "count": 10000
+      },
+      {
+        "value": "service assurance path",
+        "count": 10000
+      },
+      {
+        "value": "risk/control dependency",
+        "count": 10000
+      },
+      {
+        "value": "critical operational path",
+        "count": 10000
+      }
+    ],
+    "endpointIssueCount": 4000,
+    "endpointIssueSample": [
+      {
+        "id": "REL-AIRDN-000016",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000026",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000046",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000056",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000076",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000086",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000106",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000116",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000136",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000146",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000166",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000176",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000196",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000206",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000226",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000236",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000256",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000266",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      },
+      {
+        "id": "REL-AIRDN-000286",
+        "side": "to",
+        "type": "business_process",
+        "value": "passenger reaccommodation"
+      },
+      {
+        "id": "REL-AIRDN-000296",
+        "side": "to",
+        "type": "business_process",
+        "value": "MRO planning"
+      }
+    ],
+    "pctFromApplicationOnly": 100,
+    "note": "If from_object_type is effectively only application, graph is dense but not operating-chain deep. It lacks explicit chain_id/sequence_id, capability/process source nodes, SLA/control/vendor-to-contract traversal as first-class paths."
+  },
+  "commercialContractRealism": {
+    "contractColumns": [
+      "contract_id",
+      "vendor_id",
+      "vendor_public_reference",
+      "contract_type",
+      "service_tower",
+      "business_function",
+      "scope",
+      "term_status",
+      "commercial_model",
+      "value_disclosure_mode",
+      "risk_note",
+      "source_id"
+    ],
+    "missingContractCols": [
+      "renewal_date",
+      "effective_date",
+      "expiration_date",
+      "termination_rights",
+      "pricing_model",
+      "minimum_commitment",
+      "rate_card_id",
+      "service_credit_terms",
+      "inflation_provision",
+      "change_control_terms",
+      "subcontracting_terms",
+      "data_residency",
+      "transition_assistance",
+      "sla_history_source",
+      "invoice_source",
+      "change_order_source",
+      "lot_id",
+      "proposal_id",
+      "bafo_revision_id",
+      "evaluation_criteria_id"
+    ],
+    "contractTypes": [
+      {
+        "value": "SOW",
+        "count": 55
+      },
+      {
+        "value": "rate card",
+        "count": 55
+      },
+      {
+        "value": "software subscription",
+        "count": 55
+      },
+      {
+        "value": "managed service agreement",
+        "count": 55
+      },
+      {
+        "value": "cloud commit",
+        "count": 55
+      },
+      {
+        "value": "maintenance agreement",
+        "count": 55
+      },
+      {
+        "value": "professional services SOW",
+        "count": 55
+      },
+      {
+        "value": "data platform agreement",
+        "count": 55
+      },
+      {
+        "value": "telecom/network services",
+        "count": 55
+      },
+      {
+        "value": "cybersecurity services",
+        "count": 55
+      },
+      {
+        "value": "ITSM workflow subscription",
+        "count": 54
+      },
+      {
+        "value": "mainframe software agreement",
+        "count": 54
+      },
+      {
+        "value": "colocation contract",
+        "count": 54
+      },
+      {
+        "value": "BPO services SOW",
+        "count": 54
+      },
+      {
+        "value": "MSA",
+        "count": 54
+      }
+    ],
+    "commercialModels": [
+      {
+        "value": "T&M",
+        "count": 118
+      },
+      {
+        "value": "unit-rate",
+        "count": 117
+      },
+      {
+        "value": "consumption",
+        "count": 117
+      },
+      {
+        "value": "hybrid fixed + variable",
+        "count": 117
+      },
+      {
+        "value": "committed spend",
+        "count": 117
+      },
+      {
+        "value": "outcome-linked",
+        "count": 117
+      },
+      {
+        "value": "fixed fee",
+        "count": 117
+      }
+    ],
+    "termStatus": [
+      {
+        "value": "renewal within 12 months",
+        "count": 137
+      },
+      {
+        "value": "renewal within 24 months",
+        "count": 137
+      },
+      {
+        "value": "extension option",
+        "count": 137
+      },
+      {
+        "value": "transition assistance required",
+        "count": 137
+      },
+      {
+        "value": "exit rights need review",
+        "count": 136
+      },
+      {
+        "value": "active",
+        "count": 136
+      }
+    ],
+    "riskNotes": [
+      {
+        "value": "standard commercial review",
+        "count": 598
+      },
+      {
+        "value": "high exit-term sensitivity",
+        "count": 136
+      },
+      {
+        "value": "supplier concentration",
+        "count": 55
+      },
+      {
+        "value": "SLA credit ambiguity",
+        "count": 31
+      }
+    ],
+    "lotsWithContracts": [
+      {
+        "lot": "Corporate and SAP AMS",
+        "contracts": 118,
+        "vendors": 60
+      },
+      {
+        "lot": "Digital Customer and Loyalty AMS",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Data Analytics and Integration",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Cloud Infrastructure and Mainframe",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Workplace Service Desk and Field Support",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "SIAM Observability and Service Governance",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Airline Operations AMS",
+        "contracts": 117,
+        "vendors": 60
+      }
+    ],
+    "note": "820 contract rows exist, but required commercial/legal/procurement fields are mostly absent or compressed into generic notes."
+  },
+  "reconstructability": {
+    "parserVisibleSourceFamilies": 18,
+    "hiddenTruthObjectCount": 6,
+    "crosswalkRows": 4,
+    "visibleSupportRatioAgainstGeneratedRows": 0,
+    "sourceManifestColumns": [
+      "source_id",
+      "source_name",
+      "storage_container",
+      "tenant_rooted_path",
+      "parser_visible",
+      "restricted_truth_visible",
+      "maps_to_templates"
+    ],
+    "crosswalkColumns": [
+      "source_id",
+      "source_native_ref",
+      "truth_id",
+      "expected_extraction",
+      "restricted_reason"
+    ],
+    "note": "Restricted crosswalk is a tiny sample, not a reconstructability test across the generated estate."
+  },
+  "procurementCompleteness": {
+    "sourceEventCoverage": {
+      "hasProposalSamples": false,
+      "hasBafoSamples": false,
+      "hasRateCardSamples": false,
+      "hasInvoiceSamples": false,
+      "hasSlaSamples": true,
+      "hasIncidentSamples": false,
+      "hasEvaluationSamples": false,
+      "matchingFiles": [
+        "kpi-sla-catalog.csv"
+      ]
+    },
+    "lotsWithContracts": [
+      {
+        "lot": "Corporate and SAP AMS",
+        "contracts": 118,
+        "vendors": 60
+      },
+      {
+        "lot": "Digital Customer and Loyalty AMS",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Data Analytics and Integration",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Cloud Infrastructure and Mainframe",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Workplace Service Desk and Field Support",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "SIAM Observability and Service Governance",
+        "contracts": 117,
+        "vendors": 60
+      },
+      {
+        "lot": "Airline Operations AMS",
+        "contracts": 117,
+        "vendors": 60
+      }
+    ],
+    "missingContractCols": [
+      "renewal_date",
+      "effective_date",
+      "expiration_date",
+      "termination_rights",
+      "pricing_model",
+      "minimum_commitment",
+      "rate_card_id",
+      "service_credit_terms",
+      "inflation_provision",
+      "change_control_terms",
+      "subcontracting_terms",
+      "data_residency",
+      "transition_assistance",
+      "sla_history_source",
+      "invoice_source",
+      "change_order_source",
+      "lot_id",
+      "proposal_id",
+      "bafo_revision_id",
+      "evaluation_criteria_id"
+    ],
+    "note": "There is no structured proposal/BAFO/rate-card/invoice/SLA/incident/evaluation sample file in the sample corpus; procurement completeness is described in prose, not evidenced structurally."
+  }
+}

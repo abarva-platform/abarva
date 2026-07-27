@@ -1,0 +1,5 @@
+source_id,source_native_ref,truth_id,expected_extraction,restricted_reason
+SRC-AIRDN-APP-001,APP-AIRDN-001,TRUTH-AIRDN-APP-001,"application object reconstructed with owner, tower and criticality",answer key
+SRC-AIRDN-CONT-001,CONT-AIRDN-001,TRUTH-AIRDN-CONT-001,contract obligation reconstructed with SLA and exit term evidence,answer key
+SRC-AIRDN-PROP-002,PROP-AIRDN-002,TRUTH-AIRDN-PROP-002,proposal facts reconstructed without accepting unsupported claims,answer key
+SRC-AIRDN-REL-001,REL-AIRDN-001,TRUTH-AIRDN-REL-001,relationship edge reconstructed with from/to types and evidence,answer key
