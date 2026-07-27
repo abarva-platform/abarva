@@ -1,0 +1,41 @@
+{
+  "schema": "abarva.phase2b3c.postgres-readiness-validation/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "tenantKey": "airline-demo-new",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "database_guard",
+      "status": "pass"
+    },
+    {
+      "name": "six_roles",
+      "status": "pass"
+    },
+    {
+      "name": "rls_table_coverage",
+      "status": "pass",
+      "count": 51
+    },
+    {
+      "name": "reader_candidate_denial",
+      "status": "pass"
+    },
+    {
+      "name": "ingest_publish_denial",
+      "status": "pass"
+    },
+    {
+      "name": "evaluator_mutation_denial",
+      "status": "pass"
+    },
+    {
+      "name": "strategic_insight_planning_grade",
+      "status": "pass"
+    },
+    {
+      "name": "migration_job_contract",
+      "status": "pass"
+    }
+  ]
+}

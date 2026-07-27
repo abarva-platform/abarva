@@ -1,0 +1,18 @@
+{
+  "schema": "abarva.phase2b3c.postgres-readiness-rollup/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "azureApplyBlocked": true,
+  "databaseMigrationBlocked": true,
+  "tenants": [
+    {
+      "tenantKey": "hc-demo-new",
+      "status": "pass",
+      "rlsTables": 51
+    },
+    {
+      "tenantKey": "airline-demo-new",
+      "status": "pass",
+      "rlsTables": 51
+    }
+  ]
+}
