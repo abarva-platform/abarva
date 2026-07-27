@@ -232,6 +232,92 @@ synthetic-v-folder-reference,reports/enterprise-profile-foundation/latest/source
 legacy-v-dimension-token,reports/enterprise-profile-foundation/latest/source-lineage.json,generated/historical report
 legacy-v-file-name,reports/enterprise-profile-foundation/latest/source-lineage.json,generated/historical report
 v6-v7-current-state,reports/enterprise-profile-foundation/latest/source-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/apex-retail/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/apex-retail/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/apex-retail/evidence-id-reconciliation.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/apex-retail/migration-lineage.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/apex-retail/migration-lineage.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/apex-retail/migration-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/apex-retail/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/apex-retail/source-identity-resolution.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/apex-retail/source-identity-resolution.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/first-capital-financial/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/first-capital-financial/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/first-capital-financial/evidence-id-reconciliation.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/first-capital-financial/migration-lineage.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/first-capital-financial/migration-lineage.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/first-capital-financial/migration-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/first-capital-financial/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/first-capital-financial/source-identity-resolution.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/first-capital-financial/source-identity-resolution.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-holdings/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-holdings/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-holdings/evidence-id-reconciliation.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-holdings/migration-lineage.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-holdings/migration-lineage.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-holdings/migration-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-holdings/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-holdings/source-identity-resolution.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-holdings/source-identity-resolution.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-holdings/source-metadata-conflicts-before-after.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-holdings/source-metadata-conflicts-before-after.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-holdings/source-metadata-conflicts-before-after.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-industries/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-industries/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-industries/evidence-id-reconciliation.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-industries/migration-lineage.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-industries/migration-lineage.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-industries/migration-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/lakeshore-industries/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/lakeshore-industries/source-identity-resolution.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/lakeshore-industries/source-identity-resolution.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/meridian-health/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/meridian-health/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/meridian-health/evidence-id-reconciliation.csv,generated/historical report
+current-state-pack,reports/evidence-v4-migration/meridian-health/evidence-id-reconciliation.csv,generated/historical report
+rich-enterprise-pack,reports/evidence-v4-migration/meridian-health/evidence-id-reconciliation.csv,generated/historical report
+v6-v7-current-state,reports/evidence-v4-migration/meridian-health/evidence-items-candidate.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/meridian-health/evidence-sources-candidate.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/meridian-health/evidence-sources-candidate.csv,generated/historical report
+v6-v7-current-state,reports/evidence-v4-migration/meridian-health/evidence-sources-candidate.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/meridian-health/migration-lineage.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/meridian-health/migration-lineage.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/meridian-health/migration-lineage.json,generated/historical report
+current-state-pack,reports/evidence-v4-migration/meridian-health/migration-lineage.json,generated/historical report
+rich-enterprise-pack,reports/evidence-v4-migration/meridian-health/migration-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/meridian-health/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/meridian-health/source-identity-resolution.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/meridian-health/source-identity-resolution.csv,generated/historical report
+current-state-pack,reports/evidence-v4-migration/meridian-health/source-identity-resolution.csv,generated/historical report
+rich-enterprise-pack,reports/evidence-v4-migration/meridian-health/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/meridian-health/source-version-to-evidence-item-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/meridian-health/source-version-to-evidence-item-reconciliation.csv,generated/historical report
+v6-v7-current-state,reports/evidence-v4-migration/meridian-health/source-version-to-evidence-item-reconciliation.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/recovery-input-manifest.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/recovery-input-manifest.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/recovery-input-manifest.json,generated/historical report
+current-state-pack,reports/evidence-v4-migration/recovery-input-manifest.json,generated/historical report
+rich-enterprise-pack,reports/evidence-v4-migration/recovery-input-manifest.json,generated/historical report
+upgrade-candidate-pack,reports/evidence-v4-migration/recovery-input-manifest.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/skyharbor-air/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/skyharbor-air/evidence-id-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/skyharbor-air/evidence-id-reconciliation.csv,generated/historical report
+upgrade-candidate-pack,reports/evidence-v4-migration/skyharbor-air/evidence-id-reconciliation.csv,generated/historical report
+synthetic-v-folder-reference,reports/evidence-v4-migration/skyharbor-air/evidence-items-candidate.csv,generated/historical report
+synthetic-v-folder-reference,reports/evidence-v4-migration/skyharbor-air/evidence-sources-candidate.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/skyharbor-air/evidence-sources-candidate.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/skyharbor-air/evidence-sources-candidate.csv,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/skyharbor-air/migration-lineage.json,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/skyharbor-air/migration-lineage.json,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/skyharbor-air/migration-lineage.json,generated/historical report
+upgrade-candidate-pack,reports/evidence-v4-migration/skyharbor-air/migration-lineage.json,generated/historical report
+archive-path-reference,reports/evidence-v4-migration/skyharbor-air/source-identity-resolution.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/skyharbor-air/source-identity-resolution.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/skyharbor-air/source-identity-resolution.csv,generated/historical report
+upgrade-candidate-pack,reports/evidence-v4-migration/skyharbor-air/source-identity-resolution.csv,generated/historical report
+synthetic-v-folder-reference,reports/evidence-v4-migration/skyharbor-air/source-version-to-evidence-item-reconciliation.csv,generated/historical report
+legacy-v-dimension-token,reports/evidence-v4-migration/skyharbor-air/source-version-to-evidence-item-reconciliation.csv,generated/historical report
+legacy-v-file-name,reports/evidence-v4-migration/skyharbor-air/source-version-to-evidence-item-reconciliation.csv,generated/historical report
 legacy-v-dimension-token,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
 legacy-v-file-name,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
 rich-substrate-pack,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
@@ -340,6 +426,10 @@ upgrade-candidate-pack,scripts/audit/meridian-data-state-reconciliation.mjs,non-
 synthetic-v-folder-reference,scripts/audit/run-full-module-stress.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/context-packs/embed-v4-tenants-postgres-only.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/context-packs/regenerate-v4-relationship-graphs.mjs,non-loader historical reference
+legacy-v-dimension-token,scripts/data-build/__tests__/run-evidence-v4-migration-tests.mjs,non-loader historical reference
+legacy-v-file-name,scripts/data-build/__tests__/run-evidence-v4-migration-tests.mjs,non-loader historical reference
+legacy-v-dimension-token,scripts/data-build/evidence-v4-migration-dry-run.mjs,non-loader historical reference
+legacy-v-file-name,scripts/data-build/evidence-v4-migration-dry-run.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 legacy-v-file-name,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference

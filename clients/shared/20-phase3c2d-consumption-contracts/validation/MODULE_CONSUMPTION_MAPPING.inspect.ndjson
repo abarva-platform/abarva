@@ -1,0 +1,2 @@
+{"kind":"sheet","id":"ws/91dg9i","name":"Module Mapping","index":0,"range":"A1:D11","address":"A1:D11","tables":1}
+{"kind":"table","sheet":"Module Mapping","address":"A1:D11","rows":11,"cols":4,"values":[["Module Consumption Mapping",null,null,null],[null,null,null,null],["consumer","allowed_sources","denied_sources","certification_required"]],"valuesTruncated":true,"valuesPreviewRows":3,"valuesPreviewCols":4,"valuesPreviewAddress":"A1:D3"}

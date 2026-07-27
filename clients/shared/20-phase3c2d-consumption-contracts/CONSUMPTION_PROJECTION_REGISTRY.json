@@ -1,0 +1,387 @@
+{
+  "version": "phase3c2d-consumption-contracts-v1.0.0",
+  "generated": "2026-07-27",
+  "status": "contract_only_no_runtime_mutation",
+  "projections": [
+    {
+      "projection_name": "consumption.enterprise_brief_v1",
+      "consumers": [
+        "Home / Knowledge"
+      ],
+      "purpose": "tenant executive brief shell, source-bound status and baseline metadata",
+      "source_publication": "publication.enterprise_publication_v1",
+      "build_gate": "required before Enterprise Brief renders",
+      "partial_data_behavior": "Home must render without Cube",
+      "key_fields": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "content_hash"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.enterprise_identity_v1",
+      "consumers": [
+        "Home / aVa"
+      ],
+      "purpose": "organization identity, industry, footprint, revenue/employee disclosure states",
+      "source_publication": "knowledge.organization, metrics.metric_observation",
+      "build_gate": "required after enterprise wave",
+      "partial_data_behavior": "missing values return null plus availability_state",
+      "key_fields": [
+        "tenant_key",
+        "organization_id",
+        "knowledge_baseline_ref"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.executive_perspective_v1",
+      "consumers": [
+        "Home / Intelligence"
+      ],
+      "purpose": "leadership themes, interview signals and client-confirmed caveats",
+      "source_publication": "knowledge.interview, knowledge.fact_assertion",
+      "build_gate": "optional but expected for rich tenants",
+      "partial_data_behavior": "synthetic/interview signals must carry source_basis",
+      "key_fields": [
+        "tenant_key",
+        "perspective_id",
+        "evidence_coverage"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.strategic_interpretation_v1",
+      "consumers": [
+        "Home / aVa"
+      ],
+      "purpose": "Claude-authored strategic interpretation pinned to one baseline",
+      "source_publication": "publication.strategic_publication_v1",
+      "build_gate": "generated only after publication validation",
+      "partial_data_behavior": "renderer may style but not rewrite",
+      "key_fields": [
+        "tenant_key",
+        "interpretation_id",
+        "prompt_hash"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.domain_summary_v1",
+      "consumers": [
+        "Home Explore"
+      ],
+      "purpose": "domain-level summary for enterprise, technology, data, vendors, risks and programs",
+      "source_publication": "publication.domain_publication_v1",
+      "build_gate": "required for Explore landing",
+      "partial_data_behavior": "partial domains show readiness state",
+      "key_fields": [
+        "tenant_key",
+        "domain_key",
+        "authority_state"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.application_inventory_v1",
+      "consumers": [
+        "Home / Source / Intelligence"
+      ],
+      "purpose": "applications, ownership, lifecycle, hosting and criticality",
+      "source_publication": "knowledge.application",
+      "build_gate": "required after application wave",
+      "partial_data_behavior": "no zero substitutions for missing ownership/cost",
+      "key_fields": [
+        "tenant_key",
+        "application_id",
+        "content_hash"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.vendor_contract_inventory_v1",
+      "consumers": [
+        "Home / Source / Tower"
+      ],
+      "purpose": "vendors, contracts, terms, renewal exposure and evidence state",
+      "source_publication": "knowledge.vendor, knowledge.contract",
+      "build_gate": "required before Source projection",
+      "partial_data_behavior": "commercial claims require accepted source evidence",
+      "key_fields": [
+        "tenant_key",
+        "contract_id",
+        "publication_ref"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.metric_observation_v1",
+      "consumers": [
+        "Cube / Tower / Home"
+      ],
+      "purpose": "governed metric observations with null semantics and evidence state",
+      "source_publication": "metrics.metric_definition, metrics.metric_observation",
+      "build_gate": "required before Cube certification",
+      "partial_data_behavior": "value null when unavailable",
+      "key_fields": [
+        "tenant_key",
+        "metric_id",
+        "period",
+        "baseline_ref"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.relationship_node_v1",
+      "consumers": [
+        "Home Relationships / aVa"
+      ],
+      "purpose": "accepted graph nodes for UI and packet use",
+      "source_publication": "knowledge.relationship_assertion",
+      "build_gate": "required before graph view",
+      "partial_data_behavior": "no candidate nodes in active view",
+      "key_fields": [
+        "tenant_key",
+        "node_id",
+        "baseline_ref"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.relationship_edge_v1",
+      "consumers": [
+        "Home Relationships / aVa"
+      ],
+      "purpose": "accepted graph edges with valid endpoints and evidence",
+      "source_publication": "knowledge.relationship_assertion",
+      "build_gate": "required before graph view",
+      "partial_data_behavior": "zero broken endpoints",
+      "key_fields": [
+        "tenant_key",
+        "edge_id",
+        "from_node_id",
+        "to_node_id"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.relationship_evidence_v1",
+      "consumers": [
+        "Evidence / aVa"
+      ],
+      "purpose": "source snippets and lineage for graph assertions",
+      "source_publication": "evidence.evidence_fragment",
+      "build_gate": "required for graph evidence drawer",
+      "partial_data_behavior": "hidden truth never exposed",
+      "key_fields": [
+        "tenant_key",
+        "edge_id",
+        "evidence_id"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.evidence_gap_v1",
+      "consumers": [
+        "Home / Source / Moves"
+      ],
+      "purpose": "evidence gaps, source requests and impact explanation",
+      "source_publication": "governance.evidence_gap",
+      "build_gate": "required in every partial state",
+      "partial_data_behavior": "missing is explicit, never converted to zero",
+      "key_fields": [
+        "tenant_key",
+        "gap_id",
+        "severity"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.search_document_v1",
+      "consumers": [
+        "Nexus search / aVa"
+      ],
+      "purpose": "deterministic search documents over accepted publications",
+      "source_publication": "publication.active_knowledge_baseline",
+      "build_gate": "required before deterministic search",
+      "partial_data_behavior": "candidate/working content excluded",
+      "key_fields": [
+        "tenant_key",
+        "search_doc_id",
+        "content_hash"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    },
+    {
+      "projection_name": "consumption.module_knowledge_packet_v1",
+      "consumers": [
+        "aVa / module APIs"
+      ],
+      "purpose": "versioned packet references for Home, Source, Moves, Tower and Intelligence",
+      "source_publication": "publication.active_knowledge_baseline, consumption.*",
+      "build_gate": "required before module packet certification",
+      "partial_data_behavior": "records source versions and metric query hashes",
+      "key_fields": [
+        "tenant_key",
+        "module_key",
+        "packet_hash"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ]
+    }
+  ]
+}

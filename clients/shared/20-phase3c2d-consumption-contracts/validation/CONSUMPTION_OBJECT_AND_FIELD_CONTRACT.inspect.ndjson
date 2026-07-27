@@ -1,0 +1,2 @@
+{"kind":"sheet","id":"ws/jh5llb","name":"Object Fields","index":0,"range":"A1:F21","address":"A1:F21","tables":1}
+{"kind":"table","sheet":"Object Fields","address":"A1:F21","rows":21,"cols":6,"values":[["Phase 3C-2D Consumption Object and Field Contract",null,null,null,null,null],[null,null,null,null,null,null],["object_family","field_name","data_type","requirement","projection","guidance"]],"valuesTruncated":true,"valuesPreviewRows":3,"valuesPreviewCols":6,"valuesPreviewAddress":"A1:F3"}

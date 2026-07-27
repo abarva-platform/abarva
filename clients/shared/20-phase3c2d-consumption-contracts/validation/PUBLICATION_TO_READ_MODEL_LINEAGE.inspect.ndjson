@@ -1,0 +1,2 @@
+{"kind":"sheet","id":"ws/w5x5un","name":"Lineage","index":0,"range":"A1:F17","address":"A1:F17","tables":1}
+{"kind":"table","sheet":"Lineage","address":"A1:F17","rows":17,"cols":6,"values":[["Publication to Read Model Lineage",null,null,null,null,null],[null,null,null,null,null,null],["source_publication","publication_ref_field","read_model","consumer","first_wave","reconciliation_method"]],"valuesTruncated":true,"valuesPreviewRows":3,"valuesPreviewCols":6,"valuesPreviewAddress":"A1:F3"}
