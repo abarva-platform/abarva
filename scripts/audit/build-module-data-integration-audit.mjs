@@ -38,6 +38,189 @@ const dispositionValues = [
   "replace",
 ];
 
+const classificationOverrides = new Map(
+  [
+    [
+      "public.move_artifact_review_decisions",
+      [
+        "retain_operational",
+        "Review workflow state remains in Moves; accepted decisions may emit canonical decision/evidence records later.",
+      ],
+    ],
+    [
+      "public.move_artifacts",
+      [
+        "retain_operational",
+        "Generated and uploaded Move artifacts remain workflow records; only approved evidence/facts should be published.",
+      ],
+    ],
+    [
+      "public.move_template_artifacts",
+      [
+        "retain_operational",
+        "Template content is product configuration, not enterprise Knowledge.",
+      ],
+    ],
+    [
+      "public.source_artifact_chunks",
+      [
+        "promote_link_canonical_knowledge",
+        "Evidence chunks can link to canonical evidence/corpus records after provenance, citation, and retrieval checks.",
+      ],
+    ],
+    [
+      "public.source_artifacts",
+      [
+        "retain_operational",
+        "Source owns uploaded/generated artifact lifecycle; extracted facts/evidence publish separately.",
+      ],
+    ],
+    [
+      "public.source_event_artifact_states",
+      [
+        "retain_operational",
+        "Artifact readiness state belongs to Source workflow; linked artifacts/facts publish separately.",
+      ],
+    ],
+    [
+      "public.source_vendor_proposal_fact_reviews",
+      [
+        "retain_operational",
+        "Review status for extracted proposal facts stays operational; approved facts publish separately.",
+      ],
+    ],
+    [
+      "public.ai_control_sources",
+      [
+        "retain_operational",
+        "Tower source-run metadata should remain a domain registry, not canonical business truth.",
+      ],
+    ],
+    [
+      "public.ai_control_refresh_runs",
+      [
+        "retain_operational",
+        "Refresh runs are operational lineage for Tower publication, not enterprise facts.",
+      ],
+    ],
+    [
+      "public.ai_control_atlas_context_packs",
+      [
+        "project_shared_consumption",
+        "Context packs are derived read bundles for aVa/Tower consumption, not canonical source truth.",
+      ],
+    ],
+    [
+      "cio_tower.question_contracts",
+      [
+        "retain_operational",
+        "Question contracts govern Tower answer behavior; they are product configuration, not vendor contracts.",
+      ],
+    ],
+    [
+      "intelligence_v7.active_tenant_contract_versions",
+      [
+        "retain_operational",
+        "Active contract-version pointers are runtime governance/configuration, not commercial contract facts.",
+      ],
+    ],
+    [
+      "cio_tower.measures",
+      [
+        "promote_link_canonical_knowledge",
+        "Tower metric definitions should link to the shared metric definition registry.",
+      ],
+    ],
+    [
+      "cio_tower.measure_results",
+      [
+        "project_shared_consumption",
+        "Tower metric observations are calculated/published results for shared consumption after parity proof.",
+      ],
+    ],
+    [
+      "cio_tower.facts",
+      [
+        "project_shared_consumption",
+        "Tower facts are measure observations/read-model inputs; definitions and source facts must be governed separately.",
+      ],
+    ],
+    [
+      "public.tower_dora_metrics",
+      [
+        "project_shared_consumption",
+        "DORA values are metric observations and should consume governed metric definitions.",
+      ],
+    ],
+    [
+      "public.application_portfolio",
+      [
+        "promote_link_canonical_knowledge",
+        "Application/system inventory is an enterprise object family that should map to canonical application identity.",
+      ],
+    ],
+    [
+      "public.use_cases",
+      [
+        "promote_link_canonical_knowledge",
+        "Use cases and initiatives are enterprise program/opportunity objects once reviewed.",
+      ],
+    ],
+    [
+      "public.tower_cmdb_cis",
+      [
+        "promote_link_canonical_knowledge",
+        "CMDB configuration items can link to canonical application/system/service identity after quality review.",
+      ],
+    ],
+    [
+      "public.tower_cmdb_dependencies",
+      [
+        "project_shared_consumption",
+        "CMDB dependencies should publish as governed relationship/graph projections after endpoint validation.",
+      ],
+    ],
+    [
+      "public.tower_program_financials",
+      [
+        "project_shared_consumption",
+        "Program financial observations should publish through metric/value projections, not become a second financial truth.",
+      ],
+    ],
+    [
+      "public.tower_vendor_spend",
+      [
+        "project_shared_consumption",
+        "Vendor-spend observations should publish through shared spend/value projections with canonical vendor links.",
+      ],
+    ],
+  ].map(([name, value]) => [name.toLowerCase(), value]),
+);
+
+const canonicalOverrides = new Map(
+  [
+    ["cio_tower.facts", "knowledge.metric_observation"],
+    ["cio_tower.measure_results", "knowledge.metric_observation"],
+    ["cio_tower.measures", "knowledge.metric_definition"],
+    ["cio_tower.question_contracts", "product.tower_question_contract"],
+    ["intelligence_v7.active_tenant_contract_versions", "governance.publication_contract_version"],
+    ["public.ai_control_atlas_context_packs", "consumption.context_pack"],
+    ["public.ai_control_refresh_runs", "operations.refresh_run"],
+    ["public.application_portfolio", "knowledge.application"],
+    ["public.source_artifact_acceptances", "knowledge.evidence_acceptance"],
+    ["public.source_artifact_chunks", "knowledge.evidence_chunk"],
+    ["public.source_artifact_facts", "knowledge.fact"],
+    ["public.source_event_facts", "knowledge.fact"],
+    ["public.source_vendor_proposal_fact_reviews", "governance.review_state"],
+    ["public.tower_cmdb_cis", "knowledge.application"],
+    ["public.tower_cmdb_dependencies", "knowledge.relationship_projection"],
+    ["public.tower_dora_metrics", "knowledge.metric_observation"],
+    ["public.tower_program_financials", "knowledge.metric_observation"],
+    ["public.tower_vendor_spend", "knowledge.metric_observation"],
+    ["public.use_cases", "knowledge.program"],
+  ].map(([name, value]) => [name.toLowerCase(), value]),
+);
+
 function walk(dir, predicate = () => true) {
   if (!fs.existsSync(dir)) return [];
   const out = [];
@@ -108,26 +291,45 @@ function purposeFor(fullName) {
 function classificationFor({ fullName, module, objectKind, columns }) {
   const name = fullName.toLowerCase();
   const colText = columns.join(" ").toLowerCase();
+  const override = classificationOverrides.get(name);
+  if (override) return override;
   if (objectKind.includes("view") || name.includes("mart") || name.includes("rollup") || name.includes("mv_")) {
     return ["project_shared_consumption", "Derived object shaped for reuse by screens, reports, exports, or aVa."];
   }
   if (name.includes("trace") || name.includes("generation_job") || name.includes("log") || name.includes("snapshot")) {
     return ["archive", "Audit/history object should be retained but not promoted as enterprise truth."];
   }
-  if (name.includes("selected") || name.includes("executed") || name.includes("accepted") || name.includes("approved") || name.includes("fact") || name.includes("contract") || name.includes("vendor") || name.includes("metric") || name.includes("kpi") || name.includes("outcome") || colText.includes("canonical") || colText.includes("evidence")) {
-    return ["promote_link_canonical_knowledge", "Contains enterprise-meaningful facts that should link or promote through canonical IDs after review."];
-  }
-  if (module === "Moves" && /decision|risk|action|program|initiative/.test(name)) {
-    return ["promote_link_canonical_knowledge", "Moves object has enterprise decision/program/risk/action meaning after approval."];
-  }
   if (name.includes("legacy") || name.includes("deprecated") || name.includes("old_")) {
     return ["replace", "Name suggests replacement by a governed canonical or consumption model."];
+  }
+  if (
+    /(?:template|review|approval|activity|event|job|stage|gate|dependency|instance|session|draft|submission|state)/.test(name) &&
+    !/(?:^|_)(?:accepted|acceptance|selected|executed|published|fact|facts|commitment|commitments|contract|contracts|metric|metrics|kpi|outcome|outcomes|value|risk|control)(?:_|$)/.test(name)
+  ) {
+    return ["retain_operational", "Workflow, review, template, or draft state remains domain-owned unless it emits accepted/published facts."];
+  }
+  if (name.includes("artifact") && !/(?:accepted|acceptance|fact|chunk|evidence|published)/.test(name)) {
+    return ["retain_operational", "Generated or draft artifacts remain operational; only accepted facts/evidence promote."];
+  }
+  if (
+    /(?:^|_)(?:accepted|acceptance|selected|executed|published|fact|facts|commitment|commitments|contract|contracts|vendor|vendors|supplier|suppliers|metric|metrics|kpi|outcome|outcomes|value|risk|control)(?:_|$)/.test(name) ||
+    colText.includes("canonical")
+  ) {
+    return ["promote_link_canonical_knowledge", "Contains enterprise-meaningful accepted, factual, commercial, metric, risk, or control data that should link through canonical IDs after review."];
+  }
+  if (name.includes("evidence") && /(?:source|lineage|citation|provenance|document|file)/.test(colText)) {
+    return ["promote_link_canonical_knowledge", "Evidence-bearing object can link to canonical evidence after tenant, provenance, and review-state checks."];
+  }
+  if (module === "Moves" && /decision|risk|action|program|initiative/.test(name) && /(?:approved|accepted|published|final|outcome|metric|evidence)/.test(colText)) {
+    return ["promote_link_canonical_knowledge", "Moves object has enterprise decision/program/risk/action meaning only after approval or publication."];
   }
   return ["retain_operational", "Needed for domain workflow unless a later live data review proves it obsolete."];
 }
 
 function canonicalEquivalent(fullName) {
   const name = fullName.toLowerCase();
+  const override = canonicalOverrides.get(name);
+  if (override) return override;
   if (name.includes("vendor") || name.includes("supplier")) return "knowledge.vendor";
   if (name.includes("contract") || name.includes("agreement")) return "knowledge.contract";
   if (name.includes("program") || name.includes("initiative") || name.includes("move")) return "knowledge.program";
@@ -273,21 +475,6 @@ function buildInventory() {
     walk(path.join(REPO, dir), (file) => /\.(ts|tsx|js|jsx|mjs|cjs|sql)$/.test(file)),
   );
   const refs = extractCodeRefs(codeFiles);
-  for (const [fullName] of refs) {
-    if (!byName.has(fullName)) {
-      const { schema, objectName } = splitSchema(fullName);
-      byName.set(fullName, {
-        fullName,
-        schema,
-        table: objectName,
-        objectKind: "referenced_object",
-        migrationFile: "not found in parsed CREATE statements",
-        columns: [],
-        primaryKeys: [],
-      });
-    }
-  }
-
   const rows = [];
   for (const obj of byName.values()) {
     const codeRefs = [...(refs.get(obj.fullName) || [])].sort();
@@ -416,7 +603,7 @@ function writeMarkdownReports(inventory) {
   const moduleCounts = countsBy("module");
   const dispositionCounts = countsBy("future_classification");
   const reportHeader = `> Scope: static repository audit only. No Azure resources, production data, schemas, APIs, dashboards, or tenant records were mutated. Live row counts, RLS policies, null rates, and broken-link checks require a later controlled DB read audit.\n\n`;
-  const commonSummary = `Inventory captured ${inventory.length} module-relevant persisted objects or focused code references across Moves, Source, and Tower.\n\nModule counts: ${Object.entries(moduleCounts).map(([k, v]) => `${k}: ${v}`).join("; ")}.\n\nDisposition counts: ${Object.entries(dispositionCounts).map(([k, v]) => `${k}: ${v}`).join("; ")}.\n`;
+  const commonSummary = `Inventory captured ${inventory.length} module-relevant persisted objects parsed from migration DDL across Moves, Source, and Tower.\n\nModule counts: ${Object.entries(moduleCounts).map(([k, v]) => `${k}: ${v}`).join("; ")}.\n\nDisposition counts: ${Object.entries(dispositionCounts).map(([k, v]) => `${k}: ${v}`).join("; ")}.\n`;
 
   const moduleFiles = [
     ["MOVES_DATA_MODEL_ASSESSMENT.md", "Moves", "Moves should retain workflow drafting/execution state locally, promote approved programs, decisions, risks, actions, outcomes, and KPIs through canonical identity mapping, and publish stable portfolio/readiness summaries only after parity proof."],

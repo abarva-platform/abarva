@@ -1,23 +1,22 @@
 {
   "auditDate": "2026-07-27",
   "scope": "static repo audit only; no Azure/Postgres mutation",
-  "inventoryRows": 679,
+  "inventoryRows": 131,
   "byModule": {
-    "Moves": 27,
-    "Source": 460,
-    "Tower": 192
+    "Moves": 11,
+    "Source": 50,
+    "Tower": 70
   },
   "byClassification": {
-    "retain_operational": 591,
-    "promote_link_canonical_knowledge": 68,
-    "archive": 8,
-    "replace": 1,
-    "project_shared_consumption": 11
+    "retain_operational": 72,
+    "archive": 5,
+    "promote_link_canonical_knowledge": 38,
+    "project_shared_consumption": 16
   },
   "matrixRows": {
     "identityCollisions": 9,
-    "canonicalPromotion": 68,
-    "consumptionProjection": 11,
-    "metricDuplication": 33
+    "canonicalPromotion": 38,
+    "consumptionProjection": 16,
+    "metricDuplication": 20
   }
 }

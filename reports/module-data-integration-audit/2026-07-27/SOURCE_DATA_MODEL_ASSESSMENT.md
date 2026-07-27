@@ -8,38 +8,33 @@ Source should retain sourcing-event workflow state locally, promote selected sup
 
 ## Static Findings
 
-Objects reviewed: 460.
+Objects reviewed: 50.
 
-Disposition mix: retain_operational: 419; promote_link_canonical_knowledge: 37; archive: 3; replace: 1.
+Disposition mix: retain_operational: 30; promote_link_canonical_knowledge: 19; archive: 1.
 
 ## Representative Objects
 ### retain_operational
-- `citation.doc` — Persisted module object requiring owner review.
-- `constants.ts` — Persisted module object requiring owner review.
-- `e.g` — Persisted module object requiring owner review.
-- `information_schema.tables` — Persisted module object requiring owner review.
-- `public.a` — Persisted module object requiring owner review.
-- `public.AbarVa` — Persisted module object requiring owner review.
-- `public.acceptance` — Persisted module object requiring owner review.
-- `public.accepting` — Persisted module object requiring owner review.
-
-### promote_link_canonical_knowledge
-- `public.artifact` — Generated or reviewed deliverable/artifact persistence.
-- `public.contract` — Vendor, contract, or commercial-evidence substrate.
-- `public.CONTRACT_TERMS_V1` — Vendor, contract, or commercial-evidence substrate.
-- `public.contracting` — Vendor, contract, or commercial-evidence substrate.
-- `public.contractor` — Vendor, contract, or commercial-evidence substrate.
-- `public.contractual` — Vendor, contract, or commercial-evidence substrate.
+- `public.ai_control_sources` — Risk/control governance or monitoring substrate.
+- `public.data_inventory_records` — Persisted module object requiring owner review.
+- `public.data_sources` — Persisted module object requiring owner review.
+- `public.enterprise_context_chunks` — Persisted module object requiring owner review.
 - `public.enterprise_context_source_files` — Persisted module object requiring owner review.
 - `public.enterprise_context_sources` — Persisted module object requiring owner review.
+- `public.external_sources` — Persisted module object requiring owner review.
+- `public.knowledge_sources` — Persisted module object requiring owner review.
+
+### promote_link_canonical_knowledge
+- `public.evidence` — Persisted module object requiring owner review.
+- `public.home_knowledge_evidence_sources` — Persisted module object requiring owner review.
+- `public.source_artifact_chunks` — Generated or reviewed deliverable/artifact persistence.
+- `public.source_artifact_facts` — Generated or reviewed deliverable/artifact persistence.
+- `public.source_contract_evidence_manifests` — Vendor, contract, or commercial-evidence substrate.
+- `public.source_contract_evidence_metrics` — Metric, KPI, value, or outcome measurement substrate.
+- `public.source_contract_evidence_rows` — Vendor, contract, or commercial-evidence substrate.
+- `public.source_contract_optimization_findings` — Vendor, contract, or commercial-evidence substrate.
 
 ### archive
-- `public.catalog` — Persisted module object requiring owner review.
-- `public.methodology` — Persisted module object requiring owner review.
 - `public.source_artifact_generation_jobs` — Generated or reviewed deliverable/artifact persistence.
-
-### replace
-- `public.legacy` — Persisted module object requiring owner review.
 
 ## Required Next Proof
 

@@ -4,11 +4,11 @@
 
 ## Static Result
 
-Inventory captured 679 module-relevant persisted objects or focused code references across Moves, Source, and Tower.
+Inventory captured 131 module-relevant persisted objects parsed from migration DDL across Moves, Source, and Tower.
 
-Module counts: Moves: 27; Source: 460; Tower: 192.
+Module counts: Moves: 11; Source: 50; Tower: 70.
 
-Disposition counts: retain_operational: 591; promote_link_canonical_knowledge: 68; archive: 8; replace: 1; project_shared_consumption: 11.
+Disposition counts: retain_operational: 72; archive: 5; promote_link_canonical_knowledge: 38; project_shared_consumption: 16.
 
 
 ## What This Audit Can Prove

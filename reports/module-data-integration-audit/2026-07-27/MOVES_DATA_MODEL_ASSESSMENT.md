@@ -8,28 +8,20 @@ Moves should retain workflow drafting/execution state locally, promote approved 
 
 ## Static Findings
 
-Objects reviewed: 27.
+Objects reviewed: 11.
 
-Disposition mix: retain_operational: 20; promote_link_canonical_knowledge: 6; archive: 1.
+Disposition mix: retain_operational: 10; archive: 1.
 
 ## Representative Objects
 ### retain_operational
-- `public.Active` — Persisted module object requiring owner review.
-- `public.Claude` — Persisted module object requiring owner review.
-- `public.every` — Persisted module object requiring owner review.
-- `public.execution` — Persisted module object requiring owner review.
-- `public.its` — Persisted module object requiring owner review.
-- `public.key` — Persisted module object requiring owner review.
-- `public.measured` — Persisted module object requiring owner review.
-- `public.Move` — Moves lifecycle, phase, charter, or execution planning state.
-
-### promote_link_canonical_knowledge
-- `public.approved` — Persisted module object requiring owner review.
 - `public.move_artifact_review_decisions` — Generated or reviewed deliverable/artifact persistence.
 - `public.move_artifacts` — Generated or reviewed deliverable/artifact persistence.
+- `public.move_dependencies` — Moves lifecycle, phase, charter, or execution planning state.
+- `public.move_instances` — Moves lifecycle, phase, charter, or execution planning state.
 - `public.move_template_artifacts` — Generated or reviewed deliverable/artifact persistence.
 - `public.move_template_gates` — Moves lifecycle, phase, charter, or execution planning state.
-- `public.program_evidence_reviews` — Persisted module object requiring owner review.
+- `public.move_template_review_state` — Moves lifecycle, phase, charter, or execution planning state.
+- `public.move_template_versions` — Moves lifecycle, phase, charter, or execution planning state.
 
 ### archive
 - `public.move_template_audit_log` — Moves lifecycle, phase, charter, or execution planning state.
