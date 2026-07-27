@@ -155,13 +155,6 @@ function cutoverFor(row) {
   return "Replace with canonical/consumption equivalent after read-parity proof.";
 }
 
-function migrationPhaseFor(row) {
-  if (row.module === "Moves") return "Wave 2: Moves lifecycle, decisions, outcomes, and identity map.";
-  if (row.module === "Source") return "Wave 3: Source events, supplier/proposal evidence, contracts, and commercial commitments.";
-  if (row.module === "Tower") return "Wave 4: Tower metrics, value, controls, and monitoring projections.";
-  return "Wave 5: cross-module reconciliation and shared consumption.";
-}
-
 function extractCreateTables(sql, file) {
   const objects = [];
   const createRe = /create\s+(table|view|materialized\s+view)\s+(?:if\s+not\s+exists\s+)?([a-zA-Z0-9_".]+)\s*(?:\(|as\b)/gi;
@@ -299,8 +292,8 @@ function buildInventory() {
   for (const obj of byName.values()) {
     const codeRefs = [...(refs.get(obj.fullName) || [])].sort();
     if (!isRelevant(obj.fullName, codeRefs)) continue;
-    const module = moduleFor(obj.fullName, codeRefs);
-    const [futureClassification, rationale] = classificationFor({ ...obj, module });
+    const moduleName = moduleFor(obj.fullName, codeRefs);
+    const [futureClassification, rationale] = classificationFor({ ...obj, module: moduleName });
     const relationships = obj.columns.filter((col) => /(^|_)id$/.test(col) || col.endsWith("_key"));
     const stateCols = obj.columns.filter((col) => /(status|state|stage|phase|approval|published|superseded)/i.test(col));
     const temporalCols = obj.columns.filter((col) => /(created_at|updated_at|valid_from|valid_to|effective|period|date|history|version)/i.test(col));
@@ -312,7 +305,7 @@ function buildInventory() {
         : "Needs live DB/RLS verification; no tenant column parsed statically";
     const row = {
       audit_date: AUDIT_DATE,
-      module,
+      module: moduleName,
       schema_table: obj.fullName,
       object_kind: obj.objectKind,
       business_purpose: purposeFor(obj.fullName),
@@ -418,7 +411,7 @@ function inferMetricFamily(name) {
   return "Generic metric";
 }
 
-function writeMarkdownReports(inventory, matrices) {
+function writeMarkdownReports(inventory) {
   const countsBy = (key) => inventory.reduce((acc, row) => ((acc[row[key]] = (acc[row[key]] || 0) + 1), acc), {});
   const moduleCounts = countsBy("module");
   const dispositionCounts = countsBy("future_classification");
@@ -540,7 +533,7 @@ function main() {
     "required_definition_owner",
     "consolidation_action",
   ]);
-  writeMarkdownReports(inventory, matrices);
+  writeMarkdownReports(inventory);
   fs.writeFileSync(
     path.join(OUT_DIR, "summary.json"),
     JSON.stringify(
