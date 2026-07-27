@@ -35,6 +35,7 @@ This release turns an approved synthetic source-corpus package into an executabl
 - `scripts/knowledge/land-airline-source-corpus.mjs`
 - `scripts/knowledge/__tests__/run-airline-source-landing-tests.mjs`
 - `package.json` script `test:airline-source-landing`
+- Follow-up hardening: operational landing now validates only operational files, so evaluator-only truth files are not required or downloaded for the operational job.
 
 ## QA / Validation
 
