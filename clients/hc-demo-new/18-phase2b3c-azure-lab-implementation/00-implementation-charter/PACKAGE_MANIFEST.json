@@ -1,0 +1,263 @@
+{
+  "package": "hc-demo-new-phase2b3c-azure-lab-implementation",
+  "phase": "2B-3C-1",
+  "generated": "2026-07-27",
+  "status": "plan_only_azure_apply_blocked",
+  "files": [
+    {
+      "path": "00-implementation-charter/APPROVED_BOUNDARY_SNAPSHOT.json",
+      "sha256": "548ab4c84f2199e928299e5755e811c65471194ca634a3740c738cec8d11c4d0",
+      "bytes": 3712
+    },
+    {
+      "path": "00-implementation-charter/MANIFEST_GAP_REPORT.csv",
+      "sha256": "095495dcb441a06edf50c49784913934f6795f6d37eedb9e0057f5484bdc68e5",
+      "bytes": 1287
+    },
+    {
+      "path": "00-implementation-charter/MANIFEST_GAP_REPORT.md",
+      "sha256": "5eeffe1ef010fa97ece0c0afc4388b0829496cb0ac35ea80c4982d69883c541a",
+      "bytes": 1125
+    },
+    {
+      "path": "00-implementation-charter/PACKAGE_MANIFEST.json",
+      "sha256": "f621bd7bf402b639632dad0418bb59ba1d8139e952d797f1ba0f71496d0941de",
+      "bytes": 9573
+    },
+    {
+      "path": "00-implementation-charter/PHASE_2B_3C_IMPLEMENTATION_CHARTER.md",
+      "sha256": "15f1bb8f5ebae8912e30c409f33da9960ad18364c7ee7f9ef5125685b5a42e5d",
+      "bytes": 1878
+    },
+    {
+      "path": "00-implementation-charter/STOP_CONDITIONS.md",
+      "sha256": "fa6bd16cc562ce23d0d184162bce872e6cd5ad70df305da6c231f5cd96437bdb",
+      "bytes": 1287
+    },
+    {
+      "path": "00-implementation-charter/hc-demo-new.lab.manifest.yaml",
+      "sha256": "91ebd2722198164301f2b485ddfa28f91878b09642ec0d6844071c4d0608fd9f",
+      "bytes": 3463
+    },
+    {
+      "path": "01-infrastructure-as-code/AZURE_CONTROL_PLANE_MANIFEST.yaml",
+      "sha256": "91ebd2722198164301f2b485ddfa28f91878b09642ec0d6844071c4d0608fd9f",
+      "bytes": 3463
+    },
+    {
+      "path": "01-infrastructure-as-code/AZURE_COST_ESTIMATE.md",
+      "sha256": "058db6e9754b91c52de3e5e4c96de1e11578654237e042c270f4b43a9dd617d0",
+      "bytes": 732
+    },
+    {
+      "path": "01-infrastructure-as-code/CONTAINER_IMAGE_LOCK.json",
+      "sha256": "caadbc38004fa31dd2be936731668a9da599bec2717ed236c0cf6f24d269dcc3",
+      "bytes": 748
+    },
+    {
+      "path": "01-infrastructure-as-code/IAC_PLAN_SUMMARY.json",
+      "sha256": "9ba5abc39cc0e865bf0095e411baa74811502f31976c0438d217524719ec3c0b",
+      "bytes": 685
+    },
+    {
+      "path": "01-infrastructure-as-code/NETWORK_ADDRESS_PLAN.md",
+      "sha256": "819e18821433c5ef5d68df0058fe541479e85fc4efe73eeb5756b4f58add4a8c",
+      "bytes": 1390
+    },
+    {
+      "path": "01-infrastructure-as-code/NETWORK_COLLISION_REPORT.json",
+      "sha256": "1fed80d625a776cdd3dfec8938c6caa6ec934d52065bd23779331aae440b2097",
+      "bytes": 3064
+    },
+    {
+      "path": "01-infrastructure-as-code/PHASE_2B_3C1_DECISION_MEMO.md",
+      "sha256": "b2596481b16f3ab6a0c1a5acb2843cc46a9d5d571eb5886015ee3b2474a62dd3",
+      "bytes": 938
+    },
+    {
+      "path": "01-infrastructure-as-code/PLAN_ONLY_COMMANDS.md",
+      "sha256": "e88d72e9e98edbe237997732a11a491db7f047165ffb2f8499971c4255997c00",
+      "bytes": 751
+    },
+    {
+      "path": "01-infrastructure-as-code/PRIVATE_DNS_AND_ENDPOINT_MATRIX.xlsx",
+      "sha256": "2e0456279964838489260c3d26f0ddf76d483a03ac19e496c9276cd8ab1dccd3",
+      "bytes": 5423
+    },
+    {
+      "path": "01-infrastructure-as-code/README.md",
+      "sha256": "e15f2c4656b5e3944f1121bec13ca5f00f7a61970ed69e20b2b4e7c5873324ff",
+      "bytes": 904
+    },
+    {
+      "path": "01-infrastructure-as-code/RESOURCE_NAME_AVAILABILITY.json",
+      "sha256": "e7dfa9d4e0b0613dfaf545850893adffa5fc62c55584fb212034612f7543c465",
+      "bytes": 747
+    },
+    {
+      "path": "01-infrastructure-as-code/SECURITY_AND_IDENTITY_MATRIX.xlsx",
+      "sha256": "5c5ad1b42dad3b6db2ba6ab00f95542bd868e9f2154cb39c6d86ac297ea44f1c",
+      "bytes": 5579
+    },
+    {
+      "path": "01-infrastructure-as-code/SQL_AZURE_HARDENING_REPORT.md",
+      "sha256": "7341533c4a115957ed404d38a8cd359e0153f488958db6ea743be61205f2813d",
+      "bytes": 1316
+    },
+    {
+      "path": "01-infrastructure-as-code/SUBSCRIPTION_DISCOVERY.json",
+      "sha256": "7f78a312e386d1841d66bef674158c59c81057bf6152856fafe603869cf5ff7f",
+      "bytes": 1211
+    },
+    {
+      "path": "01-infrastructure-as-code/WHAT_IF_OUTPUT.txt",
+      "sha256": "de23d1eb448eff82a413d18208a5b5d19b45fcbc103a90e2f52300ca59c63564",
+      "bytes": 109151
+    },
+    {
+      "path": "01-infrastructure-as-code/hcdn-lab-foundation.bicep",
+      "sha256": "639a1586f2db51677c97b9899fd9315a79839684549dfe250ccca6523ea4f4a7",
+      "bytes": 11316
+    },
+    {
+      "path": "01-infrastructure-as-code/hcdn.lab.bicepparam",
+      "sha256": "9f855b2bb0b85eeb98bcc854b10e0fdf1d4ee153a7ad965e38184e69e69c4865",
+      "bytes": 485
+    },
+    {
+      "path": "01-infrastructure-as-code/main.bicep",
+      "sha256": "203fc1f331738eafcbeb0ce77e43ace3f9f8584ddbf93ea0401f965804a24dfc",
+      "bytes": 686
+    },
+    {
+      "path": "01-infrastructure-as-code/main.json",
+      "sha256": "ae1bfd519d2ef1bd3d0222cc1741afc4ef953792710ab702f52b1c44f2392234",
+      "bytes": 27750
+    },
+    {
+      "path": "02-database-migrations/001_physical_model.sql",
+      "sha256": "54d21322e0c2978ab8feef478c6f870d39fdc2def19ad233b69f661320e5e2fb",
+      "bytes": 44410
+    },
+    {
+      "path": "02-database-migrations/vertical_slice_load.sql",
+      "sha256": "e39e22c6af85afaa6d129e0bff41553ed384dff638f163a8ba0d828001751cb7",
+      "bytes": 41065
+    },
+    {
+      "path": "03-container-app-jobs/JOB_STAGE_MAP.csv",
+      "sha256": "ab27300051685fdfd1f9cca2d374125fb8498961b35e2638dbd1b92e91f3978e",
+      "bytes": 2358
+    },
+    {
+      "path": "03-container-app-jobs/LOAD_JOB_AND_STAGE_CONTRACTS.xlsx",
+      "sha256": "557f62270ca06a16957c482416e13c17c09f4f9cb3628dbb9febe8097f4d0a7c",
+      "bytes": 9541
+    },
+    {
+      "path": "04-dataset-manifests/HC_DEMO_NEW_DATASET_CHECKSUMS.sha256",
+      "sha256": "868837e893220d768f545ecfe23d4178682f8674c4d11d4bcd0f7805810b00e2",
+      "bytes": 415
+    },
+    {
+      "path": "04-dataset-manifests/HC_DEMO_NEW_DATASET_MANIFEST.json",
+      "sha256": "5c10a5c2ab8cee075774d1e44598b91af3f3209b2ece7868339e6685517b4894",
+      "bytes": 1459
+    },
+    {
+      "path": "04-dataset-manifests/HC_DEMO_NEW_DATASET_RELEASE_NOTES.md",
+      "sha256": "97193fec6aa2e5177d1c49f56a25507c6f18fe0e9ae22a69149017270f2f1be9",
+      "bytes": 600
+    },
+    {
+      "path": "04-dataset-manifests/HC_DEMO_NEW_RESTRICTED_EVALUATION_MANIFEST.json",
+      "sha256": "206fe897f0d2023185db1c3ffff88213d649c5e85736dd18d7b216c2901c7a9b",
+      "bytes": 21227
+    },
+    {
+      "path": "04-dataset-manifests/HC_DEMO_NEW_SOURCE_MANIFEST.csv",
+      "sha256": "ebd47cc947c661d97d94b5ad52d48e94c2a45751b4b3bf8b2bd90923605b3a55",
+      "bytes": 40486
+    },
+    {
+      "path": "05-runbooks/PHASE_2B_3C_OPERATOR_RUNBOOK.md",
+      "sha256": "c54e49330e403b8b793b2ff9422a6a86a74252ebec9e7c13ec2cf02884f3e338",
+      "bytes": 1229
+    },
+    {
+      "path": "06-run-evidence/ACTUAL_AZURE_RUN_TIMELINE.json",
+      "sha256": "2fb911a7c4b6b694c03b89044f9e80449dd1f8d1e6e2cf01f055e05ca9c066f2",
+      "bytes": 170
+    },
+    {
+      "path": "06-run-evidence/AZURE_JOB_EXECUTION_LEDGER.csv",
+      "sha256": "394b9a432cacaa99a0b8b4be9cb73e2b3aa6991d82094f9cc0d76badf8d3dc54",
+      "bytes": 175
+    },
+    {
+      "path": "07-reconstruction-validation/CONFLICT_AND_REVIEW_LEDGER.csv",
+      "sha256": "61b6b9c5ce89de32874ece423539c233c7c57c4a11769aa01312e6135242d383",
+      "bytes": 200
+    },
+    {
+      "path": "07-reconstruction-validation/RECONSTRUCTION_SCORECARD.csv",
+      "sha256": "7a0a8d3076a97c5bb94a1db4e715247b2367c3c0dce29e5dd50672a5c20afdd6",
+      "bytes": 167
+    },
+    {
+      "path": "08-knowledge-publication/KNOWLEDGE_BASELINE_MANIFEST.json",
+      "sha256": "06cd6990f8720c6e72806d1effc3d001cb6ed95701b279b01afc412e82254a26",
+      "bytes": 147
+    },
+    {
+      "path": "09-consumption-proof/MODULE_CONSUMPTION_PROOF.md",
+      "sha256": "68ac7d0f360a6f4612d65f95f731b10635d1e6aa9d415574d350003e032fce1a",
+      "bytes": 276
+    },
+    {
+      "path": "10-case-study/COST_AND_TOKEN_SUMMARY.csv",
+      "sha256": "783c3ac410ba82a2e4f60f9261f2c44f90f7c331fb0799465667333b4cdf7e85",
+      "bytes": 110
+    },
+    {
+      "path": "10-case-study/HC_DEMO_NEW_CASE_STUDY.html",
+      "sha256": "025524b09ef40adca28dc6cb50874277e42befc534e83326122b42f72ca0f1ca",
+      "bytes": 459
+    },
+    {
+      "path": "10-case-study/HC_DEMO_NEW_CASE_STUDY.md",
+      "sha256": "29fd35e1f094234813c7b93198c3cdbe2f10e034d8706138a0dba478fe33e66f",
+      "bytes": 440
+    },
+    {
+      "path": "10-case-study/SIMULATED_4_6_WEEK_CLIENT_TIMELINE.md",
+      "sha256": "30c40e9ab7233d9e89115425d528df7eb952279eaca2feffb42294c8b8fd631d",
+      "bytes": 547
+    },
+    {
+      "path": "10-case-study/SOURCE_TO_KNOWLEDGE_TRACE.csv",
+      "sha256": "990b1b254007582dd0edb0dcd8f885dcabec44439cafd7b18afe68753894c231",
+      "bytes": 122
+    },
+    {
+      "path": "PACKAGE_MANIFEST.json",
+      "sha256": "f621bd7bf402b639632dad0418bb59ba1d8139e952d797f1ba0f71496d0941de",
+      "bytes": 9573
+    },
+    {
+      "path": "tools/build_phase2b3c1_plan_only.py",
+      "sha256": "8f446f1df94c20313ce5d46075457ab846fb846edbc9416d8a6287d5b0fc8cd6",
+      "bytes": 40551
+    },
+    {
+      "path": "validation/phase2b3c-implementation-lock-validation-summary.json",
+      "sha256": "86cc068a6597ff34ecd20b269cd01dd4192a9502a5430f1a7a429d9ba61bb202",
+      "bytes": 2774
+    },
+    {
+      "path": "validation/phase2b3c1-plan-only-validation-summary.json",
+      "sha256": "86cc068a6597ff34ecd20b269cd01dd4192a9502a5430f1a7a429d9ba61bb202",
+      "bytes": 2774
+    }
+  ]
+}

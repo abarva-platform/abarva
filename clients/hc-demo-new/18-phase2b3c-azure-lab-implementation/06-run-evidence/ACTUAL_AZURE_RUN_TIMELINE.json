@@ -1,0 +1,5 @@
+{
+  "status": "not_run",
+  "reason": "blocked pending exact resource group, VNet, subnet, Container Apps environment and Log Analytics manifest values",
+  "events": []
+}

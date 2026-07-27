@@ -1,0 +1,17 @@
+{
+  "registry_resource_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
+  "registry_hostname": "acrabarvalab001.azurecr.io",
+  "registry_name": "acrabarvalab001",
+  "registry_sku": {
+    "name": "Premium",
+    "tier": "Premium"
+  },
+  "repository": "abarva/web",
+  "image_digest": "sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8",
+  "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8",
+  "source_tag_observed": [
+    "main-53a91c00"
+  ],
+  "manifest_timestamp": "2026-07-27T04:09:22.6075085Z",
+  "floating_tags_allowed": false
+}

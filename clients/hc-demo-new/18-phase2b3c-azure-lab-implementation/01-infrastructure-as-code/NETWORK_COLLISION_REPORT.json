@@ -1,0 +1,78 @@
+{
+  "visible_vnets": [
+    {
+      "name": "vnet-abarva-lakeshore-pilot-data-eastus",
+      "resource_group": "rg-abarva-lakeshore-pilot-data-eastus",
+      "address_prefixes": [
+        "10.72.0.0/16"
+      ],
+      "location": "eastus"
+    },
+    {
+      "name": "vnet-abarva-private-dataplane-lab-eastus",
+      "resource_group": "rg-abarva-private-dataplane-lab-eastus",
+      "address_prefixes": [
+        "10.42.0.0/16"
+      ],
+      "location": "eastus"
+    },
+    {
+      "name": "vnet-abarva-database-lab-eastus2",
+      "resource_group": "rg-abarva-database-lab-eastus2",
+      "address_prefixes": [
+        "10.43.0.0/16"
+      ],
+      "location": "eastus2"
+    },
+    {
+      "name": "vnet-abarva-lakeshore-pilot-db-eastus2",
+      "resource_group": "rg-abarva-lakeshore-pilot-db-eastus2",
+      "address_prefixes": [
+        "10.73.0.0/16"
+      ],
+      "location": "eastus2"
+    }
+  ],
+  "visible_peerings": [
+    {
+      "source_vnet": "vnet-abarva-lakeshore-pilot-data-eastus",
+      "peering": "peer-to-vnet-abarva-lakeshore-pilot-db-eastus2",
+      "remote_virtual_network_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-lakeshore-pilot-db-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-abarva-lakeshore-pilot-db-eastus2",
+      "remote_address_space": [
+        "10.73.0.0/16"
+      ]
+    },
+    {
+      "source_vnet": "vnet-abarva-private-dataplane-lab-eastus",
+      "peering": "peer-to-vnet-abarva-database-lab-eastus2",
+      "remote_virtual_network_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-database-lab-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-abarva-database-lab-eastus2",
+      "remote_address_space": [
+        "10.43.0.0/16"
+      ]
+    },
+    {
+      "source_vnet": "vnet-abarva-database-lab-eastus2",
+      "peering": "peer-to-vnet-abarva-private-dataplane-lab-eastus",
+      "remote_virtual_network_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-private-dataplane-lab-eastus/providers/Microsoft.Network/virtualNetworks/vnet-abarva-private-dataplane-lab-eastus",
+      "remote_address_space": [
+        "10.42.0.0/16"
+      ]
+    },
+    {
+      "source_vnet": "vnet-abarva-lakeshore-pilot-db-eastus2",
+      "peering": "peer-to-vnet-abarva-lakeshore-pilot-data-eastus",
+      "remote_virtual_network_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-lakeshore-pilot-data-eastus/providers/Microsoft.Network/virtualNetworks/vnet-abarva-lakeshore-pilot-data-eastus",
+      "remote_address_space": [
+        "10.72.0.0/16"
+      ]
+    }
+  ],
+  "proposed_vnet_cidr": "10.74.0.0/22",
+  "proposed_subnets": {
+    "snet-aca-hcdn-lab-eus-001": "10.74.0.0/23",
+    "snet-pg-hcdn-lab-eus-001": "10.74.2.0/27",
+    "snet-pe-hcdn-lab-eus-001": "10.74.2.32/27"
+  },
+  "collision_result": "no_overlap_with_visible_vnet_prefixes",
+  "caveat": "Peered remote ranges are only as visible as the active subscription exposes through VNet peering metadata. Re-run before apply."
+}

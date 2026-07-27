@@ -1,0 +1,51 @@
+{
+  "dataset_id": "hc-demo-new-certified-source-corpus-phase2b2d",
+  "tenant_key": "hc-demo-new",
+  "environment": "lab",
+  "source_root": "15-phase2b2d-final-parser-certification/corrected-source-artifacts",
+  "synthetic_label": "Synthetic HC Demo New source artifact - not a real client, not PHI, planning grade.",
+  "source_manifest": "HC_DEMO_NEW_SOURCE_MANIFEST.csv",
+  "summary": {
+    "artifact_count": 153,
+    "declared_structured_row_count": 69472,
+    "by_wave": {
+      "1": 36,
+      "2": 35,
+      "3": 42,
+      "4": 40
+    },
+    "by_source_classification": {
+      "internal diagram": 2,
+      "internal narrative": 30,
+      "internal presentation": 3,
+      "interview": 20,
+      "interview metadata": 20,
+      "public": 36,
+      "system extract": 42
+    },
+    "patient_access_or_contact_center_artifacts": 3
+  },
+  "visibility": {
+    "parser_visible": [
+      "public",
+      "internal narrative",
+      "internal presentation",
+      "internal diagram",
+      "system extract",
+      "interview",
+      "interview metadata",
+      "controlled conflict"
+    ],
+    "evaluator_only": [
+      "hidden ground truth",
+      "source-id crosswalk restricted",
+      "restricted expected parser results"
+    ]
+  },
+  "load_policy": {
+    "deterministic_parsing_first": true,
+    "claude_output_destination": "candidate tables only",
+    "hidden_truth_can_seed_accepted_knowledge": false,
+    "review_required_before_publication": true
+  }
+}

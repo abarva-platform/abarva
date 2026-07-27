@@ -1,0 +1,670 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.44.1.10279",
+      "templateHash": "4321232651526158434"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus"
+    },
+    "subscriptionId": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "resourceGroupName": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "object"
+    },
+    "postgresAdministratorLoginPassword": {
+      "type": "securestring"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hcdn-lab-foundation-plan",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tenantId": {
+            "value": "[parameters('tenantId')]"
+          },
+          "subscriptionId": {
+            "value": "[parameters('subscriptionId')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "postgresAdministratorLoginPassword": {
+            "value": "[parameters('postgresAdministratorLoginPassword')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "1079476825560300659"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "tenantId": {
+              "type": "string"
+            },
+            "subscriptionId": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "postgresAdministratorLoginPassword": {
+              "type": "securestring"
+            }
+          },
+          "variables": {
+            "tenantKey": "hc-demo-new",
+            "registryServer": "acrabarvalab001.azurecr.io",
+            "imageName": "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8",
+            "postgresAdminLogin": "hcdn_admin",
+            "storageContainers": [
+              "raw",
+              "parsed",
+              "working",
+              "quarantine",
+              "published",
+              "projections",
+              "exports",
+              "audit"
+            ],
+            "jobs": [
+              {
+                "name": "job-hcdn-backfill-lab",
+                "process": "hc-demo-new-knowledge-backfill-v1",
+                "identityKey": "ingest",
+                "stage": "15_backfill_replay"
+              },
+              {
+                "name": "job-hcdn-baseline-publish-lab",
+                "process": "hc-demo-new-baseline-publish-v1",
+                "identityKey": "publish",
+                "stage": "12_publish_baseline"
+              },
+              {
+                "name": "job-hcdn-domain-publish-lab",
+                "process": "hc-demo-new-domain-publish-v1",
+                "identityKey": "publish",
+                "stage": "11_publish_domain"
+              },
+              {
+                "name": "job-hcdn-entity-resolve-lab",
+                "process": "hc-demo-new-entity-resolve-v1",
+                "identityKey": "ingest",
+                "stage": "06_resolve_identity"
+              },
+              {
+                "name": "job-hcdn-evidence-extract-lab",
+                "process": "hc-demo-new-evidence-extract-v1",
+                "identityKey": "ingest",
+                "stage": "04_extract_evidence"
+              },
+              {
+                "name": "job-hcdn-home-readmodel-lab",
+                "process": "hc-demo-new-home-readmodel-v1",
+                "identityKey": "publish",
+                "stage": "14_refresh_home_readmodel"
+              },
+              {
+                "name": "job-hcdn-normalize-lab",
+                "process": "hc-demo-new-knowledge-normalize-v1",
+                "identityKey": "ingest",
+                "stage": "05_normalize_values"
+              },
+              {
+                "name": "job-hcdn-projection-build-lab",
+                "process": "hc-demo-new-projection-build-v1",
+                "identityKey": "publish",
+                "stage": "13_build_module_projections"
+              },
+              {
+                "name": "job-hcdn-reconcile-audit-lab",
+                "process": "hc-demo-new-reconciliation-audit-v1",
+                "identityKey": "evaluator",
+                "stage": "16_reconciliation_audit"
+              },
+              {
+                "name": "job-hcdn-review-apply-lab",
+                "process": "hc-demo-new-knowledge-review-v1",
+                "identityKey": "review",
+                "stage": "09_route_review_quarantine"
+              },
+              {
+                "name": "job-hcdn-source-parse-lab",
+                "process": "hc-demo-new-source-parse-v1",
+                "identityKey": "ingest",
+                "stage": "03_parse_source"
+              },
+              {
+                "name": "job-hcdn-source-register-lab",
+                "process": "hc-demo-new-source-register-v1",
+                "identityKey": "ingest",
+                "stage": "01_register_source"
+              },
+              {
+                "name": "job-hcdn-validate-lab",
+                "process": "hc-demo-new-knowledge-validate-v1",
+                "identityKey": "ingest",
+                "stage": "07_validate_semantics"
+              }
+            ],
+            "identityIds": {
+              "ingest": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-ingest-lab-001')]",
+              "review": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-review-lab-001')]",
+              "publish": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-publish-lab-001')]",
+              "read": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-read-lab-001')]",
+              "evaluator": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-evaluator-lab-001')]",
+              "admin": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-admin-lab-001')]"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "law-abarva-hcdn-lab-eus-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 30
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "vnet-abarva-hcdn-lab-eus-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "10.74.0.0/22"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "snet-aca-hcdn-lab-eus-001",
+                    "properties": {
+                      "addressPrefix": "10.74.0.0/23",
+                      "delegations": [
+                        {
+                          "name": "container-apps-environment",
+                          "properties": {
+                            "serviceName": "Microsoft.App/environments"
+                          }
+                        }
+                      ],
+                      "privateEndpointNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "snet-pg-hcdn-lab-eus-001",
+                    "properties": {
+                      "addressPrefix": "10.74.2.0/27",
+                      "delegations": [
+                        {
+                          "name": "postgres-flexible-server",
+                          "properties": {
+                            "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers"
+                          }
+                        }
+                      ],
+                      "privateEndpointNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "snet-pe-hcdn-lab-eus-001",
+                    "properties": {
+                      "addressPrefix": "10.74.2.32/27",
+                      "privateEndpointNetworkPolicies": "Disabled"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "mi-hcdn-ingest-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "mi-hcdn-review-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "mi-hcdn-publish-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "mi-hcdn-read-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "mi-hcdn-evaluator-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "mi-hcdn-admin-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "stabhcdemonewlab001",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('tenantKey', variables('tenantKey')))]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "accessTier": "Hot",
+                "allowBlobPublicAccess": false,
+                "minimumTlsVersion": "TLS1_2",
+                "publicNetworkAccess": "Disabled",
+                "supportsHttpsTrafficOnly": true,
+                "networkAcls": {
+                  "defaultAction": "Deny",
+                  "bypass": "None"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', 'stabhcdemonewlab001', 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', 'stabhcdemonewlab001')]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "containers",
+                "count": "[length(variables('storageContainers'))]"
+              },
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', 'stabhcdemonewlab001', 'default', variables('storageContainers')[copyIndex()])]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', 'stabhcdemonewlab001', 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2023-07-01",
+              "name": "kv-abarva-hcdn-lab-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "tenantId": "[parameters('tenantId')]",
+                "sku": {
+                  "family": "A",
+                  "name": "standard"
+                },
+                "enableRbacAuthorization": true,
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "publicNetworkAccess": "Disabled",
+                "networkAcls": {
+                  "defaultAction": "Deny",
+                  "bypass": "None"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.blob.core.windows.net",
+              "location": "global",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.vaultcore.azure.net",
+              "location": "global",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.postgres.database.azure.com",
+              "location": "global",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.blob.core.windows.net', 'hcdn-blob-link')]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.vaultcore.azure.net', 'hcdn-vault-link')]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.vaultcore.azure.net')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.postgres.database.azure.com', 'hcdn-postgres-link')]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.postgres.database.azure.com')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+              "apiVersion": "2023-12-01-preview",
+              "name": "pg-abarva-hc-demo-new-lab-eus-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard_B1ms",
+                "tier": "Burstable"
+              },
+              "properties": {
+                "version": "16",
+                "administratorLogin": "[variables('postgresAdminLogin')]",
+                "administratorLoginPassword": "[parameters('postgresAdministratorLoginPassword')]",
+                "storage": {
+                  "storageSizeGB": 128
+                },
+                "backup": {
+                  "backupRetentionDays": 7,
+                  "geoRedundantBackup": "Disabled"
+                },
+                "network": {
+                  "delegatedSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-abarva-hcdn-lab-eus-001', 'snet-pg-hcdn-lab-eus-001')]",
+                  "privateDnsZoneArmResourceId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.postgres.database.azure.com')]",
+                  "publicNetworkAccess": "Disabled"
+                },
+                "highAvailability": {
+                  "mode": "Disabled"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.postgres.database.azure.com')]",
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', 'privatelink.postgres.database.azure.com', 'hcdn-postgres-link')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+              "apiVersion": "2023-12-01-preview",
+              "name": "[format('{0}/{1}', 'pg-abarva-hc-demo-new-lab-eus-001', 'abarva_hc_demo_new_knowledge_lab')]",
+              "properties": {
+                "charset": "UTF8",
+                "collation": "en_US.utf8"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', 'pg-abarva-hc-demo-new-lab-eus-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.App/managedEnvironments",
+              "apiVersion": "2024-03-01",
+              "name": "cae-abarva-hcdn-lab-eus-001",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "appLogsConfiguration": {
+                  "destination": "log-analytics",
+                  "logAnalyticsConfiguration": {
+                    "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', 'law-abarva-hcdn-lab-eus-001'), '2022-10-01').customerId]",
+                    "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', 'law-abarva-hcdn-lab-eus-001'), '2022-10-01').primarySharedKey]"
+                  }
+                },
+                "vnetConfiguration": {
+                  "infrastructureSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-abarva-hcdn-lab-eus-001', 'snet-aca-hcdn-lab-eus-001')]",
+                  "internal": true
+                },
+                "workloadProfiles": [
+                  {
+                    "name": "Consumption",
+                    "workloadProfileType": "Consumption"
+                  }
+                ],
+                "zoneRedundant": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', 'law-abarva-hcdn-lab-eus-001')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "acaJobs",
+                "count": "[length(variables('jobs'))]"
+              },
+              "type": "Microsoft.App/jobs",
+              "apiVersion": "2024-03-01",
+              "name": "[variables('jobs')[copyIndex()].name]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('process', variables('jobs')[copyIndex()].process, 'tenantKey', variables('tenantKey')))]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', variables('identityIds')[variables('jobs')[copyIndex()].identityKey])]": {}
+                }
+              },
+              "properties": {
+                "environmentId": "[resourceId('Microsoft.App/managedEnvironments', 'cae-abarva-hcdn-lab-eus-001')]",
+                "configuration": {
+                  "triggerType": "Manual",
+                  "replicaTimeout": 3600,
+                  "replicaRetryLimit": 1,
+                  "manualTriggerConfig": {
+                    "parallelism": 1,
+                    "replicaCompletionCount": 1
+                  },
+                  "registries": [
+                    {
+                      "server": "[variables('registryServer')]",
+                      "identity": "[variables('identityIds')[variables('jobs')[copyIndex()].identityKey]]"
+                    }
+                  ]
+                },
+                "template": {
+                  "containers": [
+                    {
+                      "name": "hcdn-job",
+                      "image": "[variables('imageName')]",
+                      "command": [
+                        "/bin/sh"
+                      ],
+                      "args": [
+                        "-lc",
+                        "[format('node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process {0}', variables('jobs')[copyIndex()].process)]"
+                      ],
+                      "env": [
+                        {
+                          "name": "ABARVA_TENANT_KEY",
+                          "value": "[variables('tenantKey')]"
+                        },
+                        {
+                          "name": "ABARVA_HCDN_PROCESS",
+                          "value": "[variables('jobs')[copyIndex()].process]"
+                        },
+                        {
+                          "name": "ABARVA_HCDN_STAGE",
+                          "value": "[variables('jobs')[copyIndex()].stage]"
+                        },
+                        {
+                          "name": "ABARVA_HCDN_DATABASE",
+                          "value": "abarva_hc_demo_new_knowledge_lab"
+                        },
+                        {
+                          "name": "ABARVA_HCDN_STORAGE_ACCOUNT",
+                          "value": "stabhcdemonewlab001"
+                        }
+                      ],
+                      "resources": {
+                        "cpu": "[json('0.5')]",
+                        "memory": "1Gi"
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-admin-lab-001')]",
+                "[resourceId('Microsoft.App/managedEnvironments', 'cae-abarva-hcdn-lab-eus-001')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-evaluator-lab-001')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-ingest-lab-001')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-publish-lab-001')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-read-lab-001')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'mi-hcdn-review-lab-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "pe-stabhcdemonewlab001-blob",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-abarva-hcdn-lab-eus-001', 'snet-pe-hcdn-lab-eus-001')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "blob",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', 'stabhcdemonewlab001')]",
+                      "groupIds": [
+                        "blob"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', 'stabhcdemonewlab001')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "pe-kv-abarva-hcdn-lab-001-vault",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-abarva-hcdn-lab-eus-001', 'snet-pe-hcdn-lab-eus-001')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "vault",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', 'kv-abarva-hcdn-lab-001')]",
+                      "groupIds": [
+                        "vault"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', 'kv-abarva-hcdn-lab-001')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-abarva-hcdn-lab-eus-001')]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "resource_group": {
+    "name": "rg-abarva-hcdn-lab-eus-001",
+    "exists": false,
+    "available_for_plan": true
+  },
+  "storage_account": {
+    "message": null,
+    "nameAvailable": true,
+    "reason": null
+  },
+  "key_vault": {
+    "message": null,
+    "nameAvailable": true,
+    "reason": null
+  },
+  "postgres_server_exists": false,
+  "storage_account_exists_in_subscription": false,
+  "key_vault_exists_in_subscription": false,
+  "container_apps_environment_exists_in_subscription": false,
+  "service_bus_namespace_exists_in_subscription": false,
+  "notes": "Names with global availability were checked with Azure read-only name checks where available. Resource-group-scoped names were checked against current subscription inventory."
+}

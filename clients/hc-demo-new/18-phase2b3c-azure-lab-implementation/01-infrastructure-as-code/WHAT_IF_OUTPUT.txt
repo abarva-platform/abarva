@@ -1,0 +1,1404 @@
+WARNING: A new Bicep release is available: v0.45.15. Upgrade now by running "az bicep upgrade".
+WARNING: /Users/anand/Projects/nexus-hc-demo-new-phase1/clients/hc-demo-new/18-phase2b3c-azure-lab-implementation/01-infrastructure-as-code/hcdn-lab-foundation.bicep(5,7) : Warning no-unused-params: Parameter "subscriptionId" is declared but never used. [https://aka.ms/bicep/linter-diagnostics#no-unused-params]
+/Users/anand/Projects/nexus-hc-demo-new-phase1/clients/hc-demo-new/18-phase2b3c-azure-lab-implementation/01-infrastructure-as-code/hcdn-lab-foundation.bicep(168,93) : Warning no-hardcoded-env-urls: Environment URLs should not be hardcoded. Use the environment() function to ensure compatibility across clouds. Found this disallowed host: "core.windows.net" [https://aka.ms/bicep/linter-diagnostics#no-hardcoded-env-urls]
+/Users/anand/Projects/nexus-hc-demo-new-phase1/clients/hc-demo-new/18-phase2b3c-azure-lab-implementation/01-infrastructure-as-code/hcdn-lab-foundation.bicep(226,21) : Warning use-resource-symbol-reference: Use a resource reference instead of invoking function "reference". This simplifies the syntax and allows Bicep to better understand your deployment dependency graph. [https://aka.ms/bicep/linter-diagnostics#use-resource-symbol-reference]
+/Users/anand/Projects/nexus-hc-demo-new-phase1/clients/hc-demo-new/18-phase2b3c-azure-lab-implementation/01-infrastructure-as-code/hcdn-lab-foundation.bicep(227,20) : Warning use-resource-symbol-reference: Use a resource reference instead of invoking function "listKeys". This simplifies the syntax and allows Bicep to better understand your deployment dependency graph. [https://aka.ms/bicep/linter-diagnostics#use-resource-symbol-reference]
+
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+
+Resource and property changes are indicated with this symbol:
+  + Create
+
+The deployment will update the following scopes:
+
+Scope: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20
+
+  + resourceGroups/rg-abarva-hcdn-lab-eus-001 [2022-09-01]
+
+      apiVersion:       "2022-09-01"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001"
+      location:         "eastus"
+      name:             "rg-abarva-hcdn-lab-eus-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.Resources/resourceGroups"
+
+Scope: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001
+
+  + Microsoft.App/jobs/job-hcdn-backfill-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-backfill-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-backfill-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-knowledge-backfill-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-knowledge-backfill-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "15_backfill_replay"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-knowledge-backfill-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-baseline-publish-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                       "2024-03-01"
+      id:                                                                                                                                                                                                               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-baseline-publish-lab"
+      identity.type:                                                                                                                                                                                                    "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001: {}
+      location:                                                                                                                                                                                                         "eastus"
+      name:                                                                                                                                                                                                             "job-hcdn-baseline-publish-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                         1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                              1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                       1
+      properties.configuration.replicaTimeout:                                                                                                                                                                          3600
+      properties.configuration.triggerType:                                                                                                                                                                             "Manual"
+      properties.environmentId:                                                                                                                                                                                         "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-baseline-publish-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-baseline-publish-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "12_publish_baseline"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                   "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                 "lab"
+      tags.managedBy:                                                                                                                                                                                                   "bicep"
+      tags.phase:                                                                                                                                                                                                       "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                     "hc-demo-new-baseline-publish-v1"
+      tags.tenantKey:                                                                                                                                                                                                   "hc-demo-new"
+      type:                                                                                                                                                                                                             "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-domain-publish-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                       "2024-03-01"
+      id:                                                                                                                                                                                                               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-domain-publish-lab"
+      identity.type:                                                                                                                                                                                                    "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001: {}
+      location:                                                                                                                                                                                                         "eastus"
+      name:                                                                                                                                                                                                             "job-hcdn-domain-publish-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                         1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                              1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                       1
+      properties.configuration.replicaTimeout:                                                                                                                                                                          3600
+      properties.configuration.triggerType:                                                                                                                                                                             "Manual"
+      properties.environmentId:                                                                                                                                                                                         "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-domain-publish-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-domain-publish-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "11_publish_domain"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                   "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                 "lab"
+      tags.managedBy:                                                                                                                                                                                                   "bicep"
+      tags.phase:                                                                                                                                                                                                       "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                     "hc-demo-new-domain-publish-v1"
+      tags.tenantKey:                                                                                                                                                                                                   "hc-demo-new"
+      type:                                                                                                                                                                                                             "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-entity-resolve-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-entity-resolve-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-entity-resolve-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-entity-resolve-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-entity-resolve-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "06_resolve_identity"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-entity-resolve-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-evidence-extract-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-evidence-extract-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-evidence-extract-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-evidence-extract-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-evidence-extract-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "04_extract_evidence"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-evidence-extract-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-home-readmodel-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                       "2024-03-01"
+      id:                                                                                                                                                                                                               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-home-readmodel-lab"
+      identity.type:                                                                                                                                                                                                    "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001: {}
+      location:                                                                                                                                                                                                         "eastus"
+      name:                                                                                                                                                                                                             "job-hcdn-home-readmodel-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                         1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                              1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                       1
+      properties.configuration.replicaTimeout:                                                                                                                                                                          3600
+      properties.configuration.triggerType:                                                                                                                                                                             "Manual"
+      properties.environmentId:                                                                                                                                                                                         "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-home-readmodel-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-home-readmodel-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "14_refresh_home_readmodel"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                   "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                 "lab"
+      tags.managedBy:                                                                                                                                                                                                   "bicep"
+      tags.phase:                                                                                                                                                                                                       "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                     "hc-demo-new-home-readmodel-v1"
+      tags.tenantKey:                                                                                                                                                                                                   "hc-demo-new"
+      type:                                                                                                                                                                                                             "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-normalize-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-normalize-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-normalize-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-knowledge-normalize-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-knowledge-normalize-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "05_normalize_values"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-knowledge-normalize-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-projection-build-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                       "2024-03-01"
+      id:                                                                                                                                                                                                               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-projection-build-lab"
+      identity.type:                                                                                                                                                                                                    "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001: {}
+      location:                                                                                                                                                                                                         "eastus"
+      name:                                                                                                                                                                                                             "job-hcdn-projection-build-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                         1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                              1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                       1
+      properties.configuration.replicaTimeout:                                                                                                                                                                          3600
+      properties.configuration.triggerType:                                                                                                                                                                             "Manual"
+      properties.environmentId:                                                                                                                                                                                         "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-projection-build-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-projection-build-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "13_build_module_projections"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                   "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                 "lab"
+      tags.managedBy:                                                                                                                                                                                                   "bicep"
+      tags.phase:                                                                                                                                                                                                       "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                     "hc-demo-new-projection-build-v1"
+      tags.tenantKey:                                                                                                                                                                                                   "hc-demo-new"
+      type:                                                                                                                                                                                                             "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-reconcile-audit-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                         "2024-03-01"
+      id:                                                                                                                                                                                                                 "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-reconcile-audit-lab"
+      identity.type:                                                                                                                                                                                                      "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-evaluator-lab-001: {}
+      location:                                                                                                                                                                                                           "eastus"
+      name:                                                                                                                                                                                                               "job-hcdn-reconcile-audit-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                           1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                                1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-evaluator-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                         1
+      properties.configuration.replicaTimeout:                                                                                                                                                                            3600
+      properties.configuration.triggerType:                                                                                                                                                                               "Manual"
+      properties.environmentId:                                                                                                                                                                                           "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-reconciliation-audit-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-reconciliation-audit-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "16_reconciliation_audit"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                     "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                   "lab"
+      tags.managedBy:                                                                                                                                                                                                     "bicep"
+      tags.phase:                                                                                                                                                                                                         "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                       "hc-demo-new-reconciliation-audit-v1"
+      tags.tenantKey:                                                                                                                                                                                                     "hc-demo-new"
+      type:                                                                                                                                                                                                               "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-review-apply-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-review-apply-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-review-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-review-apply-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-review-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-knowledge-review-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-knowledge-review-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "09_route_review_quarantine"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-knowledge-review-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-source-parse-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-source-parse-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-source-parse-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-source-parse-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-source-parse-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "03_parse_source"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-source-parse-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-source-register-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-source-register-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-source-register-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-source-register-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-source-register-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "01_register_source"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-source-register-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/jobs/job-hcdn-validate-lab [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                      "2024-03-01"
+      id:                                                                                                                                                                                                              "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/jobs/job-hcdn-validate-lab"
+      identity.type:                                                                                                                                                                                                   "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001: {}
+      location:                                                                                                                                                                                                        "eastus"
+      name:                                                                                                                                                                                                            "job-hcdn-validate-lab"
+      properties.configuration.manualTriggerConfig.parallelism:                                                                                                                                                        1
+      properties.configuration.manualTriggerConfig.replicaCompletionCount:                                                                                                                                             1
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+          server:   "acrabarvalab001.azurecr.io"
+
+      ]
+      properties.configuration.replicaRetryLimit:                                                                                                                                                                      1
+      properties.configuration.replicaTimeout:                                                                                                                                                                         3600
+      properties.configuration.triggerType:                                                                                                                                                                            "Manual"
+      properties.environmentId:                                                                                                                                                                                        "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      properties.template.containers: [
+        0:
+
+          args: [
+            0: "-lc"
+            1: "node scripts/knowledge/hcdn-job-runner.mjs --tenant hc-demo-new --process hc-demo-new-knowledge-validate-v1"
+          ]
+          command: [
+            0: "/bin/sh"
+          ]
+          env: [
+            0:
+
+              name:  "ABARVA_TENANT_KEY"
+              value: "hc-demo-new"
+
+            1:
+
+              name:  "ABARVA_HCDN_PROCESS"
+              value: "hc-demo-new-knowledge-validate-v1"
+
+            2:
+
+              name:  "ABARVA_HCDN_STAGE"
+              value: "07_validate_semantics"
+
+            3:
+
+              name:  "ABARVA_HCDN_DATABASE"
+              value: "abarva_hc_demo_new_knowledge_lab"
+
+            4:
+
+              name:  "ABARVA_HCDN_STORAGE_ACCOUNT"
+              value: "stabhcdemonewlab001"
+
+          ]
+          image:            "acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8"
+          name:             "hcdn-job"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      tags.dataPlane:                                                                                                                                                                                                  "hc-demo-new-clean-room"
+      tags.environment:                                                                                                                                                                                                "lab"
+      tags.managedBy:                                                                                                                                                                                                  "bicep"
+      tags.phase:                                                                                                                                                                                                      "phase2b3c1-plan-only"
+      tags.process:                                                                                                                                                                                                    "hc-demo-new-knowledge-validate-v1"
+      tags.tenantKey:                                                                                                                                                                                                  "hc-demo-new"
+      type:                                                                                                                                                                                                            "Microsoft.App/jobs"
+
+  + Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001 [2024-03-01]
+
+      apiVersion:                                                           "2024-03-01"
+      id:                                                                   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.App/managedEnvironments/cae-abarva-hcdn-lab-eus-001"
+      location:                                                             "eastus"
+      name:                                                                 "cae-abarva-hcdn-lab-eus-001"
+      properties.appLogsConfiguration.destination:                          "log-analytics"
+      properties.appLogsConfiguration.logAnalyticsConfiguration.customerId: "[reference('/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.OperationalInsights/workspaces/law-abarva-hcdn-lab-eus-001', '2022-10-01').customerId]"
+      properties.appLogsConfiguration.logAnalyticsConfiguration.sharedKey:  "*******"
+      properties.vnetConfiguration.infrastructureSubnetId:                  "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001/subnets/snet-aca-hcdn-lab-eus-001"
+      properties.vnetConfiguration.internal:                                true
+      properties.workloadProfiles: [
+        0:
+
+          name:                "Consumption"
+          workloadProfileType: "Consumption"
+
+      ]
+      properties.zoneRedundant:                                             false
+      tags.dataPlane:                                                       "hc-demo-new-clean-room"
+      tags.environment:                                                     "lab"
+      tags.managedBy:                                                       "bicep"
+      tags.phase:                                                           "phase2b3c1-plan-only"
+      tags.tenantKey:                                                       "hc-demo-new"
+      type:                                                                 "Microsoft.App/managedEnvironments"
+
+  + Microsoft.DBforPostgreSQL/flexibleServers/pg-abarva-hc-demo-new-lab-eus-001 [2023-12-01-preview]
+
+      apiVersion:                                     "2023-12-01-preview"
+      id:                                             "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.DBforPostgreSQL/flexibleServers/pg-abarva-hc-demo-new-lab-eus-001"
+      location:                                       "eastus"
+      name:                                           "pg-abarva-hc-demo-new-lab-eus-001"
+      properties.administratorLogin:                  "*******"
+      properties.administratorLoginPassword:          "*******"
+      properties.backup.backupRetentionDays:          7
+      properties.backup.geoRedundantBackup:           "Disabled"
+      properties.highAvailability.mode:               "Disabled"
+      properties.network.delegatedSubnetResourceId:   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001/subnets/snet-pg-hcdn-lab-eus-001"
+      properties.network.privateDnsZoneArmResourceId: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com"
+      properties.network.publicNetworkAccess:         "Disabled"
+      properties.storage.storageSizeGB:               128
+      properties.version:                             "16"
+      sku.name:                                       "Standard_B1ms"
+      sku.tier:                                       "Burstable"
+      tags.dataPlane:                                 "hc-demo-new-clean-room"
+      tags.environment:                               "lab"
+      tags.managedBy:                                 "bicep"
+      tags.phase:                                     "phase2b3c1-plan-only"
+      tags.tenantKey:                                 "hc-demo-new"
+      type:                                           "Microsoft.DBforPostgreSQL/flexibleServers"
+
+  + Microsoft.DBforPostgreSQL/flexibleServers/pg-abarva-hc-demo-new-lab-eus-001/databases/abarva_hc_demo_new_knowledge_lab [2023-12-01-preview]
+
+      apiVersion:           "2023-12-01-preview"
+      id:                   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.DBforPostgreSQL/flexibleServers/pg-abarva-hc-demo-new-lab-eus-001/databases/abarva_hc_demo_new_knowledge_lab"
+      name:                 "abarva_hc_demo_new_knowledge_lab"
+      properties.charset:   "UTF8"
+      properties.collation: "en_US.utf8"
+      type:                 "Microsoft.DBforPostgreSQL/flexibleServers/databases"
+
+  + Microsoft.KeyVault/vaults/kv-abarva-hcdn-lab-001 [2023-07-01]
+
+      apiVersion:                              "2023-07-01"
+      id:                                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.KeyVault/vaults/kv-abarva-hcdn-lab-001"
+      location:                                "eastus"
+      name:                                    "kv-abarva-hcdn-lab-001"
+      properties.enabledForDeployment:         false
+      properties.enabledForDiskEncryption:     false
+      properties.enabledForTemplateDeployment: false
+      properties.enableRbacAuthorization:      true
+      properties.networkAcls.bypass:           "None"
+      properties.networkAcls.defaultAction:    "Deny"
+      properties.publicNetworkAccess:          "Disabled"
+      properties.sku.family:                   "A"
+      properties.sku.name:                     "standard"
+      properties.tenantId:                     "f5151b70-963c-4124-a888-20a50e8c2e2c"
+      tags.dataPlane:                          "hc-demo-new-clean-room"
+      tags.environment:                        "lab"
+      tags.managedBy:                          "bicep"
+      tags.phase:                              "phase2b3c1-plan-only"
+      tags.tenantKey:                          "hc-demo-new"
+      type:                                    "Microsoft.KeyVault/vaults"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-admin-lab-001 [2023-01-31]
+
+      apiVersion:       "2023-01-31"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-admin-lab-001"
+      location:         "eastus"
+      name:             "mi-hcdn-admin-lab-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-evaluator-lab-001 [2023-01-31]
+
+      apiVersion:       "2023-01-31"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-evaluator-lab-001"
+      location:         "eastus"
+      name:             "mi-hcdn-evaluator-lab-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001 [2023-01-31]
+
+      apiVersion:       "2023-01-31"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-ingest-lab-001"
+      location:         "eastus"
+      name:             "mi-hcdn-ingest-lab-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001 [2023-01-31]
+
+      apiVersion:       "2023-01-31"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-publish-lab-001"
+      location:         "eastus"
+      name:             "mi-hcdn-publish-lab-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-read-lab-001 [2023-01-31]
+
+      apiVersion:       "2023-01-31"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-read-lab-001"
+      location:         "eastus"
+      name:             "mi-hcdn-read-lab-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-review-lab-001 [2023-01-31]
+
+      apiVersion:       "2023-01-31"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-hcdn-review-lab-001"
+      location:         "eastus"
+      name:             "mi-hcdn-review-lab-001"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  + Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net [2020-06-01]
+
+      apiVersion:       "2020-06-01"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
+      location:         "global"
+      name:             "privatelink.blob.core.windows.net"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.Network/privateDnsZones"
+
+  + Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net/virtualNetworkLinks/hcdn-blob-link [2020-06-01]
+
+      apiVersion:                     "2020-06-01"
+      id:                             "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net/virtualNetworkLinks/hcdn-blob-link"
+      location:                       "global"
+      name:                           "hcdn-blob-link"
+      properties.registrationEnabled: false
+      properties.virtualNetwork.id:   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001"
+      type:                           "Microsoft.Network/privateDnsZones/virtualNetworkLinks"
+
+  + Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com [2020-06-01]
+
+      apiVersion:       "2020-06-01"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com"
+      location:         "global"
+      name:             "privatelink.postgres.database.azure.com"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.Network/privateDnsZones"
+
+  + Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com/virtualNetworkLinks/hcdn-postgres-link [2020-06-01]
+
+      apiVersion:                     "2020-06-01"
+      id:                             "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com/virtualNetworkLinks/hcdn-postgres-link"
+      location:                       "global"
+      name:                           "hcdn-postgres-link"
+      properties.registrationEnabled: false
+      properties.virtualNetwork.id:   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001"
+      type:                           "Microsoft.Network/privateDnsZones/virtualNetworkLinks"
+
+  + Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net [2020-06-01]
+
+      apiVersion:       "2020-06-01"
+      id:               "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+      location:         "global"
+      name:             "privatelink.vaultcore.azure.net"
+      tags.dataPlane:   "hc-demo-new-clean-room"
+      tags.environment: "lab"
+      tags.managedBy:   "bicep"
+      tags.phase:       "phase2b3c1-plan-only"
+      tags.tenantKey:   "hc-demo-new"
+      type:             "Microsoft.Network/privateDnsZones"
+
+  + Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net/virtualNetworkLinks/hcdn-vault-link [2020-06-01]
+
+      apiVersion:                     "2020-06-01"
+      id:                             "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net/virtualNetworkLinks/hcdn-vault-link"
+      location:                       "global"
+      name:                           "hcdn-vault-link"
+      properties.registrationEnabled: false
+      properties.virtualNetwork.id:   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001"
+      type:                           "Microsoft.Network/privateDnsZones/virtualNetworkLinks"
+
+  + Microsoft.Network/privateEndpoints/pe-kv-abarva-hcdn-lab-001-vault [2023-11-01]
+
+      apiVersion:           "2023-11-01"
+      id:                   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateEndpoints/pe-kv-abarva-hcdn-lab-001-vault"
+      location:             "eastus"
+      name:                 "pe-kv-abarva-hcdn-lab-001-vault"
+      properties.privateLinkServiceConnections: [
+        0:
+
+          name:                            "vault"
+          properties.groupIds: [
+            0: "vault"
+          ]
+          properties.privateLinkServiceId: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.KeyVault/vaults/kv-abarva-hcdn-lab-001"
+
+      ]
+      properties.subnet.id: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001/subnets/snet-pe-hcdn-lab-eus-001"
+      tags.dataPlane:       "hc-demo-new-clean-room"
+      tags.environment:     "lab"
+      tags.managedBy:       "bicep"
+      tags.phase:           "phase2b3c1-plan-only"
+      tags.tenantKey:       "hc-demo-new"
+      type:                 "Microsoft.Network/privateEndpoints"
+
+  + Microsoft.Network/privateEndpoints/pe-stabhcdemonewlab001-blob [2023-11-01]
+
+      apiVersion:           "2023-11-01"
+      id:                   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/privateEndpoints/pe-stabhcdemonewlab001-blob"
+      location:             "eastus"
+      name:                 "pe-stabhcdemonewlab001-blob"
+      properties.privateLinkServiceConnections: [
+        0:
+
+          name:                            "blob"
+          properties.groupIds: [
+            0: "blob"
+          ]
+          properties.privateLinkServiceId: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001"
+
+      ]
+      properties.subnet.id: "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001/subnets/snet-pe-hcdn-lab-eus-001"
+      tags.dataPlane:       "hc-demo-new-clean-room"
+      tags.environment:     "lab"
+      tags.managedBy:       "bicep"
+      tags.phase:           "phase2b3c1-plan-only"
+      tags.tenantKey:       "hc-demo-new"
+      type:                 "Microsoft.Network/privateEndpoints"
+
+  + Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001 [2023-11-01]
+
+      apiVersion:               "2023-11-01"
+      id:                       "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Network/virtualNetworks/vnet-abarva-hcdn-lab-eus-001"
+      location:                 "eastus"
+      name:                     "vnet-abarva-hcdn-lab-eus-001"
+      properties.addressSpace.addressPrefixes: [
+        0: "10.74.0.0/22"
+      ]
+      properties.subnets: [
+        0:
+
+          name:                                      "snet-aca-hcdn-lab-eus-001"
+          properties.addressPrefix:                  "10.74.0.0/23"
+          properties.delegations: [
+            0:
+
+              name:                   "container-apps-environment"
+              properties.serviceName: "Microsoft.App/environments"
+
+          ]
+          properties.privateEndpointNetworkPolicies: "Enabled"
+
+        1:
+
+          name:                                      "snet-pe-hcdn-lab-eus-001"
+          properties.addressPrefix:                  "10.74.2.32/27"
+          properties.privateEndpointNetworkPolicies: "Disabled"
+
+        2:
+
+          name:                                      "snet-pg-hcdn-lab-eus-001"
+          properties.addressPrefix:                  "10.74.2.0/27"
+          properties.delegations: [
+            0:
+
+              name:                   "postgres-flexible-server"
+              properties.serviceName: "Microsoft.DBforPostgreSQL/flexibleServers"
+
+          ]
+          properties.privateEndpointNetworkPolicies: "Enabled"
+
+      ]
+      tags.dataPlane:           "hc-demo-new-clean-room"
+      tags.environment:         "lab"
+      tags.managedBy:           "bicep"
+      tags.phase:               "phase2b3c1-plan-only"
+      tags.tenantKey:           "hc-demo-new"
+      type:                     "Microsoft.Network/virtualNetworks"
+
+  + Microsoft.OperationalInsights/workspaces/law-abarva-hcdn-lab-eus-001 [2022-10-01]
+
+      apiVersion:                 "2022-10-01"
+      id:                         "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.OperationalInsights/workspaces/law-abarva-hcdn-lab-eus-001"
+      location:                   "eastus"
+      name:                       "law-abarva-hcdn-lab-eus-001"
+      properties.retentionInDays: 30
+      properties.sku.name:        "PerGB2018"
+      tags.dataPlane:             "hc-demo-new-clean-room"
+      tags.environment:           "lab"
+      tags.managedBy:             "bicep"
+      tags.phase:                 "phase2b3c1-plan-only"
+      tags.tenantKey:             "hc-demo-new"
+      type:                       "Microsoft.OperationalInsights/workspaces"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001 [2023-05-01]
+
+      apiVersion:                           "2023-05-01"
+      id:                                   "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001"
+      kind:                                 "StorageV2"
+      location:                             "eastus"
+      name:                                 "stabhcdemonewlab001"
+      properties.accessTier:                "Hot"
+      properties.allowBlobPublicAccess:     false
+      properties.minimumTlsVersion:         "TLS1_2"
+      properties.networkAcls.bypass:        "None"
+      properties.networkAcls.defaultAction: "Deny"
+      properties.publicNetworkAccess:       "Disabled"
+      properties.supportsHttpsTrafficOnly:  true
+      sku.name:                             "Standard_LRS"
+      tags.dataPlane:                       "hc-demo-new-clean-room"
+      tags.environment:                     "lab"
+      tags.managedBy:                       "bicep"
+      tags.phase:                           "phase2b3c1-plan-only"
+      tags.tenantKey:                       "hc-demo-new"
+      type:                                 "Microsoft.Storage/storageAccounts"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default [2023-05-01]
+
+      apiVersion: "2023-05-01"
+      id:         "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default"
+      name:       "default"
+      type:       "Microsoft.Storage/storageAccounts/blobServices"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/audit [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/audit"
+      name:                    "audit"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/exports [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/exports"
+      name:                    "exports"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/parsed [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/parsed"
+      name:                    "parsed"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/projections [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/projections"
+      name:                    "projections"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/published [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/published"
+      name:                    "published"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/quarantine [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/quarantine"
+      name:                    "quarantine"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/raw [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/raw"
+      name:                    "raw"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+  + Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/working [2023-05-01]
+
+      apiVersion:              "2023-05-01"
+      id:                      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-hcdn-lab-eus-001/providers/Microsoft.Storage/storageAccounts/stabhcdemonewlab001/blobServices/default/containers/working"
+      name:                    "working"
+      properties.publicAccess: "None"
+      type:                    "Microsoft.Storage/storageAccounts/blobServices/containers"
+
+Resource changes: 44 to create.

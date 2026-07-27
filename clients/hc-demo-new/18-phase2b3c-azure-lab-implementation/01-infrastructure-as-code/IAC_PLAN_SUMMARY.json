@@ -1,0 +1,18 @@
+{
+  "status": "plan_only",
+  "azure_apply_authorized": false,
+  "subscription_match_required": true,
+  "planned_resource_group": "rg-abarva-hcdn-lab-eus-001",
+  "planned_resources_inside_resource_group": true,
+  "shared_tenant_database_referenced": false,
+  "shared_vnet_or_aca_environment_used": false,
+  "public_postgres_enabled": false,
+  "public_storage_enabled": false,
+  "jobs_use_managed_identities": true,
+  "reconciliation_audit_identity": "mi-hcdn-evaluator-lab-001",
+  "review_apply_identity": "mi-hcdn-review-lab-001",
+  "image_digest_pinned": true,
+  "service_bus_event_orchestration": false,
+  "azure_ai_search": false,
+  "no_azure_resources_created_or_modified": true
+}

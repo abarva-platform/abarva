@@ -1,0 +1,46 @@
+{
+  "subscription_id": "701a8554-a166-46e9-bf13-743bc50e3b20",
+  "subscription_display_name": "abarva-lab-sub",
+  "tenant_directory_id": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+  "home_tenant_id": "f5151b70-963c-4124-a888-20a50e8c2e2c",
+  "active_azure_cli_account": {
+    "name": "anand.sundaram@thesundaram.com",
+    "type": "user"
+  },
+  "intended_region": "eastus",
+  "environment_name": "AzureCloud",
+  "providers": [
+    {
+      "namespace": "Microsoft.App",
+      "registration_state": "Registered"
+    },
+    {
+      "namespace": "Microsoft.ContainerRegistry",
+      "registration_state": "Registering"
+    },
+    {
+      "namespace": "Microsoft.DBforPostgreSQL",
+      "registration_state": "Registered"
+    },
+    {
+      "namespace": "Microsoft.KeyVault",
+      "registration_state": "Registered"
+    },
+    {
+      "namespace": "Microsoft.Network",
+      "registration_state": "Registered"
+    },
+    {
+      "namespace": "Microsoft.OperationalInsights",
+      "registration_state": "Registered"
+    },
+    {
+      "namespace": "Microsoft.ServiceBus",
+      "registration_state": "Registered"
+    },
+    {
+      "namespace": "Microsoft.Storage",
+      "registration_state": "Registered"
+    }
+  ]
+}
