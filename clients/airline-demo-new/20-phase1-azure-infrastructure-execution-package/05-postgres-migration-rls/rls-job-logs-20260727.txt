@@ -1,0 +1,59 @@
+2026-07-27T20:50:32.87607  Connecting to the container 'airdn-job'...
+2026-07-27T20:50:32.91901  Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-ttelhxb', Replica: 'job-airdn-validate-lab-ttelhxb-czbh7']
+2026-07-27T20:49:36.2556751Z stdout F BEGIN
+2026-07-27T20:49:36.2575684Z stdout F CREATE SCHEMA
+2026-07-27T20:49:36.2575637Z stderr F psql:/tmp/002_shared_rls.sql:8: NOTICE:  schema "governance" already exists, skipping
+2026-07-27T20:49:36.2625761Z stdout F CREATE FUNCTION
+2026-07-27T20:49:36.2674334Z stdout F CREATE FUNCTION
+2026-07-27T20:49:36.2699855Z stdout F CREATE FUNCTION
+2026-07-27T20:49:36.3123627Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "audit_lineage_event_tenant_rls_cf1b2b6f" for relation "audit.lineage_event" does not exist, skipping
+2026-07-27T20:49:36.3148759Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_application_inventory_v1_tenant_rls_9658dc33" for relation "consumption.application_inventory_v1" does not exist, skipping
+2026-07-27T20:49:36.3149095Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_consumer_reconciliation_ledger_tenant_rls_d1c37fed" for relation "consumption.consumer_reconciliation_ledger" does not exist, skipping
+2026-07-27T20:49:36.3158640Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_data_product_inventory_v1_tenant_rls_0b0a62eb" for relation "consumption.data_product_inventory_v1" does not exist, skipping
+2026-07-27T20:49:36.3158779Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_domain_summary_v1_tenant_rls_7fc1ed0b" for relation "consumption.domain_summary_v1" does not exist, skipping
+2026-07-27T20:49:36.3167098Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_enterprise_brief_v1_tenant_rls_92d53d20" for relation "consumption.enterprise_brief_v1" does not exist, skipping
+2026-07-27T20:49:36.3168233Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_enterprise_identity_v1_tenant_rls_27cf3020" for relation "consumption.enterprise_identity_v1" does not exist, skipping
+2026-07-27T20:49:36.3177971Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_evidence_gap_v1_tenant_rls_c09a62ea" for relation "consumption.evidence_gap_v1" does not exist, skipping
+2026-07-27T20:49:36.3178283Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_executive_perspective_v1_tenant_rls_d65ed4bf" for relation "consumption.executive_perspective_v1" does not exist, skipping
+2026-07-27T20:49:36.3182361Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_metric_observation_v1_tenant_rls_b7933856" for relation "consumption.metric_observation_v1" does not exist, skipping
+2026-07-27T20:49:36.3187281Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_module_knowledge_packet_v1_tenant_rls_b0b0aab8" for relation "consumption.module_knowledge_packet_v1" does not exist, skipping
+2026-07-27T20:49:36.3198092Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_relationship_edge_v1_tenant_rls_09192cc6" for relation "consumption.relationship_edge_v1" does not exist, skipping
+2026-07-27T20:49:36.3198218Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_relationship_evidence_v1_tenant_rls_a7ee9f51" for relation "consumption.relationship_evidence_v1" does not exist, skipping
+2026-07-27T20:49:36.3198278Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_relationship_node_v1_tenant_rls_383e1ecf" for relation "consumption.relationship_node_v1" does not exist, skipping
+2026-07-27T20:49:36.3200146Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_search_document_v1_tenant_rls_928b5bdb" for relation "consumption.search_document_v1" does not exist, skipping
+2026-07-27T20:49:36.3207373Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_source_evaluation_v1_tenant_rls_0fc6385b" for relation "consumption.source_evaluation_v1" does not exist, skipping
+2026-07-27T20:49:36.3207459Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_source_event_summary_v1_tenant_rls_d35eba3c" for relation "consumption.source_event_summary_v1" does not exist, skipping
+2026-07-27T20:49:36.3210299Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_source_pricing_comparison_v1_tenant_rls_fa722ba1" for relation "consumption.source_pricing_comparison_v1" does not exist, skipping
+2026-07-27T20:49:36.3213679Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_source_transition_risk_v1_tenant_rls_ea608eaa" for relation "consumption.source_transition_risk_v1" does not exist, skipping
+2026-07-27T20:49:36.3217118Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_source_vendor_comparison_v1_tenant_rls_3cbcb33c" for relation "consumption.source_vendor_comparison_v1" does not exist, skipping
+2026-07-27T20:49:36.3217188Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_strategic_interpretation_v1_tenant_rls_811f953b" for relation "consumption.strategic_interpretation_v1" does not exist, skipping
+2026-07-27T20:49:36.3220050Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_technology_estate_v1_tenant_rls_8b7b4ff3" for relation "consumption.technology_estate_v1" does not exist, skipping
+2026-07-27T20:49:36.3222438Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "consumption_vendor_contract_inventory_v1_tenant_rls_781a281a" for relation "consumption.vendor_contract_inventory_v1" does not exist, skipping
+2026-07-27T20:49:36.3232289Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "evidence_evidence_item_tenant_rls_2fb2d970" for relation "evidence.evidence_item" does not exist, skipping
+2026-07-27T20:49:36.3241705Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "governance_authority_transition_tenant_rls_36f924cd" for relation "governance.authority_transition" does not exist, skipping
+2026-07-27T20:49:36.3242909Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "governance_evidence_gap_tenant_rls_d561a9aa" for relation "governance.evidence_gap" does not exist, skipping
+2026-07-27T20:49:36.3247353Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "governance_knowledge_conflict_tenant_rls_9ee161ff" for relation "governance.knowledge_conflict" does not exist, skipping
+2026-07-27T20:49:36.3250067Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "governance_review_decision_tenant_rls_d7c672b3" for relation "governance.review_decision" does not exist, skipping
+2026-07-27T20:49:36.3263956Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "knowledge_entity_tenant_rls_0f2960c8" for relation "knowledge.entity" does not exist, skipping
+2026-07-27T20:49:36.3301297Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "knowledge_entity_alias_tenant_rls_0f126755" for relation "knowledge.entity_alias" does not exist, skipping
+2026-07-27T20:49:36.3301453Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "knowledge_fact_assertion_tenant_rls_ed333b2d" for relation "knowledge.fact_assertion" does not exist, skipping
+2026-07-27T20:49:36.3310856Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "knowledge_relationship_assertion_tenant_rls_ec933697" for relation "knowledge.relationship_assertion" does not exist, skipping
+2026-07-27T20:49:36.3317694Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "metrics_metric_definition_tenant_rls_bd71cf95" for relation "metrics.metric_definition" does not exist, skipping
+2026-07-27T20:49:36.3317811Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "metrics_metric_observation_tenant_rls_31645916" for relation "metrics.metric_observation" does not exist, skipping
+2026-07-27T20:49:36.3341012Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "operations_checkpoint_tenant_rls_8d114efb" for relation "operations.checkpoint" does not exist, skipping
+2026-07-27T20:49:36.3348587Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "operations_graph_traversal_telemetry_tenant_rls_e5a8c174" for relation "operations.graph_traversal_telemetry" does not exist, skipping
+2026-07-27T20:49:36.3349462Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "operations_run_tenant_rls_1b6f66e4" for relation "operations.run" does not exist, skipping
+2026-07-27T20:49:36.3357486Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "publication_domain_publication_tenant_rls_02820839" for relation "publication.domain_publication" does not exist, skipping
+2026-07-27T20:49:36.3357625Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "publication_knowledge_baseline_tenant_rls_33b65ac0" for relation "publication.knowledge_baseline" does not exist, skipping
+2026-07-27T20:49:36.3368201Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "publication_projection_version_tenant_rls_a94a6f5f" for relation "publication.projection_version" does not exist, skipping
+2026-07-27T20:49:36.3371415Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "publication_publication_activation_tenant_rls_6dfe7751" for relation "publication.publication_activation" does not exist, skipping
+2026-07-27T20:49:36.3384673Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "source_registry_source_tenant_rls_75ed9cc1" for relation "source_registry.source" does not exist, skipping
+2026-07-27T20:49:36.3385177Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "source_registry_source_version_tenant_rls_0c42e86b" for relation "source_registry.source_version" does not exist, skipping
+2026-07-27T20:49:36.3389818Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "working_entity_candidate_tenant_rls_24ae1c36" for relation "working.entity_candidate" does not exist, skipping
+2026-07-27T20:49:36.3391383Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "working_fact_candidate_tenant_rls_dc76e70f" for relation "working.fact_candidate" does not exist, skipping
+2026-07-27T20:49:36.3403611Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "working_quarantine_item_tenant_rls_7a4f518e" for relation "working.quarantine_item" does not exist, skipping
+2026-07-27T20:49:36.3407969Z stderr F psql:/tmp/002_shared_rls.sql:102: NOTICE:  policy "working_relationship_candidate_tenant_rls_4fc2a127" for relation "working.relationship_candidate" does not exist, skipping
+2026-07-27T20:49:36.3412744Z stdout F DO
+2026-07-27T20:49:36.3488350Z stdout F CREATE VIEW
+2026-07-27T20:49:36.3618983Z stdout F COMMIT
+2026-07-27T20:49:36.4574374Z stdout F rls_tables=47,missing=0
