@@ -6,6 +6,7 @@ import path from "node:path";
 const REPO_ROOT = process.cwd();
 const PACKAGE_ROOT = "clients/shared/21-phase3c2e-executable-data-layer";
 const SQL_PATH = `${PACKAGE_ROOT}/sql/001_shared_knowledge_publication_consumption.sql`;
+const RLS_SQL_PATH = `${PACKAGE_ROOT}/sql/002_shared_knowledge_publication_consumption_rls.sql`;
 const CUBE_PATH = `${PACKAGE_ROOT}/cube/knowledge_consumption_model.yml`;
 const JOB_PATH = `${PACKAGE_ROOT}/jobs/publication_projection_job_contract.json`;
 const CONTRACT_PATH = `${PACKAGE_ROOT}/validation/expected-contract.json`;
@@ -19,6 +20,7 @@ function readJson(rel) {
 }
 
 const sql = read(SQL_PATH);
+const rlsSql = read(RLS_SQL_PATH);
 const cube = read(CUBE_PATH);
 const job = readJson(JOB_PATH);
 const contract = readJson(CONTRACT_PATH);
@@ -54,6 +56,16 @@ assert.match(sql, /projection_version_one_active_idx/, "must enforce one active 
 assert.match(sql, /publication\.activate_knowledge_baseline/, "must include atomic activation helper");
 assert.match(sql, /publication\.knowledge_baseline b/, "graph traversal must filter through active baseline");
 assert.match(sql, /authority_state = 'accepted'/, "graph traversal must filter accepted relationships");
+
+assert.match(rlsSql, /ALTER TABLE %I\.%I ENABLE ROW LEVEL SECURITY/, "RLS layer must enable row-level security");
+assert.match(rlsSql, /ALTER TABLE %I\.%I FORCE ROW LEVEL SECURITY/, "RLS layer must force row-level security");
+assert.match(rlsSql, /CREATE POLICY %I ON %I\.%I FOR ALL USING \(governance\.can_access_tenant\(tenant_key\)\)/, "RLS layer must bind policies to tenant_key");
+assert.match(rlsSql, /current_setting\('app\.tenant_key', true\)/, "RLS layer must use explicit session tenant");
+assert.match(rlsSql, /p_tenant_key <> 'all'/, "RLS layer must reject wildcard tenants");
+assert.match(rlsSql, /governance\.rls_table_coverage/, "RLS layer must expose coverage evidence view");
+for (const schema of contract.required_schemas) {
+  assert.match(rlsSql, new RegExp(`'${schema}'`), `RLS layer must cover schema ${schema}`);
+}
 
 assert.equal(job.tenant_scope, "single_tenant_only");
 assert.equal(job.wildcard_tenant_allowed, false);
