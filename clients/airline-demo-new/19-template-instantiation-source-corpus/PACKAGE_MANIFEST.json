@@ -1,0 +1,248 @@
+{
+  "package": "airline-demo-new-template-instantiation-source-corpus",
+  "phase": "phase2b3c-airline-source-corpus-design",
+  "generated": "2026-07-27",
+  "status": "large_enterprise_design_plus_synthetic_source_samples_no_azure_no_runtime_change",
+  "scale": {
+    "applications": 1495,
+    "integrations": 6200,
+    "infrastructure_rows": 10000,
+    "data_products": 1250,
+    "bi_reports": 6200,
+    "vendors": 420,
+    "contracts": 820,
+    "technology_workforce": 9500,
+    "programs": 190,
+    "risks": 650,
+    "controls": 1900,
+    "kpis_slas": 420,
+    "relationships": 60000
+  },
+  "files": [
+    {
+      "path": "01-template-workbooks/AIRLINE_ENTERPRISE_SCALE_TARGETS.xlsx",
+      "bytes": 5686,
+      "sha256": "ea4d17cd01705a47ba5143fd0563a87f366f6e19cba0b8029101428bc43a1aae"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_INDUSTRY_OVERLAY.xlsx",
+      "bytes": 6475,
+      "sha256": "3e22a0bcd7d99a9c5657b46acb165d371ebda30d7db82dec257ceea53ff95b2e"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_INTERVIEW_ARCHITECTURE.xlsx",
+      "bytes": 6205,
+      "sha256": "5bc1b23dca47c8abd2dc252d0cdf50b858b6df990ab30cf81ee2459049e2759e"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_KPI_CATALOG.xlsx",
+      "bytes": 6000,
+      "sha256": "6c6e8d50cee45058fc138411b12a32174e2d45fdb63fe2477ab7ded9ca48e0e3"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_RELATIONSHIP_DICTIONARY.xlsx",
+      "bytes": 6622,
+      "sha256": "47aa9ab88d12fa10000a7ce58533d4334610e5e704b6423931530664381c9433"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_SCALE_AND_DEPTH_MODEL.xlsx",
+      "bytes": 6001,
+      "sha256": "c9c6b2fe98c7d25952e3f201a9abbf440a9f968c5767a9916d3c622ab734964b"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_SOURCE_REQUEST_LIST.xlsx",
+      "bytes": 6939,
+      "sha256": "e4d86a38b55cb69e90bc82416eda838e84a3ba965c6837e126f0fe54515c1e38"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_TEMPLATE_CATALOG.xlsx",
+      "bytes": 9977,
+      "sha256": "5d37d91d834e787523066a8be1423a3219c72f6ba2e74b0faf6805d0ee26a79e"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_TEMPLATE_FIELD_DICTIONARY.xlsx",
+      "bytes": 6201,
+      "sha256": "641ec56090dbcb1c6e88dddc0c87a8c8cc8a58615f23553df2cef8dfcbe98bc0"
+    },
+    {
+      "path": "01-template-workbooks/AIRLINE_VENDOR_CONTRACT_PORTFOLIO.xlsx",
+      "bytes": 53692,
+      "sha256": "74596e7fd649c69a0058d4a7975131808cfc10f7b4989e46f5f4fa3a30fdab12"
+    },
+    {
+      "path": "01-template-workbooks/HC_AIRLINE_TEMPLATE_AND_MODEL_PARITY_MATRIX.xlsx",
+      "bytes": 6720,
+      "sha256": "8de17273c4cc4f62323b3f0dd80462c3b61922346564a4b1ddd924eddbfd5ed4"
+    },
+    {
+      "path": "01-template-workbooks/TECHNOLOGY_PROCUREMENT_OVERLAY.xlsx",
+      "bytes": 7388,
+      "sha256": "163a0354fca90cd3d678b78612fc50f61ff44fb4835c3309c01632ffee3b9297"
+    },
+    {
+      "path": "01-template-workbooks/UNIVERSAL_CORE_TEMPLATE_INSTANTIATION.xlsx",
+      "bytes": 7247,
+      "sha256": "544ff4347be2083d896bf589fd484dcd7d890122aece95d7affec86095704b8c"
+    },
+    {
+      "path": "02-synthetic-enterprise/AIRLINE_4_6_WEEK_CASE_STUDY_PLAN.md",
+      "bytes": 1114,
+      "sha256": "fe13bc4895043619d9309c15812753f99618e87fc93462b79275e488ef78caba"
+    },
+    {
+      "path": "02-synthetic-enterprise/AIRLINE_HIDDEN_TRUTH_DESIGN.md",
+      "bytes": 1321,
+      "sha256": "423de3ebb3af56ec86f70b19fd1aa3afb2fbea3738c8a4956e1c95e44a41917c"
+    },
+    {
+      "path": "02-synthetic-enterprise/AIRLINE_SYNTHETIC_ENTERPRISE_PROFILE.md",
+      "bytes": 2859,
+      "sha256": "c7d4754cbb6876ce7dd4508b9d7c08616b5882c7e0b92800ffcaa09dd1382c0c"
+    },
+    {
+      "path": "03-source-corpus-design/AIRLINE_DATASET_MANIFEST_SCHEMA.json",
+      "bytes": 1068,
+      "sha256": "92a781a66b4ab43add6b9451dabfcfa5b6d22eb7abb132ff9c6c379b1a8b53d7"
+    },
+    {
+      "path": "03-source-corpus-design/AIRLINE_SOURCE_CORPUS_PLAN.md",
+      "bytes": 2708,
+      "sha256": "89d8d94b46d8e2ba017bae3cd5ff5962baffe22c7da5d1d0a644b500a6d1b87e"
+    },
+    {
+      "path": "03-source-corpus-design/AIRLINE_SOURCE_FAMILY_STRATEGY.md",
+      "bytes": 2895,
+      "sha256": "83d1868e9976f93cb5c7dc0ce419bf5264c3b80426d985c1c76d7a65c7a5b5c2"
+    },
+    {
+      "path": "03-source-corpus-design/AIRLINE_SYNTHETIC_DEPTH_REQUIREMENTS.md",
+      "bytes": 2543,
+      "sha256": "d674c93fd8a4a91414b30f0b8b1463a6fcaabc11588cb6d29815202c51b53407"
+    },
+    {
+      "path": "03-source-corpus-design/SOURCE_LAYER_BOUNDARY_MATRIX.csv",
+      "bytes": 1339,
+      "sha256": "4a83fc2a3881dfb1f6c95f0bf6381c9a1ff2dcdbbac7a872044a6454a07b25b7"
+    },
+    {
+      "path": "03-source-corpus-design/parser-visible-source-manifest.csv",
+      "bytes": 2846,
+      "sha256": "da9f96d549679b15d80a61ce8501789d6d3611ca2fa2590dee75f34ca4a97928"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/application-platform-inventory.csv",
+      "bytes": 457525,
+      "sha256": "ca0d5b6791a0e39963153d4986f172f53ec7123e350edddc134de1076eb4c413"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/bi-report-catalog.csv",
+      "bytes": 682754,
+      "sha256": "084ebf165111c57251ed67f301cf4a9d0832ede6a34dc54fa63da431b8f57db0"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/cloud-infrastructure-inventory.csv",
+      "bytes": 2010480,
+      "sha256": "934ab7c758f5665cec43e9ceeb5110e91c92ebd6a8c51ea069b51c8c2741d2a6"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/control-catalog.csv",
+      "bytes": 146432,
+      "sha256": "ed49eb618adea3e52c78f5d7e639c971b0d876d8aeb1b8fee8d168b4c7f2c065"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/data-analytics-ai-landscape.csv",
+      "bytes": 330785,
+      "sha256": "488b2b87a032600d8de4dbff6b9bba5982573405763e18a9c352f834980f4bbc"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/integration-middleware-inventory.csv",
+      "bytes": 810316,
+      "sha256": "4a121f4a6f5e3b1cb071e6f47da33ad1e04cd8ac3fb168ae2fe2855e568fc12a"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/irrops-supply-chain-process-map.csv",
+      "bytes": 66606,
+      "sha256": "ea532450581bbe76993ea034b55a7c5b19f3703ec97810c6c3f74bf3c6b1aae2"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/kpi-sla-catalog.csv",
+      "bytes": 49334,
+      "sha256": "ed5a8273e053f1c1fab53fa9509314a894bf4f6a6dfd066e2d2956a719d041a2"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/program-portfolio.csv",
+      "bytes": 23582,
+      "sha256": "a1ce0db0c4072de51cc85e3f83ef5980646c9fc769a346e86f8f2cd65169b0df"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/relationship-load-template.csv",
+      "bytes": 9317424,
+      "sha256": "f20495a7fdaa2c03959ed3ca59e1f9415f141d0f0471ecbf1dbf0e48d641db88"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/risk-register.csv",
+      "bytes": 59129,
+      "sha256": "a3fa97095f5eecc6f2c57f6b1c35fda36961008df5767b23b60ac77de3ce1137"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/service-volume-baseline.csv",
+      "bytes": 27488,
+      "sha256": "658bd3bb5732a788ad33ee8335376f123bed8f2a1d0e9e1b3cd5c918ca9bc9d2"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/technology-workforce-roster.csv",
+      "bytes": 1036908,
+      "sha256": "5f5b5d013ff611cb00c30c9c58fe57a38dca4493a82bbfae2d7efa201efcf782"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/vendor-contract-register.csv",
+      "bytes": 185523,
+      "sha256": "4b1ec5d20486ea90f0897349d9283797b1c79c4fc7c3ed07a35957377b0e90a5"
+    },
+    {
+      "path": "03-source-corpus-design/synthetic-source-samples/vendor-register.csv",
+      "bytes": 64359,
+      "sha256": "d5fa7159e86b2b890dbba8b51d3af6b914a33ba254465da232ed4a8c174ae709"
+    },
+    {
+      "path": "04-restricted-evaluator-design/hidden-canonical-truth-sample.json",
+      "bytes": 870,
+      "sha256": "96fcfa851010fbfb08ab17d87cf8e3f7ac91e92ed63142e4bf92d9f32a98a518"
+    },
+    {
+      "path": "04-restricted-evaluator-design/source-to-truth-crosswalk.csv",
+      "bytes": 598,
+      "sha256": "c84ebc292f309f9fd0cfcdea5fc1b70113e7d0d99a8d0cd8bf34b6e4dc73f023"
+    },
+    {
+      "path": "05-validation/DECISION_MEMO.md",
+      "bytes": 1720,
+      "sha256": "f5141e1d53262c21d6323b66d6f178e268d861e4406e35b25e92f0bc1a4cb8e0"
+    },
+    {
+      "path": "05-validation/VALIDATION_REPORT.md",
+      "bytes": 2343,
+      "sha256": "d0ed6198e911306e014c86a4a09252e352cecfc1574d5096bd2c2e7f9be2ed7a"
+    },
+    {
+      "path": "05-validation/validation-summary.json",
+      "bytes": 2639,
+      "sha256": "6f72b604b11d11ef493e0e9cddeda10ad5785cbbc52196b5c1e3fb624b0c68f9"
+    },
+    {
+      "path": "06-review-package/REVIEW_INDEX.html",
+      "bytes": 2562,
+      "sha256": "8571cda4aa6b4c7e260095d9651d342c95fde92f84e99c16e5e485aea35f965f"
+    },
+    {
+      "path": "PACKAGE_MANIFEST.json",
+      "bytes": 9211,
+      "sha256": "e21b68cc13bd37d2af446bbcfdb9c979a1ea606d17ac4be9bdd6faef9dbd7ee1"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1127,
+      "sha256": "e1ab3539bccbaf4af379764ac1fd291dd59b7ec10ee0171f8cacabbdbc5aa4b7"
+    }
+  ]
+}

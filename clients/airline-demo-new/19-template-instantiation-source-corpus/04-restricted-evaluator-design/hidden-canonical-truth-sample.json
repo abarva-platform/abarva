@@ -1,0 +1,27 @@
+{
+  "tenant_key": "airline-demo-new",
+  "release": "airline-demo-new-source-corpus-v1.0.0",
+  "visibility": "restricted_evaluator_only",
+  "deterministic_seed": "AIRDN-SYNTH-SEED-20260727-01",
+  "sample_objects": [
+    {
+      "truth_id": "TRUTH-AIRDN-ENT-001",
+      "object_type": "enterprise",
+      "expected_public_ref": "ENT-AIRDN-001",
+      "answer_key_scope": "synthetic operating model"
+    },
+    {
+      "truth_id": "TRUTH-AIRDN-SRC-001",
+      "object_type": "source_event",
+      "expected_public_ref": "EVENT-AIRDN-001",
+      "answer_key_scope": "technology managed-services sourcing"
+    },
+    {
+      "truth_id": "TRUTH-AIRDN-REL-001",
+      "object_type": "relationship_edge",
+      "expected_public_ref": "REL-AIRDN-001",
+      "answer_key_scope": "operations platform supports disruption recovery capability"
+    }
+  ],
+  "parser_visible": false
+}
