@@ -156,10 +156,48 @@ assert(
   `meridian-health still reconciles exactly despite real duplicate content (${meridianResult.dispositions.length} dispositions vs ${meridianResult.totalInputRows} input rows)`,
 );
 
-// Conflicting source metadata (same source_version_id, genuinely different
-// values) is routed to review, not silently overwritten -- meridian-health
-// has real cases of this from its coarse evidence_location grouping.
-assert(meridianResult.sourceMetadataConflicts.length > 0, `meridian-health surfaces real conflicting source metadata for review (got ${meridianResult.sourceMetadataConflicts.length})`);
+// Gate 1.2: legacy_context_bundle's real source identity is the container
+// FILE, not evidence_location or business_name -- confirmed by construction:
+// every meridian-health legacy_context_bundle row shares exactly ONE
+// context_bundle source_version_id, with zero source-metadata conflicts (the
+// 699 conflicts from before Gate 1.2 were a field-role error, not real
+// disagreement about the source).
+{
+  const contextBundleSources = meridianResult.sourceCandidates.filter((s) => s.source_kind === "context_bundle");
+  assert(contextBundleSources.length === 1, `meridian-health's legacy_context_bundle rows resolve to exactly ONE file-level source (got ${contextBundleSources.length})`);
+  const contextBundleItems = meridianResult.itemCandidates.filter((i) => contextBundleSources.some((s) => s.source_version_id === i.source_version_id));
+  assert(contextBundleItems.length > 100, `hundreds of distinct evidence items share that one file-level source for meridian-health (got ${contextBundleItems.length})`);
+  assert(meridianResult.sourceMetadataConflicts.length === 0, `Gate 1.2 eliminates meridian-health's source-metadata conflicts entirely -- they were a field-role error, not real disagreement (got ${meridianResult.sourceMetadataConflicts.length})`);
+}
+
+// business_name is the evidence SUBJECT (routed to business_object_refs on
+// the item), never the source's own name; evidence_location is a locator or
+// preserved reference, never the source's identity.
+{
+  const source = meridianResult.sourceCandidates.find((s) => s.source_kind === "context_bundle");
+  assert(!source.source_name.includes("lakehouse") && !source.source_name.includes("Copilot"), "the context-bundle source's name is a controlled file-level label, not a business_name value from any one row");
+  const itemWithSubject = meridianResult.itemCandidates.find((i) => i.business_object_refs && i.business_object_refs.length > 0);
+  assert(itemWithSubject, "at least one item carries its business subject in business_object_refs, not lost");
+}
+
+// source_identity_method/confidence are populated in migration audit lineage
+// for every source reference, not left implicit.
+{
+  assert(meridianResult.sourceIdentityResolution.length > 0, "meridian-health's source identity resolutions are tracked in audit lineage");
+  const fileLevelEntries = meridianResult.sourceIdentityResolution.filter((r) => r.source_identity_method === "file_level_container");
+  assert(fileLevelEntries.length > 0 && fileLevelEntries.every((r) => r.source_identity_confidence === "high"), "file-level container identity is recorded with high confidence");
+}
+
+// Reclassification: the before/after conflict comparison actually reduces
+// the count and doesn't just relabel the same 699 conflicts.
+{
+  const beforeAfterPath = new URL(`../../../reports/evidence-v4-migration/meridian-health/source-metadata-conflicts-before-after.json`, import.meta.url);
+  // Not asserted via filesystem here (migrateTenant() alone doesn't write
+  // reports) -- covered by the real `main()` run's output inspected
+  // manually and in the release record; this suite validates the underlying
+  // data the report is built from.
+  void beforeAfterPath;
+}
 
 // Evidence-ID reconciliation: every real nonblank input evidence_id from
 // meridian-health's active file appears in the reconciliation ledger exactly

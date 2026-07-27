@@ -42,7 +42,7 @@
         "supersedes_source_version_id"
       ],
       "enumerations": {
-        "source_kind": ["csv", "workbook", "document", "transcript", "workshop", "api_export", "database_snapshot", "external_reference"]
+        "source_kind": ["csv", "workbook", "document", "transcript", "workshop", "api_export", "database_snapshot", "external_reference", "context_bundle", "registry_snapshot"]
       },
       "notes": "source_ref replaces v3's source_file -- an artifact is not always literally a file. The consolidation process must preserve source_ref as this row's semantic business identity; it must NEVER be overwritten with the physical path of the file being consolidated (that belongs in a separate lineage column, original_source_file, outside this template). source_kind (v3's source_type) is intentionally excluded from identity entirely -- multiple distinct artifacts, or multiple versions of one artifact, can share a kind. source_id example: SRC-SHA-EXEC-INTERVIEWS. source_version_id example: SRCV-SHA-EXEC-INTERVIEWS-20260725."
     },
