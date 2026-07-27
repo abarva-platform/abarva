@@ -1,0 +1,124 @@
+{
+  "tenant_key": "healthcare-demo-new",
+  "tenant_type": "synthetic_reference_implementation",
+  "release_id": "healthcare-demo-new-source-corpus-v1.0.0",
+  "release_state": "phase_0_frozen_design_source_corpus_foundation",
+  "frozen_at": "2026-07-27",
+  "approval_authority": {
+    "approver": "Anand Sundaram",
+    "approval_scope": "merge_phase_0_execution_authority_record_only",
+    "approval_source": "current_codex_thread_instruction_2026-07-27",
+    "does_not_authorize": [
+      "azure_apply",
+      "postgres_migration_apply",
+      "source_landing",
+      "parser_execution",
+      "knowledge_publication",
+      "product_runtime_wiring"
+    ]
+  },
+  "source_commit_sha": "b88babeaa5faaab077e991de1b1e83361c55c7a5",
+  "source_pr": 5676,
+  "package_root": "clients/healthcare-demo-new/19-template-instantiation-source-corpus",
+  "package_manifest": {
+    "path": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/PACKAGE_MANIFEST.json",
+    "status": "frozen_design_source_corpus_foundation_no_azure_no_runtime_change",
+    "file_count": 72
+  },
+  "review_zip": {
+    "path": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/06-review-package/HEALTHCARE_DEMO_NEW_TEMPLATE_SOURCE_CORPUS_REVIEW.zip",
+    "sha256": "1c6a5aa2a265168e59ff03c2ccbdddaaef4c680c86c3fb628737957559396352"
+  },
+  "parser_visible_manifest": {
+    "path": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/03-source-corpus-design/parser-visible-source-manifest.csv",
+    "row_count": 16
+  },
+  "template_workbooks": {
+    "directory": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/01-template-workbooks",
+    "workbook_count": 13
+  },
+  "source_samples": {
+    "directory": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/03-source-corpus-design/synthetic-source-samples",
+    "csv_file_count": 40
+  },
+  "hidden_truth": {
+    "version": "v1.0.0",
+    "path": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/04-restricted-evaluator-design/hidden-canonical-truth-sample.json",
+    "consumer_boundary": "restricted_evaluator_only_not_parser_visible"
+  },
+  "source_to_truth_crosswalk": {
+    "version": "v1.0.0",
+    "path": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/04-restricted-evaluator-design/source-to-truth-crosswalk.csv",
+    "consumer_boundary": "restricted_evaluator_only_not_parser_visible"
+  },
+  "expected_parser_schema_version": "phase_0_not_selected",
+  "expected_knowledge_schema_version": "phase_0_not_selected",
+  "generator_version": "healthcare-demo-new-source-corpus-v1.0.0",
+  "tenant_identity_and_resource_naming": {
+    "execution_tenant_key": "healthcare-demo-new",
+    "runtime_canonical_tenant_key_status": "not_yet_onboarded_in_this_checkout",
+    "canonical_tenant_onboarding_required_before_load": true,
+    "phase_1_resource_names_finalized": false,
+    "phase_1_resource_names_required_before_apply": true,
+    "resource_naming_owner": "phase_1_plan_only_infrastructure_package"
+  },
+  "validation": {
+    "validation_summary": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/validation-summary.json",
+    "independent_semantic_audit": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/independent-semantic-audit.json",
+    "independent_semantic_audit_report": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/INDEPENDENT_SEMANTIC_AUDIT_REPORT.md",
+    "final_content_review_report": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/FINAL_CONTENT_REVIEW_REPORT.md",
+    "validation_report": "clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/VALIDATION_REPORT.md",
+    "passed": true
+  },
+  "expected_record_counts_by_domain": {
+    "applications": 1670,
+    "interfaces": 8400,
+    "infrastructure": 12500,
+    "sql_assets": 2050,
+    "data_products": 1500,
+    "bi_reports": 8600,
+    "vendors": 480,
+    "contracts": 980,
+    "workforce": 11200,
+    "programs": 220,
+    "risks": 780,
+    "controls": 2500,
+    "kpis": 650,
+    "relationships": 85000,
+    "reconstruction_ledger": 425
+  },
+  "gate_0_result": {
+    "package_merged": true,
+    "independent_semantic_audit_pass": true,
+    "manifest_hashes_match": true,
+    "no_cross_tenant_ids": true,
+    "source_corpus_and_evaluator_corpus_separated": true,
+    "no_azure_apply_or_runtime_mutation": true,
+    "status": "pass"
+  },
+  "allowed_next_actions": [
+    "phase_1_zero_data_infrastructure_plan",
+    "phase_1_zero_data_what_if",
+    "canonical_runtime_tenant_key_onboarding_plan",
+    "source_registry_schema_design",
+    "parser_schema_design",
+    "load_runbook_dry_run"
+  ],
+  "disallowed_until_later_gate": [
+    "azure_resource_apply",
+    "postgres_migration_apply",
+    "source_landing",
+    "parser_execution",
+    "knowledge_publication",
+    "product_surface_wiring",
+    "model_retrieval_wiring",
+    "runtime_claims_that_the_tenant_is_live"
+  ],
+  "hard_boundaries": [
+    "No product owns data; products consume governed canonical projections only.",
+    "Source-visible files and evaluator-only hidden truth remain physically separate.",
+    "The package is synthetic and planning-grade; it is not a real customer record.",
+    "The tenant key is not yet a runtime canonical tenant key in this checkout.",
+    "No Azure, PostgreSQL, ingestion, runtime, or product deployment action is authorized by this freeze manifest."
+  ]
+}
