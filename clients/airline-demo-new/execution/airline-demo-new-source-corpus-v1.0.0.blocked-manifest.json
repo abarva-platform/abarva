@@ -1,0 +1,45 @@
+{
+  "tenant_key": "airline-demo-new",
+  "tenant_type": "synthetic_reference_candidate",
+  "release_id": "airline-demo-new-source-corpus-v1.0.0",
+  "release_state": "blocked_before_phase_0_freeze",
+  "blocked_at": "2026-07-27",
+  "source_pr": 5675,
+  "blocked_by": [
+    "independent_semantic_audit_not_recorded_as_pass_for_current_source_corpus",
+    "source_corpus_freeze_not_approved",
+    "phase_0_package_manifest_not_promoted_to_frozen_execution_manifest"
+  ],
+  "allowed_actions": [
+    "remediate_source_corpus_package",
+    "rerun_independent_semantic_audit",
+    "rerun_endpoint_validation",
+    "rerun_contract_depth_validation",
+    "rerun_source_evidence_family_validation",
+    "produce_phase_0_freeze_manifest_after_pass"
+  ],
+  "disallowed_actions": [
+    "freeze_release",
+    "provision_tenant_infrastructure_for_load",
+    "land_source_corpus",
+    "run_parser",
+    "write_working_or_canonical_knowledge_tables",
+    "publish_product_projection",
+    "wire_home_intelligence_source_moves_or_tower",
+    "claim_runtime_or_client_demo_readiness"
+  ],
+  "gate_0_result": {
+    "package_merged": false,
+    "independent_semantic_audit_pass": false,
+    "manifest_hashes_match": "not_evaluated",
+    "no_cross_tenant_ids": "not_evaluated",
+    "source_corpus_and_evaluator_corpus_separated": "not_evaluated",
+    "no_azure_apply_or_runtime_mutation": "not_evaluated",
+    "status": "blocked"
+  },
+  "execution_policy": [
+    "Airline follows the same factory path as the healthcare reference implementation only after Gate 0 passes.",
+    "Airline does not delay the shared framework, but it must not borrow Healthcare approvals.",
+    "Existing infrastructure-design artifacts remain plan-only until the source corpus is frozen and zero-data infrastructure gates pass."
+  ]
+}
