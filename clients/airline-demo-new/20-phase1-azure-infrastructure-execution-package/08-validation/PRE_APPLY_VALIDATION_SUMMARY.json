@@ -1,0 +1,30 @@
+{
+  "tenantKey": "airline-demo-new",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "bicep_build_main",
+      "status": "pass"
+    },
+    {
+      "name": "bicep_build_foundation",
+      "status": "pass"
+    },
+    {
+      "name": "live_what_if",
+      "status": "pass"
+    },
+    {
+      "name": "create_only",
+      "status": "pass"
+    },
+    {
+      "name": "required_resource_names",
+      "status": "pass"
+    },
+    {
+      "name": "no_source_landing",
+      "status": "pass"
+    }
+  ]
+}
