@@ -1,0 +1,843 @@
+{
+  "counts": {
+    "apps": 1670,
+    "epic": 115,
+    "interfaces": 8400,
+    "sql": 2050,
+    "infra": 12500,
+    "data": 1500,
+    "bi": 8600,
+    "vendors": 480,
+    "contracts": 980,
+    "workforce": 11200,
+    "programs": 220,
+    "risks": 780,
+    "controls": 2500,
+    "kpis": 650,
+    "relationships": 85000,
+    "reconstruction": 425
+  },
+  "enterpriseRealism": {
+    "appFamilies": [
+      [
+        "EPIC",
+        210
+      ],
+      [
+        "DATA",
+        180
+      ],
+      [
+        "PAYER",
+        170
+      ],
+      [
+        "CLIN",
+        165
+      ],
+      [
+        "RCM",
+        145
+      ],
+      [
+        "STARS",
+        120
+      ],
+      [
+        "ACCESS",
+        120
+      ],
+      [
+        "SQL",
+        120
+      ],
+      [
+        "VBC",
+        100
+      ],
+      [
+        "CLOUD",
+        95
+      ],
+      [
+        "ERP",
+        90
+      ],
+      [
+        "LEGACY",
+        80
+      ],
+      [
+        "SEC",
+        75
+      ]
+    ],
+    "businessFunctions": [
+      [
+        "Finance",
+        139
+      ],
+      [
+        "Data and Analytics",
+        102
+      ],
+      [
+        "Quality and Stars",
+        90
+      ],
+      [
+        "Revenue Cycle",
+        78
+      ],
+      [
+        "Health Plan Operations",
+        63
+      ],
+      [
+        "Actuarial",
+        61
+      ],
+      [
+        "Care Management",
+        55
+      ],
+      [
+        "Patient Access",
+        48
+      ],
+      [
+        "Clinical Analytics",
+        45
+      ],
+      [
+        "Departmental Reporting",
+        44
+      ],
+      [
+        "Technology",
+        43
+      ],
+      [
+        "Security",
+        42
+      ],
+      [
+        "Clinical Operations",
+        40
+      ],
+      [
+        "Population Health",
+        39
+      ],
+      [
+        "Surgery",
+        39
+      ],
+      [
+        "Ambulatory Care",
+        39
+      ],
+      [
+        "Digital Front Door",
+        39
+      ],
+      [
+        "Coding",
+        36
+      ],
+      [
+        "Payer Contracting",
+        36
+      ],
+      [
+        "Medicare Advantage",
+        34
+      ],
+      [
+        "Claims Operations",
+        34
+      ],
+      [
+        "Utilization Management",
+        34
+      ],
+      [
+        "Member Services",
+        34
+      ],
+      [
+        "Pharmacy",
+        30
+      ],
+      [
+        "Imaging",
+        30
+      ],
+      [
+        "Risk Adjustment",
+        30
+      ],
+      [
+        "Contact Center",
+        30
+      ],
+      [
+        "Oncology",
+        29
+      ],
+      [
+        "Cardiology",
+        29
+      ],
+      [
+        "Emergency Department",
+        29
+      ],
+      [
+        "Value-Based Care",
+        25
+      ],
+      [
+        "Provider Network",
+        25
+      ],
+      [
+        "AI Transformation",
+        24
+      ],
+      [
+        "Procurement",
+        23
+      ],
+      [
+        "HR",
+        23
+      ],
+      [
+        "Supply Chain",
+        22
+      ],
+      [
+        "Inpatient",
+        21
+      ],
+      [
+        "Lab",
+        21
+      ],
+      [
+        "Privacy",
+        19
+      ],
+      [
+        "Compliance",
+        19
+      ],
+      [
+        "Bed Management",
+        9
+      ],
+      [
+        "Interoperability",
+        9
+      ],
+      [
+        "Integration Services",
+        9
+      ]
+    ],
+    "hosting": [
+      [
+        "on-prem data center",
+        251
+      ],
+      [
+        "AWS future-agentic candidate",
+        209
+      ],
+      [
+        "Azure foundation workload",
+        208
+      ],
+      [
+        "Oracle/UNIX estate",
+        185
+      ],
+      [
+        "edge/clinic footprint",
+        185
+      ],
+      [
+        "departmental server",
+        157
+      ],
+      [
+        "private cloud",
+        157
+      ],
+      [
+        "hybrid",
+        114
+      ],
+      [
+        "Azure live AI/use-case workload",
+        114
+      ],
+      [
+        "SaaS",
+        90
+      ]
+    ],
+    "stacks": [
+      [
+        "Databricks lakehouse",
+        88
+      ],
+      [
+        "SQL Server/SSIS/SSAS/SSRS",
+        88
+      ],
+      [
+        "claims-administration platform",
+        87
+      ],
+      [
+        "security/IAM stack",
+        87
+      ],
+      [
+        "Power BI Report Server",
+        87
+      ],
+      [
+        "AWS data and AI candidate",
+        86
+      ],
+      [
+        "API/interoperability gateway",
+        86
+      ],
+      [
+        "Oracle database",
+        86
+      ],
+      [
+        "Access/Excel shadow reporting",
+        86
+      ],
+      [
+        "Tableau Server",
+        86
+      ],
+      [
+        "Azure data services",
+        85
+      ],
+      [
+        "HL7/FHIR engine",
+        85
+      ],
+      [
+        "care-management platform",
+        85
+      ],
+      [
+        "legacy EDW",
+        85
+      ],
+      [
+        "flat-file/SFTP",
+        85
+      ],
+      [
+        "Java/.NET custom",
+        84
+      ],
+      [
+        "Epic ecosystem",
+        84
+      ],
+      [
+        "Epic Hyperspace",
+        10
+      ],
+      [
+        "Epic Chronicles",
+        10
+      ],
+      [
+        "Epic Clarity",
+        10
+      ],
+      [
+        "Epic Caboodle",
+        9
+      ],
+      [
+        "Epic Cogito",
+        9
+      ],
+      [
+        "Epic Healthy Planet",
+        9
+      ],
+      [
+        "Epic Resolute HB",
+        9
+      ],
+      [
+        "Epic Resolute PB",
+        9
+      ],
+      [
+        "Epic Cadence",
+        9
+      ],
+      [
+        "Epic Prelude",
+        9
+      ],
+      [
+        "Epic Grand Central",
+        9
+      ],
+      [
+        "Epic Willow",
+        9
+      ],
+      [
+        "Epic Beacon",
+        9
+      ],
+      [
+        "Epic Radiant",
+        9
+      ],
+      [
+        "Epic Cupid",
+        9
+      ],
+      [
+        "Epic OpTime",
+        9
+      ],
+      [
+        "Epic Anesthesia",
+        9
+      ],
+      [
+        "Epic ASAP",
+        9
+      ],
+      [
+        "Epic Ambulatory",
+        9
+      ],
+      [
+        "Epic MyChart",
+        9
+      ],
+      [
+        "Epic Care Everywhere",
+        9
+      ],
+      [
+        "Epic Bridges",
+        9
+      ],
+      [
+        "Epic Tapestry",
+        9
+      ]
+    ],
+    "epicModules": [
+      [
+        "Epic Hyperspace",
+        5
+      ],
+      [
+        "Epic Chronicles",
+        5
+      ],
+      [
+        "Epic Clarity",
+        5
+      ],
+      [
+        "Epic Caboodle",
+        5
+      ],
+      [
+        "Epic Cogito",
+        5
+      ],
+      [
+        "Epic Healthy Planet",
+        5
+      ],
+      [
+        "Epic Resolute HB",
+        5
+      ],
+      [
+        "Epic Resolute PB",
+        5
+      ],
+      [
+        "Epic Cadence",
+        5
+      ],
+      [
+        "Epic Prelude",
+        5
+      ],
+      [
+        "Epic Grand Central",
+        5
+      ],
+      [
+        "Epic Willow",
+        5
+      ],
+      [
+        "Epic Beacon",
+        5
+      ],
+      [
+        "Epic Radiant",
+        5
+      ],
+      [
+        "Epic Cupid",
+        5
+      ],
+      [
+        "Epic OpTime",
+        5
+      ],
+      [
+        "Epic Anesthesia",
+        5
+      ],
+      [
+        "Epic ASAP",
+        5
+      ],
+      [
+        "Epic Ambulatory",
+        5
+      ],
+      [
+        "Epic MyChart",
+        5
+      ],
+      [
+        "Epic Care Everywhere",
+        5
+      ],
+      [
+        "Epic Bridges",
+        5
+      ],
+      [
+        "Epic Tapestry",
+        5
+      ]
+    ],
+    "cloudPostureMatches": {
+      "azureCurrent": 437,
+      "awsFuture": 280,
+      "onPremSql": 472
+    }
+  },
+  "relationshipDepth": {
+    "originTypeCount": 12,
+    "fromTypes": [
+      [
+        "application",
+        18320
+      ],
+      [
+        "data_product",
+        9485
+      ],
+      [
+        "interface",
+        8400
+      ],
+      [
+        "contract",
+        7435
+      ],
+      [
+        "risk",
+        5765
+      ],
+      [
+        "program",
+        5645
+      ],
+      [
+        "business_process",
+        5024
+      ],
+      [
+        "vendor",
+        4986
+      ],
+      [
+        "infrastructure",
+        4985
+      ],
+      [
+        "kpi",
+        4985
+      ],
+      [
+        "control",
+        4985
+      ],
+      [
+        "sql_asset",
+        4985
+      ]
+    ],
+    "applicationOriginShare": 21.6,
+    "endpointIssueCount": 0,
+    "endpointIssueSample": []
+  },
+  "contractDepth": {
+    "contractColumns": [
+      "contract_id",
+      "vendor_id",
+      "vendor_public_reference",
+      "contract_type",
+      "service_tower",
+      "business_function",
+      "scope",
+      "effective_date",
+      "expiration_date",
+      "term_status",
+      "pricing_model",
+      "value_disclosure_mode",
+      "termination_rights",
+      "minimum_commitment",
+      "rate_card_id",
+      "service_credit_terms",
+      "inflation_provision",
+      "change_control_terms",
+      "subcontracting_terms",
+      "data_residency",
+      "transition_assistance",
+      "sla_history_source",
+      "invoice_source",
+      "change_order_source",
+      "lot_id",
+      "proposal_id",
+      "bafo_revision_id",
+      "evaluation_criteria_id",
+      "risk_note"
+    ],
+    "missingContractCols": [],
+    "contractTypes": [
+      [
+        "SOW",
+        66
+      ],
+      [
+        "rate card",
+        66
+      ],
+      [
+        "Epic support agreement",
+        66
+      ],
+      [
+        "claims admin agreement",
+        66
+      ],
+      [
+        "PBM services SOW",
+        66
+      ],
+      [
+        "BPO services SOW",
+        65
+      ],
+      [
+        "cloud commit",
+        65
+      ],
+      [
+        "data platform subscription",
+        65
+      ],
+      [
+        "software subscription",
+        65
+      ],
+      [
+        "professional services SOW",
+        65
+      ],
+      [
+        "maintenance agreement",
+        65
+      ],
+      [
+        "telecom services",
+        65
+      ],
+      [
+        "cybersecurity services",
+        65
+      ],
+      [
+        "AI/document automation SOW",
+        65
+      ],
+      [
+        "MSA",
+        65
+      ]
+    ],
+    "pricingModels": [
+      [
+        "T&M",
+        98
+      ],
+      [
+        "unit rate",
+        98
+      ],
+      [
+        "per member per month",
+        98
+      ],
+      [
+        "per claim",
+        98
+      ],
+      [
+        "per encounter",
+        98
+      ],
+      [
+        "consumption",
+        98
+      ],
+      [
+        "hybrid fixed plus variable",
+        98
+      ],
+      [
+        "committed spend",
+        98
+      ],
+      [
+        "outcome-linked",
+        98
+      ],
+      [
+        "fixed fee",
+        98
+      ]
+    ]
+  },
+  "sourceEvidence": {
+    "missingEvidenceFiles": [],
+    "proposalLots": 9,
+    "bidders": 3,
+    "evidenceFileRowCounts": {
+      "proposal-requirements.csv": 81,
+      "proposal-responses.csv": 27,
+      "proposal-facts.csv": 162,
+      "pricing-lines.csv": 324,
+      "rate-cards.csv": 216,
+      "staffing-pyramids.csv": 216,
+      "invoice-lines.csv": 216,
+      "change-orders.csv": 90,
+      "incidents-tickets.csv": 216,
+      "sla-observations.csv": 216,
+      "assumptions-register.csv": 135,
+      "exceptions-register.csv": 135,
+      "bafo-questions.csv": 135,
+      "bafo-responses.csv": 135,
+      "revised-pricing.csv": 324,
+      "transition-commitments.csv": 135,
+      "value-commitments.csv": 135,
+      "evaluation-criteria.csv": 90,
+      "evaluator-scores.csv": 270,
+      "conflicts-moderation.csv": 18,
+      "executive-decisions.csv": 27
+    }
+  },
+  "reconstructability": {
+    "ledgerRows": 425,
+    "requiredRows": 365,
+    "nonReconstructableReviewRows": 38,
+    "visibleSourceCountDistribution": [
+      [
+        "3",
+        87
+      ],
+      [
+        "2",
+        85
+      ],
+      [
+        "4",
+        84
+      ],
+      [
+        "5",
+        84
+      ],
+      [
+        "1",
+        84
+      ],
+      [
+        "6",
+        1
+      ]
+    ],
+    "conflictClasses": [
+      [
+        "none",
+        106
+      ],
+      [
+        "conflicting owner",
+        105
+      ],
+      [
+        "conflicting KPI definition",
+        105
+      ],
+      [
+        "value mismatch",
+        105
+      ],
+      [
+        "version conflict candidates",
+        1
+      ],
+      [
+        "stale owner conflicts",
+        1
+      ],
+      [
+        "roadmap timing conflicts",
+        1
+      ],
+      [
+        "score moderation conflicts",
+        1
+      ]
+    ]
+  },
+  "decision": {
+    "pass": true
+  }
+}

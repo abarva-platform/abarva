@@ -1,0 +1,426 @@
+truth_object_id,truth_object_type,required_for_publication,visible_source_count,independent_source_count,source_ids,expected_parser_path,expected_candidate_fact_count,expected_relationship_count,ambiguity_class,conflict_class,review_required,reconstructable,reason_if_not_reconstructable
+TRUTH-HCDN-001,population_mix,required,2,2,SRC-HCDN-STARS-001;SRC-HCDN-PAYER-001,measure parser; payer profile parser,12,40,none,none,false,true,Medicare/MA assumption reconstructable as tenant assumption only
+TRUTH-HCDN-002,epic_platform,required,3,3,SRC-HCDN-EPIC-001;SRC-HCDN-INT-001;SRC-HCDN-SQL-001,Epic parser; interface parser; SQL parser,400,2600,module aliases,version conflict candidates,true,true,Deep Epic footprint reconstructable with review
+TRUTH-HCDN-003,sql_legacy_analytics,required,3,3,SRC-HCDN-SQL-001;SRC-HCDN-STARS-001;SRC-HCDN-ARCH-001,SQL catalog parser; BI parser,2800,7000,duplicate marts,stale owner conflicts,true,true,SQL/EDW debt reconstructable with intentional ambiguity
+TRUTH-HCDN-004,cloud_posture,required,3,3,SRC-HCDN-STR-001;SRC-HCDN-INF-001;SRC-HCDN-DATA-001,strategy parser; infra parser; data parser,900,2200,Azure/AWS workload labels,roadmap timing conflicts,true,true,Azure-current/AWS-future posture reconstructable
+TRUTH-HCDN-005,source_event,required,6,6,SRC-HCDN-CONT-001;SRC-HCDN-RATE-001;SRC-HCDN-INV-001;SRC-HCDN-PROP-001;SRC-HCDN-BAFO-001;SRC-HCDN-EVAL-001,contract/proposal/pricing/evaluation parsers,3500,9000,proposal assumptions,score moderation conflicts,true,true,Procurement scope reconstructable when all event files land
+TRUTH-HCDN-0101,data_product,required,2,1,SRC-HCDN-SQL-002,SQL parser,2,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0102,kpi,required,3,1,SRC-HCDN-STARS-003,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0103,contract,required,4,2,SRC-HCDN-CONT-004,contract parser,4,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0104,relationship,required,5,1,SRC-HCDN-INT-005,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0105,program,required,1,1,SRC-HCDN-DATA-006,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0106,risk_control,required,2,2,SRC-HCDN-SLA-007,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0107,application,optional,3,1,SRC-HCDN-PROP-008,SQL parser,8,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0108,data_product,required,4,1,SRC-HCDN-APP-009,measure parser,9,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0109,kpi,required,5,2,SRC-HCDN-SQL-010,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0110,contract,required,1,1,SRC-HCDN-STARS-011,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0111,relationship,required,2,1,SRC-HCDN-CONT-012,proposal parser,12,13,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0112,program,required,3,2,SRC-HCDN-INT-013,cmdb parser,1,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0113,risk_control,required,4,1,SRC-HCDN-DATA-014,SQL parser,2,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0114,application,optional,5,1,SRC-HCDN-SLA-015,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0115,data_product,required,1,2,SRC-HCDN-PROP-016,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0116,kpi,required,2,1,SRC-HCDN-APP-017,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0117,contract,required,3,1,SRC-HCDN-SQL-018,proposal parser,6,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0118,relationship,required,4,2,SRC-HCDN-STARS-019,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0119,program,required,5,1,SRC-HCDN-CONT-020,SQL parser,8,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0120,risk_control,required,1,1,SRC-HCDN-INT-021,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0121,application,optional,2,2,SRC-HCDN-DATA-022,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0122,data_product,required,3,1,SRC-HCDN-SLA-023,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0123,kpi,required,4,1,SRC-HCDN-PROP-024,proposal parser,12,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0124,contract,required,5,2,SRC-HCDN-APP-025,cmdb parser,1,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0125,relationship,required,1,1,SRC-HCDN-SQL-026,SQL parser,2,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0126,program,required,2,1,SRC-HCDN-STARS-027,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0127,risk_control,required,3,2,SRC-HCDN-CONT-028,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0128,application,optional,4,1,SRC-HCDN-INT-029,interface parser,5,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0129,data_product,required,5,1,SRC-HCDN-DATA-030,proposal parser,6,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0130,kpi,required,1,2,SRC-HCDN-SLA-031,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0131,contract,required,2,1,SRC-HCDN-PROP-032,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0132,relationship,required,3,1,SRC-HCDN-APP-033,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0133,program,required,4,2,SRC-HCDN-SQL-034,contract parser,10,15,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0134,risk_control,required,5,1,SRC-HCDN-STARS-035,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0135,application,optional,1,1,SRC-HCDN-CONT-036,proposal parser,12,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0136,data_product,required,2,2,SRC-HCDN-INT-037,cmdb parser,1,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0137,kpi,required,3,1,SRC-HCDN-DATA-038,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0138,contract,required,4,1,SRC-HCDN-SLA-039,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0139,relationship,required,5,2,SRC-HCDN-PROP-040,contract parser,4,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0140,program,required,1,1,SRC-HCDN-APP-041,interface parser,5,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0141,risk_control,required,2,1,SRC-HCDN-SQL-042,proposal parser,6,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0142,application,optional,3,2,SRC-HCDN-STARS-043,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0143,data_product,required,4,1,SRC-HCDN-CONT-044,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0144,kpi,required,5,1,SRC-HCDN-INT-045,measure parser,9,6,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0145,contract,required,1,2,SRC-HCDN-DATA-046,contract parser,10,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0146,relationship,required,2,1,SRC-HCDN-SLA-047,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0147,program,required,3,1,SRC-HCDN-PROP-048,proposal parser,12,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0148,risk_control,required,4,2,SRC-HCDN-APP-049,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0149,application,optional,5,1,SRC-HCDN-SQL-050,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0150,data_product,required,1,1,SRC-HCDN-STARS-051,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0151,kpi,required,2,2,SRC-HCDN-CONT-052,contract parser,4,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0152,contract,required,3,1,SRC-HCDN-INT-053,interface parser,5,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0153,relationship,required,4,1,SRC-HCDN-DATA-054,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0154,program,required,5,2,SRC-HCDN-SLA-055,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0155,risk_control,required,1,1,SRC-HCDN-PROP-056,SQL parser,8,17,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0156,application,optional,2,1,SRC-HCDN-APP-057,measure parser,9,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0157,data_product,required,3,2,SRC-HCDN-SQL-058,contract parser,10,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0158,kpi,required,4,1,SRC-HCDN-STARS-059,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0159,contract,required,5,1,SRC-HCDN-CONT-060,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0160,relationship,required,1,2,SRC-HCDN-INT-061,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0161,program,required,2,1,SRC-HCDN-DATA-062,SQL parser,2,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0162,risk_control,required,3,1,SRC-HCDN-SLA-063,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0163,application,optional,4,2,SRC-HCDN-PROP-064,contract parser,4,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0164,data_product,required,5,1,SRC-HCDN-APP-065,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0165,kpi,required,1,1,SRC-HCDN-SQL-066,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0166,contract,required,2,2,SRC-HCDN-STARS-067,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0167,relationship,required,3,1,SRC-HCDN-CONT-068,SQL parser,8,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0168,program,required,4,1,SRC-HCDN-INT-069,measure parser,9,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0169,risk_control,required,5,2,SRC-HCDN-DATA-070,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0170,application,optional,1,1,SRC-HCDN-SLA-071,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0171,data_product,required,2,1,SRC-HCDN-PROP-072,proposal parser,12,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0172,kpi,required,3,2,SRC-HCDN-APP-073,cmdb parser,1,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0173,contract,required,4,1,SRC-HCDN-SQL-074,SQL parser,2,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0174,relationship,required,5,1,SRC-HCDN-STARS-075,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0175,program,required,1,2,SRC-HCDN-CONT-076,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0176,risk_control,required,2,1,SRC-HCDN-INT-077,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0177,application,optional,3,1,SRC-HCDN-DATA-078,proposal parser,6,19,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0178,data_product,required,4,2,SRC-HCDN-SLA-079,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0179,kpi,required,5,1,SRC-HCDN-PROP-080,SQL parser,8,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0180,contract,required,1,1,SRC-HCDN-APP-081,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0181,relationship,required,2,2,SRC-HCDN-SQL-082,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0182,program,required,3,1,SRC-HCDN-STARS-083,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0183,risk_control,required,4,1,SRC-HCDN-CONT-084,proposal parser,12,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0184,application,optional,5,2,SRC-HCDN-INT-085,cmdb parser,1,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0185,data_product,required,1,1,SRC-HCDN-DATA-086,SQL parser,2,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0186,kpi,required,2,1,SRC-HCDN-SLA-087,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0187,contract,required,3,2,SRC-HCDN-PROP-088,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0188,relationship,required,4,1,SRC-HCDN-APP-089,interface parser,5,10,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0189,program,required,5,1,SRC-HCDN-SQL-090,proposal parser,6,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0190,risk_control,required,1,2,SRC-HCDN-STARS-091,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0191,application,optional,2,1,SRC-HCDN-CONT-092,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0192,data_product,required,3,1,SRC-HCDN-INT-093,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0193,kpi,required,4,2,SRC-HCDN-DATA-094,contract parser,10,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0194,contract,required,5,1,SRC-HCDN-SLA-095,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0195,relationship,required,1,1,SRC-HCDN-PROP-096,proposal parser,12,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0196,program,required,2,2,SRC-HCDN-APP-001,cmdb parser,1,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0197,risk_control,required,3,1,SRC-HCDN-SQL-002,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0198,application,optional,4,1,SRC-HCDN-STARS-003,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0199,data_product,required,5,2,SRC-HCDN-CONT-004,contract parser,4,21,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0200,kpi,required,1,1,SRC-HCDN-INT-005,interface parser,5,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0201,contract,required,2,1,SRC-HCDN-DATA-006,proposal parser,6,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0202,relationship,required,3,2,SRC-HCDN-SLA-007,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0203,program,required,4,1,SRC-HCDN-PROP-008,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0204,risk_control,required,5,1,SRC-HCDN-APP-009,measure parser,9,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0205,application,optional,1,2,SRC-HCDN-SQL-010,contract parser,10,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0206,data_product,required,2,1,SRC-HCDN-STARS-011,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0207,kpi,required,3,1,SRC-HCDN-CONT-012,proposal parser,12,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0208,contract,required,4,2,SRC-HCDN-INT-013,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0209,relationship,required,5,1,SRC-HCDN-DATA-014,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0210,program,required,1,1,SRC-HCDN-SLA-015,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0211,risk_control,required,2,2,SRC-HCDN-PROP-016,contract parser,4,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0212,application,optional,3,1,SRC-HCDN-APP-017,interface parser,5,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0213,data_product,required,4,1,SRC-HCDN-SQL-018,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0214,kpi,required,5,2,SRC-HCDN-STARS-019,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0215,contract,required,1,1,SRC-HCDN-CONT-020,SQL parser,8,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0216,relationship,required,2,1,SRC-HCDN-INT-021,measure parser,9,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0217,program,required,3,2,SRC-HCDN-DATA-022,contract parser,10,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0218,risk_control,required,4,1,SRC-HCDN-SLA-023,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0219,application,optional,5,1,SRC-HCDN-PROP-024,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0220,data_product,required,1,2,SRC-HCDN-APP-025,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0221,kpi,required,2,1,SRC-HCDN-SQL-026,SQL parser,2,3,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0222,contract,required,3,1,SRC-HCDN-STARS-027,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0223,relationship,required,4,2,SRC-HCDN-CONT-028,contract parser,4,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0224,program,required,5,1,SRC-HCDN-INT-029,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0225,risk_control,required,1,1,SRC-HCDN-DATA-030,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0226,application,optional,2,2,SRC-HCDN-SLA-031,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0227,data_product,required,3,1,SRC-HCDN-PROP-032,SQL parser,8,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0228,kpi,required,4,1,SRC-HCDN-APP-033,measure parser,9,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0229,contract,required,5,2,SRC-HCDN-SQL-034,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0230,relationship,required,1,1,SRC-HCDN-STARS-035,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0231,program,required,2,1,SRC-HCDN-CONT-036,proposal parser,12,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0232,risk_control,required,3,2,SRC-HCDN-INT-037,cmdb parser,1,14,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0233,application,optional,4,1,SRC-HCDN-DATA-038,SQL parser,2,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0234,data_product,required,5,1,SRC-HCDN-SLA-039,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0235,kpi,required,1,2,SRC-HCDN-PROP-040,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0236,contract,required,2,1,SRC-HCDN-APP-041,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0237,relationship,required,3,1,SRC-HCDN-SQL-042,proposal parser,6,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0238,program,required,4,2,SRC-HCDN-STARS-043,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0239,risk_control,required,5,1,SRC-HCDN-CONT-044,SQL parser,8,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0240,application,optional,1,1,SRC-HCDN-INT-045,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0241,data_product,required,2,2,SRC-HCDN-DATA-046,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0242,kpi,required,3,1,SRC-HCDN-SLA-047,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0243,contract,required,4,1,SRC-HCDN-PROP-048,proposal parser,12,5,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0244,relationship,required,5,2,SRC-HCDN-APP-049,cmdb parser,1,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0245,program,required,1,1,SRC-HCDN-SQL-050,SQL parser,2,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0246,risk_control,required,2,1,SRC-HCDN-STARS-051,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0247,application,optional,3,2,SRC-HCDN-CONT-052,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0248,data_product,required,4,1,SRC-HCDN-INT-053,interface parser,5,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0249,kpi,required,5,1,SRC-HCDN-DATA-054,proposal parser,6,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0250,contract,required,1,2,SRC-HCDN-SLA-055,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0251,relationship,required,2,1,SRC-HCDN-PROP-056,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0252,program,required,3,1,SRC-HCDN-APP-057,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0253,risk_control,required,4,2,SRC-HCDN-SQL-058,contract parser,10,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0254,application,optional,5,1,SRC-HCDN-STARS-059,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0255,data_product,required,1,1,SRC-HCDN-CONT-060,proposal parser,12,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0256,kpi,required,2,2,SRC-HCDN-INT-061,cmdb parser,1,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0257,contract,required,3,1,SRC-HCDN-DATA-062,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0258,relationship,required,4,1,SRC-HCDN-SLA-063,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0259,program,required,5,2,SRC-HCDN-PROP-064,contract parser,4,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0260,risk_control,required,1,1,SRC-HCDN-APP-065,interface parser,5,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0261,application,optional,2,1,SRC-HCDN-SQL-066,proposal parser,6,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0262,data_product,required,3,2,SRC-HCDN-STARS-067,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0263,kpi,required,4,1,SRC-HCDN-CONT-068,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0264,contract,required,5,1,SRC-HCDN-INT-069,measure parser,9,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0265,relationship,required,1,2,SRC-HCDN-DATA-070,contract parser,10,7,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0266,program,required,2,1,SRC-HCDN-SLA-071,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0267,risk_control,required,3,1,SRC-HCDN-PROP-072,proposal parser,12,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0268,application,optional,4,2,SRC-HCDN-APP-073,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0269,data_product,required,5,1,SRC-HCDN-SQL-074,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0270,kpi,required,1,1,SRC-HCDN-STARS-075,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0271,contract,required,2,2,SRC-HCDN-CONT-076,contract parser,4,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0272,relationship,required,3,1,SRC-HCDN-INT-077,interface parser,5,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0273,program,required,4,1,SRC-HCDN-DATA-078,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0274,risk_control,required,5,2,SRC-HCDN-SLA-079,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0275,application,optional,1,1,SRC-HCDN-PROP-080,SQL parser,8,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0276,data_product,required,2,1,SRC-HCDN-APP-081,measure parser,9,18,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0277,kpi,required,3,2,SRC-HCDN-SQL-082,contract parser,10,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0278,contract,required,4,1,SRC-HCDN-STARS-083,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0279,relationship,required,5,1,SRC-HCDN-CONT-084,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0280,program,required,1,2,SRC-HCDN-INT-085,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0281,risk_control,required,2,1,SRC-HCDN-DATA-086,SQL parser,2,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0282,application,optional,3,1,SRC-HCDN-SLA-087,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0283,data_product,required,4,2,SRC-HCDN-PROP-088,contract parser,4,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0284,kpi,required,5,1,SRC-HCDN-APP-089,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0285,contract,required,1,1,SRC-HCDN-SQL-090,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0286,relationship,required,2,2,SRC-HCDN-STARS-091,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0287,program,required,3,1,SRC-HCDN-CONT-092,SQL parser,8,9,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0288,risk_control,required,4,1,SRC-HCDN-INT-093,measure parser,9,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0289,application,optional,5,2,SRC-HCDN-DATA-094,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0290,data_product,required,1,1,SRC-HCDN-SLA-095,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0291,kpi,required,2,1,SRC-HCDN-PROP-096,proposal parser,12,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0292,contract,required,3,2,SRC-HCDN-APP-001,cmdb parser,1,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0293,relationship,required,4,1,SRC-HCDN-SQL-002,SQL parser,2,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0294,program,required,5,1,SRC-HCDN-STARS-003,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0295,risk_control,required,1,2,SRC-HCDN-CONT-004,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0296,application,optional,2,1,SRC-HCDN-INT-005,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0297,data_product,required,3,1,SRC-HCDN-DATA-006,proposal parser,6,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0298,kpi,required,4,2,SRC-HCDN-SLA-007,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0299,contract,required,5,1,SRC-HCDN-PROP-008,SQL parser,8,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0300,relationship,required,1,1,SRC-HCDN-APP-009,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0301,program,required,2,2,SRC-HCDN-SQL-010,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0302,risk_control,required,3,1,SRC-HCDN-STARS-011,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0303,application,optional,4,1,SRC-HCDN-CONT-012,proposal parser,12,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0304,data_product,required,5,2,SRC-HCDN-INT-013,cmdb parser,1,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0305,kpi,required,1,1,SRC-HCDN-DATA-014,SQL parser,2,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0306,contract,required,2,1,SRC-HCDN-SLA-015,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0307,relationship,required,3,2,SRC-HCDN-PROP-016,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0308,program,required,4,1,SRC-HCDN-APP-017,interface parser,5,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0309,risk_control,required,5,1,SRC-HCDN-SQL-018,proposal parser,6,11,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0310,application,optional,1,2,SRC-HCDN-STARS-019,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0311,data_product,required,2,1,SRC-HCDN-CONT-020,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0312,kpi,required,3,1,SRC-HCDN-INT-021,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0313,contract,required,4,2,SRC-HCDN-DATA-022,contract parser,10,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0314,relationship,required,5,1,SRC-HCDN-SLA-023,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0315,program,required,1,1,SRC-HCDN-PROP-024,proposal parser,12,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0316,risk_control,required,2,2,SRC-HCDN-APP-025,cmdb parser,1,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0317,application,optional,3,1,SRC-HCDN-SQL-026,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0318,data_product,required,4,1,SRC-HCDN-STARS-027,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0319,kpi,required,5,2,SRC-HCDN-CONT-028,contract parser,4,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0320,contract,required,1,1,SRC-HCDN-INT-029,interface parser,5,2,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0321,relationship,required,2,1,SRC-HCDN-DATA-030,proposal parser,6,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0322,program,required,3,2,SRC-HCDN-SLA-031,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0323,risk_control,required,4,1,SRC-HCDN-PROP-032,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0324,application,optional,5,1,SRC-HCDN-APP-033,measure parser,9,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0325,data_product,required,1,2,SRC-HCDN-SQL-034,contract parser,10,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0326,kpi,required,2,1,SRC-HCDN-STARS-035,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0327,contract,required,3,1,SRC-HCDN-CONT-036,proposal parser,12,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0328,relationship,required,4,2,SRC-HCDN-INT-037,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0329,program,required,5,1,SRC-HCDN-DATA-038,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0330,risk_control,required,1,1,SRC-HCDN-SLA-039,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0331,application,optional,2,2,SRC-HCDN-PROP-040,contract parser,4,13,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0332,data_product,required,3,1,SRC-HCDN-APP-041,interface parser,5,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0333,kpi,required,4,1,SRC-HCDN-SQL-042,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0334,contract,required,5,2,SRC-HCDN-STARS-043,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0335,relationship,required,1,1,SRC-HCDN-CONT-044,SQL parser,8,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0336,program,required,2,1,SRC-HCDN-INT-045,measure parser,9,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0337,risk_control,required,3,2,SRC-HCDN-DATA-046,contract parser,10,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0338,application,optional,4,1,SRC-HCDN-SLA-047,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0339,data_product,required,5,1,SRC-HCDN-PROP-048,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0340,kpi,required,1,2,SRC-HCDN-APP-049,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0341,contract,required,2,1,SRC-HCDN-SQL-050,SQL parser,2,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0342,relationship,required,3,1,SRC-HCDN-STARS-051,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0343,program,required,4,2,SRC-HCDN-CONT-052,contract parser,4,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0344,risk_control,required,5,1,SRC-HCDN-INT-053,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0345,application,optional,1,1,SRC-HCDN-DATA-054,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0346,data_product,required,2,2,SRC-HCDN-SLA-055,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0347,kpi,required,3,1,SRC-HCDN-PROP-056,SQL parser,8,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0348,contract,required,4,1,SRC-HCDN-APP-057,measure parser,9,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0349,relationship,required,5,2,SRC-HCDN-SQL-058,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0350,program,required,1,1,SRC-HCDN-STARS-059,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0351,risk_control,required,2,1,SRC-HCDN-CONT-060,proposal parser,12,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0352,application,optional,3,2,SRC-HCDN-INT-061,cmdb parser,1,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0353,data_product,required,4,1,SRC-HCDN-DATA-062,SQL parser,2,15,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0354,kpi,required,5,1,SRC-HCDN-SLA-063,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0355,contract,required,1,2,SRC-HCDN-PROP-064,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0356,relationship,required,2,1,SRC-HCDN-APP-065,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0357,program,required,3,1,SRC-HCDN-SQL-066,proposal parser,6,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0358,risk_control,required,4,2,SRC-HCDN-STARS-067,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0359,application,optional,5,1,SRC-HCDN-CONT-068,SQL parser,8,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0360,data_product,required,1,1,SRC-HCDN-INT-069,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0361,kpi,required,2,2,SRC-HCDN-DATA-070,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0362,contract,required,3,1,SRC-HCDN-SLA-071,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0363,relationship,required,4,1,SRC-HCDN-PROP-072,proposal parser,12,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0364,program,required,5,2,SRC-HCDN-APP-073,cmdb parser,1,6,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0365,risk_control,required,1,1,SRC-HCDN-SQL-074,SQL parser,2,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0366,application,optional,2,1,SRC-HCDN-STARS-075,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0367,data_product,required,3,2,SRC-HCDN-CONT-076,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0368,kpi,required,4,1,SRC-HCDN-INT-077,interface parser,5,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0369,contract,required,5,1,SRC-HCDN-DATA-078,proposal parser,6,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0370,relationship,required,1,2,SRC-HCDN-SLA-079,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0371,program,required,2,1,SRC-HCDN-PROP-080,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0372,risk_control,required,3,1,SRC-HCDN-APP-081,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0373,application,optional,4,2,SRC-HCDN-SQL-082,contract parser,10,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0374,data_product,required,5,1,SRC-HCDN-STARS-083,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0375,kpi,required,1,1,SRC-HCDN-CONT-084,proposal parser,12,17,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0376,contract,required,2,2,SRC-HCDN-INT-085,cmdb parser,1,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0377,relationship,required,3,1,SRC-HCDN-DATA-086,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0378,program,required,4,1,SRC-HCDN-SLA-087,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0379,risk_control,required,5,2,SRC-HCDN-PROP-088,contract parser,4,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0380,application,optional,1,1,SRC-HCDN-APP-089,interface parser,5,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0381,data_product,required,2,1,SRC-HCDN-SQL-090,proposal parser,6,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0382,kpi,required,3,2,SRC-HCDN-STARS-091,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0383,contract,required,4,1,SRC-HCDN-CONT-092,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0384,relationship,required,5,1,SRC-HCDN-INT-093,measure parser,9,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0385,program,required,1,2,SRC-HCDN-DATA-094,contract parser,10,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0386,risk_control,required,2,1,SRC-HCDN-SLA-095,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0387,application,optional,3,1,SRC-HCDN-PROP-096,proposal parser,12,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0388,data_product,required,4,2,SRC-HCDN-APP-001,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0389,kpi,required,5,1,SRC-HCDN-SQL-002,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0390,contract,required,1,1,SRC-HCDN-STARS-003,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0391,relationship,required,2,2,SRC-HCDN-CONT-004,contract parser,4,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0392,program,required,3,1,SRC-HCDN-INT-005,interface parser,5,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0393,risk_control,required,4,1,SRC-HCDN-DATA-006,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0394,application,optional,5,2,SRC-HCDN-SLA-007,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0395,data_product,required,1,1,SRC-HCDN-PROP-008,SQL parser,8,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0396,kpi,required,2,1,SRC-HCDN-APP-009,measure parser,9,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0397,contract,required,3,2,SRC-HCDN-SQL-010,contract parser,10,19,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0398,relationship,required,4,1,SRC-HCDN-STARS-011,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0399,program,required,5,1,SRC-HCDN-CONT-012,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0400,risk_control,required,1,2,SRC-HCDN-INT-013,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0401,application,optional,2,1,SRC-HCDN-DATA-014,SQL parser,2,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0402,data_product,required,3,1,SRC-HCDN-SLA-015,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0403,kpi,required,4,2,SRC-HCDN-PROP-016,contract parser,4,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0404,contract,required,5,1,SRC-HCDN-APP-017,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0405,relationship,required,1,1,SRC-HCDN-SQL-018,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0406,program,required,2,2,SRC-HCDN-STARS-019,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0407,risk_control,required,3,1,SRC-HCDN-CONT-020,SQL parser,8,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0408,application,optional,4,1,SRC-HCDN-INT-021,measure parser,9,10,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0409,data_product,required,5,2,SRC-HCDN-DATA-022,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0410,kpi,required,1,1,SRC-HCDN-SLA-023,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0411,contract,required,2,1,SRC-HCDN-PROP-024,proposal parser,12,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0412,relationship,required,3,2,SRC-HCDN-APP-025,cmdb parser,1,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0413,program,required,4,1,SRC-HCDN-SQL-026,SQL parser,2,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0414,risk_control,required,5,1,SRC-HCDN-STARS-027,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0415,application,optional,1,2,SRC-HCDN-CONT-028,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0416,data_product,required,2,1,SRC-HCDN-INT-029,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0417,kpi,required,3,1,SRC-HCDN-DATA-030,proposal parser,6,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0418,contract,required,4,2,SRC-HCDN-SLA-031,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0419,relationship,required,5,1,SRC-HCDN-PROP-032,SQL parser,8,21,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0420,program,required,1,1,SRC-HCDN-APP-033,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0421,risk_control,required,2,2,SRC-HCDN-SQL-034,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0422,application,optional,3,1,SRC-HCDN-STARS-035,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0423,data_product,required,4,1,SRC-HCDN-CONT-036,proposal parser,12,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0424,kpi,required,5,2,SRC-HCDN-INT-037,cmdb parser,1,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0425,contract,required,1,1,SRC-HCDN-DATA-038,SQL parser,2,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0426,relationship,required,2,1,SRC-HCDN-SLA-039,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0427,program,required,3,2,SRC-HCDN-PROP-040,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0428,risk_control,required,4,1,SRC-HCDN-APP-041,interface parser,5,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0429,application,optional,5,1,SRC-HCDN-SQL-042,proposal parser,6,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0430,data_product,required,1,2,SRC-HCDN-STARS-043,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0431,kpi,required,2,1,SRC-HCDN-CONT-044,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0432,contract,required,3,1,SRC-HCDN-INT-045,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0433,relationship,required,4,2,SRC-HCDN-DATA-046,contract parser,10,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0434,program,required,5,1,SRC-HCDN-SLA-047,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0435,risk_control,required,1,1,SRC-HCDN-PROP-048,proposal parser,12,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0436,application,optional,2,2,SRC-HCDN-APP-049,cmdb parser,1,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0437,data_product,required,3,1,SRC-HCDN-SQL-050,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0438,kpi,required,4,1,SRC-HCDN-STARS-051,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0439,contract,required,5,2,SRC-HCDN-CONT-052,contract parser,4,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0440,relationship,required,1,1,SRC-HCDN-INT-053,interface parser,5,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0441,program,required,2,1,SRC-HCDN-DATA-054,proposal parser,6,3,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0442,risk_control,required,3,2,SRC-HCDN-SLA-055,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0443,application,optional,4,1,SRC-HCDN-PROP-056,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0444,data_product,required,5,1,SRC-HCDN-APP-057,measure parser,9,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0445,kpi,required,1,2,SRC-HCDN-SQL-058,contract parser,10,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0446,contract,required,2,1,SRC-HCDN-STARS-059,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0447,relationship,required,3,1,SRC-HCDN-CONT-060,proposal parser,12,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0448,program,required,4,2,SRC-HCDN-INT-061,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0449,risk_control,required,5,1,SRC-HCDN-DATA-062,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0450,application,optional,1,1,SRC-HCDN-SLA-063,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0451,data_product,required,2,2,SRC-HCDN-PROP-064,contract parser,4,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0452,kpi,required,3,1,SRC-HCDN-APP-065,interface parser,5,14,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0453,contract,required,4,1,SRC-HCDN-SQL-066,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0454,relationship,required,5,2,SRC-HCDN-STARS-067,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0455,program,required,1,1,SRC-HCDN-CONT-068,SQL parser,8,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0456,risk_control,required,2,1,SRC-HCDN-INT-069,measure parser,9,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0457,application,optional,3,2,SRC-HCDN-DATA-070,contract parser,10,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0458,data_product,required,4,1,SRC-HCDN-SLA-071,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0459,kpi,required,5,1,SRC-HCDN-PROP-072,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0460,contract,required,1,2,SRC-HCDN-APP-073,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0461,relationship,required,2,1,SRC-HCDN-SQL-074,SQL parser,2,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0462,program,required,3,1,SRC-HCDN-STARS-075,measure parser,3,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0463,risk_control,required,4,2,SRC-HCDN-CONT-076,contract parser,4,5,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0464,application,optional,5,1,SRC-HCDN-INT-077,interface parser,5,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0465,data_product,required,1,1,SRC-HCDN-DATA-078,proposal parser,6,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0466,kpi,required,2,2,SRC-HCDN-SLA-079,cmdb parser,7,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0467,contract,required,3,1,SRC-HCDN-PROP-080,SQL parser,8,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0468,relationship,required,4,1,SRC-HCDN-APP-081,measure parser,9,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0469,program,required,5,2,SRC-HCDN-SQL-082,contract parser,10,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0470,risk_control,required,1,1,SRC-HCDN-STARS-083,interface parser,11,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0471,application,optional,2,1,SRC-HCDN-CONT-084,proposal parser,12,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0472,data_product,required,3,2,SRC-HCDN-INT-085,cmdb parser,1,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0473,kpi,required,4,1,SRC-HCDN-DATA-086,SQL parser,2,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0474,contract,required,5,1,SRC-HCDN-SLA-087,measure parser,3,16,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0475,relationship,required,1,2,SRC-HCDN-PROP-088,contract parser,4,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0476,program,required,2,1,SRC-HCDN-APP-089,interface parser,5,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0477,risk_control,required,3,1,SRC-HCDN-SQL-090,proposal parser,6,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0478,application,optional,4,2,SRC-HCDN-STARS-091,cmdb parser,7,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0479,data_product,required,5,1,SRC-HCDN-CONT-092,SQL parser,8,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0480,kpi,required,1,1,SRC-HCDN-INT-093,measure parser,9,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0481,contract,required,2,2,SRC-HCDN-DATA-094,contract parser,10,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0482,relationship,required,3,1,SRC-HCDN-SLA-095,interface parser,11,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0483,program,required,4,1,SRC-HCDN-PROP-096,proposal parser,12,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0484,risk_control,required,5,2,SRC-HCDN-APP-001,cmdb parser,1,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0485,application,optional,1,1,SRC-HCDN-SQL-002,SQL parser,2,7,ambiguous owner,conflicting owner,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0486,data_product,required,2,1,SRC-HCDN-STARS-003,measure parser,3,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0487,kpi,required,3,2,SRC-HCDN-CONT-004,contract parser,4,9,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0488,contract,required,4,1,SRC-HCDN-INT-005,interface parser,5,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0489,relationship,required,5,1,SRC-HCDN-DATA-006,proposal parser,6,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0490,program,required,1,2,SRC-HCDN-SLA-007,cmdb parser,7,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0491,risk_control,required,2,1,SRC-HCDN-PROP-008,SQL parser,8,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0492,application,optional,3,1,SRC-HCDN-APP-009,measure parser,9,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0493,data_product,required,4,2,SRC-HCDN-SQL-010,contract parser,10,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0494,kpi,required,5,1,SRC-HCDN-STARS-011,interface parser,11,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0495,contract,required,1,1,SRC-HCDN-CONT-012,proposal parser,12,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0496,relationship,required,2,2,SRC-HCDN-INT-013,cmdb parser,1,18,none,none,true,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0497,program,required,3,1,SRC-HCDN-DATA-014,SQL parser,2,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0498,risk_control,required,4,1,SRC-HCDN-SLA-015,measure parser,3,20,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0499,application,optional,5,2,SRC-HCDN-PROP-016,contract parser,4,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0500,data_product,required,1,1,SRC-HCDN-APP-017,interface parser,5,2,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0501,kpi,required,2,1,SRC-HCDN-SQL-018,proposal parser,6,3,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0502,contract,required,3,2,SRC-HCDN-STARS-019,cmdb parser,7,4,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0503,relationship,required,4,1,SRC-HCDN-CONT-020,SQL parser,8,5,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0504,program,required,5,1,SRC-HCDN-INT-021,measure parser,9,6,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0505,risk_control,required,1,2,SRC-HCDN-DATA-022,contract parser,10,7,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0506,application,optional,2,1,SRC-HCDN-SLA-023,interface parser,11,8,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0507,data_product,required,3,1,SRC-HCDN-PROP-024,proposal parser,12,9,retired/active collision,value mismatch,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0508,kpi,required,4,2,SRC-HCDN-APP-025,cmdb parser,1,10,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0509,contract,required,5,1,SRC-HCDN-SQL-026,SQL parser,2,11,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0510,relationship,required,1,1,SRC-HCDN-STARS-027,measure parser,3,12,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0511,program,required,2,2,SRC-HCDN-CONT-028,contract parser,4,13,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0512,risk_control,required,3,1,SRC-HCDN-INT-029,interface parser,5,14,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0513,application,optional,4,1,SRC-HCDN-DATA-030,proposal parser,6,15,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0514,data_product,required,5,2,SRC-HCDN-SLA-031,cmdb parser,7,16,duplicate native ID,conflicting KPI definition,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0515,kpi,required,1,1,SRC-HCDN-PROP-032,SQL parser,8,17,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0516,contract,required,2,1,SRC-HCDN-APP-033,measure parser,9,18,none,none,true,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0517,relationship,required,3,2,SRC-HCDN-SQL-034,contract parser,10,19,ambiguous owner,conflicting owner,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0518,program,required,4,1,SRC-HCDN-STARS-035,interface parser,11,20,duplicate native ID,conflicting KPI definition,false,false,visible evidence exists but ownership/source conflict blocks publication
+TRUTH-HCDN-0519,risk_control,required,5,1,SRC-HCDN-CONT-036,proposal parser,12,21,retired/active collision,value mismatch,false,true,reconstructable with available parser-visible evidence
+TRUTH-HCDN-0520,application,optional,1,2,SRC-HCDN-INT-037,cmdb parser,1,2,none,none,true,true,reconstructable with available parser-visible evidence

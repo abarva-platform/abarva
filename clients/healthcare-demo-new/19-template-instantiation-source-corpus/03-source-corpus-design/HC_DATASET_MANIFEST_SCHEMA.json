@@ -1,0 +1,21 @@
+{
+  "dataset_id": "healthcare-demo-new-source-corpus-v1",
+  "tenant_key": "healthcare-demo-new",
+  "allowed_use": "synthetic_design_review_only",
+  "required_fields": [
+    "source_id",
+    "tenant_key",
+    "owner_role",
+    "source_family",
+    "classification",
+    "lineage_state",
+    "review_state",
+    "restricted_flag"
+  ],
+  "disallowed_actions": [
+    "azure_apply",
+    "postgres_migration",
+    "parser_run",
+    "runtime_wiring"
+  ]
+}

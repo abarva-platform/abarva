@@ -1,0 +1,82 @@
+requirement_id,lot_id,service_tower,proposal_id,requirement_type,requirement_text,priority,source_id
+REQ-HCDN-LOT-HCDN-01-A-001,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-A-LOT-HCDN-01,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-A-002,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-A-LOT-HCDN-01,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-A-003,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-A-LOT-HCDN-01,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-B-001,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-B-LOT-HCDN-01,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-B-002,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-B-LOT-HCDN-01,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-B-003,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-B-LOT-HCDN-01,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-C-001,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-C-LOT-HCDN-01,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-C-002,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-C-LOT-HCDN-01,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-01-C-003,LOT-HCDN-01,Clinical and Epic AMS,PROP-HCDN-C-LOT-HCDN-01,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-01
+REQ-HCDN-LOT-HCDN-02-A-001,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-A-LOT-HCDN-02,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-A-002,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-A-LOT-HCDN-02,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-A-003,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-A-LOT-HCDN-02,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-B-001,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-B-LOT-HCDN-02,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-B-002,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-B-LOT-HCDN-02,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-B-003,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-B-LOT-HCDN-02,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-C-001,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-C-LOT-HCDN-02,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-C-002,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-C-LOT-HCDN-02,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-02-C-003,LOT-HCDN-02,Payer Platform Operations,PROP-HCDN-C-LOT-HCDN-02,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-02
+REQ-HCDN-LOT-HCDN-03-A-001,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-A-LOT-HCDN-03,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-A-002,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-A-LOT-HCDN-03,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-A-003,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-A-LOT-HCDN-03,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-B-001,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-B-LOT-HCDN-03,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-B-002,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-B-LOT-HCDN-03,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-B-003,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-B-LOT-HCDN-03,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-C-001,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-C-LOT-HCDN-03,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-C-002,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-C-LOT-HCDN-03,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-03-C-003,LOT-HCDN-03,Data Analytics and AI,PROP-HCDN-C-LOT-HCDN-03,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-03
+REQ-HCDN-LOT-HCDN-04-A-001,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-A-LOT-HCDN-04,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-A-002,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-A-LOT-HCDN-04,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-A-003,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-A-LOT-HCDN-04,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-B-001,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-B-LOT-HCDN-04,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-B-002,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-B-LOT-HCDN-04,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-B-003,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-B-LOT-HCDN-04,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-C-001,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-C-LOT-HCDN-04,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-C-002,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-C-LOT-HCDN-04,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-04-C-003,LOT-HCDN-04,Revenue Cycle Technology,PROP-HCDN-C-LOT-HCDN-04,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-04
+REQ-HCDN-LOT-HCDN-05-A-001,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-A-LOT-HCDN-05,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-A-002,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-A-LOT-HCDN-05,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-A-003,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-A-LOT-HCDN-05,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-B-001,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-B-LOT-HCDN-05,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-B-002,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-B-LOT-HCDN-05,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-B-003,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-B-LOT-HCDN-05,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-C-001,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-C-LOT-HCDN-05,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-C-002,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-C-LOT-HCDN-05,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-05-C-003,LOT-HCDN-05,Cloud Infrastructure and Data Center,PROP-HCDN-C-LOT-HCDN-05,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-05
+REQ-HCDN-LOT-HCDN-06-A-001,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-A-LOT-HCDN-06,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-A-002,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-A-LOT-HCDN-06,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-A-003,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-A-LOT-HCDN-06,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-B-001,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-B-LOT-HCDN-06,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-B-002,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-B-LOT-HCDN-06,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-B-003,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-B-LOT-HCDN-06,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-C-001,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-C-LOT-HCDN-06,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-C-002,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-C-LOT-HCDN-06,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-06-C-003,LOT-HCDN-06,Workplace and Contact Center,PROP-HCDN-C-LOT-HCDN-06,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-06
+REQ-HCDN-LOT-HCDN-07-A-001,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-A-LOT-HCDN-07,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-A-002,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-A-LOT-HCDN-07,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-A-003,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-A-LOT-HCDN-07,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-B-001,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-B-LOT-HCDN-07,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-B-002,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-B-LOT-HCDN-07,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-B-003,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-B-LOT-HCDN-07,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-C-001,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-C-LOT-HCDN-07,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-C-002,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-C-LOT-HCDN-07,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-07-C-003,LOT-HCDN-07,Security Identity and Compliance,PROP-HCDN-C-LOT-HCDN-07,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-07
+REQ-HCDN-LOT-HCDN-08-A-001,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-A-LOT-HCDN-08,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-A-002,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-A-LOT-HCDN-08,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-A-003,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-A-LOT-HCDN-08,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-B-001,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-B-LOT-HCDN-08,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-B-002,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-B-LOT-HCDN-08,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-B-003,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-B-LOT-HCDN-08,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-C-001,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-C-LOT-HCDN-08,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-C-002,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-C-LOT-HCDN-08,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-08-C-003,LOT-HCDN-08,Integration and Interoperability,PROP-HCDN-C-LOT-HCDN-08,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-08
+REQ-HCDN-LOT-HCDN-09-A-001,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-A-LOT-HCDN-09,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-A-002,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-A-LOT-HCDN-09,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-A-003,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-A-LOT-HCDN-09,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-B-001,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-B-LOT-HCDN-09,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-B-002,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-B-LOT-HCDN-09,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-B-003,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-B-LOT-HCDN-09,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-C-001,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-C-LOT-HCDN-09,scope coverage,all in-scope apps/services and exclusions,mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-C-002,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-C-LOT-HCDN-09,transition,"transition plan, knowledge transfer and service continuity",mandatory,SRC-HCDN-RFP-LOT-HCDN-09
+REQ-HCDN-LOT-HCDN-09-C-003,LOT-HCDN-09,ERP and Corporate Platforms,PROP-HCDN-C-LOT-HCDN-09,commercial,"pricing, rate card, assumptions, service credits and value commitments",mandatory,SRC-HCDN-RFP-LOT-HCDN-09

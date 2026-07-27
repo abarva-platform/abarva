@@ -1,0 +1,6 @@
+source_id,source_native_ref,truth_id,expected_extraction,restricted_reason
+SRC-HCDN-STARS-001,Population summary tab,TRUTH-HCDN-001,tenant-specific Medicare/MA exposure,restricted evaluator answer key
+SRC-HCDN-EPIC-001,module_inventory,TRUTH-HCDN-002,Epic footprint by module/environment,restricted evaluator answer key
+SRC-HCDN-SQL-001,server_catalog,TRUTH-HCDN-003,SQL/EDW debt and lineage gaps,restricted evaluator answer key
+SRC-HCDN-STR-001,cloud_strategy,TRUTH-HCDN-004,Azure current / AWS future posture,restricted evaluator answer key
+SRC-HCDN-PROP-001,proposal_scope,TRUTH-HCDN-005,Source event scope,restricted evaluator answer key

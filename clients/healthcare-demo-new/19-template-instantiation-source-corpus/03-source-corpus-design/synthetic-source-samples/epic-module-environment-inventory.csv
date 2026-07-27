@@ -1,0 +1,116 @@
+epic_asset_id,epic_module,domain,business_function,environment,scope,analytics_or_interface_dependency,roadmap_disposition,vendor_id,contract_id
+EPIC-HCDN-0001,Epic Hyperspace,clinical_transaction,Clinical Operations,production,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0003
+EPIC-HCDN-0002,Epic Hyperspace,clinical_transaction,Clinical Operations,training,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0004
+EPIC-HCDN-0003,Epic Hyperspace,clinical_transaction,Clinical Operations,test,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0005
+EPIC-HCDN-0004,Epic Hyperspace,clinical_transaction,Clinical Operations,upgrade,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0006
+EPIC-HCDN-0005,Epic Hyperspace,clinical_transaction,Clinical Operations,DR,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0007
+EPIC-HCDN-0006,Epic Chronicles,clinical_transaction,Clinical Operations,production,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0008
+EPIC-HCDN-0007,Epic Chronicles,clinical_transaction,Clinical Operations,training,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0009
+EPIC-HCDN-0008,Epic Chronicles,clinical_transaction,Clinical Operations,test,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0010
+EPIC-HCDN-0009,Epic Chronicles,clinical_transaction,Clinical Operations,upgrade,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0011
+EPIC-HCDN-0010,Epic Chronicles,clinical_transaction,Clinical Operations,DR,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0012
+EPIC-HCDN-0011,Epic Clarity,operational_reporting,Data and Analytics,production,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0013
+EPIC-HCDN-0012,Epic Clarity,operational_reporting,Data and Analytics,training,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0014
+EPIC-HCDN-0013,Epic Clarity,operational_reporting,Data and Analytics,test,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0015
+EPIC-HCDN-0014,Epic Clarity,operational_reporting,Data and Analytics,upgrade,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0016
+EPIC-HCDN-0015,Epic Clarity,operational_reporting,Data and Analytics,DR,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0017
+EPIC-HCDN-0016,Epic Caboodle,enterprise_analytics,Data and Analytics,production,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0018
+EPIC-HCDN-0017,Epic Caboodle,enterprise_analytics,Data and Analytics,training,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0019
+EPIC-HCDN-0018,Epic Caboodle,enterprise_analytics,Data and Analytics,test,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0020
+EPIC-HCDN-0019,Epic Caboodle,enterprise_analytics,Data and Analytics,upgrade,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0021
+EPIC-HCDN-0020,Epic Caboodle,enterprise_analytics,Data and Analytics,DR,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0022
+EPIC-HCDN-0021,Epic Cogito,operational_reporting,Clinical Analytics,production,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0023
+EPIC-HCDN-0022,Epic Cogito,operational_reporting,Clinical Analytics,training,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0024
+EPIC-HCDN-0023,Epic Cogito,operational_reporting,Clinical Analytics,test,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0025
+EPIC-HCDN-0024,Epic Cogito,operational_reporting,Clinical Analytics,upgrade,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0026
+EPIC-HCDN-0025,Epic Cogito,operational_reporting,Clinical Analytics,DR,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0027
+EPIC-HCDN-0026,Epic Healthy Planet,population_health,Population Health,production,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0028
+EPIC-HCDN-0027,Epic Healthy Planet,population_health,Population Health,training,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0029
+EPIC-HCDN-0028,Epic Healthy Planet,population_health,Population Health,test,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0030
+EPIC-HCDN-0029,Epic Healthy Planet,population_health,Population Health,upgrade,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0031
+EPIC-HCDN-0030,Epic Healthy Planet,population_health,Population Health,DR,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0032
+EPIC-HCDN-0031,Epic Resolute HB,revenue_cycle,Revenue Cycle,production,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0033
+EPIC-HCDN-0032,Epic Resolute HB,revenue_cycle,Revenue Cycle,training,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0034
+EPIC-HCDN-0033,Epic Resolute HB,revenue_cycle,Revenue Cycle,test,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0035
+EPIC-HCDN-0034,Epic Resolute HB,revenue_cycle,Revenue Cycle,upgrade,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0036
+EPIC-HCDN-0035,Epic Resolute HB,revenue_cycle,Revenue Cycle,DR,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0037
+EPIC-HCDN-0036,Epic Resolute PB,revenue_cycle,Revenue Cycle,production,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0038
+EPIC-HCDN-0037,Epic Resolute PB,revenue_cycle,Revenue Cycle,training,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0039
+EPIC-HCDN-0038,Epic Resolute PB,revenue_cycle,Revenue Cycle,test,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0040
+EPIC-HCDN-0039,Epic Resolute PB,revenue_cycle,Revenue Cycle,upgrade,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0041
+EPIC-HCDN-0040,Epic Resolute PB,revenue_cycle,Revenue Cycle,DR,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0042
+EPIC-HCDN-0041,Epic Cadence,patient_access,Patient Access,production,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0043
+EPIC-HCDN-0042,Epic Cadence,patient_access,Patient Access,training,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0044
+EPIC-HCDN-0043,Epic Cadence,patient_access,Patient Access,test,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0045
+EPIC-HCDN-0044,Epic Cadence,patient_access,Patient Access,upgrade,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0046
+EPIC-HCDN-0045,Epic Cadence,patient_access,Patient Access,DR,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0047
+EPIC-HCDN-0046,Epic Prelude,patient_access,Patient Access,production,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0048
+EPIC-HCDN-0047,Epic Prelude,patient_access,Patient Access,training,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0049
+EPIC-HCDN-0048,Epic Prelude,patient_access,Patient Access,test,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0050
+EPIC-HCDN-0049,Epic Prelude,patient_access,Patient Access,upgrade,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0051
+EPIC-HCDN-0050,Epic Prelude,patient_access,Patient Access,DR,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0052
+EPIC-HCDN-0051,Epic Grand Central,clinical_operations,Bed Management,production,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0053
+EPIC-HCDN-0052,Epic Grand Central,clinical_operations,Bed Management,training,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0054
+EPIC-HCDN-0053,Epic Grand Central,clinical_operations,Bed Management,test,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0055
+EPIC-HCDN-0054,Epic Grand Central,clinical_operations,Bed Management,upgrade,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0056
+EPIC-HCDN-0055,Epic Grand Central,clinical_operations,Bed Management,DR,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0057
+EPIC-HCDN-0056,Epic Willow,pharmacy,Pharmacy,production,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0058
+EPIC-HCDN-0057,Epic Willow,pharmacy,Pharmacy,training,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0059
+EPIC-HCDN-0058,Epic Willow,pharmacy,Pharmacy,test,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0060
+EPIC-HCDN-0059,Epic Willow,pharmacy,Pharmacy,upgrade,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0061
+EPIC-HCDN-0060,Epic Willow,pharmacy,Pharmacy,DR,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0062
+EPIC-HCDN-0061,Epic Beacon,oncology,Oncology,production,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0063
+EPIC-HCDN-0062,Epic Beacon,oncology,Oncology,training,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0064
+EPIC-HCDN-0063,Epic Beacon,oncology,Oncology,test,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0065
+EPIC-HCDN-0064,Epic Beacon,oncology,Oncology,upgrade,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0066
+EPIC-HCDN-0065,Epic Beacon,oncology,Oncology,DR,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0067
+EPIC-HCDN-0066,Epic Radiant,imaging,Imaging,production,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0068
+EPIC-HCDN-0067,Epic Radiant,imaging,Imaging,training,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0069
+EPIC-HCDN-0068,Epic Radiant,imaging,Imaging,test,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0070
+EPIC-HCDN-0069,Epic Radiant,imaging,Imaging,upgrade,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0071
+EPIC-HCDN-0070,Epic Radiant,imaging,Imaging,DR,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0072
+EPIC-HCDN-0071,Epic Cupid,cardiology,Cardiology,production,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0073
+EPIC-HCDN-0072,Epic Cupid,cardiology,Cardiology,training,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0074
+EPIC-HCDN-0073,Epic Cupid,cardiology,Cardiology,test,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0075
+EPIC-HCDN-0074,Epic Cupid,cardiology,Cardiology,upgrade,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0076
+EPIC-HCDN-0075,Epic Cupid,cardiology,Cardiology,DR,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0077
+EPIC-HCDN-0076,Epic OpTime,surgery,Surgery,production,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0078
+EPIC-HCDN-0077,Epic OpTime,surgery,Surgery,training,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0079
+EPIC-HCDN-0078,Epic OpTime,surgery,Surgery,test,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0080
+EPIC-HCDN-0079,Epic OpTime,surgery,Surgery,upgrade,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0081
+EPIC-HCDN-0080,Epic OpTime,surgery,Surgery,DR,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0082
+EPIC-HCDN-0081,Epic Anesthesia,surgery,Surgery,production,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0083
+EPIC-HCDN-0082,Epic Anesthesia,surgery,Surgery,training,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0084
+EPIC-HCDN-0083,Epic Anesthesia,surgery,Surgery,test,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0085
+EPIC-HCDN-0084,Epic Anesthesia,surgery,Surgery,upgrade,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0086
+EPIC-HCDN-0085,Epic Anesthesia,surgery,Surgery,DR,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0087
+EPIC-HCDN-0086,Epic ASAP,emergency_department,Emergency Department,production,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0088
+EPIC-HCDN-0087,Epic ASAP,emergency_department,Emergency Department,training,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0089
+EPIC-HCDN-0088,Epic ASAP,emergency_department,Emergency Department,test,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0090
+EPIC-HCDN-0089,Epic ASAP,emergency_department,Emergency Department,upgrade,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0091
+EPIC-HCDN-0090,Epic ASAP,emergency_department,Emergency Department,DR,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0092
+EPIC-HCDN-0091,Epic Ambulatory,ambulatory,Ambulatory Care,production,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0093
+EPIC-HCDN-0092,Epic Ambulatory,ambulatory,Ambulatory Care,training,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0094
+EPIC-HCDN-0093,Epic Ambulatory,ambulatory,Ambulatory Care,test,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0095
+EPIC-HCDN-0094,Epic Ambulatory,ambulatory,Ambulatory Care,upgrade,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0096
+EPIC-HCDN-0095,Epic Ambulatory,ambulatory,Ambulatory Care,DR,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0097
+EPIC-HCDN-0096,Epic MyChart,patient_engagement,Digital Front Door,production,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0098
+EPIC-HCDN-0097,Epic MyChart,patient_engagement,Digital Front Door,training,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0099
+EPIC-HCDN-0098,Epic MyChart,patient_engagement,Digital Front Door,test,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0100
+EPIC-HCDN-0099,Epic MyChart,patient_engagement,Digital Front Door,upgrade,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0101
+EPIC-HCDN-0100,Epic MyChart,patient_engagement,Digital Front Door,DR,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0102
+EPIC-HCDN-0101,Epic Care Everywhere,interoperability,Interoperability,production,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0103
+EPIC-HCDN-0102,Epic Care Everywhere,interoperability,Interoperability,training,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0104
+EPIC-HCDN-0103,Epic Care Everywhere,interoperability,Interoperability,test,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0105
+EPIC-HCDN-0104,Epic Care Everywhere,interoperability,Interoperability,upgrade,ambulatory instance,Bridges,upgrade planned,VEND-HCDN-001,CONT-HCDN-0106
+EPIC-HCDN-0105,Epic Care Everywhere,interoperability,Interoperability,DR,health-plan scope,SQL mart extract,interface remediation,VEND-HCDN-001,CONT-HCDN-0107
+EPIC-HCDN-0106,Epic Bridges,interoperability,Integration Services,production,shared analytics scope,FHIR/API,analytics modernization,VEND-HCDN-001,CONT-HCDN-0108
+EPIC-HCDN-0107,Epic Bridges,interoperability,Integration Services,training,primary hospital instance,Chronicles,current,VEND-HCDN-001,CONT-HCDN-0109
+EPIC-HCDN-0108,Epic Bridges,interoperability,Integration Services,test,ambulatory instance,Clarity,upgrade planned,VEND-HCDN-001,CONT-HCDN-0110
+EPIC-HCDN-0109,Epic Bridges,interoperability,Integration Services,upgrade,health-plan scope,Caboodle,interface remediation,VEND-HCDN-001,CONT-HCDN-0111
+EPIC-HCDN-0110,Epic Bridges,interoperability,Integration Services,DR,shared analytics scope,Bridges,analytics modernization,VEND-HCDN-001,CONT-HCDN-0112
+EPIC-HCDN-0111,Epic Tapestry,payer_claims,Health Plan Operations,production,primary hospital instance,SQL mart extract,current,VEND-HCDN-001,CONT-HCDN-0113
+EPIC-HCDN-0112,Epic Tapestry,payer_claims,Health Plan Operations,training,ambulatory instance,FHIR/API,upgrade planned,VEND-HCDN-001,CONT-HCDN-0114
+EPIC-HCDN-0113,Epic Tapestry,payer_claims,Health Plan Operations,test,health-plan scope,Chronicles,interface remediation,VEND-HCDN-001,CONT-HCDN-0115
+EPIC-HCDN-0114,Epic Tapestry,payer_claims,Health Plan Operations,upgrade,shared analytics scope,Clarity,analytics modernization,VEND-HCDN-001,CONT-HCDN-0116
+EPIC-HCDN-0115,Epic Tapestry,payer_claims,Health Plan Operations,DR,primary hospital instance,Caboodle,current,VEND-HCDN-001,CONT-HCDN-0117

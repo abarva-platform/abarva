@@ -1,0 +1,136 @@
+transition_commitment_id,proposal_id,lot_id,bidder,commitment_type,duration,evidence_state
+TRANS-HCDN-LOT-HCDN-01-A-01,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-01-A-02,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-01-A-03,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-01-A-04,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-01-A-05,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-01-B-01,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-01-B-02,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-01-B-03,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-01-B-04,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-01-B-05,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-01-C-01,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-01-C-02,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-01-C-03,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-01-C-04,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-01-C-05,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-02-A-01,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-02-A-02,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-02-A-03,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-02-A-04,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-02-A-05,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-02-B-01,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-02-B-02,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-02-B-03,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-02-B-04,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-02-B-05,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-02-C-01,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-02-C-02,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-02-C-03,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-02-C-04,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-02-C-05,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-03-A-01,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-03-A-02,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-03-A-03,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-03-A-04,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-03-A-05,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-03-B-01,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-03-B-02,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-03-B-03,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-03-B-04,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-03-B-05,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-03-C-01,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-03-C-02,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-03-C-03,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-03-C-04,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-03-C-05,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-04-A-01,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-04-A-02,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-04-A-03,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-04-A-04,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-04-A-05,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-04-B-01,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-04-B-02,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-04-B-03,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-04-B-04,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-04-B-05,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-04-C-01,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-04-C-02,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-04-C-03,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-04-C-04,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-04-C-05,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-05-A-01,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-05-A-02,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-05-A-03,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-05-A-04,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-05-A-05,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-05-B-01,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-05-B-02,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-05-B-03,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-05-B-04,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-05-B-05,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-05-C-01,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-05-C-02,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-05-C-03,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-05-C-04,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-05-C-05,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-06-A-01,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-06-A-02,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-06-A-03,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-06-A-04,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-06-A-05,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-06-B-01,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-06-B-02,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-06-B-03,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-06-B-04,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-06-B-05,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-06-C-01,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-06-C-02,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-06-C-03,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-06-C-04,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-06-C-05,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-07-A-01,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-07-A-02,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-07-A-03,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-07-A-04,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-07-A-05,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-07-B-01,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-07-B-02,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-07-B-03,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-07-B-04,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-07-B-05,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-07-C-01,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-07-C-02,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-07-C-03,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-07-C-04,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-07-C-05,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-08-A-01,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-08-A-02,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-08-A-03,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-08-A-04,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-08-A-05,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-08-B-01,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-08-B-02,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-08-B-03,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-08-B-04,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-08-B-05,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-08-C-01,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-08-C-02,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-08-C-03,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-08-C-04,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-08-C-05,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-09-A-01,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-09-A-02,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-09-A-03,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-09-A-04,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-09-A-05,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-09-B-01,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-09-B-02,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-09-B-03,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-09-B-04,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-09-B-05,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,knowledge transfer,60 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-09-C-01,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,dual run,60 days,needs signoff
+TRANS-HCDN-LOT-HCDN-09-C-02,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,cutover rehearsal,90 days,assumption dependent
+TRANS-HCDN-LOT-HCDN-09-C-03,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,PHI access control,120 days,source-backed
+TRANS-HCDN-LOT-HCDN-09-C-04,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,hypercare,30 days,needs signoff
+TRANS-HCDN-LOT-HCDN-09-C-05,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,knowledge transfer,60 days,assumption dependent

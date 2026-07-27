@@ -1,0 +1,481 @@
+vendor_id,vendor_public_reference,vendor_category,strategic_tier,service_tower,primary_function,concentration_note
+VEND-HCDN-001,Synthetic Healthcare Supplier 001,claims administration,major,Payer Platform Operations,Revenue Cycle,standard review
+VEND-HCDN-002,Synthetic Healthcare Supplier 002,PBM/pharmacy,niche,Data Analytics and AI,Patient Access,standard review
+VEND-HCDN-003,Synthetic Healthcare Supplier 003,BPO/contact center,incumbent,Revenue Cycle Technology,Interoperability,standard review
+VEND-HCDN-004,Synthetic Healthcare Supplier 004,revenue cycle,emerging,Cloud Infrastructure and Data Center,Population Health,standard review
+VEND-HCDN-005,Synthetic Healthcare Supplier 005,prior authorization/UM,strategic,Workplace and Contact Center,Health Plan Operations,standard review
+VEND-HCDN-006,Synthetic Healthcare Supplier 006,quality Stars HEDIS RAF,major,Security Identity and Compliance,Medicare Advantage,standard review
+VEND-HCDN-007,Synthetic Healthcare Supplier 007,payment integrity,niche,Integration and Interoperability,Claims Operations,standard review
+VEND-HCDN-008,Synthetic Healthcare Supplier 008,cloud infrastructure,incumbent,ERP and Corporate Platforms,Utilization Management,standard review
+VEND-HCDN-009,Synthetic Healthcare Supplier 009,data analytics,emerging,Clinical and Epic AMS,Member Services,standard review
+VEND-HCDN-010,Synthetic Healthcare Supplier 010,AMS/IMS,strategic,Payer Platform Operations,Quality and Stars,concentration risk
+VEND-HCDN-011,Synthetic Healthcare Supplier 011,SaaS/software,major,Data Analytics and AI,Risk Adjustment,standard review
+VEND-HCDN-012,Synthetic Healthcare Supplier 012,AI/document automation,niche,Revenue Cycle Technology,Care Management,standard review
+VEND-HCDN-013,Synthetic Healthcare Supplier 013,telecom/network,incumbent,Cloud Infrastructure and Data Center,Finance,exit sensitive
+VEND-HCDN-014,Synthetic Healthcare Supplier 014,cybersecurity,emerging,Workplace and Contact Center,Coding,standard review
+VEND-HCDN-015,Synthetic Healthcare Supplier 015,identity,strategic,Security Identity and Compliance,Payer Contracting,standard review
+VEND-HCDN-016,Synthetic Healthcare Supplier 016,interoperability,major,Integration and Interoperability,Digital Front Door,standard review
+VEND-HCDN-017,Synthetic Healthcare Supplier 017,Epic/clinical platform,niche,ERP and Corporate Platforms,Contact Center,standard review
+VEND-HCDN-018,Synthetic Healthcare Supplier 018,claims administration,incumbent,Clinical and Epic AMS,Ambulatory Care,standard review
+VEND-HCDN-019,Synthetic Healthcare Supplier 019,PBM/pharmacy,emerging,Payer Platform Operations,Emergency Department,standard review
+VEND-HCDN-020,Synthetic Healthcare Supplier 020,BPO/contact center,strategic,Data Analytics and AI,Inpatient,concentration risk
+VEND-HCDN-021,Synthetic Healthcare Supplier 021,revenue cycle,major,Revenue Cycle Technology,Surgery,standard review
+VEND-HCDN-022,Synthetic Healthcare Supplier 022,prior authorization/UM,niche,Cloud Infrastructure and Data Center,Imaging,standard review
+VEND-HCDN-023,Synthetic Healthcare Supplier 023,quality Stars HEDIS RAF,incumbent,Workplace and Contact Center,Lab,standard review
+VEND-HCDN-024,Synthetic Healthcare Supplier 024,payment integrity,emerging,Security Identity and Compliance,Pharmacy,standard review
+VEND-HCDN-025,Synthetic Healthcare Supplier 025,cloud infrastructure,strategic,Integration and Interoperability,Oncology,standard review
+VEND-HCDN-026,Synthetic Healthcare Supplier 026,data analytics,major,ERP and Corporate Platforms,Cardiology,exit sensitive
+VEND-HCDN-027,Synthetic Healthcare Supplier 027,AMS/IMS,niche,Clinical and Epic AMS,Data and Analytics,standard review
+VEND-HCDN-028,Synthetic Healthcare Supplier 028,SaaS/software,incumbent,Payer Platform Operations,Clinical Analytics,standard review
+VEND-HCDN-029,Synthetic Healthcare Supplier 029,AI/document automation,emerging,Data Analytics and AI,Actuarial,standard review
+VEND-HCDN-030,Synthetic Healthcare Supplier 030,telecom/network,strategic,Revenue Cycle Technology,Departmental Reporting,concentration risk
+VEND-HCDN-031,Synthetic Healthcare Supplier 031,cybersecurity,major,Cloud Infrastructure and Data Center,AI Transformation,standard review
+VEND-HCDN-032,Synthetic Healthcare Supplier 032,identity,niche,Workplace and Contact Center,Technology,standard review
+VEND-HCDN-033,Synthetic Healthcare Supplier 033,interoperability,incumbent,Security Identity and Compliance,Security,standard review
+VEND-HCDN-034,Synthetic Healthcare Supplier 034,Epic/clinical platform,emerging,Integration and Interoperability,Procurement,standard review
+VEND-HCDN-035,Synthetic Healthcare Supplier 035,claims administration,strategic,ERP and Corporate Platforms,HR,standard review
+VEND-HCDN-036,Synthetic Healthcare Supplier 036,PBM/pharmacy,major,Clinical and Epic AMS,Supply Chain,standard review
+VEND-HCDN-037,Synthetic Healthcare Supplier 037,BPO/contact center,niche,Payer Platform Operations,Privacy,standard review
+VEND-HCDN-038,Synthetic Healthcare Supplier 038,revenue cycle,incumbent,Data Analytics and AI,Compliance,standard review
+VEND-HCDN-039,Synthetic Healthcare Supplier 039,prior authorization/UM,emerging,Revenue Cycle Technology,Provider Network,exit sensitive
+VEND-HCDN-040,Synthetic Healthcare Supplier 040,quality Stars HEDIS RAF,strategic,Cloud Infrastructure and Data Center,Value-Based Care,concentration risk
+VEND-HCDN-041,Synthetic Healthcare Supplier 041,payment integrity,major,Workplace and Contact Center,Clinical Operations,standard review
+VEND-HCDN-042,Synthetic Healthcare Supplier 042,cloud infrastructure,niche,Security Identity and Compliance,Revenue Cycle,standard review
+VEND-HCDN-043,Synthetic Healthcare Supplier 043,data analytics,incumbent,Integration and Interoperability,Patient Access,standard review
+VEND-HCDN-044,Synthetic Healthcare Supplier 044,AMS/IMS,emerging,ERP and Corporate Platforms,Interoperability,standard review
+VEND-HCDN-045,Synthetic Healthcare Supplier 045,SaaS/software,strategic,Clinical and Epic AMS,Population Health,standard review
+VEND-HCDN-046,Synthetic Healthcare Supplier 046,AI/document automation,major,Payer Platform Operations,Health Plan Operations,standard review
+VEND-HCDN-047,Synthetic Healthcare Supplier 047,telecom/network,niche,Data Analytics and AI,Medicare Advantage,standard review
+VEND-HCDN-048,Synthetic Healthcare Supplier 048,cybersecurity,incumbent,Revenue Cycle Technology,Claims Operations,standard review
+VEND-HCDN-049,Synthetic Healthcare Supplier 049,identity,emerging,Cloud Infrastructure and Data Center,Utilization Management,standard review
+VEND-HCDN-050,Synthetic Healthcare Supplier 050,interoperability,strategic,Workplace and Contact Center,Member Services,concentration risk
+VEND-HCDN-051,Synthetic Healthcare Supplier 051,Epic/clinical platform,major,Security Identity and Compliance,Quality and Stars,standard review
+VEND-HCDN-052,Synthetic Healthcare Supplier 052,claims administration,niche,Integration and Interoperability,Risk Adjustment,exit sensitive
+VEND-HCDN-053,Synthetic Healthcare Supplier 053,PBM/pharmacy,incumbent,ERP and Corporate Platforms,Care Management,standard review
+VEND-HCDN-054,Synthetic Healthcare Supplier 054,BPO/contact center,emerging,Clinical and Epic AMS,Finance,standard review
+VEND-HCDN-055,Synthetic Healthcare Supplier 055,revenue cycle,strategic,Payer Platform Operations,Coding,standard review
+VEND-HCDN-056,Synthetic Healthcare Supplier 056,prior authorization/UM,major,Data Analytics and AI,Payer Contracting,standard review
+VEND-HCDN-057,Synthetic Healthcare Supplier 057,quality Stars HEDIS RAF,niche,Revenue Cycle Technology,Digital Front Door,standard review
+VEND-HCDN-058,Synthetic Healthcare Supplier 058,payment integrity,incumbent,Cloud Infrastructure and Data Center,Contact Center,standard review
+VEND-HCDN-059,Synthetic Healthcare Supplier 059,cloud infrastructure,emerging,Workplace and Contact Center,Ambulatory Care,standard review
+VEND-HCDN-060,Synthetic Healthcare Supplier 060,data analytics,strategic,Security Identity and Compliance,Emergency Department,concentration risk
+VEND-HCDN-061,Synthetic Healthcare Supplier 061,AMS/IMS,major,Integration and Interoperability,Inpatient,standard review
+VEND-HCDN-062,Synthetic Healthcare Supplier 062,SaaS/software,niche,ERP and Corporate Platforms,Surgery,standard review
+VEND-HCDN-063,Synthetic Healthcare Supplier 063,AI/document automation,incumbent,Clinical and Epic AMS,Imaging,standard review
+VEND-HCDN-064,Synthetic Healthcare Supplier 064,telecom/network,emerging,Payer Platform Operations,Lab,standard review
+VEND-HCDN-065,Synthetic Healthcare Supplier 065,cybersecurity,strategic,Data Analytics and AI,Pharmacy,exit sensitive
+VEND-HCDN-066,Synthetic Healthcare Supplier 066,identity,major,Revenue Cycle Technology,Oncology,standard review
+VEND-HCDN-067,Synthetic Healthcare Supplier 067,interoperability,niche,Cloud Infrastructure and Data Center,Cardiology,standard review
+VEND-HCDN-068,Synthetic Healthcare Supplier 068,Epic/clinical platform,incumbent,Workplace and Contact Center,Data and Analytics,standard review
+VEND-HCDN-069,Synthetic Healthcare Supplier 069,claims administration,emerging,Security Identity and Compliance,Clinical Analytics,standard review
+VEND-HCDN-070,Synthetic Healthcare Supplier 070,PBM/pharmacy,strategic,Integration and Interoperability,Actuarial,concentration risk
+VEND-HCDN-071,Synthetic Healthcare Supplier 071,BPO/contact center,major,ERP and Corporate Platforms,Departmental Reporting,standard review
+VEND-HCDN-072,Synthetic Healthcare Supplier 072,revenue cycle,niche,Clinical and Epic AMS,AI Transformation,standard review
+VEND-HCDN-073,Synthetic Healthcare Supplier 073,prior authorization/UM,incumbent,Payer Platform Operations,Technology,standard review
+VEND-HCDN-074,Synthetic Healthcare Supplier 074,quality Stars HEDIS RAF,emerging,Data Analytics and AI,Security,standard review
+VEND-HCDN-075,Synthetic Healthcare Supplier 075,payment integrity,strategic,Revenue Cycle Technology,Procurement,standard review
+VEND-HCDN-076,Synthetic Healthcare Supplier 076,cloud infrastructure,major,Cloud Infrastructure and Data Center,HR,standard review
+VEND-HCDN-077,Synthetic Healthcare Supplier 077,data analytics,niche,Workplace and Contact Center,Supply Chain,standard review
+VEND-HCDN-078,Synthetic Healthcare Supplier 078,AMS/IMS,incumbent,Security Identity and Compliance,Privacy,exit sensitive
+VEND-HCDN-079,Synthetic Healthcare Supplier 079,SaaS/software,emerging,Integration and Interoperability,Compliance,standard review
+VEND-HCDN-080,Synthetic Healthcare Supplier 080,AI/document automation,strategic,ERP and Corporate Platforms,Provider Network,concentration risk
+VEND-HCDN-081,Synthetic Healthcare Supplier 081,telecom/network,major,Clinical and Epic AMS,Value-Based Care,standard review
+VEND-HCDN-082,Synthetic Healthcare Supplier 082,cybersecurity,niche,Payer Platform Operations,Clinical Operations,standard review
+VEND-HCDN-083,Synthetic Healthcare Supplier 083,identity,incumbent,Data Analytics and AI,Revenue Cycle,standard review
+VEND-HCDN-084,Synthetic Healthcare Supplier 084,interoperability,emerging,Revenue Cycle Technology,Patient Access,standard review
+VEND-HCDN-085,Synthetic Healthcare Supplier 085,Epic/clinical platform,strategic,Cloud Infrastructure and Data Center,Interoperability,standard review
+VEND-HCDN-086,Synthetic Healthcare Supplier 086,claims administration,major,Workplace and Contact Center,Population Health,standard review
+VEND-HCDN-087,Synthetic Healthcare Supplier 087,PBM/pharmacy,niche,Security Identity and Compliance,Health Plan Operations,standard review
+VEND-HCDN-088,Synthetic Healthcare Supplier 088,BPO/contact center,incumbent,Integration and Interoperability,Medicare Advantage,standard review
+VEND-HCDN-089,Synthetic Healthcare Supplier 089,revenue cycle,emerging,ERP and Corporate Platforms,Claims Operations,standard review
+VEND-HCDN-090,Synthetic Healthcare Supplier 090,prior authorization/UM,strategic,Clinical and Epic AMS,Utilization Management,concentration risk
+VEND-HCDN-091,Synthetic Healthcare Supplier 091,quality Stars HEDIS RAF,major,Payer Platform Operations,Member Services,exit sensitive
+VEND-HCDN-092,Synthetic Healthcare Supplier 092,payment integrity,niche,Data Analytics and AI,Quality and Stars,standard review
+VEND-HCDN-093,Synthetic Healthcare Supplier 093,cloud infrastructure,incumbent,Revenue Cycle Technology,Risk Adjustment,standard review
+VEND-HCDN-094,Synthetic Healthcare Supplier 094,data analytics,emerging,Cloud Infrastructure and Data Center,Care Management,standard review
+VEND-HCDN-095,Synthetic Healthcare Supplier 095,AMS/IMS,strategic,Workplace and Contact Center,Finance,standard review
+VEND-HCDN-096,Synthetic Healthcare Supplier 096,SaaS/software,major,Security Identity and Compliance,Coding,standard review
+VEND-HCDN-097,Synthetic Healthcare Supplier 097,AI/document automation,niche,Integration and Interoperability,Payer Contracting,standard review
+VEND-HCDN-098,Synthetic Healthcare Supplier 098,telecom/network,incumbent,ERP and Corporate Platforms,Digital Front Door,standard review
+VEND-HCDN-099,Synthetic Healthcare Supplier 099,cybersecurity,emerging,Clinical and Epic AMS,Contact Center,standard review
+VEND-HCDN-100,Synthetic Healthcare Supplier 100,identity,strategic,Payer Platform Operations,Ambulatory Care,concentration risk
+VEND-HCDN-101,Synthetic Healthcare Supplier 101,interoperability,major,Data Analytics and AI,Emergency Department,standard review
+VEND-HCDN-102,Synthetic Healthcare Supplier 102,Epic/clinical platform,niche,Revenue Cycle Technology,Inpatient,standard review
+VEND-HCDN-103,Synthetic Healthcare Supplier 103,claims administration,incumbent,Cloud Infrastructure and Data Center,Surgery,standard review
+VEND-HCDN-104,Synthetic Healthcare Supplier 104,PBM/pharmacy,emerging,Workplace and Contact Center,Imaging,exit sensitive
+VEND-HCDN-105,Synthetic Healthcare Supplier 105,BPO/contact center,strategic,Security Identity and Compliance,Lab,standard review
+VEND-HCDN-106,Synthetic Healthcare Supplier 106,revenue cycle,major,Integration and Interoperability,Pharmacy,standard review
+VEND-HCDN-107,Synthetic Healthcare Supplier 107,prior authorization/UM,niche,ERP and Corporate Platforms,Oncology,standard review
+VEND-HCDN-108,Synthetic Healthcare Supplier 108,quality Stars HEDIS RAF,incumbent,Clinical and Epic AMS,Cardiology,standard review
+VEND-HCDN-109,Synthetic Healthcare Supplier 109,payment integrity,emerging,Payer Platform Operations,Data and Analytics,standard review
+VEND-HCDN-110,Synthetic Healthcare Supplier 110,cloud infrastructure,strategic,Data Analytics and AI,Clinical Analytics,concentration risk
+VEND-HCDN-111,Synthetic Healthcare Supplier 111,data analytics,major,Revenue Cycle Technology,Actuarial,standard review
+VEND-HCDN-112,Synthetic Healthcare Supplier 112,AMS/IMS,niche,Cloud Infrastructure and Data Center,Departmental Reporting,standard review
+VEND-HCDN-113,Synthetic Healthcare Supplier 113,SaaS/software,incumbent,Workplace and Contact Center,AI Transformation,standard review
+VEND-HCDN-114,Synthetic Healthcare Supplier 114,AI/document automation,emerging,Security Identity and Compliance,Technology,standard review
+VEND-HCDN-115,Synthetic Healthcare Supplier 115,telecom/network,strategic,Integration and Interoperability,Security,standard review
+VEND-HCDN-116,Synthetic Healthcare Supplier 116,cybersecurity,major,ERP and Corporate Platforms,Procurement,standard review
+VEND-HCDN-117,Synthetic Healthcare Supplier 117,identity,niche,Clinical and Epic AMS,HR,exit sensitive
+VEND-HCDN-118,Synthetic Healthcare Supplier 118,interoperability,incumbent,Payer Platform Operations,Supply Chain,standard review
+VEND-HCDN-119,Synthetic Healthcare Supplier 119,Epic/clinical platform,emerging,Data Analytics and AI,Privacy,standard review
+VEND-HCDN-120,Synthetic Healthcare Supplier 120,claims administration,strategic,Revenue Cycle Technology,Compliance,concentration risk
+VEND-HCDN-121,Synthetic Healthcare Supplier 121,PBM/pharmacy,major,Cloud Infrastructure and Data Center,Provider Network,standard review
+VEND-HCDN-122,Synthetic Healthcare Supplier 122,BPO/contact center,niche,Workplace and Contact Center,Value-Based Care,standard review
+VEND-HCDN-123,Synthetic Healthcare Supplier 123,revenue cycle,incumbent,Security Identity and Compliance,Clinical Operations,standard review
+VEND-HCDN-124,Synthetic Healthcare Supplier 124,prior authorization/UM,emerging,Integration and Interoperability,Revenue Cycle,standard review
+VEND-HCDN-125,Synthetic Healthcare Supplier 125,quality Stars HEDIS RAF,strategic,ERP and Corporate Platforms,Patient Access,standard review
+VEND-HCDN-126,Synthetic Healthcare Supplier 126,payment integrity,major,Clinical and Epic AMS,Interoperability,standard review
+VEND-HCDN-127,Synthetic Healthcare Supplier 127,cloud infrastructure,niche,Payer Platform Operations,Population Health,standard review
+VEND-HCDN-128,Synthetic Healthcare Supplier 128,data analytics,incumbent,Data Analytics and AI,Health Plan Operations,standard review
+VEND-HCDN-129,Synthetic Healthcare Supplier 129,AMS/IMS,emerging,Revenue Cycle Technology,Medicare Advantage,standard review
+VEND-HCDN-130,Synthetic Healthcare Supplier 130,SaaS/software,strategic,Cloud Infrastructure and Data Center,Claims Operations,concentration risk
+VEND-HCDN-131,Synthetic Healthcare Supplier 131,AI/document automation,major,Workplace and Contact Center,Utilization Management,standard review
+VEND-HCDN-132,Synthetic Healthcare Supplier 132,telecom/network,niche,Security Identity and Compliance,Member Services,standard review
+VEND-HCDN-133,Synthetic Healthcare Supplier 133,cybersecurity,incumbent,Integration and Interoperability,Quality and Stars,standard review
+VEND-HCDN-134,Synthetic Healthcare Supplier 134,identity,emerging,ERP and Corporate Platforms,Risk Adjustment,standard review
+VEND-HCDN-135,Synthetic Healthcare Supplier 135,interoperability,strategic,Clinical and Epic AMS,Care Management,standard review
+VEND-HCDN-136,Synthetic Healthcare Supplier 136,Epic/clinical platform,major,Payer Platform Operations,Finance,standard review
+VEND-HCDN-137,Synthetic Healthcare Supplier 137,claims administration,niche,Data Analytics and AI,Coding,standard review
+VEND-HCDN-138,Synthetic Healthcare Supplier 138,PBM/pharmacy,incumbent,Revenue Cycle Technology,Payer Contracting,standard review
+VEND-HCDN-139,Synthetic Healthcare Supplier 139,BPO/contact center,emerging,Cloud Infrastructure and Data Center,Digital Front Door,standard review
+VEND-HCDN-140,Synthetic Healthcare Supplier 140,revenue cycle,strategic,Workplace and Contact Center,Contact Center,concentration risk
+VEND-HCDN-141,Synthetic Healthcare Supplier 141,prior authorization/UM,major,Security Identity and Compliance,Ambulatory Care,standard review
+VEND-HCDN-142,Synthetic Healthcare Supplier 142,quality Stars HEDIS RAF,niche,Integration and Interoperability,Emergency Department,standard review
+VEND-HCDN-143,Synthetic Healthcare Supplier 143,payment integrity,incumbent,ERP and Corporate Platforms,Inpatient,exit sensitive
+VEND-HCDN-144,Synthetic Healthcare Supplier 144,cloud infrastructure,emerging,Clinical and Epic AMS,Surgery,standard review
+VEND-HCDN-145,Synthetic Healthcare Supplier 145,data analytics,strategic,Payer Platform Operations,Imaging,standard review
+VEND-HCDN-146,Synthetic Healthcare Supplier 146,AMS/IMS,major,Data Analytics and AI,Lab,standard review
+VEND-HCDN-147,Synthetic Healthcare Supplier 147,SaaS/software,niche,Revenue Cycle Technology,Pharmacy,standard review
+VEND-HCDN-148,Synthetic Healthcare Supplier 148,AI/document automation,incumbent,Cloud Infrastructure and Data Center,Oncology,standard review
+VEND-HCDN-149,Synthetic Healthcare Supplier 149,telecom/network,emerging,Workplace and Contact Center,Cardiology,standard review
+VEND-HCDN-150,Synthetic Healthcare Supplier 150,cybersecurity,strategic,Security Identity and Compliance,Data and Analytics,concentration risk
+VEND-HCDN-151,Synthetic Healthcare Supplier 151,identity,major,Integration and Interoperability,Clinical Analytics,standard review
+VEND-HCDN-152,Synthetic Healthcare Supplier 152,interoperability,niche,ERP and Corporate Platforms,Actuarial,standard review
+VEND-HCDN-153,Synthetic Healthcare Supplier 153,Epic/clinical platform,incumbent,Clinical and Epic AMS,Departmental Reporting,standard review
+VEND-HCDN-154,Synthetic Healthcare Supplier 154,claims administration,emerging,Payer Platform Operations,AI Transformation,standard review
+VEND-HCDN-155,Synthetic Healthcare Supplier 155,PBM/pharmacy,strategic,Data Analytics and AI,Technology,standard review
+VEND-HCDN-156,Synthetic Healthcare Supplier 156,BPO/contact center,major,Revenue Cycle Technology,Security,exit sensitive
+VEND-HCDN-157,Synthetic Healthcare Supplier 157,revenue cycle,niche,Cloud Infrastructure and Data Center,Procurement,standard review
+VEND-HCDN-158,Synthetic Healthcare Supplier 158,prior authorization/UM,incumbent,Workplace and Contact Center,HR,standard review
+VEND-HCDN-159,Synthetic Healthcare Supplier 159,quality Stars HEDIS RAF,emerging,Security Identity and Compliance,Supply Chain,standard review
+VEND-HCDN-160,Synthetic Healthcare Supplier 160,payment integrity,strategic,Integration and Interoperability,Privacy,concentration risk
+VEND-HCDN-161,Synthetic Healthcare Supplier 161,cloud infrastructure,major,ERP and Corporate Platforms,Compliance,standard review
+VEND-HCDN-162,Synthetic Healthcare Supplier 162,data analytics,niche,Clinical and Epic AMS,Provider Network,standard review
+VEND-HCDN-163,Synthetic Healthcare Supplier 163,AMS/IMS,incumbent,Payer Platform Operations,Value-Based Care,standard review
+VEND-HCDN-164,Synthetic Healthcare Supplier 164,SaaS/software,emerging,Data Analytics and AI,Clinical Operations,standard review
+VEND-HCDN-165,Synthetic Healthcare Supplier 165,AI/document automation,strategic,Revenue Cycle Technology,Revenue Cycle,standard review
+VEND-HCDN-166,Synthetic Healthcare Supplier 166,telecom/network,major,Cloud Infrastructure and Data Center,Patient Access,standard review
+VEND-HCDN-167,Synthetic Healthcare Supplier 167,cybersecurity,niche,Workplace and Contact Center,Interoperability,standard review
+VEND-HCDN-168,Synthetic Healthcare Supplier 168,identity,incumbent,Security Identity and Compliance,Population Health,standard review
+VEND-HCDN-169,Synthetic Healthcare Supplier 169,interoperability,emerging,Integration and Interoperability,Health Plan Operations,exit sensitive
+VEND-HCDN-170,Synthetic Healthcare Supplier 170,Epic/clinical platform,strategic,ERP and Corporate Platforms,Medicare Advantage,concentration risk
+VEND-HCDN-171,Synthetic Healthcare Supplier 171,claims administration,major,Clinical and Epic AMS,Claims Operations,standard review
+VEND-HCDN-172,Synthetic Healthcare Supplier 172,PBM/pharmacy,niche,Payer Platform Operations,Utilization Management,standard review
+VEND-HCDN-173,Synthetic Healthcare Supplier 173,BPO/contact center,incumbent,Data Analytics and AI,Member Services,standard review
+VEND-HCDN-174,Synthetic Healthcare Supplier 174,revenue cycle,emerging,Revenue Cycle Technology,Quality and Stars,standard review
+VEND-HCDN-175,Synthetic Healthcare Supplier 175,prior authorization/UM,strategic,Cloud Infrastructure and Data Center,Risk Adjustment,standard review
+VEND-HCDN-176,Synthetic Healthcare Supplier 176,quality Stars HEDIS RAF,major,Workplace and Contact Center,Care Management,standard review
+VEND-HCDN-177,Synthetic Healthcare Supplier 177,payment integrity,niche,Security Identity and Compliance,Finance,standard review
+VEND-HCDN-178,Synthetic Healthcare Supplier 178,cloud infrastructure,incumbent,Integration and Interoperability,Coding,standard review
+VEND-HCDN-179,Synthetic Healthcare Supplier 179,data analytics,emerging,ERP and Corporate Platforms,Payer Contracting,standard review
+VEND-HCDN-180,Synthetic Healthcare Supplier 180,AMS/IMS,strategic,Clinical and Epic AMS,Digital Front Door,concentration risk
+VEND-HCDN-181,Synthetic Healthcare Supplier 181,SaaS/software,major,Payer Platform Operations,Contact Center,standard review
+VEND-HCDN-182,Synthetic Healthcare Supplier 182,AI/document automation,niche,Data Analytics and AI,Ambulatory Care,exit sensitive
+VEND-HCDN-183,Synthetic Healthcare Supplier 183,telecom/network,incumbent,Revenue Cycle Technology,Emergency Department,standard review
+VEND-HCDN-184,Synthetic Healthcare Supplier 184,cybersecurity,emerging,Cloud Infrastructure and Data Center,Inpatient,standard review
+VEND-HCDN-185,Synthetic Healthcare Supplier 185,identity,strategic,Workplace and Contact Center,Surgery,standard review
+VEND-HCDN-186,Synthetic Healthcare Supplier 186,interoperability,major,Security Identity and Compliance,Imaging,standard review
+VEND-HCDN-187,Synthetic Healthcare Supplier 187,Epic/clinical platform,niche,Integration and Interoperability,Lab,standard review
+VEND-HCDN-188,Synthetic Healthcare Supplier 188,claims administration,incumbent,ERP and Corporate Platforms,Pharmacy,standard review
+VEND-HCDN-189,Synthetic Healthcare Supplier 189,PBM/pharmacy,emerging,Clinical and Epic AMS,Oncology,standard review
+VEND-HCDN-190,Synthetic Healthcare Supplier 190,BPO/contact center,strategic,Payer Platform Operations,Cardiology,concentration risk
+VEND-HCDN-191,Synthetic Healthcare Supplier 191,revenue cycle,major,Data Analytics and AI,Data and Analytics,standard review
+VEND-HCDN-192,Synthetic Healthcare Supplier 192,prior authorization/UM,niche,Revenue Cycle Technology,Clinical Analytics,standard review
+VEND-HCDN-193,Synthetic Healthcare Supplier 193,quality Stars HEDIS RAF,incumbent,Cloud Infrastructure and Data Center,Actuarial,standard review
+VEND-HCDN-194,Synthetic Healthcare Supplier 194,payment integrity,emerging,Workplace and Contact Center,Departmental Reporting,standard review
+VEND-HCDN-195,Synthetic Healthcare Supplier 195,cloud infrastructure,strategic,Security Identity and Compliance,AI Transformation,exit sensitive
+VEND-HCDN-196,Synthetic Healthcare Supplier 196,data analytics,major,Integration and Interoperability,Technology,standard review
+VEND-HCDN-197,Synthetic Healthcare Supplier 197,AMS/IMS,niche,ERP and Corporate Platforms,Security,standard review
+VEND-HCDN-198,Synthetic Healthcare Supplier 198,SaaS/software,incumbent,Clinical and Epic AMS,Procurement,standard review
+VEND-HCDN-199,Synthetic Healthcare Supplier 199,AI/document automation,emerging,Payer Platform Operations,HR,standard review
+VEND-HCDN-200,Synthetic Healthcare Supplier 200,telecom/network,strategic,Data Analytics and AI,Supply Chain,concentration risk
+VEND-HCDN-201,Synthetic Healthcare Supplier 201,cybersecurity,major,Revenue Cycle Technology,Privacy,standard review
+VEND-HCDN-202,Synthetic Healthcare Supplier 202,identity,niche,Cloud Infrastructure and Data Center,Compliance,standard review
+VEND-HCDN-203,Synthetic Healthcare Supplier 203,interoperability,incumbent,Workplace and Contact Center,Provider Network,standard review
+VEND-HCDN-204,Synthetic Healthcare Supplier 204,Epic/clinical platform,emerging,Security Identity and Compliance,Value-Based Care,standard review
+VEND-HCDN-205,Synthetic Healthcare Supplier 205,claims administration,strategic,Integration and Interoperability,Clinical Operations,standard review
+VEND-HCDN-206,Synthetic Healthcare Supplier 206,PBM/pharmacy,major,ERP and Corporate Platforms,Revenue Cycle,standard review
+VEND-HCDN-207,Synthetic Healthcare Supplier 207,BPO/contact center,niche,Clinical and Epic AMS,Patient Access,standard review
+VEND-HCDN-208,Synthetic Healthcare Supplier 208,revenue cycle,incumbent,Payer Platform Operations,Interoperability,exit sensitive
+VEND-HCDN-209,Synthetic Healthcare Supplier 209,prior authorization/UM,emerging,Data Analytics and AI,Population Health,standard review
+VEND-HCDN-210,Synthetic Healthcare Supplier 210,quality Stars HEDIS RAF,strategic,Revenue Cycle Technology,Health Plan Operations,concentration risk
+VEND-HCDN-211,Synthetic Healthcare Supplier 211,payment integrity,major,Cloud Infrastructure and Data Center,Medicare Advantage,standard review
+VEND-HCDN-212,Synthetic Healthcare Supplier 212,cloud infrastructure,niche,Workplace and Contact Center,Claims Operations,standard review
+VEND-HCDN-213,Synthetic Healthcare Supplier 213,data analytics,incumbent,Security Identity and Compliance,Utilization Management,standard review
+VEND-HCDN-214,Synthetic Healthcare Supplier 214,AMS/IMS,emerging,Integration and Interoperability,Member Services,standard review
+VEND-HCDN-215,Synthetic Healthcare Supplier 215,SaaS/software,strategic,ERP and Corporate Platforms,Quality and Stars,standard review
+VEND-HCDN-216,Synthetic Healthcare Supplier 216,AI/document automation,major,Clinical and Epic AMS,Risk Adjustment,standard review
+VEND-HCDN-217,Synthetic Healthcare Supplier 217,telecom/network,niche,Payer Platform Operations,Care Management,standard review
+VEND-HCDN-218,Synthetic Healthcare Supplier 218,cybersecurity,incumbent,Data Analytics and AI,Finance,standard review
+VEND-HCDN-219,Synthetic Healthcare Supplier 219,identity,emerging,Revenue Cycle Technology,Coding,standard review
+VEND-HCDN-220,Synthetic Healthcare Supplier 220,interoperability,strategic,Cloud Infrastructure and Data Center,Payer Contracting,concentration risk
+VEND-HCDN-221,Synthetic Healthcare Supplier 221,Epic/clinical platform,major,Workplace and Contact Center,Digital Front Door,exit sensitive
+VEND-HCDN-222,Synthetic Healthcare Supplier 222,claims administration,niche,Security Identity and Compliance,Contact Center,standard review
+VEND-HCDN-223,Synthetic Healthcare Supplier 223,PBM/pharmacy,incumbent,Integration and Interoperability,Ambulatory Care,standard review
+VEND-HCDN-224,Synthetic Healthcare Supplier 224,BPO/contact center,emerging,ERP and Corporate Platforms,Emergency Department,standard review
+VEND-HCDN-225,Synthetic Healthcare Supplier 225,revenue cycle,strategic,Clinical and Epic AMS,Inpatient,standard review
+VEND-HCDN-226,Synthetic Healthcare Supplier 226,prior authorization/UM,major,Payer Platform Operations,Surgery,standard review
+VEND-HCDN-227,Synthetic Healthcare Supplier 227,quality Stars HEDIS RAF,niche,Data Analytics and AI,Imaging,standard review
+VEND-HCDN-228,Synthetic Healthcare Supplier 228,payment integrity,incumbent,Revenue Cycle Technology,Lab,standard review
+VEND-HCDN-229,Synthetic Healthcare Supplier 229,cloud infrastructure,emerging,Cloud Infrastructure and Data Center,Pharmacy,standard review
+VEND-HCDN-230,Synthetic Healthcare Supplier 230,data analytics,strategic,Workplace and Contact Center,Oncology,concentration risk
+VEND-HCDN-231,Synthetic Healthcare Supplier 231,AMS/IMS,major,Security Identity and Compliance,Cardiology,standard review
+VEND-HCDN-232,Synthetic Healthcare Supplier 232,SaaS/software,niche,Integration and Interoperability,Data and Analytics,standard review
+VEND-HCDN-233,Synthetic Healthcare Supplier 233,AI/document automation,incumbent,ERP and Corporate Platforms,Clinical Analytics,standard review
+VEND-HCDN-234,Synthetic Healthcare Supplier 234,telecom/network,emerging,Clinical and Epic AMS,Actuarial,exit sensitive
+VEND-HCDN-235,Synthetic Healthcare Supplier 235,cybersecurity,strategic,Payer Platform Operations,Departmental Reporting,standard review
+VEND-HCDN-236,Synthetic Healthcare Supplier 236,identity,major,Data Analytics and AI,AI Transformation,standard review
+VEND-HCDN-237,Synthetic Healthcare Supplier 237,interoperability,niche,Revenue Cycle Technology,Technology,standard review
+VEND-HCDN-238,Synthetic Healthcare Supplier 238,Epic/clinical platform,incumbent,Cloud Infrastructure and Data Center,Security,standard review
+VEND-HCDN-239,Synthetic Healthcare Supplier 239,claims administration,emerging,Workplace and Contact Center,Procurement,standard review
+VEND-HCDN-240,Synthetic Healthcare Supplier 240,PBM/pharmacy,strategic,Security Identity and Compliance,HR,concentration risk
+VEND-HCDN-241,Synthetic Healthcare Supplier 241,BPO/contact center,major,Integration and Interoperability,Supply Chain,standard review
+VEND-HCDN-242,Synthetic Healthcare Supplier 242,revenue cycle,niche,ERP and Corporate Platforms,Privacy,standard review
+VEND-HCDN-243,Synthetic Healthcare Supplier 243,prior authorization/UM,incumbent,Clinical and Epic AMS,Compliance,standard review
+VEND-HCDN-244,Synthetic Healthcare Supplier 244,quality Stars HEDIS RAF,emerging,Payer Platform Operations,Provider Network,standard review
+VEND-HCDN-245,Synthetic Healthcare Supplier 245,payment integrity,strategic,Data Analytics and AI,Value-Based Care,standard review
+VEND-HCDN-246,Synthetic Healthcare Supplier 246,cloud infrastructure,major,Revenue Cycle Technology,Clinical Operations,standard review
+VEND-HCDN-247,Synthetic Healthcare Supplier 247,data analytics,niche,Cloud Infrastructure and Data Center,Revenue Cycle,exit sensitive
+VEND-HCDN-248,Synthetic Healthcare Supplier 248,AMS/IMS,incumbent,Workplace and Contact Center,Patient Access,standard review
+VEND-HCDN-249,Synthetic Healthcare Supplier 249,SaaS/software,emerging,Security Identity and Compliance,Interoperability,standard review
+VEND-HCDN-250,Synthetic Healthcare Supplier 250,AI/document automation,strategic,Integration and Interoperability,Population Health,concentration risk
+VEND-HCDN-251,Synthetic Healthcare Supplier 251,telecom/network,major,ERP and Corporate Platforms,Health Plan Operations,standard review
+VEND-HCDN-252,Synthetic Healthcare Supplier 252,cybersecurity,niche,Clinical and Epic AMS,Medicare Advantage,standard review
+VEND-HCDN-253,Synthetic Healthcare Supplier 253,identity,incumbent,Payer Platform Operations,Claims Operations,standard review
+VEND-HCDN-254,Synthetic Healthcare Supplier 254,interoperability,emerging,Data Analytics and AI,Utilization Management,standard review
+VEND-HCDN-255,Synthetic Healthcare Supplier 255,Epic/clinical platform,strategic,Revenue Cycle Technology,Member Services,standard review
+VEND-HCDN-256,Synthetic Healthcare Supplier 256,claims administration,major,Cloud Infrastructure and Data Center,Quality and Stars,standard review
+VEND-HCDN-257,Synthetic Healthcare Supplier 257,PBM/pharmacy,niche,Workplace and Contact Center,Risk Adjustment,standard review
+VEND-HCDN-258,Synthetic Healthcare Supplier 258,BPO/contact center,incumbent,Security Identity and Compliance,Care Management,standard review
+VEND-HCDN-259,Synthetic Healthcare Supplier 259,revenue cycle,emerging,Integration and Interoperability,Finance,standard review
+VEND-HCDN-260,Synthetic Healthcare Supplier 260,prior authorization/UM,strategic,ERP and Corporate Platforms,Coding,concentration risk
+VEND-HCDN-261,Synthetic Healthcare Supplier 261,quality Stars HEDIS RAF,major,Clinical and Epic AMS,Payer Contracting,standard review
+VEND-HCDN-262,Synthetic Healthcare Supplier 262,payment integrity,niche,Payer Platform Operations,Digital Front Door,standard review
+VEND-HCDN-263,Synthetic Healthcare Supplier 263,cloud infrastructure,incumbent,Data Analytics and AI,Contact Center,standard review
+VEND-HCDN-264,Synthetic Healthcare Supplier 264,data analytics,emerging,Revenue Cycle Technology,Ambulatory Care,standard review
+VEND-HCDN-265,Synthetic Healthcare Supplier 265,AMS/IMS,strategic,Cloud Infrastructure and Data Center,Emergency Department,standard review
+VEND-HCDN-266,Synthetic Healthcare Supplier 266,SaaS/software,major,Workplace and Contact Center,Inpatient,standard review
+VEND-HCDN-267,Synthetic Healthcare Supplier 267,AI/document automation,niche,Security Identity and Compliance,Surgery,standard review
+VEND-HCDN-268,Synthetic Healthcare Supplier 268,telecom/network,incumbent,Integration and Interoperability,Imaging,standard review
+VEND-HCDN-269,Synthetic Healthcare Supplier 269,cybersecurity,emerging,ERP and Corporate Platforms,Lab,standard review
+VEND-HCDN-270,Synthetic Healthcare Supplier 270,identity,strategic,Clinical and Epic AMS,Pharmacy,concentration risk
+VEND-HCDN-271,Synthetic Healthcare Supplier 271,interoperability,major,Payer Platform Operations,Oncology,standard review
+VEND-HCDN-272,Synthetic Healthcare Supplier 272,Epic/clinical platform,niche,Data Analytics and AI,Cardiology,standard review
+VEND-HCDN-273,Synthetic Healthcare Supplier 273,claims administration,incumbent,Revenue Cycle Technology,Data and Analytics,exit sensitive
+VEND-HCDN-274,Synthetic Healthcare Supplier 274,PBM/pharmacy,emerging,Cloud Infrastructure and Data Center,Clinical Analytics,standard review
+VEND-HCDN-275,Synthetic Healthcare Supplier 275,BPO/contact center,strategic,Workplace and Contact Center,Actuarial,standard review
+VEND-HCDN-276,Synthetic Healthcare Supplier 276,revenue cycle,major,Security Identity and Compliance,Departmental Reporting,standard review
+VEND-HCDN-277,Synthetic Healthcare Supplier 277,prior authorization/UM,niche,Integration and Interoperability,AI Transformation,standard review
+VEND-HCDN-278,Synthetic Healthcare Supplier 278,quality Stars HEDIS RAF,incumbent,ERP and Corporate Platforms,Technology,standard review
+VEND-HCDN-279,Synthetic Healthcare Supplier 279,payment integrity,emerging,Clinical and Epic AMS,Security,standard review
+VEND-HCDN-280,Synthetic Healthcare Supplier 280,cloud infrastructure,strategic,Payer Platform Operations,Procurement,concentration risk
+VEND-HCDN-281,Synthetic Healthcare Supplier 281,data analytics,major,Data Analytics and AI,HR,standard review
+VEND-HCDN-282,Synthetic Healthcare Supplier 282,AMS/IMS,niche,Revenue Cycle Technology,Supply Chain,standard review
+VEND-HCDN-283,Synthetic Healthcare Supplier 283,SaaS/software,incumbent,Cloud Infrastructure and Data Center,Privacy,standard review
+VEND-HCDN-284,Synthetic Healthcare Supplier 284,AI/document automation,emerging,Workplace and Contact Center,Compliance,standard review
+VEND-HCDN-285,Synthetic Healthcare Supplier 285,telecom/network,strategic,Security Identity and Compliance,Provider Network,standard review
+VEND-HCDN-286,Synthetic Healthcare Supplier 286,cybersecurity,major,Integration and Interoperability,Value-Based Care,exit sensitive
+VEND-HCDN-287,Synthetic Healthcare Supplier 287,identity,niche,ERP and Corporate Platforms,Clinical Operations,standard review
+VEND-HCDN-288,Synthetic Healthcare Supplier 288,interoperability,incumbent,Clinical and Epic AMS,Revenue Cycle,standard review
+VEND-HCDN-289,Synthetic Healthcare Supplier 289,Epic/clinical platform,emerging,Payer Platform Operations,Patient Access,standard review
+VEND-HCDN-290,Synthetic Healthcare Supplier 290,claims administration,strategic,Data Analytics and AI,Interoperability,concentration risk
+VEND-HCDN-291,Synthetic Healthcare Supplier 291,PBM/pharmacy,major,Revenue Cycle Technology,Population Health,standard review
+VEND-HCDN-292,Synthetic Healthcare Supplier 292,BPO/contact center,niche,Cloud Infrastructure and Data Center,Health Plan Operations,standard review
+VEND-HCDN-293,Synthetic Healthcare Supplier 293,revenue cycle,incumbent,Workplace and Contact Center,Medicare Advantage,standard review
+VEND-HCDN-294,Synthetic Healthcare Supplier 294,prior authorization/UM,emerging,Security Identity and Compliance,Claims Operations,standard review
+VEND-HCDN-295,Synthetic Healthcare Supplier 295,quality Stars HEDIS RAF,strategic,Integration and Interoperability,Utilization Management,standard review
+VEND-HCDN-296,Synthetic Healthcare Supplier 296,payment integrity,major,ERP and Corporate Platforms,Member Services,standard review
+VEND-HCDN-297,Synthetic Healthcare Supplier 297,cloud infrastructure,niche,Clinical and Epic AMS,Quality and Stars,standard review
+VEND-HCDN-298,Synthetic Healthcare Supplier 298,data analytics,incumbent,Payer Platform Operations,Risk Adjustment,standard review
+VEND-HCDN-299,Synthetic Healthcare Supplier 299,AMS/IMS,emerging,Data Analytics and AI,Care Management,exit sensitive
+VEND-HCDN-300,Synthetic Healthcare Supplier 300,SaaS/software,strategic,Revenue Cycle Technology,Finance,concentration risk
+VEND-HCDN-301,Synthetic Healthcare Supplier 301,AI/document automation,major,Cloud Infrastructure and Data Center,Coding,standard review
+VEND-HCDN-302,Synthetic Healthcare Supplier 302,telecom/network,niche,Workplace and Contact Center,Payer Contracting,standard review
+VEND-HCDN-303,Synthetic Healthcare Supplier 303,cybersecurity,incumbent,Security Identity and Compliance,Digital Front Door,standard review
+VEND-HCDN-304,Synthetic Healthcare Supplier 304,identity,emerging,Integration and Interoperability,Contact Center,standard review
+VEND-HCDN-305,Synthetic Healthcare Supplier 305,interoperability,strategic,ERP and Corporate Platforms,Ambulatory Care,standard review
+VEND-HCDN-306,Synthetic Healthcare Supplier 306,Epic/clinical platform,major,Clinical and Epic AMS,Emergency Department,standard review
+VEND-HCDN-307,Synthetic Healthcare Supplier 307,claims administration,niche,Payer Platform Operations,Inpatient,standard review
+VEND-HCDN-308,Synthetic Healthcare Supplier 308,PBM/pharmacy,incumbent,Data Analytics and AI,Surgery,standard review
+VEND-HCDN-309,Synthetic Healthcare Supplier 309,BPO/contact center,emerging,Revenue Cycle Technology,Imaging,standard review
+VEND-HCDN-310,Synthetic Healthcare Supplier 310,revenue cycle,strategic,Cloud Infrastructure and Data Center,Lab,concentration risk
+VEND-HCDN-311,Synthetic Healthcare Supplier 311,prior authorization/UM,major,Workplace and Contact Center,Pharmacy,standard review
+VEND-HCDN-312,Synthetic Healthcare Supplier 312,quality Stars HEDIS RAF,niche,Security Identity and Compliance,Oncology,exit sensitive
+VEND-HCDN-313,Synthetic Healthcare Supplier 313,payment integrity,incumbent,Integration and Interoperability,Cardiology,standard review
+VEND-HCDN-314,Synthetic Healthcare Supplier 314,cloud infrastructure,emerging,ERP and Corporate Platforms,Data and Analytics,standard review
+VEND-HCDN-315,Synthetic Healthcare Supplier 315,data analytics,strategic,Clinical and Epic AMS,Clinical Analytics,standard review
+VEND-HCDN-316,Synthetic Healthcare Supplier 316,AMS/IMS,major,Payer Platform Operations,Actuarial,standard review
+VEND-HCDN-317,Synthetic Healthcare Supplier 317,SaaS/software,niche,Data Analytics and AI,Departmental Reporting,standard review
+VEND-HCDN-318,Synthetic Healthcare Supplier 318,AI/document automation,incumbent,Revenue Cycle Technology,AI Transformation,standard review
+VEND-HCDN-319,Synthetic Healthcare Supplier 319,telecom/network,emerging,Cloud Infrastructure and Data Center,Technology,standard review
+VEND-HCDN-320,Synthetic Healthcare Supplier 320,cybersecurity,strategic,Workplace and Contact Center,Security,concentration risk
+VEND-HCDN-321,Synthetic Healthcare Supplier 321,identity,major,Security Identity and Compliance,Procurement,standard review
+VEND-HCDN-322,Synthetic Healthcare Supplier 322,interoperability,niche,Integration and Interoperability,HR,standard review
+VEND-HCDN-323,Synthetic Healthcare Supplier 323,Epic/clinical platform,incumbent,ERP and Corporate Platforms,Supply Chain,standard review
+VEND-HCDN-324,Synthetic Healthcare Supplier 324,claims administration,emerging,Clinical and Epic AMS,Privacy,standard review
+VEND-HCDN-325,Synthetic Healthcare Supplier 325,PBM/pharmacy,strategic,Payer Platform Operations,Compliance,exit sensitive
+VEND-HCDN-326,Synthetic Healthcare Supplier 326,BPO/contact center,major,Data Analytics and AI,Provider Network,standard review
+VEND-HCDN-327,Synthetic Healthcare Supplier 327,revenue cycle,niche,Revenue Cycle Technology,Value-Based Care,standard review
+VEND-HCDN-328,Synthetic Healthcare Supplier 328,prior authorization/UM,incumbent,Cloud Infrastructure and Data Center,Clinical Operations,standard review
+VEND-HCDN-329,Synthetic Healthcare Supplier 329,quality Stars HEDIS RAF,emerging,Workplace and Contact Center,Revenue Cycle,standard review
+VEND-HCDN-330,Synthetic Healthcare Supplier 330,payment integrity,strategic,Security Identity and Compliance,Patient Access,concentration risk
+VEND-HCDN-331,Synthetic Healthcare Supplier 331,cloud infrastructure,major,Integration and Interoperability,Interoperability,standard review
+VEND-HCDN-332,Synthetic Healthcare Supplier 332,data analytics,niche,ERP and Corporate Platforms,Population Health,standard review
+VEND-HCDN-333,Synthetic Healthcare Supplier 333,AMS/IMS,incumbent,Clinical and Epic AMS,Health Plan Operations,standard review
+VEND-HCDN-334,Synthetic Healthcare Supplier 334,SaaS/software,emerging,Payer Platform Operations,Medicare Advantage,standard review
+VEND-HCDN-335,Synthetic Healthcare Supplier 335,AI/document automation,strategic,Data Analytics and AI,Claims Operations,standard review
+VEND-HCDN-336,Synthetic Healthcare Supplier 336,telecom/network,major,Revenue Cycle Technology,Utilization Management,standard review
+VEND-HCDN-337,Synthetic Healthcare Supplier 337,cybersecurity,niche,Cloud Infrastructure and Data Center,Member Services,standard review
+VEND-HCDN-338,Synthetic Healthcare Supplier 338,identity,incumbent,Workplace and Contact Center,Quality and Stars,exit sensitive
+VEND-HCDN-339,Synthetic Healthcare Supplier 339,interoperability,emerging,Security Identity and Compliance,Risk Adjustment,standard review
+VEND-HCDN-340,Synthetic Healthcare Supplier 340,Epic/clinical platform,strategic,Integration and Interoperability,Care Management,concentration risk
+VEND-HCDN-341,Synthetic Healthcare Supplier 341,claims administration,major,ERP and Corporate Platforms,Finance,standard review
+VEND-HCDN-342,Synthetic Healthcare Supplier 342,PBM/pharmacy,niche,Clinical and Epic AMS,Coding,standard review
+VEND-HCDN-343,Synthetic Healthcare Supplier 343,BPO/contact center,incumbent,Payer Platform Operations,Payer Contracting,standard review
+VEND-HCDN-344,Synthetic Healthcare Supplier 344,revenue cycle,emerging,Data Analytics and AI,Digital Front Door,standard review
+VEND-HCDN-345,Synthetic Healthcare Supplier 345,prior authorization/UM,strategic,Revenue Cycle Technology,Contact Center,standard review
+VEND-HCDN-346,Synthetic Healthcare Supplier 346,quality Stars HEDIS RAF,major,Cloud Infrastructure and Data Center,Ambulatory Care,standard review
+VEND-HCDN-347,Synthetic Healthcare Supplier 347,payment integrity,niche,Workplace and Contact Center,Emergency Department,standard review
+VEND-HCDN-348,Synthetic Healthcare Supplier 348,cloud infrastructure,incumbent,Security Identity and Compliance,Inpatient,standard review
+VEND-HCDN-349,Synthetic Healthcare Supplier 349,data analytics,emerging,Integration and Interoperability,Surgery,standard review
+VEND-HCDN-350,Synthetic Healthcare Supplier 350,AMS/IMS,strategic,ERP and Corporate Platforms,Imaging,concentration risk
+VEND-HCDN-351,Synthetic Healthcare Supplier 351,SaaS/software,major,Clinical and Epic AMS,Lab,exit sensitive
+VEND-HCDN-352,Synthetic Healthcare Supplier 352,AI/document automation,niche,Payer Platform Operations,Pharmacy,standard review
+VEND-HCDN-353,Synthetic Healthcare Supplier 353,telecom/network,incumbent,Data Analytics and AI,Oncology,standard review
+VEND-HCDN-354,Synthetic Healthcare Supplier 354,cybersecurity,emerging,Revenue Cycle Technology,Cardiology,standard review
+VEND-HCDN-355,Synthetic Healthcare Supplier 355,identity,strategic,Cloud Infrastructure and Data Center,Data and Analytics,standard review
+VEND-HCDN-356,Synthetic Healthcare Supplier 356,interoperability,major,Workplace and Contact Center,Clinical Analytics,standard review
+VEND-HCDN-357,Synthetic Healthcare Supplier 357,Epic/clinical platform,niche,Security Identity and Compliance,Actuarial,standard review
+VEND-HCDN-358,Synthetic Healthcare Supplier 358,claims administration,incumbent,Integration and Interoperability,Departmental Reporting,standard review
+VEND-HCDN-359,Synthetic Healthcare Supplier 359,PBM/pharmacy,emerging,ERP and Corporate Platforms,AI Transformation,standard review
+VEND-HCDN-360,Synthetic Healthcare Supplier 360,BPO/contact center,strategic,Clinical and Epic AMS,Technology,concentration risk
+VEND-HCDN-361,Synthetic Healthcare Supplier 361,revenue cycle,major,Payer Platform Operations,Security,standard review
+VEND-HCDN-362,Synthetic Healthcare Supplier 362,prior authorization/UM,niche,Data Analytics and AI,Procurement,standard review
+VEND-HCDN-363,Synthetic Healthcare Supplier 363,quality Stars HEDIS RAF,incumbent,Revenue Cycle Technology,HR,standard review
+VEND-HCDN-364,Synthetic Healthcare Supplier 364,payment integrity,emerging,Cloud Infrastructure and Data Center,Supply Chain,exit sensitive
+VEND-HCDN-365,Synthetic Healthcare Supplier 365,cloud infrastructure,strategic,Workplace and Contact Center,Privacy,standard review
+VEND-HCDN-366,Synthetic Healthcare Supplier 366,data analytics,major,Security Identity and Compliance,Compliance,standard review
+VEND-HCDN-367,Synthetic Healthcare Supplier 367,AMS/IMS,niche,Integration and Interoperability,Provider Network,standard review
+VEND-HCDN-368,Synthetic Healthcare Supplier 368,SaaS/software,incumbent,ERP and Corporate Platforms,Value-Based Care,standard review
+VEND-HCDN-369,Synthetic Healthcare Supplier 369,AI/document automation,emerging,Clinical and Epic AMS,Clinical Operations,standard review
+VEND-HCDN-370,Synthetic Healthcare Supplier 370,telecom/network,strategic,Payer Platform Operations,Revenue Cycle,concentration risk
+VEND-HCDN-371,Synthetic Healthcare Supplier 371,cybersecurity,major,Data Analytics and AI,Patient Access,standard review
+VEND-HCDN-372,Synthetic Healthcare Supplier 372,identity,niche,Revenue Cycle Technology,Interoperability,standard review
+VEND-HCDN-373,Synthetic Healthcare Supplier 373,interoperability,incumbent,Cloud Infrastructure and Data Center,Population Health,standard review
+VEND-HCDN-374,Synthetic Healthcare Supplier 374,Epic/clinical platform,emerging,Workplace and Contact Center,Health Plan Operations,standard review
+VEND-HCDN-375,Synthetic Healthcare Supplier 375,claims administration,strategic,Security Identity and Compliance,Medicare Advantage,standard review
+VEND-HCDN-376,Synthetic Healthcare Supplier 376,PBM/pharmacy,major,Integration and Interoperability,Claims Operations,standard review
+VEND-HCDN-377,Synthetic Healthcare Supplier 377,BPO/contact center,niche,ERP and Corporate Platforms,Utilization Management,exit sensitive
+VEND-HCDN-378,Synthetic Healthcare Supplier 378,revenue cycle,incumbent,Clinical and Epic AMS,Member Services,standard review
+VEND-HCDN-379,Synthetic Healthcare Supplier 379,prior authorization/UM,emerging,Payer Platform Operations,Quality and Stars,standard review
+VEND-HCDN-380,Synthetic Healthcare Supplier 380,quality Stars HEDIS RAF,strategic,Data Analytics and AI,Risk Adjustment,concentration risk
+VEND-HCDN-381,Synthetic Healthcare Supplier 381,payment integrity,major,Revenue Cycle Technology,Care Management,standard review
+VEND-HCDN-382,Synthetic Healthcare Supplier 382,cloud infrastructure,niche,Cloud Infrastructure and Data Center,Finance,standard review
+VEND-HCDN-383,Synthetic Healthcare Supplier 383,data analytics,incumbent,Workplace and Contact Center,Coding,standard review
+VEND-HCDN-384,Synthetic Healthcare Supplier 384,AMS/IMS,emerging,Security Identity and Compliance,Payer Contracting,standard review
+VEND-HCDN-385,Synthetic Healthcare Supplier 385,SaaS/software,strategic,Integration and Interoperability,Digital Front Door,standard review
+VEND-HCDN-386,Synthetic Healthcare Supplier 386,AI/document automation,major,ERP and Corporate Platforms,Contact Center,standard review
+VEND-HCDN-387,Synthetic Healthcare Supplier 387,telecom/network,niche,Clinical and Epic AMS,Ambulatory Care,standard review
+VEND-HCDN-388,Synthetic Healthcare Supplier 388,cybersecurity,incumbent,Payer Platform Operations,Emergency Department,standard review
+VEND-HCDN-389,Synthetic Healthcare Supplier 389,identity,emerging,Data Analytics and AI,Inpatient,standard review
+VEND-HCDN-390,Synthetic Healthcare Supplier 390,interoperability,strategic,Revenue Cycle Technology,Surgery,concentration risk
+VEND-HCDN-391,Synthetic Healthcare Supplier 391,Epic/clinical platform,major,Cloud Infrastructure and Data Center,Imaging,standard review
+VEND-HCDN-392,Synthetic Healthcare Supplier 392,claims administration,niche,Workplace and Contact Center,Lab,standard review
+VEND-HCDN-393,Synthetic Healthcare Supplier 393,PBM/pharmacy,incumbent,Security Identity and Compliance,Pharmacy,standard review
+VEND-HCDN-394,Synthetic Healthcare Supplier 394,BPO/contact center,emerging,Integration and Interoperability,Oncology,standard review
+VEND-HCDN-395,Synthetic Healthcare Supplier 395,revenue cycle,strategic,ERP and Corporate Platforms,Cardiology,standard review
+VEND-HCDN-396,Synthetic Healthcare Supplier 396,prior authorization/UM,major,Clinical and Epic AMS,Data and Analytics,standard review
+VEND-HCDN-397,Synthetic Healthcare Supplier 397,quality Stars HEDIS RAF,niche,Payer Platform Operations,Clinical Analytics,standard review
+VEND-HCDN-398,Synthetic Healthcare Supplier 398,payment integrity,incumbent,Data Analytics and AI,Actuarial,standard review
+VEND-HCDN-399,Synthetic Healthcare Supplier 399,cloud infrastructure,emerging,Revenue Cycle Technology,Departmental Reporting,standard review
+VEND-HCDN-400,Synthetic Healthcare Supplier 400,data analytics,strategic,Cloud Infrastructure and Data Center,AI Transformation,concentration risk
+VEND-HCDN-401,Synthetic Healthcare Supplier 401,AMS/IMS,major,Workplace and Contact Center,Technology,standard review
+VEND-HCDN-402,Synthetic Healthcare Supplier 402,SaaS/software,niche,Security Identity and Compliance,Security,standard review
+VEND-HCDN-403,Synthetic Healthcare Supplier 403,AI/document automation,incumbent,Integration and Interoperability,Procurement,exit sensitive
+VEND-HCDN-404,Synthetic Healthcare Supplier 404,telecom/network,emerging,ERP and Corporate Platforms,HR,standard review
+VEND-HCDN-405,Synthetic Healthcare Supplier 405,cybersecurity,strategic,Clinical and Epic AMS,Supply Chain,standard review
+VEND-HCDN-406,Synthetic Healthcare Supplier 406,identity,major,Payer Platform Operations,Privacy,standard review
+VEND-HCDN-407,Synthetic Healthcare Supplier 407,interoperability,niche,Data Analytics and AI,Compliance,standard review
+VEND-HCDN-408,Synthetic Healthcare Supplier 408,Epic/clinical platform,incumbent,Revenue Cycle Technology,Provider Network,standard review
+VEND-HCDN-409,Synthetic Healthcare Supplier 409,claims administration,emerging,Cloud Infrastructure and Data Center,Value-Based Care,standard review
+VEND-HCDN-410,Synthetic Healthcare Supplier 410,PBM/pharmacy,strategic,Workplace and Contact Center,Clinical Operations,concentration risk
+VEND-HCDN-411,Synthetic Healthcare Supplier 411,BPO/contact center,major,Security Identity and Compliance,Revenue Cycle,standard review
+VEND-HCDN-412,Synthetic Healthcare Supplier 412,revenue cycle,niche,Integration and Interoperability,Patient Access,standard review
+VEND-HCDN-413,Synthetic Healthcare Supplier 413,prior authorization/UM,incumbent,ERP and Corporate Platforms,Interoperability,standard review
+VEND-HCDN-414,Synthetic Healthcare Supplier 414,quality Stars HEDIS RAF,emerging,Clinical and Epic AMS,Population Health,standard review
+VEND-HCDN-415,Synthetic Healthcare Supplier 415,payment integrity,strategic,Payer Platform Operations,Health Plan Operations,standard review
+VEND-HCDN-416,Synthetic Healthcare Supplier 416,cloud infrastructure,major,Data Analytics and AI,Medicare Advantage,exit sensitive
+VEND-HCDN-417,Synthetic Healthcare Supplier 417,data analytics,niche,Revenue Cycle Technology,Claims Operations,standard review
+VEND-HCDN-418,Synthetic Healthcare Supplier 418,AMS/IMS,incumbent,Cloud Infrastructure and Data Center,Utilization Management,standard review
+VEND-HCDN-419,Synthetic Healthcare Supplier 419,SaaS/software,emerging,Workplace and Contact Center,Member Services,standard review
+VEND-HCDN-420,Synthetic Healthcare Supplier 420,AI/document automation,strategic,Security Identity and Compliance,Quality and Stars,concentration risk
+VEND-HCDN-421,Synthetic Healthcare Supplier 421,telecom/network,major,Integration and Interoperability,Risk Adjustment,standard review
+VEND-HCDN-422,Synthetic Healthcare Supplier 422,cybersecurity,niche,ERP and Corporate Platforms,Care Management,standard review
+VEND-HCDN-423,Synthetic Healthcare Supplier 423,identity,incumbent,Clinical and Epic AMS,Finance,standard review
+VEND-HCDN-424,Synthetic Healthcare Supplier 424,interoperability,emerging,Payer Platform Operations,Coding,standard review
+VEND-HCDN-425,Synthetic Healthcare Supplier 425,Epic/clinical platform,strategic,Data Analytics and AI,Payer Contracting,standard review
+VEND-HCDN-426,Synthetic Healthcare Supplier 426,claims administration,major,Revenue Cycle Technology,Digital Front Door,standard review
+VEND-HCDN-427,Synthetic Healthcare Supplier 427,PBM/pharmacy,niche,Cloud Infrastructure and Data Center,Contact Center,standard review
+VEND-HCDN-428,Synthetic Healthcare Supplier 428,BPO/contact center,incumbent,Workplace and Contact Center,Ambulatory Care,standard review
+VEND-HCDN-429,Synthetic Healthcare Supplier 429,revenue cycle,emerging,Security Identity and Compliance,Emergency Department,exit sensitive
+VEND-HCDN-430,Synthetic Healthcare Supplier 430,prior authorization/UM,strategic,Integration and Interoperability,Inpatient,concentration risk
+VEND-HCDN-431,Synthetic Healthcare Supplier 431,quality Stars HEDIS RAF,major,ERP and Corporate Platforms,Surgery,standard review
+VEND-HCDN-432,Synthetic Healthcare Supplier 432,payment integrity,niche,Clinical and Epic AMS,Imaging,standard review
+VEND-HCDN-433,Synthetic Healthcare Supplier 433,cloud infrastructure,incumbent,Payer Platform Operations,Lab,standard review
+VEND-HCDN-434,Synthetic Healthcare Supplier 434,data analytics,emerging,Data Analytics and AI,Pharmacy,standard review
+VEND-HCDN-435,Synthetic Healthcare Supplier 435,AMS/IMS,strategic,Revenue Cycle Technology,Oncology,standard review
+VEND-HCDN-436,Synthetic Healthcare Supplier 436,SaaS/software,major,Cloud Infrastructure and Data Center,Cardiology,standard review
+VEND-HCDN-437,Synthetic Healthcare Supplier 437,AI/document automation,niche,Workplace and Contact Center,Data and Analytics,standard review
+VEND-HCDN-438,Synthetic Healthcare Supplier 438,telecom/network,incumbent,Security Identity and Compliance,Clinical Analytics,standard review
+VEND-HCDN-439,Synthetic Healthcare Supplier 439,cybersecurity,emerging,Integration and Interoperability,Actuarial,standard review
+VEND-HCDN-440,Synthetic Healthcare Supplier 440,identity,strategic,ERP and Corporate Platforms,Departmental Reporting,concentration risk
+VEND-HCDN-441,Synthetic Healthcare Supplier 441,interoperability,major,Clinical and Epic AMS,AI Transformation,standard review
+VEND-HCDN-442,Synthetic Healthcare Supplier 442,Epic/clinical platform,niche,Payer Platform Operations,Technology,exit sensitive
+VEND-HCDN-443,Synthetic Healthcare Supplier 443,claims administration,incumbent,Data Analytics and AI,Security,standard review
+VEND-HCDN-444,Synthetic Healthcare Supplier 444,PBM/pharmacy,emerging,Revenue Cycle Technology,Procurement,standard review
+VEND-HCDN-445,Synthetic Healthcare Supplier 445,BPO/contact center,strategic,Cloud Infrastructure and Data Center,HR,standard review
+VEND-HCDN-446,Synthetic Healthcare Supplier 446,revenue cycle,major,Workplace and Contact Center,Supply Chain,standard review
+VEND-HCDN-447,Synthetic Healthcare Supplier 447,prior authorization/UM,niche,Security Identity and Compliance,Privacy,standard review
+VEND-HCDN-448,Synthetic Healthcare Supplier 448,quality Stars HEDIS RAF,incumbent,Integration and Interoperability,Compliance,standard review
+VEND-HCDN-449,Synthetic Healthcare Supplier 449,payment integrity,emerging,ERP and Corporate Platforms,Provider Network,standard review
+VEND-HCDN-450,Synthetic Healthcare Supplier 450,cloud infrastructure,strategic,Clinical and Epic AMS,Value-Based Care,concentration risk
+VEND-HCDN-451,Synthetic Healthcare Supplier 451,data analytics,major,Payer Platform Operations,Clinical Operations,standard review
+VEND-HCDN-452,Synthetic Healthcare Supplier 452,AMS/IMS,niche,Data Analytics and AI,Revenue Cycle,standard review
+VEND-HCDN-453,Synthetic Healthcare Supplier 453,SaaS/software,incumbent,Revenue Cycle Technology,Patient Access,standard review
+VEND-HCDN-454,Synthetic Healthcare Supplier 454,AI/document automation,emerging,Cloud Infrastructure and Data Center,Interoperability,standard review
+VEND-HCDN-455,Synthetic Healthcare Supplier 455,telecom/network,strategic,Workplace and Contact Center,Population Health,exit sensitive
+VEND-HCDN-456,Synthetic Healthcare Supplier 456,cybersecurity,major,Security Identity and Compliance,Health Plan Operations,standard review
+VEND-HCDN-457,Synthetic Healthcare Supplier 457,identity,niche,Integration and Interoperability,Medicare Advantage,standard review
+VEND-HCDN-458,Synthetic Healthcare Supplier 458,interoperability,incumbent,ERP and Corporate Platforms,Claims Operations,standard review
+VEND-HCDN-459,Synthetic Healthcare Supplier 459,Epic/clinical platform,emerging,Clinical and Epic AMS,Utilization Management,standard review
+VEND-HCDN-460,Synthetic Healthcare Supplier 460,claims administration,strategic,Payer Platform Operations,Member Services,concentration risk
+VEND-HCDN-461,Synthetic Healthcare Supplier 461,PBM/pharmacy,major,Data Analytics and AI,Quality and Stars,standard review
+VEND-HCDN-462,Synthetic Healthcare Supplier 462,BPO/contact center,niche,Revenue Cycle Technology,Risk Adjustment,standard review
+VEND-HCDN-463,Synthetic Healthcare Supplier 463,revenue cycle,incumbent,Cloud Infrastructure and Data Center,Care Management,standard review
+VEND-HCDN-464,Synthetic Healthcare Supplier 464,prior authorization/UM,emerging,Workplace and Contact Center,Finance,standard review
+VEND-HCDN-465,Synthetic Healthcare Supplier 465,quality Stars HEDIS RAF,strategic,Security Identity and Compliance,Coding,standard review
+VEND-HCDN-466,Synthetic Healthcare Supplier 466,payment integrity,major,Integration and Interoperability,Payer Contracting,standard review
+VEND-HCDN-467,Synthetic Healthcare Supplier 467,cloud infrastructure,niche,ERP and Corporate Platforms,Digital Front Door,standard review
+VEND-HCDN-468,Synthetic Healthcare Supplier 468,data analytics,incumbent,Clinical and Epic AMS,Contact Center,exit sensitive
+VEND-HCDN-469,Synthetic Healthcare Supplier 469,AMS/IMS,emerging,Payer Platform Operations,Ambulatory Care,standard review
+VEND-HCDN-470,Synthetic Healthcare Supplier 470,SaaS/software,strategic,Data Analytics and AI,Emergency Department,concentration risk
+VEND-HCDN-471,Synthetic Healthcare Supplier 471,AI/document automation,major,Revenue Cycle Technology,Inpatient,standard review
+VEND-HCDN-472,Synthetic Healthcare Supplier 472,telecom/network,niche,Cloud Infrastructure and Data Center,Surgery,standard review
+VEND-HCDN-473,Synthetic Healthcare Supplier 473,cybersecurity,incumbent,Workplace and Contact Center,Imaging,standard review
+VEND-HCDN-474,Synthetic Healthcare Supplier 474,identity,emerging,Security Identity and Compliance,Lab,standard review
+VEND-HCDN-475,Synthetic Healthcare Supplier 475,interoperability,strategic,Integration and Interoperability,Pharmacy,standard review
+VEND-HCDN-476,Synthetic Healthcare Supplier 476,Epic/clinical platform,major,ERP and Corporate Platforms,Oncology,standard review
+VEND-HCDN-477,Synthetic Healthcare Supplier 477,claims administration,niche,Clinical and Epic AMS,Cardiology,standard review
+VEND-HCDN-478,Synthetic Healthcare Supplier 478,PBM/pharmacy,incumbent,Payer Platform Operations,Data and Analytics,standard review
+VEND-HCDN-479,Synthetic Healthcare Supplier 479,BPO/contact center,emerging,Data Analytics and AI,Clinical Analytics,standard review
+VEND-HCDN-480,Synthetic Healthcare Supplier 480,revenue cycle,strategic,Revenue Cycle Technology,Actuarial,concentration risk

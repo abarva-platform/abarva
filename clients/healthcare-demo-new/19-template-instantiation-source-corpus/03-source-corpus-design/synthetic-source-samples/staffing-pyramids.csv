@@ -1,0 +1,217 @@
+staffing_id,proposal_id,lot_id,bidder,role_family,delivery_location,phase,headcount_disclosure_mode,transition_note
+STAFF-HCDN-LOT-HCDN-01-A-01,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-01-A-02,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-A-03,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-01-A-04,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-01-A-05,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-A-06,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-01-A-07,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-01-A-08,PROP-HCDN-A-LOT-HCDN-01,LOT-HCDN-01,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-B-01,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-01-B-02,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-B-03,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-01-B-04,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-01-B-05,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-B-06,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-01-B-07,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-01-B-08,PROP-HCDN-B-LOT-HCDN-01,LOT-HCDN-01,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-C-01,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-01-C-02,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-C-03,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-01-C-04,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-01-C-05,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-01-C-06,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-01-C-07,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-01-C-08,PROP-HCDN-C-LOT-HCDN-01,LOT-HCDN-01,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-A-01,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-02-A-02,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-A-03,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-02-A-04,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-02-A-05,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-A-06,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-02-A-07,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-02-A-08,PROP-HCDN-A-LOT-HCDN-02,LOT-HCDN-02,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-B-01,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-02-B-02,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-B-03,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-02-B-04,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-02-B-05,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-B-06,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-02-B-07,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-02-B-08,PROP-HCDN-B-LOT-HCDN-02,LOT-HCDN-02,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-C-01,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-02-C-02,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-C-03,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-02-C-04,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-02-C-05,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-02-C-06,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-02-C-07,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-02-C-08,PROP-HCDN-C-LOT-HCDN-02,LOT-HCDN-02,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-A-01,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-03-A-02,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-A-03,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-03-A-04,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-03-A-05,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-A-06,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-03-A-07,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-03-A-08,PROP-HCDN-A-LOT-HCDN-03,LOT-HCDN-03,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-B-01,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-03-B-02,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-B-03,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-03-B-04,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-03-B-05,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-B-06,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-03-B-07,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-03-B-08,PROP-HCDN-B-LOT-HCDN-03,LOT-HCDN-03,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-C-01,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-03-C-02,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-C-03,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-03-C-04,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-03-C-05,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-03-C-06,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-03-C-07,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-03-C-08,PROP-HCDN-C-LOT-HCDN-03,LOT-HCDN-03,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-A-01,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-04-A-02,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-A-03,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-04-A-04,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-04-A-05,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-A-06,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-04-A-07,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-04-A-08,PROP-HCDN-A-LOT-HCDN-04,LOT-HCDN-04,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-B-01,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-04-B-02,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-B-03,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-04-B-04,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-04-B-05,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-B-06,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-04-B-07,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-04-B-08,PROP-HCDN-B-LOT-HCDN-04,LOT-HCDN-04,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-C-01,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-04-C-02,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-C-03,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-04-C-04,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-04-C-05,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-04-C-06,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-04-C-07,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-04-C-08,PROP-HCDN-C-LOT-HCDN-04,LOT-HCDN-04,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-A-01,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-05-A-02,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-A-03,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-05-A-04,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-05-A-05,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-A-06,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-05-A-07,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-05-A-08,PROP-HCDN-A-LOT-HCDN-05,LOT-HCDN-05,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-B-01,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-05-B-02,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-B-03,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-05-B-04,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-05-B-05,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-B-06,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-05-B-07,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-05-B-08,PROP-HCDN-B-LOT-HCDN-05,LOT-HCDN-05,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-C-01,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-05-C-02,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-C-03,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-05-C-04,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-05-C-05,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-05-C-06,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-05-C-07,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-05-C-08,PROP-HCDN-C-LOT-HCDN-05,LOT-HCDN-05,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-A-01,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-06-A-02,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-A-03,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-06-A-04,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-06-A-05,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-A-06,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-06-A-07,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-06-A-08,PROP-HCDN-A-LOT-HCDN-06,LOT-HCDN-06,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-B-01,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-06-B-02,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-B-03,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-06-B-04,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-06-B-05,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-B-06,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-06-B-07,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-06-B-08,PROP-HCDN-B-LOT-HCDN-06,LOT-HCDN-06,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-C-01,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-06-C-02,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-C-03,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-06-C-04,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-06-C-05,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-06-C-06,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-06-C-07,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-06-C-08,PROP-HCDN-C-LOT-HCDN-06,LOT-HCDN-06,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-A-01,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-07-A-02,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-A-03,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-07-A-04,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-07-A-05,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-A-06,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-07-A-07,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-07-A-08,PROP-HCDN-A-LOT-HCDN-07,LOT-HCDN-07,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-B-01,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-07-B-02,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-B-03,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-07-B-04,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-07-B-05,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-B-06,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-07-B-07,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-07-B-08,PROP-HCDN-B-LOT-HCDN-07,LOT-HCDN-07,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-C-01,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-07-C-02,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-C-03,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-07-C-04,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-07-C-05,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-07-C-06,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-07-C-07,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-07-C-08,PROP-HCDN-C-LOT-HCDN-07,LOT-HCDN-07,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-A-01,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-08-A-02,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-A-03,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-08-A-04,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-08-A-05,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-A-06,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-08-A-07,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-08-A-08,PROP-HCDN-A-LOT-HCDN-08,LOT-HCDN-08,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-B-01,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-08-B-02,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-B-03,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-08-B-04,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-08-B-05,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-B-06,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-08-B-07,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-08-B-08,PROP-HCDN-B-LOT-HCDN-08,LOT-HCDN-08,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-C-01,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-08-C-02,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-C-03,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-08-C-04,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-08-C-05,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-08-C-06,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-08-C-07,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-08-C-08,PROP-HCDN-C-LOT-HCDN-08,LOT-HCDN-08,C,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-A-01,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-09-A-02,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-A-03,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-09-A-04,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-09-A-05,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-A-06,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-09-A-07,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-09-A-08,PROP-HCDN-A-LOT-HCDN-09,LOT-HCDN-09,A,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-B-01,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-09-B-02,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-B-03,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-09-B-04,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-09-B-05,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-B-06,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-09-B-07,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-09-B-08,PROP-HCDN-B-LOT-HCDN-09,LOT-HCDN-09,B,integration engineer,onsite,transition,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-C-01,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,SQL/BI engineer,nearshore,steady-state,range,standard
+STAFF-HCDN-LOT-HCDN-09-C-02,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,claims ops analyst,offshore,hypercare,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-C-03,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,UM nurse reviewer,hybrid,transformation,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-09-C-04,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,data engineer,onsite,transition,range,standard
+STAFF-HCDN-LOT-HCDN-09-C-05,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,cloud engineer,nearshore,steady-state,indexed,standard
+STAFF-HCDN-LOT-HCDN-09-C-06,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,service desk analyst,offshore,hypercare,exact,critical knowledge-transfer dependency
+STAFF-HCDN-LOT-HCDN-09-C-07,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,security engineer,hybrid,transformation,range,standard
+STAFF-HCDN-LOT-HCDN-09-C-08,PROP-HCDN-C-LOT-HCDN-09,LOT-HCDN-09,C,integration engineer,onsite,transition,indexed,standard

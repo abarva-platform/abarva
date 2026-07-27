@@ -1,0 +1,91 @@
+criteria_id,lot_id,service_tower,criterion,weight,scoring_guidance,source_id
+CRIT-HCDN-0001,LOT-HCDN-01,Clinical and Epic AMS,clinical continuity,8,evidence-backed scoring required,SRC-HCDN-EVAL-001
+CRIT-HCDN-0002,LOT-HCDN-01,Clinical and Epic AMS,payer operations depth,10,evidence-backed scoring required,SRC-HCDN-EVAL-002
+CRIT-HCDN-0003,LOT-HCDN-01,Clinical and Epic AMS,Stars/quality evidence,12,evidence-backed scoring required,SRC-HCDN-EVAL-003
+CRIT-HCDN-0004,LOT-HCDN-01,Clinical and Epic AMS,data modernization credibility,15,evidence-backed scoring required,SRC-HCDN-EVAL-004
+CRIT-HCDN-0005,LOT-HCDN-01,Clinical and Epic AMS,Azure current-state support,8,evidence-backed scoring required,SRC-HCDN-EVAL-005
+CRIT-HCDN-0006,LOT-HCDN-01,Clinical and Epic AMS,AWS transformation roadmap,10,evidence-backed scoring required,SRC-HCDN-EVAL-006
+CRIT-HCDN-0007,LOT-HCDN-01,Clinical and Epic AMS,commercial transparency,12,evidence-backed scoring required,SRC-HCDN-EVAL-007
+CRIT-HCDN-0008,LOT-HCDN-01,Clinical and Epic AMS,transition risk,15,evidence-backed scoring required,SRC-HCDN-EVAL-008
+CRIT-HCDN-0009,LOT-HCDN-01,Clinical and Epic AMS,PHI/security controls,8,evidence-backed scoring required,SRC-HCDN-EVAL-009
+CRIT-HCDN-0010,LOT-HCDN-01,Clinical and Epic AMS,value commitment evidence,10,evidence-backed scoring required,SRC-HCDN-EVAL-010
+CRIT-HCDN-0011,LOT-HCDN-02,Payer Platform Operations,clinical continuity,12,evidence-backed scoring required,SRC-HCDN-EVAL-011
+CRIT-HCDN-0012,LOT-HCDN-02,Payer Platform Operations,payer operations depth,15,evidence-backed scoring required,SRC-HCDN-EVAL-012
+CRIT-HCDN-0013,LOT-HCDN-02,Payer Platform Operations,Stars/quality evidence,8,evidence-backed scoring required,SRC-HCDN-EVAL-013
+CRIT-HCDN-0014,LOT-HCDN-02,Payer Platform Operations,data modernization credibility,10,evidence-backed scoring required,SRC-HCDN-EVAL-014
+CRIT-HCDN-0015,LOT-HCDN-02,Payer Platform Operations,Azure current-state support,12,evidence-backed scoring required,SRC-HCDN-EVAL-015
+CRIT-HCDN-0016,LOT-HCDN-02,Payer Platform Operations,AWS transformation roadmap,15,evidence-backed scoring required,SRC-HCDN-EVAL-016
+CRIT-HCDN-0017,LOT-HCDN-02,Payer Platform Operations,commercial transparency,8,evidence-backed scoring required,SRC-HCDN-EVAL-017
+CRIT-HCDN-0018,LOT-HCDN-02,Payer Platform Operations,transition risk,10,evidence-backed scoring required,SRC-HCDN-EVAL-018
+CRIT-HCDN-0019,LOT-HCDN-02,Payer Platform Operations,PHI/security controls,12,evidence-backed scoring required,SRC-HCDN-EVAL-019
+CRIT-HCDN-0020,LOT-HCDN-02,Payer Platform Operations,value commitment evidence,15,evidence-backed scoring required,SRC-HCDN-EVAL-020
+CRIT-HCDN-0021,LOT-HCDN-03,Data Analytics and AI,clinical continuity,8,evidence-backed scoring required,SRC-HCDN-EVAL-021
+CRIT-HCDN-0022,LOT-HCDN-03,Data Analytics and AI,payer operations depth,10,evidence-backed scoring required,SRC-HCDN-EVAL-022
+CRIT-HCDN-0023,LOT-HCDN-03,Data Analytics and AI,Stars/quality evidence,12,evidence-backed scoring required,SRC-HCDN-EVAL-023
+CRIT-HCDN-0024,LOT-HCDN-03,Data Analytics and AI,data modernization credibility,15,evidence-backed scoring required,SRC-HCDN-EVAL-024
+CRIT-HCDN-0025,LOT-HCDN-03,Data Analytics and AI,Azure current-state support,8,evidence-backed scoring required,SRC-HCDN-EVAL-001
+CRIT-HCDN-0026,LOT-HCDN-03,Data Analytics and AI,AWS transformation roadmap,10,evidence-backed scoring required,SRC-HCDN-EVAL-002
+CRIT-HCDN-0027,LOT-HCDN-03,Data Analytics and AI,commercial transparency,12,evidence-backed scoring required,SRC-HCDN-EVAL-003
+CRIT-HCDN-0028,LOT-HCDN-03,Data Analytics and AI,transition risk,15,evidence-backed scoring required,SRC-HCDN-EVAL-004
+CRIT-HCDN-0029,LOT-HCDN-03,Data Analytics and AI,PHI/security controls,8,evidence-backed scoring required,SRC-HCDN-EVAL-005
+CRIT-HCDN-0030,LOT-HCDN-03,Data Analytics and AI,value commitment evidence,10,evidence-backed scoring required,SRC-HCDN-EVAL-006
+CRIT-HCDN-0031,LOT-HCDN-04,Revenue Cycle Technology,clinical continuity,12,evidence-backed scoring required,SRC-HCDN-EVAL-007
+CRIT-HCDN-0032,LOT-HCDN-04,Revenue Cycle Technology,payer operations depth,15,evidence-backed scoring required,SRC-HCDN-EVAL-008
+CRIT-HCDN-0033,LOT-HCDN-04,Revenue Cycle Technology,Stars/quality evidence,8,evidence-backed scoring required,SRC-HCDN-EVAL-009
+CRIT-HCDN-0034,LOT-HCDN-04,Revenue Cycle Technology,data modernization credibility,10,evidence-backed scoring required,SRC-HCDN-EVAL-010
+CRIT-HCDN-0035,LOT-HCDN-04,Revenue Cycle Technology,Azure current-state support,12,evidence-backed scoring required,SRC-HCDN-EVAL-011
+CRIT-HCDN-0036,LOT-HCDN-04,Revenue Cycle Technology,AWS transformation roadmap,15,evidence-backed scoring required,SRC-HCDN-EVAL-012
+CRIT-HCDN-0037,LOT-HCDN-04,Revenue Cycle Technology,commercial transparency,8,evidence-backed scoring required,SRC-HCDN-EVAL-013
+CRIT-HCDN-0038,LOT-HCDN-04,Revenue Cycle Technology,transition risk,10,evidence-backed scoring required,SRC-HCDN-EVAL-014
+CRIT-HCDN-0039,LOT-HCDN-04,Revenue Cycle Technology,PHI/security controls,12,evidence-backed scoring required,SRC-HCDN-EVAL-015
+CRIT-HCDN-0040,LOT-HCDN-04,Revenue Cycle Technology,value commitment evidence,15,evidence-backed scoring required,SRC-HCDN-EVAL-016
+CRIT-HCDN-0041,LOT-HCDN-05,Cloud Infrastructure and Data Center,clinical continuity,8,evidence-backed scoring required,SRC-HCDN-EVAL-017
+CRIT-HCDN-0042,LOT-HCDN-05,Cloud Infrastructure and Data Center,payer operations depth,10,evidence-backed scoring required,SRC-HCDN-EVAL-018
+CRIT-HCDN-0043,LOT-HCDN-05,Cloud Infrastructure and Data Center,Stars/quality evidence,12,evidence-backed scoring required,SRC-HCDN-EVAL-019
+CRIT-HCDN-0044,LOT-HCDN-05,Cloud Infrastructure and Data Center,data modernization credibility,15,evidence-backed scoring required,SRC-HCDN-EVAL-020
+CRIT-HCDN-0045,LOT-HCDN-05,Cloud Infrastructure and Data Center,Azure current-state support,8,evidence-backed scoring required,SRC-HCDN-EVAL-021
+CRIT-HCDN-0046,LOT-HCDN-05,Cloud Infrastructure and Data Center,AWS transformation roadmap,10,evidence-backed scoring required,SRC-HCDN-EVAL-022
+CRIT-HCDN-0047,LOT-HCDN-05,Cloud Infrastructure and Data Center,commercial transparency,12,evidence-backed scoring required,SRC-HCDN-EVAL-023
+CRIT-HCDN-0048,LOT-HCDN-05,Cloud Infrastructure and Data Center,transition risk,15,evidence-backed scoring required,SRC-HCDN-EVAL-024
+CRIT-HCDN-0049,LOT-HCDN-05,Cloud Infrastructure and Data Center,PHI/security controls,8,evidence-backed scoring required,SRC-HCDN-EVAL-001
+CRIT-HCDN-0050,LOT-HCDN-05,Cloud Infrastructure and Data Center,value commitment evidence,10,evidence-backed scoring required,SRC-HCDN-EVAL-002
+CRIT-HCDN-0051,LOT-HCDN-06,Workplace and Contact Center,clinical continuity,12,evidence-backed scoring required,SRC-HCDN-EVAL-003
+CRIT-HCDN-0052,LOT-HCDN-06,Workplace and Contact Center,payer operations depth,15,evidence-backed scoring required,SRC-HCDN-EVAL-004
+CRIT-HCDN-0053,LOT-HCDN-06,Workplace and Contact Center,Stars/quality evidence,8,evidence-backed scoring required,SRC-HCDN-EVAL-005
+CRIT-HCDN-0054,LOT-HCDN-06,Workplace and Contact Center,data modernization credibility,10,evidence-backed scoring required,SRC-HCDN-EVAL-006
+CRIT-HCDN-0055,LOT-HCDN-06,Workplace and Contact Center,Azure current-state support,12,evidence-backed scoring required,SRC-HCDN-EVAL-007
+CRIT-HCDN-0056,LOT-HCDN-06,Workplace and Contact Center,AWS transformation roadmap,15,evidence-backed scoring required,SRC-HCDN-EVAL-008
+CRIT-HCDN-0057,LOT-HCDN-06,Workplace and Contact Center,commercial transparency,8,evidence-backed scoring required,SRC-HCDN-EVAL-009
+CRIT-HCDN-0058,LOT-HCDN-06,Workplace and Contact Center,transition risk,10,evidence-backed scoring required,SRC-HCDN-EVAL-010
+CRIT-HCDN-0059,LOT-HCDN-06,Workplace and Contact Center,PHI/security controls,12,evidence-backed scoring required,SRC-HCDN-EVAL-011
+CRIT-HCDN-0060,LOT-HCDN-06,Workplace and Contact Center,value commitment evidence,15,evidence-backed scoring required,SRC-HCDN-EVAL-012
+CRIT-HCDN-0061,LOT-HCDN-07,Security Identity and Compliance,clinical continuity,8,evidence-backed scoring required,SRC-HCDN-EVAL-013
+CRIT-HCDN-0062,LOT-HCDN-07,Security Identity and Compliance,payer operations depth,10,evidence-backed scoring required,SRC-HCDN-EVAL-014
+CRIT-HCDN-0063,LOT-HCDN-07,Security Identity and Compliance,Stars/quality evidence,12,evidence-backed scoring required,SRC-HCDN-EVAL-015
+CRIT-HCDN-0064,LOT-HCDN-07,Security Identity and Compliance,data modernization credibility,15,evidence-backed scoring required,SRC-HCDN-EVAL-016
+CRIT-HCDN-0065,LOT-HCDN-07,Security Identity and Compliance,Azure current-state support,8,evidence-backed scoring required,SRC-HCDN-EVAL-017
+CRIT-HCDN-0066,LOT-HCDN-07,Security Identity and Compliance,AWS transformation roadmap,10,evidence-backed scoring required,SRC-HCDN-EVAL-018
+CRIT-HCDN-0067,LOT-HCDN-07,Security Identity and Compliance,commercial transparency,12,evidence-backed scoring required,SRC-HCDN-EVAL-019
+CRIT-HCDN-0068,LOT-HCDN-07,Security Identity and Compliance,transition risk,15,evidence-backed scoring required,SRC-HCDN-EVAL-020
+CRIT-HCDN-0069,LOT-HCDN-07,Security Identity and Compliance,PHI/security controls,8,evidence-backed scoring required,SRC-HCDN-EVAL-021
+CRIT-HCDN-0070,LOT-HCDN-07,Security Identity and Compliance,value commitment evidence,10,evidence-backed scoring required,SRC-HCDN-EVAL-022
+CRIT-HCDN-0071,LOT-HCDN-08,Integration and Interoperability,clinical continuity,12,evidence-backed scoring required,SRC-HCDN-EVAL-023
+CRIT-HCDN-0072,LOT-HCDN-08,Integration and Interoperability,payer operations depth,15,evidence-backed scoring required,SRC-HCDN-EVAL-024
+CRIT-HCDN-0073,LOT-HCDN-08,Integration and Interoperability,Stars/quality evidence,8,evidence-backed scoring required,SRC-HCDN-EVAL-001
+CRIT-HCDN-0074,LOT-HCDN-08,Integration and Interoperability,data modernization credibility,10,evidence-backed scoring required,SRC-HCDN-EVAL-002
+CRIT-HCDN-0075,LOT-HCDN-08,Integration and Interoperability,Azure current-state support,12,evidence-backed scoring required,SRC-HCDN-EVAL-003
+CRIT-HCDN-0076,LOT-HCDN-08,Integration and Interoperability,AWS transformation roadmap,15,evidence-backed scoring required,SRC-HCDN-EVAL-004
+CRIT-HCDN-0077,LOT-HCDN-08,Integration and Interoperability,commercial transparency,8,evidence-backed scoring required,SRC-HCDN-EVAL-005
+CRIT-HCDN-0078,LOT-HCDN-08,Integration and Interoperability,transition risk,10,evidence-backed scoring required,SRC-HCDN-EVAL-006
+CRIT-HCDN-0079,LOT-HCDN-08,Integration and Interoperability,PHI/security controls,12,evidence-backed scoring required,SRC-HCDN-EVAL-007
+CRIT-HCDN-0080,LOT-HCDN-08,Integration and Interoperability,value commitment evidence,15,evidence-backed scoring required,SRC-HCDN-EVAL-008
+CRIT-HCDN-0081,LOT-HCDN-09,ERP and Corporate Platforms,clinical continuity,8,evidence-backed scoring required,SRC-HCDN-EVAL-009
+CRIT-HCDN-0082,LOT-HCDN-09,ERP and Corporate Platforms,payer operations depth,10,evidence-backed scoring required,SRC-HCDN-EVAL-010
+CRIT-HCDN-0083,LOT-HCDN-09,ERP and Corporate Platforms,Stars/quality evidence,12,evidence-backed scoring required,SRC-HCDN-EVAL-011
+CRIT-HCDN-0084,LOT-HCDN-09,ERP and Corporate Platforms,data modernization credibility,15,evidence-backed scoring required,SRC-HCDN-EVAL-012
+CRIT-HCDN-0085,LOT-HCDN-09,ERP and Corporate Platforms,Azure current-state support,8,evidence-backed scoring required,SRC-HCDN-EVAL-013
+CRIT-HCDN-0086,LOT-HCDN-09,ERP and Corporate Platforms,AWS transformation roadmap,10,evidence-backed scoring required,SRC-HCDN-EVAL-014
+CRIT-HCDN-0087,LOT-HCDN-09,ERP and Corporate Platforms,commercial transparency,12,evidence-backed scoring required,SRC-HCDN-EVAL-015
+CRIT-HCDN-0088,LOT-HCDN-09,ERP and Corporate Platforms,transition risk,15,evidence-backed scoring required,SRC-HCDN-EVAL-016
+CRIT-HCDN-0089,LOT-HCDN-09,ERP and Corporate Platforms,PHI/security controls,8,evidence-backed scoring required,SRC-HCDN-EVAL-017
+CRIT-HCDN-0090,LOT-HCDN-09,ERP and Corporate Platforms,value commitment evidence,10,evidence-backed scoring required,SRC-HCDN-EVAL-018
