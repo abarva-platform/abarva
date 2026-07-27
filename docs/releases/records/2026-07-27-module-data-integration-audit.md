@@ -31,15 +31,20 @@ This release adds a static audit package for existing Moves, Source, and Tower p
 
 - `scripts/audit/build-module-data-integration-audit.mjs`
 - `scripts/audit/build-module-data-integration-workbooks.mjs`
+- `scripts/audit/build-module-migration-sunset-backlog.mjs`
 - `reports/module-data-integration-audit/2026-07-27/`
+- `reports/module-migration-sunset-backlog/2026-07-27/`
 
 ## QA / Validation
 
 - PASS: `node scripts/audit/build-module-data-integration-audit.mjs`
 - PASS: `NODE_PATH=/Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules /Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/audit/build-module-data-integration-workbooks.mjs`
+- PASS: `node scripts/audit/build-module-migration-sunset-backlog.mjs`
 - PASS: CSV sanity check confirmed row and column counts for all generated matrices.
 - PASS: independent classification review corrected code-reference false positives and confirmed the stricter baseline: 131 persisted objects; 72 retain operational; 38 promote/link; 16 shared consumption projections; 5 archive.
-- PASS: `node --check scripts/audit/build-module-data-integration-audit.mjs && node --check scripts/audit/build-module-data-integration-workbooks.mjs`
+- PASS: final row-level spot check confirmed one row per persisted object, one disposition per object, typed table/view posture, promotion targets, projection guidance, archive handling, and explicit static/live verification boundaries.
+- PASS: generated separate migration/sunset planning backlog package; planning only, no migration authorization.
+- PASS: `node --check scripts/audit/build-module-data-integration-audit.mjs && node --check scripts/audit/build-module-data-integration-workbooks.mjs && node --check scripts/audit/build-module-migration-sunset-backlog.mjs`
 - PASS: `npm run release:check`
 
 ## Rollout Plan
@@ -64,9 +69,11 @@ Revert the audit scripts and generated report artifacts. No runtime, database, A
 
 - Generated XLSX/CSV/JSON/Markdown files under `reports/module-data-integration-audit/2026-07-27/`.
 - Independent review memo: `reports/module-data-integration-audit/2026-07-27/INDEPENDENT_CLASSIFICATION_REVIEW.md`.
+- Separate planning backlog package: `reports/module-migration-sunset-backlog/2026-07-27/`.
 - `summary.json` records the static audit scope and row counts.
 
 ## Known Gaps
 
 - Static audit only. Live row counts, RLS catalog status, null rates, duplicates, stale rows, and broken references require a later read-only database audit.
 - No migration, API cutover, Cube model, dashboard change, tenant move, or Azure mutation is included.
+- The migration/sunset backlog records future path-level candidates only. It does not authorize migration, backfill, dual-write, cutover, archive, drop, or runtime changes.

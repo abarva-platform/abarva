@@ -1,0 +1,11 @@
+{
+  "packageDate": "2026-07-27",
+  "sourceAudit": "reports/module-data-integration-audit/2026-07-27",
+  "sourcePr": 5679,
+  "scope": "planning backlog only; no migration authorization",
+  "migrationBacklogRows": 129,
+  "legacySunsetRows": 8,
+  "promotionRows": 38,
+  "projectionRows": 16,
+  "telemetryRows": 13
+}

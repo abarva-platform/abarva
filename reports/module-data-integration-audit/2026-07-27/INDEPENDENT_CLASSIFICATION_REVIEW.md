@@ -61,3 +61,20 @@ Cube / Nexus / aVa / Superset / Observable
 ```
 
 Do not begin module migration until the Healthcare execution path proves the publication and consumption framework with certified loaded data.
+
+## Final Row-Level Spot Check
+
+The final spot check passed:
+
+- All 131 persisted objects appear exactly once.
+- Every object has one primary disposition.
+- Writable tables and materialized views are distinguished.
+- Current focused code consumers are recorded where statically visible.
+- Tenant/RLS posture is recorded as static evidence or flagged for live DB/RLS verification.
+- All 38 canonical promotion candidates carry an intended canonical target.
+- All 16 shared-consumption projections carry consumer and projection cutover guidance.
+- All 5 archive items carry archive-only cutover guidance.
+
+## Follow-On Package
+
+A separate planning backlog package now exists at `reports/module-migration-sunset-backlog/2026-07-27/`. It tracks path-level migration and sunset candidates separately from the factual 131-object audit. That package is planning-only and does not authorize migration, backfill, dual-write, cutover, archive, drop, Azure mutation, Postgres mutation, or runtime change.
