@@ -1,0 +1,14 @@
+{
+  "tenantKey": "airline-demo-new",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "whatIfSource": "what-if-20260727.txt",
+  "deleteChanges": 0,
+  "modifyChanges": 0,
+  "sharedRuntimeMutations": 0,
+  "publicNetworkEnables": 0,
+  "status": "pass",
+  "notes": [
+    "Live what-if predicts create-only changes for the Airline Demo New private data plane.",
+    "No shared web runtime, source corpus, or product route changes are included."
+  ]
+}

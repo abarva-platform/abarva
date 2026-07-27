@@ -8,7 +8,8 @@ This turns the approved Phase 3C-2D consumption contract into the first tenant-a
 2. Knowledge Baseline and domain-publication control tables.
 3. Versioned consumption read models for Home, Source, Tower, Moves, Intelligence/aVa, Cube, and future analytics surfaces.
 4. Relational graph projection tables and recursive SQL traversal helpers.
-5. Static validation that blocks legacy-module inputs, hidden-truth sourcing, wildcard tenants, and graph-engine coupling.
+5. Dynamic tenant-key RLS coverage for every tenant-scoped table in the shared schemas.
+6. Static validation that blocks legacy-module inputs, hidden-truth sourcing, wildcard tenants, missing RLS, and graph-engine coupling.
 
 ## Execution Boundary
 
@@ -37,6 +38,7 @@ Graph accelerators are out of scope for P0/P1 tenant load. They may be evaluated
 ## Files
 
 - `sql/001_shared_knowledge_publication_consumption.sql` — shared Azure/Postgres migration.
+- `sql/002_shared_knowledge_publication_consumption_rls.sql` — tenant-scoped RLS policy migration for every shared table with `tenant_key`.
 - `cube/knowledge_consumption_model.yml` — initial Cube semantic model contract over `consumption.*` only.
 - `jobs/publication_projection_job_contract.json` — governed ACA job-stage contract for publication and projection.
 - `validation/expected-contract.json` — static validator expectations.

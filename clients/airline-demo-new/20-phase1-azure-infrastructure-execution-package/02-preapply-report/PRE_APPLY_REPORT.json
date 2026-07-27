@@ -1,0 +1,38 @@
+{
+  "tenantKey": "airline-demo-new",
+  "releaseState": "zero_data_infrastructure_plan",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "subscriptionId": "701a8554-a166-46e9-bf13-743bc50e3b20",
+  "resourceGroup": "rg-abarva-airdn-lab-eus2-001",
+  "liveWhatIf": {
+    "rawOutput": "what-if-clean-eastus2-20260727.txt",
+    "safetyGate": "WHAT_IF_SAFETY_GATE.json",
+    "status": "pass",
+    "createCount": 53,
+    "deleteCount": 0,
+    "modifyCount": 0,
+    "unsupportedCount": 6,
+    "unsafeModifyCount": 0,
+    "postgresLocation": "eastus2"
+  },
+  "sourceCorpus": {
+    "releaseId": "airline-demo-new-source-corpus-v1.0.0",
+    "state": "blocked_before_freeze",
+    "sourceLandingAllowed": false,
+    "parserAllowed": false,
+    "publicationAllowed": false
+  },
+  "migration": {
+    "sharedPhase3c2eRequired": true,
+    "migrationApplyAllowedInThisPackage": false
+  },
+  "blockedActions": [
+    "azure_apply_without_human_review",
+    "source_landing",
+    "parser_run",
+    "database_migration_apply",
+    "knowledge_baseline_publication",
+    "cube_deploy",
+    "product_runtime_wiring"
+  ]
+}
