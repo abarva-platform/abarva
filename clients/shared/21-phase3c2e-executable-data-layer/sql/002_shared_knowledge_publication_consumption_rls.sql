@@ -39,6 +39,11 @@ AS $$
     )
 $$;
 
+GRANT USAGE ON SCHEMA governance TO PUBLIC;
+GRANT EXECUTE ON FUNCTION governance.current_tenant_key() TO PUBLIC;
+GRANT EXECUTE ON FUNCTION governance.is_controlled_database_admin() TO PUBLIC;
+GRANT EXECUTE ON FUNCTION governance.can_access_tenant(TEXT) TO PUBLIC;
+
 DO $$
 DECLARE
   table_row RECORD;

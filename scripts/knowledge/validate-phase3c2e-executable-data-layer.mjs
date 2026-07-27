@@ -62,6 +62,8 @@ assert.match(rlsSql, /ALTER TABLE %I\.%I FORCE ROW LEVEL SECURITY/, "RLS layer m
 assert.match(rlsSql, /CREATE POLICY %I ON %I\.%I FOR ALL USING \(governance\.can_access_tenant\(tenant_key\)\)/, "RLS layer must bind policies to tenant_key");
 assert.match(rlsSql, /current_setting\('app\.tenant_key', true\)/, "RLS layer must use explicit session tenant");
 assert.match(rlsSql, /p_tenant_key <> 'all'/, "RLS layer must reject wildcard tenants");
+assert.match(rlsSql, /GRANT USAGE ON SCHEMA governance TO PUBLIC/, "RLS helper schema must be usable by tenant roles");
+assert.match(rlsSql, /GRANT EXECUTE ON FUNCTION governance\.can_access_tenant\(TEXT\) TO PUBLIC/, "RLS helper function must be executable by tenant roles");
 assert.match(rlsSql, /governance\.rls_table_coverage/, "RLS layer must expose coverage evidence view");
 for (const schema of contract.required_schemas) {
   assert.match(rlsSql, new RegExp(`'${schema}'`), `RLS layer must cover schema ${schema}`);
