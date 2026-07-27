@@ -1,0 +1,23 @@
+{
+  "auditDate": "2026-07-27",
+  "scope": "static repo audit only; no Azure/Postgres mutation",
+  "inventoryRows": 679,
+  "byModule": {
+    "Moves": 27,
+    "Source": 460,
+    "Tower": 192
+  },
+  "byClassification": {
+    "retain_operational": 591,
+    "promote_link_canonical_knowledge": 68,
+    "archive": 8,
+    "replace": 1,
+    "project_shared_consumption": 11
+  },
+  "matrixRows": {
+    "identityCollisions": 9,
+    "canonicalPromotion": 68,
+    "consumptionProjection": 11,
+    "metricDuplication": 33
+  }
+}
