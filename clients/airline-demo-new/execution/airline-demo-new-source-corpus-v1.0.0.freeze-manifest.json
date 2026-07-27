@@ -1,0 +1,94 @@
+{
+  "tenant_key": "airline-demo-new",
+  "tenant_type": "synthetic_reference_candidate",
+  "release_id": "airline-demo-new-source-corpus-v1.0.0",
+  "release_state": "source_release_frozen_for_controlled_landing",
+  "frozen_at": "2026-07-27",
+  "approval_authority": {
+    "approver": "Anand Sundaram",
+    "approval_scope": "controlled Airline source landing after clean what-if, zero-data certification, schema/RLS proof, and independent semantic audit pass",
+    "approval_source": "current Codex thread instruction 2026-07-27",
+    "does_not_authorize": [
+      "parser_execution_without_wave_manifest",
+      "knowledge_publication_without_reconciliation",
+      "product_runtime_wiring_without published baseline proof",
+      "client_readiness_claims",
+      "mixing evaluator truth into parser-visible source registry"
+    ]
+  },
+  "source_commit_sha": "009ca3b68f10563dd09971e6f05a0cb6b5314bb2",
+  "source_pr": 5684,
+  "package_root": "clients/airline-demo-new/19-template-instantiation-source-corpus",
+  "package_manifest": {
+    "path": "clients/airline-demo-new/19-template-instantiation-source-corpus/PACKAGE_MANIFEST.json",
+    "status": "semantic_repair_pass_candidate_for_freeze_review_no_azure_no_runtime_change",
+    "file_count": 56,
+    "operational_landing_file_count": 48,
+    "restricted_evaluator_file_count": 2,
+    "excluded_from_landing_file_count": 6
+  },
+  "review_zip": {
+    "path": "clients/airline-demo-new/19-template-instantiation-source-corpus/06-review-package/AIRLINE_DEMO_NEW_TEMPLATE_SOURCE_CORPUS_REVIEW.zip",
+    "sha256": "cb62c63d7a238dff86e7d9263228ae17d5c8847342cf8e82bdc54997951ad657"
+  },
+  "parser_visible_manifest": {
+    "path": "clients/airline-demo-new/19-template-instantiation-source-corpus/03-source-corpus-design/parser-visible-source-manifest.csv",
+    "status": "source_family_design_manifest_only_not_the_complete_landing_list"
+  },
+  "source_samples": {
+    "directory": "clients/airline-demo-new/19-template-instantiation-source-corpus/03-source-corpus-design/synthetic-source-samples",
+    "csv_file_count": 25,
+    "parser_contract_ref": "airline-source-parser-visible-v1"
+  },
+  "hidden_truth": {
+    "version": "v1.0.0",
+    "path": "clients/airline-demo-new/19-template-instantiation-source-corpus/04-restricted-evaluator-design/hidden-canonical-truth-sample.json",
+    "consumer_boundary": "restricted_evaluator_only_not_parser_visible"
+  },
+  "source_to_truth_crosswalk": {
+    "version": "v1.0.0",
+    "path": "clients/airline-demo-new/19-template-instantiation-source-corpus/04-restricted-evaluator-design/source-to-truth-crosswalk.csv",
+    "consumer_boundary": "restricted_evaluator_only_not_parser_visible"
+  },
+  "phase_1_zero_data_authority": {
+    "infrastructure_apply_pr": 5682,
+    "resource_group": "rg-abarva-airdn-lab-eus2-001",
+    "postgres_server": "pg-abarva-airdn-lab-eus2-001",
+    "postgres_database": "abarva_airline_demo_new_knowledge_lab",
+    "operational_storage_account": "stabairdnlabeus2001",
+    "evaluator_storage_account": "stabairdnevaleus2001",
+    "zero_data_certification": "passed",
+    "schema_rls_and_generic_projection_fixture": "passed"
+  },
+  "semantic_audit": {
+    "path": "clients/airline-demo-new/19-template-instantiation-source-corpus/05-validation/independent-semantic-audit.json",
+    "status": "pass",
+    "endpoint_issue_count": 0,
+    "relationship_origin_type_count": 14,
+    "application_origin_share": 0.05,
+    "hidden_truth_objects": 311,
+    "source_to_truth_crosswalk_rows": 338
+  },
+  "allowed_next_actions": [
+    "land_operational_sources",
+    "land_evaluator_truth_separately",
+    "run_processing_waves_after_wave_manifest",
+    "reconcile_every_transition",
+    "publish_knowledge_baseline_after_reconciliation",
+    "prove_source_home_cube_ava_consumption_after_publication"
+  ],
+  "disallowed_actions_until_baseline_publication": [
+    "wire_home_intelligence_source_moves_or_tower_to_new_tenant_baseline",
+    "claim_runtime_or_client_demo_readiness",
+    "let evaluator_truth_reach_parser_or_model_context",
+    "use_airline_demo_new_as_live_client_truth",
+    "run wildcard tenant or latest-release jobs"
+  ],
+  "execution_parameters_required": {
+    "tenant_key": "airline-demo-new",
+    "release_id": "airline-demo-new-source-corpus-v1.0.0",
+    "operator_ack_env": "ABARVA_SOURCE_LANDING_EXECUTE_ACK=LAND_AIRLINE_SOURCE_CORPUS",
+    "no_default_tenant": true,
+    "no_latest_release": true
+  }
+}

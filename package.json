@@ -57,6 +57,7 @@
     "test:phase3c2e-data-layer": "node scripts/knowledge/validate-phase3c2e-executable-data-layer.mjs",
     "test:airline-phase1-plan": "node scripts/knowledge/validate-airline-phase1-plan.mjs",
     "test:airline-source-corpus-repair": "node scripts/knowledge/build-airline-source-corpus-repair.mjs",
+    "test:airline-source-landing": "node scripts/knowledge/__tests__/run-airline-source-landing-tests.mjs",
     "audit:nexus-navigation": "node scripts/audit/nexus-navigation-contract.mjs",
     "release:deploy-authority:check": "node scripts/release-control/check-deploy-authority-policy.mjs",
     "deploy:aca-runtime-invariant": "node scripts/deploy/check-aca-runtime-invariant.mjs",
