@@ -14,6 +14,7 @@ import {
   runJobRunner,
   validateTenantKey,
 } from "../hcdn-job-runner.mjs";
+import { InMemoryKnowledgeExecutionStore } from "../processing/executor-framework.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const scriptPath = path.resolve(path.dirname(__filename), "..", "hcdn-job-runner.mjs");
@@ -223,9 +224,119 @@ await test("execute mode calls the injected network probe only after all guards 
       assert.equal(validation.processName, processNameForTenant(tenantKey, contract));
     },
   });
-  assert.equal(envelope.status, "execute_dispatched");
+  assert.equal(envelope.status, "process_passed");
   assert.equal(envelope.networkAccessAttempted, true);
+  assert.equal(envelope.processExecution.status, "passed");
   assert.equal(networkCalls, 1);
+});
+
+await test("execute mode cannot report dispatch-only success when network is disabled", async () => {
+  const contract = PROCESS_CONTRACTS[0];
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute", ["--no-network"]),
+    env: { ...envFor(contract), ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB" },
+    stdout: false,
+  });
+  assert.equal(envelope.status, "failed_process");
+  assert.equal(envelope.error.code, "execute_network_disabled");
+  assert.equal(envelope.networkAccessAttempted, false);
+});
+
+await test("source-register execute verifies landed source registry counts", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "source-register-v1");
+  const store = new InMemoryKnowledgeExecutionStore({
+    sourceSummary: {
+      source_count: 48,
+      parser_visible_count: 25,
+      evaluator_visible_count: 0,
+      non_blob_uri_count: 0,
+      release_scoped_count: 48,
+    },
+  });
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute", ["--release-id", "airline-demo-new-source-corpus-v1.0.0"]),
+    env: {
+      ...envFor(contract),
+      ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB",
+      ABARVA_RELEASE_ID: "airline-demo-new-source-corpus-v1.0.0",
+    },
+    stdout: false,
+    store,
+  });
+  assert.equal(envelope.status, "process_passed");
+  assert.equal(envelope.processExecution.inputCount, 48);
+  assert.equal(envelope.processExecution.outputCount, 48);
+  assert.equal(envelope.processExecution.acceptedCount, 25);
+  assert.equal(envelope.processExecution.blockers.length, 0);
+});
+
+await test("source-register execute blocks evaluator leakage before success", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "source-register-v1");
+  const store = new InMemoryKnowledgeExecutionStore({
+    sourceSummary: {
+      source_count: 48,
+      parser_visible_count: 25,
+      evaluator_visible_count: 2,
+      non_blob_uri_count: 0,
+      release_scoped_count: 48,
+    },
+  });
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute", ["--release-id", "airline-demo-new-source-corpus-v1.0.0"]),
+    env: {
+      ...envFor(contract),
+      ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB",
+      ABARVA_RELEASE_ID: "airline-demo-new-source-corpus-v1.0.0",
+    },
+    stdout: false,
+    store,
+  });
+  assert.equal(envelope.status, "failed_process");
+  assert.equal(envelope.error.code, "process_verification_failed");
+  assert.ok(envelope.error.details.blockers.includes("evaluator_source_registry_leakage"));
+});
+
+await test("source-parse execute parses structured rows without dispatch-only success", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "source-parse-v1");
+  const store = new InMemoryKnowledgeExecutionStore({
+    parserVisibleSources: [
+      {
+        sourceRef: "src-apps",
+        sourceVersionRef: "src-apps-v1",
+        sourceName: "application-platform-inventory.csv",
+        sourceFamily: "parser_visible_source_sample",
+        parserContractRef: "airline-source-parser-visible-v1",
+        contentText: "application_id,application_name\nAPP-1,Ops Control\n",
+      },
+    ],
+  });
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute"),
+    env: { ...envFor(contract), ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB" },
+    stdout: false,
+    store,
+  });
+  assert.equal(envelope.status, "process_passed");
+  assert.equal(envelope.processExecution.inputCount, 1);
+  assert.equal(envelope.processExecution.outputCount, 1);
+  assert.equal(store.parsedRecords.length, 1);
+});
+
+await test("review execute fails closed without explicit review decisions", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "knowledge-review-v1");
+  const store = new InMemoryKnowledgeExecutionStore({
+    entityCandidates: [{ candidateRef: "entcand-1", entityType: "application", displayName: "Ops Control" }],
+    resolvedCandidates: [{ candidateRef: "entcand-1", entityRef: "application:ops-control", entityType: "application", displayName: "Ops Control" }],
+  });
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute"),
+    env: { ...envFor(contract), ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB" },
+    stdout: false,
+    store,
+  });
+  assert.equal(envelope.status, "failed_process");
+  assert.equal(envelope.error.code, "process_verification_failed");
+  assert.ok(envelope.error.details.blockers.includes("no_explicit_accepted_review_decisions"));
 });
 
 await test("rolling digest-pinned runtime images pass without strict image lock", async () => {
