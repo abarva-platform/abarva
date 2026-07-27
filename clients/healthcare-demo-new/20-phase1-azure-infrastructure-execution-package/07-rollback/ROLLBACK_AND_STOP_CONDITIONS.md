@@ -16,6 +16,12 @@ Stop and do not create the Phase 1 apply PR if any of these occur:
   product runtime traffic change, Airline content, or wildcard tenant scope.
 - The current web image digest cannot be refreshed and locked before ACA job definition apply.
 - Private DNS, RBAC, or evaluator-isolation checks cannot be expressed as commands.
+- The plan attempts to enable Apache AGE, configure AGE `shared_preload_libraries`, or make AGE part
+  of zero-data acceptance.
+- The plan treats an old Home pack, V6/V7 demo pack, current module operational table, old chat
+  fact, hidden truth, or evaluator artifact as upstream source data for the new pilot.
+- The plan omits the Phase 3C-2D consumption contract version
+  `phase3c2d-consumption-contracts-v1.0.0` or the required relational relationship projections.
 
 ## Rollback After Future Apply
 

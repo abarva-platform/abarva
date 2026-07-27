@@ -16,6 +16,11 @@ pre-apply package with resource naming, Bicep parameters, what-if gates, RBAC, p
 PostgreSQL extension planning, ACA job definitions, rollback conditions, and validation. It does
 not create resources or load data.
 
+Follow-up alignment: this plan now treats the merged Phase 3C-2D consumption contract as a mandatory
+dependency before tenant completion. The first graph path is relational PostgreSQL consumption
+tables with recursive SQL traversal. Apache AGE is explicitly deferred and is not part of Phase 1,
+initial PostgreSQL bootstrap, zero-data acceptance, or source loading.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane` and `internal-admin`.
@@ -23,6 +28,8 @@ not create resources or load data.
 - Source adapters and parsers: no execution and no schema change.
 - Canonical model: no schema change and no tenant facts.
 - Infrastructure planning: adds a Healthcare-only plan package for future Azure apply review.
+- Consumption contract: references the shared Phase 3C-2D projection registry and blocks legacy
+  module/demo/runtime tables from becoming upstream sources for the new pilot.
 - Products: Home, Intelligence, Moves, Source, Tower, Learn, Cube, Superset, and Observable are not
   wired or changed.
 
@@ -37,6 +44,8 @@ not create resources or load data.
 ## Changes Included
 
 - `clients/healthcare-demo-new/20-phase1-azure-infrastructure-execution-package/`
+- `clients/shared/20-phase3c2d-consumption-contracts/CONSUMPTION_PROJECTION_REGISTRY.json`
+  (dependency reference only; no mutation in this PR)
 - `scripts/knowledge/validate-healthcare-phase1-plan.mjs`
 - This release record.
 
@@ -50,6 +59,10 @@ Planned and local validation:
   `release_id=healthcare-demo-new-source-corpus-v1.0.0`, and the exact manifest SHA.
 - The package declares Azure what-if as not run in this plan PR.
 - The package declares zero Azure, PostgreSQL, source, parser, publication, or runtime mutations.
+- The package declares `age_enabled=false`; AGE is not an initial extension, graph dependency, or
+  zero-data acceptance dependency.
+- The package requires relational consumption projections including `consumption.relationship_node_v1`,
+  `consumption.relationship_edge_v1`, and `consumption.relationship_evidence_v1`.
 - `npm run release:check` required before merge.
 
 ## Rollout Plan
@@ -89,5 +102,6 @@ mutate those layers.
 - PostgreSQL bootstrap and RLS are Phase 2.
 - Source landing is Phase 3.
 - Parser waves, graph projection, reconciliation, and publication are later phases.
+- AGE evaluation remains later-only and must follow the Phase 3C-2D evaluation thresholds.
 - Product wiring and client-visible runtime claims remain prohibited until a certified published
   baseline exists.

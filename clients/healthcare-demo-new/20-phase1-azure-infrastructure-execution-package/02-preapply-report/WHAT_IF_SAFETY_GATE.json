@@ -20,12 +20,20 @@
     "Create wildcard tenant access",
     "Create product runtime wiring",
     "Create source landing records",
-    "Apply PostgreSQL schema"
+    "Apply PostgreSQL schema",
+    "Enable Apache AGE",
+    "Set shared_preload_libraries for AGE",
+    "Use legacy module tables or V6/V7 demo packs as upstream source data"
   ],
   "failIfOutputMentions": [
     "airline-demo-new",
     "tenant_key=*",
     "release_id=latest",
-    "publicNetworkAccess: Enabled"
+    "publicNetworkAccess: Enabled",
+    "CREATE EXTENSION age",
+    "shared_preload_libraries",
+    "legacy_home_packs",
+    "v6_demo_packs",
+    "v7_demo_packs"
   ]
 }
