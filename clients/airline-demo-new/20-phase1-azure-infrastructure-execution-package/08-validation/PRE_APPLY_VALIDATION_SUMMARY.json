@@ -15,7 +15,11 @@
       "status": "pass"
     },
     {
-      "name": "create_only",
+      "name": "no_delete_or_unsafe_modify",
+      "status": "pass"
+    },
+    {
+      "name": "postgres_eastus2_capacity_route",
       "status": "pass"
     },
     {

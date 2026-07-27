@@ -13,7 +13,7 @@ Airline source data is still blocked by the source-corpus quality gate. This pac
 - `rg-abarva-airdn-lab-eus-001`
 - `vnet-abarva-airdn-lab-eus-001`
 - `cae-abarva-airdn-lab-eus-001`
-- `pg-abarva-airdn-lab-eus-001`
+- `pg-abarva-airdn-lab-eus2-001`
 - `abarva_airline_demo_new_knowledge_lab`
 - `stabairdnlabeus001`
 - `stabairdnevallab001`

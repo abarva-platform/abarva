@@ -5,12 +5,14 @@
   "subscriptionId": "701a8554-a166-46e9-bf13-743bc50e3b20",
   "resourceGroup": "rg-abarva-airdn-lab-eus-001",
   "liveWhatIf": {
-    "rawOutput": "what-if-20260727.txt",
+    "rawOutput": "what-if-eastus2-20260727.txt",
     "safetyGate": "WHAT_IF_SAFETY_GATE.json",
     "status": "pass",
-    "createCount": 53,
+    "createCount": 15,
     "deleteCount": 0,
-    "modifyCount": 0
+    "modifyCount": 4,
+    "unsafeModifyCount": 0,
+    "postgresLocation": "eastus2"
   },
   "sourceCorpus": {
     "releaseId": "airline-demo-new-source-corpus-v1.0.0",

@@ -1,6 +1,7 @@
 targetScope = 'resourceGroup'
 
 param location string
+param postgresLocation string
 param tenantId string
 param subscriptionId string
 param tags object
@@ -149,12 +150,22 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
   parent: storage
   name: 'default'
+  properties: {
+    deleteRetentionPolicy: {
+      enabled: false
+      allowPermanentDelete: false
+    }
+  }
 }
 
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [for containerName in storageContainers: {
   parent: blobService
   name: containerName
-  properties: { publicAccess: 'None' }
+  properties: {
+    publicAccess: 'None'
+    defaultEncryptionScope: '$account-encryption-key'
+    denyEncryptionScopeOverride: false
+  }
 }]
 
 resource evaluatorStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -179,7 +190,7 @@ resource evaluatorBlobService 'Microsoft.Storage/storageAccounts/blobServices@20
   properties: {
     isVersioningEnabled: true
     changeFeed: { enabled: true }
-    deleteRetentionPolicy: { enabled: true, days: 30 }
+    deleteRetentionPolicy: { enabled: true, days: 30, allowPermanentDelete: false }
     containerDeleteRetentionPolicy: { enabled: true, days: 30 }
   }
 }
@@ -187,7 +198,11 @@ resource evaluatorBlobService 'Microsoft.Storage/storageAccounts/blobServices@20
 resource evaluatorContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [for containerName in evaluatorStorageContainers: {
   parent: evaluatorBlobService
   name: containerName
-  properties: { publicAccess: 'None' }
+  properties: {
+    publicAccess: 'None'
+    defaultEncryptionScope: '$account-encryption-key'
+    denyEncryptionScopeOverride: false
+  }
 }]
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -230,8 +245,8 @@ resource pgDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-0
 }
 
 resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-preview' = {
-  name: 'pg-abarva-airdn-lab-eus-001'
-  location: location
+  name: 'pg-abarva-airdn-lab-eus2-001'
+  location: postgresLocation
   tags: tags
   sku: { name: 'Standard_B1ms', tier: 'Burstable' }
   properties: {
@@ -266,6 +281,16 @@ resource cae 'Microsoft.App/managedEnvironments@2024-03-01' = {
       logAnalyticsConfiguration: {
         customerId: reference(logAnalytics.id, '2022-10-01').customerId
         sharedKey: listKeys(logAnalytics.id, '2022-10-01').primarySharedKey
+      }
+    }
+    peerAuthentication: {
+      mtls: {
+        enabled: false
+      }
+    }
+    peerTrafficConfiguration: {
+      encryption: {
+        enabled: false
       }
     }
     vnetConfiguration: {

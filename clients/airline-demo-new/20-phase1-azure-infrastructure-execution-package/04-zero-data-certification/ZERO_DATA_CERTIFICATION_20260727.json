@@ -14,5 +14,13 @@
     "stabairdnevallab001"
   ],
   "storageBlobInspection": "not-run in this record; no source landing command was run by this execution",
-  "requiredNextStep": "choose an approved Postgres-capable region or secure eastus quota, rerun what-if, then retry empty-infrastructure apply before migrations/RLS."
+  "revisedWhatIf": {
+    "status": "pass",
+    "rawOutput": "what-if-eastus2-20260727.txt",
+    "postgresLocation": "eastus2",
+    "createCount": 15,
+    "deleteCount": 0,
+    "unsafeModifyCount": 0
+  },
+  "requiredNextStep": "retry empty-infrastructure apply from the revised eastus2 PostgreSQL plan, then rerun zero-data certification before migrations/RLS."
 }

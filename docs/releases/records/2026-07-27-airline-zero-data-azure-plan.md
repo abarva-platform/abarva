@@ -6,11 +6,11 @@
 
 ## Status
 
-`candidate - apply blocked`
+`candidate - clean retry what-if ready`
 
 ## Plain-English Summary
 
-This release candidate creates the plan and live Azure what-if evidence for the empty Airline Demo New private data plane. It proves the planned deployment is create-only and scoped to Airline infrastructure names, then records the first empty-infrastructure apply attempt. The apply did not complete because PostgreSQL Flexible Server provisioning is restricted in `eastus` for the active subscription. Source files, parser jobs, migrations, publication and product runtime wiring remain blocked.
+This release candidate creates the plan and live Azure what-if evidence for the empty Airline Demo New private data plane. It proves the planned deployment is scoped to Airline infrastructure names, records the first empty-infrastructure apply attempt, and adds the corrected retry plan. The first apply did not complete because PostgreSQL Flexible Server provisioning is restricted in `eastus` for the active subscription. The retry plan routes PostgreSQL to `eastus2`, where this subscription already has Flexible Server capacity. Source files, parser jobs, migrations, publication and product runtime wiring remain blocked until the empty apply and zero-data certification pass.
 
 ## Layer Impact
 
@@ -19,7 +19,7 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 - Source adapters: no source landing or parser execution.
 - Canonical model: no database migration and no accepted Knowledge writes.
 - Products: no Home, Source, Tower, Moves, Intelligence/aVa, Cube, or runtime wiring.
-- Azure infrastructure: plan package plus failed/canceled empty apply attempt evidence; not a certified environment.
+- Azure infrastructure: plan package plus failed/canceled empty apply attempt evidence plus corrected live retry what-if; not a certified environment until the retry apply passes.
 
 ## Client Applicability
 
@@ -35,6 +35,7 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn-lab-foundation.bicep`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn.lab.bicepparam`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-20260727.txt`
+- `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-eastus2-20260727.txt`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/WHAT_IF_SAFETY_GATE.json`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.md`
 - `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.json`
@@ -45,8 +46,9 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 
 - Pass: `az bicep build --file clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/main.bicep`
 - Pass: `az bicep build --file clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/airdn-lab-foundation.bicep`
-- Pass: live Azure what-if, create-only, 53 creates, 0 deletes, 0 modifies.
+- Pass: original live Azure what-if, create-only, 53 creates, 0 deletes, 0 modifies.
 - Blocked: empty infrastructure apply attempted as `airdn-phase1-zero-data-apply-20260727`; PostgreSQL Flexible Server failed in `eastus` with subscription regional provisioning restriction; deployment was canceled after evidence capture.
+- Pass: revised live Azure retry what-if using `postgresLocation = eastus2`: 15 creates, 0 deletes, 4 provider-computed no-op modifies, 0 unsafe modifies.
 - Blocked: zero-data certification is not complete because PostgreSQL is absent.
 - Pass: `node scripts/knowledge/validate-airline-phase1-plan.mjs`
 - Pass: `npm run release:check`
@@ -54,7 +56,7 @@ This release candidate creates the plan and live Azure what-if evidence for the 
 
 ## Rollout Plan
 
-Merge as a plan and blocked-apply evidence package. The next action is to choose an approved PostgreSQL-capable Azure region or obtain `eastus` quota, rerun what-if, then retry empty infrastructure apply. Source landing, migrations, parser jobs, Knowledge publication, Cube deployment, and runtime wiring remain blocked.
+Merge as a plan and apply-evidence package after review. The next action is to retry the empty infrastructure apply from the revised `eastus2` PostgreSQL plan, then run zero-data certification. Source landing, migrations, parser jobs, Knowledge publication, Cube deployment, and runtime wiring remain blocked until that certification passes.
 
 ## Deployment Authority
 
@@ -68,11 +70,12 @@ Merge as a plan and blocked-apply evidence package. The next action is to choose
 
 ## Rollback Plan
 
-The first apply attempt created partial zero-data resources and was canceled. Before retry, operators must either clean up the partial resource group or use an idempotent retry plan that accounts for existing resources. No source data rollback is required because no source files, migrations, parser jobs or publication jobs were run.
+The first apply attempt created partial zero-data resources and was canceled. The revised what-if is an idempotent retry plan that accounts for existing resources and routes PostgreSQL to `eastus2`. No source data rollback is required because no source files, migrations, parser jobs or publication jobs were run.
 
 ## Audit Evidence
 
 - Raw live what-if output: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-20260727.txt`
+- Revised retry what-if output: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/what-if-eastus2-20260727.txt`
 - Machine-readable safety gate: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/WHAT_IF_SAFETY_GATE.json`
 - Pre-apply report: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/02-preapply-report/PRE_APPLY_REPORT.json`
 - Apply attempt record: `clients/airline-demo-new/20-phase1-azure-infrastructure-execution-package/03-apply-record/APPLY_ATTEMPT_20260727.md`
@@ -83,6 +86,7 @@ The first apply attempt created partial zero-data resources and was canceled. Be
 
 - Airline source corpus remains blocked before freeze.
 - Empty Azure apply was attempted and blocked by PostgreSQL regional provisioning restriction in `eastus`; deployment canceled after evidence capture.
+- Revised retry plan routes PostgreSQL to `eastus2`; empty retry apply is still pending.
 - No database migration was run.
 - No source files were landed.
 - No Knowledge Baseline was published.

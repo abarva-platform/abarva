@@ -1,6 +1,7 @@
 targetScope = 'subscription'
 
 param location string = 'eastus'
+param postgresLocation string = 'eastus2'
 param subscriptionId string
 param tenantId string
 param resourceGroupName string
@@ -17,6 +18,7 @@ module lab './airdn-lab-foundation.bicep' = {
   ]
   params: {
     location: location
+    postgresLocation: postgresLocation
     tenantId: tenantId
     subscriptionId: subscriptionId
     tags: tags
