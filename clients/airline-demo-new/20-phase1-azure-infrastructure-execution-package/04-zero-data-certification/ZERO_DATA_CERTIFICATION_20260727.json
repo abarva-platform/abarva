@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-07-27T19:59:03.010Z",
+  "tenantKey": "airline-demo-new",
+  "status": "blocked_not_certified",
+  "reason": "Empty infrastructure apply did not complete because PostgreSQL Flexible Server failed in eastus and the deployment was canceled.",
+  "postgresServerPresent": false,
+  "postgresMigrationAllowed": false,
+  "sourceLandingAllowed": false,
+  "parserAllowed": false,
+  "publicationAllowed": false,
+  "productConsumptionProofAllowed": false,
+  "storageAccountsPresent": [
+    "stabairdnlabeus001",
+    "stabairdnevallab001"
+  ],
+  "storageBlobInspection": "not-run in this record; no source landing command was run by this execution",
+  "requiredNextStep": "choose an approved Postgres-capable region or secure eastus quota, rerun what-if, then retry empty-infrastructure apply before migrations/RLS."
+}
