@@ -200,6 +200,13 @@ export function resolveProcessContract(tenantKey, processName) {
 }
 
 export function resolveDefaultBoundarySnapshot(tenantKey) {
+  const packagedBoundaryDir = process.env.ABARVA_TENANT_BOUNDARY_DIR
+    ? path.resolve(process.env.ABARVA_TENANT_BOUNDARY_DIR)
+    : path.join(REPO_ROOT, "runtime-tenant-boundaries");
+  const packagedSnapshot = path.join(packagedBoundaryDir, tenantKey, "APPROVED_BOUNDARY_SNAPSHOT.json");
+  if (fs.existsSync(packagedSnapshot)) {
+    return packagedSnapshot;
+  }
   return path.join(
     REPO_ROOT,
     "clients",
