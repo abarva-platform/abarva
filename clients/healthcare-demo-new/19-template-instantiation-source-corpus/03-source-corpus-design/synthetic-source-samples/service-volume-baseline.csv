@@ -1,361 +1,361 @@
-volume_id,service_tower,business_function,metric,value_disclosure_mode,period,evidence_state,source_id
-VOL-HCDN-0001,Payer Platform Operations,Revenue Cycle,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-002
-VOL-HCDN-0002,Data Analytics and AI,Patient Access,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-003
-VOL-HCDN-0003,Revenue Cycle Technology,Interoperability,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-004
-VOL-HCDN-0004,Cloud Infrastructure and Data Center,Population Health,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-005
-VOL-HCDN-0005,Workplace and Contact Center,Health Plan Operations,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-006
-VOL-HCDN-0006,Security Identity and Compliance,Medicare Advantage,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-007
-VOL-HCDN-0007,Integration and Interoperability,Claims Operations,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-008
-VOL-HCDN-0008,ERP and Corporate Platforms,Utilization Management,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-009
-VOL-HCDN-0009,Clinical and Epic AMS,Member Services,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-010
-VOL-HCDN-0010,Payer Platform Operations,Quality and Stars,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-011
-VOL-HCDN-0011,Data Analytics and AI,Risk Adjustment,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-012
-VOL-HCDN-0012,Revenue Cycle Technology,Care Management,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-013
-VOL-HCDN-0013,Cloud Infrastructure and Data Center,Finance,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-014
-VOL-HCDN-0014,Workplace and Contact Center,Coding,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-015
-VOL-HCDN-0015,Security Identity and Compliance,Payer Contracting,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-016
-VOL-HCDN-0016,Integration and Interoperability,Digital Front Door,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-017
-VOL-HCDN-0017,ERP and Corporate Platforms,Contact Center,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-018
-VOL-HCDN-0018,Clinical and Epic AMS,Ambulatory Care,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-019
-VOL-HCDN-0019,Payer Platform Operations,Emergency Department,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-020
-VOL-HCDN-0020,Data Analytics and AI,Inpatient,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-021
-VOL-HCDN-0021,Revenue Cycle Technology,Surgery,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-022
-VOL-HCDN-0022,Cloud Infrastructure and Data Center,Imaging,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-023
-VOL-HCDN-0023,Workplace and Contact Center,Lab,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-024
-VOL-HCDN-0024,Security Identity and Compliance,Pharmacy,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-025
-VOL-HCDN-0025,Integration and Interoperability,Oncology,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-026
-VOL-HCDN-0026,ERP and Corporate Platforms,Cardiology,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-027
-VOL-HCDN-0027,Clinical and Epic AMS,Data and Analytics,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-028
-VOL-HCDN-0028,Payer Platform Operations,Clinical Analytics,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-029
-VOL-HCDN-0029,Data Analytics and AI,Actuarial,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-030
-VOL-HCDN-0030,Revenue Cycle Technology,Departmental Reporting,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-031
-VOL-HCDN-0031,Cloud Infrastructure and Data Center,AI Transformation,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-032
-VOL-HCDN-0032,Workplace and Contact Center,Technology,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-033
-VOL-HCDN-0033,Security Identity and Compliance,Security,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-034
-VOL-HCDN-0034,Integration and Interoperability,Procurement,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-035
-VOL-HCDN-0035,ERP and Corporate Platforms,HR,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-036
-VOL-HCDN-0036,Clinical and Epic AMS,Supply Chain,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-037
-VOL-HCDN-0037,Payer Platform Operations,Privacy,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-038
-VOL-HCDN-0038,Data Analytics and AI,Compliance,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-039
-VOL-HCDN-0039,Revenue Cycle Technology,Provider Network,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-040
-VOL-HCDN-0040,Cloud Infrastructure and Data Center,Value-Based Care,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-041
-VOL-HCDN-0041,Workplace and Contact Center,Clinical Operations,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-042
-VOL-HCDN-0042,Security Identity and Compliance,Revenue Cycle,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-043
-VOL-HCDN-0043,Integration and Interoperability,Patient Access,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-044
-VOL-HCDN-0044,ERP and Corporate Platforms,Interoperability,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-045
-VOL-HCDN-0045,Clinical and Epic AMS,Population Health,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-046
-VOL-HCDN-0046,Payer Platform Operations,Health Plan Operations,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-047
-VOL-HCDN-0047,Data Analytics and AI,Medicare Advantage,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-048
-VOL-HCDN-0048,Revenue Cycle Technology,Claims Operations,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-049
-VOL-HCDN-0049,Cloud Infrastructure and Data Center,Utilization Management,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-050
-VOL-HCDN-0050,Workplace and Contact Center,Member Services,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-051
-VOL-HCDN-0051,Security Identity and Compliance,Quality and Stars,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-052
-VOL-HCDN-0052,Integration and Interoperability,Risk Adjustment,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-053
-VOL-HCDN-0053,ERP and Corporate Platforms,Care Management,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-054
-VOL-HCDN-0054,Clinical and Epic AMS,Finance,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-055
-VOL-HCDN-0055,Payer Platform Operations,Coding,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-056
-VOL-HCDN-0056,Data Analytics and AI,Payer Contracting,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-057
-VOL-HCDN-0057,Revenue Cycle Technology,Digital Front Door,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-058
-VOL-HCDN-0058,Cloud Infrastructure and Data Center,Contact Center,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-059
-VOL-HCDN-0059,Workplace and Contact Center,Ambulatory Care,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-060
-VOL-HCDN-0060,Security Identity and Compliance,Emergency Department,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-061
-VOL-HCDN-0061,Integration and Interoperability,Inpatient,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-062
-VOL-HCDN-0062,ERP and Corporate Platforms,Surgery,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-063
-VOL-HCDN-0063,Clinical and Epic AMS,Imaging,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-064
-VOL-HCDN-0064,Payer Platform Operations,Lab,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-001
-VOL-HCDN-0065,Data Analytics and AI,Pharmacy,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-002
-VOL-HCDN-0066,Revenue Cycle Technology,Oncology,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-003
-VOL-HCDN-0067,Cloud Infrastructure and Data Center,Cardiology,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-004
-VOL-HCDN-0068,Workplace and Contact Center,Data and Analytics,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-005
-VOL-HCDN-0069,Security Identity and Compliance,Clinical Analytics,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-006
-VOL-HCDN-0070,Integration and Interoperability,Actuarial,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-007
-VOL-HCDN-0071,ERP and Corporate Platforms,Departmental Reporting,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-008
-VOL-HCDN-0072,Clinical and Epic AMS,AI Transformation,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-009
-VOL-HCDN-0073,Payer Platform Operations,Technology,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-010
-VOL-HCDN-0074,Data Analytics and AI,Security,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-011
-VOL-HCDN-0075,Revenue Cycle Technology,Procurement,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-012
-VOL-HCDN-0076,Cloud Infrastructure and Data Center,HR,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-013
-VOL-HCDN-0077,Workplace and Contact Center,Supply Chain,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-014
-VOL-HCDN-0078,Security Identity and Compliance,Privacy,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-015
-VOL-HCDN-0079,Integration and Interoperability,Compliance,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-016
-VOL-HCDN-0080,ERP and Corporate Platforms,Provider Network,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-017
-VOL-HCDN-0081,Clinical and Epic AMS,Value-Based Care,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-018
-VOL-HCDN-0082,Payer Platform Operations,Clinical Operations,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-019
-VOL-HCDN-0083,Data Analytics and AI,Revenue Cycle,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-020
-VOL-HCDN-0084,Revenue Cycle Technology,Patient Access,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-021
-VOL-HCDN-0085,Cloud Infrastructure and Data Center,Interoperability,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-022
-VOL-HCDN-0086,Workplace and Contact Center,Population Health,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-023
-VOL-HCDN-0087,Security Identity and Compliance,Health Plan Operations,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-024
-VOL-HCDN-0088,Integration and Interoperability,Medicare Advantage,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-025
-VOL-HCDN-0089,ERP and Corporate Platforms,Claims Operations,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-026
-VOL-HCDN-0090,Clinical and Epic AMS,Utilization Management,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-027
-VOL-HCDN-0091,Payer Platform Operations,Member Services,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-028
-VOL-HCDN-0092,Data Analytics and AI,Quality and Stars,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-029
-VOL-HCDN-0093,Revenue Cycle Technology,Risk Adjustment,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-030
-VOL-HCDN-0094,Cloud Infrastructure and Data Center,Care Management,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-031
-VOL-HCDN-0095,Workplace and Contact Center,Finance,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-032
-VOL-HCDN-0096,Security Identity and Compliance,Coding,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-033
-VOL-HCDN-0097,Integration and Interoperability,Payer Contracting,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-034
-VOL-HCDN-0098,ERP and Corporate Platforms,Digital Front Door,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-035
-VOL-HCDN-0099,Clinical and Epic AMS,Contact Center,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-036
-VOL-HCDN-0100,Payer Platform Operations,Ambulatory Care,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-037
-VOL-HCDN-0101,Data Analytics and AI,Emergency Department,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-038
-VOL-HCDN-0102,Revenue Cycle Technology,Inpatient,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-039
-VOL-HCDN-0103,Cloud Infrastructure and Data Center,Surgery,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-040
-VOL-HCDN-0104,Workplace and Contact Center,Imaging,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-041
-VOL-HCDN-0105,Security Identity and Compliance,Lab,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-042
-VOL-HCDN-0106,Integration and Interoperability,Pharmacy,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-043
-VOL-HCDN-0107,ERP and Corporate Platforms,Oncology,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-044
-VOL-HCDN-0108,Clinical and Epic AMS,Cardiology,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-045
-VOL-HCDN-0109,Payer Platform Operations,Data and Analytics,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-046
-VOL-HCDN-0110,Data Analytics and AI,Clinical Analytics,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-047
-VOL-HCDN-0111,Revenue Cycle Technology,Actuarial,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-048
-VOL-HCDN-0112,Cloud Infrastructure and Data Center,Departmental Reporting,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-049
-VOL-HCDN-0113,Workplace and Contact Center,AI Transformation,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-050
-VOL-HCDN-0114,Security Identity and Compliance,Technology,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-051
-VOL-HCDN-0115,Integration and Interoperability,Security,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-052
-VOL-HCDN-0116,ERP and Corporate Platforms,Procurement,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-053
-VOL-HCDN-0117,Clinical and Epic AMS,HR,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-054
-VOL-HCDN-0118,Payer Platform Operations,Supply Chain,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-055
-VOL-HCDN-0119,Data Analytics and AI,Privacy,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-056
-VOL-HCDN-0120,Revenue Cycle Technology,Compliance,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-057
-VOL-HCDN-0121,Cloud Infrastructure and Data Center,Provider Network,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-058
-VOL-HCDN-0122,Workplace and Contact Center,Value-Based Care,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-059
-VOL-HCDN-0123,Security Identity and Compliance,Clinical Operations,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-060
-VOL-HCDN-0124,Integration and Interoperability,Revenue Cycle,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-061
-VOL-HCDN-0125,ERP and Corporate Platforms,Patient Access,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-062
-VOL-HCDN-0126,Clinical and Epic AMS,Interoperability,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-063
-VOL-HCDN-0127,Payer Platform Operations,Population Health,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-064
-VOL-HCDN-0128,Data Analytics and AI,Health Plan Operations,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-001
-VOL-HCDN-0129,Revenue Cycle Technology,Medicare Advantage,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-002
-VOL-HCDN-0130,Cloud Infrastructure and Data Center,Claims Operations,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-003
-VOL-HCDN-0131,Workplace and Contact Center,Utilization Management,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-004
-VOL-HCDN-0132,Security Identity and Compliance,Member Services,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-005
-VOL-HCDN-0133,Integration and Interoperability,Quality and Stars,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-006
-VOL-HCDN-0134,ERP and Corporate Platforms,Risk Adjustment,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-007
-VOL-HCDN-0135,Clinical and Epic AMS,Care Management,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-008
-VOL-HCDN-0136,Payer Platform Operations,Finance,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-009
-VOL-HCDN-0137,Data Analytics and AI,Coding,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-010
-VOL-HCDN-0138,Revenue Cycle Technology,Payer Contracting,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-011
-VOL-HCDN-0139,Cloud Infrastructure and Data Center,Digital Front Door,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-012
-VOL-HCDN-0140,Workplace and Contact Center,Contact Center,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-013
-VOL-HCDN-0141,Security Identity and Compliance,Ambulatory Care,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-014
-VOL-HCDN-0142,Integration and Interoperability,Emergency Department,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-015
-VOL-HCDN-0143,ERP and Corporate Platforms,Inpatient,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-016
-VOL-HCDN-0144,Clinical and Epic AMS,Surgery,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-017
-VOL-HCDN-0145,Payer Platform Operations,Imaging,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-018
-VOL-HCDN-0146,Data Analytics and AI,Lab,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-019
-VOL-HCDN-0147,Revenue Cycle Technology,Pharmacy,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-020
-VOL-HCDN-0148,Cloud Infrastructure and Data Center,Oncology,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-021
-VOL-HCDN-0149,Workplace and Contact Center,Cardiology,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-022
-VOL-HCDN-0150,Security Identity and Compliance,Data and Analytics,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-023
-VOL-HCDN-0151,Integration and Interoperability,Clinical Analytics,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-024
-VOL-HCDN-0152,ERP and Corporate Platforms,Actuarial,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-025
-VOL-HCDN-0153,Clinical and Epic AMS,Departmental Reporting,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-026
-VOL-HCDN-0154,Payer Platform Operations,AI Transformation,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-027
-VOL-HCDN-0155,Data Analytics and AI,Technology,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-028
-VOL-HCDN-0156,Revenue Cycle Technology,Security,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-029
-VOL-HCDN-0157,Cloud Infrastructure and Data Center,Procurement,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-030
-VOL-HCDN-0158,Workplace and Contact Center,HR,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-031
-VOL-HCDN-0159,Security Identity and Compliance,Supply Chain,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-032
-VOL-HCDN-0160,Integration and Interoperability,Privacy,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-033
-VOL-HCDN-0161,ERP and Corporate Platforms,Compliance,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-034
-VOL-HCDN-0162,Clinical and Epic AMS,Provider Network,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-035
-VOL-HCDN-0163,Payer Platform Operations,Value-Based Care,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-036
-VOL-HCDN-0164,Data Analytics and AI,Clinical Operations,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-037
-VOL-HCDN-0165,Revenue Cycle Technology,Revenue Cycle,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-038
-VOL-HCDN-0166,Cloud Infrastructure and Data Center,Patient Access,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-039
-VOL-HCDN-0167,Workplace and Contact Center,Interoperability,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-040
-VOL-HCDN-0168,Security Identity and Compliance,Population Health,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-041
-VOL-HCDN-0169,Integration and Interoperability,Health Plan Operations,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-042
-VOL-HCDN-0170,ERP and Corporate Platforms,Medicare Advantage,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-043
-VOL-HCDN-0171,Clinical and Epic AMS,Claims Operations,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-044
-VOL-HCDN-0172,Payer Platform Operations,Utilization Management,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-045
-VOL-HCDN-0173,Data Analytics and AI,Member Services,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-046
-VOL-HCDN-0174,Revenue Cycle Technology,Quality and Stars,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-047
-VOL-HCDN-0175,Cloud Infrastructure and Data Center,Risk Adjustment,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-048
-VOL-HCDN-0176,Workplace and Contact Center,Care Management,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-049
-VOL-HCDN-0177,Security Identity and Compliance,Finance,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-050
-VOL-HCDN-0178,Integration and Interoperability,Coding,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-051
-VOL-HCDN-0179,ERP and Corporate Platforms,Payer Contracting,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-052
-VOL-HCDN-0180,Clinical and Epic AMS,Digital Front Door,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-053
-VOL-HCDN-0181,Payer Platform Operations,Contact Center,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-054
-VOL-HCDN-0182,Data Analytics and AI,Ambulatory Care,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-055
-VOL-HCDN-0183,Revenue Cycle Technology,Emergency Department,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-056
-VOL-HCDN-0184,Cloud Infrastructure and Data Center,Inpatient,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-057
-VOL-HCDN-0185,Workplace and Contact Center,Surgery,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-058
-VOL-HCDN-0186,Security Identity and Compliance,Imaging,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-059
-VOL-HCDN-0187,Integration and Interoperability,Lab,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-060
-VOL-HCDN-0188,ERP and Corporate Platforms,Pharmacy,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-061
-VOL-HCDN-0189,Clinical and Epic AMS,Oncology,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-062
-VOL-HCDN-0190,Payer Platform Operations,Cardiology,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-063
-VOL-HCDN-0191,Data Analytics and AI,Data and Analytics,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-064
-VOL-HCDN-0192,Revenue Cycle Technology,Clinical Analytics,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-001
-VOL-HCDN-0193,Cloud Infrastructure and Data Center,Actuarial,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-002
-VOL-HCDN-0194,Workplace and Contact Center,Departmental Reporting,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-003
-VOL-HCDN-0195,Security Identity and Compliance,AI Transformation,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-004
-VOL-HCDN-0196,Integration and Interoperability,Technology,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-005
-VOL-HCDN-0197,ERP and Corporate Platforms,Security,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-006
-VOL-HCDN-0198,Clinical and Epic AMS,Procurement,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-007
-VOL-HCDN-0199,Payer Platform Operations,HR,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-008
-VOL-HCDN-0200,Data Analytics and AI,Supply Chain,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-009
-VOL-HCDN-0201,Revenue Cycle Technology,Privacy,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-010
-VOL-HCDN-0202,Cloud Infrastructure and Data Center,Compliance,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-011
-VOL-HCDN-0203,Workplace and Contact Center,Provider Network,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-012
-VOL-HCDN-0204,Security Identity and Compliance,Value-Based Care,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-013
-VOL-HCDN-0205,Integration and Interoperability,Clinical Operations,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-014
-VOL-HCDN-0206,ERP and Corporate Platforms,Revenue Cycle,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-015
-VOL-HCDN-0207,Clinical and Epic AMS,Patient Access,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-016
-VOL-HCDN-0208,Payer Platform Operations,Interoperability,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-017
-VOL-HCDN-0209,Data Analytics and AI,Population Health,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-018
-VOL-HCDN-0210,Revenue Cycle Technology,Health Plan Operations,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-019
-VOL-HCDN-0211,Cloud Infrastructure and Data Center,Medicare Advantage,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-020
-VOL-HCDN-0212,Workplace and Contact Center,Claims Operations,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-021
-VOL-HCDN-0213,Security Identity and Compliance,Utilization Management,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-022
-VOL-HCDN-0214,Integration and Interoperability,Member Services,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-023
-VOL-HCDN-0215,ERP and Corporate Platforms,Quality and Stars,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-024
-VOL-HCDN-0216,Clinical and Epic AMS,Risk Adjustment,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-025
-VOL-HCDN-0217,Payer Platform Operations,Care Management,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-026
-VOL-HCDN-0218,Data Analytics and AI,Finance,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-027
-VOL-HCDN-0219,Revenue Cycle Technology,Coding,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-028
-VOL-HCDN-0220,Cloud Infrastructure and Data Center,Payer Contracting,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-029
-VOL-HCDN-0221,Workplace and Contact Center,Digital Front Door,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-030
-VOL-HCDN-0222,Security Identity and Compliance,Contact Center,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-031
-VOL-HCDN-0223,Integration and Interoperability,Ambulatory Care,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-032
-VOL-HCDN-0224,ERP and Corporate Platforms,Emergency Department,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-033
-VOL-HCDN-0225,Clinical and Epic AMS,Inpatient,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-034
-VOL-HCDN-0226,Payer Platform Operations,Surgery,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-035
-VOL-HCDN-0227,Data Analytics and AI,Imaging,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-036
-VOL-HCDN-0228,Revenue Cycle Technology,Lab,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-037
-VOL-HCDN-0229,Cloud Infrastructure and Data Center,Pharmacy,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-038
-VOL-HCDN-0230,Workplace and Contact Center,Oncology,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-039
-VOL-HCDN-0231,Security Identity and Compliance,Cardiology,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-040
-VOL-HCDN-0232,Integration and Interoperability,Data and Analytics,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-041
-VOL-HCDN-0233,ERP and Corporate Platforms,Clinical Analytics,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-042
-VOL-HCDN-0234,Clinical and Epic AMS,Actuarial,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-043
-VOL-HCDN-0235,Payer Platform Operations,Departmental Reporting,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-044
-VOL-HCDN-0236,Data Analytics and AI,AI Transformation,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-045
-VOL-HCDN-0237,Revenue Cycle Technology,Technology,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-046
-VOL-HCDN-0238,Cloud Infrastructure and Data Center,Security,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-047
-VOL-HCDN-0239,Workplace and Contact Center,Procurement,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-048
-VOL-HCDN-0240,Security Identity and Compliance,HR,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-049
-VOL-HCDN-0241,Integration and Interoperability,Supply Chain,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-050
-VOL-HCDN-0242,ERP and Corporate Platforms,Privacy,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-051
-VOL-HCDN-0243,Clinical and Epic AMS,Compliance,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-052
-VOL-HCDN-0244,Payer Platform Operations,Provider Network,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-053
-VOL-HCDN-0245,Data Analytics and AI,Value-Based Care,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-054
-VOL-HCDN-0246,Revenue Cycle Technology,Clinical Operations,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-055
-VOL-HCDN-0247,Cloud Infrastructure and Data Center,Revenue Cycle,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-056
-VOL-HCDN-0248,Workplace and Contact Center,Patient Access,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-057
-VOL-HCDN-0249,Security Identity and Compliance,Interoperability,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-058
-VOL-HCDN-0250,Integration and Interoperability,Population Health,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-059
-VOL-HCDN-0251,ERP and Corporate Platforms,Health Plan Operations,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-060
-VOL-HCDN-0252,Clinical and Epic AMS,Medicare Advantage,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-061
-VOL-HCDN-0253,Payer Platform Operations,Claims Operations,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-062
-VOL-HCDN-0254,Data Analytics and AI,Utilization Management,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-063
-VOL-HCDN-0255,Revenue Cycle Technology,Member Services,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-064
-VOL-HCDN-0256,Cloud Infrastructure and Data Center,Quality and Stars,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-001
-VOL-HCDN-0257,Workplace and Contact Center,Risk Adjustment,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-002
-VOL-HCDN-0258,Security Identity and Compliance,Care Management,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-003
-VOL-HCDN-0259,Integration and Interoperability,Finance,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-004
-VOL-HCDN-0260,ERP and Corporate Platforms,Coding,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-005
-VOL-HCDN-0261,Clinical and Epic AMS,Payer Contracting,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-006
-VOL-HCDN-0262,Payer Platform Operations,Digital Front Door,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-007
-VOL-HCDN-0263,Data Analytics and AI,Contact Center,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-008
-VOL-HCDN-0264,Revenue Cycle Technology,Ambulatory Care,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-009
-VOL-HCDN-0265,Cloud Infrastructure and Data Center,Emergency Department,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-010
-VOL-HCDN-0266,Workplace and Contact Center,Inpatient,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-011
-VOL-HCDN-0267,Security Identity and Compliance,Surgery,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-012
-VOL-HCDN-0268,Integration and Interoperability,Imaging,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-013
-VOL-HCDN-0269,ERP and Corporate Platforms,Lab,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-014
-VOL-HCDN-0270,Clinical and Epic AMS,Pharmacy,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-015
-VOL-HCDN-0271,Payer Platform Operations,Oncology,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-016
-VOL-HCDN-0272,Data Analytics and AI,Cardiology,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-017
-VOL-HCDN-0273,Revenue Cycle Technology,Data and Analytics,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-018
-VOL-HCDN-0274,Cloud Infrastructure and Data Center,Clinical Analytics,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-019
-VOL-HCDN-0275,Workplace and Contact Center,Actuarial,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-020
-VOL-HCDN-0276,Security Identity and Compliance,Departmental Reporting,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-021
-VOL-HCDN-0277,Integration and Interoperability,AI Transformation,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-022
-VOL-HCDN-0278,ERP and Corporate Platforms,Technology,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-023
-VOL-HCDN-0279,Clinical and Epic AMS,Security,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-024
-VOL-HCDN-0280,Payer Platform Operations,Procurement,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-025
-VOL-HCDN-0281,Data Analytics and AI,HR,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-026
-VOL-HCDN-0282,Revenue Cycle Technology,Supply Chain,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-027
-VOL-HCDN-0283,Cloud Infrastructure and Data Center,Privacy,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-028
-VOL-HCDN-0284,Workplace and Contact Center,Compliance,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-029
-VOL-HCDN-0285,Security Identity and Compliance,Provider Network,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-030
-VOL-HCDN-0286,Integration and Interoperability,Value-Based Care,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-031
-VOL-HCDN-0287,ERP and Corporate Platforms,Clinical Operations,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-032
-VOL-HCDN-0288,Clinical and Epic AMS,Revenue Cycle,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-033
-VOL-HCDN-0289,Payer Platform Operations,Patient Access,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-034
-VOL-HCDN-0290,Data Analytics and AI,Interoperability,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-035
-VOL-HCDN-0291,Revenue Cycle Technology,Population Health,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-036
-VOL-HCDN-0292,Cloud Infrastructure and Data Center,Health Plan Operations,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-037
-VOL-HCDN-0293,Workplace and Contact Center,Medicare Advantage,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-038
-VOL-HCDN-0294,Security Identity and Compliance,Claims Operations,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-039
-VOL-HCDN-0295,Integration and Interoperability,Utilization Management,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-040
-VOL-HCDN-0296,ERP and Corporate Platforms,Member Services,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-041
-VOL-HCDN-0297,Clinical and Epic AMS,Quality and Stars,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-042
-VOL-HCDN-0298,Payer Platform Operations,Risk Adjustment,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-043
-VOL-HCDN-0299,Data Analytics and AI,Care Management,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-044
-VOL-HCDN-0300,Revenue Cycle Technology,Finance,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-045
-VOL-HCDN-0301,Cloud Infrastructure and Data Center,Coding,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-046
-VOL-HCDN-0302,Workplace and Contact Center,Payer Contracting,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-047
-VOL-HCDN-0303,Security Identity and Compliance,Digital Front Door,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-048
-VOL-HCDN-0304,Integration and Interoperability,Contact Center,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-049
-VOL-HCDN-0305,ERP and Corporate Platforms,Ambulatory Care,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-050
-VOL-HCDN-0306,Clinical and Epic AMS,Emergency Department,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-051
-VOL-HCDN-0307,Payer Platform Operations,Inpatient,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-052
-VOL-HCDN-0308,Data Analytics and AI,Surgery,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-053
-VOL-HCDN-0309,Revenue Cycle Technology,Imaging,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-054
-VOL-HCDN-0310,Cloud Infrastructure and Data Center,Lab,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-055
-VOL-HCDN-0311,Workplace and Contact Center,Pharmacy,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-056
-VOL-HCDN-0312,Security Identity and Compliance,Oncology,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-057
-VOL-HCDN-0313,Integration and Interoperability,Cardiology,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-058
-VOL-HCDN-0314,ERP and Corporate Platforms,Data and Analytics,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-059
-VOL-HCDN-0315,Clinical and Epic AMS,Clinical Analytics,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-060
-VOL-HCDN-0316,Payer Platform Operations,Actuarial,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-061
-VOL-HCDN-0317,Data Analytics and AI,Departmental Reporting,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-062
-VOL-HCDN-0318,Revenue Cycle Technology,AI Transformation,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-063
-VOL-HCDN-0319,Cloud Infrastructure and Data Center,Technology,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-064
-VOL-HCDN-0320,Workplace and Contact Center,Security,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-001
-VOL-HCDN-0321,Security Identity and Compliance,Procurement,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-002
-VOL-HCDN-0322,Integration and Interoperability,HR,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-003
-VOL-HCDN-0323,ERP and Corporate Platforms,Supply Chain,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-004
-VOL-HCDN-0324,Clinical and Epic AMS,Privacy,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-005
-VOL-HCDN-0325,Payer Platform Operations,Compliance,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-006
-VOL-HCDN-0326,Data Analytics and AI,Provider Network,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-007
-VOL-HCDN-0327,Revenue Cycle Technology,Value-Based Care,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-008
-VOL-HCDN-0328,Cloud Infrastructure and Data Center,Clinical Operations,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-009
-VOL-HCDN-0329,Workplace and Contact Center,Revenue Cycle,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-010
-VOL-HCDN-0330,Security Identity and Compliance,Patient Access,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-011
-VOL-HCDN-0331,Integration and Interoperability,Interoperability,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-012
-VOL-HCDN-0332,ERP and Corporate Platforms,Population Health,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-013
-VOL-HCDN-0333,Clinical and Epic AMS,Health Plan Operations,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-014
-VOL-HCDN-0334,Payer Platform Operations,Medicare Advantage,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-015
-VOL-HCDN-0335,Data Analytics and AI,Claims Operations,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-016
-VOL-HCDN-0336,Revenue Cycle Technology,Utilization Management,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-017
-VOL-HCDN-0337,Cloud Infrastructure and Data Center,Member Services,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-018
-VOL-HCDN-0338,Workplace and Contact Center,Quality and Stars,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-019
-VOL-HCDN-0339,Security Identity and Compliance,Risk Adjustment,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-020
-VOL-HCDN-0340,Integration and Interoperability,Care Management,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-021
-VOL-HCDN-0341,ERP and Corporate Platforms,Finance,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-022
-VOL-HCDN-0342,Clinical and Epic AMS,Coding,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-023
-VOL-HCDN-0343,Payer Platform Operations,Payer Contracting,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-024
-VOL-HCDN-0344,Data Analytics and AI,Digital Front Door,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-025
-VOL-HCDN-0345,Revenue Cycle Technology,Contact Center,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-026
-VOL-HCDN-0346,Cloud Infrastructure and Data Center,Ambulatory Care,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-027
-VOL-HCDN-0347,Workplace and Contact Center,Emergency Department,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-028
-VOL-HCDN-0348,Security Identity and Compliance,Inpatient,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-029
-VOL-HCDN-0349,Integration and Interoperability,Surgery,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-030
-VOL-HCDN-0350,ERP and Corporate Platforms,Imaging,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-031
-VOL-HCDN-0351,Clinical and Epic AMS,Lab,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-032
-VOL-HCDN-0352,Payer Platform Operations,Pharmacy,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-033
-VOL-HCDN-0353,Data Analytics and AI,Oncology,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-034
-VOL-HCDN-0354,Revenue Cycle Technology,Cardiology,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-035
-VOL-HCDN-0355,Cloud Infrastructure and Data Center,Data and Analytics,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-036
-VOL-HCDN-0356,Workplace and Contact Center,Clinical Analytics,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-037
-VOL-HCDN-0357,Security Identity and Compliance,Actuarial,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-038
-VOL-HCDN-0358,Integration and Interoperability,Departmental Reporting,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-039
-VOL-HCDN-0359,ERP and Corporate Platforms,AI Transformation,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-040
-VOL-HCDN-0360,Clinical and Epic AMS,Technology,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-041
+volume_id,lot_id,service_tower,business_function,metric,value_disclosure_mode,period,evidence_state,source_id
+VOL-HCDN-0001,LOT-HCDN-01,Clinical and Epic AMS,Revenue Cycle,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-002
+VOL-HCDN-0002,LOT-HCDN-02,Payer Platform Operations,Patient Access,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-003
+VOL-HCDN-0003,LOT-HCDN-03,Data Analytics and AI,Interoperability,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-004
+VOL-HCDN-0004,LOT-HCDN-04,Revenue Cycle Technology,Population Health,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-005
+VOL-HCDN-0005,LOT-HCDN-05,Cloud Infrastructure and Data Center,Health Plan Operations,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-006
+VOL-HCDN-0006,LOT-HCDN-06,Workplace and Contact Center,Medicare Advantage,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-007
+VOL-HCDN-0007,LOT-HCDN-07,Security Identity and Compliance,Claims Operations,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-008
+VOL-HCDN-0008,LOT-HCDN-08,Integration and Interoperability,Utilization Management,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-009
+VOL-HCDN-0009,LOT-HCDN-09,ERP and Corporate Platforms,Member Services,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-010
+VOL-HCDN-0010,LOT-HCDN-01,Clinical and Epic AMS,Quality and Stars,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-011
+VOL-HCDN-0011,LOT-HCDN-02,Payer Platform Operations,Risk Adjustment,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-012
+VOL-HCDN-0012,LOT-HCDN-03,Data Analytics and AI,Care Management,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-013
+VOL-HCDN-0013,LOT-HCDN-04,Revenue Cycle Technology,Finance,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-014
+VOL-HCDN-0014,LOT-HCDN-05,Cloud Infrastructure and Data Center,Coding,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-015
+VOL-HCDN-0015,LOT-HCDN-06,Workplace and Contact Center,Payer Contracting,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-016
+VOL-HCDN-0016,LOT-HCDN-07,Security Identity and Compliance,Digital Front Door,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-017
+VOL-HCDN-0017,LOT-HCDN-08,Integration and Interoperability,Contact Center,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-018
+VOL-HCDN-0018,LOT-HCDN-09,ERP and Corporate Platforms,Ambulatory Care,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-019
+VOL-HCDN-0019,LOT-HCDN-01,Clinical and Epic AMS,Emergency Department,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-020
+VOL-HCDN-0020,LOT-HCDN-02,Payer Platform Operations,Inpatient,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-021
+VOL-HCDN-0021,LOT-HCDN-03,Data Analytics and AI,Surgery,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-022
+VOL-HCDN-0022,LOT-HCDN-04,Revenue Cycle Technology,Imaging,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-023
+VOL-HCDN-0023,LOT-HCDN-05,Cloud Infrastructure and Data Center,Lab,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-024
+VOL-HCDN-0024,LOT-HCDN-06,Workplace and Contact Center,Pharmacy,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-025
+VOL-HCDN-0025,LOT-HCDN-07,Security Identity and Compliance,Oncology,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-026
+VOL-HCDN-0026,LOT-HCDN-08,Integration and Interoperability,Cardiology,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-027
+VOL-HCDN-0027,LOT-HCDN-09,ERP and Corporate Platforms,Data and Analytics,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-028
+VOL-HCDN-0028,LOT-HCDN-01,Clinical and Epic AMS,Clinical Analytics,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-029
+VOL-HCDN-0029,LOT-HCDN-02,Payer Platform Operations,Actuarial,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-030
+VOL-HCDN-0030,LOT-HCDN-03,Data Analytics and AI,Departmental Reporting,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-031
+VOL-HCDN-0031,LOT-HCDN-04,Revenue Cycle Technology,AI Transformation,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-032
+VOL-HCDN-0032,LOT-HCDN-05,Cloud Infrastructure and Data Center,Technology,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-033
+VOL-HCDN-0033,LOT-HCDN-06,Workplace and Contact Center,Security,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-034
+VOL-HCDN-0034,LOT-HCDN-07,Security Identity and Compliance,Procurement,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-035
+VOL-HCDN-0035,LOT-HCDN-08,Integration and Interoperability,HR,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-036
+VOL-HCDN-0036,LOT-HCDN-09,ERP and Corporate Platforms,Supply Chain,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-037
+VOL-HCDN-0037,LOT-HCDN-01,Clinical and Epic AMS,Privacy,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-038
+VOL-HCDN-0038,LOT-HCDN-02,Payer Platform Operations,Compliance,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-039
+VOL-HCDN-0039,LOT-HCDN-03,Data Analytics and AI,Provider Network,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-040
+VOL-HCDN-0040,LOT-HCDN-04,Revenue Cycle Technology,Value-Based Care,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-041
+VOL-HCDN-0041,LOT-HCDN-05,Cloud Infrastructure and Data Center,Clinical Operations,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-042
+VOL-HCDN-0042,LOT-HCDN-06,Workplace and Contact Center,Revenue Cycle,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-043
+VOL-HCDN-0043,LOT-HCDN-07,Security Identity and Compliance,Patient Access,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-044
+VOL-HCDN-0044,LOT-HCDN-08,Integration and Interoperability,Interoperability,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-045
+VOL-HCDN-0045,LOT-HCDN-09,ERP and Corporate Platforms,Population Health,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-046
+VOL-HCDN-0046,LOT-HCDN-01,Clinical and Epic AMS,Health Plan Operations,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-047
+VOL-HCDN-0047,LOT-HCDN-02,Payer Platform Operations,Medicare Advantage,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-048
+VOL-HCDN-0048,LOT-HCDN-03,Data Analytics and AI,Claims Operations,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-049
+VOL-HCDN-0049,LOT-HCDN-04,Revenue Cycle Technology,Utilization Management,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-050
+VOL-HCDN-0050,LOT-HCDN-05,Cloud Infrastructure and Data Center,Member Services,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-051
+VOL-HCDN-0051,LOT-HCDN-06,Workplace and Contact Center,Quality and Stars,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-052
+VOL-HCDN-0052,LOT-HCDN-07,Security Identity and Compliance,Risk Adjustment,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-053
+VOL-HCDN-0053,LOT-HCDN-08,Integration and Interoperability,Care Management,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-054
+VOL-HCDN-0054,LOT-HCDN-09,ERP and Corporate Platforms,Finance,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-055
+VOL-HCDN-0055,LOT-HCDN-01,Clinical and Epic AMS,Coding,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-056
+VOL-HCDN-0056,LOT-HCDN-02,Payer Platform Operations,Payer Contracting,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-057
+VOL-HCDN-0057,LOT-HCDN-03,Data Analytics and AI,Digital Front Door,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-058
+VOL-HCDN-0058,LOT-HCDN-04,Revenue Cycle Technology,Contact Center,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-059
+VOL-HCDN-0059,LOT-HCDN-05,Cloud Infrastructure and Data Center,Ambulatory Care,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-060
+VOL-HCDN-0060,LOT-HCDN-06,Workplace and Contact Center,Emergency Department,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-061
+VOL-HCDN-0061,LOT-HCDN-07,Security Identity and Compliance,Inpatient,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-062
+VOL-HCDN-0062,LOT-HCDN-08,Integration and Interoperability,Surgery,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-063
+VOL-HCDN-0063,LOT-HCDN-09,ERP and Corporate Platforms,Imaging,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-064
+VOL-HCDN-0064,LOT-HCDN-01,Clinical and Epic AMS,Lab,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-001
+VOL-HCDN-0065,LOT-HCDN-02,Payer Platform Operations,Pharmacy,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-002
+VOL-HCDN-0066,LOT-HCDN-03,Data Analytics and AI,Oncology,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-003
+VOL-HCDN-0067,LOT-HCDN-04,Revenue Cycle Technology,Cardiology,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-004
+VOL-HCDN-0068,LOT-HCDN-05,Cloud Infrastructure and Data Center,Data and Analytics,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-005
+VOL-HCDN-0069,LOT-HCDN-06,Workplace and Contact Center,Clinical Analytics,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-006
+VOL-HCDN-0070,LOT-HCDN-07,Security Identity and Compliance,Actuarial,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-007
+VOL-HCDN-0071,LOT-HCDN-08,Integration and Interoperability,Departmental Reporting,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-008
+VOL-HCDN-0072,LOT-HCDN-09,ERP and Corporate Platforms,AI Transformation,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-009
+VOL-HCDN-0073,LOT-HCDN-01,Clinical and Epic AMS,Technology,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-010
+VOL-HCDN-0074,LOT-HCDN-02,Payer Platform Operations,Security,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-011
+VOL-HCDN-0075,LOT-HCDN-03,Data Analytics and AI,Procurement,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-012
+VOL-HCDN-0076,LOT-HCDN-04,Revenue Cycle Technology,HR,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-013
+VOL-HCDN-0077,LOT-HCDN-05,Cloud Infrastructure and Data Center,Supply Chain,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-014
+VOL-HCDN-0078,LOT-HCDN-06,Workplace and Contact Center,Privacy,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-015
+VOL-HCDN-0079,LOT-HCDN-07,Security Identity and Compliance,Compliance,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-016
+VOL-HCDN-0080,LOT-HCDN-08,Integration and Interoperability,Provider Network,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-017
+VOL-HCDN-0081,LOT-HCDN-09,ERP and Corporate Platforms,Value-Based Care,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-018
+VOL-HCDN-0082,LOT-HCDN-01,Clinical and Epic AMS,Clinical Operations,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-019
+VOL-HCDN-0083,LOT-HCDN-02,Payer Platform Operations,Revenue Cycle,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-020
+VOL-HCDN-0084,LOT-HCDN-03,Data Analytics and AI,Patient Access,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-021
+VOL-HCDN-0085,LOT-HCDN-04,Revenue Cycle Technology,Interoperability,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-022
+VOL-HCDN-0086,LOT-HCDN-05,Cloud Infrastructure and Data Center,Population Health,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-023
+VOL-HCDN-0087,LOT-HCDN-06,Workplace and Contact Center,Health Plan Operations,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-024
+VOL-HCDN-0088,LOT-HCDN-07,Security Identity and Compliance,Medicare Advantage,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-025
+VOL-HCDN-0089,LOT-HCDN-08,Integration and Interoperability,Claims Operations,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-026
+VOL-HCDN-0090,LOT-HCDN-09,ERP and Corporate Platforms,Utilization Management,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-027
+VOL-HCDN-0091,LOT-HCDN-01,Clinical and Epic AMS,Member Services,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-028
+VOL-HCDN-0092,LOT-HCDN-02,Payer Platform Operations,Quality and Stars,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-029
+VOL-HCDN-0093,LOT-HCDN-03,Data Analytics and AI,Risk Adjustment,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-030
+VOL-HCDN-0094,LOT-HCDN-04,Revenue Cycle Technology,Care Management,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-031
+VOL-HCDN-0095,LOT-HCDN-05,Cloud Infrastructure and Data Center,Finance,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-032
+VOL-HCDN-0096,LOT-HCDN-06,Workplace and Contact Center,Coding,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-033
+VOL-HCDN-0097,LOT-HCDN-07,Security Identity and Compliance,Payer Contracting,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-034
+VOL-HCDN-0098,LOT-HCDN-08,Integration and Interoperability,Digital Front Door,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-035
+VOL-HCDN-0099,LOT-HCDN-09,ERP and Corporate Platforms,Contact Center,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-036
+VOL-HCDN-0100,LOT-HCDN-01,Clinical and Epic AMS,Ambulatory Care,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-037
+VOL-HCDN-0101,LOT-HCDN-02,Payer Platform Operations,Emergency Department,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-038
+VOL-HCDN-0102,LOT-HCDN-03,Data Analytics and AI,Inpatient,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-039
+VOL-HCDN-0103,LOT-HCDN-04,Revenue Cycle Technology,Surgery,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-040
+VOL-HCDN-0104,LOT-HCDN-05,Cloud Infrastructure and Data Center,Imaging,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-041
+VOL-HCDN-0105,LOT-HCDN-06,Workplace and Contact Center,Lab,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-042
+VOL-HCDN-0106,LOT-HCDN-07,Security Identity and Compliance,Pharmacy,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-043
+VOL-HCDN-0107,LOT-HCDN-08,Integration and Interoperability,Oncology,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-044
+VOL-HCDN-0108,LOT-HCDN-09,ERP and Corporate Platforms,Cardiology,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-045
+VOL-HCDN-0109,LOT-HCDN-01,Clinical and Epic AMS,Data and Analytics,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-046
+VOL-HCDN-0110,LOT-HCDN-02,Payer Platform Operations,Clinical Analytics,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-047
+VOL-HCDN-0111,LOT-HCDN-03,Data Analytics and AI,Actuarial,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-048
+VOL-HCDN-0112,LOT-HCDN-04,Revenue Cycle Technology,Departmental Reporting,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-049
+VOL-HCDN-0113,LOT-HCDN-05,Cloud Infrastructure and Data Center,AI Transformation,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-050
+VOL-HCDN-0114,LOT-HCDN-06,Workplace and Contact Center,Technology,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-051
+VOL-HCDN-0115,LOT-HCDN-07,Security Identity and Compliance,Security,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-052
+VOL-HCDN-0116,LOT-HCDN-08,Integration and Interoperability,Procurement,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-053
+VOL-HCDN-0117,LOT-HCDN-09,ERP and Corporate Platforms,HR,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-054
+VOL-HCDN-0118,LOT-HCDN-01,Clinical and Epic AMS,Supply Chain,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-055
+VOL-HCDN-0119,LOT-HCDN-02,Payer Platform Operations,Privacy,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-056
+VOL-HCDN-0120,LOT-HCDN-03,Data Analytics and AI,Compliance,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-057
+VOL-HCDN-0121,LOT-HCDN-04,Revenue Cycle Technology,Provider Network,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-058
+VOL-HCDN-0122,LOT-HCDN-05,Cloud Infrastructure and Data Center,Value-Based Care,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-059
+VOL-HCDN-0123,LOT-HCDN-06,Workplace and Contact Center,Clinical Operations,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-060
+VOL-HCDN-0124,LOT-HCDN-07,Security Identity and Compliance,Revenue Cycle,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-061
+VOL-HCDN-0125,LOT-HCDN-08,Integration and Interoperability,Patient Access,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-062
+VOL-HCDN-0126,LOT-HCDN-09,ERP and Corporate Platforms,Interoperability,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-063
+VOL-HCDN-0127,LOT-HCDN-01,Clinical and Epic AMS,Population Health,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-064
+VOL-HCDN-0128,LOT-HCDN-02,Payer Platform Operations,Health Plan Operations,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-001
+VOL-HCDN-0129,LOT-HCDN-03,Data Analytics and AI,Medicare Advantage,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-002
+VOL-HCDN-0130,LOT-HCDN-04,Revenue Cycle Technology,Claims Operations,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-003
+VOL-HCDN-0131,LOT-HCDN-05,Cloud Infrastructure and Data Center,Utilization Management,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-004
+VOL-HCDN-0132,LOT-HCDN-06,Workplace and Contact Center,Member Services,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-005
+VOL-HCDN-0133,LOT-HCDN-07,Security Identity and Compliance,Quality and Stars,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-006
+VOL-HCDN-0134,LOT-HCDN-08,Integration and Interoperability,Risk Adjustment,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-007
+VOL-HCDN-0135,LOT-HCDN-09,ERP and Corporate Platforms,Care Management,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-008
+VOL-HCDN-0136,LOT-HCDN-01,Clinical and Epic AMS,Finance,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-009
+VOL-HCDN-0137,LOT-HCDN-02,Payer Platform Operations,Coding,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-010
+VOL-HCDN-0138,LOT-HCDN-03,Data Analytics and AI,Payer Contracting,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-011
+VOL-HCDN-0139,LOT-HCDN-04,Revenue Cycle Technology,Digital Front Door,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-012
+VOL-HCDN-0140,LOT-HCDN-05,Cloud Infrastructure and Data Center,Contact Center,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-013
+VOL-HCDN-0141,LOT-HCDN-06,Workplace and Contact Center,Ambulatory Care,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-014
+VOL-HCDN-0142,LOT-HCDN-07,Security Identity and Compliance,Emergency Department,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-015
+VOL-HCDN-0143,LOT-HCDN-08,Integration and Interoperability,Inpatient,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-016
+VOL-HCDN-0144,LOT-HCDN-09,ERP and Corporate Platforms,Surgery,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-017
+VOL-HCDN-0145,LOT-HCDN-01,Clinical and Epic AMS,Imaging,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-018
+VOL-HCDN-0146,LOT-HCDN-02,Payer Platform Operations,Lab,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-019
+VOL-HCDN-0147,LOT-HCDN-03,Data Analytics and AI,Pharmacy,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-020
+VOL-HCDN-0148,LOT-HCDN-04,Revenue Cycle Technology,Oncology,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-021
+VOL-HCDN-0149,LOT-HCDN-05,Cloud Infrastructure and Data Center,Cardiology,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-022
+VOL-HCDN-0150,LOT-HCDN-06,Workplace and Contact Center,Data and Analytics,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-023
+VOL-HCDN-0151,LOT-HCDN-07,Security Identity and Compliance,Clinical Analytics,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-024
+VOL-HCDN-0152,LOT-HCDN-08,Integration and Interoperability,Actuarial,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-025
+VOL-HCDN-0153,LOT-HCDN-09,ERP and Corporate Platforms,Departmental Reporting,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-026
+VOL-HCDN-0154,LOT-HCDN-01,Clinical and Epic AMS,AI Transformation,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-027
+VOL-HCDN-0155,LOT-HCDN-02,Payer Platform Operations,Technology,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-028
+VOL-HCDN-0156,LOT-HCDN-03,Data Analytics and AI,Security,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-029
+VOL-HCDN-0157,LOT-HCDN-04,Revenue Cycle Technology,Procurement,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-030
+VOL-HCDN-0158,LOT-HCDN-05,Cloud Infrastructure and Data Center,HR,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-031
+VOL-HCDN-0159,LOT-HCDN-06,Workplace and Contact Center,Supply Chain,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-032
+VOL-HCDN-0160,LOT-HCDN-07,Security Identity and Compliance,Privacy,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-033
+VOL-HCDN-0161,LOT-HCDN-08,Integration and Interoperability,Compliance,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-034
+VOL-HCDN-0162,LOT-HCDN-09,ERP and Corporate Platforms,Provider Network,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-035
+VOL-HCDN-0163,LOT-HCDN-01,Clinical and Epic AMS,Value-Based Care,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-036
+VOL-HCDN-0164,LOT-HCDN-02,Payer Platform Operations,Clinical Operations,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-037
+VOL-HCDN-0165,LOT-HCDN-03,Data Analytics and AI,Revenue Cycle,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-038
+VOL-HCDN-0166,LOT-HCDN-04,Revenue Cycle Technology,Patient Access,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-039
+VOL-HCDN-0167,LOT-HCDN-05,Cloud Infrastructure and Data Center,Interoperability,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-040
+VOL-HCDN-0168,LOT-HCDN-06,Workplace and Contact Center,Population Health,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-041
+VOL-HCDN-0169,LOT-HCDN-07,Security Identity and Compliance,Health Plan Operations,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-042
+VOL-HCDN-0170,LOT-HCDN-08,Integration and Interoperability,Medicare Advantage,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-043
+VOL-HCDN-0171,LOT-HCDN-09,ERP and Corporate Platforms,Claims Operations,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-044
+VOL-HCDN-0172,LOT-HCDN-01,Clinical and Epic AMS,Utilization Management,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-045
+VOL-HCDN-0173,LOT-HCDN-02,Payer Platform Operations,Member Services,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-046
+VOL-HCDN-0174,LOT-HCDN-03,Data Analytics and AI,Quality and Stars,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-047
+VOL-HCDN-0175,LOT-HCDN-04,Revenue Cycle Technology,Risk Adjustment,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-048
+VOL-HCDN-0176,LOT-HCDN-05,Cloud Infrastructure and Data Center,Care Management,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-049
+VOL-HCDN-0177,LOT-HCDN-06,Workplace and Contact Center,Finance,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-050
+VOL-HCDN-0178,LOT-HCDN-07,Security Identity and Compliance,Coding,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-051
+VOL-HCDN-0179,LOT-HCDN-08,Integration and Interoperability,Payer Contracting,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-052
+VOL-HCDN-0180,LOT-HCDN-09,ERP and Corporate Platforms,Digital Front Door,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-053
+VOL-HCDN-0181,LOT-HCDN-01,Clinical and Epic AMS,Contact Center,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-054
+VOL-HCDN-0182,LOT-HCDN-02,Payer Platform Operations,Ambulatory Care,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-055
+VOL-HCDN-0183,LOT-HCDN-03,Data Analytics and AI,Emergency Department,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-056
+VOL-HCDN-0184,LOT-HCDN-04,Revenue Cycle Technology,Inpatient,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-057
+VOL-HCDN-0185,LOT-HCDN-05,Cloud Infrastructure and Data Center,Surgery,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-058
+VOL-HCDN-0186,LOT-HCDN-06,Workplace and Contact Center,Imaging,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-059
+VOL-HCDN-0187,LOT-HCDN-07,Security Identity and Compliance,Lab,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-060
+VOL-HCDN-0188,LOT-HCDN-08,Integration and Interoperability,Pharmacy,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-061
+VOL-HCDN-0189,LOT-HCDN-09,ERP and Corporate Platforms,Oncology,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-062
+VOL-HCDN-0190,LOT-HCDN-01,Clinical and Epic AMS,Cardiology,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-063
+VOL-HCDN-0191,LOT-HCDN-02,Payer Platform Operations,Data and Analytics,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-064
+VOL-HCDN-0192,LOT-HCDN-03,Data Analytics and AI,Clinical Analytics,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-001
+VOL-HCDN-0193,LOT-HCDN-04,Revenue Cycle Technology,Actuarial,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-002
+VOL-HCDN-0194,LOT-HCDN-05,Cloud Infrastructure and Data Center,Departmental Reporting,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-003
+VOL-HCDN-0195,LOT-HCDN-06,Workplace and Contact Center,AI Transformation,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-004
+VOL-HCDN-0196,LOT-HCDN-07,Security Identity and Compliance,Technology,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-005
+VOL-HCDN-0197,LOT-HCDN-08,Integration and Interoperability,Security,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-006
+VOL-HCDN-0198,LOT-HCDN-09,ERP and Corporate Platforms,Procurement,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-007
+VOL-HCDN-0199,LOT-HCDN-01,Clinical and Epic AMS,HR,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-008
+VOL-HCDN-0200,LOT-HCDN-02,Payer Platform Operations,Supply Chain,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-009
+VOL-HCDN-0201,LOT-HCDN-03,Data Analytics and AI,Privacy,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-010
+VOL-HCDN-0202,LOT-HCDN-04,Revenue Cycle Technology,Compliance,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-011
+VOL-HCDN-0203,LOT-HCDN-05,Cloud Infrastructure and Data Center,Provider Network,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-012
+VOL-HCDN-0204,LOT-HCDN-06,Workplace and Contact Center,Value-Based Care,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-013
+VOL-HCDN-0205,LOT-HCDN-07,Security Identity and Compliance,Clinical Operations,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-014
+VOL-HCDN-0206,LOT-HCDN-08,Integration and Interoperability,Revenue Cycle,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-015
+VOL-HCDN-0207,LOT-HCDN-09,ERP and Corporate Platforms,Patient Access,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-016
+VOL-HCDN-0208,LOT-HCDN-01,Clinical and Epic AMS,Interoperability,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-017
+VOL-HCDN-0209,LOT-HCDN-02,Payer Platform Operations,Population Health,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-018
+VOL-HCDN-0210,LOT-HCDN-03,Data Analytics and AI,Health Plan Operations,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-019
+VOL-HCDN-0211,LOT-HCDN-04,Revenue Cycle Technology,Medicare Advantage,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-020
+VOL-HCDN-0212,LOT-HCDN-05,Cloud Infrastructure and Data Center,Claims Operations,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-021
+VOL-HCDN-0213,LOT-HCDN-06,Workplace and Contact Center,Utilization Management,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-022
+VOL-HCDN-0214,LOT-HCDN-07,Security Identity and Compliance,Member Services,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-023
+VOL-HCDN-0215,LOT-HCDN-08,Integration and Interoperability,Quality and Stars,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-024
+VOL-HCDN-0216,LOT-HCDN-09,ERP and Corporate Platforms,Risk Adjustment,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-025
+VOL-HCDN-0217,LOT-HCDN-01,Clinical and Epic AMS,Care Management,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-026
+VOL-HCDN-0218,LOT-HCDN-02,Payer Platform Operations,Finance,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-027
+VOL-HCDN-0219,LOT-HCDN-03,Data Analytics and AI,Coding,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-028
+VOL-HCDN-0220,LOT-HCDN-04,Revenue Cycle Technology,Payer Contracting,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-029
+VOL-HCDN-0221,LOT-HCDN-05,Cloud Infrastructure and Data Center,Digital Front Door,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-030
+VOL-HCDN-0222,LOT-HCDN-06,Workplace and Contact Center,Contact Center,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-031
+VOL-HCDN-0223,LOT-HCDN-07,Security Identity and Compliance,Ambulatory Care,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-032
+VOL-HCDN-0224,LOT-HCDN-08,Integration and Interoperability,Emergency Department,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-033
+VOL-HCDN-0225,LOT-HCDN-09,ERP and Corporate Platforms,Inpatient,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-034
+VOL-HCDN-0226,LOT-HCDN-01,Clinical and Epic AMS,Surgery,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-035
+VOL-HCDN-0227,LOT-HCDN-02,Payer Platform Operations,Imaging,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-036
+VOL-HCDN-0228,LOT-HCDN-03,Data Analytics and AI,Lab,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-037
+VOL-HCDN-0229,LOT-HCDN-04,Revenue Cycle Technology,Pharmacy,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-038
+VOL-HCDN-0230,LOT-HCDN-05,Cloud Infrastructure and Data Center,Oncology,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-039
+VOL-HCDN-0231,LOT-HCDN-06,Workplace and Contact Center,Cardiology,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-040
+VOL-HCDN-0232,LOT-HCDN-07,Security Identity and Compliance,Data and Analytics,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-041
+VOL-HCDN-0233,LOT-HCDN-08,Integration and Interoperability,Clinical Analytics,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-042
+VOL-HCDN-0234,LOT-HCDN-09,ERP and Corporate Platforms,Actuarial,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-043
+VOL-HCDN-0235,LOT-HCDN-01,Clinical and Epic AMS,Departmental Reporting,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-044
+VOL-HCDN-0236,LOT-HCDN-02,Payer Platform Operations,AI Transformation,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-045
+VOL-HCDN-0237,LOT-HCDN-03,Data Analytics and AI,Technology,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-046
+VOL-HCDN-0238,LOT-HCDN-04,Revenue Cycle Technology,Security,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-047
+VOL-HCDN-0239,LOT-HCDN-05,Cloud Infrastructure and Data Center,Procurement,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-048
+VOL-HCDN-0240,LOT-HCDN-06,Workplace and Contact Center,HR,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-049
+VOL-HCDN-0241,LOT-HCDN-07,Security Identity and Compliance,Supply Chain,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-050
+VOL-HCDN-0242,LOT-HCDN-08,Integration and Interoperability,Privacy,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-051
+VOL-HCDN-0243,LOT-HCDN-09,ERP and Corporate Platforms,Compliance,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-052
+VOL-HCDN-0244,LOT-HCDN-01,Clinical and Epic AMS,Provider Network,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-053
+VOL-HCDN-0245,LOT-HCDN-02,Payer Platform Operations,Value-Based Care,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-054
+VOL-HCDN-0246,LOT-HCDN-03,Data Analytics and AI,Clinical Operations,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-055
+VOL-HCDN-0247,LOT-HCDN-04,Revenue Cycle Technology,Revenue Cycle,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-056
+VOL-HCDN-0248,LOT-HCDN-05,Cloud Infrastructure and Data Center,Patient Access,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-057
+VOL-HCDN-0249,LOT-HCDN-06,Workplace and Contact Center,Interoperability,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-058
+VOL-HCDN-0250,LOT-HCDN-07,Security Identity and Compliance,Population Health,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-059
+VOL-HCDN-0251,LOT-HCDN-08,Integration and Interoperability,Health Plan Operations,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-060
+VOL-HCDN-0252,LOT-HCDN-09,ERP and Corporate Platforms,Medicare Advantage,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-061
+VOL-HCDN-0253,LOT-HCDN-01,Clinical and Epic AMS,Claims Operations,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-062
+VOL-HCDN-0254,LOT-HCDN-02,Payer Platform Operations,Utilization Management,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-063
+VOL-HCDN-0255,LOT-HCDN-03,Data Analytics and AI,Member Services,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-064
+VOL-HCDN-0256,LOT-HCDN-04,Revenue Cycle Technology,Quality and Stars,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-001
+VOL-HCDN-0257,LOT-HCDN-05,Cloud Infrastructure and Data Center,Risk Adjustment,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-002
+VOL-HCDN-0258,LOT-HCDN-06,Workplace and Contact Center,Care Management,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-003
+VOL-HCDN-0259,LOT-HCDN-07,Security Identity and Compliance,Finance,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-004
+VOL-HCDN-0260,LOT-HCDN-08,Integration and Interoperability,Coding,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-005
+VOL-HCDN-0261,LOT-HCDN-09,ERP and Corporate Platforms,Payer Contracting,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-006
+VOL-HCDN-0262,LOT-HCDN-01,Clinical and Epic AMS,Digital Front Door,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-007
+VOL-HCDN-0263,LOT-HCDN-02,Payer Platform Operations,Contact Center,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-008
+VOL-HCDN-0264,LOT-HCDN-03,Data Analytics and AI,Ambulatory Care,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-009
+VOL-HCDN-0265,LOT-HCDN-04,Revenue Cycle Technology,Emergency Department,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-010
+VOL-HCDN-0266,LOT-HCDN-05,Cloud Infrastructure and Data Center,Inpatient,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-011
+VOL-HCDN-0267,LOT-HCDN-06,Workplace and Contact Center,Surgery,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-012
+VOL-HCDN-0268,LOT-HCDN-07,Security Identity and Compliance,Imaging,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-013
+VOL-HCDN-0269,LOT-HCDN-08,Integration and Interoperability,Lab,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-014
+VOL-HCDN-0270,LOT-HCDN-09,ERP and Corporate Platforms,Pharmacy,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-015
+VOL-HCDN-0271,LOT-HCDN-01,Clinical and Epic AMS,Oncology,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-016
+VOL-HCDN-0272,LOT-HCDN-02,Payer Platform Operations,Cardiology,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-017
+VOL-HCDN-0273,LOT-HCDN-03,Data Analytics and AI,Data and Analytics,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-018
+VOL-HCDN-0274,LOT-HCDN-04,Revenue Cycle Technology,Clinical Analytics,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-019
+VOL-HCDN-0275,LOT-HCDN-05,Cloud Infrastructure and Data Center,Actuarial,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-020
+VOL-HCDN-0276,LOT-HCDN-06,Workplace and Contact Center,Departmental Reporting,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-021
+VOL-HCDN-0277,LOT-HCDN-07,Security Identity and Compliance,AI Transformation,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-022
+VOL-HCDN-0278,LOT-HCDN-08,Integration and Interoperability,Technology,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-023
+VOL-HCDN-0279,LOT-HCDN-09,ERP and Corporate Platforms,Security,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-024
+VOL-HCDN-0280,LOT-HCDN-01,Clinical and Epic AMS,Procurement,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-025
+VOL-HCDN-0281,LOT-HCDN-02,Payer Platform Operations,HR,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-026
+VOL-HCDN-0282,LOT-HCDN-03,Data Analytics and AI,Supply Chain,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-027
+VOL-HCDN-0283,LOT-HCDN-04,Revenue Cycle Technology,Privacy,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-028
+VOL-HCDN-0284,LOT-HCDN-05,Cloud Infrastructure and Data Center,Compliance,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-029
+VOL-HCDN-0285,LOT-HCDN-06,Workplace and Contact Center,Provider Network,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-030
+VOL-HCDN-0286,LOT-HCDN-07,Security Identity and Compliance,Value-Based Care,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-031
+VOL-HCDN-0287,LOT-HCDN-08,Integration and Interoperability,Clinical Operations,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-032
+VOL-HCDN-0288,LOT-HCDN-09,ERP and Corporate Platforms,Revenue Cycle,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-033
+VOL-HCDN-0289,LOT-HCDN-01,Clinical and Epic AMS,Patient Access,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-034
+VOL-HCDN-0290,LOT-HCDN-02,Payer Platform Operations,Interoperability,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-035
+VOL-HCDN-0291,LOT-HCDN-03,Data Analytics and AI,Population Health,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-036
+VOL-HCDN-0292,LOT-HCDN-04,Revenue Cycle Technology,Health Plan Operations,member calls,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-037
+VOL-HCDN-0293,LOT-HCDN-05,Cloud Infrastructure and Data Center,Medicare Advantage,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-038
+VOL-HCDN-0294,LOT-HCDN-06,Workplace and Contact Center,Claims Operations,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-039
+VOL-HCDN-0295,LOT-HCDN-07,Security Identity and Compliance,Utilization Management,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-040
+VOL-HCDN-0296,LOT-HCDN-08,Integration and Interoperability,Member Services,care-gap outreaches,exact,annual,needs finance signoff,SRC-HCDN-VOL-041
+VOL-HCDN-0297,LOT-HCDN-09,ERP and Corporate Platforms,Quality and Stars,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-042
+VOL-HCDN-0298,LOT-HCDN-01,Clinical and Epic AMS,Risk Adjustment,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-043
+VOL-HCDN-0299,LOT-HCDN-02,Payer Platform Operations,Care Management,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-044
+VOL-HCDN-0300,LOT-HCDN-03,Data Analytics and AI,Finance,prior-auth requests,exact,monthly,source-backed candidate,SRC-HCDN-VOL-045
+VOL-HCDN-0301,LOT-HCDN-04,Revenue Cycle Technology,Coding,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-046
+VOL-HCDN-0302,LOT-HCDN-05,Cloud Infrastructure and Data Center,Payer Contracting,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-047
+VOL-HCDN-0303,LOT-HCDN-06,Workplace and Contact Center,Digital Front Door,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-048
+VOL-HCDN-0304,LOT-HCDN-07,Security Identity and Compliance,Contact Center,BI report executions,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-049
+VOL-HCDN-0305,LOT-HCDN-08,Integration and Interoperability,Ambulatory Care,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-050
+VOL-HCDN-0306,LOT-HCDN-09,ERP and Corporate Platforms,Emergency Department,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-051
+VOL-HCDN-0307,LOT-HCDN-01,Clinical and Epic AMS,Inpatient,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-052
+VOL-HCDN-0308,LOT-HCDN-02,Payer Platform Operations,Surgery,claims transactions,exact,annual,source-backed candidate,SRC-HCDN-VOL-053
+VOL-HCDN-0309,LOT-HCDN-03,Data Analytics and AI,Imaging,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-054
+VOL-HCDN-0310,LOT-HCDN-04,Revenue Cycle Technology,Lab,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-055
+VOL-HCDN-0311,LOT-HCDN-05,Cloud Infrastructure and Data Center,Pharmacy,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-056
+VOL-HCDN-0312,LOT-HCDN-06,Workplace and Contact Center,Oncology,SQL batch jobs,exact,monthly,needs finance signoff,SRC-HCDN-VOL-057
+VOL-HCDN-0313,LOT-HCDN-07,Security Identity and Compliance,Cardiology,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-058
+VOL-HCDN-0314,LOT-HCDN-08,Integration and Interoperability,Data and Analytics,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-059
+VOL-HCDN-0315,LOT-HCDN-09,ERP and Corporate Platforms,Clinical Analytics,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-060
+VOL-HCDN-0316,LOT-HCDN-01,Clinical and Epic AMS,Actuarial,enhancement backlog,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-061
+VOL-HCDN-0317,LOT-HCDN-02,Payer Platform Operations,Departmental Reporting,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-062
+VOL-HCDN-0318,LOT-HCDN-03,Data Analytics and AI,AI Transformation,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-063
+VOL-HCDN-0319,LOT-HCDN-04,Revenue Cycle Technology,Technology,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-064
+VOL-HCDN-0320,LOT-HCDN-05,Cloud Infrastructure and Data Center,Security,Epic change requests,exact,annual,needs finance signoff,SRC-HCDN-VOL-001
+VOL-HCDN-0321,LOT-HCDN-06,Workplace and Contact Center,Procurement,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-002
+VOL-HCDN-0322,LOT-HCDN-07,Security Identity and Compliance,HR,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-003
+VOL-HCDN-0323,LOT-HCDN-08,Integration and Interoperability,Supply Chain,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-004
+VOL-HCDN-0324,LOT-HCDN-09,ERP and Corporate Platforms,Privacy,incident tickets,exact,monthly,source-backed candidate,SRC-HCDN-VOL-005
+VOL-HCDN-0325,LOT-HCDN-01,Clinical and Epic AMS,Compliance,enhancement backlog,range,quarterly,source-backed candidate,SRC-HCDN-VOL-006
+VOL-HCDN-0326,LOT-HCDN-02,Payer Platform Operations,Provider Network,claims transactions,indexed,annual,source-backed candidate,SRC-HCDN-VOL-007
+VOL-HCDN-0327,LOT-HCDN-03,Data Analytics and AI,Value-Based Care,prior-auth requests,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-008
+VOL-HCDN-0328,LOT-HCDN-04,Revenue Cycle Technology,Clinical Operations,member calls,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-009
+VOL-HCDN-0329,LOT-HCDN-05,Cloud Infrastructure and Data Center,Revenue Cycle,Epic change requests,range,annual,source-backed candidate,SRC-HCDN-VOL-010
+VOL-HCDN-0330,LOT-HCDN-06,Workplace and Contact Center,Patient Access,SQL batch jobs,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-011
+VOL-HCDN-0331,LOT-HCDN-07,Security Identity and Compliance,Interoperability,BI report executions,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-012
+VOL-HCDN-0332,LOT-HCDN-08,Integration and Interoperability,Population Health,care-gap outreaches,exact,annual,source-backed candidate,SRC-HCDN-VOL-013
+VOL-HCDN-0333,LOT-HCDN-09,ERP and Corporate Platforms,Health Plan Operations,incident tickets,range,monthly,source-backed candidate,SRC-HCDN-VOL-014
+VOL-HCDN-0334,LOT-HCDN-01,Clinical and Epic AMS,Medicare Advantage,enhancement backlog,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-015
+VOL-HCDN-0335,LOT-HCDN-02,Payer Platform Operations,Claims Operations,claims transactions,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-016
+VOL-HCDN-0336,LOT-HCDN-03,Data Analytics and AI,Utilization Management,prior-auth requests,exact,monthly,needs finance signoff,SRC-HCDN-VOL-017
+VOL-HCDN-0337,LOT-HCDN-04,Revenue Cycle Technology,Member Services,member calls,range,quarterly,source-backed candidate,SRC-HCDN-VOL-018
+VOL-HCDN-0338,LOT-HCDN-05,Cloud Infrastructure and Data Center,Quality and Stars,Epic change requests,indexed,annual,source-backed candidate,SRC-HCDN-VOL-019
+VOL-HCDN-0339,LOT-HCDN-06,Workplace and Contact Center,Risk Adjustment,SQL batch jobs,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-020
+VOL-HCDN-0340,LOT-HCDN-07,Security Identity and Compliance,Care Management,BI report executions,exact,quarterly,source-backed candidate,SRC-HCDN-VOL-021
+VOL-HCDN-0341,LOT-HCDN-08,Integration and Interoperability,Finance,care-gap outreaches,range,annual,source-backed candidate,SRC-HCDN-VOL-022
+VOL-HCDN-0342,LOT-HCDN-09,ERP and Corporate Platforms,Coding,incident tickets,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-023
+VOL-HCDN-0343,LOT-HCDN-01,Clinical and Epic AMS,Payer Contracting,enhancement backlog,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-024
+VOL-HCDN-0344,LOT-HCDN-02,Payer Platform Operations,Digital Front Door,claims transactions,exact,annual,needs finance signoff,SRC-HCDN-VOL-025
+VOL-HCDN-0345,LOT-HCDN-03,Data Analytics and AI,Contact Center,prior-auth requests,range,monthly,source-backed candidate,SRC-HCDN-VOL-026
+VOL-HCDN-0346,LOT-HCDN-04,Revenue Cycle Technology,Ambulatory Care,member calls,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-027
+VOL-HCDN-0347,LOT-HCDN-05,Cloud Infrastructure and Data Center,Emergency Department,Epic change requests,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-028
+VOL-HCDN-0348,LOT-HCDN-06,Workplace and Contact Center,Inpatient,SQL batch jobs,exact,monthly,source-backed candidate,SRC-HCDN-VOL-029
+VOL-HCDN-0349,LOT-HCDN-07,Security Identity and Compliance,Surgery,BI report executions,range,quarterly,source-backed candidate,SRC-HCDN-VOL-030
+VOL-HCDN-0350,LOT-HCDN-08,Integration and Interoperability,Imaging,care-gap outreaches,indexed,annual,source-backed candidate,SRC-HCDN-VOL-031
+VOL-HCDN-0351,LOT-HCDN-09,ERP and Corporate Platforms,Lab,incident tickets,trend-only,monthly,source-backed candidate,SRC-HCDN-VOL-032
+VOL-HCDN-0352,LOT-HCDN-01,Clinical and Epic AMS,Pharmacy,enhancement backlog,exact,quarterly,needs finance signoff,SRC-HCDN-VOL-033
+VOL-HCDN-0353,LOT-HCDN-02,Payer Platform Operations,Oncology,claims transactions,range,annual,source-backed candidate,SRC-HCDN-VOL-034
+VOL-HCDN-0354,LOT-HCDN-03,Data Analytics and AI,Cardiology,prior-auth requests,indexed,monthly,source-backed candidate,SRC-HCDN-VOL-035
+VOL-HCDN-0355,LOT-HCDN-04,Revenue Cycle Technology,Data and Analytics,member calls,trend-only,quarterly,source-backed candidate,SRC-HCDN-VOL-036
+VOL-HCDN-0356,LOT-HCDN-05,Cloud Infrastructure and Data Center,Clinical Analytics,Epic change requests,exact,annual,source-backed candidate,SRC-HCDN-VOL-037
+VOL-HCDN-0357,LOT-HCDN-06,Workplace and Contact Center,Actuarial,SQL batch jobs,range,monthly,source-backed candidate,SRC-HCDN-VOL-038
+VOL-HCDN-0358,LOT-HCDN-07,Security Identity and Compliance,Departmental Reporting,BI report executions,indexed,quarterly,source-backed candidate,SRC-HCDN-VOL-039
+VOL-HCDN-0359,LOT-HCDN-08,Integration and Interoperability,AI Transformation,care-gap outreaches,trend-only,annual,source-backed candidate,SRC-HCDN-VOL-040
+VOL-HCDN-0360,LOT-HCDN-09,ERP and Corporate Platforms,Technology,incident tickets,exact,monthly,needs finance signoff,SRC-HCDN-VOL-041

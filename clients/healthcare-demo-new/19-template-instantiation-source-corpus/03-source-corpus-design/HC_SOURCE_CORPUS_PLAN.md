@@ -8,7 +8,7 @@ Azure is modeled as the current data foundation and a limited current-use-case p
 
 ## Source families
 
-- application_cmdb_extracts: 4-6 files, 1,520 record basis - Applications/platforms plus owner, criticality and lifecycle
+- application_cmdb_extracts: 4-6 files, 1,670 record basis - Applications/platforms plus owner, criticality and lifecycle
 - epic_module_environment_extracts: 3-5 files, 115 record basis - Epic modules, environments, Bridges, Clarity/Caboodle/Cogito scope
 - interface_engine_inventories: 4-6 files, 8,400 record basis - HL7/FHIR/X12/SFTP/SSIS/interface engine evidence
 - sql_server_edw_inventories: 5-8 files, 2,050 record basis - SQL Server instances, marts, SSIS, SSAS, SSRS and legacy EDW debt

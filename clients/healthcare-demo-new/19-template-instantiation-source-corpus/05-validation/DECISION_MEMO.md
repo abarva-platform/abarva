@@ -2,7 +2,7 @@
 
 ## Recommendation
 
-Approve as a **candidate review package** for human review. The package now passed the independent semantic audit gate, but it is not a frozen synthetic-source foundation and is not approved for Azure/Postgres loading without the next human review gate.
+Approve as a **frozen design/source-corpus foundation** after CI, semantic audit and final content review. This approval is limited to the repository design package; it does not authorize Azure/Postgres loading or product runtime publication.
 
 ## What changed
 
@@ -10,7 +10,8 @@ Approve as a **candidate review package** for human review. The package now pass
 - Modeled Azure as current data foundation plus a few current AI/use-case workloads.
 - Modeled AWS as future leadership pivot for agentic and transformational use cases.
 - Generated template workbooks, source corpus plan, hidden truth design, source samples, validation report and review ZIP.
-- Passed independent semantic audit for multi-origin relationships, endpoint integrity, commercial contract depth, source evidence families and reconstructability.
+- Passed independent semantic audit for multi-origin relationships, endpoint integrity, commercial contract depth, Source evidence families and reconstructability.
+- Passed final content spot-check for Epic realism, SQL/legacy analytics depth, Medicare/MA boundary, Source lot completeness and healthcare operating-chain coverage.
 
 ## What did not happen
 
@@ -18,4 +19,4 @@ No Azure resource was provisioned. No database was created. No migration was app
 
 ## Next gate
 
-Human review of the candidate package, source-corpus design and hidden-truth evaluator contract before any Azure/Postgres load, parser run, product read-model work or publication job.
+Use this package as the healthcare reference implementation for the controlled execution path: plan/what-if, security proof, PostgreSQL/RLS, source landing, parser/enrichment, review/publication, Knowledge Baseline, Source projections and signed-in product certification.

@@ -29,7 +29,8 @@ Adds a design-only Healthcare Demo New template and source-corpus package for a 
 
 - Generated validation report confirms shape, target scale, Epic depth, SQL/legacy analytics depth, Medicare/MA boundary, Azure/AWS cloud posture and no Azure/runtime mutation.
 - Independent semantic audit passes multi-origin relationship depth, 0 broken endpoints, commercial contract depth, required Source evidence families and reconstructability.
-- Package remains a candidate review package; no data-plane load or runtime publication is included.
+- Final content review passes Epic realism, SQL/on-prem analytics realism, healthcare operating-chain coverage, tenant-specific Medicare/MA framing, Source-event completeness and reconstruction strength.
+- Package is frozen as a design/source-corpus foundation only; no data-plane load or runtime publication is included.
 
 ## Rollout Plan
 
@@ -44,6 +45,7 @@ Revert the package commit. No runtime or data-plane rollback is needed.
 - Package manifest: `clients/healthcare-demo-new/19-template-instantiation-source-corpus/PACKAGE_MANIFEST.json`.
 - Validation report: `clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/VALIDATION_REPORT.md`.
 - Independent semantic audit report: `clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/INDEPENDENT_SEMANTIC_AUDIT_REPORT.md`.
+- Final content review report: `clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/FINAL_CONTENT_REVIEW_REPORT.md`.
 - Machine-readable audit output: `clients/healthcare-demo-new/19-template-instantiation-source-corpus/05-validation/independent-semantic-audit.json`.
 
 ## Known Gaps
