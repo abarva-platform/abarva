@@ -69,6 +69,10 @@ ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Package only approved tenant boundary snapshots for Container Apps Jobs.
+# Do not copy full client workspaces into the runtime image.
+RUN node -e "const fs=require('fs');const path=require('path');const out='runtime-tenant-boundaries';fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});if(fs.existsSync('clients')){for(const tenant of fs.readdirSync('clients')){const src=path.join('clients',tenant,'18-phase2b3c-azure-lab-implementation','00-implementation-charter','APPROVED_BOUNDARY_SNAPSHOT.json');if(fs.existsSync(src)){const dest=path.join(out,tenant,'APPROVED_BOUNDARY_SNAPSHOT.json');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);}}}"
+
 # Build the Next.js app. No secrets are required for `next build` other than
 # build-time NEXT_PUBLIC_* vars, which the orchestrator may inject via
 # --build-arg if a downstream image needs them embedded. By default we do
@@ -115,6 +119,7 @@ COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets
 COPY --from=build --chown=node:node /app/reports/active-tenant-access ./reports/active-tenant-access
 COPY --from=build --chown=node:node /app/reports/candidate-invisibility-guard ./reports/candidate-invisibility-guard

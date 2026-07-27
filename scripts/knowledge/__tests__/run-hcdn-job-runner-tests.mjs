@@ -249,6 +249,25 @@ await test("CLI preflight writes an envelope file and exits successfully", async
   assert.equal(envelope.processName, processNameForTenant(tenantKey, contract));
 });
 
+await test("default manifest resolution prefers packaged runtime boundary snapshots when present", () => {
+  const previousBoundaryDir = process.env.ABARVA_TENANT_BOUNDARY_DIR;
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "hcdn-boundaries-"));
+  const packagedTenantDir = path.join(tmpDir, tenantKey);
+  fs.mkdirSync(packagedTenantDir, { recursive: true });
+  const packagedSnapshot = path.join(packagedTenantDir, "APPROVED_BOUNDARY_SNAPSHOT.json");
+  fs.writeFileSync(packagedSnapshot, "{}\n");
+  process.env.ABARVA_TENANT_BOUNDARY_DIR = tmpDir;
+  try {
+    assert.equal(resolveDefaultBoundarySnapshot(tenantKey), packagedSnapshot);
+  } finally {
+    if (previousBoundaryDir === undefined) {
+      delete process.env.ABARVA_TENANT_BOUNDARY_DIR;
+    } else {
+      process.env.ABARVA_TENANT_BOUNDARY_DIR = previousBoundaryDir;
+    }
+  }
+});
+
 await test("validateTenantKey returns only a single canonical slug", () => {
   assert.equal(validateTenantKey("airline-demo-new"), "airline-demo-new");
 });
