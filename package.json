@@ -614,7 +614,8 @@
     "report:meridian-page-fact-lineage": "node scripts/tenant-v3/build-meridian-page-fact-lineage-report.mjs",
     "home:knowledge-pack-v2:verify": "node scripts/knowledge/verify-home-knowledge-pack-content.mjs",
     "audit:tower-fact-lineage": "node scripts/tower/fact-lineage-report.mjs",
-    "audit:tower-data-path-fix": "npm run audit:tower-fact-lineage && npm run project:tower-mart:meridian:dry-run && npm run project:tower-mart:apex-retail:dry-run && npm run project:tower-mart:airline-demo:dry-run && npm run project:tower-mart:fs-demo:dry-run && npm run project:tower-mart:lakeshore-holdings:dry-run && npm run project:tower-mart:lakeshore-industries:dry-run && npm run audit:tower-mart-data-loading-qa"
+    "audit:tower-data-path-fix": "npm run audit:tower-fact-lineage && npm run project:tower-mart:meridian:dry-run && npm run project:tower-mart:apex-retail:dry-run && npm run project:tower-mart:airline-demo:dry-run && npm run project:tower-mart:fs-demo:dry-run && npm run project:tower-mart:lakeshore-holdings:dry-run && npm run project:tower-mart:lakeshore-industries:dry-run && npm run audit:tower-mart-data-loading-qa",
+    "test:knowledge-process-executors": "node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

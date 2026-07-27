@@ -4,6 +4,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  InMemoryKnowledgeExecutionStore,
+  KnowledgeProcessError,
+  PostgresKnowledgeExecutionStore,
+  buildExecutionContext,
+  createProcessResult,
+  checkpointFor,
+  runKnowledgeProcess,
+} from "./processing/executor-framework.mjs";
+import { DEFAULT_PROCESS_HANDLERS, resolveProcessHandler } from "./processing/process-handlers.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), "..", "..");
 
@@ -113,7 +124,12 @@ export function parseArgs(argv = process.argv.slice(2), env = process.env) {
     manifest: env.ABARVA_TENANT_MANIFEST ?? "",
     out: "",
     runId: "",
+    releaseId: env.ABARVA_RELEASE_ID ?? env.ABARVA_SOURCE_RELEASE_ID ?? "",
+    idempotencyKey: env.ABARVA_IDEMPOTENCY_KEY ?? "",
     sourceRunRef: "",
+    domain: env.ABARVA_PROCESS_DOMAIN ?? "",
+    scope: env.ABARVA_PROCESS_SCOPE ?? "",
+    batchSize: env.ABARVA_BATCH_SIZE ?? "",
     noNetwork: false,
   };
 
@@ -150,8 +166,23 @@ export function parseArgs(argv = process.argv.slice(2), env = process.env) {
       case "--run-id":
         args.runId = next();
         break;
+      case "--release-id":
+        args.releaseId = next();
+        break;
+      case "--idempotency-key":
+        args.idempotencyKey = next();
+        break;
       case "--source-run-ref":
         args.sourceRunRef = next();
+        break;
+      case "--domain":
+        args.domain = next();
+        break;
+      case "--scope":
+        args.scope = next();
+        break;
+      case "--batch-size":
+        args.batchSize = next();
         break;
       case "--no-network":
         args.noNetwork = true;
@@ -439,14 +470,14 @@ export function validateRunnerInputs({ args, env = process.env, manifest, manife
   };
 }
 
-export function buildAuditEnvelope({ args, env = process.env, manifest, manifestPath, validation, resultStatus, networkAccessAttempted, error = null }) {
+export function buildAuditEnvelope({ args, env = process.env, manifest, manifestPath, validation, resultStatus, networkAccessAttempted, processResult = null, error = null }) {
   const runId =
     args.runId ||
     `${validation?.tenantKey ?? args.tenant}-${validation?.processName ?? args.process}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   const expectedImage = manifest.container_image?.image ?? null;
   const expectedDigest = manifest.container_image?.image_digest ?? imageDigestFromImage(expectedImage);
   const contract = validation?.contract;
-  const status = error ? "failed_guard" : resultStatus;
+  const status = error ? resultStatus : resultStatus;
 
   return {
     schemaVersion: CONTRACT_SCHEMA_VERSION,
@@ -477,12 +508,33 @@ export function buildAuditEnvelope({ args, env = process.env, manifest, manifest
           databaseRole: contract.databaseRole,
         }
       : null,
-    checkpoints: contract ? buildCheckpoints({ ...contract, processName: validation.processName }, status) : [],
+    checkpoints: processResult?.checkpoints ?? (contract ? buildCheckpoints({ ...contract, processName: validation.processName }, status) : []),
+    processExecution: processResult
+      ? {
+          schemaVersion: processResult.schemaVersion,
+          status: processResult.status,
+          inputCount: processResult.inputCount,
+          outputCount: processResult.outputCount,
+          acceptedCount: processResult.acceptedCount,
+          rejectedCount: processResult.rejectedCount,
+          quarantineCount: processResult.quarantineCount,
+          conflictCount: processResult.conflictCount,
+          inputContentHash: processResult.inputContentHash,
+          outputContentHash: processResult.outputContentHash,
+          warnings: processResult.warnings,
+          blockers: processResult.blockers,
+          lineage: processResult.lineage,
+        }
+      : null,
     auditEvents: [
       {
-        eventType: error ? "guard_failure" : "runner_result",
+        eventType: error ? (status === "failed_process" ? "process_failure" : "guard_failure") : "runner_result",
         status,
-        message: error ? error.message : `Runner completed in ${validation?.mode ?? args.mode ?? "preflight"} mode.`,
+        message: error
+          ? error.message
+          : processResult
+            ? `Runner executed and verified ${validation?.processName}.`
+            : `Runner completed in ${validation?.mode ?? args.mode ?? "preflight"} mode.`,
       },
     ],
     networkAccessAttempted: Boolean(networkAccessAttempted),
@@ -507,10 +559,73 @@ function writeEnvelope(envelope, outPath) {
   process.stdout.write(serialized);
 }
 
+async function buildDefaultStore(env) {
+  if (env.ABARVA_HCDN_USE_IN_MEMORY_STORE === "true") {
+    return new InMemoryKnowledgeExecutionStore();
+  }
+  const { Client } = await import("pg");
+  const connectionString = env.DATABASE_URL;
+  const client = connectionString
+    ? new Client({ connectionString })
+    : new Client({
+        host: env.PGHOST,
+        port: env.PGPORT ? Number(env.PGPORT) : 5432,
+        user: env.PGUSER,
+        password: env.PGPASSWORD,
+        database: env.PGDATABASE,
+        ssl: env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
+      });
+  await client.connect();
+  return new PostgresKnowledgeExecutionStore(client);
+}
+
+async function executeWithLegacyNetworkProbe({ networkProbe, args, env, manifest, manifestPath, validation }) {
+  const context = buildExecutionContext({ args, env, manifest, manifestPath, validation });
+  const plan = {
+    processName: context.canonicalProcess,
+    stage: "legacy_network_probe",
+    prerequisites: ["test injected probe"],
+    expectedOutputs: ["probe result"],
+    inputContentHash: sha256Json({ tenantKey: context.tenantKey, processName: context.processName, probe: true }),
+    parserModelVersion: "test-probe-v1",
+  };
+  await networkProbe({ args, env, manifest, manifestPath, validation });
+  return createProcessResult({
+    context,
+    plan,
+    status: "passed",
+    counts: { input: 1, output: 1, accepted: 1 },
+    checkpoints: [checkpointFor(context, "legacy probe executed", "passed", 1, 1)],
+    lineage: { injectedProbe: true },
+  });
+}
+
+async function executeRealProcess({ args, env, manifest, manifestPath, validation, processExecutor, store, handlers, networkProbe }) {
+  if (networkProbe) {
+    return executeWithLegacyNetworkProbe({ networkProbe, args, env, manifest, manifestPath, validation });
+  }
+  if (processExecutor) {
+    return processExecutor({ args, env, manifest, manifestPath, validation });
+  }
+  const context = buildExecutionContext({ args, env, manifest, manifestPath, validation });
+  const resolvedStore = store ?? (await buildDefaultStore(env));
+  try {
+    const handler = resolveProcessHandler(context.canonicalProcess, handlers ?? DEFAULT_PROCESS_HANDLERS);
+    return await runKnowledgeProcess({ context, handler, store: resolvedStore });
+  } finally {
+    if (resolvedStore?.client?.end) {
+      await resolvedStore.client.end();
+    }
+  }
+}
+
 export async function runJobRunner({
   argv = process.argv.slice(2),
   env = process.env,
-  networkProbe = async () => ({ status: "not_implemented" }),
+  networkProbe = null,
+  processExecutor = null,
+  store = null,
+  handlers = DEFAULT_PROCESS_HANDLERS,
   stdout = true,
   setExitCode = false,
 } = {}) {
@@ -519,6 +634,7 @@ export async function runJobRunner({
   let manifestPath = "";
   let validation = null;
   let networkAccessAttempted = false;
+  let processResult = null;
 
   try {
     args = parseArgs(argv, env);
@@ -534,25 +650,37 @@ export async function runJobRunner({
       resultStatus = "noop_completed";
     } else if (validation.mode === "execute") {
       networkAccessAttempted = !args.noNetwork;
-      if (!args.noNetwork) {
-        await networkProbe({ args, env, manifest, manifestPath, validation });
+      if (args.noNetwork) {
+        throw new KnowledgeProcessError("execute_network_disabled", "Execute mode requires the real process executor; --no-network is only valid for preflight/noop.");
       }
-      resultStatus = "execute_dispatched";
+      processResult = await executeRealProcess({ args, env, manifest, manifestPath, validation, processExecutor, store, handlers, networkProbe });
+      resultStatus = processResult.status === "passed" ? "process_passed" : "failed_process";
     }
 
-    const envelope = buildAuditEnvelope({ args: { ...args, tenant: tenantKey }, env, manifest, manifestPath, validation, resultStatus, networkAccessAttempted });
+    const envelope = buildAuditEnvelope({
+      args: { ...args, tenant: tenantKey },
+      env,
+      manifest,
+      manifestPath,
+      validation,
+      resultStatus,
+      networkAccessAttempted,
+      processResult,
+    });
     if (stdout) writeEnvelope(envelope, args.out);
     return envelope;
   } catch (error) {
     const fallbackArgs = args.tenant || args.process || args.mode ? args : { tenant: "", process: "", mode: "preflight", sourceRunRef: "" };
+    const failedStatus = error instanceof KnowledgeProcessError ? "failed_process" : "failed_guard";
     const envelope = buildAuditEnvelope({
       args: fallbackArgs,
       env,
       manifest,
       manifestPath,
       validation,
-      resultStatus: "failed_guard",
+      resultStatus: failedStatus,
       networkAccessAttempted,
+      processResult,
       error,
     });
     if (stdout) writeEnvelope(envelope, fallbackArgs.out);
