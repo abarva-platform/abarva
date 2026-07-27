@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`candidate - semantic hold`
 
 ## Plain-English Summary
 
@@ -35,6 +35,7 @@ Adds a design-only template and source-corpus package with large global-carrier-
 ## QA / Validation
 
 - Generated package validation report confirms required outputs, tenant boundary, overlay separation, procurement scope coverage, relationship typing, hidden-truth boundary and no Azure/runtime mutation commands.
+- Independent semantic audit holds approval until enterprise coherence, relationship depth, procurement evidence and source-to-truth reconstructability are remediated.
 - Manual repository isolation: created in a clean worktree from `origin/main`.
 
 ## Rollout Plan
@@ -59,7 +60,8 @@ Revert the package commit. No runtime or data-plane rollback is needed because n
 
 - Package manifest: `clients/airline-demo-new/19-template-instantiation-source-corpus/PACKAGE_MANIFEST.json`.
 - Validation report: `clients/airline-demo-new/19-template-instantiation-source-corpus/05-validation/VALIDATION_REPORT.md`.
+- Independent semantic audit: `clients/airline-demo-new/19-template-instantiation-source-corpus/05-validation/INDEPENDENT_SEMANTIC_AUDIT_REPORT.md`.
 
 ## Known Gaps
 
-Synthetic source sample files are generated for design review, but are not landed into Azure/Postgres. Azure resources are not provisioned. Database migrations are not applied. Parser/firewall/semantic-realism certification has not been run against landed files. Product surfaces are not wired to this package.
+Synthetic source sample files are generated for design review, but are not landed into Azure/Postgres. Azure resources are not provisioned. Database migrations are not applied. Parser/firewall certification has not been run against landed files. Product surfaces are not wired to this package. Independent semantic audit found P0 remediation items before this package should be treated as the frozen synthetic-source foundation.

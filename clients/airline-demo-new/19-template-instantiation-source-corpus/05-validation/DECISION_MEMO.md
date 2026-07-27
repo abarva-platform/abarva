@@ -2,7 +2,7 @@
 
 ## Recommendation
 
-Approve this package as the Airline Demo New template instantiation and source-corpus design candidate. It reuses the universal Knowledge factory and creates a tenant-specific airline + technology-procurement population plan without copying completed tenant data.
+Hold this package as the Airline Demo New template instantiation and source-corpus design candidate. It reuses the universal Knowledge factory and creates a tenant-specific airline + technology-procurement population plan without copying completed tenant data, but independent semantic audit found P0 issues that must be remediated before treating it as the frozen synthetic-source foundation.
 
 ## What changed
 
@@ -17,7 +17,7 @@ No Azure resource was provisioned. No database was created. No migration was app
 
 ## Next gate
 
-Human review should approve or adjust the template and source-corpus design before any synthetic source files are manufactured or any governed Azure job is run.
+Remediate the independent semantic audit blockers, regenerate the affected source samples, then rerun semantic review before any governed Azure job is run.
 
 ## Scale-depth correction
 
