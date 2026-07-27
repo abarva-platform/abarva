@@ -30,6 +30,8 @@ const baseEnv = Object.freeze({
   ABARVA_HCDN_IMAGE: manifest.container_image.image,
   ABARVA_HCDN_IMAGE_DIGEST: manifest.container_image.image_digest,
 });
+const rollingRuntimeDigest = "sha256:a6007ebb55e5b7a64048377da52260f71efa1dcd5d27ec222de079a379675181";
+const rollingRuntimeImage = `acrabarvalab001.azurecr.io/abarva/web@${rollingRuntimeDigest}`;
 
 let failures = 0;
 async function test(name, fn) {
@@ -224,6 +226,39 @@ await test("execute mode calls the injected network probe only after all guards 
   assert.equal(envelope.status, "execute_dispatched");
   assert.equal(envelope.networkAccessAttempted, true);
   assert.equal(networkCalls, 1);
+});
+
+await test("rolling digest-pinned runtime images pass without strict image lock", async () => {
+  const contract = PROCESS_CONTRACTS[0];
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "preflight"),
+    env: envFor(contract, {
+      ABARVA_HCDN_IMAGE: rollingRuntimeImage,
+      ABARVA_HCDN_IMAGE_DIGEST: rollingRuntimeDigest,
+    }),
+    stdout: false,
+  });
+  assert.equal(envelope.status, "preflight_passed");
+  assert.equal(envelope.networkAccessAttempted, false);
+  assert.ok(envelope.guardResults.find((guard) => guard.name === "manifest_image_digest_pin" && guard.status === "passed"));
+  assert.ok(envelope.guardResults.find((guard) => guard.name === "runtime_image_digest_pin" && guard.status === "passed"));
+  assert.ok(envelope.guardResults.find((guard) => guard.name === "runtime_image_digest" && guard.status === "passed"));
+});
+
+await test("strict image lock rejects a digest-pinned runtime image that differs from the boundary snapshot", async () => {
+  const contract = PROCESS_CONTRACTS[0];
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "preflight"),
+    env: envFor(contract, {
+      ABARVA_HCDN_IMAGE: rollingRuntimeImage,
+      ABARVA_HCDN_IMAGE_DIGEST: rollingRuntimeDigest,
+      ABARVA_HCDN_STRICT_IMAGE_LOCK: "true",
+    }),
+    stdout: false,
+  });
+  assert.equal(envelope.status, "failed_guard");
+  assert.equal(envelope.error.code, "strict_image_lock_mismatch");
+  assert.equal(envelope.networkAccessAttempted, false);
 });
 
 await test("CLI preflight writes an envelope file and exits successfully", async () => {

@@ -252,6 +252,14 @@ function imageDigestFromImage(image) {
   return match ? match[1] : "";
 }
 
+function isDigestPinnedImage(image) {
+  return /@sha256:[a-f0-9]{64}$/i.test(String(image ?? ""));
+}
+
+function isSha256Digest(digest) {
+  return /^sha256:[a-f0-9]{64}$/i.test(String(digest ?? ""));
+}
+
 function sha256Json(value) {
   return crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
@@ -352,27 +360,67 @@ export function validateRunnerInputs({ args, env = process.env, manifest, manife
   const expectedImage = manifest.container_image?.image;
   const expectedDigest = manifest.container_image?.image_digest ?? imageDigestFromImage(expectedImage);
   const imageValues = observedValues(env, ["ABARVA_HCDN_IMAGE", "ABARVA_CONTAINER_IMAGE"]);
+  if (!isDigestPinnedImage(expectedImage) || !isSha256Digest(expectedDigest)) {
+    guards.push({ name: "manifest_image_digest_pin", status: "failed", expected: "digest-pinned manifest image", observed: expectedImage ?? null });
+    throw new GuardFailure("manifest_image_not_digest_pinned", "Boundary snapshot image must be digest-pinned.", {
+      observed: expectedImage ?? null,
+    });
+  }
+  guards.push({ name: "manifest_image_digest_pin", status: "passed", expected: "digest-pinned manifest image", observed: expectedImage });
+
   if (imageValues.length > 0) {
-    const mismatches = imageValues.filter((value) => value !== expectedImage);
-    const mutableTags = imageValues.filter((value) => !value.includes("@sha256:"));
-    if (mutableTags.length > 0 || mismatches.length > 0) {
-      guards.push({ name: "image_digest_pin", status: "failed", expected: expectedImage, observed: imageValues });
-      throw new GuardFailure("image_not_digest_pinned", "Container image must match the approved digest-pinned image.", {
-        expected: expectedImage,
+    const mutableImages = imageValues.filter((value) => !isDigestPinnedImage(value));
+    if (mutableImages.length > 0) {
+      guards.push({ name: "runtime_image_digest_pin", status: "failed", expected: "digest-pinned runtime image", observed: imageValues });
+      throw new GuardFailure("runtime_image_not_digest_pinned", "Runtime container image must be digest-pinned.", {
         observed: imageValues,
       });
     }
-    guards.push({ name: "image_digest_pin", status: "passed", expected: expectedImage, observed: imageValues });
+    guards.push({ name: "runtime_image_digest_pin", status: "passed", expected: "digest-pinned runtime image", observed: imageValues });
   } else {
-    guards.push({ name: "image_digest_pin", status: "warning", expected: expectedImage, observed: null, message: "No runtime image env supplied; manifest image remains the lock." });
+    guards.push({
+      name: "runtime_image_digest_pin",
+      status: "warning",
+      expected: "digest-pinned runtime image",
+      observed: null,
+      message: "No runtime image env supplied; manifest image remains the plan lock.",
+    });
   }
 
-  assertEveryObservedEquals({
-    name: "image_digest",
-    expected: expectedDigest,
-    observed: observedValues(env, ["ABARVA_HCDN_IMAGE_DIGEST", "ABARVA_CONTAINER_IMAGE_DIGEST"]),
-    guards,
-  });
+  const observedImageDigests = observedValues(env, ["ABARVA_HCDN_IMAGE_DIGEST", "ABARVA_CONTAINER_IMAGE_DIGEST"]);
+  if (observedImageDigests.length > 0) {
+    const invalidDigests = observedImageDigests.filter((digest) => !isSha256Digest(digest));
+    if (invalidDigests.length > 0) {
+      guards.push({ name: "runtime_image_digest", status: "failed", expected: "sha256 digest", observed: observedImageDigests });
+      throw new GuardFailure("runtime_image_digest_invalid", "Runtime image digest must be a sha256 digest.", {
+        observed: observedImageDigests,
+      });
+    }
+    guards.push({ name: "runtime_image_digest", status: "passed", expected: "sha256 digest", observed: observedImageDigests });
+  } else {
+    guards.push({
+      name: "runtime_image_digest",
+      status: "warning",
+      expected: "sha256 digest",
+      observed: null,
+      message: "No runtime image digest env supplied; manifest image digest remains the plan lock.",
+    });
+  }
+
+  if (env.ABARVA_HCDN_STRICT_IMAGE_LOCK === "true") {
+    assertEveryObservedEquals({
+      name: "strict_image_lock",
+      expected: expectedImage,
+      observed: imageValues,
+      guards,
+    });
+    assertEveryObservedEquals({
+      name: "strict_image_digest_lock",
+      expected: expectedDigest,
+      observed: observedImageDigests,
+      guards,
+    });
+  }
 
   if (mode === "execute" && env.ABARVA_HCDN_EXECUTE_ACK !== EXECUTE_ACK) {
     guards.push({ name: "execute_ack", status: "failed", expected: EXECUTE_ACK, observed: env.ABARVA_HCDN_EXECUTE_ACK ?? null });
