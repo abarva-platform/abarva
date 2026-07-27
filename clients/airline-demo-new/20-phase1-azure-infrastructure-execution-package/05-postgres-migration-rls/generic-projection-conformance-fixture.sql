@@ -368,7 +368,7 @@ INSERT INTO consumption.relationship_evidence_v1 (
   'accepted'
 );
 
-SELECT 'relationship_validation=' || jsonb_agg(to_jsonb(v) ORDER BY check_name)
+SELECT 'relationship_validation=' || jsonb_agg(to_jsonb(v) ORDER BY check_name)::text
 FROM consumption.validate_relationship_publication_v1(
   'airline-demo-new',
   'fixture-knowledge-baseline'
