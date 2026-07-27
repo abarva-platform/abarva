@@ -84,7 +84,49 @@ function testOutFile() {
   assert.equal(result.expectedCount, 48);
 }
 
-const tests = [testOperationalPlan, testEvaluatorPlan, testExecuteRequiresAck, testWrongTenantBlocked, testOutFile];
+function testOperationalPlanDoesNotRequireEvaluatorFiles() {
+  const sourceRoot = path.join(REPO_ROOT, "clients", "airline-demo-new", "19-template-instantiation-source-corpus");
+  const subsetRoot = fs.mkdtempSync(path.join(os.tmpdir(), "airdn-operational-subset-"));
+  const manifest = JSON.parse(fs.readFileSync(path.join(sourceRoot, "PACKAGE_MANIFEST.json"), "utf8"));
+  fs.writeFileSync(path.join(subsetRoot, "PACKAGE_MANIFEST.json"), JSON.stringify(manifest, null, 2));
+
+  for (const file of manifest.files) {
+    const p = file.path;
+    const evaluator = p.startsWith("04-restricted-evaluator-design/");
+    const excluded = p.startsWith("05-validation/") || p.startsWith("06-review-package/");
+    if (evaluator || excluded) continue;
+    const from = path.join(sourceRoot, p);
+    const to = path.join(subsetRoot, p);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(from, to);
+  }
+
+  const result = parseJson(
+    run([
+      "--tenant",
+      TENANT,
+      "--release-id",
+      RELEASE,
+      "--scope",
+      "operational",
+      "--mode",
+      "plan",
+      "--package-root",
+      subsetRoot,
+    ]),
+  );
+  assert.equal(result.expectedCount, 48);
+  assert.equal(result.evaluatorVisibleCount, 0);
+}
+
+const tests = [
+  testOperationalPlan,
+  testEvaluatorPlan,
+  testExecuteRequiresAck,
+  testWrongTenantBlocked,
+  testOutFile,
+  testOperationalPlanDoesNotRequireEvaluatorFiles,
+];
 
 for (const test of tests) {
   test();

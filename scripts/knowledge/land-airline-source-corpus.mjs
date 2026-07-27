@@ -167,7 +167,12 @@ function isOperationalFile(relativePath) {
 }
 
 function resolveFiles(packageRoot, packageManifest, scope) {
-  const files = packageManifest.files.map((entry) => {
+  const entries =
+    scope === "operational"
+      ? packageManifest.files.filter((entry) => isOperationalFile(String(entry.path)))
+      : packageManifest.files.filter((entry) => isEvaluatorFile(String(entry.path)));
+
+  const files = entries.map((entry) => {
     const relativePath = String(entry.path);
     const absolutePath = path.join(packageRoot, relativePath);
     if (!fs.existsSync(absolutePath)) {
@@ -198,19 +203,14 @@ function resolveFiles(packageRoot, packageManifest, scope) {
     };
   });
 
-  const selected =
-    scope === "operational"
-      ? files.filter((file) => isOperationalFile(file.relativePath))
-      : files.filter((file) => isEvaluatorFile(file.relativePath));
-
-  if (scope === "operational" && selected.some((file) => file.evaluatorVisible)) {
+  if (scope === "operational" && files.some((file) => file.evaluatorVisible)) {
     throw new LandingError("evaluator_file_in_operational_set", "Evaluator-only file selected for operational landing.");
   }
-  if (scope === "evaluator" && selected.some((file) => !file.evaluatorVisible)) {
+  if (scope === "evaluator" && files.some((file) => !file.evaluatorVisible)) {
     throw new LandingError("operational_file_in_evaluator_set", "Operational file selected for evaluator landing.");
   }
 
-  return selected;
+  return files;
 }
 
 function assertFreezeState(freezeManifest, scope) {
