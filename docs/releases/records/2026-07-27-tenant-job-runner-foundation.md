@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds the shared executable runner that future private data-plane jobs will call before any tenant source processing begins. The runner validates the tenant boundary, process name, environment, database, storage account, subscription, and digest-pinned image from an approved boundary snapshot, then emits a standard audit envelope. The runtime image now packages only approved boundary snapshots for job preflight; it does not copy full client workspaces. This release does not apply Azure resources, run migrations, parse sources, load data, or wire any product surface.
+Adds the shared executable runner that future private data-plane jobs will call before any tenant source processing begins. The runner validates the tenant boundary, process name, environment, database, storage account, subscription, and digest-pinned images, then emits a standard audit envelope. The runtime image now packages only approved boundary snapshots for job preflight; it does not copy full client workspaces. Runtime images may roll forward by digest through the normal deploy lane; strict equality to the boundary snapshot image is available only when `ABARVA_HCDN_STRICT_IMAGE_LOCK=true`. This release does not apply Azure resources, run migrations, parse sources, load data, or wire any product surface.
 
 ## Layer Impact
 
@@ -36,7 +36,7 @@ Adds the shared executable runner that future private data-plane jobs will call 
 
 ## QA / Validation
 
-- `npm run test:hcdn-job-runner` — passed. Covers all thirteen approved process contracts, preflight/no-op modes, tenant wildcard/list rejection, manifest mismatch, packaged boundary snapshot resolution, database/storage mismatch, and execute-mode network ordering.
+- `npm run test:hcdn-job-runner` — passed. Covers all thirteen approved process contracts, preflight/no-op modes, tenant wildcard/list rejection, manifest mismatch, packaged boundary snapshot resolution, database/storage mismatch, digest-pinned rolling runtime images, optional strict image lock, and execute-mode network ordering.
 - `npm run release:check` — pending for PR validation.
 
 ## Rollout Plan
