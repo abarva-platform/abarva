@@ -1,0 +1,43 @@
+{
+  "schema": "abarva.phase2b3c.postgres-identity-rls-plan/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "tenantKey": "hc-demo-new",
+  "displayName": "HC Demo New",
+  "azureApplyBlocked": true,
+  "databaseMigrationBlocked": true,
+  "postgresServer": "pg-abarva-hc-demo-new-lab-eus-001",
+  "database": "abarva_hc_demo_new_knowledge_lab",
+  "entra": {
+    "authenticationRequired": true,
+    "administratorBootstrapRequired": true,
+    "localPasswordFallbackAllowed": false
+  },
+  "roles": {
+    "ingest": "hc_demo_new_ingest",
+    "reviewer": "hc_demo_new_reviewer",
+    "publisher": "hc_demo_new_publisher",
+    "reader": "hc_demo_new_reader",
+    "evaluator": "hc_demo_new_evaluator",
+    "admin": "hc_demo_new_admin"
+  },
+  "managedIdentities": {
+    "ingest": "mi-hcdn-ingest-lab-001",
+    "reviewer": "mi-hcdn-review-lab-001",
+    "publisher": "mi-hcdn-publish-lab-001",
+    "reader": "mi-hcdn-read-lab-001",
+    "evaluator": "mi-hcdn-evaluator-lab-001",
+    "admin": "mi-hcdn-admin-lab-001"
+  },
+  "governedMigrationJob": "job-hcdn-db-migration-lab",
+  "tableCoverage": 51,
+  "replayRequirements": [
+    "empty_database_migration_replay",
+    "idempotent_second_replay",
+    "rollback_rehearsal",
+    "wrong_database_guard",
+    "wrong_tenant_guard",
+    "reader_candidate_denial",
+    "ingest_publish_denial",
+    "evaluator_mutation_denial"
+  ]
+}
