@@ -5,6 +5,9 @@ import path from "node:path";
 export const PROCESS_RESULT_SCHEMA_VERSION = "knowledge-process-result/v1";
 
 const RUN_STATES = new Set(["planned", "running", "passed", "failed", "cancelled", "blocked"]);
+const RESTRICTED_HIDDEN_TRUTH_MARKER =
+  "(restricted[_ -]?evaluator|evaluator[_ -]?only|hidden[_ -]?truth|hidden[_ -]?canonical|not[_ -]?parser[_ -]?visible)";
+const RESTRICTED_HIDDEN_TRUTH_REGEX = new RegExp(RESTRICTED_HIDDEN_TRUTH_MARKER, "i");
 
 export class KnowledgeProcessError extends Error {
   constructor(code, message, details = {}) {
@@ -230,7 +233,7 @@ export class InMemoryKnowledgeExecutionStore {
       ...this.entityCandidates,
       ...this.factCandidates,
       ...this.relationshipCandidates,
-    ].filter((row) => /hidden|evaluator|truth/i.test(stableJson(row))).length;
+    ].filter((row) => RESTRICTED_HIDDEN_TRUTH_REGEX.test(stableJson(row))).length;
     const result = {
       crossTenantRecords: 0,
       brokenRequiredRelationshipEndpoints: brokenRelationships,
@@ -779,11 +782,11 @@ export class PostgresKnowledgeExecutionStore {
         ),
         hidden AS (
           SELECT (
-            SELECT count(*) FROM working.entity_candidate WHERE tenant_key=$1 AND candidate_payload::text ~* '(hidden|evaluator|truth)'
+            SELECT count(*) FROM working.entity_candidate WHERE tenant_key=$1 AND candidate_payload::text ~* '${RESTRICTED_HIDDEN_TRUTH_MARKER}'
           ) + (
-            SELECT count(*) FROM working.fact_candidate WHERE tenant_key=$1 AND fact_value::text ~* '(hidden|evaluator|truth)'
+            SELECT count(*) FROM working.fact_candidate WHERE tenant_key=$1 AND fact_value::text ~* '${RESTRICTED_HIDDEN_TRUTH_MARKER}'
           ) + (
-            SELECT count(*) FROM working.relationship_candidate WHERE tenant_key=$1 AND array_to_string(evidence_refs, ',') ~* '(hidden|evaluator|truth)'
+            SELECT count(*) FROM working.relationship_candidate WHERE tenant_key=$1 AND array_to_string(evidence_refs, ',') ~* '${RESTRICTED_HIDDEN_TRUTH_MARKER}'
           ) AS count
         ),
         invalid_ids AS (
