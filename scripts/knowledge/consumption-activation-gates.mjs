@@ -68,43 +68,45 @@ async function run() {
   }
 
   // GATE 1: an active baseline exists.
+  // Real phase3c2e schema: publication.knowledge_baseline has an is_active flag
+  // (partial unique index enforces at most one active per tenant).
   try {
     const rows = await query(
-      `SELECT knowledge_baseline_ref FROM publication.active_knowledge_baseline WHERE tenant_key = $1`,
+      `SELECT knowledge_baseline_ref FROM publication.knowledge_baseline WHERE tenant_key = $1 AND is_active = true`,
       [tenant]);
     if (rows === null) record(1, "Active baseline exists", "UNVERIFIED", "No DB connection; run in Bucket B against the lab.");
     else if (rows.length === 1) record(1, "Active baseline exists", "PASS", `active baseline = ${rows[0].knowledge_baseline_ref}`);
     else record(1, "Active baseline exists", "FAIL", `expected exactly 1 active baseline, found ${rows.length}`);
   } catch (e) { record(1, "Active baseline exists", "UNVERIFIED", `schema not present: ${e.message}`); }
 
-  // GATE 2: projection build succeeded (no failed refresh_run for the active baseline).
+  // GATE 2: projection build succeeded (publication.projection_version build_state).
   try {
     const rows = await query(
-      `SELECT count(*)::int AS fails FROM consumption.refresh_run
-       WHERE tenant_key = $1 AND status = 'fail'
+      `SELECT count(*)::int AS fails FROM publication.projection_version
+       WHERE tenant_key = $1 AND build_state <> 'passed'
          AND ($2::text IS NULL OR knowledge_baseline_ref = $2)`,
       [tenant, baseline]);
     if (rows === null) record(2, "Projection build succeeded", "UNVERIFIED", "No DB connection.");
-    else if (rows[0].fails === 0) record(2, "Projection build succeeded", "PASS", "0 failed refresh_run rows");
-    else record(2, "Projection build succeeded", "FAIL", `${rows[0].fails} failed refresh_run rows`);
+    else if (rows[0].fails === 0) record(2, "Projection build succeeded", "PASS", "no non-passed projection_version rows");
+    else record(2, "Projection build succeeded", "FAIL", `${rows[0].fails} non-passed projection builds`);
   } catch (e) { record(2, "Projection build succeeded", "UNVERIFIED", `schema not present: ${e.message}`); }
 
-  // GATE 3: canonical ↔ publication ↔ consumption counts reconcile.
+  // GATE 3: canonical ↔ consumption counts reconcile (reconciliation_state).
   try {
     const rows = await query(
       `SELECT count(*)::int AS n FROM consumption.consumer_reconciliation_ledger
-       WHERE tenant_key = $1 AND status = 'fail'`,
+       WHERE tenant_key = $1 AND reconciliation_state = 'failed'`,
       [tenant]);
-    if (rows === null) record(3, "Counts reconcile (canonical↔publication↔consumption)", "UNVERIFIED", "No DB connection.");
+    if (rows === null) record(3, "Counts reconcile (canonical↔consumption↔cube)", "UNVERIFIED", "No DB connection.");
     else if (rows[0].n === 0) record(3, "Counts reconcile", "PASS", "no reconciliation failures");
     else record(3, "Counts reconcile", "FAIL", `${rows[0].n} reconciliation failures`);
   } catch (e) { record(3, "Counts reconcile", "UNVERIFIED", `schema not present: ${e.message}`); }
 
-  // GATE 6: Cube/metric ↔ Postgres metric parity.
+  // GATE 6: Cube ↔ Postgres metric parity (parity rows written by consumption-metric-parity).
   try {
     const rows = await query(
       `SELECT count(*)::int AS n FROM consumption.consumer_reconciliation_ledger
-       WHERE tenant_key = $1 AND measure_or_view LIKE 'metric%' AND status = 'fail'`,
+       WHERE tenant_key = $1 AND reconciliation_ref LIKE 'parity:%' AND reconciliation_state = 'failed'`,
       [tenant]);
     if (rows === null) record(6, "Cube ↔ Postgres metric parity", "UNVERIFIED", "No DB connection.");
     else if (rows[0].n === 0) record(6, "Cube ↔ Postgres metric parity", "PASS", "metric parity holds");
@@ -112,12 +114,15 @@ async function run() {
   } catch (e) { record(6, "Cube ↔ Postgres metric parity", "UNVERIFIED", `schema not present: ${e.message}`); }
 
   // GATE 8: rollback to the prior baseline is proven.
+  // Real phase3c2e schema: publication.publication_activation records each
+  // activation with previous_knowledge_baseline_ref + rollback_ref.
   try {
     const rows = await query(
-      `SELECT previous_baseline_ref FROM publication.active_knowledge_baseline WHERE tenant_key = $1`,
+      `SELECT previous_knowledge_baseline_ref, rollback_ref FROM publication.publication_activation
+       WHERE tenant_key = $1 ORDER BY activated_at DESC NULLS LAST LIMIT 1`,
       [tenant]);
     if (rows === null) record(8, "Rollback to prior baseline proven", "UNVERIFIED", "No DB connection.");
-    else if (rows.length && rows[0].previous_baseline_ref) record(8, "Rollback to prior baseline proven", "PASS", `prior = ${rows[0].previous_baseline_ref}`);
+    else if (rows.length && (rows[0].previous_knowledge_baseline_ref || rows[0].rollback_ref)) record(8, "Rollback to prior baseline proven", "PASS", `prior = ${rows[0].previous_knowledge_baseline_ref ?? rows[0].rollback_ref}`);
     else record(8, "Rollback to prior baseline proven", "REQUIRES_PROOF", "No prior baseline yet (first activation); rollback drill must be captured before enabling.");
   } catch (e) { record(8, "Rollback to prior baseline proven", "UNVERIFIED", `schema not present: ${e.message}`); }
 
