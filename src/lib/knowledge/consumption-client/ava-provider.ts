@@ -19,6 +19,25 @@ import type {
   AvaReasoningProvider,
   AvaRequest,
 } from "../consumption-contracts";
+import type { AvaArtifact } from "@/lib/ava-answer/contract";
+
+/**
+ * A minimal, in-scope view of governed objects the deterministic provider may
+ * reason over to build evidence-bound exhibits. It is the fixture analog of the
+ * governed baseline: the provider only ever uses entities whose refs appear in the
+ * packet's accepted-fact scope, so it never reaches beyond the permission boundary.
+ */
+export interface AvaReasoningEntity {
+  entityRef: string;
+  displayName: string;
+  entityType: string;
+  domainKey: string;
+  availabilityState: string;
+  evidenceRefs: string[];
+}
+export interface AvaReasoningCorpus {
+  entities: AvaReasoningEntity[];
+}
 
 export class NullAvaReasoningProvider implements AvaReasoningProvider {
   isAvailable(): boolean {
@@ -38,6 +57,12 @@ export class NullAvaReasoningProvider implements AvaReasoningProvider {
 }
 
 export class DeterministicAvaReasoningProvider implements AvaReasoningProvider {
+  private readonly corpus: AvaReasoningCorpus | null;
+
+  constructor(corpus: AvaReasoningCorpus | null = null) {
+    this.corpus = corpus;
+  }
+
   isAvailable(): boolean {
     return true;
   }
@@ -93,6 +118,7 @@ export class DeterministicAvaReasoningProvider implements AvaReasoningProvider {
       outcome: packet.knownGapRefs.length > 0 ? "partial" : "answered",
       sections,
       evidenceRefs: usedEvidence,
+      artifacts: this.buildArtifacts(packet.acceptedFactRefs),
       limitations: [
         gapNote,
         "aVa's answer is ephemeral and is not accepted Knowledge unless separately promoted.",
@@ -104,6 +130,62 @@ export class DeterministicAvaReasoningProvider implements AvaReasoningProvider {
       refusalReason: null,
       promoted: false,
     };
+  }
+
+  /**
+   * Build evidence-bound exhibits from the governed objects that are BOTH in the
+   * corpus AND in the packet's accepted-fact scope. Purely structural — it never
+   * invents a value, only tabulates and counts what is already accepted. Returns
+   * an empty list when there is not enough in-scope structure to exhibit.
+   */
+  private buildArtifacts(acceptedFactRefs: string[]): AvaArtifact[] {
+    if (!this.corpus) return [];
+    const scope = new Set(acceptedFactRefs);
+    const inScope = this.corpus.entities.filter((e) => scope.has(e.entityRef));
+    if (inScope.length < 3) return [];
+
+    const artifacts: AvaArtifact[] = [];
+
+    // Table: the governed objects in view (no fabricated fields).
+    artifacts.push({
+      artifact: "table",
+      id: "kv-ava-objects-in-view",
+      title: "Governed objects in view",
+      columns: [
+        { key: "name", label: "Object" },
+        { key: "type", label: "Type" },
+        { key: "domain", label: "Domain" },
+        { key: "status", label: "Status" },
+      ],
+      rows: inScope.slice(0, 12).map((e) => ({
+        name: e.displayName,
+        type: e.entityType,
+        domain: e.domainKey,
+        status: e.availabilityState.replace(/_/g, " "),
+      })),
+      note: `${inScope.length} object(s) in the current scope; showing up to 12.`,
+    });
+
+    // Chart: distribution by domain — a count of what is represented, per domain.
+    const byDomain = new Map<string, number>();
+    for (const e of inScope) byDomain.set(e.domainKey, (byDomain.get(e.domainKey) ?? 0) + 1);
+    const data = Array.from(byDomain, ([domain, count]) => ({ domain, count })).sort(
+      (a, b) => b.count - a.count,
+    );
+    if (data.length >= 2) {
+      artifacts.push({
+        artifact: "chart",
+        id: "kv-ava-objects-by-domain",
+        kind: "horizontal-bar",
+        title: "Objects in view by domain",
+        data,
+        xKey: "domain",
+        yKey: "count",
+        unit: "count",
+        sourceNote: "Count of governed objects represented in the current scope.",
+      });
+    }
+    return artifacts;
   }
 }
 

@@ -7,7 +7,7 @@
  * changes detail across the whole page, not a per-card toggle.
  */
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type {
   DepthLevel,
   EvidenceDescriptor,
@@ -38,6 +38,26 @@ const EMPTY_AVA_CONTEXT: AvaContextRefs = {
   blockedSourceRefs: [],
 };
 
+/**
+ * aVa dock window modes — mirrors the app-wide AgentDock contract (side rail,
+ * pinned strip, expanded overlay, collapsed chip) so the Knowledge dock behaves
+ * consistently, without importing AgentDock (which couples to the broker/auth
+ * stack the vNext feature is deliberately isolated from).
+ */
+export type AvaDockMode = "side-rail" | "pin-bottom" | "expand" | "collapsed";
+export type RestorableAvaDockMode = Exclude<AvaDockMode, "collapsed">;
+
+// Same persistence namespace convention as the shared dock: abarva.agent-dock.{surface}.mode
+const DOCK_MODE_KEY = "abarva.agent-dock.knowledge-vnext.mode";
+
+function readStoredMode(): AvaDockMode {
+  if (typeof window === "undefined") return "side-rail";
+  const v = window.localStorage.getItem(DOCK_MODE_KEY);
+  return v === "side-rail" || v === "pin-bottom" || v === "expand" || v === "collapsed"
+    ? v
+    : "side-rail";
+}
+
 interface ShellState {
   mode: KnowledgeMode;
   setMode: (m: KnowledgeMode) => void;
@@ -58,6 +78,10 @@ interface ShellState {
   openEvidence: (t: EvidenceDrawerTarget) => void;
   closeEvidence: () => void;
 
+  /** The aVa dock window mode (side-rail / pin-bottom / expand / collapsed). */
+  avaMode: AvaDockMode;
+  setAvaMode: (m: AvaDockMode) => void;
+  /** Convenience: open === not collapsed. setAvaOpen restores the last rich mode. */
   avaOpen: boolean;
   setAvaOpen: (v: boolean) => void;
 
@@ -85,27 +109,46 @@ export function KnowledgeShellStateProvider({ children }: { children: ReactNode 
   const [focalEntityRefs, setFocalEntityRefs] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [drawer, setDrawer] = useState<EvidenceDrawerTarget | null>(null);
-  const [avaOpen, setAvaOpen] = useState<boolean>(true);
+  const [avaMode, setAvaModeState] = useState<AvaDockMode>("side-rail");
   const [avaContext, setAvaContext] = useState<AvaContextRefs>(EMPTY_AVA_CONTEXT);
   const [avaPrefill, setAvaPrefill] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState<boolean>(false);
+  const lastRichMode = useRef<RestorableAvaDockMode>("side-rail");
+
+  // Hydrate the persisted mode after mount (avoids SSR/client mismatch).
+  useEffect(() => {
+    const stored = readStoredMode();
+    setAvaModeState(stored);
+    if (stored !== "collapsed") lastRichMode.current = stored;
+  }, []);
+
+  const setAvaMode = useCallback((m: AvaDockMode) => {
+    if (m !== "collapsed") lastRichMode.current = m;
+    setAvaModeState(m);
+    if (typeof window !== "undefined") window.localStorage.setItem(DOCK_MODE_KEY, m);
+  }, []);
+
+  const avaOpen = avaMode !== "collapsed";
+  const setAvaOpen = useCallback((v: boolean) => {
+    setAvaMode(v ? lastRichMode.current : "collapsed");
+  }, [setAvaMode]);
 
   const openEvidence = useCallback((t: EvidenceDrawerTarget) => setDrawer(t), []);
   const closeEvidence = useCallback(() => setDrawer(null), []);
   const askAva = useCallback((question: string) => {
     setAvaPrefill(question);
-    setAvaOpen(true);
-  }, []);
+    setAvaMode(lastRichMode.current);
+  }, [setAvaMode]);
   const clearAvaPrefill = useCallback(() => setAvaPrefill(null), []);
 
   const value = useMemo<ShellState>(
     () => ({
       mode, setMode, depth, setDepth, lens, setLens, scope, setScope,
       focalEntityRefs, setFocalEntityRefs, filters, setFilters,
-      drawer, openEvidence, closeEvidence, avaOpen, setAvaOpen,
+      drawer, openEvidence, closeEvidence, avaMode, setAvaMode, avaOpen, setAvaOpen,
       avaContext, setAvaContext, avaPrefill, askAva, clearAvaPrefill, leftOpen, setLeftOpen,
     }),
-    [mode, depth, lens, scope, focalEntityRefs, filters, drawer, avaOpen, avaContext, avaPrefill, askAva, clearAvaPrefill, leftOpen, openEvidence, closeEvidence],
+    [mode, depth, lens, scope, focalEntityRefs, filters, drawer, avaMode, setAvaMode, avaOpen, setAvaOpen, avaContext, avaPrefill, askAva, clearAvaPrefill, leftOpen, openEvidence, closeEvidence],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

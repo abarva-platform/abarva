@@ -13,6 +13,10 @@
  */
 
 import type { DepthLevel, KnowledgeLens, KnowledgeMode } from "./queries";
+// Shared rich-exhibit types — the SAME artifacts the app-wide aVa answer renderer
+// (Intelligence, Source, Tower, Moves) consumes, so Knowledge answers render with
+// identical tables/charts. Type-only import: presentation contract, not a data source.
+import type { AvaArtifact } from "@/lib/ava-answer/contract";
 
 export type AvaIntent = "explain" | "investigate" | "compare" | "act";
 
@@ -93,6 +97,12 @@ export interface AvaAnswer {
   limitations: string[];
   /** What additional evidence would change the answer. */
   whatWouldChangeIt: string[];
+  /**
+   * Optional rich exhibits (tables/charts/graphs) grounded in the packet's
+   * in-scope evidence, rendered by the shared answer renderer for parity with the
+   * other product modules. Empty/absent when the answer is prose-only or refused.
+   */
+  artifacts?: AvaArtifact[];
   /** Populated when outcome==="refused" — e.g. required evidence unavailable. */
   refusalReason: string | null;
   /** Always false: an aVa answer is never automatically accepted Knowledge. */
