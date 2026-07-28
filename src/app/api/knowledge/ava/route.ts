@@ -17,11 +17,14 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import type {
   AvaIntent,
   AvaKnowledgePacket,
+  AvaReasoningProvider,
   DepthLevel,
   KnowledgeLens,
   KnowledgeMode,
 } from "@/lib/knowledge/consumption-contracts";
 import { DeterministicAvaReasoningProvider } from "@/lib/knowledge/consumption-client";
+import { AiEgressAvaReasoningProvider } from "@/lib/knowledge/consumption-server/ava-egress-provider";
+import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,12 +74,35 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    const ava = new DeterministicAvaReasoningProvider();
+    // Production path = audited ai-egress. Deterministic ONLY when the model
+    // path is genuinely unavailable (no ANTHROPIC_API_KEY) or as a test stub.
+    const egress = new AiEgressAvaReasoningProvider();
+    const ava: AvaReasoningProvider = egress.isAvailable()
+      ? egress
+      : new DeterministicAvaReasoningProvider();
     const answer = await ava.ask({
       intent: (body.intent as AvaIntent | undefined) ?? "explain",
       question: String(body.question ?? ""),
       packet,
     });
+
+    // Visible-answer contract: never return model prose that leaks non-user-facing
+    // language. Applies to answered/partial sections only (refusals carry no prose).
+    for (const section of answer.sections) {
+      const contract = assertVisibleAnswerContract(section.body);
+      if (!contract.passed) {
+        return Response.json(
+          {
+            error: "visible_answer_contract_failed",
+            detail: "aVa blocked this answer before display because it exposed non-user-facing language.",
+            version: contract.version,
+            violations: contract.violations,
+          },
+          { status: 422 },
+        );
+      }
+    }
+
     return Response.json(answer, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     return Response.json(
