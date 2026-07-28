@@ -1,0 +1,59 @@
+{
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-airdn-lab-eus2-001/providers/Microsoft.App/jobs/job-airdn-validate-lab/executions/job-airdn-validate-lab-bsc8iut",
+  "name": "job-airdn-validate-lab-bsc8iut",
+  "properties": {
+    "endTime": "2026-07-28T00:26:48+00:00",
+    "startTime": "2026-07-28T00:26:12+00:00",
+    "status": "Succeeded",
+    "template": {
+      "containers": [
+        {
+          "args": [
+            "-lc",
+            "set -eu\npsql -v ON_ERROR_STOP=1 <<'SQL'\n\\echo 'diagnostic: validate run/idempotency rows'\nSELECT\n  run_ref,\n  idempotency_key,\n  run_state,\n  failure_code,\n  failure_detail,\n  started_at,\n  completed_at\nFROM operations.run\nWHERE tenant_key='airline-demo-new'\n  AND run_type='knowledge-validate-v1'\nORDER BY started_at DESC NULLS LAST, created_at DESC\nLIMIT 10;\n\n\\echo 'diagnostic: checkpoint rows for validate runs'\nSELECT run_ref, checkpoint_ref, checkpoint_state, recorded_at\nFROM operations.checkpoint\nWHERE tenant_key='airline-demo-new'\n  AND checkpoint_ref LIKE 'knowledge-validate-v1:%'\nORDER BY recorded_at DESC\nLIMIT 10;\nSQL\n"
+          ],
+          "command": [
+            "/bin/sh"
+          ],
+          "env": [
+            {
+              "name": "PGHOST",
+              "value": "pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com"
+            },
+            {
+              "name": "PGPORT",
+              "value": "5432"
+            },
+            {
+              "name": "PGUSER",
+              "value": "airdn_admin"
+            },
+            {
+              "name": "PGDATABASE",
+              "value": "abarva_airline_demo_new_knowledge_lab"
+            },
+            {
+              "name": "PGSSLMODE",
+              "value": "require"
+            },
+            {
+              "name": "PGPASSWORD",
+              "secretRef": "cappjob-job-airdn-validate-lab"
+            }
+          ],
+          "image": "postgres:16-alpine",
+          "imageType": "ContainerImage",
+          "name": "airdn-job",
+          "resources": {
+            "cpu": 0.5,
+            "ephemeralStorage": "",
+            "memory": "1Gi"
+          }
+        }
+      ],
+      "initContainers": []
+    }
+  },
+  "resourceGroup": "rg-abarva-airdn-lab-eus2-001",
+  "type": "Microsoft.App/jobs/executions"
+}

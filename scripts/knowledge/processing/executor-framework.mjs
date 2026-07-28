@@ -384,8 +384,11 @@ export class PostgresKnowledgeExecutionStore {
         )
         VALUES ($1,$2,$3,$4,$5,'running',$6,$7,$8,now(),$9::jsonb)
         ON CONFLICT (tenant_key, idempotency_key)
-        DO UPDATE SET run_state='running', started_at=now(), failure_code=null,
-          failure_detail=null, metadata=EXCLUDED.metadata
+        DO UPDATE SET run_ref=EXCLUDED.run_ref, release_id=EXCLUDED.release_id,
+          run_type=EXCLUDED.run_type, run_state='running', actor_ref=EXCLUDED.actor_ref,
+          input_manifest_hash=EXCLUDED.input_manifest_hash, image_digest=EXCLUDED.image_digest,
+          started_at=now(), completed_at=null, failure_code=null, failure_detail=null,
+          metadata=EXCLUDED.metadata
       `,
       [
         context.tenantKey,
@@ -457,19 +460,46 @@ export class PostgresKnowledgeExecutionStore {
 
   async failProcessResult(context, error) {
     if (!this.inTransaction) return;
+    try {
+      await this.client.query("ROLLBACK");
+    } catch {
+      // The transaction may already be aborted; the failure record below uses a fresh transaction.
+    }
+    this.inTransaction = false;
+    await this.client.query("BEGIN");
+    this.inTransaction = true;
+    await this.client.query("SELECT set_config('app.tenant_key', $1, true)", [context.tenantKey]);
     await this.client.query(
       `
-        UPDATE operations.run
-        SET run_state='failed', completed_at=now(), failure_code=$3,
-          failure_detail=$4, metadata=jsonb_set(metadata, '{failure}', $5::jsonb, true)
-        WHERE tenant_key=$1 AND run_ref=$2
+        INSERT INTO operations.run (
+          tenant_key, run_ref, release_id, idempotency_key, run_type, run_state,
+          actor_ref, input_manifest_hash, image_digest, started_at, completed_at,
+          failure_code, failure_detail, metadata
+        )
+        VALUES ($1,$2,$3,$4,$5,'failed',$6,$7,$8,now(),now(),$9,$10,$11::jsonb)
+        ON CONFLICT (tenant_key, idempotency_key)
+        DO UPDATE SET run_ref=EXCLUDED.run_ref, release_id=EXCLUDED.release_id,
+          run_type=EXCLUDED.run_type, run_state='failed', actor_ref=EXCLUDED.actor_ref,
+          input_manifest_hash=EXCLUDED.input_manifest_hash, image_digest=EXCLUDED.image_digest,
+          completed_at=now(), failure_code=EXCLUDED.failure_code,
+          failure_detail=EXCLUDED.failure_detail, metadata=EXCLUDED.metadata
       `,
       [
         context.tenantKey,
         context.runId,
+        context.releaseId,
+        context.idempotencyKey,
+        context.canonicalProcess,
+        context.actorRef,
+        context.manifestHash,
+        context.imageDigest,
         error.code ?? "process_failed",
         error.message,
-        JSON.stringify({ code: error.code ?? "process_failed", details: error.details ?? {} }),
+        JSON.stringify({
+          processName: context.processName,
+          stageNames: context.stageNames,
+          failure: { code: error.code ?? "process_failed", details: error.details ?? {} },
+        }),
       ],
     );
     await this.client.query("COMMIT");

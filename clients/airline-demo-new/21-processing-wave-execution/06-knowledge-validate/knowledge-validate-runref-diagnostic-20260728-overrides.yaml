@@ -1,0 +1,46 @@
+containers:
+  - name: airdn-job
+    image: postgres:16-alpine
+    command:
+      - /bin/sh
+    args:
+      - -lc
+      - |
+        set -eu
+        psql -v ON_ERROR_STOP=1 <<'SQL'
+        \echo 'diagnostic: validate run/idempotency rows'
+        SELECT
+          run_ref,
+          idempotency_key,
+          run_state,
+          failure_code,
+          failure_detail,
+          started_at,
+          completed_at
+        FROM operations.run
+        WHERE tenant_key='airline-demo-new'
+          AND run_type='knowledge-validate-v1'
+        ORDER BY started_at DESC NULLS LAST, created_at DESC
+        LIMIT 10;
+
+        \echo 'diagnostic: checkpoint rows for validate runs'
+        SELECT run_ref, checkpoint_ref, checkpoint_state, recorded_at
+        FROM operations.checkpoint
+        WHERE tenant_key='airline-demo-new'
+          AND checkpoint_ref LIKE 'knowledge-validate-v1:%'
+        ORDER BY recorded_at DESC
+        LIMIT 10;
+        SQL
+    env:
+      - name: PGHOST
+        value: pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com
+      - name: PGPORT
+        value: "5432"
+      - name: PGUSER
+        value: airdn_admin
+      - name: PGDATABASE
+        value: abarva_airline_demo_new_knowledge_lab
+      - name: PGSSLMODE
+        value: require
+      - name: PGPASSWORD
+        secretRef: pg-admin-password

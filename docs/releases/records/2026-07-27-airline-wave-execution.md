@@ -12,11 +12,14 @@
 
 This release records the first governed execution wave for the synthetic Airline Demo New knowledge corpus and fixes the validation rule that incorrectly treated ordinary procurement evaluation notes as restricted evaluator-only truth. It also aligns the Airline Container Apps job template with the execution surface that was proven during the wave: digest-pinned image, tenant-scoped managed identity client id, storage account, and PostgreSQL connection secret.
 
+Post-deploy validation also exposed a retry bookkeeping defect: failed idempotency rows retained their old `run_ref`, so a retry with a new run id could pass semantic checks but fail when writing checkpoints. This release updates the executor retry semantics so non-passed idempotency rows point at the current run id, and failure recording now rolls back aborted transactions before writing failure metadata.
+
 ## Layer Impact
 
 - `client-data-lane`: Airline Demo New source registration, parsing, evidence extraction, normalization, identity resolution, and validation evidence are tenant-scoped execution artifacts for the isolated Airline lab data plane.
 - `client-data-lane`: The Airline job template is aligned to the proved ACA job execution contract: digest-pinned image, assigned managed identity client id, tenant storage, and PostgreSQL secret wiring.
 - `global-control-lane`: The shared knowledge process validator now blocks only explicit restricted evaluator-only / hidden-truth markers, rather than any ordinary text containing the word evaluator.
+- `global-control-lane`: The shared knowledge process executor now handles non-passed idempotency retries and aborted-transaction failure recording durably, so governed ACA job evidence keeps the root failure instead of masking it behind a transaction-aborted error.
 - CLIENT INTAKE: No client-facing intake template changes.
 - PRODUCTS: No product UI or runtime read path changes are included. Home, Source, Moves, Tower, Intelligence, Learn, and Pricing are not cut over by this release.
 
@@ -47,6 +50,9 @@ This release records the first governed execution wave for the synthetic Airline
 - Governed ACA normalization passed: 264,230 normalized candidate records, 0 quarantine.
 - Governed ACA identity resolution passed: 99,015 resolved entity candidates, 0 unresolved, 0 ambiguous.
 - Governed ACA semantic validation in the currently deployed image failed on `hidden_truth_references`; diagnostic evidence showed the blocker came from ordinary parser-visible procurement scorecard rows with `evaluator_note`, not restricted evaluator-only material.
+- After deploy, governed ACA semantic-validation diagnostics showed the narrowed semantic gate itself returned all zero blockers: 25 parser-visible sources, 25 parsed terminal events, 0 hidden entity markers, 0 hidden fact markers, 0 hidden relationship markers, 0 invalid ids, 0 broken relationships, and 0 silent source skips.
+- A follow-up run/ref diagnostic showed the remaining failure was executor retry bookkeeping: the same idempotency key pointed to a failed 2026-07-27 run ref while the retry attempted to write checkpoints for the 2026-07-28 run ref.
+- `npm run test:knowledge-process-executors` passed locally after adding retry and aborted-transaction failure-recording coverage.
 
 ## Rollout Plan
 
@@ -70,10 +76,12 @@ Rollback the shared ACA runtime to the previous digest if the job runner regress
 
 - Airline execution evidence: `clients/airline-demo-new/21-processing-wave-execution/`
 - Semantic validation diagnostic: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/hidden-truth-diagnostic-query-logs-20260727.txt`
+- Post-deploy semantic diagnostic: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/knowledge-validate-sql-diagnostic-20260728-logs.txt`
+- Post-deploy run/ref diagnostic: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/knowledge-validate-runref-diagnostic-20260728-logs.txt`
 - Test evidence: `npm run test:knowledge-process-executors`
 
 ## Known Gaps
 
-- The current deployed image has not yet rerun semantic validation with the narrowed hidden-truth marker. That rerun is required after this PR deploys.
+- The current deployed image has not yet rerun semantic validation with the idempotency retry fix. That rerun is required after this PR deploys.
 - The currently deployed Airline jobs required one-shot overrides for identity and database connection settings. This release repairs the IaC template, but a future plan/apply is required before every stage job can run without overrides.
 - Evidence extraction is correct but slow at current corpus volume; it should be optimized after the controlled execution path is proven.
