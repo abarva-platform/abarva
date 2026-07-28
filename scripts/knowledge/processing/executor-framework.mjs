@@ -922,7 +922,93 @@ export class PostgresKnowledgeExecutionStore {
     return validation;
   }
 
+  async backfillMissingCandidateContentHashes(context) {
+    const specs = [
+      {
+        table: "working.entity_candidate",
+        candidateType: "entity_candidate",
+        select: `
+          SELECT candidate_ref AS "candidateRef",
+            source_version_ref AS "sourceVersionRef",
+            entity_type AS "entityType",
+            display_name AS "displayName",
+            candidate_payload AS "candidatePayload",
+            evidence_refs AS "evidenceRefs",
+            confidence,
+            review_state AS "reviewState"
+          FROM working.entity_candidate
+          WHERE tenant_key=$1 AND candidate_content_hash IS NULL
+          ORDER BY candidate_ref
+        `,
+      },
+      {
+        table: "working.fact_candidate",
+        candidateType: "fact_candidate",
+        select: `
+          SELECT candidate_ref AS "candidateRef",
+            source_version_ref AS "sourceVersionRef",
+            subject_candidate_ref AS "subjectCandidateRef",
+            fact_type AS "factType",
+            fact_value AS "factValue",
+            evidence_refs AS "evidenceRefs",
+            confidence,
+            review_state AS "reviewState"
+          FROM working.fact_candidate
+          WHERE tenant_key=$1 AND candidate_content_hash IS NULL
+          ORDER BY candidate_ref
+        `,
+      },
+      {
+        table: "working.relationship_candidate",
+        candidateType: "relationship_candidate",
+        select: `
+          SELECT candidate_ref AS "candidateRef",
+            source_version_ref AS "sourceVersionRef",
+            from_candidate_ref AS "fromCandidateRef",
+            to_candidate_ref AS "toCandidateRef",
+            relationship_type_ref AS "relationshipTypeRef",
+            current_target_state AS "currentTargetState",
+            evidence_refs AS "evidenceRefs",
+            confidence,
+            review_state AS "reviewState"
+          FROM working.relationship_candidate
+          WHERE tenant_key=$1 AND candidate_content_hash IS NULL
+          ORDER BY candidate_ref
+        `,
+      },
+    ];
+    const summary = {};
+    for (const spec of specs) {
+      const rows = (await this.client.query(spec.select, [context.tenantKey])).rows;
+      summary[spec.candidateType] = rows.length;
+      const chunkSize = 2000;
+      for (let index = 0; index < rows.length; index += chunkSize) {
+        const chunk = rows.slice(index, index + chunkSize);
+        await this.client.query(
+          `
+            UPDATE ${spec.table} AS c
+            SET candidate_content_hash = v.candidate_content_hash
+            FROM (
+              SELECT unnest($2::text[]) AS candidate_ref,
+                unnest($3::text[]) AS candidate_content_hash
+            ) AS v
+            WHERE c.tenant_key=$1
+              AND c.candidate_ref=v.candidate_ref
+              AND c.candidate_content_hash IS NULL
+          `,
+          [
+            context.tenantKey,
+            chunk.map((row) => row.candidateRef),
+            chunk.map((row) => candidateContentHash({ ...row, candidateType: spec.candidateType })),
+          ],
+        );
+      }
+    }
+    return summary;
+  }
+
   async applyReviewDecisions(context) {
+    const hashBackfill = await this.backfillMissingCandidateContentHashes(context);
     const decisionSummary = await this.client.query(
       `
         SELECT
@@ -964,6 +1050,16 @@ export class PostgresKnowledgeExecutionStore {
             candidate_content_hash, source_version_ref, evidence_refs AS candidate_evidence_refs
           FROM working.relationship_candidate
           WHERE tenant_key=$1
+        ),
+        approved_batch_manifest AS (
+          SELECT b.tenant_key,
+            b.review_batch_ref,
+            manifest_item->>'candidate_ref' AS candidate_ref,
+            manifest_item->>'candidate_content_hash' AS candidate_content_hash
+          FROM governance.review_batch b
+          CROSS JOIN LATERAL jsonb_array_elements(coalesce(b.candidate_hash_manifest, '[]'::jsonb)) AS manifest_item
+          WHERE b.tenant_key=$1
+            AND b.batch_state IN ('approved', 'applied')
         ),
         joined AS (
           SELECT d.*, c.candidate_content_hash AS current_candidate_content_hash,
@@ -1022,6 +1118,7 @@ export class PostgresKnowledgeExecutionStore {
           FROM joined
           WHERE coalesce(array_length(evidence_refs, 1), 0) = 0
             AND coalesce(array_length(candidate_evidence_refs, 1), 0) = 0
+            AND NOT (candidate_type = 'entity_candidate' AND current_source_version_ref IS NOT NULL)
           UNION ALL
           SELECT review_ref, 'unauthorized_reviewer'
           FROM joined
@@ -1055,9 +1152,11 @@ export class PostgresKnowledgeExecutionStore {
             AND approval_ref IS NOT NULL
             AND NOT EXISTS (
               SELECT 1
-              FROM jsonb_array_elements(coalesce(candidate_hash_manifest, '[]'::jsonb)) AS manifest_item
-              WHERE manifest_item->>'candidate_ref' = candidate_ref
-                AND manifest_item->>'candidate_content_hash' = candidate_content_hash
+              FROM approved_batch_manifest manifest_item
+              WHERE manifest_item.tenant_key = joined.tenant_key
+                AND manifest_item.review_batch_ref = joined.review_batch_ref
+                AND manifest_item.candidate_ref = joined.candidate_ref
+                AND manifest_item.candidate_content_hash = joined.candidate_content_hash
             )
         )
         SELECT blocker_code AS "blockerCode",
@@ -1212,6 +1311,7 @@ export class PostgresKnowledgeExecutionStore {
       applied: accepted + (decisionSummary.rows[0]?.rejected ?? 0),
       accepted,
       rejected: decisionSummary.rows[0]?.rejected ?? 0,
+      hashBackfill,
       ...counts.rows[0],
     };
   }
