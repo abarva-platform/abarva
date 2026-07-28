@@ -206,6 +206,15 @@ await test("promotion SQL casts enum-backed state columns explicitly", async () 
   assert.ok(source.includes("coalesce(nullif(f.fact_value->>'availability_state','')::abarva_availability_state, 'accepted'::abarva_availability_state)"));
 });
 
+await test("relationship promotion resolves endpoints from an accepted entity map", async () => {
+  const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
+  assert.ok(source.includes("WITH promoted_entity_map AS"));
+  assert.ok(source.includes("JOIN promoted_entity_map f"));
+  assert.ok(source.includes("JOIN promoted_entity_map t"));
+  assert.ok(source.includes("AND ed.candidate_type = 'entity_candidate'"));
+  assert.ok(!source.includes("LEFT JOIN LATERAL ("));
+});
+
 await test("custom handler must verify before commit", async () => {
   const context = baseContext({ canonicalProcess: "source-parse-v1", processName: "airline-demo-new-source-parse-v1" });
   const store = new InMemoryKnowledgeExecutionStore();

@@ -1269,6 +1269,51 @@ export class PostgresKnowledgeExecutionStore {
 
     await this.client.query(
       `
+        WITH promoted_entity_map AS (
+          SELECT DISTINCT ON (tenant_key, map_key)
+            tenant_key,
+            map_key,
+            entity_ref
+          FROM (
+            SELECT
+              e.tenant_key,
+              e.candidate_ref AS map_key,
+              coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
+              0 AS match_priority,
+              e.confidence,
+              e.candidate_ref
+            FROM working.entity_candidate e
+            JOIN governance.review_decision ed
+              ON ed.tenant_key = e.tenant_key
+             AND ed.candidate_type = 'entity_candidate'
+             AND ed.candidate_ref = e.candidate_ref
+             AND ed.candidate_content_hash = e.candidate_content_hash
+             AND ed.decision = 'accepted'
+             AND ed.review_state = 'accepted'
+            WHERE e.tenant_key=$1
+
+            UNION ALL
+
+            SELECT
+              e.tenant_key,
+              e.candidate_payload->>'source_native_id' AS map_key,
+              coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
+              1 AS match_priority,
+              e.confidence,
+              e.candidate_ref
+            FROM working.entity_candidate e
+            JOIN governance.review_decision ed
+              ON ed.tenant_key = e.tenant_key
+             AND ed.candidate_type = 'entity_candidate'
+             AND ed.candidate_ref = e.candidate_ref
+             AND ed.candidate_content_hash = e.candidate_content_hash
+             AND ed.decision = 'accepted'
+             AND ed.review_state = 'accepted'
+            WHERE e.tenant_key=$1
+              AND nullif(e.candidate_payload->>'source_native_id','') IS NOT NULL
+          ) entity_keys
+          ORDER BY tenant_key, map_key, match_priority, confidence DESC NULLS LAST, candidate_ref
+        )
         INSERT INTO knowledge.relationship_assertion (
           tenant_key, relationship_ref, from_entity_ref, to_entity_ref,
           relationship_type_ref, current_target_state, authority_state,
@@ -1303,30 +1348,14 @@ export class PostgresKnowledgeExecutionStore {
            AND d.candidate_content_hash = r.candidate_content_hash
            AND d.decision = 'accepted'
            AND d.review_state = 'accepted'
-          LEFT JOIN LATERAL (
-            SELECT coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref
-            FROM working.entity_candidate e
-            WHERE e.tenant_key = r.tenant_key
-              AND (e.candidate_ref = r.from_candidate_ref OR e.candidate_payload->>'source_native_id' = r.from_candidate_ref)
-            ORDER BY CASE WHEN e.candidate_ref = r.from_candidate_ref THEN 0 ELSE 1 END,
-              e.confidence DESC NULLS LAST,
-              e.candidate_ref
-            LIMIT 1
-          ) f ON true
-          LEFT JOIN LATERAL (
-            SELECT coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref
-            FROM working.entity_candidate e
-            WHERE e.tenant_key = r.tenant_key
-              AND (e.candidate_ref = r.to_candidate_ref OR e.candidate_payload->>'source_native_id' = r.to_candidate_ref)
-            ORDER BY CASE WHEN e.candidate_ref = r.to_candidate_ref THEN 0 ELSE 1 END,
-              e.confidence DESC NULLS LAST,
-              e.candidate_ref
-            LIMIT 1
-          ) t ON true
+          JOIN promoted_entity_map f
+            ON f.tenant_key = r.tenant_key
+           AND f.map_key = r.from_candidate_ref
+          JOIN promoted_entity_map t
+            ON t.tenant_key = r.tenant_key
+           AND t.map_key = r.to_candidate_ref
           WHERE r.tenant_key=$1
             AND r.from_candidate_ref <> r.to_candidate_ref
-            AND f.entity_ref IS NOT NULL
-            AND t.entity_ref IS NOT NULL
           ORDER BY r.tenant_key, 'rel:' || r.candidate_ref,
             r.confidence DESC NULLS LAST,
             r.candidate_ref
