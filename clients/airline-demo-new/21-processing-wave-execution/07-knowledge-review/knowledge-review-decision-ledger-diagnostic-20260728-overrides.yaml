@@ -1,0 +1,45 @@
+containers:
+  - name: airdn-job
+    image: postgres:16-alpine
+    command:
+      - /bin/sh
+    args:
+      - -lc
+      - |
+        set -eu
+        psql -v ON_ERROR_STOP=1 <<'SQL'
+        \echo 'diagnostic: review decision counts'
+        SELECT
+          review_state,
+          count(*)::int AS decisions
+        FROM governance.review_decision
+        WHERE tenant_key='airline-demo-new'
+        GROUP BY review_state
+        ORDER BY review_state;
+
+        \echo 'diagnostic: candidate counts awaiting review'
+        SELECT 'entity_candidate' AS candidate_table, count(*)::int AS candidates
+        FROM working.entity_candidate
+        WHERE tenant_key='airline-demo-new'
+        UNION ALL
+        SELECT 'fact_candidate' AS candidate_table, count(*)::int AS candidates
+        FROM working.fact_candidate
+        WHERE tenant_key='airline-demo-new'
+        UNION ALL
+        SELECT 'relationship_candidate' AS candidate_table, count(*)::int AS candidates
+        FROM working.relationship_candidate
+        WHERE tenant_key='airline-demo-new';
+        SQL
+    env:
+      - name: PGHOST
+        value: pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com
+      - name: PGPORT
+        value: "5432"
+      - name: PGUSER
+        value: airdn_admin
+      - name: PGDATABASE
+        value: abarva_airline_demo_new_knowledge_lab
+      - name: PGSSLMODE
+        value: require
+      - name: PGPASSWORD
+        secretRef: pg-admin-password
