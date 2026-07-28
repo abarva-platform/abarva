@@ -15,6 +15,7 @@ const SHELL_SURFACE_PREFIXES = [
   '/intelligence',
   '/learn',
   '/strategic-moves',
+  '/knowledge-preview',
 ] as const;
 
 export function MaestroChrome({ children }: { children: React.ReactNode }) {

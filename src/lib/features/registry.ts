@@ -95,7 +95,8 @@ export type FeatureFlagKey =
   | "moves_approvals_overview_v1"
   | "tower_command_center_v2"
   | "moves_pricing_engine"
-  | "moves_governed_roadmap_downloads";
+  | "moves_governed_roadmap_downloads"
+  | "home_knowledge_vnext";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -334,6 +335,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Tower synthesis route may use the Apex Retail demo fixture as portfolio input. Tenant-gated to apexretail only — closes the Atlas P0 cross-tenant leak where the Apex fixture was the silent default for every tenant. Default ON for apexretail.",
     policy: "tenant",
     includeTenants: ["apexretail"],
+  },
+  {
+    key: "home_knowledge_vnext",
+    summary:
+      "Home / Knowledge vNext shell (Brief · Explore · Relationships · Evidence & Gaps) built against the merged Phase 3C-2D consumption contracts. Default OFF — the shell lives behind an admin-only preview route (/knowledge-preview) that serves contract-valid fixture packs; this flag exists to enable a pilot tenant later, once the real HTTP consumption endpoints are published. Flag off = never activated for any tenant user; admin preview does not depend on it. No legacy Home/V6/V7/SkyHarbor data is consumed.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "moves_pricing_engine",
