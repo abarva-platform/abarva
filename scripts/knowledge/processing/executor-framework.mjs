@@ -1659,7 +1659,7 @@ export class PostgresKnowledgeExecutionStore {
             'evidenceRefs', accepted_evidence_refs
           )
         FROM (
-          SELECT entity_ref, entity_type, display_name, coalesce(canonical_payload, '{}'::jsonb) AS canonical_payload,
+          SELECT tenant_key, entity_ref, entity_type, display_name, coalesce(canonical_payload, '{}'::jsonb) AS canonical_payload,
             availability_state, accepted_evidence_refs, content_hash
           FROM knowledge.entity
           WHERE tenant_key=$1 AND authority_state='accepted'
