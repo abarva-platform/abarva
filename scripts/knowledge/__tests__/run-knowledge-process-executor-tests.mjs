@@ -206,11 +206,14 @@ await test("promotion SQL casts enum-backed state columns explicitly", async () 
   assert.ok(source.includes("coalesce(nullif(f.fact_value->>'availability_state','')::abarva_availability_state, 'accepted'::abarva_availability_state)"));
 });
 
-await test("relationship promotion resolves endpoints from an accepted entity map", async () => {
+await test("relationship promotion resolves endpoints from an indexed accepted entity map", async () => {
   const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
-  assert.ok(source.includes("WITH promoted_entity_map AS"));
-  assert.ok(source.includes("JOIN promoted_entity_map f"));
-  assert.ok(source.includes("JOIN promoted_entity_map t"));
+  assert.ok(source.includes("CREATE TEMP TABLE tmp_promoted_entity_map ON COMMIT DROP AS"));
+  assert.ok(source.includes("CREATE UNIQUE INDEX tmp_promoted_entity_map_lookup_idx"));
+  assert.ok(source.includes("CREATE TEMP TABLE tmp_accepted_relationship_candidate ON COMMIT DROP AS"));
+  assert.ok(source.includes("CREATE INDEX tmp_accepted_relationship_candidate_endpoint_idx"));
+  assert.ok(source.includes("JOIN tmp_promoted_entity_map f"));
+  assert.ok(source.includes("JOIN tmp_promoted_entity_map t"));
   assert.ok(source.includes("AND ed.candidate_type = 'entity_candidate'"));
   assert.ok(!source.includes("LEFT JOIN LATERAL ("));
 });
