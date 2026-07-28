@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Knowledge review-ledger builder can now connect to Azure PostgreSQL using the review job's managed identity instead of requiring a database password in the job command. This keeps the Airline review-decision apply path inside the least-privilege review identity while avoiding brittle shell-generated token plumbing.
+The Knowledge review-ledger builder can now connect to Azure PostgreSQL using the review job's managed identity instead of requiring a database password in the job command. It uses the Azure Identity SDK first, with the metadata endpoint as a fallback. This keeps the Airline review-decision apply path inside the least-privilege review identity while avoiding brittle shell-generated token plumbing.
 
 This release does not approve candidates, write review decisions, publish domains, assemble a baseline, build projections, refresh Home, select a provider, or expose product runtime content.
 
@@ -29,7 +29,7 @@ This release does not approve candidates, write review decisions, publish domain
 
 ## Changes Included
 
-- `scripts/knowledge/build-review-decision-ledger.mjs`: adds Azure PostgreSQL Entra token support when `PGPASSWORD` is absent and a managed-identity client id is supplied.
+- `scripts/knowledge/build-review-decision-ledger.mjs`: adds Azure PostgreSQL Entra token support when `PGPASSWORD` is absent and a managed-identity client id is supplied, using Azure Identity first and the metadata endpoint as fallback.
 - `scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs`: adds regression coverage for passwordless DB connection configuration.
 - Release record: this file.
 
