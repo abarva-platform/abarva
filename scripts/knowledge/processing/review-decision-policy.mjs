@@ -265,6 +265,15 @@ export function classifyCandidateForReview(candidate, options = {}) {
     ) {
       return { candidateClass: "batch_review_required", reasons: ["deterministic_source_record_batch_review"] };
     }
+    // Explicit evidence inheritance: an evidence-less entity referenced by a
+    // source-backed, evidence-bearing fact candidate inherits that lineage and is
+    // routed to batch review (never auto-accepted). Without such a fact it defers.
+    if (
+      normalized.candidateType === "entity_candidate" &&
+      options.evidenceIndex?.get?.(normalized.candidateRef)
+    ) {
+      return { candidateClass: "batch_review_required", reasons: ["evidence_inherited_from_source_fact"] };
+    }
     return { candidateClass: "defer", reasons: ["missing_source_or_evidence_lineage"] };
   }
 
@@ -288,27 +297,100 @@ export function classifyCandidateForReview(candidate, options = {}) {
   };
 }
 
-export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVIEW_POLICY_VERSION, validationRunRef, sourceVersionRef, options = {} }) {
+/** entityRef -> true when a source-backed, evidence-bearing fact references it.
+ *  Powers explicit evidence inheritance for evidence-less entities. */
+export function buildEvidenceInheritanceIndex(candidates) {
+  const index = new Map();
+  for (const candidate of candidates) {
+    const n = normalizeCandidate(candidate);
+    if (n.candidateType === "fact_candidate" && n.sourceVersionRef && n.evidenceRefs.length > 0) {
+      const subject = n.content.subjectCandidateRef;
+      if (subject) index.set(subject, true);
+    }
+  }
+  return index;
+}
+
+function confidenceBand(conf) {
+  const c = Number(conf ?? 0);
+  if (!(c > 0)) return "unscored";
+  if (c >= 0.86) return "high";
+  if (c >= 0.72) return "medium";
+  return "low";
+}
+function evidenceCompleteness(n) {
+  if (n.evidenceRefs.length > 0 && n.sourceVersionRef) return "evidence_and_source";
+  if (n.evidenceRefs.length > 0) return "evidence_only";
+  if (n.sourceVersionRef) return "source_only";
+  return "incomplete";
+}
+function candidateDomain(candidate, n) {
+  return normalizeRef(n.raw, "domain", "domain_ref", "domainKey", "domain_key") ||
+    (n.candidateType === "entity_candidate" ? (normalizeEntityType(candidate) || "unclassified") :
+     n.candidateType === "fact_candidate" ? (normalizeFactType(candidate).split(/[._]/)[0] || "unclassified") :
+     (normalizeRelationshipType(candidate) || "relationship"));
+}
+function commercialSensitivity(candidate, n) {
+  return n.candidateType === "fact_candidate" && COMMERCIAL_MARKERS.test(normalizeFactType(candidate)) ? "commercial" : "standard";
+}
+function relationshipImpact(candidate, n) {
+  if (n.candidateType !== "relationship_candidate") return "not_applicable";
+  return HIGH_IMPACT_RELATIONSHIP_TYPES.has(normalizeRelationshipType(candidate)) ? "high" : "standard";
+}
+function sampleSummary(n) {
+  if (n.candidateType === "entity_candidate") return `${n.content.entityType || "entity"}: ${n.content.displayName || n.candidateRef}`;
+  if (n.candidateType === "fact_candidate") return `${n.content.factType || "fact"} on ${n.content.subjectCandidateRef || "?"}`;
+  return `${n.content.relationshipTypeRef || "rel"} [${n.content.currentTargetState}]`;
+}
+
+export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVIEW_POLICY_VERSION, validationRunRef, sourceVersionRef, options = {}, samplesPerBatch = 5 }) {
+  // Evidence-inheritance index is available to classification for evidence-less entities.
+  const evidenceIndex = options.evidenceIndex ?? buildEvidenceInheritanceIndex(candidates);
+  const opts = { ...options, evidenceIndex };
   const grouped = new Map();
+
   for (const candidate of candidates) {
     const normalized = normalizeCandidate(candidate);
-    const classification = classifyCandidateForReview(candidate, options);
-    const key = [classification.candidateClass, normalized.candidateType].join(":");
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push({ ...normalized, candidateContentHash: candidateContentHash(candidate), classification });
+    const classification = classifyCandidateForReview(candidate, opts);
+    // Governed review dimensions (req 5): split batches by these facets so review
+    // is homogeneous within a batch and reviewers can approve a coherent slice.
+    const dimensions = {
+      domain: candidateDomain(candidate, normalized),
+      sourceFamily: normalizeSourceFamily(candidate) || "unknown_source",
+      evidenceCompleteness: evidenceCompleteness(normalized),
+      confidenceBand: confidenceBand(normalized.confidence),
+      currentTargetState: normalized.candidateType === "relationship_candidate" ? (normalizeCurrentTargetState(candidate) || "unknown") : "not_applicable",
+      commercialSensitivity: commercialSensitivity(candidate, normalized),
+      relationshipImpact: relationshipImpact(candidate, normalized),
+    };
+    const key = [
+      classification.candidateClass, normalized.candidateType, dimensions.domain, dimensions.sourceFamily,
+      dimensions.evidenceCompleteness, dimensions.confidenceBand, dimensions.currentTargetState,
+      dimensions.commercialSensitivity, dimensions.relationshipImpact,
+    ].join("|");
+    if (!grouped.has(key)) grouped.set(key, { dimensions, rows: [] });
+    grouped.get(key).rows.push({ ...normalized, candidateContentHash: candidateContentHash(candidate), classification });
   }
 
   return [...grouped.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, rows]) => {
-      const [candidateClass, candidateType] = key.split(":");
+    .map(([key, { dimensions, rows }]) => {
+      const [candidateClass, candidateType] = key.split("|");
       const ordered = rows.sort((a, b) => a.candidateRef.localeCompare(b.candidateRef));
       const manifest = ordered.map((row) => ({
         candidateRef: row.candidateRef,
         candidateContentHash: row.candidateContentHash,
         reasons: row.classification.reasons,
       }));
-      const batchContentHash = sha256Value({ tenantKey, candidateClass, candidateType, policyVersion, validationRunRef, sourceVersionRef, manifest });
+      const batchContentHash = sha256Value({ tenantKey, candidateClass, candidateType, policyVersion, validationRunRef, sourceVersionRef, dimensions, manifest });
+      const representativeSamples = ordered.slice(0, Math.max(1, samplesPerBatch)).map((row) => ({
+        candidateRef: row.candidateRef,
+        reasons: row.classification.reasons,
+        confidence: row.confidence,
+        evidenceCount: row.evidenceRefs.length,
+        sourceVersionRef: row.sourceVersionRef,
+        summary: sampleSummary(row),
+      }));
       return {
         tenantKey,
         reviewBatchRef: `review-batch:${tenantKey}:${policyVersion}:${candidateClass}:${candidateType}:${batchContentHash.slice(0, 16)}`,
@@ -317,8 +399,10 @@ export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVI
         policyVersion,
         validationRunRef,
         sourceVersionRef,
+        dimensions,
         candidateCount: ordered.length,
         batchContentHash,
+        representativeSamples,
         candidates: ordered,
       };
     });
@@ -386,14 +470,34 @@ export function validateAcceptedDecision(candidate, decision, options = {}) {
   return blockers;
 }
 
+function bump(obj, key, n) {
+  if (key === undefined || key === null) return;
+  obj[key] = (obj[key] ?? 0) + n;
+}
+
 export function createReviewSummary(batches) {
-  return batches.reduce(
-    (summary, batch) => {
-      summary.totalCandidates += batch.candidateCount;
-      summary.byClass[batch.candidateClass] = (summary.byClass[batch.candidateClass] ?? 0) + batch.candidateCount;
-      summary.byType[batch.candidateType] = (summary.byType[batch.candidateType] ?? 0) + batch.candidateCount;
-      return summary;
-    },
-    { totalCandidates: 0, byClass: {}, byType: {} },
-  );
+  const summary = {
+    totalCandidates: 0,
+    byClass: {},
+    byType: {},
+    byDomain: {},
+    bySourceFamily: {},
+    byEvidenceCompleteness: {},
+    byConfidenceBand: {},
+    byReason: {},
+  };
+  for (const batch of batches) {
+    summary.totalCandidates += batch.candidateCount;
+    bump(summary.byClass, batch.candidateClass, batch.candidateCount);
+    bump(summary.byType, batch.candidateType, batch.candidateCount);
+    const d = batch.dimensions ?? {};
+    bump(summary.byDomain, d.domain, batch.candidateCount);
+    bump(summary.bySourceFamily, d.sourceFamily, batch.candidateCount);
+    bump(summary.byEvidenceCompleteness, d.evidenceCompleteness, batch.candidateCount);
+    bump(summary.byConfidenceBand, d.confidenceBand, batch.candidateCount);
+    for (const candidate of batch.candidates ?? []) {
+      for (const reason of candidate.classification?.reasons ?? []) bump(summary.byReason, reason, 1);
+    }
+  }
+  return summary;
 }
