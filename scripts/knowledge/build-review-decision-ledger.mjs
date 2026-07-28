@@ -90,6 +90,11 @@ function readFixture(file) {
 }
 
 const POSTGRES_AAD_RESOURCE = "https://ossrdbms-aad.database.windows.net";
+const POSTGRES_AAD_TOKEN_ATTEMPTS = 4;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function postgresAadClientId(env = process.env) {
   return (
@@ -109,14 +114,17 @@ async function postgresAadAccessToken(env = process.env) {
   if (!clientId) return "";
 
   let azureIdentityError = null;
-  try {
-    const { ManagedIdentityCredential } = await import("@azure/identity");
-    const credential = new ManagedIdentityCredential(clientId);
-    const token = await credential.getToken(`${POSTGRES_AAD_RESOURCE}/.default`);
-    if (token?.token) return token.token;
-    azureIdentityError = new Error("Azure Identity returned no token");
-  } catch (error) {
-    azureIdentityError = error;
+  for (let attempt = 1; attempt <= POSTGRES_AAD_TOKEN_ATTEMPTS; attempt += 1) {
+    try {
+      const { ManagedIdentityCredential } = await import("@azure/identity");
+      const credential = new ManagedIdentityCredential(clientId);
+      const token = await credential.getToken(`${POSTGRES_AAD_RESOURCE}/.default`);
+      if (token?.token) return token.token;
+      azureIdentityError = new Error("Azure Identity returned no token");
+    } catch (error) {
+      azureIdentityError = error;
+    }
+    if (attempt < POSTGRES_AAD_TOKEN_ATTEMPTS) await sleep(attempt * 1500);
   }
 
   const url = new URL("http://169.254.169.254/metadata/identity/oauth2/token");
@@ -125,11 +133,19 @@ async function postgresAadAccessToken(env = process.env) {
   url.searchParams.set("client_id", clientId);
 
   let response;
-  try {
-    response = await fetch(url, { headers: { Metadata: "true" } });
-  } catch (error) {
+  let fetchError = null;
+  for (let attempt = 1; attempt <= POSTGRES_AAD_TOKEN_ATTEMPTS; attempt += 1) {
+    try {
+      response = await fetch(url, { headers: { Metadata: "true" } });
+      break;
+    } catch (error) {
+      fetchError = error;
+      if (attempt < POSTGRES_AAD_TOKEN_ATTEMPTS) await sleep(attempt * 1500);
+    }
+  }
+  if (!response) {
     const sdkDetail = azureIdentityError?.message ? ` Azure Identity error: ${azureIdentityError.message.slice(0, 240)}.` : "";
-    throw new Error(`Failed to acquire Azure Postgres Entra token from metadata endpoint: ${error.message}.${sdkDetail}`);
+    throw new Error(`Failed to acquire Azure Postgres Entra token from metadata endpoint: ${fetchError?.message || "fetch failed"}.${sdkDetail}`);
   }
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
@@ -141,6 +157,12 @@ async function postgresAadAccessToken(env = process.env) {
   const payload = await response.json();
   if (!payload?.access_token) throw new Error("Azure Postgres Entra token response did not include access_token");
   return payload.access_token;
+}
+
+export async function setTenantContext(client, tenantKey) {
+  requireValue(tenantKey, "tenant context");
+  if (tenantKey === "all" || tenantKey.includes("*")) throw new Error(`Unsafe tenant context: ${tenantKey}`);
+  await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
 }
 
 export async function dbConnectionConfig(env = process.env) {
@@ -170,6 +192,7 @@ async function readCandidatesFromDb(args, env = process.env) {
   const client = new Client(await dbConnectionConfig(env));
   await client.connect();
   try {
+    await setTenantContext(client, args.tenant);
     const entities = await client.query(
       `
           SELECT c.candidate_ref AS "candidateRef",
@@ -769,6 +792,7 @@ async function applyLedgerSql(args, pkg) {
   const client = new Client(await dbConnectionConfig(process.env));
   await client.connect();
   try {
+    await setTenantContext(client, args.tenant);
     await client.query("BEGIN");
     await client.query(pkg.sql);
     await client.query("COMMIT");

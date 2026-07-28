@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
-import { buildDryRunReviewPackage, buildLedgerPackage, dbConnectionConfig, validateDbApplyApproval } from "../build-review-decision-ledger.mjs";
+import { buildDryRunReviewPackage, buildLedgerPackage, dbConnectionConfig, setTenantContext, validateDbApplyApproval } from "../build-review-decision-ledger.mjs";
 import {
   InMemoryKnowledgeExecutionStore,
   KnowledgeProcessError,
@@ -708,6 +708,19 @@ await test("DB connection config accepts injected Azure Postgres Entra token wit
   assert.equal(config.user, "mi-airdn-review-lab-001");
   assert.equal(config.password, "aad-token");
   assert.deepEqual(config.ssl, { rejectUnauthorized: false });
+});
+
+await test("DB tenant context is explicit and rejects wildcard tenants", async () => {
+  const calls = [];
+  const client = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+    },
+  };
+  await setTenantContext(client, "airline-demo-new");
+  assert.deepEqual(calls, [{ sql: "SELECT set_config('app.tenant_key', $1, false)", params: ["airline-demo-new"] }]);
+  await assert.rejects(() => setTenantContext(client, "all"), /Unsafe tenant context/);
+  await assert.rejects(() => setTenantContext(client, "airline-*"), /Unsafe tenant context/);
 });
 
 await test("DB apply approval binding requires the reviewed package hashes to match", () => {
