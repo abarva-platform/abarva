@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   InMemoryKnowledgeExecutionStore,
   KnowledgeProcessError,
+  PostgresKnowledgeExecutionStore,
   checkpointFor,
   createProcessResult,
   runKnowledgeProcess,
@@ -90,6 +91,60 @@ await test("concurrent run lock blocks a second worker for the same scope", asyn
     () => runKnowledgeProcess({ context, handler: DEFAULT_PROCESS_HANDLERS["source-register-v1"], store }),
     (error) => error instanceof KnowledgeProcessError && error.code === "run_lock_busy",
   );
+});
+
+await test("postgres retry updates failed idempotency rows to the current run ref", async () => {
+  const context = baseContext({
+    actorRef: "aca-job:ingest",
+    imageDigest: "sha256:test",
+    canonicalProcess: "knowledge-validate-v1",
+    processName: "airline-demo-new-knowledge-validate-v1",
+    runId: "executor-test-run-retry",
+    idempotencyKey: "same-idempotency-after-failed-run",
+  });
+  const calls = [];
+  const client = {
+    async query(sql, params = []) {
+      calls.push({ sql: String(sql), params });
+      if (String(sql).includes("SELECT run_state, metadata FROM operations.run")) {
+        return { rows: [{ run_state: "failed", metadata: {} }] };
+      }
+      return { rows: [] };
+    },
+  };
+  const store = new PostgresKnowledgeExecutionStore(client);
+  const lock = await store.acquireRunLock(context);
+  assert.equal(lock.replayed, false);
+  const upsert = calls.find((call) => call.sql.includes("ON CONFLICT (tenant_key, idempotency_key)"));
+  assert.ok(upsert?.sql.includes("run_ref=EXCLUDED.run_ref"));
+  assert.ok(upsert?.sql.includes("completed_at=null"));
+});
+
+await test("postgres failure recording rolls back aborted transactions before writing failure state", async () => {
+  const context = baseContext({
+    actorRef: "aca-job:ingest",
+    imageDigest: "sha256:test",
+    canonicalProcess: "knowledge-validate-v1",
+    processName: "airline-demo-new-knowledge-validate-v1",
+    runId: "executor-test-run-failure",
+    idempotencyKey: "failure-recording-after-aborted-transaction",
+  });
+  const calls = [];
+  const client = {
+    async query(sql, params = []) {
+      calls.push({ sql: String(sql), params });
+      return { rows: [] };
+    },
+  };
+  const store = new PostgresKnowledgeExecutionStore(client);
+  store.inTransaction = true;
+  await store.failProcessResult(context, new Error("simulated root error"));
+  assert.equal(calls[0].sql, "ROLLBACK");
+  assert.ok(calls.some((call) => call.sql === "BEGIN"));
+  const failureUpsert = calls.find((call) => call.sql.includes("VALUES ($1,$2,$3,$4,$5,'failed'"));
+  assert.ok(failureUpsert?.sql.includes("ON CONFLICT (tenant_key, idempotency_key)"));
+  assert.ok(failureUpsert?.sql.includes("run_ref=EXCLUDED.run_ref"));
+  assert.equal(store.inTransaction, false);
 });
 
 await test("missing handler is a hard failure, not a dispatch success", async () => {
