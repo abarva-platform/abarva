@@ -345,7 +345,15 @@ export class InMemoryKnowledgeExecutionStore {
     const baseline = await this.activeBaseline(context);
     if (!baseline) return { projectionCount: 0, rowCount: 0, baseline: null };
     const rows = [
-      ...this.knowledgeEntities.map((row) => ({ projectionName: "enterprise_identity_v1", objectRef: row.entityRef, displayName: row.displayName })),
+      { projectionName: "enterprise_brief_v1", objectRef: "enterprise", displayName: "Enterprise brief" },
+      { projectionName: "enterprise_identity_v1", objectRef: "enterprise", displayName: "Enterprise identity" },
+      ...this.knowledgeEntities.map((row) => ({ projectionName: "domain_summary_v1", objectRef: row.entityType ?? "unknown", displayName: row.entityType ?? "Unknown" })),
+      ...this.knowledgeEntities
+        .filter((row) => /application/i.test(row.entityType ?? ""))
+        .map((row) => ({ projectionName: "application_inventory_v1", objectRef: row.entityRef, displayName: row.displayName })),
+      ...this.knowledgeEntities
+        .filter((row) => /vendor/i.test(row.entityType ?? ""))
+        .map((row) => ({ projectionName: "vendor_contract_inventory_v1", objectRef: row.entityRef, displayName: row.displayName })),
       ...this.knowledgeFacts.map((row) => ({ projectionName: "search_document_v1", objectRef: row.candidateRef, displayName: row.factType ?? "fact" })),
       ...this.knowledgeRelationships.map((row) => ({ projectionName: "relationship_edge_v1", objectRef: row.candidateRef, displayName: row.relationshipTypeRef ?? "relationship" })),
     ];
@@ -1511,17 +1519,297 @@ export class PostgresKnowledgeExecutionStore {
 
     await this.client.query(
       `
+        DELETE FROM consumption.enterprise_brief_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.enterprise_identity_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.domain_summary_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.application_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.technology_estate_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.data_product_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.vendor_contract_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.metric_observation_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.evidence_gap_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.search_document_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.relationship_evidence_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+        DELETE FROM consumption.relationship_node_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
+      `,
+      [context.tenantKey, baseline.knowledge_baseline_ref],
+    );
+
+    await this.client.query(
+      `
+        WITH enterprise AS (
+          SELECT entity_ref, entity_type, display_name, coalesce(canonical_payload, '{}'::jsonb) AS canonical_payload,
+            availability_state, accepted_evidence_refs
+          FROM knowledge.entity
+          WHERE tenant_key=$1
+            AND authority_state='accepted'
+          ORDER BY
+            CASE
+              WHEN entity_type ILIKE '%enterprise%' THEN 0
+              WHEN entity_type ILIKE '%organization%' THEN 1
+              WHEN entity_type ILIKE '%company%' THEN 2
+              ELSE 3
+            END,
+            entity_ref
+          LIMIT 1
+        ),
+        domain_rollup AS (
+          SELECT
+            coalesce(nullif(canonical_payload->>'domain',''), entity_type, 'unknown') AS domain_key,
+            count(*)::int AS entity_count,
+            avg(CASE WHEN cardinality(accepted_evidence_refs) > 0 THEN 1 ELSE 0.5 END)::numeric(5,4) AS evidence_coverage
+          FROM knowledge.entity
+          WHERE tenant_key=$1
+            AND authority_state='accepted'
+          GROUP BY coalesce(nullif(canonical_payload->>'domain',''), entity_type, 'unknown')
+        ),
+        gap_rollup AS (
+          SELECT coalesce(domain_ref, 'unknown') AS domain_key, count(*)::int AS open_gap_count
+          FROM governance.evidence_gap
+          WHERE tenant_key=$1
+          GROUP BY coalesce(domain_ref, 'unknown')
+        ),
+        brief AS (
+          SELECT jsonb_build_object(
+            'identity', jsonb_build_object(
+              'organizationId', enterprise.entity_ref,
+              'displayName', enterprise.display_name,
+              'industry', enterprise.canonical_payload->>'industry',
+              'revenue', null,
+              'employees', null,
+              'footprint', coalesce(enterprise.canonical_payload->>'footprint', enterprise.canonical_payload->>'geography'),
+              'footprintState', coalesce(enterprise.availability_state::text, 'available')
+            ),
+            'headlineMetrics', '[]'::jsonb,
+            'interpretation', null,
+            'perspectives', '[]'::jsonb,
+            'benchmarks', '[]'::jsonb,
+            'targets', '[]'::jsonb,
+            'domains', coalesce((
+              SELECT jsonb_agg(jsonb_build_object(
+                'domainKey', d.domain_key,
+                'label', initcap(replace(replace(d.domain_key, '_', ' '), '.', ' ')),
+                'availabilityState', 'available',
+                'evidenceCoverage', d.evidence_coverage,
+                'entityCount', jsonb_build_object(
+                  'metricKey', d.domain_key || '.count',
+                  'label', 'Entities',
+                  'value', d.entity_count,
+                  'unit', 'count',
+                  'period', null,
+                  'availabilityState', 'available',
+                  'semanticModelVersion', null,
+                  'metricQueryHash', null,
+                  'evidenceRefs', '[]'::jsonb
+                ),
+                'openGapCount', coalesce(g.open_gap_count, 0),
+                'summary', null
+              ) ORDER BY d.domain_key)
+              FROM domain_rollup d
+              LEFT JOIN gap_rollup g ON g.domain_key = d.domain_key
+            ), '[]'::jsonb),
+            'topGapRefs', coalesce((
+              SELECT jsonb_agg(gap_ref ORDER BY severity_rank, gap_ref)
+              FROM (
+                SELECT gap_ref,
+                  CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END AS severity_rank
+                FROM governance.evidence_gap
+                WHERE tenant_key=$1
+                ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, gap_ref
+                LIMIT 3
+              ) gaps
+            ), '[]'::jsonb)
+          ) AS payload,
+          enterprise.*
+          FROM enterprise
+        )
+        INSERT INTO consumption.enterprise_brief_v1 (
+          tenant_key, knowledge_baseline_ref, domain_publication_ref,
+          projection_contract_version, as_of_date, authority_state,
+          freshness_state, availability_state, evidence_coverage, content_hash,
+          object_ref, display_name, executive_summary, payload
+        )
+        SELECT $1, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
+          'fresh'::abarva_freshness_state, coalesce(availability_state, 'available'::abarva_availability_state),
+          CASE WHEN cardinality(accepted_evidence_refs) > 0 THEN 1 ELSE 0.5 END,
+          md5(payload::text), 'enterprise', display_name, NULL, payload
+        FROM brief
+      `,
+      [context.tenantKey, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate],
+    );
+
+    await this.client.query(
+      `
         INSERT INTO consumption.enterprise_identity_v1 (
           tenant_key, knowledge_baseline_ref, domain_publication_ref,
           projection_contract_version, as_of_date, authority_state,
           freshness_state, availability_state, evidence_coverage, content_hash,
           object_ref, display_name, executive_summary, payload
         )
-        SELECT tenant_key, $2, $3, $4, $5::date, authority_state, freshness_state,
+        SELECT tenant_key, $2, $3, $4, $5::date, 'published'::abarva_authority_state, 'fresh'::abarva_freshness_state,
           availability_state, CASE WHEN cardinality(accepted_evidence_refs) > 0 THEN 1 ELSE 0.5 END,
-          content_hash, entity_ref, display_name, NULL, canonical_payload
-        FROM knowledge.entity
-        WHERE tenant_key=$1 AND authority_state='accepted'
+          content_hash, entity_ref, display_name, NULL, canonical_payload || jsonb_build_object(
+            'organizationId', entity_ref,
+            'displayName', display_name,
+            'entityType', entity_type,
+            'evidenceRefs', accepted_evidence_refs
+          )
+        FROM (
+          SELECT entity_ref, entity_type, display_name, coalesce(canonical_payload, '{}'::jsonb) AS canonical_payload,
+            availability_state, accepted_evidence_refs, content_hash
+          FROM knowledge.entity
+          WHERE tenant_key=$1 AND authority_state='accepted'
+          ORDER BY
+            CASE
+              WHEN entity_type ILIKE '%enterprise%' THEN 0
+              WHEN entity_type ILIKE '%organization%' THEN 1
+              WHEN entity_type ILIKE '%company%' THEN 2
+              ELSE 3
+            END,
+            entity_ref
+          LIMIT 1
+        ) e
+        ON CONFLICT (tenant_key, knowledge_baseline_ref, object_ref)
+        DO UPDATE SET payload=EXCLUDED.payload, content_hash=EXCLUDED.content_hash
+      `,
+      [context.tenantKey, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate],
+    );
+
+    await this.client.query(
+      `
+        INSERT INTO consumption.domain_summary_v1 (
+          tenant_key, knowledge_baseline_ref, domain_publication_ref,
+          projection_contract_version, as_of_date, authority_state,
+          freshness_state, availability_state, evidence_coverage, content_hash,
+          object_ref, display_name, executive_summary, payload
+        )
+        SELECT $1, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
+          'fresh'::abarva_freshness_state, 'available'::abarva_availability_state,
+          avg(CASE WHEN cardinality(accepted_evidence_refs) > 0 THEN 1 ELSE 0.5 END)::numeric(5,4),
+          md5(domain_key || ':' || count(*)::text),
+          domain_key,
+          initcap(replace(replace(domain_key, '_', ' '), '.', ' ')),
+          NULL,
+          jsonb_build_object(
+            'domainKey', domain_key,
+            'label', initcap(replace(replace(domain_key, '_', ' '), '.', ' ')),
+            'availabilityState', 'available',
+            'evidenceCoverage', avg(CASE WHEN cardinality(accepted_evidence_refs) > 0 THEN 1 ELSE 0.5 END)::numeric(5,4),
+            'entityCount', jsonb_build_object(
+              'metricKey', domain_key || '.count',
+              'label', 'Entities',
+              'value', count(*)::int,
+              'unit', 'count',
+              'period', null,
+              'availabilityState', 'available',
+              'semanticModelVersion', null,
+              'metricQueryHash', null,
+              'evidenceRefs', '[]'::jsonb
+            ),
+            'openGapCount', 0,
+            'summary', null
+          )
+        FROM (
+          SELECT coalesce(nullif(canonical_payload->>'domain',''), entity_type, 'unknown') AS domain_key,
+            accepted_evidence_refs
+          FROM knowledge.entity
+          WHERE tenant_key=$1 AND authority_state='accepted'
+        ) d
+        GROUP BY domain_key
+        ON CONFLICT (tenant_key, knowledge_baseline_ref, object_ref)
+        DO UPDATE SET payload=EXCLUDED.payload, content_hash=EXCLUDED.content_hash
+      `,
+      [context.tenantKey, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate],
+    );
+
+    await this.insertEntityProjection(context, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate, {
+      tableName: "application_inventory_v1",
+      entityTypePattern: "%application%",
+    });
+    await this.insertEntityProjection(context, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate, {
+      tableName: "technology_estate_v1",
+      entityTypePattern: "%platform%",
+    });
+    await this.insertEntityProjection(context, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate, {
+      tableName: "data_product_inventory_v1",
+      entityTypePattern: "%data%",
+    });
+    await this.insertEntityProjection(context, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate, {
+      tableName: "vendor_contract_inventory_v1",
+      entityTypePattern: "%vendor%",
+    });
+
+    await this.client.query(
+      `
+        INSERT INTO consumption.metric_observation_v1 (
+          tenant_key, knowledge_baseline_ref, domain_publication_ref,
+          projection_contract_version, as_of_date, authority_state,
+          freshness_state, availability_state, evidence_coverage, content_hash,
+          observation_ref, metric_ref, entity_ref, period_start, period_end,
+          metric_value, unit, disclosure_mode, payload
+        )
+        SELECT o.tenant_key, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
+          'fresh'::abarva_freshness_state, o.availability_state,
+          CASE WHEN cardinality(o.evidence_refs) > 0 THEN 1 ELSE 0.5 END,
+          o.content_hash, o.observation_ref, o.metric_ref, o.entity_ref,
+          o.period_start, o.period_end,
+          CASE WHEN o.disclosure_mode IN ('withheld', 'not_measured') THEN NULL ELSE o.metric_value END,
+          d.unit, o.disclosure_mode,
+          jsonb_build_object(
+            'metricKey', o.metric_ref,
+            'label', coalesce(d.metric_name, o.metric_ref),
+            'value', CASE WHEN o.disclosure_mode IN ('withheld', 'not_measured') THEN NULL ELSE o.metric_value END,
+            'unit', d.unit,
+            'period', concat_ws('..', o.period_start::text, o.period_end::text),
+            'availabilityState', o.availability_state::text,
+            'semanticModelVersion', null,
+            'metricQueryHash', null,
+            'evidenceRefs', o.evidence_refs,
+            'unavailableReason', CASE WHEN o.disclosure_mode IN ('withheld', 'not_measured') THEN 'Metric value is not available for this baseline.' ELSE NULL END
+          )
+        FROM metrics.metric_observation o
+        LEFT JOIN metrics.metric_definition d
+          ON d.tenant_key = o.tenant_key
+         AND d.metric_ref = o.metric_ref
+        WHERE o.tenant_key=$1
+          AND o.authority_state='accepted'
+        ON CONFLICT (tenant_key, knowledge_baseline_ref, observation_ref)
+        DO UPDATE SET payload=EXCLUDED.payload, content_hash=EXCLUDED.content_hash,
+          metric_value=EXCLUDED.metric_value, disclosure_mode=EXCLUDED.disclosure_mode
+      `,
+      [context.tenantKey, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate],
+    );
+
+    await this.client.query(
+      `
+        INSERT INTO consumption.evidence_gap_v1 (
+          tenant_key, knowledge_baseline_ref, domain_publication_ref,
+          projection_contract_version, as_of_date, authority_state,
+          freshness_state, availability_state, evidence_coverage, content_hash,
+          object_ref, display_name, executive_summary, payload
+        )
+        SELECT tenant_key, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
+          'fresh'::abarva_freshness_state, coalesce(availability_state, 'not_loaded'::abarva_availability_state),
+          0, content_hash, gap_ref,
+          coalesce(missing_evidence_type, 'Missing evidence'),
+          why_it_matters,
+          jsonb_build_object(
+            'id', gap_ref,
+            'contentClass', 'evidence_gap',
+            'availabilityState', coalesce(availability_state::text, 'not_loaded'),
+            'evidenceRefs', '[]'::jsonb,
+            'absenceReason', why_it_matters,
+            'gapId', gap_ref,
+            'severity', coalesce(severity, 'medium'),
+            'domainKey', domain_ref,
+            'title', coalesce(missing_evidence_type, 'Missing evidence'),
+            'businessImpact', coalesce(why_it_matters, 'Missing evidence limits this view.'),
+            'requestedSource', source_request_text,
+            'gapState', coalesce(availability_state::text, 'not_loaded')
+          )
+        FROM governance.evidence_gap
+        WHERE tenant_key=$1
         ON CONFLICT (tenant_key, knowledge_baseline_ref, object_ref)
         DO UPDATE SET payload=EXCLUDED.payload, content_hash=EXCLUDED.content_hash
       `,
@@ -1615,15 +1903,38 @@ export class PostgresKnowledgeExecutionStore {
     const counts = await this.client.query(
       `
         SELECT
+          (SELECT count(*)::int FROM consumption.enterprise_brief_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS brief,
           (SELECT count(*)::int FROM consumption.enterprise_identity_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS identity,
+          (SELECT count(*)::int FROM consumption.domain_summary_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS domains,
+          (SELECT count(*)::int FROM consumption.application_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS applications,
+          (SELECT count(*)::int FROM consumption.technology_estate_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS technology,
+          (SELECT count(*)::int FROM consumption.data_product_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS data_products,
+          (SELECT count(*)::int FROM consumption.vendor_contract_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS vendors,
+          (SELECT count(*)::int FROM consumption.metric_observation_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS metrics,
+          (SELECT count(*)::int FROM consumption.evidence_gap_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS gaps,
           (SELECT count(*)::int FROM consumption.search_document_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS search,
           (SELECT count(*)::int FROM consumption.relationship_node_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS nodes,
-          (SELECT count(*)::int FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS edges
+          (SELECT count(*)::int FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS edges,
+          (SELECT count(*)::int FROM consumption.relationship_evidence_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS edge_evidence
       `,
       [context.tenantKey, baseline.knowledge_baseline_ref],
     );
-    const row = counts.rows[0] ?? { identity: 0, search: 0, nodes: 0, edges: 0 };
-    const rowCount = row.identity + row.search + row.nodes + row.edges;
+    const row = counts.rows[0] ?? {
+      brief: 0,
+      identity: 0,
+      domains: 0,
+      applications: 0,
+      technology: 0,
+      data_products: 0,
+      vendors: 0,
+      metrics: 0,
+      gaps: 0,
+      search: 0,
+      nodes: 0,
+      edges: 0,
+      edge_evidence: 0,
+    };
+    const rowCount = Object.values(row).reduce((sum, count) => sum + Number(count ?? 0), 0);
     await this.client.query(
       `
         INSERT INTO publication.projection_version (
@@ -1653,7 +1964,51 @@ export class PostgresKnowledgeExecutionStore {
       rowCount,
       baseline,
       contentHash: sha256Value(row),
+      counts: row,
     };
+  }
+
+  async insertEntityProjection(context, baselineRef, domainPublicationRef, contractVersion, asOfDate, { tableName, entityTypePattern }) {
+    const allowedTables = new Set([
+      "application_inventory_v1",
+      "technology_estate_v1",
+      "data_product_inventory_v1",
+      "vendor_contract_inventory_v1",
+    ]);
+    if (!allowedTables.has(tableName)) {
+      throw new KnowledgeProcessError("projection_table_not_allowed", `Projection table ${tableName} is not allowlisted.`);
+    }
+    await this.client.query(
+      `
+        INSERT INTO consumption.${tableName} (
+          tenant_key, knowledge_baseline_ref, domain_publication_ref,
+          projection_contract_version, as_of_date, authority_state,
+          freshness_state, availability_state, evidence_coverage, content_hash,
+          object_ref, display_name, executive_summary, payload
+        )
+        SELECT tenant_key, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
+          'fresh'::abarva_freshness_state, availability_state,
+          CASE WHEN cardinality(accepted_evidence_refs) > 0 THEN 1 ELSE 0.5 END,
+          content_hash, entity_ref, display_name, NULL,
+          jsonb_build_object(
+            'entityRef', entity_ref,
+            'entityType', entity_type,
+            'displayName', display_name,
+            'domainKey', coalesce(nullif(canonical_payload->>'domain',''), entity_type),
+            'availabilityState', availability_state::text,
+            'fields', '[]'::jsonb,
+            'evidenceRefs', accepted_evidence_refs,
+            'payload', canonical_payload
+          )
+        FROM knowledge.entity
+        WHERE tenant_key=$1
+          AND authority_state='accepted'
+          AND entity_type ILIKE $6
+        ON CONFLICT (tenant_key, knowledge_baseline_ref, object_ref)
+        DO UPDATE SET payload=EXCLUDED.payload, content_hash=EXCLUDED.content_hash
+      `,
+      [context.tenantKey, baselineRef, domainPublicationRef, contractVersion, asOfDate, entityTypePattern],
+    );
   }
 
   async verifyHomeReadModel(context) {
@@ -1662,7 +2017,7 @@ export class PostgresKnowledgeExecutionStore {
     const result = await this.client.query(
       `
         SELECT
-          (SELECT count(*)::int FROM consumption.enterprise_identity_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS "enterpriseBriefRows",
+          (SELECT count(*)::int FROM consumption.enterprise_brief_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS "enterpriseBriefRows",
           (SELECT count(*)::int FROM consumption.search_document_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS "searchRows",
           (SELECT count(*)::int FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS "relationshipRows"
       `,
