@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
-import { buildDryRunReviewPackage, buildLedgerPackage, validateDbApplyApproval } from "../build-review-decision-ledger.mjs";
+import { buildDryRunReviewPackage, buildLedgerPackage, dbConnectionConfig, validateDbApplyApproval } from "../build-review-decision-ledger.mjs";
 import {
   InMemoryKnowledgeExecutionStore,
   KnowledgeProcessError,
@@ -694,6 +694,20 @@ await test("dry-run review package never proposes accepted decisions without hum
   assert.ok(pkg.exceptionQueues.individual_review_required.some((queue) => queue.candidateCount >= 1));
   assert.equal(pkg.candidateCounts.commercialAndDecisionSensitive >= 1, true);
   assert.equal(pkg.candidateCounts.highImpactRelationships, 1);
+});
+
+await test("DB connection config accepts injected Azure Postgres Entra token without PGPASSWORD", async () => {
+  const config = await dbConnectionConfig({
+    PGHOST: "pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com",
+    PGUSER: "mi-airdn-review-lab-001",
+    PGDATABASE: "abarva_airline_demo_new_knowledge_lab",
+    PGSSLMODE: "require",
+    ABARVA_POSTGRES_AAD_ACCESS_TOKEN: "aad-token",
+  });
+  assert.equal(config.host, "pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com");
+  assert.equal(config.user, "mi-airdn-review-lab-001");
+  assert.equal(config.password, "aad-token");
+  assert.deepEqual(config.ssl, { rejectUnauthorized: false });
 });
 
 await test("DB apply approval binding requires the reviewed package hashes to match", () => {
