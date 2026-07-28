@@ -232,7 +232,12 @@ await test("projection build materializes analytics consumption tables from acce
   ]) {
     assert.ok(source.includes(`consumption.${projection}`), `projection build must mention ${projection}`);
   }
-  assert.ok(source.includes("DELETE FROM consumption.enterprise_brief_v1"), "projection build must clear stale rows before rebuild");
+  assert.ok(source.includes("DELETE FROM consumption.${tableName}"), "projection build must clear stale rows before rebuild");
+  assert.ok(source.includes("projectionCleanupTables"), "projection cleanup must be table allowlist-driven");
+  assert.ok(
+    source.includes("for (const tableName of projectionCleanupTables)"),
+    "projection cleanup must issue one prepared statement per table",
+  );
   assert.ok(source.includes("entity_type ILIKE $6"), "entity projections must be sourced by accepted entity type filters");
   assert.ok(source.includes("WHERE tenant_key=$1 AND authority_state='accepted'"), "projection build must read accepted canonical entities only");
   assert.ok(source.includes("FROM metrics.metric_observation o"), "metric projection must read governed metric observations");
