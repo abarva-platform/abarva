@@ -41,12 +41,14 @@ describe("envelope contract", () => {
   });
 
   it("rejects a missing knowledgeBaselineRef", () => {
-    const { knowledgeBaselineRef: _drop, ...rest } = VALID_META;
+    const rest: Record<string, unknown> = { ...VALID_META };
+    delete rest.knowledgeBaselineRef;
     expect(envelopeMetaSchema.safeParse(rest).success).toBe(false);
   });
 
   it("rejects a missing projectionContractVersion", () => {
-    const { projectionContractVersion: _drop, ...rest } = VALID_META;
+    const rest: Record<string, unknown> = { ...VALID_META };
+    delete rest.projectionContractVersion;
     expect(envelopeMetaSchema.safeParse(rest).success).toBe(false);
   });
 

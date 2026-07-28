@@ -84,8 +84,9 @@ export class ContractFixtureConsumptionProvider
   }
 
   async getEnterpriseBrief(
-    _query: EnterpriseBriefQuery,
+    query: EnterpriseBriefQuery,
   ): Promise<ConsumptionEnvelope<EnterpriseBriefV1>> {
+    void query; // brief is baseline-scoped; query kept for interface parity
     const data = this.suppress ? emptyBrief() : this.pack.brief;
     return buildEnvelope({
       pack: this.pack,

@@ -107,7 +107,7 @@ function EntityDetail({ entityRef, onClose }: { entityRef: string; onClose: () =
         <SectionHeading eyebrow={detail.entity.entityType}>{detail.entity.displayName || entityRef}</SectionHeading>
         <button type="button" className="kv-btn kv-btn-ghost" onClick={onClose}>Close</button>
       </div>
-      <FieldTable entity={detail.entity} fields={detail.fields} />
+      <FieldTable fields={detail.fields} />
       {detail.perspectives.length > 0 ? (
         <div style={{ marginTop: 12 }}>
           {detail.perspectives.map((p) => (
@@ -119,7 +119,7 @@ function EntityDetail({ entityRef, onClose }: { entityRef: string; onClose: () =
   );
 }
 
-function FieldTable({ entity, fields }: { entity: EntitySummaryV1; fields: EntitySummaryV1["fields"] }) {
+function FieldTable({ fields }: { fields: EntitySummaryV1["fields"] }) {
   const runtime = useConsumption();
   return (
     <table className="kv-table">

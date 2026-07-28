@@ -75,7 +75,8 @@ export class HttpConsumptionApiProvider
       if (!res.ok) throw new Error(`consumption API ${path} → HTTP ${res.status}`);
       const json = (await res.json()) as unknown;
       // Validate envelope metadata (data payload validated per-mode at call sites/tests).
-      const { data: _data, ...meta } = json as Record<string, unknown>;
+      const meta = { ...(json as Record<string, unknown>) };
+      delete meta.data;
       const parsed = envelopeMetaSchema.safeParse(meta);
       if (!parsed.success) {
         throw new Error(

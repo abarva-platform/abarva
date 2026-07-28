@@ -58,7 +58,11 @@ function DomainNav({ mode }: { mode: "explore" | "evidence" }) {
   );
   const domains = envelope?.data.domains ?? [];
   const select = (domainKey: string | null) =>
-    setFilters(domainKey ? { ...filters, domain: [domainKey] } : (() => { const { domain: _d, ...rest } = filters; return rest; })());
+    setFilters(
+      domainKey
+        ? { ...filters, domain: [domainKey] }
+        : Object.fromEntries(Object.entries(filters).filter(([k]) => k !== "domain")),
+    );
 
   return (
     <div>

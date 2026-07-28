@@ -80,7 +80,7 @@ export function AvaDock() {
         {!available ? (
           <div className="kv-ava-disabled" role="status">
             aVa reasoning is turned off in this environment. Everything on this page —
-            navigation, filters, relationships, evidence and gaps — still works. Only aVa's
+            navigation, filters, relationships, evidence and gaps — still works. Only aVa
             answers are unavailable.
           </div>
         ) : (

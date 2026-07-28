@@ -26,8 +26,9 @@ import { FIXTURE_SCENARIOS, FIXTURE_TENANT_KEYS } from "../../fixtures";
 const TENANT = "fixture-airline-demo-new";
 
 function metaOf(env: ConsumptionEnvelope<unknown>) {
-  const { data: _d, ...meta } = env;
-  return meta as Record<string, unknown>;
+  const meta: Record<string, unknown> = { ...env };
+  delete meta.data;
+  return meta;
 }
 
 describe("ContractFixtureConsumptionProvider — every scenario is contract-valid", () => {
