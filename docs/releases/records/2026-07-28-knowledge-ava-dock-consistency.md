@@ -107,8 +107,8 @@ Revert the squash commit. No schema, migration, data, or runtime state to unwind
 
 ## Audit Evidence
 
-- PR URL: (to be filled on open)
-- CI run: (to be filled on open)
+- PR URL: https://github.com/abarva-platform/abarva/pull/5712
+- CI run: see checks on PR #5712
 - Test output: `66 passed` (see QA / Validation)
 - Reference mapping: shared renderer `@/components/agent-answer/AgentAnswerRenderer`,
   shared dock contract `@/components/agent/AgentDock` (replicated, not imported).
