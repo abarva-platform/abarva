@@ -54,6 +54,25 @@ end $$;
 -- mi-airdn-read-lab-001 -> airline_demo_new_reader
 -- mi-airdn-evaluator-lab-001 -> airline_demo_new_evaluator
 -- mi-airdn-admin-lab-001 -> airline_demo_new_admin
+do $$
+declare
+  role_map record;
+begin
+  for role_map in
+    select * from (values
+  ('mi-airdn-ingest-lab-001', 'airline_demo_new_ingest'),
+  ('mi-airdn-review-lab-001', 'airline_demo_new_reviewer'),
+  ('mi-airdn-publish-lab-001', 'airline_demo_new_publisher'),
+  ('mi-airdn-read-lab-001', 'airline_demo_new_reader'),
+  ('mi-airdn-evaluator-lab-001', 'airline_demo_new_evaluator'),
+  ('mi-airdn-admin-lab-001', 'airline_demo_new_admin')
+    ) as m(identity_name, role_name)
+  loop
+    if exists (select 1 from pg_roles where rolname = role_map.identity_name) then
+      execute format('grant %I to %I', role_map.role_name, role_map.identity_name);
+    end if;
+  end loop;
+end $$;
 
 grant usage on schema source_registry, evidence, working, operations to airline_demo_new_ingest;
 grant select, insert, update on all tables in schema source_registry, evidence, working, operations to airline_demo_new_ingest;
