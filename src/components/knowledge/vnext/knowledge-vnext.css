@@ -87,21 +87,60 @@
 .kv-center { overflow-y: auto; padding: 24px 28px 64px; min-width: 0; }
 .kv-ava { border-left: 1px solid var(--kv-line); overflow-y: auto; background: var(--kv-card); }
 .kv-ava[data-open="false"] { display: none; }
+/* When aVa is not the side rail, its column collapses (the dock renders fixed). */
+.kv-panes[data-ava-rail="off"] { grid-template-columns: 260px minmax(0, 1fr) 0; }
 
 /* laptop: collapse left rail to a toggle, keep center + aVa */
 @media (max-width: 1280px) {
   .kv-panes { grid-template-columns: 220px minmax(0, 1fr) 300px; }
+  .kv-panes[data-ava-rail="off"] { grid-template-columns: 220px minmax(0, 1fr) 0; }
 }
 @media (max-width: 1024px) {
   .kv-panes { grid-template-columns: minmax(0, 1fr) 300px; }
+  .kv-panes[data-ava-rail="off"] { grid-template-columns: minmax(0, 1fr) 0; }
   .kv-left { position: fixed; inset: 0 auto 0 0; width: 280px; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.12); transform: translateX(-100%); transition: transform 160ms ease; }
   .kv-left[data-open="true"] { transform: translateX(0); }
 }
 /* tablet/mobile: single column; aVa docks to bottom sheet */
 @media (max-width: 900px) {
-  .kv-panes { grid-template-columns: minmax(0, 1fr); }
-  .kv-ava { position: fixed; inset: auto 0 0 0; max-height: 60vh; border-left: none; border-top: 1px solid var(--kv-line); z-index: 25; box-shadow: 0 -2px 12px rgba(0,0,0,0.14); }
+  .kv-panes, .kv-panes[data-ava-rail="off"] { grid-template-columns: minmax(0, 1fr); }
+  .kv-ava[data-mode="side-rail"] { position: fixed; inset: auto 0 0 0; max-height: 60vh; border-left: none; border-top: 1px solid var(--kv-line); z-index: 25; box-shadow: 0 -2px 12px rgba(0,0,0,0.14); }
 }
+
+/* aVa dock — pinned-bottom strip */
+.kv-ava[data-mode="pin-bottom"] {
+  position: fixed; inset: auto 0 0 0; max-height: 55vh; border-left: none;
+  border-top: 1px solid var(--kv-line); z-index: 30; box-shadow: 0 -2px 16px rgba(0,0,0,0.14);
+}
+/* aVa dock — expanded overlay (modal takeover, matches the shared AgentDock) */
+.kv-ava-scrim { position: fixed; inset: 0; background: rgba(10,10,11,0.5); z-index: 40; }
+.kv-ava-overlay {
+  position: fixed; inset: 5vh 5vw; margin: auto; max-width: 1200px; max-height: 900px;
+  background: var(--kv-card); border: 1px solid var(--kv-line); border-radius: 12px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.35); z-index: 41; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.kv-ava-overlay .kv-ava-inner { overflow-y: auto; }
+/* aVa dock — collapsed chip (fixed, bottom-right) */
+.kv-ava-chip {
+  position: fixed; right: 16px; bottom: 16px; z-index: 30; font: inherit; font-size: 13px;
+  padding: 10px 16px; border-radius: 999px; border: 1px solid var(--kv-ink);
+  background: var(--kv-ink); color: var(--kv-paper); cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+}
+/* aVa window controls + composer */
+.kv-ava-modes { display: flex; gap: 4px; }
+.kv-ava-modebtn {
+  font: inherit; font-size: 11px; padding: 4px 8px; border-radius: 7px;
+  border: 1px solid var(--kv-line); background: var(--kv-card); color: var(--kv-ink-soft); cursor: pointer;
+}
+.kv-ava-modebtn[aria-pressed="true"] { background: var(--kv-accent-bg); color: var(--kv-blue); border-color: #cfe0f5; }
+.kv-ava-composer { display: flex; gap: 6px; align-items: flex-end; }
+.kv-ava-composer textarea {
+  flex: 1; font: inherit; font-size: 13px; padding: 8px; border: 1px solid var(--kv-line);
+  border-radius: 8px; resize: none; overflow-y: auto; max-height: 160px; line-height: 1.4;
+}
+.kv-ava-modebtn:focus-visible, .kv-ava-chip:focus-visible, .kv-ava-composer textarea:focus-visible { outline: 3px solid var(--kv-blue); outline-offset: 2px; }
 
 .kv-left-toggle { display: none; }
 @media (max-width: 1024px) { .kv-left-toggle { display: inline-flex; } }

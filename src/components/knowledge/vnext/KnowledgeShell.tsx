@@ -9,7 +9,6 @@
 
 import { DEPTH_LEVELS, KNOWLEDGE_LENSES, KNOWLEDGE_MODES } from "@/lib/knowledge/consumption-contracts";
 import type { DepthLevel, KnowledgeLens, KnowledgeMode } from "@/lib/knowledge/consumption-contracts";
-import { useConsumption } from "@/lib/knowledge/consumption-client";
 import { useShell } from "./state";
 import { LeftExplorer } from "./LeftExplorer";
 import { AvaDock } from "./AvaDock";
@@ -43,8 +42,7 @@ const LENS_LABEL: Record<KnowledgeLens, string> = {
 };
 
 export function KnowledgeShell() {
-  const { mode, setMode, depth, setDepth, lens, setLens, avaOpen, setAvaOpen, leftOpen, setLeftOpen } = useShell();
-  const runtime = useConsumption();
+  const { mode, setMode, depth, setDepth, lens, setLens, avaMode, leftOpen, setLeftOpen } = useShell();
 
   return (
     <div className="kv-root">
@@ -90,15 +88,9 @@ export function KnowledgeShell() {
         </div>
 
         <HandoffPreviewButton />
-
-        {!avaOpen ? (
-          <button type="button" className="kv-btn" onClick={() => setAvaOpen(true)} aria-label="Open aVa companion">
-            Ask aVa{runtime.modelsEnabled ? "" : " (off)"}
-          </button>
-        ) : null}
       </div>
 
-      <div className="kv-panes">
+      <div className="kv-panes" data-ava-rail={avaMode === "side-rail" ? "on" : "off"}>
         <div className="kv-left" data-open={leftOpen}>
           <LeftExplorer />
         </div>

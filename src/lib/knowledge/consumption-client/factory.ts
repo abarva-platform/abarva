@@ -53,9 +53,21 @@ export function createFixtureRuntime(
   }
   const provider = new ContractFixtureConsumptionProvider({ tenantKey, scenario });
   const modelsDisabled = scenarioDisablesModels(scenario);
+  // Give the deterministic provider an in-scope corpus so it can exhibit
+  // evidence-bound tables/charts (it still only uses refs the packet carries).
+  const corpus = {
+    entities: pack.exploreLanding.entities.map((e) => ({
+      entityRef: e.entityRef,
+      displayName: e.displayName,
+      entityType: e.entityType,
+      domainKey: e.domainKey,
+      availabilityState: e.availabilityState,
+      evidenceRefs: e.evidenceRefs,
+    })),
+  };
   const ava: AvaReasoningProvider = modelsDisabled
     ? new NullAvaReasoningProvider()
-    : new DeterministicAvaReasoningProvider();
+    : new DeterministicAvaReasoningProvider(corpus);
   return {
     provider,
     ava,
