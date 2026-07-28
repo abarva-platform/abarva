@@ -89,19 +89,57 @@ function readFixture(file) {
   ];
 }
 
-function dbConnectionConfig(env = process.env) {
+const POSTGRES_AAD_RESOURCE = "https://ossrdbms-aad.database.windows.net";
+
+function postgresAadClientId(env = process.env) {
+  return (
+    env.ABARVA_POSTGRES_AAD_CLIENT_ID ||
+    env.ABARVA_REVIEW_MANAGED_IDENTITY_CLIENT_ID ||
+    env.MANAGED_IDENTITY_CLIENT_ID ||
+    env.AZURE_CLIENT_ID ||
+    ""
+  );
+}
+
+async function postgresAadAccessToken(env = process.env) {
+  const injectedToken = env.ABARVA_POSTGRES_AAD_ACCESS_TOKEN || env.PG_AAD_ACCESS_TOKEN || "";
+  if (injectedToken) return injectedToken;
+
+  const clientId = postgresAadClientId(env);
+  if (!clientId) return "";
+
+  const url = new URL("http://169.254.169.254/metadata/identity/oauth2/token");
+  url.searchParams.set("api-version", "2018-02-01");
+  url.searchParams.set("resource", POSTGRES_AAD_RESOURCE);
+  url.searchParams.set("client_id", clientId);
+
+  const response = await fetch(url, { headers: { Metadata: "true" } });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Failed to acquire Azure Postgres Entra token: HTTP ${response.status}${detail ? ` ${detail.slice(0, 160)}` : ""}`);
+  }
+  const payload = await response.json();
+  if (!payload?.access_token) throw new Error("Azure Postgres Entra token response did not include access_token");
+  return payload.access_token;
+}
+
+export async function dbConnectionConfig(env = process.env) {
   if (env.DATABASE_URL) {
     return { connectionString: env.DATABASE_URL };
   }
-  const missing = ["PGHOST", "PGUSER", "PGDATABASE", "PGPASSWORD"].filter((key) => !env[key]);
+  const password = env.PGPASSWORD || (await postgresAadAccessToken(env));
+  const missing = ["PGHOST", "PGUSER", "PGDATABASE"].filter((key) => !env[key]);
+  if (!password) missing.push("PGPASSWORD or ABARVA_POSTGRES_AAD_CLIENT_ID/AZURE_CLIENT_ID");
   if (missing.length > 0) {
-    throw new Error(`DB-backed review package requires DATABASE_URL or PGHOST/PGUSER/PGDATABASE/PGPASSWORD. Missing: ${missing.join(", ")}`);
+    throw new Error(
+      `DB-backed review package requires DATABASE_URL or PGHOST/PGUSER/PGDATABASE plus PGPASSWORD or managed identity token config. Missing: ${missing.join(", ")}`,
+    );
   }
   return {
     host: env.PGHOST,
     port: env.PGPORT ? Number(env.PGPORT) : 5432,
     user: env.PGUSER,
-    password: env.PGPASSWORD,
+    password,
     database: env.PGDATABASE,
     ssl: env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
   };
@@ -109,7 +147,7 @@ function dbConnectionConfig(env = process.env) {
 
 async function readCandidatesFromDb(args, env = process.env) {
   const { Client } = await import("pg");
-  const client = new Client(dbConnectionConfig(env));
+  const client = new Client(await dbConnectionConfig(env));
   await client.connect();
   try {
     const entities = await client.query(
@@ -708,7 +746,7 @@ async function applyLedgerSql(args, pkg) {
     throw new Error("--mode apply requires ABARVA_REVIEW_LEDGER_APPLY_ACK=APPLY_REVIEW_LEDGER");
   }
   const { Client } = await import("pg");
-  const client = new Client(dbConnectionConfig(process.env));
+  const client = new Client(await dbConnectionConfig(process.env));
   await client.connect();
   try {
     await client.query("BEGIN");
