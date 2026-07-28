@@ -53,6 +53,8 @@ Post-deploy validation also exposed a retry bookkeeping defect: failed idempoten
 - After deploy, governed ACA semantic-validation diagnostics showed the narrowed semantic gate itself returned all zero blockers: 25 parser-visible sources, 25 parsed terminal events, 0 hidden entity markers, 0 hidden fact markers, 0 hidden relationship markers, 0 invalid ids, 0 broken relationships, and 0 silent source skips.
 - A follow-up run/ref diagnostic showed the remaining failure was executor retry bookkeeping: the same idempotency key pointed to a failed 2026-07-27 run ref while the retry attempted to write checkpoints for the 2026-07-28 run ref.
 - `npm run test:knowledge-process-executors` passed locally after adding retry and aborted-transaction failure-recording coverage.
+- After the retry fix was merged and deployed by the repo-owned ACA main lane, governed ACA semantic validation passed on deployed digest `sha256:420b29f3dd36ff0f8865823c3885da8ba162be1bee5b3d6b1f5e741072a4d327`: cross-tenant records 0, broken relationship endpoints 0, hidden-truth references 0, invalid ids 0, silent source skips 0, conflicts 0.
+- The next governed wave, knowledge review/apply, failed safely with `no_explicit_accepted_review_decisions`. A read-only ledger diagnostic confirmed 0 review decisions and queued candidates awaiting explicit review: 99,015 entity candidates, 99,015 fact candidates, and 66,200 relationship candidates.
 
 ## Rollout Plan
 
@@ -78,10 +80,13 @@ Rollback the shared ACA runtime to the previous digest if the job runner regress
 - Semantic validation diagnostic: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/hidden-truth-diagnostic-query-logs-20260727.txt`
 - Post-deploy semantic diagnostic: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/knowledge-validate-sql-diagnostic-20260728-logs.txt`
 - Post-deploy run/ref diagnostic: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/knowledge-validate-runref-diagnostic-20260728-logs.txt`
+- Retry-fix validation pass: `clients/airline-demo-new/21-processing-wave-execution/06-knowledge-validate/knowledge-validate-via-deployed-retryfix-20260728-logs.txt`
+- Review/apply safe failure: `clients/airline-demo-new/21-processing-wave-execution/07-knowledge-review/knowledge-review-via-validate-job-20260728-logs.txt`
+- Review ledger diagnostic: `clients/airline-demo-new/21-processing-wave-execution/07-knowledge-review/knowledge-review-decision-ledger-diagnostic-20260728-logs.txt`
 - Test evidence: `npm run test:knowledge-process-executors`
 
 ## Known Gaps
 
-- The current deployed image has not yet rerun semantic validation with the idempotency retry fix. That rerun is required after this PR deploys.
+- Semantic validation passed on the deployed retry-fix image. Review/apply is now blocked by missing explicit accepted review decisions; publication, baseline activation, projections, Home read model, and reconciliation have not started.
 - The currently deployed Airline jobs required one-shot overrides for identity and database connection settings. This release repairs the IaC template, but a future plan/apply is required before every stage job can run without overrides.
 - Evidence extraction is correct but slow at current corpus volume; it should be optimized after the controlled execution path is proven.
