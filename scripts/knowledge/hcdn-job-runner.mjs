@@ -127,6 +127,8 @@ export function parseArgs(argv = process.argv.slice(2), env = process.env) {
     releaseId: env.ABARVA_RELEASE_ID ?? env.ABARVA_SOURCE_RELEASE_ID ?? "",
     idempotencyKey: env.ABARVA_IDEMPOTENCY_KEY ?? "",
     sourceRunRef: "",
+    validationRunRef: env.ABARVA_VALIDATION_RUN_REF ?? "",
+    reviewPolicyVersion: env.ABARVA_REVIEW_POLICY_VERSION ?? "",
     domain: env.ABARVA_PROCESS_DOMAIN ?? "",
     scope: env.ABARVA_PROCESS_SCOPE ?? "",
     batchSize: env.ABARVA_BATCH_SIZE ?? "",
@@ -174,6 +176,12 @@ export function parseArgs(argv = process.argv.slice(2), env = process.env) {
         break;
       case "--source-run-ref":
         args.sourceRunRef = next();
+        break;
+      case "--validation-run-ref":
+        args.validationRunRef = next();
+        break;
+      case "--review-policy-version":
+        args.reviewPolicyVersion = next();
         break;
       case "--domain":
         args.domain = next();

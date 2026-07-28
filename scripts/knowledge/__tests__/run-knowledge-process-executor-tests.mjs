@@ -10,6 +10,13 @@ import {
   runKnowledgeProcess,
 } from "../processing/executor-framework.mjs";
 import { DEFAULT_PROCESS_HANDLERS, assertTerminalSourceState } from "../processing/process-handlers.mjs";
+import {
+  buildDecisionRowsForBatch,
+  buildReviewBatches,
+  candidateContentHash,
+  classifyCandidateForReview,
+  validateAcceptedDecision,
+} from "../processing/review-decision-policy.mjs";
 import { evaluateSemanticGateRecords } from "../processing/semantic-gates.mjs";
 
 let failures = 0;
@@ -343,14 +350,48 @@ await test("hidden truth validation allows ordinary evaluator notes but blocks r
 });
 
 await test("explicit review decisions promote accepted candidates and projections build from active baseline", async () => {
+  const candidateRows = [
+    {
+      candidateRef: "entcand-1",
+      candidateType: "entity_candidate",
+      sourceVersionRef: "src-apps-v1",
+      entityType: "application",
+      displayName: "Ops Control",
+      payload: { source_native_id: "APP-1" },
+      evidenceRefs: ["ev-app-1"],
+      confidence: 0.91,
+    },
+    {
+      candidateRef: "factcand-1",
+      candidateType: "fact_candidate",
+      sourceVersionRef: "src-apps-v1",
+      subjectCandidateRef: "entcand-1",
+      factType: "application_source_row",
+      factValue: { current: true },
+      evidenceRefs: ["ev-fact-1"],
+      confidence: 0.88,
+    },
+  ];
+  const batches = buildReviewBatches({
+    tenantKey: "airline-demo-new",
+    candidates: candidateRows,
+    policyVersion: "knowledge-review-decision-policy-v1",
+    validationRunRef: "validate-run-1",
+    sourceVersionRef: "src-apps-v1",
+    options: { semanticValidationPassed: true, sourceReleaseFrozen: true, tenantFencePassed: true },
+  });
+  const reviewDecisions = batches.flatMap((batch) =>
+    buildDecisionRowsForBatch({
+      batch,
+      reviewerIdentity: "aca-job:review",
+      decision: "accepted",
+    }),
+  );
   const store = new InMemoryKnowledgeExecutionStore({
-    entityCandidates: [{ candidateRef: "entcand-1", entityType: "application", displayName: "Ops Control", payload: { source_native_id: "APP-1" } }],
+    entityCandidates: [candidateRows[0]],
     resolvedCandidates: [{ candidateRef: "entcand-1", entityRef: "application:ops-control", entityType: "application", displayName: "Ops Control", payload: { source_native_id: "APP-1" } }],
-    factCandidates: [{ candidateRef: "factcand-1", subjectCandidateRef: "entcand-1", factType: "application_source_row", factValue: { current: true } }],
-    reviewDecisions: [
-      { reviewedObjectRef: "entcand-1", reviewState: "accepted" },
-      { reviewedObjectRef: "factcand-1", reviewState: "accepted" },
-    ],
+    factCandidates: [candidateRows[1]],
+    reviewDecisions,
   });
   for (const [canonicalProcess, processName, idempotencyKey] of [
     ["knowledge-review-v1", "airline-demo-new-knowledge-review-v1", "review-accepted-test"],
@@ -361,7 +402,14 @@ await test("explicit review decisions promote accepted candidates and projection
     ["reconciliation-audit-v1", "airline-demo-new-reconciliation-audit-v1", "reconciliation-test"],
   ]) {
     const result = await runKnowledgeProcess({
-      context: baseContext({ canonicalProcess, processName, idempotencyKey, domain: "enterprise" }),
+      context: baseContext({
+        canonicalProcess,
+        processName,
+        idempotencyKey,
+        domain: "enterprise",
+        validationRunRef: "validate-run-1",
+        actorRef: "aca-job:review",
+      }),
       handler: DEFAULT_PROCESS_HANDLERS[canonicalProcess],
       store,
     });
@@ -371,6 +419,149 @@ await test("explicit review decisions promote accepted candidates and projection
   assert.equal(store.baselines.find((row) => row.isActive)?.knowledgeBaselineRef, "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1");
   assert.ok(store.projections.length > 0);
   assert.equal(store.reconciliationLedger.length, 1);
+});
+
+await test("review decision guard blocks stale hashes and unauthorized reviewers", async () => {
+  const candidate = {
+    candidateRef: "factcand-stale",
+    candidateType: "fact_candidate",
+    sourceVersionRef: "src-facts-v1",
+    subjectCandidateRef: "entcand-1",
+    factType: "kpi_snapshot",
+    factValue: { value: "current" },
+    evidenceRefs: ["ev-fact-stale"],
+    confidence: 0.82,
+  };
+  const batch = buildReviewBatches({
+    tenantKey: "airline-demo-new",
+    candidates: [candidate],
+    validationRunRef: "validate-run-1",
+    sourceVersionRef: "src-facts-v1",
+    options: { semanticValidationPassed: true, sourceReleaseFrozen: true, tenantFencePassed: true },
+  })[0];
+  const [decision] = buildDecisionRowsForBatch({ batch, reviewerIdentity: "reviewer-a", decision: "accepted" });
+  const staleStore = new InMemoryKnowledgeExecutionStore({
+    factCandidates: [{ ...candidate, factValue: { value: "changed" } }],
+    reviewDecisions: [decision],
+  });
+  await assert.rejects(
+    () =>
+      staleStore.applyReviewDecisions({
+        validationRunRef: "validate-run-1",
+        env: { ABARVA_REVIEW_AUTHORIZED_REVIEWERS: "reviewer-a" },
+      }),
+    (error) => error instanceof KnowledgeProcessError && error.code === "review_decision_guard_failed",
+  );
+
+  const unauthorizedStore = new InMemoryKnowledgeExecutionStore({
+    factCandidates: [candidate],
+    reviewDecisions: [decision],
+  });
+  await assert.rejects(
+    () =>
+      unauthorizedStore.applyReviewDecisions({
+        validationRunRef: "validate-run-1",
+        env: { ABARVA_REVIEW_AUTHORIZED_REVIEWERS: "reviewer-b" },
+      }),
+    (error) => error instanceof KnowledgeProcessError && error.details.blockers[0].blockers.includes("unauthorized_reviewer"),
+  );
+});
+
+await test("review policy routes model-derived and commercial candidates to individual review", () => {
+  const modelDerived = classifyCandidateForReview({
+    candidateRef: "fact-model",
+    candidateType: "fact_candidate",
+    sourceVersionRef: "src-v1",
+    factType: "strategic_inference",
+    factValue: { generated_model: "claude", statement: "candidate interpretation" },
+    evidenceRefs: ["ev-1"],
+    confidence: 0.9,
+  });
+  assert.equal(modelDerived.candidateClass, "individual_review_required");
+  assert.ok(modelDerived.reasons.includes("model_derived_candidate"));
+
+  const commercial = classifyCandidateForReview({
+    candidateRef: "fact-commercial",
+    candidateType: "fact_candidate",
+    sourceVersionRef: "src-v1",
+    factType: "commercial_term",
+    factValue: { rate_card: "proposal term" },
+    evidenceRefs: ["ev-2"],
+    confidence: 0.9,
+  });
+  assert.equal(commercial.candidateClass, "individual_review_required");
+  assert.ok(commercial.reasons.includes("commercial_or_sourcing_term"));
+});
+
+await test("review batch generation is deterministic and duplicate-safe by candidate hash", () => {
+  const candidates = [
+    { candidateRef: "b", candidateType: "entity_candidate", sourceVersionRef: "src-v1", entityType: "vendor", displayName: "Vendor B", evidenceRefs: ["ev-b"], confidence: 0.9 },
+    { candidateRef: "a", candidateType: "entity_candidate", sourceVersionRef: "src-v1", entityType: "vendor", displayName: "Vendor A", evidenceRefs: ["ev-a"], confidence: 0.9 },
+  ];
+  const left = buildReviewBatches({
+    tenantKey: "airline-demo-new",
+    candidates,
+    validationRunRef: "validate-run-1",
+    sourceVersionRef: "src-v1",
+    options: { semanticValidationPassed: true, sourceReleaseFrozen: true, tenantFencePassed: true },
+  });
+  const right = buildReviewBatches({
+    tenantKey: "airline-demo-new",
+    candidates: [...candidates].reverse(),
+    validationRunRef: "validate-run-1",
+    sourceVersionRef: "src-v1",
+    options: { semanticValidationPassed: true, sourceReleaseFrozen: true, tenantFencePassed: true },
+  });
+  assert.deepEqual(left.map((batch) => batch.reviewBatchRef), right.map((batch) => batch.reviewBatchRef));
+  assert.equal(candidateContentHash(candidates[0]), candidateContentHash({ ...candidates[0] }));
+});
+
+await test("review decision guard blocks candidates outside the approved batch manifest", () => {
+  const approvedCandidate = {
+    candidateRef: "entity-approved",
+    candidateType: "entity_candidate",
+    sourceVersionRef: "src-v1",
+    entityType: "application",
+    displayName: "Approved Application",
+    evidenceRefs: ["ev-approved"],
+    confidence: 0.93,
+  };
+  const outsideCandidate = {
+    candidateRef: "entity-outside",
+    candidateType: "entity_candidate",
+    sourceVersionRef: "src-v1",
+    entityType: "application",
+    displayName: "Outside Application",
+    evidenceRefs: ["ev-outside"],
+    confidence: 0.93,
+  };
+  const [approvedBatch] = buildReviewBatches({
+    tenantKey: "airline-demo-new",
+    candidates: [approvedCandidate],
+    validationRunRef: "validate-run-1",
+    sourceVersionRef: "src-v1",
+    options: { semanticValidationPassed: true, sourceReleaseFrozen: true, tenantFencePassed: true },
+  });
+  const borrowedDecision = {
+    ...buildDecisionRowsForBatch({ batch: approvedBatch, reviewerIdentity: "reviewer-a", decision: "accepted" })[0],
+    candidateRef: outsideCandidate.candidateRef,
+    reviewedObjectRef: outsideCandidate.candidateRef,
+    candidateContentHash: candidateContentHash(outsideCandidate),
+  };
+  const blockers = validateAcceptedDecision(outsideCandidate, borrowedDecision, {
+    authorizedReviewers: ["reviewer-a"],
+    validationRunRef: "validate-run-1",
+    approvedBatchManifests: new Map([
+      [
+        approvedBatch.reviewBatchRef,
+        approvedBatch.candidates.map((candidate) => ({
+          candidateRef: candidate.candidateRef,
+          candidateContentHash: candidate.candidateContentHash,
+        })),
+      ],
+    ]),
+  });
+  assert.ok(blockers.includes("candidate_not_in_approved_batch_manifest"));
 });
 
 if (failures > 0) {

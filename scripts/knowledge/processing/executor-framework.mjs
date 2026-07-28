@@ -2,6 +2,11 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+  candidateContentHash,
+  validateAcceptedDecision,
+} from "./review-decision-policy.mjs";
+
 export const PROCESS_RESULT_SCHEMA_VERSION = "knowledge-process-result/v1";
 
 const RUN_STATES = new Set(["planned", "running", "passed", "failed", "cancelled", "blocked"]);
@@ -67,6 +72,8 @@ export function buildExecutionContext({ args, env, manifest, manifestPath, valid
     identityPurpose: validation.contract.identityPurpose,
     databaseRole: validation.contract.databaseRole,
     sourceRunRef: args.sourceRunRef || env.ABARVA_SOURCE_RUN_REF || null,
+    validationRunRef: args.validationRunRef || env.ABARVA_VALIDATION_RUN_REF || null,
+    reviewPolicyVersion: args.reviewPolicyVersion || env.ABARVA_REVIEW_POLICY_VERSION || null,
     scope: args.scope || env.ABARVA_PROCESS_SCOPE || null,
     domain: args.domain || env.ABARVA_PROCESS_DOMAIN || null,
     batchSize: Number(args.batchSize || env.ABARVA_BATCH_SIZE || 500),
@@ -246,12 +253,35 @@ export class InMemoryKnowledgeExecutionStore {
     return result;
   }
 
-  async applyReviewDecisions() {
-    const accepted = new Set(
-      this.reviewDecisions
-        .filter((row) => ["accepted", "accept", "accept_with_warning"].includes(row.reviewState ?? row.review_state))
-        .map((row) => row.reviewedObjectRef ?? row.reviewed_object_ref),
-    );
+  async applyReviewDecisions(context = {}) {
+    const candidateByRef = new Map([
+      ...this.entityCandidates.map((row) => [row.candidateRef ?? row.candidate_ref, { ...row, candidateType: "entity_candidate" }]),
+      ...this.factCandidates.map((row) => [row.candidateRef ?? row.candidate_ref, { ...row, candidateType: "fact_candidate" }]),
+      ...this.relationshipCandidates.map((row) => [row.candidateRef ?? row.candidate_ref, { ...row, candidateType: "relationship_candidate" }]),
+    ]);
+    const authorizedReviewers = (context.env?.ABARVA_REVIEW_AUTHORIZED_REVIEWERS || context.actorRef || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const acceptedRows = this.reviewDecisions.filter((row) => ["accepted", "accept", "accept_with_warning"].includes(row.reviewState ?? row.review_state));
+    const blockers = [];
+    const accepted = new Set();
+    for (const decision of acceptedRows) {
+      const candidateRef = decision.candidateRef ?? decision.candidate_ref ?? decision.reviewedObjectRef ?? decision.reviewed_object_ref;
+      const candidate = candidateByRef.get(candidateRef);
+      const decisionBlockers = validateAcceptedDecision(candidate, decision, {
+        authorizedReviewers,
+        validationRunRef: context.validationRunRef,
+      });
+      if (decisionBlockers.length > 0) {
+        blockers.push({ candidateRef, blockers: decisionBlockers });
+      } else {
+        accepted.add(candidateRef);
+      }
+    }
+    if (blockers.length > 0) {
+      throw new KnowledgeProcessError("review_decision_guard_failed", "Accepted review decisions failed governance guard.", { blockers });
+    }
     if (accepted.size === 0) {
       return { applied: 0, accepted: 0, rejected: 0, knowledgeEntities: 0, knowledgeFacts: 0, knowledgeRelationships: 0 };
     }
@@ -655,14 +685,27 @@ export class PostgresKnowledgeExecutionStore {
         `
           INSERT INTO working.entity_candidate (
             tenant_key, candidate_ref, source_version_ref, entity_type,
-            display_name, candidate_payload, confidence, review_state, created_run_ref
+            display_name, candidate_payload, evidence_refs, candidate_content_hash, confidence, review_state, created_run_ref
           )
-          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,'not_reviewed',$8)
+          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'not_reviewed',$10)
           ON CONFLICT (tenant_key, candidate_ref)
           DO UPDATE SET candidate_payload=EXCLUDED.candidate_payload,
+            evidence_refs=EXCLUDED.evidence_refs,
+            candidate_content_hash=EXCLUDED.candidate_content_hash,
             confidence=EXCLUDED.confidence, review_state='not_reviewed'
         `,
-        [context.tenantKey, row.candidateRef, row.sourceVersionRef, row.entityType, row.displayName, JSON.stringify(row.candidatePayload ?? {}), row.confidence ?? 0.65, context.runId],
+        [
+          context.tenantKey,
+          row.candidateRef,
+          row.sourceVersionRef,
+          row.entityType,
+          row.displayName,
+          JSON.stringify(row.candidatePayload ?? {}),
+          row.evidenceRefs ?? [],
+          candidateContentHash({ ...row, candidateType: "entity_candidate" }),
+          row.confidence ?? 0.65,
+          context.runId,
+        ],
       );
     }
     for (const row of factCandidates) {
@@ -670,15 +713,28 @@ export class PostgresKnowledgeExecutionStore {
         `
           INSERT INTO working.fact_candidate (
             tenant_key, candidate_ref, source_version_ref, subject_candidate_ref,
-            fact_type, fact_value, evidence_refs, confidence, review_state, created_run_ref
+            fact_type, fact_value, evidence_refs, candidate_content_hash, confidence, review_state, created_run_ref
           )
-          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,'not_reviewed',$9)
+          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'not_reviewed',$10)
           ON CONFLICT (tenant_key, candidate_ref)
           DO UPDATE SET fact_value=EXCLUDED.fact_value,
-            evidence_refs=EXCLUDED.evidence_refs, confidence=EXCLUDED.confidence,
+            evidence_refs=EXCLUDED.evidence_refs,
+            candidate_content_hash=EXCLUDED.candidate_content_hash,
+            confidence=EXCLUDED.confidence,
             review_state='not_reviewed'
         `,
-        [context.tenantKey, row.candidateRef, row.sourceVersionRef, row.subjectCandidateRef ?? null, row.factType, JSON.stringify(row.factValue ?? {}), row.evidenceRefs ?? [], row.confidence ?? 0.65, context.runId],
+        [
+          context.tenantKey,
+          row.candidateRef,
+          row.sourceVersionRef,
+          row.subjectCandidateRef ?? null,
+          row.factType,
+          JSON.stringify(row.factValue ?? {}),
+          row.evidenceRefs ?? [],
+          candidateContentHash({ ...row, candidateType: "fact_candidate" }),
+          row.confidence ?? 0.65,
+          context.runId,
+        ],
       );
     }
     for (const row of relationshipCandidates) {
@@ -687,12 +743,13 @@ export class PostgresKnowledgeExecutionStore {
           INSERT INTO working.relationship_candidate (
             tenant_key, candidate_ref, source_version_ref, from_candidate_ref,
             to_candidate_ref, relationship_type_ref, evidence_refs,
-            current_target_state, confidence, review_state, created_run_ref
+            current_target_state, candidate_content_hash, confidence, review_state, created_run_ref
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_reviewed',$10)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'not_reviewed',$11)
           ON CONFLICT (tenant_key, candidate_ref)
           DO UPDATE SET evidence_refs=EXCLUDED.evidence_refs,
             current_target_state=EXCLUDED.current_target_state,
+            candidate_content_hash=EXCLUDED.candidate_content_hash,
             confidence=EXCLUDED.confidence, review_state='not_reviewed'
         `,
         [
@@ -704,6 +761,7 @@ export class PostgresKnowledgeExecutionStore {
           row.relationshipTypeRef,
           row.evidenceRefs ?? [],
           row.currentTargetState ?? "unknown",
+          candidateContentHash({ ...row, candidateType: "relationship_candidate" }),
           row.confidence ?? 0.65,
           context.runId,
         ],
@@ -879,6 +937,143 @@ export class PostgresKnowledgeExecutionStore {
     if (accepted === 0) {
       return { applied: 0, accepted: 0, rejected: decisionSummary.rows[0]?.rejected ?? 0, knowledgeEntities: 0, knowledgeFacts: 0, knowledgeRelationships: 0 };
     }
+    const authorizedReviewers = (context.env?.ABARVA_REVIEW_AUTHORIZED_REVIEWERS || context.actorRef || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const guard = await this.client.query(
+      `
+        WITH accepted AS (
+          SELECT *
+          FROM governance.review_decision
+          WHERE tenant_key=$1
+            AND review_state='accepted'
+        ),
+        candidate_inventory AS (
+          SELECT tenant_key, 'entity_candidate' AS candidate_type, candidate_ref,
+            candidate_content_hash, source_version_ref, evidence_refs AS candidate_evidence_refs
+          FROM working.entity_candidate
+          WHERE tenant_key=$1
+          UNION ALL
+          SELECT tenant_key, 'fact_candidate' AS candidate_type, candidate_ref,
+            candidate_content_hash, source_version_ref, evidence_refs AS candidate_evidence_refs
+          FROM working.fact_candidate
+          WHERE tenant_key=$1
+          UNION ALL
+          SELECT tenant_key, 'relationship_candidate' AS candidate_type, candidate_ref,
+            candidate_content_hash, source_version_ref, evidence_refs AS candidate_evidence_refs
+          FROM working.relationship_candidate
+          WHERE tenant_key=$1
+        ),
+        joined AS (
+          SELECT d.*, c.candidate_content_hash AS current_candidate_content_hash,
+            c.source_version_ref AS current_source_version_ref,
+            c.candidate_evidence_refs,
+            p.policy_status,
+            b.batch_state,
+            b.candidate_hash_manifest,
+            a.approval_ref
+          FROM accepted d
+          LEFT JOIN candidate_inventory c
+            ON c.tenant_key=d.tenant_key
+           AND c.candidate_type=d.candidate_type
+           AND c.candidate_ref=d.candidate_ref
+          LEFT JOIN governance.review_policy p
+            ON p.policy_version=d.policy_version
+          LEFT JOIN governance.review_batch b
+            ON b.tenant_key=d.tenant_key
+           AND b.review_batch_ref=d.review_batch_ref
+          LEFT JOIN governance.review_batch_approval a
+            ON a.tenant_key=d.tenant_key
+           AND a.review_batch_ref=d.review_batch_ref
+           AND a.policy_version=d.policy_version
+           AND a.validation_run_ref=d.validation_run_ref
+           AND a.batch_content_hash=b.batch_content_hash
+        ),
+        blockers AS (
+          SELECT review_ref, 'missing_governed_decision_metadata' AS blocker_code
+          FROM joined
+          WHERE candidate_type IS NULL
+             OR candidate_ref IS NULL
+             OR candidate_content_hash IS NULL
+             OR decision IS DISTINCT FROM 'accepted'
+             OR decision_basis IS NULL
+             OR policy_version IS NULL
+             OR review_batch_ref IS NULL
+             OR reviewer_identity IS NULL
+             OR validation_run_ref IS NULL
+             OR source_version_ref IS NULL
+          UNION ALL
+          SELECT review_ref, 'missing_candidate'
+          FROM joined
+          WHERE current_candidate_content_hash IS NULL
+          UNION ALL
+          SELECT review_ref, 'stale_candidate_hash'
+          FROM joined
+          WHERE current_candidate_content_hash IS NOT NULL
+            AND candidate_content_hash IS DISTINCT FROM current_candidate_content_hash
+          UNION ALL
+          SELECT review_ref, 'source_version_mismatch'
+          FROM joined
+          WHERE current_source_version_ref IS NOT NULL
+            AND source_version_ref IS DISTINCT FROM current_source_version_ref
+          UNION ALL
+          SELECT review_ref, 'missing_evidence_lineage'
+          FROM joined
+          WHERE coalesce(array_length(evidence_refs, 1), 0) = 0
+            AND coalesce(array_length(candidate_evidence_refs, 1), 0) = 0
+          UNION ALL
+          SELECT review_ref, 'unauthorized_reviewer'
+          FROM joined
+          WHERE array_length($2::text[], 1) IS NOT NULL
+            AND NOT (reviewer_identity = ANY($2::text[]))
+          UNION ALL
+          SELECT review_ref, 'validation_run_mismatch'
+          FROM joined
+          WHERE $3::text IS NOT NULL
+            AND validation_run_ref IS DISTINCT FROM $3::text
+          UNION ALL
+          SELECT review_ref, 'policy_version_mismatch'
+          FROM joined
+          WHERE $4::text IS NOT NULL
+            AND policy_version IS DISTINCT FROM $4::text
+          UNION ALL
+          SELECT review_ref, 'unapproved_policy_version'
+          FROM joined
+          WHERE policy_status NOT IN ('approved', 'active')
+             OR policy_status IS NULL
+          UNION ALL
+          SELECT review_ref, 'unapproved_review_batch'
+          FROM joined
+          WHERE batch_state NOT IN ('approved', 'applied')
+             OR batch_state IS NULL
+             OR approval_ref IS NULL
+          UNION ALL
+          SELECT review_ref, 'candidate_not_in_approved_batch_manifest'
+          FROM joined
+          WHERE batch_state IN ('approved', 'applied')
+            AND approval_ref IS NOT NULL
+            AND NOT EXISTS (
+              SELECT 1
+              FROM jsonb_array_elements(coalesce(candidate_hash_manifest, '[]'::jsonb)) AS manifest_item
+              WHERE manifest_item->>'candidate_ref' = candidate_ref
+                AND manifest_item->>'candidate_content_hash' = candidate_content_hash
+            )
+        )
+        SELECT blocker_code AS "blockerCode",
+          count(*)::int AS count,
+          (array_agg(review_ref ORDER BY review_ref))[1:12] AS "sampleReviewRefs"
+        FROM blockers
+        GROUP BY blocker_code
+        ORDER BY blocker_code
+      `,
+      [context.tenantKey, authorizedReviewers, context.validationRunRef ?? null, context.reviewPolicyVersion ?? null],
+    );
+    if (guard.rows.length > 0) {
+      throw new KnowledgeProcessError("review_decision_guard_failed", "Accepted review decisions failed governance guard.", {
+        blockers: guard.rows,
+      });
+    }
 
     await this.client.query(
       `
@@ -901,7 +1096,10 @@ export class PostgresKnowledgeExecutionStore {
         FROM working.entity_candidate c
         JOIN governance.review_decision d
           ON d.tenant_key = c.tenant_key
-         AND d.reviewed_object_ref = c.candidate_ref
+         AND d.candidate_type = 'entity_candidate'
+         AND d.candidate_ref = c.candidate_ref
+         AND d.candidate_content_hash = c.candidate_content_hash
+         AND d.decision = 'accepted'
          AND d.review_state = 'accepted'
         WHERE c.tenant_key=$1
         ON CONFLICT (tenant_key, entity_ref)
@@ -931,7 +1129,10 @@ export class PostgresKnowledgeExecutionStore {
         FROM working.fact_candidate f
         JOIN governance.review_decision d
           ON d.tenant_key = f.tenant_key
-         AND d.reviewed_object_ref = f.candidate_ref
+         AND d.candidate_type = 'fact_candidate'
+         AND d.candidate_ref = f.candidate_ref
+         AND d.candidate_content_hash = f.candidate_content_hash
+         AND d.decision = 'accepted'
          AND d.review_state = 'accepted'
         JOIN working.entity_candidate e
           ON e.tenant_key = f.tenant_key
@@ -978,7 +1179,10 @@ export class PostgresKnowledgeExecutionStore {
         FROM working.relationship_candidate r
         JOIN governance.review_decision d
           ON d.tenant_key = r.tenant_key
-         AND d.reviewed_object_ref = r.candidate_ref
+         AND d.candidate_type = 'relationship_candidate'
+         AND d.candidate_ref = r.candidate_ref
+         AND d.candidate_content_hash = r.candidate_content_hash
+         AND d.decision = 'accepted'
          AND d.review_state = 'accepted'
         JOIN working.entity_candidate f
           ON f.tenant_key = r.tenant_key

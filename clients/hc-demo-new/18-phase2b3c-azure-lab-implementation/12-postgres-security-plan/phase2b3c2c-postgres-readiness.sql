@@ -107,6 +107,8 @@ begin
   ('metrics', 'metric_definition', 'hcdn_metrics_metric_definition_tenant_policy'),
   ('metrics', 'metric_observation', 'hcdn_metrics_metric_observation_tenant_policy'),
   ('metrics', 'metric_target', 'hcdn_metrics_metric_target_tenant_policy'),
+  ('governance', 'review_batch', 'hcdn_governance_review_batch_tenant_policy'),
+  ('governance', 'review_batch_approval', 'hcdn_governance_review_batch_approval_tenant_policy'),
   ('governance', 'review_decision', 'hcdn_governance_review_decision_tenant_policy'),
   ('governance', 'authority_transition', 'hcdn_governance_authority_transition_tenant_policy'),
   ('governance', 'knowledge_gap', 'hcdn_governance_knowledge_gap_tenant_policy'),
