@@ -784,6 +784,8 @@ function emitProofBundle(outDir) {
   process.stdout.write("\n__SEMANTIC2_PROOF_TGZ_END__\n");
 }
 
+const LEDGER_DECISION_SQL_CHUNK_SIZE = 250;
+
 async function applyLedgerSql(args, pkg) {
   if (process.env.ABARVA_REVIEW_LEDGER_APPLY_ACK !== "APPLY_REVIEW_LEDGER") {
     throw new Error("--mode apply requires ABARVA_REVIEW_LEDGER_APPLY_ACK=APPLY_REVIEW_LEDGER");
@@ -794,7 +796,20 @@ async function applyLedgerSql(args, pkg) {
   try {
     await setTenantContext(client, args.tenant);
     await client.query("BEGIN");
-    await client.query(pkg.sql);
+    await client.query(insertSqlForPolicy(pkg.policyRecord));
+    for (const batch of pkg.batches) {
+      await client.query(insertSqlForBatch(batch));
+    }
+    for (const batch of pkg.batches.filter((batch) => batch.approved)) {
+      await client.query(insertSqlForApproval(batch, args.reviewer));
+    }
+    for (let i = 0; i < pkg.decisionRows.length; i += LEDGER_DECISION_SQL_CHUNK_SIZE) {
+      const chunkSql = pkg.decisionRows
+        .slice(i, i + LEDGER_DECISION_SQL_CHUNK_SIZE)
+        .map(insertSqlForDecision)
+        .join("\n\n");
+      if (chunkSql) await client.query(chunkSql);
+    }
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -922,10 +937,7 @@ export function buildLedgerPackage(args, candidates) {
       decisionBasis: batch.approved ? `${batch.candidateClass}_approved` : `${batch.candidateClass}_queued`,
     }),
   );
-  const approvalSql = annotatedBatches
-    .filter((batch) => batch.approved)
-    .map((batch) => insertSqlForApproval(batch, args.reviewer));
-  const pkgForPolicy = {
+  const policyRecord = {
     schemaVersion: "review-decision-ledger-package/v1",
     policyVersion: args.policyVersion,
     reviewerIdentity: args.reviewer,
@@ -941,12 +953,7 @@ export function buildLedgerPackage(args, candidates) {
     summary: createReviewSummary(annotatedBatches),
     batches: annotatedBatches,
     decisionRows,
-    sql: [
-      insertSqlForPolicy(pkgForPolicy),
-      ...annotatedBatches.map(insertSqlForBatch),
-      ...approvalSql,
-      ...decisionRows.map(insertSqlForDecision),
-    ].join("\n\n"),
+    policyRecord,
   };
 }
 
