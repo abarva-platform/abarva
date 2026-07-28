@@ -494,6 +494,76 @@ await test("review policy routes model-derived and commercial candidates to indi
   assert.ok(commercial.reasons.includes("commercial_or_sourcing_term"));
 });
 
+await test("review policy batches deterministic source records without weakening sensitive review gates", () => {
+  const directEntity = classifyCandidateForReview({
+    candidateRef: "entity-source-row",
+    candidateType: "entity_candidate",
+    sourceVersionRef: "src-app-inventory-v1",
+    entityType: "application_platform",
+    displayName: "Crew Scheduling",
+    sourceFamily: "parser_visible_source_sample",
+    evidenceRefs: [],
+    confidence: 0.68,
+  });
+  assert.equal(directEntity.candidateClass, "batch_review_required");
+  assert.ok(directEntity.reasons.includes("deterministic_source_record_batch_review"));
+
+  const directFact = classifyCandidateForReview({
+    candidateRef: "fact-source-row",
+    candidateType: "fact_candidate",
+    sourceVersionRef: "src-app-inventory-v1",
+    subjectCandidateRef: "entity-source-row",
+    factType: "application_platform_source_row",
+    factValue: { application_id: "APP-1", business_owner: "Operations", lifecycle: "active" },
+    sourceFamily: "parser_visible_source_sample",
+    evidenceRefs: ["ev-app-1"],
+    confidence: 0.68,
+  });
+  assert.equal(directFact.candidateClass, "auto_accept_eligible");
+  assert.ok(directFact.reasons.includes("deterministic_high_confidence_evidence_backed"));
+
+  const kpiFact = classifyCandidateForReview({
+    candidateRef: "fact-kpi-row",
+    candidateType: "fact_candidate",
+    sourceVersionRef: "src-kpi-v1",
+    subjectCandidateRef: "entity-source-row",
+    factType: "kpi_source_row",
+    factValue: { metric_name: "On-time departure", target_value: "withheld" },
+    sourceFamily: "parser_visible_source_sample",
+    evidenceRefs: ["ev-kpi-1"],
+    confidence: 0.76,
+  });
+  assert.equal(kpiFact.candidateClass, "individual_review_required");
+  assert.ok(kpiFact.reasons.includes("kpi_or_target_assertion"));
+
+  const neutralRelationship = classifyCandidateForReview({
+    candidateRef: "rel-neutral",
+    candidateType: "relationship_candidate",
+    sourceVersionRef: "src-rel-v1",
+    fromCandidateRef: "entity-source-row",
+    toCandidateRef: "entity-data-product",
+    relationshipTypeRef: "integrates_with",
+    currentTargetState: "current",
+    evidenceRefs: ["ev-rel-1"],
+    confidence: 0.72,
+  });
+  assert.equal(neutralRelationship.candidateClass, "batch_review_required");
+
+  const targetRelationship = classifyCandidateForReview({
+    candidateRef: "rel-target",
+    candidateType: "relationship_candidate",
+    sourceVersionRef: "src-rel-v1",
+    fromCandidateRef: "entity-source-row",
+    toCandidateRef: "entity-program",
+    relationshipTypeRef: "integrates_with",
+    currentTargetState: "target",
+    evidenceRefs: ["ev-rel-2"],
+    confidence: 0.74,
+  });
+  assert.equal(targetRelationship.candidateClass, "individual_review_required");
+  assert.ok(targetRelationship.reasons.includes("target_state_claim"));
+});
+
 await test("review batch generation is deterministic and duplicate-safe by candidate hash", () => {
   const candidates = [
     { candidateRef: "b", candidateType: "entity_candidate", sourceVersionRef: "src-v1", entityType: "vendor", displayName: "Vendor B", evidenceRefs: ["ev-b"], confidence: 0.9 },
