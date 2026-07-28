@@ -12,8 +12,28 @@ import type { EntityDetailV1, EntitySummaryV1 } from "@/lib/knowledge/consumptio
 import { useShell } from "../state";
 import { AvailabilityPill, Card, EvidenceButton, SectionHeading } from "../primitives";
 import { ErrorBlock, LoadingBlock, ProofFooter, useEnvelope, WarningBanners } from "../mode-helpers";
+import { OperationsVendorLens } from "../operations/OperationsVendorLens";
+
+type ExplorePerspective = "inventory" | "operations";
 
 export function ExploreMode() {
+  const [perspective, setPerspective] = useState<ExplorePerspective>("inventory");
+  return (
+    <div>
+      <div className="kv-perspective-switch" role="tablist" aria-label="Explore perspective">
+        <button type="button" role="tab" aria-selected={perspective === "inventory"} className="kv-mode-btn" onClick={() => setPerspective("inventory")}>
+          Inventory
+        </button>
+        <button type="button" role="tab" aria-selected={perspective === "operations"} className="kv-mode-btn" onClick={() => setPerspective("operations")}>
+          Operations &amp; Vendor Intelligence
+        </button>
+      </div>
+      {perspective === "inventory" ? <InventoryPerspective /> : <OperationsVendorLens />}
+    </div>
+  );
+}
+
+function InventoryPerspective() {
   const runtime = useConsumption();
   const { depth, lens, filters, setAvaContext } = useShell();
   const [search, setSearch] = useState("");

@@ -167,12 +167,15 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
         field("owner", "Owner", "Flight Operations", "available", ["ev-cmdb-export"]),
         field("hosting", "Hosting", "on_prem", "available", ["ev-cmdb-export"]),
         field("criticality", "Criticality", "tier_1", "available"),
+        field("capability", "Operational capability", "crew_operations", "available", ["ev-cmdb-export"]),
         field("annual_cost", "Annual cost", null, "withheld", []),
       ], { evidenceRefs: ["ev-cmdb-export"] }),
       entity("app-dispatch", "application", "Dispatch & Load Planning", "technology", [
         field("owner", "Owner", "Flight Operations", "available"),
         field("hosting", "Hosting", "private_cloud", "available"),
         field("criticality", "Criticality", "tier_1", "available"),
+        field("capability", "Operational capability", "flight_operations", "available"),
+        field("vendor", "Vendor", "vendor-opsuite", "available", ["ev-vendor-scorecard"]),
         field("annual_cost", "Annual cost", 14.2, "available", ["ev-finance-ledger"]),
       ]),
       entity("app-loyalty", "application", "Loyalty Platform", "technology", [
@@ -181,11 +184,100 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
         field("criticality", "Criticality", "tier_2", "available"),
         field("annual_cost", "Annual cost", 8.7, "available"),
       ]),
+      // --- capability-tagged applications spanning the operations taxonomy ---
+      entity("app-ops-control", "application", "IROPS Control Desk", "technology", [
+        field("owner", "Owner", "Operations Control", "available"),
+        field("hosting", "Hosting", "private_cloud", "available"),
+        field("criticality", "Criticality", "tier_1", "available"),
+        field("capability", "Operational capability", "irops", "available"),
+        field("vendor", "Vendor", "vendor-opsuite", "available", ["ev-vendor-scorecard"]),
+      ], { evidenceRefs: ["ev-cmdb-export"] }),
+      entity("app-data-hub", "application", "Operations Data Hub", "technology", [
+        field("owner", "Owner", "Data & Integration", "available"),
+        field("hosting", "Hosting", "private_cloud", "available"),
+        field("criticality", "Criticality", "tier_1", "available"),
+        field("capability", "Operational capability", "data_integration", "available"),
+        field("vendor", "Vendor", "vendor-opsuite", "available", ["ev-vendor-scorecard"]),
+      ]),
+      entity("app-maint-records", "application", "Maintenance & Engineering Records", "technology", [
+        field("owner", "Owner", "Engineering", "available"),
+        field("hosting", "Hosting", "on_prem", "available"),
+        field("criticality", "Criticality", "tier_1", "available"),
+        field("capability", "Operational capability", "maintenance", "available"),
+        field("vendor", "Vendor", "vendor-maintsys", "available"),
+      ]),
+      entity("app-station-mgmt", "application", "Station Operations Manager", "technology", [
+        field("owner", "Owner", "Airport Operations", "available"),
+        field("hosting", "Hosting", "saas", "available"),
+        field("criticality", "Criticality", "tier_2", "available"),
+        field("capability", "Operational capability", "airport_operations", "available"),
+        field("vendor", "Vendor", "vendor-station", "available"),
+      ]),
+      entity("app-rebooking", "application", "Customer Rebooking Engine", "technology", [
+        field("owner", "Owner", "Customer Care", "available"),
+        field("hosting", "Hosting", "saas", "available"),
+        field("criticality", "Criticality", "tier_1", "available"),
+        field("capability", "Operational capability", "customer_recovery", "available"),
+        field("vendor", "Vendor", "vendor-gds", "available"),
+      ]),
+      // --- vendors (incident/SLA carried as governed fields; some not measured) ---
       entity("vendor-gds", "vendor", "Global Distribution Vendor", "vendors", [
         field("category", "Category", "Distribution", "available"),
-        field("renewal", "Renewal date", null, "not_loaded", []),
         field("spend", "Annual spend", 22.5, "available", ["ev-finance-ledger"]),
+        field("sla_breaches", "SLA breaches (12mo)", null, "not_measured", []),
+      ], { evidenceRefs: ["ev-finance-ledger"] }),
+      entity("vendor-opsuite", "vendor", "Operations Suite Vendor", "vendors", [
+        field("category", "Category", "Operations platform", "available"),
+        field("spend", "Annual spend", 31.0, "available", ["ev-finance-ledger"]),
+        field("sev1_incidents", "Sev-1 incidents (12mo)", 3, "available", ["ev-vendor-scorecard"]),
+        field("sev2_incidents", "Sev-2 incidents (12mo)", 11, "available", ["ev-vendor-scorecard"]),
+        field("sla_breaches", "SLA breaches (12mo)", 2, "available", ["ev-vendor-scorecard"]),
+      ], { evidenceRefs: ["ev-vendor-scorecard", "ev-finance-ledger"] }),
+      entity("vendor-maintsys", "vendor", "Maintenance Systems Vendor", "vendors", [
+        field("category", "Category", "MRO", "available"),
+        field("spend", "Annual spend", 9.4, "available", ["ev-finance-ledger"]),
+        field("sev1_incidents", "Sev-1 incidents (12mo)", null, "not_measured", []),
+        field("sla_breaches", "SLA breaches (12mo)", null, "not_measured", []),
       ]),
+      entity("vendor-station", "vendor", "Station Operations Vendor", "vendors", [
+        field("category", "Category", "Ground operations", "available"),
+        field("spend", "Annual spend", 4.2, "available"),
+        field("sla_breaches", "SLA breaches (12mo)", 0, "available", ["ev-vendor-scorecard"]),
+      ]),
+      // --- contracts (entityType 'contract'; renewal windows measured from as-of) ---
+      entity("contract-opsuite-msa", "contract", "Operations Suite MSA", "vendors", [
+        field("vendor", "Vendor", "vendor-opsuite", "available"),
+        field("renewal_date", "Renewal date", "2027-03-01", "available", ["ev-contract-register"]),
+        field("value", "Annual value", 31.0, "available"),
+        field("term", "Term", "3 years", "available"),
+      ], { evidenceRefs: ["ev-contract-register"] }),
+      entity("contract-opsuite-mod", "contract", "Operations Suite Module", "vendors", [
+        field("vendor", "Vendor", "vendor-opsuite", "available"),
+        field("renewal_date", "Renewal date", "2026-11-15", "available", ["ev-contract-register"]),
+        field("value", "Annual value", 6.0, "available"),
+      ], { evidenceRefs: ["ev-contract-register"] }),
+      entity("contract-gds", "contract", "Distribution Agreement", "vendors", [
+        field("vendor", "Vendor", "vendor-gds", "available"),
+        field("renewal_date", "Renewal date", "2028-01-01", "available", ["ev-contract-register"]),
+        field("value", "Annual value", 22.5, "available"),
+      ]),
+      entity("contract-station", "contract", "Station Ops SaaS", "vendors", [
+        field("vendor", "Vendor", "vendor-station", "available"),
+        field("renewal_date", "Renewal date", "2026-09-30", "available", ["ev-contract-register"]),
+        field("value", "Annual value", 4.2, "available"),
+      ]),
+      entity("contract-maint", "contract", "MRO Support Contract", "vendors", [
+        field("vendor", "Vendor", "vendor-maintsys", "available"),
+        field("renewal_date", "Renewal date", null, "not_loaded", []),
+        field("value", "Annual value", 9.4, "available"),
+      ]),
+      // --- governed operational risks (the only voice that can name a risk) ---
+      entity("risk-irrops", "risk", "Irregular Operations Exposure", "risks", [
+        field("driver", "Primary driver", "Crew & dispatch fragility", "available", ["ev-ops-incident-log"]),
+      ], { availabilityState: "conflicting", evidenceRefs: ["ev-ops-incident-log"] }),
+      entity("risk-vendor-concentration", "risk", "Operations vendor concentration", "risks", [
+        field("driver", "Primary driver", "Single vendor across dispatch, IROPS and data", "available", ["ev-vendor-scorecard"]),
+      ], { evidenceRefs: ["ev-vendor-scorecard"] }),
     ],
     totalCount: 214,
     page: 1,
@@ -230,9 +322,18 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
     nodes: [
       node("app-crew-sched", "application", "Crew Scheduling System", 0, { evidenceRefs: ["ev-cmdb-export"] }),
       node("app-dispatch", "application", "Dispatch & Load Planning", 1),
+      node("app-ops-control", "application", "IROPS Control Desk", 1),
+      node("app-data-hub", "application", "Operations Data Hub", 1),
+      node("app-maint-records", "application", "Maintenance & Engineering Records", 1),
+      node("app-station-mgmt", "application", "Station Operations Manager", 1),
+      node("app-rebooking", "application", "Customer Rebooking Engine", 1),
       node("vendor-gds", "vendor", "Global Distribution Vendor", 1),
+      node("vendor-opsuite", "vendor", "Operations Suite Vendor", 1, { evidenceRefs: ["ev-vendor-scorecard"] }),
+      node("vendor-maintsys", "vendor", "Maintenance Systems Vendor", 1),
+      node("vendor-station", "vendor", "Station Operations Vendor", 1),
       node("team-flightops", "team", "Flight Operations", 1),
-      node("risk-irrops", "risk", "Irregular Operations Exposure", 1, { evidenceRefs: ["ev-ops-incident-log"] }),
+      node("risk-irrops", "risk", "Irregular Operations Exposure", 1, { availabilityState: "conflicting", evidenceRefs: ["ev-ops-incident-log"] }),
+      node("risk-vendor-concentration", "risk", "Operations vendor concentration", 1, { evidenceRefs: ["ev-vendor-scorecard"] }),
       node("app-loyalty", "application", "Loyalty Platform", 2),
     ],
     edges: [
@@ -241,15 +342,28 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
       edge("e3", "app-crew-sched", "risk-irrops", "contributes_to", { evidenceRefs: ["ev-ops-incident-log"] }),
       edge("e4", "app-dispatch", "vendor-gds", "depends_on", { authorityState: "candidate", availabilityState: "candidate" }),
       edge("e5", "app-dispatch", "app-loyalty", "shares_data_with", { scope: "target", authorityState: "candidate", availabilityState: "candidate" }),
+      // vendor support edges (evidence-backed) — feed vendor↔app linkage in the lens
+      edge("e6", "app-dispatch", "vendor-opsuite", "supported_by", { evidenceRefs: ["ev-vendor-scorecard"] }),
+      edge("e7", "app-ops-control", "vendor-opsuite", "supported_by", { evidenceRefs: ["ev-vendor-scorecard"] }),
+      edge("e8", "app-data-hub", "vendor-opsuite", "supported_by", { evidenceRefs: ["ev-integration-map"] }),
+      edge("e9", "app-maint-records", "vendor-maintsys", "supported_by"),
+      edge("e10", "app-station-mgmt", "vendor-station", "supported_by"),
+      edge("e11", "app-rebooking", "vendor-gds", "supported_by"),
+      // risk linkage (governed) — apps contributing to the concentration risk
+      edge("e12", "app-ops-control", "risk-irrops", "contributes_to", { evidenceRefs: ["ev-ops-incident-log"] }),
+      edge("e13", "app-dispatch", "risk-vendor-concentration", "contributes_to", { evidenceRefs: ["ev-vendor-scorecard"] }),
+      edge("e14", "app-data-hub", "risk-vendor-concentration", "contributes_to", { evidenceRefs: ["ev-vendor-scorecard"] }),
     ],
     evidenceByEdge: {
       e1: [{ ...evidence("ev-integration-map", "Integration Map", "architecture_doc", { citation: "p.12" }), edgeId: "e1" }],
       e3: [{ ...evidence("ev-ops-incident-log", "Operations Incident Log", "operational_record"), edgeId: "e3" }],
+      e6: [{ ...evidence("ev-vendor-scorecard", "Vendor Scorecard 2026", "vendor_scorecard"), edgeId: "e6" }],
+      e13: [{ ...evidence("ev-vendor-scorecard", "Vendor Scorecard 2026", "vendor_scorecard"), edgeId: "e13" }],
     },
     truncated: false,
     aggregationApplied: false,
     omittedNodeCount: 0,
-    acceptedEdgeCount: 3,
+    acceptedEdgeCount: 12,
     candidateEdgeCount: 2,
     openGapCount: 1,
   },
@@ -261,9 +375,10 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
       gap("gap-airline-risk-conflict", "critical", "risks", "Top operational risks conflict across sources", "The risk register and the incident log disagree on the top-three operational risks, blocking a single board view.", "Reconciled risk register", "conflicting"),
       gap("gap-airline-programs", "medium", "programs", "Program domain not loaded", "No program-level view is available until the program publication is built.", "Program register publication", "not_loaded"),
       gap("gap-airline-crew-cost", "medium", "technology", "Crew system annual cost withheld", "Cost is restricted pending finance approval, limiting business-case precision.", "Finance approval to disclose", "withheld"),
+      gap("gap-airline-vendor-sla", "medium", "vendors", "Vendor SLA history partial", "SLA breach history is not measured for two vendors, so operational reliability cannot be compared across the vendor base.", "Vendor scorecard back-fill", "not_measured"),
     ],
     overallEvidenceCoverage: 0.63,
-    severityCounts: { low: 0, medium: 2, high: 1, critical: 1 },
+    severityCounts: { low: 0, medium: 3, high: 1, critical: 1 },
   },
 
   searchDocs: [
@@ -277,6 +392,12 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
     suggested("sq-2", "What would it take to measure cloud adoption?", "evidence", true),
     suggested("sq-3", "Show what depends on the crew scheduling system.", "relationships", false),
     suggested("sq-4", "Compare our cloud adoption to peers.", "brief", true),
+    // Operations & Vendor Intelligence decision questions (routed to baseline-bound aVa)
+    suggested("sq-ops-1", "Which vendor relationships create the greatest IROPS exposure?", "explore", true),
+    suggested("sq-ops-2", "Which renewals create near-term negotiation leverage?", "explore", true),
+    suggested("sq-ops-3", "Where are integration dependencies affecting disruption recovery?", "explore", true),
+    suggested("sq-ops-4", "Which operational assertions still lack evidence?", "explore", true),
+    suggested("sq-ops-5", "Which transformation programs depend on the same critical systems?", "explore", true),
   ],
 
   handoffPreviews: {
@@ -320,6 +441,8 @@ export const AIRLINE_DEMO_NEW: FixturePack = {
     "ev-ops-incident-log": evidence("ev-ops-incident-log", "Operations Incident Log", "operational_record", { confidence: 0.8 }),
     "ev-industry-benchmark": evidence("ev-industry-benchmark", "Industry Benchmark 2026", "benchmark_dataset", { confidence: 0.75 }),
     "ev-integration-map": evidence("ev-integration-map", "Integration Map", "architecture_doc", { citation: "p.12", confidence: 0.7 }),
+    "ev-vendor-scorecard": evidence("ev-vendor-scorecard", "Vendor Scorecard 2026", "vendor_scorecard", { citation: "H1 2026", confidence: 0.8 }),
+    "ev-contract-register": evidence("ev-contract-register", "Contract Register Extract", "contract_record", { citation: "2026-06 snapshot", confidence: 0.85 }),
     // A withheld/restricted evidence descriptor — content stays withheld, never leaked
     "ev-crew-cost": evidence("ev-crew-cost", "Crew System Cost (restricted)", null, {
       accessRestriction: "withheld",

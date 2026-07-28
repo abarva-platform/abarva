@@ -25,7 +25,7 @@ const INTENTS: { id: AvaIntent; label: string }[] = [
 
 export function AvaDock() {
   const runtime = useConsumption();
-  const { mode, lens, depth, scope, focalEntityRefs, filters, avaOpen, setAvaOpen, avaContext } = useShell();
+  const { mode, lens, depth, scope, focalEntityRefs, filters, avaOpen, setAvaOpen, avaContext, avaPrefill, clearAvaPrefill } = useShell();
   const [intent, setIntent] = useState<AvaIntent>("explain");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AvaAnswer | null>(null);
@@ -33,6 +33,12 @@ export function AvaDock() {
 
   // Ephemeral: clear any answer when the mode changes.
   useEffect(() => { setAnswer(null); }, [mode]);
+
+  // A suggested question queued elsewhere pre-fills the box; the user still sends
+  // it and the answer still comes from aVa (never a canned/authored answer).
+  useEffect(() => {
+    if (avaPrefill) { setQuestion(avaPrefill); clearAvaPrefill(); }
+  }, [avaPrefill, clearAvaPrefill]);
 
   if (!avaOpen) return null;
 

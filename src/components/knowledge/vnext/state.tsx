@@ -64,6 +64,13 @@ interface ShellState {
   avaContext: AvaContextRefs;
   setAvaContext: (c: AvaContextRefs) => void;
 
+  /** A question queued for the aVa dock (e.g. a suggested decision question). */
+  avaPrefill: string | null;
+  /** Open the aVa dock and pre-fill a question; the answer still comes from aVa. */
+  askAva: (question: string) => void;
+  /** Consumed by the aVa dock after it applies the prefill. */
+  clearAvaPrefill: () => void;
+
   leftOpen: boolean;
   setLeftOpen: (v: boolean) => void;
 }
@@ -80,19 +87,25 @@ export function KnowledgeShellStateProvider({ children }: { children: ReactNode 
   const [drawer, setDrawer] = useState<EvidenceDrawerTarget | null>(null);
   const [avaOpen, setAvaOpen] = useState<boolean>(true);
   const [avaContext, setAvaContext] = useState<AvaContextRefs>(EMPTY_AVA_CONTEXT);
+  const [avaPrefill, setAvaPrefill] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState<boolean>(false);
 
   const openEvidence = useCallback((t: EvidenceDrawerTarget) => setDrawer(t), []);
   const closeEvidence = useCallback(() => setDrawer(null), []);
+  const askAva = useCallback((question: string) => {
+    setAvaPrefill(question);
+    setAvaOpen(true);
+  }, []);
+  const clearAvaPrefill = useCallback(() => setAvaPrefill(null), []);
 
   const value = useMemo<ShellState>(
     () => ({
       mode, setMode, depth, setDepth, lens, setLens, scope, setScope,
       focalEntityRefs, setFocalEntityRefs, filters, setFilters,
       drawer, openEvidence, closeEvidence, avaOpen, setAvaOpen,
-      avaContext, setAvaContext, leftOpen, setLeftOpen,
+      avaContext, setAvaContext, avaPrefill, askAva, clearAvaPrefill, leftOpen, setLeftOpen,
     }),
-    [mode, depth, lens, scope, focalEntityRefs, filters, drawer, avaOpen, avaContext, leftOpen, openEvidence, closeEvidence],
+    [mode, depth, lens, scope, focalEntityRefs, filters, drawer, avaOpen, avaContext, avaPrefill, askAva, clearAvaPrefill, leftOpen, openEvidence, closeEvidence],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
