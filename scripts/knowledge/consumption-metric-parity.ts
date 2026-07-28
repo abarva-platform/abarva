@@ -102,7 +102,7 @@ async function main() {
         !m.canonicalSql ? "not_applicable" : cube === canonical ? "passed" : "failed";
       results.push({ measure: m.measure, cube, canonical, state });
 
-      if (apply && baseline) {
+      if (apply && baseline && state !== "not_applicable") {
         await client.query(
           `INSERT INTO consumption.consumer_reconciliation_ledger
              (tenant_key, reconciliation_ref, knowledge_baseline_ref, projection_name,
