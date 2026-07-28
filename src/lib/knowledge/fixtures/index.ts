@@ -25,8 +25,33 @@ const PACKS: Record<string, FixturePack> = {
   [HEALTHCARE_DEMO_NEW.meta.tenantKey]: HEALTHCARE_DEMO_NEW,
 };
 
+/** Every fixture tenant lives under this synthetic namespace. */
+export const FIXTURE_NAMESPACE_PREFIX = "fixture-" as const;
+
 export function isFixtureTenantKey(key: string): key is FixtureTenantKey {
   return Object.prototype.hasOwnProperty.call(PACKS, key);
+}
+
+/**
+ * Activation guard. The fixture provider must NEVER be selectable for a real /
+ * canonical tenant — that is the core "no fixture provider in an activated
+ * tenant" safety rule. A canonical key (e.g. `airline-demo-new`, `skyharbor-air`,
+ * `meridian-health`) does not carry the `fixture-` prefix and is not registered,
+ * so this fails closed. Call before constructing any fixture runtime.
+ */
+export function assertFixtureNamespace(tenantKey: string): void {
+  if (!tenantKey.startsWith(FIXTURE_NAMESPACE_PREFIX)) {
+    throw new Error(
+      `Refusing to serve fixtures for non-fixture tenant "${tenantKey}". ` +
+        `Fixtures are only valid under the "${FIXTURE_NAMESPACE_PREFIX}" namespace; ` +
+        `real tenants must use the HTTP consumption provider against a governed baseline.`,
+    );
+  }
+  if (!isFixtureTenantKey(tenantKey)) {
+    throw new Error(
+      `Unknown fixture tenant "${tenantKey}" (no registered pack; no legacy fallback).`,
+    );
+  }
 }
 
 /** Returns the pack for a synthetic fixture tenant, or null. No legacy fallback. */
