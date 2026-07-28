@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 import { buildDryRunReviewPackage, buildLedgerPackage, dbConnectionConfig, setTenantContext, validateDbApplyApproval } from "../build-review-decision-ledger.mjs";
 import {
@@ -194,6 +195,15 @@ await test("semantic gates block missing-as-zero, withheld drift, candidate acce
       "withheld_not_marked_withheld",
     ].sort(),
   );
+});
+
+await test("promotion SQL casts enum-backed state columns explicitly", async () => {
+  const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
+  assert.ok(source.includes("'accepted'::abarva_authority_state AS authority_state"));
+  assert.ok(source.includes("'accepted'::abarva_availability_state AS availability_state"));
+  assert.ok(source.includes("'unknown'::abarva_freshness_state AS freshness_state"));
+  assert.ok(source.includes("r.current_target_state::abarva_current_target_state"));
+  assert.ok(source.includes("coalesce(nullif(f.fact_value->>'availability_state','')::abarva_availability_state, 'accepted'::abarva_availability_state)"));
 });
 
 await test("custom handler must verify before commit", async () => {
