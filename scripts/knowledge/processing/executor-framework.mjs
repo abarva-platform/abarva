@@ -1517,24 +1517,27 @@ export class PostgresKnowledgeExecutionStore {
     const contractVersion = "consumption-v1";
     const asOfDate = new Date().toISOString().slice(0, 10);
 
-    await this.client.query(
-      `
-        DELETE FROM consumption.enterprise_brief_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.enterprise_identity_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.domain_summary_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.application_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.technology_estate_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.data_product_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.vendor_contract_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.metric_observation_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.evidence_gap_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.search_document_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.relationship_evidence_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-        DELETE FROM consumption.relationship_node_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2;
-      `,
-      [context.tenantKey, baseline.knowledge_baseline_ref],
-    );
+    const projectionCleanupTables = [
+      "enterprise_brief_v1",
+      "enterprise_identity_v1",
+      "domain_summary_v1",
+      "application_inventory_v1",
+      "technology_estate_v1",
+      "data_product_inventory_v1",
+      "vendor_contract_inventory_v1",
+      "metric_observation_v1",
+      "evidence_gap_v1",
+      "search_document_v1",
+      "relationship_evidence_v1",
+      "relationship_edge_v1",
+      "relationship_node_v1",
+    ];
+    for (const tableName of projectionCleanupTables) {
+      await this.client.query(
+        `DELETE FROM consumption.${tableName} WHERE tenant_key=$1 AND knowledge_baseline_ref=$2`,
+        [context.tenantKey, baseline.knowledge_baseline_ref],
+      );
+    }
 
     await this.client.query(
       `
