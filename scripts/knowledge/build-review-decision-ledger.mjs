@@ -93,17 +93,16 @@ async function readCandidatesFromDb(args, env = process.env) {
   const client = new Client(dbConnectionConfig(env));
   await client.connect();
   try {
-    const [entities, facts, relationships] = await Promise.all([
-      client.query(
-        `
+    const entities = await client.query(
+      `
           SELECT c.candidate_ref AS "candidateRef",
             'entity_candidate' AS "candidateType",
             c.source_version_ref AS "sourceVersionRef",
             c.entity_type AS "entityType",
             c.display_name AS "displayName",
             c.candidate_payload AS "candidatePayload",
-            c.evidence_refs AS "evidenceRefs",
-            c.candidate_content_hash AS "storedCandidateContentHash",
+            to_jsonb(c)->'evidence_refs' AS "evidenceRefs",
+            to_jsonb(c)->>'candidate_content_hash' AS "storedCandidateContentHash",
             c.confidence,
             c.review_state AS "reviewState",
             s.source_family AS "sourceFamily",
@@ -116,18 +115,18 @@ async function readCandidatesFromDb(args, env = process.env) {
           WHERE c.tenant_key=$1
           ORDER BY c.candidate_ref
         `,
-        [args.tenant],
-      ),
-      client.query(
-        `
+      [args.tenant],
+    );
+    const facts = await client.query(
+      `
           SELECT c.candidate_ref AS "candidateRef",
             'fact_candidate' AS "candidateType",
             c.source_version_ref AS "sourceVersionRef",
             c.subject_candidate_ref AS "subjectCandidateRef",
             c.fact_type AS "factType",
             c.fact_value AS "factValue",
-            c.evidence_refs AS "evidenceRefs",
-            c.candidate_content_hash AS "storedCandidateContentHash",
+            to_jsonb(c)->'evidence_refs' AS "evidenceRefs",
+            to_jsonb(c)->>'candidate_content_hash' AS "storedCandidateContentHash",
             c.confidence,
             c.review_state AS "reviewState",
             s.source_family AS "sourceFamily",
@@ -140,10 +139,10 @@ async function readCandidatesFromDb(args, env = process.env) {
           WHERE c.tenant_key=$1
           ORDER BY c.candidate_ref
         `,
-        [args.tenant],
-      ),
-      client.query(
-        `
+      [args.tenant],
+    );
+    const relationships = await client.query(
+      `
           SELECT c.candidate_ref AS "candidateRef",
             'relationship_candidate' AS "candidateType",
             c.source_version_ref AS "sourceVersionRef",
@@ -151,8 +150,8 @@ async function readCandidatesFromDb(args, env = process.env) {
             c.to_candidate_ref AS "toCandidateRef",
             c.relationship_type_ref AS "relationshipTypeRef",
             c.current_target_state AS "currentTargetState",
-            c.evidence_refs AS "evidenceRefs",
-            c.candidate_content_hash AS "storedCandidateContentHash",
+            to_jsonb(c)->'evidence_refs' AS "evidenceRefs",
+            to_jsonb(c)->>'candidate_content_hash' AS "storedCandidateContentHash",
             c.confidence,
             c.review_state AS "reviewState",
             s.source_family AS "sourceFamily",
@@ -165,9 +164,8 @@ async function readCandidatesFromDb(args, env = process.env) {
           WHERE c.tenant_key=$1
           ORDER BY c.candidate_ref
         `,
-        [args.tenant],
-      ),
-    ]);
+      [args.tenant],
+    );
     return [...entities.rows, ...facts.rows, ...relationships.rows];
   } finally {
     await client.end();
