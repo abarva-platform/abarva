@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AbarVa Source Standard Guidebook</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f5ef;
+      --paper: #fffdf8;
+      --panel: #f0ece2;
+      --ink: #171714;
+      --muted: #6b675f;
+      --line: #ded8cc;
+      --soft-line: #ebe6dc;
+      --blue: #1769d8;
+      --teal: #248b77;
+      --amber: #b87515;
+      --red: #b33a35;
+      --green: #187a55;
+      --shadow: 0 18px 50px rgba(44, 38, 26, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 24px;
+      border-right: 1px solid var(--line);
+      background: #fbf8f0;
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #0b172d, #1d74d8 58%, #3cd1bf);
+    }
+
+    .kicker {
+      color: var(--teal);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    aside h1 {
+      margin: 8px 0 10px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    aside p {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    nav {
+      display: grid;
+      gap: 5px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+
+    nav a {
+      color: #34312d;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    nav a:hover { background: var(--panel); }
+
+    main {
+      padding: 56px clamp(28px, 6vw, 96px) 90px;
+      max-width: 1240px;
+    }
+
+    .hero {
+      padding: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h2 {
+      max-width: 820px;
+      margin: 12px 0 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(40px, 5vw, 72px);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .hero .lede {
+      max-width: 780px;
+      margin: 0;
+      color: #423f39;
+      font-size: 19px;
+      line-height: 1.5;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #38342f;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--teal);
+    }
+
+    section {
+      margin-top: 34px;
+      padding: 34px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    h2.section-title {
+      margin: 0 0 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .section-lede {
+      max-width: 790px;
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      padding: 18px;
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--teal);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .step {
+      min-height: 126px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      padding: 16px;
+      position: relative;
+    }
+
+    .step .num {
+      color: var(--amber);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .step h3 {
+      margin: 12px 0 6px;
+      font-size: 14px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--soft-line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f2eee6;
+      color: #3a352f;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: #3e3a35;
+      font-size: 13px;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .boundary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .boundary .yes { border-left: 4px solid var(--green); }
+    .boundary .no { border-left: 4px solid var(--red); }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 19px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    li { margin: 5px 0; }
+
+    .callout {
+      border: 1px solid rgba(23, 105, 216, 0.22);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--radius);
+      background: #eef5ff;
+      padding: 18px 20px;
+      color: #19365d;
+    }
+
+    .callout strong { color: #0d2a4d; }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding: 28px 18px 56px; }
+      .hero { padding: 26px; }
+      .grid, .grid.two, .flow, .boundary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand"><span class="mark"></span><span>AbarVa</span></div>
+      <div class="kicker">Source Guidebook</div>
+      <h1>From governed evidence to sourcing decisions.</h1>
+      <p>Standard guide for the reusable AbarVa Source capability. This is not an analytics-pod or custom-connector scope.</p>
+      <nav aria-label="Guidebook sections">
+        <a href="#what-source-is">What Source is</a>
+        <a href="#how-it-fits">How it fits</a>
+        <a href="#standard-workflows">Standard workflows</a>
+        <a href="#journey">Sourcing journey</a>
+        <a href="#inputs">Standard inputs</a>
+        <a href="#archetypes">Sourcing archetypes</a>
+        <a href="#outputs">Outputs</a>
+        <a href="#boundaries">Boundaries</a>
+        <a href="#responsibilities">Responsibilities</a>
+        <a href="#acceptance">Acceptance</a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <span class="kicker">Standard Product Scope</span>
+        <h2>AbarVa Source is the sourcing execution layer, not a second data lake.</h2>
+        <p class="lede">Source turns approved Knowledge, governed metrics, contract evidence, and opportunity signals into repeatable sourcing work: diagnose, scope, compare, decide, transition, and track value. It complements procurement systems of record; it does not replace them.</p>
+        <div class="meta-row">
+          <span class="pill"><span class="dot"></span> Evidence-bound</span>
+          <span class="pill"><span class="dot"></span> Baseline-aware</span>
+          <span class="pill"><span class="dot"></span> Human-approved</span>
+          <span class="pill"><span class="dot"></span> Standard first</span>
+        </div>
+      </div>
+
+      <section id="what-source-is">
+        <span class="label">Part I</span>
+        <h2 class="section-title">What AbarVa Source Is</h2>
+        <p class="section-lede">Source is the governed workbench for complex technology-services sourcing and vendor decisions. It is built for the work that usually sits between advisory decks, spreadsheets, procurement portals, and scattered contract evidence.</p>
+        <div class="grid">
+          <article class="card">
+            <span class="label">Existing contracts</span>
+            <h3>Optimization before renewal</h3>
+            <p>Source helps teams diagnose renewal exposure, obligations, service gaps, consolidation opportunities, and recoverable value using approved evidence.</p>
+          </article>
+          <article class="card">
+            <span class="label">New events</span>
+            <h3>Structured sourcing execution</h3>
+            <p>Source supports scope, RFP/RFI preparation, vendor response comparison, pricing normalization, BAFO, decision support, and transition planning.</p>
+          </article>
+          <article class="card">
+            <span class="label">Governance</span>
+            <h3>Decision support, not authority</h3>
+            <p>Source prepares evidence and decision artifacts. Legal, procurement, finance, risk, compliance, clinical, and executive owners remain accountable approvers.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="how-it-fits">
+        <span class="label">Product Model</span>
+        <h2 class="section-title">How Knowledge, Cube, aVa, reporting, and Source work together</h2>
+        <p class="section-lede">The split matters. Knowledge stores the truth, Cube defines governed measures, reporting explores the measures, aVa explains the evidence, and Source runs the sourcing workflow.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Owns</th>
+              <th>Does not own</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Knowledge</strong></td>
+              <td>Approved facts, relationships, source evidence, baseline versions, lineage, deferred states.</td>
+              <td>Sourcing workflow, vendor selection, custom analytics, or business approvals.</td>
+            </tr>
+            <tr>
+              <td><strong>Cube</strong></td>
+              <td>Reusable governed dimensions and measures over approved projections.</td>
+              <td>New facts, model-generated calculations, or bespoke client metrics by default.</td>
+            </tr>
+            <tr>
+              <td><strong>Superset</strong></td>
+              <td>Standard analyst drill-down over governed data using a read-only identity.</td>
+              <td>Independent reporting truth or custom dashboards without explicit scope.</td>
+            </tr>
+            <tr>
+              <td><strong>Observable</strong></td>
+              <td>Curated narrative views over the same governed metric payload, where included.</td>
+              <td>Metric definitions that diverge from Cube or PostgreSQL.</td>
+            </tr>
+            <tr>
+              <td><strong>aVa</strong></td>
+              <td>Evidence-aware explanation, recommendations, and questions bound to the active baseline.</td>
+              <td>Unsupported tenant facts, hidden calculations, or final approval authority.</td>
+            </tr>
+            <tr>
+              <td><strong>Source</strong></td>
+              <td>Sourcing diagnosis, RFP/RFI execution, response comparison, decision packages, transition, value tracking.</td>
+              <td>Vendor master, spend truth, contract master, application inventory, or operational metrics.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="standard-workflows">
+        <span class="label">Included Scope</span>
+        <h2 class="section-title">Two standard workflows</h2>
+        <div class="grid two">
+          <article class="card">
+            <span class="label">Workflow 01</span>
+            <h3>Existing-contract optimization</h3>
+            <p>Use when there is a renewal, performance issue, consolidation question, scope drift, or service-quality concern. Source frames what is known, what is missing, and what can be negotiated or remediated from the evidence.</p>
+            <ul>
+              <li>Renewal and expiration windows</li>
+              <li>Applications, capabilities, and services touched</li>
+              <li>Spend and SLA summaries where supplied</li>
+              <li>Evidence gaps and owner actions</li>
+            </ul>
+          </article>
+          <article class="card">
+            <span class="label">Workflow 02</span>
+            <h3>New sourcing event</h3>
+            <p>Use when the business wants to competitively source, re-platform, consolidate vendors, or modernize a service tower. Source keeps the event disciplined from scope through selection.</p>
+            <ul>
+              <li>Scope and RFP readiness</li>
+              <li>Vendor response completeness</li>
+              <li>Pricing normalization and BAFO support</li>
+              <li>Decision package and transition plan</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="journey">
+        <span class="label">Operating Path</span>
+        <h2 class="section-title">The standard Source journey</h2>
+        <p class="section-lede">AbarVa may identify a sourcing signal upstream, but Source owns the workflow once the signal becomes a sourcing decision path.</p>
+        <div class="flow">
+          <div class="step"><div class="num">01</div><h3>Signal</h3><p>Knowledge/Cube surfaces renewal, concentration, service, spend, or transformation exposure.</p></div>
+          <div class="step"><div class="num">02</div><h3>Diagnose</h3><p>Source confirms evidence, missing inputs, owners, risks, and whether the issue is sourcing-ready.</p></div>
+          <div class="step"><div class="num">03</div><h3>Scope</h3><p>The team defines towers, services, regions, volumes, constraints, and business outcomes.</p></div>
+          <div class="step"><div class="num">04</div><h3>Compete</h3><p>RFP/RFI, vendor responses, scorecards, pricing normalization, exceptions, and BAFO.</p></div>
+          <div class="step"><div class="num">05</div><h3>Decide</h3><p>Executive package, transition path, value ledger, caveats, and approval boundary.</p></div>
+        </div>
+      </section>
+
+      <section id="inputs">
+        <span class="label">Evidence</span>
+        <h2 class="section-title">Standard inputs Source can use</h2>
+        <p class="section-lede">The standard path works with agreed staged extracts and documents. It does not require clients to grant live access to every source system.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Why it matters</th>
+              <th>Standard posture</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Vendor and contract inventory</td>
+              <td>Identifies who provides what, renewal windows, obligations, and service scope.</td>
+              <td>Standard.</td>
+            </tr>
+            <tr>
+              <td>Application and capability links</td>
+              <td>Shows business impact and migration risk if a vendor or service changes.</td>
+              <td>Standard when approved relationships exist.</td>
+            </tr>
+            <tr>
+              <td>Spend summaries</td>
+              <td>Supports exposure, prioritization, and sourcing value sizing.</td>
+              <td>Standard when source lineage reconciles.</td>
+            </tr>
+            <tr>
+              <td>Incident and SLA summaries</td>
+              <td>Distinguishes price-only renewals from operational performance problems.</td>
+              <td>Standard at summary level where supplied.</td>
+            </tr>
+            <tr>
+              <td>Invoices, POs, rate cards, raw tickets</td>
+              <td>Supports forensic cost, rate, and service analysis.</td>
+              <td>Optional accelerator unless explicitly scoped.</td>
+            </tr>
+            <tr>
+              <td>Interviews and workshops</td>
+              <td>Capture business priorities, pain points, decision criteria, and missing evidence.</td>
+              <td>Standard as evidence, with confidence and review state.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="archetypes">
+        <span class="label">Sourcing Patterns</span>
+        <h2 class="section-title">Common technology-services sourcing archetypes</h2>
+        <p class="section-lede">Source should classify the event before generating artifacts. Archetypes determine the evidence needed, evaluation criteria, pricing model, transition risk, and decision package.</p>
+        <div class="grid">
+          <article class="card">
+            <h3>AMS: Application managed services</h3>
+            <p>Run/support, enhancements, release management, incident response, SLAs, productivity, automation, and application portfolio coverage.</p>
+          </article>
+          <article class="card">
+            <h3>IMS: Infrastructure managed services</h3>
+            <p>Data center, network, cloud operations, end-user services, resilience, ticket patterns, service levels, and transformation roadmap.</p>
+          </article>
+          <article class="card">
+            <h3>Data and analytics services</h3>
+            <p>Warehouse/lakehouse operations, BI, data engineering, data quality, lineage, platform modernization, and AI-readiness dependencies.</p>
+          </article>
+          <article class="card">
+            <h3>Cloud and platform engineering</h3>
+            <p>Landing zones, platform teams, DevSecOps, FinOps, reliability, migration factories, and managed cloud operations.</p>
+          </article>
+          <article class="card">
+            <h3>ERP and enterprise apps</h3>
+            <p>SAP, Oracle, Workday, CRM, core operations, module support, integration, testing, release cycles, and transformation programs.</p>
+          </article>
+          <article class="card">
+            <h3>AI and data rights</h3>
+            <p>Contract rights, model use, data use, auditability, agent controls, privacy, and AI-enabled service delivery. Often an accelerator.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="outputs">
+        <span class="label">Work Products</span>
+        <h2 class="section-title">What Source produces</h2>
+        <div class="grid">
+          <article class="card"><h3>Opportunity brief</h3><p>Why this sourcing question matters, what evidence supports it, and what is missing.</p></article>
+          <article class="card"><h3>Scope and readiness pack</h3><p>Services, boundaries, volumes, stakeholders, risks, inputs needed, and readiness status.</p></article>
+          <article class="card"><h3>RFP/RFI package</h3><p>Structured ask, service towers, response templates, required evidence, and guardrails.</p></article>
+          <article class="card"><h3>Evaluation scorecard</h3><p>Criteria, weights, exceptions, qualitative and quantitative review discipline.</p></article>
+          <article class="card"><h3>Vendor response comparison</h3><p>Normalized view of completeness, exceptions, solution fit, commercial posture, and risks.</p></article>
+          <article class="card"><h3>Decision and transition package</h3><p>Recommended path, caveats, approvals, transition dependencies, and value-tracking plan.</p></article>
+        </div>
+      </section>
+
+      <section id="boundaries">
+        <span class="label">Scope Discipline</span>
+        <h2 class="section-title">What Source replaces, and what it does not replace</h2>
+        <div class="boundary">
+          <article class="card yes">
+            <h3>Source can replace scattered manual sourcing work</h3>
+            <ul>
+              <li>Ad hoc sourcing strategy decks.</li>
+              <li>Repeated RFP/RFI drafting from scratch.</li>
+              <li>Spreadsheet-only response comparison.</li>
+              <li>Untraceable decision rationales.</li>
+              <li>Disconnected value tracking.</li>
+            </ul>
+          </article>
+          <article class="card no">
+            <h3>Source does not replace accountable systems or owners</h3>
+            <ul>
+              <li>ERP, CLM, procurement, ITSM, CMDB, monitoring, or finance systems of record.</li>
+              <li>Legal, procurement, finance, risk, compliance, clinical, or executive approval.</li>
+              <li>Client source-system cleanup.</li>
+              <li>Custom analytics unless scoped as an accelerator or analytics-pod service.</li>
+              <li>Near-real-time operational reporting.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="responsibilities">
+        <span class="label">Who Does What</span>
+        <h2 class="section-title">Responsibilities in a standard Source engagement</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Party</th>
+              <th>Responsibilities</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Client</strong></td>
+              <td>Provide agreed extracts/documents, name data owners, confirm disclosure mode, validate high-impact claims, approve decisions, and own legal/procurement/finance/risk authority.</td>
+            </tr>
+            <tr>
+              <td><strong>AbarVa</strong></td>
+              <td>Provide standard mappings, source-to-truth lineage, workflow state, artifact generation, evidence boundaries, reconciliation, and transparent missing-data states.</td>
+            </tr>
+            <tr>
+              <td><strong>Shared</strong></td>
+              <td>Agree pilot scope, source families, refresh cadence, review thresholds, optional accelerators, and acceptance evidence before activation.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="acceptance">
+        <span class="label">Definition of Done</span>
+        <h2 class="section-title">How Source becomes pilot-ready</h2>
+        <p class="section-lede">A polished screen is not enough. Source is pilot-ready only when the sourcing workflow, data lineage, metrics, evidence, and handoffs all bind to the same governed baseline.</p>
+        <div class="callout">
+          <strong>Acceptance rule:</strong> every Source opportunity, artifact, scorecard, and decision package must carry the tenant key, baseline ID, baseline content hash, projection version, source release ID, review policy version, and evidence references used to support the work.
+        </div>
+        <div class="grid" style="margin-top: 14px;">
+          <article class="card"><span class="label">Gate 01</span><h3>Signal integrity</h3><p>The opportunity originates from approved Knowledge/Cube evidence, not from a duplicate Source truth.</p></article>
+          <article class="card"><span class="label">Gate 02</span><h3>Evidence boundary</h3><p>Unavailable, deferred, conflicting, or incomplete evidence is visible before artifact generation.</p></article>
+          <article class="card"><span class="label">Gate 03</span><h3>Workflow proof</h3><p>Existing-contract optimization and new-event workflow both preserve stage state and human approvals.</p></article>
+          <article class="card"><span class="label">Gate 04</span><h3>Artifact quality</h3><p>Generated work products are structured, reviewable, source-bound, and free of unsupported claims.</p></article>
+          <article class="card"><span class="label">Gate 05</span><h3>Analytics boundary</h3><p>Custom dashboards, forensic analytics, and new connectors are not implied as standard scope.</p></article>
+          <article class="card"><span class="label">Gate 06</span><h3>Rollback</h3><p>The prior or empty baseline can be restored and Source stops consuming the newer baseline.</p></article>
+        </div>
+      </section>
+
+      <footer>
+        <p><strong>Control reference:</strong> this guidebook is aligned to <code>docs/product/STANDARD_PRODUCT_SCOPE.md</code>. It is a product guide, not an authorization to load source data, apply migrations, activate providers, provision Superset, or declare runtime proof complete.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
