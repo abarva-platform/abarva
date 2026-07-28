@@ -15,7 +15,7 @@
     {
       "name": "rls_table_coverage",
       "status": "pass",
-      "count": 51
+      "count": 53
     },
     {
       "name": "reader_candidate_denial",

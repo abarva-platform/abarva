@@ -58,6 +58,8 @@ const TENANT_TABLES = [
   ["metrics", "metric_definition", "publisher"],
   ["metrics", "metric_observation", "publisher"],
   ["metrics", "metric_target", "publisher"],
+  ["governance", "review_batch", "reviewer"],
+  ["governance", "review_batch_approval", "reviewer"],
   ["governance", "review_decision", "reviewer"],
   ["governance", "authority_transition", "reviewer"],
   ["governance", "knowledge_gap", "reviewer"],

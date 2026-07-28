@@ -107,6 +107,8 @@ begin
   ('metrics', 'metric_definition', 'airdn_metrics_metric_definition_tenant_policy'),
   ('metrics', 'metric_observation', 'airdn_metrics_metric_observation_tenant_policy'),
   ('metrics', 'metric_target', 'airdn_metrics_metric_target_tenant_policy'),
+  ('governance', 'review_batch', 'airdn_governance_review_batch_tenant_policy'),
+  ('governance', 'review_batch_approval', 'airdn_governance_review_batch_approval_tenant_policy'),
   ('governance', 'review_decision', 'airdn_governance_review_decision_tenant_policy'),
   ('governance', 'authority_transition', 'airdn_governance_authority_transition_tenant_policy'),
   ('governance', 'knowledge_gap', 'airdn_governance_knowledge_gap_tenant_policy'),

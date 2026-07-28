@@ -29,7 +29,7 @@
     "admin": "mi-hcdn-admin-lab-001"
   },
   "governedMigrationJob": "job-hcdn-db-migration-lab",
-  "tableCoverage": 51,
+  "tableCoverage": 53,
   "replayRequirements": [
     "empty_database_migration_replay",
     "idempotent_second_replay",

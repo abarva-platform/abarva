@@ -7,12 +7,12 @@
     {
       "tenantKey": "hc-demo-new",
       "status": "pass",
-      "rlsTables": 51
+      "rlsTables": 53
     },
     {
       "tenantKey": "airline-demo-new",
       "status": "pass",
-      "rlsTables": 51
+      "rlsTables": 53
     }
   ]
 }

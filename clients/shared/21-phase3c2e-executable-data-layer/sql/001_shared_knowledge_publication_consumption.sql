@@ -190,6 +190,8 @@ CREATE TABLE IF NOT EXISTS working.entity_candidate (
   entity_type TEXT NOT NULL,
   display_name TEXT NOT NULL,
   candidate_payload JSONB NOT NULL,
+  evidence_refs TEXT[] NOT NULL DEFAULT ARRAY[]::text[],
+  candidate_content_hash TEXT,
   confidence NUMERIC(5,4) NOT NULL DEFAULT 0,
   review_state abarva_review_state NOT NULL DEFAULT 'not_reviewed',
   created_run_ref TEXT,
@@ -208,6 +210,7 @@ CREATE TABLE IF NOT EXISTS working.fact_candidate (
   fact_type TEXT NOT NULL,
   fact_value JSONB NOT NULL,
   evidence_refs TEXT[] NOT NULL DEFAULT ARRAY[]::text[],
+  candidate_content_hash TEXT,
   confidence NUMERIC(5,4) NOT NULL DEFAULT 0,
   review_state abarva_review_state NOT NULL DEFAULT 'not_reviewed',
   created_run_ref TEXT,
@@ -227,6 +230,7 @@ CREATE TABLE IF NOT EXISTS working.relationship_candidate (
   relationship_type_ref TEXT NOT NULL,
   evidence_refs TEXT[] NOT NULL DEFAULT ARRAY[]::text[],
   current_target_state abarva_current_target_state NOT NULL DEFAULT 'unknown',
+  candidate_content_hash TEXT,
   confidence NUMERIC(5,4) NOT NULL DEFAULT 0,
   review_state abarva_review_state NOT NULL DEFAULT 'not_reviewed',
   created_run_ref TEXT,
@@ -378,6 +382,108 @@ CREATE TABLE IF NOT EXISTS governance.review_decision (
   decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (tenant_key, review_ref)
 );
+
+CREATE TABLE IF NOT EXISTS governance.review_policy (
+  policy_version TEXT PRIMARY KEY,
+  policy_status TEXT NOT NULL DEFAULT 'draft',
+  approved_by TEXT,
+  approved_at TIMESTAMPTZ,
+  policy_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  content_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (policy_status IN ('draft', 'approved', 'active', 'superseded', 'retired')),
+  CHECK (policy_version <> '')
+);
+
+CREATE TABLE IF NOT EXISTS governance.review_batch (
+  tenant_key TEXT NOT NULL,
+  review_batch_ref TEXT NOT NULL,
+  policy_version TEXT NOT NULL,
+  candidate_class TEXT NOT NULL,
+  candidate_type TEXT NOT NULL,
+  candidate_count INTEGER NOT NULL,
+  candidate_hash_manifest JSONB NOT NULL,
+  batch_content_hash TEXT NOT NULL,
+  batch_state TEXT NOT NULL DEFAULT 'generated',
+  validation_run_ref TEXT NOT NULL,
+  source_version_ref TEXT,
+  evidence_refs TEXT[] NOT NULL DEFAULT ARRAY[]::text[],
+  reviewer_identity TEXT,
+  approved_at TIMESTAMPTZ,
+  created_run_ref TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_key, review_batch_ref),
+  FOREIGN KEY (policy_version) REFERENCES governance.review_policy (policy_version),
+  FOREIGN KEY (tenant_key, created_run_ref) REFERENCES operations.run (tenant_key, run_ref),
+  CHECK (candidate_class IN ('auto_accept_eligible', 'batch_review_required', 'individual_review_required', 'reject', 'defer')),
+  CHECK (candidate_type IN ('entity_candidate', 'fact_candidate', 'relationship_candidate')),
+  CHECK (candidate_count >= 0),
+  CHECK (batch_state IN ('generated', 'approved', 'applied', 'held', 'stale', 'rejected'))
+);
+
+CREATE TABLE IF NOT EXISTS governance.review_batch_approval (
+  tenant_key TEXT NOT NULL,
+  review_batch_ref TEXT NOT NULL,
+  approval_ref TEXT NOT NULL,
+  reviewer_identity TEXT NOT NULL,
+  approval_basis TEXT NOT NULL,
+  policy_version TEXT NOT NULL,
+  validation_run_ref TEXT NOT NULL,
+  batch_content_hash TEXT NOT NULL,
+  approved_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_key, approval_ref),
+  FOREIGN KEY (tenant_key, review_batch_ref) REFERENCES governance.review_batch (tenant_key, review_batch_ref),
+  FOREIGN KEY (policy_version) REFERENCES governance.review_policy (policy_version),
+  CHECK (reviewer_identity <> ''),
+  CHECK (approval_basis <> '')
+);
+
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS candidate_type TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS candidate_ref TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS candidate_content_hash TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS decision TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS decision_basis TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS policy_version TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS review_batch_ref TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS reviewer_identity TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS validation_run_ref TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS source_version_ref TEXT;
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS evidence_refs TEXT[] NOT NULL DEFAULT ARRAY[]::text[];
+ALTER TABLE governance.review_decision ADD COLUMN IF NOT EXISTS decision_metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE working.entity_candidate ADD COLUMN IF NOT EXISTS evidence_refs TEXT[] NOT NULL DEFAULT ARRAY[]::text[];
+ALTER TABLE working.entity_candidate ADD COLUMN IF NOT EXISTS candidate_content_hash TEXT;
+ALTER TABLE working.fact_candidate ADD COLUMN IF NOT EXISTS candidate_content_hash TEXT;
+ALTER TABLE working.relationship_candidate ADD COLUMN IF NOT EXISTS candidate_content_hash TEXT;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'review_decision_candidate_type_chk'
+  ) THEN
+    ALTER TABLE governance.review_decision
+      ADD CONSTRAINT review_decision_candidate_type_chk
+      CHECK (candidate_type IS NULL OR candidate_type IN ('entity_candidate', 'fact_candidate', 'relationship_candidate'));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'review_decision_decision_chk'
+  ) THEN
+    ALTER TABLE governance.review_decision
+      ADD CONSTRAINT review_decision_decision_chk
+      CHECK (decision IS NULL OR decision IN ('accepted', 'rejected', 'deferred'));
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS review_decision_candidate_once_idx
+  ON governance.review_decision (tenant_key, candidate_type, candidate_ref)
+  WHERE candidate_type IS NOT NULL AND candidate_ref IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS entity_candidate_content_hash_idx
+  ON working.entity_candidate (tenant_key, candidate_ref, candidate_content_hash);
+CREATE INDEX IF NOT EXISTS fact_candidate_content_hash_idx
+  ON working.fact_candidate (tenant_key, candidate_ref, candidate_content_hash);
+CREATE INDEX IF NOT EXISTS relationship_candidate_content_hash_idx
+  ON working.relationship_candidate (tenant_key, candidate_ref, candidate_content_hash);
 
 CREATE TABLE IF NOT EXISTS governance.authority_transition (
   tenant_key TEXT NOT NULL,
