@@ -19,12 +19,33 @@ const HIGH_IMPACT_RELATIONSHIP_TYPES = new Set([
   "depends_on",
   "blocks",
   "governs",
+  "governed_by",
   "owns",
   "is_control_for",
   "feeds",
   "measures",
+  "measured_by_kpi",
   "contracted_by",
   "supports_decision",
+  "targets_contract",
+  "realized_through",
+  "mitigated_by",
+]);
+
+const INDIVIDUAL_REVIEW_ENTITY_TYPES = new Set([
+  "contract",
+  "kpi",
+  "metric",
+  "procurement_event",
+  "sourcing_event",
+]);
+
+const INDIVIDUAL_REVIEW_SOURCE_ROW_FACT_TYPES = new Set([
+  "contract_source_row",
+  "kpi_source_row",
+  "metric_source_row",
+  "procurement_event_source_row",
+  "sourcing_event_source_row",
 ]);
 
 function stableJson(value) {
@@ -55,6 +76,93 @@ function normalizeArray(value) {
     .split(/[;,]/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function directReviewText(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  return stableJson(normalized.content);
+}
+
+function normalizeSourceFamily(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  const raw = normalized.raw ?? {};
+  const payload = normalized.content?.payload ?? raw.candidatePayload ?? raw.candidate_payload ?? {};
+  return normalizeRef(raw, "sourceFamily", "source_family", "sourceRef", "source_ref") || normalizeRef(payload, "source_family") || normalized.sourceVersionRef;
+}
+
+function normalizeEntityType(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  return String(normalized.content.entityType ?? normalized.raw?.entityType ?? normalized.raw?.entity_type ?? "").trim().toLowerCase();
+}
+
+function normalizeFactType(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  return String(normalized.content.factType ?? normalized.raw?.factType ?? normalized.raw?.fact_type ?? "").trim().toLowerCase();
+}
+
+function normalizeRelationshipType(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  return String(normalized.content.relationshipTypeRef ?? normalized.raw?.relationshipTypeRef ?? normalized.raw?.relationship_type_ref ?? "").trim().toLowerCase();
+}
+
+function normalizeCurrentTargetState(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  const factValue = normalized.content?.factValue ?? normalized.raw?.factValue ?? normalized.raw?.fact_value ?? {};
+  return String(normalized.content.currentTargetState ?? normalized.raw?.currentTargetState ?? normalized.raw?.current_target_state ?? factValue.current_target_state ?? factValue.state ?? "").trim().toLowerCase();
+}
+
+function isDirectSourceRecord(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  const sourceFamily = normalizeSourceFamily(candidate);
+  const factType = normalizeFactType(candidate);
+  return (
+    sourceFamily === "parser_visible_source_sample" ||
+    /(?:source[_-]?row|source[_-]?sample|inventory|extract|register|registry|interview|transcript|ledger|lineage)/i.test(sourceFamily) ||
+    factType.endsWith("_source_row")
+  );
+}
+
+function hasSensitiveCandidateContent(candidate) {
+  const normalized = normalizeCandidate(candidate);
+  const reviewText = directReviewText(candidate);
+  const entityType = normalizeEntityType(candidate);
+  const factType = normalizeFactType(candidate);
+  const relationshipType = normalizeRelationshipType(candidate);
+  const currentTargetState = normalizeCurrentTargetState(candidate);
+  const reasons = [];
+
+  if (/probabilistic|ambiguous|conflict|interpreted|inferred/i.test(reviewText)) {
+    reasons.push("probabilistic_or_interpreted");
+  }
+  if (MODEL_DERIVED_MARKERS.test(reviewText)) {
+    reasons.push("model_derived_candidate");
+  }
+  if (COMMERCIAL_MARKERS.test(reviewText) || /commercial|contract|procurement|sourcing|invoice|proposal|rate[_ -]?card/i.test(factType)) {
+    reasons.push("commercial_or_sourcing_term");
+  }
+  if (
+    normalized.candidateType !== "relationship_candidate" &&
+    (KPI_MARKERS.test(reviewText) || /(?:^|[_-])kpi(?:$|[_-])|metric|target|benefit|outcome/i.test(factType))
+  ) {
+    reasons.push("kpi_or_target_assertion");
+  }
+  if (INDIVIDUAL_REVIEW_ENTITY_TYPES.has(entityType)) {
+    reasons.push("decision_sensitive_entity");
+  }
+  if (INDIVIDUAL_REVIEW_SOURCE_ROW_FACT_TYPES.has(factType)) {
+    reasons.push("decision_sensitive_source_row");
+  }
+  if (currentTargetState === "target") {
+    reasons.push("target_state_claim");
+  }
+  if (
+    normalized.candidateType === "relationship_candidate" &&
+    HIGH_IMPACT_RELATIONSHIP_TYPES.has(relationshipType)
+  ) {
+    reasons.push("high_impact_relationship");
+  }
+
+  return [...new Set(reasons)];
 }
 
 export function normalizeCandidate(row = {}) {
@@ -131,7 +239,7 @@ export function candidateContentHash(candidate) {
 export function classifyCandidateForReview(candidate, options = {}) {
   const normalized = normalizeCandidate(candidate);
   const serialized = stableJson(normalized.raw);
-  const reasons = [];
+  const reasons = hasSensitiveCandidateContent(candidate);
 
   if (!normalized.candidateRef || !normalized.candidateType) {
     return { candidateClass: "reject", reasons: ["missing_candidate_identity"] };
@@ -139,26 +247,10 @@ export function classifyCandidateForReview(candidate, options = {}) {
   if (normalized.raw.reviewState === "quarantined" || normalized.raw.review_state === "quarantined" || /quarantine|hidden[_ -]?truth|broken[_ -]?endpoint/i.test(serialized)) {
     return { candidateClass: "reject", reasons: ["quarantine_or_blocker_marker"] };
   }
-  if (normalized.confidence > 0 && normalized.confidence < 0.72) {
+
+  const confidence = Number(normalized.confidence ?? 0);
+  if (confidence > 0 && confidence < 0.6) {
     reasons.push("low_confidence");
-  }
-  if (/probabilistic|ambiguous|conflict|interpreted|inferred/i.test(serialized)) {
-    reasons.push("probabilistic_or_interpreted");
-  }
-  if (MODEL_DERIVED_MARKERS.test(serialized)) {
-    reasons.push("model_derived_candidate");
-  }
-  if (COMMERCIAL_MARKERS.test(serialized)) {
-    reasons.push("commercial_or_sourcing_term");
-  }
-  if (KPI_MARKERS.test(serialized)) {
-    reasons.push("kpi_or_target_assertion");
-  }
-  if (
-    normalized.candidateType === "relationship_candidate" &&
-    HIGH_IMPACT_RELATIONSHIP_TYPES.has(String(normalized.content.relationshipTypeRef).toLowerCase())
-  ) {
-    reasons.push("high_impact_relationship");
   }
 
   if (reasons.length > 0) {
@@ -166,6 +258,13 @@ export function classifyCandidateForReview(candidate, options = {}) {
   }
 
   if (!normalized.sourceVersionRef || normalized.evidenceRefs.length === 0) {
+    if (
+      normalized.candidateType === "entity_candidate" &&
+      isDirectSourceRecord(candidate) &&
+      confidence >= 0.6
+    ) {
+      return { candidateClass: "batch_review_required", reasons: ["deterministic_source_record_batch_review"] };
+    }
     return { candidateClass: "defer", reasons: ["missing_source_or_evidence_lineage"] };
   }
 
@@ -173,12 +272,20 @@ export function classifyCandidateForReview(candidate, options = {}) {
     return { candidateClass: "batch_review_required", reasons: ["upstream_gate_not_bound"] };
   }
 
-  const allowedAutoTypes = new Set(options.autoAcceptCandidateTypes ?? ["entity_candidate"]);
-  if (allowedAutoTypes.has(normalized.candidateType) && normalized.confidence >= 0.86) {
+  const allowedAutoTypes = new Set(options.autoAcceptCandidateTypes ?? ["entity_candidate", "fact_candidate"]);
+  const minimumAutoConfidence = Number(options.minimumAutoConfidence ?? 0.68);
+  if (
+    allowedAutoTypes.has(normalized.candidateType) &&
+    confidence >= minimumAutoConfidence &&
+    isDirectSourceRecord(candidate)
+  ) {
     return { candidateClass: "auto_accept_eligible", reasons: ["deterministic_high_confidence_evidence_backed"] };
   }
 
-  return { candidateClass: "batch_review_required", reasons: ["deterministic_batch_review"] };
+  return {
+    candidateClass: "batch_review_required",
+    reasons: [confidence > 0 && confidence < 0.72 ? "moderate_confidence_evidence_backed_batch_review" : "deterministic_batch_review"],
+  };
 }
 
 export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVIEW_POLICY_VERSION, validationRunRef, sourceVersionRef, options = {} }) {

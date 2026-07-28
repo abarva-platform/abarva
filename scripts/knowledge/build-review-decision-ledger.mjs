@@ -243,8 +243,9 @@ function inferSourceFamily(candidate) {
 }
 
 function inferIdentityResolution(candidate) {
-  const serialized = rawJson(candidate);
+  const serialized = JSON.stringify(candidate.content ?? {});
   if (/probabilistic|ambiguous|candidate_match|fuzzy|needs[_ -]?review|inferred/i.test(serialized)) return "probabilistic_or_review";
+  if (inferSourceFamily(candidate) === "parser_visible_source_sample" && Number(candidate.confidence ?? 0) >= 0.6) return "deterministic_source_record";
   if (Number(candidate.confidence ?? 0) >= 0.86) return "deterministic";
   return "needs_review";
 }
@@ -260,14 +261,22 @@ function inferCurrentTargetState(candidate) {
 }
 
 function inferDerivationBasis(candidate) {
-  return /model[-_ ]?derived|claude|llm|generated_model|ai[-_ ]?enriched|synthetic[-_ ]?only|interpreted|inferred/i.test(rawJson(candidate))
+  return /model[-_ ]?derived|claude|llm|generated_model|ai[-_ ]?enriched|synthetic[-_ ]?only|interpreted|inferred/i.test(JSON.stringify(candidate.content ?? {}))
     ? "interpreted_or_model_derived"
     : "source_derived";
 }
 
 function isCommercialOrDecisionSensitive(candidate) {
-  return /commercial[_ -]?term|contract[_ -]?value|rate[_ -]?card|pricing|invoice|bafo|proposal|sourcing[_ -]?decision|award[_ -]?recommendation|decision|approval|kpi|metric[_ -]?definition|target[_ -]?state|outcome[_ -]?target|benefit[_ -]?target/i.test(
-    rawJson(candidate),
+  const raw = candidate.raw ?? {};
+  const factType = String(candidate.content?.factType ?? raw.factType ?? raw.fact_type ?? "").toLowerCase();
+  const entityType = String(candidate.content?.entityType ?? raw.entityType ?? raw.entity_type ?? "").toLowerCase();
+  const currentTargetState = String(inferCurrentTargetState(candidate) ?? "").toLowerCase();
+  const reviewText = JSON.stringify(candidate.content ?? {});
+  return (
+    /commercial[_ -]?term|contract[_ -]?value|rate[_ -]?card|pricing|invoice|bafo|proposal|sourcing[_ -]?decision|award[_ -]?recommendation/i.test(reviewText) ||
+    /commercial|contract|procurement|sourcing|invoice|proposal|rate[_ -]?card|(?:^|[_-])kpi(?:$|[_-])|metric|target|benefit|outcome/i.test(factType) ||
+    /contract|procurement_event|sourcing_event|(?:^|[_-])kpi(?:$|[_-])|metric/.test(entityType) ||
+    currentTargetState === "target"
   );
 }
 
