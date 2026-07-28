@@ -1794,7 +1794,20 @@ export class PostgresKnowledgeExecutionStore {
         )
         SELECT tenant_key, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
           'fresh'::abarva_freshness_state, coalesce(availability_state, 'not_loaded'::abarva_availability_state),
-          0, content_hash, gap_ref,
+          0,
+          md5(concat_ws(
+            ':',
+            tenant_key,
+            gap_ref,
+            domain_ref,
+            missing_evidence_type,
+            why_it_matters,
+            coalesce(owner_ref, ''),
+            severity,
+            coalesce(availability_state::text, ''),
+            coalesce(source_request_text, '')
+          )),
+          gap_ref,
           coalesce(missing_evidence_type, 'Missing evidence'),
           why_it_matters,
           jsonb_build_object(
