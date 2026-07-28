@@ -7,7 +7,7 @@
 
 import { ConsumptionReader } from "../reader";
 import type { ConsumptionQuery } from "../db";
-import { envelopeMetaSchema } from "../../consumption-contracts";
+import { envelopeMetaSchema, type ConsumptionEnvelope } from "../../consumption-contracts";
 
 const TENANT = "airline-demo-new";
 const BASELINE = "kb-airline-2026";
@@ -27,7 +27,7 @@ const activeBaselineRow = {
   rows: [{ knowledge_baseline_ref: BASELINE, baseline_content_hash: "hash-1", domain_publication_refs: ["enterprise:v1", "technology:v1"], activated_at: "2026-07-28T00:00:00.000Z" }],
 };
 
-function metaOf(env: Record<string, unknown>) {
+function metaOf(env: ConsumptionEnvelope<unknown>) {
   const m: Record<string, unknown> = { ...env };
   delete m.data;
   return m;
