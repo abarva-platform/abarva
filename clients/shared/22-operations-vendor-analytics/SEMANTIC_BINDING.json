@@ -1,0 +1,101 @@
+{
+  "$comment": "PRESENTATION binding only. Maps Operations & Vendor Exposure tiles to APPROVED Cube measure names from clients/shared/20-phase3c2d-consumption-contracts/CUBE_MEASURE_AND_DIMENSION_CATALOG. No SQL, no connection. The foundation lane owns the measure definitions and proves parity; this file only fixes the shared vocabulary so AbarVa, Cube, Superset and Observable refer to the same measures by the same names.",
+  "package": "operations-vendor-analytics",
+  "status": "dormant",
+  "semanticContractRef": "clients/shared/20-phase3c2d-consumption-contracts/CUBE_SEMANTIC_MODEL_CONTRACT.md",
+  "consumesOnly": [
+    "consumption.application_inventory_v1",
+    "consumption.vendor_contract_inventory_v1",
+    "consumption.domain_summary_v1",
+    "consumption.relationship_edge_v1",
+    "consumption.evidence_gap_v1",
+    "consumption.metric_observation_v1"
+  ],
+  "mustNotConsume": [
+    "raw sources",
+    "working candidates",
+    "unreviewed records",
+    "current Tower marts",
+    "current Source operational tables",
+    "current Moves workflow tables",
+    "legacy Airline Demo data",
+    "any fixture pack"
+  ],
+  "tiles": [
+    {
+      "tile": "material_vendors",
+      "surfaceLabel": "Material vendors",
+      "cube_domain": "VendorContractPortfolio",
+      "measure_name": "vendor_concentration_pct",
+      "$note": "The lens shows the vendor set + concentration INDICATORS (counts). The governed concentration percentage is measure vendor_concentration_pct — foundation lane owns its SQL. AbarVa must never compute it client-side.",
+      "dimensions": ["tenant_key", "service_tower"],
+      "authority_minimum": "accepted contract + metric evidence",
+      "null_behavior": "null if spend withheld/not_measured"
+    },
+    {
+      "tile": "renewals_approaching",
+      "surfaceLabel": "Renewals in 12 months",
+      "cube_domain": "VendorContractPortfolio",
+      "measure_name": "contract_renewal_exposure",
+      "dimensions": ["tenant_key", "renewal_quarter"],
+      "authority_minimum": "accepted contract dates",
+      "null_behavior": "null for withheld money"
+    },
+    {
+      "tile": "applications_connected",
+      "surfaceLabel": "Applications connected",
+      "cube_domain": "ApplicationPortfolio",
+      "measure_name": "application_count",
+      "dimensions": ["tenant_key", "hosting_model", "criticality"],
+      "authority_minimum": "published baseline",
+      "null_behavior": "available only"
+    },
+    {
+      "tile": "critical_applications",
+      "surfaceLabel": "Tier-1 / critical systems",
+      "cube_domain": "ApplicationPortfolio",
+      "measure_name": "critical_application_count",
+      "dimensions": ["tenant_key", "domain"],
+      "authority_minimum": "published baseline",
+      "null_behavior": "available only"
+    },
+    {
+      "tile": "operational_risks",
+      "surfaceLabel": "Known operational risks / open critical gaps",
+      "cube_domain": "RiskControlPortfolio",
+      "measure_name": "open_critical_gap_count",
+      "dimensions": ["tenant_key", "domain"],
+      "authority_minimum": "published gap register",
+      "null_behavior": "available only"
+    },
+    {
+      "tile": "transformation_exposure",
+      "surfaceLabel": "Programs at risk / transformation exposure",
+      "cube_domain": "ProgramPortfolio",
+      "measure_name": "program_at_risk_count",
+      "dimensions": ["tenant_key", "business_function"],
+      "authority_minimum": "published program state",
+      "null_behavior": "available only"
+    },
+    {
+      "tile": "evidence_coverage",
+      "surfaceLabel": "Evidence coverage",
+      "cube_domain": "KnowledgeCoverage",
+      "measure_name": "evidence_coverage_pct",
+      "dimensions": ["tenant_key", "domain"],
+      "authority_minimum": "published baseline",
+      "null_behavior": "available only"
+    }
+  ],
+  "reconciliationIdentity": {
+    "$note": "Every surface (AbarVa lens, Cube query, Superset dashboard, Observable page, aVa packet) MUST expose these identity fields so a human or the foundation lane can prove they are reading the same governed truth. Values are resolved at activation, never hard-coded here.",
+    "fields": [
+      "tenant_key",
+      "knowledge_baseline_ref",
+      "baseline_content_hash",
+      "projection_contract_version",
+      "metric_definition_version",
+      "refresh_run_ref"
+    ]
+  }
+}

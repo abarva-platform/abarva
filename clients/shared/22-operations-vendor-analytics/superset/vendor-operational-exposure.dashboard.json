@@ -1,0 +1,106 @@
+{
+  "$lane": "PRESENTATION LAYOUT ONLY. This describes the Superset dashboard's charts, layout, filters and drill paths. It references dataset names and APPROVED Cube measure names; it does NOT define dataset SQL, governed metric definitions, database connections, or grants. The foundation lane defines the datasets (over the governed semantic / read-only baseline-versioned consumption views) and imports this layout against them.",
+  "status": "dormant",
+  "dashboard": {
+    "slug": "vendor-operational-exposure",
+    "dashboard_title": "Vendor & Operational Exposure",
+    "description": "Governed vendor and operational-exposure analytics over the active Knowledge Baseline. Same tenant/baseline/projection/metric identity as the AbarVa lens, Cube and Observable (see PARITY_CONTRACT.md).",
+    "certification": {
+      "$note": "Displayed identity for reconciliation — bound by the foundation lane at activation, never hard-coded.",
+      "identity_fields": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "baseline_content_hash",
+        "projection_contract_version",
+        "metric_definition_version",
+        "refresh_run_ref"
+      ]
+    }
+  },
+  "datasets": [
+    {
+      "name": "vendor_contract_portfolio",
+      "owner": "codex-foundation",
+      "$source": "Cube VendorContractPortfolio (or read-only consumption.vendor_contract_inventory_v1). SQL/metric defs foundation-owned.",
+      "exposes_measures": ["vendor_concentration_pct", "contract_renewal_exposure"],
+      "exposes_dimensions": ["tenant_key", "service_tower", "renewal_quarter", "vendor_name"]
+    },
+    {
+      "name": "application_portfolio",
+      "owner": "codex-foundation",
+      "exposes_measures": ["application_count", "critical_application_count", "end_of_life_application_count"],
+      "exposes_dimensions": ["tenant_key", "hosting_model", "criticality", "domain", "owner", "operational_capability"]
+    },
+    {
+      "name": "program_portfolio",
+      "owner": "codex-foundation",
+      "exposes_measures": ["program_at_risk_count"],
+      "exposes_dimensions": ["tenant_key", "business_function"]
+    },
+    {
+      "name": "risk_control_portfolio",
+      "owner": "codex-foundation",
+      "exposes_measures": ["open_critical_gap_count"],
+      "exposes_dimensions": ["tenant_key", "domain"]
+    },
+    {
+      "name": "knowledge_coverage",
+      "owner": "codex-foundation",
+      "exposes_measures": ["evidence_coverage_pct"],
+      "exposes_dimensions": ["tenant_key", "domain"]
+    }
+  ],
+  "pending_measures_for_foundation_lane": {
+    "$note": "The exec brief asked for incident/SLA and spend tiles. Those measures are NOT in the approved CUBE_MEASURE_AND_DIMENSION_CATALOG yet, so they are intentionally NOT charted here (no invented analytics truth). The foundation lane must define these before the corresponding charts are added: sev1_incident_count, sev2_incident_count, sla_breach_count (VendorContractPortfolio); vendor_spend_total (VendorContractPortfolio)."
+  },
+  "charts": [
+    { "slice_name": "Applications connected", "viz_type": "big_number_total", "dataset": "application_portfolio", "metric": "application_count" },
+    { "slice_name": "Critical systems", "viz_type": "big_number_total", "dataset": "application_portfolio", "metric": "critical_application_count" },
+    { "slice_name": "Vendor concentration", "viz_type": "big_number_total", "dataset": "vendor_contract_portfolio", "metric": "vendor_concentration_pct", "d3_format": ".0%" },
+    { "slice_name": "Renewal exposure (12mo)", "viz_type": "big_number_total", "dataset": "vendor_contract_portfolio", "metric": "contract_renewal_exposure" },
+    { "slice_name": "Open critical gaps", "viz_type": "big_number_total", "dataset": "risk_control_portfolio", "metric": "open_critical_gap_count" },
+    { "slice_name": "Evidence coverage", "viz_type": "big_number_total", "dataset": "knowledge_coverage", "metric": "evidence_coverage_pct", "d3_format": ".0%" },
+    {
+      "slice_name": "Vendor comparison",
+      "viz_type": "table",
+      "dataset": "vendor_contract_portfolio",
+      "groupby": ["vendor_name", "service_tower"],
+      "metrics": ["vendor_concentration_pct", "contract_renewal_exposure"],
+      "$columns_pending_measures": ["sev1_incident_count", "sla_breach_count"]
+    },
+    {
+      "slice_name": "Renewal opportunity by quarter",
+      "viz_type": "echarts_timeseries_bar",
+      "dataset": "vendor_contract_portfolio",
+      "x_axis": "renewal_quarter",
+      "metrics": ["contract_renewal_exposure"]
+    },
+    {
+      "slice_name": "Program exposure by function",
+      "viz_type": "echarts_timeseries_bar",
+      "dataset": "program_portfolio",
+      "x_axis": "business_function",
+      "metrics": ["program_at_risk_count"]
+    },
+    {
+      "slice_name": "Evidence coverage by domain",
+      "viz_type": "echarts_timeseries_bar",
+      "dataset": "knowledge_coverage",
+      "x_axis": "domain",
+      "metrics": ["evidence_coverage_pct"]
+    }
+  ],
+  "native_filters": [
+    { "name": "Operational capability", "column": "operational_capability", "dataset": "application_portfolio", "$targets": "IROPS / flight ops / crew / airport / maintenance / customer recovery / data & integration" },
+    { "name": "Service tower", "column": "service_tower", "dataset": "vendor_contract_portfolio" },
+    { "name": "Renewal window", "column": "renewal_quarter", "dataset": "vendor_contract_portfolio" }
+  ],
+  "layout": {
+    "$note": "Logical layout (Superset position_json is generated at import). Row 1 = six big-number tiles; Row 2 = vendor comparison table (full width); Row 3 = renewal + program + coverage bars.",
+    "rows": [
+      ["Applications connected", "Critical systems", "Vendor concentration", "Renewal exposure (12mo)", "Open critical gaps", "Evidence coverage"],
+      ["Vendor comparison"],
+      ["Renewal opportunity by quarter", "Program exposure by function", "Evidence coverage by domain"]
+    ]
+  }
+}
