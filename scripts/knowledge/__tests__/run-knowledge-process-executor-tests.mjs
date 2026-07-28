@@ -218,6 +218,27 @@ await test("relationship promotion resolves endpoints from an indexed accepted e
   assert.ok(!source.includes("LEFT JOIN LATERAL ("));
 });
 
+await test("projection build materializes analytics consumption tables from accepted knowledge", async () => {
+  const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
+  for (const projection of [
+    "enterprise_brief_v1",
+    "domain_summary_v1",
+    "application_inventory_v1",
+    "technology_estate_v1",
+    "data_product_inventory_v1",
+    "vendor_contract_inventory_v1",
+    "metric_observation_v1",
+    "evidence_gap_v1",
+  ]) {
+    assert.ok(source.includes(`consumption.${projection}`), `projection build must mention ${projection}`);
+  }
+  assert.ok(source.includes("DELETE FROM consumption.enterprise_brief_v1"), "projection build must clear stale rows before rebuild");
+  assert.ok(source.includes("entity_type ILIKE $6"), "entity projections must be sourced by accepted entity type filters");
+  assert.ok(source.includes("WHERE tenant_key=$1 AND authority_state='accepted'"), "projection build must read accepted canonical entities only");
+  assert.ok(source.includes("FROM metrics.metric_observation o"), "metric projection must read governed metric observations");
+  assert.ok(source.includes("FROM governance.evidence_gap"), "gap projection must read governed evidence gaps");
+});
+
 await test("custom handler must verify before commit", async () => {
   const context = baseContext({ canonicalProcess: "source-parse-v1", processName: "airline-demo-new-source-parse-v1" });
   const store = new InMemoryKnowledgeExecutionStore();
