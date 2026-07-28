@@ -108,15 +108,35 @@ async function postgresAadAccessToken(env = process.env) {
   const clientId = postgresAadClientId(env);
   if (!clientId) return "";
 
+  let azureIdentityError = null;
+  try {
+    const { ManagedIdentityCredential } = await import("@azure/identity");
+    const credential = new ManagedIdentityCredential(clientId);
+    const token = await credential.getToken(`${POSTGRES_AAD_RESOURCE}/.default`);
+    if (token?.token) return token.token;
+    azureIdentityError = new Error("Azure Identity returned no token");
+  } catch (error) {
+    azureIdentityError = error;
+  }
+
   const url = new URL("http://169.254.169.254/metadata/identity/oauth2/token");
   url.searchParams.set("api-version", "2018-02-01");
   url.searchParams.set("resource", POSTGRES_AAD_RESOURCE);
   url.searchParams.set("client_id", clientId);
 
-  const response = await fetch(url, { headers: { Metadata: "true" } });
+  let response;
+  try {
+    response = await fetch(url, { headers: { Metadata: "true" } });
+  } catch (error) {
+    const sdkDetail = azureIdentityError?.message ? ` Azure Identity error: ${azureIdentityError.message.slice(0, 240)}.` : "";
+    throw new Error(`Failed to acquire Azure Postgres Entra token from metadata endpoint: ${error.message}.${sdkDetail}`);
+  }
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(`Failed to acquire Azure Postgres Entra token: HTTP ${response.status}${detail ? ` ${detail.slice(0, 160)}` : ""}`);
+    const sdkDetail = azureIdentityError?.message ? ` Azure Identity error: ${azureIdentityError.message.slice(0, 240)}.` : "";
+    throw new Error(
+      `Failed to acquire Azure Postgres Entra token: HTTP ${response.status}${detail ? ` ${detail.slice(0, 160)}` : ""}.${sdkDetail}`,
+    );
   }
   const payload = await response.json();
   if (!payload?.access_token) throw new Error("Azure Postgres Entra token response did not include access_token");
