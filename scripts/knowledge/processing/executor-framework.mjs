@@ -1181,26 +1181,38 @@ export class PostgresKnowledgeExecutionStore {
           authority_state, availability_state, freshness_state,
           accepted_evidence_refs, content_hash, created_run_ref
         )
-        SELECT c.tenant_key,
-          coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')),
-          c.entity_type,
-          c.display_name,
-          c.candidate_payload,
-          'accepted',
-          'accepted',
-          'unknown',
-          ARRAY[]::text[],
-          md5(c.candidate_payload::text),
-          $2
-        FROM working.entity_candidate c
-        JOIN governance.review_decision d
-          ON d.tenant_key = c.tenant_key
-         AND d.candidate_type = 'entity_candidate'
-         AND d.candidate_ref = c.candidate_ref
-         AND d.candidate_content_hash = c.candidate_content_hash
-         AND d.decision = 'accepted'
-         AND d.review_state = 'accepted'
-        WHERE c.tenant_key=$1
+        SELECT tenant_key, entity_ref, entity_type, display_name, canonical_payload,
+          authority_state, availability_state, freshness_state,
+          accepted_evidence_refs, content_hash, created_run_ref
+        FROM (
+          SELECT DISTINCT ON (c.tenant_key, coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')))
+            c.tenant_key,
+            coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
+            c.entity_type,
+            c.display_name,
+            c.candidate_payload,
+            'accepted' AS authority_state,
+            'accepted' AS availability_state,
+            'unknown' AS freshness_state,
+            ARRAY[]::text[] AS accepted_evidence_refs,
+            md5(c.candidate_payload::text) AS content_hash,
+            $2 AS created_run_ref,
+            c.confidence,
+            c.candidate_ref
+          FROM working.entity_candidate c
+          JOIN governance.review_decision d
+            ON d.tenant_key = c.tenant_key
+           AND d.candidate_type = 'entity_candidate'
+           AND d.candidate_ref = c.candidate_ref
+           AND d.candidate_content_hash = c.candidate_content_hash
+           AND d.decision = 'accepted'
+           AND d.review_state = 'accepted'
+          WHERE c.tenant_key=$1
+          ORDER BY c.tenant_key,
+            coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')),
+            c.confidence DESC NULLS LAST,
+            c.candidate_ref
+        ) promoted_entities
         ON CONFLICT (tenant_key, entity_ref)
         DO UPDATE SET canonical_payload=EXCLUDED.canonical_payload,
           content_hash=EXCLUDED.content_hash, created_run_ref=EXCLUDED.created_run_ref
@@ -1263,34 +1275,62 @@ export class PostgresKnowledgeExecutionStore {
           availability_state, freshness_state, evidence_refs, relationship_payload,
           content_hash
         )
-        SELECT r.tenant_key,
-          'rel:' || r.candidate_ref,
-          coalesce(nullif(f.candidate_payload->>'entity_ref',''), 'entity:' || f.entity_type || ':' || regexp_replace(lower(f.display_name), '[^a-z0-9]+', '-', 'g')),
-          coalesce(nullif(t.candidate_payload->>'entity_ref',''), 'entity:' || t.entity_type || ':' || regexp_replace(lower(t.display_name), '[^a-z0-9]+', '-', 'g')),
-          r.relationship_type_ref,
-          r.current_target_state,
-          'accepted',
-          'accepted',
-          'unknown',
-          r.evidence_refs,
-          jsonb_build_object('from_source_native_id', r.from_candidate_ref, 'to_source_native_id', r.to_candidate_ref),
-          md5((r.from_candidate_ref || r.to_candidate_ref || r.relationship_type_ref || r.current_target_state)::text)
-        FROM working.relationship_candidate r
-        JOIN governance.review_decision d
-          ON d.tenant_key = r.tenant_key
-         AND d.candidate_type = 'relationship_candidate'
-         AND d.candidate_ref = r.candidate_ref
-         AND d.candidate_content_hash = r.candidate_content_hash
-         AND d.decision = 'accepted'
-         AND d.review_state = 'accepted'
-        JOIN working.entity_candidate f
-          ON f.tenant_key = r.tenant_key
-         AND (f.candidate_ref = r.from_candidate_ref OR f.candidate_payload->>'source_native_id' = r.from_candidate_ref)
-        JOIN working.entity_candidate t
-          ON t.tenant_key = r.tenant_key
-         AND (t.candidate_ref = r.to_candidate_ref OR t.candidate_payload->>'source_native_id' = r.to_candidate_ref)
-        WHERE r.tenant_key=$1
-          AND r.from_candidate_ref <> r.to_candidate_ref
+        SELECT tenant_key, relationship_ref, from_entity_ref, to_entity_ref,
+          relationship_type_ref, current_target_state, authority_state,
+          availability_state, freshness_state, evidence_refs, relationship_payload,
+          content_hash
+        FROM (
+          SELECT DISTINCT ON (r.tenant_key, 'rel:' || r.candidate_ref)
+            r.tenant_key,
+            'rel:' || r.candidate_ref AS relationship_ref,
+            f.entity_ref AS from_entity_ref,
+            t.entity_ref AS to_entity_ref,
+            r.relationship_type_ref,
+            r.current_target_state,
+            'accepted' AS authority_state,
+            'accepted' AS availability_state,
+            'unknown' AS freshness_state,
+            r.evidence_refs,
+            jsonb_build_object('from_source_native_id', r.from_candidate_ref, 'to_source_native_id', r.to_candidate_ref) AS relationship_payload,
+            md5((r.from_candidate_ref || r.to_candidate_ref || r.relationship_type_ref || r.current_target_state)::text) AS content_hash,
+            r.confidence,
+            r.candidate_ref
+          FROM working.relationship_candidate r
+          JOIN governance.review_decision d
+            ON d.tenant_key = r.tenant_key
+           AND d.candidate_type = 'relationship_candidate'
+           AND d.candidate_ref = r.candidate_ref
+           AND d.candidate_content_hash = r.candidate_content_hash
+           AND d.decision = 'accepted'
+           AND d.review_state = 'accepted'
+          LEFT JOIN LATERAL (
+            SELECT coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref
+            FROM working.entity_candidate e
+            WHERE e.tenant_key = r.tenant_key
+              AND (e.candidate_ref = r.from_candidate_ref OR e.candidate_payload->>'source_native_id' = r.from_candidate_ref)
+            ORDER BY CASE WHEN e.candidate_ref = r.from_candidate_ref THEN 0 ELSE 1 END,
+              e.confidence DESC NULLS LAST,
+              e.candidate_ref
+            LIMIT 1
+          ) f ON true
+          LEFT JOIN LATERAL (
+            SELECT coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref
+            FROM working.entity_candidate e
+            WHERE e.tenant_key = r.tenant_key
+              AND (e.candidate_ref = r.to_candidate_ref OR e.candidate_payload->>'source_native_id' = r.to_candidate_ref)
+            ORDER BY CASE WHEN e.candidate_ref = r.to_candidate_ref THEN 0 ELSE 1 END,
+              e.confidence DESC NULLS LAST,
+              e.candidate_ref
+            LIMIT 1
+          ) t ON true
+          WHERE r.tenant_key=$1
+            AND r.from_candidate_ref <> r.to_candidate_ref
+            AND f.entity_ref IS NOT NULL
+            AND t.entity_ref IS NOT NULL
+          ORDER BY r.tenant_key, 'rel:' || r.candidate_ref,
+            r.confidence DESC NULLS LAST,
+            r.candidate_ref
+        ) promoted_relationships
         ON CONFLICT (tenant_key, relationship_ref)
         DO UPDATE SET evidence_refs=EXCLUDED.evidence_refs,
           relationship_payload=EXCLUDED.relationship_payload, content_hash=EXCLUDED.content_hash
