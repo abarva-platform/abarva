@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
+import { buildDryRunReviewPackage } from "../build-review-decision-ledger.mjs";
 import {
   InMemoryKnowledgeExecutionStore,
   KnowledgeProcessError,
@@ -562,6 +563,66 @@ await test("review decision guard blocks candidates outside the approved batch m
     ]),
   });
   assert.ok(blockers.includes("candidate_not_in_approved_batch_manifest"));
+});
+
+await test("dry-run review package never proposes accepted decisions without human approval", () => {
+  const pkg = buildDryRunReviewPackage(
+    {
+      tenant: "airline-demo-new",
+      releaseId: "airline-demo-new-source-corpus-v1.0.0",
+      policyVersion: "knowledge-review-decision-policy-v1",
+      validationRunRef: "validate-run-1",
+      sourceVersionRef: "src-v1",
+      samplesPerBatch: 2,
+    },
+    [
+      {
+        candidateRef: "entity-auto",
+        candidateType: "entity_candidate",
+        sourceVersionRef: "src-v1",
+        entityType: "application",
+        displayName: "Deterministic Application",
+        evidenceRefs: ["ev-1"],
+        confidence: 0.94,
+        sourceFamily: "application_inventory",
+      },
+      {
+        candidateRef: "fact-commercial",
+        candidateType: "fact_candidate",
+        sourceVersionRef: "src-v2",
+        subjectCandidateRef: "entity-auto",
+        factType: "commercial_term",
+        factValue: { pricing: "proposal rate" },
+        evidenceRefs: ["ev-2"],
+        confidence: 0.91,
+        sourceFamily: "vendor_contracts",
+      },
+      {
+        candidateRef: "rel-high-impact",
+        candidateType: "relationship_candidate",
+        sourceVersionRef: "src-v3",
+        fromCandidateRef: "entity-auto",
+        toCandidateRef: "entity-risk",
+        relationshipTypeRef: "blocks",
+        currentTargetState: "current",
+        evidenceRefs: ["ev-3"],
+        confidence: 0.88,
+        sourceFamily: "relationship_map",
+      },
+    ],
+  );
+  assert.equal(pkg.candidateCounts.total, 3);
+  assert.equal(pkg.candidateCounts.proposedDecisions.accept, 0);
+  assert.equal(pkg.candidateCounts.proposedDecisions.defer + pkg.candidateCounts.proposedDecisions.reject, 3);
+  assert.equal(pkg.humanApprovalRequired, true);
+  assert.equal(pkg.applyAuthorized, false);
+  assert.equal(pkg.hardStop, "dry_run_only_no_review_decisions_written");
+  assert.equal(pkg.candidateManifest.length, 3);
+  assert.ok(pkg.candidateManifestHash);
+  assert.ok(pkg.packageContentHash);
+  assert.ok(pkg.exceptionQueues.individual_review_required.some((queue) => queue.candidateCount >= 1));
+  assert.equal(pkg.candidateCounts.commercialAndDecisionSensitive >= 1, true);
+  assert.equal(pkg.candidateCounts.highImpactRelationships, 1);
 });
 
 if (failures > 0) {
