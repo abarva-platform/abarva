@@ -1,0 +1,55 @@
+containers:
+  - name: airdn-job
+    image: postgres:16-alpine
+    command:
+      - /bin/sh
+    args:
+      - -lc
+      - |
+        set -eu
+        PGPASSWORD=$PGPASSWORD psql -v ON_ERROR_STOP=1 -h $PGHOST -U $PGUSER -d $PGDATABASE -Atc "
+          select 'hidden_entity_candidates=' || count(*)
+          from working.entity_candidate
+          where tenant_key='airline-demo-new' and candidate_payload::text ~* '(hidden|evaluator|truth)';
+
+          select 'hidden_fact_candidates=' || count(*)
+          from working.fact_candidate
+          where tenant_key='airline-demo-new' and fact_value::text ~* '(hidden|evaluator|truth)';
+
+          select 'hidden_relationship_candidates=' || count(*)
+          from working.relationship_candidate
+          where tenant_key='airline-demo-new' and array_to_string(evidence_refs, ',') ~* '(hidden|evaluator|truth)';
+
+          select concat_ws('|',
+            'entity',
+            candidate_ref,
+            source_version_ref,
+            display_name,
+            left(candidate_payload::text, 450)
+          )
+          from working.entity_candidate
+          where tenant_key='airline-demo-new' and candidate_payload::text ~* '(hidden|evaluator|truth)'
+          limit 12;
+
+          select concat_ws('|',
+            'fact',
+            candidate_ref,
+            source_version_ref,
+            fact_type,
+            left(fact_value::text, 450)
+          )
+          from working.fact_candidate
+          where tenant_key='airline-demo-new' and fact_value::text ~* '(hidden|evaluator|truth)'
+          limit 12;
+        "
+    env:
+      - name: PGHOST
+        value: pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com
+      - name: PGPORT
+        value: "5432"
+      - name: PGUSER
+        value: airdn_admin
+      - name: PGDATABASE
+        value: abarva_airline_demo_new_knowledge_lab
+      - name: PGPASSWORD
+        secretRef: pg-admin-password

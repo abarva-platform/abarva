@@ -1,0 +1,208 @@
+{"TimeStamp":"2026-07-27T23:50:04.85119","Log":"Connecting to the container 'airdn-job'..."}
+{"TimeStamp":"2026-07-27T23:50:05.0122","Log":"Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-5glcrz1', Replica: 'job-airdn-validate-lab-5glcrz1-4dxsc']"}
+{"TimeStamp":"2026-07-27T23:49:43.4114561+00:00","Log":"F {"}
+{"TimeStamp":"2026-07-27T23:49:43.4115+00:00","Log":"F   "schemaVersion": "hcdn-job-runner-envelope/v1","}
+{"TimeStamp":"2026-07-27T23:49:43.411525+00:00","Log":"F   "generatedAt": "2026-07-27T23:49:43.411Z","}
+{"TimeStamp":"2026-07-27T23:49:43.4115285+00:00","Log":"F   "runId": "airline-demo-new-evidence-extract-v1-20260727-001","}
+{"TimeStamp":"2026-07-27T23:49:43.4115308+00:00","Log":"F   "tenantKey": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:49:43.4115328+00:00","Log":"F   "environment": "lab","}
+{"TimeStamp":"2026-07-27T23:49:43.411535+00:00","Log":"F   "processName": "airline-demo-new-evidence-extract-v1","}
+{"TimeStamp":"2026-07-27T23:49:43.4115391+00:00","Log":"F   "stageNames": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4115412+00:00","Log":"F     "04_extract_evidence""}
+{"TimeStamp":"2026-07-27T23:49:43.4115433+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4115455+00:00","Log":"F   "mode": "execute","}
+{"TimeStamp":"2026-07-27T23:49:43.4115476+00:00","Log":"F   "sourceRunRef": null,"}
+{"TimeStamp":"2026-07-27T23:49:43.4115496+00:00","Log":"F   "manifest": {"}
+{"TimeStamp":"2026-07-27T23:49:43.411552+00:00","Log":"F     "path": "/app/runtime-tenant-boundaries/airline-demo-new/APPROVED_BOUNDARY_SNAPSHOT.json","}
+{"TimeStamp":"2026-07-27T23:49:43.4115543+00:00","Log":"F     "tenantKey": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:49:43.4115565+00:00","Log":"F     "databaseName": "abarva_airline_demo_new_knowledge_lab","}
+{"TimeStamp":"2026-07-27T23:49:43.4115589+00:00","Log":"F     "storageAccount": "stabairdnlabeus001","}
+{"TimeStamp":"2026-07-27T23:49:43.4115619+00:00","Log":"F     "subscriptionId": "701a8554-a166-46e9-bf13-743bc50e3b20","}
+{"TimeStamp":"2026-07-27T23:49:43.4115642+00:00","Log":"F     "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160","}
+{"TimeStamp":"2026-07-27T23:49:43.4115665+00:00","Log":"F     "imageDigest": "sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160""}
+{"TimeStamp":"2026-07-27T23:49:43.41157+00:00","Log":"F   },"}
+{"TimeStamp":"2026-07-27T23:49:43.4115723+00:00","Log":"F   "guardResults": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4115743+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4115761+00:00","Log":"F       "name": "tenant_scope","}
+{"TimeStamp":"2026-07-27T23:49:43.4115781+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4116688+00:00","Log":"F       "expected": "single canonical tenant","}
+{"TimeStamp":"2026-07-27T23:49:43.4116779+00:00","Log":"F       "observed": "airline-demo-new""}
+{"TimeStamp":"2026-07-27T23:49:43.4116815+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4116834+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4116853+00:00","Log":"F       "name": "tenant_env","}
+{"TimeStamp":"2026-07-27T23:49:43.4116872+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4116893+00:00","Log":"F       "expected": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:49:43.4116912+00:00","Log":"F       "observed": "airline-demo-new""}
+{"TimeStamp":"2026-07-27T23:49:43.4116951+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.411697+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4116992+00:00","Log":"F       "name": "manifest_tenant","}
+{"TimeStamp":"2026-07-27T23:49:43.4117011+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4117031+00:00","Log":"F       "expected": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:49:43.4117049+00:00","Log":"F       "observed": "airline-demo-new""}
+{"TimeStamp":"2026-07-27T23:49:43.411707+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.411709+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4117109+00:00","Log":"F       "name": "mode","}
+{"TimeStamp":"2026-07-27T23:49:43.4117128+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4117147+00:00","Log":"F       "expected": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4117165+00:00","Log":"F         "preflight","}
+{"TimeStamp":"2026-07-27T23:49:43.4117183+00:00","Log":"F         "noop","}
+{"TimeStamp":"2026-07-27T23:49:43.4117201+00:00","Log":"F         "execute""}
+{"TimeStamp":"2026-07-27T23:49:43.4117219+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4117237+00:00","Log":"F       "observed": "execute""}
+{"TimeStamp":"2026-07-27T23:49:43.4117268+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4117286+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4117304+00:00","Log":"F       "name": "process","}
+{"TimeStamp":"2026-07-27T23:49:43.4117323+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4117341+00:00","Log":"F       "expected": "airline-demo-new-evidence-extract-v1","}
+{"TimeStamp":"2026-07-27T23:49:43.411736+00:00","Log":"F       "observed": "airline-demo-new-evidence-extract-v1""}
+{"TimeStamp":"2026-07-27T23:49:43.4117379+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4117398+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4117416+00:00","Log":"F       "name": "stage","}
+{"TimeStamp":"2026-07-27T23:49:43.4117435+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4117453+00:00","Log":"F       "expected": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4117471+00:00","Log":"F         "04_extract_evidence""}
+{"TimeStamp":"2026-07-27T23:49:43.411749+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4118374+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4118435+00:00","Log":"F         "04_extract_evidence""}
+{"TimeStamp":"2026-07-27T23:49:43.4118456+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.4118475+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4118493+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4118511+00:00","Log":"F       "name": "environment","}
+{"TimeStamp":"2026-07-27T23:49:43.411853+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4118548+00:00","Log":"F       "expected": "lab","}
+{"TimeStamp":"2026-07-27T23:49:43.4118568+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4118586+00:00","Log":"F         "lab""}
+{"TimeStamp":"2026-07-27T23:49:43.4118607+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.4118625+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4118644+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4118991+00:00","Log":"F       "name": "subscription","}
+{"TimeStamp":"2026-07-27T23:49:43.4119043+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4119067+00:00","Log":"F       "expected": "701a8554-a166-46e9-bf13-743bc50e3b20","}
+{"TimeStamp":"2026-07-27T23:49:43.4119133+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4119155+00:00","Log":"F         "701a8554-a166-46e9-bf13-743bc50e3b20""}
+{"TimeStamp":"2026-07-27T23:49:43.4119176+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.4119195+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4119214+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4119233+00:00","Log":"F       "name": "database","}
+{"TimeStamp":"2026-07-27T23:49:43.4119251+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4119269+00:00","Log":"F       "expected": "abarva_airline_demo_new_knowledge_lab","}
+{"TimeStamp":"2026-07-27T23:49:43.4119287+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4119307+00:00","Log":"F         "abarva_airline_demo_new_knowledge_lab""}
+{"TimeStamp":"2026-07-27T23:49:43.4119326+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.4119345+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4119363+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4119383+00:00","Log":"F       "name": "storage_account","}
+{"TimeStamp":"2026-07-27T23:49:43.4119402+00:00","Log":"F       "status": "warning","}
+{"TimeStamp":"2026-07-27T23:49:43.4119421+00:00","Log":"F       "expected": "stabairdnlabeus001","}
+{"TimeStamp":"2026-07-27T23:49:43.4119451+00:00","Log":"F       "observed": null,"}
+{"TimeStamp":"2026-07-27T23:49:43.4119471+00:00","Log":"F       "message": "No environment value supplied; checked from manifest only.""}
+{"TimeStamp":"2026-07-27T23:49:43.4119492+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4119511+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4119531+00:00","Log":"F       "name": "manifest_image_digest_pin","}
+{"TimeStamp":"2026-07-27T23:49:43.4119551+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4119571+00:00","Log":"F       "expected": "digest-pinned manifest image","}
+{"TimeStamp":"2026-07-27T23:49:43.4119592+00:00","Log":"F       "observed": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160""}
+{"TimeStamp":"2026-07-27T23:49:43.4119613+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4119634+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4119653+00:00","Log":"F       "name": "runtime_image_digest_pin","}
+{"TimeStamp":"2026-07-27T23:49:43.4119673+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4119692+00:00","Log":"F       "expected": "digest-pinned runtime image","}
+{"TimeStamp":"2026-07-27T23:49:43.411971+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4120001+00:00","Log":"F         "acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f""}
+{"TimeStamp":"2026-07-27T23:49:43.4120032+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.4120055+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4120075+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4120094+00:00","Log":"F       "name": "runtime_image_digest","}
+{"TimeStamp":"2026-07-27T23:49:43.4120113+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4120132+00:00","Log":"F       "expected": "sha256 digest","}
+{"TimeStamp":"2026-07-27T23:49:43.4120305+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4120329+00:00","Log":"F         "sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f""}
+{"TimeStamp":"2026-07-27T23:49:43.4120349+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.412037+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4120391+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4120411+00:00","Log":"F       "name": "execute_ack","}
+{"TimeStamp":"2026-07-27T23:49:43.4120444+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4120465+00:00","Log":"F       "expected": "EXECUTE_SHARED_TENANT_JOB","}
+{"TimeStamp":"2026-07-27T23:49:43.4120485+00:00","Log":"F       "observed": "EXECUTE_SHARED_TENANT_JOB""}
+{"TimeStamp":"2026-07-27T23:49:43.4121138+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:49:43.4122119+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4122161+00:00","Log":"F   "processContract": {"}
+{"TimeStamp":"2026-07-27T23:49:43.4122185+00:00","Log":"F     "processName": "airline-demo-new-evidence-extract-v1","}
+{"TimeStamp":"2026-07-27T23:49:43.4122208+00:00","Log":"F     "canonicalProcess": "evidence-extract-v1","}
+{"TimeStamp":"2026-07-27T23:49:43.4122233+00:00","Log":"F     "stageNames": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4122254+00:00","Log":"F       "04_extract_evidence""}
+{"TimeStamp":"2026-07-27T23:49:43.4122276+00:00","Log":"F     ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4122297+00:00","Log":"F     "identityPurpose": "ingest","}
+{"TimeStamp":"2026-07-27T23:49:43.4122319+00:00","Log":"F     "databaseRole": "airline_demo_new_ingest""}
+{"TimeStamp":"2026-07-27T23:49:43.4122341+00:00","Log":"F   },"}
+{"TimeStamp":"2026-07-27T23:49:43.4122362+00:00","Log":"F   "checkpoints": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4122383+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4122405+00:00","Log":"F       "checkpointRef": "evidence-extract-v1:evidence lineage created","}
+{"TimeStamp":"2026-07-27T23:49:43.4122452+00:00","Log":"F       "checkpointName": "evidence lineage created","}
+{"TimeStamp":"2026-07-27T23:49:43.4122475+00:00","Log":"F       "checkpointState": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4122497+00:00","Log":"F       "expectedCount": 1,"}
+{"TimeStamp":"2026-07-27T23:49:43.4122518+00:00","Log":"F       "actualCount": 99883,"}
+{"TimeStamp":"2026-07-27T23:49:43.412308+00:00","Log":"F       "contentHash": "cad7a6c32281460b464abb2f01ab8baba7fd8a44c31adaff9377cbeee754196d","}
+{"TimeStamp":"2026-07-27T23:49:43.4123156+00:00","Log":"F       "detail": {}"}
+{"TimeStamp":"2026-07-27T23:49:43.412319+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4123212+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4123235+00:00","Log":"F       "checkpointRef": "evidence-extract-v1:candidate entities created","}
+{"TimeStamp":"2026-07-27T23:49:43.4123256+00:00","Log":"F       "checkpointName": "candidate entities created","}
+{"TimeStamp":"2026-07-27T23:49:43.4123277+00:00","Log":"F       "checkpointState": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4123298+00:00","Log":"F       "expectedCount": 1,"}
+{"TimeStamp":"2026-07-27T23:49:43.4123316+00:00","Log":"F       "actualCount": 99883,"}
+{"TimeStamp":"2026-07-27T23:49:43.4123354+00:00","Log":"F       "contentHash": "602f9d59c880bebefffdc842e650ac05dc632296722dc77de0220c09c9c0da38","}
+{"TimeStamp":"2026-07-27T23:49:43.4123374+00:00","Log":"F       "detail": {}"}
+{"TimeStamp":"2026-07-27T23:49:43.4123393+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4123411+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.412343+00:00","Log":"F       "checkpointRef": "evidence-extract-v1:candidate facts created","}
+{"TimeStamp":"2026-07-27T23:49:43.412345+00:00","Log":"F       "checkpointName": "candidate facts created","}
+{"TimeStamp":"2026-07-27T23:49:43.412347+00:00","Log":"F       "checkpointState": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4123488+00:00","Log":"F       "expectedCount": 1,"}
+{"TimeStamp":"2026-07-27T23:49:43.4123506+00:00","Log":"F       "actualCount": 99883,"}
+{"TimeStamp":"2026-07-27T23:49:43.4123524+00:00","Log":"F       "contentHash": "58b6a28da57d9a9e3b3a09ab3c606a2ba12c94f7354bfe104c7eeefc49bad656","}
+{"TimeStamp":"2026-07-27T23:49:43.4123544+00:00","Log":"F       "detail": {}"}
+{"TimeStamp":"2026-07-27T23:49:43.4123563+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:49:43.4123583+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4123602+00:00","Log":"F       "checkpointRef": "evidence-extract-v1:candidate relationships are evidence-backed when present","}
+{"TimeStamp":"2026-07-27T23:49:43.4123638+00:00","Log":"F       "checkpointName": "candidate relationships are evidence-backed when present","}
+{"TimeStamp":"2026-07-27T23:49:43.4123659+00:00","Log":"F       "checkpointState": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4123827+00:00","Log":"F       "expectedCount": 66200,"}
+{"TimeStamp":"2026-07-27T23:49:43.4123856+00:00","Log":"F       "actualCount": 66200,"}
+{"TimeStamp":"2026-07-27T23:49:43.4123878+00:00","Log":"F       "contentHash": "06652ab954fe4baeaf160f5db1ec490c16909aaaef1248a8f4460de7085de37d","}
+{"TimeStamp":"2026-07-27T23:49:43.4123898+00:00","Log":"F       "detail": {}"}
+{"TimeStamp":"2026-07-27T23:49:43.4123917+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:49:43.4123936+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4123955+00:00","Log":"F   "processExecution": {"}
+{"TimeStamp":"2026-07-27T23:49:43.4123974+00:00","Log":"F     "schemaVersion": "knowledge-process-result/v1","}
+{"TimeStamp":"2026-07-27T23:49:43.4123994+00:00","Log":"F     "status": "passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4124014+00:00","Log":"F     "inputCount": 99883,"}
+{"TimeStamp":"2026-07-27T23:49:43.4124045+00:00","Log":"F     "outputCount": 365849,"}
+{"TimeStamp":"2026-07-27T23:49:43.4124066+00:00","Log":"F     "acceptedCount": 0,"}
+{"TimeStamp":"2026-07-27T23:49:43.4124087+00:00","Log":"F     "rejectedCount": 0,"}
+{"TimeStamp":"2026-07-27T23:49:43.4124107+00:00","Log":"F     "quarantineCount": 0,"}
+{"TimeStamp":"2026-07-27T23:49:43.4124331+00:00","Log":"F     "conflictCount": 0,"}
+{"TimeStamp":"2026-07-27T23:49:43.4124357+00:00","Log":"F     "inputContentHash": "1e238c6888d390a7b2561758464fe7bb5674a7c03814ca582590c9ec4d898f8e","}
+{"TimeStamp":"2026-07-27T23:49:43.4124379+00:00","Log":"F     "outputContentHash": "e16a102cc08664770ba104f3a455b7e5cb118ac433ed9c705ed693d20291eda0","}
+{"TimeStamp":"2026-07-27T23:49:43.41244+00:00","Log":"F     "warnings": [],"}
+{"TimeStamp":"2026-07-27T23:49:43.4124422+00:00","Log":"F     "blockers": [],"}
+{"TimeStamp":"2026-07-27T23:49:43.4124942+00:00","Log":"F     "lineage": {"}
+{"TimeStamp":"2026-07-27T23:49:43.412498+00:00","Log":"F       "evidence": "evidence.evidence_item","}
+{"TimeStamp":"2026-07-27T23:49:43.4125003+00:00","Log":"F       "candidates": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4125021+00:00","Log":"F         "working.entity_candidate","}
+{"TimeStamp":"2026-07-27T23:49:43.412504+00:00","Log":"F         "working.fact_candidate","}
+{"TimeStamp":"2026-07-27T23:49:43.4125072+00:00","Log":"F         "working.relationship_candidate""}
+{"TimeStamp":"2026-07-27T23:49:43.4125091+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:49:43.412511+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:49:43.4125129+00:00","Log":"F   },"}
+{"TimeStamp":"2026-07-27T23:49:43.4125148+00:00","Log":"F   "auditEvents": ["}
+{"TimeStamp":"2026-07-27T23:49:43.4125167+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:49:43.4125186+00:00","Log":"F       "eventType": "runner_result","}
+{"TimeStamp":"2026-07-27T23:49:43.4125204+00:00","Log":"F       "status": "process_passed","}
+{"TimeStamp":"2026-07-27T23:49:43.4125223+00:00","Log":"F       "message": "Runner executed and verified airline-demo-new-evidence-extract-v1.""}
+{"TimeStamp":"2026-07-27T23:49:43.4125459+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:49:43.41255+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:49:43.4125527+00:00","Log":"F   "networkAccessAttempted": true,"}
+{"TimeStamp":"2026-07-27T23:49:43.4125549+00:00","Log":"F   "status": "process_passed","}
+{"TimeStamp":"2026-07-27T23:49:43.412557+00:00","Log":"F   "error": null"}
+{"TimeStamp":"2026-07-27T23:49:43.4125592+00:00","Log":"F }"}

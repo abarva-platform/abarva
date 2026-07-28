@@ -6,10 +6,13 @@ param containerAppsEnvironmentId string
 param operationalStorageAccountName string
 param evaluatorStorageAccountName string
 param identityIds object
+param identityClientIds object
+@secure()
+param postgresAdministratorLoginPassword string
+param imageName string = 'acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f'
 
 var tenantKey = 'airline-demo-new'
 var registryServer = 'acrabarvalab001.azurecr.io'
-var imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160'
 var jobs = [
   { name: 'job-airdn-backfill-lab', process: 'airline-demo-new-knowledge-backfill-v1', identityKey: 'ingest', stage: '15_backfill_replay' }
   { name: 'job-airdn-baseline-publish-lab', process: 'airline-demo-new-baseline-publish-v1', identityKey: 'publish', stage: '12_publish_baseline' }
@@ -46,6 +49,12 @@ resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
       registries: [
         { server: registryServer, identity: identityIds[job.identityKey] }
       ]
+      secrets: [
+        {
+          name: 'pg-admin-password'
+          value: postgresAdministratorLoginPassword
+        }
+      ]
     }
     template: {
       containers: [
@@ -56,11 +65,20 @@ resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
           args: [ '-lc', 'node scripts/knowledge/hcdn-job-runner.mjs --tenant airline-demo-new --process ${job.process}' ]
           env: [
             { name: 'ABARVA_TENANT_KEY', value: tenantKey }
+            { name: 'ABARVA_HCDN_ENVIRONMENT', value: 'lab' }
+            { name: 'AZURE_SUBSCRIPTION_ID', value: subscription().subscriptionId }
+            { name: 'AZURE_CLIENT_ID', value: identityClientIds[job.identityKey] }
             { name: 'ABARVA_AIRDN_PROCESS', value: job.process }
             { name: 'ABARVA_AIRDN_STAGE', value: job.stage }
             { name: 'ABARVA_AIRDN_DATABASE', value: 'abarva_airline_demo_new_knowledge_lab' }
             { name: 'ABARVA_AIRDN_STORAGE_ACCOUNT', value: operationalStorageAccountName }
             { name: 'ABARVA_AIRDN_EVALUATOR_STORAGE_ACCOUNT', value: evaluatorStorageAccountName }
+            { name: 'ABARVA_CONTAINER_IMAGE', value: imageName }
+            { name: 'PGHOST', value: 'pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com' }
+            { name: 'PGPORT', value: '5432' }
+            { name: 'PGUSER', value: 'airdn_admin' }
+            { name: 'PGDATABASE', value: 'abarva_airline_demo_new_knowledge_lab' }
+            { name: 'PGPASSWORD', secretRef: 'pg-admin-password' }
           ]
           resources: { cpu: json('0.5'), memory: '1Gi' }
         }

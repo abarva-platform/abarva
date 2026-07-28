@@ -10,22 +10,22 @@
     "tenant_directory_id": "f5151b70-963c-4124-a888-20a50e8c2e2c"
   },
   "control_plane": {
-    "resource_group": "rg-abarva-airdn-lab-eus-001",
-    "virtual_network": "vnet-abarva-airdn-lab-eus-001",
-    "container_apps_environment": "cae-abarva-airdn-lab-eus-001",
-    "postgres_server": "pg-abarva-airdn-lab-eus-001",
+    "resource_group": "rg-abarva-airdn-lab-eus2-001",
+    "virtual_network": "vnet-abarva-airdn-lab-eus2-001",
+    "container_apps_environment": "cae-abarva-airdn-lab-eus2-001",
+    "postgres_server": "pg-abarva-airdn-lab-eus2-001",
     "postgres_database": "abarva_airline_demo_new_knowledge_lab",
-    "storage_account": "stabairdnlabeus001",
-    "evaluator_storage_account": "stabairdnevallab001",
-    "key_vault": "kv-abarva-airdn-lab-001",
-    "log_analytics_workspace": "law-abarva-airdn-lab-eus-001"
+    "storage_account": "stabairdnlabeus2001",
+    "evaluator_storage_account": "stabairdnevaleus2001",
+    "key_vault": "kv-abarva-airdn-lab-eus2",
+    "log_analytics_workspace": "law-abarva-airdn-lab-eus2-001"
   },
   "container_image": {
     "registry_resource_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
     "registry_hostname": "acrabarvalab001.azurecr.io",
     "repository": "abarva/web",
-    "image_digest": "sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160",
-    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160"
+    "image_digest": "sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f",
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f"
   },
   "managed_identities": [
     {
@@ -71,22 +71,22 @@
   "display_name": "Airline Demo New",
   "tenant_key": "airline-demo-new",
   "controlPlane": {
-    "resourceGroup": "rg-abarva-airdn-lab-eus-001",
-    "vnet": "vnet-abarva-airdn-lab-eus-001",
-    "containerAppsEnvironment": "cae-abarva-airdn-lab-eus-001",
-    "postgresServer": "pg-abarva-airdn-lab-eus-001",
+    "resourceGroup": "rg-abarva-airdn-lab-eus2-001",
+    "vnet": "vnet-abarva-airdn-lab-eus2-001",
+    "containerAppsEnvironment": "cae-abarva-airdn-lab-eus2-001",
+    "postgresServer": "pg-abarva-airdn-lab-eus2-001",
     "database": "abarva_airline_demo_new_knowledge_lab",
-    "storage": "stabairdnlabeus001",
-    "evaluatorStorage": "stabairdnevallab001",
-    "keyVault": "kv-abarva-airdn-lab-001",
-    "logAnalytics": "law-abarva-airdn-lab-eus-001"
+    "storage": "stabairdnlabeus2001",
+    "evaluatorStorage": "stabairdnevaleus2001",
+    "keyVault": "kv-abarva-airdn-lab-eus2",
+    "logAnalytics": "law-abarva-airdn-lab-eus2-001"
   },
   "image": {
     "registryResourceId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
     "registryHostname": "acrabarvalab001.azurecr.io",
     "repository": "abarva/web",
-    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160",
-    "digest": "sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160"
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f",
+    "digest": "sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f"
   },
   "managedIdentities": {
     "ingest": "mi-airdn-ingest-lab-001",

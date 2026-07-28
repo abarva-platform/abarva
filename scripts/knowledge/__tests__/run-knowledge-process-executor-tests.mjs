@@ -239,6 +239,54 @@ await test("review apply blocks without explicit accepted review decisions", asy
   assert.equal(store.knowledgeEntities.length, 0);
 });
 
+await test("hidden truth validation allows ordinary evaluator notes but blocks restricted markers", async () => {
+  const allowedStore = new InMemoryKnowledgeExecutionStore({
+    entityCandidates: [
+      {
+        candidateRef: "entcand-eval-note",
+        entityType: "procurement_event",
+        displayName: "Evaluation Scorecard",
+        payload: { evaluator_note: "synthetic scorecard; final decision requires signoff" },
+      },
+    ],
+  });
+  const allowed = await runKnowledgeProcess({
+    context: baseContext({
+      canonicalProcess: "knowledge-validate-v1",
+      processName: "airline-demo-new-knowledge-validate-v1",
+      idempotencyKey: "hidden-truth-marker-allowed-test",
+    }),
+    handler: DEFAULT_PROCESS_HANDLERS["knowledge-validate-v1"],
+    store: allowedStore,
+  });
+  assert.equal(allowed.status, "passed");
+  assert.equal(allowedStore.validationLedger[0].hiddenTruthReferences, 0);
+
+  const blockedStore = new InMemoryKnowledgeExecutionStore({
+    entityCandidates: [
+      {
+        candidateRef: "entcand-hidden-truth",
+        entityType: "evaluator_fixture",
+        displayName: "Restricted Boundary",
+        payload: { boundary: "restricted_evaluator_only_not_parser_visible" },
+      },
+    ],
+  });
+  await assert.rejects(
+    () =>
+      runKnowledgeProcess({
+        context: baseContext({
+          canonicalProcess: "knowledge-validate-v1",
+          processName: "airline-demo-new-knowledge-validate-v1",
+          idempotencyKey: "hidden-truth-marker-blocked-test",
+        }),
+        handler: DEFAULT_PROCESS_HANDLERS["knowledge-validate-v1"],
+        store: blockedStore,
+      }),
+    (error) => error instanceof KnowledgeProcessError && error.details.blockers.includes("hidden_truth_references"),
+  );
+});
+
 await test("explicit review decisions promote accepted candidates and projections build from active baseline", async () => {
   const store = new InMemoryKnowledgeExecutionStore({
     entityCandidates: [{ candidateRef: "entcand-1", entityType: "application", displayName: "Ops Control", payload: { source_native_id: "APP-1" } }],
