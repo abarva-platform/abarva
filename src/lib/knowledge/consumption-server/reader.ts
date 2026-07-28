@@ -18,12 +18,15 @@ import type {
   ConsumptionEnvelope,
   EnterpriseBriefQuery,
   EnterpriseBriefV1,
+  DomainReadinessV1,
   EntityDetailQuery,
   EntityDetailV1,
   EntityExploreQuery,
   EntityExploreResultV1,
+  EntitySummaryV1,
   EvidenceGapQuery,
   EvidenceGapResultV1,
+  EvidenceGapV1,
   KnowledgeSearchQuery,
   KnowledgeSearchResultV1,
   ModuleHandoffPreviewV1,
@@ -269,9 +272,32 @@ export class ConsumptionReader {
       return this.notLoaded(query.tenantKey, "consumption.domain_summary_v1", empty, null,
         "No active Knowledge Baseline for this tenant.");
     }
-    // domain_summary_v1 / application_inventory_v1 are not built yet → not_loaded.
-    return this.notLoaded(query.tenantKey, "consumption.domain_summary_v1", empty, baseline,
-      "domain_summary_v1 / application_inventory_v1 are not built for the active baseline yet.");
+    // Read domains + entity inventory (payloads are V1-shaped by the build).
+    const domainRows = await this.readPayloads<DomainReadinessV1>("domain_summary_v1", query.tenantKey, baseline.knowledgeBaselineRef);
+    const entityRows = await this.readPayloads<EntitySummaryV1>("application_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef);
+    const vendorRows = await this.readPayloads<EntitySummaryV1>("vendor_contract_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef);
+    let entities = [...entityRows, ...vendorRows].filter((e): e is EntitySummaryV1 => Boolean(e));
+    if (domainRows.length === 0 && entities.length === 0) {
+      return this.notLoaded(query.tenantKey, "consumption.domain_summary_v1", empty, baseline,
+        "domain_summary_v1 / application_inventory_v1 are not built for the active baseline yet.");
+    }
+    if (query.domainKey) entities = entities.filter((e) => e.domainKey === query.domainKey);
+    if (query.search) {
+      const q = query.search.toLowerCase();
+      entities = entities.filter((e) => e.displayName.toLowerCase().includes(q));
+    }
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    const paged = entities.slice((page - 1) * pageSize, page * pageSize);
+    const data: EntityExploreResultV1 = {
+      domainKey: query.domainKey ?? null,
+      domains: domainRows.filter((d): d is DomainReadinessV1 => Boolean(d)),
+      entities: paged,
+      totalCount: entities.length,
+      page,
+      pageSize,
+    };
+    return this.ok(query.tenantKey, "consumption.domain_summary_v1", data, baseline);
   }
 
   async getEntityDetail(query: EntityDetailQuery): Promise<ConsumptionEnvelope<EntityDetailV1>> {
@@ -281,8 +307,19 @@ export class ConsumptionReader {
       return this.notLoaded(query.tenantKey, "consumption.application_inventory_v1", empty, null,
         "No active Knowledge Baseline for this tenant.");
     }
+    for (const table of ["application_inventory_v1", "vendor_contract_inventory_v1"] as const) {
+      const rows = await this.q.rows<{ payload: EntitySummaryV1 | null }>(
+        `SELECT payload FROM consumption.${table} WHERE tenant_key = $1 AND knowledge_baseline_ref = $2 AND object_ref = $3 LIMIT 1`,
+        [query.tenantKey, baseline.knowledgeBaselineRef, query.entityRef],
+      ).catch(() => []);
+      const entity = rows[0]?.payload;
+      if (entity) {
+        const data: EntityDetailV1 = { entity, fields: entity.fields, perspectives: [], benchmarks: [], relatedEntityRefs: [], gapRefs: [] };
+        return this.ok(query.tenantKey, "consumption.application_inventory_v1", data, baseline);
+      }
+    }
     return this.notLoaded(query.tenantKey, "consumption.application_inventory_v1", empty, baseline,
-      "Inventory projections are not built for the active baseline yet.");
+      "This entity is not in a built inventory projection for the active baseline.");
   }
 
   async getEvidenceAndGaps(query: EvidenceGapQuery): Promise<ConsumptionEnvelope<EvidenceGapResultV1>> {
@@ -292,8 +329,26 @@ export class ConsumptionReader {
       return this.notLoaded(query.tenantKey, "consumption.evidence_gap_v1", empty, null,
         "No active Knowledge Baseline for this tenant.");
     }
-    return this.notLoaded(query.tenantKey, "consumption.evidence_gap_v1", empty, baseline,
-      "evidence_gap_v1 is not built for the active baseline yet.");
+    const gaps = (await this.readPayloads<EvidenceGapV1>("evidence_gap_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+      .filter((g): g is EvidenceGapV1 => Boolean(g))
+      .filter((g) => !query.domainKey || g.domainKey === query.domainKey);
+    if (gaps.length === 0) {
+      return this.notLoaded(query.tenantKey, "consumption.evidence_gap_v1", empty, baseline,
+        "evidence_gap_v1 is not built for the active baseline yet.");
+    }
+    const severityCounts = { low: 0, medium: 0, high: 0, critical: 0 };
+    for (const g of gaps) severityCounts[g.severity] += 1;
+    const data: EvidenceGapResultV1 = { domainKey: query.domainKey ?? null, gaps, overallEvidenceCoverage: 0, severityCounts };
+    return this.ok(query.tenantKey, "consumption.evidence_gap_v1", data, baseline);
+  }
+
+  /** Read the `payload` jsonb of a generic *_v1 projection for the active baseline. */
+  private async readPayloads<T>(table: string, tenantKey: string, baselineRef: string): Promise<T[]> {
+    const rows = await this.q.rows<{ payload: T | null }>(
+      `SELECT payload FROM consumption.${table} WHERE tenant_key = $1 AND knowledge_baseline_ref = $2`,
+      [tenantKey, baselineRef],
+    ).catch(() => []);
+    return rows.map((r) => r.payload).filter((p): p is T => p !== null && p !== undefined);
   }
 
   async getSuggestedQuestions(query: SuggestedQuestionQuery): Promise<ConsumptionEnvelope<SuggestedQuestionV1[]>> {
