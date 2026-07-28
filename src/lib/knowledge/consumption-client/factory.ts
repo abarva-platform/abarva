@@ -11,6 +11,7 @@ import type {
   ProviderBinding,
 } from "../consumption-contracts";
 import {
+  assertFixtureNamespace,
   getFixturePack,
   scenarioDisablesModels,
   type FixtureScenario,
@@ -42,6 +43,8 @@ export function createFixtureRuntime(
   tenantKey: string,
   scenario: FixtureScenario,
 ): ConsumptionRuntime {
+  // Activation guard: a real/canonical tenant must never resolve to fixtures.
+  assertFixtureNamespace(tenantKey);
   const pack = getFixturePack(tenantKey);
   if (!pack) {
     throw new Error(
