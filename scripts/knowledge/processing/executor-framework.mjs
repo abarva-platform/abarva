@@ -1190,7 +1190,7 @@ export class PostgresKnowledgeExecutionStore {
             coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
             c.entity_type,
             c.display_name,
-            c.candidate_payload,
+            c.candidate_payload AS canonical_payload,
             'accepted' AS authority_state,
             'accepted' AS availability_state,
             'unknown' AS freshness_state,
