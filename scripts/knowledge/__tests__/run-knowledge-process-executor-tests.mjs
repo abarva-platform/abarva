@@ -479,7 +479,7 @@ await test("review policy routes model-derived and commercial candidates to indi
     confidence: 0.9,
   });
   assert.equal(modelDerived.candidateClass, "individual_review_required");
-  assert.ok(modelDerived.reasons.includes("model_derived_candidate"));
+  assert.ok(modelDerived.reasons.includes("model_derived_or_interpreted"));
 
   const commercial = classifyCandidateForReview({
     candidateRef: "fact-commercial",
@@ -491,7 +491,7 @@ await test("review policy routes model-derived and commercial candidates to indi
     confidence: 0.9,
   });
   assert.equal(commercial.candidateClass, "individual_review_required");
-  assert.ok(commercial.reasons.includes("commercial_or_sourcing_term"));
+  assert.ok(commercial.reasons.includes("commercial_or_sourcing_conclusion"));
 });
 
 await test("review batch generation is deterministic and duplicate-safe by candidate hash", () => {

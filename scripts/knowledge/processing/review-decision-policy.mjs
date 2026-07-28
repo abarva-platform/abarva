@@ -1,6 +1,17 @@
 import crypto from "node:crypto";
 
-export const REVIEW_POLICY_VERSION = "knowledge-review-decision-policy-v1";
+// v2: the v1 classifier matched every marker regex against the ENTIRE raw-row
+// JSON (`stableJson(normalized.raw)`), so field NAMES tripped the reasons — most
+// notably every relationship's `current_target_state` field matched the KPI
+// marker `target_state`, collapsing 100% of candidates into individual review
+// and defeating the governed batch model. v2 matches markers against the
+// candidate's SEMANTIC CONTENT only (entity/fact/relationship type + payload/
+// value), separates deterministic source-derived candidates from
+// judgment-dependent ones, adds explicit evidence inheritance for entities, and
+// splits batches across the governed review dimensions. Governance is not
+// weakened: judgment-dependent candidates still require individual review, and
+// evidence-less entities are never auto-accepted.
+export const REVIEW_POLICY_VERSION = "knowledge-review-decision-policy-v2";
 
 export const REVIEW_CANDIDATE_CLASSES = Object.freeze([
   "auto_accept_eligible",
@@ -12,9 +23,13 @@ export const REVIEW_CANDIDATE_CLASSES = Object.freeze([
 
 export const REVIEW_DECISIONS = Object.freeze(["accepted", "rejected", "deferred"]);
 
-const MODEL_DERIVED_MARKERS = /(?:model[-_ ]?derived|claude|llm|generated_model|ai[-_ ]?enriched|synthetic[-_ ]?only)/i;
-const COMMERCIAL_MARKERS = /(?:commercial[_ -]?term|contract[_ -]?value|rate[_ -]?card|pricing|invoice|bafo|proposal|sourcing[_ -]?decision|award[_ -]?recommendation)/i;
-const KPI_MARKERS = /(?:kpi|metric[_ -]?definition|target[_ -]?state|outcome[_ -]?target|benefit[_ -]?target|realized[_ -]?value)/i;
+// Markers are matched against specific SEMANTIC content, never the raw row.
+const MODEL_DERIVED_MARKERS = /(?:model[-_ ]?derived|claude|llm|generated_model|ai[-_ ]?enriched|synthetic[-_ ]?only|inferred|estimated|interpreted|judgment)/i;
+const COMMERCIAL_MARKERS = /(?:commercial[_ -]?term|contract[_ -]?value|rate[_ -]?card|pricing|price|invoice|bafo|proposal|sourcing[_ -]?decision|award[_ -]?recommendation|spend|discount|savings)/i;
+const KPI_DEFINITION_MARKERS = /(?:kpi|metric[_ -]?definition|benefit[_ -]?target|outcome[_ -]?target|realized[_ -]?value|service[_ -]?level|sla[_ -]?target)/i;
+const TARGET_STATE_FACT_MARKERS = /(?:target[_ -]?state|future[_ -]?state|to[_ -]?be[_ -]?state|to[_ -]?be[_ -]?architecture|desired[_ -]?state)/i;
+const PROBABILISTIC_IDENTITY_MARKERS = /(?:probabilistic|fuzzy[_ -]?match|ambiguous[_ -]?match|multiple[_ -]?candidate|low[_ -]?similarity|unresolved[_ -]?alias|possible[_ -]?duplicate)/i;
+
 const HIGH_IMPACT_RELATIONSHIP_TYPES = new Set([
   "depends_on",
   "blocks",
@@ -27,6 +42,14 @@ const HIGH_IMPACT_RELATIONSHIP_TYPES = new Set([
   "supports_decision",
 ]);
 
+// current/target values that are genuinely ambiguous (needing judgment). NOTE:
+// "unknown" is NOT ambiguous — it is the normal value for a structural
+// relationship that has no current/target dimension, and must not force review.
+const AMBIGUOUS_TARGET_STATES = new Set(["conflicting", "ambiguous", "disputed", "mixed", "contested"]);
+
+const LOW_CONFIDENCE_THRESHOLD = 0.72;
+const AUTO_ACCEPT_CONFIDENCE = 0.86;
+
 function stableJson(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map((item) => stableJson(item)).join(",")}]`;
@@ -38,6 +61,11 @@ function stableJson(value) {
 
 function sha256Value(value) {
   return crypto.createHash("sha256").update(stableJson(value)).digest("hex");
+}
+
+function inc(obj, key, n = 1) {
+  if (!key && key !== 0) return;
+  obj[key] = (obj[key] ?? 0) + n;
 }
 
 function normalizeRef(row, ...keys) {
@@ -128,80 +156,206 @@ export function candidateContentHash(candidate) {
   });
 }
 
+/** The SEMANTIC content of a candidate (type + payload/value) — never lineage refs
+ *  or field names. Marker regexes run against this, not the raw row. */
+function contentText(normalized) {
+  const c = normalized.content || {};
+  const parts = [];
+  if (c.entityType) parts.push(String(c.entityType));
+  if (c.displayName) parts.push(String(c.displayName));
+  if (c.factType) parts.push(String(c.factType));
+  if (c.relationshipTypeRef) parts.push(String(c.relationshipTypeRef));
+  if (c.payload && Object.keys(c.payload).length) parts.push(stableJson(c.payload));
+  if (c.factValue && Object.keys(c.factValue).length) parts.push(stableJson(c.factValue));
+  return parts.join(" ");
+}
+
+function derivationBasis(raw) {
+  return normalizeRef(raw, "derivationBasis", "derivation_basis", "sourceFamily", "source_family", "origin", "provenance");
+}
+
+/** entityRef -> true when a source-backed, evidence-bearing fact references it.
+ *  Used to represent explicit evidence INHERITANCE for evidence-less entities. */
+export function buildEvidenceInheritanceIndex(candidates) {
+  const index = new Map();
+  for (const candidate of candidates) {
+    const n = normalizeCandidate(candidate);
+    if (n.candidateType === "fact_candidate" && n.sourceVersionRef && n.evidenceRefs.length > 0) {
+      const subject = n.content.subjectCandidateRef;
+      if (subject) index.set(subject, true);
+    }
+  }
+  return index;
+}
+
 export function classifyCandidateForReview(candidate, options = {}) {
   const normalized = normalizeCandidate(candidate);
-  const serialized = stableJson(normalized.raw);
+  const type = normalized.candidateType;
+  const content = normalized.content;
+  const cText = contentText(normalized);
+  const basis = derivationBasis(normalized.raw);
   const reasons = [];
 
-  if (!normalized.candidateRef || !normalized.candidateType) {
+  if (!normalized.candidateRef || !type) {
     return { candidateClass: "reject", reasons: ["missing_candidate_identity"] };
   }
-  if (normalized.raw.reviewState === "quarantined" || normalized.raw.review_state === "quarantined" || /quarantine|hidden[_ -]?truth|broken[_ -]?endpoint/i.test(serialized)) {
+
+  const reviewState = normalized.raw.reviewState ?? normalized.raw.review_state;
+  if (reviewState === "quarantined" || /\bhidden[_ -]?truth\b|\bbroken[_ -]?endpoint\b/i.test(cText)) {
     return { candidateClass: "reject", reasons: ["quarantine_or_blocker_marker"] };
   }
-  if (normalized.confidence > 0 && normalized.confidence < 0.72) {
-    reasons.push("low_confidence");
+
+  // --- Judgment-dependent reasons → individual_review_required (field-specific) ---
+  if (type === "entity_candidate" && (PROBABILISTIC_IDENTITY_MARKERS.test(cText) || PROBABILISTIC_IDENTITY_MARKERS.test(basis))) {
+    reasons.push("probabilistic_identity_resolution");
   }
-  if (/probabilistic|ambiguous|conflict|interpreted|inferred/i.test(serialized)) {
-    reasons.push("probabilistic_or_interpreted");
+  // Model-derived / interpreted: derivation basis, or the candidate's semantic
+  // content (fact value / entity payload) declaring model generation or
+  // interpretation. Matching content (not raw-row field names) is correct.
+  if (MODEL_DERIVED_MARKERS.test(basis) || ((type === "fact_candidate" || type === "entity_candidate") && MODEL_DERIVED_MARKERS.test(cText))) {
+    reasons.push("model_derived_or_interpreted");
   }
-  if (MODEL_DERIVED_MARKERS.test(serialized)) {
-    reasons.push("model_derived_candidate");
+  if (type === "fact_candidate" && (COMMERCIAL_MARKERS.test(String(content.factType)) || COMMERCIAL_MARKERS.test(cText))) {
+    reasons.push("commercial_or_sourcing_conclusion");
   }
-  if (COMMERCIAL_MARKERS.test(serialized)) {
-    reasons.push("commercial_or_sourcing_term");
+  if (type === "fact_candidate" && KPI_DEFINITION_MARKERS.test(String(content.factType))) {
+    reasons.push("kpi_or_metric_definition");
   }
-  if (KPI_MARKERS.test(serialized)) {
-    reasons.push("kpi_or_target_assertion");
-  }
+  // Target-state ASSERTION: a relationship explicitly scoped to target, or a fact
+  // whose type asserts a target/future state. A relationship with an *unknown*
+  // current/target is NOT a target-state assertion (v1's central error).
   if (
-    normalized.candidateType === "relationship_candidate" &&
-    HIGH_IMPACT_RELATIONSHIP_TYPES.has(String(normalized.content.relationshipTypeRef).toLowerCase())
+    (type === "relationship_candidate" && String(content.currentTargetState).toLowerCase() === "target") ||
+    (type === "fact_candidate" && TARGET_STATE_FACT_MARKERS.test(String(content.factType)))
   ) {
+    reasons.push("target_state_assertion");
+  }
+  if (type === "relationship_candidate" && AMBIGUOUS_TARGET_STATES.has(String(content.currentTargetState).toLowerCase())) {
+    reasons.push("ambiguous_current_target_state");
+  }
+  if (type === "relationship_candidate" && HIGH_IMPACT_RELATIONSHIP_TYPES.has(String(content.relationshipTypeRef).toLowerCase())) {
     reasons.push("high_impact_relationship");
+  }
+  if (normalized.confidence > 0 && normalized.confidence < LOW_CONFIDENCE_THRESHOLD) {
+    reasons.push("low_confidence");
   }
 
   if (reasons.length > 0) {
     return { candidateClass: "individual_review_required", reasons };
   }
 
-  if (!normalized.sourceVersionRef || normalized.evidenceRefs.length === 0) {
-    return { candidateClass: "defer", reasons: ["missing_source_or_evidence_lineage"] };
+  // --- Deterministic path: lineage + evidence must be present ---
+  if (!normalized.sourceVersionRef) {
+    return { candidateClass: "individual_review_required", reasons: ["incomplete_source_lineage"] };
+  }
+
+  const hasDirectEvidence = normalized.evidenceRefs.length > 0;
+  if (!hasDirectEvidence) {
+    // Evidence-less entity: it may INHERIT evidence from a source-backed fact that
+    // references it — represented explicitly and routed to batch review (never
+    // auto-accept). Without such a fact it needs individual review.
+    if (type === "entity_candidate" && options.evidenceIndex?.get?.(normalized.candidateRef)) {
+      return { candidateClass: "batch_review_required", reasons: ["evidence_inherited_from_source_fact"] };
+    }
+    return { candidateClass: "individual_review_required", reasons: ["no_evidence_lineage"] };
   }
 
   if (options.semanticValidationPassed === false || options.sourceReleaseFrozen === false || options.tenantFencePassed === false) {
     return { candidateClass: "batch_review_required", reasons: ["upstream_gate_not_bound"] };
   }
 
-  const allowedAutoTypes = new Set(options.autoAcceptCandidateTypes ?? ["entity_candidate"]);
-  if (allowedAutoTypes.has(normalized.candidateType) && normalized.confidence >= 0.86) {
+  // Deterministic, source-derived, directly evidence-backed, no judgment reasons.
+  const autoTypes = new Set(options.autoAcceptCandidateTypes ?? ["entity_candidate", "fact_candidate"]);
+  if (autoTypes.has(type) && normalized.confidence >= (options.autoAcceptConfidence ?? AUTO_ACCEPT_CONFIDENCE)) {
     return { candidateClass: "auto_accept_eligible", reasons: ["deterministic_high_confidence_evidence_backed"] };
   }
-
-  return { candidateClass: "batch_review_required", reasons: ["deterministic_batch_review"] };
+  // Relationships, and deterministic candidates below the auto-accept confidence,
+  // are governed through batch review rather than individual.
+  return { candidateClass: "batch_review_required", reasons: ["deterministic_evidence_backed_batch"] };
 }
 
-export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVIEW_POLICY_VERSION, validationRunRef, sourceVersionRef, options = {} }) {
+// --- Batch dimensions (req: split by type/domain/source/evidence/confidence/
+//     derivation basis/current-target/commercial sensitivity/relationship impact) ---
+function confidenceBand(conf) {
+  if (!(conf > 0)) return "unscored";
+  if (conf >= AUTO_ACCEPT_CONFIDENCE) return "high";
+  if (conf >= LOW_CONFIDENCE_THRESHOLD) return "medium";
+  return "low";
+}
+function evidenceCompleteness(n) {
+  if (n.evidenceRefs.length > 0 && n.sourceVersionRef) return "evidence_and_source";
+  if (n.evidenceRefs.length > 0) return "evidence_only";
+  if (n.sourceVersionRef) return "source_only";
+  return "incomplete";
+}
+function commercialSensitivity(n) {
+  return n.candidateType === "fact_candidate" && COMMERCIAL_MARKERS.test(String(n.content.factType)) ? "commercial" : "standard";
+}
+function relationshipImpact(n) {
+  if (n.candidateType !== "relationship_candidate") return "not_applicable";
+  return HIGH_IMPACT_RELATIONSHIP_TYPES.has(String(n.content.relationshipTypeRef).toLowerCase()) ? "high" : "standard";
+}
+function candidateDomain(n) {
+  return normalizeRef(n.raw, "domain", "domain_ref", "domainKey", "domain_key") ||
+    (n.candidateType === "entity_candidate" ? String(n.content.entityType || "unclassified") :
+     n.candidateType === "fact_candidate" ? String(n.content.factType || "unclassified").split(/[._]/)[0] :
+     String(n.content.relationshipTypeRef || "relationship"));
+}
+function sourceFamily(n) {
+  return derivationBasis(n.raw) || normalizeRef(n.raw, "sourceFamily", "source_family") || (n.sourceVersionRef ? n.sourceVersionRef.split(/[:@]/)[0] : "unknown_source");
+}
+
+function sampleSummary(n) {
+  if (n.candidateType === "entity_candidate") return `${n.content.entityType || "entity"}: ${n.content.displayName || n.candidateRef}`;
+  if (n.candidateType === "fact_candidate") return `${n.content.factType || "fact"} on ${n.content.subjectCandidateRef || "?"}`;
+  return `${n.content.relationshipTypeRef || "rel"} [${n.content.currentTargetState}]`;
+}
+
+export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVIEW_POLICY_VERSION, validationRunRef, sourceVersionRef, options = {}, samplesPerBatch = 5 }) {
+  const evidenceIndex = options.evidenceIndex ?? buildEvidenceInheritanceIndex(candidates);
+  const opts = { ...options, evidenceIndex };
   const grouped = new Map();
+
   for (const candidate of candidates) {
     const normalized = normalizeCandidate(candidate);
-    const classification = classifyCandidateForReview(candidate, options);
-    const key = [classification.candidateClass, normalized.candidateType].join(":");
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push({ ...normalized, candidateContentHash: candidateContentHash(candidate), classification });
+    const classification = classifyCandidateForReview(candidate, opts);
+    const dimensions = {
+      domain: candidateDomain(normalized),
+      sourceFamily: sourceFamily(normalized),
+      evidenceCompleteness: evidenceCompleteness(normalized),
+      confidenceBand: confidenceBand(normalized.confidence),
+      currentTargetState: normalized.candidateType === "relationship_candidate" ? String(normalized.content.currentTargetState || "unknown") : "not_applicable",
+      commercialSensitivity: commercialSensitivity(normalized),
+      relationshipImpact: relationshipImpact(normalized),
+    };
+    const key = [
+      classification.candidateClass, normalized.candidateType, dimensions.domain, dimensions.sourceFamily,
+      dimensions.evidenceCompleteness, dimensions.confidenceBand, dimensions.currentTargetState,
+      dimensions.commercialSensitivity, dimensions.relationshipImpact,
+    ].join("|");
+    if (!grouped.has(key)) grouped.set(key, { dimensions, rows: [] });
+    grouped.get(key).rows.push({ ...normalized, candidateContentHash: candidateContentHash(candidate), classification });
   }
 
   return [...grouped.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, rows]) => {
-      const [candidateClass, candidateType] = key.split(":");
+    .map(([key, { dimensions, rows }]) => {
+      const [candidateClass, candidateType] = key.split("|");
       const ordered = rows.sort((a, b) => a.candidateRef.localeCompare(b.candidateRef));
       const manifest = ordered.map((row) => ({
         candidateRef: row.candidateRef,
         candidateContentHash: row.candidateContentHash,
         reasons: row.classification.reasons,
       }));
-      const batchContentHash = sha256Value({ tenantKey, candidateClass, candidateType, policyVersion, validationRunRef, sourceVersionRef, manifest });
+      const batchContentHash = sha256Value({ tenantKey, candidateClass, candidateType, policyVersion, validationRunRef, sourceVersionRef, dimensions, manifest });
+      const representativeSamples = ordered.slice(0, Math.max(1, samplesPerBatch)).map((row) => ({
+        candidateRef: row.candidateRef,
+        reasons: row.classification.reasons,
+        confidence: row.confidence,
+        evidenceCount: row.evidenceRefs.length,
+        sourceVersionRef: row.sourceVersionRef,
+        summary: sampleSummary(row),
+      }));
       return {
         tenantKey,
         reviewBatchRef: `review-batch:${tenantKey}:${policyVersion}:${candidateClass}:${candidateType}:${batchContentHash.slice(0, 16)}`,
@@ -210,8 +364,10 @@ export function buildReviewBatches({ tenantKey, candidates, policyVersion = REVI
         policyVersion,
         validationRunRef,
         sourceVersionRef,
+        dimensions,
         candidateCount: ordered.length,
         batchContentHash,
+        representativeSamples,
         candidates: ordered,
       };
     });
@@ -280,13 +436,28 @@ export function validateAcceptedDecision(candidate, decision, options = {}) {
 }
 
 export function createReviewSummary(batches) {
-  return batches.reduce(
-    (summary, batch) => {
-      summary.totalCandidates += batch.candidateCount;
-      summary.byClass[batch.candidateClass] = (summary.byClass[batch.candidateClass] ?? 0) + batch.candidateCount;
-      summary.byType[batch.candidateType] = (summary.byType[batch.candidateType] ?? 0) + batch.candidateCount;
-      return summary;
-    },
-    { totalCandidates: 0, byClass: {}, byType: {} },
-  );
+  const summary = {
+    totalCandidates: 0,
+    byClass: {},
+    byType: {},
+    byDomain: {},
+    bySourceFamily: {},
+    byEvidenceCompleteness: {},
+    byConfidenceBand: {},
+    byReason: {},
+  };
+  for (const batch of batches) {
+    summary.totalCandidates += batch.candidateCount;
+    inc(summary.byClass, batch.candidateClass, batch.candidateCount);
+    inc(summary.byType, batch.candidateType, batch.candidateCount);
+    const d = batch.dimensions ?? {};
+    inc(summary.byDomain, d.domain, batch.candidateCount);
+    inc(summary.bySourceFamily, d.sourceFamily, batch.candidateCount);
+    inc(summary.byEvidenceCompleteness, d.evidenceCompleteness, batch.candidateCount);
+    inc(summary.byConfidenceBand, d.confidenceBand, batch.candidateCount);
+    for (const candidate of batch.candidates) {
+      for (const reason of candidate.classification.reasons) inc(summary.byReason, reason, 1);
+    }
+  }
+  return summary;
 }
