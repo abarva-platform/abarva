@@ -12,7 +12,7 @@ import {
   createReviewSummary,
 } from "./processing/review-decision-policy.mjs";
 
-function parseArgs(argv = process.argv.slice(2), env = process.env) {
+export function parseArgs(argv = process.argv.slice(2), env = process.env) {
   const args = {
     tenant: env.ABARVA_TENANT_KEY || "",
     releaseId: env.ABARVA_RELEASE_ID || env.ABARVA_SOURCE_RELEASE_ID || "",
@@ -26,6 +26,8 @@ function parseArgs(argv = process.argv.slice(2), env = process.env) {
     fixture: "",
     fromDb: env.ABARVA_REVIEW_LEDGER_FROM_DB === "true",
     approveBatchClass: "",
+    approvedPackageContentHash: env.ABARVA_REVIEW_LEDGER_APPROVED_PACKAGE_CONTENT_HASH || "",
+    approvedCandidateManifestHash: env.ABARVA_REVIEW_LEDGER_APPROVED_CANDIDATE_MANIFEST_HASH || "",
     samplesPerBatch: Number(env.ABARVA_REVIEW_LEDGER_SAMPLES_PER_BATCH || 5),
     emitProofBundle: env.EMIT_ACA_PROOF_BUNDLE === "true",
   };
@@ -49,11 +51,28 @@ function parseArgs(argv = process.argv.slice(2), env = process.env) {
     else if (token === "--fixture") args.fixture = next();
     else if (token === "--from-db") args.fromDb = true;
     else if (token === "--approve-batch-class") args.approveBatchClass = next();
+    else if (token === "--approved-package-content-hash") args.approvedPackageContentHash = next();
+    else if (token === "--approved-candidate-manifest-hash") args.approvedCandidateManifestHash = next();
     else if (token === "--samples-per-batch") args.samplesPerBatch = Number(next());
     else if (token === "--emit-proof-bundle") args.emitProofBundle = true;
     else throw new Error(`Unknown argument: ${token}`);
   }
   return args;
+}
+
+function approvedBatchClasses(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function assertApprovedBatchClassesAreBulkSafe(args) {
+  const approvedClasses = approvedBatchClasses(args.approveBatchClass);
+  const unsupportedClasses = approvedClasses.filter((item) => !["auto_accept_eligible", "batch_review_required"].includes(item));
+  if (unsupportedClasses.length > 0) {
+    throw new Error(`Bulk apply cannot approve these candidate classes: ${unsupportedClasses.join(", ")}`);
+  }
 }
 
 function requireValue(value, name) {
@@ -688,12 +707,8 @@ async function applyLedgerSql(args, pkg) {
   if (process.env.ABARVA_REVIEW_LEDGER_APPLY_ACK !== "APPLY_REVIEW_LEDGER") {
     throw new Error("--mode apply requires ABARVA_REVIEW_LEDGER_APPLY_ACK=APPLY_REVIEW_LEDGER");
   }
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error("--mode apply requires DATABASE_URL");
-  }
   const { Client } = await import("pg");
-  const client = new Client({ connectionString: databaseUrl });
+  const client = new Client(dbConnectionConfig(process.env));
   await client.connect();
   try {
     await client.query("BEGIN");
@@ -714,13 +729,93 @@ async function applyLedgerSql(args, pkg) {
   };
 }
 
-export function buildLedgerPackage(args, candidates) {
-  const approvedClasses = new Set(
-    String(args.approveBatchClass || "")
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean),
+function summarizeLedgerPackage(pkg, approvalBinding = null, applyResult = null) {
+  const decisionCounts = pkg.decisionRows.reduce(
+    (counts, row) => {
+      counts[row.decision] = (counts[row.decision] ?? 0) + 1;
+      return counts;
+    },
+    { accepted: 0, rejected: 0, deferred: 0 },
   );
+  const approvedBatches = pkg.batches.filter((batch) => batch.approved);
+  return {
+    schemaVersion: "review-decision-ledger-summary/v1",
+    tenantKey: pkg.tenantKey,
+    releaseId: pkg.releaseId,
+    policyVersion: pkg.policyVersion,
+    validationRunRef: pkg.validationRunRef,
+    sourceVersionRef: pkg.sourceVersionRef,
+    mode: pkg.mode,
+    batches: pkg.batches.length,
+    approvedBatchClasses: [...new Set(approvedBatches.map((batch) => batch.candidateClass))].sort(),
+    approvedBatches: approvedBatches.length,
+    decisionRows: pkg.decisionRows.length,
+    decisionCounts,
+    summary: pkg.summary,
+    approvalBinding,
+    applyResult,
+  };
+}
+
+export function validateDbApplyApproval(args, candidates) {
+  requireValue(args.approveBatchClass, "--approve-batch-class");
+  requireValue(args.approvedPackageContentHash, "--approved-package-content-hash");
+  requireValue(args.approvedCandidateManifestHash, "--approved-candidate-manifest-hash");
+  assertApprovedBatchClassesAreBulkSafe(args);
+  const dryRunPackage = buildDryRunReviewPackage(args, candidates);
+  const approvalBinding = {
+    dryRunPackageId: dryRunPackage.packageId,
+    dryRunPackageContentHash: dryRunPackage.packageContentHash,
+    dryRunCandidateManifestHash: dryRunPackage.candidateManifestHash,
+    approvedPackageContentHash: args.approvedPackageContentHash,
+    approvedCandidateManifestHash: args.approvedCandidateManifestHash,
+  };
+  if (dryRunPackage.packageContentHash !== args.approvedPackageContentHash) {
+    throw new Error(
+      `Approved review package hash mismatch: expected ${args.approvedPackageContentHash}, got ${dryRunPackage.packageContentHash}`,
+    );
+  }
+  if (dryRunPackage.candidateManifestHash !== args.approvedCandidateManifestHash) {
+    throw new Error(
+      `Approved candidate manifest hash mismatch: expected ${args.approvedCandidateManifestHash}, got ${dryRunPackage.candidateManifestHash}`,
+    );
+  }
+  return approvalBinding;
+}
+
+function writeApplyArtifacts(pkg, outDir, approvalBinding = null, applyResult = null) {
+  const resolved = path.resolve(outDir);
+  fs.mkdirSync(resolved, { recursive: true });
+  const summary = summarizeLedgerPackage(pkg, approvalBinding, applyResult);
+  writeJson(path.join(resolved, "review-ledger-apply-summary.json"), summary);
+  writeCsv(
+    path.join(resolved, "review-ledger-decision-counts.csv"),
+    Object.entries(summary.decisionCounts).map(([decision, count]) => ({ decision, count })),
+    ["decision", "count"],
+  );
+  fs.writeFileSync(
+    path.join(resolved, "README.md"),
+    [
+      "# Review Ledger Apply Summary",
+      "",
+      `Tenant: \`${pkg.tenantKey}\``,
+      `Release: \`${pkg.releaseId}\``,
+      `Policy: \`${pkg.policyVersion}\``,
+      `Validation run: \`${pkg.validationRunRef}\``,
+      "",
+      "This package writes review decisions only. It does not publish a domain, switch an active baseline, build projections, refresh Home, or expose product runtime content.",
+      "",
+      "Files:",
+      "- `review-ledger-apply-summary.json`",
+      "- `review-ledger-decision-counts.csv`",
+    ].join("\n") + "\n",
+  );
+  return resolved;
+}
+
+export function buildLedgerPackage(args, candidates) {
+  assertApprovedBatchClassesAreBulkSafe(args);
+  const approvedClasses = new Set(approvedBatchClasses(args.approveBatchClass));
   const batches = buildReviewBatches({
     tenantKey: args.tenant,
     candidates,
@@ -781,24 +876,36 @@ async function main() {
   requireValue(args.reviewer, "--reviewer");
   if (!["dry-run", "apply"].includes(args.mode)) throw new Error("--mode must be dry-run or apply");
   if (!args.fixture && !args.fromDb) throw new Error("--fixture or --from-db is required for this deterministic package builder");
-  if (args.mode === "apply" && args.fromDb) throw new Error("--from-db supports dry-run package generation only; apply requires an explicit reviewed package fixture");
 
   const candidates = args.fromDb ? await readCandidatesFromDb(args) : readFixture(args.fixture);
-  const pkg = args.fromDb ? buildDryRunReviewPackage(args, candidates) : buildLedgerPackage(args, candidates);
-  const output = JSON.stringify(pkg, null, 2);
+  let approvalBinding = null;
+  if (args.mode === "apply" && args.fromDb) {
+    approvalBinding = validateDbApplyApproval(args, candidates);
+  }
+  const pkg = args.fromDb && args.mode === "dry-run" ? buildDryRunReviewPackage(args, candidates) : buildLedgerPackage(args, candidates);
+  if (args.mode === "apply") {
+    const result = await applyLedgerSql(args, pkg);
+    if (args.outDir) {
+      const outDir = writeApplyArtifacts(pkg, args.outDir, approvalBinding, result);
+      if (args.emitProofBundle) emitProofBundle(outDir);
+      console.error(JSON.stringify({ applyPackage: true, ...summarizeLedgerPackage(pkg, approvalBinding, result), outDir }, null, 2));
+    } else if (args.out) {
+      fs.mkdirSync(path.dirname(args.out), { recursive: true });
+      fs.writeFileSync(args.out, `${JSON.stringify(summarizeLedgerPackage(pkg, approvalBinding, result), null, 2)}\n`);
+    } else {
+      console.error(JSON.stringify({ applied: true, ...summarizeLedgerPackage(pkg, approvalBinding, result) }, null, 2));
+    }
+    return;
+  }
   if (args.outDir) {
     const outDir = writeDryRunArtifacts(pkg, args.outDir);
     if (args.emitProofBundle) emitProofBundle(outDir);
     console.error(JSON.stringify({ dryRunPackage: true, packageId: pkg.packageId, packageContentHash: pkg.packageContentHash, outDir }, null, 2));
   } else if (args.out) {
     fs.mkdirSync(path.dirname(args.out), { recursive: true });
-    fs.writeFileSync(args.out, output);
+    fs.writeFileSync(args.out, `${JSON.stringify(pkg, null, 2)}\n`);
   } else {
-    console.log(output);
-  }
-  if (args.mode === "apply") {
-    const result = await applyLedgerSql(args, pkg);
-    console.error(JSON.stringify({ applied: true, ...result }, null, 2));
+    console.log(JSON.stringify(pkg, null, 2));
   }
 }
 

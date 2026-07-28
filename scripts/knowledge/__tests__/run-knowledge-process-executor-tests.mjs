@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
-import { buildDryRunReviewPackage } from "../build-review-decision-ledger.mjs";
+import { buildDryRunReviewPackage, buildLedgerPackage, validateDbApplyApproval } from "../build-review-decision-ledger.mjs";
 import {
   InMemoryKnowledgeExecutionStore,
   KnowledgeProcessError,
@@ -636,6 +636,41 @@ await test("review decision guard blocks candidates outside the approved batch m
 });
 
 await test("dry-run review package never proposes accepted decisions without human approval", () => {
+  const candidates = [
+    {
+      candidateRef: "entity-auto",
+      candidateType: "entity_candidate",
+      sourceVersionRef: "src-v1",
+      entityType: "application",
+      displayName: "Deterministic Application",
+      evidenceRefs: ["ev-1"],
+      confidence: 0.94,
+      sourceFamily: "application_inventory",
+    },
+    {
+      candidateRef: "fact-commercial",
+      candidateType: "fact_candidate",
+      sourceVersionRef: "src-v2",
+      subjectCandidateRef: "entity-auto",
+      factType: "commercial_term",
+      factValue: { pricing: "proposal rate" },
+      evidenceRefs: ["ev-2"],
+      confidence: 0.91,
+      sourceFamily: "vendor_contracts",
+    },
+    {
+      candidateRef: "rel-high-impact",
+      candidateType: "relationship_candidate",
+      sourceVersionRef: "src-v3",
+      fromCandidateRef: "entity-auto",
+      toCandidateRef: "entity-risk",
+      relationshipTypeRef: "blocks",
+      currentTargetState: "current",
+      evidenceRefs: ["ev-3"],
+      confidence: 0.88,
+      sourceFamily: "relationship_map",
+    },
+  ];
   const pkg = buildDryRunReviewPackage(
     {
       tenant: "airline-demo-new",
@@ -644,6 +679,80 @@ await test("dry-run review package never proposes accepted decisions without hum
       validationRunRef: "validate-run-1",
       sourceVersionRef: "src-v1",
       samplesPerBatch: 2,
+    },
+    candidates,
+  );
+  assert.equal(pkg.candidateCounts.total, 3);
+  assert.equal(pkg.candidateCounts.proposedDecisions.accept, 0);
+  assert.equal(pkg.candidateCounts.proposedDecisions.defer + pkg.candidateCounts.proposedDecisions.reject, 3);
+  assert.equal(pkg.humanApprovalRequired, true);
+  assert.equal(pkg.applyAuthorized, false);
+  assert.equal(pkg.hardStop, "dry_run_only_no_review_decisions_written");
+  assert.equal(pkg.candidateManifest.length, 3);
+  assert.ok(pkg.candidateManifestHash);
+  assert.ok(pkg.packageContentHash);
+  assert.ok(pkg.exceptionQueues.individual_review_required.some((queue) => queue.candidateCount >= 1));
+  assert.equal(pkg.candidateCounts.commercialAndDecisionSensitive >= 1, true);
+  assert.equal(pkg.candidateCounts.highImpactRelationships, 1);
+});
+
+await test("DB apply approval binding requires the reviewed package hashes to match", () => {
+  const args = {
+    tenant: "airline-demo-new",
+    releaseId: "airline-demo-new-source-corpus-v1.0.0",
+    policyVersion: "knowledge-review-decision-policy-v1",
+    validationRunRef: "validate-run-1",
+    sourceVersionRef: "src-v1",
+    samplesPerBatch: 2,
+    approveBatchClass: "auto_accept_eligible,batch_review_required",
+  };
+  const candidates = [
+    {
+      candidateRef: "entity-auto",
+      candidateType: "entity_candidate",
+      sourceVersionRef: "src-v1",
+      entityType: "application",
+      displayName: "Deterministic Application",
+      evidenceRefs: ["ev-1"],
+      confidence: 0.94,
+      sourceFamily: "application_inventory",
+    },
+  ];
+  const dryRunPackage = buildDryRunReviewPackage(args, candidates);
+  const binding = validateDbApplyApproval(
+    {
+      ...args,
+      approvedPackageContentHash: dryRunPackage.packageContentHash,
+      approvedCandidateManifestHash: dryRunPackage.candidateManifestHash,
+    },
+    candidates,
+  );
+  assert.equal(binding.dryRunPackageContentHash, dryRunPackage.packageContentHash);
+  assert.equal(binding.dryRunCandidateManifestHash, dryRunPackage.candidateManifestHash);
+  assert.throws(
+    () =>
+      validateDbApplyApproval(
+        {
+          ...args,
+          approvedPackageContentHash: "wrong",
+          approvedCandidateManifestHash: dryRunPackage.candidateManifestHash,
+        },
+        candidates,
+      ),
+    /Approved review package hash mismatch/,
+  );
+});
+
+await test("bulk ledger apply accepts only approved routine classes and defers sensitive candidates", () => {
+  const pkg = buildLedgerPackage(
+    {
+      tenant: "airline-demo-new",
+      releaseId: "airline-demo-new-source-corpus-v1.0.0",
+      policyVersion: "knowledge-review-decision-policy-v1",
+      validationRunRef: "validate-run-1",
+      sourceVersionRef: "src-v1",
+      reviewer: "reviewer:test",
+      approveBatchClass: "auto_accept_eligible,batch_review_required",
     },
     [
       {
@@ -655,6 +764,16 @@ await test("dry-run review package never proposes accepted decisions without hum
         evidenceRefs: ["ev-1"],
         confidence: 0.94,
         sourceFamily: "application_inventory",
+      },
+      {
+        candidateRef: "entity-routine-batch",
+        candidateType: "entity_candidate",
+        sourceVersionRef: "src-v1",
+        entityType: "application",
+        displayName: "Routine Source Row",
+        evidenceRefs: [],
+        confidence: 0.68,
+        sourceFamily: "parser_visible_source_sample",
       },
       {
         candidateRef: "fact-commercial",
@@ -681,18 +800,28 @@ await test("dry-run review package never proposes accepted decisions without hum
       },
     ],
   );
-  assert.equal(pkg.candidateCounts.total, 3);
-  assert.equal(pkg.candidateCounts.proposedDecisions.accept, 0);
-  assert.equal(pkg.candidateCounts.proposedDecisions.defer + pkg.candidateCounts.proposedDecisions.reject, 3);
-  assert.equal(pkg.humanApprovalRequired, true);
-  assert.equal(pkg.applyAuthorized, false);
-  assert.equal(pkg.hardStop, "dry_run_only_no_review_decisions_written");
-  assert.equal(pkg.candidateManifest.length, 3);
-  assert.ok(pkg.candidateManifestHash);
-  assert.ok(pkg.packageContentHash);
-  assert.ok(pkg.exceptionQueues.individual_review_required.some((queue) => queue.candidateCount >= 1));
-  assert.equal(pkg.candidateCounts.commercialAndDecisionSensitive >= 1, true);
-  assert.equal(pkg.candidateCounts.highImpactRelationships, 1);
+  const decisionCounts = pkg.decisionRows.reduce((counts, row) => {
+    counts[row.decision] = (counts[row.decision] ?? 0) + 1;
+    return counts;
+  }, {});
+  assert.equal(decisionCounts.accepted, 2);
+  assert.equal(decisionCounts.deferred, 2);
+  assert.throws(
+    () =>
+      buildLedgerPackage(
+        {
+          tenant: "airline-demo-new",
+          releaseId: "airline-demo-new-source-corpus-v1.0.0",
+          policyVersion: "knowledge-review-decision-policy-v1",
+          validationRunRef: "validate-run-1",
+          sourceVersionRef: "src-v1",
+          reviewer: "reviewer:test",
+          approveBatchClass: "individual_review_required",
+        },
+        [],
+      ),
+    /Bulk apply cannot approve/,
+  );
 });
 
 if (failures > 0) {
