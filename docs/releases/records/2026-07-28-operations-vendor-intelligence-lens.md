@@ -118,8 +118,8 @@ feature is dormant behind an admin-only route and an OFF flag, so revert is full
 
 ## Audit Evidence
 
-- PR URL: (to be filled on open)
-- CI run: (to be filled on open)
+- PR URL: https://github.com/abarva-platform/abarva/pull/5708
+- CI run: see checks on PR #5708
 - Test output: `66 passed` (see QA / Validation)
 - Parity contract: `clients/shared/22-operations-vendor-analytics/PARITY_CONTRACT.md`
 - Lane boundary: `clients/shared/22-operations-vendor-analytics/README.md`
