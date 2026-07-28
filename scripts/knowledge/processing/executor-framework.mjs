@@ -1388,7 +1388,6 @@ export class PostgresKnowledgeExecutionStore {
         DO UPDATE SET evidence_refs=EXCLUDED.evidence_refs,
           relationship_payload=EXCLUDED.relationship_payload, content_hash=EXCLUDED.content_hash
       `,
-      [context.tenantKey],
     );
 
     const counts = await this.client.query(
