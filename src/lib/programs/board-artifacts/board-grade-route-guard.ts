@@ -13,6 +13,7 @@
 
 import { getActiveClientKey } from '@/lib/active-client';
 import type { ClientKey } from '@/lib/client-config';
+import { isFoundationTenantKey } from '@/lib/tenant/foundation-tenants';
 
 /**
  * The tenant the board-grade artifact set is bound to. Today every shipped
@@ -45,6 +46,21 @@ export async function assertBoardGradeTenancy(
   }
 
   if (activeKey !== BOARD_GRADE_ARTIFACT_TENANT) {
+    if (isFoundationTenantKey(activeKey)) {
+      console.warn(`[${routeName}] governed foundation reference fallback blocked`, {
+        activeTenant: activeKey,
+        artifactTenant: BOARD_GRADE_ARTIFACT_TENANT,
+      });
+      return Response.json(
+        {
+          error: 'governed_foundation_tenant',
+          detail:
+            'Foundation tenants must render Moves artifacts from governed operational Moves. Reference decks are unavailable on this tenant.',
+        },
+        { status: 403 },
+      );
+    }
+
     console.warn(`[${routeName}] cross-tenant access blocked`, {
       activeTenant: activeKey,
       artifactTenant: BOARD_GRADE_ARTIFACT_TENANT,
