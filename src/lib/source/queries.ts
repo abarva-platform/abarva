@@ -182,9 +182,10 @@ export async function getPendingSourceEvents(
   // Physical read goes through the data-plane seam (Supabase default,
   // Azure Postgres opt-in via ABARVA_DATA_PLANE). RBAC scoping below is
   // unchanged and stays lib-side.
-  const rows = (await selectSourceEventsReadAdapter().getPendingEventsForClient(
+  const rows = (await selectSourceEventsReadAdapter(
+    undefined,
     clientKey,
-  )) as SourceEventRow[];
+  ).getPendingEventsForClient(clientKey)) as SourceEventRow[];
   const clientRows = allowedIds === null
     ? rows
     : rows.filter((event) => allowedIds.includes(event.id));
@@ -382,9 +383,10 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   // returns [] on a read failure; the seed-overlay merge below then yields
   // exactly the pre-seam error fallback (`activeClientSeedEvents`).
   const persistedRows =
-    (await selectSourceEventsReadAdapter().getActiveEventsForClient(
+    (await selectSourceEventsReadAdapter(
+      undefined,
       activeClient.key,
-    )) as SourceEventRow[];
+    ).getActiveEventsForClient(activeClient.key)) as SourceEventRow[];
   const scopedPersistedRows = (
     allowedIds === null
       ? persistedRows
@@ -536,7 +538,7 @@ async function getPersistedSourceEventRow(
 ): Promise<SourceEventRow | null> {
   // Physical reads go through the data-plane seam (Supabase default,
   // Azure Postgres opt-in). The UUID-vs-event_code routing stays here.
-  const adapter = selectSourceEventsReadAdapter();
+  const adapter = selectSourceEventsReadAdapter(undefined, clientKey);
   const clientKeys = tenantAliasesFor(clientKey);
   // Try by primary key first when the slug looks like a UUID — fast
   // path for existing links + most internal navigation.

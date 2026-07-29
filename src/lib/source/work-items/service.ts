@@ -28,7 +28,10 @@ import type {
 export async function createWorkItem(
   input: NewSourcingWorkItem,
 ): Promise<WorkItemWriteOutcome<SourcingWorkItem>> {
-  return selectSourcingWorkItemsWriteAdapter().createWorkItem(input);
+  return selectSourcingWorkItemsWriteAdapter(
+    undefined,
+    input.tenantClientKey,
+  ).createWorkItem(input);
 }
 
 /** All work items attached to one subject (e.g. a Renewal Cockpit contract). */
@@ -37,7 +40,7 @@ export async function listWorkItemsForSubject(
   subjectKind: WorkItemSubjectKind,
   subjectRef: string,
 ): Promise<SourcingWorkItem[]> {
-  return selectSourcingWorkItemsReadAdapter().listForSubject(
+  return selectSourcingWorkItemsReadAdapter(undefined, tenantKey).listForSubject(
     tenantKey,
     subjectKind,
     subjectRef,
@@ -69,7 +72,10 @@ export async function accountabilityForContracts(
   const result = new Map<string, WorkItemAccountability>();
   if (contractIds.length === 0) return result;
   // One tenant-scoped read, then project per-contract from the pure model.
-  const all = await selectSourcingWorkItemsReadAdapter().listForTenant(tenantKey);
+  const all = await selectSourcingWorkItemsReadAdapter(
+    undefined,
+    tenantKey,
+  ).listForTenant(tenantKey);
   const contractItems = all.filter((i) => i.subjectKind === 'contract');
   const grouped = groupBySubject(contractItems);
   for (const id of contractIds) {
@@ -87,7 +93,10 @@ export async function listWorkItemsByKind(
   tenantKey: string,
   kind: WorkItemKind,
 ): Promise<SourcingWorkItem[]> {
-  return selectSourcingWorkItemsReadAdapter().listByKind(tenantKey, kind);
+  return selectSourcingWorkItemsReadAdapter(undefined, tenantKey).listByKind(
+    tenantKey,
+    kind,
+  );
 }
 
 /**

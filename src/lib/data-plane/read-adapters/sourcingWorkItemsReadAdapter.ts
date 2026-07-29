@@ -34,7 +34,7 @@ import {
   WORK_ITEM_SUBJECT_KINDS,
 } from '@/lib/source/work-items/types';
 import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
+import { resolveDataPlaneForTenant } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
 /** The columns the adapter reads, shared by both planes. */
@@ -303,8 +303,9 @@ export const azureSourcingWorkItemsReadAdapter: SourcingWorkItemsReadAdapter =
  */
 export function selectSourcingWorkItemsReadAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): SourcingWorkItemsReadAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureSourcingWorkItemsReadAdapter
     : supabaseSourcingWorkItemsReadAdapter;

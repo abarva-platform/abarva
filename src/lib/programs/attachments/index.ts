@@ -147,7 +147,10 @@ export async function recordAttachmentUpload(
   // (Slice 3c). Validation stays here; the caller still owns the storage
   // upload of the file bytes. Default plane = Supabase — the inserted row is
   // byte-faithful to the pre-seam `.insert()` body.
-  const data = await selectAttachmentsWriteAdapter().insertProgramAttachment(
+  const data = await selectAttachmentsWriteAdapter(
+    undefined,
+    input.tenantKey,
+  ).insertProgramAttachment(
     {
       tenant_key: input.tenantKey,
       program_id: input.programId,

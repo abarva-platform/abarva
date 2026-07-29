@@ -84,7 +84,7 @@ export default async function StrategicMoveTracePage({ params }: Props) {
   > = [];
 
   if (clientKey) {
-    const sourceAdapter = selectSourceEventsReadAdapter();
+    const sourceAdapter = selectSourceEventsReadAdapter(undefined, clientKey);
     const [active, pending, ledger] = await Promise.all([
       sourceAdapter.getActiveEventsForClient(clientKey).catch(() => []),
       sourceAdapter.getPendingEventsForClient(clientKey).catch(() => []),

@@ -39,6 +39,19 @@ describe("selectAttachmentsWriteAdapter", () => {
     process.env.ABARVA_DATA_PLANE = "azure-postgres";
     expect(selectAttachmentsWriteAdapter("supabase").plane).toBe("supabase");
   });
+
+  it("routes governed foundation tenants to Azure when the env is unset", () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectAttachmentsWriteAdapter(undefined, "airline-demo-new").plane).toBe(
+      "azure-postgres",
+    );
+  });
+
+  it("fails closed when a governed foundation tenant is forced to Supabase", () => {
+    expect(() =>
+      selectAttachmentsWriteAdapter("supabase", "airline-demo-new"),
+    ).toThrow(/airline-demo-new.*Azure PostgreSQL/i);
+  });
 });
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------
