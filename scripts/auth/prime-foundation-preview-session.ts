@@ -224,29 +224,42 @@ async function main(): Promise<void> {
         },
         headers: { "content-type": "application/json" },
       })
-      .then(async (probe) => ({
-        status: probe.status(),
-        ok: probe.ok(),
-        body: (await probe.text()).slice(0, 4000),
-      }))
+      .then(async (probe) => {
+        const body = await probe.text();
+        let payload: Record<string, unknown> | null = null;
+        try {
+          const parsed = JSON.parse(body) as Record<string, unknown>;
+          payload = {
+            tenantKey: parsed.tenantKey,
+            knowledgeBaselineRef: parsed.knowledgeBaselineRef,
+            contentHash: parsed.contentHash,
+            availabilityState: parsed.availabilityState,
+            projectionName: parsed.projectionName,
+            projectionContractVersion: parsed.projectionContractVersion,
+          };
+        } catch {
+          payload = null;
+        }
+
+        return {
+          status: probe.status(),
+          ok: probe.ok(),
+          body: body.slice(0, 4000),
+          payload,
+        };
+      })
       .catch((error) => ({
         status: 0,
         ok: false,
         body: String((error as Error)?.message ?? error),
+        payload: null,
       }));
 
     const response = await page.goto(url.toString(), { waitUntil: "networkidle", timeout: 60000 });
     const status = response?.status() ?? 0;
     const bodyText = await page.locator("body").innerText({ timeout: 30000 });
 
-    let directEnterpriseBriefPayload: Record<string, unknown> | null = null;
-    if (directEnterpriseBriefProbe.ok) {
-      try {
-        directEnterpriseBriefPayload = JSON.parse(directEnterpriseBriefProbe.body) as Record<string, unknown>;
-      } catch {
-        directEnterpriseBriefPayload = null;
-      }
-    }
+    const directEnterpriseBriefPayload = directEnterpriseBriefProbe.payload;
 
     const visibleRequired = [
       "Admin canary",
