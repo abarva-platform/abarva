@@ -139,7 +139,7 @@ export async function loadApprovalsInbox(
   clientKey: string,
   db = getAzureWriteFluentClient(),
 ): Promise<ApprovalsInbox> {
-  const adapter = selectSourceEventsReadAdapter();
+  const adapter = selectSourceEventsReadAdapter(undefined, clientKey);
   const [pendingEvents, activeEvents] = await Promise.all([
     adapter.getPendingEventsForClient(clientKey),
     adapter.getActiveEventsForClient(clientKey),

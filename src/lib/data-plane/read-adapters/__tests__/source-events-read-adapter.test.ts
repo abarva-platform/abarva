@@ -94,6 +94,19 @@ describe('selectSourceEventsReadAdapter', () => {
     process.env.ABARVA_DATA_PLANE = 'azure-postgres';
     expect(selectSourceEventsReadAdapter('supabase').name).toBe('supabase');
   });
+
+  it('routes governed foundation tenants to Azure when the env is unset', () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectSourceEventsReadAdapter(undefined, 'airline-demo-new').name).toBe(
+      'azure-postgres',
+    );
+  });
+
+  it('fails closed when a governed foundation tenant is forced to Supabase', () => {
+    expect(() =>
+      selectSourceEventsReadAdapter('supabase', 'airline-demo-new'),
+    ).toThrow(/airline-demo-new.*Azure PostgreSQL/i);
+  });
 });
 
 describe('supabaseSourceEventsReadAdapter', () => {

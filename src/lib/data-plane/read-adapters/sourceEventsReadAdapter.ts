@@ -25,7 +25,7 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
+import { resolveDataPlaneForTenant } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
 /**
@@ -251,8 +251,11 @@ export const azureSourceEventsReadAdapter: SourceEventsReadAdapter =
   createAzureSourceEventsReadAdapter();
 
 /** Select the Source-events read adapter for the configured data plane. */
-export function selectSourceEventsReadAdapter(plane?: DataPlane): SourceEventsReadAdapter {
-  const target = plane ?? resolveDataPlane();
+export function selectSourceEventsReadAdapter(
+  plane?: DataPlane,
+  tenantKey?: string | null,
+): SourceEventsReadAdapter {
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureSourceEventsReadAdapter
     : supabaseSourceEventsReadAdapter;

@@ -28,7 +28,7 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
+import { resolveDataPlaneForTenant } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
 /** A Strategic-Moves preferences read adapter for one physical data plane. */
@@ -109,8 +109,9 @@ export const azureStrategicMovesPreferencesReadAdapter: StrategicMovesPreference
 /** Select the Strategic-Moves preferences read adapter for the configured plane. */
 export function selectStrategicMovesPreferencesReadAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): StrategicMovesPreferencesReadAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureStrategicMovesPreferencesReadAdapter
     : supabaseStrategicMovesPreferencesReadAdapter;

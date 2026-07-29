@@ -126,7 +126,7 @@ export async function loadSourceLifecycleRouteAction(
     const { selectSourceEventsReadAdapter } = await import(
       "@/lib/data-plane/read-adapters/sourceEventsReadAdapter"
     );
-    const adapter = selectSourceEventsReadAdapter();
+    const adapter = selectSourceEventsReadAdapter(undefined, clientKey);
     const event = UUID_RE.test(input.eventId)
       ? await adapter.getEventByIdForClient(input.eventId, clientKey)
       : await adapter.getEventByCodeForClient(input.eventId, clientKey);

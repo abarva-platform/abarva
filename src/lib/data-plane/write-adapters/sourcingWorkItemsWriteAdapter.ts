@@ -24,7 +24,7 @@ import type {
 } from '@/lib/source/work-items/types';
 import { validateNewWorkItem } from '@/lib/source/work-items/work-item-model';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
-import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
+import { resolveDataPlaneForTenant } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
 
 /** A write outcome — `ok:false` carries a human-readable message. */
@@ -234,8 +234,9 @@ export const azureSourcingWorkItemsWriteAdapter: SourcingWorkItemsWriteAdapter =
  */
 export function selectSourcingWorkItemsWriteAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): SourcingWorkItemsWriteAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureSourcingWorkItemsWriteAdapter
     : supabaseSourcingWorkItemsWriteAdapter;

@@ -180,7 +180,7 @@ export async function getProgramPortfolio(
   if (allowedProgramIds && allowedProgramIds.length === 0) return [];
   const adapter = opts.supabase
     ? createSupabaseProgramsReadAdapter(() => opts.supabase as SupabaseClient)
-    : selectProgramsReadAdapter();
+    : selectProgramsReadAdapter(undefined, ctx.clientKey);
   const archiveFilter: "active" | "all" | "archived" = opts.archivedOnly
     ? "archived"
     : opts.includeArchived
@@ -217,7 +217,7 @@ export async function getProgramById(
   if (!(await canReadProgram(ctx, programId))) return null;
   const adapter = opts.supabase
     ? createSupabaseProgramsReadAdapter(() => opts.supabase as SupabaseClient)
-    : selectProgramsReadAdapter();
+    : selectProgramsReadAdapter(undefined, ctx.clientKey);
   const row = await adapter.getProgramByIdRow(programId, ctx.clientId);
   if (!row) return null;
   const [program] = await attachTemplateInstancesToPrograms(ctx, [

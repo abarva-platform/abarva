@@ -40,7 +40,10 @@ export async function getStrategicMovesPreferences(
 ): Promise<StrategicMovesPreferences> {
   if (!isUuid(ctx.userId)) return DEFAULT_STRATEGIC_MOVES_PREFERENCES;
   const filters =
-    await selectStrategicMovesPreferencesReadAdapter().getDefaultFilters(
+    await selectStrategicMovesPreferencesReadAdapter(
+      undefined,
+      ctx.clientKey,
+    ).getDefaultFilters(
       ctx.userId,
       ctx.clientId,
     );

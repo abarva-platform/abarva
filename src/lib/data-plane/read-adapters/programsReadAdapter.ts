@@ -17,7 +17,7 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
 import { createDefaultSession, type SessionRunner } from "./azureSession";
-import { resolveDataPlane } from "./resolveDataPlane";
+import { resolveDataPlaneForTenant } from "./resolveDataPlane";
 import type { DataPlane } from "./types";
 
 /**
@@ -252,8 +252,9 @@ export const azureProgramsReadAdapter: ProgramsReadAdapter =
 /** Select the programs read adapter for the configured data plane. */
 export function selectProgramsReadAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): ProgramsReadAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === "azure-postgres"
     ? azureProgramsReadAdapter
     : supabaseProgramsReadAdapter;

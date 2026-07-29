@@ -32,7 +32,7 @@ import {
   createTxSession,
   type TxSessionRunner,
 } from "../read-adapters/azureSession";
-import { resolveDataPlane } from "../read-adapters/resolveDataPlane";
+import { resolveDataPlaneForTenant } from "../read-adapters/resolveDataPlane";
 import type { DataPlane } from "./types";
 
 const PROGRAM_ATTACHMENTS_TABLE = "program_attachments";
@@ -246,8 +246,9 @@ export function createAzureAttachmentsWriteAdapter(
  */
 export function selectAttachmentsWriteAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): AttachmentsWriteAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === "azure-postgres"
     ? createAzureAttachmentsWriteAdapter()
     : createSupabaseAttachmentsWriteAdapter();
