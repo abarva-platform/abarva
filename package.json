@@ -622,6 +622,8 @@
     "audit:tower-fact-lineage": "node scripts/tower/fact-lineage-report.mjs",
     "audit:tower-data-path-fix": "npm run audit:tower-fact-lineage && npm run project:tower-mart:meridian:dry-run && npm run project:tower-mart:apex-retail:dry-run && npm run project:tower-mart:airline-demo:dry-run && npm run project:tower-mart:fs-demo:dry-run && npm run project:tower-mart:lakeshore-holdings:dry-run && npm run project:tower-mart:lakeshore-industries:dry-run && npm run audit:tower-mart-data-loading-qa",
     "knowledge:review-package:dry-run": "node scripts/knowledge/build-review-decision-ledger.mjs --from-db --mode dry-run --out-dir /tmp/airline-review-package-dry-run --emit-proof-bundle",
+    "qa:airline-module-data-plane-certification": "node scripts/qa/airline-module-data-plane-certification.mjs",
+    "qa:airline-module-runtime-db-proof": "node scripts/qa/airline-module-runtime-db-proof.mjs",
     "test:knowledge-process-executors": "node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs",
     "test:review-batch-dimensions": "node scripts/knowledge/__tests__/run-review-batch-dimensions-tests.mjs"
   },

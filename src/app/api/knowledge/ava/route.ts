@@ -24,7 +24,10 @@ import type {
 } from "@/lib/knowledge/consumption-contracts";
 import { DeterministicAvaReasoningProvider } from "@/lib/knowledge/consumption-client";
 import { AiEgressAvaReasoningProvider } from "@/lib/knowledge/consumption-server/ava-egress-provider";
+import { bindAvaPacketToActiveConsumptionEnvelope } from "@/lib/knowledge/consumption-server/ava-packet-binding";
+import { getTenantScopedConsumptionReader } from "@/lib/knowledge/consumption-server";
 import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
+import { isFoundationPreviewTenantKey } from "@/lib/auth/foundation-preview-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +53,7 @@ export async function POST(req: NextRequest) {
     body = {};
   }
 
-  const packet: AvaKnowledgePacket = {
+  let packet: AvaKnowledgePacket = {
     tenantKey,
     knowledgeBaselineRef: String(body.knowledgeBaselineRef ?? "none"),
     domainPublicationVersions: (body.domainPublicationVersions as Record<string, string>) ?? {},
@@ -72,6 +75,22 @@ export async function POST(req: NextRequest) {
     knownGapRefs: Array.isArray(body.knownGapRefs) ? (body.knownGapRefs as string[]) : [],
     blockedSourceRefs: [],
   };
+
+  if (isFoundationPreviewTenantKey(tenantKey)) {
+    try {
+      const enterpriseBrief = await getTenantScopedConsumptionReader(tenantKey)
+        .getEnterpriseBrief({ tenantKey });
+      packet = bindAvaPacketToActiveConsumptionEnvelope(packet, enterpriseBrief);
+    } catch (err) {
+      return Response.json(
+        {
+          error: "ava_baseline_unavailable",
+          detail: String((err as Error)?.message ?? err),
+        },
+        { status: 409 },
+      );
+    }
+  }
 
   try {
     // Production path = audited ai-egress. Deterministic ONLY when the model

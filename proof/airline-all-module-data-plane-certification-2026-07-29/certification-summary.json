@@ -1,0 +1,350 @@
+{
+  "generatedAt": "2026-07-29T14:20:05.798Z",
+  "foundationIdentity": {
+    "tenantKey": "airline-demo-new",
+    "baselineId": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+    "baselineContentHash": "135d860b9b104b2a2891fd108ea57286dc28bc057327498c63934c6552425549",
+    "projectionVersion": "phase3c2d-consumption-contracts-v1.0.0",
+    "enterpriseBriefProjection": "consumption.enterprise_brief_v1",
+    "proofEndpoint": "/api/knowledge/consumption/enterprise-brief"
+  },
+  "dataFlow": [
+    {
+      "stage": "Frozen source release",
+      "status": "Complete",
+      "evidence": "Approved Airline corpus is frozen; no further source mutation in this lane."
+    },
+    {
+      "stage": "Governed review decisions",
+      "status": "Complete",
+      "evidence": "112,201 accepted and 152,029 deferred; no replay permitted."
+    },
+    {
+      "stage": "Immutable domain publication",
+      "status": "Complete",
+      "evidence": "Accepted candidates were published into immutable Knowledge domains."
+    },
+    {
+      "stage": "Active Knowledge Baseline",
+      "status": "Complete",
+      "evidence": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1"
+    },
+    {
+      "stage": "Consumption projections",
+      "status": "Complete",
+      "evidence": "Enterprise brief projection is live-proven available; projection contract is pinned."
+    },
+    {
+      "stage": "Knowledge API activation",
+      "status": "Complete",
+      "evidence": "Signed-in /enterprise-brief canary returned 200 against the governed baseline."
+    },
+    {
+      "stage": "aVa baseline binding",
+      "status": "This PR",
+      "evidence": "Foundation tenant aVa packets are now server-bound to the active consumption envelope."
+    },
+    {
+      "stage": "All-module migration",
+      "status": "Open",
+      "evidence": "Several modules still require runtime DB/provider certification and legacy-fallback removal."
+    },
+    {
+      "stage": "Cube/Superset/Observable runtime",
+      "status": "Open",
+      "evidence": "Contracts/presentation exist; governed runtime and identity proof remain."
+    }
+  ],
+  "modules": [
+    {
+      "module": "Home / Knowledge",
+      "classification": "migrated_and_proven",
+      "percentComplete": 90,
+      "routes": [
+        "/api/knowledge/consumption/enterprise-brief",
+        "/knowledge-preview?provider=http&tenant=airline-demo-new"
+      ],
+      "readProvider": "Tenant-scoped governed HTTP/API -> Azure PostgreSQL consumption reader",
+      "writeProvider": "None in product surface; foundation writes are governed jobs only",
+      "database": "Tenant-scoped Azure PostgreSQL; shared DATABASE_URL fallback refused for foundation tenants",
+      "baselineBinding": "Required and live-proven",
+      "fixtureDependency": "Admin fixture preview only; real foundation tenant HTTP path prohibits fixture namespace use",
+      "legacyDependency": "No SkyHarbor fallback on the live-proven canary path",
+      "evidence": [
+        {
+          "file": "src/lib/knowledge/consumption-server/db.ts",
+          "marker": "refusing shared DATABASE_URL fallback",
+          "note": "Tenant-scoped consumption DB resolver fails closed instead of reading shared/old database.",
+          "found": true
+        },
+        {
+          "file": "src/app/api/knowledge/consumption/_shared.ts",
+          "marker": "const ADMIN_HTTP_CANARY_TENANTS = new Set([\"airline-demo-new\"])",
+          "note": "Consumption endpoint resolves tenant server-side and restricts admin canary tenant override.",
+          "found": true
+        },
+        {
+          "file": "src/app/(maestro)/knowledge-preview/page.tsx",
+          "marker": "const ADMIN_HTTP_CANARY_TENANT = \"airline-demo-new\"",
+          "note": "Signed-in preview route only permits the Airline HTTP canary tenant.",
+          "found": true
+        }
+      ],
+      "nextAction": "Keep provider active; add same signed-in proof to normal tenant-user path after Clerk mapping."
+    },
+    {
+      "module": "aVa / Knowledge",
+      "classification": "partially_migrated_this_pr",
+      "percentComplete": 60,
+      "routes": [
+        "/api/knowledge/ava"
+      ],
+      "readProvider": "Now binds foundation tenants to tenant-scoped consumption reader before reasoning",
+      "writeProvider": "None; aVa output remains ephemeral and non-promoting",
+      "database": "Tenant-scoped Azure PostgreSQL consumption envelope for foundation tenants",
+      "baselineBinding": "Enforced in this PR for foundation preview tenants",
+      "fixtureDependency": "Deterministic provider remains model-unavailable fallback, not fixture data authority",
+      "legacyDependency": "No baseline identity accepted from browser for foundation tenants after this PR",
+      "evidence": [
+        {
+          "file": "src/app/api/knowledge/ava/route.ts",
+          "marker": "bindAvaPacketToActiveConsumptionEnvelope",
+          "note": "Route overwrites browser-supplied baseline identity with active server envelope.",
+          "found": true
+        },
+        {
+          "file": "src/lib/knowledge/consumption-server/ava-packet-binding.ts",
+          "marker": "ava_baseline_unavailable",
+          "note": "aVa fails closed when the active foundation baseline/projection is unavailable.",
+          "found": true
+        }
+      ],
+      "nextAction": "Deploy and run signed-in aVa proof for Airline once this PR lands."
+    },
+    {
+      "module": "Intelligence",
+      "classification": "partially_migrated_needs_runtime_certification",
+      "percentComplete": 35,
+      "routes": [
+        "/api/intelligence/ask",
+        "/api/intelligence/query"
+      ],
+      "readProvider": "Mixed legacy advisory/context paths plus newer Knowledge hooks",
+      "writeProvider": "Audit/log paths vary by route",
+      "database": "Not yet proven baseline-bound for Airline",
+      "baselineBinding": "Not certified",
+      "fixtureDependency": "Static scan shows legacy tenant-specific/context code remains",
+      "legacyDependency": "Requires proof that Airline cannot retrieve legacy V6/V7/SkyHarbor context",
+      "evidence": [
+        {
+          "file": "src/app/api/intelligence/ask/route.ts",
+          "marker": "buildHomeKnowAgentAnswer",
+          "note": "Route has a Knowledge-answer path, but full baseline-bound Airline packet proof is still required.",
+          "found": true
+        },
+        {
+          "file": "src/app/api/intelligence/ask/route.ts",
+          "marker": "SkyHarbor",
+          "note": "Static tenant-specific logic remains and must be runtime-fenced from Airline Demo New.",
+          "found": true
+        }
+      ],
+      "nextAction": "Add signed-in Airline Intelligence proof with legacy fixtures and Supabase unavailable."
+    },
+    {
+      "module": "Moves",
+      "classification": "partially_migrated_legacy_operational_risk",
+      "percentComplete": 25,
+      "routes": [
+        "/api/v1/moves/*",
+        "/api/programs/phase-gate"
+      ],
+      "readProvider": "Operational adapters are mixed; generic reference fallbacks still exist",
+      "writeProvider": "programsWriteAdapter defaults depend on ABARVA_DATA_PLANE",
+      "database": "New Azure PostgreSQL not yet proven for all Airline operational state",
+      "baselineBinding": "Required only when consuming enterprise context; not certified",
+      "fixtureDependency": "Reference-mode fallbacks exist when moveId is absent/inaccessible",
+      "legacyDependency": "Supabase-default adapter behavior still exists unless runtime config prevents it",
+      "evidence": [
+        {
+          "file": "src/lib/data-plane/write-adapters/programsWriteAdapter.ts",
+          "marker": "Defaults to Supabase",
+          "note": "Programs/Moves write seam still has legacy default behavior.",
+          "found": true
+        },
+        {
+          "file": "src/app/api/v1/moves/board-grade-master-dossier/route.ts",
+          "marker": "REFERENCE MODE",
+          "note": "Board-grade routes retain reference/fallback behavior that must be disabled or certified for Airline.",
+          "found": true
+        }
+      ],
+      "nextAction": "Certify runtime env uses azure-postgres and disable reference fallbacks for governed Airline routes."
+    },
+    {
+      "module": "Source",
+      "classification": "partially_migrated_legacy_operational_risk",
+      "percentComplete": 30,
+      "routes": [
+        "/api/v1/source/*",
+        "/source"
+      ],
+      "readProvider": "Several routes use Azure fluent clients; fixture-specific views remain",
+      "writeProvider": "sourceWriteAdapter defaults depend on ABARVA_DATA_PLANE",
+      "database": "New Azure PostgreSQL not yet proven for every Source operational table",
+      "baselineBinding": "Required for Knowledge handoff; not certified end-to-end",
+      "fixtureDependency": "Source fixture views and event-instance fixtures remain in code",
+      "legacyDependency": "Static scan shows SkyHarbor default in at least one Source route",
+      "evidence": [
+        {
+          "file": "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
+          "marker": "Supabase stays the default",
+          "note": "Source write seam still has legacy default behavior.",
+          "found": true
+        },
+        {
+          "file": "src/app/api/v1/source/[eventId]/contract-optimization/brief/route.ts",
+          "marker": "skyharbor-air",
+          "note": "A Source route still has an explicit SkyHarbor fallback and must not serve governed Airline.",
+          "found": true
+        }
+      ],
+      "nextAction": "Migrate/certify Source operational state and block old fixture/default routes for Airline."
+    },
+    {
+      "module": "Tower",
+      "classification": "partially_migrated_legacy_operational_risk",
+      "percentComplete": 30,
+      "routes": [
+        "/api/tower/*",
+        "/tower"
+      ],
+      "readProvider": "Mixed Azure read models, V7 projections, and aggregate adapter",
+      "writeProvider": "Tower value-state and ingest paths use direct DATABASE_URL/Azure clients",
+      "database": "New Azure PostgreSQL not yet proven for all Tower operational state",
+      "baselineBinding": "Required for governed enterprise context; metrics remain Tower-owned operational projections",
+      "fixtureDependency": "Static seeded vendor/portfolio and deterministic views remain",
+      "legacyDependency": "Aggregate adapter still documents Supabase default unless env forces Azure",
+      "evidence": [
+        {
+          "file": "src/lib/tower/aggregate.ts",
+          "marker": "selectTowerAggregateReadAdapter",
+          "note": "Tower aggregate path still documents legacy default behavior.",
+          "found": true
+        },
+        {
+          "file": "src/lib/tower/v7-tower-projection.ts",
+          "marker": "V7",
+          "note": "Legacy V7 projection path remains and needs migration/sunset proof for Airline.",
+          "found": true
+        }
+      ],
+      "nextAction": "Certify Tower DB host/schema/table use and remove legacy defaults before Airline completion."
+    },
+    {
+      "module": "Admin / Platform",
+      "classification": "partially_migrated_needs_sunset_controls",
+      "percentComplete": 25,
+      "routes": [
+        "/admin/*",
+        "/platform/*"
+      ],
+      "readProvider": "Mixed admin and platform surfaces",
+      "writeProvider": "Mixed operational/admin writers",
+      "database": "Not yet certified against Airline private data plane",
+      "baselineBinding": "Only applicable where enterprise context is consumed",
+      "fixtureDependency": "Admin preview fixtures remain intentionally available to platform admins",
+      "legacyDependency": "Needs controls preventing legacy tenant access and fixture tenant creation",
+      "evidence": [
+        {
+          "file": "src/lib/knowledge/consumption-client/factory.ts",
+          "marker": "assertFixtureNamespace",
+          "note": "Fixture namespace guard exists for Knowledge preview, but platform-wide controls remain open.",
+          "found": true
+        }
+      ],
+      "nextAction": "Add CI/runtime controls for governed tenant legacy/fallback access."
+    },
+    {
+      "module": "Cube",
+      "classification": "contract_ready_runtime_proof_pending",
+      "percentComplete": 65,
+      "routes": [
+        "Cube semantic model"
+      ],
+      "readProvider": "Governed consumption projections only by contract",
+      "writeProvider": "None",
+      "database": "Consumption projections; parity proof previously passed but must be retained in closure bundle",
+      "baselineBinding": "Metric definitions and projection version required",
+      "fixtureDependency": "No fixture use allowed in governed model",
+      "legacyDependency": "Validator prohibits raw source/working/publication/operations tables",
+      "evidence": [
+        {
+          "file": "scripts/knowledge/validate-phase3c2e-executable-data-layer.mjs",
+          "marker": "source_boundary: consumption_only",
+          "note": "Executable data-layer validator enforces Cube consumption-only source boundary.",
+          "found": true
+        },
+        {
+          "file": "clients/shared/21-phase3c2e-executable-data-layer/cube/knowledge_consumption_model.yml",
+          "marker": "source_boundary: consumption_only",
+          "note": "Cube model declares the governed consumption-only boundary.",
+          "found": true
+        }
+      ],
+      "nextAction": "Rerun Cube-to-PostgreSQL parity in the deployed Airline closure bundle."
+    },
+    {
+      "module": "Superset",
+      "classification": "presentation_ready_runtime_provisioning_pending",
+      "percentComplete": 20,
+      "routes": [
+        "Analyze in Superset"
+      ],
+      "readProvider": "Should use read-only governed identity against consumption/Cube contract",
+      "writeProvider": "None",
+      "database": "Not provisioned/proven in this certification",
+      "baselineBinding": "Required in dataset/dashboard metadata",
+      "fixtureDependency": "Not certified",
+      "legacyDependency": "Not certified",
+      "evidence": [
+        {
+          "file": "clients/shared/20-phase3c2d-consumption-contracts/MODULE_CONSUMPTION_MAPPING.xlsx.inspect.ndjson",
+          "marker": "Superset",
+          "note": "Presentation contract names the standard dashboard path, but runtime proof remains open.",
+          "found": true
+        }
+      ],
+      "nextAction": "Provision read-only governed identity and certify dashboard dataset identity."
+    },
+    {
+      "module": "Observable",
+      "classification": "presentation_ready_runtime_payload_pending",
+      "percentComplete": 20,
+      "routes": [
+        "Observable narrative presentation"
+      ],
+      "readProvider": "Should consume the same governed metric payload as Cube/Superset",
+      "writeProvider": "None",
+      "database": "Not directly applicable; payload binding not proven",
+      "baselineBinding": "Required in payload identity",
+      "fixtureDependency": "Not certified",
+      "legacyDependency": "Not certified",
+      "evidence": [
+        {
+          "file": "clients/shared/20-phase3c2d-consumption-contracts/MODULE_CONSUMPTION_MAPPING.xlsx.inspect.ndjson",
+          "marker": "Observable",
+          "note": "Contract names the Observable story payload; runtime proof remains open.",
+          "found": true
+        }
+      ],
+      "nextAction": "Verify Observable payload carries the same baseline/projection/metric identity."
+    }
+  ],
+  "missingEvidenceChecks": [],
+  "completion": {
+    "foundationPipeline": 100,
+    "knowledgeActivation": 100,
+    "allModuleCertification": 40
+  }
+}
