@@ -27,6 +27,11 @@ network request. The HTTP consumption provider now late-binds `globalThis.fetch`
 provider instance created during a Next server-render pass cannot freeze Node's server fetch into
 the hydrated browser runtime.
 
+Post-deploy proof then showed the UI-originated `/enterprise-brief` call succeeded with the active
+baseline, but the proof script still failed on brittle display-copy checks. The canary proof now
+asserts the governed API envelope directly: tenant binding, baseline reference, content hash, and
+available state, while still checking that the signed-in canary and HTTP provider are visible.
+
 ## Layer Impact
 
 - Layer 3 Canonical Enterprise Model: no canonical data is changed.
@@ -56,8 +61,8 @@ the hydrated browser runtime.
 
 - Pass: `npx jest src/lib/knowledge/consumption-server/__tests__/db.test.ts src/lib/knowledge/consumption-server/__tests__/reader.test.ts --runInBand`
 - Pass: `npx jest src/lib/knowledge/consumption-client/__tests__/vnext-consumption.test.ts --runInBand`
-- Pass: `npx tsc --noEmit`
-- Pending: signed-in Airline proof after the RLS binding deploy.
+- Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+- Pending: signed-in Airline proof after the proof-harness deploy.
 
 ## Rollout Plan
 
@@ -92,9 +97,13 @@ identity from the shared web Container App.
   `airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1`, `availabilityState=available`,
   while UI rendered the generic provider-unavailable message without its own consumption network
   request.
+- Proof harness correction: post-deploy screenshot and browser events showed the canary page was
+  using the HTTP provider and the `/enterprise-brief` browser call returned `200`; the failing
+  fields were display-copy assertions, not the consumption API path.
 - Signed-in proof: still required.
 
 ## Known Gaps
 
 Production proof still requires a post-deploy signed-in Airline run proving the HTTP provider reads
-the active baseline through the tenant-scoped RLS context.
+the active baseline through the tenant-scoped RLS context and records the baseline-bound API
+envelope.
