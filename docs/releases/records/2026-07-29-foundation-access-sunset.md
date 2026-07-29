@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Foundation-only proof users now land on the governed Knowledge preview route instead of the legacy Home route. The `/home` entry point is archived as a redirect-only route so the old Home V2/V4 renderer is no longer reachable from that URL. The release also adds a dry-run-first Clerk operator command for disabling retired demo tenant logins without deleting users or mutating Knowledge foundation data.
+Foundation-only proof users now land on the governed Knowledge preview route instead of the legacy Home route. The `/home` entry point and legacy Home child surfaces are archived as redirect-only routes so the old Home V2/V4 renderer and fixture-backed review pages are no longer reachable from those URLs. The release also adds a dry-run-first Clerk operator command for disabling retired demo tenant logins without deleting users or mutating Knowledge foundation data.
 
 ## Layer Impact
 
@@ -32,6 +32,7 @@ Foundation-only proof users now land on the governed Knowledge preview route ins
 - Post-sign-in routing for foundation proof sessions.
 - Proxy guard for foundation proof sessions.
 - Home route archive redirect; the old Home renderer is no longer mounted at `/home`.
+- Legacy Home child route archive redirects for `/home/v4-preview` and `/home/queue`.
 - Historical Airline Demo labels now resolve to the new foundation tenant before legacy aliases can map them to retired tenant data.
 - Clerk legacy-login disable dry-run/apply script.
 - Focused unit tests for routing, proxy metadata, and disable classification.
@@ -41,6 +42,7 @@ Foundation-only proof users now land on the governed Knowledge preview route ins
 - `jest src/lib/auth/__tests__/access-routing.test.ts src/__tests__/unit/proxy-session-identity.test.ts src/lib/auth/__tests__/legacy-tenant-sunset.test.ts src/lib/auth/__tests__/foundation-route-access.test.ts --runInBand` passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit --pretty false` passed.
 - Hotfix validation repeated focused routing tests and full TypeScript after the hard `/home` archive redirect.
+- Follow-up validation archived remaining legacy Home child routes without changing Learn.
 
 ## Rollout Plan
 
