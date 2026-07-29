@@ -8,6 +8,10 @@
  */
 
 import type { NextRequest } from "next/server";
+import {
+  isFoundationPreviewTenantKey,
+  isFoundationPreviewTenantSession,
+} from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
@@ -48,15 +52,21 @@ export async function handleConsumption(
   delete body.__adminCanaryTenantKey;
 
   if (adminCanaryTenantKey) {
-    if (!ADMIN_HTTP_CANARY_TENANTS.has(adminCanaryTenantKey)) {
+    if (
+      !ADMIN_HTTP_CANARY_TENANTS.has(adminCanaryTenantKey) ||
+      !isFoundationPreviewTenantKey(adminCanaryTenantKey)
+    ) {
       return Response.json(
         { error: "canary_tenant_not_allowed" },
         { status: 403 },
       );
     }
-    if (!(await isPlatformAdminSession())) {
+    const authorized =
+      (await isPlatformAdminSession()) ||
+      (await isFoundationPreviewTenantSession(adminCanaryTenantKey));
+    if (!authorized) {
       return Response.json(
-        { error: "platform_admin_required" },
+        { error: "foundation_preview_access_required" },
         { status: 403 },
       );
     }
