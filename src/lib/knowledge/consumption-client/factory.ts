@@ -81,9 +81,11 @@ export function createFixtureRuntime(
 
 export function createHttpRuntime(
   tenantKey: string,
-  opts: { modelsEnabled?: boolean } = {},
+  opts: { modelsEnabled?: boolean; adminCanaryTenantKey?: string } = {},
 ): ConsumptionRuntime {
-  const provider = new HttpConsumptionApiProvider(tenantKey);
+  const provider = new HttpConsumptionApiProvider(tenantKey, {
+    adminCanaryTenantKey: opts.adminCanaryTenantKey,
+  });
   const modelsEnabled = opts.modelsEnabled ?? false;
   const ava: AvaReasoningProvider = modelsEnabled
     ? new DeterministicAvaReasoningProvider()

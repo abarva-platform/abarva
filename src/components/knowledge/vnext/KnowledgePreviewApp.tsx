@@ -11,7 +11,10 @@
  */
 
 import { useState } from "react";
-import { ConsumptionRuntimeProvider } from "@/lib/knowledge/consumption-client";
+import {
+  ConsumptionRuntimeProvider,
+  type ConsumptionSource,
+} from "@/lib/knowledge/consumption-client";
 import { FIXTURE_SCENARIOS, type FixtureScenario } from "@/lib/knowledge/fixtures";
 import { KnowledgeShellStateProvider } from "./state";
 import { KnowledgeShell } from "./KnowledgeShell";
@@ -26,28 +29,59 @@ export interface FixtureTenantOption {
 export function KnowledgePreviewApp({
   fixtureTenants,
   defaultTenantKey,
+  source,
 }: {
   fixtureTenants: FixtureTenantOption[];
   defaultTenantKey: string;
+  source?: ConsumptionSource;
 }) {
   const [tenantKey, setTenantKey] = useState(defaultTenantKey);
   const [scenario, setScenario] = useState<FixtureScenario>("normal");
+  const runtimeSource =
+    source ?? { kind: "fixture" as const, tenantKey, scenario };
 
   return (
-    <ConsumptionRuntimeProvider source={{ kind: "fixture", tenantKey, scenario }}>
+    <ConsumptionRuntimeProvider source={runtimeSource}>
       <KnowledgeShellStateProvider>
         <div className="kv-root">
-          <AdminFixtureControl
-            fixtureTenants={fixtureTenants}
-            tenantKey={tenantKey}
-            scenario={scenario}
-            onTenant={setTenantKey}
-            onScenario={setScenario}
-          />
+          {runtimeSource.kind === "http" ? (
+            <AdminHttpCanaryControl
+              tenantKey={runtimeSource.tenantKey}
+              modelsEnabled={runtimeSource.modelsEnabled === true}
+            />
+          ) : (
+            <AdminFixtureControl
+              fixtureTenants={fixtureTenants}
+              tenantKey={tenantKey}
+              scenario={scenario}
+              onTenant={setTenantKey}
+              onScenario={setScenario}
+            />
+          )}
           <KnowledgeShell />
         </div>
       </KnowledgeShellStateProvider>
     </ConsumptionRuntimeProvider>
+  );
+}
+
+function AdminHttpCanaryControl({
+  tenantKey,
+  modelsEnabled,
+}: {
+  tenantKey: string;
+  modelsEnabled: boolean;
+}) {
+  return (
+    <div className="kv-adminbar" role="region" aria-label="Admin HTTP canary control">
+      <span className="kv-tag">Admin canary · HTTP provider</span>
+      <span>Tenant: <strong>{tenantKey}</strong></span>
+      <span>Fixtures prohibited</span>
+      <span>aVa models: {modelsEnabled ? "enabled" : "disabled"}</span>
+      <span style={{ opacity: 0.7 }}>
+        Uses the active governed Knowledge Baseline via consumption APIs
+      </span>
+    </div>
   );
 }
 

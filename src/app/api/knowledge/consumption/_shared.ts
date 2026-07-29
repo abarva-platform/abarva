@@ -8,6 +8,7 @@
  */
 
 import type { NextRequest } from "next/server";
+import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { getConsumptionReader, ConsumptionReader } from "@/lib/knowledge/consumption-server";
@@ -22,6 +23,8 @@ export interface ConsumptionContext {
   body: Record<string, unknown>;
 }
 
+const ADMIN_HTTP_CANARY_TENANTS = new Set(["airline-demo-new"]);
+
 /**
  * Run a consumption handler with tenancy resolved. The handler receives the
  * reader + the trusted canonical tenantKey + the parsed body.
@@ -30,25 +33,47 @@ export async function handleConsumption(
   req: NextRequest,
   fn: (ctx: ConsumptionContext) => Promise<unknown>,
 ): Promise<Response> {
-  let tenantKey: string;
-  try {
-    const ctx = await requireTenancy();
-    // Canonical key from the authenticated session — the only trusted source.
-    tenantKey = canonicalTenantKey(ctx.clientKey ?? "");
-    if (!tenantKey) throw new Error("no_client");
-  } catch (err) {
-    try {
-      return tenancyErrorResponse(err);
-    } catch {
-      return Response.json({ error: "unauthenticated" }, { status: 401 });
-    }
-  }
-
   let body: Record<string, unknown> = {};
   try {
     body = (await req.json()) as Record<string, unknown>;
   } catch {
     body = {};
+  }
+
+  let tenantKey: string;
+  const adminCanaryTenantKey =
+    typeof body.__adminCanaryTenantKey === "string"
+      ? canonicalTenantKey(body.__adminCanaryTenantKey)
+      : null;
+  delete body.__adminCanaryTenantKey;
+
+  if (adminCanaryTenantKey) {
+    if (!ADMIN_HTTP_CANARY_TENANTS.has(adminCanaryTenantKey)) {
+      return Response.json(
+        { error: "canary_tenant_not_allowed" },
+        { status: 403 },
+      );
+    }
+    if (!(await isPlatformAdminSession())) {
+      return Response.json(
+        { error: "platform_admin_required" },
+        { status: 403 },
+      );
+    }
+    tenantKey = adminCanaryTenantKey;
+  } else {
+    try {
+      const ctx = await requireTenancy();
+      // Canonical key from the authenticated session — the only trusted source.
+      tenantKey = canonicalTenantKey(ctx.clientKey ?? "");
+      if (!tenantKey) throw new Error("no_client");
+    } catch (err) {
+      try {
+        return tenancyErrorResponse(err);
+      } catch {
+        return Response.json({ error: "unauthenticated" }, { status: 401 });
+      }
+    }
   }
 
   try {
