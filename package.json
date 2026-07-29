@@ -627,7 +627,8 @@
     "qa:airline-module-data-plane-certification": "node scripts/qa/airline-module-data-plane-certification.mjs",
     "qa:airline-module-runtime-db-proof": "node scripts/qa/airline-module-runtime-db-proof.mjs",
     "test:knowledge-process-executors": "node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs",
-    "test:review-batch-dimensions": "node scripts/knowledge/__tests__/run-review-batch-dimensions-tests.mjs"
+    "test:review-batch-dimensions": "node scripts/knowledge/__tests__/run-review-batch-dimensions-tests.mjs",
+    "qa:airline-e2e-live-reconciliation-readback": "node scripts/qa/airline-e2e-live-reconciliation-readback.mjs --require-db --emit-proof-bundle"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
