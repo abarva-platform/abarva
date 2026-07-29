@@ -15,7 +15,11 @@ import {
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
-import { getConsumptionReader, ConsumptionReader } from "@/lib/knowledge/consumption-server";
+import {
+  getConsumptionReader,
+  getTenantScopedConsumptionReader,
+  ConsumptionReader,
+} from "@/lib/knowledge/consumption-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,12 +91,19 @@ export async function handleConsumption(
   }
 
   try {
-    const reader = getConsumptionReader();
+    const reader = isFoundationPreviewTenantKey(tenantKey)
+      ? getTenantScopedConsumptionReader(tenantKey)
+      : getConsumptionReader();
     const envelope = await fn({ reader, tenantKey, body });
-    return Response.json(envelope, { headers: { "Cache-Control": "no-store" } });
+    return Response.json(envelope, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (err) {
     return Response.json(
-      { error: "consumption_read_failed", detail: String((err as Error)?.message ?? err) },
+      {
+        error: "consumption_read_failed",
+        detail: String((err as Error)?.message ?? err),
+      },
       { status: 500 },
     );
   }
