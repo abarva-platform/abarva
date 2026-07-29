@@ -17,6 +17,7 @@ import {
 import {
   envelopeMetaSchema,
   findContentSafetyViolations,
+  PROJECTION_CONTRACT_VERSION,
   type AvaKnowledgePacket,
   type ConsumptionEnvelope,
   type KnowledgeConsumptionProvider,
@@ -191,6 +192,43 @@ describe("provider interchangeability", () => {
     const fetchImpl = (async () => { throw new Error("network down"); }) as unknown as typeof fetch;
     const http = new HttpConsumptionApiProvider(TENANT, { fetchImpl });
     await expect(http.getEnterpriseBrief({ tenantKey: TENANT })).rejects.toThrow(/not available/);
+  });
+
+  it("sends the admin canary tenant marker only when configured", async () => {
+    const requests: unknown[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      requests.push(JSON.parse(String(init?.body ?? "{}")));
+      return new Response(
+        JSON.stringify({
+          tenantKey: "airline-demo-new",
+          knowledgeBaselineRef: "kb",
+          domainPublicationVersions: {},
+          projectionName: "consumption.enterprise_brief_v1",
+          projectionContractVersion: PROJECTION_CONTRACT_VERSION,
+          asOf: "2026-07-28T00:00:00.000Z",
+          contentHash: "hash",
+          authorityState: "published",
+          availabilityState: "available",
+          freshnessState: "fresh",
+          evidenceRefs: [],
+          knownGapRefs: [],
+          warnings: [],
+          data: {},
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }) as unknown as typeof fetch;
+
+    const normal = new HttpConsumptionApiProvider("airline-demo-new", { fetchImpl });
+    await normal.getEnterpriseBrief({ tenantKey: "airline-demo-new" });
+    const canary = new HttpConsumptionApiProvider("airline-demo-new", {
+      fetchImpl,
+      adminCanaryTenantKey: "airline-demo-new",
+    });
+    await canary.getEnterpriseBrief({ tenantKey: "airline-demo-new" });
+
+    expect(requests[0]).not.toHaveProperty("__adminCanaryTenantKey");
+    expect(requests[1]).toHaveProperty("__adminCanaryTenantKey", "airline-demo-new");
   });
 
   it("refuses to construct a fixture provider for an unknown tenant (no fallback)", () => {

@@ -8,6 +8,7 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { listFixtureTenants, DEFAULT_FIXTURE_TENANT } from "@/lib/knowledge/fixtures";
 import { KnowledgePreviewApp } from "@/components/knowledge/vnext/KnowledgePreviewApp";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 /**
  * Home / Knowledge vNext — ADMIN PREVIEW ROUTE (isolated, not activated).
@@ -28,8 +29,25 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function KnowledgePreviewPage() {
+interface PageSearchParams {
+  provider?: string | string[];
+  tenant?: string | string[];
+  models?: string | string[];
+}
+
+const ADMIN_HTTP_CANARY_TENANT = "airline-demo-new";
+
+function firstParam(value: string | string[] | undefined): string | null {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+export default async function KnowledgePreviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<PageSearchParams>;
+}) {
   await connection();
+  const params = searchParams ? await searchParams : {};
 
   // Admin-only. Role/claim based; no hard-coded email allowlist here.
   if (!(await isPlatformAdminSession())) {
@@ -50,12 +68,28 @@ export default async function KnowledgePreviewPage() {
   void tenantFlagOn;
 
   const fixtureTenants = listFixtureTenants();
+  const provider = firstParam(params.provider)?.toLowerCase();
+  const requestedTenant = canonicalTenantKey(firstParam(params.tenant) ?? "");
+  const useHttpCanary = provider === "http";
+  if (useHttpCanary && requestedTenant !== ADMIN_HTTP_CANARY_TENANT) {
+    notFound();
+  }
 
   return (
     <AppShell surface="product" topBarProps={{ context: "Knowledge (vNext preview)" }}>
       <KnowledgePreviewApp
         fixtureTenants={fixtureTenants}
         defaultTenantKey={DEFAULT_FIXTURE_TENANT}
+        source={
+          useHttpCanary
+            ? {
+                kind: "http",
+                tenantKey: ADMIN_HTTP_CANARY_TENANT,
+                adminCanaryTenantKey: ADMIN_HTTP_CANARY_TENANT,
+                modelsEnabled: firstParam(params.models) === "on",
+              }
+            : undefined
+        }
       />
     </AppShell>
   );

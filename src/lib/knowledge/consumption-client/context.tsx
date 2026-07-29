@@ -15,7 +15,7 @@ const ConsumptionContext = createContext<ConsumptionRuntime | null>(null);
 
 export type ConsumptionSource =
   | { kind: "fixture"; tenantKey: string; scenario: FixtureScenario }
-  | { kind: "http"; tenantKey: string; modelsEnabled?: boolean };
+  | { kind: "http"; tenantKey: string; modelsEnabled?: boolean; adminCanaryTenantKey?: string };
 
 export function ConsumptionRuntimeProvider({
   source,
@@ -30,6 +30,7 @@ export function ConsumptionRuntimeProvider({
     }
     return createHttpRuntime(source.tenantKey, {
       modelsEnabled: source.modelsEnabled,
+      adminCanaryTenantKey: source.adminCanaryTenantKey,
     });
   }, [source]);
 

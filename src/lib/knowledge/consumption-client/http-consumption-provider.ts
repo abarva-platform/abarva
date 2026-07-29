@@ -40,6 +40,12 @@ import { envelopeMetaSchema } from "../consumption-contracts";
 export interface HttpProviderOptions {
   /** Base path for the published consumption API. Server resolves the tenant. */
   basePath?: string;
+  /**
+   * Admin-only preview canary. This is not a tenant activation switch; the API
+   * route independently verifies platform-admin authority and an allowlisted
+   * canonical tenant before honoring it.
+   */
+  adminCanaryTenantKey?: string;
   /** Injected fetch (tests). Defaults to global fetch. */
   fetchImpl?: typeof fetch;
 }
@@ -52,12 +58,14 @@ export class HttpConsumptionApiProvider
   readonly binding: ProviderBinding;
   private readonly base: string;
   private readonly fetchImpl: typeof fetch;
+  private readonly adminCanaryTenantKey: string | null;
   /** Last-known-good cache keyed by endpoint+query hash. */
   private readonly lkg = new Map<string, ConsumptionEnvelope<unknown>>();
 
   constructor(tenantKey: string, opts: HttpProviderOptions = {}) {
     this.base = opts.basePath ?? DEFAULT_BASE;
     this.fetchImpl = opts.fetchImpl ?? globalThis.fetch;
+    this.adminCanaryTenantKey = opts.adminCanaryTenantKey ?? null;
     this.binding = { kind: "http_consumption_api", tenantKey };
   }
 
@@ -70,7 +78,12 @@ export class HttpConsumptionApiProvider
       const res = await this.fetchImpl(`${this.base}${path}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          ...(body as Record<string, unknown>),
+          ...(this.adminCanaryTenantKey
+            ? { __adminCanaryTenantKey: this.adminCanaryTenantKey }
+            : {}),
+        }),
       });
       if (!res.ok) throw new Error(`consumption API ${path} → HTTP ${res.status}`);
       const json = (await res.json()) as unknown;
