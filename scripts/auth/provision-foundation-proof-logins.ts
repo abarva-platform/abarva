@@ -1,4 +1,7 @@
 #!/usr/bin/env tsx
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { config as loadEnv } from "dotenv";
 import { createClerkClient } from "@clerk/backend";
@@ -11,6 +14,10 @@ import {
 } from "../../src/lib/auth/foundation-proof-logins";
 
 const REPO_ROOT = process.cwd();
+const DEFAULT_REPORT_DIR = path.join(
+  os.tmpdir(),
+  `foundation-proof-provision-${new Date().toISOString().replace(/[:.]/g, "-")}`,
+);
 
 function loadEnvFiles(): void {
   for (const candidate of [
@@ -35,11 +42,14 @@ function parseArgs() {
     const index = args.indexOf(name);
     return index >= 0 ? args[index + 1] ?? null : null;
   };
+  const envFlag = (name: string): boolean => ["1", "true", "yes"].includes((process.env[name] ?? "").toLowerCase());
   return {
-    apply: args.includes("--apply"),
-    list: args.includes("--list"),
-    tenant: (getValue("--tenant") as FoundationProofTenantKey | null) ?? null,
-    slug: getValue("--slug"),
+    apply: args.includes("--apply") || envFlag("FOUNDATION_PROOF_APPLY"),
+    emitProofBundle: args.includes("--emit-proof-bundle") || envFlag("FOUNDATION_PROOF_EMIT_PROOF_BUNDLE"),
+    list: args.includes("--list") || envFlag("FOUNDATION_PROOF_LIST"),
+    outDir: getValue("--out-dir") ?? process.env.FOUNDATION_PROOF_OUT_DIR ?? DEFAULT_REPORT_DIR,
+    tenant: (getValue("--tenant") as FoundationProofTenantKey | null) ?? (process.env.FOUNDATION_PROOF_TENANT as FoundationProofTenantKey | undefined) ?? null,
+    slug: getValue("--slug") ?? process.env.FOUNDATION_PROOF_SLUG,
   };
 }
 
@@ -73,6 +83,14 @@ async function main(): Promise<void> {
   );
 
   const clerk = createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") });
+  const results: Array<{
+    email: string;
+    slug: string;
+    tenantKey: FoundationProofTenantKey;
+    personaKind: FoundationProofLogin["personaKind"];
+    action: "create" | "update";
+    applied: boolean;
+  }> = [];
   for (const login of selected) {
     const metadata = buildFoundationProofMetadata(login);
     const existing = await clerk.users.getUserList({
@@ -104,7 +122,45 @@ async function main(): Promise<void> {
     console.log(
       `${args.apply ? "[APPLIED]" : "[PLAN]"} ${action} ${login.email} · ${login.tenantKey} · ${login.personaKind}`,
     );
+    results.push({
+      email: login.email,
+      slug: login.slug,
+      tenantKey: login.tenantKey,
+      personaKind: login.personaKind,
+      action,
+      applied: args.apply,
+    });
   }
+
+  fs.mkdirSync(args.outDir, { recursive: true });
+  const reportPath = path.join(args.outDir, "foundation-proof-provision.json");
+  fs.writeFileSync(
+    reportPath,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        mode: args.apply ? "apply" : "dry-run",
+        purpose: "Clerk metadata only; no foundation review/publication/baseline/projection mutation.",
+        selectedTenant: args.tenant,
+        selectedSlug: args.slug ?? null,
+        results,
+      },
+      null,
+      2,
+    ),
+  );
+  console.log(`Report: ${reportPath}`);
+  if (args.emitProofBundle) emitProofBundle(args.outDir);
+}
+
+function emitProofBundle(dir: string): void {
+  const tar = spawnSync("tar", ["-czf", "-", "-C", dir, "."], { encoding: "buffer" });
+  if (tar.status !== 0) {
+    throw new Error(`Failed to create provision proof bundle: ${tar.stderr?.toString() || tar.stdout?.toString() || "tar failed"}`);
+  }
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  console.log(tar.stdout.toString("base64"));
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
 main().catch((error) => {
