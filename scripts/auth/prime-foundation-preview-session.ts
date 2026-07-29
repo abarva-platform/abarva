@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { config as loadEnv } from "dotenv";
 import { createClerkClient } from "@clerk/backend";
@@ -13,8 +14,13 @@ import {
 } from "../../src/lib/auth/foundation-proof-logins";
 
 const REPO_ROOT = process.cwd();
-const AUTH_DIR = path.join(REPO_ROOT, ".auth");
-const REPORT_DIR = path.join(REPO_ROOT, "reports", "foundation-preview-auth");
+const WORK_DIR =
+  process.env.FOUNDATION_PROOF_WORK_DIR ??
+  path.join(os.tmpdir(), "foundation-preview-auth");
+const AUTH_DIR =
+  process.env.FOUNDATION_PROOF_AUTH_DIR ?? path.join(WORK_DIR, ".auth");
+const REPORT_DIR =
+  process.env.FOUNDATION_PROOF_REPORT_DIR ?? path.join(WORK_DIR, "reports");
 const DEFAULT_BASE_URL = process.env.BASE_URL ?? "https://app.abarva.ai";
 
 function loadEnvFiles(): void {
@@ -96,6 +102,11 @@ function selectLogin(args: ReturnType<typeof parseArgs>): FoundationProofLogin {
   return login;
 }
 
+function displayPath(filePath: string): string {
+  const relative = path.relative(REPO_ROOT, filePath);
+  return relative.startsWith("..") ? filePath : relative;
+}
+
 async function main(): Promise<void> {
   loadEnvFiles();
   const args = parseArgs();
@@ -156,8 +167,8 @@ async function main(): Promise<void> {
           status,
           passed,
           missing,
-          storagePath: path.relative(REPO_ROOT, storagePath),
-          screenshotPath: path.relative(REPO_ROOT, screenshotPath),
+          storagePath: displayPath(storagePath),
+          screenshotPath: displayPath(screenshotPath),
         },
         null,
         2,
@@ -165,9 +176,9 @@ async function main(): Promise<void> {
     );
 
     console.log(`${passed ? "[PASS]" : "[FAIL]"} ${login.slug} · ${login.tenantKey}`);
-    console.log(`Storage: ${path.relative(REPO_ROOT, storagePath)}`);
-    console.log(`Report: ${path.relative(REPO_ROOT, reportPath)}`);
-    console.log(`Screenshot: ${path.relative(REPO_ROOT, screenshotPath)}`);
+    console.log(`Storage: ${displayPath(storagePath)}`);
+    console.log(`Report: ${displayPath(reportPath)}`);
+    console.log(`Screenshot: ${displayPath(screenshotPath)}`);
     if (args.emitProofBundle) emitProofBundle(REPORT_DIR);
     if (!passed) process.exitCode = 1;
   } finally {
