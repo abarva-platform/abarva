@@ -194,7 +194,10 @@ async function main(): Promise<void> {
       "Active baseline",
       "governed baseline",
     ];
-    const missing = required.filter((needle) => !bodyText.includes(needle));
+    const normalizedBodyText = bodyText.toLowerCase();
+    const missing = required.filter(
+      (needle) => !normalizedBodyText.includes(needle.toLowerCase()),
+    );
     const passed = status < 400 && missing.length === 0 && !page.url().includes("/sign-in");
 
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
