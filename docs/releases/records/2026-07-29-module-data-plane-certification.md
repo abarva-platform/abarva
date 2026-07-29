@@ -33,6 +33,7 @@ This release adds the first controlled certification package for proving whether
 - Adds aVa packet binding helper and regression tests under `src/lib/knowledge/consumption-server/`.
 - Updates `/api/knowledge/ava` so governed foundation tenants bind to the active server-side consumption envelope before model invocation.
 - Adds npm commands for the two proof scripts.
+- Updates the read-only runtime DB proof script to inspect the deployed baseline row shape and projection relation availability instead of assuming every optional proof column exists.
 
 ## QA / Validation
 
@@ -42,6 +43,7 @@ This release adds the first controlled certification package for proving whether
 - Pass: `npm run test:phase3c2e-data-layer`
 - Pass: `npx tsc --noEmit`
 - Pass: `npm run release:check`
+- Pass: deployed read-only proof script syntax after schema-tolerant update: `node --check scripts/qa/airline-module-runtime-db-proof.mjs`
 
 Live signed-in proof and read-only VNet database proof are required after deployment before any all-module migration closure claim.
 
@@ -69,6 +71,7 @@ Rollback the ACA web runtime to the previous digest if the aVa route or Knowledg
 - Proof bundle: `proof/airline-all-module-data-plane-certification-2026-07-29/`.
 - Jest regression for server-side aVa baseline binding.
 - Post-deploy ACA digest and signed-in proof bundle to be appended after deployment.
+- Runtime DB proof script now reports missing projection relations as proof findings instead of aborting on optional-column drift.
 
 ## Known Gaps
 
