@@ -23,6 +23,13 @@ is not present in the deployed runtime image. This preserves the runtime image
 boundary while allowing VNet operator jobs to verify the actual landed source
 files.
 
+Operator-readback update: adds an explicit Airline-only admin helper that grants
+the evaluator role read access to the schemas required for reconciliation
+readback, then verifies the role's schema/table privileges before exiting. The
+helper is guarded by exact tenant/database assertions and a required
+acknowledgement env var. It grants SELECT/USAGE only and does not mutate
+foundation data.
+
 The verifier does not load data, approve records, publish a baseline, switch a
 provider, or alter Azure resources.
 
@@ -47,7 +54,9 @@ provider, or alter Azure resources.
 ## Changes Included
 
 - `scripts/qa/airline-e2e-live-reconciliation-readback.mjs`
+- `scripts/ops/airline-grant-reconciliation-readback.mjs`
 - `package.json` script: `qa:airline-e2e-live-reconciliation-readback`
+- `package.json` script: `ops:airline-grant-reconciliation-readback`
 
 ## QA / Validation
 
@@ -56,14 +65,17 @@ database readback until this candidate is merged/deployed into the operator
 runtime image.
 
 - `pass`: `node --check scripts/qa/airline-e2e-live-reconciliation-readback.mjs`
+- `pass`: `node --check scripts/ops/airline-grant-reconciliation-readback.mjs`
 - `pass`: local source-ledger generation with `--skip-db --no-field-detail`
   against 25 source files, 99,883 rows, and 1,014,830 field instances.
 - `pass`: missing local source-root negative test fails closed instead of
   silently running against fixtures.
 - `pass`: row-count discrepancy register marks 99,883 authoritative and 110,895
   as stale prior-audit documentation drift.
+- `pending`: governed VNet read-only grant helper execution against the Airline
+  database.
 - `pending`: governed VNet database readback from live source-registry/blob
-  authority after this runtime fix is deployed.
+  authority after the evaluator role can read the required schemas.
 - `not-run`: product certification; this verifier intentionally does not wire
   product surfaces.
 
