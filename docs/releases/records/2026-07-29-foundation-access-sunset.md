@@ -36,6 +36,7 @@ Foundation-only proof users now land on the governed Knowledge preview route ins
 - Historical Airline Demo labels now resolve to the new foundation tenant before legacy aliases can map them to retired tenant data.
 - Known AbarVa launch-owner identities may inspect foundation preview APIs without becoming broad platform admins; tenant users still require exact foundation-proof metadata.
 - Clerk legacy-login disable dry-run/apply script.
+- ACA post-deploy stale-revision hygiene now skips cleanup on transient Azure traffic/revision-list API failures after the runtime invariant has already passed, instead of marking a good deploy red.
 - Focused unit tests for routing, proxy metadata, and disable classification.
 
 ## QA / Validation
@@ -45,6 +46,7 @@ Foundation-only proof users now land on the governed Knowledge preview route ins
 - Hotfix validation repeated focused routing tests and full TypeScript after the hard `/home` archive redirect.
 - Follow-up validation archived remaining legacy Home child routes without changing Learn.
 - Access-gate follow-up validation added foundation-preview operator coverage and re-ran focused auth/routing tests: 19 passed.
+- Deploy-hygiene follow-up validation re-ran release checks after making stale-revision cleanup non-fatal for transient Azure API failures.
 
 ## Rollout Plan
 
@@ -54,6 +56,7 @@ Merge through the normal PR lane. Deploy through the repo-owned Azure Container 
 
 - Repo-owned deploy workflow: required for runtime routing changes.
 - Shared runtime mutators: none outside the deploy workflow.
+- ACR build policy: unchanged; images are built only by the repo-owned ACA main deploy workflow using the approved Premium ACR and digest-pinned runtime image.
 - Approved image digest: captured by ACA deploy workflow.
 - ACA runtime invariant: required before calling the runtime live.
 - Worker image invariant: not applicable.
