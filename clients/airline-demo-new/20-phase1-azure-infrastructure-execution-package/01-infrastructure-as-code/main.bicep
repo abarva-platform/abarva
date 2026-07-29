@@ -51,7 +51,6 @@ module jobs './airdn-lab-jobs.bicep' = {
     containerAppsEnvironmentId: lab.outputs.containerAppsEnvironmentId
     operationalStorageAccountName: lab.outputs.operationalStorageAccountName
     evaluatorStorageAccountName: lab.outputs.evaluatorStorageAccountName
-    postgresAdministratorLoginPassword: postgresAdministratorLoginPassword
     identityIds: {
       ingest: lab.outputs.ingestIdentityId
       review: lab.outputs.reviewIdentityId

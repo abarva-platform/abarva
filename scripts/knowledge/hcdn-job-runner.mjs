@@ -13,6 +13,7 @@ import {
   checkpointFor,
   runKnowledgeProcess,
 } from "./processing/executor-framework.mjs";
+import { dbConnectionConfig } from "./build-review-decision-ledger.mjs";
 import { DEFAULT_PROCESS_HANDLERS, resolveProcessHandler } from "./processing/process-handlers.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -632,7 +633,6 @@ async function buildDefaultStore(env, manifest, tenantKey) {
       "Execute mode cannot use the in-memory Knowledge store. Inject a test store explicitly or run preflight/noop.",
     );
   }
-  const { Client } = await import("pg");
   const hasExplicitPostgres = Boolean(env.PGHOST || env.PGDATABASE || env.PGUSER);
   const connectionString = hasExplicitPostgres ? "" : env.DATABASE_URL;
   assertConnectionMatchesBoundary({
@@ -642,16 +642,8 @@ async function buildDefaultStore(env, manifest, tenantKey) {
     host: hasExplicitPostgres ? env.PGHOST : "",
     database: hasExplicitPostgres ? env.PGDATABASE : "",
   });
-  const client = connectionString
-    ? new Client({ connectionString })
-    : new Client({
-        host: env.PGHOST,
-        port: env.PGPORT ? Number(env.PGPORT) : 5432,
-        user: env.PGUSER,
-        password: env.PGPASSWORD,
-        database: env.PGDATABASE,
-        ssl: env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
-      });
+  const { Client } = await import("pg");
+  const client = new Client(await dbConnectionConfig(env));
   await client.connect();
   await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
   return new PostgresKnowledgeExecutionStore(client);
