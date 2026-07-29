@@ -125,3 +125,5 @@ describe("GET /api/setup/files/[scope]/[artifactId]/download", () => {
     expect(res.status).toBe(403);
   });
 });
+
+export {};

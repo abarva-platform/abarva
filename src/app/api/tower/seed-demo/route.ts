@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { seedDemoData, removeDemoData } from "@/scripts/demo-data/generate";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 export const runtime = "nodejs";
@@ -30,12 +31,27 @@ async function requireTowerAdmin(
 }
 export const dynamic = "force-dynamic";
 
+function governedFoundationTenantResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      error: "governed_foundation_tenant",
+      detail:
+        "Foundation tenants cannot be seeded or reset through Tower demo routes. Use the governed Knowledge/source pipeline.",
+    },
+    { status: 403 },
+  );
+}
+
 export async function POST(req: NextRequest) {
   let ctx;
   try {
     ctx = await requireTenancy();
   } catch (err) {
     return tenancyErrorResponse(err) as NextResponse;
+  }
+
+  if (isFoundationTenantKey(ctx.clientKey)) {
+    return governedFoundationTenantResponse();
   }
 
   const roleDenied = await requireTowerAdmin(ctx);
@@ -84,6 +100,10 @@ export async function DELETE(req: NextRequest) {
     ctx = await requireTenancy();
   } catch (err) {
     return tenancyErrorResponse(err) as NextResponse;
+  }
+
+  if (isFoundationTenantKey(ctx.clientKey)) {
+    return governedFoundationTenantResponse();
   }
 
   const roleDenied = await requireTowerAdmin(ctx);
