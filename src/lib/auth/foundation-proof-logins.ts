@@ -9,6 +9,7 @@ export interface FoundationProofLogin {
   tenantKey: FoundationProofTenantKey;
   tenantName: string;
   email: string;
+  phoneNumber: string;
   firstName: string;
   lastName: string;
   personaKind: FoundationProofPersonaKind;
@@ -29,6 +30,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
     email: "anand.sundaram+airline-foundation@thesundaram.com",
+    phoneNumber: "+15550190101",
     firstName: "Anand",
     lastName: "Sundaram",
     personaKind: "human_owner",
@@ -40,6 +42,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
     email: "airline-foundation-agent@abarva.ai",
+    phoneNumber: "+15550190102",
     firstName: "Ava",
     lastName: "Agent",
     personaKind: "automation_agent",

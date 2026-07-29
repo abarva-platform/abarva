@@ -114,6 +114,7 @@ async function main(): Promise<void> {
         } else {
           await clerk.users.createUser({
             emailAddress: [login.email],
+            phoneNumber: [login.phoneNumber],
             firstName: login.firstName,
             lastName: login.lastName,
             publicMetadata: metadata,
