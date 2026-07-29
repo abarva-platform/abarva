@@ -23,6 +23,10 @@ export interface FoundationProofLogin {
  * (`skyharbor`, `meridian`, etc.). They exist only to prove the governed
  * Knowledge Baseline through `/knowledge-preview?provider=http&tenant=...`
  * before any tenant is activated on the ordinary product routes.
+ *
+ * The phone numbers use reserved NANPA 202-555-01xx proof numbers. They
+ * satisfy Clerk's E.164 validation without routing to a real operator-owned
+ * phone.
  */
 export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
   {
@@ -30,7 +34,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
     email: "anand.sundaram+airline-foundation@thesundaram.com",
-    phoneNumber: "+15550190101",
+    phoneNumber: "+12025550101",
     firstName: "Anand",
     lastName: "Sundaram",
     personaKind: "human_owner",
@@ -42,7 +46,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
     email: "airline-foundation-agent@abarva.ai",
-    phoneNumber: "+15550190102",
+    phoneNumber: "+12025550102",
     firstName: "Ava",
     lastName: "Agent",
     personaKind: "automation_agent",
