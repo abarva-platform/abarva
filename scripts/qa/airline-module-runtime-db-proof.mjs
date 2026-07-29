@@ -18,6 +18,14 @@ const OUT_DIR =
 const OUT_FILE = path.join(OUT_DIR, "runtime-db-proof.json");
 const POSTGRES_AAD_RESOURCE =
   "https://ossrdbms-aad.database.windows.net/.default";
+const PROJECTION_RELATIONS = [
+  "consumption.enterprise_brief_v1",
+  "consumption.domain_summary_v1",
+  "consumption.relationship_node_v1",
+  "consumption.relationship_edge_v1",
+  "consumption.module_knowledge_packet_v1",
+  "consumption.metric_observation_v1",
+];
 
 function env(name) {
   return process.env[name]?.trim() || "";
@@ -75,6 +83,41 @@ async function query(client, sql, params = []) {
   return (await client.query(sql, params)).rows;
 }
 
+async function relationExists(client, relationName) {
+  const rows = await query(
+    client,
+    "SELECT to_regclass($1) IS NOT NULL AS exists",
+    [relationName],
+  );
+  return rows[0]?.exists === true;
+}
+
+async function countTenantRows(client, relationName) {
+  if (!(await relationExists(client, relationName))) {
+    return { projection: relationName, rows: null, status: "missing" };
+  }
+
+  try {
+    const rows = await query(
+      client,
+      `SELECT count(*)::bigint AS rows FROM ${relationName} WHERE tenant_key = $1`,
+      [TENANT],
+    );
+    return {
+      projection: relationName,
+      rows: rows[0]?.rows ?? "0",
+      status: "available",
+    };
+  } catch (error) {
+    return {
+      projection: relationName,
+      rows: null,
+      status: "error",
+      error: String(error?.message ?? error),
+    };
+  }
+}
+
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const { pool, config } = await connect();
@@ -94,33 +137,17 @@ async function main() {
     `))[0];
 
     const baseline = await query(client, `
-      SELECT tenant_key, knowledge_baseline_ref, baseline_content_hash,
-             is_active, activated_at, projection_contract_version
-        FROM publication.knowledge_baseline
+      SELECT to_jsonb(kb) AS record
+        FROM publication.knowledge_baseline kb
        WHERE tenant_key = $1
        ORDER BY is_active DESC, activated_at DESC NULLS LAST
        LIMIT 5
     `, [TENANT]);
 
-    const projectionCounts = await query(client, `
-      SELECT 'consumption.enterprise_brief_v1' AS projection, count(*)::bigint AS rows
-        FROM consumption.enterprise_brief_v1 WHERE tenant_key = $1
-      UNION ALL
-      SELECT 'consumption.domain_summary_v1', count(*)::bigint
-        FROM consumption.domain_summary_v1 WHERE tenant_key = $1
-      UNION ALL
-      SELECT 'consumption.relationship_node_v1', count(*)::bigint
-        FROM consumption.relationship_node_v1 WHERE tenant_key = $1
-      UNION ALL
-      SELECT 'consumption.relationship_edge_v1', count(*)::bigint
-        FROM consumption.relationship_edge_v1 WHERE tenant_key = $1
-      UNION ALL
-      SELECT 'consumption.module_knowledge_packet_v1', count(*)::bigint
-        FROM consumption.module_knowledge_packet_v1 WHERE tenant_key = $1
-      UNION ALL
-      SELECT 'consumption.metric_observation_v1', count(*)::bigint
-        FROM consumption.metric_observation_v1 WHERE tenant_key = $1
-    `, [TENANT]);
+    const projectionCounts = [];
+    for (const relationName of PROJECTION_RELATIONS) {
+      projectionCounts.push(await countTenantRows(client, relationName));
+    }
 
     const schemaInventory = await query(client, `
       SELECT n.nspname AS schema_name,
@@ -176,7 +203,11 @@ async function main() {
       host: config.host,
       database: config.database,
       user: config.user,
-      baseline: baseline[0]?.knowledge_baseline_ref ?? null,
+      baseline:
+        baseline[0]?.record?.knowledge_baseline_ref ??
+        baseline[0]?.record?.baseline_id ??
+        baseline[0]?.record?.knowledge_baseline_id ??
+        null,
       projectionCounts,
       outFile: OUT_FILE,
     }, null, 2));
