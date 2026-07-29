@@ -16,6 +16,8 @@ Follow-up correction: the preview-session priming script now writes auth state a
 
 Second follow-up correction: the ACA runtime image now includes the Playwright Chromium browser and system dependencies required by the signed-in proof scripts. The scripts were already packaged, but the operator job could not launch a browser until the image carried the matching browser binary under the non-root runtime user's cache.
 
+Third follow-up correction: foundation-only proof identities now resolve the Responsible AI subject from their Clerk foundation metadata before falling back to the legacy active-client roster. The Responsible AI training page also renders an Airline Demo New workflow-specific training experience so proof users learn the governed baseline, deferred evidence boundary, module-consumption boundary, and human approval rule before entering the protected Knowledge preview.
+
 ## Layer Impact
 
 - `global-control-lane`: Adds an auth/proof roster and scripts for signed-in preview validation. No product data, review decision, publication, baseline, projection, or Azure job state is changed.
@@ -31,8 +33,15 @@ Second follow-up correction: the ACA runtime image now includes the Playwright C
 ## Changes Included
 
 - `src/lib/auth/foundation-proof-logins.ts`
+- `src/lib/ai-liability/responsible-ai-acknowledgment.ts`
+- `src/lib/ai-liability/responsible-ai-training-copy.ts`
+- `src/components/ai-liability/ResponsibleAiTrainingForm.tsx`
+- `src/app/(public)/responsible-ai/acknowledgment/page.tsx`
+- `src/app/(public)/responsible-ai/training/page.tsx`
 - `scripts/auth/provision-foundation-proof-logins.ts`
 - `scripts/auth/prime-foundation-preview-session.ts`
+- `src/lib/ai-liability/__tests__/responsible-ai-acknowledgment.test.ts`
+- `src/lib/ai-liability/__tests__/responsible-ai-training.test.ts`
 - `src/lib/auth/__tests__/foundation-proof-logins.test.ts`
 - `Dockerfile`
 - `package.json` scripts:
@@ -47,6 +56,8 @@ Second follow-up correction: the ACA runtime image now includes the Playwright C
 - `pass`: `npm test -- --runTestsByPath src/lib/auth/__tests__/foundation-proof-logins.test.ts`
 - `pass`: `npm run auth:foundation-proof:provision -- --tenant airline-demo-new --list`
 - `pass`: `FOUNDATION_PROOF_LIST=true npm run auth:foundation-proof:provision`
+- `pass`: Responsible AI foundation-subject tests prove Airline foundation proof metadata resolves to `airline-demo-new` without depending on the legacy client roster.
+- `pass`: Responsible AI training tests prove the Airline foundation training contract names the active baseline, deferred categories, module workflow boundary, business-value lens, and human ownership rule.
 - `pass`: `npm run ops:aca-job -- --image <deployed-digest> --script auth:foundation-proof:provision:airline:apply --secret-env CLERK_SECRET_KEY=clerk-secret-key --out-dir /tmp/foundation-proof-provision-plan --plan-only`
 - `pass`: `npm run ops:aca-job -- --image <deployed-digest> --script auth:foundation-proof:prime:airline:agent --secret-env CLERK_SECRET_KEY=clerk-secret-key --out-dir /tmp/foundation-proof-prime-plan --plan-only`
 - `pass`: `npx tsc --noEmit --pretty false`

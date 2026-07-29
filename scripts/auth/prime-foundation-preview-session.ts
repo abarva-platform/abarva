@@ -12,6 +12,14 @@ import {
   type FoundationProofLogin,
   type FoundationProofTenantKey,
 } from "../../src/lib/auth/foundation-proof-logins";
+import {
+  RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
+  RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+} from "../../src/lib/ai-liability/responsible-ai-acknowledgment-copy";
+import {
+  RESPONSIBLE_AI_TRAINING_ROUTE,
+  RESPONSIBLE_AI_TRAINING_VERSION,
+} from "../../src/lib/ai-liability/responsible-ai-training-copy";
 
 const REPO_ROOT = process.cwd();
 const WORK_DIR =
@@ -92,6 +100,44 @@ async function signInWithTicket(page: Page, baseUrl: string, userId: string): Pr
   }, token.token);
 }
 
+async function acknowledgeResponsibleAi(page: Page, baseUrl: string): Promise<void> {
+  const ackUrl = new URL(RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE, baseUrl).toString();
+  const response = await page.goto(ackUrl, { waitUntil: "domcontentloaded" }).catch(() => null);
+  if (response && response.status() >= 400 && response.status() !== 404) {
+    throw new Error(`Responsible AI acknowledgment route returned ${response.status()}.`);
+  }
+
+  const apiResponse = await page.request.post("/api/ai-liability/responsible-ai-acknowledgment", {
+    data: {
+      accepted: true,
+      textVersion: RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+    },
+  });
+  if (![200, 409].includes(apiResponse.status())) {
+    const body = await apiResponse.text().catch(() => "");
+    throw new Error(`Responsible AI acknowledgment API returned ${apiResponse.status()}: ${body}`);
+  }
+}
+
+async function completeResponsibleAiTraining(page: Page, baseUrl: string): Promise<void> {
+  const trainingUrl = new URL(RESPONSIBLE_AI_TRAINING_ROUTE, baseUrl).toString();
+  const response = await page.goto(trainingUrl, { waitUntil: "domcontentloaded" }).catch(() => null);
+  if (response && response.status() >= 400 && response.status() !== 404) {
+    throw new Error(`Responsible AI training route returned ${response.status()}.`);
+  }
+
+  const apiResponse = await page.request.post("/api/ai-liability/responsible-ai-training", {
+    data: {
+      completed: true,
+      trainingVersion: RESPONSIBLE_AI_TRAINING_VERSION,
+    },
+  });
+  if (![200, 409].includes(apiResponse.status())) {
+    const body = await apiResponse.text().catch(() => "");
+    throw new Error(`Responsible AI training API returned ${apiResponse.status()}: ${body}`);
+  }
+}
+
 function selectLogin(args: ReturnType<typeof parseArgs>): FoundationProofLogin {
   const login = FOUNDATION_PROOF_LOGINS.find(
     (candidate) => candidate.tenantKey === args.tenant && candidate.slug === args.slug,
@@ -131,6 +177,8 @@ async function main(): Promise<void> {
   const page = await context.newPage();
   try {
     await signInWithTicket(page, args.baseUrl, user.id);
+    await acknowledgeResponsibleAi(page, args.baseUrl);
+    await completeResponsibleAiTraining(page, args.baseUrl);
     const url = new URL("/knowledge-preview", args.baseUrl);
     url.searchParams.set("provider", "http");
     url.searchParams.set("tenant", login.tenantKey);
