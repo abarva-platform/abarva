@@ -19,7 +19,7 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
+import { resolveDataPlaneForTenant } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
 /** A `clients` row as the Tower client selector consumes it. */
@@ -250,8 +250,9 @@ export const azureTowerAggregateReadAdapter: TowerAggregateReadAdapter =
 /** Select the Tower-aggregate read adapter for the configured data plane. */
 export function selectTowerAggregateReadAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): TowerAggregateReadAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureTowerAggregateReadAdapter
     : supabaseTowerAggregateReadAdapter;

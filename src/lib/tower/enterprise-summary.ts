@@ -42,10 +42,17 @@ interface VolRow {
   storage_tb: number | null;
 }
 
-export async function loadEnterpriseSummary(clientId: string): Promise<EnterpriseSummary> {
-  // Physical reads routed through the data-plane seam (Slice 6). Supabase
-  // remains the default; `ABARVA_DATA_PLANE=azure-postgres` opts into Azure.
-  const bundle = await selectEnterpriseSummaryReadAdapter().getEnterpriseSummaryBundle(clientId);
+export async function loadEnterpriseSummary(
+  clientId: string,
+  tenantKey?: string | null,
+): Promise<EnterpriseSummary> {
+  // Physical reads routed through the tenant-aware data-plane seam. Legacy
+  // tenants keep the historic default; governed foundation tenants fail closed
+  // unless the Azure/Postgres adapter is selected.
+  const bundle = await selectEnterpriseSummaryReadAdapter(
+    undefined,
+    tenantKey,
+  ).getEnterpriseSummaryBundle(clientId);
 
   const techRows = bundle.tech as TechRow[];
   const byCategoryMap = new Map<string, { count: number; spend: number }>();

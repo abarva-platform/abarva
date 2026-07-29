@@ -154,7 +154,7 @@ export async function getAtlasPortfolioSummary(ctx: AtlasTenancyCtx): Promise<At
     };
   }
 
-  const vm = await buildTowerViewModel(ctx.clientId);
+  const vm = await buildTowerViewModel(ctx.clientId, ctx.clientKey);
   return {
     clientId: ctx.clientId,
     clientName,
