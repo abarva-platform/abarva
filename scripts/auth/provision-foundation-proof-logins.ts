@@ -91,6 +91,7 @@ async function main(): Promise<void> {
     action: "create" | "update" | "error";
     applied: boolean;
     ok: boolean;
+    phoneNumber?: string | null;
     error?: unknown;
   }> = [];
   for (const login of selected) {
@@ -102,6 +103,8 @@ async function main(): Promise<void> {
       });
       const user = existing.data[0] ?? null;
       const action = user ? "update" : "create";
+      let phoneNumber: string | null =
+        user?.phoneNumbers?.[0]?.phoneNumber ?? null;
 
       if (args.apply) {
         if (user) {
@@ -112,19 +115,22 @@ async function main(): Promise<void> {
           });
           if (user.banned) await clerk.users.unbanUser(user.id);
         } else {
+          phoneNumber = await selectAvailablePhoneNumber(clerk, login);
           await clerk.users.createUser({
             emailAddress: [login.email],
-            phoneNumber: [login.phoneNumber],
+            phoneNumber: [phoneNumber],
             firstName: login.firstName,
             lastName: login.lastName,
             publicMetadata: metadata,
             skipPasswordRequirement: true,
           });
         }
+      } else if (!user) {
+        phoneNumber = await selectAvailablePhoneNumber(clerk, login);
       }
 
       console.log(
-        `${args.apply ? "[APPLIED]" : "[PLAN]"} ${action} ${login.email} · ${login.tenantKey} · ${login.personaKind}`,
+        `${args.apply ? "[APPLIED]" : "[PLAN]"} ${action} ${login.email} · ${login.tenantKey} · ${login.personaKind} · phone=${phoneNumber ?? "existing/unset"}`,
       );
       results.push({
         email: login.email,
@@ -134,6 +140,7 @@ async function main(): Promise<void> {
         action,
         applied: args.apply,
         ok: true,
+        phoneNumber,
       });
     } catch (error) {
       const detail = clerkErrorDetail(error);
@@ -146,6 +153,7 @@ async function main(): Promise<void> {
         action: "error",
         applied: args.apply,
         ok: false,
+        phoneNumber: null,
         error: detail,
       });
     }
@@ -171,6 +179,22 @@ async function main(): Promise<void> {
   console.log(`Report: ${reportPath}`);
   if (args.emitProofBundle) emitProofBundle(args.outDir);
   if (results.some((result) => !result.ok)) process.exitCode = 1;
+}
+
+async function selectAvailablePhoneNumber(
+  clerk: ReturnType<typeof createClerkClient>,
+  login: FoundationProofLogin,
+): Promise<string> {
+  for (const phoneNumber of login.phoneNumbers) {
+    const existing = await clerk.users.getUserList({
+      phoneNumber: [phoneNumber],
+      limit: 1,
+    });
+    if (existing.data.length === 0) return phoneNumber;
+  }
+  throw new Error(
+    `No available proof phone numbers remain for ${login.slug}. Add another reserved roster number before applying.`,
+  );
 }
 
 function clerkErrorDetail(error: unknown): unknown {
