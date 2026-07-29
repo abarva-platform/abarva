@@ -184,15 +184,15 @@ const modules = [
   },
   {
     module: "Source",
-    classification: "partially_migrated_legacy_routes_fenced",
-    percentComplete: 45,
+    classification: "partially_migrated_legacy_synthesis_fenced",
+    percentComplete: 50,
     routes: ["/api/v1/source/*", "/source"],
     readProvider: "Several routes use Azure fluent clients; fixture-specific views remain",
     writeProvider: "Tenant-aware Source write adapters force governed tenants to Azure/PostgreSQL",
     database: "New Azure PostgreSQL not yet proven for every Source operational table",
     baselineBinding: "Required for Knowledge handoff; not certified end-to-end",
-    fixtureDependency: "Source fixture views and event-instance fixtures remain in code",
-    legacyDependency: "Source write seams are tenant-guarded; legacy fixture-specific routes are regression-proven unavailable for the governed tenant where directly targeted",
+    fixtureDependency: "Legacy Source contract-optimization and synthesis routes are fenced for governed foundation tenants; other Source fixture views remain in code",
+    legacyDependency: "Source write seams are tenant-guarded; directly targeted legacy fixture and V6 synthesis routes are regression-proven unavailable for governed tenants",
     evidence: [
       evidence(
         "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
@@ -208,6 +208,16 @@ const modules = [
         "src/app/api/v1/source/[eventId]/contract-optimization/brief/__tests__/route.test.ts",
         "does not serve a legacy fixture-specific contract-optimization pack for governed foundation events",
         "Regression proves a legacy fixture-specific contract-optimization pack is unavailable for governed foundation tenant requests.",
+      ),
+      evidence(
+        "src/app/api/source/synthesis/route.ts",
+        "governed_foundation_tenant",
+        "Source synthesis fails closed for governed foundation tenants before legacy V6 demo-pack resolution.",
+      ),
+      evidence(
+        "src/app/api/source/synthesis/__tests__/route.test.ts",
+        "blocks governed foundation tenants before legacy V6 Source synthesis",
+        "Regression proves governed foundation tenants cannot receive legacy V6 Source synthesis.",
       ),
     ],
     nextAction: "Certify remaining Source runtime routes and migrate/disable operational state paths that are not yet proven on the Airline data plane.",
