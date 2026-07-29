@@ -34,7 +34,7 @@ import {
 } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
-import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
+import { resolveDataPlaneForTenant } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
 import { embedDiscoveryPlanInCharter } from '@/lib/programs/discovery/charter-transformers';
 import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
@@ -740,10 +740,14 @@ export function createAzureProgramsWriteAdapter(
 
 /**
  * Select the programs write adapter for the configured (or explicitly passed)
- * plane. Defaults to Supabase — production write behavior is unchanged.
+ * plane. Defaults to Supabase for legacy tenants. Governed foundation tenants
+ * are Azure/Postgres-only and fail closed on explicit Supabase.
  */
-export function selectProgramsWriteAdapter(plane?: DataPlane): ProgramsWriteAdapter {
-  const target = plane ?? resolveDataPlane();
+export function selectProgramsWriteAdapter(
+  plane?: DataPlane,
+  tenantKey?: string,
+): ProgramsWriteAdapter {
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? createAzureProgramsWriteAdapter()
     : createSupabaseProgramsWriteAdapter();

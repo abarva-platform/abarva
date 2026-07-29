@@ -242,7 +242,10 @@ export async function draftModuleDeliverable(
   // deliverables_v2 upsert + deliverable_versions insert are one unit — atomic
   // on Azure, the same statements on Supabase. A write error is surfaced as
   // `ok:false` and re-thrown here, exactly as the pre-seam helper.
-  const written = await selectProgramsWriteAdapter().runDraftModuleDeliverable({
+  const written = await selectProgramsWriteAdapter(
+    undefined,
+    ctx.clientKey,
+  ).runDraftModuleDeliverable({
     programId: input.programId,
     deliverableTypeKey: input.deliverableTypeKey,
     title: input.title,

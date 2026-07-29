@@ -52,6 +52,7 @@ export interface AutoDraftOnStageEntryDeps {
     request?: Request;
   }) => Promise<Response>;
   updateArtifactStatus?: (input: {
+    clientKey: string;
     artifactRowId: string;
     status: "drafting";
   }) => Promise<void>;
@@ -127,6 +128,7 @@ export async function autoDraftOnStageEntry(
 
     try {
       await (deps.updateArtifactStatus ?? defaultUpdateArtifactStatus)({
+        clientKey: input.clientKey,
         artifactRowId: row.id,
         status: "drafting",
       });
@@ -225,10 +227,14 @@ async function defaultEnqueueGenerationJob(input: {
 }
 
 async function defaultUpdateArtifactStatus(input: {
+  clientKey: string;
   artifactRowId: string;
   status: "drafting";
 }): Promise<void> {
-  const write = await selectSourceWriteAdapter().updateArtifactStatus({
+  const write = await selectSourceWriteAdapter(
+    undefined,
+    input.clientKey,
+  ).updateArtifactStatus({
     artifactRowId: input.artifactRowId,
     status: input.status,
     updatedAtIso: new Date().toISOString(),

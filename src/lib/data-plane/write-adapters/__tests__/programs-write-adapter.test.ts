@@ -111,6 +111,19 @@ describe('selectProgramsWriteAdapter', () => {
     process.env.ABARVA_DATA_PLANE = 'azure-postgres';
     expect(selectProgramsWriteAdapter('supabase').name).toBe('supabase');
   });
+
+  it('forces governed foundation tenants onto Azure when no plane is configured', () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectProgramsWriteAdapter(undefined, 'airline-demo-new').name).toBe(
+      'azure-postgres',
+    );
+  });
+
+  it('fails closed when a governed foundation tenant is explicitly routed to Supabase', () => {
+    expect(() =>
+      selectProgramsWriteAdapter('supabase', 'airline-demo-new'),
+    ).toThrow(/cannot use supabase/);
+  });
 });
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------

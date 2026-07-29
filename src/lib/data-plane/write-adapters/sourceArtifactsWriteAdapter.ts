@@ -23,7 +23,7 @@ import {
   createTxSession,
   type TxSessionRunner,
 } from "../read-adapters/azureSession";
-import { resolveDataPlane } from "../read-adapters/resolveDataPlane";
+import { resolveDataPlaneForTenant } from "../read-adapters/resolveDataPlane";
 import type { DataPlane } from "./types";
 
 // --- write input ------------------------------------------------------------
@@ -235,12 +235,14 @@ export function createAzureSourceArtifactsWriteAdapter(
 
 /**
  * Select the source-artifacts write adapter for the configured (or explicitly
- * passed) plane. Defaults to Supabase — production write behavior is unchanged.
+ * passed) plane. Defaults to Supabase for legacy tenants. Governed foundation
+ * tenants are Azure/Postgres-only and fail closed on explicit Supabase.
  */
 export function selectSourceArtifactsWriteAdapter(
   plane?: DataPlane,
+  tenantKey?: string,
 ): SourceArtifactsWriteAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === "azure-postgres"
     ? createAzureSourceArtifactsWriteAdapter()
     : createSupabaseSourceArtifactsWriteAdapter();

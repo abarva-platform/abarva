@@ -366,6 +366,19 @@ describe("source-artifacts write adapter", () => {
     else process.env.ABARVA_DATA_PLANE = original;
   });
 
+  it("forces governed foundation tenants onto Azure and rejects explicit Supabase", () => {
+    const original = process.env.ABARVA_DATA_PLANE;
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(
+      selectSourceArtifactsWriteAdapter(undefined, "airline-demo-new").name,
+    ).toBe("azure-postgres");
+    expect(() =>
+      selectSourceArtifactsWriteAdapter("supabase", "airline-demo-new"),
+    ).toThrow(/cannot use supabase/);
+    if (original === undefined) delete process.env.ABARVA_DATA_PLANE;
+    else process.env.ABARVA_DATA_PLANE = original;
+  });
+
   it("supabase: inserts source_artifacts and returns the row", async () => {
     const { client, calls } = fakeSupabase({
       rowFor: () => ({ id: "art-1", tenant_key: "apex-retail" }),

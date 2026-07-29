@@ -1437,7 +1437,7 @@ async function linkAttachmentsToEvent(args: {
   // still respond even if attachment metadata persistence fails. The
   // attachment row keeps its other context and a retention sweeper can
   // reconcile from telemetry if needed.
-  await selectSourceWriteAdapter().linkAttachments({
+  await selectSourceWriteAdapter(undefined, tenantId).linkAttachments({
     attachmentIds,
     tenantId,
     eventId,

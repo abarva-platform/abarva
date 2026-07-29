@@ -115,6 +115,19 @@ describe("selectSourceWriteAdapter / selectDeliverableWriteAdapter", () => {
       "supabase",
     );
   });
+
+  it("forces governed foundation tenants onto Azure when no plane is configured", () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectSourceWriteAdapter(undefined, "airline-demo-new").name).toBe(
+      "azure-postgres",
+    );
+  });
+
+  it("fails closed when a governed foundation tenant is explicitly routed to Supabase", () => {
+    expect(() =>
+      selectSourceWriteAdapter("supabase", "airline-demo-new"),
+    ).toThrow(/cannot use supabase/);
+  });
 });
 
 // --- Supabase source write adapter -----------------------------------------

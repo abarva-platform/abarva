@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
 
     // DB writes route through the data-plane write seam (Slice 3a); reads
     // use the Packet 30 Azure read plane.
-    const writeAdapter = selectProgramsWriteAdapter();
+    const writeAdapter = selectProgramsWriteAdapter(undefined, ctx.clientKey);
 
     // Seed participants from form. Failures here are non-fatal — the program
     // record exists; we surface a server-side warning but still return success

@@ -31,7 +31,7 @@ import {
   createSupabaseProgramsWriteAdapter,
   selectProgramsWriteAdapter,
 } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
-import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
+import { resolveDataPlaneForTenant } from '@/lib/data-plane/read-adapters/resolveDataPlane';
 import type {
   ApprovalAuthority,
   FounderApprovalRequestRow,
@@ -725,11 +725,11 @@ export async function requestFounderApproval(
   // stays the default; the route-scoped client (if any) is threaded through so
   // RLS / auth-mode is unchanged. Azure is opt-in via `ABARVA_DATA_PLANE`.
   const adapter =
-    resolveDataPlane() === 'azure-postgres'
-      ? selectProgramsWriteAdapter()
+    resolveDataPlaneForTenant(ctx.clientKey) === 'azure-postgres'
+      ? selectProgramsWriteAdapter(undefined, ctx.clientKey)
       : opts.supabase
         ? createSupabaseProgramsWriteAdapter(() => opts.supabase as SupabaseClient)
-        : selectProgramsWriteAdapter('supabase');
+        : selectProgramsWriteAdapter('supabase', ctx.clientKey);
   const written = await adapter.insertFounderApproval({
     programId,
     requestedByUserId: ctx.userId,
