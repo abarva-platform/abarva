@@ -37,6 +37,17 @@ describe('selectTowerAggregateReadAdapter', () => {
     process.env.ABARVA_DATA_PLANE = 'azure-postgres';
     expect(selectTowerAggregateReadAdapter().name).toBe('azure-postgres');
   });
+
+  it('selects Azure by default for governed foundation tenants', () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectTowerAggregateReadAdapter(undefined, 'airline-demo-new').name).toBe('azure-postgres');
+  });
+
+  it('fails closed when a governed foundation tenant is forced to Supabase', () => {
+    expect(() => selectTowerAggregateReadAdapter('supabase', 'airline-demo-new')).toThrow(
+      /airline-demo-new is governed by Azure PostgreSQL/,
+    );
+  });
 });
 
 describe('azureTowerAggregateReadAdapter', () => {

@@ -20,7 +20,7 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
+import { resolveDataPlaneForTenant } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
 /** A `tech_stack_items` row, non-demo, for the active tenant. */
@@ -184,8 +184,9 @@ export const azureEnterpriseSummaryReadAdapter: EnterpriseSummaryReadAdapter =
 /** Select the enterprise-summary read adapter for the configured data plane. */
 export function selectEnterpriseSummaryReadAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): EnterpriseSummaryReadAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureEnterpriseSummaryReadAdapter
     : supabaseEnterpriseSummaryReadAdapter;

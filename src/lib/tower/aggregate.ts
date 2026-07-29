@@ -91,20 +91,27 @@ function toNum(v: unknown, fallback = 0): number {
   return fallback;
 }
 
-export async function listTowerClients(): Promise<TowerClient[]> {
-  // Physical read routed through the data-plane seam (Slice 6). Supabase
-  // remains the default; `ABARVA_DATA_PLANE=azure-postgres` opts into Azure.
-  return selectTowerAggregateReadAdapter().listClients();
+export async function listTowerClients(tenantKey?: string | null): Promise<TowerClient[]> {
+  // Physical read routed through the tenant-aware data-plane seam. Legacy
+  // tenants keep the historic default; governed foundation tenants fail closed
+  // unless the Azure/Postgres adapter is selected.
+  return selectTowerAggregateReadAdapter(undefined, tenantKey).listClients();
 }
 
-export async function buildTowerViewModel(clientId: string): Promise<TowerViewModel | null> {
+export async function buildTowerViewModel(
+  clientId: string,
+  tenantKey?: string | null,
+): Promise<TowerViewModel | null> {
   // Client list for selector
-  const clients = await listTowerClients();
+  const clients = await listTowerClients(tenantKey);
   const client = clients.find((c) => c.id === clientId) ?? null;
   if (!client) return null;
 
   // Tenant-scoped substrate reads routed through the data-plane seam.
-  const bundle = await selectTowerAggregateReadAdapter().getAggregateBundle(clientId);
+  const bundle = await selectTowerAggregateReadAdapter(
+    undefined,
+    tenantKey,
+  ).getAggregateBundle(clientId);
 
   // Inventory
   const inventoryRows = bundle.useCases;
