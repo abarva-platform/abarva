@@ -32,12 +32,18 @@ Adds a permanent, passwordless proof-login path for foundation-only tenants. The
 - `src/lib/auth/__tests__/foundation-proof-logins.test.ts`
 - `package.json` scripts:
   - `auth:foundation-proof:provision`
+  - `auth:foundation-proof:provision:airline:apply`
   - `auth:foundation-proof:prime`
+  - `auth:foundation-proof:prime:airline:agent`
+  - `auth:foundation-proof:prime:airline:anand`
 
 ## QA / Validation
 
 - `pass`: `npm test -- --runTestsByPath src/lib/auth/__tests__/foundation-proof-logins.test.ts`
 - `pass`: `npm run auth:foundation-proof:provision -- --tenant airline-demo-new --list`
+- `pass`: `FOUNDATION_PROOF_LIST=true npm run auth:foundation-proof:provision`
+- `pass`: `npm run ops:aca-job -- --image <deployed-digest> --script auth:foundation-proof:provision:airline:apply --secret-env CLERK_SECRET_KEY=clerk-secret-key --out-dir /tmp/foundation-proof-provision-plan --plan-only`
+- `pass`: `npm run ops:aca-job -- --image <deployed-digest> --script auth:foundation-proof:prime:airline:agent --secret-env CLERK_SECRET_KEY=clerk-secret-key --out-dir /tmp/foundation-proof-prime-plan --plan-only`
 - `pass`: `npx tsc --noEmit --pretty false`
 - `pass`: `npm run release:check`
 - `blocked`: `npm run auth:foundation-proof:provision -- --tenant airline-demo-new --apply` requires the governed Clerk secret from a VNet-attached operator/runtime environment. Local Key Vault secret read is intentionally blocked by private data-plane access.
@@ -46,6 +52,8 @@ Adds a permanent, passwordless proof-login path for foundation-only tenants. The
 ## Rollout Plan
 
 Merge the control-path scripts to main and deploy the image through the normal ACA lane before provisioning. Provisioning is an explicit operator command and defaults to dry-run. Because the lab Key Vault has private data-plane access, the apply/proof commands must run from a VNet-attached ACA runtime or job with the approved Clerk secret reference.
+
+The operator-specific scripts are deliberately argument-free from the ACA wrapper's perspective. The operator job supplies only a digest-pinned image, npm script name, and secret reference; the tenant, apply mode, and proof-bundle behavior are encoded in named package scripts or explicit environment variables.
 
 ## Deployment Authority
 

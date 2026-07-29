@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { config as loadEnv } from "dotenv";
@@ -39,12 +40,14 @@ function parseArgs() {
     const index = args.indexOf(name);
     return index >= 0 ? args[index + 1] ?? null : null;
   };
+  const envFlag = (name: string): boolean => ["1", "true", "yes"].includes((process.env[name] ?? "").toLowerCase());
   return {
-    baseUrl: getValue("--base-url") ?? DEFAULT_BASE_URL,
-    tenant: (getValue("--tenant") as FoundationProofTenantKey | null) ?? "airline-demo-new",
-    slug: getValue("--slug") ?? "agent-airline-foundation",
-    refresh: args.includes("--refresh"),
-    models: getValue("--models") ?? "off",
+    baseUrl: getValue("--base-url") ?? process.env.FOUNDATION_PROOF_BASE_URL ?? DEFAULT_BASE_URL,
+    emitProofBundle: args.includes("--emit-proof-bundle") || envFlag("FOUNDATION_PROOF_EMIT_PROOF_BUNDLE"),
+    tenant: (getValue("--tenant") as FoundationProofTenantKey | null) ?? (process.env.FOUNDATION_PROOF_TENANT as FoundationProofTenantKey | undefined) ?? "airline-demo-new",
+    slug: getValue("--slug") ?? process.env.FOUNDATION_PROOF_SLUG ?? "agent-airline-foundation",
+    refresh: args.includes("--refresh") || envFlag("FOUNDATION_PROOF_REFRESH"),
+    models: getValue("--models") ?? process.env.FOUNDATION_PROOF_MODELS ?? "off",
   };
 }
 
@@ -165,11 +168,22 @@ async function main(): Promise<void> {
     console.log(`Storage: ${path.relative(REPO_ROOT, storagePath)}`);
     console.log(`Report: ${path.relative(REPO_ROOT, reportPath)}`);
     console.log(`Screenshot: ${path.relative(REPO_ROOT, screenshotPath)}`);
+    if (args.emitProofBundle) emitProofBundle(REPORT_DIR);
     if (!passed) process.exitCode = 1;
   } finally {
     await context.close();
     await browser.close();
   }
+}
+
+function emitProofBundle(dir: string): void {
+  const tar = spawnSync("tar", ["-czf", "-", "-C", dir, "."], { encoding: "buffer" });
+  if (tar.status !== 0) {
+    throw new Error(`Failed to create foundation preview proof bundle: ${tar.stderr?.toString() || tar.stdout?.toString() || "tar failed"}`);
+  }
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  console.log(tar.stdout.toString("base64"));
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
 main().catch((error) => {
