@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The foundation proof-login roster now includes controlled phone numbers because the Clerk instance requires a phone number when creating users. The provisioning script sends that phone value when creating proof users and keeps the prior metadata-only update behavior for existing users.
+The foundation proof-login roster now includes controlled, validation-safe phone numbers because the Clerk instance requires a phone number when creating users. The provisioning script sends that phone value when creating proof users and keeps the prior metadata-only update behavior for existing users.
 
 ## Layer Impact
 
@@ -30,6 +30,7 @@ The foundation proof-login roster now includes controlled phone numbers because 
 - `src/lib/auth/foundation-proof-logins.ts`
 - `scripts/auth/provision-foundation-proof-logins.ts`
 - `src/lib/auth/__tests__/foundation-proof-logins.test.ts`
+- Follow-up correction: replace an invalid `+1 555` area-code pattern with reserved `+1 202-555-01xx` proof numbers that satisfy phone-number validation.
 
 ## QA / Validation
 
