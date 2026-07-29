@@ -55,6 +55,8 @@ Merge the control-path scripts to main and deploy the image through the normal A
 
 The operator-specific scripts are deliberately argument-free from the ACA wrapper's perspective. The operator job supplies only a digest-pinned image, npm script name, and secret reference; the tenant, apply mode, and proof-bundle behavior are encoded in named package scripts or explicit environment variables.
 
+The automation proof identity uses the controlled `abarva.ai` domain so Clerk provisioning does not depend on reserved placeholder email domains.
+
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Required before VNet-attached operator execution so the proof scripts are present in the runtime image.

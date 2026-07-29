@@ -88,48 +88,66 @@ async function main(): Promise<void> {
     slug: string;
     tenantKey: FoundationProofTenantKey;
     personaKind: FoundationProofLogin["personaKind"];
-    action: "create" | "update";
+    action: "create" | "update" | "error";
     applied: boolean;
+    ok: boolean;
+    error?: unknown;
   }> = [];
   for (const login of selected) {
-    const metadata = buildFoundationProofMetadata(login);
-    const existing = await clerk.users.getUserList({
-      emailAddress: [login.email],
-      limit: 1,
-    });
-    const user = existing.data[0] ?? null;
-    const action = user ? "update" : "create";
+    try {
+      const metadata = buildFoundationProofMetadata(login);
+      const existing = await clerk.users.getUserList({
+        emailAddress: [login.email],
+        limit: 1,
+      });
+      const user = existing.data[0] ?? null;
+      const action = user ? "update" : "create";
 
-    if (args.apply) {
-      if (user) {
-        await clerk.users.updateUser(user.id, {
-          firstName: login.firstName,
-          lastName: login.lastName,
-          publicMetadata: metadata,
-        });
-        if (user.banned) await clerk.users.unbanUser(user.id);
-      } else {
-        await clerk.users.createUser({
-          emailAddress: [login.email],
-          firstName: login.firstName,
-          lastName: login.lastName,
-          publicMetadata: metadata,
-          skipPasswordRequirement: true,
-        });
+      if (args.apply) {
+        if (user) {
+          await clerk.users.updateUser(user.id, {
+            firstName: login.firstName,
+            lastName: login.lastName,
+            publicMetadata: metadata,
+          });
+          if (user.banned) await clerk.users.unbanUser(user.id);
+        } else {
+          await clerk.users.createUser({
+            emailAddress: [login.email],
+            firstName: login.firstName,
+            lastName: login.lastName,
+            publicMetadata: metadata,
+            skipPasswordRequirement: true,
+          });
+        }
       }
-    }
 
-    console.log(
-      `${args.apply ? "[APPLIED]" : "[PLAN]"} ${action} ${login.email} · ${login.tenantKey} · ${login.personaKind}`,
-    );
-    results.push({
-      email: login.email,
-      slug: login.slug,
-      tenantKey: login.tenantKey,
-      personaKind: login.personaKind,
-      action,
-      applied: args.apply,
-    });
+      console.log(
+        `${args.apply ? "[APPLIED]" : "[PLAN]"} ${action} ${login.email} · ${login.tenantKey} · ${login.personaKind}`,
+      );
+      results.push({
+        email: login.email,
+        slug: login.slug,
+        tenantKey: login.tenantKey,
+        personaKind: login.personaKind,
+        action,
+        applied: args.apply,
+        ok: true,
+      });
+    } catch (error) {
+      const detail = clerkErrorDetail(error);
+      console.error(`[ERROR] ${login.slug} ${login.email}: ${JSON.stringify(detail)}`);
+      results.push({
+        email: login.email,
+        slug: login.slug,
+        tenantKey: login.tenantKey,
+        personaKind: login.personaKind,
+        action: "error",
+        applied: args.apply,
+        ok: false,
+        error: detail,
+      });
+    }
   }
 
   fs.mkdirSync(args.outDir, { recursive: true });
@@ -151,6 +169,19 @@ async function main(): Promise<void> {
   );
   console.log(`Report: ${reportPath}`);
   if (args.emitProofBundle) emitProofBundle(args.outDir);
+  if (results.some((result) => !result.ok)) process.exitCode = 1;
+}
+
+function clerkErrorDetail(error: unknown): unknown {
+  if (!error || typeof error !== "object") return error;
+  const record = error as Record<string, unknown>;
+  return {
+    message: error instanceof Error ? error.message : String(error),
+    status: record.status,
+    statusCode: record.statusCode,
+    clerkTraceId: record.clerkTraceId,
+    errors: record.errors,
+  };
 }
 
 function emitProofBundle(dir: string): void {

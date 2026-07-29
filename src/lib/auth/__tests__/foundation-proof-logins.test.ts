@@ -12,6 +12,9 @@ describe("foundation proof logins", () => {
       "human_owner",
     ]);
     expect(airline.every((login) => login.email.includes("@"))).toBe(true);
+    expect(
+      airline.every((login) => !login.email.endsWith(".example.com")),
+    ).toBe(true);
   });
 
   it("emits the exact metadata required by the foundation preview gate", () => {
