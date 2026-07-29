@@ -564,10 +564,13 @@ jobs:
           fi
 
           # --- Guardrail 1 + 2: positively identify the 100%-traffic revision. ---
-          az containerapp ingress traffic show \
+          if ! az containerapp ingress traffic show \
             --name "$CONTAINER_APP_NAME" \
             --resource-group "$RESOURCE_GROUP" \
-            --output json > audit-artifacts/aca-main-deploy/hygiene-traffic.json
+            --output json > audit-artifacts/aca-main-deploy/hygiene-traffic.json; then
+            echo "::warning::Could not read ACA traffic for revision hygiene. The runtime invariant already passed; skipping stale-revision cleanup and retrying on the next deploy." >&2
+            exit 0
+          fi
 
           traffic_holder="$(jq -r '[.[]? | select((.weight // 0) == 100)] | if length == 1 then .[0].revisionName else "" end' \
             audit-artifacts/aca-main-deploy/hygiene-traffic.json)"
@@ -586,10 +589,13 @@ jobs:
 
           # --- Build the keep-list: the 100%-traffic revision + N most-recent prior actives. ---
           # List active revisions ordered by createdTime descending (newest first).
-          az containerapp revision list \
+          if ! az containerapp revision list \
             --name "$CONTAINER_APP_NAME" \
             --resource-group "$RESOURCE_GROUP" \
-            --output json > audit-artifacts/aca-main-deploy/hygiene-revision-list.json
+            --output json > audit-artifacts/aca-main-deploy/hygiene-revision-list.json; then
+            echo "::warning::Could not list ACA revisions for hygiene. The runtime invariant already passed; skipping stale-revision cleanup and retrying on the next deploy." >&2
+            exit 0
+          fi
 
           # Active revisions, newest-first, excluding the traffic holder (it is always kept).
           mapfile -t prior_active < <(jq -r \
