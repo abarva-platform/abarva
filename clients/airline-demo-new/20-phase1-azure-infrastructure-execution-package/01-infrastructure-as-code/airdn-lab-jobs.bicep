@@ -23,6 +23,7 @@ var jobs = [
   { name: 'job-airdn-normalize-lab', process: 'airline-demo-new-knowledge-normalize-v1', identityKey: 'ingest', stage: '05_normalize_values' }
   { name: 'job-airdn-projection-build-lab', process: 'airline-demo-new-projection-build-v1', identityKey: 'publish', stage: '13_build_module_projections' }
   { name: 'job-airdn-reconcile-audit-lab', process: 'airline-demo-new-reconciliation-audit-v1', identityKey: 'evaluator', stage: '16_reconciliation_audit' }
+  { name: 'job-airdn-metric-parity-lab', process: 'airline-demo-new-metric-parity-v1', identityKey: 'evaluator', stage: '17_cube_metric_parity' }
   { name: 'job-airdn-review-apply-lab', process: 'airline-demo-new-knowledge-review-v1', identityKey: 'review', stage: '09_route_review_quarantine' }
   { name: 'job-airdn-source-parse-lab', process: 'airline-demo-new-source-parse-v1', identityKey: 'ingest', stage: '03_parse_source' }
   { name: 'job-airdn-source-register-lab', process: 'airline-demo-new-source-register-v1', identityKey: 'ingest', stage: '01_register_source' }

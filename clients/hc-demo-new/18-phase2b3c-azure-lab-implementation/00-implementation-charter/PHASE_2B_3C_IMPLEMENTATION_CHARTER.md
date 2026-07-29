@@ -31,4 +31,4 @@ This package is an implementation lock, not an Azure apply. It freezes the bound
 
 Status: **STOP BEFORE AZURE APPLY**.
 
-Reason: the approved artifacts freeze tenant/database/storage/identity/process names, but they do not freeze resource group, VNet, subnet, Container Apps environment, or Log Analytics names. The ten reserved ACA job names also do not cover three approved process names: baseline publication, Home read-model refresh, and reconciliation audit.
+Reason: the approved artifacts freeze tenant/database/storage/identity/process names, but this charter remains plan-only until Azure apply authority is separately granted and recorded. The current execution package reserves fourteen ACA jobs, including baseline publication, Home read-model refresh, reconciliation audit, and metric parity.

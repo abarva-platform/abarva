@@ -99,6 +99,12 @@ export const PROCESS_CONTRACTS = Object.freeze([
     identityPurpose: "evaluator",
     databaseRolePurpose: "evaluator",
   },
+  {
+    suffix: "metric-parity-v1",
+    stages: ["17_cube_metric_parity"],
+    identityPurpose: "evaluator",
+    databaseRolePurpose: "evaluator",
+  },
 ]);
 
 const REJECTED_TENANT_SCOPES = new Set(["all", "*", "any", "tenant-all", "all-tenants"]);
@@ -567,12 +573,75 @@ function writeEnvelope(envelope, outPath) {
   process.stdout.write(serialized);
 }
 
-async function buildDefaultStore(env) {
+function databaseNameFromUrl(connectionString) {
+  try {
+    const parsed = new URL(connectionString);
+    return decodeURIComponent(parsed.pathname.replace(/^\//, ""));
+  } catch {
+    return "";
+  }
+}
+
+function hostNameFromUrl(connectionString) {
+  try {
+    return new URL(connectionString).hostname;
+  } catch {
+    return "";
+  }
+}
+
+function approvedPostgresHosts(expectedHost) {
+  if (!expectedHost) return new Set();
+  const normalized = expectedHost.toLowerCase();
+  const hosts = new Set([normalized]);
+  if (!normalized.endsWith(".postgres.database.azure.com")) {
+    hosts.add(`${normalized}.postgres.database.azure.com`);
+  }
+  return hosts;
+}
+
+function assertConnectionMatchesBoundary({ env, manifest, connectionString, host, database }) {
+  const expectedDatabase = manifest.control_plane?.postgres_database;
+  const expectedHost = manifest.control_plane?.postgres_server;
+  const observedDatabase = database || (connectionString ? databaseNameFromUrl(connectionString) : "");
+  const observedHost = (host || (connectionString ? hostNameFromUrl(connectionString) : "")).toLowerCase();
+  if (expectedDatabase && observedDatabase && observedDatabase !== expectedDatabase) {
+    throw new GuardFailure("runtime_database_mismatch", "Runtime database does not match the approved tenant boundary.", {
+      expected: expectedDatabase,
+      observed: observedDatabase,
+    });
+  }
+  if (expectedHost && observedHost && !approvedPostgresHosts(expectedHost).has(observedHost)) {
+    throw new GuardFailure("runtime_postgres_host_mismatch", "Runtime Postgres host does not match the approved tenant boundary.", {
+      expected: Array.from(approvedPostgresHosts(expectedHost)),
+      observed: observedHost,
+    });
+  }
+  if (env.ABARVA_HCDN_DATABASE && expectedDatabase && env.ABARVA_HCDN_DATABASE !== expectedDatabase) {
+    throw new GuardFailure("runtime_database_env_mismatch", "ABARVA_HCDN_DATABASE does not match the approved tenant boundary.", {
+      expected: expectedDatabase,
+      observed: env.ABARVA_HCDN_DATABASE,
+    });
+  }
+}
+
+async function buildDefaultStore(env, manifest, tenantKey) {
   if (env.ABARVA_HCDN_USE_IN_MEMORY_STORE === "true") {
-    return new InMemoryKnowledgeExecutionStore();
+    throw new GuardFailure(
+      "in_memory_store_execute_blocked",
+      "Execute mode cannot use the in-memory Knowledge store. Inject a test store explicitly or run preflight/noop.",
+    );
   }
   const { Client } = await import("pg");
-  const connectionString = env.DATABASE_URL;
+  const hasExplicitPostgres = Boolean(env.PGHOST || env.PGDATABASE || env.PGUSER);
+  const connectionString = hasExplicitPostgres ? "" : env.DATABASE_URL;
+  assertConnectionMatchesBoundary({
+    env,
+    manifest,
+    connectionString,
+    host: hasExplicitPostgres ? env.PGHOST : "",
+    database: hasExplicitPostgres ? env.PGDATABASE : "",
+  });
   const client = connectionString
     ? new Client({ connectionString })
     : new Client({
@@ -584,6 +653,7 @@ async function buildDefaultStore(env) {
         ssl: env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
       });
   await client.connect();
+  await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
   return new PostgresKnowledgeExecutionStore(client);
 }
 
@@ -616,7 +686,7 @@ async function executeRealProcess({ args, env, manifest, manifestPath, validatio
     return processExecutor({ args, env, manifest, manifestPath, validation });
   }
   const context = buildExecutionContext({ args, env, manifest, manifestPath, validation });
-  const resolvedStore = store ?? (await buildDefaultStore(env));
+  const resolvedStore = store ?? (await buildDefaultStore(env, manifest, validation.tenantKey));
   try {
     const handler = resolveProcessHandler(context.canonicalProcess, handlers ?? DEFAULT_PROCESS_HANDLERS);
     return await runKnowledgeProcess({ context, handler, store: resolvedStore });

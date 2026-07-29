@@ -31,6 +31,7 @@ var jobs = [
   { name: 'job-hcdn-normalize-lab', process: 'hc-demo-new-knowledge-normalize-v1', identityKey: 'ingest', stage: '05_normalize_values' }
   { name: 'job-hcdn-projection-build-lab', process: 'hc-demo-new-projection-build-v1', identityKey: 'publish', stage: '13_build_module_projections' }
   { name: 'job-hcdn-reconcile-audit-lab', process: 'hc-demo-new-reconciliation-audit-v1', identityKey: 'evaluator', stage: '16_reconciliation_audit' }
+  { name: 'job-hcdn-metric-parity-lab', process: 'hc-demo-new-metric-parity-v1', identityKey: 'evaluator', stage: '17_cube_metric_parity' }
   { name: 'job-hcdn-review-apply-lab', process: 'hc-demo-new-knowledge-review-v1', identityKey: 'review', stage: '09_route_review_quarantine' }
   { name: 'job-hcdn-source-parse-lab', process: 'hc-demo-new-source-parse-v1', identityKey: 'ingest', stage: '03_parse_source' }
   { name: 'job-hcdn-source-register-lab', process: 'hc-demo-new-source-register-v1', identityKey: 'ingest', stage: '01_register_source' }

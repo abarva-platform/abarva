@@ -6,9 +6,9 @@ What changed:
 
 - Added frozen control-plane names, subscription discovery, and active CLI account evidence.
 - Added reviewer and evaluator managed identities.
-- Expanded the ACA job topology to thirteen distinct jobs.
+- Expanded the ACA job topology to fourteen distinct jobs.
 - Mapped review application to `mi-hcdn-review-lab-001`.
-- Mapped reconciliation audit to `mi-hcdn-evaluator-lab-001`.
+- Mapped reconciliation audit and metric parity to `mi-hcdn-evaluator-lab-001`.
 - Proposed non-overlapping network ranges after read-only VNet inventory.
 - Locked the ACR image to `acrabarvalab001.azurecr.io/abarva/web@sha256:74e8051d40d33ec2ea242e4061001aa33da5363ad8826207bb871598079e4cf8`.
 - Generated Bicep plan files following the repository Bicep convention.

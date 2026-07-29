@@ -40,33 +40,34 @@ container_image:
   image_digest: sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
   image: acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
 managed_identities:
-    ingest: mi-hcdn-ingest-lab-001
-    review: mi-hcdn-review-lab-001
-    publish: mi-hcdn-publish-lab-001
-    read: mi-hcdn-read-lab-001
-    evaluator: mi-hcdn-evaluator-lab-001
-    admin: mi-hcdn-admin-lab-001
+  ingest: mi-hcdn-ingest-lab-001
+  review: mi-hcdn-review-lab-001
+  publish: mi-hcdn-publish-lab-001
+  read: mi-hcdn-read-lab-001
+  evaluator: mi-hcdn-evaluator-lab-001
+  admin: mi-hcdn-admin-lab-001
 database_roles:
-    ingest: hc_demo_new_ingest
-    review: hc_demo_new_reviewer
-    publish: hc_demo_new_publisher
-    read: hc_demo_new_reader
-    evaluator: hc_demo_new_evaluator
-    admin: hc_demo_new_admin
+  ingest: hc_demo_new_ingest
+  review: hc_demo_new_reviewer
+  publish: hc_demo_new_publisher
+  read: hc_demo_new_reader
+  evaluator: hc_demo_new_evaluator
+  admin: hc_demo_new_admin
 container_apps_jobs:
-    job-hcdn-source-register-lab: job-hcdn-source-register-lab
-    job-hcdn-source-parse-lab: job-hcdn-source-parse-lab
-    job-hcdn-evidence-extract-lab: job-hcdn-evidence-extract-lab
-    job-hcdn-normalize-lab: job-hcdn-normalize-lab
-    job-hcdn-entity-resolve-lab: job-hcdn-entity-resolve-lab
-    job-hcdn-validate-lab: job-hcdn-validate-lab
-    job-hcdn-review-apply-lab: job-hcdn-review-apply-lab
-    job-hcdn-domain-publish-lab: job-hcdn-domain-publish-lab
-    job-hcdn-baseline-publish-lab: job-hcdn-baseline-publish-lab
-    job-hcdn-projection-build-lab: job-hcdn-projection-build-lab
-    job-hcdn-home-readmodel-lab: job-hcdn-home-readmodel-lab
-    job-hcdn-backfill-lab: job-hcdn-backfill-lab
-    job-hcdn-reconcile-audit-lab: job-hcdn-reconcile-audit-lab
+  job-hcdn-source-register-lab: job-hcdn-source-register-lab
+  job-hcdn-source-parse-lab: job-hcdn-source-parse-lab
+  job-hcdn-evidence-extract-lab: job-hcdn-evidence-extract-lab
+  job-hcdn-normalize-lab: job-hcdn-normalize-lab
+  job-hcdn-entity-resolve-lab: job-hcdn-entity-resolve-lab
+  job-hcdn-validate-lab: job-hcdn-validate-lab
+  job-hcdn-review-apply-lab: job-hcdn-review-apply-lab
+  job-hcdn-domain-publish-lab: job-hcdn-domain-publish-lab
+  job-hcdn-baseline-publish-lab: job-hcdn-baseline-publish-lab
+  job-hcdn-projection-build-lab: job-hcdn-projection-build-lab
+  job-hcdn-home-readmodel-lab: job-hcdn-home-readmodel-lab
+  job-hcdn-backfill-lab: job-hcdn-backfill-lab
+  job-hcdn-reconcile-audit-lab: job-hcdn-reconcile-audit-lab
+  job-hcdn-metric-parity-lab: job-hcdn-metric-parity-lab
 safety:
   allow_tenant_all: false
   expected_tenant_key: hc-demo-new

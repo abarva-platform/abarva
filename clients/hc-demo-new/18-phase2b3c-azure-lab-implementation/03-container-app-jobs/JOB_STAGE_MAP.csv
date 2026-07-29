@@ -12,3 +12,4 @@ stage,approved_process_name,reserved_aca_job_name,managed_identity,database_role
 14_refresh_home_readmodel,hc-demo-new-home-readmodel-v1,job-hcdn-home-readmodel-lab,mi-hcdn-publish-lab-001,hc_demo_new_publisher,plan_only_ready
 15_backfill_replay,hc-demo-new-knowledge-backfill-v1,job-hcdn-backfill-lab,mi-hcdn-ingest-lab-001,hc_demo_new_ingest,plan_only_ready
 16_reconciliation_audit,hc-demo-new-reconciliation-audit-v1,job-hcdn-reconcile-audit-lab,mi-hcdn-evaluator-lab-001,hc_demo_new_evaluator,plan_only_ready
+17_cube_metric_parity,hc-demo-new-metric-parity-v1,job-hcdn-metric-parity-lab,mi-hcdn-evaluator-lab-001,hc_demo_new_evaluator,plan_only_ready

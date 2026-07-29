@@ -12,3 +12,4 @@ stage,approved_process_name,reserved_aca_job_name,managed_identity,database_role
 14_refresh_home_readmodel,airline-demo-new-home-readmodel-v1,job-airdn-home-readmodel-lab,mi-airdn-publish-lab-001,airline_demo_new_publisher,plan_only_ready
 15_backfill_replay,airline-demo-new-knowledge-backfill-v1,job-airdn-backfill-lab,mi-airdn-ingest-lab-001,airline_demo_new_ingest,plan_only_ready
 16_reconciliation_audit,airline-demo-new-reconciliation-audit-v1,job-airdn-reconcile-audit-lab,mi-airdn-evaluator-lab-001,airline_demo_new_evaluator,plan_only_ready
+17_cube_metric_parity,airline-demo-new-metric-parity-v1,job-airdn-metric-parity-lab,mi-airdn-evaluator-lab-001,airline_demo_new_evaluator,plan_only_ready
