@@ -54,6 +54,25 @@ end $$;
 -- mi-hcdn-read-lab-001 -> hc_demo_new_reader
 -- mi-hcdn-evaluator-lab-001 -> hc_demo_new_evaluator
 -- mi-hcdn-admin-lab-001 -> hc_demo_new_admin
+do $$
+declare
+  role_map record;
+begin
+  for role_map in
+    select * from (values
+  ('mi-hcdn-ingest-lab-001', 'hc_demo_new_ingest'),
+  ('mi-hcdn-review-lab-001', 'hc_demo_new_reviewer'),
+  ('mi-hcdn-publish-lab-001', 'hc_demo_new_publisher'),
+  ('mi-hcdn-read-lab-001', 'hc_demo_new_reader'),
+  ('mi-hcdn-evaluator-lab-001', 'hc_demo_new_evaluator'),
+  ('mi-hcdn-admin-lab-001', 'hc_demo_new_admin')
+    ) as m(identity_name, role_name)
+  loop
+    if exists (select 1 from pg_roles where rolname = role_map.identity_name) then
+      execute format('grant %I to %I', role_map.role_name, role_map.identity_name);
+    end if;
+  end loop;
+end $$;
 
 grant usage on schema source_registry, evidence, working, operations to hc_demo_new_ingest;
 grant select, insert, update on all tables in schema source_registry, evidence, working, operations to hc_demo_new_ingest;
@@ -70,8 +89,9 @@ grant usage on all sequences in schema knowledge, metrics, publication, consumpt
 grant usage on schema knowledge, metrics, publication, consumption to hc_demo_new_reader;
 grant select on all tables in schema knowledge, metrics, publication, consumption to hc_demo_new_reader;
 
-grant usage on schema knowledge, metrics, publication, consumption, evidence, audit, operations to hc_demo_new_evaluator;
-grant select on all tables in schema knowledge, metrics, publication, consumption, evidence, audit, operations to hc_demo_new_evaluator;
+grant usage on schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations to hc_demo_new_evaluator;
+grant select on all tables in schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations to hc_demo_new_evaluator;
+alter default privileges in schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations grant select on tables to hc_demo_new_evaluator;
 
 grant usage on schema source_registry, evidence, working, knowledge, metrics, governance, publication, consumption, audit, operations to hc_demo_new_admin;
 grant all privileges on all tables in schema source_registry, evidence, working, knowledge, metrics, governance, publication, consumption, audit, operations to hc_demo_new_admin;

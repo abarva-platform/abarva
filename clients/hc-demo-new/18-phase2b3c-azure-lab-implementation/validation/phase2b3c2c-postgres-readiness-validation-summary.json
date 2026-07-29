@@ -30,6 +30,14 @@
       "status": "pass"
     },
     {
+      "name": "evaluator_governance_read",
+      "status": "pass"
+    },
+    {
+      "name": "managed_identity_role_inheritance",
+      "status": "pass"
+    },
+    {
       "name": "strategic_insight_planning_grade",
       "status": "pass"
     },
