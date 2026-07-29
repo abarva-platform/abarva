@@ -161,7 +161,7 @@ function roleGrantRows(tenant) {
   for (const schema of ["knowledge", "metrics", "publication", "consumption"]) {
     rows.push({ role: r.reader, schema, usage: "yes", select: "yes", insert: "no", update: "no", delete: "no", execute: "limited_read", default_privileges: "select_only" });
   }
-  for (const schema of ["knowledge", "metrics", "publication", "consumption", "evidence", "audit", "operations"]) {
+  for (const schema of ["knowledge", "metrics", "publication", "consumption", "governance", "evidence", "audit", "operations"]) {
     rows.push({ role: r.evaluator, schema, usage: "yes", select: "yes", insert: "no", update: "no", delete: "no", execute: "limited_read", default_privileges: "select_only" });
   }
   return rows;
@@ -226,8 +226,19 @@ function sqlLiteral(value) {
 
 function postgresSql(tenant) {
   const r = roles(tenant);
+  const id = identities(tenant);
   const roleValues = Object.entries(r)
     .map(([kind, role]) => `  ('${kind}', '${role}')`)
+    .join(",\n");
+  const identityRoleValues = [
+    [id.ingest, r.ingest],
+    [id.reviewer, r.reviewer],
+    [id.publisher, r.publisher],
+    [id.reader, r.reader],
+    [id.evaluator, r.evaluator],
+    [id.admin, r.admin],
+  ]
+    .map(([identityName, roleName]) => `  ('${identityName}', '${roleName}')`)
     .join(",\n");
   const tableValues = rlsRows(tenant)
     .map((row) => `  ('${row.schema}', '${row.table}', '${row.policy_name}')`)
@@ -283,6 +294,20 @@ end $$;
 -- ${identities(tenant).reader} -> ${r.reader}
 -- ${identities(tenant).evaluator} -> ${r.evaluator}
 -- ${identities(tenant).admin} -> ${r.admin}
+do $$
+declare
+  role_map record;
+begin
+  for role_map in
+    select * from (values
+${identityRoleValues}
+    ) as m(identity_name, role_name)
+  loop
+    if exists (select 1 from pg_roles where rolname = role_map.identity_name) then
+      execute format('grant %I to %I', role_map.role_name, role_map.identity_name);
+    end if;
+  end loop;
+end $$;
 
 grant usage on schema source_registry, evidence, working, operations to ${r.ingest};
 grant select, insert, update on all tables in schema source_registry, evidence, working, operations to ${r.ingest};
@@ -299,8 +324,9 @@ grant usage on all sequences in schema knowledge, metrics, publication, consumpt
 grant usage on schema knowledge, metrics, publication, consumption to ${r.reader};
 grant select on all tables in schema knowledge, metrics, publication, consumption to ${r.reader};
 
-grant usage on schema knowledge, metrics, publication, consumption, evidence, audit, operations to ${r.evaluator};
-grant select on all tables in schema knowledge, metrics, publication, consumption, evidence, audit, operations to ${r.evaluator};
+grant usage on schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations to ${r.evaluator};
+grant select on all tables in schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations to ${r.evaluator};
+alter default privileges in schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations grant select on tables to ${r.evaluator};
 
 grant usage on schema ${SCHEMAS.join(", ")} to ${r.admin};
 grant all privileges on all tables in schema ${SCHEMAS.join(", ")} to ${r.admin};
@@ -504,6 +530,8 @@ function generateTenant(tenant) {
     { name: "reader_candidate_denial", status: postgresSql(tenant).includes(`revoke all on schema working from ${roles(tenant).reader}`) ? "pass" : "fail" },
     { name: "ingest_publish_denial", status: postgresSql(tenant).includes(`from ${roles(tenant).ingest}`) ? "pass" : "fail" },
     { name: "evaluator_mutation_denial", status: postgresSql(tenant).includes(`from ${roles(tenant).reader}, ${roles(tenant).evaluator}`) ? "pass" : "fail" },
+    { name: "evaluator_governance_read", status: postgresSql(tenant).includes(`consumption, governance, evidence`) ? "pass" : "fail" },
+    { name: "managed_identity_role_inheritance", status: postgresSql(tenant).includes("grant %I to %I") ? "pass" : "fail" },
     { name: "strategic_insight_planning_grade", status: postgresSql(tenant).includes("set default 'planning_grade'") ? "pass" : "fail" },
     { name: "migration_job_contract", status: jobRows.every((row) => row.job_name === tenant.migrationJob) ? "pass" : "fail" },
   ];

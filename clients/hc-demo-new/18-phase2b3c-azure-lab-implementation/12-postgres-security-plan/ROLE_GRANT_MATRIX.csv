@@ -29,6 +29,7 @@ hc_demo_new_evaluator,knowledge,yes,yes,no,no,no,limited_read,select_only
 hc_demo_new_evaluator,metrics,yes,yes,no,no,no,limited_read,select_only
 hc_demo_new_evaluator,publication,yes,yes,no,no,no,limited_read,select_only
 hc_demo_new_evaluator,consumption,yes,yes,no,no,no,limited_read,select_only
+hc_demo_new_evaluator,governance,yes,yes,no,no,no,limited_read,select_only
 hc_demo_new_evaluator,evidence,yes,yes,no,no,no,limited_read,select_only
 hc_demo_new_evaluator,audit,yes,yes,no,no,no,limited_read,select_only
 hc_demo_new_evaluator,operations,yes,yes,no,no,no,limited_read,select_only

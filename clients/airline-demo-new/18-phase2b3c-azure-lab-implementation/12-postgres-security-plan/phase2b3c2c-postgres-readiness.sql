@@ -89,8 +89,9 @@ grant usage on all sequences in schema knowledge, metrics, publication, consumpt
 grant usage on schema knowledge, metrics, publication, consumption to airline_demo_new_reader;
 grant select on all tables in schema knowledge, metrics, publication, consumption to airline_demo_new_reader;
 
-grant usage on schema knowledge, metrics, publication, consumption, evidence, audit, operations to airline_demo_new_evaluator;
-grant select on all tables in schema knowledge, metrics, publication, consumption, evidence, audit, operations to airline_demo_new_evaluator;
+grant usage on schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations to airline_demo_new_evaluator;
+grant select on all tables in schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations to airline_demo_new_evaluator;
+alter default privileges in schema knowledge, metrics, publication, consumption, governance, evidence, audit, operations grant select on tables to airline_demo_new_evaluator;
 
 grant usage on schema source_registry, evidence, working, knowledge, metrics, governance, publication, consumption, audit, operations to airline_demo_new_admin;
 grant all privileges on all tables in schema source_registry, evidence, working, knowledge, metrics, governance, publication, consumption, audit, operations to airline_demo_new_admin;
