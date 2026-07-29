@@ -30,7 +30,7 @@ Airline Knowledge activation is complete and immutable. This report is the next 
 | --- | --- | --- | --- | --- | --- | --- |
 | Home / Knowledge | 90% | migrated_and_proven | Required and live-proven | Admin fixture preview only; real foundation tenant HTTP path prohibits fixture namespace use | No SkyHarbor fallback on the live-proven canary path | Keep provider active; add same signed-in proof to normal tenant-user path after Clerk mapping. |
 | aVa / Knowledge | 70% | partially_migrated_runtime_proof_pending | Enforced in this PR for foundation preview tenants | Deterministic provider remains model-unavailable fallback, not fixture data authority | No baseline identity accepted from browser for foundation tenants after this PR | Run signed-in aVa proof for Airline and capture baseline identity in the answer audit payload. |
-| Intelligence | 35% | partially_migrated_needs_runtime_certification | Not certified | Static scan shows legacy tenant-specific/context code remains | Requires proof that Airline cannot retrieve legacy V6/V7/SkyHarbor context | Add signed-in Airline Intelligence proof with legacy fixtures and Supabase unavailable. |
+| Intelligence | 45% | legacy_context_fenced_runtime_certification_pending | Not certified | Legacy broker fixtures are blocked for foundation tenants; static tenant-specific/context code remains for older demos | Requires proof that Airline cannot retrieve legacy V6/V7/SkyHarbor context | Add signed-in Airline Intelligence proof with legacy fixtures and Supabase unavailable. |
 | Moves | 35% | partially_migrated_legacy_operational_risk | Required only when consuming enterprise context; not certified | Reference-mode fallbacks exist when moveId is absent/inaccessible | Program write seam is tenant-guarded; read/runtime route proof remains incomplete | Certify Moves runtime routes and disable reference-mode fallbacks for governed Airline routes. |
 | Source | 40% | partially_migrated_legacy_operational_risk | Required for Knowledge handoff; not certified end-to-end | Source fixture views and event-instance fixtures remain in code | Source write seams are tenant-guarded; old SkyHarbor-specific routes remain disabled/unavailable for Airline until certified | Certify Source runtime routes and prove old fixture/default routes fail explicitly for Airline. |
 | Tower | 40% | partially_migrated_legacy_operational_risk | Required for governed enterprise context; metrics remain Tower-owned operational projections | Static seeded vendor/portfolio and deterministic views remain | Aggregate/enterprise-summary seams are tenant-guarded; seeded deterministic Tower views remain to be disabled or proven unavailable for Airline | Certify Tower runtime routes and disable or prove unavailable any seeded deterministic Tower views for Airline. |
@@ -54,7 +54,10 @@ Airline Knowledge activation is complete and immutable. This report is the next 
 
 ### Intelligence
 
-- PASS — `src/app/api/intelligence/ask/route.ts` contains `buildHomeKnowAgentAnswer`: Route has a Knowledge-answer path, but full baseline-bound Airline packet proof is still required.
+- PASS — `src/app/api/intelligence/ask/route.ts` contains `governed_knowledge_consumption_required`: Legacy Home-tab Intelligence path fails closed for governed foundation tenants instead of using V6 Home fallback.
+- PASS — `src/lib/knowledge/agent-context-broker.ts` contains `governed_consumption_required`: Enterprise context broker blocks foundation tenants from fixture and tenant-data fallback paths.
+- PASS — `src/lib/tenant/foundation-tenants.ts` contains `airline-demo-new`: Foundation tenant allowlist is shared by auth/session and legacy-context fence code.
+- PASS — `src/app/api/intelligence/ask/route.ts` contains `buildHomeKnowAgentAnswer`: Route still contains the old Home answer branch for non-foundation tenants; signed-in Airline proof must show it is fenced.
 - PASS — `src/app/api/intelligence/ask/route.ts` contains `SkyHarbor`: Static tenant-specific logic remains and must be runtime-fenced from Airline Demo New.
 
 ### Moves

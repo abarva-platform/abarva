@@ -60,6 +60,7 @@ import {
   shouldUseHomeKnowAgentAnswer,
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import {
@@ -417,6 +418,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             tenantClientKey ??
             requestedOrSurfaceClient ??
             null;
+          if (isFoundationTenantKey(homeTenantKey)) {
+            sawStreamError = true;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "error",
+                  error:
+                    "This tenant is governed by the Knowledge Baseline. Use the Knowledge experience or Knowledge aVa path so the answer is bound to the active baseline and consumption projection.",
+                  code: "governed_knowledge_consumption_required",
+                }) + "\n",
+              ),
+            );
+            return;
+          }
           let response: HomeKnowResponse;
           let answer: AvaAnswerPacket;
           try {

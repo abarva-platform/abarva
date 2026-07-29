@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T15:29:51.939Z",
+  "generatedAt": "2026-07-29T15:42:31.268Z",
   "foundationIdentity": {
     "tenantKey": "airline-demo-new",
     "baselineId": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
@@ -123,23 +123,41 @@
     },
     {
       "module": "Intelligence",
-      "classification": "partially_migrated_needs_runtime_certification",
-      "percentComplete": 35,
+      "classification": "legacy_context_fenced_runtime_certification_pending",
+      "percentComplete": 45,
       "routes": [
         "/api/intelligence/ask",
         "/api/intelligence/query"
       ],
-      "readProvider": "Mixed legacy advisory/context paths plus newer Knowledge hooks",
+      "readProvider": "Legacy broker and Home-tab fixture paths are fenced for foundation tenants; newer Knowledge hooks still require signed-in proof",
       "writeProvider": "Audit/log paths vary by route",
       "database": "Not yet proven baseline-bound for Airline",
       "baselineBinding": "Not certified",
-      "fixtureDependency": "Static scan shows legacy tenant-specific/context code remains",
+      "fixtureDependency": "Legacy broker fixtures are blocked for foundation tenants; static tenant-specific/context code remains for older demos",
       "legacyDependency": "Requires proof that Airline cannot retrieve legacy V6/V7/SkyHarbor context",
       "evidence": [
         {
           "file": "src/app/api/intelligence/ask/route.ts",
+          "marker": "governed_knowledge_consumption_required",
+          "note": "Legacy Home-tab Intelligence path fails closed for governed foundation tenants instead of using V6 Home fallback.",
+          "found": true
+        },
+        {
+          "file": "src/lib/knowledge/agent-context-broker.ts",
+          "marker": "governed_consumption_required",
+          "note": "Enterprise context broker blocks foundation tenants from fixture and tenant-data fallback paths.",
+          "found": true
+        },
+        {
+          "file": "src/lib/tenant/foundation-tenants.ts",
+          "marker": "airline-demo-new",
+          "note": "Foundation tenant allowlist is shared by auth/session and legacy-context fence code.",
+          "found": true
+        },
+        {
+          "file": "src/app/api/intelligence/ask/route.ts",
           "marker": "buildHomeKnowAgentAnswer",
-          "note": "Route has a Knowledge-answer path, but full baseline-bound Airline packet proof is still required.",
+          "note": "Route still contains the old Home answer branch for non-foundation tenants; signed-in Airline proof must show it is fenced.",
           "found": true
         },
         {
@@ -351,6 +369,6 @@
   "completion": {
     "foundationPipeline": 100,
     "knowledgeActivation": 100,
-    "allModuleCertification": 44
+    "allModuleCertification": 45
   }
 }

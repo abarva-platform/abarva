@@ -98,4 +98,30 @@ describe('AgentContextBroker tenant isolation', () => {
       ]),
     );
   });
+
+  it('blocks governed foundation tenants from the legacy fixture broker', () => {
+    const bundle = buildEnterpriseAgentContextBundle({
+      tenantKey: 'airline-demo-new',
+      agentName: 'Sentinel',
+      surface: 'intelligence',
+      includeGraphNeighborhood: true,
+      allowL4RawContext: true,
+    });
+
+    expect(bundle.tenantKey).toBe('airline-demo-new');
+    expect(bundle.items).toHaveLength(0);
+    expect(bundle.citations).toHaveLength(0);
+    expect(bundle.graphNeighborhood.included).toBe(false);
+    expect(bundle.warnings).toContain(
+      'Governed foundation tenant context must come from the Knowledge consumption API.',
+    );
+    expect(bundle.blockedItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tenantKey: 'airline-demo-new',
+          reason: 'governed_consumption_required',
+        }),
+      ]),
+    );
+  });
 });
