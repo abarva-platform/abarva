@@ -212,6 +212,7 @@ async function main(): Promise<void> {
     url.searchParams.set("provider", "http");
     url.searchParams.set("tenant", login.tenantKey);
     url.searchParams.set("models", args.models === "on" ? "on" : "off");
+    url.searchParams.set("canary", "1");
 
     const directEnterpriseBriefProbe = await page.request
       .post("/api/knowledge/consumption/enterprise-brief", {
