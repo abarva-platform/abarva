@@ -14,6 +14,8 @@ Adds a permanent, passwordless proof-login path for foundation-only tenants. The
 
 Follow-up correction: the preview-session priming script now writes auth state and proof artifacts under a writable temp work directory by default. ACA operator images run from a read-only app directory, so repo-relative `.auth/` and `reports/` paths are retained only when explicitly configured through environment variables.
 
+Second follow-up correction: the ACA runtime image now includes the Playwright Chromium browser and system dependencies required by the signed-in proof scripts. The scripts were already packaged, but the operator job could not launch a browser until the image carried the matching browser binary under the non-root runtime user's cache.
+
 ## Layer Impact
 
 - `global-control-lane`: Adds an auth/proof roster and scripts for signed-in preview validation. No product data, review decision, publication, baseline, projection, or Azure job state is changed.
@@ -32,6 +34,7 @@ Follow-up correction: the preview-session priming script now writes auth state a
 - `scripts/auth/provision-foundation-proof-logins.ts`
 - `scripts/auth/prime-foundation-preview-session.ts`
 - `src/lib/auth/__tests__/foundation-proof-logins.test.ts`
+- `Dockerfile`
 - `package.json` scripts:
   - `auth:foundation-proof:provision`
   - `auth:foundation-proof:provision:airline:apply`
@@ -49,6 +52,7 @@ Follow-up correction: the preview-session priming script now writes auth state a
 - `pass`: `npx tsc --noEmit --pretty false`
 - `pass`: `npm run release:check`
 - `pass`: `FOUNDATION_PROOF_WORK_DIR=/tmp/foundation-preview-auth-test-<stamp> CLERK_SECRET_KEY=sk_test_dummy npx tsx scripts/auth/prime-foundation-preview-session.ts --tenant airline-demo-new --slug agent-airline-foundation --base-url https://app.abarva.ai --refresh` creates temp `.auth/` and `reports/` directories, then reaches the expected Clerk `Unauthorized` response for the dummy key without attempting to create repo-relative `.auth/` or `reports/` directories.
+- `blocked-before-fix`: ACA operator proof execution reached Playwright launch and failed because Chromium was absent from the runtime image (`Executable doesn't exist at /home/node/.cache/ms-playwright/...`). This release now installs the browser during image build so the digest-pinned operator image can run signed-in proof jobs without ad-hoc container installs.
 - `blocked`: `npm run auth:foundation-proof:provision -- --tenant airline-demo-new --apply` requires the governed Clerk secret from a VNet-attached operator/runtime environment. Local Key Vault secret read is intentionally blocked by private data-plane access.
 - `blocked`: `npm run auth:foundation-proof:prime -- --tenant airline-demo-new --slug agent-airline-foundation --base-url https://app.abarva.ai --refresh` requires the proof identity to exist in Clerk first.
 
