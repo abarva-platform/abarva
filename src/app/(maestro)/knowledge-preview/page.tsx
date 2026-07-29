@@ -10,21 +10,23 @@ import {
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { requireTenancy } from "@/lib/auth/tenancy";
-import { listFixtureTenants, DEFAULT_FIXTURE_TENANT } from "@/lib/knowledge/fixtures";
+import {
+  DEFAULT_FIXTURE_TENANT,
+  listFixtureTenants,
+} from "@/lib/knowledge/fixtures";
 import { KnowledgePreviewApp } from "@/components/knowledge/vnext/KnowledgePreviewApp";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 /**
- * Home / Knowledge vNext — ADMIN PREVIEW ROUTE (isolated, not activated).
+ * Home / Knowledge vNext — governed preview route.
  *
- * - Gated to platform-admin sessions only (role/claim based, no email allowlist).
- *   `notFound()` for everyone else, including any signed-in tenant/maestro user.
- * - The feature flag `home_knowledge_vnext` is default-OFF for all tenants and is
- *   NOT the gate for admin preview; it exists so a pilot tenant can be enabled
- *   later. Tenant users never reach this route today.
- * - Serves ONLY contract-valid fixture packs (synthetic namespaces). No real
- *   tenant data, no legacy Home/V6/V7/SkyHarbor packs, no operational tables.
- * - The existing `/home` route is untouched; nothing here activates a tenant.
+ * - Fixture preview remains platform-admin only.
+ * - HTTP preview accepts platform-admins and foundation proof users pinned by
+ *   Clerk metadata to a foundation tenant.
+ * - HTTP preview uses governed consumption APIs. It must not fall back to
+ *   legacy Home packs, fixtures, or old tenant aliases.
+ * - `/home` redirects foundation tenants here so the old Home shells stay
+ *   archived for foundation proof sessions.
  */
 export const metadata: Metadata = {
   title: "Knowledge (vNext preview) | AbarVa",
@@ -38,8 +40,6 @@ interface PageSearchParams {
   tenant?: string | string[];
   models?: string | string[];
 }
-
-const ADMIN_HTTP_CANARY_TENANT = "airline-demo-new";
 
 function firstParam(value: string | string[] | undefined): string | null {
   return Array.isArray(value) ? value[0] ?? null : value ?? null;
@@ -57,11 +57,7 @@ export default async function KnowledgePreviewPage({
   const provider = firstParam(params.provider)?.toLowerCase();
   const requestedTenant = canonicalTenantKey(firstParam(params.tenant) ?? "");
   const useHttpCanary = provider === "http";
-  if (
-    useHttpCanary &&
-    (requestedTenant !== ADMIN_HTTP_CANARY_TENANT ||
-      !isFoundationPreviewTenantKey(requestedTenant))
-  ) {
+  if (useHttpCanary && !isFoundationPreviewTenantKey(requestedTenant)) {
     notFound();
   }
   const hasPlatformAdmin = await isPlatformAdminSession();
@@ -85,13 +81,19 @@ export default async function KnowledgePreviewPage({
   // Flag is checked for transparency/telemetry; it governs FUTURE tenant
   // activation, not admin/proof preview. Default OFF → never true for tenant users.
   const tenantFlagOn = isFeatureEnabled(
-    { clientKey: tenancy?.clientKey ?? null, clientId: tenancy?.clientId ?? null },
+    {
+      clientKey: tenancy?.clientKey ?? null,
+      clientId: tenancy?.clientId ?? null,
+    },
     "home_knowledge_vnext",
   );
   void tenantFlagOn;
 
   return (
-    <AppShell surface="product" topBarProps={{ context: "Knowledge (vNext preview)" }}>
+    <AppShell
+      surface="product"
+      topBarProps={{ context: "Knowledge (vNext preview)" }}
+    >
       <KnowledgePreviewApp
         fixtureTenants={fixtureTenants}
         defaultTenantKey={DEFAULT_FIXTURE_TENANT}
@@ -99,8 +101,8 @@ export default async function KnowledgePreviewPage({
           useHttpCanary
             ? {
                 kind: "http",
-                tenantKey: ADMIN_HTTP_CANARY_TENANT,
-                adminCanaryTenantKey: ADMIN_HTTP_CANARY_TENANT,
+                tenantKey: requestedTenant,
+                adminCanaryTenantKey: requestedTenant,
                 modelsEnabled: firstParam(params.models) === "on",
               }
             : undefined

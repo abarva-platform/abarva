@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
+import { resolveFoundationTenantKeyFromMetadata } from "@/lib/auth/foundation-route-access";
 
 type MetadataRecord = Record<string, unknown>;
 
@@ -9,43 +10,11 @@ function isRecord(value: unknown): value is MetadataRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function metadataString(
-  metadata: MetadataRecord | null | undefined,
-  key: string,
-): string | null {
-  const value = metadata?.[key];
-  return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-function metadataBoolean(
-  metadata: MetadataRecord | null | undefined,
-  key: string,
-): boolean {
-  return metadata?.[key] === true;
-}
-
-function metadataTenantKey(metadata: MetadataRecord | null | undefined) {
-  return (
-    metadataString(metadata, "foundationTenantKey") ??
-    metadataString(metadata, "tenantKey") ??
-    metadataString(metadata, "clientId") ??
-    metadataString(metadata, "defaultClientId")
-  );
-}
-
 function metadataAllowsFoundationPreview(
   metadata: MetadataRecord | null | undefined,
   requestedTenantKey: string,
 ): boolean {
-  if (!metadata) return false;
-  if (
-    !metadataBoolean(metadata, "foundationTenant") &&
-    !metadataBoolean(metadata, "proofLogin")
-  ) {
-    return false;
-  }
-  const tenantKey = canonicalTenantKey(metadataTenantKey(metadata) ?? "");
-  return tenantKey === requestedTenantKey;
+  return resolveFoundationTenantKeyFromMetadata(metadata) === requestedTenantKey;
 }
 
 export function isFoundationPreviewTenantKey(
