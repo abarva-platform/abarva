@@ -40,6 +40,7 @@ interface PageSearchParams {
   provider?: string | string[];
   tenant?: string | string[];
   models?: string | string[];
+  canary?: string | string[];
 }
 
 function firstParam(value: string | string[] | undefined): string | null {
@@ -58,6 +59,9 @@ export default async function KnowledgePreviewPage({
   const provider = firstParam(params.provider)?.toLowerCase();
   const requestedTenant = canonicalTenantKey(firstParam(params.tenant) ?? "");
   const useHttpCanary = provider === "http";
+  const explicitCanaryParam = firstParam(params.canary)?.toLowerCase();
+  const useExplicitCanary =
+    explicitCanaryParam === "1" || explicitCanaryParam === "true";
   if (useHttpCanary && !isFoundationPreviewTenantKey(requestedTenant)) {
     notFound();
   }
@@ -94,13 +98,27 @@ export default async function KnowledgePreviewPage({
   return (
     <AppShell
       surface="product"
-      topBarProps={{ context: "Knowledge (vNext preview)" }}
+      topBarProps={{
+        context:
+          useHttpCanary && !useExplicitCanary
+            ? "Knowledge activation review"
+            : "Knowledge foundation canary",
+      }}
     >
       <KnowledgePreviewApp
         fixtureTenants={fixtureTenants}
         defaultTenantKey={DEFAULT_FIXTURE_TENANT}
+        activationBlocked={
+          useHttpCanary && !useExplicitCanary
+            ? {
+                tenantKey: requestedTenant,
+                reason:
+                  "The governed foundation is active, but this technical preview shell has not passed client-facing UI/content acceptance.",
+              }
+            : undefined
+        }
         source={
-          useHttpCanary
+          useHttpCanary && useExplicitCanary
             ? {
                 kind: "http",
                 tenantKey: requestedTenant,

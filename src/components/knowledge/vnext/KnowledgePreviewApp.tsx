@@ -30,15 +30,24 @@ export function KnowledgePreviewApp({
   fixtureTenants,
   defaultTenantKey,
   source,
+  activationBlocked,
 }: {
   fixtureTenants: FixtureTenantOption[];
   defaultTenantKey: string;
   source?: ConsumptionSource;
+  activationBlocked?: {
+    tenantKey: string;
+    reason: string;
+  };
 }) {
   const [tenantKey, setTenantKey] = useState(defaultTenantKey);
   const [scenario, setScenario] = useState<FixtureScenario>("normal");
   const runtimeSource =
     source ?? { kind: "fixture" as const, tenantKey, scenario };
+
+  if (activationBlocked) {
+    return <ClientActivationBlocked {...activationBlocked} />;
+  }
 
   return (
     <ConsumptionRuntimeProvider source={runtimeSource}>
@@ -62,6 +71,53 @@ export function KnowledgePreviewApp({
         </div>
       </KnowledgeShellStateProvider>
     </ConsumptionRuntimeProvider>
+  );
+}
+
+function ClientActivationBlocked({
+  tenantKey,
+  reason,
+}: {
+  tenantKey: string;
+  reason: string;
+}) {
+  return (
+    <div className="kv-root">
+      <main className="kv-activation-block" aria-labelledby="knowledge-activation-title">
+        <div className="kv-activation-panel">
+          <p className="kv-eyebrow">Knowledge activation gate</p>
+          <h1 id="knowledge-activation-title">Client Knowledge UI is not activated.</h1>
+          <p>
+            {reason} This page is blocked from showing raw projection inventory,
+            parser sample rows, internal identifiers, disabled advisor rails, or
+            any other operator-only diagnostics as a client experience.
+          </p>
+          <div className="kv-activation-grid" aria-label="Knowledge activation status">
+            <div>
+              <span className="kv-activation-kicker">Tenant</span>
+              <strong>{tenantKey}</strong>
+            </div>
+            <div>
+              <span className="kv-activation-kicker">Foundation data</span>
+              <strong>Frozen and governed</strong>
+            </div>
+            <div>
+              <span className="kv-activation-kicker">Client UI</span>
+              <strong>Acceptance blocked</strong>
+            </div>
+            <div>
+              <span className="kv-activation-kicker">Next proof</span>
+              <strong>Design and content QA</strong>
+            </div>
+          </div>
+          <p className="kv-activation-note">
+            Operators can still run the explicit canary proof route when they need
+            to verify baseline/API identity. Client review must use the approved
+            Knowledge design surface after it passes product QA.
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }
 
