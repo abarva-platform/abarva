@@ -7,12 +7,18 @@ param operationalStorageAccountName string
 param evaluatorStorageAccountName string
 param identityIds object
 param identityClientIds object
-@secure()
-param postgresAdministratorLoginPassword string
 param imageName string = 'acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f'
 
 var tenantKey = 'airline-demo-new'
 var registryServer = 'acrabarvalab001.azurecr.io'
+var identityDatabaseUsers = {
+  admin: 'mi-airdn-admin-lab-001'
+  ingest: 'mi-airdn-ingest-lab-001'
+  review: 'mi-airdn-review-lab-001'
+  publish: 'mi-airdn-publish-lab-001'
+  read: 'mi-airdn-read-lab-001'
+  evaluator: 'mi-airdn-evaluator-lab-001'
+}
 var jobs = [
   { name: 'job-airdn-backfill-lab', process: 'airline-demo-new-knowledge-backfill-v1', identityKey: 'ingest', stage: '15_backfill_replay' }
   { name: 'job-airdn-baseline-publish-lab', process: 'airline-demo-new-baseline-publish-v1', identityKey: 'publish', stage: '12_publish_baseline' }
@@ -50,12 +56,6 @@ resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
       registries: [
         { server: registryServer, identity: identityIds[job.identityKey] }
       ]
-      secrets: [
-        {
-          name: 'pg-admin-password'
-          value: postgresAdministratorLoginPassword
-        }
-      ]
     }
     template: {
       containers: [
@@ -77,9 +77,11 @@ resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
             { name: 'ABARVA_CONTAINER_IMAGE', value: imageName }
             { name: 'PGHOST', value: 'pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com' }
             { name: 'PGPORT', value: '5432' }
-            { name: 'PGUSER', value: 'airdn_admin' }
+            { name: 'PGUSER', value: identityDatabaseUsers[job.identityKey] }
             { name: 'PGDATABASE', value: 'abarva_airline_demo_new_knowledge_lab' }
-            { name: 'PGPASSWORD', secretRef: 'pg-admin-password' }
+            { name: 'PGSSLMODE', value: 'require' }
+            { name: 'ABARVA_POSTGRES_AAD_CLIENT_ID', value: identityClientIds[job.identityKey] }
+            { name: 'MANAGED_IDENTITY_CLIENT_ID', value: identityClientIds[job.identityKey] }
           ]
           resources: { cpu: json('0.5'), memory: '1Gi' }
         }

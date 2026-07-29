@@ -12,6 +12,8 @@
 
 Promotes the foundation-closure recovery lessons into the standard governed job runner and tenant execution packages. The runner now treats metric parity as a first-class governed process, blocks accidental in-memory execution fallback, verifies the runtime database boundary before writes, and sets tenant context for Postgres reads and writes so RLS-protected projections can be reconciled consistently.
 
+Follow-up correction: the runner can now acquire a PostgreSQL AAD token through the assigned managed identity when `PGPASSWORD` is not supplied, and the tenant job module uses identity-scoped database users instead of password-based job execution.
+
 ## Layer Impact
 
 - `client-data-lane`: strengthens tenant-scoped foundation jobs, publication/consumption reconciliation, and metric-parity audit execution. It does not apply review decisions or publish a new baseline by itself.
@@ -33,6 +35,7 @@ Promotes the foundation-closure recovery lessons into the standard governed job 
 - `scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs`
 - Foundation lab job topology manifests and Bicep job definitions.
 - Approved boundary snapshot image alignment.
+- Managed-identity database authentication for tenant execution jobs.
 
 ## QA / Validation
 
@@ -42,6 +45,7 @@ Promotes the foundation-closure recovery lessons into the standard governed job 
 - `npm run test:hcdn-job-runner` — passed across fourteen governed process contracts.
 - `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false` — passed after installing dependencies in the isolated recovery worktree.
 - `npm run release:check` — passed.
+- Follow-up validation: `az bicep build` for the tenant job module and main module — passed with pre-existing foundation-module linter warnings only.
 
 ## Rollout Plan
 
