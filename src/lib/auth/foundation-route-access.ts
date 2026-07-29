@@ -27,6 +27,29 @@ function metadataBoolean(
   return metadata?.[key] === true;
 }
 
+function foundationTenantKeyFromHistoricalAlias(
+  value: string | null | undefined,
+): FoundationTenantKey | null {
+  const normalized = value?.trim().toLowerCase().replace(/_/g, "-") ?? "";
+  if (!normalized) return null;
+  if (isFoundationTenantKey(normalized)) return normalized;
+  if (
+    normalized === "airline-demo" ||
+    normalized === "airline demo" ||
+    normalized.includes("airline")
+  ) {
+    return "airline-demo-new";
+  }
+  if (
+    normalized === "healthcare-demo" ||
+    normalized === "healthcare demo" ||
+    normalized.includes("healthcare")
+  ) {
+    return "healthcare-demo-new";
+  }
+  return null;
+}
+
 export function resolveFoundationTenantKeyFromMetadata(
   metadata: MetadataRecord | null | undefined,
 ): FoundationTenantKey | null {
@@ -42,6 +65,8 @@ export function resolveFoundationTenantKeyFromMetadata(
     metadataString(metadata, "tenantKey") ??
     metadataString(metadata, "clientId") ??
     metadataString(metadata, "defaultClientId");
+  const foundationAlias = foundationTenantKeyFromHistoricalAlias(rawTenantKey);
+  if (foundationAlias) return foundationAlias;
   const tenantKey = canonicalTenantKey(rawTenantKey ?? "");
   return isFoundationTenantKey(tenantKey) ? tenantKey : null;
 }
@@ -58,6 +83,8 @@ export function resolveFoundationTenantKeyFromSessionInput(input: {
     input.clientId,
     input.defaultClientId,
   ]) {
+    const foundationAlias = foundationTenantKeyFromHistoricalAlias(rawTenantKey);
+    if (foundationAlias) return foundationAlias;
     const tenantKey = canonicalTenantKey(rawTenantKey ?? "");
     if (isFoundationTenantKey(tenantKey)) return tenantKey;
   }

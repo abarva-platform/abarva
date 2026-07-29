@@ -27,6 +27,22 @@ describe("foundation route access", () => {
     ).toBeNull();
   });
 
+  it("maps historical Airline Demo labels to the new foundation tenant", () => {
+    expect(
+      resolveFoundationTenantKeyFromMetadata({
+        proofLogin: true,
+        tenantKey: "airline-demo",
+      }),
+    ).toBe("airline-demo-new");
+
+    expect(
+      resolveFoundationTenantKeyFromMetadata({
+        proofLogin: true,
+        clientId: "Airline Demo",
+      }),
+    ).toBe("airline-demo-new");
+  });
+
   it("allows only the governed Knowledge surface and supporting APIs", () => {
     expect(isFoundationRouteAllowed("/knowledge-preview")).toBe(true);
     expect(isFoundationRouteAllowed("/api/knowledge/consumption/foo")).toBe(
