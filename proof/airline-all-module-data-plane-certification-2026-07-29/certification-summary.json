@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T16:02:28.157Z",
+  "generatedAt": "2026-07-29T16:21:32.439Z",
   "foundationIdentity": {
     "tenantKey": "airline-demo-new",
     "baselineId": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
@@ -171,17 +171,17 @@
     },
     {
       "module": "Moves",
-      "classification": "partially_migrated_legacy_operational_risk",
-      "percentComplete": 35,
+      "classification": "partially_migrated_reference_fallbacks_fenced",
+      "percentComplete": 40,
       "routes": [
         "/api/v1/moves/*",
         "/api/programs/phase-gate"
       ],
-      "readProvider": "Operational adapters are mixed; generic reference fallbacks still exist",
+      "readProvider": "Operational adapters are mixed; board-grade reference fallbacks are blocked for governed foundation tenants",
       "writeProvider": "Tenant-aware programsWriteAdapter guard forces governed tenants to Azure/PostgreSQL",
       "database": "New Azure PostgreSQL not yet proven for all Airline operational state",
       "baselineBinding": "Required only when consuming enterprise context; not certified",
-      "fixtureDependency": "Reference-mode fallbacks exist when moveId is absent/inaccessible",
+      "fixtureDependency": "Board-grade reference-mode fallbacks are blocked for foundation tenants; other Moves fixtures still need route proof",
       "legacyDependency": "Program write seam is tenant-guarded; read/runtime route proof remains incomplete",
       "evidence": [
         {
@@ -191,13 +191,19 @@
           "found": true
         },
         {
-          "file": "src/app/api/v1/moves/board-grade-master-dossier/route.ts",
-          "marker": "REFERENCE MODE",
-          "note": "Board-grade routes retain reference/fallback behavior that must be disabled or certified for Airline.",
+          "file": "src/lib/programs/board-artifacts/board-grade-route-guard.ts",
+          "marker": "governed_foundation_tenant",
+          "note": "Shared board-grade route guard blocks reference decks for governed foundation tenants before rendering.",
+          "found": true
+        },
+        {
+          "file": "src/lib/programs/board-artifacts/__tests__/board-grade-route-guard.test.ts",
+          "marker": "blocks governed foundation tenants from board-grade reference fallbacks",
+          "note": "Regression proves governed foundation tenants cannot receive board-grade reference fallbacks.",
           "found": true
         }
       ],
-      "nextAction": "Certify Moves runtime routes and disable reference-mode fallbacks for governed Airline routes."
+      "nextAction": "Certify remaining Moves runtime routes and migrate/disable operational state paths that are not yet proven on the Airline data plane."
     },
     {
       "module": "Source",
@@ -387,6 +393,6 @@
   "completion": {
     "foundationPipeline": 100,
     "knowledgeActivation": 100,
-    "allModuleCertification": 46
+    "allModuleCertification": 47
   }
 }
