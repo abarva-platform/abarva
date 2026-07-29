@@ -90,6 +90,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
 
 # Use the built-in `node` user (uid 1000) for least-privilege runtime.
 # If a stricter uid:gid is required by the orchestrator, override via
@@ -126,7 +127,13 @@ COPY --from=build --chown=node:node /app/reports/candidate-invisibility-guard ./
 COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 
+RUN npx playwright install-deps chromium \
+ && mkdir -p /home/node/.cache/ms-playwright \
+ && chown -R node:node /home/node/.cache
+
 USER node
+
+RUN npx playwright install chromium
 
 EXPOSE 3000
 
