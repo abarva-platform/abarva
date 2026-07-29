@@ -34,6 +34,7 @@ Foundation-only proof users now land on the governed Knowledge preview route ins
 - Home route archive redirect; the old Home renderer is no longer mounted at `/home`.
 - Legacy Home child route archive redirects for `/home/v4-preview` and `/home/queue`.
 - Historical Airline Demo labels now resolve to the new foundation tenant before legacy aliases can map them to retired tenant data.
+- Known AbarVa launch-owner identities may inspect foundation preview APIs without becoming broad platform admins; tenant users still require exact foundation-proof metadata.
 - Clerk legacy-login disable dry-run/apply script.
 - Focused unit tests for routing, proxy metadata, and disable classification.
 
@@ -43,6 +44,7 @@ Foundation-only proof users now land on the governed Knowledge preview route ins
 - `NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit --pretty false` passed.
 - Hotfix validation repeated focused routing tests and full TypeScript after the hard `/home` archive redirect.
 - Follow-up validation archived remaining legacy Home child routes without changing Learn.
+- Access-gate follow-up validation added foundation-preview operator coverage and re-ran focused auth/routing tests: 19 passed.
 
 ## Rollout Plan
 
