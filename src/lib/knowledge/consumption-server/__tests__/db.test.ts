@@ -1,4 +1,8 @@
-import { resolveConsumptionDatabaseForTenant } from "../db";
+import { Pool } from "pg";
+import {
+  createPgConsumptionQuery,
+  resolveConsumptionDatabaseForTenant,
+} from "../db";
 
 describe("consumption server database resolution", () => {
   it("uses a tenant-scoped URL for governed tenant consumption reads", () => {
@@ -63,5 +67,41 @@ describe("consumption server database resolution", () => {
     ).toThrow(
       /Tenant-scoped consumption database URL is required for airline-demo-new/,
     );
+  });
+
+  it("binds and resets app.tenant_key for tenant-scoped RLS reads", async () => {
+    const calls: Array<{ sql: string; params: unknown[] | undefined }> = [];
+    const release = jest.fn();
+    const query = jest.fn(async (sql: string, params?: unknown[]) => {
+      calls.push({ sql, params });
+      if (sql === "SELECT 1 as value") return { rows: [{ value: 1 }] };
+      return { rows: [] };
+    });
+    const connect = jest
+      .spyOn(Pool.prototype, "connect")
+      .mockResolvedValue({ query, release } as never);
+
+    try {
+      const consumptionQuery = createPgConsumptionQuery(
+        { connectionString: "postgres://tenant:pass@private.example.com/db" },
+        "test-tenant-rls-binding",
+        { tenantKey: "airline-demo-new" },
+      );
+
+      await expect(consumptionQuery.rows("SELECT 1 as value")).resolves.toEqual(
+        [{ value: 1 }],
+      );
+    } finally {
+      connect.mockRestore();
+    }
+
+    expect(calls.map((call) => call.sql)).toEqual([
+      "SET TRANSACTION READ ONLY",
+      "SELECT set_config('app.tenant_key', $1, false)",
+      "SELECT 1 as value",
+      "RESET app.tenant_key",
+    ]);
+    expect(calls[1]?.params).toEqual(["airline-demo-new"]);
+    expect(release).toHaveBeenCalledTimes(1);
   });
 });

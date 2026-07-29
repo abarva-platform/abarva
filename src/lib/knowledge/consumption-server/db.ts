@@ -174,13 +174,25 @@ export function resolveConsumptionDatabaseForTenant(
 async function withClient<T>(
   config: PoolConfig,
   applicationName: string,
+  tenantKey: string | null,
   fn: (c: PoolClient) => Promise<T>,
 ): Promise<T> {
   const client = await getConsumptionPool(config, applicationName).connect();
   try {
     // Belt-and-braces: this connection is read-only for the request's lifetime.
     await client.query("SET TRANSACTION READ ONLY").catch(() => undefined);
-    return await fn(client);
+    if (tenantKey) {
+      await client.query("SELECT set_config('app.tenant_key', $1, false)", [
+        tenantKey,
+      ]);
+    }
+    try {
+      return await fn(client);
+    } finally {
+      if (tenantKey) {
+        await client.query("RESET app.tenant_key").catch(() => undefined);
+      }
+    }
   } finally {
     client.release();
   }
@@ -189,13 +201,19 @@ async function withClient<T>(
 export function createPgConsumptionQuery(
   config: PoolConfig,
   applicationName = "nexus-knowledge-consumption",
+  options: { tenantKey?: string | null } = {},
 ): ConsumptionQuery {
   return {
     async rows<T>(sql: string, params: unknown[] = []): Promise<T[]> {
-      return withClient(config, applicationName, async (c) => {
-        const r = await c.query(sql, params);
-        return r.rows as T[];
-      });
+      return withClient(
+        config,
+        applicationName,
+        options.tenantKey ?? null,
+        async (c) => {
+          const r = await c.query(sql, params);
+          return r.rows as T[];
+        },
+      );
     },
   };
 }
@@ -208,6 +226,7 @@ export function createTenantScopedConsumptionQuery(
   return createPgConsumptionQuery(
     resolved.config,
     `nexus-knowledge-consumption-${tenantKey}`,
+    { tenantKey },
   );
 }
 
@@ -220,6 +239,7 @@ export const pgConsumptionQuery: ConsumptionQuery = {
         "nexus-knowledge-consumption",
       ),
       "nexus-knowledge-consumption",
+      null,
       async (c) => {
         const r = await c.query(sql, params);
         return r.rows as T[];

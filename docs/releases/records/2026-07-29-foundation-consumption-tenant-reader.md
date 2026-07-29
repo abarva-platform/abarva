@@ -14,6 +14,12 @@ Foundation-preview tenants now use a tenant-scoped Knowledge consumption databas
 of silently reading the shared web database. If the tenant data-plane connection is not configured,
 the product fails clearly rather than making an active baseline appear empty.
 
+Follow-up production proof showed the tenant database, private DNS, managed identity token, and
+active baseline were all reachable, but row-level security hid the consumption rows unless the
+database session carried `app.tenant_key`. The tenant-scoped reader now binds and resets that
+session setting around every query so governed projections are visible only for the requested
+tenant.
+
 ## Layer Impact
 
 - Layer 3 Canonical Enterprise Model: no canonical data is changed.
@@ -35,11 +41,13 @@ the product fails clearly rather than making an active baseline appear empty.
 - `src/lib/knowledge/consumption-server/index.ts`
 - `src/app/api/knowledge/consumption/_shared.ts`
 - `src/lib/knowledge/consumption-server/__tests__/db.test.ts`
+- `scripts/auth/prime-foundation-preview-session.ts`
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/knowledge/consumption-server/__tests__/db.test.ts src/lib/knowledge/consumption-server/__tests__/reader.test.ts --runInBand`
 - Pass: `npx tsc --noEmit`
+- Pending: signed-in Airline proof after the RLS binding deploy.
 
 ## Rollout Plan
 
@@ -73,5 +81,5 @@ identity from the shared web Container App.
 
 ## Known Gaps
 
-The code path is ready, but production proof still requires private network/DNS connectivity and a
-tenant read identity projected into the web runtime.
+Production proof still requires a post-deploy signed-in Airline run proving the HTTP provider reads
+the active baseline through the tenant-scoped RLS context.
