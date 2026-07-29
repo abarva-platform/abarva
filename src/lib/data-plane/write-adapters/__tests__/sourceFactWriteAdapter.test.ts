@@ -5,6 +5,7 @@
 import {
   createSupabaseSourceFactWriteAdapter,
   createAzureSourceFactWriteAdapter,
+  selectSourceFactWriteAdapter,
 } from "../sourceFactWriteAdapter";
 import type { SourceEventFactInsert } from "@/lib/source/facts/fact-types";
 import type { PostgresCompatClient } from "@/lib/data-plane/postgresCompat";
@@ -31,6 +32,34 @@ function fact(
     ...overrides,
   };
 }
+
+describe("selectSourceFactWriteAdapter", () => {
+  const original = process.env.ABARVA_DATA_PLANE;
+  afterEach(() => {
+    if (original === undefined) delete process.env.ABARVA_DATA_PLANE;
+    else process.env.ABARVA_DATA_PLANE = original;
+  });
+
+  it("keeps the legacy default for ordinary tenants", () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectSourceFactWriteAdapter(undefined, "lakeshore").name).toBe(
+      "supabase",
+    );
+  });
+
+  it("forces governed foundation tenants onto Azure", () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(
+      selectSourceFactWriteAdapter(undefined, "airline-demo-new").name,
+    ).toBe("azure-postgres");
+  });
+
+  it("fails closed when a governed foundation tenant is explicitly routed to Supabase", () => {
+    expect(() =>
+      selectSourceFactWriteAdapter("supabase", "airline-demo-new"),
+    ).toThrow(/cannot use supabase/);
+  });
+});
 
 describe("Supabase source-fact write adapter", () => {
   it("inserts the batch as a single .insert([...]) call", async () => {

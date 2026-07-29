@@ -34,6 +34,8 @@ This release adds the first controlled certification package for proving whether
 - Updates `/api/knowledge/ava` so governed foundation tenants bind to the active server-side consumption envelope before model invocation.
 - Adds npm commands for the two proof scripts.
 - Updates the read-only runtime DB proof script to inspect the deployed baseline row shape and projection relation availability instead of assuming every optional proof column exists.
+- Adds tenant-aware data-plane selection for governed foundation tenants. Legacy tenants keep the historical default, but foundation tenants resolve module write seams to Azure PostgreSQL by tenant key and fail closed if explicitly routed to Supabase.
+- Threads tenant keys through the obvious Moves/Programs and Source write selectors so governed tenant operations cannot silently choose the legacy write plane.
 
 ## QA / Validation
 
@@ -44,6 +46,7 @@ This release adds the first controlled certification package for proving whether
 - Pass: `npx tsc --noEmit`
 - Pass: `npm run release:check`
 - Pass: deployed read-only proof script syntax after schema-tolerant update: `node --check scripts/qa/airline-module-runtime-db-proof.mjs`
+- Pass: governed tenant write-plane selector regression tests for Source writes, Source facts, Source artifacts, and Moves/Programs writes.
 
 Live signed-in proof and read-only VNet database proof are required after deployment before any all-module migration closure claim.
 
@@ -72,7 +75,8 @@ Rollback the ACA web runtime to the previous digest if the aVa route or Knowledg
 - Jest regression for server-side aVa baseline binding.
 - Post-deploy ACA digest and signed-in proof bundle to be appended after deployment.
 - Runtime DB proof script now reports missing projection relations as proof findings instead of aborting on optional-column drift.
+- Tenant-aware write-plane guard tests cover Source writes, Source facts, Source artifacts, and Moves/Programs writes.
 
 ## Known Gaps
 
-This release does not complete all-module migration. It identifies partial/legacy module paths and adds proof tooling. Moves, Source, Tower, Intelligence, Cube, Superset, Observable, and Admin still require module-by-module runtime proof or follow-up migration before the foundation tenant can be called fully migrated.
+This release does not complete all-module migration. It identifies partial/legacy module paths and adds proof tooling. The follow-up guard closes a class of accidental Supabase fallback for governed Source and Moves write seams, but Tower, Intelligence, Cube, Superset, Observable, and Admin still require module-by-module runtime proof or follow-up migration before the foundation tenant can be called fully migrated.

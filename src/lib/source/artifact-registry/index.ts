@@ -378,7 +378,10 @@ export async function registerSourceArtifactUpload(
   // callers — the artifacts/generate and artifacts/upload routes — migrate at
   // once. Supabase stays the default; Azure is opt-in via `ABARVA_DATA_PLANE`.
   // Validation, MIME/size guardrails and row→record mapping stay helper-side.
-  const written = await selectSourceArtifactsWriteAdapter().insertArtifact(
+  const written = await selectSourceArtifactsWriteAdapter(
+    undefined,
+    input.tenantKey,
+  ).insertArtifact(
     {
       ...(input.artifactId ? { id: input.artifactId } : {}),
       tenant_key: input.tenantKey,

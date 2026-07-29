@@ -400,7 +400,10 @@ export async function POST(request: NextRequest) {
       // 3. UPDATE engagements.current_phase and gates_passed — routed through
       // the data-plane write seam (Slice 3a). The engagement-row lookup above
       // is read-only and now uses the Packet 30 read plane.
-      const ok = await selectProgramsWriteAdapter().advanceEngagementPhase({
+      const ok = await selectProgramsWriteAdapter(
+        undefined,
+        ownerKey,
+      ).advanceEngagementPhase({
         engagementId,
         toPhase,
         gatesPassed: updatedGates,

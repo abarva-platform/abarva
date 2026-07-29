@@ -35,7 +35,7 @@ import {
   type ExtractionReceipt,
 } from "@/lib/programs/discovery/extraction-planner";
 import type { ExtractedProgramEvidence } from "@/lib/programs/evidence-ingestion";
-import { resolveDataPlane } from "@/lib/data-plane/read-adapters/resolveDataPlane";
+import { resolveDataPlaneForTenant } from "@/lib/data-plane/read-adapters/resolveDataPlane";
 import {
   appendDeliverableLifecycleEvent,
   getAuthoritativeVersion as resolveAuthoritativeVersion,
@@ -49,12 +49,16 @@ import {
  * the pre-seam helper's. The Azure path ignores the client (it has its own
  * transactional session) and is opt-in via `ABARVA_DATA_PLANE`.
  */
-function programsWriteAdapter(supabase?: SupabaseClient): ProgramsWriteAdapter {
-  if (resolveDataPlane() === "azure-postgres")
-    return selectProgramsWriteAdapter();
+function programsWriteAdapter(
+  ctx: TenancyCtx,
+  supabase?: SupabaseClient,
+): ProgramsWriteAdapter {
+  if (resolveDataPlaneForTenant(ctx.clientKey) === "azure-postgres") {
+    return selectProgramsWriteAdapter(undefined, ctx.clientKey);
+  }
   return supabase
     ? createSupabaseProgramsWriteAdapter(() => supabase)
-    : selectProgramsWriteAdapter("supabase");
+    : selectProgramsWriteAdapter("supabase", ctx.clientKey);
 }
 
 function assertTenancy(ctx: TenancyCtx): void {
@@ -342,7 +346,7 @@ export async function advancePhase(
       ? input.discoveryPlan
       : null;
 
-  const written = await programsWriteAdapter(opts.supabase).runAdvancePhase({
+  const written = await programsWriteAdapter(ctx, opts.supabase).runAdvancePhase({
     programId: input.programId,
     clientId: ctx.clientId,
     userId: ctx.userId,
@@ -509,6 +513,7 @@ export async function applyUploadedEvidenceToMove(
   );
 
   const written = await programsWriteAdapter(
+    ctx,
     opts.supabase,
   ).updateEngagementCharter({
     programId: input.programId,
