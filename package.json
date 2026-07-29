@@ -50,6 +50,7 @@
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
     "test:hcdn-job-runner": "node scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs",
+    "test:foundation-pipeline-preflight": "node scripts/knowledge/__tests__/run-foundation-pipeline-preflight-tests.mjs",
     "generate:hcdn-security-plan": "node scripts/knowledge/build-phase2b3c-security-plan.mjs",
     "test:hcdn-security-plan": "node scripts/knowledge/__tests__/run-phase2b3c-security-plan-tests.mjs",
     "generate:hcdn-postgres-plan": "node scripts/knowledge/build-phase2b3c-postgres-plan.mjs",
