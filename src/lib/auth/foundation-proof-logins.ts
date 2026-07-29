@@ -39,7 +39,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     slug: "agent-airline-foundation",
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
-    email: "airline-foundation-agent@abarva.example.com",
+    email: "airline-foundation-agent@abarva.ai",
     firstName: "Ava",
     lastName: "Agent",
     personaKind: "automation_agent",
