@@ -78,3 +78,5 @@ describe('GET /api/v1/programs/[programId]', () => {
     await expect(res.json()).resolves.toEqual({ error: 'not_found' });
   });
 });
+
+export {};

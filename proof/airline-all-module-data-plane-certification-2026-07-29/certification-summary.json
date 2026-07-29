@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T15:42:31.268Z",
+  "generatedAt": "2026-07-29T16:02:28.157Z",
   "foundationIdentity": {
     "tenantKey": "airline-demo-new",
     "baselineId": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
@@ -201,8 +201,8 @@
     },
     {
       "module": "Source",
-      "classification": "partially_migrated_legacy_operational_risk",
-      "percentComplete": 40,
+      "classification": "partially_migrated_legacy_routes_fenced",
+      "percentComplete": 45,
       "routes": [
         "/api/v1/source/*",
         "/source"
@@ -212,7 +212,7 @@
       "database": "New Azure PostgreSQL not yet proven for every Source operational table",
       "baselineBinding": "Required for Knowledge handoff; not certified end-to-end",
       "fixtureDependency": "Source fixture views and event-instance fixtures remain in code",
-      "legacyDependency": "Source write seams are tenant-guarded; old SkyHarbor-specific routes remain disabled/unavailable for Airline until certified",
+      "legacyDependency": "Source write seams are tenant-guarded; legacy fixture-specific routes are regression-proven unavailable for the governed tenant where directly targeted",
       "evidence": [
         {
           "file": "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
@@ -225,14 +225,20 @@
           "marker": "skyharbor-air",
           "note": "A Source route still has an explicit SkyHarbor fallback and must not serve governed Airline.",
           "found": true
+        },
+        {
+          "file": "src/app/api/v1/source/[eventId]/contract-optimization/brief/__tests__/route.test.ts",
+          "marker": "does not serve a legacy fixture-specific contract-optimization pack for governed foundation events",
+          "note": "Regression proves a legacy fixture-specific contract-optimization pack is unavailable for governed foundation tenant requests.",
+          "found": true
         }
       ],
-      "nextAction": "Certify Source runtime routes and prove old fixture/default routes fail explicitly for Airline."
+      "nextAction": "Certify remaining Source runtime routes and migrate/disable operational state paths that are not yet proven on the Airline data plane."
     },
     {
       "module": "Tower",
-      "classification": "partially_migrated_legacy_operational_risk",
-      "percentComplete": 40,
+      "classification": "partially_migrated_demo_writes_fenced",
+      "percentComplete": 45,
       "routes": [
         "/api/tower/*",
         "/tower"
@@ -241,8 +247,8 @@
       "writeProvider": "Tower value-state and ingest paths use direct DATABASE_URL/Azure clients",
       "database": "New Azure PostgreSQL not yet proven for all Tower operational state",
       "baselineBinding": "Required for governed enterprise context; metrics remain Tower-owned operational projections",
-      "fixtureDependency": "Static seeded vendor/portfolio and deterministic views remain",
-      "legacyDependency": "Aggregate/enterprise-summary seams are tenant-guarded; seeded deterministic Tower views remain to be disabled or proven unavailable for Airline",
+      "fixtureDependency": "Static seeded vendor/portfolio and deterministic views remain; demo seed/reset writes are blocked for foundation tenants",
+      "legacyDependency": "Aggregate/enterprise-summary seams are tenant-guarded; seeded deterministic Tower read views remain to be disabled or proven unavailable for Airline",
       "evidence": [
         {
           "file": "src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts",
@@ -261,9 +267,21 @@
           "marker": "V7",
           "note": "Legacy V7 projection path remains and needs migration/sunset proof for Airline.",
           "found": true
+        },
+        {
+          "file": "src/app/api/tower/seed-demo/route.ts",
+          "marker": "governed_foundation_tenant",
+          "note": "Tower demo seed/reset route fails closed for governed foundation tenants before admin role checks or demo writes.",
+          "found": true
+        },
+        {
+          "file": "src/app/api/tower/__tests__/seed-demo-route.test.ts",
+          "marker": "blocks demo seeding for governed foundation tenants",
+          "note": "Regression proves Airline cannot seed or reset Tower demo data through the legacy demo route.",
+          "found": true
         }
       ],
-      "nextAction": "Certify Tower runtime routes and disable or prove unavailable any seeded deterministic Tower views for Airline."
+      "nextAction": "Certify Tower runtime routes and disable or prove unavailable any remaining seeded deterministic Tower read views for Airline."
     },
     {
       "module": "Admin / Platform",
@@ -369,6 +387,6 @@
   "completion": {
     "foundationPipeline": 100,
     "knowledgeActivation": 100,
-    "allModuleCertification": 45
+    "allModuleCertification": 46
   }
 }
