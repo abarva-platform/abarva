@@ -4,4 +4,4 @@ virtual_network_name,"private Postgres, private storage, ACA job integration",mi
 subnet_names,"Container Apps environment, private endpoints, database/storage isolation",missing from approved 3A.2 artifacts inspected by this builder,Do not create public database or storage access as a workaround.
 container_apps_environment,ACA job placement,missing from approved 3A.2 artifacts inspected by this builder,Do not use an existing shared app environment without explicit approval.
 log_analytics_workspace,job execution ledger and operations evidence,missing from approved 3A.2 artifacts inspected by this builder,Do not run unobservable mutation jobs.
-three_processes_without_reserved_job_names,complete 13-process orchestration,"baseline publication, Home read-model refresh, and reconciliation audit have approved process names but no reserved ACA job names in the ten-job list",Do not collapse these into another job without explicit orchestration decision.
+job_topology_resolved_in_current_plan,complete 14-process orchestration,"current plan reserves dedicated jobs through metric parity",Do not collapse these into another job without explicit orchestration decision.

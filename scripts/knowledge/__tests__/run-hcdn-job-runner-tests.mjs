@@ -72,12 +72,12 @@ function argvFor(contract, mode = "preflight", extra = []) {
   ];
 }
 
-await test("exactly thirteen tenant-neutral process contracts are registered", () => {
-  assert.equal(PROCESS_CONTRACTS.length, 13);
-  assert.equal(new Set(PROCESS_CONTRACTS.map((contract) => contract.suffix)).size, 13);
+await test("exactly fourteen tenant-neutral process contracts are registered", () => {
+  assert.equal(PROCESS_CONTRACTS.length, 14);
+  assert.equal(new Set(PROCESS_CONTRACTS.map((contract) => contract.suffix)).size, 14);
 });
 
-await test("all thirteen process contracts pass preflight and write a standard audit envelope", async () => {
+await test("all fourteen process contracts pass preflight and write a standard audit envelope", async () => {
   for (const contract of PROCESS_CONTRACTS) {
     const envelope = await runJobRunner({
       argv: argvFor(contract, "preflight"),
@@ -95,7 +95,7 @@ await test("all thirteen process contracts pass preflight and write a standard a
   }
 });
 
-await test("all thirteen process contracts pass no-op dispatch without network access", async () => {
+await test("all fourteen process contracts pass no-op dispatch without network access", async () => {
   for (const contract of PROCESS_CONTRACTS) {
     let networkCalls = 0;
     const envelope = await runJobRunner({
@@ -337,6 +337,67 @@ await test("review execute fails closed without explicit review decisions", asyn
   assert.equal(envelope.status, "failed_process");
   assert.equal(envelope.error.code, "process_verification_failed");
   assert.ok(envelope.error.details.blockers.includes("no_explicit_accepted_review_decisions"));
+});
+
+await test("metric parity is a first-class governed process", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "metric-parity-v1");
+  const store = new InMemoryKnowledgeExecutionStore({
+    baselines: [{ tenantKey, knowledgeBaselineRef: "baseline:current", isActive: true }],
+    metricParity: {
+      knowledgeBaselineRef: "baseline:current",
+      passedCount: 4,
+      failedCount: 0,
+      notApplicableCount: 4,
+      measures: [{ measure: "application_count", cube: 10, canonical: 10, state: "passed" }],
+    },
+  });
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute"),
+    env: { ...envFor(contract), ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB" },
+    stdout: false,
+    store,
+  });
+  assert.equal(envelope.status, "process_passed");
+  assert.equal(envelope.processExecution.outputCount, 8);
+  assert.equal(envelope.processExecution.conflictCount, 0);
+});
+
+await test("metric parity fails closed on mismatched measures", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "metric-parity-v1");
+  const store = new InMemoryKnowledgeExecutionStore({
+    baselines: [{ tenantKey, knowledgeBaselineRef: "baseline:current", isActive: true }],
+    metricParity: {
+      knowledgeBaselineRef: "baseline:current",
+      passedCount: 3,
+      failedCount: 1,
+      notApplicableCount: 4,
+      measures: [{ measure: "vendor_count", cube: 4, canonical: 5, state: "failed" }],
+    },
+  });
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute"),
+    env: { ...envFor(contract), ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB" },
+    stdout: false,
+    store,
+  });
+  assert.equal(envelope.status, "failed_process");
+  assert.ok(envelope.error.details.blockers.includes("metric_parity_failed"));
+});
+
+await test("execute mode blocks in-memory default store fallback", async () => {
+  const contract = PROCESS_CONTRACTS.find((item) => item.suffix === "metric-parity-v1");
+  const envelope = await runJobRunner({
+    argv: argvFor(contract, "execute"),
+    env: {
+      ...envFor(contract),
+      ABARVA_HCDN_EXECUTE_ACK: "EXECUTE_SHARED_TENANT_JOB",
+      ABARVA_HCDN_USE_IN_MEMORY_STORE: "true",
+    },
+    stdout: false,
+  });
+  assert.equal(envelope.status, "failed_guard");
+  assert.equal(envelope.error.code, "in_memory_store_execute_blocked");
+  assert.equal(envelope.networkAccessAttempted, true);
 });
 
 await test("rolling digest-pinned runtime images pass without strict image lock", async () => {

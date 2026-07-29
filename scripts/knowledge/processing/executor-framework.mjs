@@ -13,6 +13,53 @@ const RUN_STATES = new Set(["planned", "running", "passed", "failed", "cancelled
 const RESTRICTED_HIDDEN_TRUTH_MARKER =
   "(restricted[_ -]?evaluator|evaluator[_ -]?only|hidden[_ -]?truth|hidden[_ -]?canonical|not[_ -]?parser[_ -]?visible)";
 const RESTRICTED_HIDDEN_TRUTH_REGEX = new RegExp(RESTRICTED_HIDDEN_TRUTH_MARKER, "i");
+const METRIC_PARITY_MEASURES = Object.freeze([
+  {
+    measure: "application_count",
+    table: "application_inventory_v1",
+    canonicalSql:
+      "SELECT count(*)::int AS n FROM knowledge.entity WHERE tenant_key=$1 AND authority_state='accepted' AND entity_type ILIKE '%application%'",
+  },
+  {
+    measure: "critical_application_count",
+    table: "application_inventory_v1",
+    where: "payload->>'criticality' = 'critical'",
+  },
+  {
+    measure: "end_of_life_application_count",
+    table: "application_inventory_v1",
+    where: "payload->>'lifecycle_state' = 'end_of_life'",
+  },
+  {
+    measure: "data_product_count",
+    table: "data_product_inventory_v1",
+  },
+  {
+    measure: "vendor_count",
+    table: "vendor_contract_inventory_v1",
+    canonicalSql:
+      "SELECT count(*)::int AS n FROM knowledge.entity WHERE tenant_key=$1 AND authority_state='accepted' AND entity_type ILIKE '%vendor%'",
+  },
+  {
+    measure: "accepted_relationship_count",
+    table: "relationship_edge_v1",
+    where: "authority_state = 'accepted'",
+    canonicalSql:
+      "SELECT count(*)::int AS n FROM knowledge.relationship_assertion WHERE tenant_key=$1 AND authority_state='accepted'",
+  },
+  {
+    measure: "open_critical_gap_count",
+    table: "evidence_gap_v1",
+    where: "payload->>'severity' = 'critical'",
+    canonicalSql:
+      "SELECT count(*)::int AS n FROM governance.evidence_gap WHERE tenant_key=$1 AND severity='critical'",
+  },
+  {
+    measure: "program_at_risk_count",
+    table: "domain_summary_v1",
+    where: "payload->>'availabilityState' = 'conflicting'",
+  },
+]);
 
 export class KnowledgeProcessError extends Error {
   constructor(code, message, details = {}) {
@@ -106,6 +153,14 @@ export class InMemoryKnowledgeExecutionStore {
     this.baselines = seed.baselines ?? [];
     this.projections = seed.projections ?? [];
     this.reconciliationLedger = seed.reconciliationLedger ?? [];
+    this.metricParity = seed.metricParity ?? {
+      knowledgeBaselineRef: seed.baselines?.find?.((row) => row.isActive)?.knowledgeBaselineRef ?? "baseline:test",
+      passedCount: 0,
+      failedCount: 0,
+      notApplicableCount: 0,
+      mutatedKnowledge: false,
+      measures: [],
+    };
     this.outputs = [];
   }
 
@@ -390,6 +445,17 @@ export class InMemoryKnowledgeExecutionStore {
     this.reconciliationLedger.push(result);
     return result;
   }
+
+  async runMetricParityAudit() {
+    return {
+      knowledgeBaselineRef: this.metricParity.knowledgeBaselineRef,
+      passedCount: this.metricParity.passedCount ?? 0,
+      failedCount: this.metricParity.failedCount ?? 0,
+      notApplicableCount: this.metricParity.notApplicableCount ?? 0,
+      mutatedKnowledge: false,
+      measures: this.metricParity.measures ?? [],
+    };
+  }
 }
 
 export class PostgresKnowledgeExecutionStore {
@@ -401,7 +467,7 @@ export class PostgresKnowledgeExecutionStore {
   async acquireRunLock(context) {
     await this.client.query("BEGIN");
     this.inTransaction = true;
-    await this.client.query("SELECT set_config('app.tenant_key', $1, true)", [context.tenantKey]);
+    await this.client.query("SELECT set_config('app.tenant_key', $1, false)", [context.tenantKey]);
     await this.client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
       `${context.tenantKey}:${context.processName}:${context.idempotencyKey}`,
     ]);
@@ -506,7 +572,7 @@ export class PostgresKnowledgeExecutionStore {
     this.inTransaction = false;
     await this.client.query("BEGIN");
     this.inTransaction = true;
-    await this.client.query("SELECT set_config('app.tenant_key', $1, true)", [context.tenantKey]);
+    await this.client.query("SELECT set_config('app.tenant_key', $1, false)", [context.tenantKey]);
     await this.client.query(
       `
         INSERT INTO operations.run (
@@ -2081,6 +2147,71 @@ export class PostgresKnowledgeExecutionStore {
       conflicted: 0,
       notReconstructed: 0,
       notExpectedFromVisibleSources: 0,
+      mutatedKnowledge: false,
+    };
+  }
+
+  async runMetricParityAudit(context) {
+    const baseline = await this.activeBaseline(context);
+    if (!baseline) {
+      return { knowledgeBaselineRef: null, passedCount: 0, failedCount: 0, notApplicableCount: 0, measures: [], mutatedKnowledge: false };
+    }
+
+    const count = async (sql, params) => {
+      const result = await this.client.query(sql, params);
+      return Number(result.rows[0]?.n ?? 0);
+    };
+    const results = [];
+    for (const metric of METRIC_PARITY_MEASURES) {
+      const whereClause = metric.where ? ` AND ${metric.where}` : "";
+      const cube = await count(
+        `SELECT count(*)::int AS n FROM consumption.${metric.table} WHERE tenant_key=$1 AND knowledge_baseline_ref=$2${whereClause}`,
+        [context.tenantKey, baseline.knowledge_baseline_ref],
+      );
+      const canonical = metric.canonicalSql ? await count(metric.canonicalSql, [context.tenantKey]) : null;
+      const state = metric.canonicalSql ? (cube === canonical ? "passed" : "failed") : "not_applicable";
+      results.push({ measure: metric.measure, cube, canonical, state });
+
+      if (state !== "not_applicable") {
+        await this.client.query(
+          `
+            INSERT INTO consumption.consumer_reconciliation_ledger (
+              tenant_key, reconciliation_ref, knowledge_baseline_ref, projection_name,
+              canonical_hash, cube_hash, canonical_count, cube_count,
+              reconciliation_state, checked_run_ref, checked_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+            ON CONFLICT (tenant_key, reconciliation_ref)
+            DO UPDATE SET canonical_hash=EXCLUDED.canonical_hash,
+              cube_hash=EXCLUDED.cube_hash,
+              canonical_count=EXCLUDED.canonical_count,
+              cube_count=EXCLUDED.cube_count,
+              reconciliation_state=EXCLUDED.reconciliation_state,
+              checked_run_ref=EXCLUDED.checked_run_ref,
+              checked_at=now()
+          `,
+          [
+            context.tenantKey,
+            `parity:${context.tenantKey}:${metric.measure}`,
+            baseline.knowledge_baseline_ref,
+            metric.measure,
+            sha256Value({ measure: metric.measure, canonical }),
+            sha256Value({ measure: metric.measure, cube }),
+            canonical,
+            cube,
+            state,
+            context.runId,
+          ],
+        );
+      }
+    }
+
+    return {
+      knowledgeBaselineRef: baseline.knowledge_baseline_ref,
+      passedCount: results.filter((result) => result.state === "passed").length,
+      failedCount: results.filter((result) => result.state === "failed").length,
+      notApplicableCount: results.filter((result) => result.state === "not_applicable").length,
+      measures: results,
       mutatedKnowledge: false,
     };
   }

@@ -21,6 +21,7 @@ var jobs = [
   { name: 'job-hcdn-home-readmodel-lab', process: 'hc-demo-new-home-readmodel-v1', identityName: 'mi-hcdn-publish-lab-001', stage: '14_refresh_home_readmodel' }
   { name: 'job-hcdn-backfill-lab', process: 'hc-demo-new-knowledge-backfill-v1', identityName: 'mi-hcdn-ingest-lab-001', stage: '15_backfill_replay' }
   { name: 'job-hcdn-reconcile-audit-lab', process: 'hc-demo-new-reconciliation-audit-v1', identityName: 'mi-hcdn-evaluator-lab-001', stage: '16_reconciliation_audit' }
+  { name: 'job-hcdn-metric-parity-lab', process: 'hc-demo-new-metric-parity-v1', identityName: 'mi-hcdn-evaluator-lab-001', stage: '17_cube_metric_parity' }
 ]
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' existing = {

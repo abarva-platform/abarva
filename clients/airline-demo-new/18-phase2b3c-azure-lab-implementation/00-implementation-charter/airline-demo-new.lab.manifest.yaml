@@ -40,33 +40,34 @@ container_image:
   image_digest: sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
   image: acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
 managed_identities:
-    ingest: mi-airdn-ingest-lab-001
-    review: mi-airdn-review-lab-001
-    publish: mi-airdn-publish-lab-001
-    read: mi-airdn-read-lab-001
-    evaluator: mi-airdn-evaluator-lab-001
-    admin: mi-airdn-admin-lab-001
+  ingest: mi-airdn-ingest-lab-001
+  review: mi-airdn-review-lab-001
+  publish: mi-airdn-publish-lab-001
+  read: mi-airdn-read-lab-001
+  evaluator: mi-airdn-evaluator-lab-001
+  admin: mi-airdn-admin-lab-001
 database_roles:
-    ingest: airline_demo_new_ingest
-    review: airline_demo_new_reviewer
-    publish: airline_demo_new_publisher
-    read: airline_demo_new_reader
-    evaluator: airline_demo_new_evaluator
-    admin: airline_demo_new_admin
+  ingest: airline_demo_new_ingest
+  review: airline_demo_new_reviewer
+  publish: airline_demo_new_publisher
+  read: airline_demo_new_reader
+  evaluator: airline_demo_new_evaluator
+  admin: airline_demo_new_admin
 container_apps_jobs:
-    job-airdn-source-register-lab: job-airdn-source-register-lab
-    job-airdn-source-parse-lab: job-airdn-source-parse-lab
-    job-airdn-evidence-extract-lab: job-airdn-evidence-extract-lab
-    job-airdn-normalize-lab: job-airdn-normalize-lab
-    job-airdn-entity-resolve-lab: job-airdn-entity-resolve-lab
-    job-airdn-validate-lab: job-airdn-validate-lab
-    job-airdn-review-apply-lab: job-airdn-review-apply-lab
-    job-airdn-domain-publish-lab: job-airdn-domain-publish-lab
-    job-airdn-baseline-publish-lab: job-airdn-baseline-publish-lab
-    job-airdn-projection-build-lab: job-airdn-projection-build-lab
-    job-airdn-home-readmodel-lab: job-airdn-home-readmodel-lab
-    job-airdn-backfill-lab: job-airdn-backfill-lab
-    job-airdn-reconcile-audit-lab: job-airdn-reconcile-audit-lab
+  job-airdn-source-register-lab: job-airdn-source-register-lab
+  job-airdn-source-parse-lab: job-airdn-source-parse-lab
+  job-airdn-evidence-extract-lab: job-airdn-evidence-extract-lab
+  job-airdn-normalize-lab: job-airdn-normalize-lab
+  job-airdn-entity-resolve-lab: job-airdn-entity-resolve-lab
+  job-airdn-validate-lab: job-airdn-validate-lab
+  job-airdn-review-apply-lab: job-airdn-review-apply-lab
+  job-airdn-domain-publish-lab: job-airdn-domain-publish-lab
+  job-airdn-baseline-publish-lab: job-airdn-baseline-publish-lab
+  job-airdn-projection-build-lab: job-airdn-projection-build-lab
+  job-airdn-home-readmodel-lab: job-airdn-home-readmodel-lab
+  job-airdn-backfill-lab: job-airdn-backfill-lab
+  job-airdn-reconcile-audit-lab: job-airdn-reconcile-audit-lab
+  job-airdn-metric-parity-lab: job-airdn-metric-parity-lab
 safety:
   allow_tenant_all: false
   expected_tenant_key: airline-demo-new

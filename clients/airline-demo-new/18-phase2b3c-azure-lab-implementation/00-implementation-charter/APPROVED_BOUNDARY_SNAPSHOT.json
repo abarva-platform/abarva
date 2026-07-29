@@ -24,8 +24,8 @@
     "registry_resource_id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
     "registry_hostname": "acrabarvalab001.azurecr.io",
     "repository": "abarva/web",
-    "image_digest": "sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f",
-    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f"
+    "image_digest": "sha256:56d2b4b3abb4ebadb2758beb0ba9fb4ec31946ee890fadcc7b2cd9c74fd39164",
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:56d2b4b3abb4ebadb2758beb0ba9fb4ec31946ee890fadcc7b2cd9c74fd39164"
   },
   "managed_identities": [
     {
@@ -85,8 +85,8 @@
     "registryResourceId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001",
     "registryHostname": "acrabarvalab001.azurecr.io",
     "repository": "abarva/web",
-    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f",
-    "digest": "sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f"
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:56d2b4b3abb4ebadb2758beb0ba9fb4ec31946ee890fadcc7b2cd9c74fd39164",
+    "digest": "sha256:56d2b4b3abb4ebadb2758beb0ba9fb4ec31946ee890fadcc7b2cd9c74fd39164"
   },
   "managedIdentities": {
     "ingest": "mi-airdn-ingest-lab-001",

@@ -80,6 +80,11 @@ const PROCESS_ORDER = Object.freeze({
     outputs: ["restricted evaluator audit results only"],
     prerequisites: ["published baseline", "evaluator identity", "restricted hidden truth"],
   },
+  "metric-parity-v1": {
+    stage: "metric_parity",
+    outputs: ["Cube/Postgres metric parity ledger"],
+    prerequisites: ["active knowledge baseline", "baseline-versioned consumption projections", "evaluator identity"],
+  },
 });
 
 export function assertTerminalSourceState(state) {
@@ -563,6 +568,16 @@ const GENERIC_STORE_OPERATIONS = Object.freeze({
   "projection-build-v1": ["buildConsumptionProjections", "consumption projections built from active baseline", (op) => (op.rowCount > 0 ? [] : ["no_active_baseline_projection_rows"])],
   "home-readmodel-v1": ["verifyHomeReadModel", "Home read model projections verified", (op) => (op.enterpriseBriefRows + op.searchRows + op.relationshipRows > 0 ? [] : ["home_read_model_empty"])],
   "reconciliation-audit-v1": ["runReconciliationAudit", "evaluator reconciliation wrote audit-only results", (op) => (op.mutatedKnowledge ? ["evaluator_mutated_knowledge"] : op.knowledgeBaselineRef ? [] : ["no_published_baseline_to_reconcile"])],
+  "metric-parity-v1": [
+    "runMetricParityAudit",
+    "Cube/Postgres metric parity wrote governed results",
+    (op) => {
+      const blockers = [];
+      if (!op.knowledgeBaselineRef) blockers.push("no_published_baseline_for_metric_parity");
+      if (op.failedCount > 0) blockers.push("metric_parity_failed");
+      return blockers;
+    },
+  ],
 });
 
 function createSourceRegisterHandler() {

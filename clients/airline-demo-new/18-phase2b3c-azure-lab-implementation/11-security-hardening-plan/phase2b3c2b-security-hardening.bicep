@@ -21,6 +21,7 @@ var jobs = [
   { name: 'job-airdn-home-readmodel-lab', process: 'airline-demo-new-home-readmodel-v1', identityName: 'mi-airdn-publish-lab-001', stage: '14_refresh_home_readmodel' }
   { name: 'job-airdn-backfill-lab', process: 'airline-demo-new-knowledge-backfill-v1', identityName: 'mi-airdn-ingest-lab-001', stage: '15_backfill_replay' }
   { name: 'job-airdn-reconcile-audit-lab', process: 'airline-demo-new-reconciliation-audit-v1', identityName: 'mi-airdn-evaluator-lab-001', stage: '16_reconciliation_audit' }
+  { name: 'job-airdn-metric-parity-lab', process: 'airline-demo-new-metric-parity-v1', identityName: 'mi-airdn-evaluator-lab-001', stage: '17_cube_metric_parity' }
 ]
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' existing = {

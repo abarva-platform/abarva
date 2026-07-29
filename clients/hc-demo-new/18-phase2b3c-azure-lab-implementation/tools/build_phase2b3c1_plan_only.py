@@ -77,6 +77,7 @@ JOB_ROWS = [
     ("14_refresh_home_readmodel", "hc-demo-new-home-readmodel-v1", "job-hcdn-home-readmodel-lab", "publish"),
     ("15_backfill_replay", "hc-demo-new-knowledge-backfill-v1", "job-hcdn-backfill-lab", "ingest"),
     ("16_reconciliation_audit", "hc-demo-new-reconciliation-audit-v1", "job-hcdn-reconcile-audit-lab", "evaluator"),
+    ("17_cube_metric_parity", "hc-demo-new-metric-parity-v1", "job-hcdn-metric-parity-lab", "evaluator"),
 ]
 
 
@@ -870,9 +871,9 @@ What changed:
 
 - Added frozen control-plane names, subscription discovery, and active CLI account evidence.
 - Added reviewer and evaluator managed identities.
-- Expanded the ACA job topology to thirteen distinct jobs.
+- Expanded the ACA job topology to fourteen distinct jobs.
 - Mapped review application to `mi-hcdn-review-lab-001`.
-- Mapped reconciliation audit to `mi-hcdn-evaluator-lab-001`.
+- Mapped reconciliation audit and metric parity to `mi-hcdn-evaluator-lab-001`.
 - Proposed non-overlapping network ranges after read-only VNet inventory.
 - Locked the ACR image to `{img['image']}`.
 - Generated Bicep plan files following the repository Bicep convention.
