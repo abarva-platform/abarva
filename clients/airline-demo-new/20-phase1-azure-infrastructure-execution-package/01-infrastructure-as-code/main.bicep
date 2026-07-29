@@ -5,6 +5,7 @@ param postgresLocation string = 'eastus2'
 param tenantId string
 param resourceGroupName string
 param tags object
+param imageName string
 
 @secure()
 param postgresAdministratorLoginPassword string
@@ -67,6 +68,7 @@ module jobs './airdn-lab-jobs.bicep' = {
       evaluator: lab.outputs.evaluatorClientId
       admin: lab.outputs.adminClientId
     }
+    imageName: imageName
   }
 }
 
