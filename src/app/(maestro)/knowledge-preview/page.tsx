@@ -4,6 +4,7 @@ import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
 import {
+  isFoundationPreviewOperatorSession,
   isFoundationPreviewTenantKey,
   isFoundationPreviewTenantSession,
 } from "@/lib/auth/foundation-preview-session";
@@ -61,6 +62,7 @@ export default async function KnowledgePreviewPage({
     notFound();
   }
   const hasPlatformAdmin = await isPlatformAdminSession();
+  const hasFoundationOperator = await isFoundationPreviewOperatorSession();
   const hasFoundationPreviewAccess =
     useHttpCanary &&
     (await isFoundationPreviewTenantSession(requestedTenant));
@@ -69,7 +71,7 @@ export default async function KnowledgePreviewPage({
   // foundation proof users whose Clerk metadata is pinned to the requested
   // baseline tenant. That lets Airline/Healthcare foundation tenants be
   // browser-proven before the legacy product-wide ClientKey migration.
-  if (!hasPlatformAdmin && !hasFoundationPreviewAccess) {
+  if (!hasPlatformAdmin && !hasFoundationOperator && !hasFoundationPreviewAccess) {
     notFound();
   }
 

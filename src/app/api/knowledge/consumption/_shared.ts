@@ -9,6 +9,7 @@
 
 import type { NextRequest } from "next/server";
 import {
+  isFoundationPreviewOperatorSession,
   isFoundationPreviewTenantKey,
   isFoundationPreviewTenantSession,
 } from "@/lib/auth/foundation-preview-session";
@@ -31,7 +32,10 @@ export interface ConsumptionContext {
   body: Record<string, unknown>;
 }
 
-const ADMIN_HTTP_CANARY_TENANTS = new Set(["airline-demo-new"]);
+const ADMIN_HTTP_CANARY_TENANTS = new Set([
+  "airline-demo-new",
+  "healthcare-demo-new",
+]);
 
 /**
  * Run a consumption handler with tenancy resolved. The handler receives the
@@ -67,6 +71,7 @@ export async function handleConsumption(
     }
     const authorized =
       (await isPlatformAdminSession()) ||
+      (await isFoundationPreviewOperatorSession()) ||
       (await isFoundationPreviewTenantSession(adminCanaryTenantKey));
     if (!authorized) {
       return Response.json(
