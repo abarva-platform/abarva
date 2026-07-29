@@ -238,17 +238,37 @@ async function main(): Promise<void> {
     const response = await page.goto(url.toString(), { waitUntil: "networkidle", timeout: 60000 });
     const status = response?.status() ?? 0;
     const bodyText = await page.locator("body").innerText({ timeout: 30000 });
-    const required = [
+
+    let directEnterpriseBriefPayload: Record<string, unknown> | null = null;
+    if (directEnterpriseBriefProbe.ok) {
+      try {
+        directEnterpriseBriefPayload = JSON.parse(directEnterpriseBriefProbe.body) as Record<string, unknown>;
+      } catch {
+        directEnterpriseBriefPayload = null;
+      }
+    }
+
+    const visibleRequired = [
       "Admin canary",
       "HTTP provider",
       login.tenantKey,
-      "Active baseline",
-      "governed baseline",
     ];
     const normalizedBodyText = bodyText.toLowerCase();
-    const missing = required.filter(
+    const missingVisible = visibleRequired.filter(
       (needle) => !normalizedBodyText.includes(needle.toLowerCase()),
     );
+    const apiProofMissing = [
+      directEnterpriseBriefProbe.ok ? null : "enterprise-brief api ok",
+      directEnterpriseBriefPayload?.tenantKey === login.tenantKey ? null : "enterprise-brief tenant binding",
+      String(directEnterpriseBriefPayload?.knowledgeBaselineRef ?? "").includes("knowledge-baseline")
+        ? null
+        : "enterprise-brief baseline ref",
+      typeof directEnterpriseBriefPayload?.contentHash === "string" && directEnterpriseBriefPayload.contentHash.length > 0
+        ? null
+        : "enterprise-brief content hash",
+      directEnterpriseBriefPayload?.availabilityState === "available" ? null : "enterprise-brief availability",
+    ].filter((item): item is string => item !== null);
+    const missing = [...missingVisible, ...apiProofMissing];
     const passed = status < 400 && missing.length === 0 && !page.url().includes("/sign-in");
 
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -269,6 +289,7 @@ async function main(): Promise<void> {
           status,
           passed,
           missing,
+          directEnterpriseBriefPayload,
           directEnterpriseBriefProbe,
           consumptionApiEvents,
           storagePath: displayPath(storagePath),
