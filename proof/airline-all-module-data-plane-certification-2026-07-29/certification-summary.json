@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T16:42:22.006Z",
+  "generatedAt": "2026-07-29T16:55:03.518Z",
   "foundationIdentity": {
     "tenantKey": "airline-demo-new",
     "baselineId": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
@@ -255,8 +255,8 @@
     },
     {
       "module": "Tower",
-      "classification": "partially_migrated_demo_writes_fenced",
-      "percentComplete": 45,
+      "classification": "partially_migrated_fixture_views_fenced",
+      "percentComplete": 50,
       "routes": [
         "/api/tower/*",
         "/tower"
@@ -265,8 +265,8 @@
       "writeProvider": "Tower value-state and ingest paths use direct DATABASE_URL/Azure clients",
       "database": "New Azure PostgreSQL not yet proven for all Tower operational state",
       "baselineBinding": "Required for governed enterprise context; metrics remain Tower-owned operational projections",
-      "fixtureDependency": "Static seeded vendor/portfolio and deterministic views remain; demo seed/reset writes are blocked for foundation tenants",
-      "legacyDependency": "Aggregate/enterprise-summary seams are tenant-guarded; seeded deterministic Tower read views remain to be disabled or proven unavailable for Airline",
+      "fixtureDependency": "Static seeded vendor/portfolio views remain; demo seed/reset writes and Source commercial signal fixture reads are blocked for foundation tenants",
+      "legacyDependency": "Aggregate/enterprise-summary seams are tenant-guarded; Source commercial signals fixture is tenant-fenced; remaining seeded deterministic Tower read views still need disable/proof for Airline",
       "evidence": [
         {
           "file": "src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts",
@@ -296,6 +296,18 @@
           "file": "src/app/api/tower/__tests__/seed-demo-route.test.ts",
           "marker": "blocks demo seeding for governed foundation tenants",
           "note": "Regression proves Airline cannot seed or reset Tower demo data through the legacy demo route.",
+          "found": true
+        },
+        {
+          "file": "src/lib/tower/source-commercial-signals-view.ts",
+          "marker": "governed_foundation_tenant",
+          "note": "Tower Source commercial signals fixture fails closed for governed foundation tenants when tenant context is supplied.",
+          "found": true
+        },
+        {
+          "file": "src/lib/tower/__tests__/source-commercial-signals-view.test.ts",
+          "marker": "blocks governed foundation tenants from the Tower Source commercial fixture",
+          "note": "Regression proves governed foundation tenants cannot receive the Tower Source commercial signal fixture.",
           "found": true
         }
       ],
@@ -405,6 +417,6 @@
   "completion": {
     "foundationPipeline": 100,
     "knowledgeActivation": 100,
-    "allModuleCertification": 47
+    "allModuleCertification": 48
   }
 }
