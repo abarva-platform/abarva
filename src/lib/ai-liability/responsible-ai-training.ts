@@ -1,28 +1,34 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@clerk/nextjs/server";
 
 import {
   getAzureReadFluentClient,
   getAzureWriteFluentClient,
   type PostgresCompatClient,
-} from '@/lib/data-plane/postgresCompat';
+} from "@/lib/data-plane/postgresCompat";
 import {
   getResponsibleAiAcknowledgmentSubjectForRequest,
   type ResponsibleAiAcknowledgmentSubject,
-} from './responsible-ai-acknowledgment';
+} from "./responsible-ai-acknowledgment";
 import {
+  AIRLINE_FOUNDATION_TRAINING_COMPLETION_STATEMENT,
+  AIRLINE_FOUNDATION_TRAINING_MODULES,
+  type ResponsibleAiTrainingModule,
   RESPONSIBLE_AI_TRAINING_COMPLETION_STATEMENT,
   RESPONSIBLE_AI_TRAINING_ESTIMATED_MINUTES,
   RESPONSIBLE_AI_TRAINING_MODULES,
   RESPONSIBLE_AI_TRAINING_ROUTE,
   RESPONSIBLE_AI_TRAINING_VERSION,
-} from './responsible-ai-training-copy';
+} from "./responsible-ai-training-copy";
 
 export {
+  AIRLINE_FOUNDATION_TRAINING_COMPLETION_STATEMENT,
+  AIRLINE_FOUNDATION_TRAINING_MODULES,
   RESPONSIBLE_AI_TRAINING_COMPLETION_STATEMENT,
   RESPONSIBLE_AI_TRAINING_ESTIMATED_MINUTES,
   RESPONSIBLE_AI_TRAINING_MODULES,
   RESPONSIBLE_AI_TRAINING_ROUTE,
   RESPONSIBLE_AI_TRAINING_VERSION,
+  type ResponsibleAiTrainingModule,
 };
 
 export type ResponsibleAiTrainingSubject = ResponsibleAiAcknowledgmentSubject;
@@ -43,18 +49,18 @@ export interface ResponsibleAiTrainingStatus {
   readonly storageAvailable: boolean;
   readonly completedAt: string | null;
   readonly reason:
-    | 'completed'
-    | 'missing'
-    | 'storage_unavailable'
-    | 'unauthenticated'
-    | 'no_client';
+    | "completed"
+    | "missing"
+    | "storage_unavailable"
+    | "unauthenticated"
+    | "no_client";
 }
 
 export interface ResponsibleAiTrainingCompletion {
   readonly subject: ResponsibleAiTrainingSubject;
   readonly ipAddress: string | null;
   readonly userAgent: string | null;
-  readonly source: 'responsible_ai_training_module';
+  readonly source: "responsible_ai_training_module";
 }
 
 export interface ResponsibleAiTrainingStore {
@@ -66,21 +72,23 @@ export interface ResponsibleAiTrainingStore {
   ): Promise<{ ok: boolean; error?: string }>;
 }
 
-export function createPostgresResponsibleAiTrainingStore(args: {
-  readonly getReadClient?: () => PostgresCompatClient;
-  readonly getWriteClient?: () => PostgresCompatClient;
-} = {}): ResponsibleAiTrainingStore {
+export function createPostgresResponsibleAiTrainingStore(
+  args: {
+    readonly getReadClient?: () => PostgresCompatClient;
+    readonly getWriteClient?: () => PostgresCompatClient;
+  } = {},
+): ResponsibleAiTrainingStore {
   const getReadClient = args.getReadClient ?? getAzureReadFluentClient;
   const getWriteClient = args.getWriteClient ?? getAzureWriteFluentClient;
 
   return {
     async getCompletedRecord(subject) {
       const { data, error } = await getReadClient()
-        .from('responsible_ai_training_completions')
-        .select('id, client_id, user_id, training_version, completed_at')
-        .eq('client_id', subject.clientId)
-        .eq('user_id', subject.userId)
-        .eq('training_version', RESPONSIBLE_AI_TRAINING_VERSION)
+        .from("responsible_ai_training_completions")
+        .select("id, client_id, user_id, training_version, completed_at")
+        .eq("client_id", subject.clientId)
+        .eq("user_id", subject.userId)
+        .eq("training_version", RESPONSIBLE_AI_TRAINING_VERSION)
         .maybeSingle<ResponsibleAiTrainingRecord>();
 
       if (error) {
@@ -92,7 +100,7 @@ export function createPostgresResponsibleAiTrainingStore(args: {
     async insertCompletedRecord(completion) {
       const { subject } = completion;
       const { error } = await getWriteClient()
-        .from('responsible_ai_training_completions')
+        .from("responsible_ai_training_completions")
         .upsert(
           {
             client_id: subject.clientId,
@@ -107,12 +115,14 @@ export function createPostgresResponsibleAiTrainingStore(args: {
             user_agent: completion.userAgent,
             source: completion.source,
             metadata_jsonb: {
-              capturedBy: 'responsible-ai-training-api',
-              modules: RESPONSIBLE_AI_TRAINING_MODULES.map((module) => module.title),
+              capturedBy: "responsible-ai-training-api",
+              modules: RESPONSIBLE_AI_TRAINING_MODULES.map(
+                (module) => module.title,
+              ),
             },
           },
           {
-            onConflict: 'client_id,user_id,training_version',
+            onConflict: "client_id,user_id,training_version",
             ignoreDuplicates: true,
           },
         );
@@ -128,17 +138,17 @@ export async function getResponsibleAiTrainingStatus(
   store: ResponsibleAiTrainingStore = createPostgresResponsibleAiTrainingStore(),
 ): Promise<ResponsibleAiTrainingStatus> {
   if (!subject) {
-    return status(false, 'unauthenticated', true, null);
+    return status(false, "unauthenticated", true, null);
   }
 
   try {
     const record = await store.getCompletedRecord(subject);
     if (record) {
-      return status(false, 'completed', true, record.completed_at);
+      return status(false, "completed", true, record.completed_at);
     }
-    return status(true, 'missing', true, null);
+    return status(true, "missing", true, null);
   } catch {
-    return status(true, 'storage_unavailable', false, null);
+    return status(true, "storage_unavailable", false, null);
   }
 }
 
@@ -157,15 +167,15 @@ export async function getResponsibleAiTrainingStatusForCurrentRequest(
   );
   if (subject === null) {
     const { userId } = await auth().catch(() => ({ userId: null }));
-    if (userId) return status(true, 'storage_unavailable', false, null);
+    if (userId) return status(true, "storage_unavailable", false, null);
   }
-  if (!subject) return status(false, 'no_client', true, null);
+  if (!subject) return status(false, "no_client", true, null);
   return getResponsibleAiTrainingStatus(subject, store);
 }
 
 function status(
   required: boolean,
-  reason: ResponsibleAiTrainingStatus['reason'],
+  reason: ResponsibleAiTrainingStatus["reason"],
   storageAvailable: boolean,
   completedAt: string | null,
 ): ResponsibleAiTrainingStatus {
