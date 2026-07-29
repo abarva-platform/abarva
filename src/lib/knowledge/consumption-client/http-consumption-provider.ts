@@ -57,14 +57,14 @@ export class HttpConsumptionApiProvider
 {
   readonly binding: ProviderBinding;
   private readonly base: string;
-  private readonly fetchImpl: typeof fetch;
+  private readonly fetchImpl: typeof fetch | null;
   private readonly adminCanaryTenantKey: string | null;
   /** Last-known-good cache keyed by endpoint+query hash. */
   private readonly lkg = new Map<string, ConsumptionEnvelope<unknown>>();
 
   constructor(tenantKey: string, opts: HttpProviderOptions = {}) {
     this.base = opts.basePath ?? DEFAULT_BASE;
-    this.fetchImpl = opts.fetchImpl ?? globalThis.fetch;
+    this.fetchImpl = opts.fetchImpl ?? null;
     this.adminCanaryTenantKey = opts.adminCanaryTenantKey ?? null;
     this.binding = { kind: "http_consumption_api", tenantKey };
   }
@@ -75,7 +75,8 @@ export class HttpConsumptionApiProvider
   ): Promise<ConsumptionEnvelope<T>> {
     const cacheKey = `${path}:${JSON.stringify(body)}`;
     try {
-      const res = await this.fetchImpl(`${this.base}${path}`, {
+      const fetchImpl = this.fetchImpl ?? globalThis.fetch;
+      const res = await fetchImpl(`${this.base}${path}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({

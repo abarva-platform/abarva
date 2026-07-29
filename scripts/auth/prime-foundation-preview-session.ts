@@ -175,6 +175,35 @@ async function main(): Promise<void> {
   const browser = await chromium.launch();
   const context = await browser.newContext({ baseURL: args.baseUrl, viewport: { width: 1440, height: 960 } });
   const page = await context.newPage();
+  const consumptionApiEvents: Array<{
+    url: string;
+    method?: string;
+    status?: number;
+    failure?: string | null;
+    body?: string;
+  }> = [];
+  page.on("requestfailed", (request) => {
+    if (!request.url().includes("/api/knowledge/consumption/")) return;
+    consumptionApiEvents.push({
+      url: request.url(),
+      method: request.method(),
+      failure: request.failure()?.errorText ?? "request_failed",
+    });
+  });
+  page.on("response", async (response) => {
+    if (!response.url().includes("/api/knowledge/consumption/")) return;
+    let body = "";
+    try {
+      body = (await response.text()).slice(0, 4000);
+    } catch (error) {
+      body = `<<response body unavailable: ${String((error as Error)?.message ?? error)}>>`;
+    }
+    consumptionApiEvents.push({
+      url: response.url(),
+      status: response.status(),
+      body,
+    });
+  });
   try {
     await signInWithTicket(page, args.baseUrl, user.id);
     await acknowledgeResponsibleAi(page, args.baseUrl);
@@ -183,6 +212,28 @@ async function main(): Promise<void> {
     url.searchParams.set("provider", "http");
     url.searchParams.set("tenant", login.tenantKey);
     url.searchParams.set("models", args.models === "on" ? "on" : "off");
+
+    const directEnterpriseBriefProbe = await page.request
+      .post("/api/knowledge/consumption/enterprise-brief", {
+        data: {
+          tenantKey: login.tenantKey,
+          depth: "executive",
+          lens: "none",
+          currentTargetScope: "current",
+          __adminCanaryTenantKey: login.tenantKey,
+        },
+        headers: { "content-type": "application/json" },
+      })
+      .then(async (probe) => ({
+        status: probe.status(),
+        ok: probe.ok(),
+        body: (await probe.text()).slice(0, 4000),
+      }))
+      .catch((error) => ({
+        status: 0,
+        ok: false,
+        body: String((error as Error)?.message ?? error),
+      }));
 
     const response = await page.goto(url.toString(), { waitUntil: "networkidle", timeout: 60000 });
     const status = response?.status() ?? 0;
@@ -218,6 +269,8 @@ async function main(): Promise<void> {
           status,
           passed,
           missing,
+          directEnterpriseBriefProbe,
+          consumptionApiEvents,
           storagePath: displayPath(storagePath),
           screenshotPath: displayPath(screenshotPath),
         },

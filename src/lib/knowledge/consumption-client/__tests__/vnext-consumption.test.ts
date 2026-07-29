@@ -194,6 +194,46 @@ describe("provider interchangeability", () => {
     await expect(http.getEnterpriseBrief({ tenantKey: TENANT })).rejects.toThrow(/not available/);
   });
 
+  it("late-binds global fetch so SSR construction does not freeze a server fetch into the browser runtime", async () => {
+    const originalFetch = globalThis.fetch;
+    try {
+      // Simulate constructing the provider before the browser fetch implementation
+      // is available. The call must resolve fetch at execution time, not at
+      // construction time.
+      // @ts-expect-error test deliberately removes fetch from the global object.
+      globalThis.fetch = undefined;
+      const http = new HttpConsumptionApiProvider("airline-demo-new");
+      const requests: unknown[] = [];
+      globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
+        requests.push(JSON.parse(String(init?.body ?? "{}")));
+        return new Response(
+          JSON.stringify({
+            tenantKey: "airline-demo-new",
+            knowledgeBaselineRef: "kb",
+            domainPublicationVersions: {},
+            projectionName: "consumption.enterprise_brief_v1",
+            projectionContractVersion: PROJECTION_CONTRACT_VERSION,
+            asOf: "2026-07-28T00:00:00.000Z",
+            contentHash: "hash",
+            authorityState: "published",
+            availabilityState: "available",
+            freshnessState: "fresh",
+            evidenceRefs: [],
+            knownGapRefs: [],
+            warnings: [],
+            data: {},
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }) as typeof fetch;
+
+      await http.getEnterpriseBrief({ tenantKey: "airline-demo-new" });
+      expect(requests).toHaveLength(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it("sends the admin canary tenant marker only when configured", async () => {
     const requests: unknown[] = [];
     const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {

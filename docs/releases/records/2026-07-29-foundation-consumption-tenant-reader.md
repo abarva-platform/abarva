@@ -20,6 +20,13 @@ database session carried `app.tenant_key`. The tenant-scoped reader now binds an
 session setting around every query so governed projections are visible only for the requested
 tenant.
 
+Signed-in canary follow-up isolated a second, application-side issue: the direct
+`/api/knowledge/consumption/enterprise-brief` call returned `200` with the active Airline baseline,
+but the preview UI still displayed the generic unavailable message without issuing its own browser
+network request. The HTTP consumption provider now late-binds `globalThis.fetch` at call time so a
+provider instance created during a Next server-render pass cannot freeze Node's server fetch into
+the hydrated browser runtime.
+
 ## Layer Impact
 
 - Layer 3 Canonical Enterprise Model: no canonical data is changed.
@@ -41,11 +48,14 @@ tenant.
 - `src/lib/knowledge/consumption-server/index.ts`
 - `src/app/api/knowledge/consumption/_shared.ts`
 - `src/lib/knowledge/consumption-server/__tests__/db.test.ts`
+- `src/lib/knowledge/consumption-client/http-consumption-provider.ts`
+- `src/lib/knowledge/consumption-client/__tests__/vnext-consumption.test.ts`
 - `scripts/auth/prime-foundation-preview-session.ts`
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/knowledge/consumption-server/__tests__/db.test.ts src/lib/knowledge/consumption-server/__tests__/reader.test.ts --runInBand`
+- Pass: `npx jest src/lib/knowledge/consumption-client/__tests__/vnext-consumption.test.ts --runInBand`
 - Pass: `npx tsc --noEmit`
 - Pending: signed-in Airline proof after the RLS binding deploy.
 
@@ -76,7 +86,12 @@ identity from the shared web Container App.
 
 - PR URL: populated after PR creation.
 - CI run: populated after PR checks.
-- ACA deployment proof: populated after deploy.
+- ACA deployment proof: PR #5745 deployed to revision `ca-abarva-web-lab-eastus--m62c6bc41`
+  on digest `acrabarvalab001.azurecr.io/abarva/web@sha256:f4126f328f2abcbd11b6efdf42995faf17823eda2912c97ff6b52085fb9fe36c`.
+- Read-only failure capture: signed-in direct API probe returned `200`, `knowledgeBaselineRef`
+  `airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1`, `availabilityState=available`,
+  while UI rendered the generic provider-unavailable message without its own consumption network
+  request.
 - Signed-in proof: still required.
 
 ## Known Gaps
