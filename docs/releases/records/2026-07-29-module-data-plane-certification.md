@@ -42,6 +42,7 @@ This release adds the first controlled certification package for proving whether
 - Blocks Tower demo seed/reset writes for governed foundation tenants before admin role lookup or demo-data mutation.
 - Adds regression proof that a legacy fixture-specific Source contract-optimization pack is unavailable to the governed foundation tenant path.
 - Blocks Moves board-grade reference decks for governed foundation tenants before reference rendering.
+- Blocks legacy Source synthesis for governed foundation tenants before V6 demo-pack resolution.
 
 ## QA / Validation
 
@@ -57,6 +58,7 @@ This release adds the first controlled certification package for proving whether
 - Pass: governed foundation tenant broker tests for both sync and async Enterprise Agent Context Broker entry points.
 - Pass: `npx jest --runTestsByPath src/app/api/tower/__tests__/seed-demo-route.test.ts 'src/app/api/v1/source/[eventId]/contract-optimization/brief/__tests__/route.test.ts' --runInBand`
 - Pass: `npx jest --runTestsByPath src/lib/programs/board-artifacts/__tests__/board-grade-route-guard.test.ts --runInBand`
+- Pass: `npx jest --runTestsByPath src/app/api/source/synthesis/__tests__/route.test.ts --runInBand`
 
 Live signed-in proof and read-only VNet database proof are required after deployment before any all-module migration closure claim.
 
@@ -91,7 +93,8 @@ Rollback the ACA web runtime to the previous digest if the aVa route or Knowledg
 - Tower demo seed/reset route tests prove governed foundation tenants cannot seed or remove deterministic Tower demo data.
 - Source contract-optimization route test proves a legacy fixture-specific contract-optimization pack does not serve the governed foundation tenant.
 - Moves board-grade route-guard test proves governed foundation tenants cannot receive reference deck fallbacks.
+- Source synthesis route test proves governed foundation tenants cannot receive legacy V6 Source synthesis.
 
 ## Known Gaps
 
-This release does not complete all-module migration. It identifies partial/legacy module paths and adds proof tooling. The follow-up guards close a class of accidental Supabase fallback for governed Source and Moves write seams, Tower aggregate/enterprise-summary read seams, legacy Intelligence context fallbacks, Tower demo seed/reset writes, one legacy Source contract-optimization route, and Moves board-grade reference fallbacks. Tower, Intelligence, Cube, Superset, Observable, Source operational state, Moves operational state, and Admin still require module-by-module runtime proof or follow-up migration before the foundation tenant can be called fully migrated.
+This release does not complete all-module migration. It identifies partial/legacy module paths and adds proof tooling. The follow-up guards close a class of accidental Supabase fallback for governed Source and Moves write seams, Tower aggregate/enterprise-summary read seams, legacy Intelligence context fallbacks, Tower demo seed/reset writes, one legacy Source contract-optimization route, Source synthesis V6 demo-pack routing, and Moves board-grade reference fallbacks. Tower, Intelligence, Cube, Superset, Observable, Source operational state, Moves operational state, and Admin still require module-by-module runtime proof or follow-up migration before the foundation tenant can be called fully migrated.

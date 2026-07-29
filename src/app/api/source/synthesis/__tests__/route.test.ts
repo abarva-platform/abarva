@@ -14,6 +14,51 @@ jest.mock("@/lib/active-client", () => ({
   getActiveClientRow: mockGetActiveClientRow,
 }));
 
+jest.mock("@/lib/module-v6/demo-tenant-packs", () => {
+  const actual = jest.requireActual("@/lib/module-v6/demo-tenant-packs");
+  const sourceInstances = jest.requireActual(
+    "@/lib/source/source-event-instances",
+  );
+  const baseInstance = sourceInstances.AMS_VENDOR_CONSOLIDATION_2026_INSTANCE;
+
+  return {
+    ...actual,
+    buildV6SourceEventInstanceForTenant: jest.fn(
+      (tenantKeyInput: string, requestedInstanceId?: string | null) => {
+        const tenantKey = actual.canonicalV6DemoTenantKey(tenantKeyInput);
+        if (!["skyharbor-air", "lakeshore-holdings"].includes(tenantKey)) {
+          return null;
+        }
+
+        const eventId = `${tenantKey}-v6-source-commercial-review`;
+        if (
+          requestedInstanceId &&
+          ![eventId, "v6-source-commercial-review"].includes(
+            requestedInstanceId,
+          )
+        ) {
+          return null;
+        }
+
+        return {
+          ...baseInstance,
+          id: eventId,
+          displayId:
+            tenantKey === "skyharbor-air"
+              ? "SRC-AIR-V6-2026"
+              : "SRC-IND-V6-2026",
+          tenantSlug: tenantKey,
+          tenantId: tenantKey,
+          name:
+            tenantKey === "skyharbor-air"
+              ? "OCC Modernization vendor and commercial readiness"
+              : "Corporate ERP and HCM controls modernization vendor and commercial readiness",
+        };
+      },
+    ),
+  };
+});
+
 jest.mock("@/lib/agent/userContext", () => ({
   getUserContextPromptBlock: jest.fn().mockResolvedValue("USER CONTEXT"),
 }));
@@ -130,6 +175,32 @@ describe("POST /api/source/synthesis", () => {
     await expect(res.json()).resolves.toEqual({
       error: "wrong_client",
       detail: "Requested Source event does not belong to the active tenant.",
+    });
+    expect(mockAnthropicStream).not.toHaveBeenCalled();
+  });
+
+  it("blocks governed foundation tenants before legacy V6 Source synthesis", async () => {
+    mockGetActiveClientRow.mockResolvedValue({
+      id: "client-airline-new",
+      name: "Airline Demo New",
+      industry_code: "airline",
+      key: "airline-demo-new",
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      new Request("http://test/api/source/synthesis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get("x-abarva-v6-surface")).toBe("source");
+    await expect(res.json()).resolves.toEqual({
+      error: "governed_foundation_tenant",
+      detail:
+        "Foundation tenants must render Source synthesis from governed Source operational state. Legacy V6 synthesis packs are unavailable on this tenant.",
     });
     expect(mockAnthropicStream).not.toHaveBeenCalled();
   });

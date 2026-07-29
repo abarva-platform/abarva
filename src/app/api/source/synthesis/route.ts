@@ -30,6 +30,7 @@ import {
   buildV6SourceEventInstanceForTenant,
   canonicalV6DemoTenantKey,
 } from "@/lib/module-v6/demo-tenant-packs";
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -187,6 +188,17 @@ export async function POST(request: Request) {
   }
 
   const activeTenantKey = canonicalTenantKey(activeClient.key);
+  if (isFoundationTenantKey(activeTenantKey)) {
+    return sourceJsonError(
+      {
+        error: "governed_foundation_tenant",
+        detail:
+          "Foundation tenants must render Source synthesis from governed Source operational state. Legacy V6 synthesis packs are unavailable on this tenant.",
+      },
+      { status: 403 },
+    );
+  }
+
   const instanceId = body.instanceId
     ? resolveSourceInstanceId(body.instanceId)
     : activeTenantKey === "apex-retail"
