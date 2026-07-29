@@ -32,8 +32,7 @@ const DEFAULT_SOURCE_ROOT = path.join(
   "synthetic-source-samples",
 );
 const DEFAULT_OUT_DIR = path.join(
-  process.cwd(),
-  "proof",
+  os.tmpdir(),
   "airline-e2e-live-reconciliation-readback-2026-07-29",
 );
 
@@ -357,6 +356,169 @@ function loadSourceAuthority(sourceRoot) {
       fieldInstances,
     },
   };
+}
+
+function storageCredential() {
+  const clientId =
+    envValue("ABARVA_STORAGE_AAD_CLIENT_ID") ||
+    envValue("AZURE_STORAGE_AAD_CLIENT_ID") ||
+    envValue("MANAGED_IDENTITY_CLIENT_ID") ||
+    envValue("AZURE_CLIENT_ID");
+  if (clientId) return new ManagedIdentityCredential(clientId);
+  return null;
+}
+
+async function blobServiceClient(accountName) {
+  const { BlobServiceClient } = await import("@azure/storage-blob");
+  const connectionString =
+    envValue("AZURE_STORAGE_CONNECTION_STRING") ||
+    envValue("ABARVA_AZURE_STORAGE_CONNECTION_STRING") ||
+    envValue(`${accountName.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_CONNECTION_STRING`);
+  if (connectionString) return BlobServiceClient.fromConnectionString(connectionString);
+
+  const credential = storageCredential();
+  if (credential) {
+    return new BlobServiceClient(`https://${accountName}.blob.core.windows.net`, credential);
+  }
+
+  const { DefaultAzureCredential } = await import("@azure/identity");
+  return new BlobServiceClient(
+    `https://${accountName}.blob.core.windows.net`,
+    new DefaultAzureCredential(),
+  );
+}
+
+function blobRefFromUri(uri) {
+  const value = String(uri || "").trim();
+  const azblob = value.match(/^azblob:\/\/([^/]+)\/([^/]+)\/(.+)$/);
+  if (azblob) {
+    return {
+      accountName: azblob[1],
+      containerName: azblob[2],
+      blobName: decodeURIComponent(azblob[3]),
+    };
+  }
+
+  if (/^https:\/\//i.test(value)) {
+    const parsed = new URL(value);
+    const accountName = parsed.hostname.split(".")[0];
+    const [, containerName, ...blobParts] = parsed.pathname.split("/");
+    if (accountName && containerName && blobParts.length) {
+      return {
+        accountName,
+        containerName,
+        blobName: decodeURIComponent(blobParts.join("/")),
+      };
+    }
+  }
+
+  return null;
+}
+
+function sourceFileNameFromRecord(record, blobName) {
+  const candidates = [
+    record?.source_name,
+    record?.source_ref,
+    blobName,
+  ]
+    .filter(Boolean)
+    .map((value) => path.basename(String(value)));
+  const csvName =
+    candidates.find((value) => value.toLowerCase().endsWith(".csv")) ||
+    candidates.find((value) => value.includes(".")) ||
+    candidates[0];
+  if (!csvName) return "";
+  return csvName.toLowerCase().endsWith(".csv") ? csvName : `${csvName}.csv`;
+}
+
+async function hydrateSourceAuthorityFromLiveRegistry(sourceRecords, outDir) {
+  const registryRows = [...new Map(
+    (sourceRecords || [])
+      .filter((record) => String(record.landed_uri || record.source_uri || "").trim())
+      .map((record) => [record.source_ref || record.landed_uri || record.source_uri, record]),
+  ).values()];
+  if (!registryRows.length) {
+    throw new Error("Source root is unavailable and live source_registry has no landed source URIs.");
+  }
+
+  const sourceRoot = path.join(outDir, "_live-source-authority");
+  fs.rmSync(sourceRoot, { recursive: true, force: true });
+  fs.mkdirSync(sourceRoot, { recursive: true });
+
+  const downloadRows = [];
+  for (const record of registryRows) {
+    const uri = record.landed_uri || record.source_uri;
+    const blobRef = blobRefFromUri(uri);
+    if (!blobRef) {
+      downloadRows.push({
+        source_ref: record.source_ref,
+        source_name: record.source_name,
+        uri,
+        source_file: "",
+        download_status: "UNSUPPORTED_URI",
+        expected_hash: record.content_hash || record.source_hash || "",
+        actual_hash: "",
+      });
+      continue;
+    }
+    const fileName = sourceFileNameFromRecord(record, blobRef.blobName);
+    if (!fileName) {
+      downloadRows.push({
+        source_ref: record.source_ref,
+        source_name: record.source_name,
+        uri,
+        source_file: "",
+        download_status: "MISSING_SOURCE_FILE_NAME",
+        expected_hash: record.content_hash || record.source_hash || "",
+        actual_hash: "",
+      });
+      continue;
+    }
+
+    const service = await blobServiceClient(blobRef.accountName);
+    const blob = service
+      .getContainerClient(blobRef.containerName)
+      .getBlobClient(blobRef.blobName);
+    const download = await blob.download();
+    const chunks = [];
+    for await (const chunk of download.readableStreamBody) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const body = Buffer.concat(chunks);
+    const actualHash = sha256(body);
+    const expectedHash = record.content_hash || record.source_hash || "";
+    const destination = path.join(sourceRoot, fileName);
+    fs.writeFileSync(destination, body);
+    downloadRows.push({
+      source_ref: record.source_ref,
+      source_name: record.source_name,
+      uri,
+      source_file: fileName,
+      download_status:
+        expectedHash && expectedHash !== actualHash ? "HASH_MISMATCH" : "DOWNLOADED",
+      expected_hash: expectedHash,
+      actual_hash: actualHash,
+    });
+  }
+
+  writeCsv(path.join(outDir, "live-source-authority-downloads.csv"), [
+    "source_ref",
+    "source_name",
+    "uri",
+    "source_file",
+    "download_status",
+    "expected_hash",
+    "actual_hash",
+  ], downloadRows);
+
+  const failures = downloadRows.filter((row) => row.download_status !== "DOWNLOADED");
+  if (failures.length) {
+    throw new Error(
+      `Failed to hydrate ${failures.length} source authority file(s) from live registry; see live-source-authority-downloads.csv`,
+    );
+  }
+
+  return loadSourceAuthority(sourceRoot);
 }
 
 function envValue(name) {
@@ -1354,14 +1516,36 @@ async function main() {
   const phase = phaseLogger(args.verbose);
   fs.mkdirSync(args.outDir, { recursive: true });
   phase("start");
-  const sourceAuthority = loadSourceAuthority(args.sourceRoot);
-  phase("source authority loaded");
 
   let live = null;
   let dbError = "";
+  let sourceAuthority = null;
+  if (fs.existsSync(args.sourceRoot)) {
+    sourceAuthority = loadSourceAuthority(args.sourceRoot);
+    phase("source authority loaded from local source root");
+  } else if (args.skipDb) {
+    throw new Error(`Source root not found: ${args.sourceRoot}`);
+  } else {
+    try {
+      live = await readLiveDb();
+      phase("live db read complete");
+      sourceAuthority = await hydrateSourceAuthorityFromLiveRegistry(
+        live.sourceRecords,
+        args.outDir,
+      );
+      phase("source authority hydrated from live registry blobs");
+    } catch (error) {
+      if (args.requireDb) throw error;
+      dbError = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Source root not found and live source hydration failed: ${dbError}`,
+      );
+    }
+  }
+
   if (args.skipDb) {
     dbError = "skipped_by_cli";
-  } else {
+  } else if (!live) {
     try {
       live = await readLiveDb();
       phase("live db read complete");

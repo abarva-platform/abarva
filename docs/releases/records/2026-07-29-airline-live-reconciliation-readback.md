@@ -17,6 +17,12 @@ emits reconciliation evidence across source registration, evidence extraction,
 candidates, review decisions, canonical publication, baseline activation,
 consumption projections, and Cube-facing parity records.
 
+Runtime update: the verifier can now hydrate source authority from the live
+source registry and landed Azure Blob URIs when the local source-corpus folder
+is not present in the deployed runtime image. This preserves the runtime image
+boundary while allowing VNet operator jobs to verify the actual landed source
+files.
+
 The verifier does not load data, approve records, publish a baseline, switch a
 provider, or alter Azure resources.
 
@@ -52,9 +58,12 @@ runtime image.
 - `pass`: `node --check scripts/qa/airline-e2e-live-reconciliation-readback.mjs`
 - `pass`: local source-ledger generation with `--skip-db --no-field-detail`
   against 25 source files, 99,883 rows, and 1,014,830 field instances.
+- `pass`: missing local source-root negative test fails closed instead of
+  silently running against fixtures.
 - `pass`: row-count discrepancy register marks 99,883 authoritative and 110,895
   as stale prior-audit documentation drift.
-- `not-run`: governed VNet database readback and proof bundle extraction.
+- `pending`: governed VNet database readback from live source-registry/blob
+  authority after this runtime fix is deployed.
 - `not-run`: product certification; this verifier intentionally does not wire
   product surfaces.
 
