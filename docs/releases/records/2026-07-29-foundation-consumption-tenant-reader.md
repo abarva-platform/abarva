@@ -31,6 +31,8 @@ Post-deploy proof then showed the UI-originated `/enterprise-brief` call succeed
 baseline, but the proof script still failed on brittle display-copy checks. The canary proof now
 asserts the governed API envelope directly: tenant binding, baseline reference, content hash, and
 available state, while still checking that the signed-in canary and HTTP provider are visible.
+The proof probe parses the complete API response before truncating the logged body so large
+baseline envelopes do not fail JSON parsing in the proof harness.
 
 ## Layer Impact
 
@@ -99,7 +101,8 @@ identity from the shared web Container App.
   request.
 - Proof harness correction: post-deploy screenshot and browser events showed the canary page was
   using the HTTP provider and the `/enterprise-brief` browser call returned `200`; the failing
-  fields were display-copy assertions, not the consumption API path.
+  fields were display-copy assertions, not the consumption API path. A second proof-harness
+  correction parses the full API envelope before truncating the logged response body.
 - Signed-in proof: still required.
 
 ## Known Gaps
