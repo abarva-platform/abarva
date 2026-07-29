@@ -1,11 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
-
-const FOUNDATION_PREVIEW_TENANTS = new Set([
-  "airline-demo-new",
-  "healthcare-demo-new",
-]);
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 
 type MetadataRecord = Record<string, unknown>;
 
@@ -55,7 +51,7 @@ function metadataAllowsFoundationPreview(
 export function isFoundationPreviewTenantKey(
   tenantKey: string | null | undefined,
 ): boolean {
-  return FOUNDATION_PREVIEW_TENANTS.has(canonicalTenantKey(tenantKey ?? ""));
+  return isFoundationTenantKey(tenantKey);
 }
 
 export async function isFoundationPreviewTenantSession(

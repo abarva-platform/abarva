@@ -62,6 +62,7 @@ import {
   type TenantDataAdapter,
 } from "@/lib/knowledge/tenant-data";
 import { normalizePrivateTenantKey } from "@/lib/knowledge/private-data-plane/registry";
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import {
   buildValidatedAgentContextBundle,
   type ValidatedAgentContextBundle,
@@ -137,7 +138,8 @@ export interface EnterpriseBlockedContextItem {
     | "unknown_tenant"
     | "l4_raw_not_allowed"
     | "domain_not_available"
-    | "canonicalization_pending";
+    | "canonicalization_pending"
+    | "governed_consumption_required";
   message: string;
   requestedDomain?: EnterpriseDataRoomDomain;
 }
@@ -203,6 +205,10 @@ export const TENANT_DATA_FIXTURE_WARNING =
 export function buildEnterpriseAgentContextBundle(
   request: EnterpriseAgentContextRequest,
 ): EnterpriseAgentContextBundle {
+  if (isFoundationTenantKey(request.tenantKey)) {
+    return buildGovernedConsumptionRequiredBundle(request);
+  }
+
   const room = getEnterpriseDataRoom(request.tenantKey);
   if (!room) {
     return buildUnknownTenantBundle(request);
@@ -262,6 +268,10 @@ export async function buildEnterpriseAgentContextBundleAsync(
     dataTenantKey === request.tenantKey
       ? request
       : { ...request, tenantKey: dataTenantKey };
+  if (isFoundationTenantKey(dataTenantKey)) {
+    return buildGovernedConsumptionRequiredBundle(normalizedRequest);
+  }
+
   const room =
     getEnterpriseDataRoom(dataTenantKey) ??
     getEnterpriseDataRoom(request.tenantKey);
@@ -351,6 +361,42 @@ function buildUnknownTenantBundle(
       "Unknown tenant context request produced a blocked bundle instead of synthetic filler.",
     ],
   };
+}
+
+function buildGovernedConsumptionRequiredBundle(
+  request: EnterpriseAgentContextRequest,
+): EnterpriseAgentContextBundle {
+  return withGovernance({
+    tenantKey: request.tenantKey,
+    agentName: request.agentName,
+    surface: request.surface,
+    generatedFrom: BROKER_VERSION,
+    runtimeSafe: true,
+    directStoreAccess: false,
+    items: [],
+    blockedItems: [
+      {
+        id: `blocked:${request.tenantKey}:governed-consumption-required`,
+        tenantKey: request.tenantKey,
+        reason: "governed_consumption_required",
+        message:
+          "Governed foundation tenants must use the Knowledge consumption API; legacy broker fixtures and tenant-data fallbacks are blocked.",
+      },
+    ],
+    citations: [],
+    graphNeighborhood: {
+      tenantKey: request.tenantKey,
+      included: false,
+      nodeCount: 0,
+      edgeCount: 0,
+      topNodeTitles: [],
+      edgeTypes: [],
+      note: "Graph neighborhood withheld because foundation tenants use baseline-bound consumption projections.",
+    },
+    warnings: [
+      "Governed foundation tenant context must come from the Knowledge consumption API.",
+    ],
+  });
 }
 
 function buildBlockedItems(

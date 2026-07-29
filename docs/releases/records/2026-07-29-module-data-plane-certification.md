@@ -37,6 +37,8 @@ This release adds the first controlled certification package for proving whether
 - Adds tenant-aware data-plane selection for governed foundation tenants. Legacy tenants keep the historical default, but foundation tenants resolve module write seams to Azure PostgreSQL by tenant key and fail closed if explicitly routed to Supabase.
 - Threads tenant keys through the obvious Moves/Programs and Source write selectors so governed tenant operations cannot silently choose the legacy write plane.
 - Extends the same tenant-aware guard to Tower aggregate and enterprise-summary read adapters, and threads the tenant key through the Atlas portfolio fallback so governed tenant Tower reads cannot silently choose the legacy read plane.
+- Adds a shared foundation-tenant key helper and fences the legacy Enterprise Agent Context Broker for governed foundation tenants so fixture and tenant-data fallback paths cannot supply model context.
+- Fences the legacy Intelligence Home-tab route for governed foundation tenants so it fails closed instead of using the old Home/V6 answer path.
 
 ## QA / Validation
 
@@ -49,6 +51,7 @@ This release adds the first controlled certification package for proving whether
 - Pass: deployed read-only proof script syntax after schema-tolerant update: `node --check scripts/qa/airline-module-runtime-db-proof.mjs`
 - Pass: governed tenant write-plane selector regression tests for Source writes, Source facts, Source artifacts, and Moves/Programs writes.
 - Pass: governed tenant read-plane selector regression tests for Tower aggregate and enterprise-summary reads.
+- Pass: governed foundation tenant broker tests for both sync and async Enterprise Agent Context Broker entry points.
 
 Live signed-in proof and read-only VNet database proof are required after deployment before any all-module migration closure claim.
 
@@ -79,7 +82,8 @@ Rollback the ACA web runtime to the previous digest if the aVa route or Knowledg
 - Runtime DB proof script now reports missing projection relations as proof findings instead of aborting on optional-column drift.
 - Tenant-aware write-plane guard tests cover Source writes, Source facts, Source artifacts, and Moves/Programs writes.
 - Tenant-aware read-plane guard tests cover Tower aggregate and enterprise-summary reads.
+- Enterprise Agent Context Broker tests prove governed foundation tenants are blocked from legacy fixture and persisted tenant-data fallback paths.
 
 ## Known Gaps
 
-This release does not complete all-module migration. It identifies partial/legacy module paths and adds proof tooling. The follow-up guards close a class of accidental Supabase fallback for governed Source and Moves write seams and Tower aggregate/enterprise-summary read seams, but Tower, Intelligence, Cube, Superset, Observable, and Admin still require module-by-module runtime proof or follow-up migration before the foundation tenant can be called fully migrated.
+This release does not complete all-module migration. It identifies partial/legacy module paths and adds proof tooling. The follow-up guards close a class of accidental Supabase fallback for governed Source and Moves write seams, Tower aggregate/enterprise-summary read seams, and legacy Intelligence context fallbacks, but Tower, Intelligence, Cube, Superset, Observable, and Admin still require module-by-module runtime proof or follow-up migration before the foundation tenant can be called fully migrated.

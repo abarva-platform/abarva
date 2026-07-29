@@ -421,6 +421,33 @@ describe('buildEnterpriseAgentContextBundleAsync — two-source consumer', () =>
     );
   });
 
+  it('blocks governed foundation tenants before persisted or fixture lookup', async () => {
+    fakeAdapter = makePersistedAdapter([apexSpec(), meridianSpec()]);
+
+    const bundle = await buildEnterpriseAgentContextBundleAsync({
+      tenantKey: 'airline-demo-new',
+      agentName: 'Nexus',
+      surface: 'programs',
+    });
+
+    expect(bundle.tenantKey).toBe('airline-demo-new');
+    expect(bundle.items).toHaveLength(0);
+    expect(bundle.citations).toHaveLength(0);
+    expect(bundle.warnings).toContain(
+      'Governed foundation tenant context must come from the Knowledge consumption API.',
+    );
+    expect(bundle.warnings).not.toContain(TENANT_DATA_PERSISTED_WARNING);
+    expect(bundle.warnings).not.toContain(TENANT_DATA_FIXTURE_WARNING);
+    expect(bundle.blockedItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tenantKey: 'airline-demo-new',
+          reason: 'governed_consumption_required',
+        }),
+      ]),
+    );
+  });
+
   it('always emits the tenant_summary item alongside the per-agent selection', async () => {
     fakeAdapter = makePersistedAdapter([apexSpec()]);
 

@@ -114,20 +114,35 @@ const modules = [
   },
   {
     module: "Intelligence",
-    classification: "partially_migrated_needs_runtime_certification",
-    percentComplete: 35,
+    classification: "legacy_context_fenced_runtime_certification_pending",
+    percentComplete: 45,
     routes: ["/api/intelligence/ask", "/api/intelligence/query"],
-    readProvider: "Mixed legacy advisory/context paths plus newer Knowledge hooks",
+    readProvider: "Legacy broker and Home-tab fixture paths are fenced for foundation tenants; newer Knowledge hooks still require signed-in proof",
     writeProvider: "Audit/log paths vary by route",
     database: "Not yet proven baseline-bound for Airline",
     baselineBinding: "Not certified",
-    fixtureDependency: "Static scan shows legacy tenant-specific/context code remains",
+    fixtureDependency: "Legacy broker fixtures are blocked for foundation tenants; static tenant-specific/context code remains for older demos",
     legacyDependency: "Requires proof that Airline cannot retrieve legacy V6/V7/SkyHarbor context",
     evidence: [
       evidence(
         "src/app/api/intelligence/ask/route.ts",
+        "governed_knowledge_consumption_required",
+        "Legacy Home-tab Intelligence path fails closed for governed foundation tenants instead of using V6 Home fallback.",
+      ),
+      evidence(
+        "src/lib/knowledge/agent-context-broker.ts",
+        "governed_consumption_required",
+        "Enterprise context broker blocks foundation tenants from fixture and tenant-data fallback paths.",
+      ),
+      evidence(
+        "src/lib/tenant/foundation-tenants.ts",
+        "airline-demo-new",
+        "Foundation tenant allowlist is shared by auth/session and legacy-context fence code.",
+      ),
+      evidence(
+        "src/app/api/intelligence/ask/route.ts",
         "buildHomeKnowAgentAnswer",
-        "Route has a Knowledge-answer path, but full baseline-bound Airline packet proof is still required.",
+        "Route still contains the old Home answer branch for non-foundation tenants; signed-in Airline proof must show it is fenced.",
       ),
       evidence(
         "src/app/api/intelligence/ask/route.ts",
