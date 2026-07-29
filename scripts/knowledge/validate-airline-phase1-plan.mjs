@@ -41,12 +41,17 @@ assert.match(main, /targetScope = 'subscription'/);
 assert.match(main, /resourceGroups@2022-09-01/);
 assert.match(params, /resourceGroupName = 'rg-abarva-airdn-lab-eus2-001'/);
 assert.match(params, /postgresLocation = 'eastus2'/);
+assert.match(params, /imageName = readEnvironmentVariable\('ABARVA_HCDN_IMAGE_NAME'\)/);
 assert.match(foundation, /location: postgresLocation/);
 assert.match(main, /module acrPull '.\/airdn-acr-pull.bicep'/);
 assert.match(main, /module jobs '.\/airdn-lab-jobs.bicep'/);
+assert.match(main, /param imageName string/);
+assert.match(main, /imageName: imageName/);
 assert.match(acrPull, /roleAssignments@2022-04-01/);
 assert.match(acrPull, /AcrPull/);
 assert.match(jobs, /Microsoft.App\/jobs@2024-03-01/);
+assert.match(jobs, /param imageName string\s*\n/);
+assert.doesNotMatch(jobs, /param imageName string =/);
 
 for (const name of requiredNames) {
   assert.match(foundation + params + whatIf, new RegExp(name), `missing required resource ${name}`);
@@ -97,7 +102,28 @@ assert.equal(postgresConformance.sourceReleaseGate.sourceLandingAllowed, false);
 assert.match(foundation, /publicNetworkAccess: 'Disabled'/);
 assert.match(foundation, /allowBlobPublicAccess: false/);
 assert.ok(foundation.includes("networkAcls: { defaultAction: 'Deny', bypass: 'None' }"));
-assert.ok(jobs.includes("node scripts/knowledge/hcdn-job-runner.mjs --tenant airline-demo-new"));
+assert.ok(jobs.includes("node scripts/knowledge/hcdn-job-runner.mjs --tenant ${tenantKey} --process ${job.process} --stage ${job.stage} --mode preflight"));
+for (const requiredEnv of [
+  "ABARVA_HCDN_PROCESS",
+  "ABARVA_HCDN_STAGE",
+  "ABARVA_HCDN_MODE",
+  "ABARVA_HCDN_DATABASE",
+  "ABARVA_HCDN_STORAGE_ACCOUNT",
+  "ABARVA_HCDN_EVALUATOR_STORAGE_ACCOUNT",
+  "ABARVA_HCDN_SUBSCRIPTION_ID",
+  "ABARVA_HCDN_IMAGE",
+  "ABARVA_HCDN_IMAGE_DIGEST",
+  "ABARVA_HCDN_STRICT_IMAGE_LOCK",
+  "ABARVA_HCDN_USE_IN_MEMORY_STORE",
+  "PGHOST",
+  "PGDATABASE",
+  "PGUSER",
+  "ABARVA_POSTGRES_AAD_CLIENT_ID",
+  "MANAGED_IDENTITY_CLIENT_ID",
+]) {
+  assert.ok(jobs.includes(`name: '${requiredEnv}'`), `missing required job env ${requiredEnv}`);
+}
+assert.doesNotMatch(jobs, /name: 'PGPASSWORD'/);
 assert.doesNotMatch(foundation + params + main, /hc-demo-new|healthcare|stabhcdemonewlab001|pg-abarva-hc-demo-new/);
 assert.doesNotMatch(foundation + params + main, /TENANT=all|hidden-truth.*ingest|sourceLandingAllowed.*true/);
 
