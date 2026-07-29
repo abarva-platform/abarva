@@ -134,6 +134,8 @@
     "auth:foundation-proof:prime": "npx tsx scripts/auth/prime-foundation-preview-session.ts",
     "auth:foundation-proof:prime:airline:agent": "npx tsx scripts/auth/prime-foundation-preview-session.ts --tenant airline-demo-new --slug agent-airline-foundation --base-url https://app.abarva.ai --models off --refresh --emit-proof-bundle",
     "auth:foundation-proof:prime:airline:anand": "npx tsx scripts/auth/prime-foundation-preview-session.ts --tenant airline-demo-new --slug anand-airline-foundation --base-url https://app.abarva.ai --models off --refresh --emit-proof-bundle",
+    "auth:legacy-tenant-logins:disable:dry-run": "npx tsx scripts/auth/disable-legacy-tenant-logins.ts",
+    "auth:legacy-tenant-logins:disable:apply": "npx tsx scripts/auth/disable-legacy-tenant-logins.ts --apply --confirm-disable-legacy-tenant-logins",
     "generate:skyharbor-substrate": "node scripts/skyharbor/generate-skyharbor-substrate.mjs",
     "generate:skyharbor-overlay": "node scripts/skyharbor/generate-airline-pattern-overlay.mjs",
     "corpus:release-manifest": "node scripts/corpus/release-manifest.mjs",

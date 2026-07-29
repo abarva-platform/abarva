@@ -9,6 +9,10 @@ describe('proxy session identity fallback', () => {
           role: 'client',
           clientId: 'meridian',
           defaultClientId: 'meridian',
+          foundationTenant: true,
+          proofLogin: true,
+          foundationTenantKey: 'airline-demo-new',
+          tenantKey: 'airline-demo-new',
         },
         primaryEmailAddress: { emailAddress: 'operator@example.com' },
       },
@@ -18,6 +22,10 @@ describe('proxy session identity fallback', () => {
       role: 'client',
       clientId: 'meridian',
       defaultClientId: 'meridian',
+      foundationTenant: true,
+      proofLogin: true,
+      foundationTenantKey: 'airline-demo-new',
+      tenantKey: 'airline-demo-new',
     });
     expect(identity.email).toBe('operator@example.com');
     expect(identity.source).toBe('clerk_user_fallback');

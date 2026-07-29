@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { HomeEnterpriseBriefApp } from "@/components/home/HomeEnterpriseBriefApp";
 import { HomeV4ExplorerShell } from "@/components/home/v4/HomeV4ExplorerShell";
@@ -19,6 +20,11 @@ import {
 import { readHomeKnowledgeV4PackForTenantFromPostgres } from "@/lib/home/home-knowledge-v4-pack";
 import { deriveHomeRelationshipEdges } from "@/lib/home/derive-relationship-edges";
 import { readDerivedRelationshipGraphEdges } from "@/lib/home/read-derived-relationship-graph";
+import {
+  foundationKnowledgePath,
+  resolveFoundationTenantKeyFromSessionInput,
+} from "@/lib/auth/foundation-route-access";
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 
 export const metadata: Metadata = {
   title: "Knowledge · Enterprise Context | AbarVa",
@@ -48,12 +54,20 @@ function firstSearchParam(
 function bindingTenantKey(value: string | null | undefined): string | null {
   const key = value?.trim().toLowerCase();
   if (!key) return null;
+  if (key === "airline-demo-new" || key === "airline demo new") {
+    return "airline-demo-new";
+  }
+  if (key === "healthcare-demo-new" || key === "healthcare demo new") {
+    return "healthcare-demo-new";
+  }
   if (key === "arcturus" || key === "firstcapital") return "first-capital";
   if (key === "meridian") return "meridian-health";
   if (key === "apexretail") return "apex-retail";
   if (key === "skyharbor") return "skyharbor-air";
   if (key === "lakeshore") return "lakeshore-holdings";
-  if (key === "airline-demo" || key === "airline demo") return "skyharbor-air";
+  if (key === "airline-demo" || key === "airline demo") {
+    return "airline-demo-new";
+  }
   if (key === "healthcare-demo" || key === "healthcare demo") {
     return "meridian-health";
   }
@@ -62,6 +76,7 @@ function bindingTenantKey(value: string | null | undefined): string | null {
     return "first-capital";
   }
   if (key.includes("skyharbor") || key.includes("airline")) {
+    if (!key.includes("skyharbor")) return "airline-demo-new";
     return "skyharbor-air";
   }
   if (key.includes("meridian") || key.includes("healthcare")) {
@@ -130,14 +145,30 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     (clerkUser?.publicMetadata?.clientId as string | undefined) ??
     (clerkUser?.publicMetadata?.defaultClientId as string | undefined) ??
     null;
+  const foundationTenantKey = resolveFoundationTenantKeyFromSessionInput({
+    foundationTenantKey: clerkUser?.publicMetadata?.foundationTenantKey as
+      | string
+      | undefined,
+    tenantKey: clerkUser?.publicMetadata?.tenantKey as string | undefined,
+    clientId: metadataClientKey,
+    defaultClientId: clerkUser?.publicMetadata?.defaultClientId as
+      | string
+      | undefined,
+  });
   const inferredClientKey =
-    metadataClientKey ?? inferClientKeyFromEmail(clerkEmail);
+    foundationTenantKey ??
+    metadataClientKey ??
+    inferClientKeyFromEmail(clerkEmail);
   const homeTenantKey =
+    foundationTenantKey ??
     bindingTenantKey(requestedClient) ??
     bindingTenantKey(cookieClientKey) ??
     bindingTenantKey(inferredClientKey) ??
     bindingTenantKey(activeClient?.key) ??
     bindingTenantKey(activeClient?.name);
+  if (isFoundationTenantKey(homeTenantKey)) {
+    redirect(foundationKnowledgePath(homeTenantKey));
+  }
   const displayClientKey =
     cookieClientKey ??
     inferredClientKey ??

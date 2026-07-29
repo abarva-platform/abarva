@@ -8,6 +8,20 @@
 import { resolvePostSignInPath } from '@/lib/auth/access-routing';
 
 describe('resolvePostSignInPath — Tower-as-landing', () => {
+  it('routes foundation proof tenants to the governed Knowledge preview instead of legacy Home', () => {
+    const path = resolvePostSignInPath('client', {
+      clientId: 'airline-demo-new',
+      defaultClientId: 'airline-demo-new',
+      tenantKey: 'airline-demo-new',
+      foundationTenantKey: 'airline-demo-new',
+      hasTowerPortfolio: true,
+    });
+
+    expect(path).toBe(
+      '/knowledge-preview?provider=http&tenant=airline-demo-new',
+    );
+  });
+
   it('routes portfolio-bearing client users straight to /tower', () => {
     const path = resolvePostSignInPath('client', {
       email: 'cio@apex-retail.example.com',

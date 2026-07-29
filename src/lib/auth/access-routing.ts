@@ -6,6 +6,10 @@ import {
   type ClientKey,
 } from "@/lib/client-config";
 import { getStaticLaunchAccessProfile } from "@/lib/auth/launch-access";
+import {
+  foundationKnowledgePath,
+  resolveFoundationTenantKeyFromSessionInput,
+} from "@/lib/auth/foundation-route-access";
 
 export type AppSessionRole =
   | "admin"
@@ -20,6 +24,8 @@ export type AppSessionRole =
 interface ResolveClientInput {
   clientId?: string | null;
   defaultClientId?: string | null;
+  foundationTenantKey?: string | null;
+  tenantKey?: string | null;
   email?: string | null;
   /**
    * Tower-as-landing signal (Tower audit §5.1 + §7). When `true`, a
@@ -219,6 +225,10 @@ export function resolvePostSignInPath(
   input: ResolveClientInput = {},
 ): string {
   const resolvedRole = resolveSessionRole(role, input.email);
+  const foundationTenantKey = resolveFoundationTenantKeyFromSessionInput(input);
+  if (foundationTenantKey) {
+    return foundationKnowledgePath(foundationTenantKey);
+  }
   const pinnedClientId = resolvePinnedSessionClientKey(input);
   const resolvedClientId = resolveSessionClientKey(input);
 

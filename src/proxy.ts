@@ -14,6 +14,12 @@ import {
   shouldStripUnauthorizedClientParam,
 } from "@/lib/auth/access-routing";
 import {
+  foundationKnowledgePath,
+  isFoundationRouteAllowed,
+  resolveFoundationTenantKeyFromMetadata,
+  resolveFoundationTenantKeyFromSessionInput,
+} from "@/lib/auth/foundation-route-access";
+import {
   loadSourceLifecycleRouteAction,
   parseSourceEventRoute,
 } from "@/lib/source/lifecycle-routing-guard";
@@ -252,10 +258,14 @@ function withProductionReadinessNoStoreHeaders<T extends NextResponse>(
   return response;
 }
 
-interface ProxySessionMetadata {
+interface ProxySessionMetadata extends Record<string, unknown> {
   role?: string;
   clientId?: string;
   defaultClientId?: string;
+  foundationTenant?: boolean;
+  proofLogin?: boolean;
+  foundationTenantKey?: string;
+  tenantKey?: string;
 }
 
 interface ProxySessionIdentity {
@@ -282,12 +292,24 @@ function stringField(
   return typeof field === "string" && field.trim() ? field : undefined;
 }
 
+function booleanField(
+  value: Record<string, unknown>,
+  key: keyof ProxySessionMetadata,
+): boolean | undefined {
+  const field = value[key];
+  return typeof field === "boolean" ? field : undefined;
+}
+
 function normalizeProxyMetadata(value: unknown): ProxySessionMetadata {
   if (!isRecord(value)) return {};
   return {
     role: stringField(value, "role"),
     clientId: stringField(value, "clientId"),
     defaultClientId: stringField(value, "defaultClientId"),
+    foundationTenant: booleanField(value, "foundationTenant"),
+    proofLogin: booleanField(value, "proofLogin"),
+    foundationTenantKey: stringField(value, "foundationTenantKey"),
+    tenantKey: stringField(value, "tenantKey"),
   };
 }
 
@@ -310,11 +332,22 @@ function emailFromClerkUser(user: ClerkUserIdentityLike | null): string | null {
 function shouldFetchClerkUserForProxyIdentity(
   identity: ProxySessionIdentity,
 ): boolean {
+  const sessionLooksFoundationBound = Boolean(
+    resolveFoundationTenantKeyFromSessionInput({
+      foundationTenantKey: identity.metadata.foundationTenantKey,
+      tenantKey: identity.metadata.tenantKey,
+      clientId: identity.metadata.clientId,
+      defaultClientId: identity.metadata.defaultClientId,
+    }),
+  );
   return (
     !identity.metadata.role ||
     !identity.metadata.clientId ||
     !identity.metadata.defaultClientId ||
-    !identity.email
+    !identity.email ||
+    (sessionLooksFoundationBound &&
+      !identity.metadata.foundationTenant &&
+      !identity.metadata.proofLogin)
   );
 }
 
@@ -329,7 +362,11 @@ export function readProxySessionIdentity(
   const hasClerkMetadata =
     Boolean(clerkMetadata.role) ||
     Boolean(clerkMetadata.clientId) ||
-    Boolean(clerkMetadata.defaultClientId);
+    Boolean(clerkMetadata.defaultClientId) ||
+    Boolean(clerkMetadata.foundationTenant) ||
+    Boolean(clerkMetadata.proofLogin) ||
+    Boolean(clerkMetadata.foundationTenantKey) ||
+    Boolean(clerkMetadata.tenantKey);
 
   return {
     metadata: {
@@ -337,6 +374,12 @@ export function readProxySessionIdentity(
       clientId: claimsMetadata.clientId ?? clerkMetadata.clientId,
       defaultClientId:
         claimsMetadata.defaultClientId ?? clerkMetadata.defaultClientId,
+      foundationTenant:
+        claimsMetadata.foundationTenant ?? clerkMetadata.foundationTenant,
+      proofLogin: claimsMetadata.proofLogin ?? clerkMetadata.proofLogin,
+      foundationTenantKey:
+        claimsMetadata.foundationTenantKey ?? clerkMetadata.foundationTenantKey,
+      tenantKey: claimsMetadata.tenantKey ?? clerkMetadata.tenantKey,
     },
     email: emailFromClaims(sessionClaims) ?? emailFromClerkUser(clerkUser),
     source: hasClerkMetadata ? "clerk_user_fallback" : "session_claims",
@@ -408,6 +451,17 @@ const clerkProtectedProxy = clerkMiddleware(
       "/home/training": "/home/learn",
       "/home/ai-initiatives": "/home",
     };
+    if (
+      request.nextUrl.pathname === "/home/v4-preview" ||
+      request.nextUrl.pathname.startsWith("/home/v4-preview/")
+    ) {
+      const url = new URL("/knowledge-preview", request.url);
+      url.search = request.nextUrl.search;
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
     const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname];
     if (exactHomeMatch) {
       // Wave 1 PR-3 (2026-05-30) · Targets may carry their own canonical
@@ -529,6 +583,26 @@ const clerkProtectedProxy = clerkMiddleware(
 
     const requiresAuth =
       authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request);
+
+    const foundationTenantKey =
+      resolveFoundationTenantKeyFromMetadata(metadata);
+    if (
+      requiresAuth &&
+      userId &&
+      foundationTenantKey &&
+      !isFoundationRouteAllowed(request.nextUrl.pathname)
+    ) {
+      if (request.nextUrl.pathname.startsWith("/api/")) {
+        return createGenericNotFoundResponse();
+      }
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(
+          new URL(foundationKnowledgePath(foundationTenantKey), request.url),
+          302,
+        ),
+      );
+    }
 
     if (
       requiresAuth &&
