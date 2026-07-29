@@ -31,13 +31,19 @@ const VERIFY_TENANT_KEY = "db-migration-lab-verification-nonexistent-tenant";
 
 async function main() {
   const db = getAzureWriteFluentClient();
+  const verificationRunId = new Date()
+    .toISOString()
+    .replaceAll(/[-:.TZ]/g, "")
+    .slice(0, 14);
+  const eventCode = `DB-MIGRATION-LAB-VERIFY-${verificationRunId}-${process.pid}`;
+  const fixtureLabel = `db-migration-lab verification fixture ${eventCode} - safe to ignore`;
 
   const { data: event, error: eventError } = await db
     .from("source_events")
     .insert({
       client_key: VERIFY_TENANT_KEY,
-      event_code: "DB-MIGRATION-LAB-VERIFY",
-      event_name: "db-migration-lab verification fixture — safe to ignore",
+      event_code: eventCode,
+      event_name: fixtureLabel,
       current_stage_key: "responses",
     })
     .select("id")
@@ -56,11 +62,11 @@ async function main() {
       tenant_key: VERIFY_TENANT_KEY,
       source_event_id: event.id,
       artifact_type: "db_migration_lab_verify",
-      title: "db-migration-lab verification fixture — safe to ignore",
-      file_name: "db-migration-lab-verify.txt",
+      title: fixtureLabel,
+      file_name: `${eventCode.toLowerCase()}.txt`,
       file_format: "txt",
       blob_container: "verify",
-      blob_path: "verify/db-migration-lab-verify.txt",
+      blob_path: `verify/${eventCode.toLowerCase()}.txt`,
       status: "approved",
       approved_by: "db-migration-lab",
     })
