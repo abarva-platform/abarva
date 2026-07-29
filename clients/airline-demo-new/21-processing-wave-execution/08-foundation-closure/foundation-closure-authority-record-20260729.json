@@ -1,0 +1,107 @@
+{
+  "schema": "abarva.foundation_closure_authority_record.v1",
+  "recorded_at": "2026-07-29T07:55:00.000Z",
+  "tenant_key": "airline-demo-new",
+  "source_release_id": "airline-demo-new-source-corpus-v1.0.0",
+  "environment": "lab",
+  "subscription_id": "701a8554-a166-46e9-bf13-743bc50e3b20",
+  "resource_group": "rg-abarva-airdn-lab-eus2-001",
+  "postgres": {
+    "host": "pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com",
+    "database": "abarva_airline_demo_new_knowledge_lab"
+  },
+  "review_decisions": {
+    "accepted": 112201,
+    "deferred": 152029,
+    "rejected": 0
+  },
+  "domain_publication": {
+    "publication_ref": "airline-demo-new-source-corpus-v1.0.0:enterprise:domain-publication-v1",
+    "state": "passed",
+    "accepted_entities": 34534,
+    "accepted_facts": 37000,
+    "accepted_relationships": 16605,
+    "source_hash": "acfaf6be3626f9ccd9f21e73d254d7f12d28e89ac66c00a6b5b783c2282afe52"
+  },
+  "active_baseline": {
+    "baseline_ref": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+    "active": true,
+    "baseline_content_hash": "135d860b9b104b2a2891fd108ea57286dc28bc057327498c63934c6552425549"
+  },
+  "projection": {
+    "projection_ref": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1:knowledge-consumption-core-v1",
+    "state": "passed",
+    "row_count": 114566,
+    "projection_hash": "e043827303034319199613dcdac3631629ddd399e9ae841411a370b274655ef5",
+    "counts": {
+      "enterprise_brief_v1": 1,
+      "enterprise_identity_v1": 1,
+      "domain_summary_v1": 10,
+      "application_inventory_v1": 1405,
+      "technology_estate_v1": 1405,
+      "data_product_inventory_v1": 6580,
+      "vendor_contract_inventory_v1": 420,
+      "metric_catalog_v1": 0,
+      "evidence_gap_v1": 0,
+      "search_document_v1": 37000,
+      "relationship_node_v1": 34534,
+      "relationship_edge_v1": 16605,
+      "relationship_evidence_v1": 16605
+    }
+  },
+  "home_read_model": {
+    "status": "passed",
+    "enterprise_brief_rows": 1,
+    "search_rows": 37000,
+    "relationship_rows": 16605,
+    "content_hash": "5edfbf7aa1870ff68b2abb6e4ca47a873296d40f84bfea2e362011b4f4b0ae53"
+  },
+  "cube_postgres_parity": {
+    "status": "passed",
+    "passed_count": 4,
+    "failed_count": 0,
+    "not_applicable_count": 4,
+    "output_hash": "6f9374ae6aeb82dda0f24e291986c569fac038fbf55b48dfc33039efd341b837",
+    "passed_measures": [
+      "application_count",
+      "vendor_count",
+      "accepted_relationship_count",
+      "open_critical_gap_count"
+    ]
+  },
+  "job_template_preflight": {
+    "status": "passed",
+    "checked_at": "2026-07-29T07:46:56.858Z",
+    "expected_jobs": 14,
+    "passed_jobs": 14,
+    "failed_jobs": 0,
+    "failed_checks": 0
+  },
+  "runtime_invariant": {
+    "status": "passed",
+    "checked_at": "2026-07-29T07:41:18.956Z",
+    "web_revision": "ca-abarva-web-lab-eastus--mf12a3457",
+    "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:b827ec5bfb709df9cc958efcfc09f4370b22d84e7e668b6d85c4aa3c0a2d5423",
+    "traffic_percent": 100,
+    "worker_jobs_same_digest": true
+  },
+  "rerun_blocked_if_readback_matches": [
+    "review-decision-apply",
+    "domain-publish",
+    "baseline-publish",
+    "projection-build",
+    "home-readmodel",
+    "reconciliation-audit",
+    "metric-parity"
+  ],
+  "next_allowed_gates": [
+    "governed-http-provider-binding",
+    "clerk-tenant-identity-mapping",
+    "platform-admin-baseline-proof",
+    "tenant-user-baseline-proof",
+    "home-knowledge-no-fixture-proof",
+    "ava-baseline-bound-packet-proof",
+    "module-consumer-baseline-parity-proof",
+    "rollback-proof"
+  ]
+}
