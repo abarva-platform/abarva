@@ -11,6 +11,8 @@
 // Deterministic: no live clocks, no randomness, no network IO, no DB writes.
 // Does NOT import from src/lib/source/** — standalone tower domain fixture.
 
+import { isFoundationTenantKey } from '@/lib/tenant/foundation-tenants';
+
 // ─── Output types ─────────────────────────────────────────────────────────────
 
 export type CommercialSignalSeverity = 'critical' | 'high' | 'medium' | 'info';
@@ -167,9 +169,19 @@ const AMS_SIGNALS: CommercialSignal[] = [
  * Build the source commercial signals view for the Control Tower.
  *
  * Deterministic: derives from fixture data only.
- * Always returns a non-null view.
+ * Legacy callers that do not pass a tenant key keep the historical fixture
+ * behavior. Governed foundation tenants must use baseline-bound operational
+ * projections instead of this deterministic seed.
  */
-export function buildSourceCommercialSignalsView(): SourceCommercialSignalsView {
+export function buildSourceCommercialSignalsView(
+  tenantKey?: string | null,
+): SourceCommercialSignalsView {
+  if (isFoundationTenantKey(tenantKey)) {
+    throw new Error(
+      'governed_foundation_tenant: Tower Source commercial signals fixture is unavailable for governed foundation tenants.',
+    );
+  }
+
   const eventSummary: SourceCommercialEventSummary = {
     eventId: 'src-ams-2026',
     eventName: 'AMS Vendor Consolidation 2026',
