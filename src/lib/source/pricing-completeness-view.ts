@@ -10,6 +10,8 @@
 // Deterministic: no live clocks, no randomness, no network IO, no DB writes.
 // All actions are always disabled — live workflow integration is deferred.
 
+import { isFoundationTenantKey } from '@/lib/tenant/foundation-tenants';
+
 // ─── Output types ─────────────────────────────────────────────────────────────
 
 export type PricingGapSeverity = 'blocker' | 'risk' | 'advisory';
@@ -187,9 +189,19 @@ const CROSS_VENDOR_GAPS: PricingCompletenessGap[] = [
  * Build the pricing completeness drilldown view model.
  *
  * Deterministic: derives from fixture data only.
- * Always returns a non-null view.
+ * Legacy callers that do not pass a tenant key keep the historical fixture
+ * behavior. Governed foundation tenants must use baseline-bound Source
+ * projections instead of this deterministic seed.
  */
-export function buildPricingCompletenessView(): PricingCompletenessView {
+export function buildPricingCompletenessView(
+  tenantKey?: string | null,
+): PricingCompletenessView {
+  if (isFoundationTenantKey(tenantKey)) {
+    throw new Error(
+      'governed_foundation_tenant: Source pricing completeness fixture is unavailable for governed foundation tenants.',
+    );
+  }
+
   const vendors: PricingVendorCompleteness[] = [
     {
       vendorId: 'vendor-a',

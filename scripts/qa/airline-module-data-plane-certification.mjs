@@ -184,15 +184,15 @@ const modules = [
   },
   {
     module: "Source",
-    classification: "partially_migrated_legacy_synthesis_fenced",
-    percentComplete: 50,
+    classification: "partially_migrated_fixture_views_fenced",
+    percentComplete: 55,
     routes: ["/api/v1/source/*", "/source"],
     readProvider: "Several routes use Azure fluent clients; fixture-specific views remain",
     writeProvider: "Tenant-aware Source write adapters force governed tenants to Azure/PostgreSQL",
     database: "New Azure PostgreSQL not yet proven for every Source operational table",
     baselineBinding: "Required for Knowledge handoff; not certified end-to-end",
-    fixtureDependency: "Legacy Source contract-optimization and synthesis routes are fenced for governed foundation tenants; other Source fixture views remain in code",
-    legacyDependency: "Source write seams are tenant-guarded; directly targeted legacy fixture and V6 synthesis routes are regression-proven unavailable for governed tenants",
+    fixtureDependency: "Legacy Source contract-optimization, synthesis, and pricing-completeness fixture views are fenced for governed foundation tenants; other Source fixture views remain in code",
+    legacyDependency: "Source write seams are tenant-guarded; directly targeted legacy fixture, V6 synthesis, and pricing-completeness views are regression-proven unavailable for governed tenants",
     evidence: [
       evidence(
         "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
@@ -218,6 +218,16 @@ const modules = [
         "src/app/api/source/synthesis/__tests__/route.test.ts",
         "blocks governed foundation tenants before legacy V6 Source synthesis",
         "Regression proves governed foundation tenants cannot receive legacy V6 Source synthesis.",
+      ),
+      evidence(
+        "src/lib/source/pricing-completeness-view.ts",
+        "governed_foundation_tenant",
+        "Source pricing completeness fixture fails closed for governed foundation tenants when tenant context is supplied.",
+      ),
+      evidence(
+        "src/lib/source/__tests__/pricing-completeness-view.test.ts",
+        "blocks governed foundation tenants from the Source pricing completeness fixture",
+        "Regression proves governed foundation tenants cannot receive the Source pricing completeness fixture.",
       ),
     ],
     nextAction: "Certify remaining Source runtime routes and migrate/disable operational state paths that are not yet proven on the Airline data plane.",
