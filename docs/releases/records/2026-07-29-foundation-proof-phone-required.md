@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-The foundation proof-login roster now includes controlled, validation-safe phone numbers because the Clerk instance requires a phone number when creating users. The provisioning script sends that phone value when creating proof users and keeps the prior metadata-only update behavior for existing users.
+The foundation proof-login roster now includes controlled, validation-safe phone-number pools because the Clerk instance requires a globally unique phone number when creating users. The provisioning script checks each reserved proof-number pool, selects the first unowned number, sends that value when creating proof users, and keeps the prior metadata-only update behavior for existing users.
 
 ## Layer Impact
 
 - Auth/control plane: updates the foundation-only proof identity roster and the Clerk provisioning helper used to create signed-in preview identities.
-- QA/control plane: adds a regression check that the roster has unique E.164 phone numbers and does not use reserved example-domain emails.
+- QA/control plane: adds a regression check that each roster entry has a unique E.164 phone-number pool and does not use reserved example-domain emails.
 
 ## Client Applicability
 
@@ -31,6 +31,7 @@ The foundation proof-login roster now includes controlled, validation-safe phone
 - `scripts/auth/provision-foundation-proof-logins.ts`
 - `src/lib/auth/__tests__/foundation-proof-logins.test.ts`
 - Follow-up correction: replace an invalid `+1 555` area-code pattern with reserved `+1 202-555-01xx` proof numbers that satisfy phone-number validation.
+- Follow-up correction: replace single proof numbers with deterministic reserved proof-number pools so provisioning can avoid Clerk global phone-number collisions without hand-editing runtime state.
 
 ## QA / Validation
 

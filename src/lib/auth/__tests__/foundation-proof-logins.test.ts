@@ -15,12 +15,14 @@ describe("foundation proof logins", () => {
     expect(
       airline.every((login) => !login.email.endsWith(".example.com")),
     ).toBe(true);
+    const phoneNumbers = airline.flatMap((login) => login.phoneNumbers);
+    expect(airline.every((login) => login.phoneNumbers.length >= 2)).toBe(true);
     expect(
-      airline.every((login) => /^\+[1-9]\d{6,14}$/.test(login.phoneNumber)),
+      phoneNumbers.every((phoneNumber) =>
+        /^\+[1-9]\d{6,14}$/.test(phoneNumber),
+      ),
     ).toBe(true);
-    expect(new Set(airline.map((login) => login.phoneNumber)).size).toBe(
-      airline.length,
-    );
+    expect(new Set(phoneNumbers).size).toBe(phoneNumbers.length);
   });
 
   it("emits the exact metadata required by the foundation preview gate", () => {

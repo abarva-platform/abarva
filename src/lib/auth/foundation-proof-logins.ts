@@ -9,7 +9,7 @@ export interface FoundationProofLogin {
   tenantKey: FoundationProofTenantKey;
   tenantName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumbers: readonly string[];
   firstName: string;
   lastName: string;
   personaKind: FoundationProofPersonaKind;
@@ -24,9 +24,9 @@ export interface FoundationProofLogin {
  * Knowledge Baseline through `/knowledge-preview?provider=http&tenant=...`
  * before any tenant is activated on the ordinary product routes.
  *
- * The phone numbers use reserved NANPA 202-555-01xx proof numbers. They
- * satisfy Clerk's E.164 validation without routing to a real operator-owned
- * phone.
+ * The phone numbers use reserved NANPA 202-555-01xx proof-number pools. The
+ * provisioning script picks the first unowned number because Clerk requires a
+ * phone identifier and enforces global uniqueness.
  */
 export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
   {
@@ -34,7 +34,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
     email: "anand.sundaram+airline-foundation@thesundaram.com",
-    phoneNumber: "+12025550101",
+    phoneNumbers: ["+12025550101", "+12025550181", "+12025550183"],
     firstName: "Anand",
     lastName: "Sundaram",
     personaKind: "human_owner",
@@ -46,7 +46,7 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     tenantKey: "airline-demo-new",
     tenantName: "Airline Demo New",
     email: "airline-foundation-agent@abarva.ai",
-    phoneNumber: "+12025550102",
+    phoneNumbers: ["+12025550102", "+12025550182", "+12025550184"],
     firstName: "Ava",
     lastName: "Agent",
     personaKind: "automation_agent",
