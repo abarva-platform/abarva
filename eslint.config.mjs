@@ -235,6 +235,37 @@ const eslintConfig = defineConfig([
       }],
     },
   },
+  // Knowledge provider reconciliation (2026-07-30): the view-model assembler
+  // sits strictly above the real KnowledgeConsumptionProvider and strictly
+  // below the UI. It must never regain a dependency on the frozen duplicate
+  // provider or reach into UI component internals. See
+  // reports/airline-knowledge-provider-reconciliation-2026-07-30/
+  // VIEW_MODEL_ASSEMBLER_INTERFACES.md §4.
+  {
+    files: ["src/lib/knowledge/view-model/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [
+          {
+            group: [
+              "@/lib/knowledge/providers",
+              "@/lib/knowledge/providers/*",
+              "*/lib/knowledge/providers",
+              "*/lib/knowledge/providers/*",
+              "@/components/knowledge",
+              "@/components/knowledge/*",
+              "*/components/knowledge",
+              "*/components/knowledge/*",
+            ],
+            message:
+              "The view-model assembler must not depend on the frozen duplicate provider or on UI " +
+              "component internals — compose the real KnowledgeConsumptionProvider only. See " +
+              "reports/airline-knowledge-provider-reconciliation-2026-07-30/.",
+          },
+        ],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
