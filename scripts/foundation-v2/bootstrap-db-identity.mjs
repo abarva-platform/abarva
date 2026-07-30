@@ -93,24 +93,59 @@ async function bootstrap(client, options) {
       });
     }
 
-    await client.query(
-      `ALTER ROLE ${quoteIdent(options.roleName)}
-         LOGIN
-         NOSUPERUSER
-         NOCREATEDB
-         NOCREATEROLE
-         NOREPLICATION
-         NOBYPASSRLS
-         NOINHERIT`,
-    );
+    if (options.scope === "principal") {
+      const role = await roleReadback(client, options.roleName);
+      const target = await roleReadback(client, options.targetRole);
+      const memberships = await membershipReadback(client, options.roleName);
+      const aadPrincipals = await aadPrincipalReadback(client, options.roleName);
+      if (!role) defects.push(`missing identity role ${options.roleName}`);
+      if (role?.rolsuper || role?.rolcreatedb || role?.rolcreaterole || role?.rolreplication || role?.rolbypassrls) {
+        defects.push(`identity role ${options.roleName} has forbidden privileged attributes`);
+      }
+      if (!role?.rolcanlogin) defects.push(`identity role ${options.roleName} cannot login`);
+      if (options.objectId && !JSON.stringify(aadPrincipals).toLowerCase().includes(options.objectId.toLowerCase())) {
+        defects.push(`AAD principal object ID ${options.objectId} not found in pgaadauth readback`);
+      }
+      if (defects.length > 0) {
+        await client.query("ROLLBACK");
+        return createProof(options, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_FAILED", {
+          created,
+          existed_before: existedBefore,
+          defects,
+          role,
+          target,
+          memberships,
+          role_hardening: { attempted: false, skipped_reason: "principal-scope" },
+          schema_public_revokes: { attempted: false, skipped_reason: "principal-scope" },
+          aad_extension: extension,
+          aad_functions: functions,
+          aad_principals: aadPrincipals,
+        });
+      }
+      await client.query("COMMIT");
+      return createProof(options, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PASSED", {
+        created,
+        existed_before: existedBefore,
+        defects,
+        role,
+        target,
+        memberships,
+        role_hardening: { attempted: false, skipped_reason: "principal-scope" },
+        schema_public_revokes: { attempted: false, skipped_reason: "principal-scope" },
+        aad_extension: extension,
+        aad_functions: functions,
+        aad_principals: aadPrincipals,
+      });
+    }
+
+    const roleHardening = await bestEffortRoleHardening(client, options.roleName);
     const databaseName = (await client.query("SELECT current_database() AS database_name")).rows[0].database_name;
     await client.query(`GRANT CONNECT ON DATABASE ${quoteIdent(databaseName)} TO ${quoteIdent(options.roleName)}`);
     await client.query(`GRANT ${quoteIdent(options.targetRole)} TO ${quoteIdent(options.roleName)}`);
     if (await relationExists(client, "schema_migrations")) {
       await client.query(`GRANT SELECT ON schema_migrations TO ${quoteIdent(options.roleName)}`);
     }
-    await client.query(`REVOKE CREATE ON SCHEMA public FROM ${quoteIdent(options.roleName)}`);
-    await client.query(`REVOKE ALL ON SCHEMA public FROM ${quoteIdent(options.roleName)}`);
+    const schemaPublicRevokes = await bestEffortPublicSchemaRevokes(client, options.roleName);
 
     const role = await roleReadback(client, options.roleName);
     const target = await roleReadback(client, options.targetRole);
@@ -139,6 +174,8 @@ async function bootstrap(client, options) {
         role,
         target,
         memberships,
+        role_hardening: roleHardening,
+        schema_public_revokes: schemaPublicRevokes,
         aad_extension: extension,
         aad_functions: functions,
         aad_principals: aadPrincipals,
@@ -154,6 +191,8 @@ async function bootstrap(client, options) {
       role,
       target,
       memberships,
+      role_hardening: roleHardening,
+      schema_public_revokes: schemaPublicRevokes,
       aad_extension: extension,
       aad_functions: functions,
       aad_principals: aadPrincipals,
@@ -168,6 +207,7 @@ function createProof(options, status, extra) {
   return {
     status,
     generated_at: new Date().toISOString(),
+    bootstrap_scope: options.scope,
     database_target: options.databaseTarget,
     identity_kind: options.kind,
     identity_role: options.roleName,
@@ -313,6 +353,50 @@ function securityLabelHasObjectId(labels, objectId) {
   return labels.some((label) => label.provider === "pgaadauth" && String(label.label).toLowerCase().includes(String(objectId).toLowerCase()));
 }
 
+async function bestEffortRoleHardening(client, roleName) {
+  const result = { attempted: true, applied: false, error: "" };
+  await client.query("SAVEPOINT foundation_v2_role_hardening");
+  try {
+    await client.query(
+      `ALTER ROLE ${quoteIdent(roleName)}
+         LOGIN
+         NOSUPERUSER
+         NOCREATEDB
+         NOCREATEROLE
+         NOREPLICATION
+         NOBYPASSRLS
+         NOINHERIT`,
+    );
+    await client.query("RELEASE SAVEPOINT foundation_v2_role_hardening");
+    result.applied = true;
+  } catch (error) {
+    result.error = error.message;
+    await client.query("ROLLBACK TO SAVEPOINT foundation_v2_role_hardening").catch(() => {});
+    await client.query("RELEASE SAVEPOINT foundation_v2_role_hardening").catch(() => {});
+  }
+  return result;
+}
+
+async function bestEffortPublicSchemaRevokes(client, roleName) {
+  const result = { attempted: true, applied: false, errors: [] };
+  for (const statement of [
+    `REVOKE CREATE ON SCHEMA public FROM ${quoteIdent(roleName)}`,
+    `REVOKE ALL ON SCHEMA public FROM ${quoteIdent(roleName)}`,
+  ]) {
+    await client.query("SAVEPOINT foundation_v2_public_schema_revoke");
+    try {
+      await client.query(statement);
+      await client.query("RELEASE SAVEPOINT foundation_v2_public_schema_revoke");
+    } catch (error) {
+      result.errors.push(error.message);
+      await client.query("ROLLBACK TO SAVEPOINT foundation_v2_public_schema_revoke").catch(() => {});
+      await client.query("RELEASE SAVEPOINT foundation_v2_public_schema_revoke").catch(() => {});
+    }
+  }
+  result.applied = result.errors.length === 0;
+  return result;
+}
+
 async function roleExists(client, roleName) {
   return Boolean((await roleReadback(client, roleName)));
 }
@@ -350,6 +434,7 @@ function parseArgs(argv) {
   const parsed = {
     mode: process.env.FOUNDATION_V2_DB_IDENTITY_MODE || "apply",
     kind: process.env.FOUNDATION_V2_DB_IDENTITY_KIND || "writer",
+    scope: process.env.FOUNDATION_V2_DB_IDENTITY_SCOPE || "target",
     identityName: process.env.FOUNDATION_V2_DB_IDENTITY_NAME || "",
     objectId: process.env.FOUNDATION_V2_DB_IDENTITY_OBJECT_ID || "",
     outDir: process.env.FOUNDATION_V2_DB_IDENTITY_OUT_DIR || "/tmp/foundation-v2-db-identity-bootstrap",
@@ -364,6 +449,7 @@ function parseArgs(argv) {
     };
     if (arg === "--mode") parsed.mode = next();
     else if (arg === "--kind") parsed.kind = next();
+    else if (arg === "--scope") parsed.scope = next();
     else if (arg === "--identity-name") parsed.identityName = next();
     else if (arg === "--object-id") parsed.objectId = next();
     else if (arg === "--out-dir") parsed.outDir = next();
@@ -372,6 +458,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument ${arg}`);
   }
   if (!["writer", "reader"].includes(parsed.kind)) throw new Error("--kind must be writer or reader");
+  if (!["principal", "target"].includes(parsed.scope)) throw new Error("--scope must be principal or target");
   return parsed;
 }
 
@@ -403,6 +490,7 @@ function bootstrapMarkdown(proof) {
 Status: ${proof.status}
 
 - Identity kind: \`${proof.identity_kind}\`
+- Bootstrap scope: \`${proof.bootstrap_scope}\`
 - Identity role: \`${proof.identity_role}\`
 - Expected object ID: \`${proof.expected_object_id || "not-provided"}\`
 - Target role: \`${proof.target_role}\`
@@ -473,6 +561,12 @@ function selfTestProof() {
   }
   if (!aadSecurityLabelReadback.toString().includes("pg_shseclabel")) {
     defects.push("AAD security label fallback does not read back shared security labels");
+  }
+  if (!bestEffortRoleHardening.toString().includes("SAVEPOINT foundation_v2_role_hardening")) {
+    defects.push("role hardening does not preserve transaction state after permission failure");
+  }
+  if (parseArgs(["--scope", "principal"]).scope !== "principal") {
+    defects.push("principal bootstrap scope parsing failed");
   }
   return {
     status:
