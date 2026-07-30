@@ -130,6 +130,17 @@ function testOperationalPlanDoesNotRequireEvaluatorFiles() {
   assert.equal(result.evaluatorVisibleCount, 0);
 }
 
+function testOperationalLandingUsesEffectiveRunRefForRetries() {
+  const source = fs.readFileSync(SCRIPT, "utf8");
+  assert.match(source, /let effectiveRunRef = result\.runId/);
+  assert.match(source, /RETURNING run_ref/);
+  assert.match(source, /result\.effectiveRunRef = effectiveRunRef/);
+  assert.match(source, /registered_run_ref = EXCLUDED\.registered_run_ref/);
+  assert.match(source, /file\.parserVisible \? "client_visible" : "internal_ops",\s+effectiveRunRef,/);
+  assert.match(source, /created_run_ref = EXCLUDED\.created_run_ref/);
+  assert.match(source, /result\.manifestRef, effectiveRunRef/);
+}
+
 const tests = [
   testOperationalPlan,
   testEvaluatorPlan,
@@ -137,6 +148,7 @@ const tests = [
   testWrongTenantBlocked,
   testOutFile,
   testOperationalPlanDoesNotRequireEvaluatorFiles,
+  testOperationalLandingUsesEffectiveRunRefForRetries,
 ];
 
 for (const test of tests) {

@@ -423,9 +423,10 @@ async function uploadRunManifest({ result, scope }) {
 
 async function recordOperationalLanding({ files, result, packageHash }) {
   const client = await buildPgClient();
+  let effectiveRunRef = result.runId;
   try {
     await client.query("BEGIN");
-    await client.query(
+    const runUpsert = await client.query(
       `
         INSERT INTO operations.run (
           tenant_key, run_ref, release_id, idempotency_key, run_type, run_state,
@@ -433,7 +434,14 @@ async function recordOperationalLanding({ files, result, packageHash }) {
         )
         VALUES ($1, $2, $3, $4, 'source_corpus_landing', 'running', $5, $6, $7, now(), $8::jsonb)
         ON CONFLICT (tenant_key, idempotency_key)
-        DO UPDATE SET run_state = 'running', started_at = now(), metadata = EXCLUDED.metadata
+        DO UPDATE SET
+          run_state = 'running',
+          started_at = now(),
+          completed_at = null,
+          failure_code = null,
+          failure_detail = null,
+          metadata = EXCLUDED.metadata
+        RETURNING run_ref
       `,
       [
         TENANT_KEY,
@@ -446,6 +454,8 @@ async function recordOperationalLanding({ files, result, packageHash }) {
         JSON.stringify({ scope: result.scope, sourceCommitSha: result.sourceCommitSha }),
       ],
     );
+    effectiveRunRef = runUpsert.rows[0]?.run_ref ?? result.runId;
+    result.effectiveRunRef = effectiveRunRef;
 
     for (const file of files) {
       await client.query(
@@ -477,7 +487,7 @@ async function recordOperationalLanding({ files, result, packageHash }) {
           file.sha256,
           file.parserContractRef,
           file.parserVisible ? "client_visible" : "internal_ops",
-          result.runId,
+          effectiveRunRef,
         JSON.stringify({
             relativePath: file.relativePath,
             bytes: file.bytes,
@@ -512,7 +522,7 @@ async function recordOperationalLanding({ files, result, packageHash }) {
             immutable = true,
             created_run_ref = EXCLUDED.created_run_ref
         `,
-        [TENANT_KEY, file.sourceVersionRef, file.sourceRef, file.sha256, file.landedUri, result.manifestRef, result.runId],
+        [TENANT_KEY, file.sourceVersionRef, file.sourceRef, file.sha256, file.landedUri, result.manifestRef, effectiveRunRef],
       );
     }
 
@@ -529,7 +539,7 @@ async function recordOperationalLanding({ files, result, packageHash }) {
       `,
       [
         TENANT_KEY,
-        result.runId,
+        effectiveRunRef,
         result.expectedCount,
         files.length,
         result.contentHash,
@@ -547,7 +557,7 @@ async function recordOperationalLanding({ files, result, packageHash }) {
         SET run_state = 'passed', completed_at = now(), metadata = $3::jsonb
         WHERE tenant_key = $1 AND run_ref = $2
       `,
-      [TENANT_KEY, result.runId, JSON.stringify(result)],
+      [TENANT_KEY, effectiveRunRef, JSON.stringify(result)],
     );
     await client.query("COMMIT");
   } catch (error) {
@@ -559,7 +569,7 @@ async function recordOperationalLanding({ files, result, packageHash }) {
           SET run_state = 'failed', completed_at = now(), failure_code = $3, failure_detail = $4
           WHERE tenant_key = $1 AND run_ref = $2
         `,
-        [TENANT_KEY, result.runId, error.code ?? "source_landing_failed", String(error.message ?? error)],
+        [TENANT_KEY, effectiveRunRef, error.code ?? "source_landing_failed", String(error.message ?? error)],
       );
     } catch {
       // Preserve the original failure.
