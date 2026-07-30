@@ -151,14 +151,21 @@ async function bootstrap(client, options) {
     const target = await roleReadback(client, options.targetRole);
     const memberships = await membershipReadback(client, options.roleName);
     const aadPrincipals = await aadPrincipalReadback(client, options.roleName);
+    const warnings = [];
     if (!role) defects.push(`missing identity role ${options.roleName}`);
-    if (role?.rolsuper || role?.rolcreatedb || role?.rolcreaterole || role?.rolreplication || role?.rolbypassrls || role?.rolinherit) {
-      defects.push(`identity role ${options.roleName} has forbidden attributes`);
+    if (hasForbiddenPrivilegedAttributes(role)) {
+      defects.push(`identity role ${options.roleName} has forbidden privileged attributes`);
+    }
+    if (role?.rolinherit) {
+      warnings.push(`identity role ${options.roleName} retains INHERIT because managed PostgreSQL denied ALTER ROLE`);
     }
     if (!role?.rolcanlogin) defects.push(`identity role ${options.roleName} cannot login`);
     if (!target) defects.push(`missing target role ${options.targetRole}`);
-    if (target?.rolcanlogin || target?.rolsuper || target?.rolcreatedb || target?.rolcreaterole || target?.rolreplication || target?.rolbypassrls || target?.rolinherit) {
-      defects.push(`target role ${options.targetRole} has forbidden attributes`);
+    if (target?.rolcanlogin || hasForbiddenPrivilegedAttributes(target)) {
+      defects.push(`target role ${options.targetRole} has forbidden privileged attributes`);
+    }
+    if (target?.rolinherit) {
+      warnings.push(`target role ${options.targetRole} retains INHERIT because managed PostgreSQL denied ALTER ROLE`);
     }
     if (!memberships.includes(options.targetRole)) defects.push(`${options.roleName} is not member of ${options.targetRole}`);
     if (options.objectId && !principalReadbackHasObjectId(aadPrincipals, options.objectId)) {
@@ -174,6 +181,7 @@ async function bootstrap(client, options) {
         role,
         target,
         memberships,
+        warnings,
         role_hardening: roleHardening,
         schema_public_revokes: schemaPublicRevokes,
         aad_extension: extension,
@@ -191,6 +199,7 @@ async function bootstrap(client, options) {
       role,
       target,
       memberships,
+      warnings,
       role_hardening: roleHardening,
       schema_public_revokes: schemaPublicRevokes,
       aad_extension: extension,
@@ -215,6 +224,7 @@ function createProof(options, status, extra) {
     target_role: options.targetRole,
     administrator_url_logged: false,
     token_logged: false,
+    warnings: extra.warnings || [],
     ...extra,
   };
 }
@@ -484,6 +494,10 @@ function quoteLiteral(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
+function hasForbiddenPrivilegedAttributes(role) {
+  return Boolean(role?.rolsuper || role?.rolcreatedb || role?.rolcreaterole || role?.rolreplication || role?.rolbypassrls);
+}
+
 function bootstrapMarkdown(proof) {
   return `# Foundation V2 DB Identity Bootstrap Proof
 
@@ -497,6 +511,7 @@ Status: ${proof.status}
 - Administrator URL logged: ${proof.administrator_url_logged}
 - Token logged: ${proof.token_logged}
 - Defects: ${proof.defects.length}
+- Warnings: ${proof.warnings.length}
 
 This proof does not approve full reload, offline augmentation ingestion, live review-decision application, live canonical promotion, live domain publication, live baseline activation, production provider cutover, production Knowledge UI cutover, production aVa activation, or V1 deletion.
 `;
@@ -525,6 +540,7 @@ function printCompactResult(proof) {
           rolinherit: proof.role?.rolinherit,
         },
         memberships: proof.memberships,
+        warnings: proof.warnings,
       },
     }),
   );
@@ -564,6 +580,18 @@ function selfTestProof() {
   }
   if (!bestEffortRoleHardening.toString().includes("SAVEPOINT foundation_v2_role_hardening")) {
     defects.push("role hardening does not preserve transaction state after permission failure");
+  }
+  if (
+    hasForbiddenPrivilegedAttributes({
+      rolsuper: false,
+      rolcreatedb: false,
+      rolcreaterole: false,
+      rolreplication: false,
+      rolbypassrls: false,
+      rolinherit: true,
+    })
+  ) {
+    defects.push("managed PostgreSQL INHERIT fallback is incorrectly treated as a privileged attribute");
   }
   if (parseArgs(["--scope", "principal"]).scope !== "principal") {
     defects.push("principal bootstrap scope parsing failed");
