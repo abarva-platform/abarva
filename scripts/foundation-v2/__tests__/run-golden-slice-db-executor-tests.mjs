@@ -6,6 +6,12 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
   EXPECTED_FIXTURE_SHA256,
+  EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
+  EXPECTED_MIGRATION_SHA256,
+  EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
+  IDENTITY_CONTROL_MIGRATION_NAME,
+  MIGRATION_NAME,
+  WRITE_POLICY_MIGRATION_NAME,
   buildFixturePlan,
   readFixtureSet,
 } from "../golden-slice-support.mjs";
@@ -90,6 +96,13 @@ try {
   failures.push(`DB replay failed: ${error.message}`);
 }
 
+let approvedMigrationApplyReplay = null;
+try {
+  approvedMigrationApplyReplay = runApprovedMigrationApplyReplay();
+} catch (error) {
+  failures.push(`approved migration apply replay failed: ${error.message}`);
+}
+
 if (failures.length > 0) {
   console.error(JSON.stringify({ status: "FAIL", outDir, failures }, null, 2));
   process.exit(1);
@@ -104,6 +117,7 @@ console.log(
       expectedLayerTotals: plan.expected_layer_totals,
       sourceFieldRows: plan.source_field_rows.length,
       dbReplay,
+      approvedMigrationApplyReplay,
     },
     null,
     2,
@@ -137,7 +151,7 @@ function runDbReplay() {
     ]);
     psql(workDir, port, database, [
       "-c",
-      "INSERT INTO schema_migrations(name, sha256) VALUES ('20260730120000_foundation_v2_golden_slice_core.sql','4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f'), ('20260730133000_foundation_v2_golden_slice_write_policies.sql','4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d'), ('20260730152000_foundation_v2_golden_slice_identity_controls.sql','0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550')",
+      `INSERT INTO schema_migrations(name, sha256) VALUES ('${MIGRATION_NAME}','${EXPECTED_MIGRATION_SHA256}'), ('${WRITE_POLICY_MIGRATION_NAME}','${EXPECTED_WRITE_POLICY_MIGRATION_SHA256}'), ('${IDENTITY_CONTROL_MIGRATION_NAME}','${EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256}')`,
     ]);
     psql(workDir, port, database, [
       "-c",
@@ -271,6 +285,66 @@ function runDbReplay() {
   }
 }
 
+function runApprovedMigrationApplyReplay() {
+  for (const command of ["initdb", "pg_ctl", "createdb", "psql"]) requireCommand(command);
+  const workDir = mkdtempSync("/tmp/f2-approved-migrations-");
+  const dataDir = path.join(workDir, "pgdata");
+  const proofDir = path.join(workDir, "proof");
+  const port = randomPostgresPort();
+  const database = "foundation_v2_migration_apply_replay";
+  mkdirSync(proofDir, { recursive: true });
+  try {
+    run("initdb", ["-D", dataDir, "--no-locale", "--encoding=UTF8", "-U", "postgres"]);
+    run("pg_ctl", ["-D", dataDir, "-o", `-p ${port} -k ${workDir}`, "-l", path.join(workDir, "postgres.log"), "start"]);
+    run("createdb", ["-h", workDir, "-p", port, "-U", "postgres", database]);
+    psql(workDir, port, database, [
+      "-c",
+      "CREATE TABLE schema_migrations(name text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())",
+    ]);
+    psql(workDir, port, database, ["-f", path.join(repoRoot, "supabase/migrations/20260730120000_foundation_v2_golden_slice_core.sql")]);
+    psql(workDir, port, database, [
+      "-f",
+      path.join(repoRoot, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
+    ]);
+    psql(workDir, port, database, [
+      "-c",
+      `INSERT INTO schema_migrations(name, sha256) VALUES ('${MIGRATION_NAME}','${EXPECTED_MIGRATION_SHA256}'), ('${WRITE_POLICY_MIGRATION_NAME}','${EXPECTED_WRITE_POLICY_MIGRATION_SHA256}')`,
+    ]);
+
+    const proof = runJson("scripts/foundation-v2/apply-approved-migrations.mjs", [], {
+      ...process.env,
+      DATABASE_URL: `postgresql://postgres@localhost:${port}/${database}?host=${workDir}&sslmode=disable`,
+      FOUNDATION_V2_MIGRATION_MODE: "apply",
+      FOUNDATION_V2_MIGRATION_OUT_DIR: proofDir,
+      FOUNDATION_V2_EMIT_PROOF_BUNDLE: "false",
+    });
+
+    assertStatus(proof.status, "FOUNDATION_V2_APPROVED_MIGRATIONS_APPLIED", "approved migration apply replay");
+    if (proof.pending_before.length !== 1 || proof.pending_before[0] !== IDENTITY_CONTROL_MIGRATION_NAME) {
+      throw new Error(`unexpected pending_before ${JSON.stringify(proof.pending_before)}`);
+    }
+    if (proof.applied.length !== 1 || proof.applied[0] !== IDENTITY_CONTROL_MIGRATION_NAME) {
+      throw new Error(`unexpected applied migrations ${JSON.stringify(proof.applied)}`);
+    }
+    if (proof.pending_after.length !== 0) {
+      throw new Error(`expected pending_after zero, got ${JSON.stringify(proof.pending_after)}`);
+    }
+    if (proof.defects.length !== 0) {
+      throw new Error(`expected zero defects, got ${JSON.stringify(proof.defects)}`);
+    }
+
+    return {
+      status: proof.status,
+      pending_before: proof.pending_before,
+      applied: proof.applied,
+      pending_after: proof.pending_after,
+    };
+  } finally {
+    run("pg_ctl", ["-D", dataDir, "stop", "-m", "fast"], { allowFailure: true });
+    rmSync(workDir, { recursive: true, force: true });
+  }
+}
+
 function runTamperVerifierCase(name, tamperSql, expectedFirstBrokenTransition) {
   const workDir = mkdtempSync(`/tmp/f2-${name}-`);
   const dataDir = path.join(workDir, "pgdata");
@@ -297,7 +371,7 @@ function runTamperVerifierCase(name, tamperSql, expectedFirstBrokenTransition) {
     ]);
     psql(workDir, port, database, [
       "-c",
-      "INSERT INTO schema_migrations(name, sha256) VALUES ('20260730120000_foundation_v2_golden_slice_core.sql','4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f'), ('20260730133000_foundation_v2_golden_slice_write_policies.sql','4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d'), ('20260730152000_foundation_v2_golden_slice_identity_controls.sql','0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550')",
+      `INSERT INTO schema_migrations(name, sha256) VALUES ('${MIGRATION_NAME}','${EXPECTED_MIGRATION_SHA256}'), ('${WRITE_POLICY_MIGRATION_NAME}','${EXPECTED_WRITE_POLICY_MIGRATION_SHA256}'), ('${IDENTITY_CONTROL_MIGRATION_NAME}','${EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256}')`,
     ]);
     psql(workDir, port, database, [
       "-c",

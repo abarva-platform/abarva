@@ -44,7 +44,8 @@ async function main(options) {
     const applied = [];
     if (defects.length === 0 && options.mode === "apply") {
       for (const migration of migrations) {
-        if (before.find((row) => row.name === migration.name)) continue;
+        const readback = before.find((row) => row.name === migration.name);
+        if (readback?.present) continue;
         await client.query(migration.sql);
         await client.query(
           `INSERT INTO schema_migrations(name, sha256, applied_at)
@@ -56,9 +57,14 @@ async function main(options) {
       }
     }
     const after = await migrationReadback(client, migrations);
+    const pendingAfter = after.filter((row) => !row.present).map((row) => row.name);
+    const finalDefects = [...defects];
+    if (options.mode === "apply" && pendingAfter.length > 0) {
+      finalDefects.push(`approved migrations still pending after apply: ${pendingAfter.join(", ")}`);
+    }
     const proof = {
       status:
-        defects.length > 0
+        finalDefects.length > 0
           ? "FOUNDATION_V2_APPROVED_MIGRATIONS_FAILED"
           : options.mode === "dry"
             ? "FOUNDATION_V2_APPROVED_MIGRATIONS_DRY_RUN_PASSED"
@@ -69,8 +75,8 @@ async function main(options) {
       approved_migration_count: migrations.length,
       pending_before: before.filter((row) => !row.present).map((row) => row.name),
       applied,
-      pending_after: after.filter((row) => !row.present).map((row) => row.name),
-      defects,
+      pending_after: pendingAfter,
+      defects: finalDefects,
       migrations: after,
       full_repo_migration_runner_used: false,
       offline_augmentation_approved: false,
