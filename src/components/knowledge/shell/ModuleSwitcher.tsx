@@ -24,7 +24,10 @@ const MODULES: readonly {
  */
 export function ModuleSwitcher() {
   return (
-    <nav className="flex items-center gap-1" aria-label="Product modules">
+    <nav
+      className="flex max-w-full items-center gap-1 overflow-x-auto"
+      aria-label="Product modules"
+    >
       {MODULES.map((m) => (
         <ModuleTab key={m.key} moduleKey={m.key} label={m.label} />
       ))}

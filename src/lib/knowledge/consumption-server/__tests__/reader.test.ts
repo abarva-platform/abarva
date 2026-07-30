@@ -112,3 +112,113 @@ describe("ConsumptionReader — active baseline with data", () => {
     expect(env.knowledgeBaselineRef).toBe(BASELINE);
   });
 });
+
+describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", () => {
+  it("normalizes built airline application/vendor projection payloads to the Home Explore domain contract", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /FROM consumption\.domain_summary_v1/, rows: [
+        { payload: { domainKey: "application_platform", label: "Application platform", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
+        { payload: { domainKey: "vendor", label: "Vendor", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
+      ]},
+      { match: /FROM consumption\.application_inventory_v1/, rows: [
+        { payload: { entityRef: "entity:application_platform:airport-001", entityType: "application_platform", displayName: "Airport station gate ramp baggage 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
+      ]},
+      { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [
+        { payload: { entityRef: "entity:vendor:supplier-001", entityType: "vendor", displayName: "Synthetic Supplier 001", domainKey: "vendor", availabilityState: "available", fields: [], evidenceRefs: [] } },
+      ]},
+    ]));
+
+    const applications = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "technology" });
+    expect(applications.projectionName).toBe("consumption.application_inventory_v1");
+    expect(applications.availabilityState).toBe("available");
+    expect(applications.data.entities).toHaveLength(1);
+    expect(applications.data.entities[0]).toMatchObject({
+      entityType: "application",
+      domainKey: "technology",
+    });
+    expect(applications.data.domains.map((d) => d.domainKey)).toEqual([
+      "technology",
+      "vendors",
+    ]);
+
+    const vendors = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "vendors" });
+    expect(vendors.projectionName).toBe("consumption.vendor_contract_inventory_v1");
+    expect(vendors.availabilityState).toBe("available");
+    expect(vendors.data.entities).toHaveLength(1);
+    expect(vendors.data.entities[0]).toMatchObject({
+      entityType: "vendor",
+      domainKey: "vendors",
+    });
+  });
+
+  it("does not report an unsupported Explore domain as an available zero when projections contain rows", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /FROM consumption\.domain_summary_v1/, rows: [
+        { payload: { domainKey: "application_platform", label: "Application platform", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
+      ]},
+      { match: /FROM consumption\.application_inventory_v1/, rows: [
+        { payload: { entityRef: "entity:application_platform:airport-001", entityType: "application_platform", displayName: "Airport station gate ramp baggage 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
+      ]},
+      { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [] },
+    ]));
+
+    const env = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "unsupported-domain" });
+    expect(env.availabilityState).toBe("not_loaded");
+    expect(env.data.entities).toHaveLength(0);
+    expect(env.warnings[0]?.message).toMatch(/No built Explore projection rows matched/);
+  });
+
+  it("reports search_document_v1 as not_loaded when the active-baseline table is empty", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /count\(\*\)::int AS total_count FROM consumption\.search_document_v1/, rows: [
+        { total_count: 0 },
+      ]},
+    ]));
+
+    const env = await reader.searchKnowledge({ tenantKey: TENANT, query: "Crew Scheduling" });
+    expect(env.availabilityState).toBe("not_loaded");
+    expect(env.data.hits).toHaveLength(0);
+  });
+
+  it("preserves available empty search results when search_document_v1 exists but the term is absent", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /count\(\*\)::int AS total_count FROM consumption\.search_document_v1/, rows: [
+        { total_count: 37000 },
+      ]},
+    ]));
+
+    const env = await reader.searchKnowledge({ tenantKey: TENANT, query: "Crew Scheduling" });
+    expect(env.availabilityState).toBe("available");
+    expect(env.data.hits).toHaveLength(0);
+  });
+
+  it("does not report suggested questions as available when module_knowledge_packet_v1 is absent", async () => {
+    const reader = new ConsumptionReader(fakeQuery([activeBaselineRow]));
+
+    const env = await reader.getSuggestedQuestions({ tenantKey: TENANT, mode: "brief" });
+    expect(env.availabilityState).toBe("not_loaded");
+    expect(env.data).toEqual([]);
+  });
+
+  it("reads mode-scoped suggested questions from module_knowledge_packet_v1 when built", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /FROM consumption\.module_knowledge_packet_v1/, rows: [
+        { payload: { questions: [
+          { id: "sq-brief", question: "What changed?", mode: "brief", requiresModel: true },
+          { id: "sq-explore", question: "Which systems matter?", mode: "explore", requiresModel: false },
+        ] } },
+      ]},
+    ]));
+
+    const env = await reader.getSuggestedQuestions({ tenantKey: TENANT, mode: "brief" });
+    expect(env.availabilityState).toBe("available");
+    expect(env.data).toEqual([
+      { id: "sq-brief", question: "What changed?", mode: "brief", requiresModel: true },
+    ]);
+  });
+});

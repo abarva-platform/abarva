@@ -247,6 +247,15 @@ export class ConsumptionReader {
     if (rows.length === 0) {
       // Distinguish "no baseline data" from "no match": if the table is empty for
       // this baseline at all, that's not_loaded; a zero-match query is available+empty.
+      const totalRows = await this.q.rows<{ total_count: number }>(
+        `SELECT count(*)::int AS total_count FROM consumption.search_document_v1
+          WHERE tenant_key = $1 AND knowledge_baseline_ref = $2`,
+        [query.tenantKey, baseline.knowledgeBaselineRef],
+      ).catch(() => []);
+      if (Number(totalRows[0]?.total_count ?? 0) === 0) {
+        return this.notLoaded(query.tenantKey, "consumption.search_document_v1", empty, baseline,
+          "search_document_v1 has not been built for the active baseline yet.");
+      }
       return this.ok(query.tenantKey, "consumption.search_document_v1", empty, baseline);
     }
     const hits: KnowledgeSearchResultV1["hits"] = rows.map((r) => ({
@@ -273,15 +282,26 @@ export class ConsumptionReader {
         "No active Knowledge Baseline for this tenant.");
     }
     // Read domains + entity inventory (payloads are V1-shaped by the build).
-    const domainRows = await this.readPayloads<DomainReadinessV1>("domain_summary_v1", query.tenantKey, baseline.knowledgeBaselineRef);
-    const entityRows = await this.readPayloads<EntitySummaryV1>("application_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef);
-    const vendorRows = await this.readPayloads<EntitySummaryV1>("vendor_contract_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef);
-    let entities = [...entityRows, ...vendorRows].filter((e): e is EntitySummaryV1 => Boolean(e));
+    const domainRows = (await this.readPayloads<DomainReadinessV1>("domain_summary_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+      .filter((d): d is DomainReadinessV1 => Boolean(d))
+      .map(normalizeDomainReadiness);
+    const entityRows = (await this.readPayloads<EntitySummaryV1>("application_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+      .filter((e): e is EntitySummaryV1 => Boolean(e))
+      .map(normalizeApplicationEntity);
+    const vendorRows = (await this.readPayloads<EntitySummaryV1>("vendor_contract_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+      .filter((e): e is EntitySummaryV1 => Boolean(e))
+      .map(normalizeVendorEntity);
+    let entities = [...entityRows, ...vendorRows];
+    const projectionName = exploreProjectionName(query.domainKey);
     if (domainRows.length === 0 && entities.length === 0) {
-      return this.notLoaded(query.tenantKey, "consumption.domain_summary_v1", empty, baseline,
+      return this.notLoaded(query.tenantKey, projectionName, empty, baseline,
         "domain_summary_v1 / application_inventory_v1 are not built for the active baseline yet.");
     }
     if (query.domainKey) entities = entities.filter((e) => e.domainKey === query.domainKey);
+    if (query.domainKey && entities.length === 0) {
+      return this.notLoaded(query.tenantKey, projectionName, empty, baseline,
+        `No built Explore projection rows matched domainKey "${query.domainKey}" for the active baseline.`);
+    }
     if (query.search) {
       const q = query.search.toLowerCase();
       entities = entities.filter((e) => e.displayName.toLowerCase().includes(q));
@@ -297,7 +317,7 @@ export class ConsumptionReader {
       page,
       pageSize,
     };
-    return this.ok(query.tenantKey, "consumption.domain_summary_v1", data, baseline);
+    return this.ok(query.tenantKey, projectionName, data, baseline);
   }
 
   async getEntityDetail(query: EntityDetailQuery): Promise<ConsumptionEnvelope<EntityDetailV1>> {
@@ -357,7 +377,15 @@ export class ConsumptionReader {
       return this.notLoaded(query.tenantKey, "consumption.module_knowledge_packet_v1", [], null,
         "No active Knowledge Baseline for this tenant.");
     }
-    return this.ok(query.tenantKey, "consumption.module_knowledge_packet_v1", [], baseline);
+    const packets = await this.readPayloads<unknown>("module_knowledge_packet_v1", query.tenantKey, baseline.knowledgeBaselineRef);
+    if (packets.length === 0) {
+      return this.notLoaded(query.tenantKey, "consumption.module_knowledge_packet_v1", [], baseline,
+        "module_knowledge_packet_v1 has not been built for the active baseline yet.");
+    }
+    const questions = packets
+      .flatMap(extractSuggestedQuestions)
+      .filter((question) => question.mode === query.mode);
+    return this.ok(query.tenantKey, "consumption.module_knowledge_packet_v1", questions, baseline);
   }
 
   async previewModuleHandoff(query: ModuleHandoffQuery): Promise<ConsumptionEnvelope<ModuleHandoffPreviewV1>> {
@@ -404,4 +432,73 @@ function emptyRelationships(): RelationshipProjectionV1 {
 }
 function emptyEntityDetail(entityRef: string): EntityDetailV1 {
   return { entity: { entityRef, entityType: "unknown", displayName: "", domainKey: "", availabilityState: "not_loaded", fields: [], evidenceRefs: [] }, fields: [], perspectives: [], benchmarks: [], relatedEntityRefs: [], gapRefs: [] };
+}
+
+function normalizeDomainKey(domainKey: string): string {
+  if (domainKey === "application_platform") return "technology";
+  if (domainKey === "vendor") return "vendors";
+  return domainKey;
+}
+
+function normalizeDomainReadiness(domain: DomainReadinessV1): DomainReadinessV1 {
+  const domainKey = normalizeDomainKey(domain.domainKey);
+  if (domainKey === domain.domainKey) return domain;
+  return {
+    ...domain,
+    domainKey,
+    label: domainKey === "technology" ? "Systems and technology" : domain.label,
+  };
+}
+
+function normalizeApplicationEntity(entity: EntitySummaryV1): EntitySummaryV1 {
+  return {
+    ...entity,
+    entityType: entity.entityType === "application_platform" ? "application" : entity.entityType,
+    domainKey: normalizeDomainKey(entity.domainKey),
+  };
+}
+
+function normalizeVendorEntity(entity: EntitySummaryV1): EntitySummaryV1 {
+  return {
+    ...entity,
+    domainKey: normalizeDomainKey(entity.domainKey),
+  };
+}
+
+function exploreProjectionName(domainKey: string | undefined): ProjectionName {
+  if (domainKey === "technology" || domainKey === "application_platform") {
+    return "consumption.application_inventory_v1";
+  }
+  if (domainKey === "vendors" || domainKey === "vendor") {
+    return "consumption.vendor_contract_inventory_v1";
+  }
+  return "consumption.domain_summary_v1";
+}
+
+function extractSuggestedQuestions(payload: unknown): SuggestedQuestionV1[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(isSuggestedQuestion);
+  }
+  if (isSuggestedQuestion(payload)) {
+    return [payload];
+  }
+  if (payload && typeof payload === "object") {
+    const record = payload as { suggestedQuestions?: unknown; questions?: unknown };
+    const nested = Array.isArray(record.suggestedQuestions)
+      ? record.suggestedQuestions
+      : record.questions;
+    if (Array.isArray(nested)) {
+      return nested.filter(isSuggestedQuestion);
+    }
+  }
+  return [];
+}
+
+function isSuggestedQuestion(value: unknown): value is SuggestedQuestionV1 {
+  if (!value || typeof value !== "object") return false;
+  const q = value as SuggestedQuestionV1;
+  return typeof q.id === "string"
+    && typeof q.question === "string"
+    && (q.mode === "brief" || q.mode === "explore" || q.mode === "relationships" || q.mode === "evidence")
+    && typeof q.requiresModel === "boolean";
 }
