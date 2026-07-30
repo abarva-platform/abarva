@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  READER_ROLE,
   WRITER_ROLE,
   databaseUrl,
   emitProofBundle,
@@ -9,9 +10,10 @@ import {
   writeMarkdown,
 } from "./golden-slice-support.mjs";
 
-const READER_ROLE = "foundation_v2_golden_slice_reader";
-const DEFAULT_WRITER_IDENTITY = "mi-foundation-v2-golden-slice-writer-lab-001";
-const DEFAULT_READER_IDENTITY = "mi-foundation-v2-golden-slice-reader-lab-001";
+const DEFAULT_WRITER_IDENTITY =
+  process.env.FOUNDATION_V2_DB_WRITER_IDENTITY_NAME || "mi-foundation-v2-golden-slice-writer-lab-001";
+const DEFAULT_READER_IDENTITY =
+  process.env.FOUNDATION_V2_DB_READER_IDENTITY_NAME || "mi-foundation-v2-golden-slice-reader-lab-001";
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -182,10 +184,14 @@ async function ensureAadExtension(client) {
   };
   if (pgaad && !pgaad.installed_version) {
     result.attempted_create = true;
+    await client.query("SAVEPOINT foundation_v2_aad_extension_create");
     try {
       await client.query("CREATE EXTENSION IF NOT EXISTS pgaadauth");
+      await client.query("RELEASE SAVEPOINT foundation_v2_aad_extension_create");
     } catch (error) {
       result.create_error = error.message;
+      await client.query("ROLLBACK TO SAVEPOINT foundation_v2_aad_extension_create").catch(() => {});
+      await client.query("RELEASE SAVEPOINT foundation_v2_aad_extension_create").catch(() => {});
     }
     result.after = await aadExtensionReadback(client);
   }

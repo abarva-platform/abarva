@@ -12,6 +12,7 @@ import {
   TEST_NAMESPACE,
   WRITER_ROLE,
   WRITE_POLICY_MIGRATION_NAME,
+  bindFoundationV2SqlContext,
   buildFixturePlan,
   createManifest,
   emitProofBundle,
@@ -97,6 +98,7 @@ async function main(options) {
 
   const { Client } = await importPg();
   const client = new Client(await foundationPostgresClientOptions("foundation-v2-golden-slice-executor"));
+  bindFoundationV2SqlContext(client);
   await client.connect();
   try {
     if (options.mode === "schema-readback") {

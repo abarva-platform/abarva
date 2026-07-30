@@ -9,8 +9,10 @@ import {
   READER_ROLE,
   SOURCE_RELEASE_ID,
   TENANT_KEY,
+  TERMINAL_STATUS,
   TEST_NAMESPACE,
   WRITE_POLICY_MIGRATION_NAME,
+  bindFoundationV2SqlContext,
   buildFixturePlan,
   createManifest,
   emitProofBundle,
@@ -52,6 +54,7 @@ async function main(options) {
   }
   const { Client } = await importPg();
   const client = new Client(await foundationPostgresClientOptions("foundation-v2-golden-slice-verifier"));
+  bindFoundationV2SqlContext(client);
   await client.connect();
   try {
     await activateVerifierRole(client);
@@ -59,7 +62,7 @@ async function main(options) {
     const proof = await verify(client, plan, options.outDir);
     if (options.emitProofBundle) emitProofBundle(options.outDir);
     console.log(JSON.stringify(proof, null, 2));
-    if (proof.status !== "FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED") process.exitCode = 1;
+    if (proof.status !== TERMINAL_STATUS) process.exitCode = 1;
   } finally {
     await client.end();
   }
@@ -171,7 +174,7 @@ async function verify(client, plan, outDir) {
   }
   if (v1Isolation.some((row) => row.foundation_release_refs !== "0")) defects.push("V1 relation contains Foundation V2 release refs");
 
-  const status = defects.length === 0 ? "FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED" : "FOUNDATION_V2_GOLDEN_SLICE_VERIFICATION_FAILED";
+  const status = defects.length === 0 ? TERMINAL_STATUS : "FOUNDATION_V2_GOLDEN_SLICE_VERIFICATION_FAILED";
   const completedAt = new Date().toISOString();
   const manifest = createManifest(plan, status, {
     started_at: startedAt,

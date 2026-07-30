@@ -1,0 +1,17 @@
+{
+  "contract_id": "healthcare-demo-new-foundation-v2-progressive-golden-slice-contract-v1",
+  "tenant_key": "healthcare-demo-new",
+  "foundation_release_alias": "healthcare-demo-new-foundation-v2-progressive-golden-slice-v1",
+  "source_release_id": "healthcare-demo-new-foundation-v2-progressive-golden-slice-v1",
+  "test_namespace": "foundation-v2-healthcare-progressive-golden-slice-v1",
+  "database_schema": "foundation_v2_healthcare_gs",
+  "writer_role": "foundation_v2_healthcare_gs_writer",
+  "reader_role": "foundation_v2_healthcare_gs_reader",
+  "allowed_status": "HEALTHCARE_FOUNDATION_V2_PROGRESSIVE_DB_GOLDEN_SLICE_CERTIFIED",
+  "isolation_scope": "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY",
+  "full_reload_approved": false,
+  "offline_augmentation_approved": false,
+  "production_provider_cutover_approved": false,
+  "live_baseline_activation_approved": false,
+  "v1_mutation_approved": false
+}
