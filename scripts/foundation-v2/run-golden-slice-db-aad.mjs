@@ -85,6 +85,19 @@ function requiredEnv(name) {
 
 async function managedIdentityPostgresToken(clientId) {
   const resource = encodeURIComponent("https://ossrdbms-aad.database.windows.net");
+  if (process.env.IDENTITY_ENDPOINT && process.env.IDENTITY_HEADER) {
+    const url = new URL(process.env.IDENTITY_ENDPOINT);
+    url.searchParams.set("api-version", "2019-08-01");
+    url.searchParams.set("resource", "https://ossrdbms-aad.database.windows.net");
+    url.searchParams.set("client_id", clientId);
+    const response = await fetch(url, { headers: { "X-IDENTITY-HEADER": process.env.IDENTITY_HEADER } });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body.access_token) {
+      throw new Error(`container apps managed identity token request failed: ${response.status} ${JSON.stringify(body)}`);
+    }
+    return body.access_token;
+  }
+
   const url = `http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=${resource}&client_id=${encodeURIComponent(clientId)}`;
   const response = await fetch(url, { headers: { Metadata: "true" } });
   const body = await response.json().catch(() => ({}));

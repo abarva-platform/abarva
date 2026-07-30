@@ -35,6 +35,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - `scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs`
 - `package.json`
 - Follow-up repair: bootstrap now reads and enables the Azure PostgreSQL AAD extension in the target database before looking for `pgaadauth_create_principal`, and emits extension/function readback in failure proofs.
+- Follow-up repair: managed-identity token binding now uses the Azure Container Apps job endpoint/header contract before falling back to VM-style IMDS, so private operator jobs can request PostgreSQL Entra tokens from their assigned user identities.
 
 ## QA / Validation
 
@@ -46,6 +47,8 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up validation:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
   - Pass: `npm run foundation-v2:db-identity:self-test`
+- Follow-up validation for Container Apps managed-identity token binding:
+  - Pass: `node --check scripts/foundation-v2/run-golden-slice-db-aad.mjs`
 - Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 
 Not run yet: live golden-slice database execution; this release only adds the bootstrap and managed-identity execution path needed before that run.
