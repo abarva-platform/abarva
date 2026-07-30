@@ -59,6 +59,21 @@
       ]
     },
     {
+      "tenantKey": "healthcare-demo-new",
+      "displayName": "Healthcare Demo",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/healthcare-demo-new/current",
+      "packets": [
+        {
+          "packetId": "foundation-v2-progressive-golden-slice-v1",
+          "path": "fixtures/foundation-v2/healthcare-golden-slice",
+          "classification": "synthetic-demo",
+          "status": "isolated-foundation-v2-golden-slice-input",
+          "note": "Synthetic PHI-free Healthcare Foundation V2 progressive golden-slice fixture for isolated DB execution only."
+        }
+      ]
+    },
+    {
       "tenantKey": "lakeshore-holdings",
       "displayName": "Lakeshore Holdings",
       "companySizeBand": "mid_market",

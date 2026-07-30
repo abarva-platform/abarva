@@ -5,15 +5,57 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-export const FOUNDATION_RELEASE_ALIAS = "airline-demo-new";
-export const TENANT_KEY = "skyharbor-air";
-export const TEST_NAMESPACE = "foundation-v2-golden-slice-v1";
-export const SOURCE_RELEASE_ID = "airline-demo-new-foundation-v2-golden-slice-v1";
+export const LANE_CONFIGS = {
+  airline: {
+    domain: "airline",
+    database_schema: "foundation_v2",
+    execution_namespace: "foundation-v2-golden-slice-v1",
+    writer_role: "foundation_v2_golden_slice_writer",
+    reader_role: "foundation_v2_golden_slice_reader",
+    tenant_key: "skyharbor-air",
+    release_alias: "airline-demo-new",
+    source_release_id: "airline-demo-new-foundation-v2-golden-slice-v1",
+    publication_namespace: "foundation-v2-airline-publication-gs-v1",
+    baseline_namespace: "foundation-v2-airline-baseline-gs-v1",
+    projection_namespace: "foundation-v2-airline-projection-gs-v1",
+    cube_namespace: "foundation_v2_airline_gs",
+    terminal_status: "FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED",
+  },
+  healthcare: {
+    domain: "healthcare",
+    database_schema: "foundation_v2_healthcare_gs",
+    execution_namespace: "foundation-v2-healthcare-progressive-golden-slice-v1",
+    writer_role: "foundation_v2_healthcare_gs_writer",
+    reader_role: "foundation_v2_healthcare_gs_reader",
+    tenant_key: "healthcare-demo-new",
+    release_alias: "healthcare-demo-new-foundation-v2-progressive-golden-slice-v1",
+    source_release_id: "healthcare-demo-new-foundation-v2-progressive-golden-slice-v1",
+    publication_namespace: "foundation-v2-healthcare-publication-gs-v1",
+    baseline_namespace: "foundation-v2-healthcare-baseline-gs-v1",
+    projection_namespace: "foundation-v2-healthcare-projection-gs-v1",
+    cube_namespace: "foundation_v2_healthcare_gs",
+    terminal_status: "HEALTHCARE_FOUNDATION_V2_PROGRESSIVE_DB_GOLDEN_SLICE_CERTIFIED",
+  },
+};
+
+export const FOUNDATION_V2_CONTEXT = buildExecutionContext();
+export const DATABASE_SCHEMA = FOUNDATION_V2_CONTEXT.database_schema;
+export const EXECUTION_NAMESPACE = FOUNDATION_V2_CONTEXT.execution_namespace;
+export const PUBLICATION_NAMESPACE = FOUNDATION_V2_CONTEXT.publication_namespace;
+export const BASELINE_NAMESPACE = FOUNDATION_V2_CONTEXT.baseline_namespace;
+export const PROJECTION_NAMESPACE = FOUNDATION_V2_CONTEXT.projection_namespace;
+export const CUBE_NAMESPACE = FOUNDATION_V2_CONTEXT.cube_namespace;
+export const TERMINAL_STATUS = FOUNDATION_V2_CONTEXT.terminal_status;
+export const FOUNDATION_RELEASE_ALIAS = FOUNDATION_V2_CONTEXT.release_alias;
+export const TENANT_KEY = FOUNDATION_V2_CONTEXT.tenant_key;
+export const TEST_NAMESPACE = EXECUTION_NAMESPACE;
+export const SOURCE_RELEASE_ID = FOUNDATION_V2_CONTEXT.source_release_id;
 export const RELEASE_VERSION = "v1";
 export const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
-export const WRITER_ROLE = "foundation_v2_golden_slice_writer";
-export const READER_ROLE = "foundation_v2_golden_slice_reader";
+export const WRITER_ROLE = FOUNDATION_V2_CONTEXT.writer_role;
+export const READER_ROLE = FOUNDATION_V2_CONTEXT.reader_role;
 export const EXPECTED_FIXTURE_SHA256 =
+  process.env.FOUNDATION_V2_EXPECTED_FIXTURE_SHA256 ||
   "d4bb8fe59cd22c95bc470074d4dba4d45754fb80b9245c54bf3ec9b488d0bc62";
 export const EXPECTED_MIGRATION_SHA256 =
   "4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f";
@@ -33,10 +75,9 @@ export const DEFAULT_FIXTURE_PATH = path.join(
   REPO_ROOT,
   "fixtures/foundation-v2/golden-slice/fixture-matrix.json",
 );
-export const RELEASE_CONTRACT_PATH = path.join(
-  REPO_ROOT,
-  "fixtures/foundation-v2/golden-slice/release-contract.json",
-);
+export const RELEASE_CONTRACT_PATH = process.env.FOUNDATION_V2_RELEASE_CONTRACT
+  ? path.resolve(process.cwd(), process.env.FOUNDATION_V2_RELEASE_CONTRACT)
+  : path.join(REPO_ROOT, "fixtures/foundation-v2/golden-slice/release-contract.json");
 
 export const LAYERS = [
   ["L0", "L0_source_rows"],
@@ -574,10 +615,80 @@ export async function foundationPostgresClientOptions(applicationName) {
   };
 }
 
+export function bindFoundationV2SqlContext(client) {
+  const query = client.query.bind(client);
+  client.query = (config, values, callback) => {
+    if (typeof config === "string") {
+      return query(rewriteFoundationV2Sql(config), values, callback);
+    }
+    if (config && typeof config === "object" && typeof config.text === "string") {
+      return query({ ...config, text: rewriteFoundationV2Sql(config.text) }, values, callback);
+    }
+    return query(config, values, callback);
+  };
+  return client;
+}
+
+export function rewriteFoundationV2Sql(sql) {
+  return String(sql)
+    .replaceAll("foundation_v2.", `${quoteIdent(DATABASE_SCHEMA)}.`)
+    .replaceAll("'foundation_v2'", quoteLiteral(DATABASE_SCHEMA))
+    .replaceAll("foundation_v2_golden_slice_writer", WRITER_ROLE)
+    .replaceAll("foundation_v2_golden_slice_reader", READER_ROLE)
+    .replaceAll("airline-demo-new-foundation-v2-golden-slice-v1", SOURCE_RELEASE_ID)
+    .replaceAll("foundation-v2-golden-slice-v1", TEST_NAMESPACE)
+    .replaceAll("airline-demo-new", FOUNDATION_RELEASE_ALIAS)
+    .replaceAll("skyharbor-air", TENANT_KEY);
+}
+
+export function foundationTable(tableName) {
+  return `${quoteIdent(DATABASE_SCHEMA)}.${quoteIdent(tableName)}`;
+}
+
+export function quoteIdent(value) {
+  assertSqlIdentifier(value, "SQL identifier");
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+export function quoteLiteral(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function buildExecutionContext() {
+  const domain = process.env.FOUNDATION_V2_DOMAIN || process.env.FOUNDATION_V2_EXECUTION_DOMAIN || "airline";
+  const selected = LANE_CONFIGS[domain] || LANE_CONFIGS.airline;
+  const context = {
+    ...selected,
+    domain,
+    database_schema: process.env.FOUNDATION_V2_DATABASE_SCHEMA || selected.database_schema,
+    execution_namespace: process.env.FOUNDATION_V2_EXECUTION_NAMESPACE || selected.execution_namespace,
+    writer_role: process.env.FOUNDATION_V2_WRITER_ROLE || selected.writer_role,
+    reader_role: process.env.FOUNDATION_V2_READER_ROLE || selected.reader_role,
+    tenant_key: process.env.FOUNDATION_V2_TENANT_KEY || selected.tenant_key,
+    release_alias: process.env.FOUNDATION_V2_RELEASE_ALIAS || selected.release_alias,
+    source_release_id: process.env.FOUNDATION_V2_SOURCE_RELEASE_ID || selected.source_release_id,
+    publication_namespace: process.env.FOUNDATION_V2_PUBLICATION_NAMESPACE || selected.publication_namespace,
+    baseline_namespace: process.env.FOUNDATION_V2_BASELINE_NAMESPACE || selected.baseline_namespace,
+    projection_namespace: process.env.FOUNDATION_V2_PROJECTION_NAMESPACE || selected.projection_namespace,
+    cube_namespace: process.env.FOUNDATION_V2_CUBE_NAMESPACE || selected.cube_namespace,
+    terminal_status: process.env.FOUNDATION_V2_TERMINAL_STATUS || selected.terminal_status,
+  };
+  for (const [key, value] of Object.entries(context)) {
+    if (key.endsWith("_schema") || key.endsWith("_role") || key === "cube_namespace") {
+      assertSqlIdentifier(value, key);
+    }
+  }
+  return context;
+}
+
 function requiredEnv(name) {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is required`);
   return value;
+}
+
+function assertSqlIdentifier(value, label) {
+  if (!/^[a-z][a-z0-9_]{0,62}$/.test(String(value))) throw new Error(`Invalid ${label}: ${value}`);
 }
 
 export function fixtureStateBucket(fixture) {
@@ -628,6 +739,14 @@ function readTenantDeclaration() {
   if (releaseContract.source_release_id !== SOURCE_RELEASE_ID) contractDefects.push("source_release_id");
   if (releaseContract.test_namespace !== TEST_NAMESPACE) contractDefects.push("test_namespace");
   if (releaseContract.isolation_scope !== ISOLATION_SCOPE) contractDefects.push("isolation_scope");
+  if (releaseContract.database_schema && releaseContract.database_schema !== DATABASE_SCHEMA) {
+    contractDefects.push("database_schema");
+  }
+  if (releaseContract.writer_role && releaseContract.writer_role !== WRITER_ROLE) contractDefects.push("writer_role");
+  if (releaseContract.reader_role && releaseContract.reader_role !== READER_ROLE) contractDefects.push("reader_role");
+  if (releaseContract.allowed_status && releaseContract.allowed_status !== TERMINAL_STATUS) {
+    contractDefects.push("allowed_status");
+  }
   for (const gate of [
     "full_reload_approved",
     "offline_augmentation_approved",
