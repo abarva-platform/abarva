@@ -116,6 +116,13 @@ try {
   failures.push(`approved migration apply replay failed: ${error.message}`);
 }
 
+let healthcareMigrationApplyReplay = null;
+try {
+  healthcareMigrationApplyReplay = runHealthcareMigrationApplyReplay();
+} catch (error) {
+  failures.push(`healthcare migration apply replay failed: ${error.message}`);
+}
+
 if (failures.length > 0) {
   console.error(JSON.stringify({ status: "FAIL", outDir, failures }, null, 2));
   process.exit(1);
@@ -131,6 +138,7 @@ console.log(
       sourceFieldRows: plan.source_field_rows.length,
       dbReplay,
       approvedMigrationApplyReplay,
+      healthcareMigrationApplyReplay,
     },
     null,
     2,
@@ -386,6 +394,69 @@ function runApprovedMigrationApplyReplay() {
   }
 }
 
+function runHealthcareMigrationApplyReplay() {
+  for (const command of ["initdb", "pg_ctl", "createdb", "psql"]) requireCommand(command);
+  const workDir = mkdtempSync("/tmp/f2-healthcare-migrations-");
+  const dataDir = path.join(workDir, "pgdata");
+  const proofDir = path.join(workDir, "proof");
+  const port = randomPostgresPort();
+  const database = "foundation_v2_healthcare_migration_replay";
+  mkdirSync(proofDir, { recursive: true });
+  try {
+    run("initdb", ["-D", dataDir, "--no-locale", "--encoding=UTF8", "-U", "postgres"]);
+    run("pg_ctl", ["-D", dataDir, "-o", `-p ${port} -k ${workDir}`, "-l", path.join(workDir, "postgres.log"), "start"]);
+    run("createdb", ["-h", workDir, "-p", port, "-U", "postgres", database]);
+    psql(workDir, port, database, [
+      "-c",
+      "CREATE TABLE schema_migrations(name text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())",
+    ]);
+    psql(workDir, port, database, [
+      "-c",
+      `INSERT INTO schema_migrations(name, sha256) VALUES ('${MIGRATION_NAME}','${EXPECTED_MIGRATION_SHA256}'), ('${WRITE_POLICY_MIGRATION_NAME}','${EXPECTED_WRITE_POLICY_MIGRATION_SHA256}'), ('${IDENTITY_CONTROL_MIGRATION_NAME}','${EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256}')`,
+    ]);
+
+    const env = {
+      ...process.env,
+      DATABASE_URL: `postgresql://postgres@localhost:${port}/${database}?host=${workDir}&sslmode=disable`,
+      FOUNDATION_V2_DOMAIN: "healthcare",
+      FOUNDATION_V2_MIGRATION_MODE: "apply",
+      FOUNDATION_V2_MIGRATION_OUT_DIR: proofDir,
+      FOUNDATION_V2_EMIT_PROOF_BUNDLE: "false",
+    };
+    const proof = runJson("scripts/foundation-v2/apply-approved-migrations.mjs", [], env);
+    assertStatus(proof.status, "FOUNDATION_V2_APPROVED_MIGRATIONS_APPLIED", "healthcare migration apply replay");
+    if (proof.pending_before.length !== 3 || proof.applied.length !== 3 || proof.pending_after.length !== 0) {
+      throw new Error(`unexpected healthcare migration accounting ${JSON.stringify(proof)}`);
+    }
+    if (!proof.migrations.every((migration) => migration.ledger_name.startsWith("foundation_v2_healthcare_gs:"))) {
+      throw new Error(`healthcare ledger names were not schema-scoped ${JSON.stringify(proof.migrations)}`);
+    }
+    const schemaExists = psqlScalar(
+      workDir,
+      port,
+      database,
+      "SELECT count(*)::int FROM information_schema.schemata WHERE schema_name='foundation_v2_healthcare_gs'",
+    );
+    if (schemaExists !== "1") throw new Error(`healthcare schema was not created: ${schemaExists}`);
+    const defaultSchemaExists = psqlScalar(
+      workDir,
+      port,
+      database,
+      "SELECT count(*)::int FROM information_schema.schemata WHERE schema_name='foundation_v2'",
+    );
+    if (defaultSchemaExists !== "0") throw new Error(`default schema was unexpectedly created: ${defaultSchemaExists}`);
+    return {
+      status: proof.status,
+      pending_before: proof.pending_before,
+      applied: proof.applied,
+      ledger_names: proof.migrations.map((migration) => migration.ledger_name),
+    };
+  } finally {
+    run("pg_ctl", ["-D", dataDir, "stop", "-m", "fast"], { allowFailure: true });
+    rmSync(workDir, { recursive: true, force: true });
+  }
+}
+
 function runTamperVerifierCase(name, tamperSql, expectedFirstBrokenTransition) {
   const workDir = mkdtempSync(`/tmp/f2-${name}-`);
   const dataDir = path.join(workDir, "pgdata");
@@ -494,6 +565,10 @@ function run(command, args, { env = process.env, allowFailure = false } = {}) {
 
 function psql(socketDir, port, database, args) {
   return run("psql", ["-h", socketDir, "-p", port, "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", ...args]);
+}
+
+function psqlScalar(socketDir, port, database, sql) {
+  return psql(socketDir, port, database, ["-At", "-c", sql]).stdout.trim();
 }
 
 function runJson(script, args, env) {

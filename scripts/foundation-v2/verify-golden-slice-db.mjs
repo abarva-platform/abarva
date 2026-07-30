@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 import {
-  EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
-  EXPECTED_MIGRATION_SHA256,
-  EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
   IDENTITY_CONTROL_MIGRATION_NAME,
   ISOLATION_SCOPE,
   MIGRATION_NAME,
@@ -16,10 +13,12 @@ import {
   buildFixturePlan,
   createManifest,
   emitProofBundle,
+  expectedMigrationLedgerReadback,
   expectedPersistenceFingerprint,
   expectedTransitionResults,
   GATE_RESULT_ORDER_SQL,
   foundationPostgresClientOptions,
+  migrationLedgerName,
   parseArgs,
   proofRef,
   readFixtureSet,
@@ -100,11 +99,16 @@ async function verify(client, plan, outDir) {
   const rowVarianceRows = rowVarianceRowsFor(plan, rowLineage);
   const fieldVarianceRows = fieldVarianceRowsFor(plan, fieldLineage);
   const defects = [];
-  if (!migration.present || migration.sha256 !== EXPECTED_MIGRATION_SHA256) defects.push("approved migration is not present");
-  if (!writePolicyMigration.present || writePolicyMigration.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
+  if (!migration.present || migration.sha256 !== expectedMigrationLedgerReadback(MIGRATION_NAME).ledger_sha256) {
+    defects.push("approved migration is not present");
+  }
+  if (!writePolicyMigration.present || writePolicyMigration.sha256 !== expectedMigrationLedgerReadback(WRITE_POLICY_MIGRATION_NAME).ledger_sha256) {
     defects.push("approved write-policy migration is not present");
   }
-  if (!identityControlMigration.present || identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+  if (
+    !identityControlMigration.present ||
+    identityControlMigration.sha256 !== expectedMigrationLedgerReadback(IDENTITY_CONTROL_MIGRATION_NAME).ledger_sha256
+  ) {
     defects.push("approved identity-control migration is not present");
   }
   for (const row of varianceRows) {
@@ -346,9 +350,20 @@ function writeOutputs(outDir, plan, manifest, data) {
 }
 
 async function migrationReadback(client, migrationName) {
-  const result = await rows(client, "SELECT name, sha256, applied_at FROM schema_migrations WHERE name=$1", [migrationName]);
+  const ledger = expectedMigrationLedgerReadback(migrationName);
+  const result = await rows(client, "SELECT name, sha256, applied_at FROM schema_migrations WHERE name=$1", [
+    migrationLedgerName(migrationName),
+  ]);
   const row = result[0] || null;
-  return { present: Boolean(row), name: row?.name || migrationName, sha256: row?.sha256 || null, applied_at: row?.applied_at || null };
+  return {
+    present: Boolean(row),
+    name: migrationName,
+    ledger_name: row?.name || ledger.ledger_name,
+    sha256: row?.sha256 || null,
+    expected_sha256: ledger.ledger_sha256,
+    source_sha256: ledger.source_sha256,
+    applied_at: row?.applied_at || null,
+  };
 }
 
 async function dbLayerTotals(client) {
@@ -1015,7 +1030,8 @@ Status: ${manifest.status}
 - Source release: \`${SOURCE_RELEASE_ID}\`
 - Isolation scope: \`${ISOLATION_SCOPE}\`
 - Migration: \`${MIGRATION_NAME}\`
-- Migration SHA-256: \`${EXPECTED_MIGRATION_SHA256}\`
+- Migration ledger: \`${manifest.migration_ledger_name}\`
+- Migration SHA-256: \`${manifest.migration_sha256}\`
 - V1 relations with Foundation V2 release refs: ${data.v1Isolation.filter((row) => row.foundation_release_refs !== "0").length}
 - Product passed unsupported-claim rows: ${data.productBinding.filter((row) => row.render_gate_status === "passed" && Number(row.unsupported_claim_count) !== 0).length}
 - aVa unsupported-claim rows: ${data.avaProof.filter((row) => Number(row.unsupported_claim_count) !== 0).length}
