@@ -16,6 +16,7 @@ airline_demo_new_ingest,operations,yes,yes,yes,yes,no,limited,select_insert_upda
 airline_demo_new_reviewer,working,yes,yes,yes,yes,no,limited,select_insert_update
 airline_demo_new_reviewer,governance,yes,yes,yes,yes,no,limited,select_insert_update
 airline_demo_new_reviewer,operations,yes,yes,yes,yes,no,limited,select_insert_update
+airline_demo_new_reviewer,knowledge,yes,limited,limited,limited,no,limited,canonical_promotion_tables_only
 airline_demo_new_publisher,knowledge,yes,yes,yes,yes,no,limited,select_insert_update
 airline_demo_new_publisher,metrics,yes,yes,yes,yes,no,limited,select_insert_update
 airline_demo_new_publisher,publication,yes,yes,yes,yes,no,limited,select_insert_update

@@ -81,6 +81,14 @@ grant usage on all sequences in schema source_registry, evidence, working, opera
 grant usage on schema working, governance, operations to airline_demo_new_reviewer;
 grant select, insert, update on all tables in schema working, governance, operations to airline_demo_new_reviewer;
 grant usage on all sequences in schema working, governance, operations to airline_demo_new_reviewer;
+grant usage on schema knowledge to airline_demo_new_reviewer;
+grant select, insert, update on table
+  knowledge.entity,
+  knowledge.fact_assertion,
+  knowledge.relationship_type,
+  knowledge.relationship_assertion
+to airline_demo_new_reviewer;
+grant usage, select on all sequences in schema knowledge to airline_demo_new_reviewer;
 
 grant usage on schema knowledge, metrics, publication, consumption, governance, operations to airline_demo_new_publisher;
 grant select, insert, update on all tables in schema knowledge, metrics, publication, consumption, operations to airline_demo_new_publisher;
