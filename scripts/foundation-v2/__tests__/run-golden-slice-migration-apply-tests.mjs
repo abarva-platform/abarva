@@ -13,6 +13,10 @@ const writePolicyMigrationPath = path.join(
   repoRoot,
   "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql",
 );
+const identityControlMigrationPath = path.join(
+  repoRoot,
+  "supabase/migrations/20260730152000_foundation_v2_golden_slice_identity_controls.sql",
+);
 const proofOutput = args["proof-output"] ? path.resolve(process.cwd(), args["proof-output"]) : null;
 const workDir = mkdtempSync(path.join(tmpdir(), "foundation-v2-pg-"));
 const dataDir = path.join(workDir, "data");
@@ -51,6 +55,14 @@ try {
       stdio: "pipe",
     },
   );
+  execFileSync(
+    "psql",
+    ["-h", socketDir, "-p", port, "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-f", identityControlMigrationPath],
+    {
+      encoding: "utf8",
+      stdio: "pipe",
+    },
+  );
 
   const inspection = JSON.parse(execFileSync(
     "psql",
@@ -79,6 +91,9 @@ try {
   if (inspection.tables_without_rls !== 0) {
     failures.push(`expected all foundation_v2 tables to have RLS enabled, found ${inspection.tables_without_rls} without RLS`);
   }
+  if (inspection.tables_without_force_rls !== 0) {
+    failures.push(`expected all foundation_v2 tables to FORCE RLS, found ${inspection.tables_without_force_rls} without FORCE RLS`);
+  }
   if (inspection.composite_fk_count < 18) {
     failures.push(`expected at least 18 composite tenant/test FKs, found ${inspection.composite_fk_count}`);
   }
@@ -95,7 +110,10 @@ try {
     failures.push(`expected 21 writer INSERT policies, found ${inspection.writer_insert_policy_count}`);
   }
   if (inspection.writer_role_count !== 1) {
-    failures.push(`expected no-login writer role, found ${inspection.writer_role_count}`);
+    failures.push(`expected constrained no-login writer role, found ${inspection.writer_role_count}`);
+  }
+  if (inspection.reader_role_count !== 1) {
+    failures.push(`expected constrained no-login reader role, found ${inspection.reader_role_count}`);
   }
   if (inspection.unpinned_writer_policy_count !== 0) {
     failures.push(`expected zero unpinned writer policies, found ${inspection.unpinned_writer_policy_count}`);
@@ -111,6 +129,7 @@ try {
     generated_at: new Date().toISOString(),
     migrationPath,
     writePolicyMigrationPath,
+    identityControlMigrationPath,
     database_scope: "temporary_local_postgresql_only",
     azure_or_shared_database_mutated: false,
     temporary_cluster_shutdown: true,
@@ -168,7 +187,7 @@ async function waitForReady() {
 function inspectionSql() {
   return String.raw`
 WITH tables AS (
-  SELECT c.oid, c.relname, c.relrowsecurity
+  SELECT c.oid, c.relname, c.relrowsecurity, c.relforcerowsecurity
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'foundation_v2'
@@ -203,13 +222,33 @@ product_pass_guard AS (
 SELECT json_build_object(
   'table_count', (SELECT count(*) FROM tables),
   'tables_without_rls', (SELECT count(*) FROM tables WHERE NOT relrowsecurity),
+  'tables_without_force_rls', (SELECT count(*) FROM tables WHERE NOT relforcerowsecurity),
   'composite_fk_count', (SELECT count(*) FROM composite_fks),
   'required_nonempty_constraint_count', (SELECT count(*) FROM nonempty_constraints),
   'policy_with_admin_bypass_count', (SELECT count(*) FROM policies WHERE qual LIKE '%internal-admin%'),
   'product_pass_guard_count', (SELECT count(*) FROM product_pass_guard),
   'writer_insert_policy_count', (SELECT count(*) FROM policies WHERE polname = 'foundation_v2_tenant_insert' AND polcmd = 'a'),
   'writer_role_count', (
-    SELECT count(*) FROM pg_roles WHERE rolname = 'foundation_v2_golden_slice_writer' AND NOT rolcanlogin
+    SELECT count(*) FROM pg_roles
+     WHERE rolname = 'foundation_v2_golden_slice_writer'
+       AND NOT rolcanlogin
+       AND NOT rolsuper
+       AND NOT rolcreatedb
+       AND NOT rolcreaterole
+       AND NOT rolreplication
+       AND NOT rolbypassrls
+       AND NOT rolinherit
+  ),
+  'reader_role_count', (
+    SELECT count(*) FROM pg_roles
+     WHERE rolname = 'foundation_v2_golden_slice_reader'
+       AND NOT rolcanlogin
+       AND NOT rolsuper
+       AND NOT rolcreatedb
+       AND NOT rolcreaterole
+       AND NOT rolreplication
+       AND NOT rolbypassrls
+       AND NOT rolinherit
   ),
   'unpinned_writer_policy_count', (
     SELECT count(*)

@@ -106,23 +106,29 @@ function runDbReplay() {
       path.join(repoRoot, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
     ]);
     psql(workDir, port, database, [
-      "-c",
-      "INSERT INTO schema_migrations(name, sha256) VALUES ('20260730120000_foundation_v2_golden_slice_core.sql','4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f'), ('20260730133000_foundation_v2_golden_slice_write_policies.sql','4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d')",
+      "-f",
+      path.join(repoRoot, "supabase/migrations/20260730152000_foundation_v2_golden_slice_identity_controls.sql"),
     ]);
     psql(workDir, port, database, [
       "-c",
-      "CREATE ROLE foundation_v2_local_operator LOGIN PASSWORD 'local-only'; CREATE ROLE foundation_v2_plain_operator LOGIN PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator, foundation_v2_plain_operator",
+      "INSERT INTO schema_migrations(name, sha256) VALUES ('20260730120000_foundation_v2_golden_slice_core.sql','4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f'), ('20260730133000_foundation_v2_golden_slice_write_policies.sql','4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d'), ('20260730152000_foundation_v2_golden_slice_identity_controls.sql','0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550')",
+    ]);
+    psql(workDir, port, database, [
+      "-c",
+      "CREATE ROLE foundation_v2_local_operator LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_local_reader LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_plain_operator LOGIN NOINHERIT PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT foundation_v2_golden_slice_reader TO foundation_v2_local_reader; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator, foundation_v2_plain_operator",
     ]);
 
     const operatorUrl = `postgresql://foundation_v2_local_operator:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`;
+    const readerUrl = `postgresql://foundation_v2_local_reader:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`;
     const superuserUrl = `postgresql://postgres@localhost:${port}/${database}?host=${workDir}&sslmode=disable`;
     const env = { ...process.env, DATABASE_URL: operatorUrl };
+    const verifierEnv = { ...process.env, DATABASE_URL: readerUrl, FOUNDATION_V2_DB_SET_ROLE: "foundation_v2_golden_slice_reader" };
     const statuses = {
       schema: runJson("scripts/foundation-v2/execute-golden-slice-db.mjs", ["--mode", "schema-readback", "--out-dir", proofDir], env)
         .status,
       preflight: runJson("scripts/foundation-v2/execute-golden-slice-db.mjs", ["--mode", "preflight", "--out-dir", proofDir], env).status,
       apply: runJson("scripts/foundation-v2/execute-golden-slice-db.mjs", ["--mode", "apply", "--out-dir", proofDir], env).status,
-      verify: runJson("scripts/foundation-v2/verify-golden-slice-db.mjs", ["--mode", "verify", "--out-dir", proofDir], env).status,
+      verify: runJson("scripts/foundation-v2/verify-golden-slice-db.mjs", ["--mode", "verify", "--out-dir", proofDir], verifierEnv).status,
       idempotency: runJson("scripts/foundation-v2/execute-golden-slice-db.mjs", ["--mode", "apply", "--out-dir", path.join(proofDir, "idempotency")], env).status,
     };
     assertStatus(statuses.schema, "FOUNDATION_V2_SCHEMA_READBACK_PASSED", "schema replay");
@@ -260,23 +266,32 @@ function runTamperVerifierCase(name, tamperSql, expectedFirstBrokenTransition) {
       path.join(repoRoot, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
     ]);
     psql(workDir, port, database, [
-      "-c",
-      "INSERT INTO schema_migrations(name, sha256) VALUES ('20260730120000_foundation_v2_golden_slice_core.sql','4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f'), ('20260730133000_foundation_v2_golden_slice_write_policies.sql','4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d')",
+      "-f",
+      path.join(repoRoot, "supabase/migrations/20260730152000_foundation_v2_golden_slice_identity_controls.sql"),
     ]);
     psql(workDir, port, database, [
       "-c",
-      "CREATE ROLE foundation_v2_local_operator LOGIN PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator",
+      "INSERT INTO schema_migrations(name, sha256) VALUES ('20260730120000_foundation_v2_golden_slice_core.sql','4f0f696495fa09ea54159ee2eab40aeac522de2965644978be9d865b7149dd7f'), ('20260730133000_foundation_v2_golden_slice_write_policies.sql','4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d'), ('20260730152000_foundation_v2_golden_slice_identity_controls.sql','0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550')",
+    ]);
+    psql(workDir, port, database, [
+      "-c",
+      "CREATE ROLE foundation_v2_local_operator LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_local_reader LOGIN NOINHERIT PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT foundation_v2_golden_slice_reader TO foundation_v2_local_reader; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator",
     ]);
     const env = {
       ...process.env,
       DATABASE_URL: `postgresql://foundation_v2_local_operator:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`,
+    };
+    const verifierEnv = {
+      ...process.env,
+      DATABASE_URL: `postgresql://foundation_v2_local_reader:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`,
+      FOUNDATION_V2_DB_SET_ROLE: "foundation_v2_golden_slice_reader",
     };
     runJson("scripts/foundation-v2/execute-golden-slice-db.mjs", ["--mode", "apply", "--out-dir", proofDir], env);
     psql(workDir, port, database, ["-c", tamperSql]);
     const verifier = spawnSync(
       "node",
       [path.join(repoRoot, "scripts/foundation-v2/verify-golden-slice-db.mjs"), "--mode", "verify", "--out-dir", path.join(proofDir, "tampered")],
-      { cwd: repoRoot, env, encoding: "utf8" },
+      { cwd: repoRoot, env: verifierEnv, encoding: "utf8" },
     );
     if (verifier.status === 0) throw new Error(`${name} tamper verifier unexpectedly passed`);
     const json = JSON.parse(verifier.stdout);
