@@ -1140,8 +1140,9 @@ function rowRefKeys(row, sourceRecord) {
   const rowNumber = String(row.source_row_number);
   const pk = String(row.primary_key_value || "");
   const hash = String(row.source_row_hash || "");
-  const sourceRef = sourceRecord?.source_ref || "";
-  const sourceVersion = sourceRecord?.source_version_ref || "";
+  const sourceRef = sourceRecord?.source_ref || sourceRecord?.live_source_ref || "";
+  const sourceVersion =
+    sourceRecord?.source_version_ref || sourceRecord?.live_source_version_ref || "";
   for (const prefix of [file, path.basename(file), sourceRef, sourceVersion]) {
     if (!prefix) continue;
     keys.add(`${prefix}:${rowNumber}`);
