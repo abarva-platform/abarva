@@ -1689,7 +1689,95 @@ function varianceValidationQuery(row) {
   return queries[row.layer] || "see live-unexplained-variance-register.csv";
 }
 
-function compactVarianceRegister(varianceRows, proofPointer = null) {
+function sampleSourceRowIds(rows, limit = 8) {
+  return rows.slice(0, limit).map((row) =>
+    [
+      row.source_file,
+      `row=${row.source_row_number}`,
+      row.primary_key_field && row.primary_key_value
+        ? `${row.primary_key_field}=${row.primary_key_value}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("|"),
+  );
+}
+
+function summarizeMissingSourceRows(rowReconDetail, limit = 8) {
+  const missing = (rowReconDetail || []).filter(
+    (row) => row.final_disposition !== "MATCHED_TRANSFORMED",
+  );
+  const byFile = new Map();
+  for (const row of missing) {
+    const current = byFile.get(row.source_file) || {
+      source_file: row.source_file,
+      source_family: row.source_family,
+      missing_rows: 0,
+      first_row_number: row.source_row_number,
+      first_primary_key: row.primary_key_value,
+      reason: row.reason,
+    };
+    current.missing_rows += 1;
+    byFile.set(row.source_file, current);
+  }
+  return {
+    total_missing_rows: missing.length,
+    top_files: [...byFile.values()]
+      .sort((a, b) => b.missing_rows - a.missing_rows || a.source_file.localeCompare(b.source_file))
+      .slice(0, limit),
+    sample_source_ids: sampleSourceRowIds(missing, limit),
+  };
+}
+
+function summarizeUnaccountedFields(fieldSummary, limit = 8) {
+  const unaccounted = (fieldSummary || []).filter(
+    (row) =>
+      ![
+        "FIELD_PRESERVED_IN_CANONICAL_FACT",
+        "FIELD_DEFERRED_BY_REVIEW",
+        "FIELD_REJECTED_BY_REVIEW",
+      ].includes(row.field_disposition),
+  );
+  return {
+    total_unaccounted_fields: unaccounted.reduce(
+      (sum, row) => sum + Number(row.field_instance_count || 0),
+      0,
+    ),
+    top_fields: unaccounted
+      .sort(
+        (a, b) =>
+          Number(b.field_instance_count || 0) - Number(a.field_instance_count || 0) ||
+          `${a.source_file}:${a.source_field}`.localeCompare(`${b.source_file}:${b.source_field}`),
+      )
+      .slice(0, limit)
+      .map((row) => ({
+        source_file: row.source_file,
+        source_family: row.source_family,
+        source_field: row.source_field,
+        field_disposition: row.field_disposition,
+        first_broken_transition: row.first_broken_transition,
+        field_instance_count: Number(row.field_instance_count || 0),
+        reason: row.reason,
+      })),
+  };
+}
+
+function summarizeProjectionHashes(live, limit = 8) {
+  return {
+    expected_projection_hash: EXPECTED_PROJECTION_HASH,
+    active_projection_rows: (live?.projectionVersionRows || [])
+      .filter((row) => row.is_active)
+      .slice(0, limit)
+      .map((row) => ({
+        projection_name: row.projection_name,
+        knowledge_baseline_ref: row.knowledge_baseline_ref,
+        output_hash: row.output_hash,
+        is_active: row.is_active,
+      })),
+  };
+}
+
+function compactVarianceRegister(varianceRows, proofPointer = null, diagnostics = {}) {
   const proofBundleUri =
     proofPointer?.full_proof_bundle?.upload?.url ||
     (proofPointer?.full_proof_bundle?.upload
@@ -1715,8 +1803,18 @@ function compactVarianceRegister(varianceRows, proofPointer = null) {
       affected_projection: varianceAffectedProjection(row),
       affected_cube_measure_or_dimension:
         row.layer === "projection" ? "all enabled cube projections dependent on active projection hash" : "",
-      sample_source_ids: "see_proof_bundle_detail_csv",
-      sample_downstream_ids: "see_proof_bundle_detail_csv",
+      sample_source_ids:
+        row.layer === "parser_evidence"
+          ? diagnostics.missingSourceRows?.sample_source_ids || []
+          : row.layer === "field_lineage"
+            ? diagnostics.unaccountedFields?.top_fields || []
+            : row.layer === "projection"
+              ? diagnostics.projectionHashes?.active_projection_rows || []
+              : "see_proof_bundle_detail_csv",
+      sample_downstream_ids:
+        row.layer === "projection"
+          ? diagnostics.projectionHashes?.active_projection_rows || []
+          : "see_proof_bundle_detail_csv",
       classification: varianceClassification(row),
       root_cause: row.reason,
       proposed_repair: row.required_action,
@@ -1726,6 +1824,14 @@ function compactVarianceRegister(varianceRows, proofPointer = null) {
           : "rerun after earlier variance gates are closed",
       validation_query: varianceValidationQuery(row),
       proof_bundle_uri: proofBundleUri || "pending_proof_bundle_upload",
+      diagnostic_summary:
+        row.layer === "parser_evidence"
+          ? diagnostics.missingSourceRows || {}
+          : row.layer === "field_lineage"
+            ? diagnostics.unaccountedFields || {}
+            : row.layer === "projection"
+              ? diagnostics.projectionHashes || {}
+              : {},
     }));
 }
 
@@ -2201,6 +2307,11 @@ async function main() {
   const failingVarianceRegister = compactVarianceRegister(
     varianceRows,
     proofPointer,
+    {
+      missingSourceRows: summarizeMissingSourceRows(rowRecon.detail),
+      unaccountedFields: summarizeUnaccountedFields(fieldReconSummary),
+      projectionHashes: summarizeProjectionHashes(live),
+    },
   );
   if (failingVarianceRegister.length) {
     console.log(
