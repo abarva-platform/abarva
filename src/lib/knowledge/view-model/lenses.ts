@@ -5,15 +5,20 @@
  * growth_innovation/data_ai_readiness/vendor_consolidation) — it does not
  * change which real queries run, only how the assembler labels/scopes them.
  *
- * PROVENANCE NOTE: 7 of these 9 (understand, irops_disruption_recovery, crew,
- * baggage, loyalty, revenue, mro) come directly from the task brief. The
- * approved HTML prototype the brief refers to as the authoritative source for
- * the full 9 is not present anywhere in this repo's git history (see
- * reports/airline-knowledge-provider-reconciliation-2026-07-30/
- * RISK_ASSESSMENT.md). network_scheduling and safety_compliance are my own
- * placeholders to reach 9, chosen as the two next-most-obvious airline
- * operating lenses. PR B MUST confirm the full 9 against the real prototype
- * before shipping the lens picker UI.
+ * PROVENANCE NOTE: PR A (see reports/airline-knowledge-provider-reconciliation-
+ * 2026-07-30/) shipped 7 of these 9 from the task brief plus 2 placeholders
+ * (`network_scheduling`, `safety_compliance`) because the approved HTML
+ * prototype was not available in-repo at the time. PR B located the real
+ * prototype script (`const LENSES = [...]` in the design source under
+ * xdc-script.js) and reconciled ids/labels against it exactly. The real 9
+ * lens ids are `understand, irops, crew, baggage, loyalty, revenue, mro,
+ * airport, ai` — `network_scheduling` and `safety_compliance` were never
+ * real lenses; the actual 8th/9th lenses are `airport` (turnaround) and `ai`
+ * (AI opportunity readiness). Labels below are taken verbatim from the
+ * prototype's LENSES array. `primaryDomainKeys`/`nearestRealLens` for
+ * `airport` and `ai` are PR B's own judgment calls (documented per-lens
+ * below), since the prototype does not encode a domain-key/real-lens
+ * mapping — that mapping is purely an assembler-layer concept.
  */
 
 import type {
@@ -34,52 +39,59 @@ export const AIRLINE_LENS_DEFINITIONS: readonly AirlineLensDefinition[] = [
     nearestRealLens: "none",
   },
   {
-    lensId: "irops_disruption_recovery",
-    label: "IROPS / disruption recovery",
+    lensId: "irops",
+    label: "Recover faster from disruption",
     primaryDomainKeys: ["technology", "programs"],
     nearestRealLens: "risk_resilience",
   },
   {
     lensId: "crew",
-    label: "Crew",
+    label: "Protect crew legality and cost",
     primaryDomainKeys: ["technology"],
     nearestRealLens: "risk_resilience",
   },
   {
     lensId: "baggage",
-    label: "Baggage",
+    label: "Reduce baggage mishandling",
     primaryDomainKeys: ["technology", "vendors"],
     nearestRealLens: "cost_efficiency",
   },
   {
     lensId: "loyalty",
-    label: "Loyalty",
+    label: "Grow loyalty value",
     primaryDomainKeys: ["data", "technology"],
     nearestRealLens: "growth_innovation",
   },
   {
     lensId: "revenue",
-    label: "Revenue",
+    label: "Improve revenue management",
     primaryDomainKeys: ["enterprise", "data"],
     nearestRealLens: "growth_innovation",
   },
   {
     lensId: "mro",
-    label: "MRO (maintenance, repair, overhaul)",
+    label: "Raise aircraft availability",
     primaryDomainKeys: ["technology", "vendors"],
     nearestRealLens: "cost_efficiency",
   },
   {
-    lensId: "network_scheduling",
-    label: "Network & scheduling",
-    primaryDomainKeys: ["technology", "programs"],
-    nearestRealLens: "vendor_consolidation",
+    // PR B judgment call: the prototype's "airport" lens (turnaround performance,
+    // ground-handling handoffs held by vendors per the prototype's own "vendor"
+    // view narrative) scopes most naturally to the technology/vendors domains,
+    // same as mro/baggage which also concern ground operations vendors.
+    lensId: "airport",
+    label: "Improve airport turnaround",
+    primaryDomainKeys: ["technology", "vendors"],
+    nearestRealLens: "cost_efficiency",
   },
   {
-    lensId: "safety_compliance",
-    label: "Safety & compliance",
-    primaryDomainKeys: ["risks", "technology"],
-    nearestRealLens: "risk_resilience",
+    // PR B judgment call: the prototype's "ai" lens is explicitly about AI
+    // opportunity readiness gated on data-feed ownership/certification — the
+    // nearest real cross-industry lens is data_ai_readiness by name and intent.
+    lensId: "ai",
+    label: "Apply AI where evidence allows",
+    primaryDomainKeys: ["technology", "data"],
+    nearestRealLens: "data_ai_readiness",
   },
 ] as const;
 
