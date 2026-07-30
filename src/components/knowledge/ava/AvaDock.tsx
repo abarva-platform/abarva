@@ -26,7 +26,7 @@ const DOCK_SIZE: Record<string, string> = {
   right: "max-h-[42vh] w-full border-t xl:max-h-none xl:w-[380px] xl:border-l xl:border-t-0",
   left: "max-h-[42vh] w-full border-t xl:max-h-none xl:w-[380px] xl:border-r xl:border-t-0",
   bottom: "h-[42vh] w-full border-t",
-  float: "w-[calc(100vw-2rem)] max-w-[380px] rounded-lg border shadow-2xl",
+  float: "max-h-[42vh] w-full border-t xl:w-[380px] xl:max-w-[380px] xl:rounded-lg xl:border xl:shadow-2xl",
 };
 
 export function AvaDock() {
@@ -104,7 +104,7 @@ export function AvaDock() {
     <aside
       className={`min-w-0 flex flex-col overflow-y-auto bg-white ${DOCK_SIZE[dockPosition]} border-[rgba(10,10,11,0.12)] ${
         dockPosition === "float"
-          ? "fixed bottom-5 right-5 z-30 max-h-[70vh]"
+          ? "shrink-0 xl:fixed xl:bottom-5 xl:right-5 xl:z-30 xl:max-h-[70vh]"
           : "shrink-0"
       }`}
       aria-label="aVa companion"
@@ -256,6 +256,8 @@ function DockPosButton({
   return (
     <button
       type="button"
+      aria-label={`Dock aVa ${pos}`}
+      aria-pressed={active}
       title={`Dock ${pos}`}
       onClick={() => onClick(pos)}
       className={`h-6 w-6 rounded border text-[10px] ${

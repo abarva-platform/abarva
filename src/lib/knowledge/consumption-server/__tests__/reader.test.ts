@@ -183,6 +183,61 @@ describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", ()
       entityType: "vendor",
       domainKey: "vendors",
     });
+
+    const applicationAlias = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "application_platform" });
+    expect(applicationAlias.projectionName).toBe("consumption.application_inventory_v1");
+    expect(applicationAlias.availabilityState).toBe("available");
+    expect(applicationAlias.data.domainKey).toBe("technology");
+    expect(applicationAlias.data.entities).toHaveLength(1);
+
+    const vendorAlias = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "vendor" });
+    expect(vendorAlias.projectionName).toBe("consumption.vendor_contract_inventory_v1");
+    expect(vendorAlias.availabilityState).toBe("available");
+    expect(vendorAlias.data.domainKey).toBe("vendors");
+    expect(vendorAlias.data.entities).toHaveLength(1);
+  });
+
+  it("reports totalCount independently from the paginated entity rows", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /FROM consumption\.domain_summary_v1/, rows: [
+        { payload: { domainKey: "application_platform", label: "Application platform", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
+      ]},
+      { match: /FROM consumption\.application_inventory_v1/, rows: [
+        { payload: { entityRef: "entity:application_platform:airport-001", entityType: "application_platform", displayName: "Airport station gate ramp baggage 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
+        { payload: { entityRef: "entity:application_platform:airport-002", entityType: "application_platform", displayName: "Airport station gate ramp baggage 002", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
+      ]},
+      { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [] },
+    ]));
+
+    const env = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "technology", page: 1, pageSize: 1 });
+    expect(env.availabilityState).toBe("available");
+    expect(env.data.entities).toHaveLength(1);
+    expect(env.data.totalCount).toBe(2);
+    expect(env.data.pageSize).toBe(1);
+  });
+
+  it("uses the vendor inventory projection for vendor entity detail envelopes", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /FROM consumption\.application_inventory_v1/, rows: [] },
+      { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [
+        { payload: { entityRef: "entity:vendor:supplier-001", entityType: "vendor", displayName: "Synthetic Supplier 001", domainKey: "vendor", availabilityState: "available", fields: [], evidenceRefs: ["ev-vendor-001"] } },
+      ]},
+    ]));
+
+    const env = await reader.getEntityDetail({
+      tenantKey: TENANT,
+      entityRef: "entity:vendor:supplier-001",
+      lens: "none",
+    });
+    expect(env.projectionName).toBe("consumption.vendor_contract_inventory_v1");
+    expect(env.availabilityState).toBe("available");
+    expect(env.data.entity).toMatchObject({
+      entityRef: "entity:vendor:supplier-001",
+      domainKey: "vendors",
+      evidenceRefs: ["ev-vendor-001"],
+    });
   });
 
   it("does not report an unsupported Explore domain as an available zero when projections contain rows", async () => {

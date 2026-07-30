@@ -282,11 +282,12 @@ export class ConsumptionReader {
       .map(normalizeVendorEntity);
     let entities = [...entityRows, ...vendorRows];
     const projectionName = exploreProjectionName(query.domainKey);
+    const normalizedQueryDomainKey = query.domainKey ? normalizeDomainKey(query.domainKey) : null;
     if (domainRows.length === 0 && entities.length === 0) {
       return this.notLoaded(query.tenantKey, projectionName, empty, baseline,
         "domain_summary_v1 / application_inventory_v1 are not built for the active baseline yet.");
     }
-    if (query.domainKey) entities = entities.filter((e) => e.domainKey === query.domainKey);
+    if (normalizedQueryDomainKey) entities = entities.filter((e) => e.domainKey === normalizedQueryDomainKey);
     if (query.domainKey && entities.length === 0) {
       return this.notLoaded(query.tenantKey, projectionName, empty, baseline,
         `No built Explore projection rows matched domainKey "${query.domainKey}" for the active baseline.`);
@@ -299,7 +300,7 @@ export class ConsumptionReader {
     const pageSize = query.pageSize ?? 25;
     const paged = entities.slice((page - 1) * pageSize, page * pageSize);
     const data: EntityExploreResultV1 = {
-      domainKey: query.domainKey ?? null,
+      domainKey: normalizedQueryDomainKey,
       domains: domainRows.filter((d): d is DomainReadinessV1 => Boolean(d)),
       entities: paged,
       totalCount: entities.length,
@@ -323,8 +324,18 @@ export class ConsumptionReader {
       ).catch(() => []);
       const entity = rows[0]?.payload;
       if (entity) {
-        const data: EntityDetailV1 = { entity, fields: entity.fields, perspectives: [], benchmarks: [], relatedEntityRefs: [], gapRefs: [] };
-        return this.ok(query.tenantKey, "consumption.application_inventory_v1", data, baseline);
+        const normalizedEntity = table === "application_inventory_v1"
+          ? normalizeApplicationEntity(entity)
+          : normalizeVendorEntity(entity);
+        const data: EntityDetailV1 = {
+          entity: normalizedEntity,
+          fields: normalizedEntity.fields,
+          perspectives: [],
+          benchmarks: [],
+          relatedEntityRefs: [],
+          gapRefs: [],
+        };
+        return this.ok(query.tenantKey, inventoryProjectionName(table), data, baseline);
       }
     }
     return this.notLoaded(query.tenantKey, "consumption.application_inventory_v1", empty, baseline,
@@ -462,6 +473,12 @@ function exploreProjectionName(domainKey: string | null | undefined): Projection
     return "consumption.vendor_contract_inventory_v1";
   }
   return "consumption.domain_summary_v1";
+}
+
+function inventoryProjectionName(table: "application_inventory_v1" | "vendor_contract_inventory_v1"): ProjectionName {
+  return table === "application_inventory_v1"
+    ? "consumption.application_inventory_v1"
+    : "consumption.vendor_contract_inventory_v1";
 }
 
 function shapeSearchHit(row: {
