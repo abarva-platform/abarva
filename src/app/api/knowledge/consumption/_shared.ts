@@ -1,7 +1,8 @@
 /**
  * Shared plumbing for the governed consumption API. Every route:
  *  - runs on nodejs, force-dynamic, no-store;
- *  - authenticates + resolves the tenant SERVER-SIDE via requireTenancy();
+ *  - authenticates + resolves the tenant SERVER-SIDE from Foundation proof
+ *    metadata first, then generic requireTenancy();
  *  - NEVER trusts a browser-supplied tenant key — the body's tenantKey is
  *    overwritten with the session-resolved canonical key;
  *  - returns a ConsumptionEnvelope (or the typed tenancy error response).
@@ -82,17 +83,17 @@ export async function handleConsumption(
     }
     tenantKey = adminCanaryTenantKey;
   } else {
-    try {
-      const ctx = await requireTenancy();
-      // Canonical key from the authenticated session — the only trusted source.
-      tenantKey = canonicalTenantKey(ctx.clientKey ?? "");
-      if (!tenantKey) throw new Error("no_client");
-    } catch (err) {
-      const foundationTenantKey =
-        await resolveFoundationPreviewTenantKeyForSession();
-      if (foundationTenantKey) {
-        tenantKey = foundationTenantKey;
-      } else {
+    const foundationTenantKey =
+      await resolveFoundationPreviewTenantKeyForSession();
+    if (foundationTenantKey) {
+      tenantKey = foundationTenantKey;
+    } else {
+      try {
+        const ctx = await requireTenancy();
+        // Canonical key from the authenticated session — the only trusted source.
+        tenantKey = canonicalTenantKey(ctx.clientKey ?? "");
+        if (!tenantKey) throw new Error("no_client");
+      } catch (err) {
         try {
           return tenancyErrorResponse(err);
         } catch {
