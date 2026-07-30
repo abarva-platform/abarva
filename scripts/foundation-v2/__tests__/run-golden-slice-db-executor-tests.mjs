@@ -157,6 +157,10 @@ function runDbReplay() {
       "-c",
       "CREATE ROLE foundation_v2_local_operator LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_local_reader LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_plain_operator LOGIN NOINHERIT PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT foundation_v2_golden_slice_reader TO foundation_v2_local_reader; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator, foundation_v2_plain_operator",
     ]);
+    psql(workDir, port, database, [
+      "-c",
+      "CREATE SCHEMA source_registry; CREATE TABLE source_registry.source_version(id text PRIMARY KEY); REVOKE ALL ON SCHEMA source_registry FROM PUBLIC; REVOKE ALL ON ALL TABLES IN SCHEMA source_registry FROM PUBLIC",
+    ]);
 
     const operatorUrl = `postgresql://foundation_v2_local_operator:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`;
     const readerUrl = `postgresql://foundation_v2_local_reader:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`;
@@ -176,6 +180,13 @@ function runDbReplay() {
     assertStatus(statuses.apply, "FOUNDATION_V2_GOLDEN_SLICE_EXECUTOR_APPLIED", "apply replay");
     assertStatus(statuses.verify, "FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED", "verify replay");
     assertStatus(statuses.idempotency, "FOUNDATION_V2_GOLDEN_SLICE_ALREADY_APPLIED_EXACT_MATCH", "idempotency replay");
+    const schemaProof = JSON.parse(readFileSync(path.join(proofDir, "FOUNDATION_V2_GOLDEN_SLICE_SCHEMA_READBACK.json"), "utf8"));
+    const restrictedV1Probe = schemaProof.v1_isolation_snapshot.find(
+      (row) => row.relation === "source_registry.source_version",
+    );
+    if (restrictedV1Probe?.access !== "denied" || restrictedV1Probe?.error_code !== "42501") {
+      throw new Error(`restricted V1 relation probe was not recorded as access denied: ${JSON.stringify(restrictedV1Probe)}`);
+    }
     const proofTailCapturable = assertEmitProofTailCapturable(env, path.join(proofDir, "emit-proof-tail"));
 
     const superuserReadback = spawnSync(
