@@ -123,6 +123,7 @@ COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets
 COPY --from=build --chown=node:node /app/fixtures/foundation-v2/golden-slice ./fixtures/foundation-v2/golden-slice
+COPY --from=build --chown=node:node /app/fixtures/foundation-v2/healthcare-golden-slice ./fixtures/foundation-v2/healthcare-golden-slice
 COPY --from=build --chown=node:node /app/reports/active-tenant-access ./reports/active-tenant-access
 COPY --from=build --chown=node:node /app/reports/candidate-invisibility-guard ./reports/candidate-invisibility-guard
 COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
