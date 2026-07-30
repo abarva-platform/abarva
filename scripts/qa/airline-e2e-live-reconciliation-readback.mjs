@@ -1639,6 +1639,96 @@ function projectionRegistryRows(live) {
   });
 }
 
+function varianceLayerCode(layer) {
+  const codes = {
+    source_registration: "L1",
+    parser_evidence: "L2",
+    field_lineage: "L2-L6",
+    review_decision: "L5",
+    baseline_activation: "L8",
+    projection: "L9",
+  };
+  return codes[layer] || "unknown";
+}
+
+function varianceClassification(row) {
+  if (row.layer === "source_registration") return "LINEAGE_BREAK";
+  if (row.layer === "parser_evidence") return "LINEAGE_BREAK";
+  if (row.layer === "field_lineage") return "ACCOUNTING_CLASSIFICATION";
+  if (row.layer === "review_decision") return "ACCOUNTING_CLASSIFICATION";
+  if (row.layer === "baseline_activation") return "PROJECTION_DEFECT";
+  if (row.layer === "projection") return "PROJECTION_DEFECT";
+  return "GATE_DEFINITION_DEFECT";
+}
+
+function varianceAffectedProjection(row) {
+  if (row.layer === "projection") return "publication.projection_version";
+  if (row.layer === "baseline_activation") return "publication.knowledge_baseline";
+  if (row.layer === "field_lineage") return "knowledge.fact_assertion";
+  if (row.layer === "parser_evidence") return "evidence.evidence_item";
+  if (row.layer === "source_registration") return "source_registry.source_version";
+  if (row.layer === "review_decision") return "governance.review_decision";
+  return "";
+}
+
+function varianceValidationQuery(row) {
+  const queries = {
+    source_registration:
+      "select count(*) from source_registry.source_version where tenant_key = current_setting('app.tenant_key');",
+    parser_evidence:
+      "select count(distinct source_row_ref) from evidence.evidence_item where tenant_key = current_setting('app.tenant_key');",
+    field_lineage:
+      "compare source-field-live-reconciliation-summary.csv dispositions with source_authority.fieldInstances;",
+    review_decision:
+      "select decision, count(*) from governance.review_decision where tenant_key = current_setting('app.tenant_key') group by decision;",
+    baseline_activation:
+      "select knowledge_baseline_ref, baseline_content_hash, is_active from publication.knowledge_baseline where tenant_key = current_setting('app.tenant_key');",
+    projection:
+      "select projection_name, output_hash, is_active from publication.projection_version where tenant_key = current_setting('app.tenant_key');",
+  };
+  return queries[row.layer] || "see live-unexplained-variance-register.csv";
+}
+
+function compactVarianceRegister(varianceRows, proofPointer = null) {
+  const proofBundleUri =
+    proofPointer?.full_proof_bundle?.upload?.url ||
+    (proofPointer?.full_proof_bundle?.upload
+      ? `${proofPointer.full_proof_bundle.upload.container}/${proofPointer.full_proof_bundle.upload.blob}`
+      : "");
+  return varianceRows
+    .filter((row) => row.explained !== "true")
+    .map((row, index) => ({
+      gate_id: row.variance_id,
+      gate_name: `${row.layer}.${row.object}`,
+      source_family:
+        row.layer === "source_registration" ||
+        row.layer === "parser_evidence" ||
+        row.layer === "field_lineage"
+          ? "all_parser_visible_source_families"
+          : "governed_candidate_and_publication_layers",
+      expected_count: Number(row.input_count || 0),
+      actual_count: Number(row.output_count || 0),
+      variance_count: Number(row.variance_count || 0),
+      first_broken_layer: varianceLayerCode(row.layer),
+      upstream_object: row.object,
+      downstream_object: varianceAffectedProjection(row),
+      affected_projection: varianceAffectedProjection(row),
+      affected_cube_measure_or_dimension:
+        row.layer === "projection" ? "all enabled cube projections dependent on active projection hash" : "",
+      sample_source_ids: "see_proof_bundle_detail_csv",
+      sample_downstream_ids: "see_proof_bundle_detail_csv",
+      classification: varianceClassification(row),
+      root_cause: row.reason,
+      proposed_repair: row.required_action,
+      rerun_scope:
+        index === 0
+          ? "repair earliest failing layer first, then rerun live readback"
+          : "rerun after earlier variance gates are closed",
+      validation_query: varianceValidationQuery(row),
+      proof_bundle_uri: proofBundleUri || "pending_proof_bundle_upload",
+    }));
+}
+
 function summaryMarkdown({ sourceAuthority, live, varianceRows, dbError }) {
   const activeBaseline = (live?.baselineRows || []).find((row) => row.is_active);
   const failedVariances = varianceRows.filter((row) => row.explained !== "true");
@@ -1793,6 +1883,7 @@ async function emitProofBundle(outDir, args) {
       2,
     ),
   );
+  return pointer;
 }
 
 async function main() {
@@ -2104,7 +2195,29 @@ async function main() {
     ),
   );
 
-  if (args.emitProofBundle) await emitProofBundle(args.outDir, args);
+  const proofPointer = args.emitProofBundle
+    ? await emitProofBundle(args.outDir, args)
+    : null;
+  const failingVarianceRegister = compactVarianceRegister(
+    varianceRows,
+    proofPointer,
+  );
+  if (failingVarianceRegister.length) {
+    console.log(
+      JSON.stringify(
+        {
+          event: "FAILING_VARIANCE_REGISTER",
+          tenant_key: TENANT_KEY,
+          source_release_id: SOURCE_RELEASE_ID,
+          baseline_id: BASELINE_ID,
+          failing_gate_count: failingVarianceRegister.length,
+          gates_ranked_by_earliest_layer: failingVarianceRegister,
+        },
+        null,
+        2,
+      ),
+    );
+  }
 }
 
 main().catch((error) => {
