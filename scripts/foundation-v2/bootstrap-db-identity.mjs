@@ -62,25 +62,27 @@ async function bootstrap(client, options) {
     const functions = await aadFunctionReadback(client);
     let created = false;
     const existedBefore = await roleExists(client, options.roleName);
+    let creationMethod = existedBefore ? "existing_role" : "";
     const defects = [];
     if (!existedBefore) {
-      if (options.objectId && functions.some((fn) => fn.identity === "pgaadauth_create_principal_with_oid")) {
-        await client.query("SELECT * FROM pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)", [
-          options.roleName,
-          options.objectId,
-        ]);
-      } else if (functions.some((fn) => fn.identity === "pgaadauth_create_principal")) {
-        await client.query("SELECT * FROM pgaadauth_create_principal($1, false, false)", [options.roleName]);
-      } else {
-        defects.push("pgaadauth_create_principal is not available in this database");
+      const creation = await createAadPrincipalRole(client, options, functions);
+      created = creation.created;
+      creationMethod = creation.method;
+      defects.push(...creation.defects);
+    } else if (options.objectId && functions.length === 0) {
+      const label = await aadSecurityLabelReadback(client, options.roleName);
+      if (!securityLabelHasObjectId(label, options.objectId)) {
+        const labeled = await applyAadSecurityLabel(client, options.roleName, options.objectId);
+        creationMethod = labeled.method;
+        defects.push(...labeled.defects);
       }
-      created = true;
     }
 
     if (defects.length > 0) {
       await client.query("ROLLBACK");
       return createProof(options, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_FAILED", {
         created: false,
+        creation_method: creationMethod,
         defects,
         role: null,
         target: await roleReadback(client, options.targetRole),
@@ -124,7 +126,7 @@ async function bootstrap(client, options) {
       defects.push(`target role ${options.targetRole} has forbidden attributes`);
     }
     if (!memberships.includes(options.targetRole)) defects.push(`${options.roleName} is not member of ${options.targetRole}`);
-    if (options.objectId && !JSON.stringify(aadPrincipals).toLowerCase().includes(options.objectId.toLowerCase())) {
+    if (options.objectId && !principalReadbackHasObjectId(aadPrincipals, options.objectId)) {
       defects.push(`AAD principal object ID ${options.objectId} not found in pgaadauth readback`);
     }
 
@@ -132,6 +134,7 @@ async function bootstrap(client, options) {
       await client.query("ROLLBACK");
       return createProof(options, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_FAILED", {
         created,
+        creation_method: creationMethod,
         defects,
         role,
         target,
@@ -145,6 +148,7 @@ async function bootstrap(client, options) {
     await client.query("COMMIT");
     return createProof(options, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PASSED", {
       created,
+      creation_method: creationMethod,
       existed_before: existedBefore,
       defects,
       role,
@@ -224,6 +228,51 @@ async function aadFunctionReadback(client) {
   ).rows;
 }
 
+async function createAadPrincipalRole(client, options, functions) {
+  if (options.objectId && functions.some((fn) => fn.identity === "pgaadauth_create_principal_with_oid")) {
+    await client.query("SELECT * FROM pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)", [
+      options.roleName,
+      options.objectId,
+    ]);
+    return { created: true, method: "pgaadauth_create_principal_with_oid", defects: [] };
+  }
+  if (functions.some((fn) => fn.identity === "pgaadauth_create_principal")) {
+    await client.query("SELECT * FROM pgaadauth_create_principal($1, false, false)", [options.roleName]);
+    return { created: true, method: "pgaadauth_create_principal", defects: [] };
+  }
+  if (options.objectId) {
+    await client.query(`CREATE ROLE ${quoteIdent(options.roleName)} LOGIN`);
+    const labeled = await applyAadSecurityLabel(client, options.roleName, options.objectId);
+    return {
+      created: true,
+      method: labeled.method,
+      defects: labeled.defects,
+    };
+  }
+  return {
+    created: false,
+    method: "missing_pgaadauth_function",
+    defects: ["pgaadauth_create_principal is not available in this database and no object ID fallback was supplied"],
+  };
+}
+
+async function applyAadSecurityLabel(client, roleName, objectId) {
+  await client.query("SAVEPOINT foundation_v2_pgaadauth_security_label");
+  try {
+    await client.query(
+      `SECURITY LABEL FOR "pgaadauth" ON ROLE ${quoteIdent(roleName)} IS ${quoteLiteral(
+        `aadauth,oid=${objectId},type=service`,
+      )}`,
+    );
+    await client.query("RELEASE SAVEPOINT foundation_v2_pgaadauth_security_label");
+    return { method: "pgaadauth_security_label", defects: [] };
+  } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT foundation_v2_pgaadauth_security_label").catch(() => {});
+    await client.query("RELEASE SAVEPOINT foundation_v2_pgaadauth_security_label").catch(() => {});
+    return { method: "pgaadauth_security_label", defects: [`pgaadauth security label failed: ${error.message}`] };
+  }
+}
+
 async function aadPrincipalReadback(client, roleName) {
   await client.query("SAVEPOINT foundation_v2_pgaadauth_principals");
   try {
@@ -233,8 +282,35 @@ async function aadPrincipalReadback(client, roleName) {
   } catch (error) {
     await client.query("ROLLBACK TO SAVEPOINT foundation_v2_pgaadauth_principals").catch(() => {});
     await client.query("RELEASE SAVEPOINT foundation_v2_pgaadauth_principals").catch(() => {});
-    return [{ readback_error: error.message }];
+    return [
+      { readback_error: error.message },
+      ...(await aadSecurityLabelReadback(client, roleName)),
+    ];
   }
+}
+
+async function aadSecurityLabelReadback(client, roleName) {
+  return (
+    await client.query(
+      `SELECT 'pg_shseclabel' AS source,
+              s.provider,
+              s.label
+         FROM pg_catalog.pg_shseclabel s
+         JOIN pg_catalog.pg_roles r ON r.oid = s.objoid
+        WHERE s.classoid = 'pg_authid'::regclass
+          AND r.rolname = $1
+        ORDER BY s.provider, s.label`,
+      [roleName],
+    )
+  ).rows;
+}
+
+function principalReadbackHasObjectId(principals, objectId) {
+  return JSON.stringify(principals).toLowerCase().includes(String(objectId).toLowerCase());
+}
+
+function securityLabelHasObjectId(labels, objectId) {
+  return labels.some((label) => label.provider === "pgaadauth" && String(label.label).toLowerCase().includes(String(objectId).toLowerCase()));
 }
 
 async function roleExists(client, roleName) {
@@ -317,6 +393,10 @@ function quoteIdent(value) {
   return `"${String(value).replace(/"/g, '""')}"`;
 }
 
+function quoteLiteral(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
 function bootstrapMarkdown(proof) {
   return `# Foundation V2 DB Identity Bootstrap Proof
 
@@ -345,6 +425,7 @@ function printCompactResult(proof) {
       target_role: proof.target_role,
       summary: {
         created: proof.created,
+        creation_method: proof.creation_method,
         existed_before: proof.existed_before,
         defects: proof.defects,
         forbidden_attributes: {
@@ -383,6 +464,15 @@ function selfTestProof() {
   }
   if (!aadPrincipalReadback.toString().includes("ROLLBACK TO SAVEPOINT")) {
     defects.push("AAD principal readback does not preserve transaction state after readback failure");
+  }
+  if (!createAadPrincipalRole.toString().includes("applyAadSecurityLabel")) {
+    defects.push("AAD bootstrap does not include the security label object-ID fallback");
+  }
+  if (!applyAadSecurityLabel.toString().includes("SECURITY LABEL FOR")) {
+    defects.push("AAD security label fallback does not emit SECURITY LABEL");
+  }
+  if (!aadSecurityLabelReadback.toString().includes("pg_shseclabel")) {
+    defects.push("AAD security label fallback does not read back shared security labels");
   }
   return {
     status:
