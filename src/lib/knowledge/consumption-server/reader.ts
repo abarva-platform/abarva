@@ -258,18 +258,7 @@ export class ConsumptionReader {
       }
       return this.ok(query.tenantKey, "consumption.search_document_v1", empty, baseline);
     }
-    const hits: KnowledgeSearchResultV1["hits"] = rows.map((r) => ({
-      id: r.object_ref,
-      contentClass: "accepted_fact",
-      availabilityState: "accepted",
-      evidenceRefs: [],
-      absenceReason: null,
-      searchDocId: r.object_ref,
-      title: r.display_name ?? r.object_ref,
-      snippet: typeof r.payload?.snippet === "string" ? r.payload.snippet : "",
-      domainKey: null,
-      entityRef: r.object_ref,
-    }));
+    const hits: KnowledgeSearchResultV1["hits"] = rows.map((r) => shapeSearchHit(r));
     return this.ok(query.tenantKey, "consumption.search_document_v1",
       { query: query.query, hits, totalCount: hits.length, page: 1, pageSize: 25 }, baseline);
   }
@@ -465,7 +454,7 @@ function normalizeVendorEntity(entity: EntitySummaryV1): EntitySummaryV1 {
   };
 }
 
-function exploreProjectionName(domainKey: string | undefined): ProjectionName {
+function exploreProjectionName(domainKey: string | null | undefined): ProjectionName {
   if (domainKey === "technology" || domainKey === "application_platform") {
     return "consumption.application_inventory_v1";
   }
@@ -473,6 +462,89 @@ function exploreProjectionName(domainKey: string | undefined): ProjectionName {
     return "consumption.vendor_contract_inventory_v1";
   }
   return "consumption.domain_summary_v1";
+}
+
+function shapeSearchHit(row: {
+  object_ref: string;
+  display_name: string | null;
+  payload: Record<string, unknown> | null;
+}): KnowledgeSearchResultV1["hits"][number] {
+  const payload = row.payload ?? {};
+  const title = firstString(
+    payload.displayName,
+    payload.display_name,
+    payload.title,
+    payload.name,
+    row.display_name,
+    row.object_ref,
+  );
+  const snippet = firstString(
+    payload.snippet,
+    payload.summary,
+    payload.description,
+    payload.valueLabel,
+    payload.value_label,
+    payload.text,
+    title,
+  );
+  const domainKey = firstStringOrNull(
+    payload.domainKey,
+    payload.domain_key,
+    payload.domain,
+    payload.entityDomain,
+    payload.entity_domain,
+  );
+  const entityRef = firstStringOrNull(
+    payload.entityRef,
+    payload.entity_ref,
+    payload.subjectEntityRef,
+    payload.subject_entity_ref,
+    payload.objectEntityRef,
+    payload.object_entity_ref,
+  );
+  const evidenceRefs = firstStringArray(
+    payload.evidenceRefs,
+    payload.evidence_refs,
+    payload.acceptedEvidenceRefs,
+    payload.accepted_evidence_refs,
+    payload.sourceRefs,
+    payload.source_refs,
+  );
+
+  return {
+    id: row.object_ref,
+    contentClass: "accepted_fact",
+    availabilityState: "accepted",
+    evidenceRefs,
+    absenceReason: null,
+    searchDocId: row.object_ref,
+    title,
+    snippet,
+    domainKey: domainKey ? normalizeDomainKey(domainKey) : null,
+    entityRef: entityRef ?? row.object_ref,
+  };
+}
+
+function firstString(...values: unknown[]): string {
+  return firstStringOrNull(...values) ?? "";
+}
+
+function firstStringOrNull(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function firstStringArray(...values: unknown[]): string[] {
+  for (const value of values) {
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+    }
+  }
+  return [];
 }
 
 function extractSuggestedQuestions(payload: unknown): SuggestedQuestionV1[] {

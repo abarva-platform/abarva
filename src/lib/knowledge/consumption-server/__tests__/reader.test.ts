@@ -105,6 +105,39 @@ describe("ConsumptionReader — active baseline with data", () => {
     expect(env.data.hits[0].title).toBe("EHR");
   });
 
+  it("preserves stable identity, domain and evidence refs on search hits", async () => {
+    const reader = new ConsumptionReader(fakeQuery([
+      activeBaselineRow,
+      { match: /FROM consumption\.search_document_v1/, rows: [
+        {
+          object_ref: "fact:airport-station-001",
+          display_name: "application_profile",
+          payload: {
+            entityRef: "entity:application_platform:airport-001",
+            entityType: "application_platform",
+            displayName: "Airport station gate ramp baggage 001",
+            domainKey: "application_platform",
+            snippet: "Airport station gate ramp baggage workflow.",
+            evidenceRefs: ["ev-airport-001"],
+          },
+        },
+      ]},
+    ]));
+
+    const env = await reader.searchKnowledge({ tenantKey: TENANT, query: "Airport station" });
+    expect(env.projectionName).toBe("consumption.search_document_v1");
+    expect(env.knowledgeBaselineRef).toBe(BASELINE);
+    expect(env.data.hits[0]).toMatchObject({
+      id: "fact:airport-station-001",
+      searchDocId: "fact:airport-station-001",
+      title: "Airport station gate ramp baggage 001",
+      snippet: "Airport station gate ramp baggage workflow.",
+      domainKey: "technology",
+      entityRef: "entity:application_platform:airport-001",
+      evidenceRefs: ["ev-airport-001"],
+    });
+  });
+
   it("returns not_loaded for projections not yet built (brief)", async () => {
     const env = await reader.getEnterpriseBrief({ tenantKey: TENANT });
     expect(env.availabilityState).toBe("not_loaded");
