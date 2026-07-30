@@ -30,6 +30,11 @@ helper is guarded by exact tenant/database assertions and a required
 acknowledgement env var. It grants SELECT/USAGE only and does not mutate
 foundation data.
 
+Projection-readback update: makes projection-table summarization schema-aware,
+so projection tables that do not expose optional `content_hash` or
+`availability_state` columns are reported with unavailable metadata instead of
+crashing the readback before downstream reconciliation evidence is emitted.
+
 The verifier does not load data, approve records, publish a baseline, switch a
 provider, or alter Azure resources.
 
@@ -72,6 +77,8 @@ runtime image.
   silently running against fixtures.
 - `pass`: row-count discrepancy register marks 99,883 authoritative and 110,895
   as stale prior-audit documentation drift.
+- `pass`: projection summaries tolerate projection tables without optional
+  `content_hash` / `availability_state` columns.
 - `pending`: governed VNet read-only grant helper execution against the Airline
   database.
 - `pending`: governed VNet database readback from live source-registry/blob

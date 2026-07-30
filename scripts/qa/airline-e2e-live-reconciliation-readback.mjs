@@ -929,12 +929,21 @@ async function readLiveDb() {
       const params = hasColumn(columns, "knowledge_baseline_ref")
         ? [TENANT_KEY, BASELINE_ID]
         : [TENANT_KEY];
+      const contentHashCount = hasColumn(columns, "content_hash")
+        ? "count(distinct content_hash)::bigint"
+        : "NULL::bigint";
+      const availableRows = hasColumn(columns, "availability_state")
+        ? "count(*) FILTER (WHERE availability_state::text='available')::bigint"
+        : "NULL::bigint";
+      const unavailableRows = hasColumn(columns, "availability_state")
+        ? "count(*) FILTER (WHERE availability_state::text IN ('not_loaded','not_measured','withheld','conflicting','stale','candidate'))::bigint"
+        : "NULL::bigint";
       const rows = await query(client, `
         SELECT $${params.length + 1} AS projection_table,
                count(*)::bigint AS row_count,
-               count(distinct content_hash)::bigint AS distinct_content_hashes,
-               count(*) FILTER (WHERE availability_state::text='available')::bigint AS available_rows,
-               count(*) FILTER (WHERE availability_state::text IN ('not_loaded','not_measured','withheld','conflicting','stale','candidate'))::bigint AS unavailable_or_candidate_rows
+               ${contentHashCount} AS distinct_content_hashes,
+               ${availableRows} AS available_rows,
+               ${unavailableRows} AS unavailable_or_candidate_rows
           FROM ${rel}
          WHERE tenant_key=$1 ${baselineWhere}
       `, [...params, relationName]);
