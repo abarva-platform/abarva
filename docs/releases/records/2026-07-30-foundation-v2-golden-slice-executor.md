@@ -16,6 +16,8 @@ The physical tenant key is resolved from the declared canonical Airline Demo ten
 
 Follow-up repair: the deployed application image does not include Git metadata, so the executor now locates the application root from packaged project markers instead of requiring `.git`. The runtime image also copies the exact approved golden-slice fixture directory needed by the private operator scripts. This preserves the same fixture and migration hash controls while allowing the private operator container to run the proof scripts.
 
+Follow-up repair 2: private operator log retrieval is limited to the execution log tail, so the executor now emits compact pass/fail diagnostics at the end of proof-bundle runs and emits proof bundles after the full JSON body. This keeps local JSON-only test output unchanged while making failed live runs auditable from ACA tail logs.
+
 ## Layer Impact
 
 Release lane: `client-data-lane` with `internal-admin` private-operator proof tooling only.
@@ -48,6 +50,7 @@ Cross-cutting governance: Adds deterministic idempotency, transaction rollback, 
 - Container-root discovery repair for deployed private-operator images.
 - Runtime image packaging for `fixtures/foundation-v2/golden-slice`.
 - Packaged-runtime-root test assertion for the no-`.git` container layout.
+- ACA-tail-safe compact diagnostics and proof-bundle emission ordering for golden-slice executor runs.
 
 ## QA / Validation
 
@@ -85,6 +88,9 @@ Cross-cutting governance: Adds deterministic idempotency, transaction rollback, 
   - `npm run test:foundation-v2-golden-slice-db` - passed.
   - `npm run lint -- scripts/foundation-v2/golden-slice-support.mjs` - passed.
   - Independent reviewer found the first root-detection repair still missed runtime fixture packaging; Dockerfile and package test were amended accordingly.
+- Proof-tail repair validation after live schema-readback proof extraction failed:
+  - `npm run test:foundation-v2-golden-slice-db` - passed, including the `proof_tail_capturable` regression.
+  - `npm run lint -- scripts/foundation-v2/execute-golden-slice-db.mjs scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs` - passed.
 
 ## Rollout Plan
 
@@ -127,6 +133,7 @@ Application rollback is the standard ACA main rollback to the prior digest. The 
   - repository readback `job-abarva-private-operator-eus-kmhcgog`
   - artifact acceptance readback `job-abarva-private-operator-eus-183nrkk`
 - First live golden-slice schema readback execution `job-abarva-private-operator-eus-h2g11if` failed closed before DB proof because container root discovery required `.git`; repair is scoped to packaged app root detection.
+- Second live golden-slice schema readback execution `job-abarva-private-operator-eus-vp5d9dr` reached private DB schema and policy readback but failed closed; proof extraction was blocked by ACA tail-only log capture. The second follow-up repair makes proof and compact failure diagnostics tail-capturable before the next live rerun.
 
 ## Known Gaps
 
