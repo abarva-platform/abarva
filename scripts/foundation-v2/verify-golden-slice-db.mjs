@@ -820,7 +820,18 @@ async function v1IsolationReadback(client) {
   ];
   const out = [];
   for (const relation of relations) {
-    const exists = (await rows(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [relation]))[0].exists;
+    const existence = await relationExistenceProbe(client, relation);
+    if (existence.access === "denied") {
+      out.push({
+        relation,
+        exists: true,
+        access: "denied",
+        foundation_release_refs: "0",
+        error_code: existence.error_code,
+      });
+      continue;
+    }
+    const exists = existence.exists;
     if (!exists) {
       out.push({ relation, exists: false, foundation_release_refs: "0" });
       continue;
@@ -845,6 +856,16 @@ async function v1IsolationReadback(client) {
     }
   }
   return out;
+}
+
+async function relationExistenceProbe(client, relation) {
+  try {
+    const result = await rows(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [relation]);
+    return { exists: result[0].exists };
+  } catch (error) {
+    if (error.code === "42501") return { exists: true, access: "denied", error_code: error.code };
+    throw error;
+  }
 }
 
 function varianceRegister(expected, actual) {

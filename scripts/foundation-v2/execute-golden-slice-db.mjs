@@ -314,7 +314,7 @@ async function applyGoldenSlice(client, plan, outDir) {
     if (!identityControlMigration.present || identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
       throw new Error(`Fail closed: migration ${IDENTITY_CONTROL_MIGRATION_NAME} not present with approved SHA`);
     }
-    const v1Before = await v1IsolationSnapshot(client);
+    const v1Before = await v1IsolationSnapshot(client, { inTransaction: true });
     const securityPreflight = await runWriterSecurityPreflight(client);
 
     const existing = await existingCounts(client);
@@ -343,7 +343,7 @@ async function applyGoldenSlice(client, plan, outDir) {
       throw new Error(`Fail closed: layer variance after write ${JSON.stringify(varianceRows)}`);
     }
     await client.query("RESET ROLE");
-    const v1After = await v1IsolationSnapshot(client);
+    const v1After = await v1IsolationSnapshot(client, { inTransaction: true });
     const v1Changed = v1Before.filter((before) => {
       const after = v1After.find((row) => row.relation === before.relation);
       return after && after.row_count !== before.row_count;
@@ -1095,7 +1095,15 @@ async function runWriterSecurityPreflight(client) {
     await setFoundationContext(client);
 
     for (const relation of V1_RELATIONS) {
-      if (await relationExists(client, relation)) {
+      const existence = await relationExistenceProbeInSavepoint(client, relation);
+      if (existence.access === "denied") {
+        probes.push({
+          label: `V1 existence denied ${relation}`,
+          status: "passed",
+          expected: "denied",
+          observed: existence.error_code,
+        });
+      } else if (existence.exists) {
         probes.push(
           await probeSql(client, `V1 access denied ${relation}`, `SELECT count(*)::int AS count FROM ${relation}`, [], { expect: "failure" }),
         );
@@ -1462,27 +1470,79 @@ function varianceRegister(expected, actual) {
   }));
 }
 
-async function v1IsolationSnapshot(client) {
+async function v1IsolationSnapshot(client, { inTransaction = false } = {}) {
   const output = [];
   for (const relation of V1_RELATIONS) {
-    const exists = await relationExists(client, relation);
+    const existence = inTransaction
+      ? await relationExistenceProbeInSavepoint(client, relation)
+      : await relationExistenceProbe(client, relation);
+    if (existence.access === "denied") {
+      output.push({
+        relation,
+        exists: true,
+        access: "denied",
+        row_count: null,
+        error_code: existence.error_code,
+      });
+      continue;
+    }
+    const exists = existence.exists;
     if (!exists) {
       output.push({ relation, exists: false, row_count: null });
       continue;
     }
-    try {
-      const result = await rows(client, `SELECT count(*)::bigint AS count FROM ${relation}`);
-      output.push({ relation, exists: true, access: "readable", row_count: result[0].count });
-    } catch (error) {
-      output.push({ relation, exists: true, access: "denied", row_count: null, error_code: error.code || "unknown" });
-    }
+    const count = inTransaction ? await relationCountProbeInSavepoint(client, relation) : await relationCountProbe(client, relation);
+    output.push(count);
   }
   return output;
 }
 
-async function relationExists(client, relation) {
-  const result = await rows(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [relation]);
-  return result[0].exists;
+async function relationCountProbe(client, relation) {
+  try {
+    const result = await rows(client, `SELECT count(*)::bigint AS count FROM ${relation}`);
+    return { relation, exists: true, access: "readable", row_count: result[0].count };
+  } catch (error) {
+    return { relation, exists: true, access: "denied", row_count: null, error_code: error.code || "unknown" };
+  }
+}
+
+async function relationCountProbeInSavepoint(client, relation) {
+  probeCounter += 1;
+  const savepoint = `foundation_v2_relation_count_probe_${probeCounter}`;
+  await client.query(`SAVEPOINT ${savepoint}`);
+  try {
+    const result = await rows(client, `SELECT count(*)::bigint AS count FROM ${relation}`);
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+    return { relation, exists: true, access: "readable", row_count: result[0].count };
+  } catch (error) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+    return { relation, exists: true, access: "denied", row_count: null, error_code: error.code || "unknown" };
+  }
+}
+
+async function relationExistenceProbe(client, relation) {
+  try {
+    const result = await rows(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [relation]);
+    return { exists: result[0].exists };
+  } catch (error) {
+    if (error.code === "42501") return { exists: true, access: "denied", error_code: error.code };
+    throw error;
+  }
+}
+
+async function relationExistenceProbeInSavepoint(client, relation) {
+  probeCounter += 1;
+  const savepoint = `foundation_v2_relation_probe_${probeCounter}`;
+  await client.query(`SAVEPOINT ${savepoint}`);
+  try {
+    const result = await rows(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [relation]);
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+    return { exists: result[0].exists };
+  } catch (error) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+    if (error.code === "42501") return { exists: true, access: "denied", error_code: error.code };
+    throw error;
+  }
 }
 
 async function setFoundationContext(client) {
