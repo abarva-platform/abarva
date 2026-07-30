@@ -122,7 +122,7 @@ changes are part of this PR, so rollback is a pure code revert with no other cle
   built against)
 - Local test run output referenced in QA / Validation above (not yet captured as a CI artifact —
   will be produced by the PR's CI run)
-- PR URL: to be filled in after `gh pr create`
+- PR URL: https://github.com/abarva-platform/abarva/pull/5772
 
 ## Known Gaps
 
