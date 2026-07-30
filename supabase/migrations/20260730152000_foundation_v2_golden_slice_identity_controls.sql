@@ -8,14 +8,21 @@
 
 BEGIN;
 
-ALTER ROLE foundation_v2_golden_slice_writer
-  NOLOGIN
-  NOSUPERUSER
-  NOCREATEDB
-  NOCREATEROLE
-  NOREPLICATION
-  NOBYPASSRLS
-  NOINHERIT;
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE 'ALTER ROLE foundation_v2_golden_slice_writer
+      NOLOGIN
+      NOSUPERUSER
+      NOCREATEDB
+      NOCREATEROLE
+      NOREPLICATION
+      NOBYPASSRLS
+      NOINHERIT';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Skipping writer role attribute hardening because this migration operator cannot ALTER ROLE; identity bootstrap readback must verify non-BYPASSRLS execution before data load.';
+  END;
+END $$;
 
 DO $$
 BEGIN
@@ -31,14 +38,21 @@ BEGIN
   END IF;
 END $$;
 
-ALTER ROLE foundation_v2_golden_slice_reader
-  NOLOGIN
-  NOSUPERUSER
-  NOCREATEDB
-  NOCREATEROLE
-  NOREPLICATION
-  NOBYPASSRLS
-  NOINHERIT;
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE 'ALTER ROLE foundation_v2_golden_slice_reader
+      NOLOGIN
+      NOSUPERUSER
+      NOCREATEDB
+      NOCREATEROLE
+      NOREPLICATION
+      NOBYPASSRLS
+      NOINHERIT';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Skipping reader role attribute hardening because this migration operator cannot ALTER ROLE; identity bootstrap readback must verify non-BYPASSRLS execution before readback.';
+  END;
+END $$;
 
 GRANT USAGE ON SCHEMA foundation_v2 TO foundation_v2_golden_slice_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA foundation_v2 TO foundation_v2_golden_slice_reader;

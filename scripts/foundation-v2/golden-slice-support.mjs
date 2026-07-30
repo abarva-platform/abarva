@@ -64,7 +64,7 @@ export const EXPECTED_WRITE_POLICY_MIGRATION_SHA256 =
   "4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d";
 export const WRITE_POLICY_MIGRATION_NAME = "20260730133000_foundation_v2_golden_slice_write_policies.sql";
 export const EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256 =
-  "0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550";
+  "63c2ecb1ca149ea7c06fe6433d0775040699f106798be5beba4d115d9f365f9e";
 export const IDENTITY_CONTROL_MIGRATION_NAME = "20260730152000_foundation_v2_golden_slice_identity_controls.sql";
 export const DEFAULT_EXECUTION_ID = `${SOURCE_RELEASE_ID}:execution-v1`;
 export const MANAGED_IDENTITY_DB_SCOPE = "https://ossrdbms-aad.database.windows.net/.default";
