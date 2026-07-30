@@ -1989,13 +1989,50 @@ export class PostgresKnowledgeExecutionStore {
           freshness_state, availability_state, evidence_coverage, content_hash,
           object_ref, display_name, executive_summary, payload
         )
-        SELECT tenant_key, $2, $3, $4, $5::date, authority_state, freshness_state,
-          availability_state, CASE WHEN cardinality(evidence_refs) > 0 THEN 1 ELSE 0.5 END,
-          content_hash, fact_ref, fact_type, NULL, fact_value
-        FROM knowledge.fact_assertion
-        WHERE tenant_key=$1 AND authority_state='accepted'
+        SELECT f.tenant_key, $2, $3, $4, $5::date, f.authority_state, f.freshness_state,
+          f.availability_state,
+          CASE
+            WHEN cardinality(f.evidence_refs) > 0 OR cardinality(e.accepted_evidence_refs) > 0 THEN 1
+            ELSE 0.5
+          END,
+          md5(f.content_hash || ':' || e.content_hash),
+          f.fact_ref,
+          coalesce(nullif(e.display_name, ''), f.fact_type),
+          coalesce(nullif(e.display_name, ''), f.fact_type),
+          jsonb_build_object(
+            'entityRef', f.entity_ref,
+            'entityType', e.entity_type,
+            'displayName', coalesce(nullif(e.display_name, ''), f.fact_type),
+            'domainKey', coalesce(
+              nullif(e.canonical_payload->>'domainKey', ''),
+              nullif(e.canonical_payload->>'domain_key', ''),
+              nullif(e.canonical_payload->>'domain', ''),
+              e.entity_type
+            ),
+            'factType', f.fact_type,
+            'snippet', coalesce(nullif(e.display_name, ''), f.fact_type),
+            'evidenceRefs',
+              CASE
+                WHEN cardinality(f.evidence_refs) > 0 THEN to_jsonb(f.evidence_refs)
+                ELSE to_jsonb(e.accepted_evidence_refs)
+              END,
+            'factValue', f.fact_value
+          )
+        FROM knowledge.fact_assertion f
+        JOIN knowledge.entity e
+          ON e.tenant_key = f.tenant_key
+         AND e.entity_ref = f.entity_ref
+         AND e.authority_state = 'accepted'
+        WHERE f.tenant_key=$1 AND f.authority_state='accepted'
         ON CONFLICT (tenant_key, knowledge_baseline_ref, object_ref)
-        DO UPDATE SET payload=EXCLUDED.payload, content_hash=EXCLUDED.content_hash
+        DO UPDATE SET
+          freshness_state=EXCLUDED.freshness_state,
+          availability_state=EXCLUDED.availability_state,
+          evidence_coverage=EXCLUDED.evidence_coverage,
+          content_hash=EXCLUDED.content_hash,
+          display_name=EXCLUDED.display_name,
+          executive_summary=EXCLUDED.executive_summary,
+          payload=EXCLUDED.payload
       `,
       [context.tenantKey, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate],
     );

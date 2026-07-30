@@ -251,6 +251,23 @@ await test("projection build materializes analytics consumption tables from acce
   assert.ok(source.includes("CORE_CONSUMPTION_PROJECTIONS"), "projection registry must use the closed core projection list");
 });
 
+await test("search projection preserves entity identity, domain, snippet, and evidence refs", async () => {
+  const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
+  assert.ok(source.includes("INSERT INTO consumption.search_document_v1"), "search projection must be materialized");
+  assert.ok(source.includes("FROM knowledge.fact_assertion f"), "search projection must source accepted facts with a stable fact document id");
+  assert.ok(source.includes("JOIN knowledge.entity e"), "search projection must join the linked accepted entity");
+  assert.ok(source.includes("AND e.entity_ref = f.entity_ref"), "search projection must preserve canonical entity identity");
+  assert.ok(source.includes("'entityRef', f.entity_ref"), "search payload must expose entityRef for UI certification");
+  assert.ok(source.includes("'domainKey', coalesce("), "search payload must expose a domain key from governed entity metadata");
+  assert.ok(source.includes("'snippet', coalesce(nullif(e.display_name, ''), f.fact_type)"), "search payload must include a useful governed snippet");
+  assert.ok(source.includes("'evidenceRefs',"), "search payload must include source evidence references");
+  assert.ok(source.includes("to_jsonb(f.evidence_refs)"), "search payload must preserve fact evidence references");
+  assert.ok(source.includes("to_jsonb(e.accepted_evidence_refs)"), "search payload may fall back only to accepted entity evidence references");
+  assert.ok(source.includes("display_name=EXCLUDED.display_name"), "search rebuild must refresh display metadata on existing rows");
+  assert.ok(source.includes("executive_summary=EXCLUDED.executive_summary"), "search rebuild must refresh snippet metadata on existing rows");
+  assert.ok(source.includes("evidence_coverage=EXCLUDED.evidence_coverage"), "search rebuild must refresh evidence coverage on existing rows");
+});
+
 await test("live reconciliation readback traces source rows and fields through governed lineage keys", async () => {
   const source = await readFile(new URL("../../qa/airline-e2e-live-reconciliation-readback.mjs", import.meta.url), "utf8");
   assert.ok(source.includes("record.source_visibility === \"client_visible\""), "readback must exclude non-client-visible reference materials");
