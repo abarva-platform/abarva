@@ -51,6 +51,8 @@ for (const requiredTokenBinding of [
   "IDENTITY_HEADER",
   "X-IDENTITY-HEADER",
   "https://ossrdbms-aad.database.windows.net",
+  "db:migrate:dry",
+  "db:migrate:ci",
 ]) {
   if (!aadWrapperSource.includes(requiredTokenBinding)) {
     failures.push(`AAD wrapper missing ACA token binding marker ${requiredTokenBinding}`);
