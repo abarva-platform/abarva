@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import Papa from "papaparse";
 
@@ -50,6 +51,14 @@ await main().catch((error) => {
 });
 
 async function main() {
+  if (args.mode === "self-test") {
+    fs.mkdirSync(args.outDir, { recursive: true });
+    const result = await runSourceVolumeSelfTest();
+    writeJson(proofRef(args.outDir, "HEALTHCARE_SOURCE_VOLUME_SELF_TEST.json"), result);
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
   const plan = buildSourceVolumePlan();
   fs.mkdirSync(args.outDir, { recursive: true });
   writePlanProof(args.outDir, plan);
@@ -95,7 +104,7 @@ async function main() {
 function parseArgs(argv) {
   const parsed = {
     mode: process.env.FOUNDATION_V2_SOURCE_VOLUME_MODE || "plan",
-    outDir: process.env.FOUNDATION_V2_SOURCE_VOLUME_OUT_DIR || path.join(process.cwd(), "proof/healthcare-source-volume"),
+    outDir: process.env.FOUNDATION_V2_SOURCE_VOLUME_OUT_DIR || path.join(os.tmpdir(), "healthcare-source-volume"),
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
       process.env.FOUNDATION_V2_EMIT_PROOF_BUNDLE === "true",
@@ -113,7 +122,7 @@ function parseArgs(argv) {
     else if (arg === "--no-emit-proof-bundle") parsed.emitProofBundle = false;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!["plan", "preflight", "apply", "verify"].includes(parsed.mode)) {
+  if (!["plan", "preflight", "apply", "verify", "self-test"].includes(parsed.mode)) {
     throw new Error(`Unsupported mode ${parsed.mode}`);
   }
   return parsed;
@@ -364,6 +373,16 @@ async function insertSourceFiles(client, plan) {
 async function insertSourceRowsAndFields(client, plan, file) {
   const recordBatch = [];
   const fieldBatch = [];
+  const flushReadyRowsAndFields = async () => {
+    if (recordBatch.length === 0) return;
+    await flushRecordBatch(client, recordBatch);
+    recordBatch.length = 0;
+    if (fieldBatch.length > 0) {
+      await flushFieldBatch(client, fieldBatch);
+      fieldBatch.length = 0;
+    }
+  };
+
   for (let rowIndex = 0; rowIndex < file.rows.length; rowIndex += 1) {
     const row = file.rows[rowIndex];
     const rowNumber = rowIndex + 1;
@@ -403,18 +422,12 @@ async function insertSourceRowsAndFields(client, plan, file) {
         restricted: false,
         writer_job_id: plan.execution_id,
       });
-      if (fieldBatch.length >= 1000) {
-        await flushFieldBatch(client, fieldBatch);
-        fieldBatch.length = 0;
-      }
     }
     if (recordBatch.length >= 1000) {
-      await flushRecordBatch(client, recordBatch);
-      recordBatch.length = 0;
+      await flushReadyRowsAndFields();
     }
   }
-  if (recordBatch.length > 0) await flushRecordBatch(client, recordBatch);
-  if (fieldBatch.length > 0) await flushFieldBatch(client, fieldBatch);
+  await flushReadyRowsAndFields();
 }
 
 async function flushRecordBatch(client, batch) {
@@ -440,6 +453,45 @@ async function flushFieldBatch(client, batch) {
     ["source_field_value_id", "source_record_id", "source_file_id", "source_release_id", "tenant_key", "test_namespace", "source_field_id", "source_field_name", "raw_value", "normalized_value", "field_disposition", "target_object_type", "target_field_name", "adapter_rule_id", "evidence_ref", "restricted", "writer_job_id"],
     batch,
   );
+}
+
+async function runSourceVolumeSelfTest() {
+  const calls = [];
+  const client = {
+    async query(sql, params = []) {
+      if (String(sql).includes("source_records")) calls.push({ table: "source_records", param_count: params.length });
+      if (String(sql).includes("source_field_values")) calls.push({ table: "source_field_values", param_count: params.length });
+      return { rows: [] };
+    },
+  };
+  const headers = Array.from({ length: 1001 }, (_, index) => `field_${String(index + 1).padStart(4, "0")}`);
+  const row = Object.fromEntries(headers.map((header, index) => [header, `value-${index + 1}`]));
+  await insertSourceRowsAndFields(
+    client,
+    { execution_id: "source-volume-self-test" },
+    {
+      relative_path: "03-source-corpus-design/synthetic-source-samples/self-test.csv",
+      file_name: "self-test.csv",
+      source_file_id: "source-volume-self-test:file",
+      object_type: "self_test_object",
+      headers,
+      rows: [row],
+    },
+  );
+  const firstWrite = calls[0]?.table || "";
+  const recordWrites = calls.filter((call) => call.table === "source_records").length;
+  const fieldWrites = calls.filter((call) => call.table === "source_field_values").length;
+  const passed = firstWrite === "source_records" && recordWrites === 1 && fieldWrites === 1;
+  if (!passed) {
+    throw new Error(`Source-volume row/field FK write order failed: ${JSON.stringify(calls)}`);
+  }
+  return {
+    status: "HEALTHCARE_FOUNDATION_V2_SOURCE_VOLUME_SELF_TEST_PASSED",
+    first_write: firstWrite,
+    record_writes: recordWrites,
+    field_writes: fieldWrites,
+    field_values_replayed: headers.length,
+  };
 }
 
 async function insertParserExecution(client, plan) {
