@@ -12,6 +12,7 @@ export const SOURCE_RELEASE_ID = "airline-demo-new-foundation-v2-golden-slice-v1
 export const RELEASE_VERSION = "v1";
 export const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
 export const WRITER_ROLE = "foundation_v2_golden_slice_writer";
+export const READER_ROLE = "foundation_v2_golden_slice_reader";
 export const EXPECTED_FIXTURE_SHA256 =
   "d4bb8fe59cd22c95bc470074d4dba4d45754fb80b9245c54bf3ec9b488d0bc62";
 export const EXPECTED_MIGRATION_SHA256 =
@@ -20,7 +21,11 @@ export const MIGRATION_NAME = "20260730120000_foundation_v2_golden_slice_core.sq
 export const EXPECTED_WRITE_POLICY_MIGRATION_SHA256 =
   "4f8ecd6a9a5fabd7a3e8b40eb79bbb2742348d294444db241b8748d81b4e354d";
 export const WRITE_POLICY_MIGRATION_NAME = "20260730133000_foundation_v2_golden_slice_write_policies.sql";
+export const EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256 =
+  "0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550";
+export const IDENTITY_CONTROL_MIGRATION_NAME = "20260730152000_foundation_v2_golden_slice_identity_controls.sql";
 export const DEFAULT_EXECUTION_ID = `${SOURCE_RELEASE_ID}:execution-v1`;
+export const MANAGED_IDENTITY_DB_SCOPE = "https://ossrdbms-aad.database.windows.net/.default";
 
 const thisFile = fileURLToPath(import.meta.url);
 export const REPO_ROOT = findRepoRoot(path.dirname(thisFile));
@@ -369,6 +374,8 @@ export function createManifest(plan, status, extra = {}) {
     migration_sha256: EXPECTED_MIGRATION_SHA256,
     write_policy_migration_name: WRITE_POLICY_MIGRATION_NAME,
     write_policy_migration_sha256: EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
+    identity_control_migration_name: IDENTITY_CONTROL_MIGRATION_NAME,
+    identity_control_migration_sha256: EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
     full_reload_approved: false,
     production_provider_cutover_approved: false,
     live_baseline_activation_approved: false,
@@ -527,6 +534,52 @@ export function databaseUrl() {
   return process.env.ABARVA_AZURE_DATABASE_URL || process.env.AZURE_DATABASE_URL || process.env.DATABASE_URL || "";
 }
 
+export function managedIdentityDbAuthEnabled() {
+  return (
+    process.env.FOUNDATION_V2_PG_AUTH === "managed-identity" ||
+    process.env.FOUNDATION_V2_USE_MANAGED_IDENTITY_DB_AUTH === "true"
+  );
+}
+
+export async function foundationPostgresClientOptions(applicationName) {
+  if (!managedIdentityDbAuthEnabled()) {
+    const url = databaseUrl();
+    if (!url) throw new Error("ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL or DATABASE_URL is required");
+    return postgresClientOptions(url, applicationName);
+  }
+
+  const host = requiredEnv("FOUNDATION_V2_PGHOST");
+  const database = requiredEnv("FOUNDATION_V2_PGDATABASE");
+  const user = requiredEnv("FOUNDATION_V2_PGUSER");
+  const clientId =
+    process.env.FOUNDATION_V2_MANAGED_IDENTITY_CLIENT_ID ||
+    process.env.AZURE_CLIENT_ID ||
+    process.env.MANAGED_IDENTITY_CLIENT_ID ||
+    "";
+  if (!clientId) {
+    throw new Error("FOUNDATION_V2_MANAGED_IDENTITY_CLIENT_ID or AZURE_CLIENT_ID is required for managed-identity DB auth");
+  }
+  const { ManagedIdentityCredential } = await import("@azure/identity");
+  const credential = new ManagedIdentityCredential(clientId);
+  const token = await credential.getToken(MANAGED_IDENTITY_DB_SCOPE);
+  if (!token?.token) throw new Error("Managed identity did not return a PostgreSQL Entra access token");
+  return {
+    host,
+    port: Number(process.env.FOUNDATION_V2_PGPORT || "5432"),
+    database,
+    user,
+    password: token.token,
+    ssl: postgresSslOptions(`postgresql://${encodeURIComponent(user)}@${host}/${database}`),
+    application_name: applicationName,
+  };
+}
+
+function requiredEnv(name) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is required`);
+  return value;
+}
+
 export function fixtureStateBucket(fixture) {
   if (fixture.expected_state === "deferred" || fixture.expected_state === "proposed_not_approved") return "deferred";
   if (fixture.expected_state === "rejected") return "rejected";
@@ -608,7 +661,8 @@ export function findRepoRoot(start) {
       fs.existsSync(path.join(cursor, "fixtures/foundation-v2/golden-slice/fixture-matrix.json")) &&
       fs.existsSync(path.join(cursor, "fixtures/foundation-v2/golden-slice/release-contract.json")) &&
       fs.existsSync(path.join(cursor, "supabase/migrations", MIGRATION_NAME)) &&
-      fs.existsSync(path.join(cursor, "supabase/migrations", WRITE_POLICY_MIGRATION_NAME))
+      fs.existsSync(path.join(cursor, "supabase/migrations", WRITE_POLICY_MIGRATION_NAME)) &&
+      fs.existsSync(path.join(cursor, "supabase/migrations", IDENTITY_CONTROL_MIGRATION_NAME))
     ) {
       return cursor;
     }

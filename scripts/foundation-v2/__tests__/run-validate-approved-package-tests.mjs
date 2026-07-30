@@ -90,6 +90,10 @@ function writePackagedRuntimeRoot(dir) {
     path.join(repoRoot, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
     path.join(dir, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
   );
+  copyFileSync(
+    path.join(repoRoot, "supabase/migrations/20260730152000_foundation_v2_golden_slice_identity_controls.sql"),
+    path.join(dir, "supabase/migrations/20260730152000_foundation_v2_golden_slice_identity_controls.sql"),
+  );
 }
 
 function writeMiniPackage(dir) {

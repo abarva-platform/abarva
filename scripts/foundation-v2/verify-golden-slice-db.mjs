@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 import {
+  EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
   EXPECTED_MIGRATION_SHA256,
   EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
+  IDENTITY_CONTROL_MIGRATION_NAME,
   ISOLATION_SCOPE,
   MIGRATION_NAME,
+  READER_ROLE,
   SOURCE_RELEASE_ID,
   TENANT_KEY,
   TEST_NAMESPACE,
   WRITE_POLICY_MIGRATION_NAME,
   buildFixturePlan,
   createManifest,
-  databaseUrl,
   emitProofBundle,
   expectedPersistenceFingerprint,
   expectedTransitionResults,
+  foundationPostgresClientOptions,
   parseArgs,
-  postgresClientOptions,
   proofRef,
   readFixtureSet,
   sha256,
@@ -48,12 +50,11 @@ async function main(options) {
   if (!["verify", "readback", "apply"].includes(options.mode)) {
     throw new Error(`Unsupported verifier mode ${options.mode}; use verify`);
   }
-  const url = databaseUrl();
-  if (!url) throw new Error("ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL or DATABASE_URL is required");
   const { Client } = await importPg();
-  const client = new Client(postgresClientOptions(url, "foundation-v2-golden-slice-verifier"));
+  const client = new Client(await foundationPostgresClientOptions("foundation-v2-golden-slice-verifier"));
   await client.connect();
   try {
+    await activateVerifierRole(client);
     await setFoundationContext(client);
     const proof = await verify(client, plan, options.outDir);
     if (options.emitProofBundle) emitProofBundle(options.outDir);
@@ -76,6 +77,7 @@ async function verify(client, plan, outDir) {
   const startedAt = new Date().toISOString();
   const migration = await migrationReadback(client, MIGRATION_NAME);
   const writePolicyMigration = await migrationReadback(client, WRITE_POLICY_MIGRATION_NAME);
+  const identityControlMigration = await migrationReadback(client, IDENTITY_CONTROL_MIGRATION_NAME);
   const layerTotals = await dbLayerTotals(client);
   const rowLineage = await rowLineageRows(client);
   const fieldLineage = await fieldLineageRows(client);
@@ -97,6 +99,9 @@ async function verify(client, plan, outDir) {
   if (!migration.present || migration.sha256 !== EXPECTED_MIGRATION_SHA256) defects.push("approved migration is not present");
   if (!writePolicyMigration.present || writePolicyMigration.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
     defects.push("approved write-policy migration is not present");
+  }
+  if (!identityControlMigration.present || identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+    defects.push("approved identity-control migration is not present");
   }
   for (const row of varianceRows) {
     if (Number(row.unexplained_variance) !== 0) defects.push(`layer variance ${row.layer_id}:${row.variance}`);
@@ -173,6 +178,7 @@ async function verify(client, plan, outDir) {
     completed_at: completedAt,
     migration,
     write_policy_migration: writePolicyMigration,
+    identity_control_migration: identityControlMigration,
     expected_fingerprint: expectedFingerprint,
     persisted_fingerprint: persistedFingerprint.fingerprint,
     row_variance: rowVarianceRows.reduce((sum, row) => sum + Number(row.variance || 0), 0),
@@ -828,8 +834,12 @@ async function v1IsolationReadback(client) {
     }
     const checks = columns.map((column, index) => `${column.column_name}::text LIKE $${index + 1}`).join(" OR ");
     const params = columns.map(() => `%${SOURCE_RELEASE_ID}%`);
-    const count = (await rows(client, `SELECT count(*)::bigint AS count FROM ${relation} WHERE ${checks}`, params))[0].count;
-    out.push({ relation, exists: true, foundation_release_refs: count });
+    try {
+      const count = (await rows(client, `SELECT count(*)::bigint AS count FROM ${relation} WHERE ${checks}`, params))[0].count;
+      out.push({ relation, exists: true, access: "readable", foundation_release_refs: count });
+    } catch (error) {
+      out.push({ relation, exists: true, access: "denied", foundation_release_refs: "0", error_code: error.code || "unknown" });
+    }
   }
   return out;
 }
@@ -1027,6 +1037,32 @@ async function buildSelfTest(plan, outDir) {
   });
   writeJson(proofRef(outDir, "FOUNDATION_V2_GOLDEN_SLICE_VERIFIER_SELF_TEST.json"), proof);
   return proof;
+}
+
+async function activateVerifierRole(client) {
+  await client.query("SET row_security = on");
+  const requestedRole = process.env.FOUNDATION_V2_DB_SET_ROLE || process.env.FOUNDATION_V2_VERIFY_SET_ROLE || "";
+  if (!requestedRole) return;
+  if (requestedRole !== READER_ROLE) {
+    throw new Error(`Fail closed: verifier may only SET ROLE ${READER_ROLE}`);
+  }
+  const allowed = (await rows(client, "SELECT pg_has_role(session_user, $1, 'MEMBER') AS allowed", [READER_ROLE]))[0]?.allowed;
+  if (!allowed) throw new Error(`Fail closed: session user cannot assume ${READER_ROLE}`);
+  await client.query(`SET ROLE ${READER_ROLE}`);
+  await client.query("SET row_security = on");
+  const active = (
+    await rows(
+      client,
+      `SELECT session_user,
+              current_user,
+              current_setting('row_security') AS row_security,
+              COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname=session_user), false) AS session_user_bypassrls,
+              COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user), false) AS current_user_bypassrls`,
+    )
+  )[0];
+  if (active.current_user !== READER_ROLE) throw new Error(`Fail closed: SET ROLE did not activate ${READER_ROLE}`);
+  if (active.row_security !== "on") throw new Error(`Fail closed: verifier row_security is ${active.row_security}`);
+  if (active.session_user_bypassrls || active.current_user_bypassrls) throw new Error("Fail closed: verifier role can bypass RLS");
 }
 
 async function setFoundationContext(client) {

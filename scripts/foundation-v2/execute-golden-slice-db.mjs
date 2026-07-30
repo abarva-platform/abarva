@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import {
   DEFAULT_EXECUTION_ID,
+  EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
   EXPECTED_MIGRATION_SHA256,
   EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
+  IDENTITY_CONTROL_MIGRATION_NAME,
   ISOLATION_SCOPE,
   MIGRATION_NAME,
   SOURCE_RELEASE_ID,
@@ -12,12 +14,11 @@ import {
   WRITE_POLICY_MIGRATION_NAME,
   buildFixturePlan,
   createManifest,
-  databaseUrl,
   emitProofBundle,
   expectedPersistenceFingerprint,
   expectedTransitionResults,
+  foundationPostgresClientOptions,
   parseArgs,
-  postgresClientOptions,
   proofRef,
   readFixtureSet,
   sha256,
@@ -62,6 +63,7 @@ const V1_RELATIONS = [
   "publication.projection_version",
   "consumption.enterprise_brief_v1",
 ];
+let probeCounter = 0;
 
 const args = parseArgs(process.argv.slice(2));
 if (args.help) {
@@ -93,10 +95,8 @@ async function main(options) {
     return;
   }
 
-  const url = databaseUrl();
-  if (!url) throw new Error("ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL or DATABASE_URL is required");
   const { Client } = await importPg();
-  const client = new Client(postgresClientOptions(url, "foundation-v2-golden-slice-executor"));
+  const client = new Client(await foundationPostgresClientOptions("foundation-v2-golden-slice-executor"));
   await client.connect();
   try {
     if (options.mode === "schema-readback") {
@@ -168,6 +168,11 @@ function compactSummary(result) {
     policies_with_admin_bypass: result.summary.policies_with_admin_bypass,
     writer_role_present: result.summary.writer_role_present,
     writer_role_can_login: result.summary.writer_role_can_login,
+    writer_role_bypassrls: result.summary.writer_role_bypassrls,
+    writer_role_inherit: result.summary.writer_role_inherit,
+    force_rls_tables: result.summary.force_rls_tables,
+    writer_owned_tables: result.summary.writer_owned_tables,
+    row_security: result.summary.row_security,
     can_set_writer_role: result.summary.can_set_writer_role,
     session_user: result.summary.session_user,
     session_user_is_superuser: result.summary.session_user_is_superuser,
@@ -189,6 +194,9 @@ function schemaReadbackDefects(schema) {
   if (summary.rls_tables !== FOUNDATION_TABLES.length) {
     defects.push(`expected RLS on ${FOUNDATION_TABLES.length} tables, found ${summary.rls_tables}`);
   }
+  if (summary.force_rls_tables !== FOUNDATION_TABLES.length) {
+    defects.push(`expected FORCE RLS on ${FOUNDATION_TABLES.length} tables, found ${summary.force_rls_tables}`);
+  }
   if (summary.policies_with_admin_bypass !== 0) {
     defects.push(`expected zero admin-bypass policies, found ${summary.policies_with_admin_bypass}`);
   }
@@ -205,6 +213,10 @@ function schemaReadbackDefects(schema) {
   }
   if (!summary.writer_role_present) defects.push(`${WRITER_ROLE} role missing`);
   if (summary.writer_role_can_login) defects.push(`${WRITER_ROLE} must not be able to login`);
+  if (summary.writer_role_bypassrls) defects.push(`${WRITER_ROLE} must not bypass RLS`);
+  if (summary.writer_role_inherit) defects.push(`${WRITER_ROLE} must be NOINHERIT`);
+  if (summary.writer_owned_tables !== 0) defects.push(`${WRITER_ROLE} owns ${summary.writer_owned_tables} Foundation V2 tables`);
+  if (summary.row_security !== "on") defects.push(`row_security is ${summary.row_security || "missing"}`);
   if (!summary.can_set_writer_role) defects.push(`current DB session cannot assume ${WRITER_ROLE}`);
   if (summary.session_user_is_superuser) defects.push("current DB session user is superuser");
   if (summary.session_user_bypassrls) defects.push("current DB session user can bypass RLS");
@@ -218,6 +230,10 @@ function schemaReadbackDefects(schema) {
   if (!schema.write_policy_migration?.present) defects.push(`missing migration ${WRITE_POLICY_MIGRATION_NAME}`);
   if (schema.write_policy_migration?.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
     defects.push(`write policy migration sha mismatch ${schema.write_policy_migration?.sha256 || "missing"}`);
+  }
+  if (!schema.identity_control_migration?.present) defects.push(`missing migration ${IDENTITY_CONTROL_MIGRATION_NAME}`);
+  if (schema.identity_control_migration?.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+    defects.push(`identity-control migration sha mismatch ${schema.identity_control_migration?.sha256 || "missing"}`);
   }
   return defects;
 }
@@ -234,10 +250,12 @@ async function preflight(client, plan) {
   const schema = await schemaReadback(client);
   const migration = await migrationReadback(client, MIGRATION_NAME);
   const writePolicyMigration = await migrationReadback(client, WRITE_POLICY_MIGRATION_NAME);
+  const identityControlMigration = await migrationReadback(client, IDENTITY_CONTROL_MIGRATION_NAME);
   await client.query("BEGIN");
   let existing;
+  let securityPreflight;
   try {
-    await activateWriterRole(client);
+    securityPreflight = await runWriterSecurityPreflight(client);
     existing = await existingCounts(client);
     await client.query("ROLLBACK");
   } catch (error) {
@@ -253,6 +271,10 @@ async function preflight(client, plan) {
   if (writePolicyMigration.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
     defects.push(`write policy migration sha mismatch ${writePolicyMigration.sha256 || "missing"}`);
   }
+  if (!identityControlMigration.present) defects.push(`missing migration ${IDENTITY_CONTROL_MIGRATION_NAME}`);
+  if (identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+    defects.push(`identity-control migration sha mismatch ${identityControlMigration.sha256 || "missing"}`);
+  }
   if (schema.summary.table_count !== FOUNDATION_TABLES.length) {
     defects.push(`expected ${FOUNDATION_TABLES.length} tables, found ${schema.summary.table_count}`);
   }
@@ -263,6 +285,8 @@ async function preflight(client, plan) {
     schema_summary: schema.summary,
     migration,
     write_policy_migration: writePolicyMigration,
+    identity_control_migration: identityControlMigration,
+    security_preflight: securityPreflight,
     existing_counts: existing,
     existing_total: existingTotal,
   });
@@ -285,8 +309,12 @@ async function applyGoldenSlice(client, plan, outDir) {
     if (!writePolicyMigration.present || writePolicyMigration.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
       throw new Error(`Fail closed: migration ${WRITE_POLICY_MIGRATION_NAME} not present with approved SHA`);
     }
+    const identityControlMigration = await migrationReadback(client, IDENTITY_CONTROL_MIGRATION_NAME);
+    if (!identityControlMigration.present || identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+      throw new Error(`Fail closed: migration ${IDENTITY_CONTROL_MIGRATION_NAME} not present with approved SHA`);
+    }
     const v1Before = await v1IsolationSnapshot(client);
-    await activateWriterRole(client);
+    const securityPreflight = await runWriterSecurityPreflight(client);
 
     const existing = await existingCounts(client);
     const existingTotal = Object.values(existing).reduce((sum, value) => sum + Number(value || 0), 0);
@@ -334,6 +362,7 @@ async function applyGoldenSlice(client, plan, outDir) {
       field_variance: 0,
       v1_before: v1Before,
       v1_after: v1After,
+      security_preflight: securityPreflight,
       layer_totals: layerTotals,
     });
     writeApplyProof(outDir, plan, result, varianceRows, layerTotals);
@@ -750,12 +779,15 @@ async function insertPlan(client, plan) {
 }
 
 async function schemaReadback(client) {
+  await client.query("SET row_security = on");
   const tables = await rows(
     client,
     `SELECT c.relname AS table_name,
             c.relrowsecurity AS rls_enabled,
-            has_table_privilege(current_user, format('foundation_v2.%I', c.relname), 'INSERT') AS current_user_can_insert,
-            has_table_privilege(current_user, format('foundation_v2.%I', c.relname), 'SELECT') AS current_user_can_select
+            c.relforcerowsecurity AS force_rls_enabled,
+            pg_get_userbyid(c.relowner) AS table_owner,
+            has_table_privilege(current_user, c.oid, 'INSERT') AS current_user_can_insert,
+            has_table_privilege(current_user, c.oid, 'SELECT') AS current_user_can_select
        FROM pg_class c
        JOIN pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = 'foundation_v2'
@@ -764,10 +796,19 @@ async function schemaReadback(client) {
   );
   const columns = await rows(
     client,
-    `SELECT table_name, column_name, data_type, is_nullable, ordinal_position
-       FROM information_schema.columns
-      WHERE table_schema = 'foundation_v2'
-      ORDER BY table_name, ordinal_position`,
+    `SELECT c.relname AS table_name,
+            a.attname AS column_name,
+            format_type(a.atttypid, a.atttypmod) AS data_type,
+            CASE WHEN a.attnotnull THEN 'NO' ELSE 'YES' END AS is_nullable,
+            a.attnum AS ordinal_position
+       FROM pg_attribute a
+       JOIN pg_class c ON c.oid = a.attrelid
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'foundation_v2'
+        AND c.relkind = 'r'
+        AND a.attnum > 0
+        AND NOT a.attisdropped
+      ORDER BY c.relname, a.attnum`,
   );
   const constraints = await rows(
     client,
@@ -783,10 +824,15 @@ async function schemaReadback(client) {
   );
   const indexes = await rows(
     client,
-    `SELECT tablename AS table_name, indexname AS index_name, indexdef AS definition
-       FROM pg_indexes
-      WHERE schemaname = 'foundation_v2'
-      ORDER BY tablename, indexname`,
+    `SELECT c.relname AS table_name,
+            i.relname AS index_name,
+            pg_get_indexdef(i.oid) AS definition
+       FROM pg_index ix
+       JOIN pg_class c ON c.oid = ix.indrelid
+       JOIN pg_class i ON i.oid = ix.indexrelid
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'foundation_v2'
+      ORDER BY c.relname, i.relname`,
   );
   const policies = await rows(
     client,
@@ -809,13 +855,14 @@ async function schemaReadback(client) {
   );
   const writerRoleRows = await rows(
     client,
-    `SELECT rolname, rolcanlogin
+    `SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls, rolinherit
        FROM pg_roles
-      WHERE rolname = 'foundation_v2_golden_slice_writer'`,
+       WHERE rolname = 'foundation_v2_golden_slice_writer'`,
   );
   const writerRoleReadback = await writerRoleReadbackRows(client);
   const migration = await migrationReadback(client, MIGRATION_NAME);
   const writePolicyMigration = await migrationReadback(client, WRITE_POLICY_MIGRATION_NAME);
+  const identityControlMigration = await migrationReadback(client, IDENTITY_CONTROL_MIGRATION_NAME);
   const v1 = await v1IsolationSnapshot(client);
   const writerRole = writerRoleRows[0] || null;
   const summary = {
@@ -827,6 +874,8 @@ async function schemaReadback(client) {
     check_constraint_count: constraints.filter((constraint) => constraint.constraint_type === "c").length,
     index_count: indexes.length,
     rls_tables: tables.filter((table) => table.rls_enabled).length,
+    force_rls_tables: tables.filter((table) => table.force_rls_enabled).length,
+    writer_owned_tables: tables.filter((table) => table.table_owner === WRITER_ROLE).length,
     policies_with_admin_bypass: policies.filter((policy) => /internal-admin/i.test(policy.using_expression || "")).length,
     insert_policy_count: policies.filter((policy) => policy.policy_name === "foundation_v2_tenant_insert").length,
     writer_insert_policies: policies.filter(
@@ -851,31 +900,61 @@ async function schemaReadback(client) {
     ).length,
     writer_role_present: Boolean(writerRole),
     writer_role_can_login: Boolean(writerRole?.rolcanlogin),
+    writer_role_superuser: Boolean(writerRole?.rolsuper),
+    writer_role_createdb: Boolean(writerRole?.rolcreatedb),
+    writer_role_createrole: Boolean(writerRole?.rolcreaterole),
+    writer_role_replication: Boolean(writerRole?.rolreplication),
+    writer_role_bypassrls: Boolean(writerRole?.rolbypassrls),
+    writer_role_inherit: Boolean(writerRole?.rolinherit),
     session_user: writerRoleReadback.session_user,
+    row_security: writerRoleReadback.row_security,
     session_user_is_superuser: writerRoleReadback.session_user_is_superuser,
+    session_user_createrole: writerRoleReadback.session_user_createrole,
+    session_user_createdb: writerRoleReadback.session_user_createdb,
+    session_user_replication: writerRoleReadback.session_user_replication,
+    session_user_inherit: writerRoleReadback.session_user_inherit,
     session_user_bypassrls: writerRoleReadback.session_user_bypassrls,
     can_set_writer_role: writerRoleReadback.can_set_writer_role,
     active_role_after_set_role: writerRoleReadback.active_role_after_set_role,
+    active_role_bypassrls_after_set_role: writerRoleReadback.active_role_bypassrls_after_set_role,
+    row_security_after_set_role: writerRoleReadback.row_security_after_set_role,
     v1_relations_checked: v1.length,
   };
   return {
     status:
       summary.table_count === FOUNDATION_TABLES.length &&
       summary.rls_tables === FOUNDATION_TABLES.length &&
+      summary.force_rls_tables === FOUNDATION_TABLES.length &&
+      summary.writer_owned_tables === 0 &&
       summary.policies_with_admin_bypass === 0 &&
       summary.insert_policy_count === FOUNDATION_TABLES.length &&
       summary.writer_insert_policies === FOUNDATION_TABLES.length &&
       summary.pinned_writer_insert_policies === FOUNDATION_TABLES.length &&
       summary.writer_role_present &&
       !summary.writer_role_can_login &&
+      !summary.writer_role_superuser &&
+      !summary.writer_role_createdb &&
+      !summary.writer_role_createrole &&
+      !summary.writer_role_replication &&
+      !summary.writer_role_bypassrls &&
+      !summary.writer_role_inherit &&
       summary.can_set_writer_role &&
+      summary.row_security === "on" &&
       !summary.session_user_is_superuser &&
+      !summary.session_user_createrole &&
+      !summary.session_user_createdb &&
+      !summary.session_user_replication &&
+      !summary.session_user_inherit &&
       !summary.session_user_bypassrls &&
       summary.active_role_after_set_role === WRITER_ROLE &&
+      summary.active_role_bypassrls_after_set_role === false &&
+      summary.row_security_after_set_role === "on" &&
       migration.present &&
       migration.sha256 === EXPECTED_MIGRATION_SHA256 &&
       writePolicyMigration.present &&
-      writePolicyMigration.sha256 === EXPECTED_WRITE_POLICY_MIGRATION_SHA256
+      writePolicyMigration.sha256 === EXPECTED_WRITE_POLICY_MIGRATION_SHA256 &&
+      identityControlMigration.present &&
+      identityControlMigration.sha256 === EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256
         ? "FOUNDATION_V2_SCHEMA_READBACK_PASSED"
         : "FOUNDATION_V2_SCHEMA_READBACK_FAILED",
     generated_at: new Date().toISOString(),
@@ -883,6 +962,7 @@ async function schemaReadback(client) {
     test_namespace: TEST_NAMESPACE,
     migration,
     write_policy_migration: writePolicyMigration,
+    identity_control_migration: identityControlMigration,
     summary,
     tables,
     columns,
@@ -952,55 +1032,245 @@ async function existingExecutionReadback(client, plan) {
   };
 }
 
-async function activateWriterRole(client) {
+async function runWriterSecurityPreflight(client) {
+  await client.query("SET LOCAL row_security = on");
   await setFoundationContext(client);
-  const role = await writerRoleReadbackRows(client, { probeSetRole: false });
-  if (!role.can_set_writer_role) {
-    throw new Error(`Fail closed: current DB session cannot assume ${WRITER_ROLE}`);
-  }
-  if (role.session_user_is_superuser || role.session_user_bypassrls) {
-    throw new Error(`Fail closed: writer session user may bypass RLS ${JSON.stringify(role)}`);
-  }
-  if (!/^[a-z_][a-z0-9_]*$/.test(WRITER_ROLE)) throw new Error(`Invalid writer role ${WRITER_ROLE}`);
+  const before = await securityRoleSnapshot(client);
+  assertSecurityRoleSnapshot(before, "before SET ROLE", { currentUser: before.session_user });
+  if (before.session_user === "abarvaadmin") throw new Error("Fail closed: session user is abarvaadmin");
+  if (!before.session_user_can_set_writer_role) throw new Error(`Fail closed: session user cannot assume ${WRITER_ROLE}`);
+
   await client.query(`SET LOCAL ROLE ${WRITER_ROLE}`);
   await setFoundationContext(client);
-  const active = await rows(client, "SELECT current_user, current_role");
-  if (active[0]?.current_user !== WRITER_ROLE || active[0]?.current_role !== WRITER_ROLE) {
-    throw new Error(`Fail closed: SET ROLE did not activate ${WRITER_ROLE}`);
+  const after = await securityRoleSnapshot(client);
+  assertSecurityRoleSnapshot(after, "after SET ROLE", { currentUser: WRITER_ROLE });
+  if (after.session_user !== before.session_user) throw new Error("Fail closed: session user changed after SET ROLE");
+
+  const probes = [];
+  await client.query("SAVEPOINT foundation_v2_security_preflight_scope");
+  try {
+    probes.push(
+      await probeSql(
+        client,
+        "permitted isolated source_release write/read",
+        `INSERT INTO foundation_v2.source_releases
+         (source_release_id, tenant_key, test_namespace, release_version, release_hash,
+          source_release_state, isolation_scope, v1_component_classification, writer_job_id)
+       VALUES ($1,$2,$3,'security-preflight',$4,'isolated_golden_slice',$5,'SUPERSEDE_WITH_V2','security-preflight')
+       ON CONFLICT DO NOTHING`,
+        [SOURCE_RELEASE_ID, TENANT_KEY, TEST_NAMESPACE, sha256("foundation-v2-security-preflight"), ISOLATION_SCOPE],
+        { expect: "success" },
+      ),
+    );
+    probes.push(
+      await probeSql(
+        client,
+        "permitted isolated source_release read",
+        "SELECT count(*)::int AS count FROM foundation_v2.source_releases WHERE tenant_key=$1 AND test_namespace=$2",
+        [TENANT_KEY, TEST_NAMESPACE],
+        { expect: "success" },
+      ),
+    );
+    probes.push(
+      await probeSql(
+        client,
+        "cross-tenant insert rejected",
+        `INSERT INTO foundation_v2.source_releases
+         (source_release_id, tenant_key, test_namespace, release_version, release_hash,
+          source_release_state, isolation_scope, v1_component_classification, writer_job_id)
+       VALUES ($1,'wrong-tenant',$2,'security-preflight-bad',$3,'isolated_golden_slice',$4,'SUPERSEDE_WITH_V2','security-preflight')`,
+        [`${SOURCE_RELEASE_ID}:wrong-tenant`, TEST_NAMESPACE, sha256("foundation-v2-security-preflight-bad"), ISOLATION_SCOPE],
+        { expect: "failure" },
+      ),
+    );
+    await client.query("SELECT set_config('app.tenant_key', 'wrong-tenant', true)");
+    await client.query("SELECT set_config('app.client_key', 'wrong-tenant', true)");
+    const crossTenantRead = await probeSql(
+      client,
+      "cross-tenant read returns zero",
+      "SELECT count(*)::int AS count FROM foundation_v2.source_releases WHERE tenant_key=$1 AND test_namespace=$2",
+      [TENANT_KEY, TEST_NAMESPACE],
+      { expect: "success", expectZeroCount: true },
+    );
+    probes.push(crossTenantRead);
+    await setFoundationContext(client);
+
+    for (const relation of V1_RELATIONS) {
+      if (await relationExists(client, relation)) {
+        probes.push(
+          await probeSql(client, `V1 access denied ${relation}`, `SELECT count(*)::int AS count FROM ${relation}`, [], { expect: "failure" }),
+        );
+      }
+    }
+
+    probes.push(
+      await probeSql(client, "ALTER TABLE denied", "ALTER TABLE foundation_v2.source_releases ADD COLUMN forbidden_identity_probe text", [], {
+        expect: "failure",
+      }),
+    );
+    probes.push(
+      await probeSql(client, "ALTER POLICY denied", "ALTER POLICY foundation_v2_tenant_select ON foundation_v2.source_releases USING (true)", [], {
+        expect: "failure",
+      }),
+    );
+    probes.push(
+      await probeSql(client, "DISABLE ROW LEVEL SECURITY denied", "ALTER TABLE foundation_v2.source_releases DISABLE ROW LEVEL SECURITY", [], {
+        expect: "failure",
+      }),
+    );
+    probes.push(
+      await probeSql(client, "role attribute change denied", `ALTER ROLE ${WRITER_ROLE} BYPASSRLS`, [], { expect: "failure" }),
+    );
+    probes.push(
+      await probeSql(client, "role membership grant denied", `GRANT ${WRITER_ROLE} TO ${WRITER_ROLE}`, [], { expect: "failure" }),
+    );
+    probes.push(
+      await probeSql(
+        client,
+        "active baseline rejected",
+        `INSERT INTO foundation_v2.baselines
+         (baseline_id, tenant_key, test_namespace, baseline_version, baseline_hash, baseline_state, writer_job_id)
+       VALUES ('security-preflight-active-baseline',$1,$2,'active',$3,'active','security-preflight')`,
+        [TENANT_KEY, TEST_NAMESPACE, sha256("security-preflight-active-baseline")],
+        { expect: "failure" },
+      ),
+    );
+
+    const failed = probes.filter((probe) => probe.status !== "passed");
+    if (failed.length > 0) throw new Error(`Fail closed: security preflight probes failed ${JSON.stringify(failed)}`);
+  } finally {
+    await client.query("ROLLBACK TO SAVEPOINT foundation_v2_security_preflight_scope");
+    await client.query("RELEASE SAVEPOINT foundation_v2_security_preflight_scope");
+    await setFoundationContext(client);
+  }
+  return {
+    status: "FOUNDATION_V2_GOLDEN_SLICE_SECURITY_PREFLIGHT_PASSED",
+    before_set_role: before,
+    after_set_role: after,
+    probes,
+  };
+}
+
+async function securityRoleSnapshot(client) {
+  const identity = (
+    await rows(
+      client,
+      `SELECT session_user,
+              current_user,
+              current_role,
+              current_setting('row_security') AS row_security,
+              pg_has_role(session_user, $1, 'MEMBER') AS session_user_can_set_writer_role`,
+      [WRITER_ROLE],
+    )
+  )[0];
+  const roleRows = await rows(
+    client,
+    `SELECT rolname, rolsuper, rolcreaterole, rolcreatedb, rolreplication, rolbypassrls, rolinherit, rolcanlogin
+       FROM pg_roles
+      WHERE rolname IN (session_user, current_user, $1)
+      ORDER BY rolname`,
+    [WRITER_ROLE],
+  );
+  const roles = Object.fromEntries(roleRows.map((role) => [role.rolname, role]));
+  return { ...identity, roles };
+}
+
+function assertSecurityRoleSnapshot(snapshot, label, { currentUser }) {
+  const currentRole = snapshot.roles?.[snapshot.current_user];
+  if (snapshot.current_user !== currentUser) {
+    throw new Error(`Fail closed: ${label} current_user ${snapshot.current_user}, expected ${currentUser}`);
+  }
+  if (snapshot.row_security !== "on") throw new Error(`Fail closed: ${label} row_security ${snapshot.row_security}`);
+  for (const [roleName, role] of Object.entries(snapshot.roles || {})) {
+    if (role.rolsuper || role.rolcreaterole || role.rolcreatedb || role.rolreplication || role.rolbypassrls) {
+      throw new Error(`Fail closed: ${label} privileged role attributes on ${roleName}`);
+    }
+  }
+  if (!currentRole) throw new Error(`Fail closed: ${label} current role ${snapshot.current_user} is missing from pg_roles`);
+  if (snapshot.current_user === WRITER_ROLE && currentRole.rolcanlogin) {
+    throw new Error(`Fail closed: ${WRITER_ROLE} can login`);
+  }
+}
+
+async function probeSql(client, label, sql, params = [], { expect, expectZeroCount = false }) {
+  probeCounter += 1;
+  const savepoint = `foundation_v2_probe_${probeCounter}`;
+  await client.query(`SAVEPOINT ${savepoint}`);
+  try {
+    const result = await client.query(sql, params);
+    if (expect === "failure") {
+      await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+      return { label, status: "failed", expected: "failure", observed: "success" };
+    }
+    if (expectZeroCount && Number(result.rows?.[0]?.count || 0) !== 0) {
+      await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+      return { label, status: "failed", expected: "zero_rows", observed: result.rows?.[0]?.count ?? null };
+    }
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+    return { label, status: "passed", expected: "success", observed: result.command || "success" };
+  } catch (error) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+    if (expect === "failure") {
+      return { label, status: "passed", expected: "failure", observed: error.code || error.message };
+    }
+    return { label, status: "failed", expected: "success", observed: error.code || error.message };
   }
 }
 
 async function writerRoleReadbackRows(client, { probeSetRole = true } = {}) {
+  await client.query("SET row_security = on");
   const session = (
     await rows(
       client,
       `SELECT current_user,
               session_user,
+              current_setting('row_security') AS row_security,
               current_setting('role', true) AS active_set_role,
               pg_has_role(current_user, $1, 'MEMBER') AS can_set_writer_role,
               COALESCE((SELECT rolcanlogin FROM pg_roles WHERE rolname=$1), false) AS writer_role_can_login,
               COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname=$1), false) AS writer_role_bypassrls,
               COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=session_user), false) AS session_user_is_superuser,
+              COALESCE((SELECT rolcreaterole FROM pg_roles WHERE rolname=session_user), false) AS session_user_createrole,
+              COALESCE((SELECT rolcreatedb FROM pg_roles WHERE rolname=session_user), false) AS session_user_createdb,
+              COALESCE((SELECT rolreplication FROM pg_roles WHERE rolname=session_user), false) AS session_user_replication,
+              COALESCE((SELECT rolinherit FROM pg_roles WHERE rolname=session_user), false) AS session_user_inherit,
               COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname=session_user), false) AS session_user_bypassrls`,
       [WRITER_ROLE],
     )
   )[0];
   let activeRoleAfterSetRole = null;
+  let activeRoleBypassRlsAfterSetRole = null;
+  let rowSecurityAfterSetRole = null;
   if (probeSetRole && session?.can_set_writer_role && !session.session_user_is_superuser && !session.session_user_bypassrls) {
     await client.query("BEGIN");
     try {
+      await client.query("SET LOCAL row_security = on");
       await setFoundationContext(client);
       await client.query(`SET LOCAL ROLE ${WRITER_ROLE}`);
-      activeRoleAfterSetRole = (await rows(client, "SELECT current_role"))[0]?.current_role || null;
+      const active = (
+        await rows(
+          client,
+          `SELECT current_role,
+                  current_setting('row_security') AS row_security,
+                  COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname=current_role), false) AS current_role_bypassrls`,
+        )
+      )[0];
+      activeRoleAfterSetRole = active?.current_role || null;
+      activeRoleBypassRlsAfterSetRole = active?.current_role_bypassrls ?? null;
+      rowSecurityAfterSetRole = active?.row_security || null;
       await client.query("ROLLBACK");
     } catch (error) {
       await client.query("ROLLBACK").catch(() => {});
       activeRoleAfterSetRole = `ERROR:${error.message}`;
+      activeRoleBypassRlsAfterSetRole = null;
+      rowSecurityAfterSetRole = null;
     }
   }
   return {
     ...session,
     active_role_after_set_role: activeRoleAfterSetRole,
+    active_role_bypassrls_after_set_role: activeRoleBypassRlsAfterSetRole,
+    row_security_after_set_role: rowSecurityAfterSetRole,
   };
 }
 
@@ -1201,8 +1471,12 @@ async function v1IsolationSnapshot(client) {
       output.push({ relation, exists: false, row_count: null });
       continue;
     }
-    const result = await rows(client, `SELECT count(*)::bigint AS count FROM ${relation}`);
-    output.push({ relation, exists: true, row_count: result[0].count });
+    try {
+      const result = await rows(client, `SELECT count(*)::bigint AS count FROM ${relation}`);
+      output.push({ relation, exists: true, access: "readable", row_count: result[0].count });
+    } catch (error) {
+      output.push({ relation, exists: true, access: "denied", row_count: null, error_code: error.code || "unknown" });
+    }
   }
   return output;
 }

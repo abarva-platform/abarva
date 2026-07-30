@@ -18,6 +18,8 @@ Follow-up repair: the deployed application image does not include Git metadata, 
 
 Follow-up repair 2: private operator log retrieval is limited to the execution log tail, so the executor now emits compact pass/fail diagnostics at the end of proof-bundle runs and emits proof bundles after the full JSON body. This keeps local JSON-only test output unchanged while making failed live runs auditable from ACA tail logs.
 
+Follow-up repair 3: the golden-slice DB executor now fails closed unless it runs through a non-BYPASSRLS login that explicitly assumes the isolated no-login writer role. The change adds a constrained reader role for independent verification, FORCE RLS assertions, managed-identity Postgres authentication support, and a governed identity bootstrap command for private operator use.
+
 ## Layer Impact
 
 Release lane: `client-data-lane` with `internal-admin` private-operator proof tooling only.
@@ -28,7 +30,7 @@ Layer 3: Writes isolated candidate, review and canonical object records under `f
 
 Layer 4: Writes isolated publication, non-active test baseline, projection, Cube parity, preview binding and aVa proof records. These are preview/test proof records only.
 
-Cross-cutting governance: Adds deterministic idempotency, transaction rollback, tenant/test namespace isolation, RLS INSERT write policies for a no-login golden-slice writer role, V1 isolation readback and proof-bundle output.
+Cross-cutting governance: Adds deterministic idempotency, transaction rollback, tenant/test namespace isolation, RLS INSERT write policies for a no-login golden-slice writer role, a no-login read-only verifier role, V1 isolation readback and proof-bundle output.
 
 ## Client Applicability
 
@@ -51,6 +53,10 @@ Cross-cutting governance: Adds deterministic idempotency, transaction rollback, 
 - Runtime image packaging for `fixtures/foundation-v2/golden-slice`.
 - Packaged-runtime-root test assertion for the no-`.git` container layout.
 - ACA-tail-safe compact diagnostics and proof-bundle emission ordering for golden-slice executor runs.
+- Identity-control migration enforcing constrained writer/reader role attributes and FORCE RLS across the isolated Foundation V2 tables.
+- Managed-identity Postgres connection option for private operator DB execution without logging or persisting database tokens.
+- Governed DB identity bootstrap command for mapping a dedicated lab identity to the constrained writer or reader execution role.
+- Verifier support for explicit read-only `SET ROLE foundation_v2_golden_slice_reader`.
 
 ## QA / Validation
 
@@ -91,10 +97,19 @@ Cross-cutting governance: Adds deterministic idempotency, transaction rollback, 
 - Proof-tail repair validation after live schema-readback proof extraction failed:
   - `npm run test:foundation-v2-golden-slice-db` - passed, including the `proof_tail_capturable` regression.
   - `npm run lint -- scripts/foundation-v2/execute-golden-slice-db.mjs scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs` - passed.
+- Identity-control validation before governed lab identity bootstrap:
+  - `node --check scripts/foundation-v2/execute-golden-slice-db.mjs` - passed.
+  - `node --check scripts/foundation-v2/verify-golden-slice-db.mjs` - passed.
+  - `node --check scripts/foundation-v2/bootstrap-db-identity.mjs` - passed.
+  - `npm run test:foundation-v2-migration` - passed.
+  - `npm run test:foundation-v2-migration:apply` - passed against a temporary local PostgreSQL cluster with all 21 tables under RLS and FORCE RLS.
+  - `npm run test:foundation-v2-package` - passed.
+  - `npm run test:foundation-v2-golden-slice` - passed.
+  - `npm run test:foundation-v2-golden-slice-db` - passed with separate local writer and reader logins, explicit `SET ROLE`, superuser fail-closed proof, wrong-tenant rejection, idempotency and tamper detection.
 
 ## Rollout Plan
 
-Merge to `main`, let the repo-owned Azure Container Apps deploy workflow build and deploy the digest-pinned image, then run the golden-slice schema readback, writer, and verifier through the private ACA operator job with `DATABASE_URL` supplied as a Key Vault secret reference.
+Merge to `main`, let the repo-owned Azure Container Apps deploy workflow build and deploy the digest-pinned image, apply the identity-control migration through the governed migration job, create or reuse the dedicated lab managed identities, bootstrap the database principals through the governed admin path, and then run schema readback, writer preflight/apply, and independent verifier through the private ACA operator job using managed-identity Postgres authentication.
 
 ## Deployment Authority
 
@@ -134,6 +149,9 @@ Application rollback is the standard ACA main rollback to the prior digest. The 
   - artifact acceptance readback `job-abarva-private-operator-eus-183nrkk`
 - First live golden-slice schema readback execution `job-abarva-private-operator-eus-h2g11if` failed closed before DB proof because container root discovery required `.git`; repair is scoped to packaged app root detection.
 - Second live golden-slice schema readback execution `job-abarva-private-operator-eus-vp5d9dr` reached private DB schema and policy readback but failed closed; proof extraction was blocked by ACA tail-only log capture. The second follow-up repair makes proof and compact failure diagnostics tail-capturable before the next live rerun.
+- Identity-control migration `20260730152000_foundation_v2_golden_slice_identity_controls.sql`
+- Identity-control migration SHA-256 `0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550`
+- Local identity-control replay proof from `npm run test:foundation-v2-golden-slice-db`: schema `FOUNDATION_V2_SCHEMA_READBACK_PASSED`, preflight `FOUNDATION_V2_GOLDEN_SLICE_PREFLIGHT_PASSED`, apply `FOUNDATION_V2_GOLDEN_SLICE_EXECUTOR_APPLIED`, verify `FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED`, idempotency `FOUNDATION_V2_GOLDEN_SLICE_ALREADY_APPLIED_EXACT_MATCH`.
 
 ## Known Gaps
 

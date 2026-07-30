@@ -68,6 +68,7 @@
     "foundation-v2:golden-slice:preflight": "node scripts/foundation-v2/execute-golden-slice-db.mjs --mode preflight --emit-proof-bundle",
     "foundation-v2:golden-slice:apply": "node scripts/foundation-v2/execute-golden-slice-db.mjs --mode apply --emit-proof-bundle",
     "foundation-v2:golden-slice:verify": "node scripts/foundation-v2/verify-golden-slice-db.mjs --mode verify --emit-proof-bundle",
+    "foundation-v2:db-identity:bootstrap": "node scripts/foundation-v2/bootstrap-db-identity.mjs --emit-proof-bundle",
     "audit:nexus-navigation": "node scripts/audit/nexus-navigation-contract.mjs",
     "release:deploy-authority:check": "node scripts/release-control/check-deploy-authority-policy.mjs",
     "deploy:aca-runtime-invariant": "node scripts/deploy/check-aca-runtime-invariant.mjs",
