@@ -1,0 +1,14 @@
+{
+  "contract_id": "foundation-v2-golden-slice-release-contract-v1",
+  "tenant_key": "skyharbor-air",
+  "foundation_release_alias": "airline-demo-new",
+  "source_release_id": "airline-demo-new-foundation-v2-golden-slice-v1",
+  "test_namespace": "foundation-v2-golden-slice-v1",
+  "isolation_scope": "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY",
+  "allowed_status": "FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED",
+  "full_reload_approved": false,
+  "offline_augmentation_approved": false,
+  "production_provider_cutover_approved": false,
+  "live_baseline_activation_approved": false,
+  "v1_mutation_approved": false
+}
