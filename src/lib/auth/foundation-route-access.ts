@@ -7,9 +7,13 @@ import {
 type MetadataRecord = Record<string, unknown>;
 
 export const FOUNDATION_KNOWLEDGE_ROUTE = "/knowledge-preview";
+export const FOUNDATION_HOME_KNOWLEDGE_ROUTE = "/home/knowledge";
 
-export function foundationKnowledgePath(tenantKey: FoundationTenantKey): string {
-  return `${FOUNDATION_KNOWLEDGE_ROUTE}?provider=http&tenant=${encodeURIComponent(tenantKey)}`;
+export function foundationKnowledgePath(
+  tenantKey: FoundationTenantKey,
+): string {
+  void tenantKey;
+  return FOUNDATION_HOME_KNOWLEDGE_ROUTE;
 }
 
 function metadataString(
@@ -25,6 +29,18 @@ function metadataBoolean(
   key: string,
 ): boolean {
   return metadata?.[key] === true;
+}
+
+function metadataStringArray(
+  metadata: MetadataRecord | null | undefined,
+  key: string,
+): string[] {
+  const value = metadata?.[key];
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is string =>
+      typeof item === "string" && item.trim().length > 0,
+  );
 }
 
 function foundationTenantKeyFromHistoricalAlias(
@@ -83,7 +99,8 @@ export function resolveFoundationTenantKeyFromSessionInput(input: {
     input.clientId,
     input.defaultClientId,
   ]) {
-    const foundationAlias = foundationTenantKeyFromHistoricalAlias(rawTenantKey);
+    const foundationAlias =
+      foundationTenantKeyFromHistoricalAlias(rawTenantKey);
     if (foundationAlias) return foundationAlias;
     const tenantKey = canonicalTenantKey(rawTenantKey ?? "");
     if (isFoundationTenantKey(tenantKey)) return tenantKey;
@@ -98,5 +115,29 @@ export function isFoundationRouteAllowed(pathname: string): boolean {
     pathname.startsWith("/api/knowledge/") ||
     pathname.startsWith("/api/health") ||
     pathname.startsWith("/responsible-ai/")
+  );
+}
+
+export function isFoundationRouteAllowedForMetadata(
+  pathname: string,
+  metadata: MetadataRecord | null | undefined,
+): boolean {
+  if (isFoundationRouteAllowed(pathname)) return true;
+
+  if (
+    pathname !== FOUNDATION_HOME_KNOWLEDGE_ROUTE &&
+    !pathname.startsWith(`${FOUNDATION_HOME_KNOWLEDGE_ROUTE}/`)
+  ) {
+    return false;
+  }
+
+  const tenantKey = resolveFoundationTenantKeyFromMetadata(metadata);
+  if (tenantKey !== "airline-demo-new") return false;
+
+  const allowedRoutes = metadataStringArray(metadata, "allowedRoutes");
+  const moduleAccess = metadataStringArray(metadata, "moduleAccess");
+  return (
+    allowedRoutes.includes(FOUNDATION_HOME_KNOWLEDGE_ROUTE) &&
+    moduleAccess.includes("knowledge")
   );
 }

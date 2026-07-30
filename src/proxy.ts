@@ -14,8 +14,9 @@ import {
   shouldStripUnauthorizedClientParam,
 } from "@/lib/auth/access-routing";
 import {
+  FOUNDATION_HOME_KNOWLEDGE_ROUTE,
   foundationKnowledgePath,
-  isFoundationRouteAllowed,
+  isFoundationRouteAllowedForMetadata,
   resolveFoundationTenantKeyFromMetadata,
   resolveFoundationTenantKeyFromSessionInput,
 } from "@/lib/auth/foundation-route-access";
@@ -266,6 +267,8 @@ interface ProxySessionMetadata extends Record<string, unknown> {
   proofLogin?: boolean;
   foundationTenantKey?: string;
   tenantKey?: string;
+  allowedRoutes?: string[];
+  moduleAccess?: string[];
 }
 
 interface ProxySessionIdentity {
@@ -300,6 +303,19 @@ function booleanField(
   return typeof field === "boolean" ? field : undefined;
 }
 
+function stringArrayField(
+  value: Record<string, unknown>,
+  key: keyof ProxySessionMetadata,
+): string[] | undefined {
+  const field = value[key];
+  if (!Array.isArray(field)) return undefined;
+  const strings = field.filter(
+    (item): item is string =>
+      typeof item === "string" && item.trim().length > 0,
+  );
+  return strings.length ? strings : undefined;
+}
+
 function normalizeProxyMetadata(value: unknown): ProxySessionMetadata {
   if (!isRecord(value)) return {};
   return {
@@ -310,6 +326,8 @@ function normalizeProxyMetadata(value: unknown): ProxySessionMetadata {
     proofLogin: booleanField(value, "proofLogin"),
     foundationTenantKey: stringField(value, "foundationTenantKey"),
     tenantKey: stringField(value, "tenantKey"),
+    allowedRoutes: stringArrayField(value, "allowedRoutes"),
+    moduleAccess: stringArrayField(value, "moduleAccess"),
   };
 }
 
@@ -346,8 +364,10 @@ function shouldFetchClerkUserForProxyIdentity(
     !identity.metadata.defaultClientId ||
     !identity.email ||
     (sessionLooksFoundationBound &&
-      !identity.metadata.foundationTenant &&
-      !identity.metadata.proofLogin)
+      (!identity.metadata.foundationTenant ||
+        !identity.metadata.proofLogin ||
+        !identity.metadata.allowedRoutes ||
+        !identity.metadata.moduleAccess))
   );
 }
 
@@ -366,7 +386,9 @@ export function readProxySessionIdentity(
     Boolean(clerkMetadata.foundationTenant) ||
     Boolean(clerkMetadata.proofLogin) ||
     Boolean(clerkMetadata.foundationTenantKey) ||
-    Boolean(clerkMetadata.tenantKey);
+    Boolean(clerkMetadata.tenantKey) ||
+    Boolean(clerkMetadata.allowedRoutes?.length) ||
+    Boolean(clerkMetadata.moduleAccess?.length);
 
   return {
     metadata: {
@@ -380,6 +402,9 @@ export function readProxySessionIdentity(
       foundationTenantKey:
         claimsMetadata.foundationTenantKey ?? clerkMetadata.foundationTenantKey,
       tenantKey: claimsMetadata.tenantKey ?? clerkMetadata.tenantKey,
+      allowedRoutes:
+        claimsMetadata.allowedRoutes ?? clerkMetadata.allowedRoutes,
+      moduleAccess: claimsMetadata.moduleAccess ?? clerkMetadata.moduleAccess,
     },
     email: emailFromClaims(sessionClaims) ?? emailFromClerkUser(clerkUser),
     source: hasClerkMetadata ? "clerk_user_fallback" : "session_claims",
@@ -411,10 +436,7 @@ async function resolveProxySessionIdentity(
 const clerkProtectedProxy = clerkMiddleware(
   async (auth, request: NextRequest) => {
     const { userId, sessionClaims } = await auth();
-    const identity = await resolveProxySessionIdentity(
-      sessionClaims,
-      userId,
-    );
+    const identity = await resolveProxySessionIdentity(sessionClaims, userId);
     const metadata = identity.metadata;
     const metadataRole = metadata.role ?? null;
     const email = identity.email;
@@ -586,11 +608,25 @@ const clerkProtectedProxy = clerkMiddleware(
 
     const foundationTenantKey =
       resolveFoundationTenantKeyFromMetadata(metadata);
+    const isHomeKnowledgeRoute =
+      request.nextUrl.pathname === FOUNDATION_HOME_KNOWLEDGE_ROUTE ||
+      request.nextUrl.pathname.startsWith(
+        `${FOUNDATION_HOME_KNOWLEDGE_ROUTE}/`,
+      );
+    if (
+      requiresAuth &&
+      userId &&
+      isHomeKnowledgeRoute &&
+      !isFoundationRouteAllowedForMetadata(request.nextUrl.pathname, metadata)
+    ) {
+      return createGenericNotFoundResponse();
+    }
+
     if (
       requiresAuth &&
       userId &&
       foundationTenantKey &&
-      !isFoundationRouteAllowed(request.nextUrl.pathname)
+      !isFoundationRouteAllowedForMetadata(request.nextUrl.pathname, metadata)
     ) {
       if (request.nextUrl.pathname.startsWith("/api/")) {
         return createGenericNotFoundResponse();
