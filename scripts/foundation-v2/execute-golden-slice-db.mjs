@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {
   DEFAULT_EXECUTION_ID,
+  FOUNDATION_RELEASE_ALIAS,
   IDENTITY_CONTROL_MIGRATION_NAME,
   ISOLATION_SCOPE,
   MIGRATION_NAME,
@@ -858,7 +859,8 @@ async function schemaReadback(client) {
     client,
     `SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls, rolinherit
        FROM pg_roles
-       WHERE rolname = 'foundation_v2_golden_slice_writer'`,
+       WHERE rolname = $1`,
+    [WRITER_ROLE],
   );
   const writerRoleReadback = await writerRoleReadbackRows(client);
   const migration = await migrationReadback(client, MIGRATION_NAME);
@@ -883,7 +885,7 @@ async function schemaReadback(client) {
       (policy) =>
         policy.policy_name === "foundation_v2_tenant_insert" &&
         policy.policy_command === "a" &&
-        (policy.policy_roles || []).includes("foundation_v2_golden_slice_writer") &&
+        (policy.policy_roles || []).includes(WRITER_ROLE) &&
         /app\.tenant_key/.test(policy.with_check_expression || "") &&
         /app\.foundation_v2_test_namespace/.test(policy.with_check_expression || ""),
     ).length,
@@ -891,13 +893,13 @@ async function schemaReadback(client) {
       (policy) =>
         policy.policy_name === "foundation_v2_tenant_insert" &&
         policy.policy_command === "a" &&
-        (policy.policy_roles || []).includes("foundation_v2_golden_slice_writer") &&
-        /tenant_key = 'skyharbor-air'/.test(policy.with_check_expression || "") &&
-        /test_namespace = 'foundation-v2-golden-slice-v1'/.test(policy.with_check_expression || "") &&
+        (policy.policy_roles || []).includes(WRITER_ROLE) &&
+        includesSqlLiteral(policy.with_check_expression, "tenant_key", TENANT_KEY) &&
+        includesSqlLiteral(policy.with_check_expression, "test_namespace", TEST_NAMESPACE) &&
         /app\.foundation_v2_source_release_id/.test(policy.with_check_expression || "") &&
         /app\.foundation_v2_release_alias/.test(policy.with_check_expression || "") &&
-        /airline-demo-new-foundation-v2-golden-slice-v1/.test(policy.with_check_expression || "") &&
-        /airline-demo-new/.test(policy.with_check_expression || ""),
+        (policy.with_check_expression || "").includes(SOURCE_RELEASE_ID) &&
+        (policy.with_check_expression || "").includes(FOUNDATION_RELEASE_ALIAS),
     ).length,
     writer_role_present: Boolean(writerRole),
     writer_role_can_login: Boolean(writerRole?.rolcanlogin),
@@ -1033,6 +1035,16 @@ async function existingExecutionReadback(client, plan) {
       variance.every((row) => Number(row.variance) === 0) &&
       persistedFingerprint.fingerprint === expectedFingerprint,
   };
+}
+
+function includesSqlLiteral(expression, columnName, expectedValue) {
+  const escapedColumnName = escapeRegex(columnName);
+  const escapedValue = escapeRegex(expectedValue);
+  return new RegExp(`${escapedColumnName}\\s*=\\s*'${escapedValue}'`).test(expression || "");
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function runWriterSecurityPreflight(client) {
@@ -1554,7 +1566,7 @@ async function setFoundationContext(client) {
   await q(client, "SELECT set_config('app.client_key', $1, true)", [TENANT_KEY]);
   await q(client, "SELECT set_config('app.foundation_v2_test_namespace', $1, true)", [TEST_NAMESPACE]);
   await q(client, "SELECT set_config('app.foundation_v2_source_release_id', $1, true)", [SOURCE_RELEASE_ID]);
-  await q(client, "SELECT set_config('app.foundation_v2_release_alias', $1, true)", ["airline-demo-new"]);
+  await q(client, "SELECT set_config('app.foundation_v2_release_alias', $1, true)", [FOUNDATION_RELEASE_ALIAS]);
 }
 
 function writeApplyProof(outDir, plan, manifest, varianceRows, layerTotals) {
