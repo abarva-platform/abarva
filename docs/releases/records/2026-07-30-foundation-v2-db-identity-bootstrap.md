@@ -34,6 +34,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - `scripts/foundation-v2/run-golden-slice-db-aad.mjs`
 - `scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs`
 - `package.json`
+- Follow-up repair: bootstrap now reads and enables the Azure PostgreSQL AAD extension in the target database before looking for `pgaadauth_create_principal`, and emits extension/function readback in failure proofs.
 
 ## QA / Validation
 
@@ -42,6 +43,9 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Pass: `npm run foundation-v2:db-identity:self-test`
 - Pass: `npm run test:foundation-v2-golden-slice-db`
 - Pass: `npm run test:foundation-v2-package`
+- Follow-up validation:
+  - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
+  - Pass: `npm run foundation-v2:db-identity:self-test`
 - Blocked: live DB identity gate remains blocked until dedicated non-bypass database principals are created and the private operator job is rebound for managed-identity PostgreSQL auth.
 
 Not run yet: live golden-slice database execution; this release only adds the bootstrap and managed-identity execution path needed before that run.

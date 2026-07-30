@@ -56,9 +56,11 @@ async function bootstrap(client, options) {
   assertIdentifier(options.targetRole, "target role");
   await client.query("BEGIN");
   try {
+    const extension = await ensureAadExtension(client);
     const functions = await aadFunctionReadback(client);
     let created = false;
     const existedBefore = await roleExists(client, options.roleName);
+    const defects = [];
     if (!existedBefore) {
       if (options.objectId && functions.some((fn) => fn.identity === "pgaadauth_create_principal_with_oid")) {
         await client.query("SELECT * FROM pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)", [
@@ -68,9 +70,23 @@ async function bootstrap(client, options) {
       } else if (functions.some((fn) => fn.identity === "pgaadauth_create_principal")) {
         await client.query("SELECT * FROM pgaadauth_create_principal($1, false, false)", [options.roleName]);
       } else {
-        throw new Error("pgaadauth_create_principal is not available in this database");
+        defects.push("pgaadauth_create_principal is not available in this database");
       }
       created = true;
+    }
+
+    if (defects.length > 0) {
+      await client.query("ROLLBACK");
+      return createProof(options, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_FAILED", {
+        created: false,
+        defects,
+        role: null,
+        target: await roleReadback(client, options.targetRole),
+        memberships: [],
+        aad_extension: extension,
+        aad_functions: functions,
+        aad_principals: [],
+      });
     }
 
     await client.query(
@@ -94,7 +110,6 @@ async function bootstrap(client, options) {
     const target = await roleReadback(client, options.targetRole);
     const memberships = await membershipReadback(client, options.roleName);
     const aadPrincipals = await aadPrincipalReadback(client, options.roleName);
-    const defects = [];
     if (!role) defects.push(`missing identity role ${options.roleName}`);
     if (role?.rolsuper || role?.rolcreatedb || role?.rolcreaterole || role?.rolreplication || role?.rolbypassrls || role?.rolinherit) {
       defects.push(`identity role ${options.roleName} has forbidden attributes`);
@@ -117,6 +132,7 @@ async function bootstrap(client, options) {
         role,
         target,
         memberships,
+        aad_extension: extension,
         aad_functions: functions,
         aad_principals: aadPrincipals,
       });
@@ -130,6 +146,7 @@ async function bootstrap(client, options) {
       role,
       target,
       memberships,
+      aad_extension: extension,
       aad_functions: functions,
       aad_principals: aadPrincipals,
     });
@@ -152,6 +169,38 @@ function createProof(options, status, extra) {
     token_logged: false,
     ...extra,
   };
+}
+
+async function ensureAadExtension(client) {
+  const before = await aadExtensionReadback(client);
+  const pgaad = before.find((extension) => extension.name === "pgaadauth");
+  const result = {
+    before,
+    attempted_create: false,
+    create_error: "",
+    after: before,
+  };
+  if (pgaad && !pgaad.installed_version) {
+    result.attempted_create = true;
+    try {
+      await client.query("CREATE EXTENSION IF NOT EXISTS pgaadauth");
+    } catch (error) {
+      result.create_error = error.message;
+    }
+    result.after = await aadExtensionReadback(client);
+  }
+  return result;
+}
+
+async function aadExtensionReadback(client) {
+  return (
+    await client.query(
+      `SELECT name, installed_version, default_version, comment
+         FROM pg_available_extensions
+        WHERE name = 'pgaadauth'
+        ORDER BY name`,
+    )
+  ).rows;
 }
 
 async function aadFunctionReadback(client) {
