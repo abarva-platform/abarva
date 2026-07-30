@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Preserves source-field lineage for accepted relationship records. Relationship rows can now carry the original evidence-backed source-row payload into canonical relationship publication, and the read-only reconciliation verifier can account for fields preserved in relationship payloads instead of reporting them as lost because they are not fact fields.
+Preserves and verifies source-field lineage for accepted relationship records. Relationship rows can now carry the original evidence-backed source-row payload into canonical relationship publication, and the read-only reconciliation verifier can account for fields preserved in relationship payloads or live evidence instead of reporting them as lost because they are not fact fields. The projection authority gate now compares the active core projection authority row against the current live projection table counts rather than an obsolete single stored hash.
 
 ## Layer Impact
 
@@ -37,6 +37,7 @@ Preserves source-field lineage for accepted relationship records. Relationship r
 - Pass: `node --check scripts/qa/airline-e2e-live-reconciliation-readback.mjs`
 - Pass: `node --check scripts/knowledge/processing/executor-framework.mjs`
 - Pass: `node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs`
+- Pass: local no-DB readback smoke for verifier syntax/manifest behavior.
 - Pending: CI, deploy, affected downstream rebuild, and VNet readback after merge.
 
 ## Rollout Plan

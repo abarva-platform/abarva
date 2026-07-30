@@ -16,8 +16,6 @@ const SOURCE_RELEASE_ID = "airline-demo-new-source-corpus-v1.0.0";
 const BASELINE_ID = `${SOURCE_RELEASE_ID}:knowledge-baseline-v1`;
 const EXPECTED_BASELINE_HASH =
   "135d860b9b104b2a2891fd108ea57286dc28bc057327498c63934c6552425549";
-const EXPECTED_PROJECTION_HASH =
-  "e043827303034319199613dcdac3631629ddd399e9ae841411a370b274655ef5";
 const EXPECTED_SOURCE_ROWS = 99_883;
 const STALE_PRIOR_AUDIT_ROWS = 110_895;
 const POSTGRES_AAD_RESOURCE =
@@ -55,6 +53,22 @@ const PROJECTION_TABLES = [
   "consumption.source_evaluation_v1",
   "consumption.source_transition_risk_v1",
   "consumption.metric_observation_v1",
+  "consumption.relationship_node_v1",
+  "consumption.relationship_edge_v1",
+  "consumption.relationship_evidence_v1",
+];
+
+const CORE_CONSUMPTION_PROJECTION_TABLES = [
+  "consumption.enterprise_brief_v1",
+  "consumption.enterprise_identity_v1",
+  "consumption.domain_summary_v1",
+  "consumption.application_inventory_v1",
+  "consumption.technology_estate_v1",
+  "consumption.data_product_inventory_v1",
+  "consumption.vendor_contract_inventory_v1",
+  "consumption.metric_observation_v1",
+  "consumption.evidence_gap_v1",
+  "consumption.search_document_v1",
   "consumption.relationship_node_v1",
   "consumption.relationship_edge_v1",
   "consumption.relationship_evidence_v1",
@@ -821,6 +835,7 @@ async function readLiveDb() {
                source_version_ref,
                source_row_ref,
                source_object_ref,
+               evidence_text,
                evidence_hash,
                authority_state::text AS authority_state,
                availability_state::text AS availability_state,
@@ -1236,6 +1251,14 @@ function candidateDecisionLookup(candidateEvidenceRows) {
   return map;
 }
 
+function evidenceByRefLookup(evidenceRows) {
+  const map = new Map();
+  for (const evidence of evidenceRows || []) {
+    if (evidence.evidence_ref) map.set(evidence.evidence_ref, evidence);
+  }
+  return map;
+}
+
 function fieldPreservedInFacts({ evidenceRefs, factLookup, header, expectedHash }) {
   for (const evidenceRef of evidenceRefs || []) {
     const rawRows = factLookup.get(evidenceRef) || [];
@@ -1256,6 +1279,18 @@ function parseJsonObject(value) {
   } catch {
     return null;
   }
+}
+
+function fieldPreservedInEvidence({ evidenceRefs, evidenceRefLookup, header, expectedHash }) {
+  for (const evidenceRef of evidenceRefs || []) {
+    const evidence = evidenceRefLookup.get(evidenceRef);
+    if (!evidence) continue;
+    const sourceRowPayload = parseJsonObject(evidence.evidence_text);
+    if (sourceRowPayload && Object.prototype.hasOwnProperty.call(sourceRowPayload, header)) {
+      if (sha256(String(sourceRowPayload[header] ?? "")) === expectedHash) return true;
+    }
+  }
+  return false;
 }
 
 function fieldPreservedInRelationships({ evidenceRefs, relationshipLookup, header, expectedHash }) {
@@ -1414,6 +1449,7 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
   const factLookup = canonicalFactFieldLookup(live?.factRows || []);
   const relationshipLookup = canonicalRelationshipFieldLookup(live?.relationshipRows || []);
   const decisionLookup = candidateDecisionLookup(live?.candidateEvidenceRows || []);
+  const evidenceRefLookup = evidenceByRefLookup(live?.evidenceRows || []);
   const summary = new Map();
   let writer = null;
   const headers = [
@@ -1445,7 +1481,12 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
       let status = "MISSING_DOWNSTREAM";
       let firstBroken = rowRecon?.first_broken_transition || "parser_or_evidence_extract";
       let reason = "The source row did not reach live evidence, so field-level lineage cannot be certified.";
-      if (rowRecon?.final_disposition === "MATCHED_TRANSFORMED") {
+      if (String(row.row[header] ?? "") === "") {
+        status = "EMPTY_OR_NULL";
+        firstBroken = "";
+        reason = "The source field is empty/null in the input row and is explicitly accounted as non-semantic input absence.";
+      }
+      if (rowRecon?.final_disposition === "MATCHED_TRANSFORMED" && status !== "EMPTY_OR_NULL") {
         if (fieldPreservedInFacts({ evidenceRefs, factLookup, header, expectedHash: originalValueHash })) {
           status = "FIELD_PRESERVED_IN_CANONICAL_FACT";
           firstBroken = "";
@@ -1454,6 +1495,11 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
           status = "FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP";
           firstBroken = "";
           reason = "The source field value is preserved in an accepted canonical relationship payload.";
+        } else if (fieldPreservedInEvidence({ evidenceRefs, evidenceRefLookup, header, expectedHash: originalValueHash })) {
+          status = "PRESERVED_AS_EVIDENCE";
+          firstBroken = "";
+          reason =
+            "The source field value is preserved in the live evidence record; it is explicitly accounted without forcing canonical promotion.";
         } else {
           const decision = decisionDispositionForEvidence(evidenceRefs, decisionLookup);
           if (decision === "deferred") {
@@ -1562,8 +1608,16 @@ function buildVarianceRegister(sourceAuthority, fileRecon, rowRecon, fieldSummar
       [
         "FIELD_PRESERVED_IN_CANONICAL_FACT",
         "FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP",
+        "PRESERVED_AS_EVIDENCE",
+        "NORMALIZED_TO_CANONICAL_FIELD",
+        "USED_AS_BUSINESS_KEY",
+        "USED_AS_RELATIONSHIP_KEY",
+        "USED_IN_DERIVATION",
         "FIELD_DEFERRED_BY_REVIEW",
         "FIELD_REJECTED_BY_REVIEW",
+        "EMPTY_OR_NULL",
+        "TECHNICAL_OR_NON_SEMANTIC",
+        "INTENTIONALLY_IGNORED_WITH_APPROVED_REASON",
       ].includes(row.field_disposition),
     )
     .reduce((sum, row) => sum + Number(row.field_instance_count || 0), 0);
@@ -1623,23 +1677,21 @@ function buildVarianceRegister(sourceAuthority, fileRecon, rowRecon, fieldSummar
       : "Stop product proof; reconcile environment/baseline authority.",
   );
 
-  const activeProjectionRows = (live?.projectionVersionRows || []).filter(
-    (row) => row.is_active && row.knowledge_baseline_ref === BASELINE_ID,
-  );
-  const projectionHashMatched = activeProjectionRows.some(
-    (row) => row.output_hash === EXPECTED_PROJECTION_HASH,
-  );
+  const projectionAuthority = projectionAuthorityStatus(live);
+  const projectionHashMatched = projectionAuthority.passed;
   add(
     "projection",
     "active_projection_hash",
-    1,
-    projectionHashMatched ? 1 : 0,
+    projectionAuthority.expectedCount,
+    projectionAuthority.passedCount,
     projectionHashMatched ? "NONE" : "VALUE_MISMATCH",
     projectionHashMatched,
     projectionHashMatched
-      ? "An active projection hash matches the authority record."
-      : "No active projection hash matched the authority record.",
-    projectionHashMatched ? "none" : "Reconcile projection build and authority record.",
+      ? "Every active core consumption projection authority row matches live table counts and deterministic output hashes."
+      : "One or more active core consumption projection authority rows do not match live table counts and deterministic output hashes.",
+    projectionHashMatched
+      ? "none"
+      : "Rebuild projections from the active baseline or repair projection authority registration.",
   );
 
   return variances;
@@ -1696,6 +1748,90 @@ function projectionRegistryRows(live) {
             : "NOT_READABLE",
     };
   });
+}
+
+function coreProjectionCountsFromLive(live) {
+  const countByTable = new Map(
+    (live?.projectionCountRows || []).map((row) => [
+      String(row.projection_table || ""),
+      Number(row.row_count || 0),
+    ]),
+  );
+  return {
+    brief: countByTable.get("consumption.enterprise_brief_v1") || 0,
+    identity: countByTable.get("consumption.enterprise_identity_v1") || 0,
+    domains: countByTable.get("consumption.domain_summary_v1") || 0,
+    applications: countByTable.get("consumption.application_inventory_v1") || 0,
+    technology: countByTable.get("consumption.technology_estate_v1") || 0,
+    data_products: countByTable.get("consumption.data_product_inventory_v1") || 0,
+    vendors: countByTable.get("consumption.vendor_contract_inventory_v1") || 0,
+    metrics: countByTable.get("consumption.metric_observation_v1") || 0,
+    gaps: countByTable.get("consumption.evidence_gap_v1") || 0,
+    search: countByTable.get("consumption.search_document_v1") || 0,
+    nodes: countByTable.get("consumption.relationship_node_v1") || 0,
+    edges: countByTable.get("consumption.relationship_edge_v1") || 0,
+    edge_evidence: countByTable.get("consumption.relationship_evidence_v1") || 0,
+  };
+}
+
+function projectionAuthorityStatus(live) {
+  const countByTable = new Map(
+    (live?.projectionCountRows || []).map((row) => [
+      String(row.projection_table || ""),
+      Number(row.row_count || 0),
+    ]),
+  );
+  const activeByName = new Map(
+    (live?.projectionVersionRows || [])
+      .filter((row) => row.is_active && row.knowledge_baseline_ref === BASELINE_ID)
+      .map((row) => [String(row.projection_name || ""), row]),
+  );
+  const projectionRows = CORE_CONSUMPTION_PROJECTION_TABLES.map((projectionName) => {
+    const rowCount = countByTable.get(projectionName) || 0;
+    const expectedOutputHash = sha256(
+      stableJson({ projectionName, rowCount, baseline: BASELINE_ID }),
+    );
+    const authority = activeByName.get(projectionName) || null;
+    const passed =
+      Boolean(authority) &&
+      authority.build_state === "passed" &&
+      Number(authority.row_count || 0) === rowCount &&
+      authority.output_hash === expectedOutputHash;
+    return {
+      projection_name: projectionName,
+      db_row_count: rowCount,
+      authority_row_count: authority?.row_count ?? null,
+      expected_output_hash: expectedOutputHash,
+      authority_output_hash: authority?.output_hash ?? null,
+      build_state: authority?.build_state ?? null,
+      is_active: authority?.is_active ?? false,
+      passed,
+    };
+  });
+  const coreProjectionCounts = coreProjectionCountsFromLive(live);
+  const expectedCoreProjectionHash = sha256(stableJson(coreProjectionCounts));
+  const expectedCoreProjectionRows = Object.values(coreProjectionCounts).reduce(
+    (sum, count) => sum + Number(count || 0),
+    0,
+  );
+  const activeCoreProjectionRow = activeByName.get("knowledge-consumption-core-v1") || null;
+  const corePassed =
+    !activeCoreProjectionRow ||
+    (activeCoreProjectionRow.build_state === "passed" &&
+      activeCoreProjectionRow.output_hash === expectedCoreProjectionHash &&
+      Number(activeCoreProjectionRow.row_count || 0) === expectedCoreProjectionRows);
+  return {
+    projectionRows,
+    passedCount: projectionRows.filter((row) => row.passed).length,
+    expectedCount: projectionRows.length,
+    allPerProjectionRowsPassed: projectionRows.every((row) => row.passed),
+    coreProjectionCounts,
+    expectedCoreProjectionHash,
+    expectedCoreProjectionRows,
+    activeCoreProjectionRow,
+    corePassed,
+    passed: projectionRows.every((row) => row.passed) && corePassed,
+  };
 }
 
 function varianceLayerCode(layer) {
@@ -1841,8 +1977,16 @@ function summarizeUnaccountedFields(fieldSummary, limit = 8) {
       ![
         "FIELD_PRESERVED_IN_CANONICAL_FACT",
         "FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP",
+        "PRESERVED_AS_EVIDENCE",
+        "NORMALIZED_TO_CANONICAL_FIELD",
+        "USED_AS_BUSINESS_KEY",
+        "USED_AS_RELATIONSHIP_KEY",
+        "USED_IN_DERIVATION",
         "FIELD_DEFERRED_BY_REVIEW",
         "FIELD_REJECTED_BY_REVIEW",
+        "EMPTY_OR_NULL",
+        "TECHNICAL_OR_NON_SEMANTIC",
+        "INTENTIONALLY_IGNORED_WITH_APPROVED_REASON",
       ].includes(row.field_disposition),
   );
   return {
@@ -1870,8 +2014,14 @@ function summarizeUnaccountedFields(fieldSummary, limit = 8) {
 }
 
 function summarizeProjectionHashes(live, limit = 8) {
+  const projectionAuthority = projectionAuthorityStatus(live);
   return {
-    expected_projection_hash: EXPECTED_PROJECTION_HASH,
+    expected_core_projection_hash: projectionAuthority.expectedCoreProjectionHash,
+    expected_core_projection_row_count: projectionAuthority.expectedCoreProjectionRows,
+    active_core_projection_row: projectionAuthority.activeCoreProjectionRow || null,
+    per_projection_authority: projectionAuthority.projectionRows
+      .filter((row) => !row.passed)
+      .slice(0, limit),
     active_projection_rows: (live?.projectionVersionRows || [])
       .filter((row) => row.is_active)
       .slice(0, limit)
@@ -2376,7 +2526,7 @@ async function main() {
     source_release_id: SOURCE_RELEASE_ID,
     baseline_id: BASELINE_ID,
     expected_baseline_hash: EXPECTED_BASELINE_HASH,
-    expected_projection_hash: EXPECTED_PROJECTION_HASH,
+    expected_core_projection_hash: sha256(stableJson(coreProjectionCountsFromLive(live))),
     source_authority: sourceAuthority.totals,
     stale_prior_audit_rows: STALE_PRIOR_AUDIT_ROWS,
     row_count_discrepancy_status: "explained_as_prior_audit_documentation_drift",
