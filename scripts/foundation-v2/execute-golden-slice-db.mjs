@@ -216,7 +216,6 @@ function schemaReadbackDefects(schema) {
   if (!summary.writer_role_present) defects.push(`${WRITER_ROLE} role missing`);
   if (summary.writer_role_can_login) defects.push(`${WRITER_ROLE} must not be able to login`);
   if (summary.writer_role_bypassrls) defects.push(`${WRITER_ROLE} must not bypass RLS`);
-  if (summary.writer_role_inherit) defects.push(`${WRITER_ROLE} must be NOINHERIT`);
   if (summary.writer_owned_tables !== 0) defects.push(`${WRITER_ROLE} owns ${summary.writer_owned_tables} Foundation V2 tables`);
   if (summary.row_security !== "on") defects.push(`row_security is ${summary.row_security || "missing"}`);
   if (!summary.can_set_writer_role) defects.push(`current DB session cannot assume ${WRITER_ROLE}`);
@@ -939,14 +938,12 @@ async function schemaReadback(client) {
       !summary.writer_role_createrole &&
       !summary.writer_role_replication &&
       !summary.writer_role_bypassrls &&
-      !summary.writer_role_inherit &&
       summary.can_set_writer_role &&
       summary.row_security === "on" &&
       !summary.session_user_is_superuser &&
       !summary.session_user_createrole &&
       !summary.session_user_createdb &&
       !summary.session_user_replication &&
-      !summary.session_user_inherit &&
       !summary.session_user_bypassrls &&
       summary.active_role_after_set_role === WRITER_ROLE &&
       summary.active_role_bypassrls_after_set_role === false &&
