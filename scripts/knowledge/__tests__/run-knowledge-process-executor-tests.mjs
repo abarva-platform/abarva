@@ -254,6 +254,8 @@ await test("live reconciliation readback traces source rows and fields through g
   assert.ok(source.includes("record.source_basis !== \"restricted_evaluator\""), "readback must exclude evaluator-only files");
   assert.ok(source.includes("record.parser_contract_ref"), "readback must require parser-bound sources");
   assert.ok(source.includes("sourceRecord?.source_ref"), "row lineage must include source_ref-backed evidence identities");
+  assert.ok(source.includes("sourceRecord?.live_source_ref"), "row lineage must include live source refs from file reconciliation rows");
+  assert.ok(source.includes("sourceRecord?.live_source_version_ref"), "row lineage must include live source version refs from file reconciliation rows");
   assert.ok(source.includes("`${prefix}:row:${rowNumber}`"), "row lineage must include canonical source_ref:row:n evidence keys");
   assert.ok(source.includes("FIELD_PRESERVED_IN_CANONICAL_FACT"), "field reconciliation must account for accepted raw_row fact preservation");
   assert.ok(source.includes("FIELD_DEFERRED_BY_REVIEW"), "field reconciliation must distinguish deferred review decisions from lost data");
