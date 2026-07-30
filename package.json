@@ -49,6 +49,7 @@
     "db:assert-azure-target": "node scripts/data-plane/assert-azure-db-target.mjs",
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
+    "knowledge:hcdn-job-runner": "node scripts/knowledge/hcdn-job-runner.mjs",
     "test:hcdn-job-runner": "node scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs",
     "test:foundation-pipeline-preflight": "node scripts/knowledge/__tests__/run-foundation-pipeline-preflight-tests.mjs",
     "generate:hcdn-security-plan": "node scripts/knowledge/build-phase2b3c-security-plan.mjs",
