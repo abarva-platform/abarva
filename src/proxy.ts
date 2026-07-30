@@ -347,9 +347,19 @@ function emailFromClerkUser(user: ClerkUserIdentityLike | null): string | null {
   return first ?? null;
 }
 
-function shouldFetchClerkUserForProxyIdentity(
+export function shouldFetchClerkUserForProxyIdentity(
   identity: ProxySessionIdentity,
+  pathname: string | null = null,
 ): boolean {
+  if (
+    pathname &&
+    (pathname === FOUNDATION_HOME_KNOWLEDGE_ROUTE ||
+      pathname.startsWith(`${FOUNDATION_HOME_KNOWLEDGE_ROUTE}/`)) &&
+    !isFoundationRouteAllowedForMetadata(pathname, identity.metadata)
+  ) {
+    return true;
+  }
+
   const sessionLooksFoundationBound = Boolean(
     resolveFoundationTenantKeyFromSessionInput({
       foundationTenantKey: identity.metadata.foundationTenantKey,
@@ -414,9 +424,10 @@ export function readProxySessionIdentity(
 async function resolveProxySessionIdentity(
   sessionClaims: unknown,
   userId: string | null,
+  pathname: string | null = null,
 ): Promise<ProxySessionIdentity> {
   const identity = readProxySessionIdentity(sessionClaims);
-  if (!userId || !shouldFetchClerkUserForProxyIdentity(identity)) {
+  if (!userId || !shouldFetchClerkUserForProxyIdentity(identity, pathname)) {
     return identity;
   }
 
@@ -436,7 +447,11 @@ async function resolveProxySessionIdentity(
 const clerkProtectedProxy = clerkMiddleware(
   async (auth, request: NextRequest) => {
     const { userId, sessionClaims } = await auth();
-    const identity = await resolveProxySessionIdentity(sessionClaims, userId);
+    const identity = await resolveProxySessionIdentity(
+      sessionClaims,
+      userId,
+      request.nextUrl.pathname,
+    );
     const metadata = identity.metadata;
     const metadataRole = metadata.role ?? null;
     const email = identity.email;

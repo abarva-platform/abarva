@@ -1,4 +1,7 @@
-import { readProxySessionIdentity } from "@/proxy";
+import {
+  readProxySessionIdentity,
+  shouldFetchClerkUserForProxyIdentity,
+} from "@/proxy";
 
 describe("proxy session identity fallback", () => {
   it("uses Clerk user publicMetadata when the session token omits publicMetadata", () => {
@@ -88,5 +91,51 @@ describe("proxy session identity fallback", () => {
       "/knowledge-preview",
     ]);
     expect(identity.metadata.moduleAccess).toEqual(["knowledge"]);
+  });
+
+  it("refreshes Clerk metadata before denying the Home Knowledge proof route", () => {
+    const staleIdentity = readProxySessionIdentity({
+      emailAddress: "proof@example.com",
+      publicMetadata: {
+        role: "client",
+        clientId: "meridian",
+        defaultClientId: "meridian",
+      },
+    });
+
+    expect(
+      shouldFetchClerkUserForProxyIdentity(staleIdentity, "/home/knowledge"),
+    ).toBe(true);
+    expect(shouldFetchClerkUserForProxyIdentity(staleIdentity, "/home")).toBe(
+      false,
+    );
+
+    const refreshedIdentity = readProxySessionIdentity(
+      {
+        emailAddress: "proof@example.com",
+        publicMetadata: {
+          role: "client",
+          clientId: "airline-demo-new",
+          defaultClientId: "airline-demo-new",
+        },
+      },
+      {
+        publicMetadata: {
+          foundationTenant: true,
+          proofLogin: true,
+          foundationTenantKey: "airline-demo-new",
+          tenantKey: "airline-demo-new",
+          allowedRoutes: ["/home/knowledge"],
+          moduleAccess: ["knowledge"],
+        },
+      },
+    );
+
+    expect(
+      shouldFetchClerkUserForProxyIdentity(
+        refreshedIdentity,
+        "/home/knowledge",
+      ),
+    ).toBe(false);
   });
 });
