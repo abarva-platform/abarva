@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 import {
   DEFAULT_EXECUTION_ID,
-  EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
-  EXPECTED_MIGRATION_SHA256,
-  EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
   IDENTITY_CONTROL_MIGRATION_NAME,
   ISOLATION_SCOPE,
   MIGRATION_NAME,
@@ -18,8 +15,10 @@ import {
   emitProofBundle,
   expectedPersistenceFingerprint,
   expectedTransitionResults,
+  expectedMigrationLedgerReadback,
   GATE_RESULT_ORDER_SQL,
   foundationPostgresClientOptions,
+  migrationLedgerName,
   parseArgs,
   proofRef,
   readFixtureSet,
@@ -226,15 +225,15 @@ function schemaReadbackDefects(schema) {
     defects.push(`SET ROLE readback was ${summary.active_role_after_set_role || "missing"}`);
   }
   if (!schema.migration?.present) defects.push(`missing migration ${MIGRATION_NAME}`);
-  if (schema.migration?.sha256 !== EXPECTED_MIGRATION_SHA256) {
+  if (schema.migration?.sha256 !== expectedMigrationLedgerReadback(MIGRATION_NAME).ledger_sha256) {
     defects.push(`migration sha mismatch ${schema.migration?.sha256 || "missing"}`);
   }
   if (!schema.write_policy_migration?.present) defects.push(`missing migration ${WRITE_POLICY_MIGRATION_NAME}`);
-  if (schema.write_policy_migration?.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
+  if (schema.write_policy_migration?.sha256 !== expectedMigrationLedgerReadback(WRITE_POLICY_MIGRATION_NAME).ledger_sha256) {
     defects.push(`write policy migration sha mismatch ${schema.write_policy_migration?.sha256 || "missing"}`);
   }
   if (!schema.identity_control_migration?.present) defects.push(`missing migration ${IDENTITY_CONTROL_MIGRATION_NAME}`);
-  if (schema.identity_control_migration?.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+  if (schema.identity_control_migration?.sha256 !== expectedMigrationLedgerReadback(IDENTITY_CONTROL_MIGRATION_NAME).ledger_sha256) {
     defects.push(`identity-control migration sha mismatch ${schema.identity_control_migration?.sha256 || "missing"}`);
   }
   return defects;
@@ -266,15 +265,15 @@ async function preflight(client, plan) {
   }
   const defects = [];
   if (!migration.present) defects.push(`missing migration ${MIGRATION_NAME}`);
-  if (migration.sha256 !== EXPECTED_MIGRATION_SHA256) {
+  if (migration.sha256 !== expectedMigrationLedgerReadback(MIGRATION_NAME).ledger_sha256) {
     defects.push(`migration sha mismatch ${migration.sha256 || "missing"}`);
   }
   if (!writePolicyMigration.present) defects.push(`missing migration ${WRITE_POLICY_MIGRATION_NAME}`);
-  if (writePolicyMigration.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
+  if (writePolicyMigration.sha256 !== expectedMigrationLedgerReadback(WRITE_POLICY_MIGRATION_NAME).ledger_sha256) {
     defects.push(`write policy migration sha mismatch ${writePolicyMigration.sha256 || "missing"}`);
   }
   if (!identityControlMigration.present) defects.push(`missing migration ${IDENTITY_CONTROL_MIGRATION_NAME}`);
-  if (identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+  if (identityControlMigration.sha256 !== expectedMigrationLedgerReadback(IDENTITY_CONTROL_MIGRATION_NAME).ledger_sha256) {
     defects.push(`identity-control migration sha mismatch ${identityControlMigration.sha256 || "missing"}`);
   }
   if (schema.summary.table_count !== FOUNDATION_TABLES.length) {
@@ -304,15 +303,15 @@ async function applyGoldenSlice(client, plan, outDir) {
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`foundation-v2:${TENANT_KEY}:${TEST_NAMESPACE}`]);
     await setFoundationContext(client);
     const migration = await migrationReadback(client, MIGRATION_NAME);
-    if (!migration.present || migration.sha256 !== EXPECTED_MIGRATION_SHA256) {
+    if (!migration.present || migration.sha256 !== expectedMigrationLedgerReadback(MIGRATION_NAME).ledger_sha256) {
       throw new Error(`Fail closed: migration ${MIGRATION_NAME} not present with approved SHA`);
     }
     const writePolicyMigration = await migrationReadback(client, WRITE_POLICY_MIGRATION_NAME);
-    if (!writePolicyMigration.present || writePolicyMigration.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
+    if (!writePolicyMigration.present || writePolicyMigration.sha256 !== expectedMigrationLedgerReadback(WRITE_POLICY_MIGRATION_NAME).ledger_sha256) {
       throw new Error(`Fail closed: migration ${WRITE_POLICY_MIGRATION_NAME} not present with approved SHA`);
     }
     const identityControlMigration = await migrationReadback(client, IDENTITY_CONTROL_MIGRATION_NAME);
-    if (!identityControlMigration.present || identityControlMigration.sha256 !== EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256) {
+    if (!identityControlMigration.present || identityControlMigration.sha256 !== expectedMigrationLedgerReadback(IDENTITY_CONTROL_MIGRATION_NAME).ledger_sha256) {
       throw new Error(`Fail closed: migration ${IDENTITY_CONTROL_MIGRATION_NAME} not present with approved SHA`);
     }
     const v1Before = await v1IsolationSnapshot(client, { inTransaction: true });
@@ -950,11 +949,11 @@ async function schemaReadback(client) {
       summary.active_role_bypassrls_after_set_role === false &&
       summary.row_security_after_set_role === "on" &&
       migration.present &&
-      migration.sha256 === EXPECTED_MIGRATION_SHA256 &&
+      migration.sha256 === expectedMigrationLedgerReadback(MIGRATION_NAME).ledger_sha256 &&
       writePolicyMigration.present &&
-      writePolicyMigration.sha256 === EXPECTED_WRITE_POLICY_MIGRATION_SHA256 &&
+      writePolicyMigration.sha256 === expectedMigrationLedgerReadback(WRITE_POLICY_MIGRATION_NAME).ledger_sha256 &&
       identityControlMigration.present &&
-      identityControlMigration.sha256 === EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256
+      identityControlMigration.sha256 === expectedMigrationLedgerReadback(IDENTITY_CONTROL_MIGRATION_NAME).ledger_sha256
         ? "FOUNDATION_V2_SCHEMA_READBACK_PASSED"
         : "FOUNDATION_V2_SCHEMA_READBACK_FAILED",
     generated_at: new Date().toISOString(),
@@ -974,16 +973,20 @@ async function schemaReadback(client) {
 }
 
 async function migrationReadback(client, migrationName) {
+  const ledger = expectedMigrationLedgerReadback(migrationName);
   const result = await rows(
     client,
     "SELECT name, sha256, applied_at FROM schema_migrations WHERE name=$1",
-    [migrationName],
+    [migrationLedgerName(migrationName)],
   );
   const row = result[0] || null;
   return {
     present: Boolean(row),
-    name: row?.name || migrationName,
+    name: migrationName,
+    ledger_name: row?.name || ledger.ledger_name,
     sha256: row?.sha256 || null,
+    expected_sha256: ledger.ledger_sha256,
+    source_sha256: ledger.source_sha256,
     applied_at: row?.applied_at || null,
   };
 }

@@ -415,6 +415,9 @@ export function buildFixturePlan(fixtureSet, fixtureSha256, executionId) {
 }
 
 export function createManifest(plan, status, extra = {}) {
+  const coreMigration = expectedMigrationLedgerReadback(MIGRATION_NAME);
+  const writePolicyMigration = expectedMigrationLedgerReadback(WRITE_POLICY_MIGRATION_NAME);
+  const identityControlMigration = expectedMigrationLedgerReadback(IDENTITY_CONTROL_MIGRATION_NAME);
   return {
     status,
     generated_at: new Date().toISOString(),
@@ -428,11 +431,14 @@ export function createManifest(plan, status, extra = {}) {
     execution_id: plan.execution_id,
     fixture_sha256: plan.fixture_sha256,
     migration_name: MIGRATION_NAME,
-    migration_sha256: EXPECTED_MIGRATION_SHA256,
+    migration_ledger_name: coreMigration.ledger_name,
+    migration_sha256: coreMigration.ledger_sha256,
     write_policy_migration_name: WRITE_POLICY_MIGRATION_NAME,
-    write_policy_migration_sha256: EXPECTED_WRITE_POLICY_MIGRATION_SHA256,
+    write_policy_migration_ledger_name: writePolicyMigration.ledger_name,
+    write_policy_migration_sha256: writePolicyMigration.ledger_sha256,
     identity_control_migration_name: IDENTITY_CONTROL_MIGRATION_NAME,
-    identity_control_migration_sha256: EXPECTED_IDENTITY_CONTROL_MIGRATION_SHA256,
+    identity_control_migration_ledger_name: identityControlMigration.ledger_name,
+    identity_control_migration_sha256: identityControlMigration.ledger_sha256,
     full_reload_approved: false,
     production_provider_cutover_approved: false,
     live_baseline_activation_approved: false,
@@ -459,6 +465,26 @@ export function writeCsv(file, headers, rows) {
 export function writeMarkdown(file, text) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, text.endsWith("\n") ? text : `${text}\n`);
+}
+
+export function migrationLedgerName(migrationName) {
+  return DATABASE_SCHEMA === "foundation_v2" ? migrationName : `${DATABASE_SCHEMA}:${migrationName}`;
+}
+
+export function expectedMigrationLedgerReadback(migrationName) {
+  const sourcePath = path.join(REPO_ROOT, "supabase/migrations", migrationName);
+  const sourceSql = fs.readFileSync(sourcePath, "utf8");
+  const ledgerSql = migrationLedgerSql(sourceSql);
+  return {
+    name: migrationName,
+    ledger_name: migrationLedgerName(migrationName),
+    source_sha256: sha256(sourceSql),
+    ledger_sha256: sha256(ledgerSql),
+  };
+}
+
+export function migrationLedgerSql(sourceSql) {
+  return DATABASE_SCHEMA === "foundation_v2" ? sourceSql : rewriteFoundationV2Sql(sourceSql);
 }
 
 export function proofRef(outDir, fileName) {
@@ -649,6 +675,11 @@ export function rewriteFoundationV2Sql(sql) {
   return String(sql)
     .replaceAll("foundation_v2.", `${quoteIdent(DATABASE_SCHEMA)}.`)
     .replaceAll("'foundation_v2'", quoteLiteral(DATABASE_SCHEMA))
+    .replace(
+      /\b(CREATE\s+SCHEMA\s+IF\s+NOT\s+EXISTS|COMMENT\s+ON\s+SCHEMA|GRANT\s+USAGE\s+ON\s+SCHEMA)\s+foundation_v2\b/gi,
+      `$1 ${quoteIdent(DATABASE_SCHEMA)}`,
+    )
+    .replace(/\bALL\s+TABLES\s+IN\s+SCHEMA\s+foundation_v2\b/gi, `ALL TABLES IN SCHEMA ${quoteIdent(DATABASE_SCHEMA)}`)
     .replaceAll("foundation_v2_golden_slice_writer", WRITER_ROLE)
     .replaceAll("foundation_v2_golden_slice_reader", READER_ROLE)
     .replaceAll("airline-demo-new-foundation-v2-golden-slice-v1", SOURCE_RELEASE_ID)

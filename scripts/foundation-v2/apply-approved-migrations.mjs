@@ -12,6 +12,9 @@ import {
   WRITE_POLICY_MIGRATION_NAME,
   databaseUrl,
   emitProofBundle,
+  expectedMigrationLedgerReadback,
+  migrationLedgerSql,
+  migrationLedgerName,
   postgresClientOptions,
   sha256,
   writeJson,
@@ -51,7 +54,7 @@ async function main(options) {
           `INSERT INTO schema_migrations(name, sha256, applied_at)
            VALUES ($1, $2, now())
            ON CONFLICT (name) DO UPDATE SET sha256 = EXCLUDED.sha256`,
-          [migration.name, migration.sha256],
+          [migration.ledger_name, migration.ledger_sha256],
         );
         applied.push(migration.name);
       }
@@ -99,12 +102,16 @@ function readApprovedMigrations() {
     const migrationPath = path.join(REPO_ROOT, "supabase/migrations", name);
     const sql = fs.readFileSync(migrationPath, "utf8");
     const actualSha256 = sha256(sql);
+    const ledgerSql = migrationLedgerSql(sql);
+    const ledger = expectedMigrationLedgerReadback(name);
     return {
       name,
+      ledger_name: migrationLedgerName(name),
       path: path.relative(REPO_ROOT, migrationPath),
       expected_sha256: expectedSha256,
       sha256: actualSha256,
-      sql,
+      ledger_sha256: ledger.ledger_sha256,
+      sql: ledgerSql,
     };
   });
 }
@@ -120,16 +127,18 @@ async function ensureMigrationLedger(client) {
 }
 
 async function migrationReadback(client, migrations) {
-  const names = migrations.map((migration) => migration.name);
+  const names = migrations.map((migration) => migration.ledger_name);
   const result = await client.query("SELECT name, sha256, applied_at FROM schema_migrations WHERE name = ANY($1)", [names]);
   return migrations.map((migration) => {
-    const row = result.rows.find((candidate) => candidate.name === migration.name);
+    const row = result.rows.find((candidate) => candidate.name === migration.ledger_name);
     return {
       name: migration.name,
+      ledger_name: migration.ledger_name,
       path: migration.path,
       present: Boolean(row),
       sha256: row?.sha256 || null,
-      expected_sha256: migration.expected_sha256,
+      expected_sha256: migration.ledger_sha256,
+      source_expected_sha256: migration.expected_sha256,
       file_sha256: migration.sha256,
       applied_at: row?.applied_at || null,
     };
@@ -142,8 +151,8 @@ function migrationDefects(migrations, readback) {
     if (migration.sha256 !== migration.expected_sha256) {
       defects.push(`approved migration file hash mismatch: ${migration.name}`);
     }
-    const row = readback.find((candidate) => candidate.name === migration.name);
-    if (row?.present && row.sha256 !== migration.expected_sha256) {
+    const row = readback.find((candidate) => candidate.ledger_name === migration.ledger_name);
+    if (row?.present && row.sha256 !== migration.ledger_sha256) {
       defects.push(`applied migration ledger hash mismatch: ${migration.name}`);
     }
   }
