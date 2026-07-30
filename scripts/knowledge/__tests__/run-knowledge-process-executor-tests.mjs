@@ -242,6 +242,21 @@ await test("projection build materializes analytics consumption tables from acce
   assert.ok(source.includes("WHERE tenant_key=$1 AND authority_state='accepted'"), "projection build must read accepted canonical entities only");
   assert.ok(source.includes("FROM metrics.metric_observation o"), "metric projection must read governed metric observations");
   assert.ok(source.includes("FROM governance.evidence_gap"), "gap projection must read governed evidence gaps");
+  assert.ok(source.includes("await this.promoteSourceEvidenceGaps(context);"), "projection rebuild must promote source-authored gaps without replaying review decisions");
+  assert.ok(source.includes("registerConsumptionProjectionVersions"), "projection build must register each consumption table as a governed projection");
+  assert.ok(source.includes("projectionName = `consumption.${projection}`"), "projection registry names must match consumption table names");
+  assert.ok(source.includes("CORE_CONSUMPTION_PROJECTIONS"), "projection registry must use the closed core projection list");
+});
+
+await test("live reconciliation readback traces source rows and fields through governed lineage keys", async () => {
+  const source = await readFile(new URL("../../qa/airline-e2e-live-reconciliation-readback.mjs", import.meta.url), "utf8");
+  assert.ok(source.includes("record.source_visibility === \"client_visible\""), "readback must exclude non-client-visible reference materials");
+  assert.ok(source.includes("record.source_basis !== \"restricted_evaluator\""), "readback must exclude evaluator-only files");
+  assert.ok(source.includes("record.parser_contract_ref"), "readback must require parser-bound sources");
+  assert.ok(source.includes("sourceRecord?.source_ref"), "row lineage must include source_ref-backed evidence identities");
+  assert.ok(source.includes("`${prefix}:row:${rowNumber}`"), "row lineage must include canonical source_ref:row:n evidence keys");
+  assert.ok(source.includes("FIELD_PRESERVED_IN_CANONICAL_FACT"), "field reconciliation must account for accepted raw_row fact preservation");
+  assert.ok(source.includes("FIELD_DEFERRED_BY_REVIEW"), "field reconciliation must distinguish deferred review decisions from lost data");
 });
 
 await test("custom handler must verify before commit", async () => {
