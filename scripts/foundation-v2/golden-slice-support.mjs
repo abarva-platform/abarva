@@ -600,10 +600,16 @@ function readTenantDeclaration() {
   };
 }
 
-function findRepoRoot(start) {
+export function findRepoRoot(start) {
   let cursor = start;
   while (true) {
-    if (fs.existsSync(path.join(cursor, "package.json")) && fs.existsSync(path.join(cursor, ".git"))) {
+    if (
+      fs.existsSync(path.join(cursor, "package.json")) &&
+      fs.existsSync(path.join(cursor, "fixtures/foundation-v2/golden-slice/fixture-matrix.json")) &&
+      fs.existsSync(path.join(cursor, "fixtures/foundation-v2/golden-slice/release-contract.json")) &&
+      fs.existsSync(path.join(cursor, "supabase/migrations", MIGRATION_NAME)) &&
+      fs.existsSync(path.join(cursor, "supabase/migrations", WRITE_POLICY_MIGRATION_NAME))
+    ) {
       return cursor;
     }
     const parent = path.dirname(cursor);
