@@ -954,6 +954,20 @@ async function readLiveDb() {
       );
     }
 
+    if (await relationExists(client, "knowledge.relationship_assertion")) {
+      live.relationshipRows = await query(client, `
+        SELECT relationship_ref,
+               relationship_type_ref,
+               current_target_state::text AS current_target_state,
+               authority_state::text AS authority_state,
+               evidence_refs,
+               relationship_payload
+          FROM knowledge.relationship_assertion
+         WHERE tenant_key=$1
+           AND authority_state='accepted'
+      `, [TENANT_KEY]);
+    }
+
     if (await relationExists(client, "publication.domain_publication")) {
       live.publicationRows = await query(client, `
         SELECT domain_publication_ref,
@@ -1197,6 +1211,18 @@ function canonicalFactFieldLookup(factRows) {
   return map;
 }
 
+function canonicalRelationshipFieldLookup(relationshipRows) {
+  const map = new Map();
+  for (const relationship of relationshipRows || []) {
+    if (relationship.authority_state !== "accepted") continue;
+    for (const evidenceRef of relationship.evidence_refs || []) {
+      if (!map.has(evidenceRef)) map.set(evidenceRef, []);
+      map.get(evidenceRef).push(relationship);
+    }
+  }
+  return map;
+}
+
 function candidateDecisionLookup(candidateEvidenceRows) {
   const map = new Map();
   for (const row of candidateEvidenceRows || []) {
@@ -1216,6 +1242,32 @@ function fieldPreservedInFacts({ evidenceRefs, factLookup, header, expectedHash 
     for (const rawRow of rawRows) {
       if (!Object.prototype.hasOwnProperty.call(rawRow, header)) continue;
       if (sha256(String(rawRow[header] ?? "")) === expectedHash) return true;
+    }
+  }
+  return false;
+}
+
+function parseJsonObject(value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function fieldPreservedInRelationships({ evidenceRefs, relationshipLookup, header, expectedHash }) {
+  for (const evidenceRef of evidenceRefs || []) {
+    const relationships = relationshipLookup.get(evidenceRef) || [];
+    for (const relationship of relationships) {
+      const payload = relationship.relationship_payload || {};
+      const evidenceTextByRef = payload.source_evidence_text_by_ref || {};
+      const sourceRowPayload = parseJsonObject(evidenceTextByRef[evidenceRef]);
+      if (sourceRowPayload && Object.prototype.hasOwnProperty.call(sourceRowPayload, header)) {
+        if (sha256(String(sourceRowPayload[header] ?? "")) === expectedHash) return true;
+      }
     }
   }
   return false;
@@ -1360,6 +1412,7 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
     ]),
   );
   const factLookup = canonicalFactFieldLookup(live?.factRows || []);
+  const relationshipLookup = canonicalRelationshipFieldLookup(live?.relationshipRows || []);
   const decisionLookup = candidateDecisionLookup(live?.candidateEvidenceRows || []);
   const summary = new Map();
   let writer = null;
@@ -1397,6 +1450,10 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
           status = "FIELD_PRESERVED_IN_CANONICAL_FACT";
           firstBroken = "";
           reason = "The source field value is preserved in an accepted canonical fact raw_row payload.";
+        } else if (fieldPreservedInRelationships({ evidenceRefs, relationshipLookup, header, expectedHash: originalValueHash })) {
+          status = "FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP";
+          firstBroken = "";
+          reason = "The source field value is preserved in an accepted canonical relationship payload.";
         } else {
           const decision = decisionDispositionForEvidence(evidenceRefs, decisionLookup);
           if (decision === "deferred") {
@@ -1504,6 +1561,7 @@ function buildVarianceRegister(sourceAuthority, fileRecon, rowRecon, fieldSummar
     .filter((row) =>
       [
         "FIELD_PRESERVED_IN_CANONICAL_FACT",
+        "FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP",
         "FIELD_DEFERRED_BY_REVIEW",
         "FIELD_REJECTED_BY_REVIEW",
       ].includes(row.field_disposition),
@@ -1520,8 +1578,8 @@ function buildVarianceRegister(sourceAuthority, fileRecon, rowRecon, fieldSummar
       : "MISSING_DOWNSTREAM",
     allFieldsAccounted,
     allFieldsAccounted
-      ? "Every source field is either preserved in an accepted canonical fact or explicitly accounted for by review disposition."
-      : "Some source fields are neither preserved in accepted canonical facts nor explicitly accounted for by review disposition.",
+      ? "Every source field is either preserved in an accepted canonical fact/relationship or explicitly accounted for by review disposition."
+      : "Some source fields are neither preserved in accepted canonical facts/relationships nor explicitly accounted for by review disposition.",
     allFieldsAccounted
       ? "none"
       : "Repair field-level canonical preservation or explicit field-disposition export before certification.",
@@ -1782,6 +1840,7 @@ function summarizeUnaccountedFields(fieldSummary, limit = 8) {
     (row) =>
       ![
         "FIELD_PRESERVED_IN_CANONICAL_FACT",
+        "FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP",
         "FIELD_DEFERRED_BY_REVIEW",
         "FIELD_REJECTED_BY_REVIEW",
       ].includes(row.field_disposition),
