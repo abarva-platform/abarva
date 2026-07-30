@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,7 @@ import { execFileSync } from "node:child_process";
 const testPath = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(testPath), "../../..");
 const scriptPath = path.join(repoRoot, "scripts/foundation-v2/validate-approved-package.mjs");
+const supportModulePath = path.join(repoRoot, "scripts/foundation-v2/golden-slice-support.mjs");
 const tempRoot = mkdtempSync(path.join(tmpdir(), "foundation-v2-package-test-"));
 const packageDir = path.join(tempRoot, "architecture-package");
 mkdirSync(packageDir, { recursive: true });
@@ -47,7 +48,49 @@ for (const run of runs) {
   }
 }
 
-console.log(JSON.stringify({ status: "PASS", runs: runs.map((run) => run.name), packageDir }, null, 2));
+const packagedRoot = path.join(tempRoot, "packaged-app");
+writePackagedRuntimeRoot(packagedRoot);
+const { findRepoRoot } = await import(`file://${supportModulePath}`);
+const resolvedPackagedRoot = findRepoRoot(path.join(packagedRoot, "scripts/foundation-v2"));
+if (resolvedPackagedRoot !== packagedRoot) {
+  throw new Error(`packaged-runtime-root resolved ${resolvedPackagedRoot}, expected ${packagedRoot}`);
+}
+
+const dockerfile = readFileSync(path.join(repoRoot, "Dockerfile"), "utf8");
+if (!dockerfile.includes("/app/fixtures/foundation-v2/golden-slice ./fixtures/foundation-v2/golden-slice")) {
+  throw new Error("Dockerfile does not copy the approved Foundation V2 golden-slice fixture directory into runtime");
+}
+
+console.log(
+  JSON.stringify(
+    { status: "PASS", runs: [...runs.map((run) => run.name), "packaged-runtime-root"], packageDir },
+    null,
+    2,
+  ),
+);
+
+function writePackagedRuntimeRoot(dir) {
+  mkdirSync(path.join(dir, "scripts/foundation-v2"), { recursive: true });
+  mkdirSync(path.join(dir, "fixtures/foundation-v2/golden-slice"), { recursive: true });
+  mkdirSync(path.join(dir, "supabase/migrations"), { recursive: true });
+  writeFileSync(path.join(dir, "package.json"), "{}\n");
+  copyFileSync(
+    path.join(repoRoot, "fixtures/foundation-v2/golden-slice/fixture-matrix.json"),
+    path.join(dir, "fixtures/foundation-v2/golden-slice/fixture-matrix.json"),
+  );
+  copyFileSync(
+    path.join(repoRoot, "fixtures/foundation-v2/golden-slice/release-contract.json"),
+    path.join(dir, "fixtures/foundation-v2/golden-slice/release-contract.json"),
+  );
+  copyFileSync(
+    path.join(repoRoot, "supabase/migrations/20260730120000_foundation_v2_golden_slice_core.sql"),
+    path.join(dir, "supabase/migrations/20260730120000_foundation_v2_golden_slice_core.sql"),
+  );
+  copyFileSync(
+    path.join(repoRoot, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
+    path.join(dir, "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql"),
+  );
+}
 
 function writeMiniPackage(dir) {
   writeFileSync(path.join(dir, "FOUNDATION_V1_LESSONS_LEARNED.md"), "# Lessons\n");
