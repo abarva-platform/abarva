@@ -37,6 +37,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up repair: bootstrap now reads and enables the Azure PostgreSQL AAD extension in the target database before looking for `pgaadauth_create_principal`, and emits extension/function readback in failure proofs.
 - Follow-up repair: managed-identity token binding now uses the Azure Container Apps job endpoint/header contract before falling back to VM-style IMDS, so private operator jobs can request PostgreSQL Entra tokens from their assigned user identities.
 - Follow-up repair: AAD extension creation is scoped inside a savepoint, so an extension permission failure does not abort the whole bootstrap transaction before function and principal readback can be reported.
+- Follow-up repair: bootstrap grants `schema_migrations` only when that relation exists, allowing Entra principal creation to run on the server `postgres` database before target proof-database grants are applied.
 
 ## QA / Validation
 
@@ -53,6 +54,8 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up validation for AAD extension savepoint handling:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
   - Pass: `npm run test:foundation-v2-golden-slice-db` covers the ACA token binding markers.
+- Follow-up validation for conditional migration-ledger grants:
+  - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
 - Follow-up repair: optional AAD extension creation and principal readback now use savepoints so failed optional probes cannot abort the bootstrap transaction before structured proof is emitted.
 - Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 
