@@ -262,6 +262,11 @@ await test("live reconciliation readback traces source rows and fields through g
   assert.ok(source.includes("`${prefix}:row:${rowNumber}`"), "row lineage must include canonical source_ref:row:n evidence keys");
   assert.ok(source.includes("FIELD_PRESERVED_IN_CANONICAL_FACT"), "field reconciliation must account for accepted raw_row fact preservation");
   assert.ok(source.includes("FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP"), "field reconciliation must account for accepted relationship payload preservation");
+  assert.ok(source.includes("evidence_text"), "field reconciliation must read source evidence text for evidence-preserved fields");
+  assert.ok(source.includes("PRESERVED_AS_EVIDENCE"), "field reconciliation must account for fields preserved as live evidence without forcing canonical promotion");
+  assert.ok(source.includes("CORE_CONSUMPTION_PROJECTION_TABLES"), "projection authority readback must validate the closed set of core consumption projections");
+  assert.ok(source.includes("projectionAuthorityStatus"), "projection authority readback must validate each registered projection rather than a stale aggregate hash");
+  assert.ok(source.includes("stableJson({ projectionName, rowCount, baseline: BASELINE_ID })"), "projection authority readback must recompute per-projection hashes using the executor contract");
   assert.ok(source.includes("JSON.parse(value)"), "relationship field readback must parse evidence text safely in JS");
   assert.ok(source.includes("evidenceTextByRef[evidenceRef]"), "relationship field readback must only credit the matching evidence ref payload");
   assert.ok(source.includes("FIELD_DEFERRED_BY_REVIEW"), "field reconciliation must distinguish deferred review decisions from lost data");
