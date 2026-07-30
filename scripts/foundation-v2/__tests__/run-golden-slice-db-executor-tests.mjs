@@ -33,6 +33,7 @@ if (new Set(plan.rows.map((row) => row.canonical_object_id)).size !== 21) {
 for (const [script, mode] of [
   ["scripts/foundation-v2/execute-golden-slice-db.mjs", "self-test"],
   ["scripts/foundation-v2/verify-golden-slice-db.mjs", "self-test"],
+  ["scripts/foundation-v2/bootstrap-db-identity.mjs", "self-test"],
 ]) {
   const result = spawnSync(
     "node",

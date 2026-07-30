@@ -21,6 +21,15 @@ await main(args).catch((error) => {
 });
 
 async function main(options) {
+  if (options.mode === "self-test") {
+    const proof = selfTestProof();
+    writeJson(proofRef(options.outDir, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_SELF_TEST.json"), proof);
+    console.log(JSON.stringify(proof, null, 2));
+    if (options.emitProofBundle) emitProofBundle(options.outDir);
+    if (proof.status !== "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_SELF_TEST_PASSED") process.exit(1);
+    return;
+  }
+  if (options.mode !== "apply") throw new Error(`Unsupported mode ${options.mode}`);
   const url = databaseUrl();
   if (!url) throw new Error("DATABASE_URL or ABARVA_AZURE_DATABASE_URL is required for the governed bootstrap lane");
   const { Client } = await import("pg");
@@ -29,11 +38,13 @@ async function main(options) {
   try {
     const roleName = options.identityName || (options.kind === "reader" ? DEFAULT_READER_IDENTITY : DEFAULT_WRITER_IDENTITY);
     const targetRole = options.kind === "reader" ? READER_ROLE : WRITER_ROLE;
-    const proof = await bootstrap(client, { ...options, roleName, targetRole });
+    const proof = await bootstrap(client, { ...options, roleName, targetRole, databaseTarget: sanitizedDatabaseTarget(url) });
     writeJson(proofRef(options.outDir, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PROOF.json"), proof);
     writeMarkdown(proofRef(options.outDir, "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PROOF.md"), bootstrapMarkdown(proof));
+    printCompactResult(proof);
     console.log(JSON.stringify(proof, null, 2));
     if (options.emitProofBundle) emitProofBundle(options.outDir);
+    if (options.emitProofBundle) printCompactResult(proof);
     if (proof.status !== "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PASSED") process.exitCode = 1;
   } finally {
     await client.end();
@@ -49,10 +60,16 @@ async function bootstrap(client, options) {
     let created = false;
     const existedBefore = await roleExists(client, options.roleName);
     if (!existedBefore) {
-      if (!functions.some((fn) => fn.identity === "pgaadauth_create_principal")) {
+      if (options.objectId && functions.some((fn) => fn.identity === "pgaadauth_create_principal_with_oid")) {
+        await client.query("SELECT * FROM pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)", [
+          options.roleName,
+          options.objectId,
+        ]);
+      } else if (functions.some((fn) => fn.identity === "pgaadauth_create_principal")) {
+        await client.query("SELECT * FROM pgaadauth_create_principal($1, false, false)", [options.roleName]);
+      } else {
         throw new Error("pgaadauth_create_principal is not available in this database");
       }
-      await client.query("SELECT * FROM pgaadauth_create_principal($1, false, false)", [options.roleName]);
       created = true;
     }
 
@@ -126,6 +143,7 @@ function createProof(options, status, extra) {
   return {
     status,
     generated_at: new Date().toISOString(),
+    database_target: options.databaseTarget,
     identity_kind: options.kind,
     identity_role: options.roleName,
     expected_object_id: options.objectId || "",
@@ -189,6 +207,7 @@ async function membershipReadback(client, roleName) {
 
 function parseArgs(argv) {
   const parsed = {
+    mode: process.env.FOUNDATION_V2_DB_IDENTITY_MODE || "apply",
     kind: process.env.FOUNDATION_V2_DB_IDENTITY_KIND || "writer",
     identityName: process.env.FOUNDATION_V2_DB_IDENTITY_NAME || "",
     objectId: process.env.FOUNDATION_V2_DB_IDENTITY_OBJECT_ID || "",
@@ -202,15 +221,27 @@ function parseArgs(argv) {
       if (index >= argv.length) throw new Error(`${arg} requires a value`);
       return argv[index];
     };
-    if (arg === "--kind") parsed.kind = next();
+    if (arg === "--mode") parsed.mode = next();
+    else if (arg === "--kind") parsed.kind = next();
     else if (arg === "--identity-name") parsed.identityName = next();
     else if (arg === "--object-id") parsed.objectId = next();
     else if (arg === "--out-dir") parsed.outDir = next();
     else if (arg === "--emit-proof-bundle") parsed.emitProofBundle = true;
+    else if (arg === "--execution-id") next();
     else throw new Error(`Unknown argument ${arg}`);
   }
   if (!["writer", "reader"].includes(parsed.kind)) throw new Error("--kind must be writer or reader");
   return parsed;
+}
+
+function sanitizedDatabaseTarget(url) {
+  const parsed = new URL(url);
+  return {
+    host: parsed.hostname,
+    port: parsed.port || "5432",
+    database: parsed.pathname.replace(/^\//, ""),
+    sslmode: parsed.searchParams.get("sslmode") || "",
+  };
 }
 
 function assertIdentifier(value, label) {
@@ -236,4 +267,57 @@ Status: ${proof.status}
 
 This proof does not approve full reload, offline augmentation ingestion, live review-decision application, live canonical promotion, live domain publication, live baseline activation, production provider cutover, production Knowledge UI cutover, production aVa activation, or V1 deletion.
 `;
+}
+
+function printCompactResult(proof) {
+  console.log(
+    JSON.stringify({
+      foundation_v2_compact_result: "db-identity-bootstrap",
+      status: proof.status,
+      database_target: proof.database_target,
+      identity_kind: proof.identity_kind,
+      identity_role: proof.identity_role,
+      target_role: proof.target_role,
+      summary: {
+        created: proof.created,
+        existed_before: proof.existed_before,
+        defects: proof.defects,
+        forbidden_attributes: {
+          rolsuper: proof.role?.rolsuper,
+          rolcreatedb: proof.role?.rolcreatedb,
+          rolcreaterole: proof.role?.rolcreaterole,
+          rolreplication: proof.role?.rolreplication,
+          rolbypassrls: proof.role?.rolbypassrls,
+          rolinherit: proof.role?.rolinherit,
+        },
+        memberships: proof.memberships,
+      },
+    }),
+  );
+}
+
+function selfTestProof() {
+  const defects = [];
+  for (const invalid of ["bad role", "1bad", "bad;drop", "bad.role"]) {
+    try {
+      assertIdentifier(invalid, "identity role");
+      defects.push(`invalid identifier accepted: ${invalid}`);
+    } catch {}
+  }
+  try {
+    assertIdentifier("mi-foundation-v2-golden-slice-writer-lab-001", "identity role");
+  } catch (error) {
+    defects.push(error.message);
+  }
+  const createWithOidSql = "SELECT * FROM pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)";
+  if (!createWithOidSql.includes("pgaadauth_create_principal_with_oid")) {
+    defects.push("object-id principal creation path missing");
+  }
+  return {
+    status:
+      defects.length === 0
+        ? "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_SELF_TEST_PASSED"
+        : "FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_SELF_TEST_FAILED",
+    defects,
+  };
 }
