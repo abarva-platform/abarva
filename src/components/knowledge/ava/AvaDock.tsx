@@ -23,10 +23,10 @@ import { AvaSearch } from "./AvaSearch";
 import type { AvaAnswer } from "@/lib/knowledge/consumption-contracts";
 
 const DOCK_SIZE: Record<string, string> = {
-  right: "w-[380px] border-l",
-  left: "w-[380px] border-r",
+  right: "max-h-[42vh] w-full border-t xl:max-h-none xl:w-[380px] xl:border-l xl:border-t-0",
+  left: "max-h-[42vh] w-full border-t xl:max-h-none xl:w-[380px] xl:border-r xl:border-t-0",
   bottom: "h-[42vh] w-full border-t",
-  float: "w-[380px] rounded-lg border shadow-2xl",
+  float: "max-h-[42vh] w-full border-t xl:w-[380px] xl:max-w-[380px] xl:rounded-lg xl:border xl:shadow-2xl",
 };
 
 export function AvaDock() {
@@ -102,21 +102,21 @@ export function AvaDock() {
 
   return (
     <aside
-      className={`flex flex-col overflow-y-auto bg-white ${DOCK_SIZE[dockPosition]} border-[rgba(10,10,11,0.12)] ${
+      className={`min-w-0 flex flex-col overflow-y-auto bg-white ${DOCK_SIZE[dockPosition]} border-[rgba(10,10,11,0.12)] ${
         dockPosition === "float"
-          ? "fixed bottom-5 right-5 z-30 max-h-[70vh]"
+          ? "shrink-0 xl:fixed xl:bottom-5 xl:right-5 xl:z-30 xl:max-h-[70vh]"
           : "shrink-0"
       }`}
       aria-label="aVa companion"
     >
-      <header className="flex items-center justify-between border-b border-[rgba(10,10,11,0.1)] px-4 py-3">
-        <div>
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(10,10,11,0.1)] px-4 py-3">
+        <div className="min-w-0">
           <p className="text-sm font-semibold text-[#0c1a3a]">aVa</p>
           <p className="text-xs text-[#888780]">
             Reads what you are looking at. Refuses rather than guesses.
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <DockPosButton
             pos="left"
             active={dockPosition === "left"}
@@ -256,6 +256,8 @@ function DockPosButton({
   return (
     <button
       type="button"
+      aria-label={`Dock aVa ${pos}`}
+      aria-pressed={active}
       title={`Dock ${pos}`}
       onClick={() => onClick(pos)}
       className={`h-6 w-6 rounded border text-[10px] ${

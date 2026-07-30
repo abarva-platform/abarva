@@ -33,25 +33,29 @@ export function KnowledgeShell() {
   const dockIsBottom = dockState !== "hidden" && dockPosition === "bottom";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf7f1]">
-      <header className="flex items-center justify-between bg-[#0c1a3a] px-6 py-3">
-        <div className="flex items-center gap-6">
+    <div className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-[#faf7f1]">
+      <header className="flex flex-wrap items-center justify-between gap-3 bg-[#0c1a3a] px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-6">
           <span className="text-sm font-semibold text-white">AbarVa</span>
           <ModuleSwitcher />
         </div>
-        <div className="text-xs text-white/60">{tenantKey}</div>
+        <div className="shrink-0 text-xs text-white/60">{tenantKey}</div>
       </header>
 
-      <div className="flex items-center justify-between gap-4 border-b border-[rgba(10,10,11,0.1)] bg-white px-6 py-2.5">
+      <div className="flex min-w-0 flex-col gap-2 border-b border-[rgba(10,10,11,0.1)] bg-white px-4 py-2.5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <LensPicker />
         <ModeTabs />
       </div>
 
       <ConditionBanner />
 
-      <div className={`flex flex-1 ${dockIsBottom ? "flex-col" : "flex-row"}`}>
+      <div
+        className={`flex min-w-0 flex-1 overflow-x-hidden ${
+          dockIsBottom ? "flex-col" : "flex-col xl:flex-row"
+        }`}
+      >
         <main
-          className={`min-w-0 flex-1 overflow-y-auto p-6 ${dockPosition === "left" && dockIsSide ? "order-2" : "order-1"}`}
+          className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 ${dockPosition === "left" && dockIsSide ? "xl:order-2" : "order-1"}`}
         >
           {mode === "brief" ? <BriefMode /> : null}
           {mode === "explore" ? <ExploreMode /> : null}
@@ -60,7 +64,7 @@ export function KnowledgeShell() {
         </main>
         <div
           className={
-            dockPosition === "left" && dockIsSide ? "order-1" : "order-2"
+            dockPosition === "left" && dockIsSide ? "order-2 xl:order-1" : "order-2"
           }
         >
           <AvaDock />
