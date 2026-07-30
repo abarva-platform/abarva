@@ -20,6 +20,8 @@ Follow-up repair 2: private operator log retrieval is limited to the execution l
 
 Follow-up repair 3: the golden-slice DB executor now fails closed unless it runs through a non-BYPASSRLS login that explicitly assumes the isolated no-login writer role. The change adds a constrained reader role for independent verification, FORCE RLS assertions, managed-identity Postgres authentication support, and a governed identity bootstrap command for private operator use.
 
+Follow-up repair 4: the live writer identity may be intentionally denied metadata access to legacy V1 schemas. V1 isolation probes now record denied V1 metadata access as proof data instead of aborting schema readback, and transaction-scoped probes use savepoints so denied metadata checks cannot poison the preflight/apply transaction. This preserves fail-closed Foundation V2 schema/RLS checks while avoiding any grant broadening on V1 schemas.
+
 ## Layer Impact
 
 Release lane: `client-data-lane` with `internal-admin` private-operator proof tooling only.
@@ -106,6 +108,9 @@ Cross-cutting governance: Adds deterministic idempotency, transaction rollback, 
   - `npm run test:foundation-v2-package` - passed.
   - `npm run test:foundation-v2-golden-slice` - passed.
   - `npm run test:foundation-v2-golden-slice-db` - passed with separate local writer and reader logins, explicit `SET ROLE`, superuser fail-closed proof, wrong-tenant rejection, idempotency and tamper detection.
+- V1 metadata-denial repair validation after live writer schema readback failed closed:
+  - `npm run lint -- scripts/foundation-v2/execute-golden-slice-db.mjs scripts/foundation-v2/verify-golden-slice-db.mjs scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs` - passed.
+  - `npm run test:foundation-v2-golden-slice-db` - passed with V1-shaped schemas/tables present but inaccessible to the Foundation V2 writer/reader replay roles.
 
 ## Rollout Plan
 
@@ -152,6 +157,11 @@ Application rollback is the standard ACA main rollback to the prior digest. The 
 - Identity-control migration `20260730152000_foundation_v2_golden_slice_identity_controls.sql`
 - Identity-control migration SHA-256 `0e839d8112cdb7049b2979c5259571cca686ddc6650082163e248bf99985f550`
 - Local identity-control replay proof from `npm run test:foundation-v2-golden-slice-db`: schema `FOUNDATION_V2_SCHEMA_READBACK_PASSED`, preflight `FOUNDATION_V2_GOLDEN_SLICE_PREFLIGHT_PASSED`, apply `FOUNDATION_V2_GOLDEN_SLICE_EXECUTOR_APPLIED`, verify `FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED`, idempotency `FOUNDATION_V2_GOLDEN_SLICE_ALREADY_APPLIED_EXACT_MATCH`.
+- Live writer target bootstrap repair proof: `job-abarva-private-operator-eus-b6nytyx`, proof `/tmp/foundation-v2-db-identity-writer-target-20260730T200814Z/proof/FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PROOF.json`, status `FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PASSED`.
+- Live reader bootstrap proof:
+  - principal `job-abarva-private-operator-eus-a3yzo3s`, proof `/tmp/foundation-v2-db-identity-reader-principal-20260730T201007Z/proof/FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PROOF.json`, status `FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PASSED`
+  - target `job-abarva-private-operator-eus-bm5ja6s`, proof `/tmp/foundation-v2-db-identity-reader-target-20260730T201222Z/proof/FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PROOF.json`, status `FOUNDATION_V2_DB_IDENTITY_BOOTSTRAP_PASSED`
+- First live writer schema readback after identity bootstrap: `job-abarva-private-operator-eus-dc1680b`, failed closed with `permission denied for schema source_registry`; repair 4 keeps the V1 denial as isolation evidence and prevents transaction aborts during V1 probes.
 
 ## Known Gaps
 

@@ -155,11 +155,28 @@ function runDbReplay() {
     ]);
     psql(workDir, port, database, [
       "-c",
-      "CREATE ROLE foundation_v2_local_operator LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_local_reader LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_plain_operator LOGIN NOINHERIT PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT foundation_v2_golden_slice_reader TO foundation_v2_local_reader; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator, foundation_v2_plain_operator",
+      [
+        "CREATE SCHEMA source_registry",
+        "CREATE TABLE source_registry.source_version(id int)",
+        "CREATE SCHEMA governance",
+        "CREATE TABLE governance.review_decision(id int)",
+        "CREATE SCHEMA knowledge",
+        "CREATE TABLE knowledge.entity(id int)",
+        "CREATE TABLE knowledge.fact_assertion(id int)",
+        "CREATE TABLE knowledge.relationship_assertion(id int)",
+        "CREATE SCHEMA publication",
+        "CREATE TABLE publication.domain_publication(id int)",
+        "CREATE TABLE publication.knowledge_baseline(id int)",
+        "CREATE TABLE publication.projection_version(id int)",
+        "CREATE SCHEMA consumption",
+        "CREATE TABLE consumption.enterprise_brief_v1(id int)",
+        "REVOKE ALL ON SCHEMA source_registry, governance, knowledge, publication, consumption FROM PUBLIC",
+        "REVOKE ALL ON ALL TABLES IN SCHEMA source_registry, governance, knowledge, publication, consumption FROM PUBLIC",
+      ].join("; "),
     ]);
     psql(workDir, port, database, [
       "-c",
-      "CREATE SCHEMA source_registry; CREATE TABLE source_registry.source_version(id text PRIMARY KEY); REVOKE ALL ON SCHEMA source_registry FROM PUBLIC; REVOKE ALL ON ALL TABLES IN SCHEMA source_registry FROM PUBLIC",
+      "CREATE ROLE foundation_v2_local_operator LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_local_reader LOGIN NOINHERIT PASSWORD 'local-only'; CREATE ROLE foundation_v2_plain_operator LOGIN NOINHERIT PASSWORD 'local-only'; GRANT foundation_v2_golden_slice_writer TO foundation_v2_local_operator; GRANT foundation_v2_golden_slice_reader TO foundation_v2_local_reader; GRANT SELECT ON schema_migrations TO foundation_v2_local_operator, foundation_v2_plain_operator",
     ]);
 
     const operatorUrl = `postgresql://foundation_v2_local_operator:local-only@localhost:${port}/${database}?host=${workDir}&sslmode=disable`;
