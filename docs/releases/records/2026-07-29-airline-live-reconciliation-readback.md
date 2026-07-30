@@ -79,22 +79,27 @@ runtime image.
   as stale prior-audit documentation drift.
 - `pass`: projection summaries tolerate projection tables without optional
   `content_hash` / `availability_state` columns.
-- `pending`: governed VNet read-only grant helper execution against the Airline
+- `pass`: governed VNet read-only grant helper execution against the Airline
   database.
-- `pending`: governed VNet database readback from live source-registry/blob
-  authority after the evaluator role can read the required schemas.
+- `pass`: governed VNet database readback reaches the live source-registry and
+  source Blob authority with the evaluator identity.
+- `pass`: proof bundle emission now writes the full field-level archive to a
+  durable Blob destination when configured, and emits only a small pointer
+  bundle through ACA logs. This prevents log-size / tar stdout failures during
+  full field-level reconciliation.
 - `not-run`: product certification; this verifier intentionally does not wire
   product surfaces.
 
 Live certification still requires governed VNet execution with tenant database
-configuration and proof bundle extraction.
+configuration and durable proof-bundle readback.
 
 ## Rollout Plan
 
 Merge to main and deploy through the normal Azure Container Apps main lane so
 the readback script exists in the digest-pinned runtime image. Then run it
 through the private ACA operator job with tenant-scoped read-only database
-configuration.
+configuration and `AIRLINE_E2E_PROOF_UPLOAD_CONTAINER` configured for the
+durable proof bundle.
 
 ## Deployment Authority
 
@@ -117,7 +122,8 @@ verifier is read-only.
 - PR diff
 - CI/release checks
 - Local source-ledger proof
-- Governed ACA operator proof bundle after deploy
+- Governed ACA operator proof pointer bundle after deploy
+- Durable full proof bundle in tenant-scoped Azure Blob storage after deploy
 
 ## Known Gaps
 
