@@ -122,6 +122,8 @@ COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets
+COPY --from=build --chown=node:node /app/clients/airline-demo-new/execution ./clients/airline-demo-new/execution
+COPY --from=build --chown=node:node /app/clients/airline-demo-new/19-template-instantiation-source-corpus ./clients/airline-demo-new/19-template-instantiation-source-corpus
 COPY --from=build --chown=node:node /app/clients/healthcare-demo-new/execution ./clients/healthcare-demo-new/execution
 COPY --from=build --chown=node:node /app/clients/healthcare-demo-new/19-template-instantiation-source-corpus ./clients/healthcare-demo-new/19-template-instantiation-source-corpus
 COPY --from=build --chown=node:node /app/fixtures/foundation-v2/golden-slice ./fixtures/foundation-v2/golden-slice
