@@ -41,6 +41,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up repair: when Azure exposes Microsoft Entra role mapping but not the `pgaadauth_create_principal*` helper functions, bootstrap can create the dedicated role and map it to the supplied Entra object ID with a `SECURITY LABEL FOR "pgaadauth"` fallback, then read the object-ID mapping back from `pg_shseclabel`.
 - Follow-up repair: bootstrap now has explicit `principal` and `target` scopes. The server-control database phase creates and reads the Entra principal only; the proof-database phase performs grants and validates role membership. Optional role hardening and public-schema revokes are savepoint-protected so a permission denial becomes structured proof instead of aborting the transaction.
 - Follow-up repair: migration dry-run/apply can now use the same managed-identity PostgreSQL AAD wrapper as bootstrap, allowing target schema presence to be checked without falling back to an admin database URL.
+- Follow-up repair: the Foundation V2 migration wrapper now runs only the three approved golden-slice migration files and emits a proof bundle, instead of invoking the broad historical migration runner.
 
 ## QA / Validation
 
@@ -69,6 +70,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
   - Pass: `npm run test:foundation-v2-golden-slice-db`
 - Follow-up validation for AAD migration wrapper:
   - Pass: `node --check scripts/foundation-v2/run-golden-slice-db-aad.mjs`
+  - Pass: `node --check scripts/foundation-v2/apply-approved-migrations.mjs`
   - Pass: `npm run test:foundation-v2-golden-slice-db`
 - Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 
