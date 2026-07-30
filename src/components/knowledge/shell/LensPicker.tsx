@@ -48,14 +48,14 @@ export function LensPicker() {
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="text-[#888780]">Business problem</span>
+    <label className="flex min-w-0 max-w-full items-center gap-2 text-sm">
+      <span className="shrink-0 text-[#888780]">Business problem</span>
       <select
         value={lensId}
         onChange={(e) =>
           setLensId(e.target.value as (typeof lenses)[number]["lensId"])
         }
-        className="rounded-md border border-[rgba(10,10,11,0.18)] bg-white px-2 py-1 text-[#2c2c2a]"
+        className="min-w-0 max-w-full rounded-md border border-[rgba(10,10,11,0.18)] bg-white px-2 py-1 text-[#2c2c2a]"
       >
         {lenses.map((lens) => (
           <option key={lens.lensId} value={lens.lensId}>
