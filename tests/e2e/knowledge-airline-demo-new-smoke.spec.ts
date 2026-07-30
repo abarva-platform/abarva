@@ -2,17 +2,23 @@
 //
 // Reuses the exact same sign-in harness as tests/e2e/primary-surfaces-smoke.spec.ts
 // (DemoCodeSignIn flow, synthetic Apex Retail CIO fixture — see that file's own
-// header comment). The Knowledge route at /home/knowledge is hardcoded to
-// tenantKey="airline-demo-new" regardless of which signed-in persona is used,
-// so any valid demo session is sufficient to prove the authenticated route
-// loads, hydrates, and navigates cleanly.
+// header comment). The Knowledge route at /home/knowledge is hardcoded to a
+// fixed page (regardless of which signed-in persona is used), so any valid
+// demo session is sufficient to prove the authenticated route loads,
+// hydrates, and navigates cleanly.
 //
-// This is a runtime/render smoke test, not a data-correctness test: the
-// GovernedKnowledgeProvider stub honestly withholds all data for
-// airline-demo-new today (0/62 binding-matrix rows are reconciled — see
-// reports/airline-knowledge-ui-binding-2026-07-29/), so every mode is
-// EXPECTED to render its safe empty/withheld state, never real numbers.
-// A test asserting real data would be testing the wrong thing right now.
+// This is a runtime/render smoke test, not a data-correctness test, but it is
+// no longer a "verify everything is honestly empty" test either. Since PR B
+// (reports/airline-knowledge-provider-reconciliation-2026-07-30/), the route
+// binds to the REAL KnowledgeUiViewModelAssembler over the REAL fixture
+// ConsumptionRuntime (fixture-airline-demo-new) instead of the deleted
+// duplicate GovernedKnowledgeProvider stub that withheld everything
+// unconditionally. Some sections now render real fixture content (Brief
+// identity, Explore "Systems"/"Vendors", Relationships), and some still
+// render their honest empty state because no real projection exists for
+// that field at any layer of the consumption contract yet (Goals, Purpose,
+// Contradictions, the decision-readiness quadrant). Assertions below reflect
+// that mix, not a blanket "everything is withheld" expectation.
 //
 // Run: BASE_URL=http://localhost:3001 npx playwright test tests/e2e/knowledge-airline-demo-new-smoke.spec.ts
 
@@ -65,7 +71,7 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
 
     // Shell chrome
     await expect(page.getByText('AbarVa', { exact: true })).toBeVisible()
-    await expect(page.getByText('airline-demo-new')).toBeVisible()
+    await expect(page.getByText('fixture-airline-demo-new')).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Knowledge mode' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Product modules' })).toBeVisible()
     await expect(page.getByLabel('aVa companion')).toBeVisible()
@@ -93,9 +99,15 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
     for (const modeLabel of ['Brief', 'Explore', 'Relationships', 'Evidence & gaps']) {
       await modeNav.getByRole('button', { name: modeLabel }).click()
       await expect(modeNav.getByRole('button', { name: modeLabel })).toHaveAttribute('aria-current', 'page')
-      // Every mode must show at least one honest state banner today — real
-      // content, not a blank/broken pane, since nothing is reconciled yet.
-      await expect(page.getByTestId('knowledge-state-banner').first()).toBeVisible({ timeout: 10_000 })
+      // Every mode must show either real fixture content (a table, a real
+      // card) or at least one honest state banner -- never a blank/broken
+      // pane. Brief/Explore/Relationships now render real fixture content by
+      // default; Evidence & gaps' Contradictions/Decision-readiness-quadrant
+      // sections always render their honest banner (no real projection
+      // exists for either).
+      const hasBanner = page.getByTestId('knowledge-state-banner').first()
+      const hasTable = page.getByRole('table').first()
+      await expect(hasBanner.or(hasTable)).toBeVisible({ timeout: 10_000 })
       await page.screenshot({
         path: `test-results/knowledge-mode-${modeLabel.toLowerCase().replace(/[^a-z]+/g, '-')}.png`,
         fullPage: true,
@@ -105,11 +117,21 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
     expect(pageErrors, `Uncaught page errors while switching modes: ${pageErrors.join('; ')}`).toHaveLength(0)
   })
 
-  test('Explore mode never renders a real-looking table for unreconciled data', async ({ page }) => {
+  test('Explore mode renders a real table for a DIRECTLY_SUPPORTED kind, and never a real-looking table for a kind with no real projection', async ({ page }) => {
     await page.goto(`${BASE_URL}/home/knowledge`)
     await page.getByRole('navigation', { name: 'Knowledge mode' }).getByRole('button', { name: 'Explore' }).click()
-    // Per the render-gate contract: withheld data must never render as an
+
+    // "Systems" (applications) is backed by a real registered projection
+    // (application_inventory_v1) and the fixture pack has real rows -- it
+    // must render a real table, not a withheld banner.
+    await expect(page.getByRole('table')).toBeVisible()
+    await expect(page.getByText('Crew Scheduling System')).toBeVisible()
+
+    // "Risks and controls" has no real inventory projection at any layer of
+    // the consumption contract yet -- per the render-gate contract, it must
+    // show its honest PROJECTION_UNAVAILABLE banner, never an
     // empty-but-real-looking <table>.
+    await page.getByRole('button', { name: 'Risks and controls' }).click()
     await expect(page.getByTestId('knowledge-state-banner').first()).toBeVisible()
     await expect(page.getByRole('table')).toHaveCount(0)
   })
