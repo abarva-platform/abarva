@@ -1729,6 +1729,53 @@ function summarizeMissingSourceRows(rowReconDetail, limit = 8) {
   };
 }
 
+function summarizeMissingEvidenceIdentity(rowReconDetail, fileReconRows, live, limit = 8) {
+  const missing = (rowReconDetail || []).filter(
+    (row) => row.final_disposition !== "MATCHED_TRANSFORMED",
+  );
+  const fileReconByFile = new Map((fileReconRows || []).map((row) => [row.source_file, row]));
+  const evidenceBySourceVersion = new Map();
+  for (const row of live?.evidenceRows || []) {
+    const key = row.source_version_ref || "";
+    if (!key) continue;
+    if (!evidenceBySourceVersion.has(key)) evidenceBySourceVersion.set(key, []);
+    evidenceBySourceVersion.get(key).push(row);
+  }
+  const byFile = new Map();
+  for (const row of missing) {
+    const fileRecon = fileReconByFile.get(row.source_file);
+    const sourceVersionRef = fileRecon?.live_source_version_ref || "";
+    const evidenceRows = evidenceBySourceVersion.get(sourceVersionRef) || [];
+    const current = byFile.get(row.source_file) || {
+      source_file: row.source_file,
+      source_family: row.source_family,
+      missing_rows: 0,
+      live_source_ref: fileRecon?.live_source_ref || "",
+      live_source_version_ref: sourceVersionRef,
+      live_evidence_rows_for_source_version: evidenceRows.length,
+      first_missing_row_number: row.source_row_number,
+      first_missing_primary_key: row.primary_key_value,
+      evidence_identity_samples: evidenceRows.slice(0, 5).map((evidence) => ({
+        evidence_ref: evidence.evidence_ref,
+        source_row_ref: evidence.source_row_ref,
+        source_object_ref: evidence.source_object_ref,
+        evidence_hash: evidence.evidence_hash,
+        metadata_primary_key_value:
+          evidence.metadata?.primary_key_value || evidence.metadata?.primaryKeyValue || "",
+        metadata_source_row_hash:
+          evidence.metadata?.source_row_hash || evidence.metadata?.sourceRowHash || "",
+      })),
+    };
+    current.missing_rows += 1;
+    byFile.set(row.source_file, current);
+  }
+  return {
+    top_missing_file_identities: [...byFile.values()]
+      .sort((a, b) => b.missing_rows - a.missing_rows || a.source_file.localeCompare(b.source_file))
+      .slice(0, limit),
+  };
+}
+
 function summarizeUnaccountedFields(fieldSummary, limit = 8) {
   const unaccounted = (fieldSummary || []).filter(
     (row) =>
@@ -1826,7 +1873,10 @@ function compactVarianceRegister(varianceRows, proofPointer = null, diagnostics 
       proof_bundle_uri: proofBundleUri || "pending_proof_bundle_upload",
       diagnostic_summary:
         row.layer === "parser_evidence"
-          ? diagnostics.missingSourceRows || {}
+          ? {
+              ...(diagnostics.missingSourceRows || {}),
+              ...(diagnostics.missingEvidenceIdentity || {}),
+            }
           : row.layer === "field_lineage"
             ? diagnostics.unaccountedFields || {}
             : row.layer === "projection"
@@ -2309,6 +2359,7 @@ async function main() {
     proofPointer,
     {
       missingSourceRows: summarizeMissingSourceRows(rowRecon.detail),
+      missingEvidenceIdentity: summarizeMissingEvidenceIdentity(rowRecon.detail, fileRecon, live),
       unaccountedFields: summarizeUnaccountedFields(fieldReconSummary),
       projectionHashes: summarizeProjectionHashes(live),
     },
