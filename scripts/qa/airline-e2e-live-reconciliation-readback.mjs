@@ -434,9 +434,11 @@ function blobRefFromUri(uri) {
 
 function sourceFileNameFromRecord(record, blobName) {
   const candidates = [
+    blobName,
+    record?.landed_uri,
+    record?.source_uri,
     record?.source_name,
     record?.source_ref,
-    blobName,
   ]
     .filter(Boolean)
     .map((value) => path.basename(String(value)));
@@ -451,6 +453,9 @@ function sourceFileNameFromRecord(record, blobName) {
 async function hydrateSourceAuthorityFromLiveRegistry(sourceRecords, outDir) {
   const registryRows = [...new Map(
     (sourceRecords || [])
+      .filter((record) => record.source_visibility === "client_visible")
+      .filter((record) => record.source_basis !== "restricted_evaluator")
+      .filter((record) => record.parser_contract_ref)
       .filter((record) => String(record.landed_uri || record.source_uri || "").trim())
       .map((record) => [record.source_ref || record.landed_uri || record.source_uri, record]),
   ).values()];
@@ -470,6 +475,9 @@ async function hydrateSourceAuthorityFromLiveRegistry(sourceRecords, outDir) {
       downloadRows.push({
         source_ref: record.source_ref,
         source_name: record.source_name,
+        source_visibility: record.source_visibility || "",
+        source_basis: record.source_basis || "",
+        parser_contract_ref: record.parser_contract_ref || "",
         uri,
         source_file: "",
         download_status: "UNSUPPORTED_URI",
@@ -483,6 +491,9 @@ async function hydrateSourceAuthorityFromLiveRegistry(sourceRecords, outDir) {
       downloadRows.push({
         source_ref: record.source_ref,
         source_name: record.source_name,
+        source_visibility: record.source_visibility || "",
+        source_basis: record.source_basis || "",
+        parser_contract_ref: record.parser_contract_ref || "",
         uri,
         source_file: "",
         download_status: "MISSING_SOURCE_FILE_NAME",
@@ -509,6 +520,9 @@ async function hydrateSourceAuthorityFromLiveRegistry(sourceRecords, outDir) {
     downloadRows.push({
       source_ref: record.source_ref,
       source_name: record.source_name,
+      source_visibility: record.source_visibility || "",
+      source_basis: record.source_basis || "",
+      parser_contract_ref: record.parser_contract_ref || "",
       uri,
       source_file: fileName,
       download_status:
@@ -521,6 +535,9 @@ async function hydrateSourceAuthorityFromLiveRegistry(sourceRecords, outDir) {
   writeCsv(path.join(outDir, "live-source-authority-downloads.csv"), [
     "source_ref",
     "source_name",
+    "source_visibility",
+    "source_basis",
+    "parser_contract_ref",
     "uri",
     "source_file",
     "download_status",
@@ -761,6 +778,8 @@ async function readLiveDb() {
       relationRows,
       sourceRecords: [],
       evidenceRows: [],
+      factRows: [],
+      candidateEvidenceRows: [],
       candidateSummary: [],
       reviewSummary: [],
       canonicalSummary: [],
@@ -779,6 +798,10 @@ async function readLiveDb() {
                s.source_name,
                s.source_uri,
                s.source_hash,
+               s.source_visibility,
+               s.source_basis,
+               s.parser_contract_ref,
+               s.metadata,
                v.source_version_ref,
                v.content_hash,
                v.landed_uri,
@@ -804,6 +827,57 @@ async function readLiveDb() {
                metadata
           FROM evidence.evidence_item
          WHERE tenant_key=$1
+      `, [TENANT_KEY]);
+    }
+
+    if (await relationExists(client, "knowledge.fact_assertion")) {
+      live.factRows = await query(client, `
+        SELECT fact_ref,
+               entity_ref,
+               fact_type,
+               fact_value,
+               evidence_refs,
+               authority_state::text AS authority_state,
+               availability_state::text AS availability_state
+          FROM knowledge.fact_assertion
+         WHERE tenant_key=$1
+      `, [TENANT_KEY]);
+    }
+
+    if (
+      (await relationExists(client, "working.entity_candidate")) &&
+      (await relationExists(client, "working.fact_candidate")) &&
+      (await relationExists(client, "working.relationship_candidate")) &&
+      (await relationExists(client, "governance.review_decision"))
+    ) {
+      live.candidateEvidenceRows = await query(client, `
+        WITH candidate_inventory AS (
+          SELECT tenant_key, 'entity_candidate' AS candidate_type, candidate_ref, evidence_refs
+            FROM working.entity_candidate WHERE tenant_key=$1
+          UNION ALL
+          SELECT tenant_key, 'fact_candidate' AS candidate_type, candidate_ref, evidence_refs
+            FROM working.fact_candidate WHERE tenant_key=$1
+          UNION ALL
+          SELECT tenant_key, 'relationship_candidate' AS candidate_type, candidate_ref, evidence_refs
+            FROM working.relationship_candidate WHERE tenant_key=$1
+        ),
+        expanded AS (
+          SELECT c.candidate_type,
+                 c.candidate_ref,
+                 unnest(coalesce(c.evidence_refs, ARRAY[]::text[])) AS evidence_ref
+            FROM candidate_inventory c
+        )
+        SELECT e.evidence_ref,
+               count(*) FILTER (WHERE d.decision='accepted')::bigint AS accepted_candidate_count,
+               count(*) FILTER (WHERE d.decision='deferred')::bigint AS deferred_candidate_count,
+               count(*) FILTER (WHERE d.decision='rejected')::bigint AS rejected_candidate_count,
+               count(*) FILTER (WHERE d.decision IS NULL)::bigint AS undecided_candidate_count
+          FROM expanded e
+          LEFT JOIN governance.review_decision d
+            ON d.tenant_key=$1
+           AND d.candidate_type=e.candidate_type
+           AND d.candidate_ref=e.candidate_ref
+         GROUP BY e.evidence_ref
       `, [TENANT_KEY]);
     }
 
@@ -1066,11 +1140,14 @@ function rowRefKeys(row, sourceRecord) {
   const rowNumber = String(row.source_row_number);
   const pk = String(row.primary_key_value || "");
   const hash = String(row.source_row_hash || "");
+  const sourceRef = sourceRecord?.source_ref || "";
   const sourceVersion = sourceRecord?.source_version_ref || "";
-  for (const prefix of [file, path.basename(file), sourceVersion]) {
+  for (const prefix of [file, path.basename(file), sourceRef, sourceVersion]) {
     if (!prefix) continue;
     keys.add(`${prefix}:${rowNumber}`);
     keys.add(`${prefix}#${rowNumber}`);
+    keys.add(`${prefix}:row:${rowNumber}`);
+    keys.add(`${prefix}#row:${rowNumber}`);
     keys.add(`${prefix}:${pk}`);
     keys.add(`${prefix}#${pk}`);
     keys.add(`${prefix}:${hash}`);
@@ -1103,6 +1180,61 @@ function evidenceLookup(evidenceRows) {
     }
   }
   return map;
+}
+
+function canonicalFactFieldLookup(factRows) {
+  const map = new Map();
+  for (const fact of factRows || []) {
+    if (fact.authority_state !== "accepted") continue;
+    const rawRow = fact.fact_value?.raw_row;
+    if (!rawRow || typeof rawRow !== "object") continue;
+    for (const evidenceRef of fact.evidence_refs || []) {
+      if (!map.has(evidenceRef)) map.set(evidenceRef, []);
+      map.get(evidenceRef).push(rawRow);
+    }
+  }
+  return map;
+}
+
+function candidateDecisionLookup(candidateEvidenceRows) {
+  const map = new Map();
+  for (const row of candidateEvidenceRows || []) {
+    map.set(row.evidence_ref, {
+      accepted: Number(row.accepted_candidate_count || 0),
+      deferred: Number(row.deferred_candidate_count || 0),
+      rejected: Number(row.rejected_candidate_count || 0),
+      undecided: Number(row.undecided_candidate_count || 0),
+    });
+  }
+  return map;
+}
+
+function fieldPreservedInFacts({ evidenceRefs, factLookup, header, expectedHash }) {
+  for (const evidenceRef of evidenceRefs || []) {
+    const rawRows = factLookup.get(evidenceRef) || [];
+    for (const rawRow of rawRows) {
+      if (!Object.prototype.hasOwnProperty.call(rawRow, header)) continue;
+      if (sha256(String(rawRow[header] ?? "")) === expectedHash) return true;
+    }
+  }
+  return false;
+}
+
+function decisionDispositionForEvidence(evidenceRefs, decisionLookup) {
+  const totals = { accepted: 0, deferred: 0, rejected: 0, undecided: 0 };
+  for (const evidenceRef of evidenceRefs || []) {
+    const row = decisionLookup.get(evidenceRef);
+    if (!row) continue;
+    totals.accepted += row.accepted;
+    totals.deferred += row.deferred;
+    totals.rejected += row.rejected;
+    totals.undecided += row.undecided;
+  }
+  if (totals.accepted > 0) return "accepted";
+  if (totals.deferred > 0) return "deferred";
+  if (totals.rejected > 0) return "rejected";
+  if (totals.undecided > 0) return "undecided";
+  return "unknown";
 }
 
 function reconcileFiles(sourceAuthority, live) {
@@ -1207,7 +1339,7 @@ function reconcileRows(sourceAuthority, live, fileReconRows) {
   return { detail, summary: [...summary.values()] };
 }
 
-async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDetail) {
+async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDetail, live = null) {
   if (!rowReconDetail.length) {
     return sourceAuthority.fieldSummary.map((row) => ({
       source_file: row.source_file,
@@ -1226,6 +1358,8 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
       row,
     ]),
   );
+  const factLookup = canonicalFactFieldLookup(live?.factRows || []);
+  const decisionLookup = candidateDecisionLookup(live?.candidateEvidenceRows || []);
   const summary = new Map();
   let writer = null;
   const headers = [
@@ -1252,14 +1386,33 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
       `${row.source_file}:${row.source_row_number}:${row.source_row_hash}`,
     );
     for (const header of row.headers) {
-      const status =
-        rowRecon?.final_disposition === "MATCHED_TRANSFORMED"
-          ? "ROW_MATCHED_FIELD_NOT_EXPORTED"
-          : "MISSING_DOWNSTREAM";
-      const reason =
-        status === "ROW_MATCHED_FIELD_NOT_EXPORTED"
-          ? "The source row reached live evidence, but field-level downstream lineage is not exported by the current model."
-          : "The source row did not reach live evidence, so field-level lineage cannot be certified.";
+      const originalValueHash = sha256(String(row.row[header] ?? ""));
+      const evidenceRefs = String(rowRecon?.evidence_refs || "").split(";").filter(Boolean);
+      let status = "MISSING_DOWNSTREAM";
+      let firstBroken = rowRecon?.first_broken_transition || "parser_or_evidence_extract";
+      let reason = "The source row did not reach live evidence, so field-level lineage cannot be certified.";
+      if (rowRecon?.final_disposition === "MATCHED_TRANSFORMED") {
+        if (fieldPreservedInFacts({ evidenceRefs, factLookup, header, expectedHash: originalValueHash })) {
+          status = "FIELD_PRESERVED_IN_CANONICAL_FACT";
+          firstBroken = "";
+          reason = "The source field value is preserved in an accepted canonical fact raw_row payload.";
+        } else {
+          const decision = decisionDispositionForEvidence(evidenceRefs, decisionLookup);
+          if (decision === "deferred") {
+            status = "FIELD_DEFERRED_BY_REVIEW";
+            firstBroken = "review_decision";
+            reason = "The source row reached evidence, but its candidate path is explicitly deferred by review.";
+          } else if (decision === "rejected") {
+            status = "FIELD_REJECTED_BY_REVIEW";
+            firstBroken = "review_decision";
+            reason = "The source row reached evidence, but its candidate path is explicitly rejected by review.";
+          } else {
+            status = "ROW_MATCHED_FIELD_NOT_EXPORTED";
+            firstBroken = "field_lineage_export";
+            reason = "The source row reached live evidence, but this field was not found in accepted canonical fact payloads or explicit review disposition.";
+          }
+        }
+      }
       const item = {
         tenant_key: TENANT_KEY,
         source_release_id: SOURCE_RELEASE_ID,
@@ -1269,13 +1422,10 @@ async function reconcileFields(sourceAuthority, rowReconDetail, outDir, emitDeta
         primary_key_value: row.primary_key_value,
         source_row_hash: row.source_row_hash,
         source_field: header,
-        original_value_hash: sha256(String(row.row[header] ?? "")),
+        original_value_hash: originalValueHash,
         row_final_disposition: rowRecon?.final_disposition || "MISSING_DOWNSTREAM",
         field_disposition: status,
-        first_broken_transition:
-          status === "ROW_MATCHED_FIELD_NOT_EXPORTED"
-            ? "field_lineage_export"
-            : rowRecon?.first_broken_transition || "parser_or_evidence_extract",
+        first_broken_transition: firstBroken,
         reason,
       };
       const key = `${item.source_file}:${item.source_field}:${item.field_disposition}:${item.first_broken_transition}`;
@@ -1349,20 +1499,31 @@ function buildVarianceRegister(sourceAuthority, fileRecon, rowRecon, fieldSummar
       : "Repair parser/evidence source-row identity export.",
   );
 
-  const fieldRowMatched = fieldSummary
-    .filter((row) => row.field_disposition === "ROW_MATCHED_FIELD_NOT_EXPORTED")
+  const fieldAccounted = fieldSummary
+    .filter((row) =>
+      [
+        "FIELD_PRESERVED_IN_CANONICAL_FACT",
+        "FIELD_DEFERRED_BY_REVIEW",
+        "FIELD_REJECTED_BY_REVIEW",
+      ].includes(row.field_disposition),
+    )
     .reduce((sum, row) => sum + Number(row.field_instance_count || 0), 0);
+  const allFieldsAccounted = fieldAccounted === sourceAuthority.totals.fieldInstances;
   add(
     "field_lineage",
     "source_fields",
     sourceAuthority.totals.fieldInstances,
-    fieldRowMatched,
-    fieldRowMatched === sourceAuthority.totals.fieldInstances
-      ? "FIELD_EXPORT_MISSING_BUT_ROW_REACHED"
+    fieldAccounted,
+    allFieldsAccounted
+      ? "NONE"
       : "MISSING_DOWNSTREAM",
-    false,
-    "The current live model does not expose per-field downstream lineage; row-level evidence is not enough for final certification.",
-    "Add field-level lineage export or explicit field-disposition table before certification.",
+    allFieldsAccounted,
+    allFieldsAccounted
+      ? "Every source field is either preserved in an accepted canonical fact or explicitly accounted for by review disposition."
+      : "Some source fields are neither preserved in accepted canonical facts nor explicitly accounted for by review disposition.",
+    allFieldsAccounted
+      ? "none"
+      : "Repair field-level canonical preservation or explicit field-disposition export before certification.",
   );
 
   const reviewAccepted = (live?.reviewSummary || [])
@@ -1687,6 +1848,7 @@ async function main() {
     rowRecon.detail,
     args.outDir,
     args.fieldDetail,
+    live,
   );
   phase("field reconciliation complete");
   const varianceRows = buildVarianceRegister(

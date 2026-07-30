@@ -61,6 +61,22 @@ const METRIC_PARITY_MEASURES = Object.freeze([
   },
 ]);
 
+const CORE_CONSUMPTION_PROJECTIONS = Object.freeze([
+  "enterprise_brief_v1",
+  "enterprise_identity_v1",
+  "domain_summary_v1",
+  "application_inventory_v1",
+  "technology_estate_v1",
+  "data_product_inventory_v1",
+  "vendor_contract_inventory_v1",
+  "metric_observation_v1",
+  "evidence_gap_v1",
+  "search_document_v1",
+  "relationship_node_v1",
+  "relationship_edge_v1",
+  "relationship_evidence_v1",
+]);
+
 export class KnowledgeProcessError extends Error {
   constructor(code, message, details = {}) {
     super(message);
@@ -1330,6 +1346,8 @@ export class PostgresKnowledgeExecutionStore {
       [context.tenantKey],
     );
 
+    await this.promoteSourceEvidenceGaps(context);
+
     await this.client.query(
       `
         INSERT INTO knowledge.relationship_type (relationship_type_ref, display_name, active)
@@ -1482,6 +1500,51 @@ export class PostgresKnowledgeExecutionStore {
     };
   }
 
+  async promoteSourceEvidenceGaps(context) {
+    await this.client.query(
+      `
+        INSERT INTO governance.evidence_gap (
+          tenant_key, gap_ref, domain_ref, missing_evidence_type,
+          why_it_matters, severity, availability_state, source_request_text
+        )
+        SELECT tenant_key,
+          'gap:' || md5(fact_ref || ':' || lower(gap_text)),
+          domain_ref,
+          gap_text,
+          'Source record identifies a missing evidence item that must be confirmed before this context is treated as client-certified.',
+          CASE
+            WHEN gap_text ~* '(critical|regulatory|sox|safety|security|outage|material)' THEN 'high'
+            ELSE 'medium'
+          END,
+          'not_loaded'::abarva_availability_state,
+          'Provide or confirm evidence for: ' || gap_text
+        FROM (
+          SELECT f.tenant_key,
+            f.fact_ref,
+            coalesce(nullif(e.canonical_payload->>'domain',''), e.entity_type, 'unknown') AS domain_ref,
+            btrim(f.fact_value->'raw_row'->>'evidence_gap') AS gap_text
+          FROM knowledge.fact_assertion f
+          LEFT JOIN knowledge.entity e
+            ON e.tenant_key = f.tenant_key
+           AND e.entity_ref = f.entity_ref
+          WHERE f.tenant_key=$1
+            AND f.authority_state='accepted'
+            AND f.fact_value ? 'raw_row'
+            AND nullif(btrim(f.fact_value->'raw_row'->>'evidence_gap'), '') IS NOT NULL
+        ) gaps
+        WHERE gap_text !~* '^(source[- ]backed candidate|source[- ]backed|none|n/?a|not applicable)$'
+        ON CONFLICT (tenant_key, gap_ref)
+        DO UPDATE SET domain_ref=EXCLUDED.domain_ref,
+          missing_evidence_type=EXCLUDED.missing_evidence_type,
+          why_it_matters=EXCLUDED.why_it_matters,
+          severity=EXCLUDED.severity,
+          availability_state=EXCLUDED.availability_state,
+          source_request_text=EXCLUDED.source_request_text
+      `,
+      [context.tenantKey],
+    );
+  }
+
   async publishDomain(context) {
     const domainRef = context.domain || "enterprise";
     const ref = `${context.releaseId}:${domainRef}:domain-publication-v1`;
@@ -1579,6 +1642,7 @@ export class PostgresKnowledgeExecutionStore {
   async buildConsumptionProjections(context) {
     const baseline = await this.activeBaseline(context);
     if (!baseline) return { projectionCount: 0, rowCount: 0, baseline: null };
+    await this.promoteSourceEvidenceGaps(context);
     const domainPublicationRef = baseline.domain_publication_refs?.[0] ?? `${context.releaseId}:enterprise:domain-publication-v1`;
     const contractVersion = "consumption-v1";
     const asOfDate = new Date().toISOString().slice(0, 10);
@@ -2017,6 +2081,13 @@ export class PostgresKnowledgeExecutionStore {
       edge_evidence: 0,
     };
     const rowCount = Object.values(row).reduce((sum, count) => sum + Number(count ?? 0), 0);
+    await this.registerConsumptionProjectionVersions({
+      context,
+      baseline,
+      contractVersion,
+      baselineContentHash: baseline.baseline_content_hash,
+      counts: row,
+    });
     await this.client.query(
       `
         INSERT INTO publication.projection_version (
@@ -2048,6 +2119,56 @@ export class PostgresKnowledgeExecutionStore {
       contentHash: sha256Value(row),
       counts: row,
     };
+  }
+
+  async registerConsumptionProjectionVersions({ context, baseline, contractVersion, baselineContentHash, counts }) {
+    const countByProjection = {
+      enterprise_brief_v1: counts.brief,
+      enterprise_identity_v1: counts.identity,
+      domain_summary_v1: counts.domains,
+      application_inventory_v1: counts.applications,
+      technology_estate_v1: counts.technology,
+      data_product_inventory_v1: counts.data_products,
+      vendor_contract_inventory_v1: counts.vendors,
+      metric_observation_v1: counts.metrics,
+      evidence_gap_v1: counts.gaps,
+      search_document_v1: counts.search,
+      relationship_node_v1: counts.nodes,
+      relationship_edge_v1: counts.edges,
+      relationship_evidence_v1: counts.edge_evidence,
+    };
+    for (const projection of CORE_CONSUMPTION_PROJECTIONS) {
+      const projectionName = `consumption.${projection}`;
+      const rowCount = Number(countByProjection[projection] ?? 0);
+      await this.client.query(
+        `
+          INSERT INTO publication.projection_version (
+            tenant_key, projection_version_ref, knowledge_baseline_ref,
+            projection_name, projection_contract_version, build_state,
+            is_active, input_hash, output_hash, row_count, built_run_ref, built_at
+          )
+          VALUES ($1,$2,$3,$4,$5,'passed',true,$6,$7,$8,$9,now())
+          ON CONFLICT (tenant_key, projection_version_ref)
+          DO UPDATE SET build_state='passed', is_active=true,
+            input_hash=EXCLUDED.input_hash,
+            output_hash=EXCLUDED.output_hash,
+            row_count=EXCLUDED.row_count,
+            built_run_ref=EXCLUDED.built_run_ref,
+            built_at=EXCLUDED.built_at
+        `,
+        [
+          context.tenantKey,
+          `${baseline.knowledge_baseline_ref}:${projectionName}`,
+          baseline.knowledge_baseline_ref,
+          projectionName,
+          contractVersion,
+          baselineContentHash,
+          sha256Value({ projectionName, rowCount, baseline: baseline.knowledge_baseline_ref }),
+          rowCount,
+          context.runId,
+        ],
+      );
+    }
   }
 
   async insertEntityProjection(context, baselineRef, domainPublicationRef, contractVersion, asOfDate, { tableName, entityTypePattern }) {
