@@ -56,6 +56,17 @@ for (const requiredTokenBinding of [
     failures.push(`AAD wrapper missing ACA token binding marker ${requiredTokenBinding}`);
   }
 }
+const bootstrapSource = readFileSync(path.join(repoRoot, "scripts/foundation-v2/bootstrap-db-identity.mjs"), "utf8");
+for (const requiredBootstrapMarker of [
+  "SECURITY LABEL FOR",
+  "pgaadauth_security_label",
+  "pg_shseclabel",
+  "aadauth,oid=",
+]) {
+  if (!bootstrapSource.includes(requiredBootstrapMarker)) {
+    failures.push(`DB identity bootstrap missing Entra security-label fallback marker ${requiredBootstrapMarker}`);
+  }
+}
 
 const executorProof = JSON.parse(
   readFileSync(path.join(outDir, "FOUNDATION_V2_GOLDEN_SLICE_EXECUTOR_SELF_TEST.json"), "utf8"),
