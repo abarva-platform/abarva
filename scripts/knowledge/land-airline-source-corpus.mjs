@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { dbConnectionConfig, setTenantContext } from "./build-review-decision-ledger.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), "..", "..");
 
@@ -145,6 +147,48 @@ function parserContractFor(relativePath) {
   return "airline-source-package-control-v1";
 }
 
+function syncModeFor(relativePath) {
+  if (!relativePath.startsWith("03-source-corpus-design/synthetic-source-samples/")) return "REFERENCE_ONLY";
+  const name = path.basename(relativePath).toLowerCase();
+  if (name.includes("invoice-change-order-history") || name.includes("sla-incident-history") || name.includes("bafo-revisions")) {
+    return "DELTA_APPEND";
+  }
+  if (
+    name.includes("vendor-proposals") ||
+    name.includes("proposal-pricing") ||
+    name.includes("rate-cards") ||
+    name.includes("evaluation-scorecards") ||
+    name.includes("assumptions-exceptions") ||
+    name.includes("transition-commitments")
+  ) {
+    return "DELTA_UPSERT";
+  }
+  return "FULL_SNAPSHOT";
+}
+
+function businessKeyFor(relativePath) {
+  const name = path.basename(relativePath).toLowerCase();
+  if (name.includes("application")) return "application_id";
+  if (name.includes("bi-report")) return "report_id";
+  if (name.includes("cloud-infrastructure")) return "infra_id";
+  if (name.includes("control")) return "control_id";
+  if (name.includes("data-analytics")) return "data_product_id";
+  if (name.includes("integration")) return "integration_id";
+  if (name.includes("process-map")) return "process_id";
+  if (name.includes("kpi") || name.includes("sla")) return "kpi_id";
+  if (name.includes("vendor-contract")) return "contract_id";
+  if (name.includes("vendor-register")) return "vendor_id";
+  if (name.includes("program")) return "program_id";
+  if (name.includes("relationship")) return "relationship_id";
+  if (name.includes("risk")) return "risk_id";
+  if (name.includes("service-volume")) return "volume_id";
+  if (name.includes("workforce")) return "workforce_id";
+  if (name.includes("proposal")) return "proposal_id";
+  if (name.includes("rate-card")) return "rate_card_id";
+  if (name.includes("invoice")) return "invoice_source";
+  return relativePath.startsWith("03-source-corpus-design/synthetic-source-samples/") ? "source_row_number" : "source_version_ref";
+}
+
 function contentTypeFor(relativePath) {
   if (relativePath.endsWith(".csv")) return "text/csv";
   if (relativePath.endsWith(".json")) return "application/json";
@@ -152,6 +196,54 @@ function contentTypeFor(relativePath) {
   if (relativePath.endsWith(".html")) return "text/html";
   if (relativePath.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   return "application/octet-stream";
+}
+
+function schemaHashFor(filePath, relativePath) {
+  if (/\.csv$/i.test(relativePath)) {
+    const header = fs.readFileSync(filePath, "utf8").split(/\r?\n/, 1)[0] ?? "";
+    return crypto.createHash("sha256").update(header.trim()).digest("hex");
+  }
+  return crypto.createHash("sha256").update(`${contentTypeFor(relativePath)}:${path.extname(relativePath).toLowerCase()}`).digest("hex");
+}
+
+function sourceShapeFor(filePath, relativePath) {
+  if (/\.csv$/i.test(relativePath)) {
+    const text = fs.readFileSync(filePath, "utf8");
+    const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    const headers = (lines[0] ?? "").split(",").map((value) => value.trim()).filter(Boolean);
+    return {
+      rowCount: Math.max(lines.length - 1, 0),
+      fieldCount: Math.max(lines.length - 1, 0) * headers.length,
+      columnCount: headers.length,
+    };
+  }
+  if (/\.json$/i.test(relativePath)) {
+    const parsed = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const rows = Array.isArray(parsed) ? parsed : [parsed];
+    const keys = new Set(rows.flatMap((row) => (row && typeof row === "object" ? Object.keys(row) : ["value"])));
+    return { rowCount: rows.length, fieldCount: rows.length * keys.size, columnCount: keys.size };
+  }
+  if (/\.(md|html)$/i.test(relativePath)) {
+    return { rowCount: 1, fieldCount: 1, columnCount: 1 };
+  }
+  return { rowCount: 0, fieldCount: 0, columnCount: 0 };
+}
+
+function completenessFor(relativePath, syncMode, shape) {
+  if (isEvaluatorFile(relativePath)) return "restricted";
+  if (!relativePath.startsWith("03-source-corpus-design/synthetic-source-samples/")) return "reference_only";
+  if (shape.rowCount <= 0) return "empty";
+  if (syncMode === "FULL_SNAPSHOT") return "complete";
+  if (syncMode === "REFERENCE_ONLY") return "reference_only";
+  return "partial";
+}
+
+function deltaClassificationFor(file, syncMode, completeness) {
+  if (file.evaluatorVisible) return "RESTRICTED";
+  if (completeness === "empty") return "EMPTY";
+  if (completeness === "reference_only") return "NEW_FILE";
+  if (syncMode === "PARTIAL_SNAPSHOT") return "PARTIAL";
+  return "NEW_FILE";
 }
 
 function isEvaluatorFile(relativePath) {
@@ -202,6 +294,25 @@ function resolveFiles(packageRoot, packageManifest, scope) {
       evaluatorVisible: isEvaluatorFile(relativePath),
     };
   });
+
+  for (const file of files) {
+    const syncMode = syncModeFor(file.relativePath);
+    const shape = sourceShapeFor(file.absolutePath, file.relativePath);
+    const completeness = completenessFor(file.relativePath, syncMode, shape);
+    file.sourceVersion = "v1";
+    file.schemaHash = schemaHashFor(file.absolutePath, file.relativePath);
+    file.syncMode = syncMode;
+    file.businessKey = businessKeyFor(file.relativePath);
+    file.periodCovered = "synthetic_airline_v1";
+    file.availabilityState = completeness === "empty" ? "empty" : file.evaluatorVisible ? "restricted" : "available";
+    file.rowCount = shape.rowCount;
+    file.fieldCount = shape.fieldCount;
+    file.columnCount = shape.columnCount;
+    file.completeness = completeness;
+    file.predecessorVersion = null;
+    file.supersededVersion = null;
+    file.deltaClassification = deltaClassificationFor(file, syncMode, completeness);
+  }
 
   if (scope === "operational" && files.some((file) => file.evaluatorVisible)) {
     throw new LandingError("evaluator_file_in_operational_set", "Evaluator-only file selected for operational landing.");
@@ -255,18 +366,9 @@ async function buildBlobClient(scope) {
 
 async function buildPgClient() {
   const { Client } = await import("pg");
-  const connectionString = process.env.DATABASE_URL;
-  const client = connectionString
-    ? new Client({ connectionString })
-    : new Client({
-        host: process.env.PGHOST,
-        port: process.env.PGPORT ? Number(process.env.PGPORT) : 5432,
-        user: process.env.PGUSER,
-        password: process.env.PGPASSWORD,
-        database: process.env.PGDATABASE,
-        ssl: process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
-      });
+  const client = new Client(await dbConnectionConfig(process.env));
   await client.connect();
+  await setTenantContext(client, TENANT_KEY);
   return client;
 }
 
@@ -376,12 +478,21 @@ async function recordOperationalLanding({ files, result, packageHash }) {
           file.parserContractRef,
           file.parserVisible ? "client_visible" : "internal_ops",
           result.runId,
-          JSON.stringify({
+        JSON.stringify({
             relativePath: file.relativePath,
             bytes: file.bytes,
             contentType: file.contentType,
             parserVisible: file.parserVisible,
             releaseId: result.releaseId,
+            schemaHash: file.schemaHash,
+            syncMode: file.syncMode,
+            businessKey: file.businessKey,
+            periodCovered: file.periodCovered,
+            availabilityState: file.availabilityState,
+            rowCount: file.rowCount,
+            fieldCount: file.fieldCount,
+            completeness: file.completeness,
+            deltaClassification: file.deltaClassification,
           }),
         ],
       );
@@ -422,7 +533,11 @@ async function recordOperationalLanding({ files, result, packageHash }) {
         result.expectedCount,
         files.length,
         result.contentHash,
-        JSON.stringify({ manifestRef: result.manifestRef, parserVisibleCount: result.parserVisibleCount }),
+        JSON.stringify({
+          manifestRef: result.manifestRef,
+          parserVisibleCount: result.parserVisibleCount,
+          j0SyncManifest: result.j0SyncManifest,
+        }),
       ],
     );
 
@@ -503,6 +618,27 @@ function buildResult({ args, freezeManifest, packageManifest, files, landedFiles
   const runId =
     args.runId ||
     `${TENANT_KEY}-${args.scope}-source-landing-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${contentHash.slice(0, 8)}`;
+  const visibleFiles = landedFiles.length ? landedFiles : files;
+  const parserVisibleFiles = visibleFiles.filter((file) => file.parserVisible);
+  const j0SyncManifest = {
+    manifestVersion: "airline-source-sync-manifest/v1",
+    previousReleaseRef: null,
+    deltaPlanState: "INITIAL_FULL_AIRLINE_V2_LOAD",
+    sourceFamilyCount: new Set(visibleFiles.map((file) => file.sourceFamily)).size,
+    sourceVersionCount: visibleFiles.length,
+    parserVisibleSourceVersionCount: parserVisibleFiles.length,
+    sourceRowCount: parserVisibleFiles.reduce((sum, file) => sum + Number(file.rowCount || 0), 0),
+    sourceFieldCount: parserVisibleFiles.reduce((sum, file) => sum + Number(file.fieldCount || 0), 0),
+    classifications: visibleFiles.reduce((acc, file) => {
+      acc[file.deltaClassification] = (acc[file.deltaClassification] || 0) + 1;
+      return acc;
+    }, {}),
+    syncModes: visibleFiles.reduce((acc, file) => {
+      acc[file.syncMode] = (acc[file.syncMode] || 0) + 1;
+      return acc;
+    }, {}),
+  };
+
   return {
     status: args.mode === "execute" ? "executed" : "planned",
     mode: args.mode,
@@ -520,12 +656,26 @@ function buildResult({ args, freezeManifest, packageManifest, files, landedFiles
     evaluatorVisibleCount: files.filter((file) => file.evaluatorVisible).length,
     contentHash,
     manifestRef,
-    files: (landedFiles.length ? landedFiles : files).map((file) => ({
+    j0SyncManifest,
+    files: visibleFiles.map((file) => ({
       path: file.relativePath,
       sourceRef: file.sourceRef,
       sourceVersionRef: file.sourceVersionRef,
       sourceFamily: file.sourceFamily,
+      sourceVersion: file.sourceVersion,
       parserContractRef: file.parserContractRef,
+      schemaHash: file.schemaHash,
+      syncMode: file.syncMode,
+      businessKey: file.businessKey,
+      periodCovered: file.periodCovered,
+      availabilityState: file.availabilityState,
+      rowCount: file.rowCount,
+      fieldCount: file.fieldCount,
+      columnCount: file.columnCount,
+      completeness: file.completeness,
+      predecessorVersion: file.predecessorVersion,
+      supersededVersion: file.supersededVersion,
+      deltaClassification: file.deltaClassification,
       parserVisible: file.parserVisible,
       evaluatorVisible: file.evaluatorVisible,
       bytes: file.bytes,

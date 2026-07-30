@@ -35,6 +35,17 @@ function testOperationalPlan() {
   assert.equal(result.expectedCount, 48);
   assert.equal(result.evaluatorVisibleCount, 0);
   assert.equal(result.parserVisibleCount, 25);
+  assert.equal(result.j0SyncManifest.manifestVersion, "airline-source-sync-manifest/v1");
+  assert.equal(result.j0SyncManifest.deltaPlanState, "INITIAL_FULL_AIRLINE_V2_LOAD");
+  assert.equal(result.j0SyncManifest.sourceVersionCount, 48);
+  assert.equal(result.j0SyncManifest.parserVisibleSourceVersionCount, 25);
+  assert.equal(result.j0SyncManifest.sourceRowCount, 99883);
+  assert.equal(result.j0SyncManifest.classifications.NEW_FILE, 48);
+  assert.equal(result.j0SyncManifest.syncModes.FULL_SNAPSHOT, 16);
+  assert.equal(result.j0SyncManifest.syncModes.DELTA_UPSERT, 6);
+  assert.equal(result.j0SyncManifest.syncModes.DELTA_APPEND, 3);
+  assert.ok(result.files.every((file) => file.syncMode && file.businessKey && file.schemaHash));
+  assert.ok(result.files.every((file) => Number.isInteger(file.rowCount) && Number.isInteger(file.fieldCount)));
   assert.equal(result.boundaries.evaluatorTruthInSourceRegistry, false);
   assert.equal(result.boundaries.productRuntimeClaimAllowed, false);
   assert.ok(result.files.every((file) => !file.path.startsWith("04-restricted-evaluator-design/")));
