@@ -5,17 +5,12 @@
 // browser, and Clerk is not bypassed.
 //
 // This is a runtime/render smoke test, not a data-correctness test, but it is
-// no longer a "verify everything is honestly empty" test either. Since PR B
-// (reports/airline-knowledge-provider-reconciliation-2026-07-30/), the route
-// binds to the REAL KnowledgeUiViewModelAssembler over the REAL fixture
-// ConsumptionRuntime (fixture-airline-demo-new) instead of the deleted
-// duplicate GovernedKnowledgeProvider stub that withheld everything
-// unconditionally. Some sections now render real fixture content (Brief
-// identity, Explore "Systems"/"Vendors", Relationships), and some still
-// render their honest empty state because no real projection exists for
-// that field at any layer of the consumption contract yet (Goals, Purpose,
-// Contradictions, the decision-readiness quadrant). Assertions below reflect
-// that mix, not a blanket "everything is withheld" expectation.
+// no longer a "verify everything is honestly empty" test either. The route
+// binds to the REAL KnowledgeUiViewModelAssembler over the REAL HTTP
+// KnowledgeConsumptionProvider for the server-resolved Airline Foundation
+// proof tenant. Some sections render loaded governed data, and some still
+// render honest SOURCE_INCOMPLETE / not-loaded states because not every
+// projection exists for the active baseline yet.
 //
 // Run:
 //   CLERK_SECRET_KEY=... BASE_URL=http://localhost:3001 npx playwright test tests/e2e/knowledge-airline-demo-new-smoke.spec.ts
@@ -54,7 +49,7 @@ async function signInWithFoundationTicket(page: Page): Promise<void> {
     expiresInSeconds: 300,
   })
 
-  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${BASE_URL}/sign-in`, { waitUntil: 'domcontentloaded' })
   await page.waitForFunction(
     () => (window as Window & { Clerk?: { loaded?: boolean } }).Clerk?.loaded === true,
     null,
@@ -149,7 +144,8 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
 
     // Shell chrome
     await expect(page.getByText('AbarVa', { exact: true })).toBeVisible()
-    await expect(page.getByText('fixture-airline-demo-new')).toBeVisible()
+    await expect(page.getByText('airline-demo-new')).toBeVisible()
+    await expect(page.getByText('fixture-airline-demo-new')).toHaveCount(0)
     await expect(page.getByRole('navigation', { name: 'Knowledge mode' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Product modules' })).toBeVisible()
     await expect(page.getByLabel('aVa companion')).toBeVisible()
@@ -173,8 +169,8 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
       '/home/knowledge?tenant=healthcare-demo-new&provider=http',
     )
     await expect(page).toHaveURL(/\/home\/knowledge/)
-    await expect(page.getByText('fixture-airline-demo-new')).toBeVisible()
-    await expect(page.getByText(/fixture-healthcare-demo-new|healthcare-demo-new/i)).toHaveCount(0)
+    await expect(page.getByText('airline-demo-new')).toBeVisible()
+    await expect(page.getByText(/fixture-airline-demo-new|fixture-healthcare-demo-new|healthcare-demo-new/i)).toHaveCount(0)
     expect(page.url()).not.toContain('/knowledge-preview')
   })
 
@@ -188,15 +184,14 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
     for (const modeLabel of ['Brief', 'Explore', 'Relationships', 'Evidence & gaps']) {
       await modeNav.getByRole('button', { name: modeLabel }).click()
       await expect(modeNav.getByRole('button', { name: modeLabel })).toHaveAttribute('aria-current', 'page')
-      // Every mode must show either real fixture content (a table, a real
+      // Every mode must show either real governed content (a table, a real
       // card) or at least one honest state banner -- never a blank/broken
-      // pane. Brief/Explore/Relationships now render real fixture content by
-      // default; Evidence & gaps' Contradictions/Decision-readiness-quadrant
-      // sections always render their honest banner (no real projection
-      // exists for either).
-      const hasBanner = page.getByTestId('knowledge-state-banner').first()
-      const hasTable = page.getByRole('table').first()
-      await expect(hasBanner.or(hasTable)).toBeVisible({ timeout: 10_000 })
+      // pane. Use one CSS union locator to avoid Playwright strict-mode
+      // failures when a mode legitimately has both tables and banners.
+      const visibleModeEvidence = page
+        .locator('[data-testid="knowledge-state-banner"], table')
+        .first()
+      await expect(visibleModeEvidence).toBeVisible({ timeout: 10_000 })
       await page.screenshot({
         path: `test-results/knowledge-mode-${modeLabel.toLowerCase().replace(/[^a-z]+/g, '-')}.png`,
         fullPage: true,
@@ -210,11 +205,12 @@ test.describe('Knowledge UI · airline-demo-new (signed-in smoke)', () => {
     await gotoHomeKnowledgeThroughRequiredGates(page)
     await page.getByRole('navigation', { name: 'Knowledge mode' }).getByRole('button', { name: 'Explore' }).click()
 
-    // "Systems" (applications) is backed by a real registered projection
-    // (application_inventory_v1) and the fixture pack has real rows -- it
-    // must render a real table, not a withheld banner.
+    // "Systems" (applications) is backed by a registered projection
+    // (application_inventory_v1) and the active Airline Foundation baseline
+    // must render real rows -- not a fixture marker and not a withheld banner.
     await expect(page.getByRole('table')).toBeVisible()
     await expect(page.getByText('Crew Scheduling System')).toBeVisible()
+    await expect(page.getByText('fixture-airline-demo-new')).toHaveCount(0)
 
     // "Risks and controls" has no real inventory projection at any layer of
     // the consumption contract yet -- per the render-gate contract, it must

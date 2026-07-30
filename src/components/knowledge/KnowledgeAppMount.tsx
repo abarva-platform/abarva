@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { createFixtureRuntime } from "@/lib/knowledge/consumption-client";
+import { createHttpRuntime } from "@/lib/knowledge/consumption-client";
 import { KnowledgeAppProvider } from "./knowledge-app-context";
 import { KnowledgeShell } from "./shell/KnowledgeShell";
 
@@ -14,40 +14,23 @@ import { KnowledgeShell } from "./shell/KnowledgeShell";
  * client-side, not passed down as a prop. Only plain strings cross that
  * boundary here.
  *
- * PR B scope note: this mount binds to the FIXTURE runtime
- * (`fixture-airline-demo-new`), not the real HTTP consumption path. The
- * point of PR B is proving the assembler/provider plumbing swap works
- * end-to-end against the real KnowledgeConsumptionProvider *shape* -- the
- * fixture provider is a full, real implementation of that same interface, so
- * this validates the migration completely without reaching production
- * tenant data for airline-demo-new. Activating this route against the real
- * HTTP consumption path (i.e. binding it to `createHttpRuntime` and the
- * server-enforced admin-canary channel other Knowledge routes already use)
- * is explicitly PR C's job, not this one -- see
- * reports/airline-knowledge-provider-reconciliation-2026-07-30/ for why that
- * boundary matters. The `tenantKey` prop below is therefore currently
- * decorative (kept for signature continuity with the route); the runtime
- * always binds to the synthetic fixture namespace.
+ * This mount binds the client UI to the real HTTP consumption provider. The
+ * browser can pass only the route-authorized tenant key; every API call still
+ * resolves tenancy again server-side from Clerk metadata and refuses shared
+ * foundation database fallback. Fixtures are not reachable from this product
+ * route.
  */
 export function KnowledgeAppMount({
   tenantKey,
 }: {
   readonly tenantKey: string;
-  /** Retained for route-signature continuity; unused while this mount is
-   * fixture-bound (see PR-scope note above). */
+  /** Baseline is resolved per response by the HTTP provider. */
   readonly knowledgeBaselineRef?: string;
 }) {
-  void tenantKey;
-  const runtime = useMemo(
-    () => createFixtureRuntime("fixture-airline-demo-new", "normal"),
-    [],
-  );
+  const runtime = useMemo(() => createHttpRuntime(tenantKey), [tenantKey]);
 
   return (
-    <KnowledgeAppProvider
-      runtime={runtime}
-      tenantKey="fixture-airline-demo-new"
-    >
+    <KnowledgeAppProvider runtime={runtime} tenantKey={tenantKey}>
       <KnowledgeShell />
     </KnowledgeAppProvider>
   );

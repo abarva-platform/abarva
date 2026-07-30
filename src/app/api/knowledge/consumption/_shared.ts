@@ -12,6 +12,7 @@ import {
   isFoundationPreviewOperatorSession,
   isFoundationPreviewTenantKey,
   isFoundationPreviewTenantSession,
+  resolveFoundationPreviewTenantKeyForSession,
 } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
@@ -87,10 +88,16 @@ export async function handleConsumption(
       tenantKey = canonicalTenantKey(ctx.clientKey ?? "");
       if (!tenantKey) throw new Error("no_client");
     } catch (err) {
-      try {
-        return tenancyErrorResponse(err);
-      } catch {
-        return Response.json({ error: "unauthenticated" }, { status: 401 });
+      const foundationTenantKey =
+        await resolveFoundationPreviewTenantKeyForSession();
+      if (foundationTenantKey) {
+        tenantKey = foundationTenantKey;
+      } else {
+        try {
+          return tenancyErrorResponse(err);
+        } catch {
+          return Response.json({ error: "unauthenticated" }, { status: 401 });
+        }
       }
     }
   }

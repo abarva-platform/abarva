@@ -2,8 +2,14 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { CANONICAL_AUTH_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
-import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
-import { resolveFoundationTenantKeyFromMetadata } from "@/lib/auth/foundation-route-access";
+import {
+  type FoundationTenantKey,
+  isFoundationTenantKey,
+} from "@/lib/tenant/foundation-tenants";
+import {
+  isFoundationRouteAllowedForMetadata,
+  resolveFoundationTenantKeyFromMetadata,
+} from "@/lib/auth/foundation-route-access";
 
 type MetadataRecord = Record<string, unknown>;
 
@@ -15,7 +21,16 @@ function metadataAllowsFoundationPreview(
   metadata: MetadataRecord | null | undefined,
   requestedTenantKey: string,
 ): boolean {
-  return resolveFoundationTenantKeyFromMetadata(metadata) === requestedTenantKey;
+  return (
+    resolveFoundationTenantKeyFromMetadata(metadata) === requestedTenantKey
+  );
+}
+
+function metadataAllowsRoute(
+  metadata: MetadataRecord | null | undefined,
+  pathname: string | null | undefined,
+): boolean {
+  return !pathname || isFoundationRouteAllowedForMetadata(pathname, metadata);
 }
 
 const FOUNDATION_PREVIEW_OPERATOR_EMAILS: ReadonlySet<string> = new Set(
@@ -83,6 +98,42 @@ export async function isFoundationPreviewTenantSession(
     return metadataAllowsFoundationPreview(userMetadata, tenantKey);
   } catch {
     return false;
+  }
+}
+
+export async function resolveFoundationPreviewTenantKeyForSession(
+  opts: { pathname?: string | null } = {},
+): Promise<FoundationTenantKey | null> {
+  let session: Awaited<ReturnType<typeof auth>> | null = null;
+  try {
+    session = await auth();
+  } catch {
+    session = null;
+  }
+  if (!session?.userId) return null;
+
+  const claimsMetadata = isRecord(session.sessionClaims)
+    ? isRecord(session.sessionClaims.publicMetadata)
+      ? session.sessionClaims.publicMetadata
+      : null
+    : null;
+  const claimsTenantKey =
+    resolveFoundationTenantKeyFromMetadata(claimsMetadata);
+  if (claimsTenantKey && metadataAllowsRoute(claimsMetadata, opts.pathname)) {
+    return claimsTenantKey;
+  }
+
+  try {
+    const user = await currentUser();
+    const userMetadata = isRecord(user?.publicMetadata)
+      ? user.publicMetadata
+      : null;
+    const userTenantKey = resolveFoundationTenantKeyFromMetadata(userMetadata);
+    return userTenantKey && metadataAllowsRoute(userMetadata, opts.pathname)
+      ? userTenantKey
+      : null;
+  } catch {
+    return null;
   }
 }
 
