@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,6 +17,7 @@ const identityControlMigrationPath = path.join(
   repoRoot,
   "supabase/migrations/20260730152000_foundation_v2_golden_slice_identity_controls.sql",
 );
+const identityControlMigrationSql = readFileSync(identityControlMigrationPath, "utf8");
 const proofOutput = args["proof-output"] ? path.resolve(process.cwd(), args["proof-output"]) : null;
 const workDir = mkdtempSync(path.join(tmpdir(), "foundation-v2-pg-"));
 const dataDir = path.join(workDir, "data");
@@ -25,6 +26,8 @@ const port = String(15432 + Math.floor(Math.random() * 1000));
 let postgresProcess;
 
 try {
+  assertIdentityMigrationHardeningIsProviderSafe(identityControlMigrationSql);
+
   requireCommand("initdb");
   requireCommand("postgres");
   requireCommand("pg_ctl");
@@ -169,6 +172,18 @@ function parseArgs(rawArgs) {
     index += 1;
   }
   return parsed;
+}
+
+function assertIdentityMigrationHardeningIsProviderSafe(sql) {
+  if (/^ALTER ROLE foundation_v2_golden_slice_(writer|reader)\b/m.test(sql)) {
+    throw new Error("identity-control migration must not use top-level ALTER ROLE; managed Postgres can deny it");
+  }
+  if (!sql.includes("EXCEPTION WHEN insufficient_privilege")) {
+    throw new Error("identity-control migration must handle ALTER ROLE insufficient_privilege explicitly");
+  }
+  if (!sql.includes("identity bootstrap readback must verify non-BYPASSRLS execution")) {
+    throw new Error("identity-control migration must preserve the bootstrap/readback gate requirement");
+  }
 }
 
 async function waitForReady() {
