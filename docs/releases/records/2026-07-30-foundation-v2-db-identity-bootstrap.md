@@ -40,6 +40,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up repair: bootstrap grants `schema_migrations` only when that relation exists, allowing Entra principal creation to run on the server `postgres` database before target proof-database grants are applied.
 - Follow-up repair: when Azure exposes Microsoft Entra role mapping but not the `pgaadauth_create_principal*` helper functions, bootstrap can create the dedicated role and map it to the supplied Entra object ID with a `SECURITY LABEL FOR "pgaadauth"` fallback, then read the object-ID mapping back from `pg_shseclabel`.
 - Follow-up repair: bootstrap now has explicit `principal` and `target` scopes. The server-control database phase creates and reads the Entra principal only; the proof-database phase performs grants and validates role membership. Optional role hardening and public-schema revokes are savepoint-protected so a permission denial becomes structured proof instead of aborting the transaction.
+- Follow-up repair: migration dry-run/apply can now use the same managed-identity PostgreSQL AAD wrapper as bootstrap, allowing target schema presence to be checked without falling back to an admin database URL.
 
 ## QA / Validation
 
@@ -65,6 +66,9 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up validation for Entra security-label fallback:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
   - Pass: `npm run foundation-v2:db-identity:self-test`
+  - Pass: `npm run test:foundation-v2-golden-slice-db`
+- Follow-up validation for AAD migration wrapper:
+  - Pass: `node --check scripts/foundation-v2/run-golden-slice-db-aad.mjs`
   - Pass: `npm run test:foundation-v2-golden-slice-db`
 - Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 

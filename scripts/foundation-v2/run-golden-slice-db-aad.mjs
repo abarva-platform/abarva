@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const args = parseArgs(process.argv.slice(2));
 if (args.help) {
@@ -37,6 +38,10 @@ async function main() {
   const port = process.env.FOUNDATION_V2_POSTGRES_PORT || "5432";
   process.env.ABARVA_AZURE_DATABASE_URL = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(token)}@${host}:${port}/${database}?sslmode=require`;
   process.env.DATABASE_URL = "";
+  if (args.target === "migration") {
+    runMigrationTarget(args.mode);
+    return;
+  }
 
   const thisFile = fileURLToPath(import.meta.url);
   const script =
@@ -48,6 +53,20 @@ async function main() {
   process.argv = [process.argv[0], path.join(path.dirname(thisFile), script), "--mode", args.mode];
   if (args.emitProofBundle) process.argv.push("--emit-proof-bundle");
   await import(`./${script}`);
+}
+
+function runMigrationTarget(mode) {
+  const migrationArgs = mode === "dry" ? ["run", "db:migrate:dry"] : mode === "apply" ? ["run", "db:migrate:ci"] : null;
+  if (!migrationArgs) throw new Error(`Unsupported migration mode ${mode}`);
+  const result = spawnSync("npm", migrationArgs, {
+    cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.."),
+    env: process.env,
+    stdio: "inherit",
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    process.exitCode = result.status ?? 1;
+  }
 }
 
 function parseArgs(argv) {
@@ -73,7 +92,9 @@ function parseArgs(argv) {
     else if (arg === "--help" || arg === "-h") parsed.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!["bootstrap", "execute", "verify"].includes(parsed.target)) throw new Error(`Unsupported target ${parsed.target}`);
+  if (!["bootstrap", "execute", "verify", "migration"].includes(parsed.target)) {
+    throw new Error(`Unsupported target ${parsed.target}`);
+  }
   return parsed;
 }
 
