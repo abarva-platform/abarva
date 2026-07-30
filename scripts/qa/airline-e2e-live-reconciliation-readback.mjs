@@ -95,6 +95,14 @@ function parseArgs(argv = process.argv.slice(2)) {
     skipDb: process.env.AIRLINE_E2E_SKIP_DB === "true",
     verbose: process.env.AIRLINE_E2E_VERBOSE === "true",
     emitProofBundle: process.env.EMIT_ACA_PROOF_BUNDLE === "true",
+    proofUploadAccount:
+      process.env.AIRLINE_E2E_PROOF_UPLOAD_ACCOUNT ||
+      process.env.ABARVA_AIRDN_STORAGE_ACCOUNT ||
+      "",
+    proofUploadContainer: process.env.AIRLINE_E2E_PROOF_UPLOAD_CONTAINER || "",
+    proofUploadPrefix:
+      process.env.AIRLINE_E2E_PROOF_UPLOAD_PREFIX ||
+      `airline-demo-new/live-reconciliation-readback/${new Date().toISOString().replace(/[:.]/g, "-")}`,
     sampleLimit: Number(process.env.AIRLINE_E2E_SAMPLE_LIMIT || 50),
     fieldDetail: process.env.AIRLINE_E2E_FIELD_DETAIL !== "false",
   };
@@ -112,6 +120,9 @@ function parseArgs(argv = process.argv.slice(2)) {
     else if (arg === "--skip-db") args.skipDb = true;
     else if (arg === "--verbose") args.verbose = true;
     else if (arg === "--emit-proof-bundle") args.emitProofBundle = true;
+    else if (arg === "--proof-upload-account") args.proofUploadAccount = next();
+    else if (arg === "--proof-upload-container") args.proofUploadContainer = next();
+    else if (arg === "--proof-upload-prefix") args.proofUploadPrefix = next();
     else if (arg === "--sample-limit") args.sampleLimit = Number(next());
     else if (arg === "--no-field-detail") args.fieldDetail = false;
     else if (arg === "--help" || arg === "-h") {
@@ -127,7 +138,13 @@ Options:
   --skip-db                Do not attempt a DB connection; source-side smoke only.
   --verbose                Print phase timings to stderr.
   --no-field-detail        Skip per-field detail CSV; keep field summary only.
-  --emit-proof-bundle      Emit __SEMANTIC2_PROOF_TGZ_* markers for ACA wrapper.
+  --emit-proof-bundle      Emit __SEMANTIC2_PROOF_TGZ_* pointer markers for ACA wrapper.
+  --proof-upload-account <name>
+                           Storage account for durable full proof upload.
+  --proof-upload-container <name>
+                           Blob container for durable full proof upload.
+  --proof-upload-prefix <path>
+                           Blob prefix for durable full proof upload.
 `);
       process.exit(0);
     } else {
@@ -1506,18 +1523,115 @@ Fix the earliest broken transition for every row in \`live-unexplained-variance-
 `;
 }
 
-function emitProofBundle(outDir) {
-  const tar = spawnSync("tar", ["-czf", "-", "-C", outDir, "."], {
-    encoding: "buffer",
+function createProofBundleArchive(outDir) {
+  const bundlePath = path.join(
+    os.tmpdir(),
+    `airline-e2e-live-reconciliation-readback-${Date.now()}.tgz`,
+  );
+  const tar = spawnSync("tar", ["-czf", bundlePath, "-C", outDir, "."], {
+    encoding: "utf8",
+    maxBuffer: 1024 * 1024,
   });
   if (tar.status !== 0) {
     throw new Error(
-      `Failed to create proof bundle: ${tar.stderr?.toString() || tar.stdout?.toString() || "tar failed"}`,
+      `Failed to create proof bundle: ${tar.stderr || "tar failed"}`,
     );
+  }
+  const bytes = fs.readFileSync(bundlePath);
+  return {
+    path: bundlePath,
+    bytes: bytes.length,
+    sha256: sha256(bytes),
+  };
+}
+
+function safeBlobPart(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/[^A-Za-z0-9._/-]+/g, "-");
+}
+
+async function uploadProofBundle(bundle, args) {
+  if (!args.proofUploadAccount || !args.proofUploadContainer) return null;
+  const service = await blobServiceClient(args.proofUploadAccount);
+  const prefix = safeBlobPart(args.proofUploadPrefix);
+  const blobName = `${prefix ? `${prefix}/` : ""}airline-e2e-live-reconciliation-readback.tgz`;
+  const blob = service
+    .getContainerClient(args.proofUploadContainer)
+    .getBlockBlobClient(blobName);
+  await blob.uploadFile(bundle.path, {
+    blobHTTPHeaders: { blobContentType: "application/gzip" },
+    metadata: {
+      tenant: TENANT_TOKEN.toLowerCase().replace(/_/g, "-"),
+      sourceRelease: SOURCE_RELEASE_ID,
+      baselineHash: EXPECTED_BASELINE_HASH,
+      proofSha256: bundle.sha256,
+    },
+  });
+  return {
+    account: args.proofUploadAccount,
+    container: args.proofUploadContainer,
+    blob: blobName,
+    url: blob.url,
+  };
+}
+
+function emitSmallPointerBundle(pointer) {
+  const pointerDir = fs.mkdtempSync(path.join(os.tmpdir(), "airline-recon-proof-pointer-"));
+  fs.writeFileSync(
+    path.join(pointerDir, "PROOF_BUNDLE_POINTER.json"),
+    `${JSON.stringify(pointer, null, 2)}\n`,
+  );
+  const tar = spawnSync("tar", ["-czf", "-", "-C", pointerDir, "."], {
+    encoding: "buffer",
+    maxBuffer: 1024 * 1024,
+  });
+  if (tar.status !== 0) {
+    throw new Error(`Failed to create proof pointer bundle: ${tar.stderr?.toString() || "tar failed"}`);
   }
   console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
   console.log(tar.stdout.toString("base64"));
   console.log("__SEMANTIC2_PROOF_TGZ_END__");
+}
+
+async function emitProofBundle(outDir, args) {
+  const bundle = createProofBundleArchive(outDir);
+  const upload = await uploadProofBundle(bundle, args);
+  const pointer = {
+    generated_at: new Date().toISOString(),
+    tenant_key: TENANT_KEY,
+    source_release_id: SOURCE_RELEASE_ID,
+    baseline_id: BASELINE_ID,
+    full_proof_bundle: {
+      local_path: bundle.path,
+      bytes: bundle.bytes,
+      sha256: bundle.sha256,
+      uploaded: Boolean(upload),
+      upload,
+    },
+    log_contract:
+      "ACA logs contain this small pointer bundle only. The full field-level proof is stored in Blob when upload is configured.",
+  };
+  fs.writeFileSync(
+    path.join(outDir, "PROOF_BUNDLE_POINTER.json"),
+    `${JSON.stringify(pointer, null, 2)}\n`,
+  );
+  emitSmallPointerBundle(pointer);
+  console.log(
+    JSON.stringify(
+      {
+        proofBundle: {
+          bytes: bundle.bytes,
+          sha256: bundle.sha256,
+          uploaded: Boolean(upload),
+          blob: upload ? `${upload.container}/${upload.blob}` : null,
+        },
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 async function main() {
@@ -1828,7 +1942,7 @@ async function main() {
     ),
   );
 
-  if (args.emitProofBundle) emitProofBundle(args.outDir);
+  if (args.emitProofBundle) await emitProofBundle(args.outDir, args);
 }
 
 main().catch((error) => {
