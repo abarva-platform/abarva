@@ -8,9 +8,11 @@
  */
 
 import {
+  AUTHORITY_STATES,
   AVAILABILITY_STATES,
   envelopeMetaSchema,
   findContentSafetyViolations,
+  FRESHNESS_STATES,
   PROJECTION_CONTRACT_VERSION,
 } from "..";
 
@@ -60,9 +62,35 @@ describe("envelope contract", () => {
   it("enumerates exactly the ten contract availability states", () => {
     expect([...AVAILABILITY_STATES].sort()).toEqual(
       [
-        "accepted", "available", "candidate", "conflicting", "not_applicable",
-        "not_loaded", "not_measured", "stale", "superseded", "withheld",
+        "accepted",
+        "available",
+        "candidate",
+        "conflicting",
+        "not_applicable",
+        "not_loaded",
+        "not_measured",
+        "stale",
+        "superseded",
+        "withheld",
       ].sort(),
+    );
+  });
+
+  // Knowledge provider reconciliation (2026-07-30): the view-model assembler's
+  // deriveReadiness() (src/lib/knowledge/view-model/readiness.ts) depends on
+  // these two enumerations being stable — a silent enum drift here would
+  // silently break its derivation table. See
+  // reports/airline-knowledge-provider-reconciliation-2026-07-30/
+  // VIEW_MODEL_ASSEMBLER_INTERFACES.md §1.
+  it("enumerates exactly the five contract authority states", () => {
+    expect([...AUTHORITY_STATES].sort()).toEqual(
+      ["accepted", "candidate", "published", "retired", "superseded"].sort(),
+    );
+  });
+
+  it("enumerates exactly the four contract freshness states", () => {
+    expect([...FRESHNESS_STATES].sort()).toEqual(
+      ["fresh", "not_applicable", "not_loaded", "stale"].sort(),
     );
   });
 });
