@@ -18,6 +18,7 @@ import {
   emitProofBundle,
   expectedPersistenceFingerprint,
   expectedTransitionResults,
+  GATE_RESULT_ORDER_SQL,
   foundationPostgresClientOptions,
   parseArgs,
   proofRef,
@@ -1414,7 +1415,7 @@ async function dbPersistenceFingerprint(client) {
     `SELECT gate_id, transition, input_count, output_count, unexplained_variance, gate_status
        FROM foundation_v2.gate_results
       WHERE tenant_key=$1 AND test_namespace=$2
-      ORDER BY gate_id`,
+      ORDER BY ${GATE_RESULT_ORDER_SQL}`,
     [TENANT_KEY, TEST_NAMESPACE],
   );
   const querySets = {

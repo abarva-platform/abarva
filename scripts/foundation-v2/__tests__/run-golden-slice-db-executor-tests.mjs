@@ -13,6 +13,8 @@ import {
   MIGRATION_NAME,
   WRITE_POLICY_MIGRATION_NAME,
   buildFixturePlan,
+  compareGateResultOrder,
+  GATE_RESULT_ORDER_SQL,
   readFixtureSet,
 } from "../golden-slice-support.mjs";
 
@@ -34,6 +36,17 @@ if (plan.source_field_rows.length !== plan.expected_layer_totals.L2_parsed_rows 
 if (plan.baseline_id.includes("knowledge-baseline-v1")) failures.push("baseline id resembles V1 active baseline");
 if (new Set(plan.rows.map((row) => row.canonical_object_id)).size !== 21) {
   failures.push("expected object ids should stay unique across fixtures");
+}
+const orderedGateIds = [
+  { gate_id: "F2-GATE-L10-L11" },
+  { gate_id: "F2-GATE-L1-L2" },
+  { gate_id: "F2-GATE-L9-L12" },
+].sort(compareGateResultOrder).map((gate) => gate.gate_id);
+if (orderedGateIds.join(",") !== "F2-GATE-L1-L2,F2-GATE-L10-L11,F2-GATE-L9-L12") {
+  failures.push(`gate result order contract drifted: ${orderedGateIds.join(",")}`);
+}
+if (!GATE_RESULT_ORDER_SQL.includes("WHEN 'F2-GATE-L10-L11' THEN 10")) {
+  failures.push("gate result SQL order contract missing L10 transition ordinal");
 }
 
 for (const [script, mode] of [

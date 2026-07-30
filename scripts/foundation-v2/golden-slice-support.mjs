@@ -109,6 +109,22 @@ export const TRANSITIONS = [
   ["F2-GATE-L10-L11", "L10->L11", "L10_cube_outputs", "L11_product_claims"],
   ["F2-GATE-L9-L12", "L9/L10->L12", "L9_projection_rows", "L12_ava_outputs"],
 ];
+const GATE_RESULT_ORDER = new Map(TRANSITIONS.map(([gateId], index) => [gateId, index]));
+export const GATE_RESULT_ORDER_SQL = [
+  "CASE gate_id",
+  ...TRANSITIONS.map(([gateId], index) => `WHEN '${gateId}' THEN ${index}`),
+  "ELSE 999 END",
+  ", gate_id",
+].join(" ");
+
+export function compareGateResultOrder(a, b) {
+  const left = GATE_RESULT_ORDER.get(a.gate_id) ?? 999;
+  const right = GATE_RESULT_ORDER.get(b.gate_id) ?? 999;
+  if (left !== right) return left - right;
+  if (a.gate_id < b.gate_id) return -1;
+  if (a.gate_id > b.gate_id) return 1;
+  return 0;
+}
 
 const REQUIRED_FIXTURE_NAMES = new Set([
   "accepted_source_row",
@@ -566,7 +582,7 @@ export function expectedPersistenceFingerprint(plan) {
           unexplained_variance: gate.unexplained_variance,
           gate_status: gate.status,
         }))
-        .sort((a, b) => a.gate_id.localeCompare(b.gate_id)),
+        .sort(compareGateResultOrder),
     }),
   );
 }
