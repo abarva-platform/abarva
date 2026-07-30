@@ -56,7 +56,8 @@ async function main() {
 }
 
 function runMigrationTarget(mode) {
-  const migrationArgs = mode === "dry" ? ["run", "db:migrate:dry"] : mode === "apply" ? ["run", "db:migrate:ci"] : null;
+  const migrationArgs =
+    mode === "dry" ? ["run", "foundation-v2:migrate:dry"] : mode === "apply" ? ["run", "foundation-v2:migrate:apply"] : null;
   if (!migrationArgs) throw new Error(`Unsupported migration mode ${mode}`);
   const result = spawnSync("npm", migrationArgs, {
     cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.."),
