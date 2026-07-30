@@ -45,6 +45,18 @@ for (const [script, mode] of [
   }
 }
 
+const aadWrapperSource = readFileSync(path.join(repoRoot, "scripts/foundation-v2/run-golden-slice-db-aad.mjs"), "utf8");
+for (const requiredTokenBinding of [
+  "IDENTITY_ENDPOINT",
+  "IDENTITY_HEADER",
+  "X-IDENTITY-HEADER",
+  "https://ossrdbms-aad.database.windows.net",
+]) {
+  if (!aadWrapperSource.includes(requiredTokenBinding)) {
+    failures.push(`AAD wrapper missing ACA token binding marker ${requiredTokenBinding}`);
+  }
+}
+
 const executorProof = JSON.parse(
   readFileSync(path.join(outDir, "FOUNDATION_V2_GOLDEN_SLICE_EXECUTOR_SELF_TEST.json"), "utf8"),
 );

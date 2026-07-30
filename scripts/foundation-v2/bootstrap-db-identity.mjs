@@ -223,10 +223,14 @@ async function aadFunctionReadback(client) {
 }
 
 async function aadPrincipalReadback(client, roleName) {
+  await client.query("SAVEPOINT foundation_v2_pgaadauth_principals");
   try {
     const rows = (await client.query("SELECT to_jsonb(t) AS principal FROM pgaadauth_list_principals(false) AS t")).rows;
+    await client.query("RELEASE SAVEPOINT foundation_v2_pgaadauth_principals");
     return rows.map((row) => row.principal).filter((principal) => JSON.stringify(principal).includes(roleName));
   } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT foundation_v2_pgaadauth_principals").catch(() => {});
+    await client.query("RELEASE SAVEPOINT foundation_v2_pgaadauth_principals").catch(() => {});
     return [{ readback_error: error.message }];
   }
 }
@@ -367,6 +371,12 @@ function selfTestProof() {
   const createWithOidSql = "SELECT * FROM pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)";
   if (!createWithOidSql.includes("pgaadauth_create_principal_with_oid")) {
     defects.push("object-id principal creation path missing");
+  }
+  if (!ensureAadExtension.toString().includes("ROLLBACK TO SAVEPOINT")) {
+    defects.push("AAD extension bootstrap does not preserve transaction state after create failure");
+  }
+  if (!aadPrincipalReadback.toString().includes("ROLLBACK TO SAVEPOINT")) {
+    defects.push("AAD principal readback does not preserve transaction state after readback failure");
   }
   return {
     status:

@@ -52,6 +52,8 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
   - Pass: `node --check scripts/foundation-v2/run-golden-slice-db-aad.mjs`
 - Follow-up validation for AAD extension savepoint handling:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
+  - Pass: `npm run test:foundation-v2-golden-slice-db` covers the ACA token binding markers.
+- Follow-up repair: optional AAD extension creation and principal readback now use savepoints so failed optional probes cannot abort the bootstrap transaction before structured proof is emitted.
 - Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 
 Not run yet: live golden-slice database execution; this release only adds the bootstrap and managed-identity execution path needed before that run.
