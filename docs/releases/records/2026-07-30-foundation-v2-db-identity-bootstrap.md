@@ -43,6 +43,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up repair: migration dry-run/apply can now use the same managed-identity PostgreSQL AAD wrapper as bootstrap, allowing target schema presence to be checked without falling back to an admin database URL.
 - Follow-up repair: the Foundation V2 migration wrapper now runs only the three approved golden-slice migration files and emits a proof bundle, instead of invoking the broad historical migration runner.
 - Follow-up repair: the approved migration runner now distinguishes a pending readback entry from an applied ledger row, applies pending approved migrations, and fails closed if any approved migration remains pending after apply.
+- Follow-up repair: managed PostgreSQL role bootstrap and schema readback now tolerate `rolinherit=true` only when the role has no superuser, create-role, create-db, replication, or BYPASSRLS privileges and explicit `SET ROLE` plus RLS proof still pass.
 
 ## QA / Validation
 
@@ -78,6 +79,11 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
   - Pass: `node --check scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs`
   - Pass: `npm run test:foundation-v2-golden-slice-db`
   - Pass: `npm run lint -- scripts/foundation-v2/apply-approved-migrations.mjs scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs`
+- Follow-up validation for managed PostgreSQL inheritance tolerance:
+  - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
+  - Pass: `node --check scripts/foundation-v2/execute-golden-slice-db.mjs`
+  - Pass: `npm run foundation-v2:db-identity:self-test`
+  - Pass: `npm run test:foundation-v2-golden-slice-db`
 - Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 
 Not run yet: live golden-slice database execution; this release only adds the bootstrap and managed-identity execution path needed before that run.
