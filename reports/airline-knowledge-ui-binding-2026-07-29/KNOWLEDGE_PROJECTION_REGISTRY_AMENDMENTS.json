@@ -1,0 +1,346 @@
+{
+  "amendment_package": "airline-knowledge-ui-binding-2026-07-29",
+  "amends_registry_version": "phase3c2d-consumption-contracts-v1.0.0",
+  "status": "proposed_amendments_only_no_runtime_mutation",
+  "note": "Shape is consistent with clients/shared/20-phase3c2d-consumption-contracts/CONSUMPTION_PROJECTION_REGISTRY.json (worktree nexus-consumption-3c2d). Every new_projections entry follows that file's existing object shape exactly (projection_name, consumers, purpose, source_publication, build_gate, partial_data_behavior, key_fields, required_metadata). amend_projections entries name the existing projection_name and list only the delta. investigate_before_register entries are populated tables that must NOT be registered as-is until an open question is resolved -- registering them today would encode contract drift (SD-04 pattern) rather than fix it.",
+  "new_projections": [
+    {
+      "projection_name": "consumption.industry_benchmark_v1",
+      "consumers": ["Home / Knowledge Brief"],
+      "purpose": "external cohort comparison statistics for named tenant metrics, structurally separate from tenant's own accepted facts",
+      "source_publication": "publication.industry_benchmark_publication_v1",
+      "build_gate": "optional; a metric may render without a benchmark row, never the reverse",
+      "partial_data_behavior": "a benchmark row without a matching tenant metric_observation_v1 value must not render a tenant position on the bar",
+      "key_fields": ["tenant_key", "metric_id", "cohort_vintage"],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#2",
+      "blocks_matrix_rows": ["Brief / Industry benchmarks"],
+      "gap_register_ref": "PROJECTION_MISSING (Brief Benchmarks row)"
+    },
+    {
+      "projection_name": "consumption.industry_pattern_v1",
+      "consumers": ["Home / Knowledge Brief"],
+      "purpose": "cross-carrier/cross-industry observed patterns explicitly linked to tenant evidence gaps that would confirm or deny applicability",
+      "source_publication": "publication.industry_pattern_publication_v1",
+      "build_gate": "optional",
+      "partial_data_behavior": "a pattern's applicability_rating may not render without at least one real linked_gap_id resolving in consumption.evidence_gap_v1",
+      "key_fields": ["pattern_id", "industry", "publication_vintage"],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#3",
+      "blocks_matrix_rows": ["Brief / Industry patterns"],
+      "gap_register_ref": "PROJECTION_MISSING (Brief Patterns row)"
+    },
+    {
+      "projection_name": "consumption.source_registry_summary_v1",
+      "consumers": [
+        "Home / Knowledge Brief",
+        "Home / Knowledge Evidence & gaps"
+      ],
+      "purpose": "consumption-safe, Layer-3-derived summary of source material this tenant's knowledge is built from -- exposes what source_registry.source (Layer 1/2) cannot lawfully be read directly by any product",
+      "source_publication": "publication.active_knowledge_baseline",
+      "build_gate": "required before the Brief 'what it stands on' section or the Evidence 'where it came from' section may render",
+      "partial_data_behavior": "a source with state=awaited renders with received_date=null and availability_state=not_loaded, never omitted from the list",
+      "key_fields": ["tenant_key", "source_id", "knowledge_baseline_ref"],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#4",
+      "blocks_matrix_rows": [
+        "Brief / Sources list",
+        "Evidence & gaps / Sources list"
+      ],
+      "gap_register_ref": "GAP-13"
+    },
+    {
+      "projection_name": "consumption.infrastructure_inventory_v1",
+      "consumers": ["Home / Intelligence", "Cube (new measure needed)"],
+      "purpose": "infrastructure/cloud platform inventory -- the single largest source family in the corpus (10,000 rows) with zero current downstream representation",
+      "source_publication": "publication.infrastructure_publication_v1",
+      "build_gate": "required before Explore Infrastructure and cloud table renders",
+      "partial_data_behavior": "no zero substitution for missing owner/recovery_objective",
+      "key_fields": ["tenant_key", "platform_id", "content_hash"],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#9",
+      "blocks_matrix_rows": [
+        "Explore / Infrastructure and cloud inventory table"
+      ],
+      "gap_register_ref": "GAP-04 (SD-03)"
+    },
+    {
+      "projection_name": "consumption.data_product_inventory_v1",
+      "consumers": ["Home / Intelligence", "Cube DataAnalyticsEstate"],
+      "purpose": "accepted data-product inventory with stewardship, certification and sensitivity -- registers a table that is ALREADY POPULATED (6,580 rows) and already read by the shipped Cube model, but has never been declared in the governed registry",
+      "source_publication": "publication.data_publication_v1",
+      "build_gate": "required before Explore Data products table or Cube DataAnalyticsEstate.data_product_count render",
+      "partial_data_behavior": "no zero substitution for missing steward/certification",
+      "key_fields": ["tenant_key", "data_product_id", "content_hash"],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#7",
+      "blocks_matrix_rows": ["Explore / Data products inventory table"],
+      "gap_register_ref": "GAP-04 (SD-04)",
+      "special_condition": "Before this entry is accepted as-is, CANONICAL_TO_PUBLICATION_MAPPING.xlsx's existing confirmed mapping of knowledge.data_product -> domain_summary_v1 (implying ~1,250 source rows) must be reconciled against this table's actual 6,580 rows -- either the mapping doc is corrected with a documented 5.26x transformation, or this object is redefined at the grain the 6,580 rows actually represent. Do not register blindly against the live row count without resolving this discrepancy; that would just move the contract-drift problem rather than close it."
+    },
+    {
+      "projection_name": "consumption.decision_readiness_v1",
+      "consumers": [
+        "Home / Knowledge Evidence & gaps",
+        "Home / Knowledge Brief"
+      ],
+      "purpose": "decision-level readiness rollup once the canonical Decision object exists in Layer 3",
+      "source_publication": "publication.decision_publication_v1 (new; depends on canonical Decision object being ratified first)",
+      "build_gate": "required after the canonical Decision object type is ratified in the Enterprise Information Architecture -- this projection cannot be built before that",
+      "partial_data_behavior": "readiness_state is always derived, never hand-set; a decision whose inputs are unresolved renders 'Not assessed', never a default value",
+      "key_fields": ["tenant_key", "decision_id", "knowledge_baseline_ref"],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#12",
+      "blocks_matrix_rows": [
+        "Evidence & gaps / Decision-readiness summary tiles",
+        "Evidence & gaps / Decisions-and-what-closes-them list",
+        "Brief / Goals",
+        "Brief / Decision quadrant lanes"
+      ],
+      "gap_register_ref": "GAP-05, GAP-06",
+      "prerequisite": "Canonical Decision object (Layer 3) must be ratified before this projection is meaningful; do not build the projection first and backfill the object later."
+    },
+    {
+      "projection_name": "consumption.contradiction_v1",
+      "consumers": ["Home / Knowledge Evidence & gaps"],
+      "purpose": "tracked disagreements between two accepted sources, with owner and downstream effect",
+      "source_publication": "publication.contradiction_publication_v1 (new; depends on canonical Contradiction object being ratified first)",
+      "build_gate": "required after the canonical Contradiction object type is ratified",
+      "partial_data_behavior": "both conflicting statements must independently resolve to authority_state=accepted before a contradiction may be published; a stale-vs-current mismatch is not a contradiction",
+      "key_fields": [
+        "tenant_key",
+        "contradiction_id",
+        "knowledge_baseline_ref"
+      ],
+      "required_metadata": [
+        "tenant_key",
+        "knowledge_baseline_ref",
+        "domain_publication_ref",
+        "projection_contract_version",
+        "as_of_date",
+        "authority_state",
+        "freshness_state",
+        "availability_state",
+        "evidence_coverage",
+        "content_hash"
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#12",
+      "blocks_matrix_rows": ["Evidence & gaps / Contradictions list"],
+      "gap_register_ref": "GAP-06",
+      "prerequisite": "Canonical Contradiction object (Layer 3) must be ratified first.",
+      "live_example_of_the_defect_this_closes": "SD-02 (service_tower disagrees between an application row and its own linked contract row for the same contract_id) is a real, already-found instance of exactly the shape this object needs to track."
+    }
+  ],
+  "amend_projections": [
+    {
+      "projection_name": "consumption.enterprise_identity_v1",
+      "amendment_type": "add_fields",
+      "add_fields": [
+        {
+          "name": "operating_stats",
+          "type": "array<object>",
+          "description": "industry-specific structured stat tiles (e.g. fleet_count for airline tenants), each independently availability-stated; NOT a hardcoded airline-only field list -- declared per-industry"
+        }
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#1",
+      "blocks_matrix_rows": ["Brief / Identity panel"],
+      "gap_register_ref": "GAP-10 (partial)"
+    },
+    {
+      "projection_name": "consumption.metric_observation_v1",
+      "amendment_type": "clarify_fields_and_resolve_naming_collision",
+      "resolve_naming_collision": "Exactly one governed name must survive: consumption.metric_observation_v1. Retire metric_catalog_v1 and stop referencing it in any closure/reporting artifact once retired.",
+      "add_fields": [
+        { "name": "current_value", "type": "numeric | null" },
+        { "name": "target_value", "type": "numeric | null" },
+        { "name": "target_date", "type": "date | null" },
+        { "name": "disclosure_level", "type": "enum(board, operational)" }
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#6",
+      "blocks_matrix_rows": [
+        "Explore / Measures (KPIs) inventory table",
+        "Current versus target / Trajectory chart"
+      ],
+      "gap_register_ref": "GAP-02 (SD-06)"
+    },
+    {
+      "projection_name": "consumption.evidence_gap_v1",
+      "amendment_type": "add_fields",
+      "add_fields": [
+        { "name": "control_count", "type": "integer" },
+        { "name": "last_tested_date", "type": "date | null" },
+        { "name": "control_state", "type": "enum(controlled, partial, none)" }
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#5",
+      "blocks_matrix_rows": ["Explore / Risks and controls inventory table"],
+      "gap_register_ref": "GAP-01 (SD-05)",
+      "note": "Field extension is necessary but NOT sufficient -- the pipeline producing 0 rows against 650 real risk-register rows must be fixed first; adding fields to an empty table does not close SD-05."
+    },
+    {
+      "projection_name": "consumption.relationship_node_v1",
+      "amendment_type": "add_fields",
+      "add_fields": [
+        { "name": "state_scope", "type": "enum(current, target)" },
+        {
+          "name": "target_approval_state",
+          "type": "enum(proposed, approved) | null"
+        },
+        { "name": "endpoint_catalog_backed", "type": "boolean" }
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#10",
+      "blocks_matrix_rows": [
+        "Relationships / Graph canvas nodes",
+        "Relationships / Current-vs-target overlay toggle"
+      ],
+      "gap_register_ref": "GAP-07, and the SD-08/SD-14 filtering requirement"
+    },
+    {
+      "projection_name": "consumption.relationship_edge_v1",
+      "amendment_type": "add_fields",
+      "add_fields": [
+        { "name": "state_scope", "type": "enum(current, target)" },
+        {
+          "name": "target_approval_state",
+          "type": "enum(proposed, approved) | null"
+        },
+        { "name": "endpoint_catalog_backed", "type": "boolean" }
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#10",
+      "blocks_matrix_rows": [
+        "Relationships / Graph canvas edges",
+        "Relationships / Relationship list view"
+      ],
+      "gap_register_ref": "GAP-07, and the SD-08/SD-14 filtering requirement",
+      "acceptance_test": "COUNT(*) WHERE endpoint_catalog_backed = false AND authority_state = 'accepted' must equal 0 after this amendment is enforced."
+    },
+    {
+      "projection_name": "consumption.relationship_evidence_v1",
+      "amendment_type": "add_fields",
+      "add_fields": [
+        { "name": "confidence", "type": "enum(high, medium, low)" },
+        { "name": "review_state", "type": "enum(pending, reviewed)" },
+        {
+          "name": "authority_state_detail",
+          "type": "enum(authoritative, not_authoritative)"
+        },
+        { "name": "effective_from", "type": "date" },
+        { "name": "effective_to", "type": "date | null" }
+      ],
+      "target_read_model_contract_ref": "KNOWLEDGE_TARGET_READ_MODEL_CONTRACTS.md#11",
+      "blocks_matrix_rows": ["Relationships / Edge click evidence drawer"],
+      "gap_register_ref": "GAP-10 (partial)"
+    },
+    {
+      "projection_name": "consumption.application_inventory_v1",
+      "amendment_type": "add_fields_and_fix_data_quality",
+      "add_fields": [
+        { "name": "run_cost", "type": "numeric | null" },
+        { "name": "target_lifecycle_action", "type": "string | null" },
+        { "name": "dependency_count", "type": "integer | null" },
+        {
+          "name": "row_readiness_state",
+          "type": "enum(accepted, awaiting_review, sources_disagree, needs_refresh, owner_not_assigned)"
+        }
+      ],
+      "fix_data_quality": [
+        "SD-01: application_type must be a real business taxonomy field; move any 'regional duplicate'-style dedup flag to a separate data-quality field, never the business type.",
+        "SD-02: service_tower must be assigned once per canonical entity and propagated, not independently re-derived per source file -- fix the application-vs-contract disagreement for CONT-AIRDN-0002."
+      ],
+      "target_read_model_contract_ref": "N/A -- see KNOWLEDGE_DATA_MODEL_GAP_REGISTER.md P2 table",
+      "blocks_matrix_rows": ["Explore / Applications inventory table"],
+      "gap_register_ref": "SD-01, SD-02"
+    },
+    {
+      "projection_name": "consumption.vendor_contract_inventory_v1",
+      "amendment_type": "clarify_grain",
+      "clarify_grain": "Confirm and document whether this object is vendor-grain (420 rows, matches vendor-register.csv exactly) or contract-grain (should be 820 rows, matching vendor-contract-register.csv). If vendor-grain, active_contract_count and contract_renewal_exposure Cube measures must either be redefined as vendor-level rollups or a separate contract-grain object must be added.",
+      "target_read_model_contract_ref": "N/A -- see KNOWLEDGE_DATA_MODEL_GAP_REGISTER.md GAP-11",
+      "blocks_matrix_rows": ["Explore / Vendors inventory table"],
+      "gap_register_ref": "GAP-11 (SD-07)"
+    }
+  ],
+  "investigate_before_register": [
+    {
+      "table_name": "consumption.technology_estate_v1",
+      "current_row_count": 1405,
+      "concern": "Row count is identical to application_inventory_v1's 1,405 rows, suggesting this may be a denormalized copy rather than a distinct infra/integration object. Registering it as-is without resolving this would encode an unexplained duplication into the governed contract.",
+      "required_before_registration": "Prove distinct source lineage (register with a real source_publication), OR confirm it is a copy and retire it, redirecting Cube TechnologyEstate.legacy_platform_count to application_inventory_v1 directly. Also note the Cube YAML's own TechnologyEstate.integration_count measure already overrides sql_table to read relationship_edge_v1 instead of this table -- an internal inconsistency independent of tenant data.",
+      "gap_register_ref": "GAP-04 (secondary finding)"
+    }
+  ],
+  "not_amendments_flag_for_operational_ui_layer": {
+    "note": "The following are correctly application-layer / operational UI tables per the ground rules and must NOT be added to CONSUMPTION_PROJECTION_REGISTRY.json under any amendment: saved_view (Explore Save/Export, Saved views and export), ava_suggested_question (aVa), ava_dock_preference (aVa), relationship_preset_query (Relationships). See KNOWLEDGE_DATA_MODEL_GAP_REGISTER.md P3 section for their minimal field lists.",
+    "objects": [
+      "saved_view",
+      "ava_suggested_question",
+      "ava_dock_preference",
+      "relationship_preset_query"
+    ]
+  }
+}
