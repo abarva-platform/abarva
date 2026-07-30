@@ -130,6 +130,7 @@ function runDbReplay() {
     assertStatus(statuses.apply, "FOUNDATION_V2_GOLDEN_SLICE_EXECUTOR_APPLIED", "apply replay");
     assertStatus(statuses.verify, "FOUNDATION_V2_GOLDEN_SLICE_CERTIFIED", "verify replay");
     assertStatus(statuses.idempotency, "FOUNDATION_V2_GOLDEN_SLICE_ALREADY_APPLIED_EXACT_MATCH", "idempotency replay");
+    const proofTailCapturable = assertEmitProofTailCapturable(env, path.join(proofDir, "emit-proof-tail"));
 
     const superuserReadback = spawnSync(
       "node",
@@ -203,6 +204,7 @@ function runDbReplay() {
     return {
       statuses,
       negatives: {
+        proof_tail_capturable: proofTailCapturable,
         superuser_schema_readback_failed: true,
         wrong_tenant_insert_failed: true,
         non_writer_schema_readback_failed: true,
@@ -288,6 +290,38 @@ function runTamperVerifierCase(name, tamperSql, expectedFirstBrokenTransition) {
     run("pg_ctl", ["-D", dataDir, "stop", "-m", "fast"], { allowFailure: true });
     rmSync(workDir, { recursive: true, force: true });
   }
+}
+
+function assertEmitProofTailCapturable(env, proofDir) {
+  const result = run(
+    "node",
+    [
+      path.join(repoRoot, "scripts/foundation-v2/execute-golden-slice-db.mjs"),
+      "--mode",
+      "schema-readback",
+      "--out-dir",
+      proofDir,
+      "--emit-proof-bundle",
+    ],
+    { env },
+  );
+  const lines = result.stdout.trim().split(/\n/);
+  const last = JSON.parse(lines.at(-1));
+  if (last.foundation_v2_compact_result !== "schema-readback") {
+    throw new Error(`last proof-tail line was not compact schema readback: ${lines.at(-1)}`);
+  }
+  if (last.status !== "FOUNDATION_V2_SCHEMA_READBACK_PASSED") {
+    throw new Error(`proof-tail compact status ${last.status}`);
+  }
+  const endMarkerIndex = lines.lastIndexOf("__SEMANTIC2_PROOF_TGZ_END__");
+  if (endMarkerIndex !== lines.length - 2) {
+    throw new Error("proof bundle marker is not immediately before compact tail summary");
+  }
+  const beginMarkerIndex = lines.lastIndexOf("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  if (beginMarkerIndex < 0 || beginMarkerIndex >= endMarkerIndex) {
+    throw new Error("proof bundle begin marker missing before end marker");
+  }
+  return true;
 }
 
 function requireCommand(command) {

@@ -103,26 +103,123 @@ async function main(options) {
       const schema = await schemaReadback(client);
       writeJson(proofRef(options.outDir, "FOUNDATION_V2_GOLDEN_SLICE_SCHEMA_READBACK.json"), schema);
       writeSecurityProof(options.outDir, schema);
-      if (options.emitProofBundle) emitProofBundle(options.outDir);
+      if (options.emitProofBundle) printCompactResult("schema-readback", schema);
       console.log(JSON.stringify(schema, null, 2));
+      if (options.emitProofBundle) emitProofBundle(options.outDir);
+      if (options.emitProofBundle) printCompactResult("schema-readback", schema);
       if (schema.status !== "FOUNDATION_V2_SCHEMA_READBACK_PASSED") process.exitCode = 1;
       return;
     }
     if (options.mode === "preflight") {
       const proof = await preflight(client, plan);
       writeJson(proofRef(options.outDir, "FOUNDATION_V2_GOLDEN_SLICE_PREFLIGHT.json"), proof);
-      if (options.emitProofBundle) emitProofBundle(options.outDir);
+      if (options.emitProofBundle) printCompactResult("preflight", proof);
       console.log(JSON.stringify(proof, null, 2));
+      if (options.emitProofBundle) emitProofBundle(options.outDir);
+      if (options.emitProofBundle) printCompactResult("preflight", proof);
       if (proof.status !== "FOUNDATION_V2_GOLDEN_SLICE_PREFLIGHT_PASSED") process.exitCode = 1;
       return;
     }
     if (options.mode !== "apply") throw new Error(`Unsupported mode ${options.mode}`);
     const result = await applyGoldenSlice(client, plan, options.outDir);
-    if (options.emitProofBundle) emitProofBundle(options.outDir);
+    if (options.emitProofBundle) printCompactResult("apply", result);
     console.log(JSON.stringify(result, null, 2));
+    if (options.emitProofBundle) emitProofBundle(options.outDir);
+    if (options.emitProofBundle) printCompactResult("apply", result);
   } finally {
     await client.end();
   }
+}
+
+function printCompactResult(mode, result) {
+  console.log(
+    JSON.stringify({
+      foundation_v2_compact_result: mode,
+      status: result.status,
+      defects: compactDefects(result),
+      summary: compactSummary(result),
+    }),
+  );
+}
+
+function compactDefects(result) {
+  if (Array.isArray(result.defects)) return result.defects;
+  if (result.status === "FOUNDATION_V2_SCHEMA_READBACK_PASSED") return [];
+  if (result.summary) return schemaReadbackDefects(result);
+  return [];
+}
+
+function compactSummary(result) {
+  if (!result.summary) {
+    return {
+      tenant_key: result.tenant_key,
+      test_namespace: result.test_namespace,
+      row_variance: result.row_variance,
+      field_variance: result.field_variance,
+      first_broken_transition: result.first_broken_transition,
+    };
+  }
+  return {
+    table_count: result.summary.table_count,
+    rls_tables: result.summary.rls_tables,
+    insert_policy_count: result.summary.insert_policy_count,
+    writer_insert_policies: result.summary.writer_insert_policies,
+    pinned_writer_insert_policies: result.summary.pinned_writer_insert_policies,
+    policies_with_admin_bypass: result.summary.policies_with_admin_bypass,
+    writer_role_present: result.summary.writer_role_present,
+    writer_role_can_login: result.summary.writer_role_can_login,
+    can_set_writer_role: result.summary.can_set_writer_role,
+    session_user: result.summary.session_user,
+    session_user_is_superuser: result.summary.session_user_is_superuser,
+    session_user_bypassrls: result.summary.session_user_bypassrls,
+    active_role_after_set_role: result.summary.active_role_after_set_role,
+    migration_present: result.migration?.present,
+    migration_sha256: result.migration?.sha256,
+    write_policy_migration_present: result.write_policy_migration?.present,
+    write_policy_migration_sha256: result.write_policy_migration?.sha256,
+  };
+}
+
+function schemaReadbackDefects(schema) {
+  const defects = [];
+  const summary = schema.summary || {};
+  if (summary.table_count !== FOUNDATION_TABLES.length) {
+    defects.push(`expected ${FOUNDATION_TABLES.length} tables, found ${summary.table_count}`);
+  }
+  if (summary.rls_tables !== FOUNDATION_TABLES.length) {
+    defects.push(`expected RLS on ${FOUNDATION_TABLES.length} tables, found ${summary.rls_tables}`);
+  }
+  if (summary.policies_with_admin_bypass !== 0) {
+    defects.push(`expected zero admin-bypass policies, found ${summary.policies_with_admin_bypass}`);
+  }
+  if (summary.insert_policy_count !== FOUNDATION_TABLES.length) {
+    defects.push(`expected ${FOUNDATION_TABLES.length} insert policies, found ${summary.insert_policy_count}`);
+  }
+  if (summary.writer_insert_policies !== FOUNDATION_TABLES.length) {
+    defects.push(`expected ${FOUNDATION_TABLES.length} writer insert policies, found ${summary.writer_insert_policies}`);
+  }
+  if (summary.pinned_writer_insert_policies !== FOUNDATION_TABLES.length) {
+    defects.push(
+      `expected ${FOUNDATION_TABLES.length} pinned writer insert policies, found ${summary.pinned_writer_insert_policies}`,
+    );
+  }
+  if (!summary.writer_role_present) defects.push(`${WRITER_ROLE} role missing`);
+  if (summary.writer_role_can_login) defects.push(`${WRITER_ROLE} must not be able to login`);
+  if (!summary.can_set_writer_role) defects.push(`current DB session cannot assume ${WRITER_ROLE}`);
+  if (summary.session_user_is_superuser) defects.push("current DB session user is superuser");
+  if (summary.session_user_bypassrls) defects.push("current DB session user can bypass RLS");
+  if (summary.active_role_after_set_role !== WRITER_ROLE) {
+    defects.push(`SET ROLE readback was ${summary.active_role_after_set_role || "missing"}`);
+  }
+  if (!schema.migration?.present) defects.push(`missing migration ${MIGRATION_NAME}`);
+  if (schema.migration?.sha256 !== EXPECTED_MIGRATION_SHA256) {
+    defects.push(`migration sha mismatch ${schema.migration?.sha256 || "missing"}`);
+  }
+  if (!schema.write_policy_migration?.present) defects.push(`missing migration ${WRITE_POLICY_MIGRATION_NAME}`);
+  if (schema.write_policy_migration?.sha256 !== EXPECTED_WRITE_POLICY_MIGRATION_SHA256) {
+    defects.push(`write policy migration sha mismatch ${schema.write_policy_migration?.sha256 || "missing"}`);
+  }
+  return defects;
 }
 
 async function importPg() {
