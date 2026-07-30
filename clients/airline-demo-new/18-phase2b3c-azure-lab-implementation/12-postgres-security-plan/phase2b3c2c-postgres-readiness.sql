@@ -82,8 +82,9 @@ grant usage on schema working, governance, operations to airline_demo_new_review
 grant select, insert, update on all tables in schema working, governance, operations to airline_demo_new_reviewer;
 grant usage on all sequences in schema working, governance, operations to airline_demo_new_reviewer;
 
-grant usage on schema knowledge, metrics, publication, consumption, operations to airline_demo_new_publisher;
+grant usage on schema knowledge, metrics, publication, consumption, governance, operations to airline_demo_new_publisher;
 grant select, insert, update on all tables in schema knowledge, metrics, publication, consumption, operations to airline_demo_new_publisher;
+grant select, insert, update on table governance.evidence_gap to airline_demo_new_publisher;
 grant usage on all sequences in schema knowledge, metrics, publication, consumption, operations to airline_demo_new_publisher;
 
 grant usage on schema knowledge, metrics, publication, consumption to airline_demo_new_reader;
