@@ -39,6 +39,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up repair: AAD extension creation is scoped inside a savepoint, so an extension permission failure does not abort the whole bootstrap transaction before function and principal readback can be reported.
 - Follow-up repair: bootstrap grants `schema_migrations` only when that relation exists, allowing Entra principal creation to run on the server `postgres` database before target proof-database grants are applied.
 - Follow-up repair: when Azure exposes Microsoft Entra role mapping but not the `pgaadauth_create_principal*` helper functions, bootstrap can create the dedicated role and map it to the supplied Entra object ID with a `SECURITY LABEL FOR "pgaadauth"` fallback, then read the object-ID mapping back from `pg_shseclabel`.
+- Follow-up repair: bootstrap now has explicit `principal` and `target` scopes. The server-control database phase creates and reads the Entra principal only; the proof-database phase performs grants and validates role membership. Optional role hardening and public-schema revokes are savepoint-protected so a permission denial becomes structured proof instead of aborting the transaction.
 
 ## QA / Validation
 
@@ -57,6 +58,9 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
   - Pass: `npm run test:foundation-v2-golden-slice-db` covers the ACA token binding markers.
 - Follow-up validation for conditional migration-ledger grants:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
+- Follow-up validation for split principal/target bootstrap scopes:
+  - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
+  - Pass: `npm run foundation-v2:db-identity:self-test`
 - Follow-up repair: optional AAD extension creation and principal readback now use savepoints so failed optional probes cannot abort the bootstrap transaction before structured proof is emitted.
 - Follow-up validation for Entra security-label fallback:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
