@@ -21,7 +21,7 @@ export interface FoundationProofLogin {
  *
  * These are deliberately separate from the legacy demo client roster
  * (`skyharbor`, `meridian`, etc.). They exist only to prove the governed
- * Knowledge Baseline through `/knowledge-preview?provider=http&tenant=...`
+ * Knowledge Baseline through the signed-in `/home/knowledge` proof route
  * before any tenant is activated on the ordinary product routes.
  *
  * The phone numbers use reserved NANPA 202-555-01xx proof-number pools. The
@@ -68,7 +68,8 @@ export interface FoundationProofMetadata extends Record<string, unknown> {
   personaKind: FoundationProofPersonaKind;
   clientLocked: true;
   moduleAccess: readonly ["knowledge"];
-  allowedRoutes: readonly ["/knowledge-preview"];
+  landingRoute: "/home/knowledge";
+  allowedRoutes: readonly ["/home/knowledge", "/knowledge-preview"];
 }
 
 export function buildFoundationProofMetadata(
@@ -87,7 +88,8 @@ export function buildFoundationProofMetadata(
     personaKind: login.personaKind,
     clientLocked: true,
     moduleAccess: ["knowledge"],
-    allowedRoutes: ["/knowledge-preview"],
+    landingRoute: "/home/knowledge",
+    allowedRoutes: ["/home/knowledge", "/knowledge-preview"],
   };
 }
 

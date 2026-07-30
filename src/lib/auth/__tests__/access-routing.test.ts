@@ -5,92 +5,90 @@
 // directly. Empty-portfolio tenants continue to /home so the absence
 // of substrate is communicated explicitly.
 
-import { resolvePostSignInPath } from '@/lib/auth/access-routing';
+import { resolvePostSignInPath } from "@/lib/auth/access-routing";
 
-describe('resolvePostSignInPath — Tower-as-landing', () => {
-  it('routes foundation proof tenants to the governed Knowledge preview instead of legacy Home', () => {
-    const path = resolvePostSignInPath('client', {
-      clientId: 'airline-demo-new',
-      defaultClientId: 'airline-demo-new',
-      tenantKey: 'airline-demo-new',
-      foundationTenantKey: 'airline-demo-new',
+describe("resolvePostSignInPath — Tower-as-landing", () => {
+  it("routes foundation proof tenants to the governed Home Knowledge surface instead of the legacy preview", () => {
+    const path = resolvePostSignInPath("client", {
+      clientId: "airline-demo-new",
+      defaultClientId: "airline-demo-new",
+      tenantKey: "airline-demo-new",
+      foundationTenantKey: "airline-demo-new",
       hasTowerPortfolio: true,
     });
 
-    expect(path).toBe(
-      '/knowledge-preview?provider=http&tenant=airline-demo-new',
-    );
+    expect(path).toBe("/home/knowledge");
   });
 
-  it('routes portfolio-bearing client users straight to /tower', () => {
-    const path = resolvePostSignInPath('client', {
-      email: 'cio@apex-retail.example.com',
+  it("routes portfolio-bearing client users straight to /tower", () => {
+    const path = resolvePostSignInPath("client", {
+      email: "cio@apex-retail.example.com",
       hasTowerPortfolio: true,
     });
-    expect(path.startsWith('/tower')).toBe(true);
+    expect(path.startsWith("/tower")).toBe(true);
   });
 
-  it('routes portfolio-bearing maestro users straight to /tower', () => {
-    const path = resolvePostSignInPath('maestro', {
-      email: 'maestro@abarva.com',
-      clientId: 'apexretail',
+  it("routes portfolio-bearing maestro users straight to /tower", () => {
+    const path = resolvePostSignInPath("maestro", {
+      email: "maestro@abarva.com",
+      clientId: "apexretail",
       hasTowerPortfolio: true,
     });
-    expect(path.startsWith('/tower')).toBe(true);
+    expect(path.startsWith("/tower")).toBe(true);
   });
 
-  it('routes portfolio-bearing admin users to /tower', () => {
-    const path = resolvePostSignInPath('admin', {
-      email: 'admin@abarva.com',
-      clientId: 'apexretail',
+  it("routes portfolio-bearing admin users to /tower", () => {
+    const path = resolvePostSignInPath("admin", {
+      email: "admin@abarva.com",
+      clientId: "apexretail",
       hasTowerPortfolio: true,
     });
-    expect(path.startsWith('/tower')).toBe(true);
+    expect(path.startsWith("/tower")).toBe(true);
   });
 
-  it('keeps empty-portfolio client users on /home (the historical default)', () => {
-    const path = resolvePostSignInPath('client', {
-      email: 'cio@apex-retail.example.com',
+  it("keeps empty-portfolio client users on /home (the historical default)", () => {
+    const path = resolvePostSignInPath("client", {
+      email: "cio@apex-retail.example.com",
       hasTowerPortfolio: false,
     });
-    expect(path.startsWith('/home')).toBe(true);
+    expect(path.startsWith("/home")).toBe(true);
   });
 
-  it('keeps empty-portfolio maestro users on /home (the historical default)', () => {
-    const path = resolvePostSignInPath('maestro', {
-      email: 'maestro@abarva.com',
-      clientId: 'apexretail',
+  it("keeps empty-portfolio maestro users on /home (the historical default)", () => {
+    const path = resolvePostSignInPath("maestro", {
+      email: "maestro@abarva.com",
+      clientId: "apexretail",
       hasTowerPortfolio: false,
     });
-    expect(path.startsWith('/home')).toBe(true);
+    expect(path.startsWith("/home")).toBe(true);
   });
 
-  it('never routes investors to /tower even with a portfolio (they get their own surface)', () => {
-    const path = resolvePostSignInPath('investor', {
+  it("never routes investors to /tower even with a portfolio (they get their own surface)", () => {
+    const path = resolvePostSignInPath("investor", {
       hasTowerPortfolio: true,
     });
-    expect(path.startsWith('/investor')).toBe(true);
+    expect(path.startsWith("/investor")).toBe(true);
   });
 
-  it('never routes externals to /tower (they get the marketing root)', () => {
-    const path = resolvePostSignInPath('external', {
+  it("never routes externals to /tower (they get the marketing root)", () => {
+    const path = resolvePostSignInPath("external", {
       hasTowerPortfolio: true,
     });
-    expect(path).toBe('/');
+    expect(path).toBe("/");
   });
 
-  it('omitting hasTowerPortfolio preserves the historical /home default', () => {
-    const path = resolvePostSignInPath('client', {
-      email: 'cio@apex-retail.example.com',
+  it("omitting hasTowerPortfolio preserves the historical /home default", () => {
+    const path = resolvePostSignInPath("client", {
+      email: "cio@apex-retail.example.com",
     });
-    expect(path.startsWith('/home')).toBe(true);
+    expect(path.startsWith("/home")).toBe(true);
   });
 
-  it('hasTowerPortfolio=true pins the client query param when a tenant is bound', () => {
-    const path = resolvePostSignInPath('client', {
-      email: 'cio@apex-retail.example.com',
+  it("hasTowerPortfolio=true pins the client query param when a tenant is bound", () => {
+    const path = resolvePostSignInPath("client", {
+      email: "cio@apex-retail.example.com",
       hasTowerPortfolio: true,
     });
-    expect(path).toContain('client=');
+    expect(path).toContain("client=");
   });
 });

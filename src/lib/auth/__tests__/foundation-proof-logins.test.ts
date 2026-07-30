@@ -34,7 +34,11 @@ describe("foundation proof logins", () => {
       expect(metadata.tenantKey).toBe(login.tenantKey);
       expect(metadata.clientId).toBe(login.tenantKey);
       expect(metadata.defaultClientId).toBe(login.tenantKey);
-      expect(metadata.allowedRoutes).toEqual(["/knowledge-preview"]);
+      expect(metadata.landingRoute).toBe("/home/knowledge");
+      expect(metadata.allowedRoutes).toEqual([
+        "/home/knowledge",
+        "/knowledge-preview",
+      ]);
       expect(metadata.moduleAccess).toEqual(["knowledge"]);
     }
   });
