@@ -46,7 +46,7 @@ Cross-cutting governance: Preserves fail-closed execution when the bound databas
 - Follow-up validation:
   - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
   - Pass: `npm run foundation-v2:db-identity:self-test`
-- Blocked: live DB identity gate remains blocked until dedicated non-bypass database principals are created and the private operator job is rebound for managed-identity PostgreSQL auth.
+- Blocked: live DB identity gate remains blocked until the bootstrap runs as the server Microsoft Entra administrator identity, creates the dedicated non-bypass database principals, and the private operator job runs the golden-slice scripts with managed-identity PostgreSQL auth.
 
 Not run yet: live golden-slice database execution; this release only adds the bootstrap and managed-identity execution path needed before that run.
 
