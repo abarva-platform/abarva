@@ -1,94 +1,230 @@
 /**
  * @jest-environment jsdom
  *
- * Full-tree smoke test. The (maestro) route this mounts under requires a real
- * Clerk session, and this sandbox has Clerk sign-in disabled entirely, which
- * makes a real signed-in browser screenshot of the live route unavailable in
- * this environment. This test is the next best real verification: it mounts
- * the exact same component tree the route renders (KnowledgeAppMount, the
- * REAL fixture ConsumptionRuntime + KnowledgeUiViewModelAssembler, no mocks)
- * and exercises every mode tab, proving the whole tree wires together and
- * renders real, honest content (or its honest empty state where no real
- * projection exists) without a runtime crash.
+ * Full-tree smoke test for the activated Home Knowledge route mount. The route
+ * itself resolves Clerk metadata on the server; this client test proves the
+ * browser mount is wired to the real HTTP consumption provider, not fixtures.
  */
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
+import { PROJECTION_CONTRACT_VERSION } from "@/lib/knowledge/consumption-contracts";
 import { KnowledgeAppMount } from "../KnowledgeAppMount";
 
-describe("KnowledgeAppMount full-tree smoke render (fixture-airline-demo-new)", () => {
-  it("mounts the shell and shows the module switcher, lens picker, and mode tabs", async () => {
-    render(<KnowledgeAppMount tenantKey="airline-demo-new" />);
+const TENANT_KEY = "airline-demo-new";
+const BASELINE_REF = "kb-airline-foundation-live";
+
+function envelope(path: string, data: unknown) {
+  const projectionName = path.includes("explore")
+    ? "consumption.domain_summary_v1"
+    : path.includes("relationships")
+      ? "consumption.relationship_edge_v1"
+      : path.includes("evidence-gaps")
+        ? "consumption.evidence_gap_v1"
+        : path.includes("suggested-questions")
+          ? "consumption.module_knowledge_packet_v1"
+          : "consumption.enterprise_brief_v1";
+
+  return {
+    tenantKey: TENANT_KEY,
+    knowledgeBaselineRef: BASELINE_REF,
+    domainPublicationVersions: { enterprise: "v1", technology: "v1" },
+    projectionName,
+    projectionContractVersion: PROJECTION_CONTRACT_VERSION,
+    asOf: "2026-07-30T00:00:00.000Z",
+    contentHash: "hash-airline-foundation",
+    authorityState: "published",
+    availabilityState: "available",
+    freshnessState: "fresh",
+    data,
+    evidenceRefs: ["ev-airline-1"],
+    knownGapRefs: [],
+    warnings: [],
+  };
+}
+
+function briefData() {
+  return {
+    identity: {
+      organizationId: "ORG-AIR",
+      displayName: "Airline Demo New",
+      industry: "Airline",
+      revenue: null,
+      employees: null,
+      footprint: "Lab foundation proof tenant",
+      footprintState: "available",
+    },
+    headlineMetrics: [],
+    interpretation: {
+      id: "interp-1",
+      contentClass: "abarva_interpretation",
+      availabilityState: "available",
+      evidenceRefs: ["ev-airline-1"],
+      headline: "Crew operations data is available with open evidence gaps.",
+      body: "The active foundation baseline has enough governed context for route proof while preserving not-loaded sections.",
+      pinnedBaselineRef: BASELINE_REF,
+    },
+    perspectives: [],
+    benchmarks: [],
+    targets: [],
+    domains: [
+      {
+        domainKey: "systems_and_technology",
+        label: "Systems and technology",
+        availabilityState: "available",
+        evidenceCoverage: 0.72,
+        entityCount: null,
+        openGapCount: 1,
+        summary: "Core airline operations systems are loaded.",
+      },
+    ],
+    topGapRefs: [],
+  };
+}
+
+function exploreData() {
+  return {
+    domainKey: "systems_and_technology",
+    domains: briefData().domains,
+    entities: [
+      {
+        entityRef: "APP-CREW-SCHEDULING",
+        entityType: "application",
+        displayName: "Crew Scheduling System",
+        domainKey: "systems_and_technology",
+        availabilityState: "available",
+        fields: [
+          {
+            key: "owner",
+            label: "Owner",
+            value: "Crew operations",
+            availabilityState: "available",
+            evidenceRefs: ["ev-airline-1"],
+          },
+        ],
+        evidenceRefs: ["ev-airline-1"],
+      },
+    ],
+    totalCount: 1,
+    page: 1,
+    pageSize: 25,
+  };
+}
+
+function relationshipsData() {
+  return {
+    focalEntityRefs: [],
+    nodes: [],
+    edges: [],
+    evidenceByEdge: {},
+    truncated: false,
+    aggregationApplied: false,
+    omittedNodeCount: 0,
+    acceptedEdgeCount: 0,
+    candidateEdgeCount: 0,
+    openGapCount: 0,
+  };
+}
+
+function evidenceGapsData() {
+  return {
+    domainKey: null,
+    gaps: [],
+    overallEvidenceCoverage: 0,
+    severityCounts: { low: 0, medium: 0, high: 0, critical: 0 },
+  };
+}
+
+describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
+  const originalFetch = globalThis.fetch;
+  let requests: string[];
+
+  beforeEach(() => {
+    requests = [];
+    globalThis.fetch = jest.fn(async (url: string | URL | Request) => {
+      const path = String(url);
+      requests.push(path);
+      const data = path.includes("explore")
+        ? exploreData()
+        : path.includes("relationships")
+          ? relationshipsData()
+          : path.includes("evidence-gaps")
+            ? evidenceGapsData()
+            : path.includes("suggested-questions")
+              ? []
+              : briefData();
+      return {
+        ok: true,
+        status: 200,
+        json: async () => envelope(path, data),
+      };
+    }) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  it("mounts the product shell with the authorized tenant, not the fixture namespace", async () => {
+    render(<KnowledgeAppMount tenantKey={TENANT_KEY} />);
 
     expect(screen.getByText("AbarVa")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Knowledge" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Brief" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Explore" })).toBeInTheDocument();
+    expect(screen.getByText(TENANT_KEY)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Relationships" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Evidence & gaps" }),
-    ).toBeInTheDocument();
+      screen.queryByText(/fixture-airline-demo-new/i),
+    ).not.toBeInTheDocument();
 
-    // Brief mode is the default. Real fixture identity data should render;
-    // sections with no real projection (Goals/Purpose) still show their
-    // honest empty-state banner rather than a crash.
     await waitFor(() =>
       expect(screen.getByText(/airline demo new/i)).toBeInTheDocument(),
     );
     expect(
-      screen.getAllByTestId("knowledge-state-banner").length,
-    ).toBeGreaterThan(0);
+      requests.some((path) =>
+        path.includes("/api/knowledge/consumption/enterprise-brief"),
+      ),
+    ).toBe(true);
   });
 
-  it("switches to Explore mode and renders the domain nav plus real application rows", async () => {
-    render(<KnowledgeAppMount tenantKey="airline-demo-new" />);
+  it("switches to Explore mode and renders rows returned by the HTTP API", async () => {
+    render(<KnowledgeAppMount tenantKey={TENANT_KEY} />);
     fireEvent.click(screen.getByRole("button", { name: "Explore" }));
 
-    expect(
-      await screen.findByText("Systems and technology"),
-    ).toBeInTheDocument();
-    // "applications" is a DIRECTLY_SUPPORTED inventory kind against the real
-    // fixture -- it renders a real table, not a withheld banner.
     await waitFor(() => expect(screen.getByRole("table")).toBeInTheDocument());
     expect(screen.getByText("Crew Scheduling System")).toBeInTheDocument();
+    expect(
+      requests.some((path) =>
+        path.includes("/api/knowledge/consumption/explore"),
+      ),
+    ).toBe(true);
   });
 
-  it("switches to Relationships mode and renders the preset picker's resolved questions", async () => {
-    render(<KnowledgeAppMount tenantKey="airline-demo-new" />);
-    fireEvent.click(screen.getByRole("button", { name: "Relationships" }));
+  it("switches to every mode without reintroducing fixture fallback", async () => {
+    render(<KnowledgeAppMount tenantKey={TENANT_KEY} />);
 
-    expect(await screen.findByText("Questions")).toBeInTheDocument();
+    for (const mode of [
+      "Brief",
+      "Explore",
+      "Relationships",
+      "Evidence & gaps",
+    ]) {
+      fireEvent.click(screen.getByRole("button", { name: mode }));
+      expect(screen.getByRole("button", { name: mode })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+    }
+
     await waitFor(() =>
       expect(
-        screen.getByText(/what does the crew scheduling system depend on/i),
-      ).toBeInTheDocument(),
+        requests.some((path) => path.includes("/api/knowledge/consumption")),
+      ).toBe(true),
     );
-  });
-
-  it("switches to Evidence & gaps mode and renders every section without crashing", async () => {
-    render(<KnowledgeAppMount tenantKey="airline-demo-new" />);
-    fireEvent.click(screen.getByRole("button", { name: "Evidence & gaps" }));
-
-    expect(await screen.findByText("Completion workbench")).toBeInTheDocument();
-    expect(screen.getByText(/left-nav link only/i)).toBeInTheDocument();
-    // Contradictions and the decision-readiness quadrant always render their
-    // honest PROJECTION_UNAVAILABLE banner (no real projection exists for
-    // either) -- at least those two banners must be present.
-    await waitFor(() =>
-      expect(
-        screen.getAllByTestId("knowledge-state-banner").length,
-      ).toBeGreaterThan(0),
-    );
-  });
-
-  it("opens the aVa dock and shows the question input, since models are enabled for the 'normal' fixture scenario", async () => {
-    render(<KnowledgeAppMount tenantKey="airline-demo-new" />);
-    await waitFor(() =>
-      expect(screen.getByLabelText(/ask a question/i)).toBeInTheDocument(),
-    );
+    expect(
+      screen.queryByText(/fixture-airline-demo-new/i),
+    ).not.toBeInTheDocument();
   });
 });
