@@ -104,7 +104,9 @@ async function bootstrap(client, options) {
     const databaseName = (await client.query("SELECT current_database() AS database_name")).rows[0].database_name;
     await client.query(`GRANT CONNECT ON DATABASE ${quoteIdent(databaseName)} TO ${quoteIdent(options.roleName)}`);
     await client.query(`GRANT ${quoteIdent(options.targetRole)} TO ${quoteIdent(options.roleName)}`);
-    await client.query(`GRANT SELECT ON schema_migrations TO ${quoteIdent(options.roleName)}`);
+    if (await relationExists(client, "schema_migrations")) {
+      await client.query(`GRANT SELECT ON schema_migrations TO ${quoteIdent(options.roleName)}`);
+    }
     await client.query(`REVOKE CREATE ON SCHEMA public FROM ${quoteIdent(options.roleName)}`);
     await client.query(`REVOKE ALL ON SCHEMA public FROM ${quoteIdent(options.roleName)}`);
 
@@ -262,6 +264,10 @@ async function membershipReadback(client, roleName) {
       [roleName],
     )
   ).rows.map((row) => row.role_name);
+}
+
+async function relationExists(client, relationName) {
+  return Boolean((await client.query("SELECT to_regclass($1) AS relation_name", [relationName])).rows[0]?.relation_name);
 }
 
 function parseArgs(argv) {
