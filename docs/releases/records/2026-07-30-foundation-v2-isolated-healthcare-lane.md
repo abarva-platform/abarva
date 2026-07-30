@@ -47,7 +47,7 @@ Layer 3: Adds isolated Foundation V2 schema rendering and Healthcare execution c
 - Pass: `node --check scripts/foundation-v2/verify-golden-slice-db.mjs`
 - Pass: `node --check scripts/foundation-v2/bootstrap-db-identity.mjs`
 - Pass: `node --check scripts/foundation-v2/verify-cross-domain-isolation-db.mjs`
-- Pass: Healthcare context executor self-test with pinned fixture SHA `232c4882ef554d6c920a046b5cc3d79d4ff02c09905366df0693a61e9a93e3ba`
+- Pass: Healthcare context executor self-test with pinned fixture SHA `fda3a9c3f96e6dab6c8ebc0abff0379a1a572b36401f679dc0b52b57e1ad345d`
 - Pass: `npm run foundation-v2:healthcare:render-isolated-schema -- --out-dir /tmp/foundation-v2-healthcare-render-check-2`
 - Pass: `npm run test:foundation-v2-golden-slice-db`
 - Pass: `npm run release:check`
