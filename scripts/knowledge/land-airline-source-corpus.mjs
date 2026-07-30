@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
+const require = createRequire(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), "..", "..");
 
 const TENANT_KEY = "airline-demo-new";
@@ -36,6 +39,18 @@ function parseArgs(argv = process.argv.slice(2), env = process.env) {
     mode: env.ABARVA_SOURCE_LANDING_MODE ?? "plan",
     runId: env.ABARVA_RUN_ID ?? "",
     packageRoot: env.ABARVA_SOURCE_PACKAGE_ROOT ?? PACKAGE_ROOT,
+    packageZip: env.ABARVA_SOURCE_PACKAGE_ZIP ?? "",
+    packageZipUri: env.ABARVA_SOURCE_PACKAGE_ZIP_URI ?? "",
+    packageZipSha256: env.ABARVA_SOURCE_PACKAGE_ZIP_SHA256 ?? "",
+    freezeManifest: env.ABARVA_SOURCE_FREEZE_MANIFEST ?? FREEZE_MANIFEST,
+    freezeManifestUri: env.ABARVA_SOURCE_FREEZE_MANIFEST_URI ?? "",
+    freezeManifestSha256: env.ABARVA_SOURCE_FREEZE_MANIFEST_SHA256 ?? "",
+    freezeManifestPathExplicit: Boolean(env.ABARVA_SOURCE_FREEZE_MANIFEST),
+    freezeManifestSource: env.ABARVA_SOURCE_FREEZE_MANIFEST_URI
+      ? "uri"
+      : env.ABARVA_SOURCE_FREEZE_MANIFEST
+        ? "path"
+        : "default",
     out: "",
   };
 
@@ -69,6 +84,27 @@ function parseArgs(argv = process.argv.slice(2), env = process.env) {
       case "--package-root":
         args.packageRoot = path.resolve(next());
         break;
+      case "--package-zip":
+        args.packageZip = path.resolve(next());
+        break;
+      case "--package-zip-uri":
+        args.packageZipUri = next();
+        break;
+      case "--package-zip-sha256":
+        args.packageZipSha256 = next();
+        break;
+      case "--freeze-manifest":
+        args.freezeManifest = path.resolve(next());
+        args.freezeManifestPathExplicit = true;
+        args.freezeManifestSource = "path";
+        break;
+      case "--freeze-manifest-uri":
+        args.freezeManifestUri = next();
+        args.freezeManifestSource = "uri";
+        break;
+      case "--freeze-manifest-sha256":
+        args.freezeManifestSha256 = next();
+        break;
       case "--out":
         args.out = path.resolve(next());
         break;
@@ -96,11 +132,19 @@ function assertArgs(args) {
   if (args.mode === "execute" && process.env.ABARVA_SOURCE_LANDING_EXECUTE_ACK !== EXECUTE_ACK) {
     throw new LandingError("execute_ack_missing", `Set ABARVA_SOURCE_LANDING_EXECUTE_ACK=${EXECUTE_ACK} to execute.`);
   }
-  if (!fs.existsSync(path.join(args.packageRoot, "PACKAGE_MANIFEST.json"))) {
-    throw new LandingError("package_manifest_missing", `Missing PACKAGE_MANIFEST.json under ${args.packageRoot}`);
+  if (args.packageZip && args.packageZipUri) {
+    throw new LandingError("package_zip_source_ambiguous", "Use either --package-zip or --package-zip-uri, not both.");
   }
-  if (!fs.existsSync(FREEZE_MANIFEST)) {
-    throw new LandingError("freeze_manifest_missing", `Missing freeze manifest: ${FREEZE_MANIFEST}`);
+  if (args.freezeManifestPathExplicit && args.freezeManifestUri) {
+    throw new LandingError("freeze_manifest_source_ambiguous", "Use either --freeze-manifest or --freeze-manifest-uri, not both.");
+  }
+  if (args.mode === "execute") {
+    if ((args.packageZip || args.packageZipUri) && !args.packageZipSha256) {
+      throw new LandingError("package_zip_hash_required_for_execute", "Execute mode requires --package-zip-sha256 for explicit source packages.");
+    }
+    if (!args.freezeManifestSha256) {
+      throw new LandingError("freeze_manifest_hash_required_for_execute", "Execute mode requires --freeze-manifest-sha256.");
+    }
   }
 }
 
@@ -164,6 +208,116 @@ function isValidationOrReviewFile(relativePath) {
 
 function isOperationalFile(relativePath) {
   return !isEvaluatorFile(relativePath) && !isValidationOrReviewFile(relativePath);
+}
+
+async function resolveInputFiles(args) {
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "airdn-source-input-"));
+  let packageRoot = args.packageRoot;
+  let freezeManifestPath = args.freezeManifest;
+
+  if (args.packageZipUri) {
+    const zipPath = path.join(workDir, "source-package.zip");
+    await downloadAzBlobUri(args.packageZipUri, zipPath);
+    packageRoot = await extractPackageZip(zipPath, workDir, args.packageZipSha256);
+  } else if (args.packageZip) {
+    packageRoot = await extractPackageZip(args.packageZip, workDir, args.packageZipSha256);
+  }
+
+  if (args.freezeManifestUri) {
+    freezeManifestPath = path.join(workDir, "freeze-manifest.json");
+    await downloadAzBlobUri(args.freezeManifestUri, freezeManifestPath);
+  }
+
+  if (args.freezeManifestSha256) {
+    assertFileHash(freezeManifestPath, args.freezeManifestSha256, "freeze_manifest_hash_mismatch");
+  }
+
+  if (!fs.existsSync(path.join(packageRoot, "PACKAGE_MANIFEST.json"))) {
+    throw new LandingError("package_manifest_missing", `Missing PACKAGE_MANIFEST.json under ${packageRoot}`);
+  }
+  if (!fs.existsSync(freezeManifestPath)) {
+    throw new LandingError("freeze_manifest_missing", `Missing freeze manifest: ${freezeManifestPath}`);
+  }
+
+  return { packageRoot, freezeManifestPath };
+}
+
+function assertFileHash(filePath, expectedSha256, code) {
+  const actual = sha256File(filePath);
+  if (actual !== expectedSha256) {
+    throw new LandingError(code, `Hash mismatch for ${filePath}`, { expectedSha256, actualSha256: actual });
+  }
+}
+
+async function extractPackageZip(zipPath, workDir, expectedSha256 = "") {
+  if (!fs.existsSync(zipPath)) {
+    throw new LandingError("package_zip_missing", `Missing source package zip: ${zipPath}`);
+  }
+  if (expectedSha256) {
+    assertFileHash(zipPath, expectedSha256, "package_zip_hash_mismatch");
+  }
+
+  const JSZip = require("jszip");
+  const zip = await JSZip.loadAsync(fs.readFileSync(zipPath));
+  const extractRoot = path.join(workDir, "source-package");
+  fs.mkdirSync(extractRoot, { recursive: true });
+  for (const [entryName, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    const target = path.resolve(extractRoot, entryName);
+    if (!target.startsWith(`${extractRoot}${path.sep}`)) {
+      throw new LandingError("package_zip_path_traversal", `Unsafe zip entry: ${entryName}`);
+    }
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, await entry.async("nodebuffer"));
+  }
+
+  const directRoot = path.join(extractRoot, "clients", TENANT_KEY, "19-template-instantiation-source-corpus");
+  if (fs.existsSync(path.join(directRoot, "PACKAGE_MANIFEST.json"))) {
+    return directRoot;
+  }
+
+  const candidates = findPackageManifestDirs(extractRoot);
+  if (candidates.length !== 1) {
+    throw new LandingError("package_zip_manifest_resolution_failed", "Expected exactly one PACKAGE_MANIFEST.json in source package zip.", {
+      candidates,
+    });
+  }
+  return candidates[0];
+}
+
+function findPackageManifestDirs(root) {
+  const dirs = [];
+  const stack = [root];
+  while (stack.length) {
+    const dir = stack.pop();
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(full);
+      } else if (entry.name === "PACKAGE_MANIFEST.json") {
+        dirs.push(dir);
+      }
+    }
+  }
+  return dirs;
+}
+
+async function downloadAzBlobUri(uri, outPath) {
+  const match = /^azblob:\/\/([^/]+)\/([^/]+)\/(.+)$/.exec(uri);
+  if (!match) {
+    throw new LandingError("unsupported_input_uri", `Only azblob://account/container/blob URIs are supported: ${uri}`);
+  }
+  const [, accountName, containerName, blobName] = match;
+  const { BlobServiceClient } = await import("@azure/storage-blob");
+  const { DefaultAzureCredential } = await import("@azure/identity");
+  const serviceClient = new BlobServiceClient(`https://${accountName}.blob.core.windows.net`, new DefaultAzureCredential());
+  const chunks = [];
+  const response = await serviceClient.getContainerClient(containerName).getBlobClient(blobName).download();
+  for await (const chunk of response.readableStreamBody) {
+    chunks.push(Buffer.from(chunk));
+  }
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, Buffer.concat(chunks));
 }
 
 function resolveFiles(packageRoot, packageManifest, scope) {
@@ -545,13 +699,14 @@ function buildResult({ args, freezeManifest, packageManifest, files, landedFiles
 async function main() {
   const args = parseArgs();
   assertArgs(args);
+  const { packageRoot, freezeManifestPath } = await resolveInputFiles(args);
 
-  const packageManifest = readJson(path.join(args.packageRoot, "PACKAGE_MANIFEST.json"));
-  const freezeManifest = readJson(FREEZE_MANIFEST);
+  const packageManifest = readJson(path.join(packageRoot, "PACKAGE_MANIFEST.json"));
+  const freezeManifest = readJson(freezeManifestPath);
   assertFreezeState(freezeManifest, args.scope);
 
-  const packageHash = sha256File(path.join(args.packageRoot, "PACKAGE_MANIFEST.json"));
-  const files = resolveFiles(args.packageRoot, packageManifest, args.scope);
+  const packageHash = sha256File(path.join(packageRoot, "PACKAGE_MANIFEST.json"));
+  const files = resolveFiles(packageRoot, packageManifest, args.scope);
   let result = buildResult({ args, freezeManifest, packageManifest, files });
 
   if (args.mode === "execute") {
