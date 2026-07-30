@@ -1418,7 +1418,8 @@ export class PostgresKnowledgeExecutionStore {
     await this.client.query(
       `
         CREATE TEMP TABLE tmp_accepted_relationship_candidate ON COMMIT DROP AS
-        SELECT r.*
+        SELECT r.*,
+               ev.source_evidence_text_by_ref
         FROM working.relationship_candidate r
         JOIN governance.review_decision d
           ON d.tenant_key = r.tenant_key
@@ -1427,6 +1428,12 @@ export class PostgresKnowledgeExecutionStore {
          AND d.candidate_content_hash = r.candidate_content_hash
          AND d.decision = 'accepted'
          AND d.review_state = 'accepted'
+        LEFT JOIN LATERAL (
+          SELECT jsonb_object_agg(e.evidence_ref, e.evidence_text ORDER BY e.evidence_ref) AS source_evidence_text_by_ref
+            FROM evidence.evidence_item e
+           WHERE e.tenant_key = r.tenant_key
+             AND e.evidence_ref = ANY(r.evidence_refs)
+        ) ev ON true
         WHERE r.tenant_key=$1
           AND r.from_candidate_ref <> r.to_candidate_ref
       `,
@@ -1461,8 +1468,20 @@ export class PostgresKnowledgeExecutionStore {
             'accepted'::abarva_availability_state AS availability_state,
             'unknown'::abarva_freshness_state AS freshness_state,
             r.evidence_refs,
-            jsonb_build_object('from_source_native_id', r.from_candidate_ref, 'to_source_native_id', r.to_candidate_ref) AS relationship_payload,
-            md5((r.from_candidate_ref || r.to_candidate_ref || r.relationship_type_ref || r.current_target_state)::text) AS content_hash,
+            jsonb_strip_nulls(jsonb_build_object(
+              'from_source_native_id', r.from_candidate_ref,
+              'to_source_native_id', r.to_candidate_ref,
+              'relationship_type', r.relationship_type_ref,
+              'current_target_state', r.current_target_state,
+              'source_evidence_text_by_ref', coalesce(r.source_evidence_text_by_ref, '{}'::jsonb)
+            )) AS relationship_payload,
+            md5((
+              r.from_candidate_ref ||
+              r.to_candidate_ref ||
+              r.relationship_type_ref ||
+              r.current_target_state ||
+              coalesce(r.source_evidence_text_by_ref::text, '')
+            )::text) AS content_hash,
             r.confidence,
             r.candidate_ref
           FROM tmp_accepted_relationship_candidate r

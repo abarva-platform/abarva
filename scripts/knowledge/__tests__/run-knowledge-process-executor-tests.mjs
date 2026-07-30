@@ -215,7 +215,10 @@ await test("relationship promotion resolves endpoints from an indexed accepted e
   assert.ok(source.includes("JOIN tmp_promoted_entity_map f"));
   assert.ok(source.includes("JOIN tmp_promoted_entity_map t"));
   assert.ok(source.includes("AND ed.candidate_type = 'entity_candidate'"));
-  assert.ok(!source.includes("LEFT JOIN LATERAL ("));
+  assert.ok(source.includes("LEFT JOIN LATERAL ("));
+  assert.ok(source.includes("jsonb_object_agg(e.evidence_ref, e.evidence_text ORDER BY e.evidence_ref)"));
+  assert.ok(source.includes("source_evidence_text_by_ref"));
+  assert.ok(!source.includes("e.evidence_text::jsonb"));
 });
 
 await test("projection build materializes analytics consumption tables from accepted knowledge", async () => {
@@ -258,6 +261,9 @@ await test("live reconciliation readback traces source rows and fields through g
   assert.ok(source.includes("sourceRecord?.live_source_version_ref"), "row lineage must include live source version refs from file reconciliation rows");
   assert.ok(source.includes("`${prefix}:row:${rowNumber}`"), "row lineage must include canonical source_ref:row:n evidence keys");
   assert.ok(source.includes("FIELD_PRESERVED_IN_CANONICAL_FACT"), "field reconciliation must account for accepted raw_row fact preservation");
+  assert.ok(source.includes("FIELD_PRESERVED_IN_CANONICAL_RELATIONSHIP"), "field reconciliation must account for accepted relationship payload preservation");
+  assert.ok(source.includes("JSON.parse(value)"), "relationship field readback must parse evidence text safely in JS");
+  assert.ok(source.includes("evidenceTextByRef[evidenceRef]"), "relationship field readback must only credit the matching evidence ref payload");
   assert.ok(source.includes("FIELD_DEFERRED_BY_REVIEW"), "field reconciliation must distinguish deferred review decisions from lost data");
 });
 
