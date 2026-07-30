@@ -24,7 +24,7 @@ import { EvidenceMode } from "../evidence/EvidenceMode";
  * model. Documented as a deliberate choice, not an oversight.
  */
 export function KnowledgeShell() {
-  const { mode, dockPosition, dockState, drawer, closeDrawer, providerCtx } =
+  const { mode, dockPosition, dockState, drawer, closeDrawer, tenantKey } =
     useKnowledgeApp();
 
   const dockIsSide =
@@ -39,7 +39,7 @@ export function KnowledgeShell() {
           <span className="text-sm font-semibold text-white">AbarVa</span>
           <ModuleSwitcher />
         </div>
-        <div className="text-xs text-white/60">{providerCtx.tenantKey}</div>
+        <div className="text-xs text-white/60">{tenantKey}</div>
       </header>
 
       <div className="flex items-center justify-between gap-4 border-b border-[rgba(10,10,11,0.1)] bg-white px-6 py-2.5">

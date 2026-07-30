@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from "react";
 
-import type { ConsumptionEnvelope } from "@/lib/knowledge/providers/types";
+import type { ViewModelEnvelope } from "@/lib/knowledge/view-model";
 
 /**
- * Fetches a ConsumptionEnvelope via the given async fetcher and returns
+ * Fetches a ViewModelEnvelope via the given async fetcher and returns
  * `undefined` while in flight (GatedSection renders that as a loading state,
  * never as fabricated data). Re-fetches whenever `deps` changes.
  */
 export function useEnvelope<T>(
-  fetcher: () => Promise<ConsumptionEnvelope<T>>,
+  fetcher: () => Promise<ViewModelEnvelope<T>>,
   deps: readonly unknown[],
-): ConsumptionEnvelope<T> | undefined {
-  const [envelope, setEnvelope] = useState<ConsumptionEnvelope<T> | undefined>(
+): ViewModelEnvelope<T> | undefined {
+  const [envelope, setEnvelope] = useState<ViewModelEnvelope<T> | undefined>(
     undefined,
   );
 

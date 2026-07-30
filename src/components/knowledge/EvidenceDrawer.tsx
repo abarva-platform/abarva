@@ -9,10 +9,18 @@
  * never a defaulted plausible-looking value. Per Section "Restricted evidence
  * access": existence/state/owner are visible for restricted evidence; content
  * is not.
+ *
+ * Props carry the REAL contract's EvidenceDescriptor/EvidenceGapV1 shapes
+ * (src/lib/knowledge/consumption-contracts) -- already resolved via
+ * runtime.resolveEvidence -- rather than the duplicate provider's invented
+ * EvidenceRef/KnownGapRef types.
  */
 "use client";
 
-import type { EvidenceRef, KnownGapRef } from "@/lib/knowledge/providers/types";
+import type {
+  EvidenceDescriptor,
+  EvidenceGapV1,
+} from "@/lib/knowledge/consumption-contracts";
 import { StateBanner } from "./state/StateBanner";
 import { CurrentVsTargetPanel } from "./compare/CurrentVsTargetPanel";
 
@@ -30,8 +38,8 @@ export interface EvidenceDrawerProps {
   /** Real row/node/edge attributes -- rendered even when evidence provenance
    * is not yet captured, per the row-detail-drawer render gate. */
   readonly attributes?: readonly EvidenceDrawerAttribute[];
-  readonly evidence: readonly EvidenceRef[];
-  readonly gaps?: readonly KnownGapRef[];
+  readonly evidence: readonly EvidenceDescriptor[];
+  readonly gaps?: readonly EvidenceGapV1[];
   readonly onAskAva?: () => void;
   readonly onRequestAccess?: () => void;
   /** Real canonical id for the row/node this drawer opened for. When present,
@@ -55,8 +63,16 @@ export function EvidenceDrawer({
 }: EvidenceDrawerProps) {
   if (!open) return null;
 
-  const restricted = evidence.some((e) => e.accessRestricted);
-  const visibleEvidence = evidence.filter((e) => !e.accessRestricted);
+  const restricted = evidence.some(
+    (e) =>
+      e.accessRestriction === "restricted" ||
+      e.accessRestriction === "withheld",
+  );
+  const visibleEvidence = evidence.filter(
+    (e) =>
+      e.accessRestriction !== "restricted" &&
+      e.accessRestriction !== "withheld",
+  );
 
   return (
     <div
@@ -151,11 +167,11 @@ export function EvidenceDrawer({
             <ul className="space-y-2">
               {visibleEvidence.map((e, i) => (
                 <li
-                  key={`${e.sourceName}-${i}`}
+                  key={`${e.evidenceRef}-${i}`}
                   className="rounded-md border border-[rgba(10,10,11,0.1)] bg-white p-3"
                 >
                   <p className="text-sm font-medium text-[#2c2c2a]">
-                    {e.sourceName}
+                    {e.sourceName ?? "Not yet captured"}
                   </p>
                   {e.citation ? (
                     <p className="mt-0.5 text-sm text-[#5f5e5a]">
@@ -163,13 +179,16 @@ export function EvidenceDrawer({
                     </p>
                   ) : null}
                   <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[#5f5e5a]">
-                    <Row label="State" value={e.reviewState} />
+                    <Row
+                      label="State"
+                      value={e.reviewState ?? "Not yet captured"}
+                    />
                     <Row
                       label="Confidence"
                       value={
-                        e.confidence === "unknown"
+                        e.confidence === null
                           ? "Not yet captured"
-                          : e.confidence
+                          : `${Math.round(e.confidence * 100)}%`
                       }
                     />
                     <Row
@@ -178,16 +197,12 @@ export function EvidenceDrawer({
                     />
                     <Row
                       label="Effective period"
-                      value={
-                        e.effectivePeriod
-                          ? `${e.effectivePeriod.from ?? "unknown"} -> ${e.effectivePeriod.to ?? "no end date"}`
-                          : "Not yet captured"
-                      }
+                      value={e.effectivePeriod ?? "Not yet captured"}
                     />
                   </dl>
-                  {e.conflicts.length > 0 ? (
+                  {e.relatedConflicts.length > 0 ? (
                     <p className="mt-2 text-xs font-medium text-[#a32d2d]">
-                      Conflicts with: {e.conflicts.join(", ")}
+                      Conflicts with: {e.relatedConflicts.join(", ")}
                     </p>
                   ) : null}
                 </li>
@@ -207,10 +222,12 @@ export function EvidenceDrawer({
                   key={g.gapId}
                   className="rounded-md border border-[rgba(163,45,45,0.24)] bg-[rgba(163,45,45,0.05)] p-3 text-sm"
                 >
-                  <p className="font-medium text-[#a32d2d]">{g.summary}</p>
+                  <p className="font-medium text-[#a32d2d]">{g.title}</p>
                   <p className="mt-1 text-xs text-[#5f5e5a]">
-                    Owner: {g.owner ?? "Not assigned"} - Due:{" "}
-                    {g.dueDate ?? "Unassigned"}
+                    {g.businessImpact}
+                  </p>
+                  <p className="mt-1 text-xs text-[#5f5e5a]">
+                    Closes with: {g.requestedSource ?? "Not specified"}
                   </p>
                 </li>
               ))}

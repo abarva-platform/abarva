@@ -4,65 +4,52 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-import { createUnreconciledGovernedKnowledgeProvider } from "@/lib/knowledge/providers/governed-knowledge-provider";
+import { createFixtureRuntime } from "@/lib/knowledge/consumption-client";
 import { KnowledgeAppProvider } from "../knowledge-app-context";
 import { IdentityPanel } from "../brief/IdentityPanel";
 import { InventoryTable } from "../explore/InventoryTable";
 import { findInventoryKindConfig } from "../explore/inventory-config";
 import { AvaDock } from "../ava/AvaDock";
 
-const CTX = {
-  tenantKey: "airline-demo-new",
-  knowledgeBaselineRef: "test-baseline",
-};
+const FIXTURE_TENANT = "fixture-airline-demo-new";
 
-function withProvider(children: React.ReactNode) {
-  const provider = createUnreconciledGovernedKnowledgeProvider();
+function withRuntime(children: React.ReactNode) {
+  const runtime = createFixtureRuntime(FIXTURE_TENANT, "normal");
   return (
-    <KnowledgeAppProvider provider={provider} providerCtx={CTX}>
+    <KnowledgeAppProvider runtime={runtime} tenantKey={FIXTURE_TENANT}>
       {children}
     </KnowledgeAppProvider>
   );
 }
 
-describe("Knowledge UI render-gate integration (real stub provider)", () => {
-  it("IdentityPanel never renders fleet/departure numbers when the identity projection is withheld", async () => {
-    render(withProvider(<IdentityPanel />));
+describe("Knowledge UI render-gate integration (real fixture runtime)", () => {
+  it("IdentityPanel renders real governed identity fields, not a fabricated profile", async () => {
+    render(withRuntime(<IdentityPanel />));
     await waitFor(() =>
-      expect(screen.getByTestId("knowledge-state-banner")).toBeInTheDocument(),
+      expect(screen.getByText("Revenue")).toBeInTheDocument(),
     );
-    // No fabricated stat values from the prototype's mock data may leak through.
-    expect(screen.queryByText(/142 aircraft/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/1,180/)).not.toBeInTheDocument();
+    expect(screen.getByText("Employees")).toBeInTheDocument();
   });
 
-  it("InventoryTable shows 'withheld pending pipeline', never a real-looking empty table, for Applications", async () => {
+  it("InventoryTable shows a real table for Applications -- a DIRECTLY_SUPPORTED inventory kind against the real projection", async () => {
     const config = findInventoryKindConfig("applications");
-    render(withProvider(<InventoryTable config={config} />));
-    await waitFor(() =>
-      expect(screen.getByTestId("knowledge-state-banner")).toBeInTheDocument(),
-    );
-    expect(screen.getByText(/withheld pending pipeline/i)).toBeInTheDocument();
-    // A real table element must not be rendered for withheld data.
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Passenger service system/i),
-    ).not.toBeInTheDocument();
+    render(withRuntime(<InventoryTable config={config} />));
+    await waitFor(() => expect(screen.getByRole("table")).toBeInTheDocument());
+    expect(screen.getByText("Crew Scheduling System")).toBeInTheDocument();
   });
 
-  it("InventoryTable shows the same honest withheld state for every inventory kind", async () => {
+  it("InventoryTable shows the honest PROJECTION_UNAVAILABLE state, never a real-looking empty table, for kinds with no real projection", async () => {
     for (const kind of [
       "dataProducts",
       "integrations",
       "infrastructure",
-      "vendors",
       "programs",
       "risks",
       "measures",
     ] as const) {
       const config = findInventoryKindConfig(kind);
       const { unmount } = render(
-        withProvider(<InventoryTable config={config} />),
+        withRuntime(<InventoryTable config={config} />),
       );
       await waitFor(() =>
         expect(
@@ -74,31 +61,25 @@ describe("Knowledge UI render-gate integration (real stub provider)", () => {
     }
   });
 
-  it("aVa dock asks a question and returns a real refusal card, never a fabricated confident answer", async () => {
-    render(withProvider(<AvaDock />));
+  it("aVa dock answers a question with real evidence-grounded content when the Brief's evidence refs are genuinely in scope -- never a fabricated confident claim, but also never a reflexive refusal now that real evidence exists", async () => {
+    render(withRuntime(<AvaDock />));
     const input = await screen.findByLabelText(/ask a question/i);
     fireEvent.change(input, {
-      target: { value: "What is our cost per mishandled bag?" },
+      target: { value: "What is our biggest modernization risk?" },
     });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    await waitFor(() =>
-      expect(screen.getByText(/not answerable yet/i)).toBeInTheDocument(),
-    );
-    expect(
-      screen.getByText(/declined -- insufficient evidence/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/what we will not do/i)).toBeInTheDocument();
-    // The refusal card must not claim a governed answer exists.
-    expect(screen.queryByText(/^answer$/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/basis/i)).toBeInTheDocument());
+    expect(screen.getByText(/ephemeral, not accepted/i)).toBeInTheDocument();
+    // The answer must state its evidence basis, never present as an
+    // unqualified fact.
+    expect(screen.getByText(/evidence reference/i)).toBeInTheDocument();
   });
 
-  it("aVa dock's packet banner shows 'not yet available for this tenant' rather than silently proceeding", async () => {
-    render(withProvider(<AvaDock />));
+  it("aVa dock's suggested-questions section shows real, mode-scoped suggestions, not a hardcoded refusal banner", async () => {
+    render(withRuntime(<AvaDock />));
     await waitFor(() =>
-      expect(
-        screen.getByText(/knowledge packet not yet available for this tenant/i),
-      ).toBeInTheDocument(),
+      expect(screen.getByLabelText(/ask a question/i)).toBeInTheDocument(),
     );
   });
 });

@@ -1,9 +1,10 @@
 /**
- * The single wrapper every Knowledge UI component should use to consume a
- * ConsumptionEnvelope. It is the enforcement point for the render-gate rule:
- * a component given a withheld/not_loaded/blocked envelope renders the safe
- * empty state and the `children` render-prop is never invoked with
- * fabricated or partial data.
+ * The single wrapper every Knowledge UI component uses to consume a
+ * ViewModelEnvelope from KnowledgeUiViewModelAssembler. It is the enforcement
+ * point for the render-gate rule: a component given a non-renderable envelope
+ * (data === null) renders the safe empty state, keyed off the real 11-value
+ * ComponentReadinessState, and the `children` render-prop is never invoked
+ * with fabricated or partial data.
  *
  * Usage:
  *   <GatedSection envelope={identityEnvelope} label="Enterprise identity">
@@ -14,29 +15,25 @@
 
 import type { ReactNode } from "react";
 
-import type { ConsumptionEnvelope } from "@/lib/knowledge/providers/types";
-import { gateEnvelope } from "./gate-utils";
+import type { ViewModelEnvelope } from "@/lib/knowledge/view-model";
+import { readinessPresentation } from "./gate-utils";
 import { StateBanner } from "./StateBanner";
 
 export interface GatedSectionProps<T> {
-  readonly envelope: ConsumptionEnvelope<T> | null | undefined;
+  readonly envelope: ViewModelEnvelope<T> | null | undefined;
   /** Human label for what this section is, used only for the loading state. */
   readonly label: string;
   /** Render prop invoked ONLY when the envelope is renderable. Receives the
    * narrowed non-null data. */
-  readonly children: (data: T, envelope: ConsumptionEnvelope<T>) => ReactNode;
-  /** Set true for the one legitimate opt-in case (Relationships "Show
-   * candidates" toggle) where candidate/proposed authority content may render,
-   * visually marked, rather than being blocked outright. */
-  readonly allowCandidate?: boolean;
+  readonly children: (data: T, envelope: ViewModelEnvelope<T>) => ReactNode;
   readonly compact?: boolean;
   readonly emptyAction?: {
     readonly label: string;
     readonly onClick: () => void;
   };
-  /** Optional override empty-state copy for a specific matrix row's
-   * `safe_empty_state_behavior` -- when omitted, gate-utils' generic copy is
-   * used. */
+  /** Optional override empty-state copy for a specific component's own
+   * framing -- when omitted, the envelope's own `unavailableReason` (already
+   * field-specific and honest, computed by the assembler) is used. */
   readonly emptyTitle?: string;
   readonly emptyBody?: string;
 }
@@ -45,7 +42,6 @@ export function GatedSection<T>({
   envelope,
   label,
   children,
-  allowCandidate = false,
   compact = false,
   emptyAction,
   emptyTitle,
@@ -60,22 +56,18 @@ export function GatedSection<T>({
     );
   }
 
-  const decision = gateEnvelope(envelope, { allowCandidate });
-
-  if (
-    !decision.renderable ||
-    envelope.data === null ||
-    envelope.data === undefined
-  ) {
+  if (envelope.data === null) {
+    const presentation = readinessPresentation(envelope.readiness);
     return (
       <StateBanner
         compact={compact}
         decision={{
-          tone: decision.tone,
-          title: emptyTitle ?? `${label} -- ${decision.title.toLowerCase()}`,
-          body: emptyBody ?? decision.body,
+          tone: presentation.tone,
+          title:
+            emptyTitle ?? `${label} -- ${presentation.title.toLowerCase()}`,
+          body: emptyBody ?? envelope.unavailableReason ?? "",
         }}
-        detail={envelope.warnings[0]}
+        detail={envelope.warnings[0]?.message}
         action={emptyAction}
       />
     );

@@ -3,25 +3,33 @@
 import { useMemo } from "react";
 
 import { useKnowledgeApp } from "../knowledge-app-context";
+import { readinessPresentation } from "../state/gate-utils";
+import {
+  deriveReadiness,
+  type ComponentReadinessState,
+} from "@/lib/knowledge/view-model";
 import type {
-  RelationshipEdgeDetailRow,
-  RelationshipNodeRow,
-} from "@/lib/knowledge/providers/read-models";
+  RelationshipEdgeV1,
+  RelationshipNodeV1,
+} from "@/lib/knowledge/consumption-contracts";
+
+type ReadyEdge = RelationshipEdgeV1 & { readiness: ComponentReadinessState };
 
 /**
- * Focused-projection graph canvas per the Graph Binding Contract:
- *  - a node renders as an ordinary accepted node ONLY if node_type resolves
- *    to a real canonical object type AND endpoint_catalog_backed=true
- *    (Section 1). Anything else renders, if shown at all, visually distinct
- *    -- dashed amber outline, "unverified" label -- never identical to an
- *    accepted node.
- *  - an edge renders solid-and-clickable only if authority_state=accepted,
- *    both endpoints are catalog-backed, and relationship_type_ref resolves
- *    to a ratified verb (Section 2). An unresolved type renders exactly as
- *    "relationship not typed", never an invented-sounding verb (SD-08's
- *    failure mode this whole contract exists to prevent).
- *  - candidate/proposed content is excluded unless the caller has explicitly
- *    toggled "Show candidates" -- never shown by default (Section 5).
+ * Focused-projection graph canvas. The real RelationshipNodeV1/RelationshipEdgeV1
+ * contract has no `canonicalObjectTypeResolved`/`endpointCatalogBacked`/`isGap`/
+ * `isConflict` booleans the original prototype's duplicate provider invented --
+ * per VIEW_MODEL_ASSEMBLER_INTERFACES.md §1, "solid vs dashed" collapses to a
+ * single real signal: `readiness === "ENABLED_AND_PROVEN"` (solid) vs
+ * everything else (dashed), already computed per-edge by the assembler. Nodes
+ * carry no assembler-computed readiness of their own (the assembler's
+ * RelationshipNeighborhoodViewModel does not attach one), so this component
+ * derives an equivalent presentation locally from the node's own real
+ * authorityState/availabilityState, via the same deriveReadiness() function --
+ * never a fabricated trust signal.
+ *
+ * Candidate/proposed content is excluded unless the caller has explicitly
+ * toggled "Show candidates" -- never shown by default.
  */
 export function GraphCanvas({
   nodes,
@@ -29,10 +37,10 @@ export function GraphCanvas({
   onNodeClick,
   onEdgeClick,
 }: {
-  readonly nodes: readonly RelationshipNodeRow[];
-  readonly edges: readonly RelationshipEdgeDetailRow[];
-  readonly onNodeClick: (node: RelationshipNodeRow) => void;
-  readonly onEdgeClick: (edge: RelationshipEdgeDetailRow) => void;
+  readonly nodes: readonly RelationshipNodeV1[];
+  readonly edges: readonly ReadyEdge[];
+  readonly onNodeClick: (node: RelationshipNodeV1) => void;
+  readonly onEdgeClick: (edge: ReadyEdge) => void;
 }) {
   const { showCandidateRelationships } = useKnowledgeApp();
 
@@ -70,17 +78,15 @@ export function GraphCanvas({
           const a = positions.get(edge.fromNodeId);
           const b = positions.get(edge.toNodeId);
           if (!a || !b) return null;
-          const untrusted =
-            edge.authorityState !== "accepted" ||
-            !edge.endpointCatalogBacked ||
-            !edge.relationshipTypeResolved;
+          const solid = edge.readiness === "ENABLED_AND_PROVEN";
+          const tone = readinessPresentation(edge.readiness).tone;
           const stroke =
-            edge.isGap || edge.isConflict
+            tone === "gap" || tone === "blocked" || tone === "restricted"
               ? "#a32d2d"
-              : untrusted
+              : !solid
                 ? "#ba7517"
                 : "rgba(10,10,11,0.32)";
-          const dash = untrusted ? "5 4" : undefined;
+          const dash = solid ? undefined : "5 4";
           const midX = (a.x + b.x) / 2;
           const midY = (a.y + b.y) / 2;
           return (
@@ -95,7 +101,7 @@ export function GraphCanvas({
                 x2={b.x}
                 y2={b.y}
                 stroke={stroke}
-                strokeWidth={edge.isConflict ? 2 : 1.4}
+                strokeWidth={tone === "gap" ? 2 : 1.4}
                 strokeDasharray={dash}
               />
               <text
@@ -105,9 +111,7 @@ export function GraphCanvas({
                 fontSize={10}
                 fill="#888780"
               >
-                {edge.relationshipTypeResolved
-                  ? edge.relationshipTypeRef
-                  : "relationship not typed"}
+                {edge.relationshipType}
               </text>
             </g>
           );
@@ -117,18 +121,25 @@ export function GraphCanvas({
         {visibleNodes.map((node) => {
           const pos = positions.get(node.nodeId);
           if (!pos) return null;
-          const untrusted =
-            !node.canonicalObjectTypeResolved || !node.endpointCatalogBacked;
+          const nodeReadiness = deriveReadiness({
+            availabilityState: node.availabilityState,
+            authorityState: node.authorityState,
+            freshnessState: "fresh",
+            warnings: [],
+            proven: false,
+          });
+          const tone = readinessPresentation(nodeReadiness).tone;
+          const solid = nodeReadiness === "ENABLED_AND_PROVEN";
           const fill =
-            node.isGap || node.isConflict
+            tone === "gap" || tone === "blocked" || tone === "restricted"
               ? "#fceded"
-              : untrusted
+              : !solid
                 ? "#fff7ec"
                 : "#ffffff";
           const stroke =
-            node.isGap || node.isConflict
+            tone === "gap" || tone === "blocked" || tone === "restricted"
               ? "#a32d2d"
-              : untrusted
+              : !solid
                 ? "#ba7517"
                 : "rgba(10,10,11,0.24)";
           return (
@@ -145,7 +156,7 @@ export function GraphCanvas({
                 rx={6}
                 fill={fill}
                 stroke={stroke}
-                strokeDasharray={untrusted ? "5 4" : undefined}
+                strokeDasharray={solid ? undefined : "5 4"}
                 strokeWidth={1.4}
               />
               <text
@@ -164,7 +175,7 @@ export function GraphCanvas({
                 fontSize={9}
                 fill="#888780"
               >
-                {untrusted ? `${node.nodeType} (unverified)` : node.nodeType}
+                {solid ? node.nodeType : `${node.nodeType} (unverified)`}
               </text>
             </g>
           );
@@ -179,13 +190,14 @@ function truncate(s: string, n: number): string {
 }
 
 function layoutRadial(
-  nodes: readonly RelationshipNodeRow[],
+  nodes: readonly RelationshipNodeV1[],
 ): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
   const centerX = 380;
   const centerY = 230;
   const focal =
-    nodes.find((n) => n.nodeType && n.authorityState === "accepted") ??
+    nodes.find((n) => n.hop === 0) ??
+    nodes.find((n) => n.authorityState === "accepted") ??
     nodes[0];
   if (!focal) return positions;
   positions.set(focal.nodeId, { x: centerX, y: centerY });

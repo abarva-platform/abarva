@@ -1,82 +1,29 @@
 "use client";
 
-import {
-  ResponsiveContainer,
-  Scatter,
-  ScatterChart,
-  Tooltip,
-  XAxis,
-  YAxis,
-  ZAxis,
-} from "recharts";
+import { StateBanner } from "../state/StateBanner";
+import { readinessPresentation } from "../state/gate-utils";
 
-import { useKnowledgeApp } from "../knowledge-app-context";
-import { useEnvelope } from "../use-envelope";
-import { GatedSection } from "../state/GatedSection";
-
-/** Matrix row gate: "Omit the quadrant; do not plot an estimated
- * value-at-stake position as if it were a governed figure" -- points whose
- * value is only an estimate are still plotted (the prototype itself plots
- * estimates), but marked distinctly rather than hidden, since the row's own
- * text says the estimate itself is a legitimate thing to show as long as it
- * is labeled as an estimate, not disguised as a funded figure. */
+/**
+ * "Value at stake" has no home in Knowledge's contract by design: per
+ * AGENTS.md, Tower read models/metric tables own spend/value/ROI
+ * calculations, and Knowledge/graph must never calculate them (see the
+ * reconciliation matrix's `listDecisionReadinessQuadrant` row:
+ * MISSING_PROVIDER_QUERY). This component stays wired into Evidence & gaps
+ * (a prior session correctly restored its mount point after finding it
+ * orphaned) but renders its honest PROJECTION_UNAVAILABLE state rather than
+ * plotting an estimated value-at-stake position -- building this properly
+ * means a governed Tower-to-Knowledge module-handoff reference, which is
+ * later-PR scope, not an assembler computation invented here.
+ */
 export function DecisionReadinessQuadrant() {
-  const { provider, providerCtx, setMode } = useKnowledgeApp();
-  const envelope = useEnvelope(
-    () => provider.listDecisionReadinessQuadrant(providerCtx),
-    [provider, providerCtx],
-  );
-
+  const presentation = readinessPresentation("PROJECTION_UNAVAILABLE");
   return (
-    <GatedSection
-      envelope={envelope}
-      label="Decision-readiness quadrant"
-      emptyTitle="Readiness quadrant withheld"
-    >
-      {(points) => (
-        <div className="h-72 rounded-md border border-[rgba(10,10,11,0.1)] bg-white p-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 10 }}>
-              <XAxis
-                type="number"
-                dataKey="evidenceReadinessPct"
-                name="Evidence readiness"
-                unit="%"
-                domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "#888780" }}
-              />
-              <YAxis
-                type="number"
-                dataKey="valueAtStakePct"
-                name="Value at stake"
-                unit="%"
-                domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "#888780" }}
-              />
-              <ZAxis range={[80, 80]} />
-              <Tooltip
-                cursor={{ strokeDasharray: "3 3" }}
-                formatter={(value, name) => [`${value}%`, String(name)]}
-                labelFormatter={() => ""}
-              />
-              <Scatter
-                data={points.map((p) => ({ ...p }))}
-                fill="#0066CC"
-                onClick={(payload: unknown) => {
-                  void payload;
-                  setMode("explore");
-                }}
-              />
-            </ScatterChart>
-          </ResponsiveContainer>
-          {points.some((p) => p.valueAtStakeIsEstimated) ? (
-            <p className="px-1 text-xs text-[#888780]">
-              Points marked as estimated derive value-at-stake from dependency
-              scope, not a funded business case.
-            </p>
-          ) : null}
-        </div>
-      )}
-    </GatedSection>
+    <StateBanner
+      decision={{
+        tone: presentation.tone,
+        title: `Decision-readiness quadrant -- ${presentation.title.toLowerCase()}`,
+        body: "Value-at-stake belongs to Tower's governed metric tables, not a Knowledge computation. This view is pending a governed Tower-to-Knowledge module-handoff reference.",
+      }}
+    />
   );
 }

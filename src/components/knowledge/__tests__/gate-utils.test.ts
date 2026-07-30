@@ -1,155 +1,43 @@
-import { gateEnvelope } from "../state/gate-utils";
-import type { ConsumptionEnvelope } from "@/lib/knowledge/providers/types";
+import { readinessPresentation } from "../state/gate-utils";
+import { COMPONENT_READINESS_STATES } from "@/lib/knowledge/view-model";
 
-function envelope<T>(
-  overrides: Partial<
-    Pick<
-      ConsumptionEnvelope<T>,
-      "availabilityState" | "authorityState" | "freshnessState" | "data"
-    >
-  >,
-): Pick<
-  ConsumptionEnvelope<T>,
-  "availabilityState" | "authorityState" | "freshnessState" | "data"
-> {
-  return {
-    availabilityState: "available",
-    authorityState: "accepted",
-    freshnessState: "current",
-    data: null,
-    ...overrides,
-  };
-}
-
-describe("gateEnvelope", () => {
-  it("blocks rendering when availabilityState is not_loaded, even if data is somehow present", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "not_loaded",
-        data: { fake: true } as unknown,
-      }),
+describe("readinessPresentation", () => {
+  it("covers all 11 real ComponentReadinessState values with a distinct title each", () => {
+    const titles = COMPONENT_READINESS_STATES.map(
+      (s) => readinessPresentation(s).title,
     );
-    expect(decision.renderable).toBe(false);
-    expect(decision.tone).toBe("blocked");
+    expect(new Set(titles).size).toBe(COMPONENT_READINESS_STATES.length);
   });
 
-  it("never treats a missing value as zero -- not_measured blocks rendering with an honest title", () => {
-    const decision = gateEnvelope(
-      envelope({ availabilityState: "not_measured", data: null }),
-    );
-    expect(decision.renderable).toBe(false);
-    expect(decision.title).toBe("Not measured");
-    expect(decision.body.toLowerCase()).toContain("absent");
-    expect(decision.body.toLowerCase()).not.toContain("zero value");
+  it("never collapses SOURCE_INCOMPLETE into the same title as WITHHELD or STALE", () => {
+    const sourceIncomplete = readinessPresentation("SOURCE_INCOMPLETE");
+    const withheld = readinessPresentation("WITHHELD");
+    const stale = readinessPresentation("STALE");
+    expect(sourceIncomplete.title).not.toBe(withheld.title);
+    expect(sourceIncomplete.title).not.toBe(stale.title);
   });
 
-  it("blocks conflicting/disagreeing sources rather than picking one silently", () => {
-    const decision = gateEnvelope(
-      envelope({ availabilityState: "conflicting", data: null }),
-    );
-    expect(decision.renderable).toBe(false);
-    expect(decision.tone).toBe("gap");
-    expect(decision.title).toBe("Sources disagree");
+  it("marks WITHHELD and RESTRICTED with the restricted tone", () => {
+    expect(readinessPresentation("WITHHELD").tone).toBe("restricted");
+    expect(readinessPresentation("RESTRICTED").tone).toBe("restricted");
   });
 
-  it("blocks withheld/restricted content and never leaks it as renderable", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "withheld",
-        data: { secret: "classified" } as unknown,
-      }),
-    );
-    expect(decision.renderable).toBe(false);
-    expect(decision.tone).toBe("restricted");
+  it("marks DISPUTED with the gap tone (mirrors the old 'sources disagree' tone)", () => {
+    expect(readinessPresentation("DISPUTED").tone).toBe("gap");
   });
 
-  it("treats not_applicable as its own distinct state, never as 'clean' or zero", () => {
-    const decision = gateEnvelope(
-      envelope({ availabilityState: "not_applicable", data: null }),
-    );
-    expect(decision.renderable).toBe(false);
-    expect(decision.title).toBe("Not assessed");
-    expect(decision.body.toLowerCase()).toContain("not the same as clean");
+  it("marks STALE with the stale tone", () => {
+    expect(readinessPresentation("STALE").tone).toBe("stale");
   });
 
-  it("does not render available data whose authority is only 'candidate' unless explicitly allowed", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "available",
-        authorityState: "candidate",
-        data: { v: 1 },
-      }),
-    );
-    expect(decision.renderable).toBe(false);
-    expect(decision.tone).toBe("candidate");
+  it("marks ENABLED_AND_PROVEN and NOT_ASSESSED with the neutral tone", () => {
+    expect(readinessPresentation("ENABLED_AND_PROVEN").tone).toBe("neutral");
+    expect(readinessPresentation("NOT_ASSESSED").tone).toBe("neutral");
   });
 
-  it("allows candidate content to render only when the caller explicitly opts in", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "available",
-        authorityState: "candidate",
-        data: { v: 1 },
-      }),
-      { allowCandidate: true },
+  it("marks DATA_RECONCILED_BUT_UI_UNPROVEN with the candidate tone (visually distinct from proven)", () => {
+    expect(readinessPresentation("DATA_RECONCILED_BUT_UI_UNPROVEN").tone).toBe(
+      "candidate",
     );
-    expect(decision.renderable).toBe(true);
-  });
-
-  it("does not render 'proposed' authority as accepted", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "available",
-        authorityState: "proposed",
-        data: { v: 1 },
-      }),
-    );
-    expect(decision.renderable).toBe(false);
-    expect(decision.title.toLowerCase()).toContain("proposed");
-  });
-
-  it("does not render 'disputed' authority as accepted", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "available",
-        authorityState: "disputed",
-        data: { v: 1 },
-      }),
-    );
-    expect(decision.renderable).toBe(false);
-  });
-
-  it("renders available+accepted data, but marks stale freshness visibly rather than hiding it", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "available",
-        authorityState: "accepted",
-        freshnessState: "stale",
-        data: { v: 1 },
-      }),
-    );
-    expect(decision.renderable).toBe(true);
-    expect(decision.tone).toBe("stale");
-    expect(decision.title).toBe("Needs refresh");
-  });
-
-  it("renders cleanly when available, accepted, and current with no caveats", () => {
-    const decision = gateEnvelope(
-      envelope({
-        availabilityState: "available",
-        authorityState: "accepted",
-        freshnessState: "current",
-        data: { v: 1 },
-      }),
-    );
-    expect(decision.renderable).toBe(true);
-    expect(decision.tone).toBe("neutral");
-  });
-
-  it("blocks when data is null even if availabilityState claims available (defensive: never trust availability alone)", () => {
-    const decision = gateEnvelope(
-      envelope({ availabilityState: "available", data: null }),
-    );
-    expect(decision.renderable).toBe(false);
   });
 });

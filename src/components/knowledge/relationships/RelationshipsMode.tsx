@@ -4,31 +4,24 @@ import { useKnowledgeApp } from "../knowledge-app-context";
 import { useEnvelope } from "../use-envelope";
 import { GatedSection } from "../state/GatedSection";
 import { StateBanner } from "../state/StateBanner";
-import { PresetPicker } from "./PresetPicker";
+import { PresetPicker, RELATIONSHIP_PRESETS } from "./PresetPicker";
 import { GraphCanvas } from "./GraphCanvas";
 import { GraphLegend } from "./GraphLegend";
 import { RelationshipList } from "./RelationshipList";
+import type { ComponentReadinessState } from "@/lib/knowledge/view-model";
 import type {
-  RelationshipEdgeDetailRow,
-  RelationshipNodeRow,
-} from "@/lib/knowledge/providers/read-models";
+  RelationshipEdgeV1,
+  RelationshipNodeV1,
+} from "@/lib/knowledge/consumption-contracts";
 
-/** RelationshipEvidenceDetail.confidence uses a 3-value scale (high/medium/low)
- * distinct from EvidenceRef.confidence's 3-value scale (high/partial/unknown)
- * -- "medium" and "low" both honestly map to "partial" rather than pretending
- * finer granularity than the shared EvidenceRef shape carries. */
-function toEvidenceConfidence(
-  confidence: "high" | "medium" | "low" | null,
-): "high" | "partial" | "unknown" {
-  if (confidence === "high") return "high";
-  if (confidence === "medium" || confidence === "low") return "partial";
-  return "unknown";
-}
+type ReadyEdge = RelationshipEdgeV1 & { readiness: ComponentReadinessState };
 
 export function RelationshipsMode() {
   const {
-    provider,
-    providerCtx,
+    assembler,
+    runtime,
+    tenantKey,
+    lensId,
     relationshipPresetId,
     relationshipHops,
     setRelationshipHops,
@@ -39,61 +32,36 @@ export function RelationshipsMode() {
     openDrawer,
   } = useKnowledgeApp();
 
-  const presetsEnvelope = useEnvelope(
-    () => provider.listRelationshipPresets(providerCtx),
-    [provider, providerCtx],
-  );
-  const focalNodeId =
-    presetsEnvelope?.data?.find((p) => p.presetId === relationshipPresetId)
-      ?.focalNodeId ?? "";
+  const focalEntityRef = RELATIONSHIP_PRESETS.find(
+    (p) => p.presetId === relationshipPresetId,
+  )?.focalEntityRef;
 
-  const nodesEnvelope = useEnvelope(
+  const neighborhoodEnvelope = useEnvelope(
     () =>
-      focalNodeId
-        ? provider.listRelationshipNodes(
-            providerCtx,
-            focalNodeId,
-            relationshipHops,
-          )
+      focalEntityRef
+        ? assembler.getRelationshipNeighborhood({
+            runtime,
+            tenantKey,
+            lens: lensId,
+            focalEntityRefs: [focalEntityRef],
+            hopDepth: relationshipHops,
+          })
         : Promise.resolve(undefined as never),
-    [provider, providerCtx, focalNodeId, relationshipHops],
-  );
-  const edgesEnvelope = useEnvelope(
-    () =>
-      focalNodeId
-        ? provider.listRelationshipEdgeDetails(
-            providerCtx,
-            focalNodeId,
-            relationshipHops,
-          )
-        : Promise.resolve(undefined as never),
-    [provider, providerCtx, focalNodeId, relationshipHops],
+    [assembler, runtime, tenantKey, lensId, focalEntityRef, relationshipHops],
   );
 
-  const hasTargetRows = (nodesEnvelope?.data ?? []).some(
-    (n) => n.stateScope === "target",
-  );
+  const hasTargetRows = false; // no per-node stateScope exists on RelationshipNodeV1 today
 
-  function openNodeDrawer(node: RelationshipNodeRow) {
+  function openNodeDrawer(node: RelationshipNodeV1) {
     openDrawer({
       kind: node.nodeType,
       title: node.label,
       evidence: [],
       attributes: [
         { label: "Type", value: node.nodeType },
-        {
-          label: "Canonical type resolved",
-          value: node.canonicalObjectTypeResolved
-            ? "Yes"
-            : "No -- UI framing label only",
-        },
-        {
-          label: "Catalog-backed",
-          value: node.endpointCatalogBacked
-            ? "Yes"
-            : "No -- cannot support a decision",
-        },
-        { label: "State", value: node.authorityState },
+        { label: "Authority", value: node.authorityState },
+        { label: "Availability", value: node.availabilityState },
+        { label: "Hop", value: String(node.hop) },
       ],
       // Real node id, not a placeholder -- lets the drawer offer a
       // current-vs-target comparison scoped to this exact entity.
@@ -101,35 +69,29 @@ export function RelationshipsMode() {
     });
   }
 
-  async function openEdgeDrawer(edge: RelationshipEdgeDetailRow) {
-    const evidence = await provider.getRelationshipEvidence(
-      providerCtx,
-      edge.edgeId,
-    );
+  async function openEdgeDrawer(edge: ReadyEdge) {
+    if (!focalEntityRef) return;
+    // Edge evidence (evidenceByEdge) is not part of the assembler's
+    // RelationshipNeighborhoodViewModel -- it reads straight off the real
+    // provider call, per the reconciliation matrix's RelationshipsMode row.
+    const env = await runtime.provider.getRelationships({
+      tenantKey,
+      knowledgeBaselineRef: runtime.baselineRef,
+      focalEntityRefs: [focalEntityRef],
+      direction: "both",
+      hopDepth: relationshipHops,
+      currentTargetScope: "current",
+      authorityMinimum: "accepted",
+      maxNodes: 80,
+      maxEdges: 150,
+      includeCandidates: true,
+    });
+    const evidence = env.data.evidenceByEdge[edge.edgeId] ?? [];
     openDrawer({
       kind: "Relationship",
       title: `${edge.fromNodeId} -> ${edge.toNodeId}`,
-      subtitle: edge.relationshipTypeResolved
-        ? (edge.relationshipTypeRef ?? undefined)
-        : "relationship not typed",
-      evidence: evidence.data
-        ? [
-            {
-              sourceName: evidence.data.sourceCitation,
-              sourceDate: evidence.data.effectiveFrom,
-              citation: evidence.data.sourceCitation,
-              reviewState: edge.authorityState,
-              confidence: toEvidenceConfidence(evidence.data.confidence),
-              effectivePeriod: {
-                from: evidence.data.effectiveFrom,
-                to: evidence.data.effectiveTo,
-              },
-              lineage: [],
-              conflicts: edge.isConflict ? ["disputed"] : [],
-              accessRestricted: false,
-            },
-          ]
-        : [],
+      subtitle: edge.relationshipType,
+      evidence,
     });
   }
 
@@ -166,11 +128,7 @@ export function RelationshipsMode() {
               label="Target state"
               active={showTargetState}
               disabled={!hasTargetRows}
-              title={
-                !hasTargetRows
-                  ? "No target state published for this entity"
-                  : undefined
-              }
+              title="No target-state scoping exists on the real relationship node projection yet"
               onClick={() => setShowTargetState(!showTargetState)}
             />
           </div>
@@ -185,32 +143,25 @@ export function RelationshipsMode() {
             />
           ) : (
             <GatedSection
-              envelope={nodesEnvelope}
+              envelope={neighborhoodEnvelope}
               label="Relationship graph"
               emptyTitle="This graph has not been reconciled yet"
               emptyBody="One hop, accepted-only nodes must resolve server-side before this graph can render -- nothing is inferred to fill it in the meantime."
             >
-              {(nodes) => (
-                <GatedSection
-                  envelope={edgesEnvelope}
-                  label="Relationship edges"
-                >
-                  {(edges) => (
-                    <div className="space-y-3">
-                      <GraphCanvas
-                        nodes={nodes}
-                        edges={edges}
-                        onNodeClick={openNodeDrawer}
-                        onEdgeClick={openEdgeDrawer}
-                      />
-                      <GraphLegend />
-                      <RelationshipList
-                        edges={edges}
-                        onEdgeClick={openEdgeDrawer}
-                      />
-                    </div>
-                  )}
-                </GatedSection>
+              {(neighborhood) => (
+                <div className="space-y-3">
+                  <GraphCanvas
+                    nodes={neighborhood.nodes}
+                    edges={neighborhood.edges}
+                    onNodeClick={openNodeDrawer}
+                    onEdgeClick={openEdgeDrawer}
+                  />
+                  <GraphLegend />
+                  <RelationshipList
+                    edges={neighborhood.edges}
+                    onEdgeClick={openEdgeDrawer}
+                  />
+                </div>
               )}
             </GatedSection>
           )}

@@ -5,7 +5,13 @@
  * so a user learns the pattern once. Per AGENTS.md: missing is never zero,
  * uncertified is never clean, restricted evidence is never exposed.
  */
-import type { GateDecision, GateTone } from "./gate-utils";
+import type { GateTone } from "./gate-utils";
+
+export interface StateBannerDecision {
+  readonly tone: GateTone;
+  readonly title: string;
+  readonly body: string;
+}
 
 const TONE_STYLES: Record<
   GateTone,
@@ -50,7 +56,7 @@ const TONE_STYLES: Record<
 };
 
 export interface StateBannerProps {
-  readonly decision: Pick<GateDecision, "tone" | "title" | "body">;
+  readonly decision: StateBannerDecision;
   /** What is missing, named specifically -- e.g. the failing gap/owner/due date,
    * rendered as a secondary line under `body`. Optional. */
   readonly detail?: string;

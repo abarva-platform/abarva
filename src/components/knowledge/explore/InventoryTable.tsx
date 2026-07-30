@@ -6,42 +6,33 @@ import { useKnowledgeApp } from "../knowledge-app-context";
 import { useEnvelope } from "../use-envelope";
 import { GatedSection } from "../state/GatedSection";
 import { StateBadge } from "../state/StateBanner";
+import { readinessPresentation } from "../state/gate-utils";
+import { isComponentReadinessState } from "@/lib/knowledge/view-model";
 import { SavedViewExportBar } from "../saved-views/SavedViewExportBar";
 import type { InventoryKindConfig, InventoryRecord } from "./inventory-config";
 import { InventoryChart } from "./InventoryChart";
 
-const ACCEPTED_READINESS = new Set([
-  "accepted",
-  "Accepted",
-  "baselined",
-  "Baselined",
-]);
-
-function readinessTone(
-  value: InventoryCellValue,
-): "neutral" | "candidate" | "gap" {
-  const text = String(value ?? "").toLowerCase();
-  if (ACCEPTED_READINESS.has(String(value ?? ""))) return "neutral";
-  if (
-    text.includes("disagree") ||
-    text.includes("not assigned") ||
-    text.includes("not loaded")
-  )
-    return "gap";
-  return "candidate";
-}
-
 type InventoryCellValue = string | number | null;
+
+/** A readiness-state column renders through the shared 11-value readiness
+ * presentation lookup; any other column renders its raw value. */
+function cellPresentation(value: InventoryCellValue) {
+  if (isComponentReadinessState(value)) {
+    return readinessPresentation(value);
+  }
+  return { tone: "neutral" as const, title: String(value ?? "-") };
+}
 
 export function InventoryTable({
   config,
 }: {
   readonly config: InventoryKindConfig;
 }) {
-  const { provider, providerCtx, openDrawer } = useKnowledgeApp();
+  const { assembler, runtime, tenantKey, lensId, openDrawer } =
+    useKnowledgeApp();
   const envelope = useEnvelope(
-    () => config.fetch(provider, providerCtx),
-    [provider, providerCtx, config.kind],
+    () => config.fetch(assembler, { runtime, tenantKey, lens: lensId }),
+    [assembler, runtime, tenantKey, lensId, config.kind],
   );
 
   const [activeFacets, setActiveFacets] = useState<Record<string, string[]>>(
@@ -56,7 +47,6 @@ export function InventoryTable({
       envelope={envelope}
       label={config.label}
       emptyTitle={`${config.label}: withheld pending pipeline`}
-      emptyBody="This inventory has not been reconciled for airline-demo-new yet. It is withheld, not shown as an empty (zero-row) table -- an empty table here would misleadingly read as 'nothing exists'."
     >
       {(rows) => (
         <InventoryTableBody
@@ -77,7 +67,10 @@ export function InventoryTable({
               evidence: [],
               attributes: config.columns.map((c) => ({
                 label: c.label,
-                value: String(row[c.key] ?? "-"),
+                value:
+                  c.key === config.readinessKey
+                    ? cellPresentation(row[c.key]).title
+                    : String(row[c.key] ?? "-"),
               })),
             })
           }
@@ -252,8 +245,8 @@ function InventoryTableBody({
                   >
                     {col.key === config.readinessKey ? (
                       <StateBadge
-                        tone={readinessTone(row[col.key])}
-                        label={String(row[col.key] ?? "-")}
+                        tone={cellPresentation(row[col.key]).tone}
+                        label={cellPresentation(row[col.key]).title}
                       />
                     ) : (
                       <span className="text-[#2c2c2a]">

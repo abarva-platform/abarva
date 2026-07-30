@@ -1,38 +1,26 @@
 "use client";
 
-import { useKnowledgeApp } from "../knowledge-app-context";
-import { useEnvelope } from "../use-envelope";
-import { GatedSection } from "../state/GatedSection";
+import { StateBanner } from "../state/StateBanner";
+import { readinessPresentation } from "../state/gate-utils";
 
+/**
+ * "Operating priority" / "stated ambition" statement types have no home in
+ * the real consumption contract's 14 registered projections --
+ * `executive_perspective_v1` is quote-shaped (LeadershipPerspectiveV1), not
+ * statement-shaped, and no dedicated purpose-statement projection exists.
+ * The assembler exposes no method for this; per the migration guide this
+ * renders its honest PROJECTION_UNAVAILABLE state directly rather than
+ * inventing a composition that has no real backing.
+ */
 export function PurposePanel() {
-  const { provider, providerCtx } = useKnowledgeApp();
-  const envelope = useEnvelope(
-    () => provider.listPurposeStatements(providerCtx),
-    [provider, providerCtx],
-  );
-
+  const presentation = readinessPresentation("PROJECTION_UNAVAILABLE");
   return (
-    <GatedSection
-      envelope={envelope}
-      label="Purpose and priorities"
-      emptyTitle="Leadership priorities not yet published"
-      emptyBody="executive_perspective_v1 has not resolved and accepted for this tenant."
-    >
-      {(statements) => (
-        <dl className="space-y-3">
-          {statements.map((s) => (
-            <div key={s.statementType}>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-[#888780]">
-                {s.statementType === "operating_priority"
-                  ? "Operating priority"
-                  : "Stated ambition"}
-              </dt>
-              <dd className="mt-0.5 text-sm text-[#2c2c2a]">{s.text}</dd>
-              <p className="mt-0.5 text-xs text-[#888780]">{s.sourceLabel}</p>
-            </div>
-          ))}
-        </dl>
-      )}
-    </GatedSection>
+    <StateBanner
+      decision={{
+        tone: presentation.tone,
+        title: `Purpose and priorities -- ${presentation.title.toLowerCase()}`,
+        body: "No purpose-statement projection exists in the consumption contract yet. executive_perspective_v1 is quote-shaped, not statement-shaped, and cannot honestly stand in for it.",
+      }}
+    />
   );
 }

@@ -1,22 +1,45 @@
 /**
- * Config-driven Explore inventory framework. Rather than 8 near-duplicate
- * table components (one per matrix row: Applications, Data products,
- * Integrations, Infrastructure, Vendors, Programmes, Risks, Measures), each
- * inventory kind declares its columns + a normalizer from its typed provider
- * row into a generic display record. InventoryTable.tsx then stays generic
- * over any inventory kind.
+ * Config-driven Explore inventory framework. Per the reconciliation matrix's
+ * `ExploreInventoryViewModel` classification, only two of the original eight
+ * inventory kinds are DIRECTLY_SUPPORTED by the real consumption contract
+ * today (`applications` -> domainKey "technology", `vendors` -> domainKey
+ * "vendors", both backed by real registered projections --
+ * application_inventory_v1 / vendor_contract_inventory_v1). The other six
+ * (dataProducts, integrations, infrastructure, programs, risks, measures)
+ * have no real projection behind them at any layer of the registered
+ * contract -- their `fetch` returns an honest PROJECTION_UNAVAILABLE
+ * envelope directly, without an assembler call, rather than pretending a
+ * query exists. See CURRENTLY_RENDERABLE_COMPONENTS.md /
+ * KNOWLEDGE_PROVIDER_RECONCILIATION_MATRIX.csv for the full classification.
  *
  * Every `numeric` column is the ONLY kind of column the chart toggle may
- * aggregate over (matrix row "Chart toggle": disabled when the underlying
- * numeric field is not governed/populated) -- kinds with no numeric column
- * declare `chartable: false` so the toggle never appears for them.
+ * aggregate over -- kinds with no numeric column declare `chartable: false`
+ * so the toggle never appears for them.
  */
-import type { GovernedKnowledgeProvider } from "@/lib/knowledge/providers/governed-knowledge-provider";
-import type { ConsumptionEnvelope } from "@/lib/knowledge/providers/types";
-import type { ExploreInventoryKind } from "@/lib/knowledge/providers/read-models";
+import type {
+  AssemblerQuery,
+  ComponentReadinessState,
+  KnowledgeUiViewModelAssembler,
+  ViewModelEnvelope,
+} from "@/lib/knowledge/view-model";
+import { deriveReadiness } from "@/lib/knowledge/view-model";
+import type {
+  EntityFieldValue,
+  EntitySummaryV1,
+} from "@/lib/knowledge/consumption-contracts";
 
 export type InventoryCell = string | number | null;
 export type InventoryRecord = Record<string, InventoryCell>;
+
+export type ExploreInventoryKind =
+  | "applications"
+  | "dataProducts"
+  | "integrations"
+  | "infrastructure"
+  | "vendors"
+  | "programs"
+  | "risks"
+  | "measures";
 
 export interface InventoryColumn {
   readonly key: string;
@@ -41,19 +64,69 @@ export interface InventoryKindConfig {
   readonly primaryKey: string;
   readonly chartable: boolean;
   fetch(
-    provider: GovernedKnowledgeProvider,
-    ctx: Parameters<GovernedKnowledgeProvider["listApplications"]>[0],
-  ): Promise<ConsumptionEnvelope<readonly InventoryRecord[]>>;
+    assembler: KnowledgeUiViewModelAssembler,
+    query: AssemblerQuery,
+  ): Promise<ViewModelEnvelope<readonly InventoryRecord[]>>;
 }
 
-function mapEnvelope<T>(
-  envelope: ConsumptionEnvelope<readonly T[]>,
-  toRecord: (row: T) => InventoryRecord,
-): ConsumptionEnvelope<readonly InventoryRecord[]> {
-  return {
-    ...envelope,
-    data: envelope.data ? envelope.data.map(toRecord) : null,
+function fieldValue(entity: EntitySummaryV1, key: string): InventoryCell {
+  const field = entity.fields.find((f: EntityFieldValue) => f.key === key);
+  if (!field || field.availabilityState !== "available") return null;
+  return field.value;
+}
+
+function entityReadiness(entity: EntitySummaryV1): ComponentReadinessState {
+  return deriveReadiness({
+    availabilityState: entity.availabilityState,
+    authorityState: "accepted",
+    freshnessState: "fresh",
+    warnings: [],
+    // No per-row cite-render test exists yet -- every row is, at best,
+    // DATA_RECONCILED_BUT_UI_UNPROVEN, never ENABLED_AND_PROVEN.
+    proven: false,
+  });
+}
+
+/** Real, contract-backed fetch: assembler.getExploreInventory scoped to one
+ * domainKey, entities further narrowed to the one real entityType this
+ * inventory kind represents (a domainKey can carry more than one entityType
+ * -- e.g. "vendors" also carries "contract" rows -- which the original
+ * per-kind duplicate methods never mixed together). */
+function realFetch(
+  domainKey: string,
+  entityType: string,
+  toRecord: (entity: EntitySummaryV1) => InventoryRecord,
+) {
+  return async (
+    assembler: KnowledgeUiViewModelAssembler,
+    query: AssemblerQuery,
+  ): Promise<ViewModelEnvelope<readonly InventoryRecord[]>> => {
+    const env = await assembler.getExploreInventory({ ...query, domainKey });
+    if (env.data === null) {
+      return { ...env, data: null };
+    }
+    const entities = env.data.entities.filter(
+      (e) => e.entityType === entityType,
+    );
+    return { ...env, data: entities.map(toRecord) };
   };
+}
+
+/** No real projection exists for this inventory kind at any layer of the
+ * registered consumption contract today -- return an honest
+ * PROJECTION_UNAVAILABLE envelope without ever calling the assembler for a
+ * domain it cannot support. */
+function unavailableFetch(reason: string) {
+  return async (): Promise<ViewModelEnvelope<readonly InventoryRecord[]>> => ({
+    readiness: "PROJECTION_UNAVAILABLE",
+    unavailableReason: reason,
+    data: null,
+    evidenceRefs: [],
+    knownGapRefs: [],
+    asOf: new Date(0).toISOString(),
+    knowledgeBaselineRef: "not-applicable",
+    warnings: [],
+  });
 }
 
 export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
@@ -66,20 +139,21 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
     readinessKey: "readinessState",
     columns: [
       { key: "name", label: "System", align: "left", numeric: false },
-      {
-        key: "applicationType",
-        label: "Function",
-        align: "left",
-        numeric: false,
-      },
       { key: "owner", label: "Owner", align: "left", numeric: false },
+      { key: "hosting", label: "Hosting", align: "left", numeric: false },
       {
-        key: "lifecycleState",
-        label: "Lifecycle",
+        key: "criticality",
+        label: "Criticality",
         align: "left",
         numeric: false,
       },
-      { key: "domain", label: "Domain", align: "left", numeric: false },
+      { key: "vendor", label: "Vendor", align: "left", numeric: false },
+      {
+        key: "annualCost",
+        label: "Annual cost $M",
+        align: "right",
+        numeric: true,
+      },
       {
         key: "readinessState",
         label: "Readiness",
@@ -89,31 +163,20 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
     ],
     facets: [
       {
-        key: "lifecycleState",
-        label: "Lifecycle",
-        options: ["Retain", "Supported", "Emerging"],
-      },
-      {
-        key: "readinessState",
-        label: "Readiness",
-        options: [
-          "Accepted",
-          "Awaiting review",
-          "Sources disagree",
-          "Needs refresh",
-          "Owner not assigned",
-        ],
+        key: "criticality",
+        label: "Criticality",
+        options: ["tier_1", "tier_2"],
       },
     ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listApplications(ctx), (row) => ({
-        name: row.name,
-        applicationType: row.applicationType,
-        owner: row.owner ?? "Owner not assigned",
-        lifecycleState: row.lifecycleState,
-        domain: row.domain,
-        readinessState: "Not yet captured",
-      })),
+    fetch: realFetch("technology", "application", (e) => ({
+      name: e.displayName,
+      owner: fieldValue(e, "owner") ?? "Owner not assigned",
+      hosting: fieldValue(e, "hosting"),
+      criticality: fieldValue(e, "criticality"),
+      vendor: fieldValue(e, "vendor"),
+      annualCost: fieldValue(e, "annual_cost"),
+      readinessState: entityReadiness(e),
+    })),
   },
   {
     kind: "dataProducts",
@@ -124,32 +187,6 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
     readinessKey: "readinessState",
     columns: [
       { key: "name", label: "Data product", align: "left", numeric: false },
-      { key: "domain", label: "Domain", align: "left", numeric: false },
-      { key: "steward", label: "Steward", align: "left", numeric: false },
-      {
-        key: "certificationState",
-        label: "Certification",
-        align: "left",
-        numeric: false,
-      },
-      {
-        key: "sensitivity",
-        label: "Sensitivity",
-        align: "left",
-        numeric: false,
-      },
-      {
-        key: "consumerCount",
-        label: "Consumers",
-        align: "right",
-        numeric: true,
-      },
-      {
-        key: "refreshCadence",
-        label: "Refresh",
-        align: "left",
-        numeric: false,
-      },
       {
         key: "readinessState",
         label: "Readiness",
@@ -157,49 +194,20 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
         numeric: false,
       },
     ],
-    facets: [
-      {
-        key: "certificationState",
-        label: "Certification",
-        options: ["certified", "provisional", "uncertified"],
-      },
-    ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listDataProducts(ctx), (row) => ({
-        name: row.name,
-        domain: row.domain,
-        steward: row.steward ?? "Owner not assigned",
-        certificationState: row.certificationState,
-        sensitivity: row.sensitivity,
-        consumerCount: row.consumerCount,
-        refreshCadence: row.refreshCadence ?? "Not loaded",
-        readinessState: row.readinessState,
-      })),
+    facets: [],
+    fetch: unavailableFetch(
+      "No data_product_inventory_v1 projection is registered in the consumption contract yet -- a data-plane build reports rows under this name, but the TS contract/registry has not caught up to expose it.",
+    ),
   },
   {
     kind: "integrations",
     label: "Integrations",
     domainId: "tech",
     primaryKey: "name",
-    chartable: true,
+    chartable: false,
     readinessKey: "readinessState",
     columns: [
       { key: "name", label: "Integration", align: "left", numeric: false },
-      { key: "sourceSystem", label: "Source", align: "left", numeric: false },
-      { key: "targetSystem", label: "Target", align: "left", numeric: false },
-      { key: "pattern", label: "Pattern", align: "left", numeric: false },
-      {
-        key: "criticality",
-        label: "Criticality",
-        align: "left",
-        numeric: false,
-      },
-      {
-        key: "messagesPerDay",
-        label: "Messages / day",
-        align: "right",
-        numeric: true,
-      },
       {
         key: "readinessState",
         label: "Readiness",
@@ -207,53 +215,20 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
         numeric: false,
       },
     ],
-    facets: [
-      {
-        key: "pattern",
-        label: "Pattern",
-        options: ["api", "batch", "streaming"],
-      },
-    ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listIntegrations(ctx), (row) => ({
-        name: row.name,
-        sourceSystem: row.sourceSystem,
-        targetSystem: row.targetSystem,
-        pattern: row.pattern,
-        criticality: row.criticality,
-        messagesPerDay: row.messagesPerDay,
-        readinessState: row.readinessState,
-      })),
+    facets: [],
+    fetch: unavailableFetch(
+      "No integration-inventory projection exists in the consumption registry or the foundation-closure projection counts at any layer yet.",
+    ),
   },
   {
     kind: "infrastructure",
     label: "Infrastructure and cloud",
     domainId: "tech",
     primaryKey: "name",
-    chartable: true,
+    chartable: false,
     readinessKey: "readinessState",
     columns: [
       { key: "name", label: "Platform", align: "left", numeric: false },
-      { key: "owner", label: "Owner", align: "left", numeric: false },
-      { key: "hostingModel", label: "Model", align: "left", numeric: false },
-      {
-        key: "criticality",
-        label: "Criticality",
-        align: "left",
-        numeric: false,
-      },
-      {
-        key: "runCostThousands",
-        label: "Run cost $K",
-        align: "right",
-        numeric: true,
-      },
-      {
-        key: "recoveryObjective",
-        label: "Recovery objective",
-        align: "left",
-        numeric: false,
-      },
       {
         key: "readinessState",
         label: "Readiness",
@@ -261,23 +236,10 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
         numeric: false,
       },
     ],
-    facets: [
-      {
-        key: "hostingModel",
-        label: "Model",
-        options: ["public_cloud", "vendor_hosted", "on_prem", "hybrid"],
-      },
-    ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listInfrastructure(ctx), (row) => ({
-        name: row.name,
-        owner: row.owner ?? "Owner not assigned",
-        hostingModel: row.hostingModel,
-        criticality: row.criticality,
-        runCostThousands: row.runCostThousands,
-        recoveryObjective: row.recoveryObjective ?? "Not set",
-        readinessState: row.readinessState,
-      })),
+    facets: [],
+    fetch: unavailableFetch(
+      "No technology_estate_v1 projection is registered in the consumption contract yet -- a data-plane build reports rows under this name, but the TS contract/registry has not caught up to expose it.",
+    ),
   },
   {
     kind: "vendors",
@@ -291,7 +253,7 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
       { key: "category", label: "Category", align: "left", numeric: false },
       {
         key: "annualSpend",
-        label: "Committed $K",
+        label: "Committed $M",
         align: "right",
         numeric: true,
       },
@@ -303,42 +265,22 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
       },
     ],
     facets: [{ key: "category", label: "Category", options: [] }],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listVendorContracts(ctx), (row) => ({
-        vendorName: row.vendorName,
-        category: row.category,
-        annualSpend: row.annualSpend,
-        readinessState: "Not yet captured",
-      })),
+    fetch: realFetch("vendors", "vendor", (e) => ({
+      vendorName: e.displayName,
+      category: fieldValue(e, "category"),
+      annualSpend: fieldValue(e, "spend"),
+      readinessState: entityReadiness(e),
+    })),
   },
   {
     kind: "programs",
     label: "Programmes",
     domainId: "risk",
     primaryKey: "name",
-    chartable: true,
+    chartable: false,
     readinessKey: "readinessState",
     columns: [
       { key: "name", label: "Programme", align: "left", numeric: false },
-      {
-        key: "executiveOwner",
-        label: "Executive owner",
-        align: "left",
-        numeric: false,
-      },
-      { key: "stage", label: "Stage", align: "left", numeric: false },
-      {
-        key: "fundedThousands",
-        label: "Funded $K",
-        align: "right",
-        numeric: true,
-      },
-      {
-        key: "outcomeBaselineState",
-        label: "Outcome baseline",
-        align: "left",
-        numeric: false,
-      },
       {
         key: "readinessState",
         label: "Readiness",
@@ -346,22 +288,10 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
         numeric: false,
       },
     ],
-    facets: [
-      {
-        key: "stage",
-        label: "Stage",
-        options: ["proposed", "planning", "funded", "execution"],
-      },
-    ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listPrograms(ctx), (row) => ({
-        name: row.name,
-        executiveOwner: row.executiveOwner,
-        stage: row.stage,
-        fundedThousands: row.fundedThousands,
-        outcomeBaselineState: row.outcomeBaselineState,
-        readinessState: row.readinessState,
-      })),
+    facets: [],
+    fetch: unavailableFetch(
+      "No program-inventory projection exists in the consumption registry or the foundation-closure projection counts at any layer yet.",
+    ),
   },
   {
     kind: "risks",
@@ -372,21 +302,6 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
     readinessKey: "readinessState",
     columns: [
       { key: "title", label: "Risk", align: "left", numeric: false },
-      { key: "owner", label: "Owner", align: "left", numeric: false },
-      { key: "severity", label: "Severity", align: "left", numeric: false },
-      {
-        key: "controlState",
-        label: "Control state",
-        align: "left",
-        numeric: false,
-      },
-      { key: "controlCount", label: "Controls", align: "right", numeric: true },
-      {
-        key: "lastTestedDate",
-        label: "Last tested",
-        align: "left",
-        numeric: false,
-      },
       {
         key: "readinessState",
         label: "Readiness",
@@ -394,23 +309,10 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
         numeric: false,
       },
     ],
-    facets: [
-      {
-        key: "severity",
-        label: "Severity",
-        options: ["critical", "high", "medium"],
-      },
-    ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listRisks(ctx), (row) => ({
-        title: row.title,
-        owner: row.owner ?? "Owner not assigned",
-        severity: row.severity,
-        controlState: row.controlState,
-        controlCount: row.controlCount,
-        lastTestedDate: row.lastTestedDate ?? "Never",
-        readinessState: row.readinessState,
-      })),
+    facets: [],
+    fetch: unavailableFetch(
+      "No risk-inventory projection (distinct from evidence_gap_v1, a data-quality gap concept, not an operational-risk register) exists in the consumption registry yet.",
+    ),
   },
   {
     kind: "measures",
@@ -421,16 +323,6 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
     readinessKey: "readinessState",
     columns: [
       { key: "name", label: "Measure", align: "left", numeric: false },
-      { key: "owner", label: "Owner", align: "left", numeric: false },
-      { key: "currentValue", label: "Current", align: "left", numeric: false },
-      { key: "targetValue", label: "Target", align: "left", numeric: false },
-      {
-        key: "disclosureLevel",
-        label: "Disclosure",
-        align: "left",
-        numeric: false,
-      },
-      { key: "observedDate", label: "Observed", align: "left", numeric: false },
       {
         key: "readinessState",
         label: "Readiness",
@@ -438,23 +330,10 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
         numeric: false,
       },
     ],
-    facets: [
-      {
-        key: "disclosureLevel",
-        label: "Disclosure",
-        options: ["board", "operational"],
-      },
-    ],
-    fetch: async (provider, ctx) =>
-      mapEnvelope(await provider.listMeasures(ctx), (row) => ({
-        name: row.name,
-        owner: row.owner,
-        currentValue: row.currentValue ?? "Not measured",
-        targetValue: row.targetValue ?? "Not set",
-        disclosureLevel: row.disclosureLevel,
-        observedDate: row.observedDate ?? "-",
-        readinessState: row.readinessState,
-      })),
+    facets: [],
+    fetch: unavailableFetch(
+      "consumption.metric_observation_v1 is registered but no UI-facing explore query reads it yet, and the foundation-closure record shows zero metric_catalog_v1 rows for this baseline today.",
+    ),
   },
 ];
 

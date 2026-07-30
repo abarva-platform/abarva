@@ -1,22 +1,20 @@
 /**
- * Pure render-gate decision logic for the Knowledge UI. No JSX here on purpose --
- * this module is the single place that decides "may this envelope's data be
- * rendered as fact" so every component (table, chart, card, banner) makes that
- * call the same way, per the AGENTS.md render-gate discipline:
+ * Visual presentation lookup for the 11-value ComponentReadinessState (the
+ * real assembler's readiness enum -- see src/lib/knowledge/view-model/types.ts
+ * and reports/airline-knowledge-provider-reconciliation-2026-07-30/
+ * VIEW_MODEL_ASSEMBLER_INTERFACES.md §1).
  *
- *   missing is never rendered as zero; uncertified is never rendered as clean;
- *   proposed is never rendered as accepted; restricted evidence is never
- *   exposed; stale data is visibly marked, not silently shown fresh; unobserved
- *   metrics produce no chart; unsupported/candidate relationships are not
- *   rendered as accepted edges.
+ * This module used to own the render-gate DECISION (gateEnvelope(), reading a
+ * raw availability/authority/freshness triple). That logic now lives once, in
+ * the assembler's deriveReadiness() -- every ViewModelEnvelope already carries
+ * a computed `readiness` plus an honest, field-specific `unavailableReason`.
+ * This module's only remaining job is: given a readiness value, which of the
+ * existing 6 visual tones and which short title does it get. It never
+ * re-derives readiness from raw state, and it never invents body copy --
+ * `unavailableReason` on the envelope is always the source of body text.
  */
 
-import type {
-  AuthorityState,
-  AvailabilityState,
-  ConsumptionEnvelope,
-  FreshnessState,
-} from "@/lib/knowledge/providers/types";
+import type { ComponentReadinessState } from "@/lib/knowledge/view-model";
 
 export type GateTone =
   | "blocked"
@@ -26,143 +24,50 @@ export type GateTone =
   | "candidate"
   | "neutral";
 
-export interface GateDecision {
-  /** true only when the envelope's data may be handed to a render function as fact. */
-  readonly renderable: boolean;
+export interface ReadinessPresentation {
   readonly tone: GateTone;
   readonly title: string;
-  readonly body: string;
 }
-
-const AVAILABILITY_TITLES: Record<AvailabilityState, string> = {
-  available: "Available",
-  not_loaded: "Not loaded",
-  not_measured: "Not measured",
-  withheld: "Withheld",
-  conflicting: "Sources disagree",
-  stale: "Needs refresh",
-  not_applicable: "Not assessed",
-};
-
-const AVAILABILITY_BODY: Record<AvailabilityState, string> = {
-  available: "",
-  not_loaded:
-    "The source for this has not been received or has not been published into the governed knowledge layer yet.",
-  not_measured:
-    "No observation exists for this yet. Shown as absent, never as zero.",
-  withheld:
-    "This is classified or otherwise access-restricted. Its existence and state are shown; its content is not.",
-  conflicting:
-    "Two or more accepted sources disagree here. Held out of decisions until the disagreement is resolved.",
-  stale:
-    "The last accepted evidence for this has aged past its refresh window.",
-  not_applicable:
-    "This domain is not published for this tenant. Not the same as clean or zero -- it has not been assessed.",
-};
 
 /**
- * Core gate: decide whether an envelope's `data` may be treated as fact by a
- * component. `available` is necessary but not sufficient -- a `candidate` or
- * `proposed`/`disputed` authorityState still blocks rendering as accepted
- * truth unless the caller explicitly opts into rendering candidates (the
- * Relationships "Show candidates" toggle is the one legitimate opt-in case,
- * handled by callers via `allowCandidate`).
+ * One row per ComponentReadinessState. Every one of the 11 values gets its
+ * own honest title -- per AGENTS.md's render-gate discipline, "SOURCE_INCOMPLETE"
+ * must never collapse into the same generic "not available" a  "WITHHELD" or a
+ * "STALE" state would show.
  */
-export function gateEnvelope<T>(
-  envelope: Pick<
-    ConsumptionEnvelope<T>,
-    "availabilityState" | "authorityState" | "freshnessState" | "data"
-  >,
-  options: { readonly allowCandidate?: boolean } = {},
-): GateDecision {
-  const { availabilityState, authorityState, freshnessState, data } = envelope;
+const READINESS_PRESENTATION: Record<
+  ComponentReadinessState,
+  ReadinessPresentation
+> = {
+  ENABLED_AND_PROVEN: { tone: "neutral", title: "Available" },
+  DATA_RECONCILED_BUT_UI_UNPROVEN: {
+    tone: "candidate",
+    title: "Available -- unproven view",
+  },
+  SOURCE_INCOMPLETE: { tone: "blocked", title: "Source incomplete" },
+  PROJECTION_UNAVAILABLE: { tone: "blocked", title: "Not loaded" },
+  CUBE_UNPROVEN: { tone: "blocked", title: "Measure not yet available" },
+  WITHHELD: { tone: "restricted", title: "Withheld" },
+  RESTRICTED: { tone: "restricted", title: "Restricted" },
+  STALE: { tone: "stale", title: "Needs refresh" },
+  DISPUTED: { tone: "gap", title: "Sources disagree" },
+  NOT_MEASURED: { tone: "blocked", title: "Not measured" },
+  NOT_ASSESSED: { tone: "neutral", title: "Not assessed" },
+};
 
-  if (
-    availabilityState !== "available" ||
-    data === null ||
-    data === undefined
-  ) {
-    return {
-      renderable: false,
-      tone: toneForAvailability(availabilityState),
-      title: AVAILABILITY_TITLES[availabilityState],
-      body: AVAILABILITY_BODY[availabilityState],
-    };
-  }
-
-  if (
-    authorityState &&
-    !options.allowCandidate &&
-    (authorityState === "candidate" ||
-      authorityState === "disputed" ||
-      authorityState === "proposed")
-  ) {
-    return {
-      renderable: false,
-      tone: authorityState === "disputed" ? "gap" : "candidate",
-      title: authorityTitle(authorityState),
-      body: authorityBody(authorityState),
-    };
-  }
-
-  if (freshnessState === "stale") {
-    // Stale data may still render -- it must be visibly marked, not withheld
-    // outright (per the rule "stale data is visibly marked, not silently
-    // shown fresh"). Callers render the data AND a stale badge.
-    return {
-      renderable: true,
-      tone: "stale",
-      title: "Needs refresh",
-      body: "This is the last accepted value. It has aged past its normal refresh window.",
-    };
-  }
-
-  return { renderable: true, tone: "neutral", title: "Available", body: "" };
+export function readinessPresentation(
+  readiness: ComponentReadinessState,
+): ReadinessPresentation {
+  return READINESS_PRESENTATION[readiness];
 }
 
-function toneForAvailability(state: AvailabilityState): GateTone {
-  switch (state) {
-    case "withheld":
-      return "restricted";
-    case "conflicting":
-      return "gap";
-    case "stale":
-      return "stale";
-    case "not_applicable":
-      return "neutral";
-    default:
-      return "blocked";
-  }
-}
-
-function authorityTitle(state: AuthorityState): string {
-  switch (state) {
-    case "candidate":
-      return "Candidate -- awaiting review";
-    case "disputed":
-      return "Disputed";
-    case "proposed":
-      return "Proposed, not approved";
-    default:
-      return "Not yet accepted";
-  }
-}
-
-function authorityBody(state: AuthorityState): string {
-  switch (state) {
-    case "candidate":
-      return "This has not been reviewed. It stays out of accepted knowledge, counts, and decisions until it is.";
-    case "disputed":
-      return "This is contested between accepted sources and cannot support a decision until resolved.";
-    case "proposed":
-      return "This is a proposed target, not an approved plan of record. It renders separately from current state.";
-    default:
-      return "";
-  }
-}
-
-/** True when a freshness value should show a visible "stale" badge alongside
- * otherwise-renderable content. */
-export function isVisiblyStale(freshnessState: FreshnessState): boolean {
-  return freshnessState === "stale";
+/** True for the one readiness value where a value IS rendering (as an
+ * unproven view) but should still carry a visible marker distinct from a
+ * fully proven one -- mirrors the old "stale data is visibly marked, not
+ * silently shown fresh" rule, now applied to "unproven, not silently shown
+ * proven." */
+export function isUnprovenButRendering(
+  readiness: ComponentReadinessState,
+): boolean {
+  return readiness === "DATA_RECONCILED_BUT_UI_UNPROVEN";
 }

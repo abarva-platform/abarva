@@ -4,50 +4,49 @@ import { useKnowledgeApp } from "../knowledge-app-context";
 import { useEnvelope } from "../use-envelope";
 import { GatedSection } from "../state/GatedSection";
 
-/** Matrix row gate: "Omit the patterns panel entirely rather than show a
- * pattern with a fabricated or unlinked gap claim" -- a pattern whose
- * applicabilityRating is null (unresolved linked_gap_ids) is dropped, never
- * defaulted to "low". */
+/** Industry patterns -- BenchmarkV1 rows filtered to contentClass ===
+ * "industry_pattern" by the assembler. The real projection is thinner than
+ * the original prototype's pattern object (label + peer context + an
+ * optional governed value; no applicability rating/rationale field exists in
+ * the real contract), so this panel shows what is actually governed rather
+ * than inventing a rating. */
 export function PatternsPanel() {
-  const { provider, providerCtx, lensId } = useKnowledgeApp();
+  const { assembler, runtime, tenantKey, lensId } = useKnowledgeApp();
   const envelope = useEnvelope(
-    () => provider.listIndustryPatterns({ ...providerCtx, lensId }),
-    [provider, providerCtx, lensId],
+    () => assembler.getIndustryContext({ runtime, tenantKey, lens: lensId }),
+    [assembler, runtime, tenantKey, lensId],
   );
 
   return (
-    <GatedSection
-      envelope={envelope}
-      label="Industry patterns"
-      emptyTitle="Industry patterns withheld"
-    >
-      {(patterns) => {
-        const rated = patterns.filter((p) => p.applicabilityRating !== null);
-        if (rated.length === 0) {
+    <GatedSection envelope={envelope} label="Industry patterns">
+      {({ patterns }) => {
+        if (patterns.length === 0) {
           return (
             <p className="text-sm italic text-[#888780]">
-              No pattern with a resolved applicability rating yet.
+              No industry pattern published for this tenant yet.
             </p>
           );
         }
         return (
           <div className="space-y-3">
-            {rated.map((p) => (
+            {patterns.map((p) => (
               <article
-                key={p.patternId}
+                key={p.id}
                 className="rounded-md border border-dashed border-[rgba(136,135,128,0.5)] bg-[rgba(136,135,128,0.05)] p-4"
               >
-                <p className="text-sm font-medium text-[#2c2c2a]">{p.title}</p>
-                <p className="mt-1 text-sm text-[#5f5e5a]">{p.body}</p>
-                <p className="mt-2 text-xs text-[#888780]">
-                  Applicability: {p.applicabilityRating}
-                  {p.applicabilityRationale
-                    ? ` -- ${p.applicabilityRationale}`
-                    : ""}
-                </p>
-                {p.missingHereText ? (
+                <p className="text-sm font-medium text-[#2c2c2a]">{p.label}</p>
+                {p.value?.value !== null && p.value?.value !== undefined ? (
+                  <p className="mt-1 text-sm text-[#5f5e5a]">
+                    {p.value.value}
+                    {p.value.unit ?? ""}
+                  </p>
+                ) : null}
+                {p.peerContext ? (
+                  <p className="mt-2 text-xs text-[#888780]">{p.peerContext}</p>
+                ) : null}
+                {p.absenceReason ? (
                   <p className="mt-0.5 text-xs text-[#ba7517]">
-                    {p.missingHereText}
+                    {p.absenceReason}
                   </p>
                 ) : null}
               </article>

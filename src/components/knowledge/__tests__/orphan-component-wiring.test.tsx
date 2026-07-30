@@ -4,125 +4,62 @@
  * Regression coverage for a real defect found during runtime stabilization
  * (2026-07-30): CurrentVsTargetPanel and DecisionReadinessQuadrant were built
  * and typed but never mounted anywhere in the component tree -- confirmed by
- * exhaustive grep across src/. Both are now wired in (EvidenceDrawer via a
- * real entityId on node-click; EvidenceMode's "Decision readiness" section).
- *
- * The live app's honest stub provider withholds everything for
- * airline-demo-new today, so an E2E click-through can never actually reach
- * these components with real data (there is none, by design -- see
- * reports/airline-knowledge-ui-binding-2026-07-29/). This test proves the
- * WIRING is correct using a mock provider with real comparison data,
- * independent of whether airline-demo-new's data is reconciled yet.
+ * exhaustive grep across src/. Both are wired in (EvidenceDrawer via a real
+ * entityId on node-click; EvidenceMode's "Decision readiness" section) and
+ * PR B kept them wired while migrating their data source onto the real
+ * KnowledgeUiViewModelAssembler / fixture ConsumptionRuntime.
  */
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-import {
-  createUnreconciledGovernedKnowledgeProvider,
-  type GovernedKnowledgeProvider,
-} from "@/lib/knowledge/providers/governed-knowledge-provider";
-import type {
-  BaselineMetadata,
-  ConsumptionEnvelope,
-} from "@/lib/knowledge/providers/types";
+import { createFixtureRuntime } from "@/lib/knowledge/consumption-client";
 import { KnowledgeAppProvider } from "../knowledge-app-context";
 import { EvidenceDrawer } from "../EvidenceDrawer";
 import { EvidenceMode } from "../evidence/EvidenceMode";
 
-const CTX = {
-  tenantKey: "airline-demo-new",
-  knowledgeBaselineRef: "test-baseline",
-};
+const FIXTURE_TENANT = "fixture-airline-demo-new";
 
-const RECONCILED_META: BaselineMetadata = {
-  tenantKey: CTX.tenantKey,
-  knowledgeBaselineRef: CTX.knowledgeBaselineRef,
-  domainPublicationRef: "test-publication",
-  projectionContractVersion: "test-v1",
-  asOfDate: "2026-07-30T00:00:00.000Z",
-  authorityState: "accepted",
-  freshnessState: "current",
-  availabilityState: "available",
-  evidenceCoverage: 1,
-  contentHash: "test-hash",
-};
-
-function envelope<T>(data: T): ConsumptionEnvelope<T> {
-  return {
-    data,
-    availabilityState: "available",
-    authorityState: "accepted",
-    freshnessState: "current",
-    evidence: [],
-    knownGaps: [],
-    warnings: [],
-    meta: RECONCILED_META,
-  };
-}
-
-function withProvider(
-  provider: GovernedKnowledgeProvider,
-  children: React.ReactNode,
-) {
+function withRuntime(children: React.ReactNode) {
+  const runtime = createFixtureRuntime(FIXTURE_TENANT, "normal");
   return (
-    <KnowledgeAppProvider provider={provider} providerCtx={CTX}>
+    <KnowledgeAppProvider runtime={runtime} tenantKey={FIXTURE_TENANT}>
       {children}
     </KnowledgeAppProvider>
   );
 }
 
 describe("Orphan-component wiring (CurrentVsTargetPanel, DecisionReadinessQuadrant)", () => {
-  it("EvidenceDrawer mounts CurrentVsTargetPanel and calls the provider with the real entityId when one is passed", async () => {
-    const getCurrentVsTargetComparison = jest.fn().mockResolvedValue(
-      envelope({
-        entityId: "node-crew-legality-001",
-        current: {
-          label: "Current",
-          stateScope: "current" as const,
-          targetApprovalState: null,
-          headline:
-            "Crew legality enforced in one system, reasoned about in three",
-          lines: [{ key: "Systems", value: "3" }],
-        },
-        target: null,
-      }),
-    );
-    const provider: GovernedKnowledgeProvider = {
-      ...createUnreconciledGovernedKnowledgeProvider(),
-      getCurrentVsTargetComparison,
-    };
-
+  it("EvidenceDrawer mounts CurrentVsTargetPanel and renders the real Brief-level target comparison when an entityId is passed", async () => {
     render(
-      withProvider(
-        provider,
+      withRuntime(
         <EvidenceDrawer
           open
           onClose={() => {}}
           kind="Application"
           title="Crew Legality Engine"
           evidence={[]}
-          entityId="node-crew-legality-001"
+          entityId="app-crew-sched"
         />,
       ),
     );
 
-    await waitFor(() =>
-      expect(getCurrentVsTargetComparison).toHaveBeenCalledWith(
-        CTX,
-        "node-crew-legality-001",
-      ),
-    );
-    expect(
-      await screen.findByText(/crew legality enforced in one system/i),
-    ).toBeInTheDocument();
     expect(screen.getByText(/current vs\. target/i)).toBeInTheDocument();
+    // The fixture's one Brief-level target is "Cloud-hosted workloads" --
+    // getCurrentVsTarget falls back to the first real target when the
+    // passed entityId does not match a target id (Brief-level only today,
+    // per the reconciliation matrix).
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(/cloud-hosted workloads/i).length,
+      ).toBeGreaterThan(0),
+    );
+    // The real target value (70 percent) renders in the Target panel.
+    expect(screen.getByText(/70percent/i)).toBeInTheDocument();
   });
 
   it("EvidenceDrawer does NOT render a current-vs-target section when no entityId is available", () => {
-    const provider = createUnreconciledGovernedKnowledgeProvider();
     render(
-      withProvider(
-        provider,
+      withRuntime(
         <EvidenceDrawer
           open
           onClose={() => {}}
@@ -135,12 +72,13 @@ describe("Orphan-component wiring (CurrentVsTargetPanel, DecisionReadinessQuadra
     expect(screen.queryByText(/current vs\. target/i)).not.toBeInTheDocument();
   });
 
-  it("EvidenceMode mounts DecisionReadinessQuadrant and it renders an honest withheld state against the real stub provider", async () => {
-    const provider = createUnreconciledGovernedKnowledgeProvider();
-    render(withProvider(provider, <EvidenceMode />));
-    // Both the existing ReadinessTiles gate and the newly-wired quadrant gate
-    // must resolve to real withheld banners -- not zero, not a fabricated chart.
-    const banners = await screen.findAllByTestId("knowledge-state-banner");
-    expect(banners.length).toBeGreaterThanOrEqual(2);
+  it("EvidenceMode mounts DecisionReadinessQuadrant and it renders its honest PROJECTION_UNAVAILABLE state (no Tower value-at-stake computation)", async () => {
+    render(withRuntime(<EvidenceMode />));
+    expect(
+      await screen.findByText(/decision-readiness quadrant/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/value-at-stake belongs to tower/i),
+    ).toBeInTheDocument();
   });
 });

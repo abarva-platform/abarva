@@ -68,14 +68,14 @@ export const isComponentReadinessState = (
 
 export const AIRLINE_LENSES = [
   "understand",
-  "irops_disruption_recovery",
+  "irops",
   "crew",
   "baggage",
   "loyalty",
   "revenue",
   "mro",
-  "network_scheduling",
-  "safety_compliance",
+  "airport",
+  "ai",
 ] as const;
 export type AirlineLensId = (typeof AIRLINE_LENSES)[number];
 

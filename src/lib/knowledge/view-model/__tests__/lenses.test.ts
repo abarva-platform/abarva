@@ -1,8 +1,10 @@
 /**
  * The nine airline lenses — proves the exact id set and the resolution logic.
- * See VIEW_MODEL_ASSEMBLER_INTERFACES.md §2 for the provenance note: 7 of
- * these 9 come directly from the task brief; 2 are placeholders pending
- * confirmation against the real prototype (not present in this repo).
+ * Reconciled by PR B against the real approved HTML prototype's
+ * `const LENSES = [...]` array (xdc-script.js) — see lenses.ts's header
+ * comment for the full provenance note and reports/airline-knowledge-
+ * provider-reconciliation-2026-07-30/VIEW_MODEL_ASSEMBLER_INTERFACES.md §2
+ * for PR A's original (now-superseded) placeholder ids.
  */
 
 import {
@@ -17,14 +19,14 @@ describe("AIRLINE_LENSES", () => {
     expect([...AIRLINE_LENSES].sort()).toEqual(
       [
         "understand",
-        "irops_disruption_recovery",
+        "irops",
         "crew",
         "baggage",
         "loyalty",
         "revenue",
         "mro",
-        "network_scheduling",
-        "safety_compliance",
+        "airport",
+        "ai",
       ].sort(),
     );
     expect(AIRLINE_LENSES.length).toBe(9);

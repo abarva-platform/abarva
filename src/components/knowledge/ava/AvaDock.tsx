@@ -1,13 +1,15 @@
 /**
- * aVa companion dock. Per KNOWLEDGE_AVA_CONTEXT_CONTRACT.md Section 3, the
- * refusal contract is "the single most implementable aVa behavior in the
- * entire surface" -- it needs less from the data layer than answering does.
- * This build leans into that: every question asked today resolves to the
- * refusal shape (module_knowledge_packet_v1 is not populated for
- * airline-demo-new -- SD-15), and the dock says so plainly rather than
- * emitting a best-guess canned answer, which is explicitly the failure mode
- * the contract rules out (Section 4: "must not be mistaken for a grounding
- * pipeline").
+ * aVa companion dock. Per the reconciliation matrix's `askAva`/
+ * `getModuleKnowledgePacket` rows: the real aVa flow builds its
+ * AvaKnowledgePacket client-side, at the moment a question is asked, from
+ * whatever refs the current page already has in view -- there is no
+ * separate "fetch me a packet to display" round-trip in the real contract,
+ * by design (aVa is a deliberately separate, ephemeral path). This build
+ * composes the packet from the current Brief's evidence/gap refs (the
+ * broadest real context available regardless of mode) and calls
+ * `runtime.ava.ask()` directly -- the real `DeterministicAvaReasoningProvider`
+ * answers when evidence is in scope and refuses honestly when it is not,
+ * rather than a duplicate stub that refused unconditionally.
  */
 "use client";
 
@@ -16,9 +18,9 @@ import { useState } from "react";
 import { useKnowledgeApp } from "../knowledge-app-context";
 import { useEnvelope } from "../use-envelope";
 import { GatedSection } from "../state/GatedSection";
-import { StateBanner } from "../state/StateBanner";
 import { AvaAnswerCard } from "./AvaAnswerCard";
 import { AvaSearch } from "./AvaSearch";
+import type { AvaAnswer } from "@/lib/knowledge/consumption-contracts";
 
 const DOCK_SIZE: Record<string, string> = {
   right: "w-[380px] border-l",
@@ -29,9 +31,11 @@ const DOCK_SIZE: Record<string, string> = {
 
 export function AvaDock() {
   const {
-    provider,
-    providerCtx,
+    assembler,
+    runtime,
+    tenantKey,
     lensId,
+    mode,
     dockState,
     setDockState,
     dockPosition,
@@ -42,22 +46,47 @@ export function AvaDock() {
 
   const [question, setQuestion] = useState("");
   const [asked, setAsked] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<AvaAnswer | undefined>(undefined);
 
-  const packetEnvelope = useEnvelope(
-    () => provider.getModuleKnowledgePacket(providerCtx, "knowledge"),
-    [provider, providerCtx],
+  const briefEnvelope = useEnvelope(
+    () => assembler.getEnterpriseBrief({ runtime, tenantKey, lens: lensId }),
+    [assembler, runtime, tenantKey, lensId],
   );
-  const suggestionsEnvelope = useEnvelope(
-    () => provider.listAvaSuggestedQuestions({ ...providerCtx, lensId }),
-    [provider, providerCtx, lensId],
+  const avaContextEnvelope = useEnvelope(
+    () => assembler.getAvaContext({ runtime, tenantKey, mode }),
+    [assembler, runtime, tenantKey, mode],
   );
-  const answerEnvelope = useEnvelope(
-    () =>
-      asked
-        ? provider.askAva(providerCtx, asked)
-        : Promise.resolve(undefined as never),
-    [provider, providerCtx, asked],
-  );
+
+  async function ask(questionText: string) {
+    setAsked(questionText);
+    setAnswer(undefined);
+    const result = await runtime.ava.ask({
+      intent: "explain",
+      question: questionText,
+      packet: {
+        tenantKey,
+        knowledgeBaselineRef: runtime.baselineRef,
+        domainPublicationVersions: runtime.domainPublicationVersions,
+        consumptionProjectionVersions: {},
+        cubeSemanticModelVersion: null,
+        mode,
+        lens: "none",
+        depth: "executive",
+        currentTargetScope: "current",
+        focalEntityRefs: [],
+        activeFilters: {},
+        permissionBoundaryRef: `knowledge-ui:${tenantKey}`,
+        executivePerspectiveRefs: [],
+        acceptedFactRefs: [],
+        relationshipEdgeRefs: [],
+        metricQueryHashes: [],
+        evidenceRefs: [...(briefEnvelope?.evidenceRefs ?? [])],
+        knownGapRefs: [...(briefEnvelope?.knownGapRefs ?? [])],
+        blockedSourceRefs: [],
+      },
+    });
+    setAnswer(result);
+  }
 
   if (dockState === "hidden") {
     return (
@@ -130,91 +159,83 @@ export function AvaDock() {
       </header>
 
       <div className="flex-1 space-y-4 p-4">
-        <GatedSection
-          envelope={packetEnvelope}
-          label="Knowledge packet"
-          emptyTitle="Knowledge packet not yet available for this tenant"
-          emptyBody="aVa cannot answer, in any mode, until the module knowledge packet resolves for airline-demo-new. This is the gate, not a degraded fallback -- refusing here is correct behavior, not a bug."
-        >
-          {(packet) => (
-            <div className="text-sm text-[#5f5e5a]">
-              <p>Packet {packet.packetHash}</p>
-            </div>
-          )}
-        </GatedSection>
-
-        <div>
-          <label
-            htmlFor="ava-question"
-            className="mb-1 block text-xs font-medium text-[#888780]"
-          >
-            Ask a question
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="ava-question"
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && question.trim())
-                  setAsked(question.trim());
-              }}
-              placeholder="e.g. Why does recovery take a second operating day?"
-              className="flex-1 rounded-md border border-[rgba(10,10,11,0.18)] px-2.5 py-1.5 text-sm"
-            />
-            <button
-              type="button"
-              disabled={!question.trim()}
-              onClick={() => setAsked(question.trim())}
-              className="rounded-md bg-[#0066CC] px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-[rgba(0,102,204,0.35)]"
-            >
-              Ask
-            </button>
-          </div>
-        </div>
-
-        {asked ? (
-          answerEnvelope ? (
-            <AvaAnswerCard
-              envelope={answerEnvelope}
-              onAskAnother={() => setAsked(null)}
-            />
-          ) : (
-            <StateBanner
-              decision={{
-                tone: "neutral",
-                title: "aVa is reasoning...",
-                body: "",
-              }}
-              compact
-            />
-          )
+        {!runtime.modelsEnabled ? (
+          <p className="rounded-md border border-[rgba(10,10,11,0.14)] bg-[rgba(10,10,11,0.04)] p-3 text-sm text-[#5f5e5a]">
+            All model providers are disabled -- aVa reasoning is unavailable.
+            Everything else on this page still works.
+          </p>
         ) : (
-          <GatedSection
-            envelope={suggestionsEnvelope}
-            label="Suggested questions"
-            emptyTitle="No gate-passing suggestions for this lens yet"
-            emptyBody="A suggested question is only offered once its underlying evidence would actually resolve -- none do yet for airline-demo-new."
-          >
-            {(suggestions) => (
-              <ul className="space-y-1.5">
-                {suggestions
-                  .filter((s) => s.gatePasses)
-                  .map((s) => (
-                    <li key={s.questionId}>
-                      <button
-                        type="button"
-                        onClick={() => setAsked(s.questionText)}
-                        className="w-full rounded-md border border-[rgba(10,10,11,0.12)] px-2.5 py-1.5 text-left text-sm text-[#2c2c2a] hover:border-[rgba(0,102,204,0.4)]"
-                      >
-                        {s.questionText}
-                      </button>
-                    </li>
-                  ))}
-              </ul>
+          <>
+            <div>
+              <label
+                htmlFor="ava-question"
+                className="mb-1 block text-xs font-medium text-[#888780]"
+              >
+                Ask a question
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="ava-question"
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && question.trim())
+                      void ask(question.trim());
+                  }}
+                  placeholder="e.g. Why does recovery take a second operating day?"
+                  className="flex-1 rounded-md border border-[rgba(10,10,11,0.18)] px-2.5 py-1.5 text-sm"
+                />
+                <button
+                  type="button"
+                  disabled={!question.trim()}
+                  onClick={() => void ask(question.trim())}
+                  className="rounded-md bg-[#0066CC] px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-[rgba(0,102,204,0.35)]"
+                >
+                  Ask
+                </button>
+              </div>
+            </div>
+
+            {asked ? (
+              answer ? (
+                <AvaAnswerCard
+                  question={asked}
+                  answer={answer}
+                  onAskAnother={() => {
+                    setAsked(null);
+                    setAnswer(undefined);
+                  }}
+                />
+              ) : (
+                <p className="rounded-md border border-[rgba(10,10,11,0.14)] bg-[rgba(10,10,11,0.04)] p-3 text-sm text-[#5f5e5a]">
+                  aVa is reasoning...
+                </p>
+              )
+            ) : (
+              <GatedSection
+                envelope={avaContextEnvelope}
+                label="Suggested questions"
+                emptyTitle="No suggestions for this mode yet"
+              >
+                {(context) => (
+                  <ul className="space-y-1.5">
+                    {context.suggestedQuestions.map((s) => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => void ask(s.question)}
+                          className="w-full rounded-md border border-[rgba(10,10,11,0.12)] px-2.5 py-1.5 text-left text-sm text-[#2c2c2a] hover:border-[rgba(0,102,204,0.4)]"
+                        >
+                          {s.question}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </GatedSection>
             )}
-          </GatedSection>
+          </>
         )}
 
         <AvaSearch />
