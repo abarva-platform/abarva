@@ -9,6 +9,10 @@ const testPath = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(testPath), "../../..");
 const args = parseArgs(process.argv.slice(2));
 const migrationPath = path.join(repoRoot, "supabase/migrations/20260730120000_foundation_v2_golden_slice_core.sql");
+const writePolicyMigrationPath = path.join(
+  repoRoot,
+  "supabase/migrations/20260730133000_foundation_v2_golden_slice_write_policies.sql",
+);
 const proofOutput = args["proof-output"] ? path.resolve(process.cwd(), args["proof-output"]) : null;
 const workDir = mkdtempSync(path.join(tmpdir(), "foundation-v2-pg-"));
 const dataDir = path.join(workDir, "data");
@@ -39,6 +43,14 @@ try {
     encoding: "utf8",
     stdio: "pipe",
   });
+  execFileSync(
+    "psql",
+    ["-h", socketDir, "-p", port, "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-f", writePolicyMigrationPath],
+    {
+      encoding: "utf8",
+      stdio: "pipe",
+    },
+  );
 
   const inspection = JSON.parse(execFileSync(
     "psql",
@@ -79,6 +91,15 @@ try {
   if (inspection.product_pass_guard_count !== 1) {
     failures.push(`expected product render passed unsupported-claim guard, found ${inspection.product_pass_guard_count}`);
   }
+  if (inspection.writer_insert_policy_count !== 21) {
+    failures.push(`expected 21 writer INSERT policies, found ${inspection.writer_insert_policy_count}`);
+  }
+  if (inspection.writer_role_count !== 1) {
+    failures.push(`expected no-login writer role, found ${inspection.writer_role_count}`);
+  }
+  if (inspection.unpinned_writer_policy_count !== 0) {
+    failures.push(`expected zero unpinned writer policies, found ${inspection.unpinned_writer_policy_count}`);
+  }
 
   if (failures.length > 0) {
     console.error(JSON.stringify({ status: "FAIL", failures, inspection }, null, 2));
@@ -89,6 +110,7 @@ try {
     status: "PASS",
     generated_at: new Date().toISOString(),
     migrationPath,
+    writePolicyMigrationPath,
     database_scope: "temporary_local_postgresql_only",
     azure_or_shared_database_mutated: false,
     temporary_cluster_shutdown: true,
@@ -167,7 +189,7 @@ nonempty_constraints AS (
     AND con.conname LIKE 'f2_%_nonempty'
 ),
 policies AS (
-  SELECT p.polname, pg_get_expr(p.polqual, p.polrelid) AS qual
+  SELECT p.polname, p.polcmd, pg_get_expr(p.polqual, p.polrelid) AS qual, pg_get_expr(p.polwithcheck, p.polrelid) AS with_check
   FROM pg_policy p
   JOIN tables t ON t.oid = p.polrelid
 ),
@@ -184,7 +206,24 @@ SELECT json_build_object(
   'composite_fk_count', (SELECT count(*) FROM composite_fks),
   'required_nonempty_constraint_count', (SELECT count(*) FROM nonempty_constraints),
   'policy_with_admin_bypass_count', (SELECT count(*) FROM policies WHERE qual LIKE '%internal-admin%'),
-  'product_pass_guard_count', (SELECT count(*) FROM product_pass_guard)
+  'product_pass_guard_count', (SELECT count(*) FROM product_pass_guard),
+  'writer_insert_policy_count', (SELECT count(*) FROM policies WHERE polname = 'foundation_v2_tenant_insert' AND polcmd = 'a'),
+  'writer_role_count', (
+    SELECT count(*) FROM pg_roles WHERE rolname = 'foundation_v2_golden_slice_writer' AND NOT rolcanlogin
+  ),
+  'unpinned_writer_policy_count', (
+    SELECT count(*)
+      FROM policies
+     WHERE polname = 'foundation_v2_tenant_insert'
+       AND (
+         with_check NOT LIKE '%tenant_key = ''skyharbor-air''%'
+         OR with_check NOT LIKE '%test_namespace = ''foundation-v2-golden-slice-v1''%'
+         OR with_check NOT LIKE '%airline-demo-new-foundation-v2-golden-slice-v1%'
+         OR with_check NOT LIKE '%app.foundation_v2_release_alias%'
+         OR with_check NOT LIKE '%current_setting(''app.foundation_v2_release_alias''%'
+         OR with_check NOT LIKE '%= ''airline-demo-new''%'
+       )
+  )
 )::text;
 `;
 }
