@@ -70,6 +70,13 @@
           "classification": "synthetic-demo",
           "status": "isolated-foundation-v2-golden-slice-input",
           "note": "Synthetic PHI-free Healthcare Foundation V2 progressive golden-slice fixture for isolated DB execution only."
+        },
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/healthcare-demo-new/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet (Universal Tenant Input Standard v3), instantiated against the Phase-0 design corpus in clients/healthcare-demo-new/19-template-instantiation-source-corpus/."
         }
       ]
     },

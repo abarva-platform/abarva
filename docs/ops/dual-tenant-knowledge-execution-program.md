@@ -12,7 +12,7 @@ rot.
 
 | Tenant candidate | Current state | Next allowed action | Blocked action |
 | --- | --- | --- | --- |
-| `healthcare-demo-new` | Phase 0 frozen design/source-corpus foundation | Zero-data infrastructure plan and what-if | Data landing, parser execution, product wiring |
+| `healthcare-demo-new` | Phase 0 frozen — design corpus (2026-07-27) and instantiated data packet (2026-07-31, 18/24 files `PRODUCT_USABLE`, exceeds skyharbor-air's own bar) both frozen | Zero-data infrastructure plan and what-if | Data landing, parser execution, product wiring |
 | `airline-demo-new` | Blocked before Phase 0 freeze | Remediate source corpus and rerun independent audit | Freeze, provision, load, publish |
 | `skyharbor-air` | Phase 0 frozen, Phase 1 provisioned, Phase 2 schema applied and independently verified (ledger + sha256 cross-check) | Deeper RLS/table readback once a merged image is available, then source landing (Phase 3) | Parser execution, publication, product wiring |
 
@@ -99,6 +99,27 @@ Healthcare is frozen by:
 
 This freeze does not load data, provision cloud resources, add a runtime tenant
 key, or wire any product surface.
+
+## Phase 0 Healthcare Data Instantiation
+
+Distinct, later event from the design-corpus freeze above. The consolidated universal
+one-file-per-domain packet (Universal Tenant Input Standard v3) — the actual instantiated data
+generated from the frozen design corpus — landed and is frozen by:
+
+- `clients/healthcare-demo-new/execution/healthcare-demo-new-current-universal-packet-v1.0.0.freeze-manifest.json`
+- semantic audit evidence:
+  `clients/healthcare-demo-new/execution/healthcare-demo-new-tenant-quality-audit-2026-07-31.json`
+  (`node scripts/audit/tenant-quality-audit.mjs --tenant healthcare-demo-new` — 18/24 files
+  `PRODUCT_USABLE`, 6 `USABLE_WITH_LIMITATIONS` with named findings, 0 `NOT_USABLE` — exceeds
+  skyharbor-air's own frozen bar of 14/26 `PRODUCT_USABLE`)
+- source package: `datasets/tenant-inputs/active/healthcare-demo-new/current/` (24 files) +
+  `datasets/tenant-inputs/healthcare-demo-new/interviews/executive_interviews.csv` (432 rows,
+  18 stakeholder roles)
+
+The 2026-07-27 design-corpus freeze is not superseded — this instantiation was built from it. Whether
+the existing restricted-evaluator hidden-truth/crosswalk package applies unmodified to this packet's
+file shapes is an open question, recorded in the manifest, not assumed either way. This freeze does
+not load data, provision cloud resources, add a runtime tenant key, or wire any product surface.
 
 ## Phase 0 SkyHarbor Freeze
 

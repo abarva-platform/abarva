@@ -1,0 +1,235 @@
+{
+  "tenantKey": "healthcare-demo-new",
+  "canonicalInputRoot": "datasets/tenant-inputs/active/healthcare-demo-new/current",
+  "sizeBand": "large",
+  "files": [
+    {
+      "file": "00_enterprise_profile",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 1
+    },
+    {
+      "file": "01_business_functions",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "1 column(s) always empty: parent_function"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 24
+    },
+    {
+      "file": "02_org_ownership",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 224
+    },
+    {
+      "file": "03_workforce_roles",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 45
+    },
+    {
+      "file": "04_applications_systems",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "hosting_location: 95/296 rows (32%) share a recurring 8+-word phrase — e.g. \"epic hosting — verona, wi (vendor-hosted) with lakeview\" appears in 70 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 296
+    },
+    {
+      "file": "05_data_assets_integrations",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 520
+    },
+    {
+      "file": "06_infrastructure_platforms",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "platform_name: 14/60 rows (23%) share a recurring 8+-word phrase — e.g. \"nurse call & patient communication system — northlake\" appears in 9 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 60
+    },
+    {
+      "file": "07_vendors_contracts",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 71
+    },
+    {
+      "file": "08_spend_value",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 24
+    },
+    {
+      "file": "09_programs_initiatives",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 28
+    },
+    {
+      "file": "10_ai_automation_use_cases",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 18
+    },
+    {
+      "file": "11_risks_controls",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 40
+    },
+    {
+      "file": "12_relationships",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "from_object_name: 618/2302 rows (27%) share a recurring 8+-word phrase — e.g. \"vocera clinical communication platform — northlake memorial hospital\" appears in 15 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 2302
+    },
+    {
+      "file": "13_evidence_sources",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 26
+    },
+    {
+      "file": "14_metrics_outcomes",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "data_source: 20/50 rows (40%) share a recurring 8+-word phrase — e.g. \"ncqa hedis certified measure engine; epic healthy planet;\" appears in 14 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 50
+    },
+    {
+      "file": "15_industry_context_patterns",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "industry: 12/12 rows (100%) share a recurring 8+-word phrase — e.g. \"healthcare — integrated delivery network & medicare advantage\" appears in 12 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 12
+    },
+    {
+      "file": "16_expert_lenses",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 9
+    },
+    {
+      "file": "17_service_scope_managed_services",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 15
+    },
+    {
+      "file": "18_operational_process_evidence",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 25
+    },
+    {
+      "file": "19_data_analytics_platform_maturity",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 17
+    },
+    {
+      "file": "SA08_AI_Benefits_Realization_Usage_Ledger",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 18
+    },
+    {
+      "file": "SA09_AI_Tool_Usage_Feed",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 18
+    },
+    {
+      "file": "SA10_AI_Value_Interview_Evidence",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 18
+    },
+    {
+      "file": "SA11_AI_KPI_Operational_Outcome_Feed",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 18
+    }
+  ]
+}
