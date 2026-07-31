@@ -43,19 +43,15 @@ describe('Top-nav · Home and Admin remain separate', () => {
     expect(byKey.programs).toBe('/strategic-moves');
     expect(byKey.source).toBe('/source');
     expect(byKey.tower).toBe('/tower');
-    expect(byKey.learn).toBe('/home/learn');
+    expect(byKey.learn).toBeUndefined();
   });
 
-  it('Learn is its own top-level product nav item and does not activate Knowledge', () => {
+  it('Learn is a Home-level destination and does not become a global product nav item', () => {
     const home = NAV_ITEMS.find((item) => item.key === 'home');
-    const learn = NAV_ITEMS.find((item) => item.key === 'learn');
-    expect(learn).toBeDefined();
-    expect(learn?.label).toBe('Learn');
-    expect(learn?.match('/home/learn')).toBe(true);
-    expect(learn?.match('/home/learn/source')).toBe(true);
-    expect(learn?.match('/learn')).toBe(true);
-    expect(home?.match('/home/learn')).toBe(false);
-    expect(home?.match('/home/learn/source')).toBe(false);
+    expect(NAV_ITEMS.some((item) => item.label === 'Learn')).toBe(false);
+    expect(home?.match('/home/learn')).toBe(true);
+    expect(home?.match('/home/learn/source')).toBe(true);
+    expect(home?.match('/learn')).toBe(false);
   });
 
   it('NEXUS top nav keeps product navigation on App Router links instead of full document reloads', () => {

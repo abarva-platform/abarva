@@ -169,12 +169,13 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
   it("mounts the product shell with the authorized tenant, not the fixture namespace", async () => {
     render(<KnowledgeAppMount tenantKey={TENANT_KEY} />);
 
-    expect(screen.getByText("AbarVa")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Knowledge" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Product modules" })).not.toBeInTheDocument();
+    expect(screen.queryByText("AbarVa")).not.toBeInTheDocument();
+    expect(screen.queryByText(TENANT_KEY)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Brief" })).toBeInTheDocument();
-    expect(screen.getByText(TENANT_KEY)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Explore" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Relationships" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Evidence & gaps" })).toBeInTheDocument();
     expect(
       screen.queryByText(/fixture-airline-demo-new/i),
     ).not.toBeInTheDocument();
