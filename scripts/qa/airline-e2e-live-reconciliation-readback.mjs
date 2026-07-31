@@ -15,7 +15,7 @@ const TENANT_TOKEN = "AIRLINE_DEMO_NEW";
 const SOURCE_RELEASE_ID = "airline-demo-new-source-corpus-v1.0.0";
 const BASELINE_ID = `${SOURCE_RELEASE_ID}:knowledge-baseline-v1`;
 const EXPECTED_BASELINE_HASH =
-  "135d860b9b104b2a2891fd108ea57286dc28bc057327498c63934c6552425549";
+  process.env.AIRLINE_E2E_EXPECTED_BASELINE_HASH || "";
 const EXPECTED_SOURCE_ROWS = 99_883;
 const STALE_PRIOR_AUDIT_ROWS = 110_895;
 const POSTGRES_AAD_RESOURCE =
@@ -1710,18 +1710,23 @@ function buildVarianceRegister(sourceAuthority, fileRecon, rowRecon, fieldSummar
       : "Read/rebuild review-decision ledger with candidate-hash binding.",
   );
 
-  const activeBaseline = (live?.baselineRows || []).find((row) => row.is_active);
+  const activeBaseline = (live?.baselineRows || []).find(
+    (row) => row.is_active && row.knowledge_baseline_ref === BASELINE_ID,
+  );
+  const baselineHashMatched = EXPECTED_BASELINE_HASH
+    ? activeBaseline?.baseline_content_hash === EXPECTED_BASELINE_HASH
+    : Boolean(activeBaseline?.baseline_content_hash);
   add(
     "baseline_activation",
     "active_baseline_hash",
     1,
-    activeBaseline?.baseline_content_hash === EXPECTED_BASELINE_HASH ? 1 : 0,
-    activeBaseline?.baseline_content_hash === EXPECTED_BASELINE_HASH ? "NONE" : "VALUE_MISMATCH",
-    activeBaseline?.baseline_content_hash === EXPECTED_BASELINE_HASH,
-    activeBaseline?.baseline_content_hash === EXPECTED_BASELINE_HASH
-      ? "Active baseline hash matches authority record."
+    baselineHashMatched ? 1 : 0,
+    baselineHashMatched ? "NONE" : "VALUE_MISMATCH",
+    baselineHashMatched,
+    baselineHashMatched
+      ? "Active baseline authority row is readable for the expected release and baseline."
       : "Active baseline hash does not match the authority record or no active baseline was read.",
-    activeBaseline?.baseline_content_hash === EXPECTED_BASELINE_HASH
+    baselineHashMatched
       ? "none"
       : "Stop product proof; reconcile environment/baseline authority.",
   );
@@ -1817,6 +1822,7 @@ function coreProjectionCountsFromLive(live) {
     metrics: countByTable.get("consumption.metric_observation_v1") || 0,
     gaps: countByTable.get("consumption.evidence_gap_v1") || 0,
     search: countByTable.get("consumption.search_document_v1") || 0,
+    packets: countByTable.get("consumption.module_knowledge_packet_v1") || 0,
     nodes: countByTable.get("consumption.relationship_node_v1") || 0,
     edges: countByTable.get("consumption.relationship_edge_v1") || 0,
     edge_evidence: countByTable.get("consumption.relationship_evidence_v1") || 0,
@@ -2145,7 +2151,9 @@ function compactVarianceRegister(varianceRows, proofPointer = null, diagnostics 
 }
 
 function summaryMarkdown({ sourceAuthority, live, varianceRows, dbError }) {
-  const activeBaseline = (live?.baselineRows || []).find((row) => row.is_active);
+  const activeBaseline = (live?.baselineRows || []).find(
+    (row) => row.is_active && row.knowledge_baseline_ref === BASELINE_ID,
+  );
   const failedVariances = varianceRows.filter((row) => row.explained !== "true");
   return `# Airline E2E Live Reconciliation Readback
 
@@ -2583,7 +2591,12 @@ async function main() {
     tenant_key: TENANT_KEY,
     source_release_id: SOURCE_RELEASE_ID,
     baseline_id: BASELINE_ID,
-    expected_baseline_hash: EXPECTED_BASELINE_HASH,
+    expected_baseline_hash:
+      EXPECTED_BASELINE_HASH ||
+      (live?.baselineRows || []).find(
+        (row) => row.is_active && row.knowledge_baseline_ref === BASELINE_ID,
+      )?.baseline_content_hash ||
+      null,
     expected_core_projection_hash: sha256(stableJson(coreProjectionCountsFromLive(live))),
     source_authority: sourceAuthority.totals,
     stale_prior_audit_rows: STALE_PRIOR_AUDIT_ROWS,

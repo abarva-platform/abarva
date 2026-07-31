@@ -299,6 +299,8 @@ await test("live reconciliation readback traces source rows and fields through g
   assert.ok(source.includes("CORE_CONSUMPTION_PROJECTION_TABLES"), "projection authority readback must validate the closed set of core consumption projections");
   assert.ok(source.includes("projectionAuthorityStatus"), "projection authority readback must validate each registered projection rather than a stale aggregate hash");
   assert.ok(source.includes("stableJson({ projectionName, rowCount, baseline: BASELINE_ID })"), "projection authority readback must recompute per-projection hashes using the executor contract");
+  assert.ok(source.includes("process.env.AIRLINE_E2E_EXPECTED_BASELINE_HASH || \"\""), "baseline hash readback must not pin a stale compile-time hash");
+  assert.ok(source.includes("packets: countByTable.get(\"consumption.module_knowledge_packet_v1\") || 0"), "core projection authority readback must include module packet rows in the executor aggregate hash");
   assert.ok(source.includes("INACCESSIBLE_RELATION"), "readback must record permission-denied relations without aborting projection proof");
   assert.ok(source.includes("SAVEPOINT readback_relation_probe"), "permission-denied relation probes must not poison the read-only transaction");
   assert.ok(source.includes("live-inaccessible-relation-readback.csv"), "readback must emit inaccessible relation evidence");

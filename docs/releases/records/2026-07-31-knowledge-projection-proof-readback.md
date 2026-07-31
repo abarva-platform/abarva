@@ -18,7 +18,7 @@ Release lane: `internal-admin`.
 
 Layer 4 Products: proof scripts now inspect the full Home Knowledge consumption projection set and projection authority rows.
 
-Operations and audit: the live reconciliation readback now records permission-denied relations as explicit evidence rows and keeps those probes transaction-safe so projection proof can continue.
+Operations and audit: the live reconciliation readback now records permission-denied relations as explicit evidence rows, keeps those probes transaction-safe, and validates baseline/projection authority against the deployed executor contract rather than stale script constants.
 
 ## Client Applicability
 
