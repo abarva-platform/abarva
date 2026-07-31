@@ -14,7 +14,7 @@ rot.
 | --- | --- | --- | --- |
 | `healthcare-demo-new` | Phase 0 frozen design/source-corpus foundation | Zero-data infrastructure plan and what-if | Data landing, parser execution, product wiring |
 | `airline-demo-new` | Blocked before Phase 0 freeze | Remediate source corpus and rerun independent audit | Freeze, provision, load, publish |
-| `skyharbor-air` | Phase 0 frozen — source package already live and governed (26 files, 510-row interview set, real semantic audit pass) | Zero-data infrastructure plan and what-if | Provisioning, data landing, parser execution, publication, product wiring |
+| `skyharbor-air` | Phase 0 frozen, Phase 1 provisioned, Phase 2 schema applied and independently verified (ledger + sha256 cross-check) | Deeper RLS/table readback once a merged image is available, then source landing (Phase 3) | Parser execution, publication, product wiring |
 
 The healthcare candidate was the reference implementation for the execution
 factory. skyharbor-air reaches an equivalent Phase 0 state via a different
@@ -116,6 +116,31 @@ Unlike Healthcare and Airline, SkyHarbor has no restricted-evaluator hidden-trut
 yet — recorded as a real, unfilled gap in the freeze manifest, not fabricated to match the template
 shape. This freeze does not load data, provision cloud resources, add a runtime tenant key, or wire
 any product surface.
+
+## Phase 1 SkyHarbor Zero-Data Infrastructure
+
+Provisioned and independently verified 2026-07-31. IaC at
+`clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`.
+`az deployment sub what-if` ran clean (55 Create / 0 Modify / 0 Delete) before `az deployment sub create`
+actually provisioned the dedicated boundary `rg-abarva-skair-lab-eus2-001` — not shared with
+`airline-demo-new`'s infrastructure. Verified independently via direct `az resource list` / `az resource
+show` / `az role assignment list` queries, not trusted from the deployment exit code alone. Full evidence
+list in `docs/ops/skyharbor-air-foundation-v2-extension-scope.md`'s Status section. No source data has
+landed yet.
+
+## Phase 2 SkyHarbor PostgreSQL Bootstrap
+
+Applied and independently verified 2026-07-31. The dedicated Postgres server is authoritative for this
+lane (not the shared `db-migration-lab.yml` workflow, which targets only the shared control-plane
+database). Applied exactly one migration —
+`supabase/migrations/20260729015000_knowledge_publication_consumption_phase3c2e.sql` (source_registry,
+evidence, working, knowledge, metrics, governance, publication, consumption, audit, operations schemas,
+RLS keyed on `tenant_key`) — via a new parameterized, VNet-internal ACA job
+(`job-skair-private-operator-lab`), never the full 301-migration set. Verified via a separate readback
+execution (`db:migrate:ledger`): `totalApplied: 1`, and the recorded sha256 matches the on-disk file
+byte-for-byte. Deeper RLS/table-level readback is written but blocked on a merged image — see
+`docs/releases/records/2026-07-31-skyharbor-air-foundation-v2-phase2-schema-bootstrap.md` for full
+evidence. No source data has landed yet — Phase 3 (source landing) is next.
 
 ## Airline Block
 

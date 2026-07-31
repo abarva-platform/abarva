@@ -2,12 +2,47 @@
 
 ## Status
 
-**Phase 0 (freeze) complete as of this PR** — see
+**Phase 0 (freeze) complete** — see
 `clients/skyharbor-air/execution/skyharbor-air-source-corpus-v1.0.0.freeze-manifest.json` and
-`docs/ops/dual-tenant-knowledge-execution-program.md`'s SkyHarbor entry. No Azure, Postgres, or
-ingestion action has been taken — Phase 0 is documentation and audit evidence only. Phase 1 onward
-remains unauthorized and requires its own explicit go-ahead before any Azure action, per this
-document's own Phase 1 section below.
+`docs/ops/dual-tenant-knowledge-execution-program.md`'s SkyHarbor entry.
+
+**Phase 1 (zero-data infrastructure) provisioned and independently verified, 2026-07-31.** See
+`clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`.
+`az deployment sub what-if` ran clean against the live `abarva-lab-sub` subscription first (55 Create /
+0 Modify / 0 Delete, fully isolated to the new resource group), then `az deployment sub create` actually
+provisioned the dedicated boundary — not shared with `airline-demo-new`'s existing infrastructure.
+Independently re-verified via direct `az resource list` / `az resource show` / `az role assignment list`
+queries (not trusted from the deployment exit code alone): resource group `rg-abarva-skair-lab-eus2-001`
+(`provisioningState: Succeeded`), all 6 managed identities, both storage accounts (`stabskairlabeus2001`,
+`stabskairevaleus2001`) with their full container sets, Key Vault `kv-abarva-skair-lab-eus2` (confirmed
+correctly rejecting non-private-network access — `publicNetworkAccess: Disabled` working as designed),
+VNet + 3 private DNS zones/links + 3 private endpoints, Postgres Flexible Server, Container Apps
+environment, all 14 ACA job definitions, Defender-for-Storage malware scanning enabled on the operational
+storage account (confirmed via direct resource query — the legacy `az security atp storage show` CLI
+alias reported a stale/incorrect `false`), and AcrPull granted to the new managed identities on the
+shared ACR (confirmed via `az role assignment list --assignee <principalId>` for at least one identity).
+
+Known gap: the generated Postgres admin password could not be stored in the new Key Vault from this
+session — the vault correctly rejected the write because it's not on an approved private-network path
+(the same `publicNetworkAccess: Disabled` posture verified above). The password sits in a
+locally-permissioned (`chmod 600`) temp file pending manual placement into Key Vault via an approved
+path. Day-to-day pipeline auth uses managed-identity/AAD, not this password, so nothing is blocked by
+this gap — it's an operational follow-up, not a Phase 1 defect.
+
+**Phase 2 (PostgreSQL schema bootstrap) applied and independently verified, 2026-07-31.** Real target
+schema identified (`supabase/migrations/20260729015000_knowledge_publication_consumption_phase3c2e.sql`
+— not the golden-slice fixture migration under `scripts/foundation-v2/`, a decoy for this purpose).
+Applied via a new parameterized ACA job (`job-skair-private-operator-lab`, VNet-internal, reuses
+`scripts/ops/submit-aca-operator-job.mjs`), scoped to exactly that one file via `MIGRATION_FORCE_NAME` —
+never the full 301-migration set, per explicit direction. Verified via a separate readback execution
+(`db:migrate:ledger`): `totalApplied: 1`, recorded sha256 matches the on-disk file exactly. Deeper
+readback (`scripts/knowledge/verify-tenant-knowledge-schema.mjs` — RLS-enabled check, representative
+table check) is written but can't run yet: the ACA job's image predates this branch, and images are only
+built by the governed `aca-main-deploy.yml` workflow off `main`. Full evidence in
+`docs/releases/records/2026-07-31-skyharbor-air-foundation-v2-phase2-schema-bootstrap.md`.
+
+Phase 3 onward (source landing, parse, canonical assembly, graph/metrics, publication, product
+certification) has not started.
 
 ## Why this, not the tactical Admin-Loader-connector path
 
@@ -63,17 +98,30 @@ less work than what healthcare-demo-new or airline-demo-new needed.
   Postgres database (or tenant-isolated schema with RLS), Key Vault, and managed identities (ingest,
   review, publish, read, evaluator, admin) — six identities, matching the pattern in
   `clients/airline-demo-new/18-phase2b3c-azure-lab-implementation/00-implementation-charter/APPROVED_BOUNDARY_SNAPSHOT.json`.
-- This is genuinely new billable Azure resource creation. **Do not execute without an explicit,
-  separate go-ahead** — same standard applied to every Azure-touching action this session.
+- **Done, 2026-07-31**: `clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`
+  (`main.bicep`, `skair-lab-foundation.bicep`, `skair-acr-pull.bicep`, `skair-lab-jobs.bicep`,
+  `skair-defender-storage-malware.bicep`, `skair.lab.bicepparam`), adapted from airline-demo-new's
+  working templates with its own address space (`10.76.0.0/22`), resource names (`skair` prefix), and
+  Postgres database (`abarva_skyharbor_air_knowledge_lab`). What-if verified clean, then created and
+  independently re-verified against the live subscription — see Status section above for the full
+  evidence list.
+- This was genuinely new billable Azure resource creation, executed only after explicit go-ahead
+  ("focus is skyharbor now...end to end", "i have already approved the start") — same standard applied
+  to every Azure-touching action this session.
 - Plan-only/what-if first, matching the "zero-data infrastructure plan and what-if" language the
   program doc already uses for `healthcare-demo-new`'s next allowed action.
 
 ### Phase 2 — PostgreSQL bootstrap
 
-- Apply schemas (source registry, evidence, working, knowledge, metrics, governance, publication,
-  consumption, audit, operations) to the new boundary. RLS, grants, constraints, indexes.
-- Mechanical once Phase 1 infra exists — the schema definitions are shared/tenant-generic, not
-  something to redesign per tenant.
+- **Done, 2026-07-31.** Applied `supabase/migrations/20260729015000_knowledge_publication_consumption_phase3c2e.sql`
+  (source registry, evidence, working, knowledge, metrics, governance, publication, consumption, audit,
+  operations schemas; RLS keyed on `tenant_key`) to the dedicated boundary via a new parameterized
+  private ACA job, not the shared `db-migration-lab.yml` workflow. Independently re-verified — see the
+  Status section above for full evidence.
+- Was mostly mechanical once Phase 1 infra existed, as expected, but required first resolving which
+  Postgres server was actually authoritative (the shared workflow only targets the shared control-plane
+  database) and building the migration-apply mechanism itself, since none existed yet for a dedicated
+  per-tenant server.
 
 ### Phase 3 — Source landing
 
@@ -126,6 +174,17 @@ dimension discipline (technical / data-quality / product-usability) established 
 
 ## Immediate next step
 
-Phase 0 is done (this PR). Phase 1 (Azure boundary provisioning) is real, billable, hard-to-reverse
-infrastructure creation and requires its own explicit go-ahead before any `az` command runs — not
-implied by this document or by Phase 0 landing.
+Phase 0, Phase 1, and Phase 2 are done, each independently verified. Phase 3 preflight was attempted
+against the real, deployed boundary and correctly refused: `hcdn-job-runner.mjs` requires an
+`APPROVED_BOUNDARY_SNAPSHOT.json` before running anything, and skyharbor-air didn't have one. Added the
+real one, matching the actually-deployed Phase 1/2 infrastructure exactly, `apply_blocked: true` (AAD
+auth isn't enabled on the Postgres server yet and the per-identity database roles it references don't
+exist — a real Phase 2 follow-up before execute mode can ever succeed; preflight itself needs neither).
+
+Two things are now blocked on the same dependency: the deeper Phase 2 schema readback
+(`scripts/knowledge/verify-tenant-knowledge-schema.mjs`) and this Phase 3 preflight run, both because the
+currently-deployed image predates this branch's commits and images only build via `aca-main-deploy.yml`
+off `main`. Merging this branch would unblock both — but merging also triggers a full production
+redeploy of the shared `app.abarva.ai` web app (`aca-main-deploy.yml` runs `on: push: branches: [main]`),
+which is a materially bigger, separate decision than anything scoped to skyharbor-air alone. Not done
+without its own explicit go-ahead.
