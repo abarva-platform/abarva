@@ -53,6 +53,7 @@ for (const [script, mode] of [
   ["scripts/foundation-v2/execute-golden-slice-db.mjs", "self-test"],
   ["scripts/foundation-v2/verify-golden-slice-db.mjs", "self-test"],
   ["scripts/foundation-v2/bootstrap-db-identity.mjs", "self-test"],
+  ["scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs", "self-test"],
 ]) {
   const result = spawnSync(
     "node",
@@ -72,6 +73,7 @@ for (const requiredTokenBinding of [
   "https://ossrdbms-aad.database.windows.net",
   "foundation-v2:migrate:dry",
   "foundation-v2:migrate:apply",
+  "normalize-candidates",
 ]) {
   if (!aadWrapperSource.includes(requiredTokenBinding)) {
     failures.push(`AAD wrapper missing ACA token binding marker ${requiredTokenBinding}`);

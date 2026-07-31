@@ -33,6 +33,7 @@ const PACKAGE_MANIFEST = path.join(PACKAGE_ROOT, "PACKAGE_MANIFEST.json");
 const PARSER_VISIBLE_MANIFEST = path.join(PACKAGE_ROOT, "03-source-corpus-design/parser-visible-source-manifest.csv");
 const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
 const SOURCE_VOLUME_EXECUTION_ID = `${SOURCE_RELEASE_ID}:source-volume-execution-v1`;
+const SOURCE_VOLUME_GATE_IDS = ["F2-SOURCE-VOLUME-L0-L1", "F2-SOURCE-VOLUME-L1-L2"];
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -312,6 +313,20 @@ async function setContext(client, roleName) {
 async function sourceVolumeCounts(client) {
   const output = {};
   for (const table of ["source_releases", "source_files", "source_records", "source_field_values", "parser_executions", "gate_results"]) {
+    if (table === "gate_results") {
+      output[table] = Number(
+        (
+          await rows(
+            client,
+            `SELECT count(*)::int AS count
+               FROM foundation_v2.gate_results
+              WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id = ANY($3::text[])`,
+            [TENANT_KEY, TEST_NAMESPACE, SOURCE_VOLUME_GATE_IDS],
+          )
+        )[0].count,
+      );
+      continue;
+    }
     output[table] = Number(
       (
         await rows(
