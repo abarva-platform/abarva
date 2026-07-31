@@ -679,22 +679,39 @@ function isPermissionDenied(error) {
 
 const inaccessibleRelations = new Map();
 
+function recordInaccessibleRelation(relationName, error) {
+  inaccessibleRelations.set(relationName, {
+    relation_name: relationName,
+    exists: "",
+    tenant_rows: "",
+    baseline_rows: "",
+    status: "INACCESSIBLE_RELATION",
+    error: error.message,
+  });
+}
+
+async function withRelationProbe(client, probe) {
+  await client.query("SAVEPOINT readback_relation_probe");
+  try {
+    const result = await probe();
+    await client.query("RELEASE SAVEPOINT readback_relation_probe");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT readback_relation_probe").catch(() => undefined);
+    await client.query("RELEASE SAVEPOINT readback_relation_probe").catch(() => undefined);
+    throw error;
+  }
+}
+
 async function relationExists(client, relationName) {
   try {
-    const rows = await query(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [
-      relationName,
-    ]);
+    const rows = await withRelationProbe(client, () =>
+      query(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [relationName]),
+    );
     return rows[0]?.exists === true;
   } catch (error) {
     if (!isPermissionDenied(error)) throw error;
-    inaccessibleRelations.set(relationName, {
-      relation_name: relationName,
-      exists: "",
-      tenant_rows: "",
-      baseline_rows: "",
-      status: "INACCESSIBLE_RELATION",
-      error: error.message,
-    });
+    recordInaccessibleRelation(relationName, error);
     return false;
   }
 }
@@ -720,6 +737,8 @@ function hasColumn(columns, name) {
 
 async function countRelation(client, relationName, columns) {
   if (!(await relationExists(client, relationName))) {
+    const inaccessible = inaccessibleRelations.get(relationName);
+    if (inaccessible) return inaccessible;
     return {
       relation_name: relationName,
       exists: false,
@@ -730,11 +749,20 @@ async function countRelation(client, relationName, columns) {
   }
   const rel = relationSql(relationName);
   const tenantWhere = hasColumn(columns, "tenant_key") ? "WHERE tenant_key=$1" : "";
-  const tenantRows = await query(
-    client,
-    `SELECT count(*)::bigint AS count FROM ${rel} ${tenantWhere}`,
-    hasColumn(columns, "tenant_key") ? [TENANT_KEY] : [],
-  );
+  let tenantRows;
+  try {
+    tenantRows = await withRelationProbe(client, () =>
+      query(
+        client,
+        `SELECT count(*)::bigint AS count FROM ${rel} ${tenantWhere}`,
+        hasColumn(columns, "tenant_key") ? [TENANT_KEY] : [],
+      ),
+    );
+  } catch (error) {
+    if (!isPermissionDenied(error)) throw error;
+    recordInaccessibleRelation(relationName, error);
+    return inaccessibleRelations.get(relationName);
+  }
   let baselineRows = "";
   if (hasColumn(columns, "knowledge_baseline_ref")) {
     const baseline = await query(

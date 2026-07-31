@@ -18,7 +18,7 @@ Release lane: `internal-admin`.
 
 Layer 4 Products: proof scripts now inspect the full Home Knowledge consumption projection set and projection authority rows.
 
-Operations and audit: the live reconciliation readback now records permission-denied relations as explicit evidence rows instead of aborting before projection proof can complete.
+Operations and audit: the live reconciliation readback now records permission-denied relations as explicit evidence rows and keeps those probes transaction-safe so projection proof can continue.
 
 ## Client Applicability
 
@@ -44,6 +44,7 @@ Feature flag: none.
 - `node --check scripts/qa/airline-module-runtime-db-proof.mjs` — passed.
 - `node --check scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs` — passed.
 - `node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs` — passed.
+- `git diff --check` — passed.
 
 ## Rollout Plan
 
