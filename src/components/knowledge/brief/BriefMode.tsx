@@ -20,7 +20,7 @@ import { SourcesPanel } from "../shared/SourcesPanel";
  */
 export function BriefMode() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <StoryHeader />
       <Section title="The enterprise">
         <IdentityPanel />
@@ -64,10 +64,13 @@ function Section({
   readonly children: ReactNode;
 }) {
   return (
-    <section>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#0066CC]">
-        {title}
-      </h2>
+    <section className="scroll-mt-24">
+      <div className="mb-3 flex items-center gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-[#0066CC]">
+          {title}
+        </h2>
+        <span className="h-px min-w-8 flex-1 bg-[rgba(12,26,58,0.08)]" />
+      </div>
       {children}
     </section>
   );

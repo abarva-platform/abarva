@@ -28,8 +28,9 @@ export function AbarvaViewsPanel() {
     <GatedSection
       envelope={envelope}
       label="AbarVa views"
-      emptyTitle="No AbarVa view published for this lens"
-      emptyBody="strategic_interpretation_v1 has not resolved with a real interpretation for this (tenant, lens, baseline)."
+      emptyTitle="AbarVa view not yet published"
+      emptyBody="No accepted AbarVa interpretation has been published for this tenant, lens, and baseline. The view remains empty rather than composing an advisory conclusion without evidence approval."
+      emptyPresentation="governed"
     >
       {(context) => {
         const view = context.interpretation;

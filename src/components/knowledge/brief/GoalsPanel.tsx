@@ -1,7 +1,4 @@
-"use client";
-
-import { StateBanner } from "../state/StateBanner";
-import { readinessPresentation } from "../state/gate-utils";
+import { GovernedStatePanel } from "../state/GovernedStatePanel";
 
 /**
  * `Goal` is not yet a ratified canonical object type in the consumption
@@ -14,14 +11,11 @@ import { readinessPresentation } from "../state/gate-utils";
  * other would misrepresent what is actually governed.
  */
 export function GoalsPanel() {
-  const presentation = readinessPresentation("PROJECTION_UNAVAILABLE");
   return (
-    <StateBanner
-      decision={{
-        tone: presentation.tone,
-        title: `Goals -- ${presentation.title.toLowerCase()}`,
-        body: "Goal is not yet a ratified canonical object type in the consumption contract. Not synthesized from top opportunities or program titles in the meantime.",
-      }}
+    <GovernedStatePanel
+      title="Goals not yet published"
+      body="Goal is not yet a ratified canonical object type in the consumption contract. The page does not synthesize goals from opportunities, program titles, or interview fragments."
+      detail="Required publication: canonical goal object type or approved goal projection."
     />
   );
 }

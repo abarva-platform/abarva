@@ -102,48 +102,62 @@ export function AvaDock() {
 
   return (
     <aside
-      className={`min-w-0 flex flex-col overflow-y-auto bg-white ${DOCK_SIZE[dockPosition]} border-[rgba(10,10,11,0.12)] ${
+      className={`min-w-0 flex flex-col overflow-y-auto bg-[#fbfcfd] ${DOCK_SIZE[dockPosition]} border-[rgba(12,26,58,0.12)] shadow-[0_18px_50px_rgba(12,26,58,0.08)] ${
         dockPosition === "float"
           ? "shrink-0 xl:fixed xl:bottom-5 xl:right-5 xl:z-30 xl:max-h-[70vh]"
           : "shrink-0"
       }`}
       aria-label="aVa companion"
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(10,10,11,0.1)] px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#0c1a3a]">aVa</p>
-          <p className="text-xs text-[#888780]">
-            Reads what you are looking at. Refuses rather than guesses.
-          </p>
+      <header className="border-b border-[rgba(12,26,58,0.1)] bg-white px-4 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#10243d] text-[11px] font-semibold text-white">
+                aV
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-[#0c1a3a]">aVa</p>
+                <p className="text-xs font-medium text-[#607286]">
+                  Knowledge companion
+                </p>
+              </div>
+            </div>
+            <p className="mt-2 max-w-[300px] text-xs leading-relaxed text-[#6d7782]">
+              Reads the active governed view and refuses when evidence is not in scope.
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <DockPosButton
+              pos="left"
+              active={dockPosition === "left"}
+              onClick={setDockPosition}
+            />
+            <DockPosButton
+              pos="right"
+              active={dockPosition === "right"}
+              onClick={setDockPosition}
+            />
+            <DockPosButton
+              pos="bottom"
+              active={dockPosition === "bottom"}
+              onClick={setDockPosition}
+            />
+            <DockPosButton
+              pos="float"
+              active={dockPosition === "float"}
+              onClick={setDockPosition}
+            />
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <DockPosButton
-            pos="left"
-            active={dockPosition === "left"}
-            onClick={setDockPosition}
-          />
-          <DockPosButton
-            pos="right"
-            active={dockPosition === "right"}
-            onClick={setDockPosition}
-          />
-          <DockPosButton
-            pos="bottom"
-            active={dockPosition === "bottom"}
-            onClick={setDockPosition}
-          />
-          <DockPosButton
-            pos="float"
-            active={dockPosition === "float"}
-            onClick={setDockPosition}
-          />
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={toggleDockLocked}
-            className={`ml-1 rounded-md border px-2 py-1 text-xs ${
+            className={`rounded-md border px-2.5 py-1.5 text-xs font-medium ${
               dockLocked
                 ? "border-[rgba(0,102,204,0.45)] bg-[rgba(0,102,204,0.1)] text-[#0066CC]"
-                : "border-[rgba(10,10,11,0.18)] text-[#888780]"
+                : "border-[rgba(12,26,58,0.14)] bg-white text-[#607286]"
             }`}
           >
             {dockLocked ? "Locked" : "Lock"}
@@ -151,7 +165,7 @@ export function AvaDock() {
           <button
             type="button"
             onClick={() => setDockState(dockLocked ? "open" : "rail")}
-            className="rounded-md border border-[rgba(10,10,11,0.18)] px-2 py-1 text-xs text-[#888780]"
+            className="rounded-md border border-[rgba(12,26,58,0.14)] bg-white px-2.5 py-1.5 text-xs font-medium text-[#607286]"
           >
             Hide
           </button>
@@ -160,10 +174,21 @@ export function AvaDock() {
 
       <div className="flex-1 space-y-4 p-4">
         {!runtime.modelsEnabled ? (
-          <p className="rounded-md border border-[rgba(10,10,11,0.14)] bg-[rgba(10,10,11,0.04)] p-3 text-sm text-[#5f5e5a]">
-            All model providers are disabled -- aVa reasoning is unavailable.
-            Everything else on this page still works.
-          </p>
+          <div
+            role="status"
+            className="rounded-md border border-[rgba(32,93,141,0.22)] bg-white p-4 shadow-[0_14px_32px_rgba(12,26,58,0.05)]"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#607286]">
+              Reasoning unavailable
+            </p>
+            <p className="mt-1 text-sm font-semibold text-[#10243d]">
+              aVa is paused for this environment.
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-[#4f5e6c]">
+              Deterministic Knowledge views remain available. aVa will answer only
+              when the governed reasoning provider is enabled.
+            </p>
+          </div>
         ) : (
           <>
             <div>
@@ -260,10 +285,10 @@ function DockPosButton({
       aria-pressed={active}
       title={`Dock ${pos}`}
       onClick={() => onClick(pos)}
-      className={`h-6 w-6 rounded border text-[10px] ${
+      className={`h-7 w-7 rounded-md border text-[10px] font-semibold ${
         active
           ? "border-[rgba(0,102,204,0.45)] bg-[rgba(0,102,204,0.1)] text-[#0066CC]"
-          : "border-[rgba(10,10,11,0.18)] text-[#888780]"
+          : "border-[rgba(12,26,58,0.14)] bg-white text-[#607286]"
       }`}
     >
       {pos[0]?.toUpperCase()}

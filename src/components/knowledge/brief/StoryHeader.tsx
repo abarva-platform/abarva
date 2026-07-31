@@ -33,34 +33,48 @@ export function StoryHeader() {
   const lens = lenses?.find((l) => l.lensId === lensId);
 
   return (
-    <div className="mb-6">
+    <div className="mb-7 rounded-md border border-[rgba(12,26,58,0.1)] bg-[radial-gradient(circle_at_16%_0%,rgba(0,102,204,0.12),transparent_32%),linear-gradient(135deg,#ffffff,#f6f9fb)] px-5 py-5 shadow-[0_22px_60px_rgba(12,26,58,0.08)]">
       {lens ? (
         <>
-          <p className="text-xs font-medium uppercase tracking-wide text-[#888780]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#607286]">
             {lens.primaryDomainKeys.join(" -- ")}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#0c1a3a]">
+          <h1 className="mt-2 max-w-4xl text-3xl font-semibold leading-tight text-[#0c1a3a] sm:text-4xl">
             {lens.label}
           </h1>
         </>
       ) : (
-        <h1 className="text-2xl font-semibold text-[#0c1a3a]">Knowledge</h1>
+        <h1 className="text-3xl font-semibold text-[#0c1a3a] sm:text-4xl">
+          Knowledge
+        </h1>
       )}
-      <div className="mt-3">
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="rounded-full border border-[rgba(32,93,141,0.18)] bg-white/80 px-3 py-1 text-xs font-semibold text-[#205d8d]">
+          Evidence-bound
+        </span>
+        <span className="rounded-full border border-[rgba(32,93,141,0.18)] bg-white/80 px-3 py-1 text-xs font-semibold text-[#205d8d]">
+          Baseline-governed
+        </span>
+        <span className="rounded-full border border-[rgba(32,93,141,0.18)] bg-white/80 px-3 py-1 text-xs font-semibold text-[#205d8d]">
+          Gaps visible
+        </span>
+      </div>
+      <div className="mt-5">
         <GatedSection
           envelope={contextEnvelope}
           label="Lens narrative"
           emptyTitle="Interpretation not yet published"
-          emptyBody="strategic_interpretation_v1 has not resolved with accepted evidence for this lens."
+          emptyBody="No accepted strategic interpretation has been published for this lens yet. The page still renders governed facts and open gaps rather than filling the narrative from unapproved material."
+          emptyPresentation="governed"
           compact
         >
           {(context) =>
             context.interpretation ? (
               <div>
-                <p className="text-lg font-medium leading-snug text-[#2c2c2a]">
+                <p className="max-w-4xl text-xl font-semibold leading-snug text-[#10243d]">
                   {context.interpretation.headline}
                 </p>
-                <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[#5f5e5a]">
+                <p className="mt-2 max-w-4xl text-base leading-relaxed text-[#4f5e6c]">
                   {context.interpretation.body}
                 </p>
               </div>
