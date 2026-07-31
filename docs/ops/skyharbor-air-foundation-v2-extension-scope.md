@@ -29,8 +29,20 @@ locally-permissioned (`chmod 600`) temp file pending manual placement into Key V
 path. Day-to-day pipeline auth uses managed-identity/AAD, not this password, so nothing is blocked by
 this gap — it's an operational follow-up, not a Phase 1 defect.
 
-Phase 2 onward (PostgreSQL schema bootstrap, source landing, parse, canonical assembly, graph/metrics,
-publication, product certification) has not started.
+**Phase 2 (PostgreSQL schema bootstrap) applied and independently verified, 2026-07-31.** Real target
+schema identified (`supabase/migrations/20260729015000_knowledge_publication_consumption_phase3c2e.sql`
+— not the golden-slice fixture migration under `scripts/foundation-v2/`, a decoy for this purpose).
+Applied via a new parameterized ACA job (`job-skair-private-operator-lab`, VNet-internal, reuses
+`scripts/ops/submit-aca-operator-job.mjs`), scoped to exactly that one file via `MIGRATION_FORCE_NAME` —
+never the full 301-migration set, per explicit direction. Verified via a separate readback execution
+(`db:migrate:ledger`): `totalApplied: 1`, recorded sha256 matches the on-disk file exactly. Deeper
+readback (`scripts/knowledge/verify-tenant-knowledge-schema.mjs` — RLS-enabled check, representative
+table check) is written but can't run yet: the ACA job's image predates this branch, and images are only
+built by the governed `aca-main-deploy.yml` workflow off `main`. Full evidence in
+`docs/releases/records/2026-07-31-skyharbor-air-foundation-v2-phase2-schema-bootstrap.md`.
+
+Phase 3 onward (source landing, parse, canonical assembly, graph/metrics, publication, product
+certification) has not started.
 
 ## Why this, not the tactical Admin-Loader-connector path
 
@@ -101,10 +113,15 @@ less work than what healthcare-demo-new or airline-demo-new needed.
 
 ### Phase 2 — PostgreSQL bootstrap
 
-- Apply schemas (source registry, evidence, working, knowledge, metrics, governance, publication,
-  consumption, audit, operations) to the new boundary. RLS, grants, constraints, indexes.
-- Mechanical once Phase 1 infra exists — the schema definitions are shared/tenant-generic, not
-  something to redesign per tenant.
+- **Done, 2026-07-31.** Applied `supabase/migrations/20260729015000_knowledge_publication_consumption_phase3c2e.sql`
+  (source registry, evidence, working, knowledge, metrics, governance, publication, consumption, audit,
+  operations schemas; RLS keyed on `tenant_key`) to the dedicated boundary via a new parameterized
+  private ACA job, not the shared `db-migration-lab.yml` workflow. Independently re-verified — see the
+  Status section above for full evidence.
+- Was mostly mechanical once Phase 1 infra existed, as expected, but required first resolving which
+  Postgres server was actually authoritative (the shared workflow only targets the shared control-plane
+  database) and building the migration-apply mechanism itself, since none existed yet for a dedicated
+  per-tenant server.
 
 ### Phase 3 — Source landing
 
@@ -157,8 +174,9 @@ dimension discipline (technical / data-quality / product-usability) established 
 
 ## Immediate next step
 
-Phase 0 and Phase 1 are both done. `rg-abarva-skair-lab-eus2-001` exists and is independently verified.
-Next is Phase 2 (PostgreSQL schema bootstrap) — apply the source registry, evidence, working, knowledge,
-metrics, governance, publication, consumption, audit, and operations schemas to the new Postgres server,
-with RLS/grants/constraints/indexes. Mechanical once decided, but each stage still needs real evidence,
-not just an exit code — same discipline applied to Phase 1.
+Phase 0, Phase 1, and Phase 2 are done, each independently verified. Deeper Phase 2 readback (RLS
+enabled per table, representative tables exist) is written but blocked until this branch merges and a
+new image builds. Next is Phase 3 (source landing) — land the frozen
+`datasets/tenant-inputs/active/skyharbor-air/current/` package via `hcdn-job-runner.mjs`'s
+`source-register-v1` process, preflight mode first. Each stage still needs real evidence, not just an
+exit code — same discipline applied to Phases 1 and 2.
