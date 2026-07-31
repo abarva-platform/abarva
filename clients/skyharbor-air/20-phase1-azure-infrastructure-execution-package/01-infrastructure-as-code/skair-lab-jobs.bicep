@@ -51,6 +51,7 @@ resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
   }
   properties: {
     environmentId: containerAppsEnvironmentId
+    workloadProfileName: 'Consumption'
     configuration: {
       triggerType: 'Manual'
       replicaTimeout: 3600
@@ -98,3 +99,50 @@ resource acaJobs 'Microsoft.App/jobs@2024-03-01' = [for job in jobs: {
     }
   }
 }]
+
+// Generic, parameterized ad-hoc job for skyharbor-air's own boundary — mirrors
+// the shared job-abarva-private-operator-eus pattern (scripts/ops/submit-aca-operator-job.mjs):
+// idle by default (/bin/true, minimal resources), started with a specific
+// --image/--script/--env override per invocation, then restored to this idle
+// state. Reused for migration apply, migration status/ledger, and schema
+// readback — not a single-purpose "migration job." Runs inside the private
+// VNet (containerAppsEnvironmentId is deployed to snet-aca-skair-lab-eus2-001),
+// so it can reach the private Postgres server that rejects all public traffic.
+resource privateOperatorJob 'Microsoft.App/jobs@2024-03-01' = {
+  name: 'job-skair-private-operator-lab'
+  location: location
+  tags: union(tags, { process: 'ad-hoc-operator', tenantKey: tenantKey })
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identityIds.admin}': {}
+    }
+  }
+  properties: {
+    environmentId: containerAppsEnvironmentId
+    workloadProfileName: 'Consumption'
+    configuration: {
+      triggerType: 'Manual'
+      replicaTimeout: 1800
+      replicaRetryLimit: 1
+      manualTriggerConfig: { parallelism: 1, replicaCompletionCount: 1 }
+      registries: [
+        { server: registryServer, identity: identityIds.admin }
+      ]
+      secrets: [
+        { name: 'database-url', value: 'unset-pending-first-secret-set' }
+      ]
+    }
+    template: {
+      containers: [
+        {
+          name: 'db-migrate'
+          image: imageName
+          command: [ '/bin/true' ]
+          args: []
+          resources: { cpu: json('0.5'), memory: '1Gi' }
+        }
+      ]
+    }
+  }
+}

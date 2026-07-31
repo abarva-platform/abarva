@@ -278,6 +278,7 @@
     "db:verify:retired-tenants": "node scripts/verify-retired-tenant-references.mjs",
     "db:azure:bootstrap": "npx tsx src/scripts/bootstrap-azure-postgres-compat.ts",
     "db:azure:verify": "npx tsx src/scripts/verify-azure-postgres-schema.ts",
+    "db:verify:tenant-knowledge-schema": "node scripts/knowledge/verify-tenant-knowledge-schema.mjs",
     "db:azure:verify-data-parity": "npx tsx src/scripts/verify-azure-tenant-data-parity.ts",
     "db:verify:p18-apex-truth": "npx tsx src/scripts/verify/p18-apex-truth-reconciliation.ts",
     "db:azure:copy-tenant-context": "npx tsx src/scripts/copy-tenant-context-to-azure.ts",
