@@ -67,7 +67,7 @@ re-verified via exact literal-path grep (not a generic substring match) before d
   finding they're genuinely live (see Plain-English Summary).
 - Explicitly confirmed the Tower mart-write-job path claim was false via `git blame` before taking any
   action on it — no `package.json` change was needed or made.
-- `node scripts/release-check.mjs` — pending (run before merge).
+- `node scripts/release-check.mjs` — passed.
 
 ## Rollout Plan
 
