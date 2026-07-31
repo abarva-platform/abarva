@@ -222,45 +222,64 @@ export function AvaDock() {
               </div>
             </div>
 
-            {asked ? (
-              answer ? (
-                <AvaAnswerCard
-                  question={asked}
-                  answer={answer}
-                  onAskAnother={() => {
-                    setAsked(null);
-                    setAnswer(undefined);
-                  }}
-                />
-              ) : (
-                <p className="rounded-md border border-[rgba(10,10,11,0.14)] bg-[rgba(10,10,11,0.04)] p-3 text-sm text-[#5f5e5a]">
-                  aVa is reasoning...
+          </>
+        )}
+
+        {runtime.modelsEnabled && asked ? (
+          answer ? (
+            <AvaAnswerCard
+              question={asked}
+              answer={answer}
+              onAskAnother={() => {
+                setAsked(null);
+                setAnswer(undefined);
+              }}
+            />
+          ) : (
+            <p className="rounded-md border border-[rgba(10,10,11,0.14)] bg-[rgba(10,10,11,0.04)] p-3 text-sm text-[#5f5e5a]">
+              aVa is reasoning...
+            </p>
+          )
+        ) : (
+          <GatedSection
+            envelope={avaContextEnvelope}
+            label="Suggested questions"
+            emptyTitle="No suggestions for this mode yet"
+          >
+            {(context) => (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#607286]">
+                  Suggested questions
                 </p>
-              )
-            ) : (
-              <GatedSection
-                envelope={avaContextEnvelope}
-                label="Suggested questions"
-                emptyTitle="No suggestions for this mode yet"
-              >
-                {(context) => (
-                  <ul className="space-y-1.5">
-                    {context.suggestedQuestions.map((s) => (
+                <ul className="space-y-1.5">
+                  {context.suggestedQuestions.map((s) => {
+                    const disabled = !runtime.modelsEnabled && s.requiresModel;
+                    return (
                       <li key={s.id}>
                         <button
                           type="button"
+                          disabled={disabled}
+                          title={
+                            disabled
+                              ? "aVa reasoning is off in this environment."
+                              : undefined
+                          }
                           onClick={() => void ask(s.question)}
-                          className="w-full rounded-md border border-[rgba(10,10,11,0.12)] px-2.5 py-1.5 text-left text-sm text-[#2c2c2a] hover:border-[rgba(0,102,204,0.4)]"
+                          className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm ${
+                            disabled
+                              ? "cursor-not-allowed border-[rgba(10,10,11,0.1)] bg-[rgba(10,10,11,0.03)] text-[#777]"
+                              : "border-[rgba(10,10,11,0.12)] text-[#2c2c2a] hover:border-[rgba(0,102,204,0.4)]"
+                          }`}
                         >
                           {s.question}
                         </button>
                       </li>
-                    ))}
-                  </ul>
-                )}
-              </GatedSection>
+                    );
+                  })}
+                </ul>
+              </div>
             )}
-          </>
+          </GatedSection>
         )}
 
         <AvaSearch />
