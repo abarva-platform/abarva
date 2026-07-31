@@ -1,3 +1,0 @@
-2026-07-27T20:56:13.52500  Connecting to the container 'airdn-job'...
-2026-07-27T20:56:13.66538  Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-9j0t7nr', Replica: 'job-airdn-validate-lab-9j0t7nr-94kgt']
-2026-07-27T20:55:17.9289588Z stderr F wget: server returned error: HTTP/1.1 404 Not Found

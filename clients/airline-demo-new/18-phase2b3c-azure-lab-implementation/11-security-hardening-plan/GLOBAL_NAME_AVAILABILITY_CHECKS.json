@@ -1,9 +1,0 @@
-{
-  "storageAccounts": [
-    "stabairdnlabeus001",
-    "stabairdnevallab001"
-  ],
-  "keyVault": "kv-abarva-airdn-lab-001",
-  "status": "read-only Azure name checks required immediately before apply",
-  "failIfUnavailable": true
-}

@@ -1,6 +1,0 @@
-resource,diagnostic_target,logs,metrics,required
-pg-abarva-airdn-lab-eus-001,law-abarva-airdn-lab-eus-001,PostgreSQLLogs,AllMetrics,yes
-stabairdnlabeus001,law-abarva-airdn-lab-eus-001,audit,Transaction,yes
-stabairdnevallab001,law-abarva-airdn-lab-eus-001,audit,Transaction,yes
-kv-abarva-airdn-lab-001,law-abarva-airdn-lab-eus-001,audit,AllMetrics,yes
-cae-abarva-airdn-lab-eus-001,law-abarva-airdn-lab-eus-001,ContainerAppConsoleLogs_CL,AllMetrics,yes
