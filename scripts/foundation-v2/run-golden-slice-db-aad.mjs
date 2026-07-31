@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const args = parseArgs(process.argv.slice(2));
 if (args.help) {
-  console.log(`Usage: node scripts/foundation-v2/run-golden-slice-db-aad.mjs --target bootstrap|execute|verify|source-volume|normalize-candidates --mode <mode> [--emit-proof-bundle]
+  console.log(`Usage: node scripts/foundation-v2/run-golden-slice-db-aad.mjs --target bootstrap|execute|verify|source-volume|normalize-candidates|review-dry-run --mode <mode> [--emit-proof-bundle]
 
 Required:
   FOUNDATION_V2_POSTGRES_AAD_CLIENT_ID
@@ -53,6 +53,8 @@ async function main() {
           ? "load-healthcare-source-volume-db.mjs"
           : args.target === "normalize-candidates"
             ? "normalize-healthcare-source-volume-db.mjs"
+            : args.target === "review-dry-run"
+              ? "review-healthcare-candidates-db.mjs"
             : "execute-golden-slice-db.mjs";
   process.argv = [process.argv[0], path.join(path.dirname(thisFile), script), "--mode", args.mode];
   if (args.emitProofBundle) process.argv.push("--emit-proof-bundle");
@@ -97,7 +99,7 @@ function parseArgs(argv) {
     else if (arg === "--help" || arg === "-h") parsed.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!["bootstrap", "execute", "verify", "migration", "source-volume", "normalize-candidates"].includes(parsed.target)) {
+  if (!["bootstrap", "execute", "verify", "migration", "source-volume", "normalize-candidates", "review-dry-run"].includes(parsed.target)) {
     throw new Error(`Unsupported target ${parsed.target}`);
   }
   return parsed;
