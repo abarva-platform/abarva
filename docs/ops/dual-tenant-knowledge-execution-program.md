@@ -14,7 +14,7 @@ rot.
 | --- | --- | --- | --- |
 | `healthcare-demo-new` | Phase 0 frozen design/source-corpus foundation | Zero-data infrastructure plan and what-if | Data landing, parser execution, product wiring |
 | `airline-demo-new` | Blocked before Phase 0 freeze | Remediate source corpus and rerun independent audit | Freeze, provision, load, publish |
-| `skyharbor-air` | Phase 0 frozen — source package already live and governed (26 files, 510-row interview set, real semantic audit pass) | Zero-data infrastructure plan and what-if | Provisioning, data landing, parser execution, publication, product wiring |
+| `skyharbor-air` | Phase 0 frozen, Phase 1 provisioned and independently verified (dedicated Azure boundary live in `rg-abarva-skair-lab-eus2-001`) | PostgreSQL schema bootstrap (Phase 2) | Data landing, parser execution, publication, product wiring |
 
 The healthcare candidate was the reference implementation for the execution
 factory. skyharbor-air reaches an equivalent Phase 0 state via a different
@@ -117,10 +117,16 @@ yet — recorded as a real, unfilled gap in the freeze manifest, not fabricated 
 shape. This freeze does not load data, provision cloud resources, add a runtime tenant key, or wire
 any product surface.
 
-Phase 1 IaC for SkyHarbor's dedicated Azure boundary is authored at
-`clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`
-and compiles offline. It has not been deployed or what-if'd — provisioning still requires its own
-explicit go-ahead, per `docs/ops/skyharbor-air-foundation-v2-extension-scope.md`.
+## Phase 1 SkyHarbor Zero-Data Infrastructure
+
+Provisioned and independently verified 2026-07-31. IaC at
+`clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`.
+`az deployment sub what-if` ran clean (55 Create / 0 Modify / 0 Delete) before `az deployment sub create`
+actually provisioned the dedicated boundary `rg-abarva-skair-lab-eus2-001` — not shared with
+`airline-demo-new`'s infrastructure. Verified independently via direct `az resource list` / `az resource
+show` / `az role assignment list` queries, not trusted from the deployment exit code alone. Full evidence
+list in `docs/ops/skyharbor-air-foundation-v2-extension-scope.md`'s Status section. No source data has
+landed yet — Phase 2 (PostgreSQL schema bootstrap) is next.
 
 ## Airline Block
 

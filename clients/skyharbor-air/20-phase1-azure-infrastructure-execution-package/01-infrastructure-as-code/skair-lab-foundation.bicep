@@ -335,3 +335,14 @@ resource keyVaultPe 'Microsoft.Network/privateEndpoints@2023-11-01' = {
     ]
   }
 }
+
+module defenderStorageMalware './skair-defender-storage-malware.bicep' = {
+  name: 'skair-defender-storage-malware'
+  dependsOn: [ storage ]
+  params: {
+    storageAccountName: operationalStorageAccountName
+    scanCapGbPerMonth: 1000
+    automatedResponse: 'BlobSoftDelete'
+    blobScanResultsOptions: 'BlobIndexTags'
+  }
+}

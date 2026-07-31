@@ -6,13 +6,31 @@
 `clients/skyharbor-air/execution/skyharbor-air-source-corpus-v1.0.0.freeze-manifest.json` and
 `docs/ops/dual-tenant-knowledge-execution-program.md`'s SkyHarbor entry.
 
-**Phase 1 IaC authored, not executed, as of this PR** — see
+**Phase 1 (zero-data infrastructure) provisioned and independently verified, 2026-07-31.** See
 `clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`.
-The templates compile offline (`bicep build` / `bicep build-params`) and define a dedicated boundary
-(`rg-abarva-skair-lab-eus2-001`, own VNet/Postgres/storage/Key Vault/6 managed identities) that is not
-shared with `airline-demo-new`'s existing infrastructure. No `az` command has been run against real
-Azure — no `--what-if`, no `create`. Phase 1 *execution* remains unauthorized and requires its own
-explicit go-ahead before any Azure action, per this document's own Phase 1 section below.
+`az deployment sub what-if` ran clean against the live `abarva-lab-sub` subscription first (55 Create /
+0 Modify / 0 Delete, fully isolated to the new resource group), then `az deployment sub create` actually
+provisioned the dedicated boundary — not shared with `airline-demo-new`'s existing infrastructure.
+Independently re-verified via direct `az resource list` / `az resource show` / `az role assignment list`
+queries (not trusted from the deployment exit code alone): resource group `rg-abarva-skair-lab-eus2-001`
+(`provisioningState: Succeeded`), all 6 managed identities, both storage accounts (`stabskairlabeus2001`,
+`stabskairevaleus2001`) with their full container sets, Key Vault `kv-abarva-skair-lab-eus2` (confirmed
+correctly rejecting non-private-network access — `publicNetworkAccess: Disabled` working as designed),
+VNet + 3 private DNS zones/links + 3 private endpoints, Postgres Flexible Server, Container Apps
+environment, all 14 ACA job definitions, Defender-for-Storage malware scanning enabled on the operational
+storage account (confirmed via direct resource query — the legacy `az security atp storage show` CLI
+alias reported a stale/incorrect `false`), and AcrPull granted to the new managed identities on the
+shared ACR (confirmed via `az role assignment list --assignee <principalId>` for at least one identity).
+
+Known gap: the generated Postgres admin password could not be stored in the new Key Vault from this
+session — the vault correctly rejected the write because it's not on an approved private-network path
+(the same `publicNetworkAccess: Disabled` posture verified above). The password sits in a
+locally-permissioned (`chmod 600`) temp file pending manual placement into Key Vault via an approved
+path. Day-to-day pipeline auth uses managed-identity/AAD, not this password, so nothing is blocked by
+this gap — it's an operational follow-up, not a Phase 1 defect.
+
+Phase 2 onward (PostgreSQL schema bootstrap, source landing, parse, canonical assembly, graph/metrics,
+publication, product certification) has not started.
 
 ## Why this, not the tactical Admin-Loader-connector path
 
@@ -68,15 +86,16 @@ less work than what healthcare-demo-new or airline-demo-new needed.
   Postgres database (or tenant-isolated schema with RLS), Key Vault, and managed identities (ingest,
   review, publish, read, evaluator, admin) — six identities, matching the pattern in
   `clients/airline-demo-new/18-phase2b3c-azure-lab-implementation/00-implementation-charter/APPROVED_BOUNDARY_SNAPSHOT.json`.
-- **IaC authored**: `clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`
+- **Done, 2026-07-31**: `clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`
   (`main.bicep`, `skair-lab-foundation.bicep`, `skair-acr-pull.bicep`, `skair-lab-jobs.bicep`,
-  `skair.lab.bicepparam`), adapted from airline-demo-new's working templates with its own address space
-  (`10.76.0.0/22`), resource names (`skair` prefix), and Postgres database
-  (`abarva_skyharbor_air_knowledge_lab`). Compiles offline; never deployed.
-- This is genuinely new billable Azure resource creation. **Do not execute without an explicit,
-  separate go-ahead** — same standard applied to every Azure-touching action this session. Writing and
-  compiling the templates is safe, reversible, file-only work and is done; running
-  `az deployment sub what-if` or `create` against them is the actual checkpoint.
+  `skair-defender-storage-malware.bicep`, `skair.lab.bicepparam`), adapted from airline-demo-new's
+  working templates with its own address space (`10.76.0.0/22`), resource names (`skair` prefix), and
+  Postgres database (`abarva_skyharbor_air_knowledge_lab`). What-if verified clean, then created and
+  independently re-verified against the live subscription — see Status section above for the full
+  evidence list.
+- This was genuinely new billable Azure resource creation, executed only after explicit go-ahead
+  ("focus is skyharbor now...end to end", "i have already approved the start") — same standard applied
+  to every Azure-touching action this session.
 - Plan-only/what-if first, matching the "zero-data infrastructure plan and what-if" language the
   program doc already uses for `healthcare-demo-new`'s next allowed action.
 
@@ -138,8 +157,8 @@ dimension discipline (technical / data-quality / product-usability) established 
 
 ## Immediate next step
 
-Phase 0 is done. Phase 1's IaC is authored and compiles offline. What remains before Phase 2 can start
-is Phase 1 *execution* — actually provisioning `rg-abarva-skair-lab-eus2-001` and everything inside it.
-That is real, billable, hard-to-reverse infrastructure creation and requires its own explicit go-ahead
-before any `az` command runs — not implied by this document, by Phase 0 landing, or by the IaC existing
-as files on disk.
+Phase 0 and Phase 1 are both done. `rg-abarva-skair-lab-eus2-001` exists and is independently verified.
+Next is Phase 2 (PostgreSQL schema bootstrap) — apply the source registry, evidence, working, knowledge,
+metrics, governance, publication, consumption, audit, and operations schemas to the new Postgres server,
+with RLS/grants/constraints/indexes. Mechanical once decided, but each stage still needs real evidence,
+not just an exit code — same discipline applied to Phase 1.
