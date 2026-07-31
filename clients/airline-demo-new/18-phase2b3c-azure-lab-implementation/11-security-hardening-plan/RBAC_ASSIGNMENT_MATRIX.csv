@@ -1,0 +1,18 @@
+boundary,scope,identity,role,allowed,denied
+acr,acrabarvalab001.azurecr.io,mi-airdn-ingest-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-airdn-review-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-airdn-publish-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-airdn-evaluator-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-airdn-admin-lab-001,AcrPull,yes,no runtime data access from ACR
+storage,stabairdnlabeus001/raw,mi-airdn-ingest-lab-001,Storage Blob Data Contributor,yes,cross-tenant storage
+storage,stabairdnlabeus001/published,mi-airdn-publish-lab-001,Storage Blob Data Reader,yes,cross-tenant storage
+storage,stabairdnlabeus001/published,mi-airdn-read-lab-001,Storage Blob Data Reader,yes,cross-tenant storage
+storage,stabairdnlabeus001/published,mi-airdn-evaluator-lab-001,Storage Blob Data Reader,yes,cross-tenant storage
+storage,stabairdnlabeus001/audit,mi-airdn-evaluator-lab-001,Storage Blob Data Contributor,yes,cross-tenant storage
+storage,stabairdnevallab001/hidden-truth,mi-airdn-evaluator-lab-001,Storage Blob Data Reader,yes,all non-evaluator identities
+storage,stabairdnevallab001/reconstruction-proof,mi-airdn-evaluator-lab-001,Storage Blob Data Contributor,yes,cross-tenant storage
+key-vault,kv-abarva-airdn-lab-001,mi-airdn-ingest-lab-001,Key Vault Secrets User,yes,no data-bearing secret outside tenant vault
+key-vault,kv-abarva-airdn-lab-001,mi-airdn-review-lab-001,Key Vault Secrets User,yes,no data-bearing secret outside tenant vault
+key-vault,kv-abarva-airdn-lab-001,mi-airdn-publish-lab-001,Key Vault Secrets User,yes,no data-bearing secret outside tenant vault
+key-vault,kv-abarva-airdn-lab-001,mi-airdn-evaluator-lab-001,Key Vault Secrets User,yes,no data-bearing secret outside tenant vault
+key-vault,kv-abarva-airdn-lab-001,mi-airdn-admin-lab-001,Key Vault Secrets User,yes,no data-bearing secret outside tenant vault

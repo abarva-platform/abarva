@@ -1,0 +1,43 @@
+{
+  "schema": "abarva.phase2b3c.postgres-identity-rls-plan/v1",
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "tenantKey": "airline-demo-new",
+  "displayName": "Airline Demo New",
+  "azureApplyBlocked": true,
+  "databaseMigrationBlocked": true,
+  "postgresServer": "pg-abarva-airdn-lab-eus-001",
+  "database": "abarva_airline_demo_new_knowledge_lab",
+  "entra": {
+    "authenticationRequired": true,
+    "administratorBootstrapRequired": true,
+    "localPasswordFallbackAllowed": false
+  },
+  "roles": {
+    "ingest": "airline_demo_new_ingest",
+    "reviewer": "airline_demo_new_reviewer",
+    "publisher": "airline_demo_new_publisher",
+    "reader": "airline_demo_new_reader",
+    "evaluator": "airline_demo_new_evaluator",
+    "admin": "airline_demo_new_admin"
+  },
+  "managedIdentities": {
+    "ingest": "mi-airdn-ingest-lab-001",
+    "reviewer": "mi-airdn-review-lab-001",
+    "publisher": "mi-airdn-publish-lab-001",
+    "reader": "mi-airdn-read-lab-001",
+    "evaluator": "mi-airdn-evaluator-lab-001",
+    "admin": "mi-airdn-admin-lab-001"
+  },
+  "governedMigrationJob": "job-airdn-db-migration-lab",
+  "tableCoverage": 53,
+  "replayRequirements": [
+    "empty_database_migration_replay",
+    "idempotent_second_replay",
+    "rollback_rehearsal",
+    "wrong_database_guard",
+    "wrong_tenant_guard",
+    "reader_candidate_denial",
+    "ingest_publish_denial",
+    "evaluator_mutation_denial"
+  ]
+}

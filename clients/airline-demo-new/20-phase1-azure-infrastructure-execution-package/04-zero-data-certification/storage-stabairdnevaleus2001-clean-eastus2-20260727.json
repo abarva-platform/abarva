@@ -1,0 +1,10 @@
+{
+  "allowBlobPublicAccess": false,
+  "defaultAction": "Deny",
+  "kind": "StorageV2",
+  "location": "eastus2",
+  "minimumTlsVersion": "TLS1_2",
+  "name": "stabairdnevaleus2001",
+  "publicNetworkAccess": "Disabled",
+  "sku": "Standard_LRS"
+}

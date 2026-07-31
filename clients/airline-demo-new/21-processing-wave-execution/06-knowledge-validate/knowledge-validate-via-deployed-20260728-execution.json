@@ -1,0 +1,86 @@
+{
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-airdn-lab-eus2-001/providers/Microsoft.App/jobs/job-airdn-validate-lab/executions/job-airdn-validate-lab-nb02g8p",
+  "name": "job-airdn-validate-lab-nb02g8p",
+  "properties": {
+    "startTime": "2026-07-28T00:19:01+00:00",
+    "status": "Failed",
+    "template": {
+      "containers": [
+        {
+          "args": [
+            "-lc",
+            "set -eu\nnode scripts/knowledge/hcdn-job-runner.mjs \\\n  --tenant airline-demo-new \\\n  --process airline-demo-new-knowledge-validate-v1 \\\n  --mode execute \\\n  --release-id airline-demo-new-source-corpus-v1.0.0 \\\n  --run-id airline-demo-new-knowledge-validate-v1-20260728-002\n"
+          ],
+          "command": [
+            "/bin/sh"
+          ],
+          "env": [
+            {
+              "name": "ABARVA_TENANT_KEY",
+              "value": "airline-demo-new"
+            },
+            {
+              "name": "ABARVA_HCDN_ENVIRONMENT",
+              "value": "lab"
+            },
+            {
+              "name": "AZURE_SUBSCRIPTION_ID",
+              "value": "701a8554-a166-46e9-bf13-743bc50e3b20"
+            },
+            {
+              "name": "AZURE_CLIENT_ID",
+              "value": "f4ab67f7-a90f-40de-b65a-d8c12e5f00b7"
+            },
+            {
+              "name": "ABARVA_AIRDN_STORAGE_ACCOUNT",
+              "value": "stabairdnlabeus2001"
+            },
+            {
+              "name": "ABARVA_CONTAINER_IMAGE",
+              "value": "acrabarvalab001.azurecr.io/abarva/web@sha256:68242b43e395d2fda7c6df372da3723f06a5c24f5e8524f6997b758f33bb4caa"
+            },
+            {
+              "name": "ABARVA_CONTAINER_IMAGE_DIGEST",
+              "value": "sha256:68242b43e395d2fda7c6df372da3723f06a5c24f5e8524f6997b758f33bb4caa"
+            },
+            {
+              "name": "ABARVA_HCDN_EXECUTE_ACK",
+              "value": "EXECUTE_SHARED_TENANT_JOB"
+            },
+            {
+              "name": "PGHOST",
+              "value": "pg-abarva-airdn-lab-eus2-001.postgres.database.azure.com"
+            },
+            {
+              "name": "PGPORT",
+              "value": "5432"
+            },
+            {
+              "name": "PGUSER",
+              "value": "airdn_admin"
+            },
+            {
+              "name": "PGDATABASE",
+              "value": "abarva_airline_demo_new_knowledge_lab"
+            },
+            {
+              "name": "PGPASSWORD",
+              "secretRef": "cappjob-job-airdn-validate-lab"
+            }
+          ],
+          "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:68242b43e395d2fda7c6df372da3723f06a5c24f5e8524f6997b758f33bb4caa",
+          "imageType": "ContainerImage",
+          "name": "airdn-job",
+          "resources": {
+            "cpu": 0.5,
+            "ephemeralStorage": "",
+            "memory": "1Gi"
+          }
+        }
+      ],
+      "initContainers": []
+    }
+  },
+  "resourceGroup": "rg-abarva-airdn-lab-eus2-001",
+  "type": "Microsoft.App/jobs/executions"
+}

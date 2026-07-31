@@ -1,0 +1,42 @@
+2026-07-27T20:59:25.65532  Connecting to the container 'airdn-job'...
+2026-07-27T20:59:25.69155  Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-3wrfy15', Replica: 'job-airdn-validate-lab-3wrfy15-x7tz7']
+2026-07-27T20:58:18.0030784Z stdout F BEGIN
+2026-07-27T20:58:18.0063115Z stdout F     set_config    
+2026-07-27T20:58:18.0063370Z stdout F ------------------
+2026-07-27T20:58:18.0063462Z stdout F  airline-demo-new
+2026-07-27T20:58:18.0063478Z stdout F (1 row)
+2026-07-27T20:58:18.0063493Z stdout F 
+2026-07-27T20:58:18.0096245Z stdout F CREATE ROLE
+2026-07-27T20:58:18.0150940Z stdout F GRANT ROLE
+2026-07-27T20:58:18.0166570Z stdout F GRANT
+2026-07-27T20:58:18.0184627Z stdout F GRANT
+2026-07-27T20:58:18.0193988Z stdout F SET
+2026-07-27T20:58:18.0206303Z stdout F     set_config    
+2026-07-27T20:58:18.0206432Z stdout F ------------------
+2026-07-27T20:58:18.0206833Z stdout F  airline-demo-new
+2026-07-27T20:58:18.0206852Z stdout F (1 row)
+2026-07-27T20:58:18.0206868Z stdout F 
+2026-07-27T20:58:18.0228051Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0570008Z stdout F DO
+2026-07-27T20:58:18.0570007Z stderr F psql:/tmp/generic_projection_fixture.sql:58: NOTICE:  rls_cross_tenant_insert_blocked=true
+2026-07-27T20:58:18.0607023Z stdout F RESET
+2026-07-27T20:58:18.0607237Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0624234Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0654969Z stdout F INSERT 0 2
+2026-07-27T20:58:18.0683631Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0699103Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0724865Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0760540Z stdout F  activate_knowledge_baseline 
+2026-07-27T20:58:18.0761555Z stdout F -----------------------------
+2026-07-27T20:58:18.0761668Z stdout F  
+2026-07-27T20:58:18.0761695Z stdout F (1 row)
+2026-07-27T20:58:18.0761718Z stdout F 
+2026-07-27T20:58:18.0774363Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0792992Z stdout F INSERT 0 2
+2026-07-27T20:58:18.0820740Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0836283Z stdout F INSERT 0 1
+2026-07-27T20:58:18.0859977Z stderr F psql:/tmp/generic_projection_fixture.sql:375: ERROR:  invalid input syntax for type json
+2026-07-27T20:58:18.0860202Z stderr F LINE 1: SELECT 'relationship_validation=' || jsonb_agg(to_jsonb(v) O...
+2026-07-27T20:58:18.0860272Z stderr F                ^
+2026-07-27T20:58:18.0860289Z stderr F DETAIL:  Token "relationship_validation" is invalid.
+2026-07-27T20:58:18.0860302Z stderr F CONTEXT:  JSON data, line 1: relationship_validation...

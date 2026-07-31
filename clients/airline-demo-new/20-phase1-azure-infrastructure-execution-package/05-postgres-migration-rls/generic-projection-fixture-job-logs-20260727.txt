@@ -1,0 +1,33 @@
+2026-07-27T20:53:54.57648  Connecting to the container 'airdn-job'...
+2026-07-27T20:53:54.61187  Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-olih8td', Replica: 'job-airdn-validate-lab-olih8td-8mthj']
+2026-07-27T20:52:48.1801011Z stderr F psql:/tmp/generic_projection_fixture.sql:31: ERROR:  permission denied for schema governance
+2026-07-27T20:52:48.1801410Z stderr F LINE 8:       governance.is_controlled_database_admin()
+2026-07-27T20:52:48.1801665Z stderr F               ^
+2026-07-27T20:52:48.1801747Z stderr F QUERY:  
+2026-07-27T20:52:48.1801771Z stderr F   SELECT
+2026-07-27T20:52:48.1801792Z stderr F     p_tenant_key IS NOT NULL
+2026-07-27T20:52:48.1801812Z stderr F     AND p_tenant_key <> ''
+2026-07-27T20:52:48.1801832Z stderr F     AND p_tenant_key <> 'all'
+2026-07-27T20:52:48.1801853Z stderr F     AND p_tenant_key NOT LIKE '%*%'
+2026-07-27T20:52:48.1801874Z stderr F     AND (
+2026-07-27T20:52:48.1801896Z stderr F       governance.is_controlled_database_admin()
+2026-07-27T20:52:48.1801916Z stderr F       OR p_tenant_key = governance.current_tenant_key()
+2026-07-27T20:52:48.1801936Z stderr F     )
+2026-07-27T20:52:48.1801958Z stderr F 
+2026-07-27T20:52:48.1801979Z stderr F CONTEXT:  SQL function "can_access_tenant" during inlining
+2026-07-27T20:52:48.1819805Z stdout F BEGIN
+2026-07-27T20:52:48.1820000Z stdout F     set_config    
+2026-07-27T20:52:48.1820080Z stdout F ------------------
+2026-07-27T20:52:48.1820096Z stdout F  airline-demo-new
+2026-07-27T20:52:48.1820108Z stdout F (1 row)
+2026-07-27T20:52:48.1820120Z stdout F 
+2026-07-27T20:52:48.1820131Z stdout F CREATE ROLE
+2026-07-27T20:52:48.1820142Z stdout F GRANT ROLE
+2026-07-27T20:52:48.1820153Z stdout F GRANT
+2026-07-27T20:52:48.1820164Z stdout F GRANT
+2026-07-27T20:52:48.1820175Z stdout F SET
+2026-07-27T20:52:48.1820186Z stdout F     set_config    
+2026-07-27T20:52:48.1820197Z stdout F ------------------
+2026-07-27T20:52:48.1820208Z stdout F  airline-demo-new
+2026-07-27T20:52:48.1820220Z stdout F (1 row)
+2026-07-27T20:52:48.1820231Z stdout F 

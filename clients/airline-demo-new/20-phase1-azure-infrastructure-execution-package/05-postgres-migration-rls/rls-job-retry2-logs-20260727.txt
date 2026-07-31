@@ -1,0 +1,16 @@
+2026-07-27T20:57:39.05242  Connecting to the container 'airdn-job'...
+2026-07-27T20:57:39.09104  Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-90jjo74', Replica: 'job-airdn-validate-lab-90jjo74-pqq5n']
+2026-07-27T20:57:10.3318350Z stdout F BEGIN
+2026-07-27T20:57:10.3341725Z stderr F psql:/tmp/002_shared_rls.sql:8: NOTICE:  schema "governance" already exists, skipping
+2026-07-27T20:57:10.3341725Z stdout F CREATE SCHEMA
+2026-07-27T20:57:10.3373445Z stdout F CREATE FUNCTION
+2026-07-27T20:57:10.3390454Z stdout F CREATE FUNCTION
+2026-07-27T20:57:10.3412673Z stdout F CREATE FUNCTION
+2026-07-27T20:57:10.3422070Z stdout F GRANT
+2026-07-27T20:57:10.3434737Z stdout F GRANT
+2026-07-27T20:57:10.3450488Z stdout F GRANT
+2026-07-27T20:57:10.3463993Z stdout F GRANT
+2026-07-27T20:57:10.3837401Z stdout F DO
+2026-07-27T20:57:10.3906768Z stdout F CREATE VIEW
+2026-07-27T20:57:10.3987100Z stdout F COMMIT
+2026-07-27T20:57:10.4757745Z stdout F rls_tables=47,missing=0

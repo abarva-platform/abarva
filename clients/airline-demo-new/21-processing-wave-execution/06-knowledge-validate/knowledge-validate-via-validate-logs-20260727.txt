@@ -1,0 +1,187 @@
+{"TimeStamp":"2026-07-27T23:53:45.2956","Log":"Connecting to the container 'airdn-job'..."}
+{"TimeStamp":"2026-07-27T23:53:45.4532","Log":"Successfully Connected to container: 'airdn-job' [Execution: 'job-airdn-validate-lab-5nne5ss', Replica: 'job-airdn-validate-lab-5nne5ss-9bwq9']"}
+{"TimeStamp":"2026-07-27T23:53:23.6666171+00:00","Log":"F {"}
+{"TimeStamp":"2026-07-27T23:53:23.6666614+00:00","Log":"F   "schemaVersion": "hcdn-job-runner-envelope/v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6666932+00:00","Log":"F   "generatedAt": "2026-07-27T23:53:23.659Z","}
+{"TimeStamp":"2026-07-27T23:53:23.6666961+00:00","Log":"F   "runId": "airline-demo-new-knowledge-validate-v1-20260727-001","}
+{"TimeStamp":"2026-07-27T23:53:23.666698+00:00","Log":"F   "tenantKey": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:53:23.6667002+00:00","Log":"F   "environment": "lab","}
+{"TimeStamp":"2026-07-27T23:53:23.6667023+00:00","Log":"F   "processName": "airline-demo-new-knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6667043+00:00","Log":"F   "stageNames": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6667064+00:00","Log":"F     "07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.6667083+00:00","Log":"F     "08_detect_conflicts_changes""}
+{"TimeStamp":"2026-07-27T23:53:23.6667102+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6667121+00:00","Log":"F   "mode": "execute","}
+{"TimeStamp":"2026-07-27T23:53:23.666714+00:00","Log":"F   "sourceRunRef": null,"}
+{"TimeStamp":"2026-07-27T23:53:23.6667158+00:00","Log":"F   "manifest": {"}
+{"TimeStamp":"2026-07-27T23:53:23.6667179+00:00","Log":"F     "path": "/app/runtime-tenant-boundaries/airline-demo-new/APPROVED_BOUNDARY_SNAPSHOT.json","}
+{"TimeStamp":"2026-07-27T23:53:23.6667199+00:00","Log":"F     "tenantKey": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:53:23.6667232+00:00","Log":"F     "databaseName": "abarva_airline_demo_new_knowledge_lab","}
+{"TimeStamp":"2026-07-27T23:53:23.6667253+00:00","Log":"F     "storageAccount": "stabairdnlabeus001","}
+{"TimeStamp":"2026-07-27T23:53:23.6667273+00:00","Log":"F     "subscriptionId": "701a8554-a166-46e9-bf13-743bc50e3b20","}
+{"TimeStamp":"2026-07-27T23:53:23.6667298+00:00","Log":"F     "image": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160","}
+{"TimeStamp":"2026-07-27T23:53:23.6667318+00:00","Log":"F     "imageDigest": "sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160""}
+{"TimeStamp":"2026-07-27T23:53:23.6667338+00:00","Log":"F   },"}
+{"TimeStamp":"2026-07-27T23:53:23.6667357+00:00","Log":"F   "guardResults": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6667376+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6667395+00:00","Log":"F       "name": "tenant_scope","}
+{"TimeStamp":"2026-07-27T23:53:23.666889+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6669161+00:00","Log":"F       "expected": "single canonical tenant","}
+{"TimeStamp":"2026-07-27T23:53:23.6669251+00:00","Log":"F       "observed": "airline-demo-new""}
+{"TimeStamp":"2026-07-27T23:53:23.6669295+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6669308+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.666932+00:00","Log":"F       "name": "tenant_env","}
+{"TimeStamp":"2026-07-27T23:53:23.6669332+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6669343+00:00","Log":"F       "expected": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:53:23.6669355+00:00","Log":"F       "observed": "airline-demo-new""}
+{"TimeStamp":"2026-07-27T23:53:23.6669366+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6669377+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6669387+00:00","Log":"F       "name": "manifest_tenant","}
+{"TimeStamp":"2026-07-27T23:53:23.6669398+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6669408+00:00","Log":"F       "expected": "airline-demo-new","}
+{"TimeStamp":"2026-07-27T23:53:23.6669418+00:00","Log":"F       "observed": "airline-demo-new""}
+{"TimeStamp":"2026-07-27T23:53:23.6669428+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6669438+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6669449+00:00","Log":"F       "name": "mode","}
+{"TimeStamp":"2026-07-27T23:53:23.666946+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6669486+00:00","Log":"F       "expected": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6669497+00:00","Log":"F         "preflight","}
+{"TimeStamp":"2026-07-27T23:53:23.6669507+00:00","Log":"F         "noop","}
+{"TimeStamp":"2026-07-27T23:53:23.6669518+00:00","Log":"F         "execute""}
+{"TimeStamp":"2026-07-27T23:53:23.6669528+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6669539+00:00","Log":"F       "observed": "execute""}
+{"TimeStamp":"2026-07-27T23:53:23.666955+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.666956+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.666957+00:00","Log":"F       "name": "process","}
+{"TimeStamp":"2026-07-27T23:53:23.6669581+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6669592+00:00","Log":"F       "expected": "airline-demo-new-knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6669603+00:00","Log":"F       "observed": "airline-demo-new-knowledge-validate-v1""}
+{"TimeStamp":"2026-07-27T23:53:23.6669614+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6669624+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6669634+00:00","Log":"F       "name": "stage","}
+{"TimeStamp":"2026-07-27T23:53:23.6669655+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6669667+00:00","Log":"F       "expected": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6670391+00:00","Log":"F         "07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.6670434+00:00","Log":"F         "08_detect_conflicts_changes""}
+{"TimeStamp":"2026-07-27T23:53:23.6670455+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6670476+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6670496+00:00","Log":"F         "07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.6670513+00:00","Log":"F         "08_detect_conflicts_changes""}
+{"TimeStamp":"2026-07-27T23:53:23.6670533+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6670551+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6670572+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6670877+00:00","Log":"F       "name": "environment","}
+{"TimeStamp":"2026-07-27T23:53:23.6671005+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6671085+00:00","Log":"F       "expected": "lab","}
+{"TimeStamp":"2026-07-27T23:53:23.6671109+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6671128+00:00","Log":"F         "lab""}
+{"TimeStamp":"2026-07-27T23:53:23.6671148+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6671167+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6671186+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6671205+00:00","Log":"F       "name": "subscription","}
+{"TimeStamp":"2026-07-27T23:53:23.6671224+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6671245+00:00","Log":"F       "expected": "701a8554-a166-46e9-bf13-743bc50e3b20","}
+{"TimeStamp":"2026-07-27T23:53:23.6671264+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6671284+00:00","Log":"F         "701a8554-a166-46e9-bf13-743bc50e3b20""}
+{"TimeStamp":"2026-07-27T23:53:23.6671303+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6671322+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6671341+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6671359+00:00","Log":"F       "name": "database","}
+{"TimeStamp":"2026-07-27T23:53:23.6671378+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6671408+00:00","Log":"F       "expected": "abarva_airline_demo_new_knowledge_lab","}
+{"TimeStamp":"2026-07-27T23:53:23.6671428+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6671447+00:00","Log":"F         "abarva_airline_demo_new_knowledge_lab""}
+{"TimeStamp":"2026-07-27T23:53:23.6671466+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6671485+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6671503+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6671521+00:00","Log":"F       "name": "storage_account","}
+{"TimeStamp":"2026-07-27T23:53:23.667154+00:00","Log":"F       "status": "warning","}
+{"TimeStamp":"2026-07-27T23:53:23.667156+00:00","Log":"F       "expected": "stabairdnlabeus001","}
+{"TimeStamp":"2026-07-27T23:53:23.6671578+00:00","Log":"F       "observed": null,"}
+{"TimeStamp":"2026-07-27T23:53:23.6671596+00:00","Log":"F       "message": "No environment value supplied; checked from manifest only.""}
+{"TimeStamp":"2026-07-27T23:53:23.6671616+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6671636+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6671656+00:00","Log":"F       "name": "manifest_image_digest_pin","}
+{"TimeStamp":"2026-07-27T23:53:23.6671675+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6671711+00:00","Log":"F       "expected": "digest-pinned manifest image","}
+{"TimeStamp":"2026-07-27T23:53:23.6671733+00:00","Log":"F       "observed": "acrabarvalab001.azurecr.io/abarva/web@sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160""}
+{"TimeStamp":"2026-07-27T23:53:23.6671753+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6671773+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.667197+00:00","Log":"F       "name": "runtime_image_digest_pin","}
+{"TimeStamp":"2026-07-27T23:53:23.6671996+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6672018+00:00","Log":"F       "expected": "digest-pinned runtime image","}
+{"TimeStamp":"2026-07-27T23:53:23.6672036+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6672057+00:00","Log":"F         "acrabarvalab001.azurecr.io/abarva/web@sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f""}
+{"TimeStamp":"2026-07-27T23:53:23.6672077+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6672096+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6672115+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6672134+00:00","Log":"F       "name": "runtime_image_digest","}
+{"TimeStamp":"2026-07-27T23:53:23.6672167+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6672187+00:00","Log":"F       "expected": "sha256 digest","}
+{"TimeStamp":"2026-07-27T23:53:23.6672207+00:00","Log":"F       "observed": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6672227+00:00","Log":"F         "sha256:0ff1caae440f0ef7d4362f6455b164b19245fde6ff6a2df2cfee31689764ea8f""}
+{"TimeStamp":"2026-07-27T23:53:23.6672248+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6672267+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6672286+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6672305+00:00","Log":"F       "name": "execute_ack","}
+{"TimeStamp":"2026-07-27T23:53:23.6672627+00:00","Log":"F       "status": "passed","}
+{"TimeStamp":"2026-07-27T23:53:23.6672657+00:00","Log":"F       "expected": "EXECUTE_SHARED_TENANT_JOB","}
+{"TimeStamp":"2026-07-27T23:53:23.6672679+00:00","Log":"F       "observed": "EXECUTE_SHARED_TENANT_JOB""}
+{"TimeStamp":"2026-07-27T23:53:23.6672698+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:53:23.6672717+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6672737+00:00","Log":"F   "processContract": {"}
+{"TimeStamp":"2026-07-27T23:53:23.6672767+00:00","Log":"F     "processName": "airline-demo-new-knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.667279+00:00","Log":"F     "canonicalProcess": "knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6672811+00:00","Log":"F     "stageNames": ["}
+{"TimeStamp":"2026-07-27T23:53:23.667283+00:00","Log":"F       "07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.6672849+00:00","Log":"F       "08_detect_conflicts_changes""}
+{"TimeStamp":"2026-07-27T23:53:23.6672871+00:00","Log":"F     ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6672891+00:00","Log":"F     "identityPurpose": "ingest","}
+{"TimeStamp":"2026-07-27T23:53:23.6672911+00:00","Log":"F     "databaseRole": "airline_demo_new_ingest""}
+{"TimeStamp":"2026-07-27T23:53:23.667293+00:00","Log":"F   },"}
+{"TimeStamp":"2026-07-27T23:53:23.667295+00:00","Log":"F   "checkpoints": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6672969+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6673087+00:00","Log":"F       "checkpointId": "airline-demo-new-knowledge-validate-v1:07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.6673117+00:00","Log":"F       "stageName": "07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.667315+00:00","Log":"F       "checkpointHash": "5e3273f6ed7a97db3238d853a2af7ce7bbc7f22234c030683b7084c13ebf633f","}
+{"TimeStamp":"2026-07-27T23:53:23.667317+00:00","Log":"F       "status": "failed_process","}
+{"TimeStamp":"2026-07-27T23:53:23.6673189+00:00","Log":"F       "payload": {"}
+{"TimeStamp":"2026-07-27T23:53:23.6673207+00:00","Log":"F         "processName": "airline-demo-new-knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6673226+00:00","Log":"F         "canonicalProcess": "knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6673247+00:00","Log":"F         "stageName": "07_validate_semantics","}
+{"TimeStamp":"2026-07-27T23:53:23.6673267+00:00","Log":"F         "resultStatus": "failed_process""}
+{"TimeStamp":"2026-07-27T23:53:23.6673286+00:00","Log":"F       }"}
+{"TimeStamp":"2026-07-27T23:53:23.6673303+00:00","Log":"F     },"}
+{"TimeStamp":"2026-07-27T23:53:23.6673321+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.667334+00:00","Log":"F       "checkpointId": "airline-demo-new-knowledge-validate-v1:08_detect_conflicts_changes","}
+{"TimeStamp":"2026-07-27T23:53:23.6673359+00:00","Log":"F       "stageName": "08_detect_conflicts_changes","}
+{"TimeStamp":"2026-07-27T23:53:23.667338+00:00","Log":"F       "checkpointHash": "5b06d1f09142867da13f34bd2ff9f817636cb63108047473f02881718271a34f","}
+{"TimeStamp":"2026-07-27T23:53:23.6673407+00:00","Log":"F       "status": "failed_process","}
+{"TimeStamp":"2026-07-27T23:53:23.6673426+00:00","Log":"F       "payload": {"}
+{"TimeStamp":"2026-07-27T23:53:23.6673444+00:00","Log":"F         "processName": "airline-demo-new-knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6673462+00:00","Log":"F         "canonicalProcess": "knowledge-validate-v1","}
+{"TimeStamp":"2026-07-27T23:53:23.6673483+00:00","Log":"F         "stageName": "08_detect_conflicts_changes","}
+{"TimeStamp":"2026-07-27T23:53:23.6673502+00:00","Log":"F         "resultStatus": "failed_process""}
+{"TimeStamp":"2026-07-27T23:53:23.667352+00:00","Log":"F       }"}
+{"TimeStamp":"2026-07-27T23:53:23.6673539+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:53:23.6673557+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6673578+00:00","Log":"F   "processExecution": null,"}
+{"TimeStamp":"2026-07-27T23:53:23.6673599+00:00","Log":"F   "auditEvents": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6673619+00:00","Log":"F     {"}
+{"TimeStamp":"2026-07-27T23:53:23.6673758+00:00","Log":"F       "eventType": "process_failure","}
+{"TimeStamp":"2026-07-27T23:53:23.6673784+00:00","Log":"F       "status": "failed_process","}
+{"TimeStamp":"2026-07-27T23:53:23.6673819+00:00","Log":"F       "message": "Process output failed verification.""}
+{"TimeStamp":"2026-07-27T23:53:23.6673839+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:53:23.6673859+00:00","Log":"F   ],"}
+{"TimeStamp":"2026-07-27T23:53:23.6673877+00:00","Log":"F   "networkAccessAttempted": true,"}
+{"TimeStamp":"2026-07-27T23:53:23.6673897+00:00","Log":"F   "status": "failed_process","}
+{"TimeStamp":"2026-07-27T23:53:23.6673916+00:00","Log":"F   "error": {"}
+{"TimeStamp":"2026-07-27T23:53:23.6673935+00:00","Log":"F     "code": "process_verification_failed","}
+{"TimeStamp":"2026-07-27T23:53:23.6673956+00:00","Log":"F     "message": "Process output failed verification.","}
+{"TimeStamp":"2026-07-27T23:53:23.6673979+00:00","Log":"F     "details": {"}
+{"TimeStamp":"2026-07-27T23:53:23.6673999+00:00","Log":"F       "blockers": ["}
+{"TimeStamp":"2026-07-27T23:53:23.6674019+00:00","Log":"F         "hidden_truth_references""}
+{"TimeStamp":"2026-07-27T23:53:23.6674155+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-07-27T23:53:23.6674178+00:00","Log":"F     }"}
+{"TimeStamp":"2026-07-27T23:53:23.6674201+00:00","Log":"F   }"}
+{"TimeStamp":"2026-07-27T23:53:23.6674221+00:00","Log":"F }"}
