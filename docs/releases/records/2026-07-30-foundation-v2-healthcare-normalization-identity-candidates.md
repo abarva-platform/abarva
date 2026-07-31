@@ -42,6 +42,8 @@ Products: No product surface changes.
 
 Repair addendum: the first live apply attempt stopped before commit at J3A because PostgreSQL could not infer the type of the normalization-version value inside the normalized payload JSON builder. The repair adds an explicit SQL text cast and a self-test guard for that cast.
 
+Proof-manifest repair addendum: the second live apply rerun reached final proof assembly after the heavy J3/J4 work, then stopped before commit because a local variable shadowed the business-key reconciliation function. The repair renames the proof-manifest row variables and adds a self-test guard against that shadowing pattern.
+
 ## QA / Validation
 
 Planned validation before release:
@@ -53,6 +55,11 @@ Planned validation before release:
 - Pass: `npm run release:check`
 
 Repair validation:
+
+- Pass: `node --check scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs`
+- Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test --out-dir /tmp/healthcare-normalize-self-test --execution-id unit-test-execution`
+
+Proof-manifest repair validation:
 
 - Pass: `node --check scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs`
 - Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test --out-dir /tmp/healthcare-normalize-self-test --execution-id unit-test-execution`

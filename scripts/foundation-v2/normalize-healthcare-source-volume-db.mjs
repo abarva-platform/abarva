@@ -266,22 +266,22 @@ async function verify(client) {
 async function verifiedManifest(client, status, extra) {
   const sourceCounts = await sourceVolumeCounts(client);
   const actualCounts = await downstreamCounts(client);
-  const familyReconciliation = await sourceFamilyReconciliation(client);
+  const familyReconciliationRows = await sourceFamilyReconciliation(client);
   const fieldReconciliation = await fieldDispositionReconciliation(client);
-  const businessKeyReconciliation = await businessKeyReconciliation(client);
-  const identityClassifications = await identityClassificationSummary(client);
-  const relationshipReconciliation = await relationshipResolutionSummary(client);
+  const businessKeyReconciliationRows = await businessKeyReconciliation(client);
+  const identityClassificationRows = await identityClassificationSummary(client);
+  const relationshipReconciliationRows = await relationshipResolutionSummary(client);
   const exact = exactSourceCounts(sourceCounts) && exactDownstreamCounts(actualCounts) && fieldReconciliation.exact_match;
   return manifest(status, {
     ...extra,
     source_counts: sourceCounts,
     actual_counts: actualCounts,
     exact_match: exact,
-    family_reconciliation: familyReconciliation,
+    family_reconciliation: familyReconciliationRows,
     field_reconciliation: fieldReconciliation,
-    business_key_reconciliation: businessKeyReconciliation,
-    identity_classifications: identityClassifications,
-    relationship_reconciliation: relationshipReconciliation,
+    business_key_reconciliation: businessKeyReconciliationRows,
+    identity_classifications: identityClassificationRows,
+    relationship_reconciliation: relationshipReconciliationRows,
     earliest_broken_transition: exact ? null : earliestBrokenTransition(sourceCounts, actualCounts, fieldReconciliation),
   });
 }
@@ -779,6 +779,10 @@ function runSelfTest() {
   if (!script.includes("field_dispositions")) defects.push("missing explicit field disposition payload");
   if (!script.includes("downstream_row_disposition")) defects.push("missing explicit row disposition payload");
   if (!script.includes("$4::text")) defects.push("missing explicit normalization-version SQL cast");
+  const manifestShadowPattern = ["const businessKeyReconciliation", "await businessKeyReconciliation"].join(" = ");
+  if (script.includes(manifestShadowPattern)) {
+    defects.push("proof manifest shadows businessKeyReconciliation function");
+  }
   if (!script.includes("HEALTHCARE_FOUNDATION_V2_NORMALIZATION_IDENTITY_AND_CANDIDATES_VERIFIED")) {
     defects.push("missing terminal status");
   }
