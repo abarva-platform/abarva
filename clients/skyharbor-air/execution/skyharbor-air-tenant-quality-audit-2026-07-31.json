@@ -1,0 +1,265 @@
+{
+  "tenantKey": "skyharbor-air",
+  "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+  "sizeBand": "large",
+  "files": [
+    {
+      "file": "00_enterprise_profile",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 1
+    },
+    {
+      "file": "01_business_functions",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "1 column(s) always empty: parent_function"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 22
+    },
+    {
+      "file": "02_org_ownership",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 150
+    },
+    {
+      "file": "03_workforce_roles",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 35
+    },
+    {
+      "file": "04_applications_systems",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "maturity_assessment_narrative: 503/503 rows (100%) share a recurring 8+-word phrase — e.g. \"as the named accountable owner; technical debt is\" appears in 168 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 503
+    },
+    {
+      "file": "05_data_assets_integrations",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "analytics_usage: 487/499 rows (98%) share a recurring 8+-word phrase — e.g. \"feeds power bi premium (finance & ops) for\" appears in 111 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 499
+    },
+    {
+      "file": "06_infrastructure_platforms",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "known_challenges_narrative: 33/33 rows (100%) share a recurring 8+-word phrase — e.g. \"and failover to the secondary site has not\" appears in 18 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 33
+    },
+    {
+      "file": "07_vendors_contracts",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 65
+    },
+    {
+      "file": "08_spend_value",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 20
+    },
+    {
+      "file": "09_programs_initiatives",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 20
+    },
+    {
+      "file": "10_ai_automation_use_cases",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 13
+    },
+    {
+      "file": "11_risks_controls",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 44
+    },
+    {
+      "file": "12_relationships",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "evidence_basis: 3259/3318 rows (98%) share a recurring 8+-word phrase — e.g. \"derived from skyharbor-air enriched core dataset cross-references, 2026-07-31\" appears in 3071 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 3318
+    },
+    {
+      "file": "12b_interview_initiative_metric_crosswalk",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "match_rationale: 213/230 rows (93%) share a recurring 8+-word phrase — e.g. \"no canonical metric in the 26-metric list shares\" appears in 202 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 230
+    },
+    {
+      "file": "13_evidence_sources",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "1 column(s) always empty: row_count_or_pages"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 22
+    },
+    {
+      "file": "14_metrics_outcomes",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 26
+    },
+    {
+      "file": "15_industry_context_patterns",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 10
+    },
+    {
+      "file": "16_expert_lenses",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 7
+    },
+    {
+      "file": "17_service_scope_managed_services",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 11
+    },
+    {
+      "file": "18_operational_process_evidence",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 35
+    },
+    {
+      "file": "19_data_analytics_platform_maturity",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "PRODUCT_USABLE",
+      "dataQualityNotes": [],
+      "productUsability": "PRODUCT_USABLE",
+      "rowCount": 15
+    },
+    {
+      "file": "20_itsm_ticket_sla_performance",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "service_desk_provider: 503/503 rows (100%) share a recurring 8+-word phrase — e.g. \"infosys bpm (tier-1 service desk) / vendor-direct for\" appears in 503 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 503
+    },
+    {
+      "file": "SA08_AI_Benefits_Realization_Usage_Ledger",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "caveat: 8/8 rows (100%) share a recurring 8+-word phrase — e.g. \"synthetic day 1 planning context; value is not\" appears in 8 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 8
+    },
+    {
+      "file": "SA09_AI_Tool_Usage_Feed",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "notes: 8/8 rows (100%) share a recurring 8+-word phrase — e.g. \"day 1 template row; replace synthetic values with\" appears in 8 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 8
+    },
+    {
+      "file": "SA10_AI_Value_Interview_Evidence",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "answer_summary: 8/8 rows (100%) share a recurring 8+-word phrase — e.g. \"needs usage telemetry, kpi movement, and finance validation\" appears in 8 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 8
+    },
+    {
+      "file": "SA11_AI_KPI_Operational_Outcome_Feed",
+      "technical": "PASS",
+      "technicalNotes": [],
+      "dataQuality": "USABLE_WITH_LIMITATIONS",
+      "dataQualityNotes": [
+        "caveat: 8/8 rows (100%) share a recurring 8+-word phrase — e.g. \"operational kpi movement must be reconciled to finance\" appears in 8 rows"
+      ],
+      "productUsability": "USABLE_WITH_LIMITATIONS",
+      "rowCount": 8
+    }
+  ]
+}
