@@ -135,6 +135,17 @@ function evidenceGapsData() {
   };
 }
 
+function suggestedQuestionsData() {
+  return [
+    {
+      id: "airline-brief-question-1",
+      question: "Which governed gaps should leadership close first?",
+      mode: "brief",
+      requiresModel: true,
+    },
+  ];
+}
+
 describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
   const originalFetch = globalThis.fetch;
   let requests: string[];
@@ -149,10 +160,10 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
         : path.includes("relationships")
           ? relationshipsData()
           : path.includes("evidence-gaps")
-            ? evidenceGapsData()
-            : path.includes("suggested-questions")
-              ? []
-              : briefData();
+        ? evidenceGapsData()
+        : path.includes("suggested-questions")
+          ? suggestedQuestionsData()
+          : briefData();
       return {
         ok: true,
         status: 200,
@@ -179,6 +190,13 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
     expect(screen.queryByText("Models off")).not.toBeInTheDocument();
     expect(screen.queryAllByText(/All model providers are disabled/i)).toHaveLength(0);
     expect(screen.getByText("Reasoning unavailable")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("Suggested questions")).toBeInTheDocument(),
+    );
+    const suggestedQuestion = screen.getByRole("button", {
+      name: "Which governed gaps should leadership close first?",
+    });
+    expect(suggestedQuestion).toBeDisabled();
     expect(screen.getByText("Purpose and priorities not yet published")).toBeInTheDocument();
     expect(screen.getByText("Goals not yet published")).toBeInTheDocument();
     expect(
@@ -194,6 +212,11 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
     expect(
       requests.some((path) =>
         path.includes("/api/knowledge/consumption/enterprise-brief"),
+      ),
+    ).toBe(true);
+    expect(
+      requests.some((path) =>
+        path.includes("/api/knowledge/consumption/suggested-questions"),
       ),
     ).toBe(true);
   });
