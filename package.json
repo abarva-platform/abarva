@@ -647,6 +647,7 @@
     "audit:home:claude-story-report": "npx tsx scripts/qa/home-claude-story-report.ts",
     "qa:home:ava-quality": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=ava",
     "audit:no-legacy-tenant-inputs": "node scripts/audit/check-no-legacy-tenant-inputs.mjs",
+    "audit:tenant-quality": "node scripts/audit/tenant-quality-audit.mjs",
     "audit:intelligence-ava-quality": "npx tsx scripts/audit/build-intelligence-ava-quality-audit.ts",
     "audit:intelligence-ava-stream-polish": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=stream",
     "audit:intelligence-ava-visual-contract": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=visual",
