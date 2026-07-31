@@ -40,6 +40,8 @@ Products: No product surface changes.
 - `scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs`
 - `package.json`
 
+Repair addendum: the first live apply attempt stopped before commit at J3A because PostgreSQL could not infer the type of the normalization-version value inside the normalized payload JSON builder. The repair adds an explicit SQL text cast and a self-test guard for that cast.
+
 ## QA / Validation
 
 Planned validation before release:
@@ -49,6 +51,11 @@ Planned validation before release:
 - Pass: `node --check scripts/foundation-v2/run-golden-slice-db-aad.mjs`
 - Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test`
 - Pass: `npm run release:check`
+
+Repair validation:
+
+- Pass: `node --check scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs`
+- Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test --out-dir /tmp/healthcare-normalize-self-test --execution-id unit-test-execution`
 
 Not run yet: data-plane validation requires managed-identity execution of preflight, apply, and independent reader verify after deployment.
 

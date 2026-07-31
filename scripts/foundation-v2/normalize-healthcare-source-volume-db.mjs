@@ -394,7 +394,7 @@ async function insertNormalizedObjects(client) {
              ELSE 'new_candidate'
            END,
            jsonb_build_object(
-             'normalization_version', $4,
+             'normalization_version', $4::text,
              'source_release_id', source_release_id,
              'source_file_id', source_file_id,
              'source_file_name', file_name,
@@ -415,7 +415,7 @@ async function insertNormalizedObjects(client) {
              )
            ),
            source_row_hash,
-           $5
+           $5::text
       FROM classified
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, NORMALIZE_VERSION, NORMALIZE_EXECUTION_ID],
@@ -778,6 +778,7 @@ function runSelfTest() {
   }
   if (!script.includes("field_dispositions")) defects.push("missing explicit field disposition payload");
   if (!script.includes("downstream_row_disposition")) defects.push("missing explicit row disposition payload");
+  if (!script.includes("$4::text")) defects.push("missing explicit normalization-version SQL cast");
   if (!script.includes("HEALTHCARE_FOUNDATION_V2_NORMALIZATION_IDENTITY_AND_CANDIDATES_VERIFIED")) {
     defects.push("missing terminal status");
   }
