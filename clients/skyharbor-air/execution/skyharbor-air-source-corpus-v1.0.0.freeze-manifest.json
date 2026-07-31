@@ -1,0 +1,65 @@
+{
+  "tenant_key": "skyharbor-air",
+  "tenant_type": "synthetic_reference_candidate",
+  "release_id": "skyharbor-air-source-corpus-v1.0.0",
+  "release_state": "source_release_frozen_for_controlled_landing",
+  "frozen_at": "2026-07-31",
+  "approval_authority": {
+    "approver": "Anand Sundaram",
+    "approval_scope": "Phase 0 freeze only — pin the already-live, already-enriched skyharbor-air canonical dataset as the source package for a future Foundation V2 candidacy. Does not authorize Phase 1 Azure infrastructure, source landing, parser execution, publication, or product runtime wiring.",
+    "approval_source": "session instruction, 2026-07-31",
+    "does_not_authorize": [
+      "azure_resource_group_or_database_provisioning",
+      "parser_execution_without_wave_manifest",
+      "knowledge_publication_without_reconciliation",
+      "product_runtime_wiring_without_published_baseline_proof",
+      "client_readiness_claims",
+      "mixing_evaluator_truth_into_parser_visible_source_registry"
+    ]
+  },
+  "source_commit_sha": "da29603cfa33a420a0f935a0b98f826f1fd076b6",
+  "source_prs": [5838, 5842, 5843, 5844, 5845, 5846, 5847, 5848],
+  "package_root": "datasets/tenant-inputs/active/skyharbor-air/current",
+  "package_note": "Unlike healthcare-demo-new and airline-demo-new, skyharbor-air's source package was never staged through a separate 19-template-instantiation-source-corpus/ candidate directory — it landed directly in the canonical active location because the enrichment work (this session) predates this tenant's Foundation V2 candidacy. This manifest retrofits a freeze pin around data that already exists and is already governed (every dataset addition this session went through a PR with a release record), not a newly-staged candidate.",
+  "package_manifest": {
+    "file_count": 26,
+    "files": [
+      "00_enterprise_profile.csv", "01_business_functions.csv", "02_org_ownership.csv",
+      "03_workforce_roles.csv", "04_applications_systems.csv", "05_data_assets_integrations.csv",
+      "06_infrastructure_platforms.csv", "07_vendors_contracts.csv", "08_spend_value.csv",
+      "09_programs_initiatives.csv", "10_ai_automation_use_cases.csv", "11_risks_controls.csv",
+      "12_relationships.csv", "12b_interview_initiative_metric_crosswalk.csv",
+      "13_evidence_sources.csv", "14_metrics_outcomes.csv", "15_industry_context_patterns.csv",
+      "16_expert_lenses.csv", "17_service_scope_managed_services.csv",
+      "18_operational_process_evidence.csv", "19_data_analytics_platform_maturity.csv",
+      "20_itsm_ticket_sla_performance.csv",
+      "SA08_AI_Benefits_Realization_Usage_Ledger.csv", "SA09_AI_Tool_Usage_Feed.csv",
+      "SA10_AI_Value_Interview_Evidence.csv", "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+    ]
+  },
+  "interviews": {
+    "path": "datasets/tenant-inputs/skyharbor-air/interviews/executive_interviews.csv",
+    "row_count": 510,
+    "stakeholder_role_count": 22
+  },
+  "semantic_audit": {
+    "tool": "npm run audit:tenant-quality -- --tenant skyharbor-air",
+    "run_at": "2026-07-31",
+    "evidence_path": "clients/skyharbor-air/execution/skyharbor-air-tenant-quality-audit-2026-07-31.json",
+    "result_summary": {
+      "PRODUCT_USABLE": 14,
+      "USABLE_WITH_LIMITATIONS": 12,
+      "NEEDS_REPAIR": 0,
+      "NOT_USABLE": 0
+    },
+    "notes": "Every USABLE_WITH_LIMITATIONS finding is named and specific (e.g. 20_itsm_ticket_sla_performance.csv's service_desk_provider field is uniform across all 503 rows; SA08-SA11 are Day-1 template scaffolding, not production content) — none are unexplained or silently accepted."
+  },
+  "hidden_truth": {
+    "status": "not_yet_designed",
+    "note": "skyharbor-air has no restricted-evaluator hidden-truth/crosswalk package yet, unlike healthcare-demo-new and airline-demo-new. This is a real gap if this tenant proceeds toward independent evaluator-based certification — not fabricated here to fill the template shape."
+  },
+  "phase_1_zero_data_authority": {
+    "status": "not_started",
+    "note": "No Azure resource group, Postgres server, storage account, or managed identity exists for skyharbor-air. Per the Dual-Tenant Knowledge Execution Program's own rule, this tenant must not share airline-demo-new's existing infrastructure (rg-abarva-airdn-lab-eus2-001) — it needs its own dedicated boundary. Provisioning requires a separate, explicit go-ahead beyond this freeze."
+  }
+}

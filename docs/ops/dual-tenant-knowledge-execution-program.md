@@ -1,7 +1,12 @@
-# Dual-Tenant Knowledge Execution Program
+# Tenant Knowledge Execution Program
 
 Status: Phase 0 control document. This document defines the execution path; it
 does not authorize Azure, PostgreSQL, ingestion, publication, or runtime changes.
+
+Formerly "Dual-Tenant Knowledge Execution Program" — renamed 2026-07-31 when a
+third candidate (`skyharbor-air`) was added. No other document or code
+references the old title text; only the filename is unchanged, to avoid link
+rot.
 
 ## Current Disposition
 
@@ -9,10 +14,15 @@ does not authorize Azure, PostgreSQL, ingestion, publication, or runtime changes
 | --- | --- | --- | --- |
 | `healthcare-demo-new` | Phase 0 frozen design/source-corpus foundation | Zero-data infrastructure plan and what-if | Data landing, parser execution, product wiring |
 | `airline-demo-new` | Blocked before Phase 0 freeze | Remediate source corpus and rerun independent audit | Freeze, provision, load, publish |
+| `skyharbor-air` | Phase 0 frozen — source package already live and governed (26 files, 510-row interview set, real semantic audit pass) | Zero-data infrastructure plan and what-if | Provisioning, data landing, parser execution, publication, product wiring |
 
-The healthcare candidate becomes the reference implementation for the execution
-factory. The airline candidate uses the same factory after it earns its own
-Phase 0 pass; it does not inherit healthcare approval.
+The healthcare candidate was the reference implementation for the execution
+factory. skyharbor-air reaches an equivalent Phase 0 state via a different
+path — its source package was never staged through a separate candidate
+directory; it was frozen in place from the already-enriched, already-governed
+canonical dataset (every addition went through its own PR and release record).
+Neither inherits the other's approval, and airline-demo-new inherits nothing
+from either — it remains blocked on its own remediation.
 
 ## Non-Negotiable Model
 
@@ -89,6 +99,23 @@ Healthcare is frozen by:
 
 This freeze does not load data, provision cloud resources, add a runtime tenant
 key, or wire any product surface.
+
+## Phase 0 SkyHarbor Freeze
+
+SkyHarbor is frozen by:
+
+- `clients/skyharbor-air/execution/skyharbor-air-source-corpus-v1.0.0.freeze-manifest.json`
+- semantic audit evidence:
+  `clients/skyharbor-air/execution/skyharbor-air-tenant-quality-audit-2026-07-31.json`
+  (`npm run audit:tenant-quality -- --tenant skyharbor-air` — 14/26 files `PRODUCT_USABLE`, 12
+  `USABLE_WITH_LIMITATIONS` with named findings, 0 `NOT_USABLE`)
+- source package: `datasets/tenant-inputs/active/skyharbor-air/current/` (26 files) +
+  `datasets/tenant-inputs/skyharbor-air/interviews/executive_interviews.csv` (510 rows)
+
+Unlike Healthcare and Airline, SkyHarbor has no restricted-evaluator hidden-truth/crosswalk package
+yet — recorded as a real, unfilled gap in the freeze manifest, not fabricated to match the template
+shape. This freeze does not load data, provision cloud resources, add a runtime tenant key, or wire
+any product surface.
 
 ## Airline Block
 
