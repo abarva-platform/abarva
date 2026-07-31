@@ -174,9 +174,17 @@ dimension discipline (technical / data-quality / product-usability) established 
 
 ## Immediate next step
 
-Phase 0, Phase 1, and Phase 2 are done, each independently verified. Deeper Phase 2 readback (RLS
-enabled per table, representative tables exist) is written but blocked until this branch merges and a
-new image builds. Next is Phase 3 (source landing) — land the frozen
-`datasets/tenant-inputs/active/skyharbor-air/current/` package via `hcdn-job-runner.mjs`'s
-`source-register-v1` process, preflight mode first. Each stage still needs real evidence, not just an
-exit code — same discipline applied to Phases 1 and 2.
+Phase 0, Phase 1, and Phase 2 are done, each independently verified. Phase 3 preflight was attempted
+against the real, deployed boundary and correctly refused: `hcdn-job-runner.mjs` requires an
+`APPROVED_BOUNDARY_SNAPSHOT.json` before running anything, and skyharbor-air didn't have one. Added the
+real one, matching the actually-deployed Phase 1/2 infrastructure exactly, `apply_blocked: true` (AAD
+auth isn't enabled on the Postgres server yet and the per-identity database roles it references don't
+exist — a real Phase 2 follow-up before execute mode can ever succeed; preflight itself needs neither).
+
+Two things are now blocked on the same dependency: the deeper Phase 2 schema readback
+(`scripts/knowledge/verify-tenant-knowledge-schema.mjs`) and this Phase 3 preflight run, both because the
+currently-deployed image predates this branch's commits and images only build via `aca-main-deploy.yml`
+off `main`. Merging this branch would unblock both — but merging also triggers a full production
+redeploy of the shared `app.abarva.ai` web app (`aca-main-deploy.yml` runs `on: push: branches: [main]`),
+which is a materially bigger, separate decision than anything scoped to skyharbor-air alone. Not done
+without its own explicit go-ahead.
