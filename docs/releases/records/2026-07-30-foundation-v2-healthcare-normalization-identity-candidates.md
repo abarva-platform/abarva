@@ -44,6 +44,8 @@ Repair addendum: the first live apply attempt stopped before commit at J3A becau
 
 Proof-manifest repair addendum: the second live apply rerun reached final proof assembly after the heavy J3/J4 work, then stopped before commit because a local variable shadowed the business-key reconciliation function. The repair renames the proof-manifest row variables and adds a self-test guard against that shadowing pattern.
 
+Reader-proof repair addendum: the successful writer apply and independent reader verify matched the row and field counts, but the reader manifest omitted the per-layer J3A/J3B/J3C/J4 readback blocks. The repair makes reader verify independently recompute those layer readbacks and fail the verification status if any layer block does not pass.
+
 ## QA / Validation
 
 Planned validation before release:
@@ -60,6 +62,11 @@ Repair validation:
 - Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test --out-dir /tmp/healthcare-normalize-self-test --execution-id unit-test-execution`
 
 Proof-manifest repair validation:
+
+- Pass: `node --check scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs`
+- Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test --out-dir /tmp/healthcare-normalize-self-test --execution-id unit-test-execution`
+
+Reader-proof repair validation:
 
 - Pass: `node --check scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs`
 - Pass: `FOUNDATION_V2_DOMAIN=healthcare node scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs --mode self-test --out-dir /tmp/healthcare-normalize-self-test --execution-id unit-test-execution`

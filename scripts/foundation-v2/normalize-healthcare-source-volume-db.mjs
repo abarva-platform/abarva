@@ -251,9 +251,24 @@ async function verify(client) {
   await client.query("BEGIN");
   try {
     await setContext(client, READER_ROLE);
-    const result = await verifiedManifest(client, "HEALTHCARE_FOUNDATION_V2_NORMALIZATION_IDENTITY_AND_CANDIDATES_VERIFIED", {});
+    const j3a = await j3aReadback(client);
+    const j3b = await j3bReadback(client);
+    const j3c = await j3cReadback(client);
+    const j4 = await j4Readback(client);
+    const result = await verifiedManifest(client, "HEALTHCARE_FOUNDATION_V2_NORMALIZATION_IDENTITY_AND_CANDIDATES_VERIFIED", {
+      j3a,
+      j3b,
+      j3c,
+      j4,
+    });
     await client.query("ROLLBACK");
-    if (!result.exact_match) {
+    if (
+      !result.exact_match ||
+      j3a.status !== "HEALTHCARE_FOUNDATION_V2_J3A_NORMALIZATION_PASSED" ||
+      j3b.status !== "HEALTHCARE_FOUNDATION_V2_J3B_IDENTITY_RESOLUTION_PASSED" ||
+      j3c.status !== "HEALTHCARE_FOUNDATION_V2_J3C_RELATIONSHIP_RESOLUTION_PASSED" ||
+      j4.status !== "HEALTHCARE_FOUNDATION_V2_J4_CANDIDATE_GENERATION_PASSED"
+    ) {
       result.status = "HEALTHCARE_FOUNDATION_V2_NORMALIZATION_IDENTITY_AND_CANDIDATES_VERIFY_FAILED";
     }
     return result;
@@ -779,6 +794,8 @@ function runSelfTest() {
   if (!script.includes("field_dispositions")) defects.push("missing explicit field disposition payload");
   if (!script.includes("downstream_row_disposition")) defects.push("missing explicit row disposition payload");
   if (!script.includes("$4::text")) defects.push("missing explicit normalization-version SQL cast");
+  if (!script.includes("const j3a = await j3aReadback(client);")) defects.push("reader verify does not include J3A readback");
+  if (!script.includes("const j4 = await j4Readback(client);")) defects.push("reader verify does not include J4 readback");
   const manifestShadowPattern = ["const businessKeyReconciliation", "await businessKeyReconciliation"].join(" = ");
   if (script.includes(manifestShadowPattern)) {
     defects.push("proof manifest shadows businessKeyReconciliation function");
