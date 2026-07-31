@@ -44,6 +44,35 @@ describe("GatedSection", () => {
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
   });
 
+  it("can render an expected unpublished state as a calm governed panel without calling the render function", () => {
+    const renderFn = jest.fn(() => <div>SHOULD NOT RENDER</div>);
+    const env = envelope<{ count: number }>({
+      readiness: "PROJECTION_UNAVAILABLE",
+      unavailableReason: "no approved interpretation yet",
+      data: null,
+    });
+
+    render(
+      <GatedSection
+        envelope={env}
+        label="Lens narrative"
+        emptyTitle="Interpretation not yet published"
+        emptyPresentation="governed"
+      >
+        {renderFn}
+      </GatedSection>,
+    );
+
+    expect(renderFn).not.toHaveBeenCalled();
+    expect(screen.queryByText("SHOULD NOT RENDER")).not.toBeInTheDocument();
+    expect(screen.getByTestId("knowledge-governed-state-panel")).toHaveAttribute(
+      "data-knowledge-state-tone",
+      "governed",
+    );
+    expect(screen.queryByTestId("knowledge-state-banner")).not.toBeInTheDocument();
+    expect(screen.getByText("Interpretation not yet published")).toBeInTheDocument();
+  });
+
   it("never renders a numeric 0 for a NOT_MEASURED metric -- shows 'Not measured' instead", () => {
     const env = envelope<number>({
       readiness: "NOT_MEASURED",

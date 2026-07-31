@@ -1,7 +1,4 @@
-"use client";
-
-import { StateBanner } from "../state/StateBanner";
-import { readinessPresentation } from "../state/gate-utils";
+import { GovernedStatePanel } from "../state/GovernedStatePanel";
 
 /**
  * "Operating priority" / "stated ambition" statement types have no home in
@@ -13,14 +10,11 @@ import { readinessPresentation } from "../state/gate-utils";
  * inventing a composition that has no real backing.
  */
 export function PurposePanel() {
-  const presentation = readinessPresentation("PROJECTION_UNAVAILABLE");
   return (
-    <StateBanner
-      decision={{
-        tone: presentation.tone,
-        title: `Purpose and priorities -- ${presentation.title.toLowerCase()}`,
-        body: "No purpose-statement projection exists in the consumption contract yet. executive_perspective_v1 is quote-shaped, not statement-shaped, and cannot honestly stand in for it.",
-      }}
+    <GovernedStatePanel
+      title="Purpose and priorities not yet published"
+      body="No approved purpose-statement projection exists in the consumption contract yet. Leadership quotes remain available only where they are represented as quotes; they are not promoted into an enterprise purpose statement here."
+      detail="Required publication: purpose statement or priority statement projection with accepted evidence."
     />
   );
 }

@@ -6,7 +6,6 @@ import { AvaDock } from "../ava/AvaDock";
 import { ModuleHandoffModal } from "../handoff/ModuleHandoffModal";
 import { LensPicker } from "./LensPicker";
 import { ModeTabs } from "./ModeTabs";
-import { ConditionBanner } from "./ConditionBanner";
 import { BriefMode } from "../brief/BriefMode";
 import { ExploreMode } from "../explore/ExploreMode";
 import { RelationshipsMode } from "../relationships/RelationshipsMode";
@@ -31,8 +30,6 @@ export function KnowledgeShell() {
         <LensPicker />
         <ModeTabs />
       </div>
-
-      <ConditionBanner />
 
       <div
         className={`flex min-w-0 flex-1 overflow-x-hidden ${

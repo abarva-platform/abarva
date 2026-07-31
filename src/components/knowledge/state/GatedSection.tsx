@@ -17,6 +17,7 @@ import type { ReactNode } from "react";
 
 import type { ViewModelEnvelope } from "@/lib/knowledge/view-model";
 import { readinessPresentation } from "./gate-utils";
+import { GovernedStatePanel } from "./GovernedStatePanel";
 import { StateBanner } from "./StateBanner";
 
 export interface GatedSectionProps<T> {
@@ -36,6 +37,9 @@ export interface GatedSectionProps<T> {
    * field-specific and honest, computed by the assembler) is used. */
   readonly emptyTitle?: string;
   readonly emptyBody?: string;
+  /** Use for honest, expected unpublished states that are product-facing gaps,
+   * not operational errors. Strong warning tones remain the default. */
+  readonly emptyPresentation?: "banner" | "governed";
 }
 
 export function GatedSection<T>({
@@ -46,6 +50,7 @@ export function GatedSection<T>({
   emptyAction,
   emptyTitle,
   emptyBody,
+  emptyPresentation = "banner",
 }: GatedSectionProps<T>) {
   if (!envelope) {
     return (
@@ -58,14 +63,28 @@ export function GatedSection<T>({
 
   if (envelope.data === null) {
     const presentation = readinessPresentation(envelope.readiness);
+    const title =
+      emptyTitle ?? `${label} -- ${presentation.title.toLowerCase()}`;
+    const body = emptyBody ?? envelope.unavailableReason ?? "";
+
+    if (emptyPresentation === "governed") {
+      return (
+        <GovernedStatePanel
+          compact={compact}
+          title={title}
+          body={body}
+          detail={envelope.warnings[0]?.message}
+        />
+      );
+    }
+
     return (
       <StateBanner
         compact={compact}
         decision={{
           tone: presentation.tone,
-          title:
-            emptyTitle ?? `${label} -- ${presentation.title.toLowerCase()}`,
-          body: emptyBody ?? envelope.unavailableReason ?? "",
+          title,
+          body,
         }}
         detail={envelope.warnings[0]?.message}
         action={emptyAction}

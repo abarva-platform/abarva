@@ -176,6 +176,14 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
     expect(screen.getByRole("button", { name: "Explore" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Relationships" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Evidence & gaps" })).toBeInTheDocument();
+    expect(screen.queryByText("Models off")).not.toBeInTheDocument();
+    expect(screen.queryAllByText(/All model providers are disabled/i)).toHaveLength(0);
+    expect(screen.getByText("Reasoning unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Purpose and priorities not yet published")).toBeInTheDocument();
+    expect(screen.getByText("Goals not yet published")).toBeInTheDocument();
+    expect(
+      screen.getAllByTestId("knowledge-governed-state-panel").length,
+    ).toBeGreaterThanOrEqual(2);
     expect(
       screen.queryByText(/fixture-airline-demo-new/i),
     ).not.toBeInTheDocument();
