@@ -132,7 +132,9 @@ export function isFoundationRouteAllowedForMetadata(
   }
 
   const tenantKey = resolveFoundationTenantKeyFromMetadata(metadata);
-  if (tenantKey !== "airline-demo-new") return false;
+  if (tenantKey !== "airline-demo-new" && tenantKey !== "skyharbor-air") {
+    return false;
+  }
 
   const allowedRoutes = metadataStringArray(metadata, "allowedRoutes");
   const moduleAccess = metadataStringArray(metadata, "moduleAccess");
