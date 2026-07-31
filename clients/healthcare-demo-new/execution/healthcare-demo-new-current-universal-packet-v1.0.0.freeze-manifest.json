@@ -1,0 +1,63 @@
+{
+  "tenant_key": "healthcare-demo-new",
+  "tenant_type": "synthetic_reference_candidate",
+  "release_id": "healthcare-demo-new-current-universal-packet-v1.0.0",
+  "release_state": "source_release_frozen_for_controlled_landing",
+  "frozen_at": "2026-07-31",
+  "supersedes_note": "This is a distinct freeze event from healthcare-demo-new-source-corpus-v1.0.0.freeze-manifest.json (2026-07-27, PR #5676), which pinned the 72-file design/template corpus under clients/healthcare-demo-new/19-template-instantiation-source-corpus/. This freeze pins the actual instantiated data — the consolidated universal one-file-per-domain packet (Universal Tenant Input Standard v3) generated from that design corpus — landing at datasets/tenant-inputs/active/healthcare-demo-new/current/ for the first time. The 2026-07-27 manifest is not superseded or invalidated; it remains the design-layer freeze this data instantiation was built from.",
+  "approval_authority": {
+    "approver": "Anand Sundaram",
+    "approval_scope": "Phase 0 freeze only — pin the remediated healthcare-demo-new instantiated dataset as the source package for a future Foundation V2 candidacy. Does not authorize Phase 1 Azure infrastructure, source landing, parser execution, publication, or product runtime wiring.",
+    "approval_source": "session instruction, 2026-07-31",
+    "does_not_authorize": [
+      "azure_resource_group_or_database_provisioning",
+      "parser_execution_without_wave_manifest",
+      "knowledge_publication_without_reconciliation",
+      "product_runtime_wiring_without_published_baseline_proof",
+      "client_readiness_claims",
+      "mixing_evaluator_truth_into_parser_visible_source_registry"
+    ]
+  },
+  "package_root": "datasets/tenant-inputs/active/healthcare-demo-new/current",
+  "package_note": "Consolidated universal one-file-per-domain packet (Universal Tenant Input Standard v3), instantiated against the Phase-0 design corpus in clients/healthcare-demo-new/19-template-instantiation-source-corpus/. The registry's canonicalInputRoot already declared this path before this freeze; this manifest is the first freeze pin against real files landing there.",
+  "package_manifest": {
+    "file_count": 24,
+    "files": [
+      "00_enterprise_profile.csv", "01_business_functions.csv", "02_org_ownership.csv",
+      "03_workforce_roles.csv", "04_applications_systems.csv", "05_data_assets_integrations.csv",
+      "06_infrastructure_platforms.csv", "07_vendors_contracts.csv", "08_spend_value.csv",
+      "09_programs_initiatives.csv", "10_ai_automation_use_cases.csv", "11_risks_controls.csv",
+      "12_relationships.csv", "13_evidence_sources.csv", "14_metrics_outcomes.csv",
+      "15_industry_context_patterns.csv", "16_expert_lenses.csv",
+      "17_service_scope_managed_services.csv", "18_operational_process_evidence.csv",
+      "19_data_analytics_platform_maturity.csv",
+      "SA08_AI_Benefits_Realization_Usage_Ledger.csv", "SA09_AI_Tool_Usage_Feed.csv",
+      "SA10_AI_Value_Interview_Evidence.csv", "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+    ]
+  },
+  "interviews": {
+    "path": "datasets/tenant-inputs/healthcare-demo-new/interviews/executive_interviews.csv",
+    "row_count": 432,
+    "stakeholder_role_count": 18
+  },
+  "semantic_audit": {
+    "tool": "node scripts/audit/tenant-quality-audit.mjs --tenant healthcare-demo-new",
+    "run_at": "2026-07-31",
+    "evidence_path": "clients/healthcare-demo-new/execution/healthcare-demo-new-tenant-quality-audit-2026-07-31.json",
+    "result_summary": {
+      "PRODUCT_USABLE": 18,
+      "USABLE_WITH_LIMITATIONS": 6,
+      "NEEDS_REPAIR": 0,
+      "NOT_USABLE": 0
+    },
+    "notes": "Every USABLE_WITH_LIMITATIONS finding is named and specific, not unexplained or silently accepted: 01_business_functions has one always-empty column (parent_function); 04_applications_systems, 06_infrastructure_platforms, 12_relationships, and 14_metrics_outcomes each have one field where a real recurring phrase (a shared hosting location, platform name, or data-source description that legitimately repeats across related rows) crosses the phrase-diversity threshold; 15_industry_context_patterns' single industry-classification phrase is repeated across all 12 rows by construction, since every row describes the same tenant's industry segment. None are filler text or unexplained repetition — this exceeds skyharbor-air's own frozen bar (14/26 PRODUCT_USABLE, 54%) at 18/24 (75%)."
+  },
+  "hidden_truth": {
+    "status": "see_2026-07-27_design_corpus_freeze",
+    "note": "A restricted-evaluator hidden-truth/crosswalk package exists for the original 2026-07-27 design corpus (clients/healthcare-demo-new/19-template-instantiation-source-corpus/04-restricted-evaluator-design/). Whether it applies unmodified to this instantiated packet or needs its own regeneration against the new file shapes has not been checked as part of this freeze — a real open question, not assumed either way."
+  },
+  "phase_1_zero_data_authority": {
+    "status": "not_started",
+    "note": "No Azure resource group, Postgres server, storage account, or managed identity exists for healthcare-demo-new. Provisioning requires a separate, explicit go-ahead beyond this freeze, consistent with skyharbor-air's Phase 0/Phase 1 separation."
+  }
+}
