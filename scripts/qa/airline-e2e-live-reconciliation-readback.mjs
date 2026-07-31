@@ -673,11 +673,30 @@ async function query(client, sql, params = []) {
   return result.rows;
 }
 
+function isPermissionDenied(error) {
+  return error?.code === "42501" || /permission denied/i.test(String(error?.message ?? error));
+}
+
+const inaccessibleRelations = new Map();
+
 async function relationExists(client, relationName) {
-  const rows = await query(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [
-    relationName,
-  ]);
-  return rows[0]?.exists === true;
+  try {
+    const rows = await query(client, "SELECT to_regclass($1) IS NOT NULL AS exists", [
+      relationName,
+    ]);
+    return rows[0]?.exists === true;
+  } catch (error) {
+    if (!isPermissionDenied(error)) throw error;
+    inaccessibleRelations.set(relationName, {
+      relation_name: relationName,
+      exists: "",
+      tenant_rows: "",
+      baseline_rows: "",
+      status: "INACCESSIBLE_RELATION",
+      error: error.message,
+    });
+    return false;
+  }
 }
 
 async function columnsForRelation(client, relationName) {
@@ -790,6 +809,7 @@ async function readLiveDb() {
       identity,
       schemaRows,
       relationRows,
+      inaccessibleRelationRows: [],
       sourceRecords: [],
       evidenceRows: [],
       factRows: [],
@@ -1122,6 +1142,7 @@ async function readLiveDb() {
       `, [TENANT_KEY]);
     }
 
+    live.inaccessibleRelationRows = Array.from(inaccessibleRelations.values());
     await client.query("ROLLBACK");
     return live;
   } catch (error) {
@@ -2394,6 +2415,15 @@ async function main() {
     "baseline_rows",
     "status",
   ], live?.relationRows || []);
+
+  writeCsv(path.join(args.outDir, "live-inaccessible-relation-readback.csv"), [
+    "relation_name",
+    "exists",
+    "tenant_rows",
+    "baseline_rows",
+    "status",
+    "error",
+  ], live?.inaccessibleRelationRows || []);
 
   writeCsv(path.join(args.outDir, "live-candidate-summary.csv"), [
     "candidate_type",

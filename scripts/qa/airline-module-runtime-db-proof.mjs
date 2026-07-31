@@ -20,11 +20,21 @@ const POSTGRES_AAD_RESOURCE =
   "https://ossrdbms-aad.database.windows.net/.default";
 const PROJECTION_RELATIONS = [
   "consumption.enterprise_brief_v1",
+  "consumption.enterprise_identity_v1",
+  "consumption.executive_perspective_v1",
+  "consumption.strategic_interpretation_v1",
   "consumption.domain_summary_v1",
-  "consumption.relationship_node_v1",
-  "consumption.relationship_edge_v1",
+  "consumption.application_inventory_v1",
+  "consumption.technology_estate_v1",
+  "consumption.data_product_inventory_v1",
+  "consumption.vendor_contract_inventory_v1",
+  "consumption.evidence_gap_v1",
+  "consumption.search_document_v1",
   "consumption.module_knowledge_packet_v1",
   "consumption.metric_observation_v1",
+  "consumption.relationship_node_v1",
+  "consumption.relationship_edge_v1",
+  "consumption.relationship_evidence_v1",
 ];
 
 function env(name) {
@@ -149,6 +159,22 @@ async function main() {
       projectionCounts.push(await countTenantRows(client, relationName));
     }
 
+    const projectionVersions = await query(client, `
+      SELECT projection_version_ref,
+             knowledge_baseline_ref,
+             projection_name,
+             projection_contract_version,
+             build_state::text AS build_state,
+             is_active,
+             row_count,
+             output_hash,
+             built_run_ref,
+             built_at
+        FROM publication.projection_version
+       WHERE tenant_key = $1
+       ORDER BY is_active DESC, projection_name
+    `, [TENANT]);
+
     const schemaInventory = await query(client, `
       SELECT n.nspname AS schema_name,
              count(*) FILTER (WHERE c.relkind IN ('r','p'))::int AS table_count,
@@ -190,6 +216,7 @@ async function main() {
       config,
       identity,
       baseline,
+      projectionVersions,
       projectionCounts,
       schemaInventory,
       moduleRelationInventory,
@@ -209,6 +236,7 @@ async function main() {
         baseline[0]?.record?.knowledge_baseline_id ??
         null,
       projectionCounts,
+      projectionVersions,
       outFile: OUT_FILE,
     }, null, 2));
   } finally {
