@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+// Historical, one-time promotion script — already run for skyharbor-air on
+// 2026-07-21 (baselineBeforeFixRows: 77 below records that run's starting
+// point; 12_relationships.csv has moved well past it since). Its source
+// directories (candidateDir/generatedGraphDir for skyharbor-air) have been
+// archived as no-longer-needed. Re-running this for skyharbor-air will fail
+// until those paths are restored or the TENANTS entry below is updated to
+// point at a new candidate batch.
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
