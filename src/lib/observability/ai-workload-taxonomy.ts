@@ -52,6 +52,16 @@ export const AI_WORKLOADS = {
   home_dimension_story: { module: "home", lane: "offline-generation" },
   home_visual_spec: { module: "home", lane: "offline-generation" },
   home_relationship_explanation: { module: "home", lane: "offline-generation" },
+  // Knowledge Explorer vNext aVa reasoning against FIXTURE data only (the
+  // admin/platform preview route, src/app/(maestro)/knowledge-preview). Kept
+  // off the prod-realtime lane deliberately: this workload never serves real
+  // tenant traffic, so its spend must not blend into the product-answer
+  // bucket. The real-tenant path (consumption-server/ava-egress-provider.ts)
+  // uses intelligence_answer instead once a tenant is activated.
+  home_knowledge_fixture_preview: {
+    module: "home",
+    lane: "engineering-scripts",
+  },
 
   moves_architecture: { module: "moves", lane: "offline-generation" },
   moves_business_case: { module: "moves", lane: "offline-generation" },
