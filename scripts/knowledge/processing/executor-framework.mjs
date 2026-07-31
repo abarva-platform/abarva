@@ -72,6 +72,7 @@ const CORE_CONSUMPTION_PROJECTIONS = Object.freeze([
   "metric_observation_v1",
   "evidence_gap_v1",
   "search_document_v1",
+  "module_knowledge_packet_v1",
   "relationship_node_v1",
   "relationship_edge_v1",
   "relationship_evidence_v1",
@@ -426,6 +427,7 @@ export class InMemoryKnowledgeExecutionStore {
         .filter((row) => /vendor/i.test(row.entityType ?? ""))
         .map((row) => ({ projectionName: "vendor_contract_inventory_v1", objectRef: row.entityRef, displayName: row.displayName })),
       ...this.knowledgeFacts.map((row) => ({ projectionName: "search_document_v1", objectRef: row.candidateRef, displayName: row.factType ?? "fact" })),
+      { projectionName: "module_knowledge_packet_v1", objectRef: "home:suggested-questions", displayName: "Home suggested questions" },
       ...this.knowledgeRelationships.map((row) => ({ projectionName: "relationship_edge_v1", objectRef: row.candidateRef, displayName: row.relationshipTypeRef ?? "relationship" })),
     ];
     this.projections.push(...rows);
@@ -1677,6 +1679,7 @@ export class PostgresKnowledgeExecutionStore {
       "metric_observation_v1",
       "evidence_gap_v1",
       "search_document_v1",
+      "module_knowledge_packet_v1",
       "relationship_evidence_v1",
       "relationship_edge_v1",
       "relationship_node_v1",
@@ -2102,6 +2105,96 @@ export class PostgresKnowledgeExecutionStore {
       [context.tenantKey, baseline.knowledge_baseline_ref],
     );
 
+    await this.client.query(
+      `
+        WITH projection_counts AS (
+          SELECT
+            (SELECT count(*)::int FROM consumption.enterprise_brief_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS brief,
+            (SELECT count(*)::int FROM consumption.application_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS applications,
+            (SELECT count(*)::int FROM consumption.vendor_contract_inventory_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS vendors,
+            (SELECT count(*)::int FROM consumption.search_document_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS search,
+            (SELECT count(*)::int FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS relationships,
+            (SELECT count(*)::int FROM consumption.evidence_gap_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS gaps
+        ),
+        packet AS (
+          SELECT jsonb_build_object(
+            'moduleKey', 'home',
+            'packetType', 'suggested_questions',
+            'knowledgeBaselineRef', $2,
+            'projectionCounts', jsonb_build_object(
+              'brief', brief,
+              'applications', applications,
+              'vendors', vendors,
+              'search', search,
+              'relationships', relationships,
+              'gaps', gaps
+            ),
+            'suggestedQuestions', jsonb_build_array(
+              jsonb_build_object(
+                'id', 'home-brief-loaded-vs-missing-v1',
+                'question', 'What facts are loaded versus not published in this Brief?',
+                'mode', 'brief',
+                'requiresModel', true
+              ),
+              jsonb_build_object(
+                'id', 'home-brief-evidence-gaps-v1',
+                'question', 'Which evidence gaps matter most for a CXO decision?',
+                'mode', 'brief',
+                'requiresModel', true
+              ),
+              jsonb_build_object(
+                'id', 'home-explore-systems-vendors-v1',
+                'question', 'Which systems or vendors have evidence lineage available?',
+                'mode', 'explore',
+                'requiresModel', true
+              ),
+              jsonb_build_object(
+                'id', 'home-relationships-accepted-edges-v1',
+                'question', 'Which accepted relationships connect these entities?',
+                'mode', 'relationships',
+                'requiresModel', true
+              ),
+              jsonb_build_object(
+                'id', 'home-evidence-open-gaps-v1',
+                'question', 'Which open evidence gaps should be reviewed first?',
+                'mode', 'evidence',
+                'requiresModel', true
+              )
+            )
+          ) AS payload,
+          *
+          FROM projection_counts
+        )
+        INSERT INTO consumption.module_knowledge_packet_v1 (
+          tenant_key, knowledge_baseline_ref, domain_publication_ref,
+          projection_contract_version, as_of_date, authority_state,
+          freshness_state, availability_state, evidence_coverage, content_hash,
+          object_ref, display_name, executive_summary, payload
+        )
+        SELECT $1, $2, $3, $4, $5::date, 'published'::abarva_authority_state,
+          'fresh'::abarva_freshness_state,
+          'available'::abarva_availability_state,
+          1,
+          md5(payload::text),
+          'home:suggested-questions',
+          'Home suggested questions',
+          'Deterministic Home suggested questions derived from built consumption projections.',
+          payload
+        FROM packet
+        WHERE brief > 0 AND (applications > 0 OR vendors > 0 OR search > 0 OR relationships > 0 OR gaps > 0)
+        ON CONFLICT (tenant_key, knowledge_baseline_ref, object_ref)
+        DO UPDATE SET
+          freshness_state=EXCLUDED.freshness_state,
+          availability_state=EXCLUDED.availability_state,
+          evidence_coverage=EXCLUDED.evidence_coverage,
+          content_hash=EXCLUDED.content_hash,
+          display_name=EXCLUDED.display_name,
+          executive_summary=EXCLUDED.executive_summary,
+          payload=EXCLUDED.payload
+      `,
+      [context.tenantKey, baseline.knowledge_baseline_ref, domainPublicationRef, contractVersion, asOfDate],
+    );
+
     const counts = await this.client.query(
       `
         SELECT
@@ -2115,6 +2208,7 @@ export class PostgresKnowledgeExecutionStore {
           (SELECT count(*)::int FROM consumption.metric_observation_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS metrics,
           (SELECT count(*)::int FROM consumption.evidence_gap_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS gaps,
           (SELECT count(*)::int FROM consumption.search_document_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS search,
+          (SELECT count(*)::int FROM consumption.module_knowledge_packet_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS packets,
           (SELECT count(*)::int FROM consumption.relationship_node_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS nodes,
           (SELECT count(*)::int FROM consumption.relationship_edge_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS edges,
           (SELECT count(*)::int FROM consumption.relationship_evidence_v1 WHERE tenant_key=$1 AND knowledge_baseline_ref=$2) AS edge_evidence
@@ -2132,6 +2226,7 @@ export class PostgresKnowledgeExecutionStore {
       metrics: 0,
       gaps: 0,
       search: 0,
+      packets: 0,
       nodes: 0,
       edges: 0,
       edge_evidence: 0,
@@ -2189,6 +2284,7 @@ export class PostgresKnowledgeExecutionStore {
       metric_observation_v1: counts.metrics,
       evidence_gap_v1: counts.gaps,
       search_document_v1: counts.search,
+      module_knowledge_packet_v1: counts.packets,
       relationship_node_v1: counts.nodes,
       relationship_edge_v1: counts.edges,
       relationship_evidence_v1: counts.edge_evidence,

@@ -232,6 +232,7 @@ await test("projection build materializes analytics consumption tables from acce
     "vendor_contract_inventory_v1",
     "metric_observation_v1",
     "evidence_gap_v1",
+    "module_knowledge_packet_v1",
   ]) {
     assert.ok(source.includes(`consumption.${projection}`), `projection build must mention ${projection}`);
   }
@@ -266,6 +267,20 @@ await test("search projection preserves entity identity, domain, snippet, and ev
   assert.ok(source.includes("display_name=EXCLUDED.display_name"), "search rebuild must refresh display metadata on existing rows");
   assert.ok(source.includes("executive_summary=EXCLUDED.executive_summary"), "search rebuild must refresh snippet metadata on existing rows");
   assert.ok(source.includes("evidence_coverage=EXCLUDED.evidence_coverage"), "search rebuild must refresh evidence coverage on existing rows");
+});
+
+await test("module knowledge packet builds deterministic suggested questions from completed projections", async () => {
+  const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
+  assert.ok(source.includes('"module_knowledge_packet_v1"'), "core projection list must include the module packet table");
+  assert.ok(source.includes('"module_knowledge_packet_v1",\n      "relationship_evidence_v1"'), "packet cleanup must run before stale relationship cleanup completes");
+  assert.ok(source.includes("INSERT INTO consumption.module_knowledge_packet_v1"), "packet projection must be materialized");
+  assert.ok(source.includes("'packetType', 'suggested_questions'"), "packet payload must identify suggested question content");
+  assert.ok(source.includes("'projectionCounts', jsonb_build_object("), "packet payload must expose built projection counts");
+  assert.ok(source.includes("'home-brief-loaded-vs-missing-v1'"), "packet must include a deterministic brief question");
+  assert.ok(source.includes("'home-evidence-open-gaps-v1'"), "packet must include a deterministic evidence question");
+  assert.ok(source.includes("FROM packet\n        WHERE brief > 0"), "packet must not be inserted when governed projections are absent");
+  assert.ok(source.includes("SELECT count(*)::int FROM consumption.module_knowledge_packet_v1"), "packet row count must be read back");
+  assert.ok(source.includes("module_knowledge_packet_v1: counts.packets"), "packet projection version must be registered independently");
 });
 
 await test("live reconciliation readback traces source rows and fields through governed lineage keys", async () => {
@@ -512,6 +527,10 @@ await test("explicit review decisions promote accepted candidates and projection
   assert.equal(store.knowledgeEntities.length, 1);
   assert.equal(store.baselines.find((row) => row.isActive)?.knowledgeBaselineRef, "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1");
   assert.ok(store.projections.length > 0);
+  assert.ok(
+    store.projections.some((row) => row.projectionName === "module_knowledge_packet_v1" && row.objectRef === "home:suggested-questions"),
+    "projection build must expose the Home module packet as its own data-plane projection",
+  );
   assert.equal(store.reconciliationLedger.length, 1);
 });
 
