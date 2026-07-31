@@ -2,12 +2,17 @@
 
 ## Status
 
-**Phase 0 (freeze) complete as of this PR** — see
+**Phase 0 (freeze) complete** — see
 `clients/skyharbor-air/execution/skyharbor-air-source-corpus-v1.0.0.freeze-manifest.json` and
-`docs/ops/dual-tenant-knowledge-execution-program.md`'s SkyHarbor entry. No Azure, Postgres, or
-ingestion action has been taken — Phase 0 is documentation and audit evidence only. Phase 1 onward
-remains unauthorized and requires its own explicit go-ahead before any Azure action, per this
-document's own Phase 1 section below.
+`docs/ops/dual-tenant-knowledge-execution-program.md`'s SkyHarbor entry.
+
+**Phase 1 IaC authored, not executed, as of this PR** — see
+`clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`.
+The templates compile offline (`bicep build` / `bicep build-params`) and define a dedicated boundary
+(`rg-abarva-skair-lab-eus2-001`, own VNet/Postgres/storage/Key Vault/6 managed identities) that is not
+shared with `airline-demo-new`'s existing infrastructure. No `az` command has been run against real
+Azure — no `--what-if`, no `create`. Phase 1 *execution* remains unauthorized and requires its own
+explicit go-ahead before any Azure action, per this document's own Phase 1 section below.
 
 ## Why this, not the tactical Admin-Loader-connector path
 
@@ -63,8 +68,15 @@ less work than what healthcare-demo-new or airline-demo-new needed.
   Postgres database (or tenant-isolated schema with RLS), Key Vault, and managed identities (ingest,
   review, publish, read, evaluator, admin) — six identities, matching the pattern in
   `clients/airline-demo-new/18-phase2b3c-azure-lab-implementation/00-implementation-charter/APPROVED_BOUNDARY_SNAPSHOT.json`.
+- **IaC authored**: `clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`
+  (`main.bicep`, `skair-lab-foundation.bicep`, `skair-acr-pull.bicep`, `skair-lab-jobs.bicep`,
+  `skair.lab.bicepparam`), adapted from airline-demo-new's working templates with its own address space
+  (`10.76.0.0/22`), resource names (`skair` prefix), and Postgres database
+  (`abarva_skyharbor_air_knowledge_lab`). Compiles offline; never deployed.
 - This is genuinely new billable Azure resource creation. **Do not execute without an explicit,
-  separate go-ahead** — same standard applied to every Azure-touching action this session.
+  separate go-ahead** — same standard applied to every Azure-touching action this session. Writing and
+  compiling the templates is safe, reversible, file-only work and is done; running
+  `az deployment sub what-if` or `create` against them is the actual checkpoint.
 - Plan-only/what-if first, matching the "zero-data infrastructure plan and what-if" language the
   program doc already uses for `healthcare-demo-new`'s next allowed action.
 
@@ -126,6 +138,8 @@ dimension discipline (technical / data-quality / product-usability) established 
 
 ## Immediate next step
 
-Phase 0 is done (this PR). Phase 1 (Azure boundary provisioning) is real, billable, hard-to-reverse
-infrastructure creation and requires its own explicit go-ahead before any `az` command runs — not
-implied by this document or by Phase 0 landing.
+Phase 0 is done. Phase 1's IaC is authored and compiles offline. What remains before Phase 2 can start
+is Phase 1 *execution* — actually provisioning `rg-abarva-skair-lab-eus2-001` and everything inside it.
+That is real, billable, hard-to-reverse infrastructure creation and requires its own explicit go-ahead
+before any `az` command runs — not implied by this document, by Phase 0 landing, or by the IaC existing
+as files on disk.

@@ -117,6 +117,11 @@ yet — recorded as a real, unfilled gap in the freeze manifest, not fabricated 
 shape. This freeze does not load data, provision cloud resources, add a runtime tenant key, or wire
 any product surface.
 
+Phase 1 IaC for SkyHarbor's dedicated Azure boundary is authored at
+`clients/skyharbor-air/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/`
+and compiles offline. It has not been deployed or what-if'd — provisioning still requires its own
+explicit go-ahead, per `docs/ops/skyharbor-air-foundation-v2-extension-scope.md`.
+
 ## Airline Block
 
 Airline is blocked by:
