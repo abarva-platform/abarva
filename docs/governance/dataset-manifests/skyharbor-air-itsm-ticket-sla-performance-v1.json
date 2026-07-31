@@ -1,0 +1,17 @@
+{
+  "dataset_id": "skyharbor-air-itsm-ticket-sla-performance-v1",
+  "title": "SkyHarbor Air ITSM Ticket History & SLA Performance (trailing 12mo, ServiceNow-shaped)",
+  "client_key": "skyharbor-air",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic, generated from the existing 04_applications_systems.csv known_challenges_narrative field (deterministic, keyword-scored — not independent random noise)",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 503,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-07-31",
+  "notes": "One row per application in 04_applications_systems.csv: trailing-12-month incident volume by priority, MTTR, SLA target/actual/breach count, top root-cause category, change success rate. Shaped to match what a real ServiceNow CMDB/ITSM export would surface for a Source-module vendor/AMS-IMS demo. Synthetic planning-grade content, not real ServiceNow data — no real ticket numbers, real incident records, or real vendor SLA reports are represented. 16.3% of systems show an SLA breach in the generated set, concentrated in legacy/no-formal-support/M&A-inherited systems already flagged in the existing enrichment narrative, not evenly distributed noise. No PII/PHI. Requires the same promotion/review process as the rest of the skyharbor-air enrichment pack before any Azure/Postgres load."
+}
