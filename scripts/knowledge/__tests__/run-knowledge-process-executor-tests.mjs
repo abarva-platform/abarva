@@ -299,9 +299,35 @@ await test("live reconciliation readback traces source rows and fields through g
   assert.ok(source.includes("CORE_CONSUMPTION_PROJECTION_TABLES"), "projection authority readback must validate the closed set of core consumption projections");
   assert.ok(source.includes("projectionAuthorityStatus"), "projection authority readback must validate each registered projection rather than a stale aggregate hash");
   assert.ok(source.includes("stableJson({ projectionName, rowCount, baseline: BASELINE_ID })"), "projection authority readback must recompute per-projection hashes using the executor contract");
+  assert.ok(source.includes("INACCESSIBLE_RELATION"), "readback must record permission-denied relations without aborting projection proof");
+  assert.ok(source.includes("live-inaccessible-relation-readback.csv"), "readback must emit inaccessible relation evidence");
   assert.ok(source.includes("JSON.parse(value)"), "relationship field readback must parse evidence text safely in JS");
   assert.ok(source.includes("evidenceTextByRef[evidenceRef]"), "relationship field readback must only credit the matching evidence ref payload");
   assert.ok(source.includes("FIELD_DEFERRED_BY_REVIEW"), "field reconciliation must distinguish deferred review decisions from lost data");
+});
+
+await test("runtime DB proof reads all core consumption projections and projection authority", async () => {
+  const source = await readFile(new URL("../../qa/airline-module-runtime-db-proof.mjs", import.meta.url), "utf8");
+  for (const projection of [
+    "consumption.enterprise_brief_v1",
+    "consumption.enterprise_identity_v1",
+    "consumption.domain_summary_v1",
+    "consumption.application_inventory_v1",
+    "consumption.technology_estate_v1",
+    "consumption.data_product_inventory_v1",
+    "consumption.vendor_contract_inventory_v1",
+    "consumption.evidence_gap_v1",
+    "consumption.search_document_v1",
+    "consumption.module_knowledge_packet_v1",
+    "consumption.metric_observation_v1",
+    "consumption.relationship_node_v1",
+    "consumption.relationship_edge_v1",
+    "consumption.relationship_evidence_v1",
+  ]) {
+    assert.ok(source.includes(`"${projection}"`), `runtime DB proof must count ${projection}`);
+  }
+  assert.ok(source.includes("FROM publication.projection_version"), "runtime DB proof must read projection authority rows");
+  assert.ok(source.includes("projectionVersions"), "runtime DB proof must include projection authority in emitted proof");
 });
 
 await test("custom handler must verify before commit", async () => {
