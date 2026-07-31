@@ -3,6 +3,7 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 export const FOUNDATION_TENANT_KEYS = [
   "airline-demo-new",
   "healthcare-demo-new",
+  "skyharbor-air",
 ] as const;
 
 export type FoundationTenantKey = (typeof FOUNDATION_TENANT_KEYS)[number];

@@ -1,6 +1,7 @@
 export type FoundationProofTenantKey =
   | "airline-demo-new"
-  | "healthcare-demo-new";
+  | "healthcare-demo-new"
+  | "skyharbor-air";
 
 export type FoundationProofPersonaKind = "human_owner" | "automation_agent";
 
@@ -52,6 +53,30 @@ export const FOUNDATION_PROOF_LOGINS: readonly FoundationProofLogin[] = [
     personaKind: "automation_agent",
     purpose:
       "Non-human automation identity for Airline Demo New signed-in browser proof.",
+  },
+  {
+    slug: "anand-skyharbor-foundation",
+    tenantKey: "skyharbor-air",
+    tenantName: "SkyHarbor Air",
+    email: "anand.sundaram+skyharbor-foundation@thesundaram.com",
+    phoneNumbers: ["+12025550105", "+12025550185", "+12025550187"],
+    firstName: "Anand",
+    lastName: "Sundaram",
+    personaKind: "human_owner",
+    purpose:
+      "Founder/operator proof identity for SkyHarbor Air foundation preview.",
+  },
+  {
+    slug: "agent-skyharbor-foundation",
+    tenantKey: "skyharbor-air",
+    tenantName: "SkyHarbor Air",
+    email: "skyharbor-foundation-agent@abarva.ai",
+    phoneNumbers: ["+12025550106", "+12025550186", "+12025550188"],
+    firstName: "Ava",
+    lastName: "Agent",
+    personaKind: "automation_agent",
+    purpose:
+      "Non-human automation identity for SkyHarbor Air signed-in browser proof.",
   },
 ];
 

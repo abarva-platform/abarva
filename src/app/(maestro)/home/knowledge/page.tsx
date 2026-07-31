@@ -9,14 +9,17 @@ import { FOUNDATION_HOME_KNOWLEDGE_ROUTE } from "@/lib/auth/foundation-route-acc
 export const metadata: Metadata = {
   title: "Knowledge | AbarVa",
   description:
-    "Governed enterprise context for the airline-demo-new design surface -- Brief, Explore, Relationships, and Evidence & gaps, bound to the real KnowledgeUiViewModelAssembler / ConsumptionRuntime render-gate contract.",
+    "Governed enterprise context for the airline-demo-new/skyharbor-air design surfaces -- Brief, Explore, Relationships, and Evidence & gaps, bound to the real KnowledgeUiViewModelAssembler / ConsumptionRuntime render-gate contract.",
 };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const KNOWLEDGE_ACTIVATED_TENANTS = new Set(["airline-demo-new", "skyharbor-air"]);
+
 /**
- * The airline-demo-new Knowledge product surface. Every component renders
+ * The Knowledge product surface for the activated Foundation tenants
+ * (currently airline-demo-new and skyharbor-air). Every component renders
  * through the real KnowledgeUiViewModelAssembler
  * (src/lib/knowledge/view-model/), composed over the real
  * ConsumptionRuntime/KnowledgeConsumptionProvider
@@ -25,10 +28,10 @@ export const revalidate = 0;
  * reconciliation that replaced this route's original duplicate provider
  * binding (GovernedKnowledgeProvider, now removed).
  *
- * This product route is activated only for the approved Airline Foundation
- * proof user. Tenant identity is resolved on the server from Clerk metadata
- * and must match the route-specific allowedRoutes/moduleAccess gate. The
- * browser can no longer switch tenants or select fixtures.
+ * This product route is activated only for the approved Foundation proof
+ * users of the tenants above. Tenant identity is resolved on the server from
+ * Clerk metadata and must match the route-specific allowedRoutes/moduleAccess
+ * gate. The browser can no longer switch tenants or select fixtures.
  */
 export default async function KnowledgePage() {
   await connection();
@@ -36,7 +39,7 @@ export default async function KnowledgePage() {
     pathname: FOUNDATION_HOME_KNOWLEDGE_ROUTE,
   });
 
-  if (tenantKey !== "airline-demo-new") {
+  if (!tenantKey || !KNOWLEDGE_ACTIVATED_TENANTS.has(tenantKey)) {
     notFound();
   }
 
