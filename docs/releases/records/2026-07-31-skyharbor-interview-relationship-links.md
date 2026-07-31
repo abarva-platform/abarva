@@ -54,7 +54,7 @@ semantic judgment to reconcile correctly, not string matching. Tracked as separa
 
 ## QA / Validation
 
-- `node scripts/skyharbor/generate-interview-relationship-links.mjs` — ran clean.
+- `node scripts/skyharbor/generate-interview-relationship-links.mjs` — passed, ran clean.
 - Match threshold set at 60% token overlap (favoring precision over recall — a missed link is
   acceptable, a false one isn't). Real coverage reported honestly: 115/303 mentions matched (38.0%),
   not overstated.
@@ -63,7 +63,7 @@ semantic judgment to reconcile correctly, not string matching. Tracked as separa
   being treated as fully authoritative.
 - Confirmed the existing 3,071 relationship rows are byte-identical apart from being followed by the new
   115 — no accidental mutation of prior content.
-- `node scripts/release-check.mjs` — pending (run before merge).
+- `node scripts/release-check.mjs` — passed.
 
 ## Rollout Plan
 

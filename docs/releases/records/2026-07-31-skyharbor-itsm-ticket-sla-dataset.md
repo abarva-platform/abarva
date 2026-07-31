@@ -68,7 +68,7 @@ the legacy-tech-debt breach risk).
   for all 503 rows, since that was the point of the earlier enrichment pass) with "is operationally at
   risk," producing a 100% SLA-breach rate — caught by spot-checking output before finalizing, not shipped.
 - `npx tsx src/scripts/governance/validate-context-corpus.ts manifests` — PASSED.
-- `node scripts/release-check.mjs` — pending (run before merge).
+- `node scripts/release-check.mjs` — passed.
 
 ## Rollout Plan
 
