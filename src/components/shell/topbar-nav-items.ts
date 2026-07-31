@@ -1,14 +1,14 @@
 // Shared nav-item registry for the canonical NEXUS top navigation.
 //
-// Single source of truth for the canonical 6-item product nav: Knowledge,
-// Intelligence, Moves, Source, Tower, Learn. Routes stay stable even when
+// Single source of truth for the canonical product nav: Knowledge,
+// Intelligence, Moves, Source, Tower. Routes stay stable even when
 // labels evolve: Knowledge is still served from /home.
 
 import type { useUser } from "@clerk/nextjs";
 import { resolveModuleAccess, type ProductModule } from "@/lib/auth/module-access";
 
 export type CockpitNavItem = {
-  key: "home" | "learn" | ProductModule;
+  key: "home" | ProductModule;
   label: string;
   href: string;
   match: (pathname: string) => boolean;
@@ -23,9 +23,7 @@ export const NAV_ITEMS: CockpitNavItem[] = [
     match: (pathname) =>
       pathname === "/" ||
       pathname === "/home" ||
-      (pathname.startsWith("/home/") &&
-        pathname !== "/home/learn" &&
-        !pathname.startsWith("/home/learn/")) ||
+      pathname.startsWith("/home/") ||
       pathname === "/dashboard" ||
       pathname.startsWith("/dashboard/"),
   },
@@ -70,16 +68,6 @@ export const NAV_ITEMS: CockpitNavItem[] = [
       pathname === "/tower" ||
       pathname.startsWith("/tower/") ||
       (pathname.startsWith("/tenant/") && pathname.includes("/tower")),
-  },
-  {
-    key: "learn",
-    label: "Learn",
-    href: "/home/learn",
-    match: (pathname) =>
-      pathname === "/home/learn" ||
-      pathname.startsWith("/home/learn/") ||
-      pathname === "/learn" ||
-      pathname.startsWith("/learn/"),
   },
 ];
 

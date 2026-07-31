@@ -4,7 +4,6 @@ import { useKnowledgeApp } from "../knowledge-app-context";
 import { EvidenceDrawer } from "../EvidenceDrawer";
 import { AvaDock } from "../ava/AvaDock";
 import { ModuleHandoffModal } from "../handoff/ModuleHandoffModal";
-import { ModuleSwitcher } from "./ModuleSwitcher";
 import { LensPicker } from "./LensPicker";
 import { ModeTabs } from "./ModeTabs";
 import { ConditionBanner } from "./ConditionBanner";
@@ -14,18 +13,12 @@ import { RelationshipsMode } from "../relationships/RelationshipsMode";
 import { EvidenceMode } from "../evidence/EvidenceMode";
 
 /**
- * Top-level page chrome: module switcher, lens picker, mode tabs, aVa dock
- * toggle, condition banner, plus the globally-mounted evidence drawer and
- * handoff modal (both driven off knowledge-app-context so any mode can open
- * them without prop-drilling). This is a standalone product shell rather than
- * nested inside the shared AppShell -- the Knowledge prototype's own design
- * is a self-contained page with its own dense chrome (module switcher, lens
- * picker, four-position aVa dock), which AppShell's generic top bar does not
- * model. Documented as a deliberate choice, not an oversight.
+ * Top-level Knowledge page controls. Global product navigation is owned by
+ * MaestroChrome/NexusTopNav; this component may render only page controls
+ * such as lens, mode tabs, dock, drawer, and handoff modal.
  */
 export function KnowledgeShell() {
-  const { mode, dockPosition, dockState, drawer, closeDrawer, tenantKey } =
-    useKnowledgeApp();
+  const { mode, dockPosition, dockState, drawer, closeDrawer } = useKnowledgeApp();
 
   const dockIsSide =
     dockState !== "hidden" &&
@@ -33,15 +26,7 @@ export function KnowledgeShell() {
   const dockIsBottom = dockState !== "hidden" && dockPosition === "bottom";
 
   return (
-    <div className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-[#faf7f1]">
-      <header className="flex flex-wrap items-center justify-between gap-3 bg-[#0c1a3a] px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-6">
-          <span className="text-sm font-semibold text-white">AbarVa</span>
-          <ModuleSwitcher />
-        </div>
-        <div className="shrink-0 text-xs text-white/60">{tenantKey}</div>
-      </header>
-
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden bg-[#faf7f1]">
       <div className="flex min-w-0 flex-col gap-2 border-b border-[rgba(10,10,11,0.1)] bg-white px-4 py-2.5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <LensPicker />
         <ModeTabs />
