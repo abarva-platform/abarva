@@ -807,11 +807,18 @@ export class PostgresKnowledgeExecutionStore {
         `
           INSERT INTO working.entity_candidate (
             tenant_key, candidate_ref, source_version_ref, entity_type,
-            display_name, candidate_payload, evidence_refs, candidate_content_hash, confidence, review_state, created_run_ref
+            display_name, natural_key, natural_key_basis, source_row_ref,
+            source_object_ref, original_row_id, candidate_payload, evidence_refs,
+            candidate_content_hash, confidence, review_state, created_run_ref
           )
-          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'not_reviewed',$10)
+          VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11::jsonb,$12,$13,$14,'not_reviewed',$15)
           ON CONFLICT (tenant_key, candidate_ref)
           DO UPDATE SET candidate_payload=EXCLUDED.candidate_payload,
+            natural_key=EXCLUDED.natural_key,
+            natural_key_basis=EXCLUDED.natural_key_basis,
+            source_row_ref=EXCLUDED.source_row_ref,
+            source_object_ref=EXCLUDED.source_object_ref,
+            original_row_id=EXCLUDED.original_row_id,
             evidence_refs=EXCLUDED.evidence_refs,
             candidate_content_hash=EXCLUDED.candidate_content_hash,
             confidence=EXCLUDED.confidence, review_state='not_reviewed'
@@ -822,6 +829,11 @@ export class PostgresKnowledgeExecutionStore {
           row.sourceVersionRef,
           row.entityType,
           row.displayName,
+          row.naturalKey ?? row.natural_key ?? row.candidatePayload?.natural_key ?? null,
+          JSON.stringify(row.naturalKeyBasis ?? row.natural_key_basis ?? {}),
+          row.sourceRowRef ?? row.source_row_ref ?? row.candidatePayload?.source_row_ref ?? null,
+          row.sourceObjectRef ?? row.source_object_ref ?? row.candidatePayload?.source_object_ref ?? row.candidatePayload?.source_native_id ?? null,
+          row.originalRowId ?? row.original_row_id ?? row.candidatePayload?.original_row_id ?? row.candidatePayload?.source_native_id ?? null,
           JSON.stringify(row.candidatePayload ?? {}),
           row.evidenceRefs ?? [],
           candidateContentHash({ ...row, candidateType: "entity_candidate" }),
@@ -943,17 +955,23 @@ export class PostgresKnowledgeExecutionStore {
     await this.client.query(
       `
         UPDATE working.entity_candidate
-        SET candidate_payload = jsonb_set(
-          jsonb_set(
-            candidate_payload,
-            '{entity_ref}',
-            to_jsonb('entity:' || entity_type || ':' || regexp_replace(lower(display_name), '[^a-z0-9]+', '-', 'g')),
+        SET natural_key = coalesce(nullif(natural_key, ''), nullif(candidate_payload->>'natural_key', '')),
+          candidate_payload = jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                candidate_payload,
+                '{natural_key}',
+                to_jsonb(coalesce(nullif(natural_key, ''), nullif(candidate_payload->>'natural_key', ''), entity_type || ':' || regexp_replace(lower(display_name), '[^a-z0-9]+', '-', 'g'))),
+                true
+              ),
+              '{entity_ref}',
+              to_jsonb('entity:' || regexp_replace(lower(coalesce(nullif(natural_key, ''), nullif(candidate_payload->>'natural_key', ''), entity_type || ':' || display_name)), '[^a-z0-9]+', '-', 'g')),
+              true
+            ),
+            '{resolution_method}',
+            '"normalized_exact_match"'::jsonb,
             true
-          ),
-          '{resolution_method}',
-          '"normalized_exact_match"'::jsonb,
-          true
-        )
+          )
         WHERE tenant_key=$1
       `,
       [context.tenantKey],
@@ -1054,6 +1072,11 @@ export class PostgresKnowledgeExecutionStore {
             source_version_ref AS "sourceVersionRef",
             entity_type AS "entityType",
             display_name AS "displayName",
+            natural_key AS "naturalKey",
+            natural_key_basis AS "naturalKeyBasis",
+            source_row_ref AS "sourceRowRef",
+            source_object_ref AS "sourceObjectRef",
+            original_row_id AS "originalRowId",
             candidate_payload AS "candidatePayload",
             evidence_refs AS "evidenceRefs",
             candidate_content_hash AS "candidateContentHash",
@@ -1319,14 +1342,17 @@ export class PostgresKnowledgeExecutionStore {
         FROM (
           SELECT DISTINCT ON (c.tenant_key, coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')))
             c.tenant_key,
-            coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
+            coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || regexp_replace(lower(coalesce(nullif(c.natural_key, ''), nullif(c.candidate_payload->>'natural_key', ''), c.entity_type || ':' || c.display_name)), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
             c.entity_type,
             c.display_name,
             c.candidate_payload AS canonical_payload,
             'accepted'::abarva_authority_state AS authority_state,
             'accepted'::abarva_availability_state AS availability_state,
             'unknown'::abarva_freshness_state AS freshness_state,
-            ARRAY[]::text[] AS accepted_evidence_refs,
+            CASE
+              WHEN cardinality(d.evidence_refs) > 0 THEN d.evidence_refs
+              ELSE c.evidence_refs
+            END AS accepted_evidence_refs,
             md5(c.candidate_payload::text) AS content_hash,
             $2 AS created_run_ref,
             c.confidence,
@@ -1341,7 +1367,7 @@ export class PostgresKnowledgeExecutionStore {
            AND d.review_state = 'accepted'
           WHERE c.tenant_key=$1
           ORDER BY c.tenant_key,
-            coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || c.entity_type || ':' || regexp_replace(lower(c.display_name), '[^a-z0-9]+', '-', 'g')),
+            coalesce(nullif(c.candidate_payload->>'entity_ref',''), 'entity:' || regexp_replace(lower(coalesce(nullif(c.natural_key, ''), nullif(c.candidate_payload->>'natural_key', ''), c.entity_type || ':' || c.display_name)), '[^a-z0-9]+', '-', 'g')),
             c.confidence DESC NULLS LAST,
             c.candidate_ref
         ) promoted_entities
@@ -1361,7 +1387,7 @@ export class PostgresKnowledgeExecutionStore {
         )
         SELECT f.tenant_key,
           'fact:' || f.candidate_ref,
-          coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')),
+          coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || regexp_replace(lower(coalesce(nullif(e.natural_key, ''), nullif(e.candidate_payload->>'natural_key', ''), e.entity_type || ':' || e.display_name)), '[^a-z0-9]+', '-', 'g')),
           f.fact_type,
           f.fact_value,
           'accepted'::abarva_authority_state,
@@ -1413,7 +1439,7 @@ export class PostgresKnowledgeExecutionStore {
           SELECT
             e.tenant_key,
             e.candidate_ref AS map_key,
-            coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
+            coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || regexp_replace(lower(coalesce(nullif(e.natural_key, ''), nullif(e.candidate_payload->>'natural_key', ''), e.entity_type || ':' || e.display_name)), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
             0 AS match_priority,
             e.confidence,
             e.candidate_ref
@@ -1432,7 +1458,7 @@ export class PostgresKnowledgeExecutionStore {
           SELECT
             e.tenant_key,
             e.candidate_payload->>'source_native_id' AS map_key,
-            coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || e.entity_type || ':' || regexp_replace(lower(e.display_name), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
+            coalesce(nullif(e.candidate_payload->>'entity_ref',''), 'entity:' || regexp_replace(lower(coalesce(nullif(e.natural_key, ''), nullif(e.candidate_payload->>'natural_key', ''), e.entity_type || ':' || e.display_name)), '[^a-z0-9]+', '-', 'g')) AS entity_ref,
             1 AS match_priority,
             e.confidence,
             e.candidate_ref
