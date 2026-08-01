@@ -44,7 +44,7 @@ Products: No product route, UI, Cube, Superset, or aVa runtime change is include
 
 - Pass: `node --check scripts/knowledge/processing/process-handlers.mjs`
 - Pass: `node --check scripts/knowledge/processing/executor-framework.mjs`
-- Pass: `npx eslint scripts/knowledge/processing/process-handlers.mjs scripts/knowledge/processing/executor-framework.mjs scripts/knowledge/build-foundation-v3-finding-catalogue.mjs`
+- Pass: `npx eslint scripts/knowledge/build-foundation-v3-day-one-breach-report.mjs scripts/knowledge/processing/process-handlers.mjs scripts/knowledge/processing/executor-framework.mjs scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs`
 - Pass: `node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs`
 - Pass: `node scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs`
 - Pass: regression assertion confirms a parsed application source row emits a row-specific display name, natural key, source row ref, original row id, and entity evidence ref.
