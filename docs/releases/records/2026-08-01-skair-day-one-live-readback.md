@@ -39,6 +39,7 @@ Product layer: no product route or UI change.
 - `scripts/qa/skyharbor-day-one-breach-readback.mjs`
 - `package.json` script `qa:skair-day-one-breach-readback`
 - Schema-drift hardening for `publication.projection_version.retired_at`, which exists in some exports/contracts but not in the isolated lab DB.
+- Parameter-cast hardening for the explicit promotion seed path.
 
 ## QA / Validation
 
