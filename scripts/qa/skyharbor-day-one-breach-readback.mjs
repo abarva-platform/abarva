@@ -388,7 +388,7 @@ async function promotePassingExpectations(client, args, checks) {
             'executable_sql',
             'qa:skair-day-one-breach-readback',
             'phase-a-live-readback',
-            jsonb_build_object('expectation_ref', $3, 'seeded_from_live_readback', true)
+            jsonb_build_object('expectation_ref', $3::text, 'seeded_from_live_readback', true)
           )
           ON CONFLICT (query_ref, query_version)
           DO UPDATE SET query_sql=EXCLUDED.query_sql,
@@ -428,7 +428,7 @@ async function promotePassingExpectations(client, args, checks) {
             'foundation-v3-conservation-warn-v0',
             $3,
             $4,
-            jsonb_build_object('label', $5),
+            jsonb_build_object('label', $5::text),
             'upstream_count',
             $6,
             'executable_sql',
@@ -443,8 +443,8 @@ async function promotePassingExpectations(client, args, checks) {
             'qa:skair-day-one-breach-readback',
             'phase-a-live-readback',
             jsonb_build_object(
-              'status', $8,
-              'actual', $9,
+              'status', $8::text,
+              'actual', $9::int,
               'seeded_from_live_readback', true,
               'graduated_by', 'qa:skair-day-one-breach-readback',
               'graduation_basis', 'live_db_readback_passed'
