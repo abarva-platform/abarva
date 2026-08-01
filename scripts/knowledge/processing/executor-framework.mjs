@@ -1026,10 +1026,11 @@ export class PostgresKnowledgeExecutionStore {
             display_name AS "displayName",
             candidate_payload AS "candidatePayload",
             evidence_refs AS "evidenceRefs",
+            candidate_content_hash AS "candidateContentHash",
             confidence,
             review_state AS "reviewState"
           FROM working.entity_candidate
-          WHERE tenant_key=$1 AND candidate_content_hash IS NULL
+          WHERE tenant_key=$1
           ORDER BY candidate_ref
         `,
       },
@@ -1043,10 +1044,11 @@ export class PostgresKnowledgeExecutionStore {
             fact_type AS "factType",
             fact_value AS "factValue",
             evidence_refs AS "evidenceRefs",
+            candidate_content_hash AS "candidateContentHash",
             confidence,
             review_state AS "reviewState"
           FROM working.fact_candidate
-          WHERE tenant_key=$1 AND candidate_content_hash IS NULL
+          WHERE tenant_key=$1
           ORDER BY candidate_ref
         `,
       },
@@ -1061,10 +1063,11 @@ export class PostgresKnowledgeExecutionStore {
             relationship_type_ref AS "relationshipTypeRef",
             current_target_state AS "currentTargetState",
             evidence_refs AS "evidenceRefs",
+            candidate_content_hash AS "candidateContentHash",
             confidence,
             review_state AS "reviewState"
           FROM working.relationship_candidate
-          WHERE tenant_key=$1 AND candidate_content_hash IS NULL
+          WHERE tenant_key=$1
           ORDER BY candidate_ref
         `,
       },
@@ -1072,10 +1075,17 @@ export class PostgresKnowledgeExecutionStore {
     const summary = {};
     for (const spec of specs) {
       const rows = (await this.client.query(spec.select, [context.tenantKey])).rows;
-      summary[spec.candidateType] = rows.length;
+      const repairs = rows
+        .map((row) => ({
+          candidateRef: row.candidateRef,
+          candidateContentHash: candidateContentHash({ ...row, candidateType: spec.candidateType }),
+          storedCandidateContentHash: row.candidateContentHash,
+        }))
+        .filter((row) => row.storedCandidateContentHash !== row.candidateContentHash);
+      summary[spec.candidateType] = repairs.length;
       const chunkSize = 2000;
-      for (let index = 0; index < rows.length; index += chunkSize) {
-        const chunk = rows.slice(index, index + chunkSize);
+      for (let index = 0; index < repairs.length; index += chunkSize) {
+        const chunk = repairs.slice(index, index + chunkSize);
         await this.client.query(
           `
             UPDATE ${spec.table} AS c
@@ -1086,12 +1096,12 @@ export class PostgresKnowledgeExecutionStore {
             ) AS v
             WHERE c.tenant_key=$1
               AND c.candidate_ref=v.candidate_ref
-              AND c.candidate_content_hash IS NULL
+              AND c.candidate_content_hash IS DISTINCT FROM v.candidate_content_hash
           `,
           [
             context.tenantKey,
             chunk.map((row) => row.candidateRef),
-            chunk.map((row) => candidateContentHash({ ...row, candidateType: spec.candidateType })),
+            chunk.map((row) => row.candidateContentHash),
           ],
         );
       }

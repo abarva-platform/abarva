@@ -155,6 +155,19 @@ function roleGrantRows(tenant) {
   for (const schema of ["working", "governance", "operations"]) {
     rows.push({ role: r.reviewer, schema, usage: "yes", select: "yes", insert: "yes", update: "yes", delete: "no", execute: "limited", default_privileges: "select_insert_update" });
   }
+  if (tenant.tenantKey === "airline-demo-new") {
+    rows.push({
+      role: r.reviewer,
+      schema: "knowledge",
+      usage: "yes",
+      select: "limited",
+      insert: "limited",
+      update: "limited",
+      delete: "no",
+      execute: "limited",
+      default_privileges: "canonical_promotion_tables_only",
+    });
+  }
   for (const schema of ["knowledge", "metrics", "publication", "consumption", "operations"]) {
     rows.push({ role: r.publisher, schema, usage: "yes", select: "yes", insert: "yes", update: "yes", delete: "no", execute: "limited", default_privileges: "select_insert_update" });
   }
@@ -222,6 +235,20 @@ function migrationJobRows(tenant) {
 
 function sqlLiteral(value) {
   return value.replaceAll("'", "''");
+}
+
+function reviewerCanonicalPromotionSql(tenant) {
+  if (tenant.tenantKey !== "airline-demo-new") return "";
+  const r = roles(tenant);
+  return `grant usage on schema knowledge to ${r.reviewer};
+grant select, insert, update on table
+  knowledge.entity,
+  knowledge.fact_assertion,
+  knowledge.relationship_type,
+  knowledge.relationship_assertion
+to ${r.reviewer};
+grant usage, select on all sequences in schema knowledge to ${r.reviewer};
+`;
 }
 
 function postgresSql(tenant) {
@@ -316,9 +343,10 @@ grant usage on all sequences in schema source_registry, evidence, working, opera
 grant usage on schema working, governance, operations to ${r.reviewer};
 grant select, insert, update on all tables in schema working, governance, operations to ${r.reviewer};
 grant usage on all sequences in schema working, governance, operations to ${r.reviewer};
-
-grant usage on schema knowledge, metrics, publication, consumption, operations to ${r.publisher};
+${reviewerCanonicalPromotionSql(tenant)}
+grant usage on schema knowledge, metrics, publication, consumption, governance, operations to ${r.publisher};
 grant select, insert, update on all tables in schema knowledge, metrics, publication, consumption, operations to ${r.publisher};
+grant select, insert, update on table governance.evidence_gap to ${r.publisher};
 grant usage on all sequences in schema knowledge, metrics, publication, consumption, operations to ${r.publisher};
 
 grant usage on schema knowledge, metrics, publication, consumption to ${r.reader};
@@ -336,6 +364,7 @@ revoke all on schema working from ${r.reader};
 revoke all on all tables in schema working from ${r.reader};
 revoke insert, update, delete on all tables in schema knowledge, metrics, publication, consumption from ${r.reader}, ${r.evaluator};
 revoke insert, update, delete on all tables in schema publication, consumption from ${r.ingest}, ${r.reviewer};
+grant insert, update on table consumption.consumer_reconciliation_ledger to ${r.evaluator};
 
 do $$
 declare

@@ -156,6 +156,39 @@ await test("postgres failure recording rolls back aborted transactions before wr
   assert.equal(store.inTransaction, false);
 });
 
+await test("postgres candidate hash repair updates stale stored hashes before review guards", async () => {
+  const candidate = {
+    candidateRef: "entcand-stale-hash",
+    sourceVersionRef: "source-v1",
+    entityType: "organization",
+    displayName: "SkyHarbor Air",
+    candidatePayload: { canonical_key: "skyharbor-air" },
+    evidenceRefs: ["ev-1"],
+    confidence: 0.95,
+    reviewState: "not_reviewed",
+    candidateContentHash: "stale",
+  };
+  const calls = [];
+  const client = {
+    async query(sql, params = []) {
+      calls.push({ sql: String(sql), params });
+      if (String(sql).includes("FROM working.entity_candidate")) {
+        return { rows: [candidate] };
+      }
+      return { rows: [] };
+    },
+  };
+  const store = new PostgresKnowledgeExecutionStore(client);
+  const summary = await store.backfillMissingCandidateContentHashes(baseContext());
+  const expectedHash = candidateContentHash({ ...candidate, candidateType: "entity_candidate" });
+  const update = calls.find((call) => call.sql.includes("UPDATE working.entity_candidate"));
+
+  assert.deepEqual(summary, { entity_candidate: 1, fact_candidate: 0, relationship_candidate: 0 });
+  assert.ok(update?.sql.includes("IS DISTINCT FROM v.candidate_content_hash"));
+  assert.deepEqual(update?.params[1], [candidate.candidateRef]);
+  assert.deepEqual(update?.params[2], [expectedHash]);
+});
+
 await test("missing handler is a hard failure, not a dispatch success", async () => {
   const context = baseContext({ canonicalProcess: "unknown-process-v1" });
   const store = new InMemoryKnowledgeExecutionStore();

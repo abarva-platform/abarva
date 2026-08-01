@@ -67,7 +67,7 @@
     "evaluator": "skyharbor_air_evaluator",
     "admin": "skyharbor_air_admin"
   },
-  "apply_blocked": true,
+  "apply_blocked": false,
   "display_name": "SkyHarbor Air",
   "tenant_key": "skyharbor-air",
   "controlPlane": {
@@ -104,9 +104,20 @@
     "evaluator": "skyharbor_air_evaluator",
     "admin": "skyharbor_air_admin"
   },
-  "applyBlocked": true,
+  "applyBlocked": false,
   "notes": {
-    "apply_blocked_reason": "AAD authentication is not yet enabled on pg-abarva-skair-lab-eus2-001 (authConfig.activeDirectoryAuth=Disabled at Phase 1 deploy), and the per-identity Postgres roles listed under database_roles do not exist yet. Preflight mode does not require them (no real DB connection is attempted per hcdn-job-runner.mjs's runJobRunner). Execute mode will fail at the database-connection step until AAD auth is enabled and these roles are created and granted against the Phase 2 schema. Flip apply_blocked to false only after that bootstrap work is done and independently verified.",
+    "apply_unblocked_reason": "Microsoft Entra authentication is enabled on pg-abarva-skair-lab-eus2-001, six approved database roles are mapped to their managed identity object IDs and granted against the Phase 2 schema, and runtime login probes passed for the ACA job identities used by ingest, review, publish, and evaluator jobs. The read database role is mapped and granted; no read-only ACA job is currently attached to mi-skair-read-lab-001, so authenticating that identity would require an infrastructure/template change outside this evidence update.",
+    "apply_unblocked_at": "2026-07-31T21:47:15Z",
+    "apply_unblocked_evidence": {
+      "entra_auth": "az postgres flexible-server update --microsoft-entra-auth Enabled --password-auth Enabled",
+      "entra_admin": "mi-skair-admin-lab-001 / bf6115a9-e895-4011-9656-825ab4d4733d",
+      "role_mapping_and_grants": "job-skair-private-operator-lab-2qu8hc8",
+      "ingest_login": "job-skair-source-register-lab-pvia4z4",
+      "review_login": "job-skair-review-apply-lab-r1bjihd",
+      "publish_login": "job-skair-domain-publish-lab-msa8t1y",
+      "evaluator_login": "job-skair-reconcile-audit-lab-moj3yjq"
+    },
+    "previous_apply_blocked_reason": "AAD authentication was not enabled on pg-abarva-skair-lab-eus2-001 at Phase 1 deploy, and the per-identity Postgres roles listed under database_roles did not exist yet.",
     "generated_by": "Phase 3 preflight prep, 2026-07-31, following explicit tenant-scoped go-ahead"
   }
 }

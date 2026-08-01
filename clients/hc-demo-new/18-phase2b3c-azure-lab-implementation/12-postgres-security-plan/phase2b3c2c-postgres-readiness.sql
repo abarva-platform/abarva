@@ -82,8 +82,9 @@ grant usage on schema working, governance, operations to hc_demo_new_reviewer;
 grant select, insert, update on all tables in schema working, governance, operations to hc_demo_new_reviewer;
 grant usage on all sequences in schema working, governance, operations to hc_demo_new_reviewer;
 
-grant usage on schema knowledge, metrics, publication, consumption, operations to hc_demo_new_publisher;
+grant usage on schema knowledge, metrics, publication, consumption, governance, operations to hc_demo_new_publisher;
 grant select, insert, update on all tables in schema knowledge, metrics, publication, consumption, operations to hc_demo_new_publisher;
+grant select, insert, update on table governance.evidence_gap to hc_demo_new_publisher;
 grant usage on all sequences in schema knowledge, metrics, publication, consumption, operations to hc_demo_new_publisher;
 
 grant usage on schema knowledge, metrics, publication, consumption to hc_demo_new_reader;
@@ -101,6 +102,7 @@ revoke all on schema working from hc_demo_new_reader;
 revoke all on all tables in schema working from hc_demo_new_reader;
 revoke insert, update, delete on all tables in schema knowledge, metrics, publication, consumption from hc_demo_new_reader, hc_demo_new_evaluator;
 revoke insert, update, delete on all tables in schema publication, consumption from hc_demo_new_ingest, hc_demo_new_reviewer;
+grant insert, update on table consumption.consumer_reconciliation_ledger to hc_demo_new_evaluator;
 
 do $$
 declare
