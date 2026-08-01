@@ -304,6 +304,24 @@ async function projectionRows(client, tenantKey, projectionName) {
   );
 }
 
+async function persistedExpectationPolicy(client, tenantKey, expectationRefs) {
+  if (!(await relationExists(client, "operations.design_expectation"))) return new Map();
+  const result = await client.query(
+    `
+      SELECT expectation_ref,
+        on_breach,
+        contract_version,
+        implementation_scope,
+        reviewed_by
+      FROM operations.design_expectation
+      WHERE tenant_key=$1
+        AND expectation_ref = ANY($2::text[])
+    `,
+    [tenantKey, expectationRefs],
+  );
+  return new Map(result.rows.map((row) => [row.expectation_ref, row]));
+}
+
 async function buildReport(client, args) {
   const sourceFields = await sourceFieldRows(client, args.tenantKey);
   const derivedRules = referenceBreakdown(sourceFields);
@@ -325,7 +343,9 @@ async function buildReport(client, args) {
     ["exp-finding-f01-portfolio-conviction-inversion-blocked-v1", "finding-catalogue", "finding_rule_state", "F-01 portfolio conviction inversion", 1, undefined, 1, false, "blocked_declared"],
     ["exp-tower-application-inventory-v1", "tower-projection-build", "projection_row", "Tower application/estate dependency surface", applicationExpected, undefined, await projectionRows(client, args.tenantKey, "application_inventory_v1"), false, undefined, "out_of_scope"],
   ];
+  const policies = await persistedExpectationPolicy(client, args.tenantKey, rows.map(([expectationRef]) => expectationRef));
   const checks = rows.map(([expectationRef, stageName, objectKind, objectScope, expected, expectedMin, actual, promotable, override, scope]) => {
+    const policy = policies.get(expectationRef);
     const row = {
       tenant_key: args.tenantKey,
       expectation_ref: expectationRef,
@@ -335,8 +355,11 @@ async function buildReport(client, args) {
       expected,
       expected_min: expectedMin,
       actual,
-      on_breach: "warn",
-      implementation_scope: scope ?? "active",
+      on_breach: policy?.on_breach ?? "warn",
+      implementation_scope: policy?.implementation_scope ?? scope ?? "active",
+      policy_contract_version: policy?.contract_version ?? null,
+      policy_reviewed_by: policy?.reviewed_by ?? null,
+      policy_source: policy ? "operations.design_expectation" : "runner_default",
       promotable_to_fail: Boolean(promotable),
     };
     return { status: override ?? statusFor(row), ...row };
@@ -544,7 +567,7 @@ async function main() {
     };
     summary.contentHash = sha256(stableJson({ ...summary, checkedAt: null, contentHash: null }));
     writeJson(path.join(args.outDir, "day-one-live-breach-readback.json"), summary);
-    writeCsv(path.join(args.outDir, "day-one-live-breach-readback.csv"), ["status", "stage_name", "object_kind", "object_scope", "expected", "expected_min", "actual", "on_breach", "implementation_scope", "expectation_ref"], checks);
+    writeCsv(path.join(args.outDir, "day-one-live-breach-readback.csv"), ["status", "stage_name", "object_kind", "object_scope", "expected", "expected_min", "actual", "on_breach", "implementation_scope", "policy_source", "policy_reviewed_by", "expectation_ref"], checks);
     writeCsv(path.join(args.outDir, "day-one-live-derivation-rule-breakdown.csv"), ["rule_ref", "tier", "rule_shape", "from_source", "from_field", "to_source", "to_field", "elements", "resolved", "unresolved", "prior_expected_edges", "delta_vs_prior_expected"], derivedRules);
     writeJson(path.join(args.outDir, "README.json"), {
       purpose: "Live DB-backed day-one breach report after Phase A candidate repair.",
