@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Adds a live DB-backed day-one breach readback command for the isolated synthetic lab lane. The command re-evaluates the conservation scorecard after the Phase A candidate repair and can graduate only the application and vendor entity-resolve expectations from warn to fail when those two live checks pass.
+Adds a live DB-backed day-one breach readback command for the isolated synthetic lab lane. The command re-evaluates the conservation scorecard after the Phase A candidate repair and can seed or graduate only the application and vendor entity-resolve expectations to fail when those two live checks pass.
 
 ## Layer Impact
 
 Lane: `client-data-lane`.
 
-Operations layer: reads design-expectation state and can update only two existing expectation rows when explicitly requested.
+Operations layer: reads design-expectation state and can seed or update only two application/vendor expectation rows when explicitly requested and live counts pass.
 
 Evidence layer: reads source-field evidence to recompute expected application, vendor, derivation, partial-claim, and chunk counts.
 

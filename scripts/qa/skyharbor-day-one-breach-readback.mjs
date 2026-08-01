@@ -15,6 +15,22 @@ const DEFAULT_OUT_DIR = path.join(os.tmpdir(), "skyharbor-day-one-breach-readbac
 const APP_REF = "exp-entity-resolve-application-count-v1";
 const VENDOR_REF = "exp-entity-resolve-vendor-count-v1";
 const PROMOTABLE_REFS = Object.freeze([APP_REF, VENDOR_REF]);
+const PROMOTABLE_QUERY_SQL = Object.freeze({
+  [APP_REF]: `
+    SELECT count(DISTINCT coalesce(nullif(trim(normalized_value_text), ''), nullif(trim(raw_value_text), '')))::int
+    FROM evidence.source_field_v1
+    WHERE tenant_key=$1
+      AND source_name='04_applications_systems.csv'
+      AND field_name='system_name'
+  `.trim(),
+  [VENDOR_REF]: `
+    SELECT count(DISTINCT coalesce(nullif(trim(normalized_value_text), ''), nullif(trim(raw_value_text), '')))::int
+    FROM evidence.source_field_v1
+    WHERE tenant_key=$1
+      AND source_name='07_vendors_contracts.csv'
+      AND field_name='vendor_name'
+  `.trim(),
+});
 
 function parseArgs(argv = process.argv.slice(2), env = process.env) {
   const parsed = {
@@ -329,15 +345,133 @@ async function buildReport(client, args) {
 }
 
 async function promotePassingExpectations(client, args, checks) {
-  const passingRefs = checks
-    .filter((row) => PROMOTABLE_REFS.includes(row.expectation_ref) && row.status === "pass")
-    .map((row) => row.expectation_ref);
+  const promotableChecks = checks.filter((row) => PROMOTABLE_REFS.includes(row.expectation_ref));
+  const passingRefs = promotableChecks.filter((row) => row.status === "pass").map((row) => row.expectation_ref);
   if (passingRefs.length !== PROMOTABLE_REFS.length) {
     return { requested: true, status: "skipped_not_all_promotable_checks_passed", passingRefs, requiredRefs: PROMOTABLE_REFS };
   }
   await client.query("BEGIN");
   try {
-    const before = await client.query(
+    const existingBeforeSeed = await client.query(
+      `
+        SELECT expectation_ref, on_breach, reviewed_by
+        FROM operations.design_expectation
+        WHERE tenant_key=$1
+          AND expectation_ref = ANY($2::text[])
+        ORDER BY expectation_ref
+      `,
+      [args.tenantKey, PROMOTABLE_REFS],
+    );
+    for (const row of promotableChecks) {
+      const queryRef = row.expectation_ref.replace(/^exp-/, "qry-exp-");
+      await client.query(
+        `
+          INSERT INTO operations.registered_query (
+            query_ref,
+            query_kind,
+            query_version,
+            query_sql,
+            referenced_relations,
+            output_shape,
+            basis_mode,
+            authored_by,
+            reviewed_by,
+            metadata
+          )
+          VALUES (
+            $1,
+            'expectation_basis',
+            'v1',
+            $2,
+            ARRAY['evidence.source_field_v1'],
+            '{"type":"scalar_count","nullable":false}'::jsonb,
+            'executable_sql',
+            'qa:skair-day-one-breach-readback',
+            'phase-a-live-readback',
+            jsonb_build_object('expectation_ref', $3, 'seeded_from_live_readback', true)
+          )
+          ON CONFLICT (query_ref, query_version)
+          DO UPDATE SET query_sql=EXCLUDED.query_sql,
+            referenced_relations=EXCLUDED.referenced_relations,
+            reviewed_by=coalesce(operations.registered_query.reviewed_by, EXCLUDED.reviewed_by),
+            metadata=coalesce(operations.registered_query.metadata, '{}'::jsonb) || EXCLUDED.metadata
+        `,
+        [queryRef, PROMOTABLE_QUERY_SQL[row.expectation_ref], row.expectation_ref],
+      );
+      await client.query(
+        `
+          INSERT INTO operations.design_expectation (
+            tenant_key,
+            expectation_ref,
+            contract_version,
+            stage_name,
+            object_kind,
+            object_scope,
+            expectation_basis,
+            expected_count,
+            basis_mode,
+            basis_query_ref,
+            basis_query_version,
+            basis_referenced_relations,
+            stage_write_relations,
+            basis_source_layer,
+            stage_write_layer,
+            on_breach,
+            implementation_scope,
+            authored_by,
+            reviewed_by,
+            metadata
+          )
+          VALUES (
+            $1,
+            $2,
+            'foundation-v3-conservation-warn-v0',
+            $3,
+            $4,
+            jsonb_build_object('label', $5),
+            'upstream_count',
+            $6,
+            'executable_sql',
+            $7,
+            'v1',
+            ARRAY['evidence.source_field_v1'],
+            ARRAY['working.entity_candidate'],
+            'evidence',
+            'working',
+            'fail',
+            'active',
+            'qa:skair-day-one-breach-readback',
+            'phase-a-live-readback',
+            jsonb_build_object(
+              'status', $8,
+              'actual', $9,
+              'seeded_from_live_readback', true,
+              'graduated_by', 'qa:skair-day-one-breach-readback',
+              'graduation_basis', 'live_db_readback_passed'
+            )
+          )
+          ON CONFLICT (tenant_key, expectation_ref)
+          DO UPDATE SET expected_count=EXCLUDED.expected_count,
+            stage_write_relations=EXCLUDED.stage_write_relations,
+            stage_write_layer=EXCLUDED.stage_write_layer,
+            on_breach='fail',
+            reviewed_by=coalesce(operations.design_expectation.reviewed_by, EXCLUDED.reviewed_by),
+            metadata=coalesce(operations.design_expectation.metadata, '{}'::jsonb) || EXCLUDED.metadata
+        `,
+        [
+          args.tenantKey,
+          row.expectation_ref,
+          row.stage_name,
+          row.object_kind,
+          row.object_scope,
+          row.expected,
+          queryRef,
+          row.status,
+          row.actual,
+        ],
+      );
+    }
+    await client.query(
       `
         SELECT expectation_ref, on_breach, reviewed_by
         FROM operations.design_expectation
@@ -348,10 +482,6 @@ async function promotePassingExpectations(client, args, checks) {
       `,
       [args.tenantKey, PROMOTABLE_REFS],
     );
-    if (before.rows.length !== PROMOTABLE_REFS.length) {
-      await client.query("ROLLBACK");
-      return { requested: true, status: "skipped_missing_expectation_row", foundRefs: before.rows.map((row) => row.expectation_ref), requiredRefs: PROMOTABLE_REFS };
-    }
     const updated = await client.query(
       `
         UPDATE operations.design_expectation
@@ -369,7 +499,12 @@ async function promotePassingExpectations(client, args, checks) {
       [args.tenantKey, PROMOTABLE_REFS],
     );
     await client.query("COMMIT");
-    return { requested: true, status: "updated", before: before.rows, after: updated.rows };
+    return {
+      requested: true,
+      status: existingBeforeSeed.rows.length === PROMOTABLE_REFS.length ? "updated" : "seeded_and_updated",
+      before: existingBeforeSeed.rows,
+      after: updated.rows,
+    };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -417,7 +552,7 @@ async function main() {
       notes: [
         "Entity-resolve application and vendor checks read working.entity_candidate, the Phase A output layer.",
         "Canonical promotion, publication, baseline activation, Cube parity, and UI proof are not certified by this report.",
-        "Promotion mode updates only existing app/vendor design expectation rows when both live checks pass.",
+        "Promotion mode seeds or updates only app/vendor design expectation rows when both live checks pass.",
       ],
     });
     console.log(JSON.stringify(summary, null, 2));
