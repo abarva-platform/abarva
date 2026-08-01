@@ -12,6 +12,8 @@
 
 Adds a live DB-backed day-one breach readback command for the isolated synthetic lab lane. The command re-evaluates the conservation scorecard after the Phase A candidate repair and can seed or graduate only the application and vendor entity-resolve expectations to fail when those two live checks pass.
 
+Follow-up hardening makes the report rows hydrate persisted policy from `operations.design_expectation` so a post-graduation report shows the actual `on_breach` mode instead of the runner default.
+
 ## Layer Impact
 
 Lane: `client-data-lane`.
@@ -40,6 +42,7 @@ Product layer: no product route or UI change.
 - `package.json` script `qa:skair-day-one-breach-readback`
 - Schema-drift hardening for `publication.projection_version.retired_at`, which exists in some exports/contracts but not in the isolated lab DB.
 - Parameter-cast hardening for the explicit promotion seed path.
+- Persisted-policy readback for `operations.design_expectation.on_breach`, `implementation_scope`, and reviewer metadata in the report output.
 
 ## QA / Validation
 
@@ -49,6 +52,7 @@ Local validation before merge:
 - Pass: `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json ok')"`.
 - Pass: `npm run release:check`.
 - Pass: restricted-token added-line scan.
+- Pending follow-up: post-graduation report-only run should show the application and vendor checks with `policy_source=operations.design_expectation` and `on_breach=fail`.
 
 Runtime validation after deploy:
 
