@@ -103,6 +103,21 @@ async function relationExists(client, relationName) {
   return Boolean(result.rows[0]?.relation_name);
 }
 
+async function columnExists(client, schemaName, tableName, columnName) {
+  const result = await client.query(
+    `
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema=$1
+        AND table_name=$2
+        AND column_name=$3
+      LIMIT 1
+    `,
+    [schemaName, tableName, columnName],
+  );
+  return result.rows.length > 0;
+}
+
 async function sourceFieldRows(client, tenantKey) {
   const result = await client.query(
     `
@@ -259,6 +274,7 @@ function statusFor(row) {
 
 async function projectionRows(client, tenantKey, projectionName) {
   if (!(await relationExists(client, "publication.projection_version"))) return 0;
+  const hasRetiredAt = await columnExists(client, "publication", "projection_version", "retired_at");
   return scalar(
     client,
     `
@@ -266,7 +282,7 @@ async function projectionRows(client, tenantKey, projectionName) {
       FROM publication.projection_version
       WHERE tenant_key=$1
         AND projection_name=$2
-        AND retired_at IS NULL
+        ${hasRetiredAt ? "AND retired_at IS NULL" : ""}
     `,
     [tenantKey, projectionName],
   );
