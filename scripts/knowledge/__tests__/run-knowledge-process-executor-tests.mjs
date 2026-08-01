@@ -11,7 +11,7 @@ import {
   createProcessResult,
   runKnowledgeProcess,
 } from "../processing/executor-framework.mjs";
-import { DEFAULT_PROCESS_HANDLERS, assertTerminalSourceState } from "../processing/process-handlers.mjs";
+import { DEFAULT_PROCESS_HANDLERS, SOURCE_IDENTITY_MAP, assertTerminalSourceState } from "../processing/process-handlers.mjs";
 import {
   buildDecisionRowsForBatch,
   buildReviewBatches,
@@ -432,13 +432,22 @@ await test("evidence extraction creates lineage-backed candidates without accept
   const store = new InMemoryKnowledgeExecutionStore({
     parserVisibleSources: [
       {
-        sourceRef: "src-rel",
-        sourceVersionRef: "src-rel-v1",
-        sourceName: "relationship-load-template.csv",
+        sourceRef: "src-app",
+        sourceVersionRef: "src-app-v1",
+        sourceName: "04_applications_systems.csv",
         sourceFamily: "parser_visible_source_sample",
         parserContractRef: "airline-source-parser-visible-v1",
         contentText:
-          "relationship_id,from_object_type,from_source_native_id,relationship_type,to_object_type,to_source_native_id,current_target_state\nREL-1,application,APP-1,depends_on,data_product,DATA-1,current\n",
+          "original_row_id,tenant_key,system_name,vendor,business_function\nAPP-1,airline-demo-new,Crew Scheduling,Vendor A,Crew Operations\n",
+      },
+      {
+        sourceRef: "src-rel",
+        sourceVersionRef: "src-rel-v1",
+        sourceName: "12_relationships.csv",
+        sourceFamily: "parser_visible_source_sample",
+        parserContractRef: "airline-source-parser-visible-v1",
+        contentText:
+          "record_id,from_object_type,from_object_name,from_source_native_id,relationship_type,to_object_type,to_object_name,to_source_native_id,current_target_state\nREL-1,application,Crew Scheduling,APP-1,depends_on,data_product,Crew Data Mart,DATA-1,current\n",
       },
     ],
   });
@@ -448,11 +457,113 @@ await test("evidence extraction creates lineage-backed candidates without accept
     store,
   });
   assert.equal(result.status, "passed");
-  assert.equal(store.evidenceRecords.length, 1);
-  assert.equal(store.entityCandidates.length, 1);
-  assert.equal(store.factCandidates.length, 1);
+  assert.equal(store.evidenceRecords.length, 2);
+  assert.equal(store.entityCandidates.length, 2);
+  assert.equal(store.factCandidates.length, 2);
   assert.equal(store.relationshipCandidates.length, 1);
   assert.equal(store.knowledgeEntities.length, 0);
+  const appCandidate = store.entityCandidates.find((candidate) => candidate.sourceVersionRef === "src-app-v1");
+  assert.equal(appCandidate.displayName, "Crew Scheduling");
+  assert.equal(appCandidate.naturalKey, "application_platform:app_1");
+  assert.deepEqual(appCandidate.evidenceRefs, ["ev:src-app-v1:1"]);
+  assert.equal(appCandidate.candidatePayload.source_row_ref, "src-app:row:1");
+  assert.equal(appCandidate.candidatePayload.original_row_id, "APP-1");
+});
+
+await test("source identity map covers every loaded source without tenant-name fallback", async () => {
+  const tenantKey = "airline-demo-new";
+  const sources = Object.entries(SOURCE_IDENTITY_MAP).map(([sourceName, identity], index) => {
+    const sourceRef = `src-identity-${index + 1}`;
+    const idColumn = identity.idColumns?.[0] || "original_row_id";
+    const nameColumns = identity.nameColumns ?? [identity.nameColumn];
+    const idCompositeColumns = identity.idCompositeColumns ?? [];
+    const headers = Array.from(new Set(["tenant_key", idColumn, ...idCompositeColumns, ...nameColumns]));
+    const valueForHeader = (header) => {
+      if (header === "tenant_key") return tenantKey;
+      if (nameColumns.includes(header)) return `Declared ${header} ${index + 1}`;
+      if (idCompositeColumns.includes(header)) return `ID ${header} ${index + 1}`;
+      return `SRC-${String(index + 1).padStart(2, "0")}`;
+    };
+    const values = headers.map(valueForHeader);
+    const expectedDisplayName = nameColumns.map((column) => `Declared ${column} ${index + 1}`).join(" | ");
+    const expectedObjectId = idCompositeColumns.length
+      ? idCompositeColumns.map(valueForHeader).join("|")
+      : `SRC-${String(index + 1).padStart(2, "0")}`;
+    return {
+      sourceRef,
+      sourceVersionRef: `${sourceRef}-v1`,
+      sourceName,
+      sourceFamily: "parser_visible_source_sample",
+      parserContractRef: "airline-source-parser-visible-v1",
+      contentText: `${headers.join(",")}\n${values.join(",")}\n`,
+      expectedEntityType: identity.entityType,
+      expectedDisplayName,
+      expectedObjectId,
+    };
+  });
+  const context = baseContext({
+    canonicalProcess: "evidence-extract-v1",
+    processName: "airline-demo-new-evidence-extract-v1",
+    idempotencyKey: "identity-map-all-sources-test",
+  });
+  const store = new InMemoryKnowledgeExecutionStore({ parserVisibleSources: sources });
+  const result = await runKnowledgeProcess({
+    context,
+    handler: DEFAULT_PROCESS_HANDLERS["evidence-extract-v1"],
+    store,
+  });
+  assert.equal(result.status, "passed");
+  assert.equal(store.entityCandidates.length, Object.keys(SOURCE_IDENTITY_MAP).length);
+  for (const source of sources) {
+    const candidate = store.entityCandidates.find((row) => row.sourceVersionRef === source.sourceVersionRef);
+    assert.ok(candidate, `missing candidate for ${source.sourceName}`);
+    assert.equal(candidate.entityType, source.expectedEntityType, source.sourceName);
+    assert.equal(candidate.displayName, source.expectedDisplayName, source.sourceName);
+    assert.notEqual(candidate.displayName, tenantKey, source.sourceName);
+    assert.equal(candidate.sourceObjectRef, source.expectedObjectId, source.sourceName);
+    assert.deepEqual(candidate.evidenceRefs, [`ev:${source.sourceVersionRef}:1`], source.sourceName);
+  }
+  assert.equal(new Set(store.entityCandidates.map((candidate) => candidate.displayName)).size, store.entityCandidates.length);
+});
+
+await test("source identity extraction fails closed when mapping or name column is absent", async () => {
+  const context = baseContext({
+    canonicalProcess: "evidence-extract-v1",
+    processName: "airline-demo-new-evidence-extract-v1",
+    idempotencyKey: "identity-map-fail-closed-test",
+  });
+  await assert.rejects(
+    () => runKnowledgeProcess({
+      context,
+      handler: DEFAULT_PROCESS_HANDLERS["evidence-extract-v1"],
+      store: new InMemoryKnowledgeExecutionStore({
+        parserVisibleSources: [{
+          sourceRef: "src-unmapped",
+          sourceVersionRef: "src-unmapped-v1",
+          sourceName: "unmapped_source.csv",
+          sourceFamily: "parser_visible_source_sample",
+          contentText: "tenant_key,value\nairline-demo-new,Looks valid\n",
+        }],
+      }),
+    }),
+    (error) => error instanceof KnowledgeProcessError && error.code === "source_identity_mapping_missing",
+  );
+  await assert.rejects(
+    () => runKnowledgeProcess({
+      context: { ...context, idempotencyKey: "identity-name-column-fail-test" },
+      handler: DEFAULT_PROCESS_HANDLERS["evidence-extract-v1"],
+      store: new InMemoryKnowledgeExecutionStore({
+        parserVisibleSources: [{
+          sourceRef: "src-missing-name",
+          sourceVersionRef: "src-missing-name-v1",
+          sourceName: "07_vendors_contracts.csv",
+          sourceFamily: "parser_visible_source_sample",
+          contentText: "tenant_key,original_row_id,contract_name\nairline-demo-new,VEND-1,Contract Only\n",
+        }],
+      }),
+    }),
+    (error) => error instanceof KnowledgeProcessError && error.code === "source_name_column_missing",
+  );
 });
 
 await test("review apply blocks without explicit accepted review decisions", async () => {

@@ -139,75 +139,101 @@ function normalizeKey(value) {
     .replace(/^_+|_+$/g, "");
 }
 
-function displayNameFromRow(row, fallback) {
-  const preferred = [
-    "application_name",
-    "data_product_name",
-    "vendor_public_reference",
-    "contract_id",
-    "program_name",
-    "process_step",
-    "report_name",
-    "kpi_name",
-    "risk_name",
-    "control_name",
-    "lot_name",
-    "proposal_id",
-    "relationship_id",
-  ];
-  for (const key of preferred) {
-    if (row[key]) return String(row[key]);
+export const SOURCE_IDENTITY_MAP = Object.freeze({
+  "00_enterprise_profile.csv": { entityType: "enterprise", nameColumn: "entity_name", idColumns: ["original_row_id"] },
+  "01_business_functions.csv": { entityType: "business_function", nameColumn: "function_name", idColumns: ["original_row_id"] },
+  "02_org_ownership.csv": { entityType: "organization", nameColumn: "org_unit", idColumns: ["original_row_id"] },
+  "03_workforce_roles.csv": { entityType: "workforce_role", nameColumn: "persona_or_role", idColumns: ["original_row_id"] },
+  "04_applications_systems.csv": { entityType: "application_platform", nameColumn: "system_name", idColumns: ["original_row_id"] },
+  "05_data_assets_integrations.csv": { entityType: "data_asset", nameColumns: ["data_asset_name", "source_system", "target_system"], idColumns: ["original_row_id"] },
+  "06_infrastructure_platforms.csv": { entityType: "infrastructure_platform", nameColumn: "platform_name", idColumns: ["original_row_id"] },
+  "07_vendors_contracts.csv": { entityType: "vendor", nameColumn: "vendor_name", idColumns: ["original_row_id"] },
+  "08_spend_value.csv": { entityType: "spend_category", nameColumn: "spend_category", idColumns: ["original_row_id"] },
+  "09_programs_initiatives.csv": { entityType: "program", nameColumn: "program_name", idColumns: ["original_row_id"] },
+  "10_ai_automation_use_cases.csv": { entityType: "ai_use_case", nameColumn: "use_case_name", idColumns: ["original_row_id"] },
+  "11_risks_controls.csv": { entityType: "risk_control", nameColumn: "risk_or_control_name", idColumns: ["original_row_id"] },
+  "12_relationships.csv": { entityType: "relationship", nameColumns: ["from_object_name", "relationship_type", "to_object_name"], idColumns: ["record_id", "source_row_id", "evidence_id"] },
+  "12b_interview_initiative_metric_crosswalk.csv": {
+    entityType: "interview_crosswalk",
+    nameColumn: "interview_mention_text",
+    idCompositeColumns: ["mention_field", "canonical_object_type", "interview_mention_text"],
+    idColumns: [],
+  },
+  "13_evidence_sources.csv": { entityType: "evidence_source", nameColumns: ["context_item", "evidence_id"], idColumns: ["original_row_id", "evidence_id"] },
+  "14_metrics_outcomes.csv": { entityType: "metric", nameColumn: "metric_name", idColumns: ["original_row_id"] },
+  "15_industry_context_patterns.csv": { entityType: "industry_pattern", nameColumn: "pattern_name", idColumns: ["original_row_id"] },
+  "16_expert_lenses.csv": { entityType: "expert_lens", nameColumn: "lens_name", idColumns: ["original_row_id"] },
+  "17_service_scope_managed_services.csv": { entityType: "service_scope", nameColumn: "service_name", idColumns: ["original_row_id"] },
+  "18_operational_process_evidence.csv": { entityType: "business_process", nameColumn: "process_name", idColumns: ["original_row_id"] },
+  "19_data_analytics_platform_maturity.csv": { entityType: "analytics_maturity", nameColumns: ["platform_or_capability", "maturity_dimension"], idColumns: ["original_row_id"] },
+  "20_itsm_ticket_sla_performance.csv": { entityType: "service_performance_observation", nameColumn: "system_name", idColumns: ["servicenow_ci_sys_id"] },
+  "SA08_AI_Benefits_Realization_Usage_Ledger.csv": { entityType: "ai_benefit_record", nameColumn: "program_name", idColumns: ["source_record_id", "evidence_id"] },
+  "SA09_AI_Tool_Usage_Feed.csv": { entityType: "ai_tool_usage", nameColumn: "tool_name", idColumns: ["source_record_id", "evidence_id"] },
+  "SA10_AI_Value_Interview_Evidence.csv": { entityType: "interview_evidence", nameColumn: "question", idColumns: ["source_record_id", "evidence_id"] },
+  "SA11_AI_KPI_Operational_Outcome_Feed.csv": { entityType: "kpi_outcome", nameColumns: ["kpi_name", "ai_use_case_id"], idColumns: ["source_record_id", "evidence_id"] },
+});
+
+function sourceIdentityFor(source) {
+  const sourceName = source.sourceName ?? source.source_name ?? "";
+  const identity = SOURCE_IDENTITY_MAP[sourceName];
+  if (!identity) {
+    throw new KnowledgeProcessError("source_identity_mapping_missing", `No source identity mapping declared for ${sourceName}.`, {
+      sourceName,
+      sourceRef: source.sourceRef,
+      sourceVersionRef: source.sourceVersionRef,
+    });
   }
-  const firstString = Object.values(row).find((value) => String(value ?? "").trim());
-  return String(firstString ?? fallback);
+  return identity;
 }
 
-function objectIdFromRow(row, fallback) {
+function displayNameFromRow(source, row, identity) {
+  if (Array.isArray(identity.nameColumns) && identity.nameColumns.length) {
+    const values = identity.nameColumns.map((column) => String(row[column] ?? "").trim());
+    const missingIndex = values.findIndex((value) => !value);
+    if (missingIndex === -1) return values.join(" | ");
+    throw new KnowledgeProcessError("source_name_column_missing", `Source row is missing declared name column ${identity.nameColumns[missingIndex]}.`, {
+      sourceName: source.sourceName ?? source.source_name ?? "",
+      sourceVersionRef: source.sourceVersionRef,
+      nameColumn: identity.nameColumns[missingIndex],
+      nameColumns: identity.nameColumns,
+    });
+  }
+  const value = row[identity.nameColumn];
+  if (String(value ?? "").trim()) return String(value).trim();
+  throw new KnowledgeProcessError("source_name_column_missing", `Source row is missing declared name column ${identity.nameColumn}.`, {
+    sourceName: source.sourceName ?? source.source_name ?? "",
+    sourceVersionRef: source.sourceVersionRef,
+    nameColumn: identity.nameColumn,
+  });
+}
+
+function objectIdFromRow(row, identity, fallback) {
+  if (Array.isArray(identity.idCompositeColumns) && identity.idCompositeColumns.length) {
+    const values = identity.idCompositeColumns.map((column) => String(row[column] ?? "").trim());
+    if (values.every(Boolean)) return values.join("|");
+    throw new KnowledgeProcessError("source_identity_column_missing", `Source row is missing a declared identity column.`, {
+      idCompositeColumns: identity.idCompositeColumns,
+      missingColumns: identity.idCompositeColumns.filter((column) => !String(row[column] ?? "").trim()),
+    });
+  }
   const preferred = [
-    "application_id",
-    "data_product_id",
-    "vendor_id",
-    "contract_id",
-    "program_id",
-    "process_id",
-    "report_id",
-    "kpi_id",
-    "risk_id",
-    "control_id",
-    "lot_id",
-    "proposal_id",
-    "relationship_id",
-    "infra_id",
-    "integration_id",
-    "volume_id",
-    "workforce_id",
-    "rate_card_id",
-    "invoice_source",
-    "sla_history_source",
+    ...(identity.idColumns ?? []),
+    "original_row_id",
+    "source_record_id",
   ];
   for (const key of preferred) {
-    if (row[key]) return String(row[key]);
+    if (String(row[key] ?? "").trim()) return String(row[key]).trim();
   }
   return fallback;
 }
 
-function entityTypeForSource(source, row = {}) {
-  const name = normalizeKey(source.sourceName ?? source.source_name ?? "");
-  if (name.includes("application")) return "application_platform";
-  if (name.includes("data") || name.includes("analytics") || name.includes("bi_report")) return "data_analytics";
-  if (name.includes("vendor_contract") || name.includes("contract")) return "contract";
-  if (name.includes("vendor")) return "vendor";
-  if (name.includes("program")) return "program";
-  if (name.includes("risk")) return "risk";
-  if (name.includes("control")) return "control";
-  if (name.includes("kpi") || name.includes("sla")) return "kpi";
-  if (name.includes("relationship")) return "relationship";
-  if (name.includes("infrastructure") || name.includes("cloud")) return "infrastructure";
-  if (name.includes("integration")) return "integration";
-  if (name.includes("procurement") || row.lot_id || row.proposal_id) return "procurement_event";
-  if (name.includes("workforce")) return "workforce";
-  if (name.includes("process") || name.includes("irrops")) return "business_process";
-  return normalizeKey(source.sourceFamily ?? "source_record") || "source_record";
+function naturalKeyFromRow(entityType, row, objectId) {
+  const naturalPart = row.original_row_id || row.source_record_id || objectId;
+  return `${entityType}:${normalizeKey(naturalPart)}`;
+}
+
+function entityTypeForSource(identity) {
+  return identity.entityType;
 }
 
 function relationshipCandidateFromRow(source, row, sourceRowRef, evidenceRef) {
@@ -334,9 +360,11 @@ function buildCandidatesForParsedRows(parsedSources) {
   for (const source of parsedSources) {
     source.rows.forEach((row, index) => {
       const sourceRowRef = `${source.sourceRef || source.sourceVersionRef}:row:${index + 1}`;
-      const objectId = objectIdFromRow(row, sourceRowRef);
-      const displayName = displayNameFromRow(row, objectId);
-      const entityType = entityTypeForSource(source, row);
+      const identity = sourceIdentityFor(source);
+      const objectId = objectIdFromRow(row, identity, sourceRowRef);
+      const displayName = displayNameFromRow(source, row, identity);
+      const entityType = entityTypeForSource(identity);
+      const naturalKey = naturalKeyFromRow(entityType, row, objectId);
       const evidenceRef = `ev:${source.sourceVersionRef}:${index + 1}`;
       const candidateRef = `entcand:${source.sourceVersionRef}:${objectId}`;
 
@@ -358,9 +386,27 @@ function buildCandidatesForParsedRows(parsedSources) {
         sourceVersionRef: source.sourceVersionRef,
         entityType,
         displayName,
+        naturalKey,
+        naturalKeyBasis: {
+          sourceObjectRef: objectId,
+          sourceRowRef,
+          fields: identity.idColumns ?? [],
+          compositeFields: identity.idCompositeColumns ?? [],
+          nameColumn: identity.nameColumn ?? null,
+          nameColumns: identity.nameColumns ?? [],
+        },
+        sourceRowRef,
+        sourceObjectRef: objectId,
+        originalRowId: row.original_row_id || row.source_record_id || objectId,
+        evidenceRefs: [evidenceRef],
         confidence: 0.68,
         candidatePayload: {
+          natural_key: naturalKey,
           source_native_id: objectId,
+          source_row_ref: sourceRowRef,
+          source_object_ref: objectId,
+          original_row_id: row.original_row_id || row.source_record_id || objectId,
+          display_name: displayName,
           source_family: source.sourceFamily,
           raw_row: row,
         },
