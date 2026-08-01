@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a read-only verification command for the isolated synthetic lab lane and hardens candidate extraction replay so regenerated candidates replace stale working rows for the same source versions. The command checks whether the repaired Phase A candidate identity path produced the expected source, evidence, entity, fact, and key entity-type counts after the governed jobs run.
+Adds a read-only verification command for the isolated synthetic lab lane and hardens candidate extraction replay so regenerated candidates replace stale working rows for the same source versions. It also preserves row-grain identity for relationship-source candidates whose source record identifiers repeat but whose declared relationship triples differ. The command checks whether the repaired Phase A candidate identity path produced the expected source, evidence, entity, fact, and key entity-type counts after the governed jobs run.
 
 ## Layer Impact
 
@@ -19,6 +19,8 @@ Lane: `client-data-lane`.
 Layer 2 evidence: reads source registry and evidence counts for reconciliation only. It does not insert, update, or delete evidence.
 
 Layer 3 candidates: reads candidate counts, entity-type counts, resolved identity state, and display-name quality checks. Candidate extraction replay now deletes stale working candidates for the replayed source versions before inserting regenerated rows. It does not promote candidates.
+
+Layer 3 relationship-source candidates: uses the declared relationship triple as the row-grain candidate identity so repeated source record identifiers do not collapse distinct source rows during replay.
 
 Layer 4 products: no product read path changes.
 
@@ -34,6 +36,7 @@ Layer 4 products: no product read path changes.
 
 - `scripts/qa/skyharbor-phase-a-candidate-readback.mjs`
 - `scripts/knowledge/processing/executor-framework.mjs`
+- `scripts/knowledge/processing/process-handlers.mjs`
 - `scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs`
 - `package.json` script `qa:skair-phase-a-candidate-readback`
 
@@ -44,6 +47,7 @@ Local validation:
 - `node --check scripts/qa/skyharbor-phase-a-candidate-readback.mjs` — passed.
 - `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json ok')"` — passed.
 - `npm run test:knowledge-process-executors` — passed.
+- Relationship-source duplicate-record regression — passed as part of `npm run test:knowledge-process-executors`.
 - restricted-token added-line scan — passed.
 - `npm run release:check` — passed.
 
