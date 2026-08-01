@@ -64,6 +64,7 @@
     "foundation-v3:migrate:skair-ingest-role:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260801190000_skyharbor_air_ingest_role_hardening.sql",
     "foundation-v3:migrate:skair-ingest-role:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260801190000_skyharbor_air_ingest_role_hardening.sql",
     "qa:skair-day-one-breach-readback": "node scripts/qa/skyharbor-day-one-breach-readback.mjs --emit-proof-bundle",
+    "qa:skair-prepromotion-guard-readback": "node scripts/qa/skyharbor-prepromotion-guard-readback.mjs --emit-proof-bundle",
     "test:airline-phase1-plan": "node scripts/knowledge/validate-airline-phase1-plan.mjs",
     "test:airline-source-corpus-repair": "node scripts/knowledge/build-airline-source-corpus-repair.mjs",
     "test:airline-source-landing": "node scripts/knowledge/__tests__/run-airline-source-landing-tests.mjs",
