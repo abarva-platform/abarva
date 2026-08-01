@@ -677,6 +677,7 @@
     "test:knowledge-process-executors": "node scripts/knowledge/__tests__/run-knowledge-process-executor-tests.mjs",
     "test:review-batch-dimensions": "node scripts/knowledge/__tests__/run-review-batch-dimensions-tests.mjs",
     "qa:airline-e2e-live-reconciliation-readback": "node scripts/qa/airline-e2e-live-reconciliation-readback.mjs --require-db --emit-proof-bundle",
+    "qa:skair-phase-a-candidate-readback": "node scripts/qa/skyharbor-phase-a-candidate-readback.mjs --emit-proof-bundle",
     "ops:airline-grant-reconciliation-readback": "node scripts/ops/airline-grant-reconciliation-readback.mjs"
   },
   "dependencies": {
