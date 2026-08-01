@@ -152,7 +152,12 @@ export const SOURCE_IDENTITY_MAP = Object.freeze({
   "09_programs_initiatives.csv": { entityType: "program", nameColumn: "program_name", idColumns: ["original_row_id"] },
   "10_ai_automation_use_cases.csv": { entityType: "ai_use_case", nameColumn: "use_case_name", idColumns: ["original_row_id"] },
   "11_risks_controls.csv": { entityType: "risk_control", nameColumn: "risk_or_control_name", idColumns: ["original_row_id"] },
-  "12_relationships.csv": { entityType: "relationship", nameColumns: ["from_object_name", "relationship_type", "to_object_name"], idColumns: ["record_id", "source_row_id", "evidence_id"] },
+  "12_relationships.csv": {
+    entityType: "relationship",
+    nameColumns: ["from_object_name", "relationship_type", "to_object_name"],
+    idCompositeColumns: ["from_object_name", "relationship_type", "to_object_name"],
+    idColumns: ["record_id", "source_row_id", "evidence_id"],
+  },
   "12b_interview_initiative_metric_crosswalk.csv": {
     entityType: "interview_crosswalk",
     nameColumn: "interview_mention_text",
