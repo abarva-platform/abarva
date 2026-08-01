@@ -239,6 +239,17 @@ await test("promotion SQL casts enum-backed state columns explicitly", async () 
   assert.ok(source.includes("coalesce(nullif(f.fact_value->>'availability_state','')::abarva_availability_state, 'accepted'::abarva_availability_state)"));
 });
 
+await test("promotion upsert can revive retired canonical rows from fresh accepted decisions", async () => {
+  const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
+  assert.ok(source.includes("authority_state=EXCLUDED.authority_state"));
+  assert.ok(source.includes("availability_state=EXCLUDED.availability_state"));
+  assert.ok(source.includes("freshness_state=EXCLUDED.freshness_state"));
+  assert.ok(source.includes("effective_to=NULL"));
+  assert.ok(source.includes("entity_ref=EXCLUDED.entity_ref"));
+  assert.ok(source.includes("from_entity_ref=EXCLUDED.from_entity_ref"));
+  assert.ok(source.includes("to_entity_ref=EXCLUDED.to_entity_ref"));
+});
+
 await test("relationship promotion resolves endpoints from an indexed accepted entity map", async () => {
   const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
   assert.ok(source.includes("CREATE TEMP TABLE tmp_promoted_entity_map ON COMMIT DROP AS"));

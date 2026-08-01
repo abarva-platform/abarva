@@ -1426,7 +1426,14 @@ export class PostgresKnowledgeExecutionStore {
         ) promoted_entities
         ON CONFLICT (tenant_key, entity_ref)
         DO UPDATE SET canonical_payload=EXCLUDED.canonical_payload,
-          content_hash=EXCLUDED.content_hash, created_run_ref=EXCLUDED.created_run_ref
+          display_name=EXCLUDED.display_name,
+          authority_state=EXCLUDED.authority_state,
+          availability_state=EXCLUDED.availability_state,
+          freshness_state=EXCLUDED.freshness_state,
+          accepted_evidence_refs=EXCLUDED.accepted_evidence_refs,
+          content_hash=EXCLUDED.content_hash,
+          created_run_ref=EXCLUDED.created_run_ref,
+          effective_to=NULL
       `,
       [context.tenantKey, context.runId],
     );
@@ -1462,7 +1469,13 @@ export class PostgresKnowledgeExecutionStore {
         WHERE f.tenant_key=$1
         ON CONFLICT (tenant_key, fact_ref)
         DO UPDATE SET fact_value=EXCLUDED.fact_value,
-          evidence_refs=EXCLUDED.evidence_refs, content_hash=EXCLUDED.content_hash
+          entity_ref=EXCLUDED.entity_ref,
+          authority_state=EXCLUDED.authority_state,
+          availability_state=EXCLUDED.availability_state,
+          freshness_state=EXCLUDED.freshness_state,
+          evidence_refs=EXCLUDED.evidence_refs,
+          content_hash=EXCLUDED.content_hash,
+          effective_to=NULL
       `,
       [context.tenantKey],
     );
@@ -1618,7 +1631,15 @@ export class PostgresKnowledgeExecutionStore {
         ) promoted_relationships
         ON CONFLICT (tenant_key, relationship_ref)
         DO UPDATE SET evidence_refs=EXCLUDED.evidence_refs,
-          relationship_payload=EXCLUDED.relationship_payload, content_hash=EXCLUDED.content_hash
+          from_entity_ref=EXCLUDED.from_entity_ref,
+          to_entity_ref=EXCLUDED.to_entity_ref,
+          current_target_state=EXCLUDED.current_target_state,
+          authority_state=EXCLUDED.authority_state,
+          availability_state=EXCLUDED.availability_state,
+          freshness_state=EXCLUDED.freshness_state,
+          relationship_payload=EXCLUDED.relationship_payload,
+          content_hash=EXCLUDED.content_hash,
+          effective_to=NULL
       `,
     );
 
