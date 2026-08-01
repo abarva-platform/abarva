@@ -606,6 +606,45 @@ await test("source identity map covers every loaded source without tenant-name f
   assert.equal(new Set(store.entityCandidates.map((candidate) => candidate.displayName)).size, store.entityCandidates.length);
 });
 
+await test("relationship source identity stays row-grain when record ids repeat", async () => {
+  const context = baseContext({
+    canonicalProcess: "evidence-extract-v1",
+    processName: "airline-demo-new-evidence-extract-v1",
+    idempotencyKey: "relationship-duplicate-record-id-test",
+  });
+  const store = new InMemoryKnowledgeExecutionStore({
+    parserVisibleSources: [{
+      sourceRef: "src-rel-dup",
+      sourceVersionRef: "src-rel-dup-v1",
+      sourceName: "12_relationships.csv",
+      sourceFamily: "parser_visible_source_sample",
+      parserContractRef: "airline-source-parser-visible-v1",
+      contentText: [
+        "record_id,from_object_name,relationship_type,to_object_name",
+        "REL-1,Crew Scheduling,depends_on,Crew Data Mart",
+        "REL-1,Crew Scheduling,owned_by,Flight Operations",
+      ].join("\n"),
+    }],
+  });
+  const result = await runKnowledgeProcess({
+    context,
+    handler: DEFAULT_PROCESS_HANDLERS["evidence-extract-v1"],
+    store,
+  });
+  assert.equal(result.status, "passed");
+  assert.equal(store.evidenceRecords.length, 2);
+  assert.equal(store.entityCandidates.length, 2);
+  assert.equal(store.factCandidates.length, 2);
+  assert.equal(new Set(store.entityCandidates.map((candidate) => candidate.candidateRef)).size, 2);
+  assert.deepEqual(
+    store.entityCandidates.map((candidate) => candidate.sourceObjectRef),
+    [
+      "Crew Scheduling|depends_on|Crew Data Mart",
+      "Crew Scheduling|owned_by|Flight Operations",
+    ],
+  );
+});
+
 await test("source identity extraction fails closed when mapping or name column is absent", async () => {
   const context = baseContext({
     canonicalProcess: "evidence-extract-v1",
