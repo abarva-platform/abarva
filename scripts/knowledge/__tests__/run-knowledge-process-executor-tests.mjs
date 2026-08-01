@@ -472,6 +472,88 @@ await test("review apply blocks without explicit accepted review decisions", asy
   assert.equal(store.knowledgeEntities.length, 0);
 });
 
+await test("reconciliation blocks source application rows that never reach consumption", async () => {
+  const context = baseContext({
+    canonicalProcess: "reconciliation-audit-v1",
+    processName: "airline-demo-new-reconciliation-audit-v1",
+    idempotencyKey: "source-domain-coverage-block-test",
+  });
+  const store = new InMemoryKnowledgeExecutionStore({
+    baselines: [
+      {
+        knowledgeBaselineRef: "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+        isActive: true,
+      },
+    ],
+    sourceDomainCoverage: [
+      {
+        domainKey: "applications",
+        sourceRows: 125,
+        sourceVersions: 1,
+        candidateRows: 125,
+        decisionRows: 125,
+        acceptedRows: 0,
+        deferredRows: 125,
+        rejectedRows: 0,
+        consumptionRows: 0,
+        requiresProjection: true,
+      },
+    ],
+  });
+
+  await assert.rejects(
+    () =>
+      runKnowledgeProcess({
+        context,
+        handler: DEFAULT_PROCESS_HANDLERS["reconciliation-audit-v1"],
+        store,
+      }),
+    (error) =>
+      error instanceof KnowledgeProcessError &&
+      error.code === "process_verification_failed" &&
+      error.details.blockers.includes("source_to_consumption_unpublished:applications"),
+  );
+});
+
+await test("reconciliation passes source application rows only when consumption projection exists", async () => {
+  const context = baseContext({
+    canonicalProcess: "reconciliation-audit-v1",
+    processName: "airline-demo-new-reconciliation-audit-v1",
+    idempotencyKey: "source-domain-coverage-pass-test",
+  });
+  const store = new InMemoryKnowledgeExecutionStore({
+    baselines: [
+      {
+        knowledgeBaselineRef: "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+        isActive: true,
+      },
+    ],
+    sourceDomainCoverage: [
+      {
+        domainKey: "applications",
+        sourceRows: 125,
+        sourceVersions: 1,
+        candidateRows: 125,
+        decisionRows: 125,
+        acceptedRows: 125,
+        deferredRows: 0,
+        rejectedRows: 0,
+        consumptionRows: 125,
+        requiresProjection: true,
+      },
+    ],
+  });
+
+  const result = await runKnowledgeProcess({
+    context,
+    handler: DEFAULT_PROCESS_HANDLERS["reconciliation-audit-v1"],
+    store,
+  });
+
+  assert.equal(result.status, "passed");
+  assert.equal(store.reconciliationLedger[0].sourceCoverage[0].status, "passed");
+});
+
 await test("hidden truth validation allows ordinary evaluator notes but blocks restricted markers", async () => {
   const allowedStore = new InMemoryKnowledgeExecutionStore({
     entityCandidates: [

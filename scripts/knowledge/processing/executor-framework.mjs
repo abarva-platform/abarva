@@ -170,6 +170,7 @@ export class InMemoryKnowledgeExecutionStore {
     this.baselines = seed.baselines ?? [];
     this.projections = seed.projections ?? [];
     this.reconciliationLedger = seed.reconciliationLedger ?? [];
+    this.sourceDomainCoverage = seed.sourceDomainCoverage ?? [];
     this.metricParity = seed.metricParity ?? {
       knowledgeBaselineRef: seed.baselines?.find?.((row) => row.isActive)?.knowledgeBaselineRef ?? "baseline:test",
       passedCount: 0,
@@ -450,6 +451,7 @@ export class InMemoryKnowledgeExecutionStore {
 
   async runReconciliationAudit(context) {
     const baseline = await this.activeBaseline(context);
+    const sourceCoverage = await this.runSourceToConsumptionDispositionAudit(context, baseline);
     const result = {
       knowledgeBaselineRef: baseline?.knowledgeBaselineRef ?? null,
       reconstructedExact: 0,
@@ -459,9 +461,37 @@ export class InMemoryKnowledgeExecutionStore {
       notReconstructed: 0,
       notExpectedFromVisibleSources: 0,
       mutatedKnowledge: false,
+      sourceCoverage,
+      sourceCoverageBlockers: sourceCoverage.filter((row) => row.status === "failed"),
     };
     this.reconciliationLedger.push(result);
     return result;
+  }
+
+  async runSourceToConsumptionDispositionAudit(_context, baseline = null) {
+    const rows =
+      this.sourceDomainCoverage.length > 0
+        ? this.sourceDomainCoverage
+          : summarizeInMemorySourceDomainCoverage({
+            sources: this.parserVisibleSources,
+            candidates: [
+              ...this.entityCandidates,
+              ...this.factCandidates,
+              ...this.relationshipCandidates,
+            ],
+            reviewDecisions: this.reviewDecisions,
+            projections: this.projections,
+            baseline,
+          });
+    return rows.map((row) => ({
+      ...row,
+      status:
+        Number(row.sourceRows ?? 0) > 0 &&
+        row.requiresProjection !== false &&
+        Number(row.consumptionRows ?? 0) === 0
+          ? "failed"
+          : "passed",
+    }));
   }
 
   async runMetricParityAudit() {
@@ -2397,6 +2427,8 @@ export class PostgresKnowledgeExecutionStore {
       return { knowledgeBaselineRef: null, mutatedKnowledge: false };
     }
     const counts = await this.verifyHomeReadModel(context);
+    const sourceCoverage = await this.runSourceToConsumptionDispositionAudit(context, baseline);
+    const sourceCoverageBlockers = sourceCoverage.filter((row) => row.status === "failed");
     const reconciliationRef = `${baseline.knowledge_baseline_ref}:core:${context.runId}`;
     await this.client.query(
       `
@@ -2431,7 +2463,185 @@ export class PostgresKnowledgeExecutionStore {
       notReconstructed: 0,
       notExpectedFromVisibleSources: 0,
       mutatedKnowledge: false,
+      sourceCoverage,
+      sourceCoverageBlockers,
     };
+  }
+
+  async runSourceToConsumptionDispositionAudit(context, baseline) {
+    const result = await this.client.query(
+      `
+        WITH source_domains AS (
+          SELECT
+            CASE
+              WHEN lower(coalesce(s.source_name, '') || ' ' || coalesce(s.source_family, '')) ~ '(application|applications|system|systems|cmdb)' THEN 'applications'
+              WHEN lower(coalesce(s.source_name, '') || ' ' || coalesce(s.source_family, '')) ~ '(vendor|contract|contracts|procurement)' THEN 'vendors'
+              WHEN lower(coalesce(s.source_name, '') || ' ' || coalesce(s.source_family, '')) ~ '(data|analytics|report|integration)' THEN 'data_products'
+              WHEN lower(coalesce(s.source_name, '') || ' ' || coalesce(s.source_family, '')) ~ '(technology|infrastructure|platform|cloud)' THEN 'technology'
+              WHEN lower(coalesce(s.source_name, '') || ' ' || coalesce(s.source_family, '')) ~ '(metric|kpi|sla|observation)' THEN 'metrics'
+              WHEN lower(coalesce(s.source_name, '') || ' ' || coalesce(s.source_family, '')) ~ '(relationship|dependency|edge)' THEN 'relationships'
+              ELSE 'other'
+            END AS domain_key,
+            coalesce(sum(nullif((l.event_payload->>'rowCount'), '')::int), 0)::int AS source_rows,
+            count(DISTINCT v.source_version_ref)::int AS source_versions
+          FROM source_registry.source s
+          JOIN source_registry.source_version v
+            ON v.tenant_key = s.tenant_key
+           AND v.source_ref = s.source_ref
+          LEFT JOIN audit.lineage_event l
+            ON l.tenant_key = s.tenant_key
+           AND l.source_version_ref = v.source_version_ref
+           AND l.lineage_ref LIKE 'parse:%'
+          WHERE s.tenant_key=$1
+            AND s.source_visibility = 'client_visible'
+            AND s.source_basis <> 'restricted_evaluator'
+            AND s.metadata->>'releaseId' = $2
+          GROUP BY 1
+        ),
+        candidate_inventory AS (
+          SELECT tenant_key, source_version_ref, 'entity_candidate' AS candidate_type, candidate_ref,
+            CASE
+              WHEN entity_type ILIKE '%application%' THEN 'applications'
+              WHEN entity_type ILIKE '%vendor%' OR entity_type ILIKE '%contract%' THEN 'vendors'
+              WHEN entity_type ILIKE '%data%' THEN 'data_products'
+              WHEN entity_type ILIKE '%platform%' OR entity_type ILIKE '%technology%' OR entity_type ILIKE '%infrastructure%' OR entity_type ILIKE '%integration%' THEN 'technology'
+              ELSE 'other'
+            END AS domain_key
+          FROM working.entity_candidate
+          WHERE tenant_key=$1
+          UNION ALL
+          SELECT tenant_key, source_version_ref, 'fact_candidate', candidate_ref,
+            CASE
+              WHEN fact_type ILIKE '%application%' THEN 'applications'
+              WHEN fact_type ILIKE '%vendor%' OR fact_type ILIKE '%contract%' THEN 'vendors'
+              WHEN fact_type ILIKE '%data%' OR fact_type ILIKE '%analytics%' THEN 'data_products'
+              WHEN fact_type ILIKE '%metric%' OR fact_type ILIKE '%kpi%' OR fact_type ILIKE '%sla%' THEN 'metrics'
+              ELSE 'other'
+            END AS domain_key
+          FROM working.fact_candidate
+          WHERE tenant_key=$1
+          UNION ALL
+          SELECT tenant_key, source_version_ref, 'relationship_candidate', candidate_ref, 'relationships'
+          FROM working.relationship_candidate
+          WHERE tenant_key=$1
+        ),
+        candidate_domains AS (
+          SELECT domain_key, count(*)::int AS candidate_rows
+          FROM candidate_inventory
+          GROUP BY domain_key
+        ),
+        decision_domains AS (
+          SELECT c.domain_key,
+            count(d.review_ref)::int AS decision_rows,
+            count(*) FILTER (WHERE d.decision='accepted' AND d.review_state='accepted')::int AS accepted_rows,
+            count(*) FILTER (
+              WHERE d.decision IN ('deferred', 'needs_correction')
+                 OR d.review_state IN ('deferred', 'needs_correction')
+            )::int AS deferred_rows,
+            count(*) FILTER (WHERE d.decision='rejected' OR d.review_state='rejected')::int AS rejected_rows
+          FROM candidate_inventory c
+          LEFT JOIN governance.review_decision d
+            ON d.tenant_key = c.tenant_key
+           AND d.candidate_type = c.candidate_type
+           AND d.candidate_ref = c.candidate_ref
+          GROUP BY c.domain_key
+        ),
+        projection_domains AS (
+          SELECT 'applications' AS domain_key, count(*)::int AS consumption_rows
+          FROM consumption.application_inventory_v1
+          WHERE tenant_key=$1 AND knowledge_baseline_ref=$3
+          UNION ALL
+          SELECT 'vendors', count(*)::int
+          FROM consumption.vendor_contract_inventory_v1
+          WHERE tenant_key=$1 AND knowledge_baseline_ref=$3
+          UNION ALL
+          SELECT 'data_products', count(*)::int
+          FROM consumption.data_product_inventory_v1
+          WHERE tenant_key=$1 AND knowledge_baseline_ref=$3
+          UNION ALL
+          SELECT 'technology', count(*)::int
+          FROM consumption.technology_estate_v1
+          WHERE tenant_key=$1 AND knowledge_baseline_ref=$3
+          UNION ALL
+          SELECT 'metrics', count(*)::int
+          FROM consumption.metric_observation_v1
+          WHERE tenant_key=$1 AND knowledge_baseline_ref=$3
+          UNION ALL
+          SELECT 'relationships', count(*)::int
+          FROM consumption.relationship_edge_v1
+          WHERE tenant_key=$1 AND knowledge_baseline_ref=$3
+        ),
+        domains AS (
+          SELECT domain_key FROM source_domains
+          UNION
+          SELECT domain_key FROM candidate_domains
+          UNION
+          SELECT domain_key FROM projection_domains
+        )
+        SELECT d.domain_key AS "domainKey",
+          coalesce(s.source_rows, 0)::int AS "sourceRows",
+          coalesce(s.source_versions, 0)::int AS "sourceVersions",
+          coalesce(c.candidate_rows, 0)::int AS "candidateRows",
+          coalesce(dec.decision_rows, 0)::int AS "decisionRows",
+          coalesce(dec.accepted_rows, 0)::int AS "acceptedRows",
+          coalesce(dec.deferred_rows, 0)::int AS "deferredRows",
+          coalesce(dec.rejected_rows, 0)::int AS "rejectedRows",
+          coalesce(p.consumption_rows, 0)::int AS "consumptionRows",
+          CASE
+            WHEN d.domain_key IN ('applications', 'vendors', 'data_products', 'technology', 'metrics', 'relationships') THEN true
+            ELSE false
+          END AS "requiresProjection"
+        FROM domains d
+        LEFT JOIN source_domains s ON s.domain_key=d.domain_key
+        LEFT JOIN candidate_domains c ON c.domain_key=d.domain_key
+        LEFT JOIN decision_domains dec ON dec.domain_key=d.domain_key
+        LEFT JOIN projection_domains p ON p.domain_key=d.domain_key
+        ORDER BY d.domain_key
+      `,
+      [context.tenantKey, context.releaseId, baseline.knowledge_baseline_ref],
+    );
+    const rows = result.rows.map((row) => ({
+      ...row,
+      status:
+        Number(row.sourceRows ?? 0) > 0 &&
+        row.requiresProjection !== false &&
+        Number(row.consumptionRows ?? 0) === 0
+          ? "failed"
+          : "passed",
+    }));
+    for (const row of rows) {
+      await this.client.query(
+        `
+          INSERT INTO consumption.consumer_reconciliation_ledger (
+            tenant_key, reconciliation_ref, knowledge_baseline_ref, projection_name,
+            canonical_hash, consumption_hash, canonical_count, consumption_count,
+            reconciliation_state, checked_run_ref, checked_at
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+          ON CONFLICT (tenant_key, reconciliation_ref)
+          DO UPDATE SET canonical_hash=EXCLUDED.canonical_hash,
+            consumption_hash=EXCLUDED.consumption_hash,
+            canonical_count=EXCLUDED.canonical_count,
+            consumption_count=EXCLUDED.consumption_count,
+            reconciliation_state=EXCLUDED.reconciliation_state,
+            checked_run_ref=EXCLUDED.checked_run_ref,
+            checked_at=now()
+        `,
+        [
+          context.tenantKey,
+          `source-coverage:${baseline.knowledge_baseline_ref}:${row.domainKey}`,
+          baseline.knowledge_baseline_ref,
+          `source-to-consumption:${row.domainKey}`,
+          sha256Value({ domainKey: row.domainKey, sourceRows: row.sourceRows, candidateRows: row.candidateRows, decisionRows: row.decisionRows }),
+          sha256Value({ domainKey: row.domainKey, consumptionRows: row.consumptionRows }),
+          row.sourceRows,
+          row.consumptionRows,
+          row.status,
+          context.runId,
+        ],
+      );
+    }
+    return rows;
   }
 
   async runMetricParityAudit(context) {
@@ -2506,6 +2716,111 @@ function summarizeRows(rows) {
     rowCount: rows.reduce((sum, row) => sum + Number(row.rowCount ?? 1), 0),
     failedCount: rows.filter((row) => ["failed", "quarantined"].includes(row.terminalState)).length,
   };
+}
+
+function sourceDomainKey(value) {
+  const text = String(value ?? "").toLowerCase();
+  if (/(application|applications|system|systems|cmdb)/.test(text)) return "applications";
+  if (/(vendor|contract|contracts|procurement)/.test(text)) return "vendors";
+  if (/(data|analytics|report|integration)/.test(text)) return "data_products";
+  if (/(technology|infrastructure|platform|cloud)/.test(text)) return "technology";
+  if (/(metric|kpi|sla|observation)/.test(text)) return "metrics";
+  if (/(relationship|dependency|edge)/.test(text)) return "relationships";
+  return "other";
+}
+
+function candidateDomainKey(candidate = {}) {
+  return sourceDomainKey(
+    [
+      candidate.entityType,
+      candidate.entity_type,
+      candidate.factType,
+      candidate.fact_type,
+      candidate.relationshipTypeRef,
+      candidate.relationship_type_ref,
+      candidate.sourceFamily,
+      candidate.source_family,
+    ].join(" "),
+  );
+}
+
+function projectionDomainKey(row = {}) {
+  const projectionName = row.projectionName ?? row.projection_name ?? "";
+  if (projectionName === "application_inventory_v1" || projectionName === "consumption.application_inventory_v1") return "applications";
+  if (projectionName === "vendor_contract_inventory_v1" || projectionName === "consumption.vendor_contract_inventory_v1") return "vendors";
+  if (projectionName === "data_product_inventory_v1" || projectionName === "consumption.data_product_inventory_v1") return "data_products";
+  if (projectionName === "technology_estate_v1" || projectionName === "consumption.technology_estate_v1") return "technology";
+  if (projectionName === "metric_observation_v1" || projectionName === "consumption.metric_observation_v1") return "metrics";
+  if (projectionName === "relationship_edge_v1" || projectionName === "consumption.relationship_edge_v1") return "relationships";
+  return "other";
+}
+
+function increment(map, key, field, amount = 1) {
+  const row = map.get(key) ?? {
+    domainKey: key,
+    sourceRows: 0,
+    sourceVersions: 0,
+    candidateRows: 0,
+    decisionRows: 0,
+    acceptedRows: 0,
+    deferredRows: 0,
+    rejectedRows: 0,
+    consumptionRows: 0,
+    requiresProjection: key !== "other",
+  };
+  row[field] += amount;
+  map.set(key, row);
+}
+
+function summarizeInMemorySourceDomainCoverage({ sources = [], candidates = [], reviewDecisions = [], projections = [] }) {
+  const byDomain = new Map();
+  const candidateDomainByRef = new Map();
+  const sourceVersionsByDomain = new Map();
+
+  for (const source of sources) {
+    const domainKey = sourceDomainKey(`${source.sourceName ?? source.source_name ?? ""} ${source.sourceFamily ?? source.source_family ?? ""}`);
+    const rowCount = Array.isArray(source.rows) ? source.rows.length : Number(source.rowCount ?? source.row_count ?? 0);
+    increment(byDomain, domainKey, "sourceRows", rowCount);
+    const sourceVersionRef = source.sourceVersionRef ?? source.source_version_ref ?? source.sourceRef ?? source.source_ref;
+    if (sourceVersionRef) {
+      const set = sourceVersionsByDomain.get(domainKey) ?? new Set();
+      set.add(sourceVersionRef);
+      sourceVersionsByDomain.set(domainKey, set);
+    }
+  }
+
+  for (const candidate of candidates) {
+    const domainKey = candidateDomainKey(candidate);
+    const candidateRef = candidate.candidateRef ?? candidate.candidate_ref;
+    if (candidateRef) candidateDomainByRef.set(candidateRef, domainKey);
+    increment(byDomain, domainKey, "candidateRows", 1);
+  }
+
+  for (const decision of reviewDecisions) {
+    const candidateRef = decision.candidateRef ?? decision.candidate_ref ?? decision.reviewedObjectRef ?? decision.reviewed_object_ref;
+    const domainKey = candidateDomainByRef.get(candidateRef) ?? candidateDomainKey(decision);
+    increment(byDomain, domainKey, "decisionRows", 1);
+    const decisionState = decision.decision ?? decision.reviewState ?? decision.review_state;
+    if (decisionState === "accepted" || decision.review_state === "accepted") {
+      increment(byDomain, domainKey, "acceptedRows", 1);
+    } else if (decisionState === "rejected" || decision.review_state === "rejected") {
+      increment(byDomain, domainKey, "rejectedRows", 1);
+    } else {
+      increment(byDomain, domainKey, "deferredRows", 1);
+    }
+  }
+
+  for (const projection of projections) {
+    const domainKey = projectionDomainKey(projection);
+    if (domainKey !== "other") increment(byDomain, domainKey, "consumptionRows", 1);
+  }
+
+  for (const [domainKey, sourceVersions] of sourceVersionsByDomain.entries()) {
+    const row = byDomain.get(domainKey);
+    if (row) row.sourceVersions = sourceVersions.size;
+  }
+
+  return Array.from(byDomain.values()).sort((a, b) => a.domainKey.localeCompare(b.domainKey));
 }
 
 function stableEntityRef(entityType, displayName) {

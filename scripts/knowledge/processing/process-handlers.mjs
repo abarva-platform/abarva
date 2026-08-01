@@ -567,7 +567,19 @@ const GENERIC_STORE_OPERATIONS = Object.freeze({
   "baseline-publish-v1": ["publishBaseline", "atomic active baseline pointer switched", (op) => (op.domainPublicationRefs?.length > 0 && op.isActive ? [] : ["mandatory_domain_publications_missing"])],
   "projection-build-v1": ["buildConsumptionProjections", "consumption projections built from active baseline", (op) => (op.rowCount > 0 ? [] : ["no_active_baseline_projection_rows"])],
   "home-readmodel-v1": ["verifyHomeReadModel", "Home read model projections verified", (op) => (op.enterpriseBriefRows + op.searchRows + op.relationshipRows > 0 ? [] : ["home_read_model_empty"])],
-  "reconciliation-audit-v1": ["runReconciliationAudit", "evaluator reconciliation wrote audit-only results", (op) => (op.mutatedKnowledge ? ["evaluator_mutated_knowledge"] : op.knowledgeBaselineRef ? [] : ["no_published_baseline_to_reconcile"])],
+  "reconciliation-audit-v1": [
+    "runReconciliationAudit",
+    "evaluator reconciliation wrote audit-only results",
+    (op) => {
+      const blockers = [];
+      if (op.mutatedKnowledge) blockers.push("evaluator_mutated_knowledge");
+      if (!op.knowledgeBaselineRef) blockers.push("no_published_baseline_to_reconcile");
+      for (const row of op.sourceCoverageBlockers ?? []) {
+        blockers.push(`source_to_consumption_unpublished:${row.domainKey}`);
+      }
+      return blockers;
+    },
+  ],
   "metric-parity-v1": [
     "runMetricParityAudit",
     "Cube/Postgres metric parity wrote governed results",

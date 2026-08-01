@@ -8,6 +8,8 @@ Scope: isolated lab database execution in `rg-abarva-skair-lab-eus2-001`.
 
 Classification: database-backed execution proof for review, publication, baseline, projection, read-model, reconciliation, and metric parity. This is not signed-in product-surface proof.
 
+Correction, 2026-08-01: this evidence proves sparse accepted-candidate publication and readback only. It does not prove full source-to-consumption parity, does not prove application inventory/details publication, and must not be used as a full data-load certification. Source rows and fields outside the accepted subset still require explicit downstream disposition proof before any load-complete status is claimed.
+
 ## Source State
 
 - Source files: 40
@@ -53,10 +55,13 @@ Projection build then failed on a missing publisher grant for `governance.eviden
 - `enterprise_brief_v1`: 1
 - `enterprise_identity_v1`: 1
 - `domain_summary_v1`: 2
+- `application_inventory_v1`: 0
 - `search_document_v1`: 20
 - `module_knowledge_packet_v1`: 1
 - `relationship_node_v1`: 2
 - Other projection contracts: 0 rows where unsupported by accepted content
+
+Application-domain parity was not proven. The zero-row application projection was treated as unsupported by accepted content in this run, but that is not equivalent to proving that application source rows were fully parsed, persisted, dispositioned, and published. A stricter source-to-consumption coverage gate is required before this evidence can support a load-complete claim.
 
 ## Reconciliation And Parity
 
