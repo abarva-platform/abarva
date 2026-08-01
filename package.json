@@ -61,6 +61,8 @@
     "foundation-v3:migrate:scaffold:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260801162000_foundation_v3_conservation_scaffold.sql",
     "foundation-v3:migrate:candidate-identity:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260801172500_foundation_v3_phase_a_candidate_identity.sql",
     "foundation-v3:migrate:candidate-identity:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260801172500_foundation_v3_phase_a_candidate_identity.sql",
+    "foundation-v3:migrate:skair-ingest-role:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260801190000_skyharbor_air_ingest_role_hardening.sql",
+    "foundation-v3:migrate:skair-ingest-role:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260801190000_skyharbor_air_ingest_role_hardening.sql",
     "test:airline-phase1-plan": "node scripts/knowledge/validate-airline-phase1-plan.mjs",
     "test:airline-source-corpus-repair": "node scripts/knowledge/build-airline-source-corpus-repair.mjs",
     "test:airline-source-landing": "node scripts/knowledge/__tests__/run-airline-source-landing-tests.mjs",
