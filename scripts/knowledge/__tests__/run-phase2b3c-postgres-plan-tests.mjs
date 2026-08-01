@@ -90,6 +90,9 @@ for (const tenant of TENANTS) {
   assert.match(sql, /force row level security/);
   assert.match(sql, /revoke all on schema working/);
   assert.match(sql, /revoke insert, update, delete on all tables in schema publication, consumption/);
+  assert.match(sql, new RegExp(`grant usage on schema knowledge, metrics, publication, consumption, governance, operations to ${tenant.rolePrefix}_publisher`));
+  assert.match(sql, new RegExp(`grant select, insert, update on table governance\\.evidence_gap to ${tenant.rolePrefix}_publisher`));
+  assert.match(sql, new RegExp(`grant insert, update on table consumption\\.consumer_reconciliation_ledger to ${tenant.rolePrefix}_evaluator`));
   assert.match(sql, /alter table consumption\.strategic_insight alter column authority_state set default 'planning_grade'/);
   assert.match(rollback, /No tables are dropped here/);
   assert.match(rollback, new RegExp(`current_database\\(\\) <> '${tenant.database}'`));
