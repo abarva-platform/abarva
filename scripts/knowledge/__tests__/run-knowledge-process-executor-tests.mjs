@@ -423,6 +423,86 @@ await test("parser extracts structured CSV rows into terminal parsed records", a
   assert.equal(store.parsedRecords[0].terminalState, "parsed");
 });
 
+await test("candidate extraction replaces stale working candidates for replayed source versions", async () => {
+  const store = new InMemoryKnowledgeExecutionStore({
+    entityCandidates: [
+      { candidateRef: "entcand:src-app-v1:old", sourceVersionRef: "src-app-v1", displayName: "airline-demo-new" },
+      { candidateRef: "entcand:src-other-v1:keep", sourceVersionRef: "src-other-v1", displayName: "Keep Me" },
+    ],
+    factCandidates: [
+      { candidateRef: "factcand:src-app-v1:old", sourceVersionRef: "src-app-v1" },
+      { candidateRef: "factcand:src-other-v1:keep", sourceVersionRef: "src-other-v1" },
+    ],
+    relationshipCandidates: [
+      { candidateRef: "relcand:src-app-v1:old", sourceVersionRef: "src-app-v1" },
+      { candidateRef: "relcand:src-other-v1:keep", sourceVersionRef: "src-other-v1" },
+    ],
+  });
+  await store.writeEvidenceAndCandidates(baseContext(), {
+    evidenceRecords: [{ evidenceRef: "ev:src-app-v1:1", sourceVersionRef: "src-app-v1" }],
+    entityCandidates: [{ candidateRef: "entcand:src-app-v1:new", sourceVersionRef: "src-app-v1", displayName: "Crew Scheduling" }],
+    factCandidates: [{ candidateRef: "factcand:src-app-v1:new", sourceVersionRef: "src-app-v1" }],
+    relationshipCandidates: [{ candidateRef: "relcand:src-app-v1:new", sourceVersionRef: "src-app-v1" }],
+  });
+  assert.deepEqual(store.entityCandidates.map((row) => row.candidateRef).sort(), ["entcand:src-app-v1:new", "entcand:src-other-v1:keep"]);
+  assert.deepEqual(store.factCandidates.map((row) => row.candidateRef).sort(), ["factcand:src-app-v1:new", "factcand:src-other-v1:keep"]);
+  assert.deepEqual(store.relationshipCandidates.map((row) => row.candidateRef).sort(), ["relcand:src-app-v1:new", "relcand:src-other-v1:keep"]);
+});
+
+await test("postgres candidate extraction deletes stale rows before inserting regenerated candidates", async () => {
+  const calls = [];
+  const client = {
+    async query(sql, params = []) {
+      calls.push({ sql: String(sql), params });
+      return { rows: [] };
+    },
+  };
+  const store = new PostgresKnowledgeExecutionStore(client);
+  await store.writeEvidenceAndCandidates(baseContext(), {
+    evidenceRecords: [
+      {
+        evidenceRef: "ev:src-app-v1:1",
+        sourceVersionRef: "src-app-v1",
+        citationLabel: "source.csv row 1",
+        sourceRowRef: "src-app:row:1",
+        sourceObjectRef: "APP-1",
+        evidenceText: "Crew Scheduling",
+        evidenceHash: "hash",
+      },
+    ],
+    entityCandidates: [
+      {
+        candidateRef: "entcand:src-app-v1:APP-1",
+        sourceVersionRef: "src-app-v1",
+        entityType: "application_platform",
+        displayName: "Crew Scheduling",
+        naturalKey: "application_platform:app_1",
+        candidatePayload: {},
+        evidenceRefs: ["ev:src-app-v1:1"],
+      },
+    ],
+    factCandidates: [
+      {
+        candidateRef: "factcand:src-app-v1:APP-1",
+        sourceVersionRef: "src-app-v1",
+        subjectCandidateRef: "entcand:src-app-v1:APP-1",
+        factType: "source_row",
+        factValue: {},
+        evidenceRefs: ["ev:src-app-v1:1"],
+      },
+    ],
+  });
+  const sqlText = calls.map((call) => call.sql);
+  const firstDelete = sqlText.findIndex((sql) => sql.includes("DELETE FROM working.relationship_candidate"));
+  const firstInsert = sqlText.findIndex((sql) => sql.includes("INSERT INTO evidence.evidence_item"));
+  assert.equal(sqlText[0], "BEGIN");
+  assert.ok(firstDelete > 0, "relationship stale-delete should run");
+  assert.ok(firstInsert > firstDelete, "stale-delete should precede inserts");
+  assert.ok(sqlText.some((sql) => sql.includes("DELETE FROM working.fact_candidate")), "fact stale-delete should run");
+  assert.ok(sqlText.some((sql) => sql.includes("DELETE FROM working.entity_candidate")), "entity stale-delete should run");
+  assert.equal(sqlText.at(-1), "COMMIT");
+});
+
 await test("evidence extraction creates lineage-backed candidates without accepting knowledge", async () => {
   const context = baseContext({
     canonicalProcess: "evidence-extract-v1",

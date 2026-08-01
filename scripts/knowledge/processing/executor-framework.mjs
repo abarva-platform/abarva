@@ -100,6 +100,21 @@ export function sha256Value(value) {
   return crypto.createHash("sha256").update(stableJson(value)).digest("hex");
 }
 
+function sourceVersionRefsForEvidenceAndCandidates({
+  evidenceRecords = [],
+  entityCandidates = [],
+  factCandidates = [],
+  relationshipCandidates = [],
+}) {
+  return [
+    ...new Set(
+      [...evidenceRecords, ...entityCandidates, ...factCandidates, ...relationshipCandidates]
+        .map((row) => row.sourceVersionRef ?? row.source_version_ref)
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export function buildExecutionContext({ args, env, manifest, manifestPath, validation }) {
   const releaseId =
     args.releaseId ||
@@ -260,6 +275,17 @@ export class InMemoryKnowledgeExecutionStore {
   }
 
   async writeEvidenceAndCandidates(_context, { evidenceRecords = [], entityCandidates = [], factCandidates = [], relationshipCandidates = [] }) {
+    const sourceVersionRefs = sourceVersionRefsForEvidenceAndCandidates({
+      evidenceRecords,
+      entityCandidates,
+      factCandidates,
+      relationshipCandidates,
+    });
+    if (sourceVersionRefs.length > 0) {
+      this.entityCandidates = this.entityCandidates.filter((row) => !sourceVersionRefs.includes(row.sourceVersionRef ?? row.source_version_ref));
+      this.factCandidates = this.factCandidates.filter((row) => !sourceVersionRefs.includes(row.sourceVersionRef ?? row.source_version_ref));
+      this.relationshipCandidates = this.relationshipCandidates.filter((row) => !sourceVersionRefs.includes(row.sourceVersionRef ?? row.source_version_ref));
+    }
     this.evidenceRecords.push(...evidenceRecords);
     this.entityCandidates.push(...entityCandidates);
     this.factCandidates.push(...factCandidates);
@@ -775,131 +801,158 @@ export class PostgresKnowledgeExecutionStore {
   }
 
   async writeEvidenceAndCandidates(context, { evidenceRecords = [], entityCandidates = [], factCandidates = [], relationshipCandidates = [] }) {
-    for (const row of evidenceRecords) {
-      await this.client.query(
-        `
-          INSERT INTO evidence.evidence_item (
-            tenant_key, evidence_ref, source_version_ref, citation_label,
-            source_row_ref, source_object_ref, evidence_text, evidence_hash,
-            authority_state, availability_state, visibility, created_run_ref, metadata
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'candidate','candidate','client_visible',$9,$10::jsonb)
-          ON CONFLICT (tenant_key, evidence_ref)
-          DO UPDATE SET evidence_text=EXCLUDED.evidence_text,
-            evidence_hash=EXCLUDED.evidence_hash, metadata=EXCLUDED.metadata
-        `,
-        [
-          context.tenantKey,
-          row.evidenceRef,
-          row.sourceVersionRef,
-          row.citationLabel,
-          row.sourceRowRef,
-          row.sourceObjectRef,
-          row.evidenceText,
-          row.evidenceHash,
-          context.runId,
-          JSON.stringify(row.metadata ?? {}),
-        ],
-      );
-    }
-    for (const row of entityCandidates) {
-      await this.client.query(
-        `
-          INSERT INTO working.entity_candidate (
-            tenant_key, candidate_ref, source_version_ref, entity_type,
-            display_name, natural_key, natural_key_basis, source_row_ref,
-            source_object_ref, original_row_id, candidate_payload, evidence_refs,
-            candidate_content_hash, confidence, review_state, created_run_ref
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11::jsonb,$12,$13,$14,'not_reviewed',$15)
-          ON CONFLICT (tenant_key, candidate_ref)
-          DO UPDATE SET candidate_payload=EXCLUDED.candidate_payload,
-            natural_key=EXCLUDED.natural_key,
-            natural_key_basis=EXCLUDED.natural_key_basis,
-            source_row_ref=EXCLUDED.source_row_ref,
-            source_object_ref=EXCLUDED.source_object_ref,
-            original_row_id=EXCLUDED.original_row_id,
-            evidence_refs=EXCLUDED.evidence_refs,
-            candidate_content_hash=EXCLUDED.candidate_content_hash,
-            confidence=EXCLUDED.confidence, review_state='not_reviewed'
-        `,
-        [
-          context.tenantKey,
-          row.candidateRef,
-          row.sourceVersionRef,
-          row.entityType,
-          row.displayName,
-          row.naturalKey ?? row.natural_key ?? row.candidatePayload?.natural_key ?? null,
-          JSON.stringify(row.naturalKeyBasis ?? row.natural_key_basis ?? {}),
-          row.sourceRowRef ?? row.source_row_ref ?? row.candidatePayload?.source_row_ref ?? null,
-          row.sourceObjectRef ?? row.source_object_ref ?? row.candidatePayload?.source_object_ref ?? row.candidatePayload?.source_native_id ?? null,
-          row.originalRowId ?? row.original_row_id ?? row.candidatePayload?.original_row_id ?? row.candidatePayload?.source_native_id ?? null,
-          JSON.stringify(row.candidatePayload ?? {}),
-          row.evidenceRefs ?? [],
-          candidateContentHash({ ...row, candidateType: "entity_candidate" }),
-          row.confidence ?? 0.65,
-          context.runId,
-        ],
-      );
-    }
-    for (const row of factCandidates) {
-      await this.client.query(
-        `
-          INSERT INTO working.fact_candidate (
-            tenant_key, candidate_ref, source_version_ref, subject_candidate_ref,
-            fact_type, fact_value, evidence_refs, candidate_content_hash, confidence, review_state, created_run_ref
-          )
-          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'not_reviewed',$10)
-          ON CONFLICT (tenant_key, candidate_ref)
-          DO UPDATE SET fact_value=EXCLUDED.fact_value,
-            evidence_refs=EXCLUDED.evidence_refs,
-            candidate_content_hash=EXCLUDED.candidate_content_hash,
-            confidence=EXCLUDED.confidence,
-            review_state='not_reviewed'
-        `,
-        [
-          context.tenantKey,
-          row.candidateRef,
-          row.sourceVersionRef,
-          row.subjectCandidateRef ?? null,
-          row.factType,
-          JSON.stringify(row.factValue ?? {}),
-          row.evidenceRefs ?? [],
-          candidateContentHash({ ...row, candidateType: "fact_candidate" }),
-          row.confidence ?? 0.65,
-          context.runId,
-        ],
-      );
-    }
-    for (const row of relationshipCandidates) {
-      await this.client.query(
-        `
-          INSERT INTO working.relationship_candidate (
-            tenant_key, candidate_ref, source_version_ref, from_candidate_ref,
-            to_candidate_ref, relationship_type_ref, evidence_refs,
-            current_target_state, candidate_content_hash, confidence, review_state, created_run_ref
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'not_reviewed',$11)
-          ON CONFLICT (tenant_key, candidate_ref)
-          DO UPDATE SET evidence_refs=EXCLUDED.evidence_refs,
-            current_target_state=EXCLUDED.current_target_state,
-            candidate_content_hash=EXCLUDED.candidate_content_hash,
-            confidence=EXCLUDED.confidence, review_state='not_reviewed'
-        `,
-        [
-          context.tenantKey,
-          row.candidateRef,
-          row.sourceVersionRef,
-          row.fromCandidateRef,
-          row.toCandidateRef,
-          row.relationshipTypeRef,
-          row.evidenceRefs ?? [],
-          row.currentTargetState ?? "unknown",
-          candidateContentHash({ ...row, candidateType: "relationship_candidate" }),
-          row.confidence ?? 0.65,
-          context.runId,
-        ],
-      );
+    const sourceVersionRefs = sourceVersionRefsForEvidenceAndCandidates({
+      evidenceRecords,
+      entityCandidates,
+      factCandidates,
+      relationshipCandidates,
+    });
+    await this.client.query("BEGIN");
+    try {
+      if (sourceVersionRefs.length > 0) {
+        await this.client.query(
+          "DELETE FROM working.relationship_candidate WHERE tenant_key=$1 AND source_version_ref = ANY($2::text[])",
+          [context.tenantKey, sourceVersionRefs],
+        );
+        await this.client.query(
+          "DELETE FROM working.fact_candidate WHERE tenant_key=$1 AND source_version_ref = ANY($2::text[])",
+          [context.tenantKey, sourceVersionRefs],
+        );
+        await this.client.query(
+          "DELETE FROM working.entity_candidate WHERE tenant_key=$1 AND source_version_ref = ANY($2::text[])",
+          [context.tenantKey, sourceVersionRefs],
+        );
+      }
+      for (const row of evidenceRecords) {
+        await this.client.query(
+          `
+            INSERT INTO evidence.evidence_item (
+              tenant_key, evidence_ref, source_version_ref, citation_label,
+              source_row_ref, source_object_ref, evidence_text, evidence_hash,
+              authority_state, availability_state, visibility, created_run_ref, metadata
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'candidate','candidate','client_visible',$9,$10::jsonb)
+            ON CONFLICT (tenant_key, evidence_ref)
+            DO UPDATE SET evidence_text=EXCLUDED.evidence_text,
+              evidence_hash=EXCLUDED.evidence_hash, metadata=EXCLUDED.metadata
+          `,
+          [
+            context.tenantKey,
+            row.evidenceRef,
+            row.sourceVersionRef,
+            row.citationLabel,
+            row.sourceRowRef,
+            row.sourceObjectRef,
+            row.evidenceText,
+            row.evidenceHash,
+            context.runId,
+            JSON.stringify(row.metadata ?? {}),
+          ],
+        );
+      }
+      for (const row of entityCandidates) {
+        await this.client.query(
+          `
+            INSERT INTO working.entity_candidate (
+              tenant_key, candidate_ref, source_version_ref, entity_type,
+              display_name, natural_key, natural_key_basis, source_row_ref,
+              source_object_ref, original_row_id, candidate_payload, evidence_refs,
+              candidate_content_hash, confidence, review_state, created_run_ref
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11::jsonb,$12,$13,$14,'not_reviewed',$15)
+            ON CONFLICT (tenant_key, candidate_ref)
+            DO UPDATE SET candidate_payload=EXCLUDED.candidate_payload,
+              natural_key=EXCLUDED.natural_key,
+              natural_key_basis=EXCLUDED.natural_key_basis,
+              source_row_ref=EXCLUDED.source_row_ref,
+              source_object_ref=EXCLUDED.source_object_ref,
+              original_row_id=EXCLUDED.original_row_id,
+              evidence_refs=EXCLUDED.evidence_refs,
+              candidate_content_hash=EXCLUDED.candidate_content_hash,
+              confidence=EXCLUDED.confidence, review_state='not_reviewed'
+          `,
+          [
+            context.tenantKey,
+            row.candidateRef,
+            row.sourceVersionRef,
+            row.entityType,
+            row.displayName,
+            row.naturalKey ?? row.natural_key ?? row.candidatePayload?.natural_key ?? null,
+            JSON.stringify(row.naturalKeyBasis ?? row.natural_key_basis ?? {}),
+            row.sourceRowRef ?? row.source_row_ref ?? row.candidatePayload?.source_row_ref ?? null,
+            row.sourceObjectRef ?? row.source_object_ref ?? row.candidatePayload?.source_object_ref ?? row.candidatePayload?.source_native_id ?? null,
+            row.originalRowId ?? row.original_row_id ?? row.candidatePayload?.original_row_id ?? row.candidatePayload?.source_native_id ?? null,
+            JSON.stringify(row.candidatePayload ?? {}),
+            row.evidenceRefs ?? [],
+            candidateContentHash({ ...row, candidateType: "entity_candidate" }),
+            row.confidence ?? 0.65,
+            context.runId,
+          ],
+        );
+      }
+      for (const row of factCandidates) {
+        await this.client.query(
+          `
+            INSERT INTO working.fact_candidate (
+              tenant_key, candidate_ref, source_version_ref, subject_candidate_ref,
+              fact_type, fact_value, evidence_refs, candidate_content_hash, confidence, review_state, created_run_ref
+            )
+            VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'not_reviewed',$10)
+            ON CONFLICT (tenant_key, candidate_ref)
+            DO UPDATE SET fact_value=EXCLUDED.fact_value,
+              evidence_refs=EXCLUDED.evidence_refs,
+              candidate_content_hash=EXCLUDED.candidate_content_hash,
+              confidence=EXCLUDED.confidence,
+              review_state='not_reviewed'
+          `,
+          [
+            context.tenantKey,
+            row.candidateRef,
+            row.sourceVersionRef,
+            row.subjectCandidateRef ?? null,
+            row.factType,
+            JSON.stringify(row.factValue ?? {}),
+            row.evidenceRefs ?? [],
+            candidateContentHash({ ...row, candidateType: "fact_candidate" }),
+            row.confidence ?? 0.65,
+            context.runId,
+          ],
+        );
+      }
+      for (const row of relationshipCandidates) {
+        await this.client.query(
+          `
+            INSERT INTO working.relationship_candidate (
+              tenant_key, candidate_ref, source_version_ref, from_candidate_ref,
+              to_candidate_ref, relationship_type_ref, evidence_refs,
+              current_target_state, candidate_content_hash, confidence, review_state, created_run_ref
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'not_reviewed',$11)
+            ON CONFLICT (tenant_key, candidate_ref)
+            DO UPDATE SET evidence_refs=EXCLUDED.evidence_refs,
+              current_target_state=EXCLUDED.current_target_state,
+              candidate_content_hash=EXCLUDED.candidate_content_hash,
+              confidence=EXCLUDED.confidence, review_state='not_reviewed'
+          `,
+          [
+            context.tenantKey,
+            row.candidateRef,
+            row.sourceVersionRef,
+            row.fromCandidateRef,
+            row.toCandidateRef,
+            row.relationshipTypeRef,
+            row.evidenceRefs ?? [],
+            row.currentTargetState ?? "unknown",
+            candidateContentHash({ ...row, candidateType: "relationship_candidate" }),
+            row.confidence ?? 0.65,
+            context.runId,
+          ],
+        );
+      }
+      await this.client.query("COMMIT");
+    } catch (error) {
+      await this.client.query("ROLLBACK").catch(() => {});
+      throw error;
     }
     return {
       evidence: evidenceRecords.length,
