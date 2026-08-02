@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 
-// Extracted from src/app/(maestro)/home/v4-preview/page.tsx so the exact
+// Extracted from the retired Home V4 preview page so the exact
 // same gate is shared by every server-side surface that needs it (the page
 // itself, and any API route it POSTs to) -- a route reusing hand-copied
 // auth logic instead of this function is exactly the drift that caused the
@@ -28,7 +28,10 @@ export async function isPlatformAdminSession(): Promise<boolean> {
     | undefined;
   const user = await currentUser().catch(() => null);
 
-  const role = (claims?.publicMetadata?.role as string | undefined) ?? (user?.publicMetadata?.role as string | undefined) ?? "";
+  const role =
+    (claims?.publicMetadata?.role as string | undefined) ??
+    (user?.publicMetadata?.role as string | undefined) ??
+    "";
   const primaryEmail = (
     claims?.emailAddress ??
     claims?.email ??
@@ -37,7 +40,10 @@ export async function isPlatformAdminSession(): Promise<boolean> {
     user?.primaryEmailAddress?.emailAddress
   )?.toLowerCase();
 
-  return role === "admin" || (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail));
+  return (
+    role === "admin" ||
+    (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail))
+  );
 }
 
 export async function requirePlatformAdminEmail(): Promise<string | null> {

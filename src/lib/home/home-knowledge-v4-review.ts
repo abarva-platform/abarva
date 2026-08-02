@@ -1,7 +1,7 @@
 import { Client, type ClientConfig } from "pg";
 
 // Read (and the one write: approve/override) path for the Home Knowledge V4
-// review queue on /home/v4-preview. Modeled on
+// review queue on the retired V4 review surface. Modeled on
 // readHomeKnowledgeV4PackForTenantFromPostgres (same table, same connection
 // pattern) -- reads never throw (return an empty list on any failure so the
 // page still renders); the approve/override write throws real errors, since
@@ -69,13 +69,19 @@ export interface HomeKnowledgeV4JobRunFailure {
 }
 
 function connectionString(): string | null {
-  return process.env.ABARVA_AZURE_DATABASE_URL ?? process.env.AZURE_DATABASE_URL ?? process.env.DATABASE_URL ?? null;
+  return (
+    process.env.ABARVA_AZURE_DATABASE_URL ??
+    process.env.AZURE_DATABASE_URL ??
+    process.env.DATABASE_URL ??
+    null
+  );
 }
 
 function disablePostgresSsl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    if (parsed.searchParams.get("sslmode")?.toLowerCase() === "disable") return true;
+    if (parsed.searchParams.get("sslmode")?.toLowerCase() === "disable")
+      return true;
     return ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname);
   } catch {
     return false;
@@ -93,10 +99,14 @@ function clientConfig(url: string, applicationName: string): ClientConfig {
 // Latest row per tenant (candidate or approved) for the review queue -- the
 // point is "what's the current reviewable state for this tenant", not a
 // full version history.
-export async function listHomeKnowledgeV4CandidatesForReview(): Promise<HomeKnowledgeV4ReviewCandidate[]> {
+export async function listHomeKnowledgeV4CandidatesForReview(): Promise<
+  HomeKnowledgeV4ReviewCandidate[]
+> {
   const dbUrl = connectionString();
   if (!dbUrl) return [];
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-read"));
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-read"),
+  );
   try {
     await client.connect();
     const result = await client.query(
@@ -119,7 +129,9 @@ export async function listHomeKnowledgeV4CandidatesForReview(): Promise<HomeKnow
       pack_version: row.pack_version,
       status: row.status,
       validation_status: row.validation_status,
-      violations: Array.isArray(row.quality_report?.violations) ? row.quality_report.violations : [],
+      violations: Array.isArray(row.quality_report?.violations)
+        ? row.quality_report.violations
+        : [],
       created_at: row.created_at,
       approved_by: row.approved_by,
       approved_at: row.approved_at,
@@ -136,7 +148,10 @@ export async function listHomeKnowledgeV4CandidatesForReview(): Promise<HomeKnow
       effective_to: row.effective_to,
     }));
   } catch (error) {
-    console.warn("[home-v4-review] failed to list candidates for review", error);
+    console.warn(
+      "[home-v4-review] failed to list candidates for review",
+      error,
+    );
     return [];
   } finally {
     await client.end().catch(() => undefined);
@@ -155,7 +170,7 @@ export interface HomeKnowledgeV4CandidateRenderPack {
 }
 
 // The real, persisted book-mode candidate for one tenant -- render_pack and
-// all -- not the review queue's summary row. /home/v4-preview's explorer
+// all -- not the review queue's summary row. The retired V4 explorer
 // previously rendered only a build-time-bundled fixture file; approving a
 // candidate from that fixture would mean approving content nobody actually
 // re-read from the database. Returns null (never throws) on any failure or
@@ -166,7 +181,9 @@ export async function getHomeKnowledgeV4LatestCandidateRenderPack(
 ): Promise<HomeKnowledgeV4CandidateRenderPack | null> {
   const dbUrl = connectionString();
   if (!dbUrl) return null;
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-candidate-render-pack-read"));
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-candidate-render-pack-read"),
+  );
   try {
     await client.connect();
     const result = await client.query(
@@ -185,12 +202,17 @@ export async function getHomeKnowledgeV4LatestCandidateRenderPack(
       pack_version: row.pack_version,
       status: row.status,
       validation_status: row.validation_status,
-      violations: Array.isArray(row.quality_report?.violations) ? row.quality_report.violations : [],
+      violations: Array.isArray(row.quality_report?.violations)
+        ? row.quality_report.violations
+        : [],
       created_at: row.created_at,
       render_pack: row.render_pack,
     };
   } catch (error) {
-    console.warn("[home-v4-review] failed to read latest candidate render_pack", error);
+    console.warn(
+      "[home-v4-review] failed to read latest candidate render_pack",
+      error,
+    );
     return null;
   } finally {
     await client.end().catch(() => undefined);
@@ -205,7 +227,9 @@ export async function listHomeKnowledgeV4PackHistoryForTenant(
 ): Promise<HomeKnowledgeV4PackHistoryRow[]> {
   const dbUrl = connectionString();
   if (!dbUrl) return [];
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-read"));
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-read"),
+  );
   try {
     await client.connect();
     const result = await client.query(
@@ -231,10 +255,14 @@ export async function listHomeKnowledgeV4PackHistoryForTenant(
 // row at all -- this is the only place they're visible. Recent only (a
 // review queue, not an unbounded audit log; the full history lives in the
 // table itself for anyone querying directly).
-export async function listHomeKnowledgeV4RecentJobRunFailures(): Promise<HomeKnowledgeV4JobRunFailure[]> {
+export async function listHomeKnowledgeV4RecentJobRunFailures(): Promise<
+  HomeKnowledgeV4JobRunFailure[]
+> {
   const dbUrl = connectionString();
   if (!dbUrl) return [];
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-read"));
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-read"),
+  );
   try {
     await client.connect();
     const result = await client.query(
@@ -246,7 +274,10 @@ export async function listHomeKnowledgeV4RecentJobRunFailures(): Promise<HomeKno
     );
     return result.rows;
   } catch (error) {
-    console.warn("[home-v4-review] failed to list recent job-run failures", error);
+    console.warn(
+      "[home-v4-review] failed to list recent job-run failures",
+      error,
+    );
     return [];
   } finally {
     await client.end().catch(() => undefined);
@@ -266,10 +297,18 @@ export async function approveHomeKnowledgeV4Candidate(options: {
   tenantKey: string;
   approvedBy: string;
   overrideReason?: string | null;
-}): Promise<{ id: string; tenantKey: string; packVersion: string; overridden: boolean }> {
+}): Promise<{
+  id: string;
+  tenantKey: string;
+  packVersion: string;
+  overridden: boolean;
+}> {
   const dbUrl = connectionString();
-  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-approve"));
+  if (!dbUrl)
+    throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-approve"),
+  );
   await client.connect();
   try {
     await client.query("BEGIN");
@@ -280,7 +319,9 @@ export async function approveHomeKnowledgeV4Candidate(options: {
       [options.tenantKey, ARTIFACT_TYPE],
     );
     if (latest.rows.length === 0) {
-      throw new HomeKnowledgeV4ApprovalError(`No candidate pack found for tenant "${options.tenantKey}".`);
+      throw new HomeKnowledgeV4ApprovalError(
+        `No candidate pack found for tenant "${options.tenantKey}".`,
+      );
     }
     const row = latest.rows[0];
     const needsOverride = row.validation_status !== "pass";
@@ -289,7 +330,9 @@ export async function approveHomeKnowledgeV4Candidate(options: {
         `This candidate has validation_status "${row.validation_status}" -- approving it requires a written override reason.`,
       );
     }
-    const findingsAcknowledged = needsOverride ? (row.quality_report?.violations ?? []) : [];
+    const findingsAcknowledged = needsOverride
+      ? (row.quality_report?.violations ?? [])
+      : [];
     await client.query(
       `UPDATE public.home_knowledge_packs
         SET effective_to = now(), status = 'retired', updated_at = now()
@@ -313,7 +356,12 @@ export async function approveHomeKnowledgeV4Candidate(options: {
     );
     await client.query("COMMIT");
     const result = approved.rows[0];
-    return { id: result.id, tenantKey: result.tenant_key, packVersion: result.pack_version, overridden: needsOverride };
+    return {
+      id: result.id,
+      tenantKey: result.tenant_key,
+      packVersion: result.pack_version,
+      overridden: needsOverride,
+    };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
@@ -333,8 +381,11 @@ export async function rejectHomeKnowledgeV4Candidate(options: {
     throw new HomeKnowledgeV4ApprovalError("A reject reason is required.");
   }
   const dbUrl = connectionString();
-  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-reject"));
+  if (!dbUrl)
+    throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-reject"),
+  );
   await client.connect();
   try {
     await client.query("BEGIN");
@@ -343,7 +394,9 @@ export async function rejectHomeKnowledgeV4Candidate(options: {
       [options.packId, ARTIFACT_TYPE],
     );
     if (current.rows.length === 0) {
-      throw new HomeKnowledgeV4ApprovalError(`No V4 pack found with id "${options.packId}".`);
+      throw new HomeKnowledgeV4ApprovalError(
+        `No V4 pack found with id "${options.packId}".`,
+      );
     }
     if (current.rows[0].status !== "candidate") {
       throw new HomeKnowledgeV4ApprovalError(
@@ -359,7 +412,11 @@ export async function rejectHomeKnowledgeV4Candidate(options: {
     );
     await client.query("COMMIT");
     const result = rejected.rows[0];
-    return { id: result.id, tenantKey: result.tenant_key, packVersion: result.pack_version };
+    return {
+      id: result.id,
+      tenantKey: result.tenant_key,
+      packVersion: result.pack_version,
+    };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
@@ -381,8 +438,11 @@ export async function retireHomeKnowledgeV4ActivePack(options: {
     throw new HomeKnowledgeV4ApprovalError("A retire reason is required.");
   }
   const dbUrl = connectionString();
-  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-retire"));
+  if (!dbUrl)
+    throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-retire"),
+  );
   await client.connect();
   try {
     await client.query("BEGIN");
@@ -393,7 +453,9 @@ export async function retireHomeKnowledgeV4ActivePack(options: {
       [options.tenantKey, ARTIFACT_TYPE],
     );
     if (active.rows.length === 0) {
-      throw new HomeKnowledgeV4ApprovalError(`No active V4 pack found for tenant "${options.tenantKey}".`);
+      throw new HomeKnowledgeV4ApprovalError(
+        `No active V4 pack found for tenant "${options.tenantKey}".`,
+      );
     }
     const retired = await client.query(
       `UPDATE public.home_knowledge_packs
@@ -404,7 +466,11 @@ export async function retireHomeKnowledgeV4ActivePack(options: {
     );
     await client.query("COMMIT");
     const result = retired.rows[0];
-    return { id: result.id, tenantKey: result.tenant_key, packVersion: result.pack_version };
+    return {
+      id: result.id,
+      tenantKey: result.tenant_key,
+      packVersion: result.pack_version,
+    };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
@@ -422,13 +488,21 @@ export async function rollbackHomeKnowledgeV4Pack(options: {
   targetPackId: string;
   rolledBackBy: string;
   reason: string;
-}): Promise<{ id: string; tenantKey: string; packVersion: string; displacedPackId: string | null }> {
+}): Promise<{
+  id: string;
+  tenantKey: string;
+  packVersion: string;
+  displacedPackId: string | null;
+}> {
   if (!options.reason.trim()) {
     throw new HomeKnowledgeV4ApprovalError("A rollback reason is required.");
   }
   const dbUrl = connectionString();
-  if (!dbUrl) throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
-  const client = new Client(clientConfig(dbUrl, "home-knowledge-v4-review-rollback"));
+  if (!dbUrl)
+    throw new HomeKnowledgeV4ApprovalError("Missing database connection.");
+  const client = new Client(
+    clientConfig(dbUrl, "home-knowledge-v4-review-rollback"),
+  );
   await client.connect();
   try {
     await client.query("BEGIN");
@@ -454,7 +528,11 @@ export async function rollbackHomeKnowledgeV4Pack(options: {
             retire_reason = $3, updated_at = now()
         WHERE tenant_key = $1 AND status = 'approved' AND effective_to IS NULL
         RETURNING id`,
-      [options.tenantKey, options.rolledBackBy, `Displaced by rollback to pack ${options.targetPackId}: ${options.reason.trim()}`],
+      [
+        options.tenantKey,
+        options.rolledBackBy,
+        `Displaced by rollback to pack ${options.targetPackId}: ${options.reason.trim()}`,
+      ],
     );
     const reactivated = await client.query(
       `UPDATE public.home_knowledge_packs

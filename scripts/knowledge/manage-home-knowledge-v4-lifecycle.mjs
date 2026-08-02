@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Governed CLI for the reject/retire/rollback V4 pack-lifecycle actions
 // added in src/lib/home/home-knowledge-v4-review.ts. That lib backs the
-// /home/v4-preview admin UI (platform-admin Clerk session only); this
+// retired V4 review admin UI (platform-admin Clerk session only); this
 // script exists for the same actions to be taken from a governed ACA
 // operator job when a live admin browser session isn't the vehicle --
 // e.g. an agent-run qualitative review recording its decisions. Same

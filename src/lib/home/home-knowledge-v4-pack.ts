@@ -1,6 +1,9 @@
 import { Client, type ClientConfig } from "pg";
 
-import type { HomeV4Candidate } from "@/components/home/v4/homeV4Visual";
+type HomeV4Candidate = {
+  dimensions?: unknown[];
+  [key: string]: unknown;
+};
 
 // Reads the book-mode Home Knowledge V4 pack persisted by
 // scripts/knowledge/persist-home-knowledge-v4-book.mjs. Modeled directly on

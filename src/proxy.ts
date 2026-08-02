@@ -488,17 +488,6 @@ const clerkProtectedProxy = clerkMiddleware(
       "/home/training": "/home/learn",
       "/home/ai-initiatives": "/home",
     };
-    if (
-      request.nextUrl.pathname === "/home/v4-preview" ||
-      request.nextUrl.pathname.startsWith("/home/v4-preview/")
-    ) {
-      const url = new URL("/knowledge-preview", request.url);
-      url.search = request.nextUrl.search;
-      return withProductionReadinessNoStoreHeaders(
-        request,
-        NextResponse.redirect(url, 301),
-      );
-    }
     const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname];
     if (exactHomeMatch) {
       // Wave 1 PR-3 (2026-05-30) · Targets may carry their own canonical
