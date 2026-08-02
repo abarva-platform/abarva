@@ -85,6 +85,13 @@ export interface TowerCommandSummary {
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
+  valueClaimCount: number;
+  knownValueClaimCount: number;
+  unknownValueClaimCount: number;
+  knownZeroValueClaimCount: number;
+  knownValueAmountUsd: number;
+  financeAttestedClaimCount: number;
+  businessAttestedClaimCount: number;
 
   programCount: number;
   aiInitiativeCount: number;

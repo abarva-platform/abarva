@@ -12,7 +12,7 @@ import {
   ValueWaterfallChart,
   buildWaterfallRows,
 } from "../charts/ValueWaterfallChart";
-import { Card, Pips, ViewHead, cx } from "../primitives";
+import { Card, Pips, Unknown, ViewHead, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
 export function ValueProofView({
@@ -23,6 +23,10 @@ export function ValueProofView({
   onOpenProgram: (id: string) => void;
 }) {
   const s = view.summary;
+  const allValueUnknown =
+    s.valueClaimCount > 0 &&
+    s.knownValueClaimCount === 0 &&
+    s.unknownValueClaimCount > 0;
   const rows = buildWaterfallRows(s);
   const noUsage = rows[1]?.usd ?? 0;
   const noFinance = rows[3]?.usd ?? 0;
@@ -57,13 +61,30 @@ export function ValueProofView({
             className={styles.chartwrap}
             aria-describedby="tcc-waterfall-alt"
           >
-            <ValueWaterfallChart summary={s} />
+            {allValueUnknown ? (
+              <div className={styles.emptyPanel}>
+                <h2>
+                  <Unknown label="Financial value unknown" />
+                </h2>
+                <p>
+                  {s.unknownValueClaimCount} governed claims are loaded, but
+                  none carries a governed dollar amount. Tower is withholding
+                  the waterfall rather than rendering unknown value as $0.
+                </p>
+              </div>
+            ) : (
+              <ValueWaterfallChart summary={s} />
+            )}
           </div>
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
-            {rows
-              .map((r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`)
-              .join(". ")}
-            .
+            {allValueUnknown
+              ? `${s.unknownValueClaimCount} claims have unknown financial value.`
+              : `${rows
+                  .map(
+                    (r) =>
+                      `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
+                  )
+                  .join(". ")}.`}
           </p>
 
           {/* "The read" — the mart's own executive summary, prefixed with the
@@ -73,10 +94,13 @@ export function ValueProofView({
             <div className={styles.ik}>The read</div>
             <p className={styles.itext}>
               <b>
-                {formatUsdM(noUsage)} never becomes usage-supported
-                {noFinance > 0
-                  ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
-                  : "."}
+                {allValueUnknown
+                  ? `${s.unknownValueClaimCount} claims have unknown financial value; no executive value total is claimable from this dataset.`
+                  : `${formatUsdM(noUsage)} never becomes usage-supported${
+                      noFinance > 0
+                        ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
+                        : "."
+                    }`}
               </b>{" "}
               {financeAheadOfUsage ? (
                 <>

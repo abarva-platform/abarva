@@ -13,7 +13,7 @@ import {
   hasLockedTenantSession,
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { loadTowerMartCommandView } from "@/lib/cio-tower/tower-mart-view-model";
+import { readTowerCommandCenter } from "@/lib/tower/readTowerCommandCenter";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 export const metadata = { title: "Tower · AbarVa" };
@@ -64,13 +64,13 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     client?.name ??
     "AbarVa Client";
 
-  const martView = await withTowerReadTimeout(
-    loadTowerMartCommandView({
+  const towerView = await withTowerReadTimeout(
+    readTowerCommandCenter({
       tenantKeyCandidates: [client?.key, requestedClient, client?.id],
     }),
     null,
   );
-  const commandCenterView = buildTowerCommandCenterView(martView, {
+  const commandCenterView = buildTowerCommandCenterView(towerView, {
     tenantName,
   });
   const towerChatClientId =
