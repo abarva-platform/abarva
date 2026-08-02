@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DEFAULT_OUT_DIR = "reports/foundation-v3-day-one-breach-report";
+const EXPECTED_DECLARED_INTAKE_DATA_SOURCES = 33;
 
 function argValue(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -556,10 +557,10 @@ const rawExpectations = [
     expectation_ref: "exp-source-register-file-count-v1",
     stage_name: "source-register",
     object_kind: "source_file",
-    object_scope: "all declared intake sources",
+    object_scope: "declared intake data sources excluding workbook lineage companions",
     expectation_basis: "declared_intake",
     basis_mode: "literal_snapshot",
-    expected: 48,
+    expected: EXPECTED_DECLARED_INTAKE_DATA_SOURCES,
     actual: countRows(counts, "source_registry.source"),
     basis_query: "SELECT count(*) FROM intake.expected_source WHERE tenant_key = $1 AND coalesce(arrival_state, 'expected') <> 'not_applicable'",
     basis_pending_relation: "intake.expected_source",
