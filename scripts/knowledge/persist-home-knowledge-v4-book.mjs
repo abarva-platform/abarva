@@ -17,7 +17,7 @@
 // persisted row starts life as 'candidate'. Flipping one tenant's row to
 // 'approved' -- the actual "go live" moment for that tenant -- is a
 // separate, explicit action via --approve=<tenantKey>, run only after a
-// human has reviewed the real content (e.g. via /home/v4-preview).
+// human has reviewed the real content through the now-retired V4 review surface.
 
 import fs from "node:fs";
 import path from "node:path";

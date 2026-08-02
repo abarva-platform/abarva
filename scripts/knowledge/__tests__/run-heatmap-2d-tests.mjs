@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Zero-cost, zero-network regression suite for a real, previously-shipped
-// bug: HeatmapVisual (src/components/home/v4/HomeV4VisualRenderer.tsx)
+// bug: the retired V4 Heatmap visual renderer
 // builds its grid from data_points[].row/col, but resolveVisualDataPoints()
 // only ever produced {label, value} -- every point collapsed onto the same
 // blank row/col key and rendered as a single empty cell. Confirmed live: the

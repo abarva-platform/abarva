@@ -125,7 +125,7 @@ export const COLORS = {
 
 // Mirrors scripts/knowledge/build-home-knowledge-v4-review-pack.mjs's
 // expandedDimensionCatalog (38 real dimension-family keys) — kept in sync by
-// hand, same reasoning as src/components/home/v4/homeV4Visual.ts. Every
+// hand, same reasoning as the retired Home V4 visual contract. Every
 // catalog concept gets its own ViewKey/dimKey here, even though most have no
 // generated content yet on the V2 pipeline this page reads (DimensionView's
 // existing fallback — "available for exploration, but ... not yet authored"
@@ -136,15 +136,30 @@ const VIEW_META: Record<ViewKey, { title: string; dimKey?: string }> = {
   map: { title: "Enterprise relationship map" },
   coverage: { title: "Coverage" },
 
-  enterprise_thesis: { title: "Enterprise Thesis", dimKey: "enterprise_thesis" },
-  leadership_agenda: { title: "Leadership Agenda", dimKey: "leadership_agenda" },
+  enterprise_thesis: {
+    title: "Enterprise Thesis",
+    dimKey: "enterprise_thesis",
+  },
+  leadership_agenda: {
+    title: "Leadership Agenda",
+    dimKey: "leadership_agenda",
+  },
   proven_strengths: { title: "Proven Strengths", dimKey: "proven_strengths" },
-  structural_constraints: { title: "Structural Constraints", dimKey: "structural_constraints" },
-  interview_signals: { title: "Interview Signals", dimKey: "interview_signals" },
+  structural_constraints: {
+    title: "Structural Constraints",
+    dimKey: "structural_constraints",
+  },
+  interview_signals: {
+    title: "Interview Signals",
+    dimKey: "interview_signals",
+  },
 
   profile: { title: "Enterprise Profile", dimKey: "profile" },
   divisions: { title: "Divisions & Business Units", dimKey: "divisions" },
-  front_middle_back: { title: "Front / Middle / Back Office", dimKey: "front_middle_back" },
+  front_middle_back: {
+    title: "Front / Middle / Back Office",
+    dimKey: "front_middle_back",
+  },
   functions: { title: "Business Functions", dimKey: "functions" },
   capabilities: { title: "Business Capabilities", dimKey: "capabilities" },
   org: { title: "Organization Ownership", dimKey: "org" },
@@ -153,10 +168,16 @@ const VIEW_META: Record<ViewKey, { title: string; dimKey?: string }> = {
   geography: { title: "Geography & Legal Entities", dimKey: "geography" },
 
   value_streams: { title: "Value Streams", dimKey: "value_streams" },
-  business_processes: { title: "Business Processes", dimKey: "business_processes" },
+  business_processes: {
+    title: "Business Processes",
+    dimKey: "business_processes",
+  },
   journeys: { title: "Member / Customer Journeys", dimKey: "journeys" },
   opev: { title: "Operational Evidence", dimKey: "opev" },
-  service_delivery: { title: "Service Delivery Model", dimKey: "service_delivery" },
+  service_delivery: {
+    title: "Service Delivery Model",
+    dimKey: "service_delivery",
+  },
   spend: { title: "IT Budget, Spend & Value", dimKey: "budget" },
   programs: { title: "Programs & Initiatives", dimKey: "programs" },
 
@@ -164,10 +185,19 @@ const VIEW_META: Record<ViewKey, { title: string; dimKey?: string }> = {
   data: { title: "Data Domains", dimKey: "data" },
   integrations: { title: "Integrations", dimKey: "integrations" },
   infra: { title: "Infrastructure & Platforms", dimKey: "infra" },
-  architecture_dependencies: { title: "Architecture Dependencies", dimKey: "architecture_dependencies" },
+  architecture_dependencies: {
+    title: "Architecture Dependencies",
+    dimKey: "architecture_dependencies",
+  },
   tech_lifecycle: { title: "Technology Lifecycle", dimKey: "tech_lifecycle" },
-  data_quality_lineage: { title: "Data Quality & Lineage", dimKey: "data_quality_lineage" },
-  identity_semantic: { title: "Identity & Semantic Foundations", dimKey: "identity_semantic" },
+  data_quality_lineage: {
+    title: "Data Quality & Lineage",
+    dimKey: "data_quality_lineage",
+  },
+  identity_semantic: {
+    title: "Identity & Semantic Foundations",
+    dimKey: "identity_semantic",
+  },
 
   vendors: { title: "Vendors & Contracts", dimKey: "vendors" },
   ms: { title: "Managed Services", dimKey: "ms" },
@@ -245,7 +275,11 @@ const NAV_GROUPS: Array<{
       { key: "enterprise_thesis", label: "Enterprise Thesis", tone: "green" },
       { key: "leadership_agenda", label: "Leadership Agenda", tone: "green" },
       { key: "proven_strengths", label: "Proven Strengths", tone: "green" },
-      { key: "structural_constraints", label: "Structural Constraints", tone: "red" },
+      {
+        key: "structural_constraints",
+        label: "Structural Constraints",
+        tone: "red",
+      },
       { key: "interview_signals", label: "Interview Signals", tone: "amber" },
       { key: "coverage", label: "Coverage", tone: "amber" },
     ],
@@ -258,7 +292,11 @@ const NAV_GROUPS: Array<{
       { key: "operating", label: "Operating Model", tone: "green" },
       { key: "profile", label: "Enterprise Profile", tone: "green" },
       { key: "divisions", label: "Divisions & Business Units", tone: "green" },
-      { key: "front_middle_back", label: "Front / Middle / Back Office", tone: "amber" },
+      {
+        key: "front_middle_back",
+        label: "Front / Middle / Back Office",
+        tone: "amber",
+      },
       { key: "functions", label: "Business Functions", tone: "green" },
       { key: "capabilities", label: "Business Capabilities", tone: "muted" },
       { key: "org", label: "Organization Ownership", tone: "amber" },
@@ -276,9 +314,23 @@ const NAV_GROUPS: Array<{
       { key: "business_processes", label: "Business Processes", tone: "muted" },
       { key: "journeys", label: "Member / Customer Journeys", tone: "muted" },
       { key: "opev", label: "Operational Evidence", tone: "muted" },
-      { key: "service_delivery", label: "Service Delivery Model", tone: "muted" },
-      { key: "spend", label: "IT Budget, Spend & Value", measure: "budget", tone: "amber" },
-      { key: "programs", label: "Programs & Initiatives", measure: "programs", tone: "amber" },
+      {
+        key: "service_delivery",
+        label: "Service Delivery Model",
+        tone: "muted",
+      },
+      {
+        key: "spend",
+        label: "IT Budget, Spend & Value",
+        measure: "budget",
+        tone: "amber",
+      },
+      {
+        key: "programs",
+        label: "Programs & Initiatives",
+        measure: "programs",
+        tone: "amber",
+      },
     ],
   },
   {
@@ -286,14 +338,31 @@ const NAV_GROUPS: Array<{
     icon: "technology",
     collapsible: true,
     items: [
-      { key: "apps", label: "Applications & Systems", measure: "apps", tone: "green" },
+      {
+        key: "apps",
+        label: "Applications & Systems",
+        measure: "apps",
+        tone: "green",
+      },
       { key: "data", label: "Data Domains", measure: "data", tone: "amber" },
       { key: "integrations", label: "Integrations", tone: "amber" },
       { key: "infra", label: "Infrastructure & Platforms", tone: "muted" },
-      { key: "architecture_dependencies", label: "Architecture Dependencies", tone: "muted" },
+      {
+        key: "architecture_dependencies",
+        label: "Architecture Dependencies",
+        tone: "muted",
+      },
       { key: "tech_lifecycle", label: "Technology Lifecycle", tone: "amber" },
-      { key: "data_quality_lineage", label: "Data Quality & Lineage", tone: "amber" },
-      { key: "identity_semantic", label: "Identity & Semantic Foundations", tone: "muted" },
+      {
+        key: "data_quality_lineage",
+        label: "Data Quality & Lineage",
+        tone: "amber",
+      },
+      {
+        key: "identity_semantic",
+        label: "Identity & Semantic Foundations",
+        tone: "muted",
+      },
       { key: "map", label: "Relationship Map", tone: "muted" },
     ],
   },
@@ -302,7 +371,12 @@ const NAV_GROUPS: Array<{
     icon: "vendors",
     collapsible: true,
     items: [
-      { key: "vendors", label: "Vendors & Contracts", measure: "vendors", tone: "green" },
+      {
+        key: "vendors",
+        label: "Vendors & Contracts",
+        measure: "vendors",
+        tone: "green",
+      },
       { key: "ms", label: "Managed Services", tone: "muted" },
     ],
   },
@@ -311,7 +385,12 @@ const NAV_GROUPS: Array<{
     icon: "change",
     collapsible: true,
     items: [
-      { key: "priorities", label: "AI & Automation Use Cases", measure: "ai", tone: "green" },
+      {
+        key: "priorities",
+        label: "AI & Automation Use Cases",
+        measure: "ai",
+        tone: "green",
+      },
       { key: "metrics", label: "Metrics & Outcomes", tone: "muted" },
       { key: "industry", label: "Industry Patterns", tone: "muted" },
       { key: "lenses", label: "Context Confidence", tone: "muted" },
@@ -322,8 +401,18 @@ const NAV_GROUPS: Array<{
     icon: "risk",
     collapsible: true,
     items: [
-      { key: "risks", label: "Risks & Controls", measure: "risks", tone: "red" },
-      { key: "evidence", label: "Evidence Sources", measure: "evidence", tone: "green" },
+      {
+        key: "risks",
+        label: "Risks & Controls",
+        measure: "risks",
+        tone: "red",
+      },
+      {
+        key: "evidence",
+        label: "Evidence Sources",
+        measure: "evidence",
+        tone: "green",
+      },
     ],
   },
 ];
@@ -658,16 +747,28 @@ function dimensionVisualChart(
         column.k,
       ),
     )?.k ?? "status";
-  const buckets = new Map<string, { label: string; value: number; tone: string }>();
+  const buckets = new Map<
+    string,
+    { label: string; value: number; tone: string }
+  >();
   for (const row of rows.slice(0, 80)) {
     const raw =
-      firstText(row, [categoryKey, "business_function", "system_category", "criticality", "stage", "status"]) ||
-      toneLabel(String(dimension?.status ?? ""));
+      firstText(row, [
+        categoryKey,
+        "business_function",
+        "system_category",
+        "criticality",
+        "stage",
+        "status",
+      ]) || toneLabel(String(dimension?.status ?? ""));
     const label = shortLabel(noMechanics(raw) || "Context", 24);
     const existing = buckets.get(label) ?? {
       label,
       value: 0,
-      tone: firstText(row, ["status", "confidence", "criticality"]) || dimension?.status || "",
+      tone:
+        firstText(row, ["status", "confidence", "criticality"]) ||
+        dimension?.status ||
+        "",
     };
     existing.value += 1;
     buckets.set(label, existing);
@@ -677,11 +778,11 @@ function dimensionVisualChart(
     .slice(0, 6);
   const max = Math.max(1, ...ranked.map((item) => item.value));
   const values = ranked.map((item) => ({
-      name: item.label,
-      value: Math.max(12, Math.round((item.value / max) * 100)),
-      label: item.value === max ? "strongest signal" : "",
-      fill: toneColor(item.tone),
-    }));
+    name: item.label,
+    value: Math.max(12, Math.round((item.value / max) * 100)),
+    label: item.value === max ? "strongest signal" : "",
+    fill: toneColor(item.tone),
+  }));
   // No real data rows for this dimension -- return empty rather than the
   // old single-bar "Directional" stub, which rendered identically across
   // every under-generated dimension and looked like a real coverage signal.
@@ -732,9 +833,10 @@ function sourceRows(pack: HomeKnowledgeDesignContractPack, key?: string) {
       // No generic reassurance when the source itself doesn't state what it
       // supports -- an unstated relationship must render as unstated, not
       // as a vague claim of support the source never actually made.
-      supports: source.supports || source.facts
-        ? noMechanics(source.supports || source.facts)
-        : null,
+      supports:
+        source.supports || source.facts
+          ? noMechanics(source.supports || source.facts)
+          : null,
       size: noMechanics(source.size || source.fields || "Coverage not stated"),
       gap: noMechanics(source.missing || "No source-specific caveat captured"),
     }));
@@ -992,13 +1094,19 @@ function initialView(selectedDimension?: string | null): ViewKey {
 // dependency; single-color strokes so they sit quietly under the locked
 // Georgia/DM Sans system rather than compete with it.
 const EXPLORER_ICON_PATHS: Record<ExplorerIcon, string> = {
-  brief: "M4 2.5h6l2 2v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5ZM9 2.5v2.5h2.5 M5.5 7.5h5 M5.5 9.5h5 M5.5 11.5h3",
-  compass: "M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z M10 6l-1.4 3.3L5.3 10.7 6.7 7.4 10 6Z",
-  structure: "M8 1.5v3M4.5 8h7M2.5 4.5h11v3h-11z M3 11h3v3H3z M6.5 11h3v3h-3z M10 11h3v3h-3z",
-  value: "M8 1.5v13 M4.5 4.5c0-1 1-1.5 3.5-1.5s3.5.7 3.5 1.7-1.3 1.5-3.5 1.8-3.5.9-3.5 1.9 1 1.6 3.5 1.6 3.5-.5 3.5-1.5",
+  brief:
+    "M4 2.5h6l2 2v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5ZM9 2.5v2.5h2.5 M5.5 7.5h5 M5.5 9.5h5 M5.5 11.5h3",
+  compass:
+    "M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z M10 6l-1.4 3.3L5.3 10.7 6.7 7.4 10 6Z",
+  structure:
+    "M8 1.5v3M4.5 8h7M2.5 4.5h11v3h-11z M3 11h3v3H3z M6.5 11h3v3h-3z M10 11h3v3h-3z",
+  value:
+    "M8 1.5v13 M4.5 4.5c0-1 1-1.5 3.5-1.5s3.5.7 3.5 1.7-1.3 1.5-3.5 1.8-3.5.9-3.5 1.9 1 1.6 3.5 1.6 3.5-.5 3.5-1.5",
   technology: "M2.5 3.5h11v7h-11z M6 13.5h4 M8 10.5v3 M5 6h1.5 M5 8h3",
-  vendors: "M2.5 5.5 8 2l5.5 3.5v6L8 15l-5.5-3.5z M8 8l5.5-3.5M8 8v7M8 8 2.5 5.5",
-  change: "M3 8a5 5 0 0 1 8.5-3.5L13 3M13 3v3h-3 M13 8a5 5 0 0 1-8.5 3.5L3 13M3 13v-3h3",
+  vendors:
+    "M2.5 5.5 8 2l5.5 3.5v6L8 15l-5.5-3.5z M8 8l5.5-3.5M8 8v7M8 8 2.5 5.5",
+  change:
+    "M3 8a5 5 0 0 1 8.5-3.5L13 3M13 3v3h-3 M13 8a5 5 0 0 1-8.5 3.5L3 13M3 13v-3h3",
   risk: "M8 1.5 14 4v4c0 4-2.5 6-6 6.5C4.5 14 2 12 2 8V4z M8 5.5v3.5 M8 10.5h.01",
 };
 
@@ -1029,7 +1137,9 @@ export function HomeEnterpriseBriefApp({
   const [view, setView] = useState<ViewKey>(initialView(selectedDimension));
   const [activeNavId, setActiveNavId] = useState<string | null>(null);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(NAV_GROUPS.map((g) => [g.title, g.defaultOpen ?? false])),
+    Object.fromEntries(
+      NAV_GROUPS.map((g) => [g.title, g.defaultOpen ?? false]),
+    ),
   );
   const meta = VIEW_META[view];
   const graph = useMemo(
@@ -1053,48 +1163,52 @@ export function HomeEnterpriseBriefApp({
         {NAV_GROUPS.map((group) => {
           const isOpen = openGroups[group.title] ?? false;
           return (
-          <nav className="heb-nav-group" key={group.title}>
-            {group.eyebrow ? <small>{group.eyebrow}</small> : null}
-            <button
-              type="button"
-              className="heb-nav-group-head"
-              aria-expanded={isOpen}
-              onClick={() =>
-                setOpenGroups((prev) => ({ ...prev, [group.title]: !isOpen }))
-              }
-            >
-              <em className={isOpen ? "heb-disclosure open" : "heb-disclosure"}>▶</em>
-              <ExplorerGroupIcon icon={group.icon} />
-              {group.title}
-            </button>
-            {isOpen
-              ? group.items.map((item) => {
-              const navId = `${group.title}:${item.label}`;
-              const active = activeNavId
-                ? activeNavId === navId
-                : item.key === view && group.title === "Enterprise Brief";
-              return (
-                <button
-                  className={[
-                    active ? "is-active" : "",
-                    item.tone ? `tone-${item.tone}` : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  key={navId}
-                  type="button"
-                  onClick={() => {
-                    setView(item.key);
-                    setActiveNavId(navId);
-                  }}
+            <nav className="heb-nav-group" key={group.title}>
+              {group.eyebrow ? <small>{group.eyebrow}</small> : null}
+              <button
+                type="button"
+                className="heb-nav-group-head"
+                aria-expanded={isOpen}
+                onClick={() =>
+                  setOpenGroups((prev) => ({ ...prev, [group.title]: !isOpen }))
+                }
+              >
+                <em
+                  className={isOpen ? "heb-disclosure open" : "heb-disclosure"}
                 >
-                  <i aria-hidden="true" />
-                  <b>{item.label}</b>
-                </button>
-              );
-                })
-              : null}
-          </nav>
+                  ▶
+                </em>
+                <ExplorerGroupIcon icon={group.icon} />
+                {group.title}
+              </button>
+              {isOpen
+                ? group.items.map((item) => {
+                    const navId = `${group.title}:${item.label}`;
+                    const active = activeNavId
+                      ? activeNavId === navId
+                      : item.key === view && group.title === "Enterprise Brief";
+                    return (
+                      <button
+                        className={[
+                          active ? "is-active" : "",
+                          item.tone ? `tone-${item.tone}` : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        key={navId}
+                        type="button"
+                        onClick={() => {
+                          setView(item.key);
+                          setActiveNavId(navId);
+                        }}
+                      >
+                        <i aria-hidden="true" />
+                        <b>{item.label}</b>
+                      </button>
+                    );
+                  })
+                : null}
+            </nav>
           );
         })}
         <p className="heb-rail-note">
@@ -2630,7 +2744,8 @@ function DimensionView({
             sources.slice(0, 3).map((source) => (
               <p key={source.name}>
                 <strong>{source.name}</strong>:{" "}
-                {source.supports ?? "No explicit relationship stated for this source."}
+                {source.supports ??
+                  "No explicit relationship stated for this source."}
               </p>
             ))
           ) : (
@@ -2649,7 +2764,8 @@ function MiniRelationshipVisual({
 }) {
   const center = { x: 310, y: 104 };
   const nodes = chart.slice(0, 6).map((item, index) => {
-    const angle = (-130 + index * (260 / Math.max(1, chart.length - 1))) * (Math.PI / 180);
+    const angle =
+      (-130 + index * (260 / Math.max(1, chart.length - 1))) * (Math.PI / 180);
     return {
       ...item,
       x: center.x + Math.cos(angle) * 210,
@@ -2675,17 +2791,20 @@ function MiniRelationshipVisual({
         />
       ))}
       <circle cx={center.x} cy={center.y} r="28" fill={COLORS.black} />
-      <text x={center.x} y={center.y + 4} textAnchor="middle" fill="#fffdf8" fontSize="11" fontWeight="700">
+      <text
+        x={center.x}
+        y={center.y + 4}
+        textAnchor="middle"
+        fill="#fffdf8"
+        fontSize="11"
+        fontWeight="700"
+      >
         Context
       </text>
       {nodes.map((node) => (
         <g key={node.name}>
           <circle cx={node.x} cy={node.y} r="13" fill={node.fill} />
-          <text
-            x={node.x + 18}
-            y={node.y + 4}
-            className="heb-node-label"
-          >
+          <text x={node.x + 18} y={node.y + 4} className="heb-node-label">
             {shortLabel(node.name, 22)}
           </text>
         </g>

@@ -1,0 +1,122 @@
+{
+  "tenant_key": "skyharbor_global",
+  "dataset_id": "skyharbor_global_synthetic_current_state_v3",
+  "rule": "Claude may use only these numbers in published Home content. Unknown financial values must remain not available/not established/unknown/blocked, never zero.",
+  "values": [
+    {
+      "key": "raw_business_rows",
+      "exact_value": 9656,
+      "display_formatted_value": "9656",
+      "currency": null,
+      "unit": "rows",
+      "period": "rows",
+      "semantic_meaning": "Current raw business row count loaded into PostgreSQL",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact",
+      "allowed_comparison": "equal only"
+    },
+    {
+      "key": "fy2027_technology_budget",
+      "exact_value": 2350000000,
+      "display_formatted_value": "$2.35B",
+      "currency": "USD",
+      "unit": null,
+      "period": "FY2027",
+      "semantic_meaning": "FY2027 technology budget",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "display as $2.35B",
+      "allowed_comparison": "comparisons allowed only against listed budget values"
+    },
+    {
+      "key": "fy2026_actual",
+      "exact_value": 2180000000,
+      "display_formatted_value": "$2.18B",
+      "currency": "USD",
+      "unit": null,
+      "period": "FY2026",
+      "semantic_meaning": "FY2026 prior-year actual technology spend",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "display as $2.18B",
+      "allowed_comparison": "comparisons allowed only against listed budget values"
+    },
+    {
+      "key": "annual_contract_value",
+      "exact_value": 1480500000,
+      "display_formatted_value": "$1.4805B",
+      "currency": "USD",
+      "unit": null,
+      "period": "current",
+      "semantic_meaning": "Annual vendor contract value in raw vendor contract register",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "display as $1.4805B",
+      "allowed_comparison": "may compare to FY2027 budget as contract coverage only"
+    },
+    {
+      "key": "tower_value_claim_count",
+      "exact_value": 162,
+      "display_formatted_value": "162",
+      "currency": null,
+      "period": "claims",
+      "semantic_meaning": "Tower value claim row count",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact",
+      "allowed_comparison": "equal only"
+    },
+    {
+      "key": "tower_claimable_claim_count",
+      "exact_value": 0,
+      "display_formatted_value": "0",
+      "currency": null,
+      "period": "claims",
+      "semantic_meaning": "Claimable Tower value claim count",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact",
+      "allowed_comparison": "may say none are claimable if value is 0"
+    },
+    {
+      "key": "tower_claimable_value",
+      "exact_value": 0,
+      "display_formatted_value": "$0",
+      "currency": "USD",
+      "unit": null,
+      "period": "current",
+      "semantic_meaning": "Current claimable value from Tower value claims",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact zero only because Tower establishes zero claimable value",
+      "allowed_comparison": "do not generalize to zero realized value"
+    },
+    {
+      "key": "architecture_graph_nodes",
+      "exact_value": 444,
+      "display_formatted_value": "444",
+      "currency": null,
+      "period": "nodes",
+      "semantic_meaning": "ArchitectureGraph node count",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact",
+      "allowed_comparison": "structural only; do not lead Home with this"
+    },
+    {
+      "key": "architecture_graph_edges",
+      "exact_value": 586,
+      "display_formatted_value": "586",
+      "currency": null,
+      "period": "edges",
+      "semantic_meaning": "ArchitectureGraph edge count",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact",
+      "allowed_comparison": "structural only; do not lead Home with this"
+    },
+    {
+      "key": "architecture_projection_nodes",
+      "exact_value": 25,
+      "display_formatted_value": "25",
+      "currency": null,
+      "period": "nodes",
+      "semantic_meaning": "Executive architecture projection node count",
+      "source_reference": "HOME-EVID-0248",
+      "allowed_rounding": "exact",
+      "allowed_comparison": "structural only"
+    }
+  ]
+}

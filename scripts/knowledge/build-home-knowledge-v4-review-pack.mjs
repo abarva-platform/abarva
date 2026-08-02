@@ -251,7 +251,7 @@ const LEGACY_DIMENSION_TAB_KEYS = ["summary_tab", "data_tab", "relationship_tab"
 
 // Real gap, not a stylistic choice: the 900-row Applications & Systems
 // inventory (full_rows) was previously injected only into the static
-// /home/v4-preview fixture file, by reconcile-tenant-applications.mjs's CLI
+// retired V4 review fixture file, by reconcile-tenant-applications.mjs's CLI
 // side effect -- never into the actual candidate that gets persisted to
 // Postgres by the real generation pipeline. Any candidate approved and
 // served on the real /home route would have shipped with an empty

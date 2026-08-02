@@ -1,0 +1,1037 @@
+{
+  "status": "passed",
+  "model": "claude-sonnet-4-6",
+  "promptVersion": "enterprise_landscape_architecture_advisory_v1",
+  "promptSha256": "ec7d5a0ee2e51019951be8a5c551ef339bb70832bba5a0d3dd4cbd9dc1d5290c",
+  "responseSha256": "2b961b1a9a0a1b3e80414b75000fc51786757395b987c99e7c7662cf65285607",
+  "usage": {
+    "input_tokens": 37406,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 14447,
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "graphIssues": [],
+  "claudeStatus": "reused_validated_advisory",
+  "claudeIssues": [],
+  "validation": {
+    "valid": true,
+    "issues": [],
+    "referencedNodeRefs": [
+      "APP-APP-0011",
+      "APP-APP-0306",
+      "APP-APP-0658",
+      "APP-APP-0074",
+      "PLAT-PLT-015",
+      "VEN-VEN-022",
+      "VEN-VEN-021",
+      "APP-APP-0694",
+      "APP-APP-0486",
+      "AI-AIADOPT-06-0058"
+    ],
+    "referencedEdgeRefs": [],
+    "referencedEvidenceRefs": [
+      "raw_enterprise_it.applications_portfolio",
+      "raw_enterprise_it.business_functions",
+      "raw_enterprise_it.vendors_contracts:65",
+      "raw_enterprise_it.vendors_contracts:91",
+      "raw_enterprise_it.vendors_contracts:64",
+      "sem.contract_wide",
+      "raw_enterprise_it.ai_adoption_usage:359",
+      "raw_enterprise_it.ai_adoption_usage:355",
+      "raw_enterprise_it.ai_adoption_usage:335",
+      "raw_enterprise_it.ai_adoption_usage:264",
+      "raw_enterprise_it.ai_adoption_usage:346",
+      "raw_enterprise_it.applications_portfolio:302",
+      "raw_enterprise_it.applications_portfolio:318",
+      "raw_enterprise_it.applications_portfolio:12",
+      "raw_enterprise_it.applications_portfolio:307",
+      "raw_cloud_hybrid.workload_distribution",
+      "raw_data_analytics.platform_tech_stack:39",
+      "raw_data_analytics.platform_tech_stack:37",
+      "raw_data_analytics.platform_tech_stack:40",
+      "raw_data_analytics.platform_tech_stack:11",
+      "raw_data_analytics.platform_tech_stack:17",
+      "raw_data_analytics.platform_tech_stack:43",
+      "raw_data_analytics.platform_tech_stack:44",
+      "raw_enterprise_it.ai_adoption_usage",
+      "tower.value_claim",
+      "raw_enterprise_it.vendors_contracts:25",
+      "raw_enterprise_it.applications_portfolio:684",
+      "raw_enterprise_it.business_functions:19",
+      "raw_enterprise_it.business_functions:6",
+      "raw_enterprise_it.ai_adoption_usage:338",
+      "raw_enterprise_it.ai_adoption_usage:300",
+      "raw_enterprise_it.business_functions:21",
+      "raw_enterprise_it.business_functions:20",
+      "raw_enterprise_it.applications_portfolio:119",
+      "raw_enterprise_it.applications_portfolio:366",
+      "raw_enterprise_it.business_functions:26",
+      "raw_enterprise_it.business_functions:3",
+      "raw_enterprise_it.applications_portfolio:75",
+      "raw_enterprise_it.applications_portfolio:487",
+      "raw_enterprise_it.applications_portfolio:659",
+      "raw_enterprise_it.applications_portfolio:595",
+      "raw_enterprise_it.applications_portfolio:691",
+      "raw_data_analytics.platform_tech_stack:15",
+      "raw_data_analytics.platform_tech_stack:16",
+      "raw_enterprise_it.applications_portfolio:221",
+      "raw_enterprise_it.applications_portfolio:671",
+      "raw_enterprise_it.applications_portfolio:336",
+      "raw_enterprise_it.applications_portfolio:16",
+      "raw_enterprise_it.applications_portfolio:695",
+      "raw_enterprise_it.applications_portfolio:515",
+      "raw_enterprise_it.business_functions:22",
+      "raw_enterprise_it.business_functions:43",
+      "raw_enterprise_it.business_functions:35",
+      "raw_data_analytics.platform_tech_stack:32",
+      "raw_enterprise_it.applications_portfolio:252",
+      "raw_enterprise_it.applications_portfolio:342",
+      "raw_enterprise_it.applications_portfolio:269",
+      "tower.metric_observation",
+      "raw_enterprise_it.business_functions:17",
+      "raw_enterprise_it.applications_portfolio:158"
+    ]
+  },
+  "snapshotId": "skyharbor-enterprise-landscape-6f7615be08c8",
+  "advisory": {
+    "title": "SkyHarbor Global — Enterprise Landscape Architecture Advisory",
+    "executiveThesis": "SkyHarbor Global operates a sprawling, high-criticality application estate across fragmented hosting models, with every major business capability — from revenue management and crew scheduling to baggage operations and passenger service — dependent on Tier 1/Critical systems that carry unresolved modernization decisions. The portfolio's centre of gravity is operational: 130 of the displayed applications are Tier 1/Critical, and the analytics layer alone accounts for dozens of marts in various states of retirement candidacy and ETL modernization. AI tools are being deployed at scale — with usage visible across pricing, revenue management, commercial strategy, and network planning — but Tower confirms zero claimable value against that spend, and 13 adoption rows lack auditable outcome proof. The strategic imperative is not to accelerate AI deployment; it is to sequence dependency resolution, stabilise the data foundation, and establish outcome baselines before the AI investment becomes commercially indefensible. Three decisions are non-deferrable: resolving the SAP S/4HANA lifecycle dispute on APP-APP-0306, retiring APP-APP-0011 which is simultaneously lifecycle-state 'Retire' and modernization-state 'Maintain', and establishing Tower baselines for AI value claims before the next budget cycle.",
+    "strengths": [
+      {
+        "headline": "Near-complete evidence coverage across the application portfolio",
+        "body": "437 of 444 nodes are fully evidenced, and all 586 edges carry evidence. This gives leadership a reliable foundation for portfolio decisions rather than relying on estimates or inference.",
+        "affectedRefs": [
+          "APP-APP-0012",
+          "APP-APP-0317",
+          "APP-APP-0251",
+          "APP-APP-0301",
+          "APP-APP-0074"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio",
+          "raw_enterprise_it.business_functions"
+        ]
+      },
+      {
+        "headline": "Full contract semantic coverage enables immediate vendor leverage",
+        "body": "All 119 contracts carry document-backed semantic coverage, meaning commercial terms, renewal timelines, and competitive event flags are actionable now. NorthPeak Consulting ($50M), Salesforce ($43.5M), and Microsoft ($37.5M) are the top three spend concentrations, with Microsoft flagged for a competitive event and NorthPeak under renewal analysis — both are live negotiation opportunities.",
+        "affectedRefs": ["VEN-VEN-022", "VEN-VEN-030", "VEN-VEN-021"],
+        "evidenceRefs": [
+          "raw_enterprise_it.vendors_contracts:65",
+          "raw_enterprise_it.vendors_contracts:91",
+          "raw_enterprise_it.vendors_contracts:64",
+          "sem.contract_wide"
+        ]
+      },
+      {
+        "headline": "AI adoption is broad and spans the highest-value business functions",
+        "body": "AI tools are deployed across pricing, revenue management, commercial strategy, and network planning — the functions most directly linked to yield and capacity optimisation. The breadth of deployment creates a platform for structured value measurement once baselines are established.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-06-0034",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-06-0045"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage:359",
+          "raw_enterprise_it.ai_adoption_usage:355",
+          "raw_enterprise_it.ai_adoption_usage:335",
+          "raw_enterprise_it.ai_adoption_usage:264",
+          "raw_enterprise_it.ai_adoption_usage:346"
+        ]
+      },
+      {
+        "headline": "Strategic anchor systems are in place for core airline operations",
+        "body": "Amadeus Altéa (APP-APP-0301) for airport and station operations and the Cloudera Data Platform (APP-APP-0317) for maintenance and engineering are both lifecycle-state 'Strategic' and 'Maintain', providing stable operational anchors around which modernization can be sequenced.",
+        "affectedRefs": ["APP-APP-0301", "APP-APP-0317"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:302",
+          "raw_enterprise_it.applications_portfolio:318"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "headline": "Lifecycle contradiction on APP-APP-0011 creates active operational risk",
+        "body": "The Operations Control Ab Initio platform (APP-APP-0011) carries lifecycle state 'Retire' but modernization state 'Maintain'. This contradiction means the system is simultaneously being sustained and scheduled for decommission, with no resolved exit path. It supports the Loyalty business function — a customer trust and growth capability — at $6.99M annual cost with 10 interfaces. Until this is resolved, downstream dependencies cannot be safely planned.",
+        "affectedRefs": ["APP-APP-0011"],
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:12"]
+      },
+      {
+        "headline": "Disputed lifecycle decision on SAP S/4HANA 306 blocks ERP consolidation",
+        "body": "APP-APP-0306 (Safety and Regulatory Reporting SAP S/4HANA) carries lifecycle state 'Decision disputed' — the only application in the portfolio with this designation. At $6.96M annual cost, 18 interfaces, and 12,004 users, an unresolved dispute on a Tier 1/Critical SAP S/4HANA instance directly blocks any coherent ERP rationalisation strategy and creates governance risk in safety and regulatory reporting.",
+        "affectedRefs": ["APP-APP-0306"],
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:307"]
+      },
+      {
+        "headline": "Hybrid and on-premises hosting constrains cloud and AI execution timelines",
+        "body": "47 displayed applications remain on-premises across multiple data centres including DFW Enterprise Data Center, Chicago Resilience Data Center, and Atlanta Operations Data Center. Cloud and AI roadmaps that assume direct platform replacement will fail without explicit latency, integration, and resilience sequencing for these workloads.",
+        "affectedRefs": [
+          "APP-APP-0251",
+          "APP-APP-0658",
+          "APP-APP-0365",
+          "APP-APP-0594",
+          "APP-APP-0335",
+          "APP-APP-0157",
+          "APP-APP-0436",
+          "APP-APP-0097"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio",
+          "raw_cloud_hybrid.workload_distribution"
+        ]
+      },
+      {
+        "headline": "Analytics estate is fragmented, high-cost, and predominantly in retirement or modernization states",
+        "body": "The analytics layer spans dozens of domain-specific marts — including the Loyalty Analytics Mart ($37.5M), Revenue Management Analytics Mart ($37M), and Digital Commerce Analytics Mart ($37M) — with the majority flagged as 'Retire candidate', 'ETL modernization', or 'EDW modernization'. This fragmentation creates data trust risk for AI and decision-making capabilities that depend on consistent, governed data.",
+        "affectedRefs": [
+          "PLAT-PLT-038",
+          "PLAT-PLT-036",
+          "PLAT-PLT-039",
+          "PLAT-PLT-010",
+          "PLAT-PLT-016",
+          "PLAT-PLT-042",
+          "PLAT-PLT-043"
+        ],
+        "evidenceRefs": [
+          "raw_data_analytics.platform_tech_stack:39",
+          "raw_data_analytics.platform_tech_stack:37",
+          "raw_data_analytics.platform_tech_stack:40",
+          "raw_data_analytics.platform_tech_stack:11",
+          "raw_data_analytics.platform_tech_stack:17",
+          "raw_data_analytics.platform_tech_stack:43",
+          "raw_data_analytics.platform_tech_stack:44"
+        ]
+      },
+      {
+        "headline": "AI value is unproven: $41M in usage cost, zero Tower-claimable outcomes",
+        "body": "Tower confirms 150 funded-but-no-baseline value claims and only 12 usage-supported claims. The AI adoption programme carries an estimated $41.26M in usage cost with no claimable calculated value in this load. This is not a technology problem — it is a governance and measurement problem that must be resolved before further AI investment is approved.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0045",
+          "AI-AIADOPT-06-0037",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-04-0023",
+          "AI-AIADOPT-03-0023",
+          "AI-AIADOPT-06-0041",
+          "AI-AIADOPT-02-0023",
+          "AI-AIADOPT-05-0059"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage",
+          "tower.value_claim"
+        ]
+      },
+      {
+        "headline": "Vendor concentration in consulting and managed services creates strategic dependency",
+        "body": "NorthPeak Consulting ($50M, renewal analysis pending) and CloudPeak Managed Services ($34.1M, renewal analysis pending) together represent over $84M in annual spend under active renewal review. Concentration at this level in services — rather than software — limits SkyHarbor's ability to internalise capability or competitively re-source without significant transition risk.",
+        "affectedRefs": ["VEN-VEN-022", "VEN-VEN-007"],
+        "evidenceRefs": [
+          "raw_enterprise_it.vendors_contracts:65",
+          "raw_enterprise_it.vendors_contracts:25"
+        ]
+      }
+    ],
+    "businessImplications": [
+      {
+        "statement": "Operations Control is the highest-risk business capability in the portfolio. APP-APP-0011 (Retire/Maintain contradiction) and APP-APP-0683 (Power BI custom application on SAP ABAP, move to managed service) both sit in this domain. A disruption to Operations Control directly impacts on-time performance, crew recovery, and customer trust — the airline's most visible commercial metrics.",
+        "affectedRefs": [
+          "APP-APP-0011",
+          "APP-APP-0683",
+          "FUNC-OPERATIONS-CONTROL"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:12",
+          "raw_enterprise_it.applications_portfolio:684",
+          "raw_enterprise_it.business_functions:19"
+        ]
+      },
+      {
+        "statement": "Revenue Management and Pricing — the functions most directly linked to yield — are carrying the highest density of AI tool deployment (Power BI Copilot, SAP Joule, GitHub Copilot, ChatGPT Enterprise) but have no Tower-confirmed outcome baselines. Until baselines are set, the commercial case for continued AI investment in these functions cannot be made to the board.",
+        "affectedRefs": [
+          "FUNC-PRICING",
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0037",
+          "AI-AIADOPT-05-0059",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-06-0034"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.business_functions:6",
+          "raw_enterprise_it.ai_adoption_usage:359",
+          "raw_enterprise_it.ai_adoption_usage:338",
+          "raw_enterprise_it.ai_adoption_usage:300",
+          "raw_enterprise_it.ai_adoption_usage:355",
+          "raw_enterprise_it.ai_adoption_usage:335"
+        ]
+      },
+      {
+        "statement": "Baggage Operations and Airport and Ground Operations — both High criticality, customer-facing capabilities — are served by applications with consolidate or retire-candidate modernization states. Operational reliability in these functions is a direct driver of customer trust and loyalty growth; modernization sequencing must protect service continuity.",
+        "affectedRefs": [
+          "FUNC-BAGGAGE-OPERATIONS",
+          "FUNC-AIRPORT-AND-GROUND-OPERATIONS",
+          "APP-APP-0118",
+          "APP-APP-0365"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.business_functions:21",
+          "raw_enterprise_it.business_functions:20",
+          "raw_enterprise_it.applications_portfolio:119",
+          "raw_enterprise_it.applications_portfolio:366"
+        ]
+      },
+      {
+        "statement": "Fleet Planning and Network Planning carry risk-reduction and execution-transparency outcomes. The MuleSoft Anypoint application (APP-APP-0074) serving Fleet Planning has 30 interfaces — the highest interface count among the top-cost applications — making it a critical integration node. Any modernization of this application requires full interface dependency mapping before execution.",
+        "affectedRefs": [
+          "FUNC-FLEET-PLANNING",
+          "FUNC-NETWORK-PLANNING",
+          "APP-APP-0074"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.business_functions:26",
+          "raw_enterprise_it.business_functions:3",
+          "raw_enterprise_it.applications_portfolio:75"
+        ]
+      },
+      {
+        "statement": "The Loyalty business function is served by a retiring platform (APP-APP-0011) and a replace-candidate SAP S/4HANA instance (APP-APP-0486 at $6.82M, 31,748 users — the highest user count in the portfolio). Loyalty is a direct revenue and customer retention lever; the combination of a retiring operational platform and a replace-candidate analytics platform creates compounding risk to loyalty programme continuity.",
+        "affectedRefs": [
+          "FUNC-PARTNERSHIPS-AND-ALLIANCES",
+          "APP-APP-0011",
+          "APP-APP-0486"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:12",
+          "raw_enterprise_it.applications_portfolio:487"
+        ]
+      },
+      {
+        "statement": "Safety and Regulatory Reporting is the domain with the highest concentration of misaligned applications: Microsoft 365 on Mainframe COBOL (APP-APP-0658, decision pending), SAP BusinessObjects on Databricks/Spark (APP-APP-0594, replace/replace), Okta Workforce Identity (APP-APP-0690, modernize/modernize), and SAP S/4HANA (APP-APP-0306, decision disputed). Regulatory reporting failures carry licence and safety authority risk that is categorically different from commercial system failures.",
+        "affectedRefs": [
+          "APP-APP-0658",
+          "APP-APP-0594",
+          "APP-APP-0690",
+          "APP-APP-0306"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:659",
+          "raw_enterprise_it.applications_portfolio:595",
+          "raw_enterprise_it.applications_portfolio:691",
+          "raw_enterprise_it.applications_portfolio:307"
+        ]
+      }
+    ],
+    "architecturePatterns": [
+      {
+        "pattern": "Domain-mart proliferation without semantic consolidation",
+        "description": "The analytics layer has evolved into a collection of domain-specific marts — Operations Control, Revenue Management, Loyalty, Cargo, Fleet Planning, Network Planning, and more — each with independent ETL pipelines, governance states, and hosting models. The Enterprise Semantic Layer (PLAT-PLT-015) exists but is in ETL modernization state, meaning the consolidation mechanism is itself under change. This pattern produces data trust risk: business decisions in pricing, revenue management, and crew scheduling may be drawing from inconsistent definitions of the same metrics.",
+        "affectedRefs": [
+          "PLAT-PLT-038",
+          "PLAT-PLT-036",
+          "PLAT-PLT-039",
+          "PLAT-PLT-010",
+          "PLAT-PLT-014",
+          "PLAT-PLT-016",
+          "PLAT-PLT-015"
+        ],
+        "evidenceRefs": [
+          "raw_data_analytics.platform_tech_stack:39",
+          "raw_data_analytics.platform_tech_stack:37",
+          "raw_data_analytics.platform_tech_stack:40",
+          "raw_data_analytics.platform_tech_stack:11",
+          "raw_data_analytics.platform_tech_stack:15",
+          "raw_data_analytics.platform_tech_stack:17",
+          "raw_data_analytics.platform_tech_stack:16"
+        ]
+      },
+      {
+        "pattern": "Integration tool duplication across Informatica PowerCenter instances",
+        "description": "Two separate Informatica PowerCenter instances (APP-APP-0220 in Integration and APIs, lifecycle Strategic/Replace; APP-APP-0670 in Collaboration and Productivity, lifecycle Replace/Maintain) are running concurrently with contradictory lifecycle signals. One is strategic and marked for replacement; the other is in replace lifecycle but being maintained. This creates integration governance ambiguity and duplicates licensing cost.",
+        "affectedRefs": ["APP-APP-0220", "APP-APP-0670"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:221",
+          "raw_enterprise_it.applications_portfolio:671"
+        ]
+      },
+      {
+        "pattern": "MRO system fragmentation across AMOS and TRAX eMRO",
+        "description": "Maintenance, Repair and Overhaul is served by multiple overlapping systems: AMOS 335 (on-premises, maintain/retire candidate), AMOS 365 (on-premises, modernize/move to managed service), Teradata Vantage 015 (SaaS, modernize/replace), and TRAX eMRO instances in HR and Workforce (APP-APP-0694, strategic/replace) and Ticketing (APP-APP-0514, replace/modernize). This fragmentation increases maintenance cost, creates data consistency risk for airworthiness records, and complicates any AI-assisted predictive maintenance initiative.",
+        "affectedRefs": [
+          "APP-APP-0335",
+          "APP-APP-0365",
+          "APP-APP-0015",
+          "APP-APP-0694",
+          "APP-APP-0514"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.applications_portfolio:366",
+          "raw_enterprise_it.applications_portfolio:16",
+          "raw_enterprise_it.applications_portfolio:695",
+          "raw_enterprise_it.applications_portfolio:515"
+        ]
+      },
+      {
+        "pattern": "AI tool deployment ahead of data and measurement infrastructure",
+        "description": "AI tools (Power BI Copilot, SAP Joule, GitHub Copilot, ChatGPT Enterprise, Microsoft 365 Copilot, ServiceNow Now Assist) are deployed across 40 nodes in the ai_and_decision layer, but the underlying analytics marts that would provide outcome data are predominantly in retire-candidate or ETL modernization states. AI is being deployed on top of an unstable data foundation, which structurally prevents outcome measurement.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0045",
+          "AI-AIADOPT-06-0037",
+          "AI-AIADOPT-06-0054",
+          "PLAT-PLT-038",
+          "PLAT-PLT-036",
+          "PLAT-PLT-010"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage:359",
+          "raw_enterprise_it.ai_adoption_usage:346",
+          "raw_enterprise_it.ai_adoption_usage:338",
+          "raw_enterprise_it.ai_adoption_usage:355",
+          "raw_data_analytics.platform_tech_stack:39",
+          "raw_data_analytics.platform_tech_stack:37",
+          "raw_data_analytics.platform_tech_stack:11"
+        ]
+      }
+    ],
+    "criticalDependencies": [
+      {
+        "from": "APP-APP-0074",
+        "to": "FUNC-FLEET-PLANNING",
+        "description": "MuleSoft Anypoint 074 carries 30 interfaces — the highest in the top-cost application set — and serves Fleet Planning, a risk-reduction and execution-transparency capability. Any modernization or consolidation of this application requires full interface dependency resolution before execution; failure to do so risks cascading disruption across fleet scheduling and network planning.",
+        "riskIfBroken": "Disruption to fleet scheduling data flows would impair network planning, crew scheduling, and operations control — a cascade across the core operational capability chain.",
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:75",
+          "raw_enterprise_it.business_functions:26"
+        ]
+      },
+      {
+        "from": "APP-APP-0658",
+        "to": "FUNC-PASSENGER-SERVICE",
+        "description": "Microsoft 365 on Mainframe COBOL (APP-APP-0658) serves Passenger Service with 39 interfaces — the highest interface count in the critical node set — and carries a 'Decision pending' modernization state. A Mainframe COBOL application with 39 active interfaces and no resolved modernization path is a systemic risk to passenger service continuity.",
+        "riskIfBroken": "Passenger service disruption at scale, with 877 users and 39 interface dependencies, would directly impact check-in, boarding, and irregular operations recovery.",
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:659",
+          "raw_enterprise_it.business_functions:22"
+        ]
+      },
+      {
+        "from": "APP-APP-0694",
+        "to": "FUNC-DATA-ANALYTICS-AND-AI",
+        "description": "TRAX eMRO 694 in HR and Workforce carries 31 interfaces and is lifecycle Strategic but modernization Replace — a contradiction that signals the system is operationally embedded but commercially targeted for replacement. With 2,421 users and 1,381 GB data volume, its replacement must be sequenced against MRO data continuity requirements.",
+        "riskIfBroken": "Loss of MRO data continuity would impair airworthiness record integrity, with direct regulatory and safety authority implications.",
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:695",
+          "raw_enterprise_it.business_functions:43"
+        ]
+      },
+      {
+        "from": "PLAT-PLT-015",
+        "to": "FUNC-DATA-ANALYTICS-AND-AI",
+        "description": "The Enterprise Semantic Layer (PLAT-PLT-015) is the consolidation mechanism for the fragmented mart estate. It is currently in ETL modernization state, meaning the governance anchor for data consistency is itself under change. AI tools deployed in pricing and revenue management are dependent on this layer for consistent metric definitions.",
+        "riskIfBroken": "Inconsistent metric definitions across pricing, revenue management, and loyalty analytics would undermine AI model inputs and produce commercially incorrect outputs without visible failure signals.",
+        "evidenceRefs": [
+          "raw_data_analytics.platform_tech_stack:16",
+          "raw_enterprise_it.business_functions:43"
+        ]
+      },
+      {
+        "from": "APP-APP-0306",
+        "to": "FUNC-CORPORATE-STRATEGY",
+        "description": "SAP S/4HANA 306 in Safety and Regulatory Reporting carries a 'Decision disputed' lifecycle state. With 18 interfaces and 12,004 users, an unresolved governance dispute on a Tier 1/Critical SAP instance creates a hard blocker for any ERP consolidation or SAP estate rationalisation programme.",
+        "riskIfBroken": "Continued dispute without resolution will delay ERP modernization, increase SAP licensing exposure, and leave safety reporting on an ungoverned platform trajectory.",
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:307",
+          "raw_enterprise_it.business_functions:35"
+        ]
+      }
+    ],
+    "duplicationAndConsolidationOpportunities": [
+      {
+        "statement": "Two Informatica PowerCenter instances (APP-APP-0220, APP-APP-0670) are running concurrently with contradictory lifecycle signals. Consolidating to a single governed integration platform — with a clear replacement roadmap — would eliminate duplicated licensing, reduce integration governance complexity, and create a single migration path. This is a recommendation for target state; current state duplication is evidenced.",
+        "affectedRefs": ["APP-APP-0220", "APP-APP-0670"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:221",
+          "raw_enterprise_it.applications_portfolio:671"
+        ]
+      },
+      {
+        "statement": "The MRO application landscape spans AMOS (two instances), Teradata Vantage, and TRAX eMRO (two instances) across different domains and hosting models. A consolidated MRO platform strategy — targeting a single system of record for airworthiness and maintenance data — would reduce data consistency risk, lower total cost of ownership, and create a viable foundation for predictive maintenance AI use cases. This is a target-state recommendation; current fragmentation is evidenced.",
+        "affectedRefs": [
+          "APP-APP-0335",
+          "APP-APP-0365",
+          "APP-APP-0015",
+          "APP-APP-0694",
+          "APP-APP-0514"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.applications_portfolio:366",
+          "raw_enterprise_it.applications_portfolio:16",
+          "raw_enterprise_it.applications_portfolio:695",
+          "raw_enterprise_it.applications_portfolio:515"
+        ]
+      },
+      {
+        "statement": "The analytics mart estate contains multiple retire-candidate platforms (PLAT-PLT-036, PLAT-PLT-010, PLAT-PLT-016, PLAT-PLT-042, PLAT-PLT-043, PLAT-PLT-031) that collectively represent significant annual spend and interface complexity. A mart rationalisation programme — consolidating onto a governed cloud data platform with the Enterprise Semantic Layer as the canonical metric store — would reduce data trust risk and lower the cost base for analytics. This is a target-state recommendation.",
+        "affectedRefs": [
+          "PLAT-PLT-036",
+          "PLAT-PLT-010",
+          "PLAT-PLT-016",
+          "PLAT-PLT-042",
+          "PLAT-PLT-043",
+          "PLAT-PLT-031",
+          "PLAT-PLT-015"
+        ],
+        "evidenceRefs": [
+          "raw_data_analytics.platform_tech_stack:37",
+          "raw_data_analytics.platform_tech_stack:11",
+          "raw_data_analytics.platform_tech_stack:17",
+          "raw_data_analytics.platform_tech_stack:43",
+          "raw_data_analytics.platform_tech_stack:44",
+          "raw_data_analytics.platform_tech_stack:32",
+          "raw_data_analytics.platform_tech_stack:16"
+        ]
+      },
+      {
+        "statement": "Ab Initio appears across multiple domains (APP-APP-0251 in Data and Analytics, APP-APP-0341 in Procurement, APP-APP-0011 in Operations Control) with different lifecycle and modernization states. A single Ab Initio estate review — assessing whether these instances share infrastructure or are independently licensed — would identify consolidation or exit opportunities. Current duplication is evidenced; consolidation path is a recommendation.",
+        "affectedRefs": ["APP-APP-0251", "APP-APP-0341", "APP-APP-0011"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:252",
+          "raw_enterprise_it.applications_portfolio:342",
+          "raw_enterprise_it.applications_portfolio:12"
+        ]
+      },
+      {
+        "statement": "Microsoft 365 appears in multiple domains (APP-APP-0658 in Safety and Regulatory Reporting on Mainframe COBOL, APP-APP-0118 in HR and Workforce, APP-APP-0268 in Dispatch) with different hosting models and lifecycle states. The technology label 'Mainframe COBOL' on a Microsoft 365 application (APP-APP-0658) warrants immediate clarification — this may indicate a data quality issue in the portfolio record that, if unresolved, will produce incorrect modernization sequencing.",
+        "affectedRefs": ["APP-APP-0658", "APP-APP-0118", "APP-APP-0268"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:659",
+          "raw_enterprise_it.applications_portfolio:119",
+          "raw_enterprise_it.applications_portfolio:269"
+        ]
+      }
+    ],
+    "aiReadinessImplications": [
+      {
+        "statement": "AI value must be proven, not assumed. Tower confirms 150 funded-but-no-baseline claims and zero claimable calculated value against the $41.26M AI usage cost. The immediate action is to establish Tower baselines for the highest-spend AI deployments — Power BI Copilot in Pricing and Revenue Management, GitHub Copilot in Commercial Strategy, and ChatGPT Enterprise in Pricing — before the next budget cycle. Without baselines, continued investment approval is commercially indefensible.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-05-0059",
+          "AI-AIADOPT-06-0034"
+        ],
+        "evidenceRefs": [
+          "tower.value_claim",
+          "raw_enterprise_it.ai_adoption_usage:359",
+          "raw_enterprise_it.ai_adoption_usage:355",
+          "raw_enterprise_it.ai_adoption_usage:264",
+          "raw_enterprise_it.ai_adoption_usage:300",
+          "raw_enterprise_it.ai_adoption_usage:335"
+        ]
+      },
+      {
+        "statement": "The analytics foundation that AI models depend on is structurally unstable. Multiple high-cost marts serving the functions with the highest AI deployment density (Revenue Management, Pricing, Commercial Strategy) are in retire-candidate or ETL modernization states. AI models trained or operated against data from retiring marts will produce outputs that cannot be validated against a stable metric baseline. Data foundation stabilisation must precede AI scaling.",
+        "affectedRefs": [
+          "PLAT-PLT-036",
+          "PLAT-PLT-038",
+          "PLAT-PLT-039",
+          "PLAT-PLT-015"
+        ],
+        "evidenceRefs": [
+          "raw_data_analytics.platform_tech_stack:37",
+          "raw_data_analytics.platform_tech_stack:39",
+          "raw_data_analytics.platform_tech_stack:40",
+          "raw_data_analytics.platform_tech_stack:16"
+        ]
+      },
+      {
+        "statement": "13 AI adoption rows lack auditable business-outcome proof per GAP-AI-VALUE-PROOF. This is not a minor data gap — it means that for a material portion of the AI portfolio, leadership cannot distinguish between tools that are generating value and tools that are generating usage. A structured AI value audit, using Tower metric observations (2,880 business metric observations and 2,880 usage observations are present), should be initiated immediately to close this gap.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0037",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-04-0023",
+          "AI-AIADOPT-03-0023",
+          "AI-AIADOPT-02-0023",
+          "AI-AIADOPT-01-0023"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage",
+          "tower.value_claim",
+          "tower.metric_observation"
+        ]
+      },
+      {
+        "statement": "AI use cases in Operations Control, Crew Scheduling, and Baggage Operations — where the business capability outcomes are reliability, productivity, and lower cost — require dependency sequencing against the Tier 1/Critical application estate before they can be scaled. Deploying AI on top of systems with unresolved retire/maintain contradictions (APP-APP-0011) or decision-pending modernization states (APP-APP-0658) creates operational risk that outweighs the productivity benefit.",
+        "affectedRefs": [
+          "FUNC-OPERATIONS-CONTROL",
+          "FUNC-CREW-SCHEDULING",
+          "FUNC-BAGGAGE-OPERATIONS",
+          "APP-APP-0011",
+          "APP-APP-0658"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.business_functions:19",
+          "raw_enterprise_it.business_functions:17",
+          "raw_enterprise_it.business_functions:21",
+          "raw_enterprise_it.applications_portfolio:12",
+          "raw_enterprise_it.applications_portfolio:659"
+        ]
+      },
+      {
+        "statement": "SAP Joule deployments in Pricing and Revenue Management (AI-AIADOPT-06-0037, AI-AIADOPT-06-0034) are operating against an SAP estate that includes a disputed lifecycle decision (APP-APP-0306) and multiple consolidate-state instances. The commercial value of SAP Joule is contingent on a stable, governed SAP data model — which cannot be assured while the SAP estate governance dispute remains unresolved.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0037",
+          "AI-AIADOPT-06-0034",
+          "APP-APP-0306"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage:338",
+          "raw_enterprise_it.ai_adoption_usage:335",
+          "raw_enterprise_it.applications_portfolio:307"
+        ]
+      }
+    ],
+    "transformationPriorities": [
+      {
+        "priority": 1,
+        "title": "Resolve the three non-deferrable governance decisions",
+        "rationale": "Three decisions are blocking downstream transformation: (1) the lifecycle contradiction on APP-APP-0011 (Retire/Maintain), (2) the disputed lifecycle on APP-APP-0306 (SAP S/4HANA), and (3) the decision-pending modernization on APP-APP-0658 (Mainframe COBOL, 39 interfaces). Each of these blocks a different transformation stream — loyalty platform modernization, ERP consolidation, and passenger service resilience respectively. None can be resolved by architecture alone; they require executive sponsorship and cross-functional governance.",
+        "affectedRefs": ["APP-APP-0011", "APP-APP-0306", "APP-APP-0658"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:12",
+          "raw_enterprise_it.applications_portfolio:307",
+          "raw_enterprise_it.applications_portfolio:659"
+        ]
+      },
+      {
+        "priority": 2,
+        "title": "Establish AI value baselines before the next budget cycle",
+        "rationale": "With $41.26M in AI usage cost and zero Tower-claimable value, the AI programme is at risk of board-level challenge. Establishing Tower baselines for the top five AI deployments by cost — Power BI Copilot (Pricing), Power BI Copilot (Revenue Management), GitHub Copilot (Commercial Strategy), ChatGPT Enterprise (Pricing), and SAP Joule (Revenue Management) — would create the minimum evidential foundation for continued investment approval.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-05-0059",
+          "AI-AIADOPT-06-0034"
+        ],
+        "evidenceRefs": [
+          "tower.value_claim",
+          "raw_enterprise_it.ai_adoption_usage:359",
+          "raw_enterprise_it.ai_adoption_usage:355",
+          "raw_enterprise_it.ai_adoption_usage:264",
+          "raw_enterprise_it.ai_adoption_usage:300",
+          "raw_enterprise_it.ai_adoption_usage:335"
+        ]
+      },
+      {
+        "priority": 3,
+        "title": "Execute vendor leverage on Microsoft and NorthPeak Consulting before renewal",
+        "rationale": "Microsoft ($37.5M, competitive event likely) and NorthPeak Consulting ($50M, renewal analysis pending) together represent $87.5M in annual spend at active commercial inflection points. A structured competitive event for Microsoft and a scope-and-value review for NorthPeak — backed by the full contract semantic coverage already available — should be initiated immediately. Salesforce ($43.5M, renewal approved) should be reviewed for scope rationalisation given the consolidate-state MuleSoft application (APP-APP-0074).",
+        "affectedRefs": [
+          "VEN-VEN-021",
+          "VEN-VEN-022",
+          "VEN-VEN-030",
+          "APP-APP-0074"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.vendors_contracts:64",
+          "raw_enterprise_it.vendors_contracts:65",
+          "raw_enterprise_it.vendors_contracts:91",
+          "raw_enterprise_it.applications_portfolio:75"
+        ]
+      },
+      {
+        "priority": 4,
+        "title": "Stabilise the Safety and Regulatory Reporting domain",
+        "rationale": "The Safety and Regulatory Reporting domain has the highest concentration of unresolved modernization decisions in the portfolio. Regulatory reporting failures carry licence and safety authority risk. A domain-level stabilisation programme — resolving the SAP S/4HANA dispute, establishing a replacement path for the Mainframe COBOL application, and consolidating the SAP BusinessObjects replace/replace instance — must be treated as a compliance priority, not a technology optimisation.",
+        "affectedRefs": [
+          "APP-APP-0306",
+          "APP-APP-0658",
+          "APP-APP-0594",
+          "APP-APP-0690"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:307",
+          "raw_enterprise_it.applications_portfolio:659",
+          "raw_enterprise_it.applications_portfolio:595",
+          "raw_enterprise_it.applications_portfolio:691"
+        ]
+      },
+      {
+        "priority": 5,
+        "title": "Consolidate the MRO application landscape",
+        "rationale": "Five applications across AMOS, Teradata Vantage, and TRAX eMRO serve overlapping MRO functions with inconsistent lifecycle states. Airworthiness data integrity is a regulatory requirement, not a commercial preference. A consolidated MRO platform strategy — with a single system of record — would reduce compliance risk, lower total cost, and create the data foundation for predictive maintenance AI use cases that are currently blocked by data fragmentation.",
+        "affectedRefs": [
+          "APP-APP-0335",
+          "APP-APP-0365",
+          "APP-APP-0015",
+          "APP-APP-0694",
+          "APP-APP-0514"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.applications_portfolio:366",
+          "raw_enterprise_it.applications_portfolio:16",
+          "raw_enterprise_it.applications_portfolio:695",
+          "raw_enterprise_it.applications_portfolio:515"
+        ]
+      },
+      {
+        "priority": 6,
+        "title": "Rationalise the analytics mart estate and stabilise the Enterprise Semantic Layer",
+        "rationale": "The fragmented mart estate — with multiple retire-candidate platforms and the Enterprise Semantic Layer itself in ETL modernization — is the single largest structural barrier to trustworthy AI and analytics. A mart rationalisation programme, anchored on stabilising PLAT-PLT-015 as the canonical metric store, would reduce data trust risk across pricing, revenue management, loyalty, and operations — the four functions with the highest AI investment density.",
+        "affectedRefs": [
+          "PLAT-PLT-015",
+          "PLAT-PLT-036",
+          "PLAT-PLT-010",
+          "PLAT-PLT-016",
+          "PLAT-PLT-042",
+          "PLAT-PLT-043"
+        ],
+        "evidenceRefs": [
+          "raw_data_analytics.platform_tech_stack:16",
+          "raw_data_analytics.platform_tech_stack:37",
+          "raw_data_analytics.platform_tech_stack:11",
+          "raw_data_analytics.platform_tech_stack:17",
+          "raw_data_analytics.platform_tech_stack:43",
+          "raw_data_analytics.platform_tech_stack:44"
+        ]
+      }
+    ],
+    "targetStatePrinciples": [
+      {
+        "principle": "RECOMMENDATION: Operational system of record before AI layer",
+        "description": "No AI use case in Operations Control, Crew Scheduling, Baggage Operations, or MRO should be scaled until the underlying system of record for that domain has a resolved, governed modernization path. AI deployed on top of retiring or contradictory-state systems cannot be safely operated or commercially justified.",
+        "affectedRefs": [
+          "FUNC-OPERATIONS-CONTROL",
+          "FUNC-CREW-SCHEDULING",
+          "FUNC-BAGGAGE-OPERATIONS",
+          "APP-APP-0011",
+          "APP-APP-0335"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:12",
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.business_functions:19",
+          "raw_enterprise_it.business_functions:17",
+          "raw_enterprise_it.business_functions:21"
+        ]
+      },
+      {
+        "principle": "RECOMMENDATION: Single governed integration platform",
+        "description": "The current duplication of Informatica PowerCenter instances with contradictory lifecycle signals should be resolved into a single governed integration platform with a clear replacement roadmap. All new integration patterns should be built against this platform; no new point-to-point integrations should be approved outside it.",
+        "affectedRefs": ["APP-APP-0220", "APP-APP-0670"],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:221",
+          "raw_enterprise_it.applications_portfolio:671"
+        ]
+      },
+      {
+        "principle": "RECOMMENDATION: Enterprise Semantic Layer as canonical metric authority",
+        "description": "The Enterprise Semantic Layer (PLAT-PLT-015) should be stabilised and designated as the canonical metric authority for all analytics and AI use cases. No new analytics mart should be commissioned without a defined migration path to the semantic layer. AI model inputs should be validated against semantic layer definitions before production deployment.",
+        "affectedRefs": ["PLAT-PLT-015"],
+        "evidenceRefs": ["raw_data_analytics.platform_tech_stack:16"]
+      },
+      {
+        "principle": "RECOMMENDATION: Tower baseline as gate for AI investment approval",
+        "description": "No new AI tool deployment should be approved without a Tower baseline established at the point of funding. Existing deployments without baselines should be placed on a 90-day remediation clock: establish baseline or initiate decommission review. This principle applies regardless of vendor or business function.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0037",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-04-0023",
+          "AI-AIADOPT-03-0023"
+        ],
+        "evidenceRefs": [
+          "tower.value_claim",
+          "raw_enterprise_it.ai_adoption_usage"
+        ]
+      },
+      {
+        "principle": "RECOMMENDATION: Hybrid hosting as a first-class architectural constraint",
+        "description": "Cloud migration and AI roadmaps must treat on-premises workloads as first-class architectural constraints, not legacy exceptions. Every modernization programme must include an explicit hybrid integration design that accounts for latency, resilience, and data sovereignty requirements before cloud migration is approved.",
+        "affectedRefs": [
+          "APP-APP-0251",
+          "APP-APP-0658",
+          "APP-APP-0335",
+          "APP-APP-0157"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:252",
+          "raw_enterprise_it.applications_portfolio:659",
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.applications_portfolio:158",
+          "raw_cloud_hybrid.workload_distribution"
+        ]
+      }
+    ],
+    "leadershipDecisions": [
+      {
+        "decision": "Resolve the APP-APP-0011 lifecycle contradiction: Retire or Maintain — not both",
+        "context": "APP-APP-0011 (Operations Control Ab Initio) carries lifecycle state 'Retire' and modernization state 'Maintain'. This is not an architectural ambiguity — it is a governance failure. The system supports the Loyalty business function at $6.99M annual cost with 10 interfaces. Leadership must designate a retirement date and a replacement path, or formally reverse the retire decision and fund a modernization programme.",
+        "options": [
+          "Confirm retirement with a funded replacement programme for Loyalty operational support",
+          "Reverse the retire decision and fund a formal modernization programme with a defined end state"
+        ],
+        "recommendedBy": "Architecture Advisory",
+        "affectedRefs": ["APP-APP-0011", "FUNC-PARTNERSHIPS-AND-ALLIANCES"],
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:12"]
+      },
+      {
+        "decision": "Resolve the SAP S/4HANA 306 lifecycle dispute before ERP consolidation can proceed",
+        "context": "APP-APP-0306 is the only application in the portfolio with lifecycle state 'Decision disputed'. With 18 interfaces, 12,004 users, and $6.96M annual cost, this dispute is blocking ERP consolidation and leaving safety reporting on an ungoverned trajectory. The dispute must be escalated to executive governance and resolved within a defined timeframe.",
+        "options": [
+          "Escalate to executive governance committee with a 30-day resolution mandate",
+          "Commission an independent assessment of the dispute and bind both parties to the outcome"
+        ],
+        "recommendedBy": "Architecture Advisory",
+        "affectedRefs": ["APP-APP-0306"],
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:307"]
+      },
+      {
+        "decision": "Approve or reject continued AI investment without Tower baselines",
+        "context": "Tower confirms 150 funded-but-no-baseline AI value claims and zero claimable calculated value. Leadership must decide whether to continue funding AI deployments without outcome baselines, or to impose a baseline requirement as a condition of continued investment. This is a board-level governance decision with direct implications for the credibility of the AI programme.",
+        "options": [
+          "Impose a Tower baseline requirement as a condition of continued AI investment approval, with a 90-day remediation window for existing deployments",
+          "Accept the current evidence gap and commission a structured AI value audit to establish retrospective baselines within 60 days"
+        ],
+        "recommendedBy": "Architecture Advisory",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0054",
+          "AI-AIADOPT-05-0023",
+          "AI-AIADOPT-05-0059"
+        ],
+        "evidenceRefs": [
+          "tower.value_claim",
+          "raw_enterprise_it.ai_adoption_usage"
+        ]
+      },
+      {
+        "decision": "Initiate competitive event for Microsoft before contract renewal",
+        "context": "Microsoft ($37.5M, lifecycle state 'Competitive event likely') is at a commercial inflection point. Full contract semantic coverage is available. Leadership must decide whether to initiate a formal competitive event or negotiate a renewal directly. Given the breadth of Microsoft deployment across the portfolio (Microsoft 365, Power BI, Power BI Copilot, Microsoft 365 Copilot), a competitive event carries transition risk that must be weighed against commercial leverage.",
+        "options": [
+          "Initiate a structured competitive event with a defined scope and timeline",
+          "Negotiate a direct renewal using the competitive event signal as leverage, with defined commercial targets"
+        ],
+        "recommendedBy": "Architecture Advisory",
+        "affectedRefs": ["VEN-VEN-021"],
+        "evidenceRefs": ["raw_enterprise_it.vendors_contracts:64"]
+      },
+      {
+        "decision": "Define a consolidated MRO platform strategy",
+        "context": "Five applications across AMOS, Teradata Vantage, and TRAX eMRO serve overlapping MRO functions. Leadership must decide on a target MRO platform — or confirm that the current fragmentation is intentional and funded. Without a decision, the MRO estate will continue to accumulate technical debt and data consistency risk with direct airworthiness implications.",
+        "options": [
+          "Commission a MRO platform consolidation programme with a defined target state and migration roadmap",
+          "Formally accept the current fragmentation and fund ongoing maintenance of all five systems with explicit data consistency controls"
+        ],
+        "recommendedBy": "Architecture Advisory",
+        "affectedRefs": [
+          "APP-APP-0335",
+          "APP-APP-0365",
+          "APP-APP-0015",
+          "APP-APP-0694",
+          "APP-APP-0514"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.applications_portfolio:366",
+          "raw_enterprise_it.applications_portfolio:16",
+          "raw_enterprise_it.applications_portfolio:695",
+          "raw_enterprise_it.applications_portfolio:515"
+        ]
+      }
+    ],
+    "nodeEmphasis": [
+      {
+        "nodeRef": "APP-APP-0011",
+        "reason": "Lifecycle contradiction (Retire/Maintain) — non-deferrable governance decision required",
+        "visualWeight": "critical"
+      },
+      {
+        "nodeRef": "APP-APP-0306",
+        "reason": "Only application with 'Decision disputed' lifecycle state — blocks ERP consolidation",
+        "visualWeight": "critical"
+      },
+      {
+        "nodeRef": "APP-APP-0658",
+        "reason": "Mainframe COBOL with 39 interfaces and decision-pending modernization — highest interface risk in passenger service",
+        "visualWeight": "critical"
+      },
+      {
+        "nodeRef": "APP-APP-0074",
+        "reason": "30 interfaces serving Fleet Planning — highest integration dependency in the top-cost application set",
+        "visualWeight": "high"
+      },
+      {
+        "nodeRef": "PLAT-PLT-015",
+        "reason": "Enterprise Semantic Layer — canonical metric authority under ETL modernization; stabilisation is prerequisite for AI value measurement",
+        "visualWeight": "high"
+      },
+      {
+        "nodeRef": "VEN-VEN-022",
+        "reason": "Highest vendor spend ($50M) with renewal analysis pending — immediate commercial action required",
+        "visualWeight": "high"
+      },
+      {
+        "nodeRef": "VEN-VEN-021",
+        "reason": "Competitive event likely — $37.5M at commercial inflection point",
+        "visualWeight": "high"
+      },
+      {
+        "nodeRef": "APP-APP-0694",
+        "reason": "TRAX eMRO — Strategic lifecycle but Replace modernization, 31 interfaces, MRO data integrity risk",
+        "visualWeight": "high"
+      },
+      {
+        "nodeRef": "APP-APP-0486",
+        "reason": "Highest user count in portfolio (31,748 users) — SAP S/4HANA replace candidate in Loyalty domain",
+        "visualWeight": "high"
+      },
+      {
+        "nodeRef": "AI-AIADOPT-06-0058",
+        "reason": "Highest-cost AI deployment — Power BI Copilot in Pricing with no Tower-confirmed value baseline",
+        "visualWeight": "medium"
+      }
+    ],
+    "edgeEmphasis": [],
+    "diagramCallouts": [
+      {
+        "targetRef": "APP-APP-0011",
+        "calloutText": "GOVERNANCE ALERT: Retire + Maintain contradiction — decision required",
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:12"]
+      },
+      {
+        "targetRef": "APP-APP-0306",
+        "calloutText": "GOVERNANCE ALERT: Decision disputed — only instance in portfolio; blocks ERP consolidation",
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:307"]
+      },
+      {
+        "targetRef": "APP-APP-0658",
+        "calloutText": "RISK: Mainframe COBOL, 39 interfaces, decision pending — passenger service continuity risk",
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:659"]
+      },
+      {
+        "targetRef": "APP-APP-0074",
+        "calloutText": "DEPENDENCY: 30 interfaces — full mapping required before any modernization",
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:75"]
+      },
+      {
+        "targetRef": "PLAT-PLT-015",
+        "calloutText": "FOUNDATION: Enterprise Semantic Layer in ETL modernization — stabilise before scaling AI",
+        "evidenceRefs": ["raw_data_analytics.platform_tech_stack:16"]
+      },
+      {
+        "targetRef": "AI-AIADOPT-06-0058",
+        "calloutText": "AI VALUE UNPROVEN: $41M+ AI spend, zero Tower-claimable value — baselines required",
+        "evidenceRefs": [
+          "tower.value_claim",
+          "raw_enterprise_it.ai_adoption_usage:359"
+        ]
+      },
+      {
+        "targetRef": "VEN-VEN-022",
+        "calloutText": "COMMERCIAL: $50M, renewal analysis pending — initiate scope and value review now",
+        "evidenceRefs": ["raw_enterprise_it.vendors_contracts:65"]
+      },
+      {
+        "targetRef": "VEN-VEN-021",
+        "calloutText": "COMMERCIAL: $37.5M, competitive event likely — prepare negotiation position",
+        "evidenceRefs": ["raw_enterprise_it.vendors_contracts:64"]
+      }
+    ],
+    "assumptions": [
+      {
+        "statement": "The technology label 'Mainframe COBOL' on APP-APP-0658 (Microsoft 365) is assumed to reflect the underlying integration or data layer technology rather than the application itself. If this is a data quality error in the portfolio record, the modernization risk profile of this application changes materially. Verification is required.",
+        "affectedRefs": ["APP-APP-0658"],
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:659"]
+      },
+      {
+        "statement": "The $41.26M AI usage cost figure is treated as an estimate based on the displayed AI adoption nodes. Tower confirms this as the sum of displayed AI tool costs; the full enterprise AI spend may differ if additional nodes are present outside this load.",
+        "affectedRefs": [
+          "AI-AIADOPT-06-0058",
+          "AI-AIADOPT-06-0045",
+          "AI-AIADOPT-06-0037"
+        ],
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage",
+          "tower.value_claim"
+        ]
+      },
+      {
+        "statement": "The 7 inferred or unresolved nodes in the graph are assumed to represent minor data gaps rather than material missing capabilities. If any of these nodes represent critical operational systems, the risk profile of the advisory may change.",
+        "affectedRefs": [],
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio"]
+      },
+      {
+        "statement": "Vendor contract renewal timelines are assumed to be current as of the dataset generation date (2026-08-02). Commercial actions recommended for Microsoft and NorthPeak Consulting are predicated on these timelines being accurate.",
+        "affectedRefs": ["VEN-VEN-021", "VEN-VEN-022"],
+        "evidenceRefs": [
+          "raw_enterprise_it.vendors_contracts:64",
+          "raw_enterprise_it.vendors_contracts:65"
+        ]
+      }
+    ],
+    "evidenceGaps": [
+      {
+        "gapRef": "GAP-AI-VALUE-PROOF",
+        "severity": "high",
+        "area": "AI activation",
+        "gap": "13 AI adoption rows lack auditable business-outcome proof. Tower confirms 150 funded-but-no-baseline claims and zero claimable calculated value against the AI portfolio.",
+        "implication": "Leadership cannot distinguish between AI tools generating value and tools generating only usage. Continued investment approval without baselines is commercially indefensible and creates board-level credibility risk for the AI programme.",
+        "recommendedAction": "Establish Tower baselines for the top five AI deployments by cost within 60 days. Place all remaining unbaselined deployments on a 90-day remediation clock.",
+        "evidenceRefs": [
+          "raw_enterprise_it.ai_adoption_usage",
+          "tower.value_claim"
+        ]
+      },
+      {
+        "gapRef": "GAP-MAINFRAME-COBOL-LABEL",
+        "severity": "medium",
+        "area": "Application portfolio data quality",
+        "gap": "APP-APP-0658 is labelled as Microsoft 365 with technology 'Mainframe COBOL'. This combination is architecturally inconsistent and may indicate a data quality error in the portfolio record.",
+        "implication": "If the Mainframe COBOL label is accurate, the modernization complexity and cost of this application are significantly higher than a standard Microsoft 365 instance. If it is a data error, the current risk assessment for this application is based on incorrect information.",
+        "recommendedAction": "Verify the technology stack of APP-APP-0658 with the application owner (Sofia Bishop) and correct the portfolio record before any modernization planning proceeds.",
+        "evidenceRefs": ["raw_enterprise_it.applications_portfolio:659"]
+      },
+      {
+        "gapRef": "GAP-HYBRID-WORKLOAD-DETAIL",
+        "severity": "medium",
+        "area": "Cloud and hybrid architecture",
+        "gap": "The hybrid hosting constraint is evidenced at the application level but workload-level distribution detail (latency profiles, resilience requirements, data sovereignty constraints) is not present in the packet.",
+        "implication": "Cloud migration and AI roadmaps cannot be accurately sequenced without workload-level hybrid architecture detail. Plans built without this data will encounter execution failures at the integration design stage.",
+        "recommendedAction": "Commission a workload-level hybrid architecture assessment for the 47 on-premises Tier 1/Critical applications before any cloud migration programme is approved.",
+        "evidenceRefs": [
+          "raw_cloud_hybrid.workload_distribution",
+          "raw_enterprise_it.applications_portfolio"
+        ]
+      },
+      {
+        "gapRef": "GAP-MRO-DATA-CONSISTENCY",
+        "severity": "high",
+        "area": "Maintenance, Repair and Overhaul",
+        "gap": "No evidence is present in the packet confirming whether the five MRO applications (AMOS 335, AMOS 365, Teradata Vantage 015, TRAX eMRO 694, TRAX eMRO 514) share a common airworthiness data model or operate on independent data stores.",
+        "implication": "If these systems operate on independent data stores without reconciliation, airworthiness record integrity cannot be assured across the fleet. This is a regulatory risk, not merely a technical debt issue.",
+        "recommendedAction": "Commission an MRO data consistency audit to map data flows, identify reconciliation gaps, and assess regulatory exposure before any MRO consolidation programme is initiated.",
+        "evidenceRefs": [
+          "raw_enterprise_it.applications_portfolio:336",
+          "raw_enterprise_it.applications_portfolio:366",
+          "raw_enterprise_it.applications_portfolio:16",
+          "raw_enterprise_it.applications_portfolio:695",
+          "raw_enterprise_it.applications_portfolio:515"
+        ]
+      }
+    ]
+  }
+}

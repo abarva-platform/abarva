@@ -32,6 +32,7 @@
   ],
   "exclude": [
     "node_modules",
+    "reports",
     "src/lib/intelligence/answer/evals/live-answer/bank.ts",
     "src/lib/intelligence/answer/evals/live-answer/__tests__/**/*.ts",
     "evals/intelligence/live-answer/cases/**/*.ts"

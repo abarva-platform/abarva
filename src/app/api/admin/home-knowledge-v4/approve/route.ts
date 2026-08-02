@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
-import { approveHomeKnowledgeV4Candidate, HomeKnowledgeV4ApprovalError } from "@/lib/home/home-knowledge-v4-review";
+import {
+  approveHomeKnowledgeV4Candidate,
+  HomeKnowledgeV4ApprovalError,
+} from "@/lib/home/home-knowledge-v4-review";
 
 export const dynamic = "force-dynamic";
 
 // Approve (or, with a written reason, override-approve) the latest V4 book
 // candidate for one tenant. Platform-admin only -- same gate as
-// /home/v4-preview itself, reused via isPlatformAdminSession() rather than
+// the retired V4 review surface, reused via isPlatformAdminSession() rather than
 // re-implemented here (see that function's comment for why: hand-copied
 // auth checks are exactly what caused the earlier cross-tenant exposure on
 // this same page).
@@ -18,14 +21,20 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const tenantKey = typeof body?.tenantKey === "string" ? body.tenantKey.trim() : "";
-  const overrideReason = typeof body?.overrideReason === "string" ? body.overrideReason.trim() : "";
+  const tenantKey =
+    typeof body?.tenantKey === "string" ? body.tenantKey.trim() : "";
+  const overrideReason =
+    typeof body?.overrideReason === "string" ? body.overrideReason.trim() : "";
   if (!tenantKey) {
-    return NextResponse.json({ error: "tenantKey is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "tenantKey is required." },
+      { status: 400 },
+    );
   }
 
   const user = await currentUser().catch(() => null);
-  const approvedBy = user?.primaryEmailAddress?.emailAddress ?? user?.id ?? "unknown-reviewer";
+  const approvedBy =
+    user?.primaryEmailAddress?.emailAddress ?? user?.id ?? "unknown-reviewer";
 
   try {
     const result = await approveHomeKnowledgeV4Candidate({
@@ -42,9 +51,10 @@ export async function POST(request: Request) {
       approvedBy,
     });
   } catch (error) {
-    const message = error instanceof HomeKnowledgeV4ApprovalError
-      ? error.message
-      : "Approval failed. See server logs for detail.";
+    const message =
+      error instanceof HomeKnowledgeV4ApprovalError
+        ? error.message
+        : "Approval failed. See server logs for detail.";
     if (!(error instanceof HomeKnowledgeV4ApprovalError)) {
       console.error("[home-knowledge-v4-approve]", error);
     }

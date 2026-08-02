@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Zero-cost, zero-network regression suite for a real gap: the 900-row
 // Applications & Systems inventory (full_rows) was only ever injected into
-// the static /home/v4-preview fixture file by
+// the static retired V4 review fixture file by
 // reconcile-tenant-applications.mjs's CLI side effect -- never into the
 // actual candidate persisted to Postgres by the real generation pipeline
 // (processTenant()'s book-mode branch). A freshly generated, approved, and
