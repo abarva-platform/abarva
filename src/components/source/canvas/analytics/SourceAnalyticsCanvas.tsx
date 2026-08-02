@@ -18,6 +18,8 @@ import rehypeSanitize from "rehype-sanitize";
 import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
+import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
+import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import {
   buildSourceEventShellView,
   type SourceEventShellView,
@@ -93,7 +95,8 @@ const SESSION_EVIDENCE_LANES: readonly SessionEvidenceLane[] = [
     family: "meeting_notes",
     kind: "source_session_notes",
     title: "Meeting notes",
-    detail: "Vendor calls, evaluation meetings, sponsor reviews, and follow-ups.",
+    detail:
+      "Vendor calls, evaluation meetings, sponsor reviews, and follow-ups.",
     evidenceUse:
       "Low-authority context until a human promotes decisions or actions.",
   },
@@ -101,7 +104,8 @@ const SESSION_EVIDENCE_LANES: readonly SessionEvidenceLane[] = [
     family: "workshop_output",
     kind: "source_workshop_output",
     title: "Workshop output",
-    detail: "Facilitated sessions, risk reviews, scope workshops, and action logs.",
+    detail:
+      "Facilitated sessions, risk reviews, scope workshops, and action logs.",
     evidenceUse:
       "Parsed into outcomes when text is available; unresolved items stay open.",
   },
@@ -124,6 +128,14 @@ interface SourceAnalyticsCanvasProps {
   latestArtifactAcceptances?: readonly ArtifactAcceptanceRecord[];
   /** Initial workspace selected by the route, e.g. from ?workspace=approvals. */
   initialWorkspace?: SourceShellWorkspace;
+  /**
+   * Persisted contract-optimization profile (findings, levers, recommended
+   * path) for this exact event, if one exists — null for every event that
+   * isn't a guarded contract-optimization event. Presence of this prop is
+   * the render gate for ContractOptimizationProfilePanel, not a name/keyword
+   * heuristic, so it can never appear on an unrelated event by mistake.
+   */
+  contractOptimizationProfile?: ContractOptimizationMveProfile | null;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -236,6 +248,7 @@ export function SourceAnalyticsCanvas({
   guidebook = null,
   latestArtifactAcceptances = [],
   initialWorkspace,
+  contractOptimizationProfile = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -249,7 +262,8 @@ export function SourceAnalyticsCanvas({
   }, [event.id, resolvedInitialWorkspace, viewStage]);
 
   const latestArtifactAcceptancesById = useMemo(
-    () => new Map(latestArtifactAcceptances.map((rec) => [rec.artifactId, rec])),
+    () =>
+      new Map(latestArtifactAcceptances.map((rec) => [rec.artifactId, rec])),
     [latestArtifactAcceptances],
   );
 
@@ -321,6 +335,13 @@ export function SourceAnalyticsCanvas({
               onWorkspaceChange={setWorkspace}
             />
             <div style={{ minWidth: 0, padding: "28px 92px 150px" }}>
+              {contractOptimizationProfile ? (
+                <div style={{ marginBottom: 28 }}>
+                  <ContractOptimizationProfilePanel
+                    profile={contractOptimizationProfile}
+                  />
+                </div>
+              ) : null}
               <SourceWorkspace
                 view={shellView}
                 stageView={resolvedStageView}
@@ -1464,8 +1485,12 @@ function EvidenceReadinessPanel({
 
 function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
   const storedCount = files.length;
-  const parsedCount = files.filter((file) => file.parseStatus === "parsed").length;
-  const failedCount = files.filter((file) => file.parseStatus === "failed").length;
+  const parsedCount = files.filter(
+    (file) => file.parseStatus === "parsed",
+  ).length;
+  const failedCount = files.filter(
+    (file) => file.parseStatus === "failed",
+  ).length;
   const registeredOnlyCount = files.filter(
     (file) => file.parseStatus !== "parsed",
   ).length;
@@ -1522,9 +1547,9 @@ function SessionEvidenceCapturePanel({
         `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/upload`,
         { method: "POST", body: formData, credentials: "include" },
       );
-      const payload = (await response.json().catch(() => null)) as
-        | SourceSessionEvidenceUploadPayload
-        | null;
+      const payload = (await response
+        .json()
+        .catch(() => null)) as SourceSessionEvidenceUploadPayload | null;
       if (!response.ok || payload?.ok !== true || !payload.artifact?.id) {
         throw new Error(
           payload?.detail ??
@@ -1756,7 +1781,9 @@ function SessionEvidenceStatus({
     );
   }
   return (
-    <span style={{ color: ANALYTICS.GREEN_TEXT, fontSize: 12, fontWeight: 750 }}>
+    <span
+      style={{ color: ANALYTICS.GREEN_TEXT, fontSize: 12, fontWeight: 750 }}
+    >
       Captured {state.fileName} · {state.parseStatus ?? "pending"} ·{" "}
       {state.substrateSummary}
     </span>
@@ -1786,13 +1813,15 @@ function summarizeSubstrateSync(
   sync: SourceSessionEvidenceUploadPayload["substrateSync"],
 ): string {
   if (!sync) return "registry receipt returned";
-  if ("error" in sync && sync.error) return `evidence sync warning: ${sync.error}`;
+  if ("error" in sync && sync.error)
+    return `evidence sync warning: ${sync.error}`;
   if ("skippedReason" in sync && sync.skippedReason) {
     return `registry only: ${sync.skippedReason}`;
   }
-  const criteria = "criteria" in sync && Array.isArray(sync.criteria)
-    ? sync.criteria.filter((item) => item.linked).length
-    : 0;
+  const criteria =
+    "criteria" in sync && Array.isArray(sync.criteria)
+      ? sync.criteria.filter((item) => item.linked).length
+      : 0;
   if ("evidence" in sync && sync.evidence?.requirementId) {
     return `${sync.evidence.requirementId} ${sync.evidence.newState ?? "linked"}`;
   }
@@ -1826,7 +1855,9 @@ function ArtifactLifecyclePanel({
   // reads as "broken," not "on track," for an event 3 steps into its second
   // stage. Lead with what's actually due so far instead.
   const reachedStageLabels = new Set(
-    view.journey.filter((stage) => stage.state !== "future").map((stage) => stage.label),
+    view.journey
+      .filter((stage) => stage.state !== "future")
+      .map((stage) => stage.label),
   );
   const rowsDueSoFar = lifecycle.rows.filter((row) =>
     reachedStageLabels.has(row.stageLabel),
@@ -2325,9 +2356,9 @@ function LifecycleStageRows({
                 {row.quality.hardFails[0] ?? row.quality.warnings[0]}
               </div>
             ) : null}
-            {row.contentQuality.blockers[0] ??
+            {(row.contentQuality.blockers[0] ??
             row.contentQuality.warnings[0] ??
-            null ? (
+            null) ? (
               // Real per-row blockers/warnings only. The not-scored case's
               // explanation is already shown once, for the whole panel, in
               // the "Quality rubric" scope line above — repeating the exact
@@ -2343,7 +2374,8 @@ function LifecycleStageRows({
                   fontSize: 11.5,
                 }}
               >
-                {row.contentQuality.blockers[0] ?? row.contentQuality.warnings[0]}
+                {row.contentQuality.blockers[0] ??
+                  row.contentQuality.warnings[0]}
               </div>
             ) : null}
             {row.consultingGate.required &&
@@ -2358,7 +2390,8 @@ function LifecycleStageRows({
                   fontSize: 11.5,
                 }}
               >
-                {row.consultingGate.findings[0] ?? row.consultingGate.nextAction}
+                {row.consultingGate.findings[0] ??
+                  row.consultingGate.nextAction}
               </div>
             ) : null}
             {row.lifecycleState === "ai_draft" ? (
@@ -3035,16 +3068,18 @@ function ProcessingReadinessBadge({ item }: { item: SourceShellFileItem }) {
       : failed
         ? "PARSER FAILED"
         : "REGISTERED ONLY";
-  const color = searchReady || parsed
-    ? ANALYTICS.GREEN_TEXT
-    : failed
-      ? ANALYTICS.RUST
-      : ANALYTICS.MUTED;
-  const background = searchReady || parsed
-    ? "rgba(17, 120, 84, 0.1)"
-    : failed
-      ? "rgba(166, 71, 43, 0.1)"
-      : "rgba(10,10,11,0.05)";
+  const color =
+    searchReady || parsed
+      ? ANALYTICS.GREEN_TEXT
+      : failed
+        ? ANALYTICS.RUST
+        : ANALYTICS.MUTED;
+  const background =
+    searchReady || parsed
+      ? "rgba(17, 120, 84, 0.1)"
+      : failed
+        ? "rgba(166, 71, 43, 0.1)"
+        : "rgba(10,10,11,0.05)";
 
   return (
     <span

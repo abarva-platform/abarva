@@ -5,6 +5,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
 import { listArtifactStatesForEvent } from "@/lib/source/canvas-substrate";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import {
   SOURCE_STAGE_ORDER,
   SOURCE_STAGE_LABELS,
@@ -93,6 +94,28 @@ export default async function SourceEventDetailPage({
         key: activeClient?.key,
         name: activeClient?.name,
       }) ?? event.accountName;
+
+    // Persisted contract-optimization profile (findings, levers, recommended
+    // path) for this exact event, if one was loaded for it. Cheap client-key
+    // pre-filter avoids an extra query for every non-SkyHarbor tenant; the
+    // real render gate is the presence of a row for THIS event id, not a
+    // name/keyword heuristic (see isSkyHarborContractOptimizationEvent's
+    // looser matching, which this deliberately does not rely on).
+    const normalizedClientKey = activeClient?.key?.trim().toLowerCase();
+    const contractOptimizationProfile =
+      normalizedClientKey === "skyharbor" ||
+      normalizedClientKey === "skyharbor-air"
+        ? await getContractOptimizationProfile(
+            normalizedClientKey,
+            event.id,
+          ).catch((error) => {
+            console.error(
+              "[SourceEventDetailPage] contract optimization profile read failed",
+              error instanceof Error ? error.message : String(error),
+            );
+            return null;
+          })
+        : null;
 
     // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation
     // stage and its gate IS the P0 approval — build it from the event's captured
@@ -424,6 +447,7 @@ export default async function SourceEventDetailPage({
         guidebook={analyticsGuidebook}
         latestArtifactAcceptances={analyticsLatestAcceptances}
         initialWorkspace={initialWorkspace}
+        contractOptimizationProfile={contractOptimizationProfile}
       />
     );
   }
