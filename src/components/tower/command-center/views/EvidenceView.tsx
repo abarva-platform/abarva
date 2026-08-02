@@ -16,7 +16,7 @@ import type {
   TowerEvidenceGapView,
 } from "@/lib/tower/command-center/types";
 
-import { Card, Dot, ViewHead, cx } from "../primitives";
+import { Card, Dot, Unknown, ViewHead, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
 export type EvidenceQuestion = "exists" | "missing" | "owner" | "blocked";
@@ -67,13 +67,17 @@ function ownerAnswers(gaps: readonly TowerEvidenceGapView[]): AnswerItem[] {
     .sort((a, b) => b[1].length - a[1].length)
     .map(([owner, items]) => {
       const high = items.filter((g) => g.priority === "high").length;
+      const knownValue = items.reduce(
+        (sum, g) => sum + (g.valueAtStakeUsd ?? 0),
+        0,
+      );
+      const valueUnknown =
+        knownValue === 0 && items.some((g) => g.valueAtStakeUsd === null);
       return {
         id: `owner:${owner}`,
         name: owner,
         detail: items.map((g) => g.missing).join(" · "),
-        metric: formatUsdM(
-          items.reduce((sum, g) => sum + (g.valueAtStakeUsd ?? 0), 0),
-        ),
+        metric: valueUnknown ? "Unknown" : formatUsdM(knownValue),
         unit:
           items.length === 1
             ? "1 gap to close"
@@ -128,7 +132,7 @@ function buildAnswers(
         detail: g.why,
         // The dollar the gap holds up — the reason a CXO cares which gap to close first.
         metric:
-          g.valueAtStakeUsd === null ? "—" : formatUsdM(g.valueAtStakeUsd),
+          g.valueAtStakeUsd === null ? "Unknown" : formatUsdM(g.valueAtStakeUsd),
         unit: "blocked",
         tone: gapTone(g),
         tag: g.owner ? `Owner · ${g.owner}` : "No owner recorded",
@@ -153,7 +157,7 @@ function buildAnswers(
       name: g.blockedDecision,
       detail: g.why,
       metric:
-        g.valueAtStakeUsd === null ? "Held" : formatUsdM(g.valueAtStakeUsd),
+        g.valueAtStakeUsd === null ? "Unknown" : formatUsdM(g.valueAtStakeUsd),
       unit: g.linkedProgram ?? "no linked program",
       tone: gapTone(g),
       tag: g.owner ? `Blocked · ${g.owner}` : "Blocked · no owner",
@@ -269,7 +273,7 @@ function EvidenceRowBody({
       </span>
       <span className={styles.ebigRight}>
         <span className={cx(styles.ebigMetric, styles[TONE_CLASS[item.tone]])}>
-          {item.metric}
+          {item.metric === "Unknown" ? <Unknown label="Unknown" /> : item.metric}
         </span>
         <span className={styles.ebigUnit}>{item.unit}</span>
         <span className={styles.ebigTag}>{item.tag}</span>

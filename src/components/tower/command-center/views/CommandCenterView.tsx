@@ -5,6 +5,8 @@
 // four posture tiles, "this week's read" with the week bar chart and a CTA into
 // Value Proof, and the "decisions waiting on you" queue.
 
+import type { ReactNode } from "react";
+
 import {
   formatCount,
   formatPct,
@@ -33,7 +35,7 @@ interface Tile {
   tone: Tone;
   key: string;
   status: { cls: "steal" | "samber" | "sred" | "sgray"; text: string };
-  hero: string;
+  hero: ReactNode;
   heroNote: string;
   rows: TileRow[];
 }
@@ -45,6 +47,12 @@ interface Tile {
  */
 function buildTiles(view: TowerCommandCenterView): Tile[] {
   const s = view.summary;
+  const allValueUnknown =
+    s.valueClaimCount > 0 &&
+    s.knownValueClaimCount === 0 &&
+    s.unknownValueClaimCount > 0;
+  const valueOrUnknown = (value: number, label = "Unknown") =>
+    allValueUnknown ? <Unknown label={label} /> : formatUsdM(value);
   const openGaps = view.gaps.length;
   // Program-derived risk signals — see the Risk posture tile below for why
   // these do not come from `mart_required_field_gaps`.
@@ -97,23 +105,29 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
       key: "Value posture",
       status: {
         cls: s.claimableUsd > 0 ? "steal" : "sred",
-        text: s.claimableUsd > 0 ? "Partially proven" : "Unproven",
+        text: allValueUnknown
+          ? "Value unknown"
+          : s.claimableUsd > 0
+            ? "Partially proven"
+            : "Unproven",
       },
-      hero: formatUsdM(s.claimableUsd),
-      heroNote: "is claimable today",
+      hero: valueOrUnknown(s.claimableUsd),
+      heroNote: allValueUnknown
+        ? `${formatCount(s.unknownValueClaimCount)} claims need value evidence`
+        : "is claimable today",
       rows: [
-        { label: "Promised", value: formatUsdM(s.promisedUsd), tone: "" },
+        { label: "Promised", value: valueOrUnknown(s.promisedUsd), tone: "" },
         {
           label: "Usage-supported",
-          value: formatUsdM(s.usageSupportedUsd),
+          value: valueOrUnknown(s.usageSupportedUsd),
           tone: "vAmber",
         },
         {
           label: "Finance-validated",
-          value: formatUsdM(s.financeValidatedUsd),
+          value: valueOrUnknown(s.financeValidatedUsd),
           tone: "vAmber",
         },
-        { label: "Blocked", value: formatUsdM(s.blockedUsd), tone: "vRed" },
+        { label: "Blocked", value: valueOrUnknown(s.blockedUsd), tone: "vRed" },
       ],
     },
     {
@@ -190,6 +204,10 @@ export function CommandCenterView({
   onGoToFunnel: () => void;
 }) {
   const s = view.summary;
+  const allValueUnknown =
+    s.valueClaimCount > 0 &&
+    s.knownValueClaimCount === 0 &&
+    s.unknownValueClaimCount > 0;
   const tiles = buildTiles(view);
   const queue = decisionQueue(view);
 
@@ -235,24 +253,46 @@ export function CommandCenterView({
             <span className={styles.n}>{formatUsdM(s.budgetUsd)}</span> is in
             view. <span className={styles.n}>{formatUsdM(s.aiTaggedUsd)}</span>{" "}
             is AI-tagged.{" "}
-            <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span> is
-            promised value.{" "}
-            <span className={s.claimableUsd > 0 ? styles.n : styles.z}>
-              {formatUsdM(s.claimableUsd)}
-            </span>{" "}
-            is claimable.{" "}
+            {allValueUnknown ? (
+              <>
+                <span className={styles.n}>
+                  {formatCount(s.unknownValueClaimCount)}
+                </span>{" "}
+                value claims have unknown financial amount. Claimable value is{" "}
+                <Unknown label="not evidenced" />.{" "}
+              </>
+            ) : (
+              <>
+                <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span>{" "}
+                is promised value.{" "}
+                <span className={s.claimableUsd > 0 ? styles.n : styles.z}>
+                  {formatUsdM(s.claimableUsd)}
+                </span>{" "}
+                is claimable.{" "}
+              </>
+            )}
             {s.decisionQuestion ? (
               <span className={styles.turn}>{s.decisionQuestion}</span>
             ) : null}
           </p>
 
           <div className={styles.wkViz}>
-            <WeekReadChart summary={s} />
+            {allValueUnknown ? (
+              <div className={styles.emptyPanel}>
+                <h2>Value proof is not quantified yet</h2>
+                <p>
+                  Tower has usage and claim-state evidence, but no governed
+                  dollar amount for the value claims. The proof chart stays
+                  withheld until value evidence exists.
+                </p>
+              </div>
+            ) : (
+              <WeekReadChart summary={s} />
+            )}
             <span className={styles.srOnly}>
-              Promised {formatUsdM(s.promisedUsd)}; usage-supported{" "}
-              {formatUsdM(s.usageSupportedUsd)}; finance-validated{" "}
-              {formatUsdM(s.financeValidatedUsd)}; claimable{" "}
-              {formatUsdM(s.claimableUsd)}.
+              {allValueUnknown
+                ? `${s.unknownValueClaimCount} claims have unknown financial value; no claimable amount is evidenced.`
+                : `Promised ${formatUsdM(s.promisedUsd)}; usage-supported ${formatUsdM(s.usageSupportedUsd)}; finance-validated ${formatUsdM(s.financeValidatedUsd)}; claimable ${formatUsdM(s.claimableUsd)}.`}
             </span>
           </div>
 
