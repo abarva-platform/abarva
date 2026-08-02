@@ -8,36 +8,39 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe("Home/Admin boundary contract", () => {
-  it("keeps the canonical /home entry on the insight surface", () => {
+  it("keeps the canonical /home entry on the AI Success Command Center", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const homeSource = readRepoFile(
-      "src/components/home/HomeEnterpriseBriefApp.tsx",
+    const commandCenterSource = readRepoFile(
+      "src/components/home/ai-success-command-center/AiSuccessCommandCenter.tsx",
     );
 
-    expect(pageSource).toContain("import { HomeEnterpriseBriefApp }");
+    expect(pageSource).toContain("import { AiSuccessCommandCenter }");
+    expect(pageSource).toContain("readSkyHarborAiSuccessHome");
     expect(pageSource).not.toMatch(
       /HomeExecutiveCockpit|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
 
-    expect(pageSource).toContain("<HomeEnterpriseBriefApp");
-    expect(homeSource).toContain("HomeEnterpriseBriefApp");
-    expect(homeSource).toContain("Context Explorer");
-    expect(homeSource).toContain("Enterprise relationship map");
+    expect(pageSource).toContain("<AiSuccessCommandCenter");
+    expect(commandCenterSource).toContain("CurrentStateArchitectureMap");
+    expect(commandCenterSource).toContain(
+      "AI is scaling across SkyHarbor. Value proof has not caught up.",
+    );
+    expect(commandCenterSource).toContain("Of 162 governed value claims");
     expect(pageSource).not.toMatch(
       /ImpactInsightsHome|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
   });
 
-  it("bounds optional Knowledge pack lookup so /home can render", () => {
+  it("keeps /home data-bound to the SkyHarbor command-center snapshot", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-
-    expect(pageSource).toContain("withHomePageTimeout");
-    expect(pageSource).toContain("HOME_OPTIONAL_DATA_TIMEOUT_MS");
-    expect(pageSource).toContain('"Home Knowledge Pack v2"');
-    expect(pageSource).toContain(
-      "readHomeKnowledgeDesignContractForTenantFromPostgres",
+    const dataSource = readRepoFile(
+      "src/lib/home/readSkyHarborAiSuccessHome.ts",
     );
-    expect(pageSource).toContain("Knowledge pack unavailable");
+
+    expect(pageSource).toContain("const data = readSkyHarborAiSuccessHome()");
+    expect(dataSource).toContain("architectureGraphSnapshot");
+    expect(dataSource).toContain("advisoryResultSnapshot");
+    expect(dataSource).toContain("dataCapabilityPacketSnapshot");
     expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
@@ -71,5 +74,20 @@ describe("Home/Admin boundary contract", () => {
     );
     expect(proxySource).toContain('pathname === "/home"');
     expect(proxySource).toContain('pathname.startsWith("/home/")');
+  });
+
+  it("redirects the retired Home Knowledge proof path before route gating", () => {
+    const proxySource = readRepoFile("src/proxy.ts");
+    const redirectIndex = proxySource.indexOf(
+      "request.nextUrl.pathname === FOUNDATION_HOME_KNOWLEDGE_ROUTE",
+    );
+    const authGateIndex = proxySource.indexOf("const requiresAuth");
+
+    expect(redirectIndex).toBeGreaterThan(-1);
+    expect(authGateIndex).toBeGreaterThan(-1);
+    expect(redirectIndex).toBeLessThan(authGateIndex);
+    expect(proxySource).toContain(
+      'NextResponse.redirect(new URL("/home", request.url), 302)',
+    );
   });
 });
