@@ -267,6 +267,32 @@ await test("baseline activation gate blocks empty validation and requires absenc
   assert.ok(source.includes("governance.can_access_tenant(tenant_key)"));
 });
 
+await test("source-register expectation counts authored data sources, not operational files", async () => {
+  const offlineReport = await readFile(
+    new URL("../build-foundation-v3-day-one-breach-report.mjs", import.meta.url),
+    "utf8",
+  );
+  const liveReadback = await readFile(
+    new URL("../../qa/skyharbor-day-one-breach-readback.mjs", import.meta.url),
+    "utf8",
+  );
+  const correctionMigration = await readFile(
+    new URL("../../../supabase/migrations/20260801231000_foundation_v3_source_expectation_correction.sql", import.meta.url),
+    "utf8",
+  );
+
+  for (const source of [offlineReport, liveReadback]) {
+    assert.ok(source.includes("EXPECTED_DECLARED_INTAKE_DATA_SOURCES = 33"));
+    assert.ok(source.includes("declared intake data sources excluding workbook lineage companions"));
+    assert.ok(!source.includes('"all declared intake sources", 48'));
+  }
+  assert.ok(correctionMigration.includes("'exp-source-register-file-count-v1'"));
+  assert.ok(correctionMigration.includes("expected_count = EXCLUDED.expected_count"));
+  assert.ok(correctionMigration.includes("'corrected_expected_count', 33"));
+  assert.ok(correctionMigration.includes("'excluded_workbook_lineage_companions', 5"));
+  assert.ok(correctionMigration.includes("prior_snapshot_counted_operational_files_not_intake_data_sources"));
+});
+
 await test("relationship promotion resolves endpoints from an indexed accepted entity map", async () => {
   const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
   assert.ok(source.includes("CREATE TEMP TABLE tmp_promoted_entity_map ON COMMIT DROP AS"));
