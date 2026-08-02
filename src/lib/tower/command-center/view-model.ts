@@ -57,14 +57,43 @@ function trimOrNull(value: string | null | undefined): string | null {
 }
 
 /** Title-case a snake_case / kebab-case mart token for display. */
+/**
+ * Acronyms the mart uses as lowercase tokens. Without these, `ai_portfolio`
+ * sentence-cases to "Ai portfolio", which looks like a typo on an executive
+ * surface.
+ */
+const ACRONYMS = new Set([
+  "ai",
+  "it",
+  "hr",
+  "kpi",
+  "roi",
+  "erp",
+  "sla",
+  "aml",
+  "kyc",
+  "itsm",
+  "cxo",
+  "cio",
+  "cfo",
+  "cdao",
+  "occ",
+  "dlp",
+  "api",
+  "llm",
+  "phi",
+]);
+
 function humanize(value: string | null | undefined): string | null {
   const raw = trimOrNull(value);
   if (!raw) return null;
-  return raw
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^./, (c) => c.toUpperCase());
+  const words = raw.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().split(" ");
+  return words
+    .map((word, i) => {
+      if (ACRONYMS.has(word.toLowerCase())) return word.toUpperCase();
+      return i === 0 ? word.replace(/^./, (c) => c.toUpperCase()) : word;
+    })
+    .join(" ");
 }
 
 // ── AI kind ────────────────────────────────────────────────────────────────

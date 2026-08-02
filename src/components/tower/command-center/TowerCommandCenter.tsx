@@ -240,7 +240,10 @@ export function TowerCommandCenter({
   return (
     <div className={styles.root} data-testid="tower-command-center">
       <div className={styles.stage}>
-        <div className={cx(styles.wrap, styles.dash)}>
+        {/* Full-bleed navigation band: header + tabs read as chrome,
+            distinct from the working canvas below. */}
+        <div className={styles.dashBand}>
+          <div className={cx(styles.wrap, styles.dash)}>
           <div className={styles.dashTop}>
             <div className={styles.dashId}>
               <div className={styles.eyebrow}>
@@ -318,7 +321,8 @@ export function TowerCommandCenter({
                 </button>
               );
             })}
-          </nav>
+            </nav>
+          </div>
         </div>
 
         <div className={styles.bodyregion}>

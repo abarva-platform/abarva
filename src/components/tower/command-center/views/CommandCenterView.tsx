@@ -228,9 +228,17 @@ export function CommandCenterView({
           <div className={styles.wkK} id="tcc-week-read">
             This week&rsquo;s read
           </div>
-          {/* The run-on sentence is assembled from governed totals only. The
-              turn ("the issue is X") is the mart's own decision question — we
-              do not write a new one. */}
+          {/* The run-on sentence is assembled from governed totals only.
+           *
+           * The turn at the end is the mart's `executive_summary` — the "so
+           * what" — NOT its `decision_question`. The design carries two
+           * distinct strings here: the page H1 states the posture ("Funded
+           * ahead of proof. Value is the constraint.") and this turn states
+           * the consequence ("The issue is not spend visibility — it is value
+           * proof."). Both slots were wired to `decision_question`, so on the
+           * live tenants the identical sentence rendered twice within ~400px —
+           * once as the H1 and again as the tail of this paragraph. Keep these
+           * two fields apart; the guard test pins it. */}
           <p className={styles.wkLine}>
             <span className={styles.n}>{formatUsdM(s.budgetUsd)}</span> is in
             view. <span className={styles.n}>{formatUsdM(s.aiTaggedUsd)}</span>{" "}
@@ -241,8 +249,8 @@ export function CommandCenterView({
               {formatUsdM(s.claimableUsd)}
             </span>{" "}
             is claimable.{" "}
-            {s.decisionQuestion ? (
-              <span className={styles.turn}>{s.decisionQuestion}</span>
+            {s.executiveSummary ? (
+              <span className={styles.turn}>{s.executiveSummary}</span>
             ) : null}
           </p>
 

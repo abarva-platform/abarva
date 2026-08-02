@@ -404,8 +404,9 @@ describe("buildTowerCommandCenterView", () => {
       }),
       { tenantName: "Demo" },
     )!;
+    // "Cloud AI", not "Cloud AI" — humanize() keeps known acronyms uppercase.
     expect(view.spendLens.map((r) => r.category)).toEqual([
-      "Cloud ai",
+      "Cloud AI",
       "Copilot",
     ]);
     expect(view.spendLens[0].kind).toBe("embedded");
@@ -484,6 +485,30 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.unknownSlots).toEqual(
       expect.arrayContaining([expect.stringContaining("Action due windows")]),
     );
+  });
+
+
+  it("uppercases known acronyms instead of sentence-casing them", () => {
+    // `ai_portfolio` was rendering as "Ai portfolio" on the Evidence tab.
+    const view = buildTowerCommandCenterView(
+      mart({
+        evidenceLineage: [
+          {
+            lineageKey: "e-acr",
+            surfaceSection: "ai_portfolio",
+            displayedFact: "AI-tagged spend",
+            displayedValueText: "$8M",
+            displayedValueNumeric: 8 * M,
+            sourceFile: "09_programs_initiatives.csv",
+            sourceRow: "r1",
+            sourceSystem: "finance",
+            caveat: "",
+          },
+        ],
+      }),
+      { tenantName: "Demo" },
+    )!;
+    expect(view.evidenceFacts[0].unit).toBe("AI portfolio");
   });
 
   it("flags AI spend as unattributed when the portfolio carries none but the total is non-zero", () => {

@@ -13,6 +13,7 @@
 import { formatUsdM } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
+  TowerEvidenceFactView,
   TowerEvidenceGapView,
 } from "@/lib/tower/command-center/types";
 
@@ -91,6 +92,19 @@ function ownerAnswers(gaps: readonly TowerEvidenceGapView[]): AnswerItem[] {
     });
 }
 
+/**
+ * Does this lineage row actually carry a figure? A metric of "$0" / "—" on an
+ * auto-generated row means the mart traced the fact but carried no value for
+ * it, which is different from a governed zero.
+ */
+function hasRealMetric(f: TowerEvidenceFactView): boolean {
+  const m = (f.metricText ?? "").trim();
+  return m !== "" && m !== "—" && m !== "$0";
+}
+
+/** Executive default, matching the Top-10 policy used across the portfolio. */
+const EVIDENCE_FACT_DISPLAY_LIMIT = 10;
+
 function buildAnswers(
   question: EvidenceQuestion,
   view: TowerCommandCenterView,
@@ -98,17 +112,45 @@ function buildAnswers(
   const gaps = view.gaps;
 
   if (question === "exists") {
-    const facts = view.evidenceFacts;
+    // Deduplicate by the fact being asserted. The mart emits one lineage row per
+    // rendered figure, so the same business fact can appear several times with
+    // different keys — on the live healthcare tenant "Automated close and
+    // reporting AI-tagged spend" surfaced three times in a row.
+    const seen = new Set<string>();
+    const deduped = view.evidenceFacts.filter((f) => {
+      const key = f.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Facts that actually carry a value first. A tenant's lineage is dominated
+    // by auto-generated per-item rows whose value is $0; leading with those
+    // buries the handful of rows that state a real number.
+    const ranked = [...deduped].sort((a, b) => {
+      const av = hasRealMetric(a) ? 0 : 1;
+      const bv = hasRealMetric(b) ? 0 : 1;
+      return av - bv;
+    });
+
+    const shown = ranked.slice(0, EVIDENCE_FACT_DISPLAY_LIMIT);
     return {
-      meta: `${facts.length} traced fact${facts.length === 1 ? "" : "s"} carry a governed source row`,
-      items: facts.map((f) => ({
+      meta:
+        shown.length < ranked.length
+          ? `${shown.length} of ${ranked.length} traced facts shown`
+          : `${ranked.length} traced fact${ranked.length === 1 ? "" : "s"} carry a governed source row`,
+      items: shown.map((f) => ({
         id: f.id,
         name: f.name,
-        detail: f.sourceFile
-          ? `${f.detail} Source: ${f.sourceFile}.`
-          : f.detail,
-        metric: f.metricText,
-        unit: f.unit,
+        // The source FILE never appears here. A CXO surface reports business
+        // posture, not the projection's plumbing; the filename belongs in the
+        // gap drawer's audit trace, which is where an auditor looks for it.
+        detail: f.detail,
+        // A zero on an auto-generated lineage row means "no value carried",
+        // not "this fact is worth nothing". Showing "$0" as the headline
+        // metric on ~250 rows reads as broken data.
+        metric: hasRealMetric(f) ? f.metricText : "Traced",
+        unit: hasRealMetric(f) ? f.unit : "no value carried",
         tone: f.tone,
         tag: f.tag,
       })),
