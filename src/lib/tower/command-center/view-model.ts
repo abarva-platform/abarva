@@ -539,8 +539,32 @@ export function deriveBusinessEvidenceGaps(
   const gaps: TowerEvidenceGapView[] = [];
 
   for (const p of programs) {
-    // A program promising nothing has no value claim to block.
-    if (p.promisedUsd <= 0) continue;
+    if (p.promisedUsd <= 0 && p.claimableUsd <= 0) {
+      gaps.push({
+        id: `gap:unknown-value:${p.id}`,
+        kind: "claim_gate",
+        gapStage: "claim_gate",
+        primaryBlockingGap: true,
+        area: "Value evidence",
+        linkedProgram: p.name,
+        missing: `Governed financial amount and baseline/target/actual proof for ${p.name}`,
+        why:
+          "Tower has a claim-state row, but no governed dollar amount. Unknown value is withheld from executive totals until the measurement, value amount, provenance and attestations are loaded.",
+        blockedDecision: `${LANE_DECISION_VERB[p.lane]} ${p.name}`,
+        owner: p.financeOwnerRole ?? p.ownerRole,
+        priority: "high",
+        blocking: true,
+        sourceTemplate: p.sourceFile,
+        valueAtStakeUsd: null,
+        promisedValueExposedUsd: 0,
+        validatedValueHeldUsd: 0,
+        claimableValueBlockedUsd: 0,
+        sourceProgramId: p.id,
+        sourceEvidenceRefs: [p.sourceFile].filter(Boolean) as string[],
+        gapPolicyVersion: TOWER_GAP_POLICY_VERSION,
+      });
+      continue;
+    }
 
     const laneDecision = `${LANE_DECISION_VERB[p.lane]} ${p.name}`;
     const promisedValueExposedUsd = Math.max(0, p.promisedUsd - p.claimableUsd);
@@ -851,6 +875,13 @@ export function buildTowerCommandCenterView(
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
     claimableUsd: claimable,
     blockedUsd: Math.max(0, promised - claimable),
+    valueClaimCount: num(command.valueClaimCount),
+    knownValueClaimCount: num(command.knownValueClaimCount),
+    unknownValueClaimCount: num(command.unknownValueClaimCount),
+    knownZeroValueClaimCount: num(command.knownZeroValueClaimCount),
+    knownValueAmountUsd: num(command.knownValueAmountUsd),
+    financeAttestedClaimCount: num(command.financeAttestedClaimCount),
+    businessAttestedClaimCount: num(command.businessAttestedClaimCount),
 
     programCount: programs.length,
     aiInitiativeCount: ai.length,
