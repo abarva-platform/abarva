@@ -12,7 +12,7 @@
 
 Adds a governed operator command to retire accepted tenant-key ghost canonical rows before canonical promotion. The command defaults to dry-run and requires both apply mode and an explicit confirmation token before mutating data.
 
-Apply mode records review and authority-transition evidence before retiring the ghost entities and the accepted facts attached to them. It also hardens canonical promotion upserts so future fresh accepted decisions can revive corrected rows by refreshing authority state, endpoint/subject references, and freshness fields instead of leaving a retired row stuck.
+Apply mode records review and authority-transition evidence before retiring the ghost entities and the accepted facts attached to them. The review decision uses the existing governed decision vocabulary, and the authority-transition row records the actual move to `retired`. It also hardens canonical promotion upserts so future fresh accepted decisions can revive corrected rows by refreshing authority state, endpoint/subject references, and freshness fields instead of leaving a retired row stuck.
 
 ## Layer Impact
 
@@ -56,8 +56,9 @@ Local validation before merge:
 
 Runtime validation after deploy:
 
-- not-run: dry-run through isolated private operator job.
-- not-run: apply through isolated private operator job with explicit confirmation.
+- pass: dry-run through isolated private operator job scoped to two ghost entities and twenty attached facts.
+- blocked: first apply exposed a governed-schema vocabulary mismatch before mutation; the job rolled back and restored idle state.
+- pending: apply through isolated private operator job with explicit confirmation after vocabulary correction.
 - not-run: post-apply pre-promotion guard readback.
 - not-run: preserve the proof bundle in Downloads.
 

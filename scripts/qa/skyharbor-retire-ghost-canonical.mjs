@@ -14,6 +14,7 @@ const DEFAULT_OUT_DIR = path.join(os.tmpdir(), "skyharbor-retire-ghost-canonical
 const CONFIRMATION = "retire-ghost-canonical";
 const REASON_CODE = "phase_a_entity_collapse_defect";
 const REVIEWER = "qa:skair-retire-ghost-canonical";
+const REVIEW_DECISION = "rejected";
 
 function parseArgs(argv = process.argv.slice(2), env = process.env) {
   const parsed = {
@@ -202,13 +203,14 @@ async function writeReviewAndTransition(client, tenantKey, objectSchema, objectR
         $5,
         $6,
         $7,
-        'retired',
-        'prepromotion_guard',
+        $9,
+        'prepromotion_guard_retirement',
         $5,
         now(),
         $8::text[],
         jsonb_build_object(
           'retirement_reason', $6::text,
+          'retirement_decision', 'retired',
           'object_schema', $3::text,
           'object_ref', $4::text,
           'reversible_by_fresh_promotion', true
@@ -224,7 +226,17 @@ async function writeReviewAndTransition(client, tenantKey, objectSchema, objectR
         evidence_refs=EXCLUDED.evidence_refs,
         decision_metadata=coalesce(governance.review_decision.decision_metadata, '{}'::jsonb) || EXCLUDED.decision_metadata
     `,
-    [tenantKey, reviewRef, objectSchema, objectRef, REVIEWER, REASON_CODE, reasonDetail(objectSchema), evidenceRefs],
+    [
+      tenantKey,
+      reviewRef,
+      objectSchema,
+      objectRef,
+      REVIEWER,
+      REASON_CODE,
+      reasonDetail(objectSchema),
+      evidenceRefs,
+      REVIEW_DECISION,
+    ],
   );
   await client.query(
     `
