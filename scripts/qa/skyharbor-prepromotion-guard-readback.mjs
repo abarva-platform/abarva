@@ -94,13 +94,24 @@ const REGISTERED_QUERIES = Object.freeze({
       JOIN publication.knowledge_baseline kb
         ON kb.tenant_key=pv.tenant_key
        AND kb.knowledge_baseline_ref=pv.knowledge_baseline_ref
+      LEFT JOIN publication.projection_absence_assertion paa
+        ON paa.tenant_key=pv.tenant_key
+       AND paa.knowledge_baseline_ref=pv.knowledge_baseline_ref
+       AND paa.projection_name=pv.projection_name
+       AND (paa.projection_version_ref IS NULL OR paa.projection_version_ref=pv.projection_version_ref)
+       AND paa.retired_at IS NULL
       WHERE pv.tenant_key=$1
         AND kb.is_active
         AND kb.baseline_state='passed'
         AND pv.is_active
         AND pv.row_count=0
+        AND paa.absence_ref IS NULL
     `.trim(),
-    referencedRelations: ["publication.knowledge_baseline", "publication.projection_version"],
+    referencedRelations: [
+      "publication.knowledge_baseline",
+      "publication.projection_version",
+      "publication.projection_absence_assertion",
+    ],
     outputShape: { type: "scalar_count", nullable: false },
   },
 });
@@ -154,7 +165,7 @@ const GUARD_EXPECTATIONS = Object.freeze([
     expectationRef: "exp-prepromotion-active-zero-row-projections-zero-v1",
     stageName: "baseline-activation-readiness",
     objectKind: "projection_version",
-    objectScope: "active passed baseline projections with zero rows",
+    objectScope: "active passed baseline zero-row projections without active absence assertion",
     basisQueryRef: "qry-prepromotion-active-zero-row-projections-v1",
     basisSourceLayer: "publication",
     stageWriteLayer: "operations",

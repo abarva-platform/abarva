@@ -250,6 +250,23 @@ await test("promotion upsert can revive retired canonical rows from fresh accept
   assert.ok(source.includes("to_entity_ref=EXCLUDED.to_entity_ref"));
 });
 
+await test("baseline activation gate blocks empty validation and requires absence assertions", async () => {
+  const source = await readFile(
+    new URL("../../../supabase/migrations/20260801194500_foundation_v3_baseline_activation_gate.sql", import.meta.url),
+    "utf8",
+  );
+  assert.ok(source.includes("CREATE TABLE IF NOT EXISTS publication.projection_absence_assertion"));
+  assert.ok(source.includes("knowledge_baseline_passed_requires_projection_validation_chk"));
+  assert.ok(source.includes("projection_validation_hash"));
+  assert.ok(source.includes("NOT VALID"));
+  assert.ok(source.includes("CREATE OR REPLACE FUNCTION publication.validate_knowledge_baseline_activation_gate"));
+  assert.ok(source.includes("missingProjectionAbsenceAssertionCount"));
+  assert.ok(source.includes("Knowledge Baseline % has zero-row projections without absence assertions"));
+  assert.ok(source.includes("PERFORM publication.validate_knowledge_baseline_activation_gate"));
+  assert.ok(source.includes("ALTER TABLE publication.projection_absence_assertion ENABLE ROW LEVEL SECURITY"));
+  assert.ok(source.includes("governance.can_access_tenant(tenant_key)"));
+});
+
 await test("relationship promotion resolves endpoints from an indexed accepted entity map", async () => {
   const source = await readFile(new URL("../processing/executor-framework.mjs", import.meta.url), "utf8");
   assert.ok(source.includes("CREATE TEMP TABLE tmp_promoted_entity_map ON COMMIT DROP AS"));

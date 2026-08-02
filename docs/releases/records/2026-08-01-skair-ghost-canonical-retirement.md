@@ -58,9 +58,14 @@ Runtime validation after deploy:
 
 - pass: dry-run through isolated private operator job scoped to two ghost entities and twenty attached facts.
 - blocked: first apply exposed a governed-schema vocabulary mismatch before mutation; the job rolled back and restored idle state.
-- pending: apply through isolated private operator job with explicit confirmation after vocabulary correction.
-- not-run: post-apply pre-promotion guard readback.
-- not-run: preserve the proof bundle in Downloads.
+- pass: fixed apply through isolated private operator job retired two ghost entities and twenty attached facts.
+- pass: post-apply pre-promotion guard readback reported zero accepted ghost entities and zero accepted ghost facts.
+- pass: preserved the dry-run, failed apply, fixed apply, and post-apply guard proof bundle in Downloads.
+
+Additional runtime notes:
+
+- The twenty retired facts all traced to the interview initiative metric crosswalk support source, which is also the source family still flagged for generation-basis review in the next intake phase.
+- `candidate-repoint-hints.csv` was header-only. The recorded decision was to retire the collapsed promotion rather than re-point in place; valid source rows remain available as candidates for fresh review and later promotion under the repaired identity map.
 
 ## Rollout Plan
 
