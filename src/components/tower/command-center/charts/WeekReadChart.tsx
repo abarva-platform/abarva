@@ -1,84 +1,59 @@
 "use client";
 
-// "This week's read" — the four-stage horizontal bar on the Command Center tab.
-// Transcribed from `chart_week()` in the design file (line ~1233).
+// "This week's read" — the four-stage proof rail on the Command Center tab.
+// This is intentionally CSS-native instead of Recharts: the card can become
+// shallow in the live shell, and chart measurement warnings were producing
+// cramped labels in exactly the executive first-read slot.
 
-import {
-  Bar,
-  BarChart,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import type { CSSProperties } from "react";
 
 import { formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerCommandSummary } from "@/lib/tower/command-center/types";
 
-import { HEX, toM, withSliver } from "./chart-kit";
+import styles from "../TowerCommandCenter.module.css";
 
 export function WeekReadChart({ summary }: { summary: TowerCommandSummary }) {
-  const promisedM = toM(summary.promisedUsd);
-  const axisMax = Math.max(promisedM, 0.0001);
+  const maxUsd = Math.max(
+    summary.promisedUsd,
+    summary.usageSupportedUsd,
+    summary.financeValidatedUsd,
+    summary.claimableUsd,
+    1,
+  );
 
   const rows = [
-    { name: "Promised", usd: summary.promisedUsd, fill: HEX.gray300 },
-    { name: "Usage-supported", usd: summary.usageSupportedUsd, fill: HEX.teal },
+    { name: "Promised", usd: summary.promisedUsd, tone: "muted" },
+    { name: "Usage-supported", usd: summary.usageSupportedUsd, tone: "teal" },
     {
       name: "Finance-validated",
       usd: summary.financeValidatedUsd,
-      fill: HEX.tealDark,
+      tone: "tealDark",
     },
-    { name: "Claimable", usd: summary.claimableUsd, fill: HEX.red },
+    { name: "Claimable", usd: summary.claimableUsd, tone: "red" },
   ];
 
-  const data = rows.map((row) => ({
-    name: row.name,
-    // Bar length is the plotted value with a hairline floor so a true zero row
-    // still occupies its slot; `lab` always carries the real figure.
-    v: withSliver(toM(row.usd), axisMax),
-    lab: formatUsdM(row.usd),
-    fill: row.fill,
-  }));
-
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ top: 2, right: 56, left: 0, bottom: 2 }}
-        barCategoryGap="26%"
-      >
-        <XAxis type="number" hide domain={[0, axisMax]} />
-        <YAxis
-          type="category"
-          dataKey="name"
-          width={118}
-          axisLine={false}
-          tickLine={false}
-          tick={{
-            fontSize: 11,
-            fill: HEX.gray700,
-            fontFamily: "var(--abarva-sans)",
-          }}
-        />
-        <Bar dataKey="v" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-          {data.map((d, i) => (
-            <Cell key={i} fill={d.fill} />
-          ))}
-          <LabelList
-            dataKey="lab"
-            position="right"
-            style={{
-              fontFamily: "var(--abarva-mono)",
-              fontSize: 11.5,
-              fontWeight: 600,
-              fill: HEX.gray900,
-            }}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div
+      className={styles.weekProofRail}
+      aria-label="This week's value proof progression"
+    >
+      {rows.map((row) => {
+        const widthPct = row.usd > 0 ? Math.max((row.usd / maxUsd) * 100, 3) : 0;
+        return (
+          <div className={styles.weekProofRow} key={row.name}>
+            <span className={styles.weekProofLabel}>{row.name}</span>
+            <span className={styles.weekProofTrack}>
+              <span
+                className={`${styles.weekProofFill} ${styles[`weekProofFill_${row.tone}`]}`}
+                style={
+                  { "--week-proof-width": `${widthPct}%` } as CSSProperties
+                }
+              />
+            </span>
+            <span className={styles.weekProofValue}>{formatUsdM(row.usd)}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
