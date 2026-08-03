@@ -5,6 +5,7 @@ const DEFAULTS = {
   CUBEJS_DEV_MODE: "false",
   CUBEJS_SCHEMA_PATH: "model",
   CUBEJS_DB_SSL: "true",
+  CUBEJS_CACHE_AND_QUEUE_DRIVER: "memory",
   CUBEJS_PG_SQL_PORT: "15432",
   CUBEJS_SQL_USER: "cube",
   CUBEJS_DEFAULT_API_SCOPES: "meta,data,sql",

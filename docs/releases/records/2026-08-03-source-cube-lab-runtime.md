@@ -44,6 +44,8 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - The internal SQL API port update uses an explicit Container App name with the generated ARM payload to satisfy the Azure CLI update contract.
 - The internal SQL API port update omits the previous revision suffix from the generated payload so Azure can create the follow-up revision without suffix collision.
 - The private-runtime verifier runs the Azure Container App exec command under a pseudo-terminal wrapper so GitHub-hosted runners can satisfy the Azure CLI exec TTY contract while preserving the same in-container Cube API checks.
+- The lab runtime explicitly uses Cube's in-memory queue/cache driver; a separate Cube Store deployment is deferred until the semantic runtime needs production-grade concurrency or pre-aggregation scale.
+- The deploy workflow now parses the verifier JSON output and fails the job if the in-container verifier reports `ok:false`, even if the Azure exec transport itself reports success.
 
 ## QA / Validation
 
@@ -58,6 +60,8 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - PASS: deploy retry design corrects the SQL-port update command to provide the required Container App name when applying the generated ingress payload.
 - PASS: deploy retry design removes reused revision suffixes from the generated SQL-port payload.
 - PASS: deploy retry design wraps the private-runtime exec verifier in a pseudo-terminal so the GitHub runner can invoke Azure CLI exec non-interactively without weakening the Cube API assertions.
+- PASS: deploy retry design sets the Cube lab cache/queue driver to memory so the runtime can execute governed PostgreSQL-backed queries without a separate Cube Store service.
+- PASS: deploy retry design fails closed on verifier JSON output so a semantic/query failure cannot be masked by Azure exec transport success.
 - NOT RUN locally: Postgres parity verifier, because this checkout does not contain a lab database URL. The deploy workflow obtains the database URL from Key Vault.
 
 ## Rollout Plan
@@ -91,3 +95,4 @@ Disable or revert the Cube lab deploy workflow and remove or roll back `ca-abarv
 - If GitHub-provided Cube credentials are not configured, the lab deploy generates Cube-only credentials during deployment; Superset binding should use stable managed credentials before broad consumer rollout.
 - Native Source workspace binding is not completed in this PR.
 - Some Source cubes are contract-ready but intentionally sparse until deeper operational extracts are generated and loaded.
+- The first lab runtime uses the in-memory Cube cache/queue driver. Add Cube Store before treating this runtime as a high-concurrency production semantic service.
