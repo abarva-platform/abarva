@@ -41,6 +41,7 @@ This release adds a read-only live proof command for the Source V3 data foundati
 - Pass: `./node_modules/.bin/jest src/lib/source/data-model/__tests__/vendor-contract-portfolio.test.ts src/lib/source/data-model/__tests__/sourcing-opportunities.test.ts src/lib/source/data-model/__tests__/contract-360-view.test.ts --runInBand`
 - Pass: `NODE_OPTIONS='--max-old-space-size=8192' ./node_modules/.bin/tsc --noEmit --pretty false`
 - Expected fail-closed: running the live proof command locally without `DATABASE_URL` exits with `Missing DATABASE_URL`.
+- Follow-up validation: the first live proof execution on the deployed image failed before emitting counts because the dynamic raw-table row-count query passed an untyped tenant parameter into `format(...)`. This follow-up casts the dynamic query parameters to `text`, then reruns the same lint, TypeScript, wrapper self-test, release check, deploy, and read-only live proof sequence.
 
 ## Rollout Plan
 
@@ -63,6 +64,7 @@ Revert this release record, the proof script, package script, and operator wrapp
 ## Audit Evidence
 
 - PR URL, CI, ACA deploy run, deployed image digest, operator job summary, `05-proof-extraction.json`, and local proof ZIP will be captured after merge/deploy.
+- Failed proof execution retained for traceability: `job-abarva-private-operator-eus-8e8dnvj`, status `Failed`, image `acrabarvalab001.azurecr.io/abarva/web@sha256:f0d7db047e32c9091c4f3d26f5bbb257878f67ff5ef8fa4eaf374ed2551a37cf`, error `could not determine data type of parameter $1`.
 
 ## Known Gaps
 
