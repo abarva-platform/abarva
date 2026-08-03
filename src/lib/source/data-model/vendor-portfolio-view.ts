@@ -10,6 +10,7 @@ import {
   computeRenewalExposure,
   computeVendorConcentration,
   excludeSupplementalContracts,
+  numberFromDb,
   summarizePortfolio,
   type ContractLeverageEntry,
   type RenewalExposureResult,
@@ -47,6 +48,7 @@ export interface VendorPortfolioView {
 }
 
 function formatUsdCompact(value: number): string {
+  if (!Number.isFinite(value)) return "Not available";
   if (value === 0) return "$0";
   const abs = Math.abs(value);
   if (abs >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
@@ -56,6 +58,7 @@ function formatUsdCompact(value: number): string {
 }
 
 function formatPct(value: number): string {
+  if (!Number.isFinite(value)) return "n/a";
   return `${(value * 100).toFixed(1)}%`;
 }
 
@@ -111,12 +114,16 @@ export function buildVendorPortfolioView(
   ];
 
   const contracts: ContractListEntry[] = [...cleaned]
-    .sort((a, b) => (b.annual_value ?? 0) - (a.annual_value ?? 0))
+    .sort(
+      (a, b) =>
+        (numberFromDb(b.annual_value) ?? 0) -
+        (numberFromDb(a.annual_value) ?? 0),
+    )
     .map((row) => ({
       contractId: row.contract_id,
       contractName: row.contract_name,
       vendorName: row.vendor_name,
-      annualValue: row.annual_value ?? 0,
+      annualValue: numberFromDb(row.annual_value) ?? 0,
       endDate: row.end_date,
       autoRenew: row.auto_renew,
     }));

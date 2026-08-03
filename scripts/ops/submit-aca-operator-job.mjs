@@ -219,6 +219,81 @@ function stripLogPrefix(line) {
   return match ? match[1] : line;
 }
 
+function collectJsonObjects(logText) {
+  const objects = [];
+  let collecting = false;
+  let buffer = [];
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  const updateDepth = (value) => {
+    for (const char of value) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) continue;
+      if (char === "{") depth += 1;
+      else if (char === "}") depth -= 1;
+    }
+  };
+
+  for (const rawLine of logText.split(/\r?\n/)) {
+    const line = stripLogPrefix(rawLine).trim();
+    if (!line) continue;
+    if (!collecting && !line.startsWith("{")) continue;
+
+    if (!collecting) {
+      collecting = true;
+      buffer = [];
+      depth = 0;
+      inString = false;
+      escaped = false;
+    }
+
+    buffer.push(line);
+    updateDepth(line);
+
+    if (collecting && depth === 0) {
+      const candidate = buffer.join("\n");
+      try {
+        const parsed = JSON.parse(candidate);
+        if (parsed && typeof parsed === "object") objects.push(parsed);
+      } catch {
+        // Ignore non-JSON brace blocks in mixed application logs.
+      }
+      collecting = false;
+      buffer = [];
+    }
+  }
+
+  return objects;
+}
+
+function extractStructuredEvents(logText, outDir) {
+  const events = collectJsonObjects(logText).filter((event) => typeof event.event === "string");
+  if (!events.length) return null;
+  const eventPath = path.join(outDir, "05-structured-events.json");
+  writeJson(eventPath, events);
+  return {
+    extracted: false,
+    structuredEventsExtracted: true,
+    eventPath,
+    eventCount: events.length,
+    eventNames: events.map((event) => event.event),
+    events,
+  };
+}
+
 function extractProofBundle(logText, outDir) {
   const begin = "__SEMANTIC2_PROOF_TGZ_BEGIN__";
   const end = "__SEMANTIC2_PROOF_TGZ_END__";
@@ -234,7 +309,9 @@ function extractProofBundle(logText, outDir) {
     if (line === end) break;
     if (collecting && line) payload.push(line);
   }
-  if (!payload.length) return { extracted: false, reason: "No proof bundle marker found in logs." };
+  if (!payload.length) {
+    return extractStructuredEvents(logText, outDir) ?? { extracted: false, reason: "No proof bundle marker found in logs." };
+  }
 
   const tarPath = path.join(outDir, "proof.tgz");
   fs.writeFileSync(tarPath, Buffer.from(payload.join(""), "base64"));
@@ -554,6 +631,19 @@ function selfTest() {
   ].join("\n");
   const result = extractProofBundle(logText, dir);
   if (!result.extracted) throw new Error(`proof extraction self-test failed: ${result.reason}`);
+  const eventDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-json-event-self-test-"));
+  const eventLogText = [
+    '2026-01-01 stdout F {',
+    '2026-01-01 stdout F   "event": "skyharbor_v3_current_state_loaded",',
+    '2026-01-01 stdout F   "reconciliation": {',
+    '2026-01-01 stdout F     "passed": true',
+    '2026-01-01 stdout F   }',
+    '2026-01-01 stdout F }',
+  ].join("\n");
+  const eventResult = extractProofBundle(eventLogText, eventDir);
+  if (!eventResult.structuredEventsExtracted || eventResult.eventCount !== 1) {
+    throw new Error(`structured event extraction self-test failed: ${JSON.stringify(eventResult)}`);
+  }
   assertDigestPinned("repo.azurecr.io/app@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   assertScript("semantic2:l3-dossiers:self-test");
   console.log(`self-test passed: ${dir}`);
