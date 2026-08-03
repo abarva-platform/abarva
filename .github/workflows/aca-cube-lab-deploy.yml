@@ -288,6 +288,7 @@ jobs:
           } | tee audit-artifacts/aca-cube-lab-deploy/runtime-secret-sources.txt
           env_vars=(
             "NODE_ENV=production"
+            "SOURCE_TENANT_KEY=${SOURCE_TENANT_KEY}"
             "DATABASE_URL=secretref:database-url"
             "CUBEJS_API_SECRET=secretref:cube-api-secret"
             "CUBEJS_SQL_PASSWORD=secretref:cube-sql-pass"
