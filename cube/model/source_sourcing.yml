@@ -1,0 +1,514 @@
+cubes:
+  - name: sourcing_vendors
+    sql_table: consumption.sourcing_vendor_v1
+    public: true
+    joins:
+      - name: sourcing_contracts
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {sourcing_contracts.tenant_key} AND {CUBE.vendor_id} = {sourcing_contracts.vendor_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+        primary_key: true
+      - name: legal_name
+        sql: legal_name
+        type: string
+      - name: supplier_category
+        sql: supplier_category
+        type: string
+      - name: strategic_status
+        sql: strategic_status
+        type: string
+      - name: risk_tier
+        sql: risk_tier
+        type: string
+      - name: relationship_owner_role
+        sql: relationship_owner_role
+        type: string
+      - name: quality_state
+        sql: quality_state
+        type: string
+    measures:
+      - name: count
+        type: count
+      - name: annual_value
+        sql: annual_value
+        type: sum
+        format: currency
+      - name: contract_count
+        sql: contract_count
+        type: sum
+      - name: distinct_categories
+        sql: supplier_category
+        type: count_distinct
+
+  - name: sourcing_contracts
+    sql_table: consumption.sourcing_contract_v1
+    public: true
+    joins:
+      - name: sourcing_vendors
+        relationship: many_to_one
+        sql: "{CUBE.tenant_key} = {sourcing_vendors.tenant_key} AND {CUBE.vendor_id} = {sourcing_vendors.vendor_id}"
+      - name: sourcing_contract_scope
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {sourcing_contract_scope.tenant_key} AND {CUBE.contract_id} = {sourcing_contract_scope.contract_id}"
+      - name: sourcing_spend_monthly
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {sourcing_spend_monthly.tenant_key} AND {CUBE.contract_id} = {sourcing_spend_monthly.contract_id}"
+      - name: sourcing_performance
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {sourcing_performance.tenant_key} AND {CUBE.contract_id} = {sourcing_performance.contract_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: contract_id
+        sql: contract_id
+        type: string
+        primary_key: true
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: vendor_name
+        sql: vendor_name
+        type: string
+      - name: agreement_type
+        sql: agreement_type
+        type: string
+      - name: renewal_type
+        sql: renewal_type
+        type: string
+      - name: auto_renew
+        sql: auto_renew
+        type: boolean
+      - name: quality_state
+        sql: quality_state
+        type: string
+      - name: effective_date
+        sql: effective_date
+        type: time
+      - name: expiration_date
+        sql: expiration_date
+        type: time
+      - name: notice_deadline
+        sql: notice_deadline
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: annual_value
+        sql: annual_value
+        type: sum
+        format: currency
+      - name: total_committed_value
+        sql: total_committed_value
+        type: sum
+        format: currency
+      - name: auto_renew_count
+        sql: "CASE WHEN auto_renew THEN 1 ELSE 0 END"
+        type: sum
+      - name: notice_90_day_count
+        sql: "CASE WHEN notice_deadline <= DATE '2027-09-28' THEN 1 ELSE 0 END"
+        type: sum
+      - name: average_confidence
+        sql: confidence
+        type: avg
+
+  - name: sourcing_contract_scope
+    sql_table: consumption.sourcing_contract_scope_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: contract_scope_id
+        sql: contract_scope_id
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: scope_type
+        sql: scope_type
+        type: string
+      - name: scope_name
+        sql: scope_name
+        type: string
+      - name: criticality
+        sql: criticality
+        type: string
+      - name: relationship_method
+        sql: relationship_method
+        type: string
+      - name: quality_state
+        sql: quality_state
+        type: string
+    measures:
+      - name: count
+        type: count
+      - name: explicit_scope_count
+        sql: "CASE WHEN relationship_method = 'explicit_contract_scope' THEN 1 ELSE 0 END"
+        type: sum
+      - name: inferred_scope_count
+        sql: "CASE WHEN relationship_method LIKE '%inference' THEN 1 ELSE 0 END"
+        type: sum
+      - name: average_relationship_confidence
+        sql: relationship_confidence
+        type: avg
+
+  - name: sourcing_spend_monthly
+    sql_table: consumption.sourcing_spend_monthly_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: observation_id
+        sql: observation_id
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: business_unit
+        sql: business_unit
+        type: string
+      - name: cost_center
+        sql: cost_center
+        type: string
+      - name: service_category
+        sql: service_category
+        type: string
+      - name: month
+        sql: month
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: committed_amount
+        sql: committed_amount
+        type: sum
+        format: currency
+      - name: actual_spend
+        sql: actual_spend
+        type: sum
+        format: currency
+      - name: invoice_amount
+        sql: invoice_amount
+        type: sum
+        format: currency
+      - name: overage_amount
+        sql: overage_amount
+        type: sum
+        format: currency
+      - name: service_credit_amount
+        sql: service_credit_amount
+        type: sum
+        format: currency
+
+  - name: sourcing_performance
+    sql_table: consumption.sourcing_performance_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: observation_id
+        sql: observation_id
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: metric_name
+        sql: metric_name
+        type: string
+      - name: unit
+        sql: unit
+        type: string
+      - name: credit_eligible
+        sql: credit_eligible
+        type: boolean
+      - name: period_start
+        sql: period_start
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: breach_count
+        sql: breach_count
+        type: sum
+      - name: credit_calculated
+        sql: credit_calculated
+        type: sum
+        format: currency
+      - name: credit_claimed
+        sql: credit_claimed
+        type: sum
+        format: currency
+      - name: credit_recovered
+        sql: credit_recovered
+        type: sum
+        format: currency
+      - name: unclaimed_credit
+        sql: "COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)"
+        type: sum
+        format: currency
+
+  - name: sourcing_opportunities
+    sql_table: consumption.sourcing_opportunity_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: opportunity_id
+        sql: opportunity_id
+        type: string
+        primary_key: true
+      - name: opportunity_type
+        sql: opportunity_type
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: title
+        sql: title
+        type: string
+      - name: timing_window
+        sql: timing_window
+        type: string
+      - name: quality_state
+        sql: quality_state
+        type: string
+      - name: recommended_action
+        sql: recommended_action
+        type: string
+    measures:
+      - name: count
+        type: count
+      - name: value_low
+        sql: value_low
+        type: sum
+        format: currency
+      - name: value_high
+        sql: value_high
+        type: sum
+        format: currency
+      - name: average_confidence
+        sql: confidence
+        type: avg
+
+  - name: sourcing_events
+    sql_table: consumption.sourcing_event_v1
+    public: true
+    joins:
+      - name: sourcing_event_suppliers
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {sourcing_event_suppliers.tenant_key} AND {CUBE.event_id} = {sourcing_event_suppliers.event_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: event_id
+        sql: event_id
+        type: string
+        primary_key: true
+      - name: event_type
+        sql: event_type
+        type: string
+      - name: service_scope
+        sql: service_scope
+        type: string
+      - name: event_status
+        sql: event_status
+        type: string
+      - name: accountable_role
+        sql: accountable_role
+        type: string
+      - name: decision_due_date
+        sql: decision_due_date
+        type: time
+    measures:
+      - name: count
+        type: count
+
+  - name: sourcing_event_suppliers
+    sql_table: consumption.sourcing_event_supplier_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: event_supplier_id
+        sql: event_supplier_id
+        type: string
+        primary_key: true
+      - name: event_id
+        sql: event_id
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: supplier_name
+        sql: supplier_name
+        type: string
+      - name: supplier_status
+        sql: supplier_status
+        type: string
+      - name: response_status
+        sql: response_status
+        type: string
+      - name: recommendation
+        sql: recommendation
+        type: string
+    measures:
+      - name: count
+        type: count
+      - name: risk_score
+        sql: risk_score
+        type: avg
+      - name: weighted_score
+        sql: weighted_score
+        type: avg
+
+views:
+  - name: source_executive_portfolio
+    cubes:
+      - join_path: sourcing_contracts
+        includes:
+          - count
+          - annual_value
+          - total_committed_value
+          - auto_renew_count
+          - notice_90_day_count
+      - join_path: sourcing_opportunities
+        prefix: true
+        includes:
+          - count
+          - value_low
+          - value_high
+
+  - name: source_vendor_concentration
+    cubes:
+      - join_path: sourcing_vendors
+        includes:
+          - legal_name
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - annual_value
+          - contract_count
+
+  - name: source_renewal_exposure
+    cubes:
+      - join_path: sourcing_contracts
+        includes:
+          - contract_id
+          - vendor_name
+          - expiration_date
+          - notice_deadline
+          - auto_renew
+          - annual_value
+          - notice_90_day_count
+
+  - name: source_contract_scope_confidence
+    cubes:
+      - join_path: sourcing_contract_scope
+        includes:
+          - contract_id
+          - scope_type
+          - scope_name
+          - criticality
+          - relationship_method
+          - count
+          - explicit_scope_count
+          - inferred_scope_count
+          - average_relationship_confidence
+
+  - name: source_spend_consumption
+    cubes:
+      - join_path: sourcing_spend_monthly
+        includes:
+          - contract_id
+          - business_unit
+          - service_category
+          - month
+          - committed_amount
+          - actual_spend
+          - overage_amount
+          - service_credit_amount
+
+  - name: source_performance_and_credits
+    cubes:
+      - join_path: sourcing_performance
+        includes:
+          - contract_id
+          - metric_name
+          - period_start
+          - breach_count
+          - credit_calculated
+          - credit_claimed
+          - credit_recovered
+          - unclaimed_credit
+
+  - name: source_opportunity_pipeline
+    cubes:
+      - join_path: sourcing_opportunities
+        includes:
+          - opportunity_type
+          - vendor_id
+          - contract_id
+          - title
+          - timing_window
+          - quality_state
+          - recommended_action
+          - count
+          - value_low
+          - value_high
+          - average_confidence
+
+  - name: source_event_execution
+    cubes:
+      - join_path: sourcing_events
+        includes:
+          - event_id
+          - event_type
+          - service_scope
+          - event_status
+          - accountable_role
+          - decision_due_date
+          - count
+      - join_path: sourcing_events.sourcing_event_suppliers
+        prefix: true
+        includes:
+          - count
+          - risk_score
+          - weighted_score
+
+  - name: source_supplier_comparison
+    cubes:
+      - join_path: sourcing_event_suppliers
+        includes:
+          - event_id
+          - supplier_name
+          - supplier_status
+          - response_status
+          - recommendation
+          - risk_score
+          - weighted_score
