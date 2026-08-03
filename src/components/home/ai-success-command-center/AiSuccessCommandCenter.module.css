@@ -538,6 +538,152 @@
   align-items: center;
 }
 
+.toolUsageHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.toolUsageStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.toolUsageStats span {
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: #f7f9fb;
+  padding: 10px 11px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.toolUsageStats b {
+  display: block;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: 19px;
+  line-height: 1.05;
+}
+
+.toolUsageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(310px, 0.88fr);
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.toolUsageList {
+  display: grid;
+  gap: 7px;
+}
+
+.toolUsageRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(84px, 0.4fr) minmax(118px, 0.5fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 11px;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.toolUsageRow:hover,
+.toolUsageRowActive {
+  border-color: rgba(0, 95, 214, 0.42);
+  background: #f7fbff;
+}
+
+.toolUsageRow:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.toolUsageRow b,
+.toolUsageRow small {
+  display: block;
+  min-width: 0;
+}
+
+.toolUsageRow b {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.toolUsageRow small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.toolMetric {
+  color: var(--ink);
+  font:
+    11px/1.2 var(--abarva-mono),
+    ui-monospace,
+    monospace;
+  font-weight: 800;
+  text-align: right;
+}
+
+.toolDrill {
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: #fbfaf8;
+  padding: 16px;
+}
+
+.toolDrill h3 {
+  margin: 9px 0 14px;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: 23px;
+  line-height: 1.12;
+}
+
+.toolDrill dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.toolDrill dl div {
+  display: grid;
+  gap: 3px;
+  border-bottom: 1px solid rgba(12, 26, 58, 0.08);
+  padding-bottom: 9px;
+}
+
+.toolDrill dt {
+  color: var(--muted);
+  font:
+    10px/1.15 var(--abarva-mono),
+    ui-monospace,
+    monospace;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.toolDrill dd {
+  margin: 0;
+  color: #4d5d79;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .chartBox {
   min-height: 320px;
   padding: 18px;
@@ -1051,7 +1197,9 @@
 
   .executiveGrid,
   .twoCol,
-  .twoColTight {
+  .twoColTight,
+  .toolUsageHeader,
+  .toolUsageGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1130,10 +1278,16 @@
   .grid4,
   .choiceGrid,
   .limitsGrid,
+  .toolUsageStats,
+  .toolUsageRow,
   .railList,
   .flowBoard,
   .flowStatGrid {
     grid-template-columns: 1fr;
+  }
+
+  .toolMetric {
+    text-align: left;
   }
 
   .flowHeader,

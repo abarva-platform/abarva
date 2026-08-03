@@ -38,8 +38,20 @@ export interface AiSuccessHomeData {
   observationQuality: Array<{ name: string; count: number; quality: string }>;
   aiToolMix: Array<{
     name: string;
+    vendor: string;
+    category: string;
     cost: number;
     activeUsers: number;
+    seatsPurchased: number;
+    seatsAssigned: number;
+    hoursSaved: number;
+    useCase: string;
+    trend: string;
+    governance: string;
+    riskIssue: string;
+    confidence: string;
+    sourceRow: string;
+    evidenceRef: string;
     evidence: string;
   }>;
   architectureFlow: Array<{
@@ -57,6 +69,13 @@ export interface AiSuccessHomeData {
       evidenceState: string;
     }>;
   }>;
+  aiToolUsageSummary: {
+    rowCount: number;
+    activeUserObservations: number;
+    seatsPurchasedObservations: number;
+    estimatedUseCost: number;
+    source: string;
+  };
   attentionSignals: Array<{
     severity: string;
     ref: string;
@@ -152,7 +171,7 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
         label: "AI portfolio, estimated use cost",
         valueLabel: "$170.2M",
         value: numberFrom(aiSummary.estimated_use_cost),
-        note: `${textFrom(aiSummary.ai_tool_rows, "480")} tool rows · ${formatInt(numberFrom(aiSummary.active_users))} active-user observations`,
+        note: `${textFrom(aiSummary.ai_tool_rows, "480")} tool-period rows · ${formatInt(numberFrom(aiSummary.active_users))} active-user observations; not deduped people`,
         tone: "amber",
       },
       {
@@ -230,6 +249,13 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
       quality: textFrom(row.quality_state),
     })),
     aiToolMix,
+    aiToolUsageSummary: {
+      rowCount: numberFrom(aiSummary.ai_tool_rows),
+      activeUserObservations: numberFrom(aiSummary.active_users),
+      seatsPurchasedObservations: numberFrom(aiSummary.seats_purchased),
+      estimatedUseCost: numberFrom(aiSummary.estimated_use_cost),
+      source: "csv/enterprise_it/10_ai_adoption_usage.csv",
+    },
     architectureFlow: buildArchitectureFlow(graph, aiToolMix),
     attentionSignals: [
       ...graph.deterministicFindings.map((finding) => ({
@@ -359,18 +385,50 @@ function formatInt(value: number): string {
 function buildAiToolMix(rows: Json[]): AiSuccessHomeData["aiToolMix"] {
   const byTool = new Map<
     string,
-    { name: string; cost: number; activeUsers: number; evidence: Set<string> }
+    {
+      name: string;
+      vendor: string;
+      category: string;
+      cost: number;
+      activeUsers: number;
+      seatsPurchased: number;
+      seatsAssigned: number;
+      hoursSaved: number;
+      useCase: string;
+      trend: string;
+      governance: string;
+      riskIssue: string;
+      confidence: string;
+      sourceRow: string;
+      evidenceRef: string;
+      evidence: Set<string>;
+    }
   >();
   for (const row of rows) {
     const name = textFrom(row.tool_agent_product, "Unspecified AI tool").trim();
     const existing = byTool.get(name) ?? {
       name,
+      vendor: textFrom(row.vendor_provider, "Unknown vendor"),
+      category: textFrom(row.ai_category, "Uncategorized"),
       cost: 0,
       activeUsers: 0,
+      seatsPurchased: 0,
+      seatsAssigned: 0,
+      hoursSaved: 0,
+      useCase: textFrom(row.top_use_cases, "Not supplied"),
+      trend: textFrom(row.adoption_trend, "Not supplied"),
+      governance: textFrom(row.policy_governance_status, "Not supplied"),
+      riskIssue: textFrom(row.risk_issue, "Not supplied"),
+      confidence: textFrom(row.confidence, "Unknown"),
+      sourceRow: `${textFrom(row._source_file, "source file")} · row ${textFrom(row._source_row_number, "?")}`,
+      evidenceRef: textFrom(row.evidence_ref, "No evidence ref"),
       evidence: new Set<string>(),
     };
     existing.cost += numberFrom(row.estimated_use_cost);
     existing.activeUsers += numberFrom(row.active_users);
+    existing.seatsPurchased += numberFrom(row.seats_purchased);
+    existing.seatsAssigned += numberFrom(row.seats_assigned);
+    existing.hoursSaved += numberFrom(row.estimated_hours_saved);
     const evidence = textFrom(
       row.business_outcome_value_evidence,
       "Not supplied",
@@ -384,8 +442,20 @@ function buildAiToolMix(rows: Json[]): AiSuccessHomeData["aiToolMix"] {
     .slice(0, 8)
     .map((item) => ({
       name: item.name,
+      vendor: item.vendor,
+      category: item.category,
       cost: item.cost,
       activeUsers: item.activeUsers,
+      seatsPurchased: item.seatsPurchased,
+      seatsAssigned: item.seatsAssigned,
+      hoursSaved: item.hoursSaved,
+      useCase: item.useCase,
+      trend: item.trend,
+      governance: item.governance,
+      riskIssue: item.riskIssue,
+      confidence: item.confidence,
+      sourceRow: item.sourceRow,
+      evidenceRef: item.evidenceRef,
       evidence: [...item.evidence].slice(0, 2).join(" + ") || "Not supplied",
     }));
 }
@@ -417,7 +487,7 @@ function buildArchitectureFlow(
       tag: textFrom(node.criticality || node.businessFunction, "evidenced"),
       metric: node.annualCost
         ? moneyShort(node.annualCost)
-        : `${degree.get(node.nodeRef) ?? 0} flows`,
+        : `${degree.get(node.nodeRef) ?? 0} relationships`,
       caption: textFrom(
         node.vendorName || node.technology || node.businessFunction,
         node.evidenceState,
@@ -443,7 +513,7 @@ function buildArchitectureFlow(
     ref: `ai-tool-${slug(tool.name)}`,
     name: tool.name,
     kind: "AI tool",
-    tag: `${formatInt(tool.activeUsers)} active users`,
+    tag: `${formatInt(tool.activeUsers)} active-user observations`,
     metric: moneyShort(tool.cost),
     caption: tool.evidence,
     evidenceState: tool.evidence.match(/not yet|not supplied/i)
@@ -463,14 +533,14 @@ function buildArchitectureFlow(
       stageRef: "integration",
       title: "Integration",
       subtitle: "APIs, files and messaging",
-      metric: `${integrationItems.reduce((sum, item) => sum + numberFrom(item.metric), 0)} evidenced flows`,
+      metric: `${integrationItems.reduce((sum, item) => sum + numberFrom(item.metric), 0)} evidenced relationships`,
       items: integrationItems,
     },
     {
       stageRef: "transformation",
       title: "Transformation",
       subtitle: "ETL and data pipelines",
-      metric: `${transformationItems.reduce((sum, item) => sum + numberFrom(item.metric), 0)} evidenced flows`,
+      metric: `${transformationItems.reduce((sum, item) => sum + numberFrom(item.metric), 0)} evidenced relationships`,
       items: transformationItems,
     },
     {
@@ -486,7 +556,7 @@ function buildArchitectureFlow(
     },
     {
       stageRef: "ai",
-      title: "AI Outcomes",
+      title: "AI Tools & Adoption",
       subtitle: "tools with usage evidence",
       metric: moneyShort(aiToolMix.reduce((sum, tool) => sum + tool.cost, 0)),
       items: aiItems,
@@ -512,9 +582,9 @@ function topByDegree(
         kind: node.nodeKind.replaceAll("_", " "),
         tag: textFrom(
           node.businessFunction || node.technology,
-          `${flowCount} flows`,
+          `${flowCount} relationships`,
         ),
-        metric: `${flowCount} flows`,
+        metric: `${flowCount} relationships`,
         caption: textFrom(node.evidenceState, "evidenced"),
         evidenceState: node.evidenceState,
       };

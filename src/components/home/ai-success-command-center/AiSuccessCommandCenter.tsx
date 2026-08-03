@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -10,8 +10,6 @@ import {
   Funnel,
   FunnelChart,
   LabelList,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -26,14 +24,14 @@ import styles from "./AiSuccessCommandCenter.module.css";
 
 const SECTIONS = [
   ["executive", "Advisory perspective", "Current evidence · pending review"],
-  ["posture", "AI success posture", "162 claims · $0 claimable"],
+  ["posture", "AI success posture", "Budget · tools · value proof"],
   ["attention", "Leadership attention", "5 material signals"],
   [
     "architecture",
     "Current-state architecture",
-    "7 layers · 444 nodes · 586 edges",
+    "7 layers · 444 nodes · 586 relationships",
   ],
-  ["portfolio", "Portfolio choices", "6 of 150 initiatives"],
+  ["portfolio", "Portfolio choices", "6 material choices"],
   ["value", "Value realization", "Funnel stops at usage"],
   ["agenda", "Agenda and decisions", "4 open decisions"],
   ["limits", "Evidence required next", "6 stated gaps"],
@@ -67,20 +65,6 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
     data.moneyBars[2]?.value && data.moneyBars[0]?.value
       ? data.moneyBars[2].value / data.moneyBars[0].value
       : 0;
-  const pieData = useMemo(
-    () => [
-      {
-        name: "Contract-backed",
-        value: Math.round(contractRatio * 1000) / 10,
-      },
-      {
-        name: "Internal/unattributed",
-        value: Math.round((1 - contractRatio) * 1000) / 10,
-      },
-    ],
-    [contractRatio],
-  );
-
   useEffect(() => {
     const requested = window.location.hash.replace("#", "");
     if (SECTION_IDS.has(requested)) setActiveSection(requested as SectionId);
@@ -155,7 +139,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
               </span>
               <span>
                 <b>{data.graph.edges.length}</b>
-                <small>flows</small>
+                <small>relationships</small>
               </span>
               <span>
                 <b>{data.moneyBars[0]?.valueLabel ?? "$2.35B"}</b>
@@ -199,7 +183,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
               <PortfolioCanvas data={data} />
             ) : null}
             {activeSection === "value" ? (
-              <ValueCanvas data={data} pieData={pieData} />
+              <ValueCanvas data={data} />
             ) : null}
             {activeSection === "agenda" ? <AgendaCanvas data={data} /> : null}
             {activeSection === "limits" ? <LimitsCanvas data={data} /> : null}
@@ -440,11 +424,16 @@ function PortfolioCanvas({ data }: { data: AiSuccessHomeData }) {
 
 function ValueCanvas({
   data,
-  pieData,
 }: {
   data: AiSuccessHomeData;
-  pieData: Array<{ name: string; value: number }>;
 }) {
+  const [selectedToolRef, setSelectedToolRef] = useState(
+    data.aiToolMix[0]?.evidenceRef ?? "",
+  );
+  const selectedTool =
+    data.aiToolMix.find((tool) => tool.evidenceRef === selectedToolRef) ??
+    data.aiToolMix[0];
+
   return (
     <>
       <SectionHeader
@@ -501,33 +490,96 @@ function ValueCanvas({
         </div>
       </div>
       <div className={`${styles.panel} ${styles.panelPad}`}>
-        <div className={styles.twoColTight}>
+        <div className={styles.toolUsageHeader}>
           <div>
             <span className={styles.eyebrow}>AI tool evidence</span>
             <p className={styles.sectionCopy}>
-              Top AI rows show adoption and directional use cost. They do not
-              establish realized value.
+              Tool usage is a telemetry lens, not a value claim. Rows below
+              aggregate tool-period observations from{" "}
+              {data.aiToolUsageSummary.source}; active users and seats are
+              observation totals, not deduped people.
             </p>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={54}
-                outerRadius={86}
-                paddingAngle={3}
+          <div className={styles.toolUsageStats}>
+            <span>
+              <b>{formatInt(data.aiToolUsageSummary.rowCount)}</b>
+              tool-period rows
+            </span>
+            <span>
+              <b>{formatInt(data.aiToolUsageSummary.activeUserObservations)}</b>
+              active-user observations
+            </span>
+            <span>
+              <b>{money(data.aiToolUsageSummary.estimatedUseCost)}</b>
+              estimated use cost
+            </span>
+          </div>
+        </div>
+        <div className={styles.toolUsageGrid}>
+          <div className={styles.toolUsageList}>
+            {data.aiToolMix.map((tool) => (
+              <button
+                key={tool.evidenceRef}
+                type="button"
+                className={`${styles.toolUsageRow} ${
+                  selectedTool?.evidenceRef === tool.evidenceRef
+                    ? styles.toolUsageRowActive
+                    : ""
+                }`}
+                onClick={() => setSelectedToolRef(tool.evidenceRef)}
+                onDoubleClick={() => setSelectedToolRef(tool.evidenceRef)}
               >
-                {pieData.map((_, index) => (
-                  <Cell key={index} fill={CHART_COLORS[index]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+                <span>
+                  <b>{tool.name}</b>
+                  <small>
+                    {tool.vendor} · {tool.category}
+                  </small>
+                </span>
+                <span className={styles.toolMetric}>{money(tool.cost)}</span>
+                <span className={styles.toolMetric}>
+                  {formatInt(tool.activeUsers)} active obs.
+                </span>
+              </button>
+            ))}
+          </div>
+          {selectedTool ? (
+            <aside className={styles.toolDrill}>
+              <div className={styles.choiceLane}>Tool usage drill</div>
+              <h3>{selectedTool.name}</h3>
+              <dl>
+                <div>
+                  <dt>Usage grain</dt>
+                  <dd>Aggregated tool-period observations for this tool</dd>
+                </div>
+                <div>
+                  <dt>Seats</dt>
+                  <dd>
+                    {formatInt(selectedTool.seatsAssigned)} assigned of{" "}
+                    {formatInt(selectedTool.seatsPurchased)} purchased
+                  </dd>
+                </div>
+                <div>
+                  <dt>Active-user observations</dt>
+                  <dd>{formatInt(selectedTool.activeUsers)}</dd>
+                </div>
+                <div>
+                  <dt>Estimated use cost</dt>
+                  <dd>{money(selectedTool.cost)}</dd>
+                </div>
+                <div>
+                  <dt>Evidence state</dt>
+                  <dd>{selectedTool.evidence}</dd>
+                </div>
+                <div>
+                  <dt>Governance / risk</dt>
+                  <dd>
+                    {selectedTool.governance}; {selectedTool.riskIssue}
+                  </dd>
+                </div>
+              </dl>
+              <Evidence refs={[selectedTool.evidenceRef, selectedTool.sourceRow]} />
+            </aside>
+          ) : null}
         </div>
       </div>
     </>
@@ -686,6 +738,10 @@ function formatDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatInt(value: number) {
+  return Math.round(value).toLocaleString("en-US");
 }
 
 function money(value: number) {
