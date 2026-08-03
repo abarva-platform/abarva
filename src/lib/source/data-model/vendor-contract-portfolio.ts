@@ -28,10 +28,16 @@ import {
  * one contract to sum. Every arithmetic accumulation in this file must read
  * through this coercion — reading `?? 0` alone is not enough.
  */
+export function numberFromDb(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string") return null;
+  const parsed = Number(value.replace(/,/g, "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function toNum(value: number | string | null | undefined): number {
-  if (value == null) return 0;
-  const n = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(n) ? n : 0;
+  return numberFromDb(value) ?? 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -202,9 +208,10 @@ export function computeRenewalExposure(
   const noticeDeadlinePassed = withEndDate.filter((r) => {
     const end = new Date(r.end_date);
     if (end.getTime() <= asOf.getTime()) return false; // already expired, not "still active"
-    if (r.notice_period_days == null) return false; // no notice term to have missed
+    const noticePeriodDays = numberFromDb(r.notice_period_days);
+    if (noticePeriodDays == null) return false; // no notice term to have missed
     const noticeDeadline = new Date(
-      end.getTime() - r.notice_period_days * 24 * 60 * 60 * 1000,
+      end.getTime() - noticePeriodDays * 24 * 60 * 60 * 1000,
     );
     return noticeDeadline.getTime() < asOf.getTime();
   });

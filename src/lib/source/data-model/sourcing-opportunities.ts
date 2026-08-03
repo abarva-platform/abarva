@@ -22,6 +22,7 @@ import {
   computeRenewalExposure,
   computeVendorConcentration,
   excludeSupplementalContracts,
+  numberFromDb,
 } from "./vendor-contract-portfolio";
 import type { SourceContractVendor360Row } from "./types";
 
@@ -66,7 +67,7 @@ function getOrCreate(
     vendorRef: row.vendor_ref,
     vendorName: row.vendor_name,
     contractName: row.contract_name,
-    annualValue: row.annual_value ?? 0,
+    annualValue: numberFromDb(row.annual_value) ?? 0,
     reasons: [],
     rationale: [],
   };

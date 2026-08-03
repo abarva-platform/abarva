@@ -124,6 +124,31 @@ describe("computeVendorConcentration", () => {
     expect(result.byVendor[0].vendorRef).toBe("v1");
     expect(result.byVendor[0].annualValue).toBe(80);
   });
+
+  it("coerces pg numeric strings before aggregating vendor value", () => {
+    const rows = [
+      row({
+        contract_id: "c1",
+        vendor_ref: "v1",
+        annual_value: "40000000" as unknown as number,
+      }),
+      row({
+        contract_id: "c2",
+        vendor_ref: "v1",
+        annual_value: "30000000" as unknown as number,
+      }),
+      row({
+        contract_id: "c3",
+        vendor_ref: "v2",
+        annual_value: "10000000" as unknown as number,
+      }),
+    ];
+    const result = computeVendorConcentration(rows);
+    expect(result.totalAnnualValue).toBe(80_000_000);
+    expect(result.byVendor[0].annualValue).toBe(70_000_000);
+    expect(result.byVendor[0].shareOfTotal).toBeCloseTo(0.875);
+    expect(Number.isFinite(result.byVendor[0].annualValue)).toBe(true);
+  });
 });
 
 describe("computeRenewalExposure", () => {
