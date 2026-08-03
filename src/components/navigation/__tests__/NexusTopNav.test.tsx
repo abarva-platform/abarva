@@ -11,7 +11,9 @@ import { useUser } from "@clerk/nextjs";
 
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => {
+  default: (
+    props: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean },
+  ) => {
     const { priority, alt, ...imageProps } = props;
     void priority;
     // eslint-disable-next-line @next/next/no-img-element
@@ -47,7 +49,10 @@ const signedInUser = {
   emailAddresses: [{ emailAddress: "anand@abarva.ai" }],
 };
 
-function renderNav(pathname: string, props: React.ComponentProps<typeof NexusTopNav> = {}) {
+function renderNav(
+  pathname: string,
+  props: React.ComponentProps<typeof NexusTopNav> = {},
+) {
   mockUsePathname.mockReturnValue(pathname);
   mockUseUser.mockReturnValue({
     isLoaded: true,
@@ -55,11 +60,7 @@ function renderNav(pathname: string, props: React.ComponentProps<typeof NexusTop
   } as unknown as ReturnType<typeof useUser>);
 
   return render(
-    <NexusTopNav
-      tenantName="Airline Demo"
-      preserveTenantName
-      {...props}
-    />,
+    <NexusTopNav tenantName="Airline Demo" preserveTenantName {...props} />,
   );
 }
 
@@ -71,11 +72,17 @@ describe("NexusTopNav", () => {
   it("renders the AbarVa NEXUS lockup and exactly one primary navigation landmark", () => {
     renderNav("/home");
 
-    expect(screen.getAllByRole("img", { name: "AbarVa NEXUS" })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "AbarVa NEXUS Knowledge" }).getAttribute("href")).toBe(
-      "/home",
+    expect(screen.getAllByRole("img", { name: "AbarVa NEXUS" })).toHaveLength(
+      1,
     );
-    expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(1);
+    expect(
+      screen
+        .getByRole("link", { name: "AbarVa NEXUS Home" })
+        .getAttribute("href"),
+    ).toBe("/home");
+    expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(
+      1,
+    );
     expect(screen.queryByText("Airline Demo")).toBeNull();
     expect(screen.queryByLabelText(/Active client/i)).toBeNull();
   });
@@ -90,36 +97,42 @@ describe("NexusTopNav", () => {
     renderNav("/home");
     const nav = screen.getByRole("navigation", { name: "Primary" });
 
-    for (const label of ["Knowledge", "Intelligence", "Moves", "Source", "Tower"]) {
-      expect(within(nav).getAllByRole("link", { name: label }).length).toBeGreaterThanOrEqual(1);
+    for (const label of ["Home", "Intelligence", "Moves", "Source", "Tower"]) {
+      expect(
+        within(nav).getAllByRole("link", { name: label }).length,
+      ).toBeGreaterThanOrEqual(1);
     }
-    expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
+    expect(within(nav).queryByRole("link", { name: "Knowledge" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Learn" })).toBeNull();
   });
 
-  it("keeps the Knowledge destination stable from Tower", () => {
+  it("keeps the Home destination stable from Tower", () => {
     renderNav("/tower");
     const nav = screen.getByRole("navigation", { name: "Primary" });
 
-    expect(within(nav).getAllByRole("link", { name: "Knowledge" })[0]?.getAttribute("href")).toBe(
-      "/home",
-    );
+    expect(
+      within(nav)
+        .getAllByRole("link", { name: "Home" })[0]
+        ?.getAttribute("href"),
+    ).toBe("/home");
   });
 
   it.each([
-    ["/home", "Knowledge"],
-    ["/home/context", "Knowledge"],
+    ["/home", "Home"],
+    ["/home/context", "Home"],
     ["/intelligence", "Intelligence"],
     ["/strategic-moves/123", "Moves"],
     ["/source/events/alpha", "Source"],
     ["/tower/portfolio", "Tower"],
-    ["/home/learn/source", "Knowledge"],
+    ["/home/learn/source", "Home"],
   ])("marks %s as %s", (pathname, label) => {
     renderNav(pathname);
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const activeLinks = within(nav).getAllByRole("link", { name: label });
 
-    expect(activeLinks.some((link) => link.getAttribute("aria-current") === "page")).toBe(true);
+    expect(
+      activeLinks.some((link) => link.getAttribute("aria-current") === "page"),
+    ).toBe(true);
   });
 
   it("does not render tenant context from props or query-like path values", () => {
@@ -131,7 +144,9 @@ describe("NexusTopNav", () => {
     expect(screen.getAllByTestId("nexus-top-nav")).toHaveLength(1);
     expect(screen.queryByText("airline-demo-new")).toBeNull();
     expect(screen.getByText("Anand Sundaram")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sign out" }),
+    ).toBeInTheDocument();
   });
 
   it("hides product navigation when requested without changing the brand lockup", () => {

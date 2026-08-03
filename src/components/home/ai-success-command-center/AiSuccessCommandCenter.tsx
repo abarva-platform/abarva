@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -69,64 +70,38 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
     },
   ];
 
-  const sectionObserver = useMemo(
-    () => (id: string) => (node: HTMLElement | null) => {
-      if (!node || typeof IntersectionObserver === "undefined") return;
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry?.isIntersecting) setActiveSection(id);
-        },
-        { rootMargin: "-30% 0px -60% 0px", threshold: 0.01 },
-      );
-      observer.observe(node);
-      return () => observer.disconnect();
-    },
-    [],
-  );
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+
+    const sections = SECTIONS.map(([id]) => document.getElementById(id)).filter(
+      (section): section is HTMLElement => Boolean(section),
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-20% 0px -68% 0px", threshold: [0.08, 0.18, 0.3] },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div>
-          <span className={styles.brand}>
-            Abar<span className={styles.brandVa}>Va</span>
-          </span>
-          <span className={styles.domain}>app.abarva.ai</span>
-        </div>
-        <nav className={styles.nav} aria-label="Primary">
-          {["Home", "Intelligence", "Source", "Tower", "Moves"].map((item) => (
-            <button
-              key={item}
-              className={`${styles.navItem} ${item === "Home" ? styles.navItemActive : ""}`}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
-        <div className={styles.topActions}>
-          <button type="button" className={styles.blueButton}>
-            V&nbsp; Ask aVa
-          </button>
-          <span className={styles.tenant}>SkyHarbor Global</span>
-          <span className={styles.avatar}>AK</span>
-        </div>
-      </header>
-
       <div className={styles.layout}>
         <aside className={styles.rail}>
           <div className={styles.railTitle}>On this page</div>
           <div className={styles.railList}>
             {SECTIONS.map(([id, label, hint], index) => (
-              <button
+              <a
                 key={id}
-                type="button"
+                href={`#${id}`}
                 className={`${styles.railButton} ${activeSection === id ? styles.railButtonActive : ""}`}
-                onClick={() =>
-                  document
-                    .getElementById(id)
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                onClick={() => setActiveSection(id)}
               >
                 <span className={styles.railNumber}>
                   {String(index + 1).padStart(2, "0")}
@@ -135,7 +110,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
                   <span className={styles.railLabel}>{label}</span>
                   <span className={styles.railHint}>{hint}</span>
                 </span>
-              </button>
+              </a>
             ))}
           </div>
           <p className={styles.railFoot}>
@@ -148,10 +123,14 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
         <main className={styles.main}>
           <section
             id="executive"
-            ref={sectionObserver("executive")}
             className={`${styles.section} ${styles.heroGrid}`}
           >
             <div>
+              <div className={styles.heroMeta}>
+                <span>SkyHarbor Global</span>
+                <span>Snapshot {data.graphFingerprint.slice(0, 8)}</span>
+                <span>Current-state advisory</span>
+              </div>
               <h1 className={styles.h1}>
                 AI is scaling across SkyHarbor. Value proof has not caught up.
               </h1>
@@ -208,11 +187,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </aside>
           </section>
 
-          <section
-            id="posture"
-            ref={sectionObserver("posture")}
-            className={styles.section}
-          >
+          <section id="posture" className={styles.section}>
             <SectionHeader
               kicker="02 · Posture"
               title="AI success posture"
@@ -234,11 +209,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </div>
           </section>
 
-          <section
-            id="attention"
-            ref={sectionObserver("attention")}
-            className={styles.section}
-          >
+          <section id="attention" className={styles.section}>
             <SectionHeader
               kicker="03 · Attention"
               title="What leadership must look at this quarter"
@@ -293,11 +264,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </div>
           </section>
 
-          <section
-            id="architecture"
-            ref={sectionObserver("architecture")}
-            className={styles.section}
-          >
+          <section id="architecture" className={styles.section}>
             <SectionHeader
               kicker="04 · Current-state architecture"
               title="How SkyHarbor is positioned for AI success"
@@ -316,11 +283,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </div>
           </section>
 
-          <section
-            id="portfolio"
-            ref={sectionObserver("portfolio")}
-            className={styles.section}
-          >
+          <section id="portfolio" className={styles.section}>
             <SectionHeader
               kicker="05 · Portfolio"
               title="Scale, redesign, fix or stop"
@@ -344,11 +307,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </div>
           </section>
 
-          <section
-            id="value"
-            ref={sectionObserver("value")}
-            className={styles.section}
-          >
+          <section id="value" className={styles.section}>
             <SectionHeader
               kicker="06 · Value"
               title="Value realization funnel"
@@ -408,11 +367,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </div>
           </section>
 
-          <section
-            id="agenda"
-            ref={sectionObserver("agenda")}
-            className={styles.section}
-          >
+          <section id="agenda" className={styles.section}>
             <SectionHeader
               kicker="07 · Agenda"
               title="What must change, and what must be decided"
@@ -444,11 +399,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             </div>
           </section>
 
-          <section
-            id="limits"
-            ref={sectionObserver("limits")}
-            className={styles.section}
-          >
+          <section id="limits" className={styles.section}>
             <SectionHeader
               kicker="08 · Evidence required"
               title="Evidence required next"
@@ -502,15 +453,12 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
               {formatDateTime(data.generatedAt)} from
               abarva_skyharbor_current_state_dev.
             </span>
-            <span>Abarva · Home V0.3 · Data-bound build</span>
+            <Link href="/intelligence" className={styles.footerLink}>
+              Open Intelligence explorer
+            </Link>
           </footer>
         </main>
       </div>
-
-      <button type="button" className={styles.avaTab}>
-        <span className={styles.avaV}>V</span>
-        <span className={styles.avaLabel}>Ask aVa</span>
-      </button>
     </div>
   );
 }
