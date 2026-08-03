@@ -42,6 +42,21 @@ export interface AiSuccessHomeData {
     activeUsers: number;
     evidence: string;
   }>;
+  architectureFlow: Array<{
+    stageRef: string;
+    title: string;
+    subtitle: string;
+    metric: string;
+    items: Array<{
+      ref: string;
+      name: string;
+      kind: string;
+      tag: string;
+      metric: string;
+      caption: string;
+      evidenceState: string;
+    }>;
+  }>;
   attentionSignals: Array<{
     severity: string;
     ref: string;
@@ -97,6 +112,7 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
   );
   const enterprise =
     arrayFrom(objectFrom(packet.enterpriseContext).rows)[0] ?? {};
+  const aiToolMix = buildAiToolMix(arrayFrom(aiPortfolio.top_rows));
 
   const funded = numberFrom(
     towerClaims.find(
@@ -213,14 +229,8 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
       count: numberFrom(row.observation_count),
       quality: textFrom(row.quality_state),
     })),
-    aiToolMix: arrayFrom(aiPortfolio.top_rows)
-      .slice(0, 8)
-      .map((row) => ({
-        name: textFrom(row.tool_agent_product),
-        cost: numberFrom(row.estimated_use_cost),
-        activeUsers: numberFrom(row.active_users),
-        evidence: textFrom(row.business_outcome_value_evidence, "Not supplied"),
-      })),
+    aiToolMix,
+    architectureFlow: buildArchitectureFlow(graph, aiToolMix),
     attentionSignals: [
       ...graph.deterministicFindings.map((finding) => ({
         severity: finding.severity.toUpperCase(),
@@ -344,4 +354,247 @@ function numberFrom(value: unknown): number {
 
 function formatInt(value: number): string {
   return Math.round(value).toLocaleString("en-US");
+}
+
+function buildAiToolMix(rows: Json[]): AiSuccessHomeData["aiToolMix"] {
+  const byTool = new Map<
+    string,
+    { name: string; cost: number; activeUsers: number; evidence: Set<string> }
+  >();
+  for (const row of rows) {
+    const name = textFrom(row.tool_agent_product, "Unspecified AI tool").trim();
+    const existing = byTool.get(name) ?? {
+      name,
+      cost: 0,
+      activeUsers: 0,
+      evidence: new Set<string>(),
+    };
+    existing.cost += numberFrom(row.estimated_use_cost);
+    existing.activeUsers += numberFrom(row.active_users);
+    const evidence = textFrom(
+      row.business_outcome_value_evidence,
+      "Not supplied",
+    ).trim();
+    if (evidence) existing.evidence.add(evidence);
+    byTool.set(name, existing);
+  }
+
+  return [...byTool.values()]
+    .sort((a, b) => b.cost - a.cost || b.activeUsers - a.activeUsers)
+    .slice(0, 8)
+    .map((item) => ({
+      name: item.name,
+      cost: item.cost,
+      activeUsers: item.activeUsers,
+      evidence: [...item.evidence].slice(0, 2).join(" + ") || "Not supplied",
+    }));
+}
+
+function buildArchitectureFlow(
+  graph: ArchitectureGraph,
+  aiToolMix: AiSuccessHomeData["aiToolMix"],
+): AiSuccessHomeData["architectureFlow"] {
+  const degree = new Map<string, number>();
+  for (const edge of graph.edges) {
+    degree.set(edge.fromNodeRef, (degree.get(edge.fromNodeRef) ?? 0) + 1);
+    degree.set(edge.toNodeRef, (degree.get(edge.toNodeRef) ?? 0) + 1);
+  }
+
+  const sourceItems = graph.nodes
+    .filter(
+      (node) => node.layer === "source" && node.nodeKind === "application",
+    )
+    .sort(
+      (a, b) =>
+        (b.annualCost ?? 0) - (a.annualCost ?? 0) ||
+        (degree.get(b.nodeRef) ?? 0) - (degree.get(a.nodeRef) ?? 0),
+    )
+    .slice(0, 4)
+    .map((node) => ({
+      ref: node.nodeRef,
+      name: textFrom(node.shortLabel || node.label, "Source system"),
+      kind: node.nodeKind.replaceAll("_", " "),
+      tag: textFrom(node.criticality || node.businessFunction, "evidenced"),
+      metric: node.annualCost
+        ? moneyShort(node.annualCost)
+        : `${degree.get(node.nodeRef) ?? 0} flows`,
+      caption: textFrom(
+        node.vendorName || node.technology || node.businessFunction,
+        node.evidenceState,
+      ),
+      evidenceState: node.evidenceState,
+    }));
+
+  const integrationItems = topByDegree(graph, degree, "integration", 5);
+  const transformationItems = topByDegree(graph, degree, "transformation", 5);
+  const isDataPlatformFlowNode = (node: ArchitectureGraph["nodes"][number]) =>
+    node.layer === "data_platform" ||
+    (node.layer === "consumption" &&
+      ["analytics_platform", "data_platform", "reporting_tool"].includes(
+        node.nodeKind,
+      ));
+  const dataPlatformItems = aggregateNodesByName(
+    graph,
+    degree,
+    isDataPlatformFlowNode,
+    5,
+  );
+  const aiItems = aiToolMix.slice(0, 5).map((tool) => ({
+    ref: `ai-tool-${slug(tool.name)}`,
+    name: tool.name,
+    kind: "AI tool",
+    tag: `${formatInt(tool.activeUsers)} active users`,
+    metric: moneyShort(tool.cost),
+    caption: tool.evidence,
+    evidenceState: tool.evidence.match(/not yet|not supplied/i)
+      ? "unresolved"
+      : "evidenced",
+  }));
+
+  return [
+    {
+      stageRef: "source",
+      title: "Source Systems",
+      subtitle: "operational systems of record",
+      metric: `${sourceItems.length} shown · ${graph.nodes.filter((node) => node.layer === "source").length} total`,
+      items: sourceItems,
+    },
+    {
+      stageRef: "integration",
+      title: "Integration",
+      subtitle: "APIs, files and messaging",
+      metric: `${integrationItems.reduce((sum, item) => sum + numberFrom(item.metric), 0)} evidenced flows`,
+      items: integrationItems,
+    },
+    {
+      stageRef: "transformation",
+      title: "Transformation",
+      subtitle: "ETL and data pipelines",
+      metric: `${transformationItems.reduce((sum, item) => sum + numberFrom(item.metric), 0)} evidenced flows`,
+      items: transformationItems,
+    },
+    {
+      stageRef: "data",
+      title: "Data Platforms",
+      subtitle: "marts, lakehouse and semantic layer",
+      metric: moneyShort(
+        graph.nodes
+          .filter(isDataPlatformFlowNode)
+          .reduce((sum, node) => sum + (node.annualCost ?? 0), 0),
+      ),
+      items: dataPlatformItems,
+    },
+    {
+      stageRef: "ai",
+      title: "AI Outcomes",
+      subtitle: "tools with usage evidence",
+      metric: moneyShort(aiToolMix.reduce((sum, tool) => sum + tool.cost, 0)),
+      items: aiItems,
+    },
+  ];
+}
+
+function topByDegree(
+  graph: ArchitectureGraph,
+  degree: Map<string, number>,
+  layer: string,
+  limit: number,
+): AiSuccessHomeData["architectureFlow"][number]["items"] {
+  return graph.nodes
+    .filter((node) => node.layer === layer)
+    .sort((a, b) => (degree.get(b.nodeRef) ?? 0) - (degree.get(a.nodeRef) ?? 0))
+    .slice(0, limit)
+    .map((node) => {
+      const flowCount = degree.get(node.nodeRef) ?? 0;
+      return {
+        ref: node.nodeRef,
+        name: textFrom(node.shortLabel || node.label, layer),
+        kind: node.nodeKind.replaceAll("_", " "),
+        tag: textFrom(
+          node.businessFunction || node.technology,
+          `${flowCount} flows`,
+        ),
+        metric: `${flowCount} flows`,
+        caption: textFrom(node.evidenceState, "evidenced"),
+        evidenceState: node.evidenceState,
+      };
+    });
+}
+
+function aggregateNodesByName(
+  graph: ArchitectureGraph,
+  degree: Map<string, number>,
+  predicate: (node: ArchitectureGraph["nodes"][number]) => boolean,
+  limit: number,
+): AiSuccessHomeData["architectureFlow"][number]["items"] {
+  const byName = new Map<
+    string,
+    {
+      ref: string;
+      name: string;
+      kind: string;
+      cost: number;
+      degree: number;
+      tags: Set<string>;
+      captions: Set<string>;
+      evidenceState: string;
+    }
+  >();
+  for (const node of graph.nodes.filter(predicate)) {
+    const name = textFrom(node.label, "Data platform");
+    const existing = byName.get(name) ?? {
+      ref: node.nodeRef,
+      name,
+      kind: node.nodeKind.replaceAll("_", " "),
+      cost: 0,
+      degree: 0,
+      tags: new Set<string>(),
+      captions: new Set<string>(),
+      evidenceState: node.evidenceState,
+    };
+    existing.cost += node.annualCost ?? 0;
+    existing.degree += degree.get(node.nodeRef) ?? 0;
+    for (const tag of [
+      ...textFrom(node.technology).split(";"),
+      ...textFrom(node.businessFunction).split(";"),
+    ]) {
+      const clean = tag.trim();
+      if (clean) existing.tags.add(clean);
+    }
+    if (node.evidenceState) existing.captions.add(node.evidenceState);
+    byName.set(name, existing);
+  }
+
+  return [...byName.values()]
+    .sort((a, b) => b.cost - a.cost || b.degree - a.degree)
+    .slice(0, limit)
+    .map((item) => ({
+      ref: item.ref,
+      name: item.name,
+      kind: item.kind,
+      tag:
+        [...item.tags].slice(0, 2).join(" · ") ||
+        `${item.degree.toLocaleString("en-US")} flows`,
+      metric: item.cost ? moneyShort(item.cost) : `${item.degree} flows`,
+      caption: [...item.captions].join(" + ") || "evidenced",
+      evidenceState: item.evidenceState,
+    }));
+}
+
+function moneyShort(value: number): string {
+  if (!value) return "$0";
+  if (Math.abs(value) >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  }
+  if (Math.abs(value) >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+  return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
+function slug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
