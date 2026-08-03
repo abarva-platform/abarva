@@ -185,6 +185,14 @@ export interface MigrationDriftFinding {
   currentSha256: string;
 }
 
+export function matchesForcedMigration(
+  filename: string,
+  forceName: string | null,
+): boolean {
+  if (!forceName) return false;
+  return filename === forceName || filename.startsWith(forceName);
+}
+
 /**
  * Compare every already-applied migration's recorded hash against its
  * current on-disk content. A mismatch means the file was edited after it
@@ -285,11 +293,28 @@ async function main() {
         return null; // file no longer exists on disk — not drift, see findMigrationDrift's doc comment.
       }
     });
-    if (driftFindings.length > 0) {
+    const unforcedDriftFindings = driftFindings.filter(
+      (finding) => !matchesForcedMigration(finding.filename, forceName),
+    );
+    const forcedDriftFindings = driftFindings.filter((finding) =>
+      matchesForcedMigration(finding.filename, forceName),
+    );
+    if (forcedDriftFindings.length > 0 && unforcedDriftFindings.length === 0) {
+      console.warn(
+        "\n⚠  Re-recording forced migration drift for the requested migration only.\n",
+      );
+      for (const f of forcedDriftFindings) {
+        console.warn(`   ${f.filename}`);
+        console.warn(`     recorded: ${f.recordedSha256}`);
+        console.warn(`     current:  ${f.currentSha256}`);
+      }
+      console.warn("");
+    }
+    if (unforcedDriftFindings.length > 0) {
       console.error(
         "\n✗  Migration drift detected — an already-applied migration file was modified.\n",
       );
-      for (const f of driftFindings) {
+      for (const f of unforcedDriftFindings) {
         console.error(`   ${f.filename}`);
         console.error(`     recorded: ${f.recordedSha256}`);
         console.error(`     current:  ${f.currentSha256}`);
