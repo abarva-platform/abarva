@@ -21,6 +21,9 @@ interface ClaimSummaryRow {
   unknown_value_claim_count: number;
   known_zero_value_claim_count: number;
   known_value_amount_usd: Numeric;
+  promised_value_amount_usd: Numeric;
+  finance_validated_value_usd: Numeric;
+  claimable_value_usd: Numeric;
   finance_attested_claim_count: number;
   business_attested_claim_count: number;
   claimable_count: number;
@@ -59,6 +62,15 @@ interface ProgramRow {
   next_gate_owner_role: string | null;
   quality_guardrail_state: string;
   risk_guardrail_state: string;
+  promised_value: Numeric;
+  calculated_value: Numeric;
+  baseline_observation_id: string | null;
+  target_observation_id: string | null;
+  actual_observation_id: string | null;
+  caveat: string | null;
+  approved_budget_usd: Numeric;
+  actual_to_date_usd: Numeric;
+  forecast_at_completion_usd: Numeric;
 }
 
 interface AiRow {
@@ -66,6 +78,7 @@ interface AiRow {
   title: string;
   subject_kind: string;
   vendor_ref: string | null;
+  vendor_name: string | null;
   owner_role: string | null;
   active_users: Numeric;
   seats_purchased: Numeric;
@@ -103,6 +116,10 @@ function nullableText(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function clampPct(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
 function tenantCandidates(values: readonly (string | null | undefined)[]) {
   const out = new Set<string>();
   for (const value of values) {
@@ -133,11 +150,25 @@ function claimAllowedFor(claimState: string): string {
 
 function programLane(row: ProgramRow): TowerMartProgramLane {
   const gate = nullableText(row.next_gate) ?? "Load governed baseline, target, actual, and attestation evidence.";
+  const approvedFundingUsd = num(row.approved_budget_usd);
+  const promisedValueUsd = num(row.promised_value);
+  const financeValidatedValueUsd =
+    row.claim_state.toLowerCase() === "finance_validated" ||
+    row.claim_state.toLowerCase() === "claimable"
+      ? num(row.calculated_value)
+      : 0;
+  const hasLinkedOutcome =
+    Boolean(row.baseline_observation_id) &&
+    Boolean(row.target_observation_id) &&
+    Boolean(row.actual_observation_id);
   const caveat = [
+    nullableText(row.caveat),
     `Claim state: ${row.claim_state}.`,
     `Quality guardrail: ${row.quality_guardrail_state}.`,
     `Risk guardrail: ${row.risk_guardrail_state}.`,
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return {
     laneKey: `tower:${row.claim_id}`,
@@ -149,12 +180,12 @@ function programLane(row: ProgramRow): TowerMartProgramLane {
     decisionRationale:
       nullableText(row.blocked_reason) ??
       "Governed value evidence is not complete enough to claim outcomes.",
-    approvedFundingUsd: 0,
+    approvedFundingUsd,
     aiTaggedSpendUsd: 0,
-    promisedValueUsd: 0,
-    financeValidatedValueUsd: 0,
-    usageMetric: null,
-    usageActual: null,
+    promisedValueUsd,
+    financeValidatedValueUsd,
+    usageMetric: hasLinkedOutcome ? "linked outcome metric" : null,
+    usageActual: hasLinkedOutcome ? 1 : null,
     adoptionRatePct: null,
     valueClaimStatus: row.claim_state,
     towerClaimAllowed: claimAllowedFor(row.claim_state),
@@ -168,7 +199,9 @@ function programLane(row: ProgramRow): TowerMartProgramLane {
 function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
   const activeUsers = num(row.active_users);
   const seats = num(row.seats_purchased);
-  const adoptionPct = num(row.active_user_rate) * 100;
+  const sourceRatePct = num(row.active_user_rate) * 100;
+  const fallbackRatePct = seats > 0 ? (activeUsers / seats) * 100 : 0;
+  const adoptionPct = clampPct(sourceRatePct > 0 ? sourceRatePct : fallbackRatePct);
   const readinessScore = Math.max(0, Math.min(100, Math.round(adoptionPct)));
   const valueScore = activeUsers > 0 ? Math.min(100, Math.round(activeUsers / 40)) : 0;
   return {
@@ -178,7 +211,7 @@ function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
       row.subject_kind === "developer_ai_tool"
         ? "funded_program"
         : "embedded_platform",
-    vendorName: nullableText(row.vendor_ref),
+    vendorName: nullableText(row.vendor_name) ?? nullableText(row.vendor_ref),
     systemName: row.subject_ref,
     aiSpendType: "usage-supported evidence",
     aiSpendCategory:
@@ -209,24 +242,27 @@ function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
 }
 
 function valueFunnelRows(summary: ClaimSummaryRow): TowerMartCommandViewModel["valueFunnel"] {
+  const promisedValue = num(summary.promised_value_amount_usd);
+  const financeValidatedValue = num(summary.finance_validated_value_usd);
+  const claimableValue = num(summary.claimable_value_usd);
   const caveat =
     summary.unknown_value_claim_count > 0
       ? `${summary.unknown_value_claim_count} claims have unknown financial amount; unknown value is not converted to zero.`
       : "Known value amount is traceable through tower.value_claim.";
   const stages = [
-    ["potential", "Potential", summary.claim_count, "portfolio"],
-    ["promised", "Promised", summary.known_value_claim_count, "promised"],
-    ["usage_supported", "Usage-supported", summary.usage_supported_count, "usage_supported"],
-    ["finance_validated", "Finance-validated", summary.finance_attested_claim_count, "finance_validated"],
-    ["claimable", "Claimable", summary.claimable_count, "claimable"],
-    ["realized", "Realized", 0, "not_realized"],
+    ["potential", "Potential", summary.claim_count, "portfolio", promisedValue],
+    ["promised", "Promised", summary.known_value_claim_count, "promised", promisedValue],
+    ["usage_supported", "Usage-supported", summary.usage_supported_count, "usage_supported", 0],
+    ["finance_validated", "Finance-validated", summary.finance_attested_claim_count, "finance_validated", financeValidatedValue],
+    ["claimable", "Claimable", summary.claimable_count, "claimable", claimableValue],
+    ["realized", "Realized", 0, "not_realized", 0],
   ] as const;
-  return stages.map(([stageKey, stageLabel, count, claimStatus], index) => ({
+  return stages.map(([stageKey, stageLabel, count, claimStatus, valueNumeric], index) => ({
     funnelKey: `tower:${summary.tenant_key}:funnel:${stageKey}`,
     sequence: index + 1,
     stageKey,
     stageLabel,
-    valueNumeric: 0,
+    valueNumeric,
     denominatorStageKey: index === 0 ? null : stages[0][0],
     conversionRatio: summary.claim_count > 0 ? count / summary.claim_count : null,
     claimStatus,
@@ -280,6 +316,9 @@ export async function readTowerCommandCenter(args: {
           count(*) filter (where calculated_value is null)::int as unknown_value_claim_count,
           count(*) filter (where calculated_value = 0)::int as known_zero_value_claim_count,
           coalesce(sum(calculated_value) filter (where calculated_value is not null), 0) as known_value_amount_usd,
+          coalesce(sum(promised_value) filter (where promised_value is not null), 0) as promised_value_amount_usd,
+          coalesce(sum(calculated_value) filter (where lower(claim_state) in ('finance_validated','claimable')), 0) as finance_validated_value_usd,
+          coalesce(sum(calculated_value) filter (where lower(claim_state) = 'claimable'), 0) as claimable_value_usd,
           count(*) filter (where lower(quality_guardrail_state) in ('finance_attested','finance_validated'))::int as finance_attested_claim_count,
           count(*) filter (where lower(risk_guardrail_state) in ('business_attested','business_validated'))::int as business_attested_claim_count,
           count(*) filter (where lower(claim_state) = 'claimable')::int as claimable_count,
@@ -329,7 +368,22 @@ export async function readTowerCommandCenter(args: {
 
     const [programs, aiRows, evidenceRows] = await Promise.all([
       azureRead.query<ProgramRow>(
-        `select
+        `with project_obs as (
+           select
+             subject_ref,
+             max(value_num) filter (where metric_ref = 'project.approved_budget') as approved_budget_usd,
+             max(value_num) filter (where metric_ref = 'project.actual_to_date') as actual_to_date_usd,
+             max(value_num) filter (where metric_ref = 'project.forecast_at_completion') as forecast_at_completion_usd
+           from tower.metric_observation
+           where tenant_key = $1
+             and metric_ref in (
+               'project.approved_budget',
+               'project.actual_to_date',
+               'project.forecast_at_completion'
+             )
+           group by subject_ref
+         )
+         select
             c.claim_id,
             c.subject_ref,
             s.title,
@@ -344,11 +398,21 @@ export async function readTowerCommandCenter(args: {
             c.next_gate,
             c.next_gate_owner_role,
             c.quality_guardrail_state,
-            c.risk_guardrail_state
+            c.risk_guardrail_state,
+            c.promised_value,
+            c.calculated_value,
+            c.baseline_observation_id,
+            c.target_observation_id,
+            c.actual_observation_id,
+            c.caveat,
+            po.approved_budget_usd,
+            po.actual_to_date_usd,
+            po.forecast_at_completion_usd
            from tower.value_claim c
            join tower.tracked_subject s
              on s.tenant_key = c.tenant_key
             and s.subject_ref = c.subject_ref
+           left join project_obs po on po.subject_ref = c.subject_ref
           where c.tenant_key = $1
             and s.subject_kind = 'initiative'
           order by
@@ -358,6 +422,8 @@ export async function readTowerCommandCenter(args: {
               when 'medium' then 2
               else 3
             end,
+            po.approved_budget_usd desc nulls last,
+            c.promised_value desc nulls last,
             s.title
           limit 40`,
         [tenantKey],
@@ -384,6 +450,7 @@ export async function readTowerCommandCenter(args: {
            s.title,
            s.subject_kind,
            s.vendor_ref,
+           coalesce(s.metadata_json->>'vendor_provider', s.vendor_ref) as vendor_name,
            s.owner_role,
            max(value_num) filter (where metric_ref = 'ai.active_users') as active_users,
            max(value_num) filter (where metric_ref = 'ai.seats_purchased') as seats_purchased,
@@ -439,6 +506,16 @@ export async function readTowerCommandCenter(args: {
 
     const totalBudget = num(budget?.target_budget_usd || budget?.total_budget_usd);
     const knownAmount = num(summary.known_value_amount_usd);
+    const promisedAmount = num(summary.promised_value_amount_usd);
+    const financeValidatedAmount = num(summary.finance_validated_value_usd);
+    const claimableAmount = num(summary.claimable_value_usd);
+    const approvedProgramBudget = programs.reduce(
+      (sum, row) => sum + num(row.approved_budget_usd),
+      0,
+    );
+    const candidateAiOpportunities = aiRows.filter(
+      (row) => row.subject_kind === "candidate_ai_opportunity",
+    ).length;
     const command: TowerMartCommandCenter = {
       commandCenterKey: `tower:${tenantKey}:command-center`,
       tenantKey,
@@ -449,11 +526,11 @@ export async function readTowerCommandCenter(args: {
       totalItBudgetFy26: totalBudget,
       runBudgetFy26: num(budget?.run_budget_usd),
       changeBudgetFy26: num(budget?.change_budget_usd),
-      approvedProgramBudgetFy26: 0,
+      approvedProgramBudgetFy26: approvedProgramBudget,
       aiTaggedSpendFy26NonAdditive: num(budget?.ai_tagged_spend_usd),
-      promisedValueFy26: knownAmount,
-      partialFinanceValidatedValueYtd: knownAmount,
-      realizedValueYtdAllowed: 0,
+      promisedValueFy26: promisedAmount,
+      partialFinanceValidatedValueYtd: financeValidatedAmount,
+      realizedValueYtdAllowed: claimableAmount,
       valueClaimCount: summary.claim_count,
       knownValueClaimCount: summary.known_value_claim_count,
       unknownValueClaimCount: summary.unknown_value_claim_count,
@@ -470,7 +547,7 @@ export async function readTowerCommandCenter(args: {
       targetLinkedClaimCount: summary.target_linked_claim_count,
       actualLinkedClaimCount: summary.actual_linked_claim_count,
       outcomeMeasuredClaimCount: summary.outcome_measured_claim_count,
-      candidateAiOpportunities: summary.unknown_value_claim_count,
+      candidateAiOpportunities,
       watchPressureSignals:
         summary.funded_no_baseline_count + summary.stale_count + summary.disputed_count,
       runRatio: totalBudget > 0 ? num(budget?.run_budget_usd) / totalBudget : null,
@@ -483,7 +560,7 @@ export async function readTowerCommandCenter(args: {
         "Are AI and transformation investments producing claimable outcomes?",
       executiveSummary:
         summary.unknown_value_claim_count > 0
-          ? `${summary.claim_count} governed value claims are loaded. ${summary.outcome_measured_claim_count} have baseline/current/target outcome links, ${summary.known_value_claim_count} carry partial finance-validated value, and ${summary.unknown_value_claim_count} still have unknown financial amount. Leadership should treat deployment and usage as evidence to investigate, not realized value.`
+          ? `${summary.claim_count} governed value claims are loaded against ${formatCioTowerMoney(promisedAmount)} of promised value. ${summary.outcome_measured_claim_count} have baseline/current/target outcome links, ${formatCioTowerMoney(financeValidatedAmount)} is partial finance-validated value, and ${summary.unknown_value_claim_count} claims still have unknown financial amount. Leadership should treat deployment and usage as evidence to investigate, not realized value.`
           : `${summary.claim_count} governed value claims are loaded with ${formatCioTowerMoney(knownAmount)} of known value. Claimability still depends on attestation and guardrail gates.`,
       sourceFiles: [
         "tower.value_claim",
@@ -514,7 +591,7 @@ export async function readTowerCommandCenter(args: {
       aiPortfolio: aiRows.map(aiPortfolioItem),
       aiPortfolioCounts: {
         total: aiRows.length,
-        candidate: 0,
+        candidate: candidateAiOpportunities,
         active: aiRows.length,
         funded: aiRows.filter((row) => row.subject_kind === "developer_ai_tool").length,
         embeddedOrUsage: aiRows.filter((row) => row.subject_kind === "service_agent").length,
