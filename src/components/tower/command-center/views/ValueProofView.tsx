@@ -5,15 +5,79 @@
 // waterfall with "The read" callout, beside the top-5 blockers table sorted by
 // blocked dollars descending.
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
 import {
   ValueWaterfallChart,
   buildWaterfallRows,
 } from "../charts/ValueWaterfallChart";
-import { Card, Pips, Unknown, ViewHead, cx } from "../primitives";
+import { Card, Pips, ViewHead, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
+
+function EvidenceProgression({ view }: { view: TowerCommandCenterView }) {
+  return (
+    <div className={styles.progressionGrid}>
+      {view.evidenceMaturity.stages.map((stage, index) => (
+        <div key={stage.key} className={cx(styles.progressionStage, styles[stage.tone])}>
+          <div className={styles.progressionTop}>
+            <span className={styles.progressionN}>{index + 1}</span>
+            <span className={styles.progressionLabel}>{stage.label}</span>
+          </div>
+          <div className={styles.progressionCount}>
+            {formatCount(stage.claimCount)}
+          </div>
+          <div className={styles.progressionSub}>
+            {stage.unknownValueCount > 0
+              ? `${formatCount(stage.unknownValueCount)} unknown-value claims`
+              : `${formatUsdM(stage.knownValueUsd)} known value`}
+          </div>
+          <div className={styles.progressionGate}>{stage.missingGate}</div>
+          <div className={styles.progressionAction}>
+            <span>{stage.ownerRole}</span>
+            <b>{stage.nextAction}</b>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EvidenceGapLedger({ view }: { view: TowerCommandCenterView }) {
+  return (
+    <table className={styles.tbl}>
+      <thead>
+        <tr>
+          <th scope="col">Evidence gap</th>
+          <th scope="col" className={styles.num}>
+            Claims
+          </th>
+          <th scope="col">Owner</th>
+          <th scope="col">Next action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {view.evidenceMaturity.gapLedger.map((gap) => (
+          <tr key={gap.key}>
+            <td>
+              <span className={styles.pname} style={{ fontSize: 14 }}>
+                {gap.label}
+              </span>
+              <div className={styles.psub}>{gap.evidenceBasis}</div>
+            </td>
+            <td className={styles.num}>
+              <span className={cx(styles.bignum, gap.count > 0 && styles.nRed)}>
+                {formatCount(gap.count)}
+              </span>
+            </td>
+            <td>{gap.ownerRole}</td>
+            <td className={styles.gateCell}>{gap.nextAction}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 export function ValueProofView({
   view,
@@ -42,8 +106,16 @@ export function ValueProofView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="Where the value disappears"
-        sub="Promised → usage-supported → finance-validated → claimable"
+        title={
+          allValueUnknown
+            ? "Where proof has to mature"
+            : "Where the value disappears"
+        }
+        sub={
+          allValueUnknown
+            ? "Funded -> baseline captured -> usage supported -> outcome measured -> Finance validated -> claimable"
+            : "Promised -> usage-supported -> finance-validated -> claimable"
+        }
         hint="Click a program for its proof chain & usage evidence"
       />
 
@@ -52,33 +124,24 @@ export function ValueProofView({
         style={{ gridTemplateColumns: "1.12fr 1fr" }}
       >
         <Card
-          eyebrow="Value waterfall"
-          right="FY26 · $M"
+          eyebrow={allValueUnknown ? "Evidence progression" : "Value waterfall"}
+          right={allValueUnknown ? "claims · value status" : "FY26 · $M"}
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <div
-            className={styles.chartwrap}
-            aria-describedby="tcc-waterfall-alt"
-          >
-            {allValueUnknown ? (
-              <div className={styles.emptyPanel}>
-                <h2>
-                  <Unknown label="Financial value unknown" />
-                </h2>
-                <p>
-                  {s.unknownValueClaimCount} governed claims are loaded, but
-                  none carries a governed dollar amount. Tower is withholding
-                  the waterfall rather than rendering unknown value as $0.
-                </p>
-              </div>
-            ) : (
+          {allValueUnknown ? (
+            <EvidenceProgression view={view} />
+          ) : (
+            <div
+              className={styles.chartwrap}
+              aria-describedby="tcc-waterfall-alt"
+            >
               <ValueWaterfallChart summary={s} />
-            )}
-          </div>
+            </div>
+          )}
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
             {allValueUnknown
-              ? `${s.unknownValueClaimCount} claims have unknown financial value.`
+              ? view.evidenceMaturity.summaryRead
               : `${rows
                   .map(
                     (r) =>
@@ -115,12 +178,14 @@ export function ValueProofView({
         </Card>
 
         <Card
-          title="Top 5 blockers by dollar impact"
+          title={allValueUnknown ? "Top evidence blockers" : "Top 5 blockers by dollar impact"}
           headId="tcc-blockers"
           bodyClassName={styles.scroll}
           bodyStyle={{ paddingTop: 8 }}
         >
-          {blockers.length === 0 ? (
+          {allValueUnknown ? (
+            <EvidenceGapLedger view={view} />
+          ) : blockers.length === 0 ? (
             <p className={styles.lhSub}>
               No program currently carries blocked value.
             </p>

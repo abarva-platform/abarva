@@ -3,9 +3,10 @@
 // Tab 3 — Decision Lanes. Three sub-views: Program table (default), Kanban
 // lanes, Portfolio heatmap. Transcribed from `viewLanes()` (design line ~815).
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
+  TowerInterventionLane,
   TowerLaneKey,
   TowerProgramView,
 } from "@/lib/tower/command-center/types";
@@ -46,6 +47,42 @@ const LANE_ORDER: Record<TowerLaneKey, number> = {
   stop: 3,
   watch: 4,
 };
+
+const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
+  teal: "toneTeal",
+  amber: "toneAmber",
+  red: "toneRed",
+  gray: "",
+};
+
+function EvidenceLaneBoard({
+  view,
+}: {
+  view: TowerCommandCenterView;
+}) {
+  return (
+    <div className={styles.interventionLanes}>
+      {view.evidenceMaturity.interventionLanes.map((lane) => (
+        <section
+          key={lane.key}
+          className={cx(
+            styles.interventionLane,
+            INTERVENTION_TONE_CLASS[lane.tone] &&
+              styles[INTERVENTION_TONE_CLASS[lane.tone]],
+          )}
+          aria-label={`${lane.label} lane`}
+        >
+          <header>
+            <span className={styles.lhName}>{lane.label}</span>
+            <span className={styles.lhCnt}>{formatCount(lane.count)}</span>
+          </header>
+          <p>{lane.description}</p>
+          <b>{lane.nextAction}</b>
+        </section>
+      ))}
+    </div>
+  );
+}
 
 // ── the decision table ─────────────────────────────────────────────────────
 
@@ -367,7 +404,23 @@ export function DecisionLanesView({
     view.summary.unknownValueClaimCount > 0;
 
   let body: React.ReactNode;
-  if (subView === "overview") {
+  if (valueUnknown && subView !== "heatmap") {
+    body = (
+      <Card
+        title="Evidence maturity lanes"
+        right="measurement gates before executive action"
+        headId="tcc-evidence-lanes"
+        style={{ flex: 1 }}
+        bodyStyle={{ display: "flex", flexDirection: "column", gap: 14 }}
+      >
+        <p className={styles.lhSub}>
+          Tower is holding scale / fund / freeze / stop posture until the proof
+          gates mature. These are the operating lanes for the current data.
+        </p>
+        <EvidenceLaneBoard view={view} />
+      </Card>
+    );
+  } else if (subView === "overview") {
     body = (
       <div
         className={styles.ccLower}
@@ -444,8 +497,12 @@ export function DecisionLanesView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="The operating room"
-        hint="Click any program for its proof chain"
+        title={valueUnknown ? "The evidence operating room" : "The operating room"}
+        hint={
+          valueUnknown
+            ? "Sparse-state lanes prescribe proof work before investment decisions"
+            : "Click any program for its proof chain"
+        }
       >
         <SubNav
           label="Decision Lanes view"

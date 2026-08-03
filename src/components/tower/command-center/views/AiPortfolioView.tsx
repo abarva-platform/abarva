@@ -625,6 +625,14 @@ export function AiPortfolioView({
         />
       </ViewHead>
 
+      <div className={styles.evidenceNote}>
+        <b>Usage proves activity. It does not prove business value.</b>
+        <span>
+          Spend, capacity, adoption, usage, outcome evidence, guardrails,
+          attestation and claim state are shown as separate gates.
+        </span>
+      </div>
+
       <div
         style={{
           display: "flex",

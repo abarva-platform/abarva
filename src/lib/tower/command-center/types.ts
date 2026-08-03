@@ -92,6 +92,15 @@ export interface TowerCommandSummary {
   knownValueAmountUsd: number;
   financeAttestedClaimCount: number;
   businessAttestedClaimCount: number;
+  claimableClaimCount: number;
+  usageSupportedClaimCount: number;
+  fundedNoBaselineClaimCount: number;
+  staleClaimCount: number;
+  disputedClaimCount: number;
+  baselineLinkedClaimCount: number;
+  targetLinkedClaimCount: number;
+  actualLinkedClaimCount: number;
+  outcomeMeasuredClaimCount: number;
 
   programCount: number;
   aiInitiativeCount: number;
@@ -299,6 +308,89 @@ export interface TowerEvidenceFactView {
   sourceRow: string | null;
 }
 
+export type TowerEvidenceMaturityStageKey =
+  | "funded"
+  | "baseline"
+  | "usage"
+  | "outcome"
+  | "finance"
+  | "claimable"
+  | "realized";
+
+export type TowerEvidenceMaturityTone =
+  | "teal"
+  | "amber"
+  | "red"
+  | "gray";
+
+export interface TowerEvidenceMaturityStage {
+  key: TowerEvidenceMaturityStageKey;
+  label: string;
+  claimCount: number;
+  knownValueUsd: number;
+  unknownValueCount: number;
+  missingGate: string;
+  ownerRole: string;
+  nextAction: string;
+  tone: TowerEvidenceMaturityTone;
+}
+
+export type TowerEvidenceGapLedgerKey =
+  | "missing_baseline"
+  | "missing_target"
+  | "missing_actual"
+  | "missing_outcome_metric"
+  | "missing_attribution"
+  | "missing_quality_guardrail"
+  | "missing_risk_guardrail"
+  | "missing_finance_attestation"
+  | "missing_business_attestation";
+
+export interface TowerEvidenceGapLedgerItem {
+  key: TowerEvidenceGapLedgerKey;
+  label: string;
+  count: number;
+  ownerRole: string;
+  nextAction: string;
+  evidenceBasis: string;
+  tone: TowerEvidenceMaturityTone;
+}
+
+export type TowerInterventionLaneKey =
+  | "establish_baseline"
+  | "instrument_outcome"
+  | "validate_attribution"
+  | "complete_guardrails"
+  | "obtain_attestation"
+  | "ready_for_decision";
+
+export interface TowerInterventionLane {
+  key: TowerInterventionLaneKey;
+  label: string;
+  count: number;
+  description: string;
+  nextAction: string;
+  tone: TowerEvidenceMaturityTone;
+}
+
+export interface TowerEvidenceIntervention {
+  id: string;
+  title: string;
+  ownerRole: string;
+  why: string;
+  nextAction: string;
+}
+
+export interface TowerEvidenceMaturityView {
+  headline: string;
+  summaryRead: string;
+  valueStatus: string;
+  stages: readonly TowerEvidenceMaturityStage[];
+  gapLedger: readonly TowerEvidenceGapLedgerItem[];
+  interventionLanes: readonly TowerInterventionLane[];
+  interventions: readonly TowerEvidenceIntervention[];
+}
+
 /** One CXO action card. */
 export interface TowerActionView {
   id: string;
@@ -342,6 +434,8 @@ export interface TowerCommandCenterView {
   spendLens: readonly TowerSpendLensRow[];
   /** Business evidence gaps — what proof is missing before value can be claimed. */
   gaps: readonly TowerEvidenceGapView[];
+  /** Executive maturity diagnosis for sparse evidence states and reload work. */
+  evidenceMaturity: TowerEvidenceMaturityView;
   /**
    * Data-pipeline gaps from the governed field-gap projection. Kept separate and off
    * the executive Evidence tab: "populate this column and rerun the projection"

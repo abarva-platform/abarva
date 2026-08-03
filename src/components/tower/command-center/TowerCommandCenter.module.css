@@ -120,6 +120,13 @@
 
 .eyebrow2 { font-family: var(--abarva-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--canon-gray-500); }
 
+.diagnosticBand { flex: none; display: flex; gap: 18px; align-items: flex-start; justify-content: space-between; background: var(--canon-bg-surface); border: 1px solid var(--canon-border); border-radius: 13px; padding: 15px 18px; box-shadow: var(--shadow-card); }
+.diagnosticBand h2 { font-family: var(--abarva-serif); font-size: 22px; line-height: 1.12; font-weight: 500; letter-spacing: -0.025em; margin: 5px 0 4px; }
+.diagnosticBand p { margin: 0; font-size: 13px; color: var(--canon-gray-700); max-width: 82ch; }
+.diagnosticStats { flex: none; display: grid; grid-template-columns: repeat(2, minmax(108px, 1fr)); gap: 8px; min-width: 270px; }
+.diagnosticStats span { border: 1px solid var(--canon-border); border-radius: 9px; padding: 8px 10px; color: var(--canon-gray-500); font-size: 11px; line-height: 1.25; }
+.diagnosticStats b { display: block; font-family: var(--abarva-serif); font-size: 20px; line-height: 1; font-weight: 500; letter-spacing: -0.025em; color: var(--canon-teal-dark); margin-bottom: 3px; }
+
 /* Posture tiles */
 .ptiles { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .ptile { background: var(--canon-bg-surface); border: 1px solid var(--canon-border); border-radius: 13px; padding: 13px 15px; box-shadow: var(--shadow-card); position: relative; overflow: hidden; display: flex; flex-direction: column; }
@@ -254,6 +261,39 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .ins .itext { font-size: 15px; line-height: 1.55; color: var(--canon-gray-900); margin-top: 6px; text-wrap: pretty; }
 .ins .itext b { font-weight: 600; }
 
+.progressionGrid { display: grid; grid-template-columns: repeat(7, minmax(124px, 1fr)); gap: 9px; min-height: 0; }
+.progressionStage { border: 1px solid var(--canon-border); border-top: 4px solid var(--canon-gray-200); border-radius: 10px; padding: 11px 10px; min-width: 0; display: flex; flex-direction: column; gap: 7px; background: var(--canon-bg-surface); }
+.progressionStage.teal { border-top-color: var(--canon-teal); }
+.progressionStage.amber { border-top-color: var(--canon-amber); }
+.progressionStage.red { border-top-color: var(--canon-red); }
+.progressionStage.gray { border-top-color: var(--canon-gray-300); }
+.progressionTop { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.progressionN { font-family: var(--abarva-mono); font-size: 9px; font-weight: 700; color: var(--canon-gray-500); background: var(--canon-gray-100); border-radius: 5px; padding: 2px 6px; }
+.progressionLabel { font-family: var(--abarva-serif); font-size: 14px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.1; }
+.progressionCount { font-family: var(--abarva-serif); font-size: 25px; line-height: 1; font-weight: 500; letter-spacing: -0.035em; color: var(--canon-gray-900); font-variant-numeric: tabular-nums; }
+.progressionSub { font-size: 11px; color: var(--canon-gray-500); min-height: 32px; }
+.progressionGate { font-size: 11.5px; line-height: 1.35; color: var(--canon-gray-700); min-height: 45px; }
+.progressionAction { margin-top: auto; border-top: 1px solid var(--canon-border); padding-top: 7px; display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; color: var(--canon-gray-500); }
+.progressionAction b { color: var(--canon-gray-900); font-size: 11px; line-height: 1.3; }
+
+.evidenceNote { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--canon-teal-light); border: 1px solid rgba(30, 163, 130, 0.28); border-radius: 10px; padding: 10px 13px; color: var(--canon-gray-700); font-size: 12.5px; }
+.evidenceNote b { color: var(--canon-teal-dark); }
+
+.interventionLanes { display: grid; grid-template-columns: repeat(6, minmax(126px, 1fr)); gap: 10px; min-height: 0; }
+.interventionLane { border: 1px solid var(--canon-border); border-left: 4px solid var(--canon-gray-200); border-radius: 10px; padding: 13px 13px 14px; min-width: 0; background: var(--canon-bg-surface); display: flex; flex-direction: column; gap: 9px; }
+.interventionLane.toneTeal { border-left-color: var(--canon-teal); }
+.interventionLane.toneAmber { border-left-color: var(--canon-amber); }
+.interventionLane.toneRed { border-left-color: var(--canon-red); }
+.interventionLane header { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
+.interventionLane p { margin: 0; font-size: 12px; color: var(--canon-gray-700); line-height: 1.45; }
+.interventionLane b { margin-top: auto; font-size: 12px; line-height: 1.35; color: var(--canon-gray-900); font-weight: 600; }
+
+.interventionMemo { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.interventionMemo article { background: var(--canon-bg-surface); border: 1px solid var(--canon-border); border-radius: 11px; padding: 13px 15px; box-shadow: var(--shadow-card); min-width: 0; }
+.interventionMemo h3 { font-family: var(--abarva-serif); font-size: 15.5px; line-height: 1.2; font-weight: 500; letter-spacing: -0.012em; margin: 5px 0 6px; }
+.interventionMemo p { margin: 0; font-size: 12.5px; color: var(--canon-gray-700); line-height: 1.45; }
+.interventionMemo b { display: block; margin-top: 8px; font-size: 12px; line-height: 1.35; color: var(--canon-teal-dark); }
+
 /* AI spend lens */
 .lensrow { display: grid; grid-template-columns: 158px 1fr 92px; gap: 12px; align-items: center; padding: 6px 0; }
 .lensrow .ll { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
@@ -352,6 +392,11 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 /* Actions by owner */
 .owncols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 @media (max-width: 1200px) { .owncols { grid-template-columns: repeat(3, 1fr); overflow-y: auto; } }
+@media (max-width: 1280px) {
+  .progressionGrid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+  .interventionLanes { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+  .interventionMemo { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
+}
 .owncol { display: flex; flex-direction: column; min-height: 0; }
 .ocHead { flex: none; padding-bottom: 9px; margin-bottom: 10px; border-bottom: 1px solid var(--canon-border-strong); }
 .ocRole { font-family: var(--abarva-serif); font-size: 15px; font-weight: 500; letter-spacing: -0.015em; }
@@ -480,6 +525,9 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   .view { height: auto; }
   .lanes, .owncols, .eqgrid { grid-template-columns: 1fr; }
   .ptiles { grid-template-columns: 1fr; }
+  .diagnosticBand { flex-direction: column; }
+  .diagnosticStats { width: 100%; min-width: 0; }
+  .progressionGrid, .interventionLanes, .interventionMemo { grid-template-columns: 1fr; }
   .wrap { padding: 0 16px; }
   .drawer { width: 100%; }
 }

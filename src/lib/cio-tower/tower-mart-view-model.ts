@@ -26,6 +26,15 @@ export interface TowerMartCommandCenter {
   knownValueAmountUsd?: number;
   financeAttestedClaimCount?: number;
   businessAttestedClaimCount?: number;
+  claimableClaimCount?: number;
+  usageSupportedClaimCount?: number;
+  fundedNoBaselineClaimCount?: number;
+  staleClaimCount?: number;
+  disputedClaimCount?: number;
+  baselineLinkedClaimCount?: number;
+  targetLinkedClaimCount?: number;
+  actualLinkedClaimCount?: number;
+  outcomeMeasuredClaimCount?: number;
   candidateAiOpportunities: number;
   watchPressureSignals: number;
   runRatio: number | null;

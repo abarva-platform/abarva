@@ -68,6 +68,9 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
 
   const laneCount = (lane: TowerProgramView["lane"]) =>
     view.programs.filter((p) => p.lane === lane).length;
+  const laneByKey = new Map(
+    view.evidenceMaturity.interventionLanes.map((lane) => [lane.key, lane]),
+  );
 
   return [
     {
@@ -166,17 +169,25 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
       tone: "",
       key: "Decision posture",
       status: { cls: "sgray", text: "This week" },
-      hero: formatCount(view.actions.length),
-      heroNote: "decisions waiting on a named owner",
+      hero: formatCount(laneByKey.get("ready_for_decision")?.count ?? 0),
+      heroNote: "claims ready for scale / fund / freeze / stop",
       rows: [
-        { label: "Fund", value: formatCount(laneCount("fund")), tone: "vTeal" },
-        { label: "Fix", value: formatCount(laneCount("fix")), tone: "vAmber" },
         {
-          label: "Freeze",
-          value: formatCount(laneCount("freeze")),
+          label: "Establish baseline",
+          value: formatCount(laneByKey.get("establish_baseline")?.count ?? 0),
+          tone: "vAmber",
+        },
+        {
+          label: "Instrument outcome",
+          value: formatCount(laneByKey.get("instrument_outcome")?.count ?? 0),
           tone: "vRed",
         },
-        { label: "Stop", value: formatCount(laneCount("stop")), tone: "vRed" },
+        {
+          label: "Obtain attestation",
+          value: formatCount(laneByKey.get("obtain_attestation")?.count ?? 0),
+          tone: "vRed",
+        },
+        { label: "Legacy lanes", value: formatCount(laneCount("fix")), tone: "" },
       ],
     },
   ];
@@ -213,6 +224,34 @@ export function CommandCenterView({
 
   return (
     <div className={styles.view}>
+      <section className={styles.diagnosticBand}>
+        <div>
+          <div className={styles.eyebrow2}>Tower diagnosis</div>
+          <h2>{view.evidenceMaturity.headline}</h2>
+          <p>
+            {view.evidenceMaturity.summaryRead}{" "}
+            {view.evidenceMaturity.valueStatus}
+          </p>
+        </div>
+        <div className={styles.diagnosticStats}>
+          <span>
+            <b>{formatCount(s.valueClaimCount)}</b>
+            governed claims
+          </span>
+          <span>
+            <b>{formatCount(s.fundedNoBaselineClaimCount)}</b>
+            funded without baseline
+          </span>
+          <span>
+            <b>{formatCount(s.usageSupportedClaimCount)}</b>
+            usage-supported
+          </span>
+          <span>
+            <b>{formatCount(s.claimableClaimCount)}</b>
+            claimable
+          </span>
+        </div>
+      </section>
       <div className={styles.ptiles}>
         {tiles.map((tile) => (
           <div
@@ -281,9 +320,10 @@ export function CommandCenterView({
               <div className={styles.emptyPanel}>
                 <h2>Value proof is not quantified yet</h2>
                 <p>
-                  Tower has usage and claim-state evidence, but no governed
-                  dollar amount for the value claims. The proof chart stays
-                  withheld until value evidence exists.
+                  Usage proves activity. It does not prove business value.
+                  Tower is waiting for baseline, actual, attribution and
+                  attestation evidence before it lets these claims become
+                  executive value.
                 </p>
               </div>
             ) : (
@@ -306,20 +346,21 @@ export function CommandCenterView({
               className={styles.wkCta}
               onClick={onGoToFunnel}
             >
-              See the value funnel
+              See evidence progression
             </button>
           </div>
         </section>
 
         <Card
-          title="Decisions waiting on you"
-          right="aVa proposes · you approve · nothing acts on its own"
+          title="Interventions waiting on you"
+          right="measurement work before scale decisions"
           headId="tcc-decision-queue"
           bodyClassName={styles.scroll}
         >
           {queue.length === 0 ? (
             <p className={styles.lhSub}>
-              No program currently carries blocked value for this tenant.
+              No scale, fund, freeze, or stop decision is ready. Tower is
+              prescribing measurement work first.
             </p>
           ) : (
             <div className={styles.dq}>
