@@ -238,6 +238,102 @@ describe("computeContractLeverageSignals", () => {
   });
 });
 
+describe("numeric-string coercion (Postgres NUMERIC columns return as strings)", () => {
+  // node-postgres returns NUMERIC/DECIMAL columns as strings, not numbers.
+  // These fixtures inject real strings (via a cast, since the row type
+  // declares `number | null`) to reproduce that — the exact bug found live:
+  // `0 + "50000000.00"` is string concatenation in JS, not addition, and it
+  // only shows up once a vendor has more than one contract to sum.
+  function stringRow(overrides: {
+    contract_id: string;
+    vendor_ref: string;
+    vendor_name?: string;
+    annual_value: string;
+  }): SourceContractVendor360Row {
+    return row({
+      contract_id: overrides.contract_id,
+      vendor_ref: overrides.vendor_ref,
+      vendor_name: overrides.vendor_name ?? "Default Vendor",
+      annual_value: overrides.annual_value as unknown as number,
+    });
+  }
+
+  it("summarizePortfolio sums string-typed annual_value as numbers, not concatenated text", () => {
+    const rows = [
+      stringRow({
+        contract_id: "c1",
+        vendor_ref: "v1",
+        annual_value: "50000000.00",
+      }),
+      stringRow({
+        contract_id: "c2",
+        vendor_ref: "v1",
+        annual_value: "43500000.00",
+      }),
+      stringRow({
+        contract_id: "c3",
+        vendor_ref: "v2",
+        annual_value: "37500000.00",
+      }),
+    ];
+    const summary = summarizePortfolio(rows);
+    expect(summary.totalAnnualValue).toBe(131000000);
+    expect(typeof summary.totalAnnualValue).toBe("number");
+  });
+
+  it("computeVendorConcentration sums a multi-contract vendor's string values correctly, not e+22-scale garbage", () => {
+    const rows = [
+      stringRow({
+        contract_id: "c1",
+        vendor_ref: "v1",
+        vendor_name: "Vendor One",
+        annual_value: "50000000.00",
+      }),
+      stringRow({
+        contract_id: "c2",
+        vendor_ref: "v1",
+        vendor_name: "Vendor One",
+        annual_value: "43500000.00",
+      }),
+      stringRow({
+        contract_id: "c3",
+        vendor_ref: "v2",
+        vendor_name: "Vendor Two",
+        annual_value: "37500000.00",
+      }),
+    ];
+    const result = computeVendorConcentration(rows);
+    const vendorOne = result.byVendor.find((v) => v.vendorRef === "v1");
+    expect(vendorOne?.annualValue).toBe(93500000);
+    expect(result.totalAnnualValue).toBe(131000000);
+    // The exact regression: string concatenation would have produced a huge
+    // number far outside any plausible contract-value range.
+    expect(vendorOne?.annualValue).toBeLessThan(1_000_000_000);
+  });
+
+  it("computeContractLeverageSignals compares string-typed values numerically, not lexicographically", () => {
+    const rows = [
+      stringRow({
+        contract_id: "c1",
+        vendor_ref: "v1",
+        annual_value: "9000000.00",
+      }),
+      stringRow({
+        contract_id: "c2",
+        vendor_ref: "v2",
+        annual_value: "100000000.00",
+      }),
+    ];
+    const signals = computeContractLeverageSignals(rows);
+    const small = signals.find((s) => s.contractId === "c1");
+    const big = signals.find((s) => s.contractId === "c2");
+    // Lexicographic string comparison would rank "100000000.00" below
+    // "9000000.00" (since "1" < "9" as the first character) — numeric
+    // comparison must rank it above.
+    expect(big?.annualValue).toBeGreaterThan(small?.annualValue ?? 0);
+  });
+});
+
 describe("excludeSupplementalContracts", () => {
   it("is a no-op today (no supplemental vendors loaded yet)", () => {
     const rows = [row({ contract_id: "c1", vendor_ref: "v1" })];

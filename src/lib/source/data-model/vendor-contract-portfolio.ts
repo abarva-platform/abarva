@@ -18,6 +18,22 @@ import {
   type SourceContractVendor360Row,
 } from "./types";
 
+/**
+ * Postgres NUMERIC/DECIMAL columns come back from node-postgres as strings,
+ * not numbers, to avoid silent precision loss — but this repo's row types
+ * (types.ts) declare them as `number | null` because that's what every other
+ * caller wants to work with. That mismatch is invisible until two values get
+ * combined with `+`: `0 + "50000000.00"` is string concatenation in
+ * JavaScript, not addition, and it only shows up once a vendor has more than
+ * one contract to sum. Every arithmetic accumulation in this file must read
+ * through this coercion — reading `?? 0` alone is not enough.
+ */
+function toNum(value: number | string | null | undefined): number {
+  if (value == null) return 0;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 // ---------------------------------------------------------------------------
 // Supplemental-contract exclusion
 // ---------------------------------------------------------------------------
@@ -56,8 +72,9 @@ export function summarizePortfolio(
   rows: readonly SourceContractVendor360Row[],
 ): PortfolioSummary {
   const vendorRefs = new Set(rows.map((r) => r.vendor_ref));
-  const sum = (pick: (r: SourceContractVendor360Row) => number | null) =>
-    rows.reduce((acc, r) => acc + (pick(r) ?? 0), 0);
+  const sum = (
+    pick: (r: SourceContractVendor360Row) => number | string | null,
+  ) => rows.reduce((acc, r) => acc + toNum(pick(r)), 0);
   return {
     contractCount: rows.length,
     vendorCount: vendorRefs.size,
@@ -95,7 +112,7 @@ export function computeVendorConcentration(
   const byVendorValue = new Map<string, { name: string; value: number }>();
   for (const row of rows) {
     const existing = byVendorValue.get(row.vendor_ref);
-    const delta = row.annual_value ?? 0;
+    const delta = toNum(row.annual_value);
     if (existing) existing.value += delta;
     else
       byVendorValue.set(row.vendor_ref, {
@@ -197,7 +214,7 @@ export function computeRenewalExposure(
   );
 
   const sumAnnual = (list: readonly SourceContractVendor360Row[]) =>
-    list.reduce((acc, r) => acc + (r.annual_value ?? 0), 0);
+    list.reduce((acc, r) => acc + toNum(r.annual_value), 0);
 
   return {
     asOfDateIso,
@@ -261,7 +278,7 @@ export function computeContractLeverageSignals(
   options?: { highSpendThreshold?: number },
 ): readonly ContractLeverageEntry[] {
   const sortedValues = rows
-    .map((r) => r.annual_value ?? 0)
+    .map((r) => toNum(r.annual_value))
     .sort((a, b) => a - b);
   const p75Index = Math.floor(sortedValues.length * 0.75);
   const highSpendThreshold =
@@ -281,7 +298,7 @@ export function computeContractLeverageSignals(
       ),
     };
     const weakSignalCount = Object.values(weakSignals).filter(Boolean).length;
-    const annualValue = row.annual_value ?? 0;
+    const annualValue = toNum(row.annual_value);
     return {
       contractId: row.contract_id,
       vendorRef: row.vendor_ref,
