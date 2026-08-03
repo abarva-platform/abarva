@@ -1,0 +1,291 @@
+{
+  "status": "passed",
+  "route": "anthropic_direct_local",
+  "model": "claude-sonnet-4-6",
+  "prompt_version": "abarva_ai_success_advisor_tower_v2",
+  "prompt_sha256": "59b829c3e941001be2c5ea5ff448ee71a3c9e143fe0dec1e4ee02c45b8e375d9",
+  "response_sha256": "6ef6c5934c0af4f7544cedb8a570d907a1d77db592d827c3bfdf61e7965dc720",
+  "usage": {
+    "input_tokens": 34318,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 11721,
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "validation_issues": [],
+  "parsed": {
+    "headline": "SkyHarbor Global is spending at transformation scale but has not yet earned transformation outcomes — the next 90 days must close the gap between activity and evidence before the portfolio loses executive credibility.",
+    "executive_thesis": "SkyHarbor Global has assembled the financial commitment, strategic intent, and platform portfolio of a genuine AI-led transformation. It has not yet assembled the proof. Across a $52.8B airline operating 5,150 daily departures, the gap between investment activity and measurable outcome realization is the defining risk of the current planning cycle. The AI portfolio spans 12 tools and over $160M in estimated annual use cost, yet zero value claims have cleared the Tower's evidentiary standard — every claim sits in 'funded_no_baseline' or 'usage_supported' states, neither of which constitutes realized value. The broader project portfolio carries 57 critical-priority initiatives simultaneously, 24 of which are already at risk, with a change-readiness signal dominated by frustration on AI, talent, and vendor themes. The enterprise is not failing to invest — it is failing to convert investment into defensible, outcome-linked proof. That failure, left unaddressed through the 2027 planning cycle, will erode board and leadership confidence precisely when the ambition of the 2027–2030 strategy requires it most. The immediate leadership choice is not whether to transform — that decision is made — it is whether to govern the transformation with the same operational discipline SkyHarbor applies to its flight network.",
+    "business_outcomes_at_stake": "Four outcome clusters define what is materially at risk. First, operational reliability: crew recovery time, maintenance delay minutes, and completion factor KPIs are all directionally improving but remain disputed or estimated, meaning no flight-operations or irregular-operations benefit can be credibly claimed to the board or regulators. Second, customer trust and loyalty: with 86M loyalty members and overnight-batch dependencies driving Contact Centers, Marketing, Loyalty, and Customer Experience, the inability to act on real-time disruption data directly degrades the customer recovery experience that differentiates premium airline loyalty. Third, AI and data investment returns: over $160M per year in AI tool costs is generating telemetry and sponsor estimates, not validated productivity or workflow transformation — every quarter this persists, the cost of proof rises and the window for competitive differentiation narrows. Fourth, execution credibility: 24 at-risk projects, 10 awaiting unresolved decisions, and a portfolio concentration in three vendors (Salesforce, SkyBridge AMS, GlobalLink Telecom) collectively accountable for over $600M in linked initiative budget creates a structural execution fragility that could materially delay the 2027–2030 strategy.",
+    "diagnosis": "Five interlocking conditions explain the current state. One: the AI portfolio has scaled deployment ahead of value architecture. With ~490K seats purchased across M365 Copilot, ChatGPT Enterprise, and GitHub Copilot, and active rates of 40%, SkyHarbor has achieved broad reach but not workflow reinvention. Value evidence across all tools is classified as directional sponsor estimate, telemetry only, or not yet evidenced — none has a validated before/after baseline at the workflow level. The Operations Recovery Agent, Maintenance Knowledge Agent, and Customer Recovery Agent — the tools most directly linked to operational outcomes — collectively serve fewer than 47K active users and carry the same evidence gap as the productivity copilots. Two: KPI integrity is compromised at the measurement layer. Aircraft utilization is reported separately by Crew Operations, Internal Audit, IT Service Management, and Sales with materially different current values (228 to 488 hours/day), multiple disputed confidence ratings, and known definition variance. This is not a minor data-quality issue — it means SkyHarbor cannot currently tell regulators, investors, or its own leadership with a single authoritative number what its fleet is producing. The same problem recurs for cancellation rate, completion factor, fuel efficiency, crew recovery time, and maintenance delay minutes. Three: the investment portfolio is executing ahead of its governance. 150 funded initiatives have no baseline, 10 await unresolved decisions blocking forward progress, and several critical initiatives (Data Platform Modernization Wave 5, Baggage Visibility Wave 6, Data Governance Wave 2) are pending steering decisions while spend continues. ERP Modernization alone spans at least six waves with partially funded or pending-decision funding status. Four: vendor concentration is a strategic risk that is not yet being managed at the portfolio level. NorthPeak Consulting ($338M committed, renewal June 2027), SkyBridge AMS (67 linked initiatives across three contracts, over $480M committed), Salesforce (50 linked initiatives, over $416M committed), and GlobalLink Telecom (68 linked initiatives across three contracts, over $553M committed) each represent single-point dependencies that could constrain delivery or extract value at renewal. Five: change readiness shows a pattern of resignation and frustration on the themes — AI, talent, vendor, reliability, decision rights — that most directly determine execution success. This is not generic organizational resistance; it is a signal that the people closest to delivery do not yet believe the governance model is working.",
+    "portfolio_choices": [
+      {
+        "scope": "AI use-case portfolio — productivity copilots (M365 Copilot, ChatGPT Enterprise, GitHub Copilot)",
+        "recommended_choice": "Fix",
+        "business_rationale": "Combined spend of approximately $122M per year with ~492K active users and zero workflow-level validated value. The business case for continuation at current scale depends entirely on establishing before/after baselines within the next 90 days. The CEO mandate of 'measure value before expanding licenses' is correct and must be operationalized immediately. The fix required is not technical — it is measurement architecture: define workflow-level hypotheses, instrument before states, and run 60-day proof cycles for the two or three highest-volume use cases in each tool.",
+        "evidence_refs": [
+          "AI portfolio: active_rate_pct 39.9–40.0%, value_evidence: Telemetry only | Directional sponsor estimate",
+          "value_claim_states: tower_claimable_value = 0",
+          "material_evidence_gaps: developer_ai_before_after, 0 observed rows",
+          "CEO ai_strategy_mandate: Measure value before expanding licenses"
+        ],
+        "confidence": "high"
+      },
+      {
+        "scope": "Internal operations agents (Operations Recovery Agent, Maintenance Knowledge Agent, Customer Recovery Agent, Agent Workbench)",
+        "recommended_choice": "Accelerate",
+        "business_rationale": "These four tools are the highest-alignment assets in the portfolio — directly linked to irregular-operations recovery, maintenance productivity, and customer disruption management, all top strategic priorities. Active rates of 52–54% are meaningfully higher than the horizontal copilots, suggesting greater workflow specificity. The Operations Recovery Agent is identified as a highest-value opportunity by SVP Flight Operations and SVP Commercial Strategy. The constraint is the same evidence gap, but the hypothesis-to-outcome pathway is tighter and the operational stakes are higher. Acceleration means instrumenting these workflows for proof within 60 days, not adding seats.",
+        "evidence_refs": [
+          "Operations Recovery Agent: active_rate_pct 52.4%, estimated_hours_saved 356,813",
+          "SVP Commercial Strategy highest_value_ai_opportunities: Irregular-operations recovery",
+          "SVP Flight Operations highest_value_ai_opportunities: Irregular-operations recovery",
+          "Crew recovery time - Operations Control: current 33.6 min, target 25.4 min, confidence Medium",
+          "Change readiness: AI sentiment frustrated, reliability sentiment resigned"
+        ],
+        "confidence": "moderate"
+      },
+      {
+        "scope": "KPI semantic standardization and data governance (KPI Semantic Standardization waves, Data Governance Wave 2)",
+        "recommended_choice": "Accelerate",
+        "business_rationale": "Multiple critical operational KPIs — aircraft utilization, cancellation rate, completion factor — carry disputed confidence or definition-varies-by-function caveats. This is not a data hygiene issue; it is a value-proof infrastructure failure. Without a single authoritative KPI definition per metric, no AI, cloud, or operations initiative can credibly claim to have moved a business outcome. Data Governance Wave 2 is pending a steering funding decision while spend continues — that decision must be resolved immediately. KPI Semantic Standardization is the unlock for the entire evidence stack.",
+        "evidence_refs": [
+          "Aircraft utilization: four separate function values ranging 228–488 hrs/day, three marked Disputed",
+          "Cancellation rate: four function values, three marked Disputed, one 'Definition varies by function'",
+          "data_maturity: Semantic consistency 3.12, Data quality 2.88, AI readiness 2.90",
+          "PRJ-045 Data Governance Wave 2: Pending steering decision, Critical priority",
+          "CEO critical_decisions_needed: Resolve KPI owner"
+        ],
+        "confidence": "high"
+      },
+      {
+        "scope": "ERP Modernization (Waves 1, 3, 6) — multi-wave parallel execution",
+        "recommended_choice": "Consolidate",
+        "business_rationale": "Three ERP modernization waves are simultaneously in-flight or partially funded, spanning Customer Experience, Flight Operations, and Integration/API, with at least two pending steering decisions and one showing forecast below budget (Wave 3 — a possible positive sign or scope reduction). The parallel wave structure without resolved KPI owners and benefit baselines creates compounding governance risk. The portfolio needs a single ERP program owner, consolidated benefit tracking, and explicit sequencing decisions before the next wave is committed.",
+        "evidence_refs": [
+          "PRJ-009 ERP Modernization Wave 1: $41M approved, Pending steering decision on KPI owner",
+          "PRJ-063 ERP Modernization Wave 3: $11M, Pending steering decision, forecast below budget",
+          "PRJ-144 ERP Modernization Wave 6: $12.5M, Partially funded, KPI owner unresolved",
+          "execution_capacity: 91 in-flight projects, 24 at risk"
+        ],
+        "confidence": "moderate"
+      },
+      {
+        "scope": "NorthPeak Consulting primary contract (CTR-064/066/067) — June 2027 renewal",
+        "recommended_choice": "Discover",
+        "business_rationale": "NorthPeak holds $338M in committed value across three contracts expiring June 2027, linked to 22 initiatives including Data Governance, Baggage Visibility, Contact Center Transformation, and Network Modernization. This is the most time-critical contract event in the portfolio. With fewer than 12 months to the renewal window and no clause-level evidence, rate cards, or performance data available, SkyHarbor cannot currently determine whether to renew, renegotiate, or restructure. A Discover phase — extracting clause-level terms, benchmarking rates, and assessing outcome accountability — must begin immediately.",
+        "evidence_refs": [
+          "NorthPeak Consulting: $338,148,856 committed, next_end_date 2027-06-28, 22 linked initiatives",
+          "sourcing_options: clause-level documents, rate cards, vendor performance incomplete",
+          "material_evidence_gaps: contract_clause_evidence, 0 observed rows"
+        ],
+        "confidence": "high"
+      },
+      {
+        "scope": "Baggage Visibility Wave 6 and Customer Disruption Management Wave 3 — partially funded, AI-component initiatives",
+        "recommended_choice": "Accelerate",
+        "business_rationale": "Both carry AI automation components, are linked to high-criticality operational outcomes (baggage reliability, contact-center disruption recovery), and are pending steering funding decisions. These are precisely the initiatives where AI can demonstrate workflow-level value most visibly to customers and operations staff. Delay risks losing the measurement window ahead of the 2027 travel peak. Accelerating the funding decision — not the deployment — is the immediate action.",
+        "evidence_refs": [
+          "PRJ-139 Baggage Visibility Wave 6: $11.8M, AI component Yes, Pending steering decision",
+          "PRJ-059 Customer Disruption Management Wave 3: $10.6M, AI component Yes, Partially funded",
+          "SVP Contact Centers highest_value_ai_opportunities: Contact-center case summarization",
+          "Baggage Operations criticality: High, outcome: reliability, productivity, lower cost"
+        ],
+        "confidence": "moderate"
+      },
+      {
+        "scope": "Overnight-batch-dependent functions: Schedule Planning, Revenue Management, Sales, Customer Experience, Contact Centers, Marketing, Loyalty, Fleet Planning, Safety",
+        "recommended_choice": "Redesign",
+        "business_rationale": "Nine functions — including all major customer-facing and commercial units — identify overnight batch dependency as their primary constraint. In an airline operating 5,150 daily departures where irregular-operations recovery is a top strategic priority, batch-dependent data flows directly impair the ability of AI agents, contact center staff, and operations controllers to act on current information. This is not a technology upgrade problem; it is a business-process reinvention requirement. Real-time data availability must be explicitly targeted as a program outcome, not a platform side-effect.",
+        "evidence_refs": [
+          "Process pain points: Schedule Planning, Revenue Management, Sales, Customer Experience, Contact Centers, Loyalty, Marketing, Fleet Planning, Safety — all overnight batch dependency",
+          "Corporate Strategy known_constraint: overnight batch dependency",
+          "data_maturity: AI readiness 2.90, Platform 2.93 — both below 3.0"
+        ],
+        "confidence": "high"
+      },
+      {
+        "scope": "Cloud governance and automation maturity",
+        "recommended_choice": "Fix",
+        "business_rationale": "Cloud maturity scores for Automation (2.50) and Governance (2.60) are the two lowest dimensions in the technology estate — below all data maturity scores and well below the Strategy score of 3.50 that indicates leadership intent exists but execution has not followed. With 187 applications on public cloud IaaS/PaaS and 158 on private cloud, governance and automation gaps directly increase security exposure and cost unpredictability. Cloud guardrail gaps appear as a known constraint in Operations Platforms, Operations Technology, Architecture and Integration, Technology Platforms, and Cloud Platform Engineering — five separate portfolio groups.",
+        "evidence_refs": [
+          "cloud_maturity: Automation 2.50, Governance 2.60 (lowest two scores)",
+          "application_hosting_mix: Public-cloud IaaS/PaaS 187, Private cloud 158",
+          "Known constraints across 5 portfolio groups: cloud guardrail gaps",
+          "quality_and_risk_guardrails: cloud High/High residual risk, 1 missing test date"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "priority_use_cases": [
+      {
+        "use_case": "AI-assisted irregular-operations recovery (Operations Recovery Agent)",
+        "business_problem": "During disruption events, crew recovery decisions are manual, time-consuming, and fragmented across Operations Control, Crew Scheduling, and Flight Operations. Crew recovery time ranges from 33.6 minutes (Operations Control) to 542.4 minutes (Real Estate and Facilities) depending on the function reporting — a variance that itself signals process inconsistency. Every minute of delay propagates downstream across 5,150 daily departures.",
+        "target_outcome": "Reduce crew recovery time in Operations Control from 33.6 to 25.4 minutes (per governed target); reduce downstream propagation of disruption events; measurably improve completion factor from current disputed baseline.",
+        "value_hypothesis": "AI-generated recovery plan drafts reviewed and approved by controllers can compress decision cycles, reduce manual option-scanning, and improve recovery sequencing quality — translating to fewer cancelled flights, fewer missed connections, and lower irregular-operations cost.",
+        "workflow_change_required": "Operations controllers must shift from generating recovery options manually to reviewing and approving AI-generated options. This requires workflow redesign, decision-authority clarity, crew scheduling system integration, and controller training — not just tool deployment.",
+        "evidence_state": "Operations Recovery Agent is deployed with 20,467 active users and an active rate of 52.4%. Value evidence is directional sponsor estimate and telemetry only. No before/after workflow baseline exists. KPI confidence for crew recovery time is Medium with lineage-incomplete caveat.",
+        "next_proof_gate": "Establish a controlled before/after measurement for controller decision cycle time and recovery plan quality within 60 days, using a defined subset of disruption event types. Gate: validated reduction in average crew recovery time in Operations Control with lineage to agent usage, signed off by Operations Control business owner."
+      },
+      {
+        "use_case": "Contact center AI case summarization and disruption communication (Customer Recovery Agent)",
+        "business_problem": "Contact Centers, serving 86M loyalty members across disruption and service events, operate on overnight-batch data and manual case management. Average handle time and case summary quality directly affect customer trust and agent productivity. Four separate SVP-level executives identify contact-center case summarization as their highest-value AI opportunity.",
+        "target_outcome": "Measurable reduction in average handle time for disruption-related contacts; improvement in first-contact resolution; reduction in post-disruption customer churn among loyalty members.",
+        "value_hypothesis": "Real-time AI case summarization reduces the time agents spend reconstructing customer context, enabling faster resolution and higher-quality disruption recovery communication — directly supporting loyalty retention for the 86M member base.",
+        "workflow_change_required": "Agents must stop manually reviewing transaction history and instead validate AI-generated summaries. Supervisors must adopt new quality metrics. The overnight batch dependency feeding customer history must be replaced with near-real-time data feeds — a platform prerequisite currently unresolved.",
+        "evidence_state": "Customer Recovery Agent has 12,618 active users at 53.5% active rate. Value evidence is directional and not yet validated. Contact Centers identified as overnight-batch-dependent, which constrains the real-time context availability the agent requires.",
+        "next_proof_gate": "Resolve batch-to-real-time data feed dependency for customer history within 90 days as a prerequisite. Then run a 60-day pilot measuring average handle time, first-contact resolution, and agent satisfaction with a defined agent cohort. Gate: Finance-reviewed handle time reduction with attribution to agent summarization."
+      },
+      {
+        "use_case": "Maintenance knowledge retrieval (Maintenance Knowledge Agent)",
+        "business_problem": "Maintenance and Engineering identify legacy platform constraints as their primary pain point, and Technical Operations cite manual reconciliation. Technicians searching for maintenance procedures, parts history, and engineering orders across fragmented systems lose productive time, create compliance risk, and extend maintenance delay minutes — currently 215 to 591 minutes across reporting functions.",
+        "target_outcome": "Reduce technician time spent searching for maintenance documentation; reduce maintenance delay minutes from current disputed baselines toward governed targets; improve MRO compliance documentation quality.",
+        "value_hypothesis": "Maintenance knowledge retrieval AI that surfaces authoritative procedures and parts history in natural language reduces documentation search time, improves first-time fix rates, and supports regulatory compliance — with a direct link to reducing maintenance-driven departure delays.",
+        "workflow_change_required": "Technicians must adopt agent-assisted procedure lookup as the default workflow, replacing multi-system manual searches. MRO documentation must be ingested, governed, and kept current in the knowledge base — a data quality and governance prerequisite. Quality assurance must validate AI-retrieved content against authoritative sources.",
+        "evidence_state": "Maintenance Knowledge Agent has 13,898 active users at 53.0% active rate. Value evidence is directional. Maintenance delay KPIs show high confidence for Airport and Ground Operations (312.5 min) and Communications (591.2 min) but lineage is incomplete. CIO and Chief Strategy Officer both identify maintenance knowledge retrieval as highest-value AI opportunity.",
+        "next_proof_gate": "Define a documentation accuracy and retrieval time baseline within 30 days. Run a 60-day pilot in one maintenance base measuring technician search time and maintenance delay attribution. Gate: measured reduction in documentation retrieval time with a statistically valid sample, reviewed by MRO leadership."
+      },
+      {
+        "use_case": "Developer productivity via GitHub Copilot (Coding Copilot Enablement)",
+        "business_problem": "With a technology team of 12,240 people executing 150 funded initiatives, developer throughput directly constrains the speed of the entire transformation portfolio. GitHub Copilot is deployed to 148,293 active users at a cost of $36M per year, yet no DORA/productivity before-after measurement exists.",
+        "target_outcome": "Measurable increase in code-review cycle time, story point velocity, or defect rate for Copilot-assisted developers versus non-assisted baseline; quantification of development cost per feature delivered.",
+        "value_hypothesis": "GitHub Copilot-assisted developers complete coding tasks and code reviews faster, reducing the throughput bottleneck on a portfolio where execution capacity is already strained by 91 in-flight projects.",
+        "workflow_change_required": "Engineering leads must adopt standardized measurement practices (DORA metrics or equivalent) before and after Copilot use. PR review processes must be adjusted to account for AI-generated code quality patterns. Prompt quality standards and sensitive-code guardrails must be operationalized.",
+        "evidence_state": "148,293 active users, $36M annual cost, zero before/after DORA observations. Value evidence is directional sponsor estimate and telemetry only. This is the largest evidence gap relative to spend in the developer tooling portfolio.",
+        "next_proof_gate": "Establish DORA baseline for a defined engineering cohort within 30 days. Run 60-day before/after measurement. Gate: statistically significant improvement in at least two DORA metrics attributable to Copilot use, signed off by CIO and engineering leadership."
+      },
+      {
+        "use_case": "KPI semantic standardization enabling AI-linked outcome proof",
+        "business_problem": "The foundational measurement problem: aircraft utilization, cancellation rate, completion factor, and crew recovery time — the four most operationally critical KPI families — each carry multiple conflicting definitions across business functions, disputed confidence levels, and incomplete lineage. This is not a reporting inconvenience; it is the reason no AI or operational initiative can currently claim Tower-level value.",
+        "target_outcome": "Single authoritative definition, single authoritative owner, and single auditable lineage for each Tier-1 operational KPI by Q4 2026; elimination of disputed confidence ratings for core operational metrics.",
+        "value_hypothesis": "KPI standardization is not itself a value-generating activity — it is the prerequisite infrastructure that allows every other use case in this portfolio to demonstrate value. Without it, the $160M+ AI investment cannot be defended.",
+        "workflow_change_required": "Each KPI requires a designated business owner who accepts accountability for definition, calculation, and sign-off. Technology Finance and PMO must enforce single-source reporting. Data Governance Wave 2 must be funded and sequenced before, not alongside, AI scale decisions.",
+        "evidence_state": "KPI confidence issues are pervasive across all four major operational metric families. Data maturity scores: Semantic consistency 3.12, Data quality 2.88, Lineage 3.00, AI readiness 2.90. KPI Semantic Standardization waves exist in the portfolio but are linked to governance initiatives pending funding decisions.",
+        "next_proof_gate": "Assign named business owners to all Tier-1 operational KPIs within 30 days. Confirm Data Governance Wave 2 funding within 30 days. Gate: first three KPIs upgraded from Disputed to Confirmed confidence with documented lineage, validated by Finance."
+      }
+    ],
+    "business_change_agenda": "The transformation SkyHarbor is attempting cannot succeed as a technology delivery program. It requires a business change agenda with four non-negotiable elements. First, value accountability must move from IT to the business. Every priority AI use case requires a named SVP-level business owner who accepts accountability for workflow change, measurement, and outcome sign-off — not just tool adoption. The current state, where value evidence is 'directional sponsor estimate,' reflects a governance gap, not a technology gap. Second, the overnight-batch dependency across nine customer-facing and commercial functions must be treated as a business transformation program, not a platform migration. Real-time data availability is the prerequisite for AI agents to deliver value in contact centers, crew scheduling, revenue management, and loyalty. Until that dependency is resolved, AI deployment in those functions is aspirational. Third, AI governance must be treated as an operational risk domain, not a technology compliance exercise. With Critical inherent severity AI governance risks carrying High residual severity, and 2 of the 5 AI governance risks lacking test dates, the CPO's mandate to 'constrain sensitive use cases until controls mature' must be operationalized with specific use-case constraints, not general caution. Fourth, the change-readiness frustration signal on AI, talent, and vendor themes demands a visible leadership response. The people executing this transformation do not currently believe the governance model is working. A 90-day visible governance improvement — resolved KPI owners, confirmed funding for blocked initiatives, a NorthPeak renewal decision process — would materially shift that signal.",
+    "operating_model_implications": "The AI Products and Enablement group, with 230 people, is structurally undersized for the mandate of governing 12 AI tools, operating the Enterprise AI Gateway, managing the Agent Workbench platform, and owning use-case measurement across a 109,500-person enterprise. The gap between the team's size and the portfolio's scope is a risk factor that neither additional vendor spend nor license expansion can resolve. The Operations Platforms group (360 people, 'Scale governed AI' mandate) is the highest-priority operating model investment for AI value delivery — this team owns crew, flight, maintenance, station, baggage, and cargo applications, which are exactly where the highest-value AI use cases sit. Cloud guardrail gaps appearing in five separate portfolio groups indicate a governance model where landing zone policy and cloud controls are not yet enforced uniformly — this must be resolved before cloud-hosted AI agents can operate at scale with appropriate security and compliance posture. The AMS cost pressure appearing as a known constraint in four portfolio groups (Application Managed Services, Data Platforms, Corporate Applications, AI Products and Enablement, Office of the CIO) needs to be examined as a portfolio-level sourcing decision, not managed function by function.",
+    "technology_and_data_implications": "Four technology conditions require executive attention. One: the application estate (245 on-premises, 158 private cloud, 187 public cloud IaaS/PaaS, 130 SaaS) with disputed disposition decisions across all categories means the cloud transition is not complete and the cost structure is not yet optimized — cloud economics observations exist but estate references are blank, preventing cost precision. Two: cloud automation maturity of 2.50 is the single lowest score in the entire technology and data estate; below this threshold, AI workloads cannot be reliably provisioned, scaled, or governed, which directly constrains agent deployment ambition. Three: data maturity scores cluster between 2.79 and 3.12, with AI readiness at 2.90 and data quality at 2.88 — both below the threshold at which AI models can be trusted to produce consistently reliable outputs in safety- and compliance-sensitive airline operations workflows. Four: the Teradata contract ($39.8M committed, renewal June 2030) and Snowflake contract ($29M committed, renewal May 2027) represent concurrent data platform commitments that require a deliberate platform convergence decision — the Teradata Optimization waves running through Wave 6 suggest a transition is underway but the endpoint and timeline are not visible in the evidence.",
+    "sourcing_strategy": "SkyHarbor's sourcing position carries three urgent and one structural risk. The urgent risks: NorthPeak Consulting ($338M, June 2027 renewal) requires immediate clause-level extraction and rate benchmarking — without this, the renewal will be negotiated on the vendor's terms. The Confluent contract ($31.7M, July 2027) and Snowflake contract ($29M, May 2027) both renew within 12 months with auto-renew status (Snowflake: yes) — both require active management before automatic commitment. SkyBridge AMS, spanning three contracts and 67 linked initiatives with over $480M committed, represents the largest single execution dependency in the portfolio; its cost pressure is appearing as a constraint in five portfolio groups, indicating the relationship may need to be restructured, not just renewed. The structural risk: the sourcing options section correctly identifies that no partner recommendation is supportable until clause-level documents, rate cards, SLA performance, and outcome accountability data are available. The most consequential sourcing decision — whether to consolidate, restructure, or compete the AMS relationship — cannot be made responsibly without this evidence, and that evidence gap must be closed in parallel with the NorthPeak renewal process.",
+    "business_case_position": "The current business case position is: investment committed, value unproven. Tower-claimable value is zero. All 150 funded-no-baseline claims and 12 usage-supported claims fall below the evidentiary standard required for Finance attestation. The total annual AI tool cost visible in the portfolio exceeds $160M; the total committed vendor value across the largest five relationships exceeds $1.5B; and the project portfolio carries over $400M in approved budgets for the initiatives visible in this packet alone. Against this investment base, the absence of a single validated workflow-level outcome is not a minor measurement gap — it is the central business case risk. The path to a defensible business case runs through three sequential gates: (1) establish workflow baselines for the five priority use cases within 30 days, (2) run controlled 60-day proof cycles with Finance-reviewed measurement, and (3) present Tower-level value claims to the board by Q1 2027. Any AI license expansion, any new agent deployment, and any sourcing commitment above a defined threshold should require a passed proof gate as a precondition.",
+    "execution_roadmap": {
+      "next_30_days": [
+        "Assign named SVP-level business owners to all Tier-1 operational KPIs (aircraft utilization, cancellation rate, completion factor, crew recovery time, maintenance delay minutes) — CEO to issue directive, CIO to track.",
+        "Convene steering committee to resolve the five pending funding decisions blocking Data Platform Modernization Wave 5, Data Governance Wave 2, Baggage Visibility Wave 6, Crew Recovery Wave 6, and Coding Copilot Enablement Wave 2.",
+        "Launch NorthPeak Consulting contract extraction: assign legal and sourcing resources to complete clause-level review of CTR-064, CTR-066, CTR-067 ahead of June 2027 renewal.",
+        "Define workflow-level value hypotheses and baseline measurement protocols for the five priority AI use cases (Operations Recovery Agent, Customer Recovery Agent, Maintenance Knowledge Agent, GitHub Copilot, KPI Semantic Standardization).",
+        "Review and resolve the 10 initiatives in 'Awaiting decision' status — for each, either confirm forward progress or formally place on hold to prevent resource drain.",
+        "Assign accountability for AI governance control remediation: address the 4 AI governance risks (2 Critical, 2 High residual) with missing test dates, per CPO mandate to constrain sensitive use cases until controls mature."
+      ],
+      "days_31_to_90": [
+        "Launch 60-day controlled proof pilots for Operations Recovery Agent (Operations Control cohort) and Customer Recovery Agent (defined contact center cohort) with Finance-reviewed measurement frameworks.",
+        "Establish DORA baseline for GitHub Copilot cohort and begin 60-day before/after measurement cycle.",
+        "Complete Snowflake renewal assessment (May 2027 expiry) and Confluent contract review (July 2027 expiry) — present renewal, renegotiate, or compete recommendation to CIO and CFO.",
+        "Deliver first three KPI upgrades from Disputed to Confirmed confidence with documented lineage — validate with Finance and publish as proof-of-governance milestone.",
+        "Complete ERP Modernization program consolidation: appoint single program owner across Waves 1, 3, 6; establish unified benefit tracking; resolve Wave 3 sourcing strategy decision (PRJ-063).",
+        "Assess cloud automation and governance maturity improvement plan: target Automation from 2.50 toward 3.0 and Governance from 2.60 toward 3.0 with specific landing zone policy enforcement actions.",
+        "Conduct SkyBridge AMS relationship review: aggregate performance, cost, and scope data across three contracts; determine whether to consolidate, restructure, or competitively tender at next renewal."
+      ],
+      "months_4_to_12": [
+        "Present first Tower-level value claims for Operations Recovery Agent and at least one productivity copilot to leadership, based on 60-day proof cycle results — if evidence supports scale, expand; if not, redesign the workflow intervention.",
+        "Deliver real-time data feed replacement for at least two of the nine overnight-batch-dependent functions (prioritize Contact Centers and Crew Scheduling given AI use case dependencies).",
+        "Complete NorthPeak renewal strategy and open formal negotiation or competitive process — target contract restructuring that ties compensation to outcome delivery, not activity.",
+        "Achieve single authoritative KPI definition and ownership for all Tier-1 operational metrics; publish to board as governance maturity milestone.",
+        "Resolve Teradata-to-Snowflake/Databricks platform convergence decision: define the target state, timeline, and wave sequencing for data platform consolidation before the next Teradata renewal cycle.",
+        "Scale Maintenance Knowledge Agent to a second maintenance base based on first pilot results; begin MRO compliance documentation quality measurement.",
+        "Deliver operating model recommendation for AI Products and Enablement: assess whether the 230-person team requires restructuring, augmentation, or AMS partnership to support governed AI at enterprise scale.",
+        "Complete application disposition decisions for the 245 on-premises applications with disputed status — each application must have a confirmed Maintain, Modernize, Replace, or Retire designation as a prerequisite for the 2027–2030 investment plan."
+      ]
+    },
+    "leadership_decisions_required": [
+      {
+        "decision": "Resolve KPI ownership: assign named business owners to all Tier-1 operational KPIs and mandate a single authoritative definition per metric across all functions.",
+        "why_required": "Multiple critical KPIs (aircraft utilization, cancellation rate, completion factor, crew recovery time) are disputed or definition-varies-by-function. No AI or operations initiative can claim Tower-level value without authoritative KPI baselines.",
+        "evidence_supporting_it": "Aircraft utilization reported as 228–488 hrs/day across four functions, three marked Disputed. Cancellation rate: four values, three Disputed. CEO critical_decisions_needed: Resolve KPI owner. Data maturity AI readiness 2.90, Data quality 2.88.",
+        "consequence_of_delay": "Every AI proof cycle launched without a resolved KPI baseline produces evidence that cannot be validated by Finance, cannot be reported to the board, and cannot support the 2027–2030 investment case. The cost of the measurement gap compounds with every quarter of delay.",
+        "accountable_leadership_role": "CEO (mandate issuance), CIO (implementation), CFO (Finance attestation framework)"
+      },
+      {
+        "decision": "Confirm or halt funding for the five critical initiatives pending steering decisions: Data Platform Modernization Wave 5, Data Governance Wave 2, Baggage Visibility Wave 6, Data Center Consolidation Wave 1, and Crew Recovery Wave 6.",
+        "why_required": "These five initiatives collectively represent over $58M in approved budget with active spend continuing against unresolved steering decisions. Each carries an AI or data infrastructure component critical to the value proof agenda. Ambiguity is consuming resources without producing outcomes.",
+        "evidence_supporting_it": "PRJ-122 Data Platform Modernization Wave 5: $12.9M, Critical, Pending steering decision. PRJ-045 Data Governance Wave 2: $11.4M, Critical, Pending steering decision. PRJ-139 Baggage Visibility Wave 6: $11.8M, Critical, Pending steering decision. PRJ-011 Data Center Consolidation Wave 1: $10.8M, Pending steering decision. PRJ-137 Crew Recovery Wave 6: $11.9M, Awaiting decision.",
+        "consequence_of_delay": "Continued spend without governance approval; team uncertainty that feeds the resignation and frustration signal in change readiness; risk of losing the measurement window before the 2027 travel peak.",
+        "accountable_leadership_role": "CIO (steering committee chair), CFO (funding authority), relevant SVP business owners"
+      },
+      {
+        "decision": "Approve the NorthPeak Consulting renewal strategy process: initiate clause-level contract extraction and benchmarking immediately, with a decision to renew, renegotiate, or competitively tender by Q4 2026.",
+        "why_required": "NorthPeak holds $338M in committed value across three contracts expiring June 2027, linked to 22 initiatives. With no clause-level evidence available, SkyHarbor cannot assess its negotiating position, exit optionability, or outcome accountability terms. The renewal window is effectively open now.",
+        "evidence_supporting_it": "NorthPeak CTR-064/066/067: $338,148,856 committed, next_end_date 2027-06-28. sourcing_options: clause-level documents absent. material_evidence_gaps: contract_clause_evidence 0 observed rows. change_readiness: vendor sentiment frustrated.",
+        "consequence_of_delay": "Auto-renewal on vendor-favorable terms; loss of leverage to restructure for outcome-based accountability; potential concentration risk if NorthPeak capacity is constrained during a contested renewal period.",
+        "accountable_leadership_role": "CIO, Chief Procurement Officer, CFO"
+      },
+      {
+        "decision": "Define and enforce an AI license expansion and new deployment gate: no scale of existing licenses and no new AI tool deployment without a passed 60-day proof cycle reviewed by Finance.",
+        "why_required": "Tower-claimable value is zero. All 150 funded-no-baseline claims and 12 usage-supported claims are below the evidentiary standard. The CEO, SVP Commercial Strategy, SVP Flight Operations, SVP Loyalty, and SVP Marketing all mandate 'measure value before expanding licenses.' Without a formal gate, the portfolio will continue to accumulate deployment cost without evidence.",
+        "evidence_supporting_it": "value_claim_states: tower_claimable_value = 0. adoption_and_usage: 150 funded_no_baseline, 12 usage_supported. AI tool annual costs: M365 Copilot $46.7M, ChatGPT Enterprise $39.2M, GitHub Copilot $36.1M. CEO, five SVP ai_strategy_mandates: Measure value before expanding licenses.",
+        "consequence_of_delay": "Continued license cost accumulation without a defensible return; board-level credibility risk when the 2027–2030 investment case requires AI ROI evidence; potential CPO-mandate breach on sensitive use case controls.",
+        "accountable_leadership_role": "CEO (mandate), CIO (implementation), CFO (gate enforcement)"
+      },
+      {
+        "decision": "Decide the target state for the data platform: resolve the Teradata-to-cloud transition endpoint and timeline, and confirm the Snowflake contract renewal or competitive evaluation ahead of the May 2027 expiry.",
+        "why_required": "Teradata Optimization is running through at least six waves with $39.8M committed (renewal 2030). Snowflake has a $29M commitment renewing May 2027 with auto-renew active. Databricks has a $31.5M commitment. Without a declared target state, optimization waves risk being tactical cost management rather than platform rationalization, and the auto-renew on Snowflake will commit $29M without a deliberate decision.",
+        "evidence_supporting_it": "Teradata: $39,831,500 committed, 2030-06-28. Snowflake: $29,004,906 committed, 2027-05-28, auto_renew = 1. Databricks: $31,476,836 committed, 2028-01-28. data_maturity: Platform 2.93, AI readiness 2.90. Teradata Optimization Waves 1–6 visible across multiple initiatives.",
+        "consequence_of_delay": "Snowflake auto-renew commits $29M without strategic alignment review; parallel platform spend (Teradata + Snowflake + Databricks) continues without a convergence pathway; data platform complexity remains a constraint on AI readiness.",
+        "accountable_leadership_role": "CIO, Chief Data Officer (or equivalent), CFO"
+      }
+    ],
+    "observed_text": "The evidence packet reveals a transformation portfolio that is broad, well-funded, and operationally active — 91 projects in flight, 12 AI tools deployed, $160M+ in annual AI tool costs, and strategic alignment across all 14 high-criticality business functions. Key operational KPIs show directional improvement (e.g., aircraft utilization trending up, crew recovery time in Operations Control at 33.6 minutes moving toward a 25.4-minute target). Internal AI agents (Operations Recovery, Maintenance Knowledge, Customer Recovery) are achieving active rates of 52–54%, meaningfully above the ~40% rates of the horizontal productivity copilots. Cloud maturity scores range from 2.50 (Automation) to 3.50 (Strategy), indicating a recognized strategic direction but uneven execution. Change readiness shows positive sentiment on strategy and cost but frustrated or resigned sentiment on AI, talent, vendor, reliability, and decision rights themes. The NorthPeak Consulting renewal is 11 months away with no clause-level evidence available. Tower-claimable value is zero across all 162 assessed claims.",
+    "why_text": "The gap between investment scale and evidence quality reflects three compounding structural conditions. First, the AI deployment model prioritized reach over proof — seats were acquired and assigned faster than value measurement infrastructure was built, which is a common but consequential sequencing error in enterprise AI programs. Second, KPI governance was not treated as a transformation prerequisite. When the same operational metric (aircraft utilization, crew recovery time) is reported with materially different values and definitions by different functions, no AI or operational initiative can produce a measurement that Finance will attest to — and without Finance attestation, no claim crosses the Tower threshold. Third, the portfolio governance model did not keep pace with portfolio scale. Running 57 critical-priority initiatives simultaneously, with 24 already at risk and 10 awaiting unresolved decisions, reflects a planning process that approved initiatives faster than it resolved the ownership, measurement, and sequencing conditions required for execution success.",
+    "implication_text": "If the current trajectory continues without structural intervention, three consequences will materialize before the 2027 planning cycle. First, the AI business case will be challenged at the board level — $160M+ in annual AI spend with zero Tower-level value claims is not a defensible position for a $52.8B enterprise that has committed to AI-led transformation. Second, the NorthPeak renewal will be negotiated from a weak position — without clause-level evidence, benchmarking data, or a documented alternative, SkyHarbor will renew $338M on terms it cannot fully assess. Third, execution capacity will continue to erode — 24 at-risk projects in a portfolio of 150 is a 16% at-risk rate that, if not addressed, will consume change management capacity needed for the 2027–2030 transformation waves. Conversely, if the 30-day governance actions are executed — KPI owners assigned, pending funding decisions resolved, proof gates established, NorthPeak process initiated — the transformation retains its strategic momentum while building the evidence infrastructure required to sustain it through 2030.",
+    "assumption_text": "The following assumptions are applied in this analysis and should be validated by the relevant business owners. One: the active user counts and estimated hours saved for AI tools reflect telemetry from the vendor platforms and have not been adjusted for quality of use, prompt effectiveness, or workflow integration depth — actual productivity impact may be higher or lower than telemetry implies. Two: KPI values reported under different business functions for the same metric (e.g., aircraft utilization across Crew Operations, Internal Audit, ITSM, Sales) reflect genuinely different definitions or data sources, not simply reporting errors — this assumption, if incorrect, would simplify the KPI governance agenda. Three: the NorthPeak Consulting contracts (CTR-064/066/067) do not contain provisions that would make competitive evaluation legally constrained or commercially prohibitive — this requires legal review before the renewal strategy is finalized. Four: the change readiness frustration signals on AI, talent, and vendor themes reflect organizational experience with the current transformation model and are not attributable to individual leadership actions — this framing is used to keep the analysis at the governance level, consistent with the advisory role.",
+    "evidence_gaps": [
+      {
+        "gap": "No workflow-level before/after baselines for any AI tool or agent",
+        "decision_blocked": "AI license expansion, funding confirmation for AI-component initiatives, board-level value reporting",
+        "why_material": "Tower-claimable value is zero. Without baselines, no proof cycle can produce a Finance-attestable claim. The entire AI business case depends on resolving this gap.",
+        "owner_role": "CIO (AI Products and Enablement team), SVP business owners for each priority use case",
+        "next_action": "Define and instrument workflow baselines for five priority use cases within 30 days; launch 60-day proof cycles by Day 31."
+      },
+      {
+        "gap": "Contract clause-level evidence absent for all major vendors (0 observed rows)",
+        "decision_blocked": "NorthPeak renewal strategy, SkyBridge AMS restructuring assessment, Salesforce and GlobalLink renegotiation leverage",
+        "why_material": "Over $1.5B in committed vendor value has no clause-level visibility. NorthPeak renews in 11 months. Sourcing decisions cannot be made responsibly without this data.",
+        "owner_role": "Chief Procurement Officer, Legal, CIO",
+        "next_action": "Initiate contract extraction and clause corpus loading for the five largest vendor relationships (NorthPeak, SkyBridge AMS, GlobalLink Telecom, Microsoft, Salesforce) within 30 days."
+      },
+      {
+        "gap": "Cloud estate reference data blank across all cloud economics rows (240 observations without estate linkage)",
+        "decision_blocked": "Cloud cost optimization precision, cloud vendor negotiation, cloud-hosted AI workload cost allocation",
+        "why_material": "Without estate references, cloud spend cannot be attributed to workloads, business functions, or initiatives — preventing cost-per-outcome analysis and informed renewal decisions for AWS/Azure/GCP commitments.",
+        "owner_role": "CIO, Infrastructure and Cloud portfolio group, Technology Finance and PMO",
+        "next_action": "Complete CMDB refresh and cloud estate tagging as a prerequisite for the next cloud cost review cycle; prioritize the 187 public cloud IaaS/PaaS applications."
+      },
+      {
+        "gap": "DORA/developer productivity before-after observations absent (0 rows) for GitHub Copilot",
+        "decision_blocked": "GitHub Copilot scale/funding decision; developer throughput impact on overall portfolio execution capacity",
+        "why_material": "$36M annual spend with 148,293 active users and no productivity measurement. Developer throughput directly constrains transformation portfolio delivery speed.",
+        "owner_role": "CIO, engineering leadership, AI Products and Enablement",
+        "next_action": "Define DORA baseline protocol and instrument for a pilot engineering cohort within 30 days; begin 60-day measurement cycle by Day 31."
+      },
+      {
+        "gap": "ServiceNow ITSM and Workday HR workflow before/after observations absent (0 rows each)",
+        "decision_blocked": "ServiceNow Now Assist and SAP Joule scale decisions; ITSM AI Wave funding justification",
+        "why_material": "ServiceNow ($38.9M committed) and SAP/Joule ($9M annual cost) represent significant run-cost reduction hypotheses that cannot be validated without workflow baselines.",
+        "owner_role": "CIO, IT Service Management portfolio group, Corporate Applications",
+        "next_action": "Define incident-resolution and HR transaction workflow baselines within 60 days; align with ITSM AI Wave investment decisions."
+      },
+      {
+        "gap": "22 risk controls with missing test dates across cybersecurity, AI governance, legacy technology, and regulatory domains",
+        "decision_blocked": "Risk residual confidence for board reporting; AI governance constraint decisions (CPO mandate); regulatory compliance attestation",
+        "why_material": "Critical and High inherent severity risks without tested controls cannot be characterized as residual Medium — the residual rating is an assumption, not an evidence-based assessment. This affects both board risk reporting and AI deployment authorization.",
+        "owner_role": "CISO, Chief Risk Officer, CIO",
+        "next_action": "Complete control testing for all 22 controls with missing test dates within 60 days; refresh residual ratings based on actual test results; report to board Risk Committee."
+      }
+    ]
+  }
+}

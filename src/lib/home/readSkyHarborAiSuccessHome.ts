@@ -6,6 +6,7 @@ import allowedValuesSnapshot from "./ai-success-data/allowed-values.json";
 import advisoryResultSnapshot from "./ai-success-data/architecture-advisory-result.json";
 import architectureGraphSnapshot from "./ai-success-data/architecture-graph.json";
 import dataCapabilityPacketSnapshot from "./ai-success-data/data-capability-packet.json";
+import towerAdvisoryResultSnapshot from "./ai-success-data/tower-advisory-result.json";
 
 type Json = Record<string, unknown>;
 
@@ -58,14 +59,42 @@ export interface AiSuccessHomeData {
     gate: string;
     ref: string;
   }>;
+  heroHeadline: string;
+  heroLead: string;
   decisions: Array<{
     decision: string;
     consequence: string;
     owner: string;
     destination: string;
+    destinationHref: string;
   }>;
+  investmentPriorities: Array<{
+    rank: number;
+    title: string;
+    rationale: string;
+    refs: string[];
+  }>;
+  architectureRisks: Array<{ pattern: string; description: string; refs: string[] }>;
   limits: Array<{ title: string; body: string; owner: string }>;
+  flowDiagram: {
+    stages: Array<{
+      key: string;
+      label: string;
+      hint: string;
+      boxes: Array<{ title: string; subtitle: string; tag: string }>;
+    }>;
+    crossCutting: { label: string; note: string };
+  };
 }
+
+const MODULE_ROUTES: Record<string, string> = {
+  Home: "/home",
+  Intelligence: "/intelligence/enterprise-landscape",
+  Source: "/source",
+  Tower: "/tower",
+  Moves: "/strategic-moves",
+  "Evidence backlog": "/tower",
+};
 
 export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
   const packet = objectFrom(dataCapabilityPacketSnapshot);
@@ -107,6 +136,67 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
     towerClaims.find((row) => textFrom(row.claim_state) === "usage_supported")
       ?.claim_count,
   );
+
+  // The Tower Claude layer is the comprehensive, business-first transformation narrative --
+  // it reads the full enterprise context (KPIs, interviews, portfolio, vendors, change
+  // readiness), not just the architecture graph. It supersedes the narrower architecture
+  // advisory for hero/decisions/priorities; the architecture advisory still backs the
+  // diagram callouts in CurrentStateArchitectureMap.
+  const tower = (
+    towerAdvisoryResultSnapshot as unknown as {
+      parsed: {
+        headline: string;
+        executive_thesis: string;
+        leadership_decisions_required: Array<{
+          decision: string;
+          why_required: string;
+          accountable_leadership_role: string;
+        }>;
+        portfolio_choices: Array<{
+          scope: string;
+          recommended_choice: string;
+          business_rationale: string;
+          evidence_refs: string[];
+        }>;
+        evidence_gaps: Array<{
+          gap: string;
+          why_material: string;
+          next_action: string;
+          owner_role: string;
+        }>;
+      };
+    }
+  ).parsed;
+
+  const heroHeadline = tower.headline;
+  const heroLead = tower.executive_thesis;
+
+  const DECISION_DESTINATIONS = ["Tower", "Moves", "Source", "Tower", "Intelligence"];
+  const decisions = tower.leadership_decisions_required.slice(0, 5).map((item, index) => {
+    const destination = DECISION_DESTINATIONS[index] ?? "Intelligence";
+    return {
+      decision: item.decision,
+      consequence: item.why_required,
+      owner: item.accountable_leadership_role,
+      destination,
+      destinationHref: MODULE_ROUTES[destination] ?? "/intelligence",
+    };
+  });
+
+  const investmentPriorities = tower.portfolio_choices.map((item, index) => ({
+    rank: index + 1,
+    title: `${item.scope} — ${item.recommended_choice}`,
+    rationale: item.business_rationale,
+    refs: item.evidence_refs,
+  }));
+
+  const architectureRisks = tower.evidence_gaps.map((item) => ({
+    pattern: item.gap,
+    description: `${item.why_material} ${item.next_action}`,
+    refs: [item.owner_role],
+  }));
+
+  const flowDiagram = buildFlowDiagram(packet, graph, aiPortfolio);
 
   return {
     tenantName: textFrom(tenant.tenant_display_name, "SkyHarbor Global"),
@@ -255,34 +345,12 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
       gate: textFrom(row.decision_needed, "Confirm owner and baseline"),
       ref: textFrom(row.project_id, textFrom(row.evidence_ref)),
     })),
-    decisions: [
-      {
-        decision: "Approve the baseline gate policy",
-        consequence:
-          "Blocks 150 claims from ever becoming provable if deferred.",
-        owner: "CFO",
-        destination: "Moves",
-      },
-      {
-        decision: "Authorize the contract page and span load",
-        consequence: "No clause-level evidence exists across 119 contracts.",
-        owner: "CIO",
-        destination: "Source",
-      },
-      {
-        decision: "Resolve SAP S/4HANA lifecycle dispute",
-        consequence:
-          "ERP consolidation remains blocked by an unresolved platform decision.",
-        owner: "CIO",
-        destination: "Intelligence",
-      },
-      {
-        decision: "Sequence AI scaling against Tier 1 dependencies",
-        consequence: "130 critical applications shape the AI agenda.",
-        owner: "CIO + CDAO",
-        destination: "Tower",
-      },
-    ],
+    heroHeadline,
+    heroLead,
+    decisions,
+    investmentPriorities,
+    architectureRisks,
+    flowDiagram,
     limits: [
       {
         title: "Realized AI financial value",
@@ -344,4 +412,102 @@ function numberFrom(value: unknown): number {
 
 function formatInt(value: number): string {
   return Math.round(value).toLocaleString("en-US");
+}
+
+function formatMoney(value: number): string {
+  if (!value) return "Not established";
+  if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
+// Excludes vendors that are themselves integration/analytics tooling (they'd otherwise
+// double-appear as both a "source system" and later as an Integration/Data platform box).
+const NON_SOURCE_VENDORS = new Set([
+  "Informatica",
+  "Ab Initio",
+  "Cloudera",
+  "IBM",
+  "Confluent",
+  "Databricks",
+  "MuleSoft",
+  "Snowflake",
+  "Talend",
+  "Denodo",
+]);
+
+function buildFlowDiagram(packet: Json, graph: ArchitectureGraph, aiPortfolio: Json) {
+  const apps = arrayFrom(objectFrom(packet.applications).top_material_rows);
+  const seenFunctions = new Set<string>();
+  const sourceBoxes: Array<{ title: string; subtitle: string; tag: string }> = [];
+  for (const row of [...apps].sort(
+    (a, b) => numberFrom(b.annual_run_cost) - numberFrom(a.annual_run_cost),
+  )) {
+    const [vendor, product] = textFrom(row.primary_vendor_product).split(" / ");
+    if (NON_SOURCE_VENDORS.has(vendor)) continue;
+    const businessFunction = textFrom(row.primary_business_function);
+    if (seenFunctions.has(businessFunction)) continue;
+    seenFunctions.add(businessFunction);
+    sourceBoxes.push({
+      title: product || vendor,
+      subtitle: businessFunction,
+      tag: formatMoney(numberFrom(row.annual_run_cost)),
+    });
+    if (sourceBoxes.length >= 5) break;
+  }
+
+  const edgeDegree = (nodeRef: string) =>
+    graph.edges.filter((e) => e.fromNodeRef === nodeRef || e.toNodeRef === nodeRef).length;
+
+  const integrationBoxes = graph.nodes
+    .filter((n) => n.layer === "integration")
+    .map((n) => ({ title: n.label, subtitle: "Integration tool", tag: `${edgeDegree(n.nodeRef)} connections` }));
+
+  const transformationBoxes = graph.nodes
+    .filter((n) => n.layer === "transformation")
+    .map((n) => ({ title: n.label, subtitle: "Transformation", tag: `${edgeDegree(n.nodeRef)} connections` }));
+
+  const platforms = arrayFrom(objectFrom(packet.platforms).top_material_rows);
+  const costByTech = new Map<string, number>();
+  for (const row of platforms) {
+    const tech = textFrom(row.technology_product);
+    if (!tech) continue;
+    costByTech.set(tech, (costByTech.get(tech) ?? 0) + numberFrom(row.approx_annual_run_cost));
+  }
+  const dataPlatformBoxes = [...costByTech.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tech, cost]) => ({ title: tech, subtitle: "Function marts", tag: formatMoney(cost) }));
+
+  const aiRows = arrayFrom(aiPortfolio.top_rows);
+  const aiByTool = new Map<string, { vendor: string; cost: number }>();
+  for (const row of aiRows) {
+    const tool = textFrom(row.tool_agent_product);
+    if (!tool) continue;
+    const existing = aiByTool.get(tool);
+    const cost = numberFrom(row.estimated_use_cost);
+    aiByTool.set(tool, { vendor: textFrom(row.vendor_provider), cost: (existing?.cost ?? 0) + cost });
+  }
+  const aiBoxes = [...aiByTool.entries()]
+    .sort((a, b) => b[1].cost - a[1].cost)
+    .slice(0, 5)
+    .map(([tool, agg]) => ({ title: tool, subtitle: agg.vendor, tag: formatMoney(agg.cost) }));
+
+  const riskSummary = objectFrom(objectFrom(packet.risksAndControls).summary);
+  const totalControls = textFrom(riskSummary.risk_control_count, "0");
+  const missingTestDate = textFrom(riskSummary.result_without_test_date_count, "0");
+
+  return {
+    stages: [
+      { key: "source", label: "Source systems", hint: "operational systems of record", boxes: sourceBoxes },
+      { key: "integration", label: "Integration", hint: "APIs, files and messaging", boxes: integrationBoxes },
+      { key: "transformation", label: "Transformation", hint: "ETL, pipelines and logic", boxes: transformationBoxes },
+      { key: "data_platform", label: "Data platforms", hint: "warehouses, lakes and marts", boxes: dataPlatformBoxes },
+      { key: "ai_and_decision", label: "AI-enabled outcomes", hint: "AI activation and proof", boxes: aiBoxes },
+    ],
+    crossCutting: {
+      label: "Risk and control coverage",
+      note: `${totalControls} risk/control rows registered · ${missingTestDate} missing a control test date`,
+    },
+  };
 }
