@@ -95,4 +95,27 @@ describe("TowerCommandCenter.module.css contract", () => {
     expect(rules).not.toMatch(/:root\s*\{/);
     expect(rules).not.toMatch(/:global/);
   });
+
+  it("keeps the fixed shell horizontally shrinkable", () => {
+    for (const selector of [
+      ".root",
+      ".stage",
+      ".wrap",
+      ".dashTop",
+      ".bodyregion",
+      ".view",
+      ".card",
+    ]) {
+      const blockStart = rules.indexOf(`${selector} {`);
+      expect(blockStart).toBeGreaterThanOrEqual(0);
+      const blockEnd = rules.indexOf("}", blockStart);
+      const block = rules.slice(blockStart, blockEnd);
+      expect(block).toContain("min-width: 0");
+    }
+
+    const tabsStart = rules.indexOf(".tabs {");
+    expect(tabsStart).toBeGreaterThanOrEqual(0);
+    const tabsBlock = rules.slice(tabsStart, rules.indexOf("}", tabsStart));
+    expect(tabsBlock).toContain("overflow-x: auto");
+  });
 });

@@ -602,7 +602,7 @@ function lineage(): TowerMartEvidenceLineage[] {
 /** The full fixture, in mart shape. Feed to `buildTowerCommandCenterView()`. */
 export function designFixtureMart(): TowerMartCommandViewModel {
   return {
-    generatedFrom: "cio_tower_mart",
+    generatedFrom: "tower_schema",
     headline: "Tower fixture",
     command: {
       commandCenterKey: "fixture::cc",
