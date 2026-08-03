@@ -20,7 +20,15 @@ returns numeric
 language sql
 immutable
 as $$
-  select nullif(regexp_replace(coalesce(value, ''), '[^0-9.-]+', '', 'g'), '')::numeric
+  with cleaned as (
+    select regexp_replace(coalesce(value, ''), '[^0-9.-]+', '', 'g') as value
+  )
+  select case
+    when value ~ '^-?[0-9]+(\.[0-9]+)?$' then value::numeric
+    when value ~ '^-?\.[0-9]+$' then value::numeric
+    else null
+  end
+  from cleaned
 $$;
 
 create or replace function tower.period_start(value text)
