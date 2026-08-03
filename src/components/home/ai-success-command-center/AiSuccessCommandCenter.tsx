@@ -12,10 +12,14 @@ import {
   LabelList,
   Pie,
   PieChart,
+  ReferenceArea,
+  Scatter,
+  ScatterChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from "recharts";
 
 import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentStateArchitectureMap";
@@ -227,60 +231,310 @@ function ExecutiveCanvas({
   contractRatio: number;
   aiCostRatio: number;
 }) {
+  const [activeTabId, setActiveTabId] = useState(
+    data.advisoryTabs[0]?.id ?? "thesis",
+  );
+  const activeTab =
+    data.advisoryTabs.find((tab) => tab.id === activeTabId) ??
+    data.advisoryTabs[0];
+
   return (
-    <div className={styles.executiveGrid}>
-      <div className={styles.executiveStory}>
-        <div className={styles.heroMeta}>
-          <span>Current-state advisory</span>
-          <span>Evidence-bound</span>
-          <span>Pending review</span>
-        </div>
-        <h2 className={styles.h1}>
-          AI is scaling across SkyHarbor. Value proof has not caught up.
-        </h2>
-        <p className={styles.lead}>
-          SkyHarbor is running AI at real scale: coding assistants, BI copilots
-          and ERP copilots against operations, crew, revenue management and
-          customer recovery. Adoption is uneven but genuine.
-        </p>
-        <p className={styles.paragraph}>
-          Of 162 governed value claims, none currently meets the claimable
-          threshold, and Tower establishes $0 of claimable value. The barrier is
-          structural: claims carry funding without a baseline, adoption rows
-          carry telemetry without an outcome, and AI touches a Tier 1/Critical
-          estate.
-        </p>
-        <Evidence
-          refs={[
-            "tower.value_claim · 162",
-            "ALLOWED_VALUES · FY2027 $2.35B",
-            "contracts · $1.4805B",
-            "FIND-ARCH-AI-PROOF-GAP",
-            `snapshot ${data.graphFingerprint.slice(0, 8)}`,
-          ]}
-        />
+    <div className={styles.advisoryShell}>
+      <div
+        className={styles.advisoryTabs}
+        role="tablist"
+        aria-label="Advisory story"
+      >
+        {data.advisoryTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab?.id === tab.id}
+            aria-controls={`advisory-panel-${tab.id}`}
+            id={`advisory-tab-${tab.id}`}
+            className={`${styles.advisoryTab} ${
+              activeTab?.id === tab.id ? styles.advisoryTabActive : ""
+            }`}
+            onClick={() => {
+              setActiveTabId(tab.id);
+              requestAnimationFrame(() => {
+                window.scrollTo({ top: 0, left: 0 });
+              });
+            }}
+          >
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            {tab.label}
+          </button>
+        ))}
       </div>
-      <aside className={`${styles.panel} ${styles.moneyPanel}`}>
-        <span className={styles.eyebrow}>Where the money is</span>
-        <h3 className={styles.panelTitle}>and where the proof is</h3>
-        <div className={styles.barList}>
-          {data.moneyBars.map((bar, index) => (
-            <MoneyBar
-              key={bar.label}
-              {...bar}
-              percent={
-                index === 0
-                  ? 100
-                  : index === 1
-                    ? contractRatio * 100
-                    : index === 2
-                      ? aiCostRatio * 100
-                      : 0
-              }
-            />
-          ))}
+
+      {activeTab ? (
+        <div
+          id={`advisory-panel-${activeTab.id}`}
+          role="tabpanel"
+          aria-labelledby={`advisory-tab-${activeTab.id}`}
+          className={`${styles.advisoryPanel} ${
+            activeTab.id === "ai-shift" ? styles.advisoryPanelMatrix : ""
+          }`}
+        >
+          <article className={styles.advisoryStory}>
+            <div className={styles.heroMeta}>
+              <span>{activeTab.kicker}</span>
+              <span>Evidence-bound</span>
+              <span>Human review required</span>
+            </div>
+            <h2 className={styles.h1}>{activeTab.headline}</h2>
+            {activeTab.id === "ai-shift" ? (
+              <AdvisoryValueMatrix data={data} />
+            ) : null}
+            <p className={styles.lead}>{activeTab.read}</p>
+            <div className={styles.advisoryPointGrid}>
+              {activeTab.points.map((point) => (
+                <div key={point.label} className={styles.advisoryPoint}>
+                  <span>{point.label}</span>
+                  <p>{point.body}</p>
+                </div>
+              ))}
+            </div>
+            <Evidence refs={activeTab.evidenceRefs} />
+          </article>
+
+          {activeTab.id !== "ai-shift" ? (
+            <aside className={`${styles.panel} ${styles.advisoryAside}`}>
+              <span className={styles.eyebrow}>Executive proof stack</span>
+              {activeTab.callout ? (
+                <div className={styles.advisoryCallout}>
+                  <span>{activeTab.callout.label}</span>
+                  <strong>{activeTab.callout.value}</strong>
+                  <p>{activeTab.callout.note}</p>
+                </div>
+              ) : null}
+              <div className={styles.barList}>
+                {data.moneyBars.map((bar, index) => (
+                  <MoneyBar
+                    key={bar.label}
+                    {...bar}
+                    percent={
+                      index === 0
+                        ? 100
+                        : index === 1
+                          ? contractRatio * 100
+                          : index === 2
+                            ? aiCostRatio * 100
+                            : 0
+                    }
+                  />
+                ))}
+              </div>
+            </aside>
+          ) : null}
         </div>
-      </aside>
+      ) : null}
+    </div>
+  );
+}
+
+function AdvisoryValueMatrix({ data }: { data: AiSuccessHomeData }) {
+  const matrixData = data.advisoryValueMatrix.map((idea) => ({
+    ...idea,
+    z:
+      idea.valuePotential === "High"
+        ? 520
+        : idea.valuePotential === "Medium"
+          ? 430
+          : 340,
+  }));
+
+  return (
+    <div className={styles.valueMatrixShell}>
+      <div className={styles.matrixIntro}>
+        <div>
+          <span className={styles.eyebrow}>Value priority matrix</span>
+          <h3>Where the first dollar goes</h3>
+        </div>
+        <p>
+          Value potential x execution readiness. Use this as a workshop frame:
+          outside-in value ideas move only when source owners validate the
+          evidence gate.
+        </p>
+      </div>
+      <div
+        className={styles.matrixChartCard}
+        aria-label="AI use case priority matrix"
+      >
+        <ResponsiveContainer width="100%" height={360}>
+          <ScatterChart margin={{ top: 20, right: 24, bottom: 34, left: 40 }}>
+            <CartesianGrid stroke="#ffffff" strokeWidth={1.5} />
+            <ReferenceArea x1={0} x2={33.33} y1={0} y2={33.33} fill="#eef2f6" />
+            <ReferenceArea
+              x1={0}
+              x2={33.33}
+              y1={33.33}
+              y2={66.66}
+              fill="#eef2f6"
+            />
+            <ReferenceArea
+              x1={0}
+              x2={33.33}
+              y1={66.66}
+              y2={100}
+              fill="#f3ead6"
+            />
+            <ReferenceArea
+              x1={33.33}
+              x2={66.66}
+              y1={0}
+              y2={33.33}
+              fill="#eef2f6"
+            />
+            <ReferenceArea
+              x1={33.33}
+              x2={66.66}
+              y1={33.33}
+              y2={66.66}
+              fill="#f3ead6"
+            />
+            <ReferenceArea
+              x1={33.33}
+              x2={66.66}
+              y1={66.66}
+              y2={100}
+              fill="#dcece5"
+            />
+            <ReferenceArea
+              x1={66.66}
+              x2={100}
+              y1={0}
+              y2={33.33}
+              fill="#f3ead6"
+            />
+            <ReferenceArea
+              x1={66.66}
+              x2={100}
+              y1={33.33}
+              y2={66.66}
+              fill="#dcece5"
+            />
+            <ReferenceArea
+              x1={66.66}
+              x2={100}
+              y1={66.66}
+              y2={100}
+              fill="#dcece5"
+            />
+            <XAxis
+              type="number"
+              dataKey="x"
+              domain={[0, 100]}
+              ticks={[16.66, 50, 83.33]}
+              tickFormatter={readinessTick}
+              tick={{ fill: "#5f6f88", fontSize: 11, fontWeight: 800 }}
+              axisLine={{ stroke: "rgba(12, 26, 58, 0.26)" }}
+              tickLine={false}
+              label={{
+                value: "Execution readiness",
+                position: "insideBottom",
+                offset: -24,
+                fill: "#0c1a3a",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              domain={[0, 100]}
+              ticks={[16.66, 50, 83.33]}
+              tickFormatter={readinessTick}
+              tick={{ fill: "#5f6f88", fontSize: 11, fontWeight: 800 }}
+              axisLine={{ stroke: "rgba(12, 26, 58, 0.26)" }}
+              tickLine={false}
+              label={{
+                value: "Value potential",
+                angle: -90,
+                position: "insideLeft",
+                fill: "#0c1a3a",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            />
+            <ZAxis type="number" dataKey="z" range={[420, 820]} />
+            <Tooltip content={<MatrixTooltipContent />} />
+            <Scatter data={matrixData} isAnimationActive={false}>
+              {matrixData.map((idea) => (
+                <Cell key={idea.id} fill={matrixColor(idea.zone)} />
+              ))}
+              <LabelList
+                dataKey="shortLabel"
+                position="inside"
+                fill="#ffffff"
+                fontSize={11}
+                fontWeight={900}
+              />
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+      <div className={styles.matrixLegend}>
+        <span>
+          <i className={styles.legendInvest} />
+          Invest now
+        </span>
+        <span>
+          <i className={styles.legendBuild} />
+          Build selectively
+        </span>
+        <span>
+          <i className={styles.legendMonitor} />
+          Monitor
+        </span>
+      </div>
+      <div className={styles.matrixIdeaList}>
+        {data.advisoryValueMatrix.map((idea) => (
+          <article key={idea.id}>
+            <span>{idea.zone.replace("-", " ")}</span>
+            <strong>{idea.title}</strong>
+            <p>{idea.note}</p>
+            <small>{idea.evidenceGate}</small>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function readinessTick(value: number) {
+  if (value < 34) return "Low";
+  if (value < 67) return "Medium";
+  return "High";
+}
+
+function matrixColor(
+  zone: AiSuccessHomeData["advisoryValueMatrix"][number]["zone"],
+) {
+  if (zone === "invest") return "#173e6d";
+  if (zone === "build") return "#9b6418";
+  return "#66758d";
+}
+
+function MatrixTooltipContent({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    payload?: AiSuccessHomeData["advisoryValueMatrix"][number];
+  }>;
+}) {
+  if (!active || !payload?.[0]?.payload) return null;
+  const idea = payload[0].payload;
+  return (
+    <div className={styles.matrixTooltip}>
+      <span>{idea.zone.replace("-", " ")}</span>
+      <strong>{idea.title}</strong>
+      <p>{idea.note}</p>
+      <small>{idea.evidenceGate}</small>
     </div>
   );
 }
