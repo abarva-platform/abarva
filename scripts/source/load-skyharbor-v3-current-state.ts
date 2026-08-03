@@ -89,6 +89,7 @@ interface Reconciliation {
 
 function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
+  const envApply = process.env.SOURCE_SKYHARBOR_V3_APPLY === "true";
   const value = (name: string): string | undefined => {
     const idx = args.indexOf(name);
     if (idx >= 0) return args[idx + 1];
@@ -97,7 +98,7 @@ function parseArgs(): CliArgs {
   };
 
   return {
-    apply: args.includes("--apply"),
+    apply: args.includes("--apply") || envApply,
     packageZip:
       value("--package-zip") ??
       process.env.SKYHARBOR_V3_PACKAGE_ZIP ??
