@@ -178,32 +178,19 @@ jobs:
             echo "acr_id=$acr_id"
           } | tee audit-artifacts/aca-cube-lab-deploy/azure-resources.txt
 
-      - name: Ensure Cube Key Vault secrets exist
+      - name: Record private Key Vault secret references
         shell: bash
         run: |
           set -euo pipefail
-          ensure_secret() {
-            local name="$1"
-            if az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "$name" --query id --output tsv >/dev/null 2>&1; then
-              echo "secret=$name state=exists"
-              return
-            fi
-            value="$(openssl rand -base64 48 | tr -d '\n')"
-            az keyvault secret set \
-              --vault-name "$KEY_VAULT_NAME" \
-              --name "$name" \
-              --value "$value" \
-              --output none
-            echo "secret=$name state=created"
-          }
-
-          az keyvault secret show \
-            --vault-name "$KEY_VAULT_NAME" \
-            --name azure-postgres-control-database-url \
-            --query id \
-            --output tsv > audit-artifacts/aca-cube-lab-deploy/database-secret-id.txt
-          ensure_secret cube-api-secret | tee audit-artifacts/aca-cube-lab-deploy/cube-api-secret-state.txt
-          ensure_secret cube-sql-password | tee audit-artifacts/aca-cube-lab-deploy/cube-sql-password-state.txt
+          # The lab vault is private-link only. GitHub-hosted runners must not
+          # read or create vault secrets directly; ACA stores Key Vault
+          # references and resolves them through the runtime managed identity.
+          {
+            echo "database_url=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/azure-postgres-control-database-url"
+            echo "cube_api_secret=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-api-secret"
+            echo "cube_sql_password=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-sql-password"
+            echo "resolution=aca-runtime-managed-identity"
+          } | tee audit-artifacts/aca-cube-lab-deploy/key-vault-references.txt
 
       - name: Log in to ACR for Docker Buildx
         shell: bash
