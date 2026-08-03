@@ -178,18 +178,22 @@ jobs:
             echo "acr_id=$acr_id"
           } | tee audit-artifacts/aca-cube-lab-deploy/azure-resources.txt
 
-      - name: Record private Key Vault secret references
+      - name: Record runtime secret sources
         shell: bash
         run: |
           set -euo pipefail
           # The lab vault is private-link only. GitHub-hosted runners must not
-          # read or create vault secrets directly; ACA stores Key Vault
-          # references and resolves them through the runtime managed identity.
+          # read or create vault secrets directly. The database URL remains a
+          # Key Vault reference resolved by ACA through the runtime managed
+          # identity. Cube-only credentials are stored as Container App local
+          # secrets, sourced from GitHub secrets when present and generated
+          # during deploy otherwise.
           {
             echo "database_url=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/azure-postgres-control-database-url"
-            echo "cube_api_secret=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-api-secret"
-            echo "cube_sql_password=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-sql-password"
-            echo "resolution=aca-runtime-managed-identity"
+            echo "database_url_resolution=aca-runtime-managed-identity"
+            echo "cube_api_secret=containerapp-local-secret:cube-api-secret"
+            echo "cube_sql_password=containerapp-local-secret:cube-sql-pass"
+            echo "cube_secret_values_recorded=false"
           } | tee audit-artifacts/aca-cube-lab-deploy/key-vault-references.txt
 
       - name: Log in to ACR for Docker Buildx
@@ -255,11 +259,33 @@ jobs:
         env:
           IMAGE: ${{ steps.image.outputs.image }}
           RUNTIME_IDENTITY_ID: ${{ steps.azure_resources.outputs.identity_id }}
+          BOOTSTRAP_CUBE_API_SECRET: ${{ secrets.CUBE_API_SECRET }}
+          BOOTSTRAP_CUBE_SQL_PASSWORD: ${{ secrets.CUBE_SQL_PASSWORD }}
         run: |
           set -euo pipefail
           database_secret="database-url=keyvaultref:https://${KEY_VAULT_NAME}.vault.azure.net/secrets/azure-postgres-control-database-url,identityref:${RUNTIME_IDENTITY_ID}"
-          api_secret="cube-api-secret=keyvaultref:https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-api-secret,identityref:${RUNTIME_IDENTITY_ID}"
-          sql_secret="cube-sql-pass=keyvaultref:https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-sql-password,identityref:${RUNTIME_IDENTITY_ID}"
+          api_secret_value="${BOOTSTRAP_CUBE_API_SECRET:-}"
+          sql_secret_value="${BOOTSTRAP_CUBE_SQL_PASSWORD:-}"
+          api_secret_source="github_actions_secret"
+          sql_secret_source="github_actions_secret"
+          if [[ -z "$api_secret_value" ]]; then
+            api_secret_value="$(openssl rand -hex 48)"
+            api_secret_source="generated"
+          fi
+          if [[ -z "$sql_secret_value" ]]; then
+            sql_secret_value="$(openssl rand -hex 32)"
+            sql_secret_source="generated"
+          fi
+          echo "::add-mask::$api_secret_value"
+          echo "::add-mask::$sql_secret_value"
+          api_secret="cube-api-secret=${api_secret_value}"
+          sql_secret="cube-sql-pass=${sql_secret_value}"
+          {
+            echo "database_url_source=key_vault_reference"
+            echo "cube_api_secret_source=$api_secret_source"
+            echo "cube_sql_password_source=$sql_secret_source"
+            echo "cube_secret_values_recorded=false"
+          } | tee audit-artifacts/aca-cube-lab-deploy/runtime-secret-sources.txt
           env_vars=(
             "NODE_ENV=production"
             "DATABASE_URL=secretref:database-url"

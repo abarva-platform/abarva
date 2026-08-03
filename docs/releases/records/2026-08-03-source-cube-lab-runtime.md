@@ -38,7 +38,8 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - `cube/model/source_sourcing.yml` adds default hierarchies and drill members for the Source cubes.
 - `scripts/source/verify-source-cube-parity.mjs` now fails if Cube measures lack drill members or expected hierarchies are removed.
 - `package.json` adds `source:cube:verify-runtime`.
-- Follow-up hardening: the workflow records private Key Vault references but does not read or create vault secrets from GitHub-hosted runners; ACA resolves those references through the runtime managed identity.
+- Follow-up hardening: the workflow records private Key Vault references but does not read or create vault secrets from GitHub-hosted runners; ACA resolves the database URL through the runtime managed identity.
+- Cube-only API and SQL credentials are stored as Container App local secrets, sourced from GitHub secrets when configured and generated at deploy time otherwise. Secret values are masked and are not written to evidence artifacts.
 
 ## QA / Validation
 
@@ -48,6 +49,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - PASS: `docker build -f Dockerfile.cube -t abarva-source-cube-runtime:test .`.
 - PASS: local container entrypoint fails closed when required runtime secrets are absent.
 - PASS: follow-up workflow fix keeps release/deploy authority gates green after removing GitHub-runner Key Vault reads.
+- PASS: deploy retry design keeps the production database URL on private Key Vault while bootstrapping Cube-only credentials as non-exported Container App local secrets.
 - NOT RUN locally: Postgres parity verifier, because this checkout does not contain a lab database URL. The deploy workflow obtains the database URL from Key Vault.
 
 ## Rollout Plan
@@ -78,5 +80,6 @@ Disable or revert the Cube lab deploy workflow and remove or roll back `ca-abarv
 ## Known Gaps
 
 - Superset binding is not completed in this PR; this PR exposes the internal Cube SQL API port and proves the runtime shape first.
+- If GitHub-provided Cube credentials are not configured, the lab deploy generates Cube-only credentials during deployment; Superset binding should use stable managed credentials before broad consumer rollout.
 - Native Source workspace binding is not completed in this PR.
 - Some Source cubes are contract-ready but intentionally sparse until deeper operational extracts are generated and loaded.
