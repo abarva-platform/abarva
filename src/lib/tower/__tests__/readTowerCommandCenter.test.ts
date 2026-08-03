@@ -38,6 +38,9 @@ describe("readTowerCommandCenter", () => {
           unknown_value_claim_count: 144,
           known_zero_value_claim_count: 0,
           known_value_amount_usd: "42400000",
+          promised_value_amount_usd: "612000000",
+          finance_validated_value_usd: "42400000",
+          claimable_value_usd: "0",
           finance_attested_claim_count: 18,
           business_attested_claim_count: 18,
           claimable_count: 0,
@@ -78,6 +81,15 @@ describe("readTowerCommandCenter", () => {
           next_gate_owner_role: "Finance partner",
           quality_guardrail_state: "finance_validated",
           risk_guardrail_state: "business_validated",
+          promised_value: "6800000",
+          calculated_value: "200000",
+          baseline_observation_id: "obs-kpi-prj-001-baseline",
+          target_observation_id: "obs-kpi-prj-001-target",
+          actual_observation_id: "obs-kpi-prj-001-actual",
+          caveat: "Synthetic partial value is formula-derived from linked KPI progress and approved budget.",
+          approved_budget_usd: "16000000",
+          actual_to_date_usd: "5500000",
+          forecast_at_completion_usd: "17200000",
         },
       ])
       .mockResolvedValueOnce([
@@ -86,6 +98,7 @@ describe("readTowerCommandCenter", () => {
           title: "GitHub Copilot",
           subject_kind: "developer_ai_tool",
           vendor_ref: "VEN-001",
+          vendor_name: "GitHub",
           owner_role: "Developer platform owner",
           active_users: "4186",
           seats_purchased: "11998",
@@ -123,18 +136,28 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.generatedFrom).toBe("tower_schema");
     expect(mart?.command.unknownValueClaimCount).toBe(144);
     expect(mart?.command.knownValueClaimCount).toBe(18);
-    expect(mart?.command.promisedValueFy26).toBe(42_400_000);
+    expect(mart?.command.promisedValueFy26).toBe(612_000_000);
+    expect(mart?.command.partialFinanceValidatedValueYtd).toBe(42_400_000);
+    expect(mart?.command.realizedValueYtdAllowed).toBe(0);
+    expect(mart?.command.candidateAiOpportunities).toBe(0);
+    expect(mart?.command.approvedProgramBudgetFy26).toBe(16_000_000);
     expect(mart?.command.baselineLinkedClaimCount).toBe(75);
     expect(mart?.command.targetLinkedClaimCount).toBe(75);
     expect(mart?.command.actualLinkedClaimCount).toBe(75);
     expect(mart?.command.outcomeMeasuredClaimCount).toBe(75);
+
+    expect(mart?.programLanes[0]?.approvedFundingUsd).toBe(16_000_000);
+    expect(mart?.programLanes[0]?.promisedValueUsd).toBe(6_800_000);
+    expect(mart?.programLanes[0]?.financeValidatedValueUsd).toBe(200_000);
+    expect(mart?.programLanes[0]?.usageMetric).toBe("linked outcome metric");
+    expect(mart?.aiPortfolio[0]?.vendorName).toBe("GitHub");
 
     const view = buildTowerCommandCenterView(mart, {
       tenantName: "SkyHarbor Air",
     });
     expect(view?.summary.unknownValueClaimCount).toBe(144);
     expect(view?.summary.knownValueClaimCount).toBe(18);
-    expect(view?.summary.promisedUsd).toBe(42_400_000);
+    expect(view?.summary.promisedUsd).toBe(612_000_000);
     expect(view?.summary.executiveSummary).toMatch(/baseline\/current\/target outcome links/i);
   });
 });

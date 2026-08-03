@@ -1028,7 +1028,10 @@ select
   case when baseline_num is not null then 'obs-kpi-' || tower.slugify(kpi_observation_id || '-baseline') end,
   case when target_num is not null then 'obs-kpi-' || tower.slugify(kpi_observation_id || '-target') end,
   case when actual_num is not null then 'obs-kpi-' || tower.slugify(kpi_observation_id || '-actual') end,
-  null,
+  coalesce(
+    tower.parse_num(expected_business_technology_value),
+    tower.parse_num(approved_budget)
+  ),
   case
     when derived_claim_state = 'finance_validated'
      and progress_ratio is not null
@@ -1043,7 +1046,7 @@ select
     when 'baseline_captured' then 'baseline/current/target KPI evidence is present, but source confidence is still estimated.'
     when 'disputed' then 'baseline/current/target KPI evidence exists, but at least one linked KPI is disputed.'
     else 'project funding exists, but no linked KPI baseline/current/target evidence is loaded.'
-  end,
+  end || ' Promised value basis is numeric expected value when present; otherwise approved budget is used as investment-at-stake.',
   case derived_claim_state
     when 'finance_validated' then 'finance_validated'
     when 'disputed' then 'disputed'
@@ -1065,6 +1068,10 @@ select
     when 'baseline_captured' then 'Comparable measurement evidence exists, but confidence and attestation gates remain open.'
     when 'disputed' then 'Linked KPI evidence is disputed; Tower withholds the value from executive claimable totals.'
     else 'Project has funding data, but no linked outcome baseline/current/target evidence.'
+  end || case
+    when tower.parse_num(expected_business_technology_value) is null and tower.parse_num(approved_budget) is not null
+      then ' The source value hypothesis is qualitative, so Tower uses approved budget as value-at-stake rather than fabricated promised value.'
+    else ''
   end,
   case derived_claim_state
     when 'finance_validated' then 'Awaiting Finance and business attestation before claimability.'
