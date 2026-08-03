@@ -16,6 +16,18 @@ function setDefault(name, value) {
   if (!process.env[name]) process.env[name] = value;
 }
 
+function quotePgOption(value) {
+  return String(value).replaceAll("\\", "\\\\").replaceAll(" ", "\\ ");
+}
+
+function configureTenantSession() {
+  const tenantKey = process.env.SOURCE_TENANT_KEY;
+  if (!tenantKey) return;
+
+  const tenantOption = `-c app.tenant_key=${quotePgOption(tenantKey)}`;
+  process.env.PGOPTIONS = process.env.PGOPTIONS ? `${process.env.PGOPTIONS} ${tenantOption}` : tenantOption;
+}
+
 function parseDatabaseUrl() {
   const raw = process.env.DATABASE_URL || process.env.SOURCE_CUBE_DATABASE_URL;
   if (!raw) return;
@@ -35,6 +47,7 @@ function parseDatabaseUrl() {
 }
 
 for (const [name, value] of Object.entries(DEFAULTS)) setDefault(name, value);
+configureTenantSession();
 parseDatabaseUrl();
 
 const missing = [
