@@ -21,6 +21,7 @@ import {
 import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentStateArchitectureMap";
 import type { AiSuccessHomeData } from "@/lib/home/readSkyHarborAiSuccessHome";
 
+import { ArchitectureFlowDiagram } from "./ArchitectureFlowDiagram";
 import styles from "./AiSuccessCommandCenter.module.css";
 
 const SECTIONS = [
@@ -160,7 +161,10 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
                 <b>{data.moneyBars[0]?.valueLabel ?? "$2.35B"}</b>
                 <small>FY2027 budget</small>
               </span>
-              <Link href="/intelligence" className={styles.openLink}>
+              <Link
+                href="/intelligence/enterprise-landscape"
+                className={styles.openLink}
+              >
                 Intelligence explorer
               </Link>
             </div>
@@ -379,14 +383,29 @@ function ArchitectureCanvas({
 }) {
   return (
     <div className={styles.architectureFrame}>
-      <CurrentStateArchitectureMap
-        graph={data.graph}
-        advisory={data.advisory}
-        overlay={overlay}
-        selectedRef={selectedRef}
-        onOverlayChange={onOverlayChange}
-        onSelect={onSelect}
-      />
+      <ArchitectureFlowDiagram data={data} onSelect={onSelect} />
+      <div className={styles.architectureSecondary}>
+        <div className={styles.secondaryHeader}>
+          <div>
+            <span className={styles.eyebrow}>Detailed explorer</span>
+            <h3>Evidence graph</h3>
+          </div>
+          <Link
+            href="/intelligence/enterprise-landscape"
+            className={styles.secondaryLink}
+          >
+            Open full explorer
+          </Link>
+        </div>
+        <CurrentStateArchitectureMap
+          graph={data.graph}
+          advisory={data.advisory}
+          overlay={overlay}
+          selectedRef={selectedRef}
+          onOverlayChange={onOverlayChange}
+          onSelect={onSelect}
+        />
+      </div>
     </div>
   );
 }
