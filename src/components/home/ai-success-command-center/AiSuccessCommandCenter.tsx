@@ -19,6 +19,7 @@ import {
 } from "recharts";
 
 import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentStateArchitectureMap";
+import { ArchitectureFlowDiagram } from "./ArchitectureFlowDiagram";
 import type { AiSuccessHomeData } from "@/lib/home/readSkyHarborAiSuccessHome";
 
 import styles from "./AiSuccessCommandCenter.module.css";
@@ -160,8 +161,8 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
                 <b>{data.moneyBars[0]?.valueLabel ?? "$2.35B"}</b>
                 <small>FY2027 budget</small>
               </span>
-              <Link href="/intelligence" className={styles.openLink}>
-                Intelligence explorer
+              <Link href="/intelligence/enterprise-landscape" className={styles.openLink}>
+                Filterable table in Intelligence
               </Link>
             </div>
           </header>
@@ -231,20 +232,10 @@ function ExecutiveCanvas({
           <span>Evidence-bound</span>
           <span>Pending review</span>
         </div>
-        <h2 className={styles.h1}>
-          AI is scaling across SkyHarbor. Value proof has not caught up.
-        </h2>
-        <p className={styles.lead}>
-          SkyHarbor is running AI at real scale: coding assistants, BI copilots
-          and ERP copilots against operations, crew, revenue management and
-          customer recovery. Adoption is uneven but genuine.
-        </p>
-        <p className={styles.paragraph}>
-          Of 162 governed value claims, none currently meets the claimable
-          threshold, and Tower establishes $0 of claimable value. The barrier is
-          structural: claims carry funding without a baseline, adoption rows
-          carry telemetry without an outcome, and AI touches a Tier 1/Critical
-          estate.
+        <h2 className={styles.h1}>{data.heroHeadline}</h2>
+        <p className={styles.lead}>{data.heroLead}</p>
+        <p className={styles.sectionCopy} style={{ marginTop: 4 }}>
+          Tower Claude advisory · full enterprise context (KPIs, interviews, portfolio, vendors, change readiness) · validation passed
         </p>
         <Evidence
           refs={[
@@ -378,16 +369,20 @@ function ArchitectureCanvas({
   onSelect: (ref: string) => void;
 }) {
   return (
-    <div className={styles.architectureFrame}>
-      <CurrentStateArchitectureMap
-        graph={data.graph}
-        advisory={data.advisory}
-        overlay={overlay}
-        selectedRef={selectedRef}
-        onOverlayChange={onOverlayChange}
-        onSelect={onSelect}
-      />
-    </div>
+    <>
+      <ArchitectureFlowDiagram stages={data.flowDiagram.stages} crossCutting={data.flowDiagram.crossCutting} />
+      <div className={styles.architectureFrame}>
+        <div className={styles.eyebrow} style={{ marginBottom: 8 }}>Detailed node-and-edge explorer</div>
+        <CurrentStateArchitectureMap
+          graph={data.graph}
+          advisory={data.advisory}
+          overlay={overlay}
+          selectedRef={selectedRef}
+          onOverlayChange={onOverlayChange}
+          onSelect={onSelect}
+        />
+      </div>
+    </>
   );
 }
 
@@ -412,6 +407,19 @@ function PortfolioCanvas({ data }: { data: AiSuccessHomeData }) {
               Next gate: {choice.gate}
             </p>
             <Evidence refs={[choice.ref]} />
+          </article>
+        ))}
+      </div>
+      <div className={styles.signals} style={{ marginTop: 20 }}>
+        <span className={styles.eyebrow}>Where to invest — Claude&apos;s portfolio calls</span>
+        {data.investmentPriorities.slice(0, 4).map((item) => (
+          <article key={item.title} className={styles.signal}>
+            <div className={styles.signalTop}>
+              <span className={styles.signalRef}>Choice {item.rank}</span>
+            </div>
+            <div className={styles.signalTitle}>{item.title}</div>
+            <p className={styles.signalBody}>{item.rationale}</p>
+            <Evidence refs={item.refs} />
           </article>
         ))}
       </div>
@@ -541,7 +549,11 @@ function AgendaCanvas({ data }: { data: AiSuccessHomeData }) {
                 </td>
                 <td>{item.consequence}</td>
                 <td>{item.owner}</td>
-                <td>{item.destination}</td>
+                <td>
+                  <Link href={item.destinationHref} className={styles.signalRef}>
+                    {item.destination} →
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -565,6 +577,16 @@ function LimitsCanvas({ data }: { data: AiSuccessHomeData }) {
             <div className={styles.choiceTitle}>{limit.title}</div>
             <p className={styles.choiceMeta}>{limit.body}</p>
             <span className={styles.chip}>Owner · {limit.owner}</span>
+          </article>
+        ))}
+      </div>
+      <div className={styles.signals} style={{ marginTop: 20 }}>
+        <span className={styles.eyebrow}>What&apos;s blocking proof</span>
+        {data.architectureRisks.slice(0, 6).map((item) => (
+          <article key={item.pattern} className={styles.signal}>
+            <div className={styles.signalTitle}>{item.pattern}</div>
+            <p className={styles.signalBody}>{item.description}</p>
+            <Evidence refs={item.refs} />
           </article>
         ))}
       </div>
