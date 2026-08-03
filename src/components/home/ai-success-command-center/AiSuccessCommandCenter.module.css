@@ -16,7 +16,7 @@
   width: 100%;
   max-width: 100vw;
   min-height: calc(100vh - var(--chrome-height));
-  overflow-y: auto;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--abarva-sans);
@@ -32,7 +32,7 @@
   grid-template-columns: 258px minmax(0, 1fr);
   width: 100%;
   min-height: calc(100vh - var(--chrome-height));
-  overflow: visible;
+  overflow-x: clip;
 }
 
 .rail {
@@ -262,7 +262,7 @@
 .canvas {
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -278,7 +278,88 @@
   align-items: start;
 }
 
-.executiveStory {
+.advisoryShell {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.advisoryTabs {
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.advisoryTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: #ffffff;
+  color: #4d5d79;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 820;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(12, 26, 58, 0.04);
+}
+
+.advisoryTab span {
+  color: var(--blue);
+  font:
+    11px/1 var(--abarva-mono),
+    ui-monospace,
+    monospace;
+  font-weight: 900;
+}
+
+.advisoryTabActive {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.advisoryTabActive span {
+  color: #ffffff;
+}
+
+.advisoryTab:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.advisoryPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 360px);
+  gap: clamp(18px, 2.4vw, 32px);
+  align-items: start;
+}
+
+.advisoryPanelMatrix {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.advisoryPanelMatrix .advisoryStory {
+  max-width: 1120px;
+}
+
+.advisoryPanelMatrix .h1 {
+  max-width: 760px;
+  font-size: clamp(34px, 3.2vw, 48px);
+}
+
+.advisoryPanelMatrix .lead {
+  max-width: 900px;
+  margin-top: 16px;
+}
+
+.executiveStory,
+.advisoryStory {
   max-width: 920px;
 }
 
@@ -321,6 +402,251 @@
   font-size: clamp(15px, 1.2vw, 18px);
   line-height: 1.54;
   margin: 18px 0 0;
+}
+
+.advisoryPointGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.advisoryPoint {
+  min-width: 0;
+  border-top: 2px solid var(--hairline-strong);
+  padding-top: 12px;
+}
+
+.advisoryPoint span {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 880;
+}
+
+.advisoryPoint p {
+  margin: 7px 0 0;
+  color: #4d5d79;
+  font-size: 13px;
+  line-height: 1.44;
+}
+
+.advisoryAside {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.advisoryCallout {
+  display: grid;
+  gap: 7px;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 16px;
+}
+
+.advisoryCallout span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.advisoryCallout strong {
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.advisoryCallout p {
+  margin: 0;
+  color: #4d5d79;
+  font-size: 12px;
+  line-height: 1.36;
+}
+
+.valueMatrixShell {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.matrixIntro {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(260px, 0.28fr);
+  gap: 18px;
+  align-items: end;
+}
+
+.matrixIntro h3 {
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: clamp(22px, 2vw, 30px);
+  line-height: 1.08;
+}
+
+.matrixIntro p {
+  margin: 0;
+  color: #4d5d79;
+  font-size: 12px;
+  line-height: 1.42;
+}
+
+.matrixChartCard {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(12, 26, 58, 0.18);
+  border-radius: 9px;
+  background: #fdfbf6;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.62),
+    0 18px 36px rgba(12, 26, 58, 0.08);
+}
+
+.matrixChartCard :global(.recharts-surface) {
+  display: block;
+}
+
+.matrixChartCard :global(.recharts-cartesian-axis-tick-value),
+.matrixChartCard :global(.recharts-label) {
+  font-family: var(--abarva-mono), ui-monospace, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.matrixChartCard :global(.recharts-scatter-symbol) {
+  filter: drop-shadow(0 9px 14px rgba(12, 26, 58, 0.24));
+}
+
+.matrixChartCard :global(.recharts-label-list text) {
+  font-family: var(--abarva-mono), ui-monospace, monospace;
+  letter-spacing: 0.06em;
+  paint-order: stroke;
+  stroke: rgba(12, 26, 58, 0.28);
+  stroke-width: 2px;
+}
+
+.matrixTooltip {
+  display: grid;
+  gap: 6px;
+  max-width: 260px;
+  border: 1px solid rgba(12, 26, 58, 0.18);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 11px 12px;
+  box-shadow: 0 16px 34px rgba(12, 26, 58, 0.14);
+}
+
+.matrixTooltip span {
+  color: var(--amber);
+  font:
+    10px/1 var(--abarva-mono),
+    ui-monospace,
+    monospace;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matrixTooltip strong {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.matrixTooltip p,
+.matrixTooltip small {
+  margin: 0;
+  color: #4d5d79;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.matrixTooltip small {
+  color: var(--soft-muted);
+}
+
+.matrixLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  padding-top: 2px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.matrixLegend span {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.matrixLegend i {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(12, 26, 58, 0.18);
+}
+
+.legendInvest {
+  background: #dcece5;
+}
+
+.legendBuild {
+  background: #f3ead6;
+}
+
+.legendMonitor {
+  background: #eef2f6;
+}
+
+.matrixIdeaList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.matrixIdeaList article {
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.matrixIdeaList span {
+  color: var(--amber);
+  font:
+    10px/1 var(--abarva-mono),
+    ui-monospace,
+    monospace;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matrixIdeaList strong {
+  display: block;
+  margin-top: 7px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.matrixIdeaList p,
+.matrixIdeaList small {
+  display: block;
+  margin: 7px 0 0;
+  color: #4d5d79;
+  font-size: 11.5px;
+  line-height: 1.32;
+}
+
+.matrixIdeaList small {
+  color: var(--soft-muted);
 }
 
 .evidenceRow {
@@ -603,7 +929,11 @@
   border: 1px solid var(--hairline);
   border-radius: 12px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 250, 247, 0.98)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(251, 250, 247, 0.98)
+    ),
     #ffffff;
   box-shadow: 0 12px 32px rgba(12, 26, 58, 0.06);
   overflow: hidden;
@@ -674,7 +1004,13 @@
   min-width: 0;
   padding: 18px;
   background:
-    linear-gradient(90deg, rgba(22, 136, 255, 0.04), transparent 22%, transparent 78%, rgba(21, 152, 127, 0.05)),
+    linear-gradient(
+      90deg,
+      rgba(22, 136, 255, 0.04),
+      transparent 22%,
+      transparent 78%,
+      rgba(21, 152, 127, 0.05)
+    ),
     repeating-linear-gradient(
       90deg,
       rgba(12, 26, 58, 0.045) 0,
@@ -1001,14 +1337,14 @@
   .page {
     height: auto;
     min-height: calc(100vh - var(--chrome-height));
-    overflow: visible;
+    overflow-x: clip;
   }
 
   .layout {
     grid-template-columns: 1fr;
     height: auto;
     min-height: auto;
-    overflow: visible;
+    overflow-x: clip;
   }
 
   .rail {
@@ -1050,9 +1386,15 @@
   }
 
   .executiveGrid,
+  .advisoryPanel,
   .twoCol,
   .twoColTight {
     grid-template-columns: 1fr;
+  }
+
+  .advisoryPointGrid,
+  .matrixIdeaList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .flowHeader,
@@ -1106,15 +1448,12 @@
   .canvasChrome {
     align-items: flex-start;
     grid-template-columns: 1fr;
-    padding: 13px 14px;
+    gap: 8px;
+    padding: 7px 10px 2px;
   }
 
   .commandStats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-    overflow: visible;
-    padding-bottom: 0;
+    display: none;
   }
 
   .commandStats span,
@@ -1132,8 +1471,56 @@
   .limitsGrid,
   .railList,
   .flowBoard,
-  .flowStatGrid {
+  .flowStatGrid,
+  .advisoryPointGrid,
+  .matrixIntro,
+  .matrixIdeaList {
     grid-template-columns: 1fr;
+  }
+
+  .advisoryTabs {
+    gap: 6px;
+  }
+
+  .advisoryTab {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+  }
+
+  .advisoryAside {
+    padding: 14px;
+  }
+
+  .advisoryPanelMatrix .h1 {
+    font-size: 29px;
+    line-height: 1.05;
+  }
+
+  .advisoryPanelMatrix .lead {
+    margin-top: 14px;
+  }
+
+  .valueMatrixShell {
+    margin-top: 15px;
+  }
+
+  .matrixIntro {
+    gap: 8px;
+  }
+
+  .matrixIntro h3 {
+    font-size: 23px;
+  }
+
+  .matrixChartCard {
+    margin-right: -2px;
+  }
+
+  .matrixLegend {
+    gap: 10px;
+    margin-left: 0;
+    padding-top: 0;
   }
 
   .flowHeader,
