@@ -548,6 +548,59 @@ jobs:
           printf -v verifier_command_quoted "%q " "${verifier_command[@]}"
           script -q -e -c "$verifier_command_quoted" /dev/null \
             | tee audit-artifacts/aca-cube-lab-deploy/cube-runtime-verifier.txt
+          node <<'NODE'
+          const fs = require("node:fs");
+          const text = fs
+            .readFileSync("audit-artifacts/aca-cube-lab-deploy/cube-runtime-verifier.txt", "utf8")
+            .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
+
+          function extractObjects(input) {
+            const objects = [];
+            for (let start = input.indexOf("{"); start !== -1; start = input.indexOf("{", start + 1)) {
+              let depth = 0;
+              let inString = false;
+              let escape = false;
+              for (let index = start; index < input.length; index += 1) {
+                const char = input[index];
+                if (escape) {
+                  escape = false;
+                  continue;
+                }
+                if (char === "\\") {
+                  escape = true;
+                  continue;
+                }
+                if (char === '"') {
+                  inString = !inString;
+                  continue;
+                }
+                if (inString) continue;
+                if (char === "{") depth += 1;
+                if (char === "}") depth -= 1;
+                if (depth === 0) {
+                  const candidate = input.slice(start, index + 1);
+                  try {
+                    objects.push(JSON.parse(candidate));
+                  } catch {
+                    // Keep scanning; the Azure exec wrapper can print non-JSON braces.
+                  }
+                  break;
+                }
+              }
+            }
+            return objects;
+          }
+
+          const verifier = extractObjects(text).find((object) => Object.prototype.hasOwnProperty.call(object, "ok") && Array.isArray(object.failures));
+          if (!verifier) {
+            console.error("Cube runtime verifier did not emit a parseable result object.");
+            process.exit(1);
+          }
+          if (verifier.ok !== true) {
+            console.error(`Cube runtime verifier failed: ${JSON.stringify(verifier.failures)}`);
+            process.exit(1);
+          }
+          NODE
 
       - name: Upload Cube lab deploy evidence
         if: always()

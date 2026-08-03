@@ -66,6 +66,15 @@ function value(row, key) {
   return Number(raw);
 }
 
+function responseSummary(response) {
+  return {
+    status: response.status,
+    ok: response.ok,
+    error: response.json?.error || response.json?.message || null,
+    body: response.ok ? undefined : response.json,
+  };
+}
+
 async function main() {
   const now = Math.floor(Date.now() / 1000);
   const tenantToken = signJwt({ tenant_key: tenantKey, iat: now, exp: now + 600 });
@@ -159,6 +168,15 @@ async function main() {
       contracts: contractRow,
       vendors: vendorRow,
       contract_scope: scopeRow,
+    },
+    cube_runtime_diagnostics: {
+      readyz: responseSummary(readyz),
+      livez: responseSummary(livez),
+      no_auth: responseSummary(noAuth),
+      missing_tenant: responseSummary(missingTenant),
+      contracts: responseSummary(contracts),
+      vendors: responseSummary(vendors),
+      contract_scope: responseSummary(scope),
     },
     known_scope_caveat: {
       explicit_contract_scope: value(scopeRow, "sourcing_contract_scope.explicit_scope_count"),
