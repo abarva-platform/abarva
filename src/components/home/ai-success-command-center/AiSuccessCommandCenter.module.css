@@ -1,13 +1,13 @@
 .page {
   --chrome-height: 72px;
-  --paper: #f3f0e9;
-  --panel: #fffdf9;
+  --paper: #f5f6f4;
+  --panel: #ffffff;
   --ink: #151311;
-  --muted: #625c54;
-  --hairline: #ddd5c9;
+  --muted: #5c625f;
+  --hairline: #d8ddd8;
   --blue: #1688ff;
-  --green: #178978;
-  --amber: #bd720f;
+  --green: #138a78;
+  --amber: #b8690e;
   --danger: #b3261e;
 
   width: 100%;
@@ -33,7 +33,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 292px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -44,36 +44,21 @@
   min-height: 0;
   overflow: auto;
   border-right: 1px solid var(--hairline);
-  background: rgba(255, 253, 249, 0.92);
-  padding: 22px 16px;
+  background: #ffffff;
+  padding: 18px 14px;
 }
 
-.brandBlock {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 26px;
-}
-
-.brandName {
-  font-size: 21px;
-  font-weight: 900;
-  letter-spacing: 0;
-}
-
-.brandMeta {
-  color: #8b857d;
-  font:
-    10px/1.2 ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    monospace;
-  letter-spacing: 0.18em;
+.railIntro {
+  border: 1px solid #e1e5e0;
+  border-radius: 8px;
+  background: #f7f9f7;
+  padding: 13px 13px 14px;
+  margin-bottom: 14px;
 }
 
 .railTitle,
 .eyebrow {
-  color: #68645e;
+  color: #4970a0;
   font:
     10px/1.2 ui-monospace,
     SFMono-Regular,
@@ -83,10 +68,17 @@
   text-transform: uppercase;
 }
 
+.railDeck {
+  margin-top: 7px;
+  color: #343a37;
+  font-size: 13px;
+  font-weight: 780;
+  line-height: 1.32;
+}
+
 .railList {
   display: grid;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 6px;
 }
 
 .railButton {
@@ -95,10 +87,10 @@
   gap: 9px;
   width: 100%;
   border: 1px solid transparent;
-  border-left: 3px solid transparent;
+  border-left: 2px solid transparent;
   border-radius: 8px;
   background: transparent;
-  padding: 11px 10px 12px;
+  padding: 10px 9px;
   text-align: left;
   color: #1f1d1a;
   cursor: pointer;
@@ -109,7 +101,7 @@
 }
 
 .railButton:hover {
-  background: #f2eee6;
+  background: #f5f7f4;
 }
 
 .railButton:focus-visible {
@@ -118,10 +110,10 @@
 }
 
 .railButtonActive {
-  border-color: #ded5c9;
+  border-color: #dce5df;
   border-left-color: var(--blue);
-  background: #fffaf1;
-  box-shadow: 0 10px 26px rgba(20, 18, 15, 0.06);
+  background: #f7fbff;
+  box-shadow: 0 8px 20px rgba(22, 36, 48, 0.06);
 }
 
 .railNumber {
@@ -143,7 +135,7 @@
 
 .railLabel {
   display: block;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 850;
   line-height: 1.2;
 }
@@ -158,11 +150,11 @@
 
 .railFoot {
   display: grid;
-  gap: 8px;
+  gap: 5px;
   margin-top: 24px;
-  border-top: 1px solid #ded8cf;
+  border-top: 1px solid #e0e5e0;
   padding-top: 16px;
-  color: #5f5a53;
+  color: #5c625f;
   font:
     11px/1.35 ui-monospace,
     SFMono-Regular,
@@ -170,67 +162,109 @@
     monospace;
 }
 
+.railFoot strong {
+  color: #151311;
+  font-size: 16px;
+}
+
 .main {
   min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 12px;
   overflow: hidden;
-  padding: 22px clamp(20px, 2.8vw, 42px) 14px;
+  padding: 18px clamp(18px, 2.4vw, 36px) 12px;
 }
 
 .canvasChrome {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
   gap: 18px;
-  min-height: 64px;
-  border-bottom: 1px solid var(--hairline);
-  padding-bottom: 14px;
+  min-height: 82px;
+  border: 1px solid #dfe5e0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px 18px;
+  box-shadow: 0 12px 28px rgba(24, 31, 28, 0.06);
 }
 
 .canvasTitle {
   margin: 6px 0 0;
-  font-size: clamp(24px, 2.2vw, 34px);
+  font-size: clamp(24px, 2.1vw, 32px);
   line-height: 1.08;
-  font-weight: 880;
+  font-weight: 900;
   letter-spacing: 0;
 }
 
-.canvasActions {
+.canvasSubtitle {
+  max-width: 680px;
+  margin: 7px 0 0;
+  color: #5c625f;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.commandStats {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-.contextPill,
+.commandStats span {
+  min-width: 92px;
+  border: 1px solid #e0e5e0;
+  border-radius: 8px;
+  background: #f7f9f7;
+  padding: 9px 10px;
+}
+
+.commandStats b,
+.commandStats small {
+  display: block;
+}
+
+.commandStats b {
+  color: #151311;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.commandStats small {
+  margin-top: 5px;
+  color: #6a716d;
+  font-size: 10px;
+  font-weight: 740;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .openLink {
-  border: 1px solid #d9d1c5;
-  border-radius: 999px;
-  background: #fffdf9;
-  padding: 8px 11px;
-  color: #312d27;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border: 1px solid #0f1f1a;
+  border-radius: 8px;
+  background: #0f1f1a;
+  padding: 9px 12px;
+  color: #ffffff;
   font-size: 12px;
-  font-weight: 760;
+  font-weight: 820;
   text-decoration: none;
-}
-
-.openLink {
-  color: #0d68c3;
 }
 
 .canvas {
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  border: 1px solid var(--hairline);
-  border-radius: 10px;
-  background: rgba(255, 253, 249, 0.72);
-  padding: clamp(18px, 2vw, 28px);
-  box-shadow: 0 20px 60px rgba(27, 22, 16, 0.08);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: clamp(12px, 1.4vw, 20px) 0;
+  box-shadow: none;
 }
 
 .executiveGrid {
@@ -262,8 +296,8 @@
 
 .h1 {
   max-width: 900px;
-  font-size: clamp(40px, 4.4vw, 64px);
-  line-height: 1.02;
+  font-size: clamp(38px, 3.8vw, 56px);
+  line-height: 1.04;
   font-weight: 900;
   letter-spacing: 0;
   margin: 0;
@@ -306,10 +340,10 @@
 }
 
 .panel {
-  border: 1px solid var(--hairline);
+  border: 1px solid #dfe5e0;
   border-radius: 8px;
   background: var(--panel);
-  box-shadow: 0 8px 30px rgba(25, 22, 18, 0.05);
+  box-shadow: 0 10px 24px rgba(24, 31, 28, 0.05);
 }
 
 .panelPad {
@@ -353,7 +387,7 @@
 .track {
   height: 6px;
   border-radius: 999px;
-  background: #ece7de;
+  background: #ebefeb;
   overflow: hidden;
 }
 
@@ -382,7 +416,7 @@
   justify-content: space-between;
   gap: 20px;
   align-items: end;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .sectionKicker {
@@ -407,7 +441,7 @@
 .sectionCopy {
   max-width: 860px;
   margin: 8px 0 0;
-  color: #69645d;
+  color: #5c625f;
   font-size: 15px;
   line-height: 1.5;
 }
@@ -423,9 +457,9 @@
 .signal,
 .choice,
 .limit {
-  border: 1px solid #ded7ce;
+  border: 1px solid #dfe5e0;
   border-radius: 8px;
-  background: #fffdfa;
+  background: #ffffff;
 }
 
 .postureCard {
@@ -548,10 +582,11 @@
 
 .architectureFrame {
   min-height: 560px;
-  border: 1px solid #d8d0c5;
+  border: 1px solid #dfe5e0;
   border-radius: 10px;
-  background: #fffdfa;
+  background: #ffffff;
   overflow: hidden;
+  box-shadow: 0 14px 34px rgba(24, 31, 28, 0.06);
 }
 
 .choiceGrid,
@@ -602,16 +637,16 @@
 .decisionTable th {
   text-align: left;
   padding: 12px;
-  color: #777067;
+  color: #6a716d;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-bottom: 1px solid #ded7ce;
+  border-bottom: 1px solid #dfe5e0;
 }
 
 .decisionTable td {
   padding: 14px 12px;
-  border-bottom: 1px solid #ebe5dc;
+  border-bottom: 1px solid #e9eee9;
   vertical-align: top;
   line-height: 1.4;
 }
@@ -641,11 +676,31 @@
   .rail {
     border-right: 0;
     border-bottom: 1px solid var(--hairline);
-    overflow: visible;
+    overflow: hidden;
+    padding: 12px;
+  }
+
+  .railIntro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
   }
 
   .railList {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 3px;
+  }
+
+  .railButton {
+    min-width: 210px;
+  }
+
+  .railFoot {
+    display: none;
   }
 
   .main {
@@ -666,13 +721,50 @@
 }
 
 @media (max-width: 760px) {
+  .railIntro {
+    padding: 10px 11px;
+  }
+
+  .railDeck {
+    font-size: 12px;
+  }
+
+  .railButton {
+    min-width: 152px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 9px 8px;
+  }
+
+  .railHint {
+    display: none;
+  }
+
   .main {
     padding: 18px 12px 12px;
   }
 
   .canvasChrome {
     align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    padding: 13px 14px;
+  }
+
+  .commandStats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .commandStats span,
+  .openLink {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .openLink {
+    display: none;
   }
 
   .grid4,
@@ -683,7 +775,7 @@
   }
 
   .h1 {
-    font-size: 34px;
+    font-size: 31px;
     line-height: 1.08;
   }
 

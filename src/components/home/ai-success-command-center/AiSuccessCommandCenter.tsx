@@ -95,16 +95,18 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
 
   const activeMeta =
     SECTIONS.find(([id]) => id === activeSection) ?? SECTIONS[0];
+  const activeIndex = SECTIONS.findIndex(([id]) => id === activeSection) + 1;
 
   return (
     <div className={styles.page}>
       <div className={styles.layout}>
         <aside className={styles.rail} aria-label="Home explorer">
-          <div className={styles.brandBlock}>
-            <div className={styles.brandName}>AbarVa</div>
-            <div className={styles.brandMeta}>app.abarva.ai</div>
+          <div className={styles.railIntro}>
+            <div className={styles.railTitle}>Executive Review</div>
+            <div className={styles.railDeck}>
+              AI value, architecture and evidence posture
+            </div>
           </div>
-          <div className={styles.railTitle}>Explorer</div>
           <div className={styles.railList}>
             {SECTIONS.map(([id, label, hint], index) => (
               <button
@@ -130,7 +132,8 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             ))}
           </div>
           <div className={styles.railFoot}>
-            <span>Snapshot {data.graphFingerprint.slice(0, 8)}</span>
+            <span>Graph snapshot</span>
+            <strong>{data.graphFingerprint.slice(0, 8)}</strong>
             <span>{formatDate(data.generatedAt)}</span>
           </div>
         </aside>
@@ -138,15 +141,24 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
         <main className={styles.main}>
           <header className={styles.canvasChrome}>
             <div>
-              <span className={styles.eyebrow}>SkyHarbor Global</span>
-              <h1 className={styles.canvasTitle}>{activeMeta[1]}</h1>
-            </div>
-            <div className={styles.canvasActions}>
-              <span className={styles.contextPill}>
-                {data.graph.nodes.length} nodes
+              <span className={styles.eyebrow}>
+                {String(activeIndex).padStart(2, "0")} · SkyHarbor Global
               </span>
-              <span className={styles.contextPill}>
-                {data.graph.edges.length} edges
+              <h1 className={styles.canvasTitle}>{activeMeta[1]}</h1>
+              <p className={styles.canvasSubtitle}>{activeMeta[2]}</p>
+            </div>
+            <div className={styles.commandStats} aria-label="Review context">
+              <span>
+                <b>{data.graph.nodes.length}</b>
+                <small>nodes</small>
+              </span>
+              <span>
+                <b>{data.graph.edges.length}</b>
+                <small>flows</small>
+              </span>
+              <span>
+                <b>{data.moneyBars[0]?.valueLabel ?? "$2.35B"}</b>
+                <small>FY2027 budget</small>
               </span>
               <Link href="/intelligence" className={styles.openLink}>
                 Intelligence explorer

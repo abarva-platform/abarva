@@ -717,11 +717,11 @@ const shellStyle = {
 
 const headerStyle = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
-  gap: 20,
+  gridTemplateColumns: "minmax(0, 1fr)",
+  gap: 14,
   padding: "18px 20px",
   borderBottom: "1px solid #e4dccf",
-  alignItems: "center",
+  alignItems: "start",
 } satisfies CSSProperties;
 
 const kickerStyle = {
@@ -753,7 +753,7 @@ const metricWrapStyle = {
   display: "flex",
   gap: 8,
   flexWrap: "wrap",
-  justifyContent: "flex-end",
+  justifyContent: "flex-start",
 } satisfies CSSProperties;
 
 const metricStyle = {

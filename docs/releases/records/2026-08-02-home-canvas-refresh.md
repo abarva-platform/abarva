@@ -41,7 +41,7 @@ Canonical model: No change. The visual remains bound to the existing graph and a
 - `npm test -- --runTestsByPath src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts --runInBand` — passed.
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` — passed.
 - `NODE_OPTIONS='--max-old-space-size=8192' npm run build` — passed with pre-existing broad filesystem trace warnings unrelated to this change.
-- Local browser proof on `/home#posture` with temporary uncommitted auth bypass — passed. Assertions covered hash clearing, `window.scrollY = 0` after explorer clicks, active canvas changes, architecture board visibility, Cost lens refresh, no desktop/mobile horizontal overflow, and no page errors.
+- Local production-mode browser proof on `/home#posture` with temporary uncommitted auth bypass — passed. Assertions covered hash clearing, `window.scrollY = 0` after explorer clicks, active canvas changes, architecture board visibility, AI-readiness lens refresh, no desktop/mobile horizontal overflow, no console messages, no page errors, and no bad HTTP responses.
 
 ## Rollout Plan
 
@@ -63,10 +63,10 @@ Revert this PR and redeploy the previous approved Azure Container Apps image. No
 
 ## Audit Evidence
 
-- PR URL: To be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5882
 - Local validation commands listed above.
-- Local browser evidence ZIP: `home-canvas-refresh-local-qa-20260802T2037.zip` captured outside the repository.
-- Local browser evidence SHA-256: `dd7679799f50747d9b81ec3abcabab6ea5834eb3382c499cc8d93738de83330b`
+- Local browser evidence ZIP: `home-canvas-refresh-production-qa-20260802T2132.zip` captured outside the repository.
+- Local browser evidence SHA-256: `e57f273d8257c0b6b97fb6ebe671f44dbad68050728608f921bda42ae048b7ce`
 - Live browser screenshots and interaction proof: To be captured after deployment.
 
 ## Known Gaps
