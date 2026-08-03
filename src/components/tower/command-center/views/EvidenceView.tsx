@@ -5,8 +5,8 @@
 // control, one answer set shown at a time, in a two-column grid of large
 // evidence rows with a right-aligned metric + unit + tag.
 //
-// The four questions are answered from `mart_evidence_lineage` and
-// `mart_required_field_gaps`. Question 3 ("who owns it") and question 4 ("what
+// The four questions are answered from governed evidence lineage plus derived
+// business evidence gaps. Question 3 ("who owns it") and question 4 ("what
 // decision is blocked") are re-groupings of the same gap rows — no new facts
 // are introduced by either.
 

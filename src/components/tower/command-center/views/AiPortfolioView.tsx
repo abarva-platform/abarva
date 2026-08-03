@@ -230,9 +230,9 @@ function CandidatePipelinePanel({ view }: { view: TowerCommandCenterView }) {
 }
 
 /**
- * Shown in place of the spend lens when `mart_ai_portfolio` carries no per-item
+ * Shown in place of the spend lens when the AI portfolio projection carries no per-item
  * spend. Drawing an empty bar chart beneath a "$53.7M AI-tagged" header would
- * assert a breakdown the mart cannot substantiate.
+ * assert a breakdown the read model cannot substantiate.
  */
 function SpendUnattributed({ aiTagged }: { aiTagged: string }) {
   return (
@@ -242,7 +242,7 @@ function SpendUnattributed({ aiTagged }: { aiTagged: string }) {
         {aiTagged} is tagged to AI-related spend, but none is currently
         attributable to a specific initiative. This view supports position and
         value-readiness evidence, not spend concentration, until the governed
-        attribution mart exists.
+        attribution projection exists.
       </p>
     </div>
   );

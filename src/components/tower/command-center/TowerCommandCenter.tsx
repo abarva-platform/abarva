@@ -67,10 +67,10 @@ export function TowerCommandCenter({
   tenantName,
   refreshedOn,
 }: {
-  /** `null` when the tenant has no governed Tower mart rows. */
+  /** `null` when the tenant has no governed Tower read-model rows. */
   view: TowerCommandCenterView | null;
   tenantName: string;
-  /** ISO date the mart view was read. */
+  /** ISO date the Tower read model was read. */
   refreshedOn: string;
 }) {
   const router = useRouter();

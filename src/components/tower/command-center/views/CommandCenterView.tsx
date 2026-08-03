@@ -55,7 +55,7 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
     allValueUnknown ? <Unknown label={label} /> : formatUsdM(value);
   const openGaps = view.gaps.length;
   // Program-derived risk signals — see the Risk posture tile below for why
-  // these do not come from `mart_required_field_gaps`.
+  // these do not come from the pipeline field-gap projection.
   const ownerGaps =
     view.programs.filter((p) => !p.ownerRole).length +
     view.gaps.filter((g) => !g.owner).length;
@@ -131,7 +131,7 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
       ],
     },
     {
-      // Risk posture reads the PROGRAMS, not just `mart_required_field_gaps`.
+      // Risk posture reads the PROGRAMS, not just the pipeline field-gap projection.
       //
       // Verified live on 2026-07-23: the Healthcare Composite Demo tenant has
       // ZERO required-field-gap rows, yet 12 programs that cannot claim value.

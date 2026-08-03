@@ -1,6 +1,6 @@
-// Tower Command Center v2 — mart → design shape.
+// Tower Command Center v2 — governed Tower read model → design shape.
 //
-// Takes the governed `TowerMartCommandViewModel` (cio_tower.mart_*) and returns
+// Takes the governed `TowerMartCommandViewModel` compatibility shape and returns
 // exactly what the design's views need. Two rules bind this file:
 //
 //  1. Every string and number originates in the mart. Where the mart carries
@@ -460,8 +460,9 @@ function gapPriority(
 /**
  * A data-pipeline gap. NOT shown on the executive Evidence tab.
  *
- * `mart_required_field_gaps` records "column X on mart table Y is unpopulated;
- * fill the source template and rerun the projection", owned by the Data Office.
+ * The governed field-gap projection records "field X on read-model row Y is
+ * unpopulated; fill the source template and rerun the projection", owned by the
+ * Data Office.
  * That is an ETL backlog item. Rendering it as a CXO evidence answer would
  * break the standing Tower rule that the surface reports business posture, not
  * pipeline state — and, because the table only fills when the pipeline is
@@ -513,11 +514,11 @@ function toPipelineGapView(
 /**
  * **Business evidence gaps — what proof is missing before value can be claimed.**
  *
- * Derived from the claim chain the mart already carries, one gap per program per
- * unmet step. No new mart table is required, and nothing is invented: every gap
- * names a program the mart lists, a step of the governed claim chain it has not
- * cleared, the owner the mart records for it, and the promised value that cannot
- * be booked until it closes.
+ * Derived from the claim chain the read model already carries, one gap per
+ * program per unmet step. No new projection is required, and nothing is
+ * invented: every gap names a program the read model lists, a step of the
+ * governed claim chain it has not cleared, the owner recorded for it, and the
+ * promised value that cannot be booked until it closes.
  *
  * The three steps, in order — a program only raises the FIRST one it fails,
  * because that is the one actually blocking it today:
@@ -530,8 +531,8 @@ function toPipelineGapView(
  * how the shipped Tower produces its "owner gaps / usage gaps / claim blockers"
  * counts. It replaces an earlier wiring that read the Evidence tab's "what is
  * missing / who owns it / what is blocked" questions off
- * `mart_required_field_gaps` — a table that is EMPTY when the data is healthy,
- * so good data produced an empty tab.
+ * the pipeline field-gap projection — a projection that is EMPTY when the data
+ * is healthy, so good data produced an empty tab.
  */
 export function deriveBusinessEvidenceGaps(
   programs: readonly TowerProgramView[],
@@ -812,7 +813,7 @@ export function buildTowerCommandCenterView(
   const concentration = vendorConcentrationPct(mart.aiPortfolio);
   if (concentration === null) unknownSlots.push("Top-3 vendor concentration");
 
-  // The command centre reports an AI-tagged total, but `mart_ai_portfolio` may
+  // The command centre reports an AI-tagged total, but the AI portfolio projection may
   // carry no per-item spend at all — verified on the Healthcare Composite Demo
   // tenant 2026-07-23, where every one of the 250 portfolio rows has
   // ai_tagged_spend_usd = 0 while the command centre reports $53.7M. When that
@@ -829,7 +830,7 @@ export function buildTowerCommandCenterView(
   const aiSpendUnattributed = portfolioSpendUsd <= 0 && totalAiTaggedUsd > 0;
   if (aiSpendUnattributed) {
     unknownSlots.push(
-      "AI spend attribution (portfolio total exists, but mart_ai_portfolio carries no per-item spend)",
+      "AI spend attribution (portfolio total exists, but the AI portfolio projection carries no per-item spend)",
     );
   }
 
@@ -927,7 +928,7 @@ export function buildTowerCommandCenterView(
 
   if (actions.every((a) => a.due === null)) {
     unknownSlots.push(
-      "Action due windows (mart_cxo_actions carries no due date)",
+      "Action due windows (the action projection carries no due date)",
     );
   }
   if (evidenceFacts.length === 0) unknownSlots.push("Evidence lineage rows");

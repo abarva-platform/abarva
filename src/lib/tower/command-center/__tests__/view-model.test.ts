@@ -125,7 +125,7 @@ function mart(
   overrides: Partial<TowerMartCommandViewModel> = {},
 ): TowerMartCommandViewModel {
   return {
-    generatedFrom: "cio_tower_mart",
+    generatedFrom: "tower_schema",
     headline: "Tower",
     command: command(),
     valueFunnel: [
@@ -421,8 +421,8 @@ describe("buildTowerCommandCenterView", () => {
 
   it("keeps data-pipeline gaps off the executive Evidence tab", () => {
     const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
-    // mart_required_field_gaps is an ETL backlog ("populate this column and
-    // rerun the projection"), so it lands in pipelineGaps, never in gaps.
+    // Pipeline field gaps are an ETL backlog ("populate this field and rerun
+    // the projection"), so they land in pipelineGaps, never in gaps.
     const [pipeline] = view.pipelineGaps;
     expect(pipeline.kind).toBe("pipeline");
     expect(pipeline.linkedProgram).toBe("Program One");
