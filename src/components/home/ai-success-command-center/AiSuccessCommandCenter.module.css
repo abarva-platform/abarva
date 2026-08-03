@@ -1,29 +1,25 @@
 .page {
   --chrome-height: 72px;
-  --paper: #f5f6f4;
+  --paper: var(--canon-bg-surface, #f8f7f4);
+  --rail-paper: #fbfaf8;
   --panel: #ffffff;
-  --ink: #151311;
-  --muted: #5c625f;
-  --hairline: #d8ddd8;
-  --blue: #1688ff;
-  --green: #138a78;
-  --amber: #b8690e;
+  --ink: #0c1a3a;
+  --muted: #7b8aa5;
+  --soft-muted: #8b95a8;
+  --hairline: rgba(12, 26, 58, 0.1);
+  --hairline-strong: rgba(12, 26, 58, 0.14);
+  --blue: #005fd6;
+  --green: #2f8f66;
+  --amber: #ba7517;
   --danger: #b3261e;
 
   width: 100%;
   max-width: 100vw;
-  height: calc(100vh - var(--chrome-height));
-  overflow: hidden;
+  min-height: calc(100vh - var(--chrome-height));
+  overflow-y: auto;
   background: var(--paper);
   color: var(--ink);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--abarva-sans);
 }
 
 .page,
@@ -33,47 +29,49 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 258px minmax(0, 1fr);
   width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  min-height: calc(100vh - var(--chrome-height));
+  overflow: visible;
 }
 
 .rail {
-  min-height: 0;
+  min-height: calc(100vh - var(--chrome-height));
   overflow: auto;
   border-right: 1px solid var(--hairline);
-  background: #ffffff;
-  padding: 18px 14px;
+  background: var(--rail-paper);
+  color: var(--ink);
+  padding: 18px 16px;
 }
 
 .railIntro {
-  border: 1px solid #e1e5e0;
+  border: 1px solid var(--hairline);
   border-radius: 8px;
-  background: #f7f9f7;
-  padding: 13px 13px 14px;
+  background: #ffffff;
+  padding: 14px 13px 15px;
   margin-bottom: 14px;
+  box-shadow: 0 1px 5px rgba(12, 26, 58, 0.05);
 }
 
 .railTitle,
 .eyebrow {
-  color: #4970a0;
+  color: var(--blue);
   font:
-    10px/1.2 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    10px/1.2 var(--abarva-mono),
+    ui-monospace,
     monospace;
-  letter-spacing: 0.16em;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .railDeck {
-  margin-top: 7px;
-  color: #343a37;
-  font-size: 13px;
-  font-weight: 780;
-  line-height: 1.32;
+  margin-top: 8px;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.12;
 }
 
 .railList {
@@ -87,12 +85,12 @@
   gap: 9px;
   width: 100%;
   border: 1px solid transparent;
-  border-left: 2px solid transparent;
+  border-left: 3px solid transparent;
   border-radius: 8px;
   background: transparent;
   padding: 10px 9px;
   text-align: left;
-  color: #1f1d1a;
+  color: #6f7f99;
   cursor: pointer;
   transition:
     background 120ms ease,
@@ -101,7 +99,7 @@
 }
 
 .railButton:hover {
-  background: #f5f7f4;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .railButton:focus-visible {
@@ -110,23 +108,24 @@
 }
 
 .railButtonActive {
-  border-color: #dce5df;
-  border-left-color: var(--blue);
-  background: #f7fbff;
-  box-shadow: 0 8px 20px rgba(22, 36, 48, 0.06);
+  border-color: var(--hairline);
+  border-left-color: var(--ink);
+  background: #ffffff;
+  color: var(--ink);
+  box-shadow: 0 1px 5px rgba(12, 26, 58, 0.08);
 }
 
 .railNumber {
-  color: #a7a199;
+  color: var(--soft-muted);
   font:
-    12px/1.2 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    12px/1.2 var(--abarva-mono),
+    ui-monospace,
     monospace;
+  font-weight: 800;
 }
 
 .railButtonActive .railNumber {
-  color: var(--blue);
+  color: var(--ink);
 }
 
 .railText {
@@ -136,14 +135,14 @@
 .railLabel {
   display: block;
   font-size: 12.5px;
-  font-weight: 850;
+  font-weight: 760;
   line-height: 1.2;
 }
 
 .railHint {
   display: block;
   margin-top: 4px;
-  color: #8a8379;
+  color: var(--soft-muted);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -152,56 +151,57 @@
   display: grid;
   gap: 5px;
   margin-top: 24px;
-  border-top: 1px solid #e0e5e0;
+  border-top: 1px solid var(--hairline);
   padding-top: 16px;
-  color: #5c625f;
+  color: var(--soft-muted);
   font:
-    11px/1.35 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    11px/1.35 var(--abarva-mono),
+    ui-monospace,
     monospace;
 }
 
 .railFoot strong {
-  color: #151311;
+  color: var(--ink);
   font-size: 16px;
 }
 
 .main {
   min-width: 0;
-  min-height: 0;
+  min-height: calc(100vh - var(--chrome-height));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 12px;
-  overflow: hidden;
-  padding: 18px clamp(18px, 2.4vw, 36px) 12px;
+  gap: 18px;
+  overflow: visible;
+  padding: 28px clamp(32px, 4vw, 56px) 16px;
 }
 
 .canvasChrome {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 18px;
-  min-height: 82px;
-  border: 1px solid #dfe5e0;
-  border-radius: 10px;
-  background: #ffffff;
-  padding: 16px 18px;
-  box-shadow: 0 12px 28px rgba(24, 31, 28, 0.06);
+  gap: 24px;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0 2px;
+  box-shadow: none;
 }
 
 .canvasTitle {
-  margin: 6px 0 0;
-  font-size: clamp(24px, 2.1vw, 32px);
-  line-height: 1.08;
-  font-weight: 900;
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: clamp(34px, 3vw, 46px);
+  line-height: 1.04;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
 .canvasSubtitle {
   max-width: 680px;
-  margin: 7px 0 0;
-  color: #5c625f;
+  margin: 8px 0 0;
+  color: var(--muted);
   font-size: 13px;
   line-height: 1.35;
 }
@@ -215,10 +215,11 @@
 
 .commandStats span {
   min-width: 92px;
-  border: 1px solid #e0e5e0;
-  border-radius: 8px;
-  background: #f7f9f7;
-  padding: 9px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 12px 14px;
+  box-shadow: 0 10px 26px rgba(20, 20, 19, 0.05);
 }
 
 .commandStats b,
@@ -227,17 +228,19 @@
 }
 
 .commandStats b {
-  color: #151311;
-  font-size: 17px;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: 22px;
+  font-weight: 900;
   line-height: 1;
 }
 
 .commandStats small {
   margin-top: 5px;
-  color: #6a716d;
+  color: var(--muted);
   font-size: 10px;
-  font-weight: 740;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -246,9 +249,9 @@
   align-items: center;
   justify-content: center;
   min-height: 46px;
-  border: 1px solid #0f1f1a;
+  border: 1px solid var(--ink);
   border-radius: 8px;
-  background: #0f1f1a;
+  background: var(--ink);
   padding: 9px 12px;
   color: #ffffff;
   font-size: 12px;
@@ -284,21 +287,23 @@
   flex-wrap: wrap;
   gap: 8px 14px;
   margin-bottom: 18px;
-  color: #6d675f;
+  color: var(--soft-muted);
   font:
-    10px/1.2 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    10px/1.2 var(--abarva-mono),
+    ui-monospace,
     monospace;
+  font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .h1 {
   max-width: 900px;
-  font-size: clamp(38px, 3.8vw, 56px);
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-size: clamp(38px, 3.8vw, 58px);
   line-height: 1.04;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0;
   margin: 0;
 }
@@ -306,13 +311,13 @@
 .lead {
   max-width: 870px;
   margin: 24px 0 0;
-  color: #4b4741;
+  color: #4d5d79;
   font-size: clamp(17px, 1.45vw, 21px);
   line-height: 1.54;
 }
 
 .paragraph {
-  color: #4b4741;
+  color: #4d5d79;
   font-size: clamp(15px, 1.2vw, 18px);
   line-height: 1.54;
   margin: 18px 0 0;
@@ -327,23 +332,22 @@
 }
 
 .chip {
-  border: 1px solid #d9d3ca;
-  border-radius: 4px;
-  background: #fffdfa;
-  color: #34302a;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: #f6f8fb;
+  color: #35506f;
   padding: 6px 10px;
   font:
-    11px/1 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    11px/1 var(--abarva-mono),
+    ui-monospace,
     monospace;
 }
 
 .panel {
-  border: 1px solid #dfe5e0;
-  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
   background: var(--panel);
-  box-shadow: 0 10px 24px rgba(24, 31, 28, 0.05);
+  box-shadow: 0 10px 26px rgba(20, 20, 19, 0.05);
 }
 
 .panelPad {
@@ -355,9 +359,11 @@
 }
 
 .panelTitle {
+  color: var(--ink);
+  font-family: var(--abarva-serif);
   font-size: 22px;
   line-height: 1.16;
-  font-weight: 860;
+  font-weight: 700;
   margin: 8px 0 20px;
 }
 
@@ -376,25 +382,25 @@
   justify-content: space-between;
   gap: 16px;
   font-size: 14px;
-  color: #47423d;
+  color: #4d5d79;
 }
 
 .moneyValue {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: #211f1c;
+  font-family: var(--abarva-mono), ui-monospace, monospace;
+  color: var(--ink);
 }
 
 .track {
   height: 6px;
   border-radius: 999px;
-  background: #ebefeb;
+  background: rgba(12, 26, 58, 0.08);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
   border-radius: inherit;
-  background: #4f504b;
+  background: var(--ink);
 }
 
 .fillAmber {
@@ -406,7 +412,7 @@
 }
 
 .moneyNote {
-  color: #6a645d;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -422,26 +428,28 @@
 .sectionKicker {
   color: var(--blue);
   font:
-    11px/1 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    11px/1 var(--abarva-mono),
+    ui-monospace,
     monospace;
+  font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .sectionTitle {
+  color: var(--ink);
+  font-family: var(--abarva-serif);
   margin: 8px 0 0;
   font-size: clamp(26px, 2.2vw, 38px);
   line-height: 1.1;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
 .sectionCopy {
   max-width: 860px;
   margin: 8px 0 0;
-  color: #5c625f;
+  color: var(--muted);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -457,8 +465,8 @@
 .signal,
 .choice,
 .limit {
-  border: 1px solid #dfe5e0;
-  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
   background: #ffffff;
 }
 
@@ -473,18 +481,20 @@
 .postureValue {
   font-size: clamp(22px, 2vw, 30px);
   line-height: 1.08;
-  font-weight: 880;
+  font-family: var(--abarva-serif);
+  font-weight: 900;
+  color: var(--ink);
 }
 
 .postureLabel {
-  color: #5b554f;
+  color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .postureNote {
-  color: #736c64;
+  color: var(--soft-muted);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -553,40 +563,43 @@
 .signalRef {
   color: var(--blue);
   font:
-    11px/1.25 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    11px/1.25 var(--abarva-mono),
+    ui-monospace,
     monospace;
+  font-weight: 800;
 }
 
 .signalSeverity {
   color: var(--danger);
   font:
-    11px/1 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    11px/1 var(--abarva-mono),
+    ui-monospace,
     monospace;
+  font-weight: 800;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .signalTitle {
-  font-weight: 900;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-weight: 700;
   font-size: 18px;
 }
 
 .signalBody {
-  color: #4d4841;
+  color: #4d5d79;
   font-size: 14px;
   line-height: 1.48;
 }
 
 .architectureFrame {
   min-height: 560px;
-  border: 1px solid #dfe5e0;
+  border: 1px solid var(--hairline);
   border-radius: 10px;
   background: #ffffff;
   overflow: hidden;
-  box-shadow: 0 14px 34px rgba(24, 31, 28, 0.06);
+  box-shadow: 0 12px 32px rgba(12, 26, 58, 0.05);
 }
 
 .choiceGrid,
@@ -605,24 +618,26 @@
 .choiceLane {
   color: var(--amber);
   font:
-    11px/1 ui-monospace,
-    SFMono-Regular,
-    Menlo,
+    11px/1 var(--abarva-mono),
+    ui-monospace,
     monospace;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .choiceTitle {
   margin-top: 10px;
-  font-weight: 900;
+  color: var(--ink);
+  font-family: var(--abarva-serif);
+  font-weight: 700;
   font-size: 16px;
   line-height: 1.25;
 }
 
 .choiceMeta {
   margin-top: 12px;
-  color: #5b554f;
+  color: #4d5d79;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -637,16 +652,16 @@
 .decisionTable th {
   text-align: left;
   padding: 12px;
-  color: #6a716d;
+  color: var(--muted);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-bottom: 1px solid #dfe5e0;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .decisionTable td {
   padding: 14px 12px;
-  border-bottom: 1px solid #e9eee9;
+  border-bottom: 1px solid rgba(12, 26, 58, 0.08);
   vertical-align: top;
   line-height: 1.4;
 }
@@ -655,7 +670,7 @@
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  color: #68625a;
+  color: var(--soft-muted);
   font-size: 12px;
   min-height: 20px;
 }
