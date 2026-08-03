@@ -38,6 +38,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - `cube/model/source_sourcing.yml` adds default hierarchies and drill members for the Source cubes.
 - `scripts/source/verify-source-cube-parity.mjs` now fails if Cube measures lack drill members or expected hierarchies are removed.
 - `package.json` adds `source:cube:verify-runtime`.
+- Follow-up hardening: the workflow records private Key Vault references but does not read or create vault secrets from GitHub-hosted runners; ACA resolves those references through the runtime managed identity.
 
 ## QA / Validation
 
@@ -46,6 +47,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - PASS: `git diff --check`.
 - PASS: `docker build -f Dockerfile.cube -t abarva-source-cube-runtime:test .`.
 - PASS: local container entrypoint fails closed when required runtime secrets are absent.
+- PASS: follow-up workflow fix keeps release/deploy authority gates green after removing GitHub-runner Key Vault reads.
 - NOT RUN locally: Postgres parity verifier, because this checkout does not contain a lab database URL. The deploy workflow obtains the database URL from Key Vault.
 
 ## Rollout Plan
