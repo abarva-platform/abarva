@@ -57,7 +57,7 @@ Layer 4 - Products: Source pages continue to read through the existing adapter. 
 
 Merge through PR to `main`, let the repo-owned ACA deploy workflow build and deploy the image, then run the private ACA operator job using the digest-pinned deployed image:
 
-`npm run ops:aca-job -- --image <digest-pinned-aca-image> --script source:skyharbor-v3:load-current-state --secret-env DATABASE_URL=azure-postgres-control-database-url --env TENANT_KEY=skyharbor_global`
+`npm run ops:aca-job -- --image <digest-pinned-aca-image> --script source:skyharbor-v3:load-current-state:apply --secret-env DATABASE_URL=azure-postgres-control-database-url --env TENANT_KEY=skyharbor_global`
 
 The page is not considered fixed until the operator job reconciliation proves the live database has the expected Source read-model rows.
 
