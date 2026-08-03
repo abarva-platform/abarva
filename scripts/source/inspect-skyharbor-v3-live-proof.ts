@@ -57,7 +57,7 @@ async function main() {
         table_name,
         (
           xpath('/row/cnt/text()', query_to_xml(
-            format('select count(*) as cnt from %I.%I where _tenant_key = %L and _dataset_id = %L', table_schema, table_name, $1, $2),
+            format('select count(*) as cnt from %I.%I where _tenant_key = %L and _dataset_id = %L', table_schema, table_name, $1::text, $2::text),
             false,
             true,
             ''
