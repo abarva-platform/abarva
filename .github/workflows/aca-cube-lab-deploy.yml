@@ -431,6 +431,7 @@ jobs:
           fs.writeFileSync("audit-artifacts/aca-cube-lab-deploy/containerapp-sql-port.json", JSON.stringify(resource, null, 2));
           NODE
           az containerapp update \
+            --name "$CONTAINER_APP_NAME" \
             --resource-group "$RESOURCE_GROUP" \
             --yaml audit-artifacts/aca-cube-lab-deploy/containerapp-sql-port.json \
             --image "$IMAGE" \
