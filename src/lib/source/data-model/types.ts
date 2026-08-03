@@ -1,0 +1,367 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// TypeScript mirror of the new cross-domain SkyHarbor read-model schema
+// (`source.*`, `tower.*`, `doc.*`, `meta.*`, `sem.*`), which all tenants are
+// pivoting to. Source consumes this layer — it does not own or copy it.
+//
+// Every field name below was verified against a real Postgres export
+// (SkyHarbor_Postgres_Layers_Cube_Audit_20260802T182921), not invented from
+// the design spec alone. Row counts at verification time (tenant_key =
+// 'skyharbor_global'):
+//   source.contract_vendor_360        119 rows / 28 distinct vendor_ref
+//   source.contract_360               120 rows (includes 1 non-vendor row)
+//   source.contract_application_scope 3,373 rows (raw register has only 357
+//                                      explicit contract-to-application refs
+//                                      across 278 unique applications — the
+//                                      extra rows are vendor-level inference,
+//                                      see relationship_method below)
+//   source.vendor_contract_portfolio  93 rows
+//   tower.metric_observation          7,174 rows
+//   tower.value_claim                 162 rows
+//
+// These schemas do not exist in this repo's tracked migrations as of this
+// writing — they were applied directly against the SkyHarbor Postgres
+// instance by a separate build lane. Treat this file as the contract until
+// a migration file surfaces; keep it in lockstep once one does.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Every table in this schema carries this discriminator. */
+export type SkyHarborTenantKey = string;
+
+// ---------------------------------------------------------------------------
+// source.contract_vendor_360 / source.contract_360
+//
+// contract_360 is a strict superset of contract_vendor_360 (same commercial
+// columns, plus enterprise-scope rollups). Kept as separate interfaces so a
+// caller that only needs commercial terms doesn't have to know about scope
+// counts that may not be populated for every contract.
+// ---------------------------------------------------------------------------
+
+/** `annual_value_conflict_flag`-style columns: true when sem.* extraction disagreed. */
+export interface ConflictFlagged {
+  readonly annual_value_conflict_flag: boolean | null;
+  readonly total_committed_value_conflict_flag: boolean | null;
+}
+
+export interface SourceContractVendor360Row extends ConflictFlagged {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly vendor_category: string | null;
+  readonly contract_name: string;
+  readonly scope_summary: string | null;
+  readonly annual_value: number | null;
+  readonly total_committed_value: number | null;
+  readonly committed_annual_spend: number | null;
+  readonly actual_annual_spend: number | null;
+  readonly end_date: string | null;
+  readonly notice_period_days: number | null;
+  readonly auto_renew: boolean;
+  readonly renewal_decision_state: string | null;
+  readonly renewal_owner_ref: string | null;
+  readonly benchmarking_clause: string | null;
+  readonly exit_rights_summary: string | null;
+  readonly alternatives_available: string | null;
+  readonly concentration_note: string | null;
+  /** 0-1 confidence assigned by the resolution layer (sem.extraction_resolved). */
+  readonly source_confidence: number | null;
+  /** Resolved value to use when annual_value_conflict_flag is true — prefer this over annual_value. */
+  readonly resolved_annual_value: number | null;
+  readonly resolved_total_committed_value: number | null;
+}
+
+export interface SourceContract360Row extends SourceContractVendor360Row {
+  readonly scoped_application_count: number | null;
+  readonly critical_application_count: number | null;
+  readonly linked_budget_amount: number | null;
+  readonly linked_actual_amount: number | null;
+  readonly linked_budget_lines: number | null;
+  readonly cloud_sev1_sev2_incidents: number | null;
+  readonly operational_evidence_gap: boolean | string | null;
+  readonly initiative_dependency_count: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// source.vendor_contract_portfolio — one row per vendor, contracts rolled up.
+// ---------------------------------------------------------------------------
+
+export interface SourceVendorContractPortfolioRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly vendor_category: string | null;
+  readonly contract_count: number;
+  readonly annual_value: number | null;
+  readonly total_committed_value: number | null;
+  readonly auto_renew_contracts: number;
+  readonly next_end_date: string | null;
+  /** Postgres array column — contract_id[]. */
+  readonly contract_refs: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// source.contract_application_scope — the confidence-tiered link table.
+//
+// relationship_method / relationship_confidence are NOT literal columns in
+// the exported CSV (the raw view only carries hosting/lifecycle/criticality
+// facts) — they must be derived by the repository layer per the "relationship
+// confidence must remain visible" requirement, by cross-referencing which
+// rows appear in the raw 357-row explicit register vs. rows only reachable
+// via vendor_ref join. See vendor-contract-portfolio.ts for the derivation.
+// ---------------------------------------------------------------------------
+
+export interface SourceContractApplicationScopeRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly application_ref: string;
+  readonly application_name: string;
+  readonly business_function: string | null;
+  readonly function_ref: string | null;
+  readonly criticality: string | null;
+  readonly lifecycle_state: string | null;
+  readonly hosting_model: string | null;
+  readonly annual_run_cost: number | null;
+  readonly modernization_plan: string | null;
+  readonly sla_tier: string | null;
+  readonly known_pain_risk: string | null;
+  readonly it_portfolio_ref: string | null;
+}
+
+/**
+ * How a contract<->application link was established. Not a DB column — this
+ * is the app-tier classification the "review before calling it contract
+ * scope" requirement demands. `unresolved` covers links whose method cannot
+ * be determined from the export at hand.
+ */
+export type RelationshipMethod =
+  | "explicit_contract_scope"
+  | "explicit_sow_scope"
+  | "reviewed_mapping"
+  | "vendor_based_inference"
+  | "name_based_inference"
+  | "unresolved";
+
+export interface RelationshipConfidence {
+  readonly relationship_method: RelationshipMethod;
+  /** 0-1, monotonic with relationship_method (explicit_* highest, unresolved lowest). */
+  readonly relationship_confidence: number;
+}
+
+// ---------------------------------------------------------------------------
+// source.contract_financial_exposure
+// ---------------------------------------------------------------------------
+
+export interface SourceContractFinancialExposureRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly contracted_annual_value: number | null;
+  readonly total_committed_value: number | null;
+  readonly committed_annual_spend: number | null;
+  readonly actual_annual_spend: number | null;
+  readonly linked_budget_amount: number | null;
+  readonly linked_forecast_amount: number | null;
+  readonly linked_actual_amount: number | null;
+  readonly linked_committed_amount: number | null;
+  readonly linked_budget_lines: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// source.contract_operational_performance
+// ---------------------------------------------------------------------------
+
+export interface SourceContractOperationalPerformanceRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly sla_summary: string | null;
+  readonly scoped_application_count: number | null;
+  readonly critical_application_count: number | null;
+  readonly cloud_sev1_sev2_incidents: number | null;
+  readonly avg_cloud_change_failure_rate: number | null;
+  readonly service_credits_earned: number | null;
+  readonly service_credits_claimed: number | null;
+  readonly evidence_gap: boolean | string | null;
+}
+
+// ---------------------------------------------------------------------------
+// source.contract_initiative_dependency
+// ---------------------------------------------------------------------------
+
+export interface SourceContractInitiativeDependencyRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly initiative_ref: string;
+  readonly initiative_project_name: string;
+  readonly status: string | null;
+  readonly target_end_date: string | null;
+  readonly approved_budget: number | null;
+  readonly expected_business_technology_value: string | null;
+  readonly major_risk_constraint: string | null;
+  readonly decision_needed: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// source.application_vendor_exposure
+// ---------------------------------------------------------------------------
+
+export interface SourceApplicationVendorExposureRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly application_ref: string;
+  readonly application_name: string;
+  readonly criticality: string | null;
+  readonly lifecycle_status: string | null;
+  readonly hosting_model: string | null;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly annual_run_cost: number | null;
+  readonly contract_count: number;
+  readonly contracted_annual_value: number | null;
+  readonly risk_count: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// tower.metric_observation / tower.value_claim / tower.metric_provenance
+//
+// This is what "performance vs. entitlement" is computed against — Source
+// must never assert an actual metric value itself, only join to these.
+// ---------------------------------------------------------------------------
+
+export type TowerQualityState =
+  | "available"
+  | "not_loaded"
+  | "not_measured"
+  | "withheld"
+  | "conflicting"
+  | "stale";
+export type TowerEvidenceState =
+  | "candidate"
+  | "accepted"
+  | "superseded"
+  | "not_applicable";
+
+export interface TowerMetricObservationRow {
+  readonly observation_id: string;
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly subject_ref: string;
+  readonly metric_ref: string;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly scenario: string | null;
+  readonly value_num: number | null;
+  readonly value_text: string | null;
+  readonly unit: string | null;
+  readonly currency: string | null;
+  readonly numerator: number | null;
+  readonly denominator: number | null;
+  readonly sample_size: number | null;
+  readonly cohort_ref: string | null;
+  readonly dimension_json: Record<string, unknown> | null;
+  readonly provenance_id: string | null;
+  readonly source_result_hash: string | null;
+  readonly quality_state: TowerQualityState;
+  readonly evidence_state: TowerEvidenceState;
+  readonly observed_at: string;
+  readonly stale_at: string | null;
+}
+
+export type TowerClaimState =
+  | "draft"
+  | "blocked"
+  | "accepted"
+  | "rejected"
+  | string;
+
+export interface TowerValueClaimRow {
+  readonly claim_id: string;
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly subject_ref: string;
+  readonly outcome_metric_ref: string;
+  readonly baseline_observation_id: string | null;
+  readonly target_observation_id: string | null;
+  readonly actual_observation_id: string | null;
+  readonly promised_value: number | null;
+  readonly calculated_value: number | null;
+  readonly currency: string | null;
+  readonly attribution_basis: string | null;
+  readonly quality_guardrail_state: string | null;
+  readonly risk_guardrail_state: string | null;
+  readonly claim_state: TowerClaimState;
+  readonly claim_rule_version: string | null;
+  readonly claim_input_hash: string | null;
+  readonly caveat: string | null;
+  readonly blocked_reason: string | null;
+  readonly next_gate: string | null;
+  readonly next_gate_owner_role: string | null;
+  readonly evaluated_at: string | null;
+  readonly stale_at: string | null;
+  readonly stale_reason: string | null;
+}
+
+export interface TowerMetricProvenanceRow {
+  readonly provenance_id: string;
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly source_system: string | null;
+  readonly source_report: string | null;
+  readonly source_schema: string | null;
+  readonly source_table: string | null;
+  readonly source_file_id: string | null;
+  readonly source_row_pointer: string | null;
+  readonly formula: string | null;
+  readonly formula_version: string | null;
+  readonly extraction_method: string | null;
+  readonly historical_depth: string | null;
+  readonly refresh_cadence: string | null;
+  readonly last_refreshed: string | null;
+  readonly known_limitations: string | null;
+  readonly data_owner_role: string | null;
+  readonly quality_score: number | null;
+  readonly attestation_status: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// doc.* — evidence lineage, needed so a Source view can cite exact clause /
+// row provenance rather than a bare table name.
+// ---------------------------------------------------------------------------
+
+export interface DocExtractionRow {
+  readonly extraction_id: string;
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly concept_ref: string;
+  readonly subject_kind: string;
+  readonly subject_ref: string;
+  readonly value_text: string | null;
+  readonly value_num: number | null;
+  readonly confidence: number | null;
+  readonly method: string | null;
+  readonly review_state: string | null;
+  readonly source_file_id: string | null;
+  readonly source_page: number | null;
+  readonly source_section: string | null;
+  readonly extracted_at: string;
+}
+
+/**
+ * A vendor whose contract(s) exist only as supplemental evidence — loaded
+ * (or pending load) into doc.* for a specific demo/analysis, but NOT part
+ * of the reconciled 28-vendor / 119-contract v3 register. Must be excluded
+ * from every portfolio-level rollup (concentration, total annual value,
+ * budget-reconciliation percentage) unless and until someone deliberately
+ * crosswalks or replaces a v3 contract with it.
+ *
+ * Empty as of 2026-08-02 — Crestline, NimbusWorks, and AeroLake are not yet
+ * loaded into doc.file (confirmed: doc.file contains only the 29 raw CSV
+ * intake files, document_type = 'client_intake_csv', zero contract-type
+ * documents). This constant exists so that loading them later is additive
+ * and safe by default, not a silent portfolio-total corruption.
+ */
+export const SUPPLEMENTAL_CONTRACT_VENDOR_REFS: ReadonlySet<string> = new Set([
+  // 'crestline', 'nimbusworks', 'aerolake' — populate with real vendor_ref
+  // values once these are loaded into doc.file and a vendor_ref is assigned.
+]);
