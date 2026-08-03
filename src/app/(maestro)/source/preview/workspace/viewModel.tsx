@@ -1,0 +1,538 @@
+import type { ReactElement } from 'react';
+import {
+  computeContractLeverageSignals,
+  computeRenewalExposure,
+  computeVendorConcentration,
+  summarizePortfolio,
+  tierApplicationScopeByConfidence,
+  type ContractLeverageEntry,
+  type LeverageSignal,
+} from '@/lib/source/data-model/vendor-contract-portfolio';
+import { computeSourcingOpportunities, type SourcingOpportunity } from '@/lib/source/data-model/sourcing-opportunities';
+import type {
+  SourceContract360Row,
+  SourceContractInitiativeDependencyRow,
+  SourceVendorContractPortfolioRow,
+} from '@/lib/source/data-model/types';
+import type { SourceWorkspacePortfolioData } from './live/portfolioAdapter';
+import type { Contract360Response } from './live/contractDetail';
+import { SVGT, fitText } from './svgText';
+import type { DataTableCell, DataTableRow } from './DataTable';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Source Workspace view model — bound to the governed Source data plane.
+// Every figure here is either a real column value or the output of a real
+// pure function from vendor-contract-portfolio.ts / sourcing-opportunities.ts
+// (imported above, never reimplemented). Only chart geometry — pixel
+// positions, label fitting, tooltip placement — is computed locally; that is
+// presentation, not a business calculation.
+// ─────────────────────────────────────────────────────────────────────────
+
+export const COL = {
+  red: '#a32d2d',
+  amber: '#ba7517',
+  blue: '#0066CC',
+  teal: '#1d9e75',
+  gray: '#b4b2a9',
+  ink: '#0a0a0b',
+  slate: '#5f5e5a',
+};
+
+export function money(m: number | null | undefined): string {
+  if (m == null) return 'Not established';
+  const abs = Math.abs(m);
+  if (abs >= 1_000_000_000) return '$' + (m / 1_000_000_000).toFixed(m >= 10_000_000_000 ? 2 : 4).replace(/0+$/, '').replace(/\.$/, '') + 'B';
+  if (abs >= 1_000_000) return '$' + (m / 1_000_000).toFixed(1) + 'M';
+  if (abs >= 1_000) return '$' + (m / 1_000).toFixed(0) + 'K';
+  return '$' + m.toFixed(0);
+}
+export function pct(v: number): string {
+  return (v * 100).toFixed(1) + '%';
+}
+export function fmtDate(iso: string | null): string {
+  if (!iso) return 'Not established';
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return 'Not established';
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+const DAY = 86400000;
+function daysBetween(a: Date, b: Date): number {
+  return Math.round((b.getTime() - a.getTime()) / DAY);
+}
+
+// ── selection / navigation state (presentation only) ───────────────────────
+
+export interface Selection {
+  kind: string;
+  id: string | null;
+}
+export interface TipLine {
+  k: string;
+  v: string;
+}
+export interface TipState {
+  title: string;
+  lines: TipLine[];
+  left: string;
+  top: string;
+}
+export interface PinItem {
+  title: string;
+  type: string;
+  note: string;
+  when: string;
+}
+export interface HistEntry {
+  kind: string;
+  id: string | null;
+  tab?: string;
+}
+
+export interface WorkspaceState {
+  sel: Selection;
+  tabs: Record<string, string>;
+  open: Record<string, boolean>;
+  window: number;
+  quadrant: string | null;
+  actionFilter: string;
+  groupBy: string;
+  slice: Record<string, string[]>;
+  ava: 'hidden' | 'expanded';
+  avaKey: string | null;
+  pins: Record<string, PinItem[]>;
+  q: string;
+  tip: TipState | null;
+  hist: HistEntry[];
+  hi: number;
+  narrow: boolean;
+  tight: boolean;
+  wide: boolean;
+  drawer: boolean;
+  concStrip: string | null;
+  explorerPinned: boolean;
+  avaCanvas: boolean;
+  contractDetail: Record<string, Contract360Response | 'loading' | 'error'>;
+}
+
+export const INITIAL_STATE: WorkspaceState = {
+  sel: { kind: 'portfolio', id: null },
+  tabs: { portfolio: 'Context', vendor: 'Overview', contract: 'Overview', evidence: 'Coverage' },
+  open: { exec: true, vendors: true, contracts: true, opps: false, ev: false, allVendors: false, allContracts: false },
+  window: 180,
+  quadrant: null,
+  actionFilter: 'all',
+  groupBy: 'vendor',
+  slice: {},
+  ava: 'hidden',
+  avaKey: null,
+  pins: {},
+  q: '',
+  tip: null,
+  hist: [],
+  hi: -1,
+  narrow: false,
+  tight: false,
+  wide: true,
+  drawer: false,
+  concStrip: null,
+  explorerPinned: false,
+  avaCanvas: false,
+  contractDetail: {},
+};
+
+// ── enriched per-contract row (real columns + a per-contract join of the
+// real leverage/renewal function outputs; day counts are chart-geometry
+// only, never used to re-derive a passed/expiring classification) ──────────
+
+export type Urgency = 'urgent' | 'action_required' | 'prepare' | 'monitor';
+
+export interface EnrichedContract {
+  row: SourceContract360Row;
+  leverage: ContractLeverageEntry;
+  noticePassed: boolean;
+  active: boolean;
+  expiringWithin90: boolean;
+  expiringWithin180: boolean;
+  urgency: Urgency;
+  dExp: number;
+  noticeDate: Date | null;
+  dNot: number;
+}
+
+function cell(text: unknown, o?: Partial<DataTableCell>): DataTableCell {
+  return Object.assign({ text }, o || {}) as DataTableCell;
+}
+
+export class WorkspaceViewModel {
+  state: WorkspaceState;
+  setState: (patch: Partial<WorkspaceState> | ((s: WorkspaceState) => Partial<WorkspaceState>)) => void;
+  portfolio: SourceWorkspacePortfolioData;
+  fetchContractDetail: (contractId: string) => void;
+  tenantName: string;
+  asOf: Date;
+
+  constructor(
+    state: WorkspaceState,
+    setState: (patch: Partial<WorkspaceState> | ((s: WorkspaceState) => Partial<WorkspaceState>)) => void,
+    portfolio: SourceWorkspacePortfolioData,
+    tenantName: string,
+    fetchContractDetail: (contractId: string) => void,
+  ) {
+    this.state = state;
+    this.setState = setState;
+    this.portfolio = portfolio;
+    this.tenantName = tenantName;
+    this.fetchContractDetail = fetchContractDetail;
+    this.asOf = new Date(portfolio.asOfDateIso);
+  }
+
+  // ── navigation / selection ──────────────────────────────────────────
+  select = (kind: string, id: string | null = null, tab?: string) => {
+    const s = this.state;
+    const hist = s.hist.slice(0, s.hi + 1).concat([{ kind, id, tab }]);
+    const tabs = tab ? Object.assign({}, s.tabs, { [kind]: tab }) : s.tabs;
+    this.setState({ sel: { kind, id }, tabs, hist, hi: hist.length - 1, quadrant: null, tip: null, avaCanvas: false });
+    if (kind === 'contract' && id) this.fetchContractDetail(id);
+  };
+  jump = (i: number) => {
+    const h = this.state.hist[i];
+    if (!h) return;
+    const tabs = h.tab ? Object.assign({}, this.state.tabs, { [h.kind]: h.tab }) : this.state.tabs;
+    this.setState({ sel: { kind: h.kind, id: h.id }, tabs, hi: i, tip: null });
+    if (h.kind === 'contract' && h.id) this.fetchContractDetail(h.id);
+  };
+  setTab = (kind: string, tab: string) => {
+    this.setState({ tabs: Object.assign({}, this.state.tabs, { [kind]: tab }), tip: null });
+  };
+  toggle = (k: string) => {
+    this.setState({ open: Object.assign({}, this.state.open, { [k]: !this.state.open[k] }) });
+  };
+  showTip = (e: { currentTarget: Element }, title: string, lines: [string, string][]) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    this.setState({
+      tip: { title, lines: lines.map((l) => ({ k: l[0], v: l[1] })), left: r.left + r.width / 2 + 'px', top: r.top - 10 + 'px' },
+    });
+  };
+  hideTip = () => this.setState({ tip: null });
+  pin = (title: string, type: string, note: string) => {
+    const key = this.state.sel.kind + ':' + (this.state.sel.id || '');
+    const list = (this.state.pins[key] || []).concat([{ title, type, note, when: fmtDate(new Date().toISOString()) }]);
+    this.setState({ pins: Object.assign({}, this.state.pins, { [key]: list }) });
+  };
+  toggleExplorerPin = () => this.setState({ explorerPinned: !this.state.explorerPinned });
+  openAvaCanvas = () => this.setState({ avaCanvas: true, ava: 'expanded' });
+  closeAvaCanvas = () => this.setState({ avaCanvas: false });
+
+  // ── governed derivations (thin calls into the real pure functions) ──────
+  contracts(): readonly SourceContract360Row[] {
+    return this.portfolio.contracts;
+  }
+  summary() {
+    return summarizePortfolio(this.contracts());
+  }
+  concentration() {
+    return computeVendorConcentration(this.contracts());
+  }
+  leverage(): readonly ContractLeverageEntry[] {
+    return computeContractLeverageSignals(this.contracts());
+  }
+  renewal(windowDays: number) {
+    return computeRenewalExposure(this.contracts(), this.portfolio.asOfDateIso, windowDays);
+  }
+  opportunities(): readonly SourcingOpportunity[] {
+    return computeSourcingOpportunities(this.contracts(), this.portfolio.asOfDateIso).opportunities;
+  }
+  scopeTiers(contractId?: string) {
+    const rows = contractId
+      ? this.portfolio.applicationScope.filter((r) => r.contract_id === contractId)
+      : this.portfolio.applicationScope;
+    return tierApplicationScopeByConfidence(rows);
+  }
+  initiativesFor(contractId: string): readonly SourceContractInitiativeDependencyRow[] {
+    return this.portfolio.initiativeDependencies.filter((r) => r.contract_id === contractId);
+  }
+  vendorRow(vendorRef: string): SourceVendorContractPortfolioRow | undefined {
+    return this.portfolio.vendors.find((v) => v.vendor_ref === vendorRef);
+  }
+
+  // ── per-contract enrichment: joins the real functions' classifications
+  // onto each row, plus a raw day-count used only for chart pixel geometry.
+  enrich(): EnrichedContract[] {
+    const rows = this.contracts();
+    const leverageByContract = new Map(this.leverage().map((l) => [l.contractId, l]));
+    const passed90 = new Set(this.renewal(90).noticeDeadlinePassed.map((r) => r.contract_id));
+    const win90 = new Set(this.renewal(90).expiringWithinWindow.map((r) => r.contract_id));
+    const win180 = new Set(this.renewal(180).expiringWithinWindow.map((r) => r.contract_id));
+    const noticePassedSet = new Set(this.renewal(180).noticeDeadlinePassed.map((r) => r.contract_id));
+    void passed90;
+    return rows.map((row) => {
+      const leverage = leverageByContract.get(row.contract_id) ?? {
+        contractId: row.contract_id, vendorRef: row.vendor_ref, vendorName: row.vendor_name,
+        annualValue: row.annual_value ?? 0,
+        weakSignals: { benchmarking: false, alternatives: false, skill_dependency: false, regional_dependency: false },
+        weakSignalCount: 0, isHighPriority: false,
+      };
+      const end = row.end_date ? new Date(row.end_date) : null;
+      const active = end ? end.getTime() > this.asOf.getTime() : false;
+      const noticePassed = noticePassedSet.has(row.contract_id);
+      const dExp = end ? daysBetween(this.asOf, end) : Number.POSITIVE_INFINITY;
+      const noticeDate = end && row.notice_period_days != null ? new Date(end.getTime() - row.notice_period_days * DAY) : null;
+      const dNot = noticeDate ? daysBetween(this.asOf, noticeDate) : dExp;
+      const urgency: Urgency = noticePassed ? 'urgent' : win90.has(row.contract_id) ? 'action_required' : win180.has(row.contract_id) ? 'prepare' : 'monitor';
+      return { row, leverage, noticePassed, active, expiringWithin90: win90.has(row.contract_id), expiringWithin180: win180.has(row.contract_id), urgency, dExp, noticeDate, dNot };
+    });
+  }
+
+  urgColor(u: Urgency): string {
+    return { urgent: COL.red, action_required: COL.amber, prepare: COL.blue, monitor: COL.gray }[u];
+  }
+  urgLabel(u: Urgency): string {
+    return {
+      urgent: 'Urgent · notice passed', action_required: 'Action required · ≤90 days',
+      prepare: 'Prepare · ≤180 days', monitor: 'Monitor · later window',
+    }[u];
+  }
+  signalLabel(s: LeverageSignal): string {
+    return {
+      benchmarking: 'Benchmark right', alternatives: 'Supplier alternatives',
+      skill_dependency: 'Specialised skills', regional_dependency: 'Regional dependency',
+    }[s];
+  }
+
+  cell = cell;
+
+  // ── charts (pixel geometry only — inputs are the real, already-computed
+  // concentration/renewal/leverage results) ───────────────────────────────
+
+  pareto() {
+    const conc = this.concentration();
+    const NAMED = 13, W = 1000, H = 286, L = 54, R = 44, T = 14, B = 56;
+    const shown = conc.byVendor.slice(0, NAMED);
+    const tailVal = conc.byVendor.slice(NAMED).reduce((t, r) => t + r.annualValue, 0);
+    type Bar = { vendorRef: string; vendorName: string; val: number; cumPct: number; share: number; tail?: boolean };
+    const bars: Bar[] = shown
+      .map((r): Bar => ({ vendorRef: r.vendorRef, vendorName: r.vendorName, val: r.annualValue, cumPct: r.cumulativeShare * 100, share: r.shareOfTotal * 100 }))
+      .concat(tailVal > 0 ? [{ vendorRef: '__other__', vendorName: 'Other ' + Math.max(0, conc.byVendor.length - NAMED) + ' vendors', val: tailVal, cumPct: 100, share: (tailVal / (conc.totalAnnualValue || 1)) * 100, tail: true }] : []);
+    const maxV = bars[0]?.val || 1, iw = W - L - R, ih = H - T - B, bw = iw / (bars.length || 1);
+    return {
+      w: W, h: H, axisY: T + ih, left: L, right: W - R,
+      bars: bars.map((b, i) => {
+        const h = Math.max(2, (b.val / maxV) * ih);
+        return {
+          key: b.vendorRef, x: L + i * bw + bw * 0.15, y: T + ih - h, w: bw * 0.7, h,
+          fill: b.tail ? '#d3d1c7' : i < 5 ? '#0a0a0b' : i < 10 ? '#3d6ea8' : '#a9bdd6',
+          cx: L + i * bw + bw / 2, cy: T + ih - (b.cumPct / 100) * ih,
+          onEnter: (e: { currentTarget: Element }) =>
+            this.showTip(e, b.vendorName, [[money(b.val), 'Annual contract value'], ['Portfolio share', b.share.toFixed(1) + '%'], ['Cumulative share', b.cumPct.toFixed(1) + '%']]),
+          onLeave: this.hideTip,
+          onClick: b.tail ? undefined : () => this.select('vendor', b.vendorRef),
+        };
+      }),
+      line: bars.map((b, i) => L + i * bw + bw / 2 + ',' + (T + ih - (b.cumPct / 100) * ih)).join(' '),
+      gridY: [25, 50, 75, 100].map((p) => ({ p, y: T + ih - (p / 100) * ih })),
+      labels: ([] as ReactElement[])
+        .concat([25, 50, 75, 100].map((p, i) => SVGT('g' + i, W - R + 6, T + ih - (p / 100) * ih + 3, p + '%', { fill: '#b4b2a9', fontSize: 10 })))
+        .concat([0.5, 1].map((f, i) => SVGT('t' + i, L - 8, T + ih - f * ih + 3, money(maxV * f), { fill: '#888780', fontSize: 10, textAnchor: 'end' })))
+        .concat(bars.map((b, i) => {
+          const lx = L + i * bw + bw / 2, ly = T + ih + 15;
+          return SVGT('n' + i, lx, ly, fitText(b.vendorName, 78, 10), { fill: '#5f5e5a', fontSize: 10, textAnchor: 'end', transform: 'rotate(-38 ' + lx + ' ' + ly + ')' });
+        })),
+    };
+  }
+
+  timeline(rows: EnrichedContract[]) {
+    const S = this.state, win = S.window;
+    const W = 1060, L = 286, R = 92, T = 46, ROW = 25, SPAN = 548;
+    const shown = rows
+      .filter((c) => c.active && (c.noticePassed || c.dExp <= win))
+      .sort((a, b) => (a.noticePassed === b.noticePassed ? a.dExp - b.dExp : a.noticePassed ? -1 : 1));
+    const later = rows.filter((c) => c.active && !c.noticePassed && c.dExp > win);
+    const iw = W - L - R;
+    const x = (dd: number) => L + (Math.max(0, Math.min(SPAN, dd)) / SPAN) * iw;
+    const maxV = Math.max.apply(null, shown.map((c) => c.row.annual_value ?? 0).concat([1]));
+    return {
+      w: W, h: T + shown.length * ROW + 26, left: L, right: W - R, asOfX: x(0), axisY: T - 12,
+      laterNote: later.length
+        ? later.length + ' further active contracts (' + money(later.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)) + ') carry decision dates beyond the selected window.'
+        : 'All active contracts fall inside the selected window.',
+      labels: ([] as ReactElement[])
+        .concat([SVGT('asof', x(0), T - 30, 'Governed as-of · ' + fmtDate(this.portfolio.asOfDateIso), { fontSize: 10, fontWeight: 600, fill: '#0a0a0b', textAnchor: 'middle' })])
+        .concat(shown.reduce((acc: ReactElement[], c, i) => {
+          const y = T + i * ROW + 16;
+          return acc.concat([
+            SVGT('v' + i, 14, y, fitText(c.row.vendor_name, 124, 11.5, 600), { fontSize: 11.5, fontWeight: 600, fill: '#0a0a0b' }),
+            SVGT('c' + i, 150, y, fitText(c.row.contract_name, L - 164, 11), { fontSize: 11, fill: '#5f5e5a' }),
+            SVGT('m' + i, W - R + 8, y, money(c.row.annual_value), { fontSize: 11, fill: '#5f5e5a', fontFamily: "'JetBrains Mono', monospace" }),
+          ]);
+        }, [])),
+      rows: shown.map((c, i) => {
+        const y = T + i * ROW + 12, r = 4 + Math.sqrt((c.row.annual_value ?? 0) / maxV) * 8, col = this.urgColor(c.urgency);
+        return {
+          key: c.row.contract_id, y, col, r, cx: x(c.dExp), nx: x(Math.max(0, c.dNot)),
+          x1: x(Math.max(0, Math.min(c.dNot, c.dExp))), x2: x(c.dExp), bandY: T + i * ROW,
+          band: i % 2 === 0 ? 'rgba(10,10,11,0.02)' : 'transparent',
+          dash: c.row.auto_renew ? '3 2' : '0', noticeMark: c.noticePassed ? 0 : 6,
+          onEnter: (e: { currentTarget: Element }) =>
+            this.showTip(e, c.row.vendor_name + ' · ' + c.row.contract_name, [
+              ['Contract', c.row.contract_id], ['Annual contract value', money(c.row.annual_value)],
+              ['Notice deadline', c.noticeDate ? fmtDate(c.noticeDate.toISOString()) + (c.noticePassed ? ' — passed' : '') : 'No notice term'],
+              ['Expiration', fmtDate(c.row.end_date)], ['Auto-renew', c.row.auto_renew ? 'Yes' : 'No'],
+              ['Renewal urgency', c.urgency], ['Benchmark right', c.row.benchmarking_clause ?? 'Not verified'],
+            ]),
+          onLeave: this.hideTip, onClick: () => this.select('contract', c.row.contract_id),
+        };
+      }),
+    };
+  }
+
+  matrix(rows: EnrichedContract[]) {
+    const W = 640, H = 430, L = 58, R = 20, T = 18, B = 68;
+    const iw = W - L - R, ih = H - T - B, YMAX = Math.max(20, Math.max.apply(null, rows.map((c) => (c.row.annual_value ?? 0) / 1_000_000).concat([20])));
+    const x = (n: number) => L + (n / 4) * iw;
+    const y = (v: number) => T + ih - Math.min(1, v / YMAX) * ih;
+    const maxSpend = Math.max.apply(null, rows.map((c) => c.row.actual_annual_spend ?? 0).concat([1]));
+    const qx = x(1.5), qy = y(YMAX * 0.3), sel = this.state.quadrant;
+    const quads = [
+      { id: 'renegotiate', label: 'High exposure · weak leverage', action: 'Build alternatives and renegotiate', qx, qy: T, qw: W - R - qx, qh: qy - T, tx: W - R - 10, ty: T + 15, anchor: 'end' as const },
+      { id: 'benchmark', label: 'High exposure · stronger leverage', action: 'Benchmark or recompete', qx: L, qy: T, qw: qx - L, qh: qy - T, tx: L + 10, ty: T + 15, anchor: 'start' as const },
+      { id: 'consolidate', label: 'Lower exposure · weak leverage', action: 'Consolidate or standardise', qx, qy, qw: W - R - qx, qh: T + ih - qy, tx: W - R - 10, ty: T + ih - 9, anchor: 'end' as const },
+      { id: 'renew', label: 'Lower exposure · stronger leverage', action: 'Routine renewal management', qx: L, qy, qw: qx - L, qh: T + ih - qy, tx: L + 10, ty: T + ih - 9, anchor: 'start' as const },
+    ];
+    return {
+      w: W, h: H, left: L, bottom: T + ih, right: W - R, top: T, qx, qy,
+      quads: quads.map((q) => Object.assign({}, q, {
+        fill: sel === q.id ? 'rgba(0,102,204,0.07)' : 'transparent', stroke: sel === q.id ? '#0066CC' : 'transparent',
+        onClick: () => this.setState({ quadrant: sel === q.id ? null : q.id, actionFilter: sel === q.id ? 'all' : q.id }),
+      })),
+      labels: ([] as ReactElement[])
+        .concat([0, 0.33, 0.66, 1].map((f, i) => SVGT('y' + i, L - 8, y(YMAX * f) + 3, '$' + Math.round(YMAX * f) + 'M', { fontSize: 10, fill: '#888780', textAnchor: 'end' })))
+        .concat([0, 1, 2, 3, 4].map((n, i) => SVGT('x' + i, x(n), T + ih + 16, String(n), { fontSize: 10, fill: '#888780', textAnchor: 'middle' })))
+        .concat(quads.map((q, i) => SVGT('q' + i, q.tx, q.ty, q.action, { fontSize: 10.5, fontWeight: 600, fill: sel === q.id ? '#0a3d70' : '#888780', textAnchor: q.anchor })))
+        .concat([
+          SVGT('cap1', L, H - 14, 'Stronger leverage', { fontSize: 10.5, fill: '#5f5e5a' }),
+          SVGT('cap2', W - R, H - 14, 'Weaker leverage · more signals', { fontSize: 10.5, fill: '#5f5e5a', textAnchor: 'end' }),
+        ]),
+      pts: rows.map((c) => {
+        const j = ((c.row.contract_id.charCodeAt(c.row.contract_id.length - 1) % 5) - 2) * 8;
+        const r = 5 + Math.sqrt((c.row.actual_annual_spend ?? 0) / maxSpend) * 14;
+        return {
+          key: c.row.contract_id, cx: x(c.leverage.weakSignalCount) + j, cy: y((c.row.annual_value ?? 0) / 1_000_000), r,
+          fill: this.urgColor(c.urgency), stroke: c.row.auto_renew ? '#0a0a0b' : 'rgba(255,255,255,.85)', sw: c.row.auto_renew ? 2 : 1.5, dash: c.row.auto_renew ? '3 2' : '0',
+          onEnter: (e: { currentTarget: Element }) =>
+            this.showTip(e, c.row.vendor_name + ' · ' + c.row.contract_name, (
+              [['Weak leverage signals', c.leverage.weakSignalCount + ' of 4']] as [string, string][]
+            ).concat((Object.keys(c.leverage.weakSignals) as LeverageSignal[]).map((s) => [this.signalLabel(s), c.leverage.weakSignals[s] ? '⚠ weak' : '✓ ok']))
+              .concat([['Annual contract value', money(c.row.annual_value)], ['Actual annual spend', money(c.row.actual_annual_spend)], ['Auto-renew', c.row.auto_renew ? 'Yes' : 'No']])),
+          onLeave: this.hideTip, onClick: () => this.select('contract', c.row.contract_id),
+        };
+      }),
+    };
+  }
+
+  // ── governed slice-and-dice (Explore lens) ──────────────────────────────
+  dims() {
+    return [
+      { id: 'vendor', label: 'Vendor', get: (c: EnrichedContract) => c.row.vendor_name },
+      { id: 'category', label: 'Vendor category', get: (c: EnrichedContract) => c.row.vendor_category ?? 'Unresolved' },
+      { id: 'urgency', label: 'Renewal urgency', get: (c: EnrichedContract) => this.urgLabel(c.urgency) },
+      { id: 'benchmark', label: 'Benchmark clause', get: (c: EnrichedContract) => c.row.benchmarking_clause ?? 'Not verified' },
+      { id: 'alternatives', label: 'Supplier alternatives', get: (c: EnrichedContract) => c.row.alternatives_available ?? 'Not assessed' },
+      { id: 'autoRenew', label: 'Renewal mechanism', get: (c: EnrichedContract) => (c.row.auto_renew ? 'Auto-renewing' : 'Manual renewal') },
+      { id: 'weak', label: 'Weak leverage signals', get: (c: EnrichedContract) => c.leverage.weakSignalCount + ' of 4' },
+    ];
+  }
+  dimById(id: string) {
+    return this.dims().find((d) => d.id === id) || this.dims()[0];
+  }
+  matches(c: EnrichedContract, exceptDim?: string): boolean {
+    const slice = this.state.slice || {};
+    return Object.keys(slice).every((dd) => dd === exceptDim || !slice[dd].length || slice[dd].indexOf(this.dimById(dd).get(c)) >= 0);
+  }
+  toggleValue = (dimId: string, value: string) => {
+    const slice = this.state.slice || {}, cur = slice[dimId] || [];
+    const next = cur.indexOf(value) >= 0 ? cur.filter((v) => v !== value) : cur.concat([value]);
+    const out = Object.assign({}, slice);
+    if (next.length) out[dimId] = next;
+    else delete out[dimId];
+    this.setState({ slice: out, tip: null });
+  };
+  listbox(allRows: EnrichedContract[], dimId: string) {
+    const dim = this.dimById(dimId), sel = (this.state.slice || {})[dimId] || [];
+    const possible = allRows.filter((c) => this.matches(c, dimId));
+    const values: Record<string, { all: EnrichedContract[]; live: EnrichedContract[] }> = {};
+    allRows.forEach((c) => { const v = dim.get(c); values[v] = values[v] || { all: [], live: [] }; values[v].all.push(c); });
+    possible.forEach((c) => { const v = dim.get(c); values[v].live.push(c); });
+    return {
+      id: dimId, label: dim.label,
+      values: Object.keys(values).map((v) => {
+        const g = values[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0;
+        return {
+          label: v, count: String((live ? g.live : g.all).length),
+          value: money((live ? g.live : g.all).reduce((t, c) => t + (c.row.annual_value ?? 0), 0)),
+          bg: isSel ? '#0a0a0b' : live ? '#fff' : '#f4f2ec', fg: isSel ? '#fff' : live ? '#2c2c2a' : '#b4b2a9',
+          border: isSel ? '#0a0a0b' : live ? 'rgba(10,10,11,.14)' : 'rgba(10,10,11,.07)', sub: isSel ? '#fff' : live ? '#888780' : '#c9c6bd',
+          onClick: () => this.toggleValue(dimId, v),
+        };
+      }).sort((a, b) => (a.fg === '#b4b2a9' ? 1 : 0) - (b.fg === '#b4b2a9' ? 1 : 0)),
+      onClear: () => { const out = Object.assign({}, this.state.slice); delete out[dimId]; this.setState({ slice: out, tip: null }); },
+    };
+  }
+  explore(allRows: EnrichedContract[]) {
+    const S = this.state, dim = this.dimById(S.groupBy), slice = S.slice || {};
+    const selRows = allRows.filter((c) => this.matches(c));
+    const base = allRows.filter((c) => this.matches(c, S.groupBy));
+    const sel = slice[S.groupBy] || [];
+    const total = selRows.reduce((t, c) => t + (c.row.annual_value ?? 0), 0);
+    const bucket: Record<string, { all: EnrichedContract[]; live: EnrichedContract[] }> = {};
+    allRows.forEach((c) => { const v = dim.get(c); bucket[v] = bucket[v] || { all: [], live: [] }; bucket[v].all.push(c); });
+    base.forEach((c) => { const v = dim.get(c); bucket[v].live.push(c); });
+    const groups = Object.keys(bucket).map((v) => {
+      const g = bucket[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0, list = live ? g.live : g.all;
+      return { key: v, list, live, isSel, val: list.reduce((t, c) => t + (c.row.annual_value ?? 0), 0) };
+    }).sort((a, b) => (a.live === b.live ? b.val - a.val : a.live ? -1 : 1));
+    const max = Math.max.apply(null, groups.map((g) => g.val).concat([1]));
+    const liveTotal = groups.filter((g) => g.live).reduce((t, g) => t + g.val, 0);
+    return {
+      dimLabel: dim.label, contractCount: selRows.length, totalVal: money(total),
+      groupCount: groups.filter((g) => g.live).length, excludedCount: groups.filter((g) => !g.live).length,
+      groups: groups.map((g) => ({
+        key: g.key, label: g.key, value: money(g.val),
+        share: liveTotal && g.live ? pct(g.val / liveTotal) : 'excluded', pct: Math.max(1.5, (g.val / max) * 100),
+        count: g.list.length + (g.list.length === 1 ? ' contract' : ' contracts'),
+        weak: Math.max.apply(null, g.list.map((c) => c.leverage.weakSignalCount).concat([0])) + ' of 4',
+        labelColor: g.live ? '#0a0a0b' : '#b4b2a9', subColor: g.live ? '#888780' : '#c9c6bd',
+        valueColor: g.live ? '#0a0a0b' : '#b4b2a9', track: g.live ? '#f1efe8' : '#f7f5f0', rowBg: g.isSel ? 'rgba(10,10,11,.05)' : 'transparent',
+        fill: !g.live ? '#e4e1d8' : g.list.some((c) => c.noticePassed) ? COL.red : g.list.every((c) => c.leverage.weakSignalCount === 0) ? COL.teal : '#3d6ea8',
+        onClick: () => this.toggleValue(S.groupBy, g.key),
+        onEnter: (e: { currentTarget: Element }) => this.showTip(e, g.key, [[money(g.val), 'value'], ['Contracts', String(g.list.length)]]),
+        onLeave: this.hideTip,
+      })),
+      dimBtns: this.dims().map((dd) => ({
+        label: dd.label, onClick: () => this.setState({ groupBy: dd.id, tip: null }),
+        bg: dd.id === S.groupBy ? '#0a0a0b' : '#fff', fg: dd.id === S.groupBy ? '#fff' : '#5f5e5a', border: dd.id === S.groupBy ? '#0a0a0b' : 'rgba(10,10,11,.16)',
+      })),
+      boxes: ['category', 'urgency', 'benchmark', 'alternatives'].map((id) => this.listbox(allRows, id)),
+      chips: Object.keys(slice).reduce<{ label: string; onClick: () => void }[]>((acc, dd) => acc.concat(slice[dd].map((v) => ({ label: this.dimById(dd).label + ' = ' + v, onClick: () => this.toggleValue(dd, v) }))), []),
+      hasFilters: Object.keys(slice).length > 0, noFilters: Object.keys(slice).length === 0,
+      clearAll: () => this.setState({ slice: {}, tip: null }),
+      query: 'query = {\n  view:       "source.contract_360",\n  measure:    "annual_value",\n  dimension:  "' + S.groupBy + '",\n  as_of_date: "' + this.portfolio.asOfDateIso.slice(0, 10) + '",\n  tenant_key: "' + this.portfolio.tenantKey + '"\n}',
+    };
+  }
+
+  contractTableRows(list: EnrichedContract[]): DataTableRow[] {
+    return list.map((c) => ({
+      onClick: () => this.select('contract', c.row.contract_id),
+      cells: [
+        cell(c.row.vendor_name, { weight: 600 }), cell(c.row.contract_name, { wrap: true, color: '#5f5e5a' }),
+        cell(c.row.contract_id, { mono: true, color: '#5f5e5a' }),
+        cell(money(c.row.annual_value), { align: 'right', mono: true, weight: 600 }),
+        cell(money(c.row.actual_annual_spend), { align: 'right', mono: true, color: '#5f5e5a' }),
+        cell(c.noticeDate ? fmtDate(c.noticeDate.toISOString()) : 'No notice term', { align: 'right', color: c.noticePassed ? COL.red : '#2c2c2a', weight: c.noticePassed ? 600 : 400 }),
+        cell(fmtDate(c.row.end_date), { align: 'right' }),
+        cell(c.row.auto_renew ? 'Auto-renew' : 'Manual', { color: c.row.auto_renew ? COL.amber : '#5f5e5a' }),
+        cell(c.leverage.weakSignalCount + ' of 4', { align: 'center', color: c.leverage.weakSignalCount >= 2 ? COL.red : '#5f5e5a' }),
+        cell(this.urgLabel(c.urgency).split(' · ')[0], { color: this.urgColor(c.urgency), weight: 600 }),
+      ],
+    }));
+  }
+}
