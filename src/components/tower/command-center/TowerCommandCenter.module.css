@@ -169,10 +169,27 @@
 .weekread .wkLine .z { color: var(--canon-red); font-family: var(--abarva-mono); font-weight: 600; font-size: 0.84em; font-variant-numeric: tabular-nums; }
 .weekread .wkLine .turn { color: var(--canon-gray-500); }
 .wkViz { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 11px; margin: 16px 0 6px; }
+.weekProofRail { width: 100%; min-width: 0; display: grid; gap: 8px; padding: 2px 0; }
+.weekProofRow { display: grid; grid-template-columns: minmax(112px, 0.7fr) minmax(96px, 1.2fr) minmax(58px, auto); gap: 12px; align-items: center; min-width: 0; }
+.weekProofLabel { font-size: 11.5px; line-height: 1.2; color: var(--canon-gray-700); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weekProofTrack { position: relative; height: 9px; min-width: 0; overflow: hidden; border-radius: 999px; background: var(--canon-gray-100); border: 1px solid var(--canon-border); }
+.weekProofFill { position: absolute; inset: 0 auto 0 0; width: var(--week-proof-width); min-width: 0; border-radius: inherit; }
+.weekProofFill_muted { background: var(--canon-gray-300); }
+.weekProofFill_teal { background: var(--canon-teal); }
+.weekProofFill_tealDark { background: var(--canon-teal-dark); }
+.weekProofFill_red { background: var(--canon-red); }
+.weekProofValue { justify-self: end; min-width: 58px; font-family: var(--abarva-mono); font-size: 11.5px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--canon-gray-900); white-space: nowrap; text-align: right; }
 .weekread .wkFoot { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--canon-border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--canon-gray-500); }
 .weekread .wkFoot b { color: var(--canon-gray-900); font-weight: 600; }
 .weekread .wkCta { margin-left: auto; font-family: var(--abarva-sans); font-size: 13px; font-weight: 600; color: #fff; background: var(--canon-bg-dark); border: 0; border-radius: 8px; padding: 9px 15px; cursor: pointer; }
 .weekread .wkCta:hover { background: var(--canon-teal-dark); color: #fff; }
+
+@media (max-width: 640px) {
+  .weekProofRow { grid-template-columns: minmax(0, 1fr) minmax(58px, max-content); gap: 6px 10px; }
+  .weekProofLabel { grid-column: 1; grid-row: 1; }
+  .weekProofValue { grid-column: 2; grid-row: 1; }
+  .weekProofTrack { grid-column: 1 / -1; grid-row: 2; }
+}
 
 /* Decision queue */
 .dq { display: flex; flex-direction: column; gap: 9px; }
