@@ -120,6 +120,7 @@ COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/cube ./cube
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets
 COPY --from=build --chown=node:node /app/clients/airline-demo-new/execution ./clients/airline-demo-new/execution

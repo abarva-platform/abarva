@@ -1,6 +1,6 @@
 cubes:
   - name: sourcing_vendors
-    sql_table: consumption.sourcing_vendor_v1
+    sql_table: consumption.sourcing_vendor_semantic_v1
     public: true
     joins:
       - name: sourcing_contracts
