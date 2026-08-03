@@ -45,6 +45,28 @@ describe("Home/Admin boundary contract", () => {
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
 
+  it("keeps the Home explorer as canvas state, not hash-anchor document navigation", () => {
+    const commandCenterSource = readRepoFile(
+      "src/components/home/ai-success-command-center/AiSuccessCommandCenter.tsx",
+    );
+    const architectureSource = readRepoFile(
+      "src/components/architecture/CurrentStateArchitectureMap.tsx",
+    );
+
+    expect(commandCenterSource).toContain(
+      "data-active-section={activeSection}",
+    );
+    expect(commandCenterSource).toContain('type="button"');
+    expect(commandCenterSource).toContain("window.history.replaceState");
+    expect(commandCenterSource).not.toMatch(/href=\\{`#|href="#/);
+    expect(commandCenterSource).not.toContain("IntersectionObserver");
+    expect(commandCenterSource).not.toContain("document.getElementById");
+    expect(architectureSource).toContain("Architecture review board");
+    expect(architectureSource).toContain(
+      'data-testid="current-state-architecture-board"',
+    );
+  });
+
   it("keeps legacy setup-ish Home URLs redirected into Admin", () => {
     const proxySource = readRepoFile("src/proxy.ts");
 
