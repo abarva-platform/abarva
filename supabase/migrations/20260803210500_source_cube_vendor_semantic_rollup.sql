@@ -4,8 +4,14 @@
 -- Lab Cube parity proved that this preserved primary-key uniqueness but lost
 -- annual value and contract counts when a vendor had multiple source/context
 -- rows. Keep one row per vendor for Cube, but aggregate the measures.
+--
+-- Drop/recreate this derived view because prior environments can disagree on
+-- the count column type depending on the exact replay path that created the
+-- earlier semantic view. No source data is modified.
 
-CREATE OR REPLACE VIEW consumption.sourcing_vendor_semantic_v1 AS
+DROP VIEW IF EXISTS consumption.sourcing_vendor_semantic_v1;
+
+CREATE VIEW consumption.sourcing_vendor_semantic_v1 AS
 WITH base AS (
   SELECT *
   FROM consumption.sourcing_vendor_v1
@@ -53,10 +59,10 @@ rolled AS (
   SELECT
     tenant_key,
     vendor_id,
-    SUM(COALESCE(contract_count, 0))::int AS contract_count,
+    SUM(COALESCE(contract_count, 0))::bigint AS contract_count,
     SUM(COALESCE(annual_value, 0)) AS annual_value,
     SUM(COALESCE(total_committed_value, 0)) AS total_committed_value,
-    SUM(COALESCE(auto_renew_contracts, 0))::int AS auto_renew_contracts,
+    SUM(COALESCE(auto_renew_contracts, 0))::bigint AS auto_renew_contracts,
     MIN(next_end_date) AS next_end_date,
     MAX(COALESCE(critical_application_count, 0)) AS critical_application_count,
     MAX(COALESCE(lock_in_signal_count, 0)) AS lock_in_signal_count

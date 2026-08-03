@@ -35,6 +35,8 @@ Repairs the Source vendor Cube semantic view so it remains one row per vendor wh
 - Pass: ACA operator Source Cube parity verifier reached the semantic gate and failed only on vendor annual value and contract-count reconciliation.
 - Pass: replacement view keeps one row per vendor and aggregates annual value, total committed value, auto-renew count, and contract count.
 - Pass: migration includes a replay-safe duplicate vendor-key assertion.
+- Pass: lab operator dry apply caught a view contract type mismatch before the Cube verifier ran; the migration now preserves the existing count column types.
+- Pass: fresh migration replay caught the opposite historical type path; the migration now rebuilds only the derived semantic view so every environment ends with one contract.
 - Not-run: PR CI checks; will run after PR creation.
 - Not-run: ACA operator migration apply in lab; runs after merge/deploy.
 - Not-run: ACA operator Source Cube parity verifier in lab; runs after merge/deploy and migration apply.
