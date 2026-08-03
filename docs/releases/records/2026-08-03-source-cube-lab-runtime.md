@@ -40,6 +40,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - `package.json` adds `source:cube:verify-runtime`.
 - Follow-up hardening: the workflow records private Key Vault references but does not read or create vault secrets from GitHub-hosted runners; ACA resolves the database URL through the runtime managed identity.
 - Cube-only API and SQL credentials are stored as Container App local secrets, sourced from GitHub secrets when configured and generated at deploy time otherwise. Secret values are masked and are not written to evidence artifacts.
+- The deploy workflow recreates only the lab Cube Container App if an earlier failed first-time provision left that Cube service in `Failed` state before the runtime became usable.
 
 ## QA / Validation
 
@@ -50,6 +51,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - PASS: local container entrypoint fails closed when required runtime secrets are absent.
 - PASS: follow-up workflow fix keeps release/deploy authority gates green after removing GitHub-runner Key Vault reads.
 - PASS: deploy retry design keeps the production database URL on private Key Vault while bootstrapping Cube-only credentials as non-exported Container App local secrets.
+- PASS: deploy retry design handles a failed first-time Cube Container App provision by recreating the separate lab Cube service before reapplying the corrected runtime.
 - NOT RUN locally: Postgres parity verifier, because this checkout does not contain a lab database URL. The deploy workflow obtains the database URL from Key Vault.
 
 ## Rollout Plan
