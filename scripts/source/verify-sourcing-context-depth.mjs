@@ -70,6 +70,14 @@ async function main() {
   const client = new Client(clientOptions());
   await client.connect();
   try {
+    await client.query("SELECT set_config('app.tenant_key', '__sourcing_context_probe__', false)");
+    const negativeTenantProbe = await scalar(client, "SELECT source.can_read_sourcing_tenant($1) AS allowed", [tenantKey]);
+    if (negativeTenantProbe?.allowed === true) {
+      throw new Error("source.can_read_sourcing_tenant allowed the requested tenant while app.tenant_key was set to a different tenant");
+    }
+
+    await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
+
     const tables = await client.query(
       `
       SELECT table_name
