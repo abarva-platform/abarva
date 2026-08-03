@@ -920,38 +920,190 @@ where value_num is not null and tower.period_start(reporting_period) is not null
 on conflict (observation_id) do update set value_num = excluded.value_num, source_result_hash = excluded.source_result_hash;
 
 -- ---------------------------------------------------------------------------
--- Tower value claims: deliberately non-claimable until evidence gates pass
+-- Tower value claims: synthetic proof maturity, not fabricated claimability.
 -- ---------------------------------------------------------------------------
 
+with project_kpis as (
+  select
+    _tenant_key,
+    related_initiative_ref as project_id,
+    kpi_id,
+    kpi_observation_id,
+    confidence,
+    source_system_file,
+    direction,
+    current_value,
+    prior_value,
+    target_value,
+    reporting_period,
+    _row_sha256,
+    tower.parse_num(prior_value) as baseline_num,
+    tower.parse_num(current_value) as actual_num,
+    tower.parse_num(target_value) as target_num
+  from raw_enterprise_it.kpis_outcomes
+  where nullif(related_initiative_ref, '') is not null
+),
+project_kpi_rollup as (
+  select
+    _tenant_key,
+    project_id,
+    count(*)::int as kpi_count,
+    bool_or(lower(coalesce(confidence, '')) = 'disputed') as has_disputed,
+    bool_or(
+      lower(coalesce(confidence, '')) in ('high', 'medium')
+      and lower(coalesce(source_system_file, '')) in ('finance mart', 'bi semantic layer')
+    ) as has_finance_metric,
+    bool_or(lower(coalesce(confidence, '')) in ('high', 'medium')) as has_supported_metric,
+    md5(string_agg(coalesce(_row_sha256, ''), '' order by coalesce(kpi_observation_id, kpi_id))) as kpi_hash
+  from project_kpis
+  group by _tenant_key, project_id
+),
+selected_kpi as (
+  select distinct on (_tenant_key, project_id)
+    *,
+    case
+      when baseline_num is null or actual_num is null or target_num is null then null::numeric
+      when lower(coalesce(direction, '')) = 'decrease' and baseline_num <> target_num
+        then least(1::numeric, greatest(0::numeric, (baseline_num - actual_num) / nullif(baseline_num - target_num, 0)))
+      when baseline_num <> target_num
+        then least(1::numeric, greatest(0::numeric, (actual_num - baseline_num) / nullif(target_num - baseline_num, 0)))
+      else null::numeric
+    end as progress_ratio
+  from project_kpis
+  order by
+    _tenant_key,
+    project_id,
+    case
+      when lower(coalesce(confidence, '')) in ('high', 'medium')
+       and lower(coalesce(source_system_file, '')) in ('finance mart', 'bi semantic layer') then 0
+      when lower(coalesce(confidence, '')) in ('high', 'medium') then 1
+      when lower(coalesce(confidence, '')) = 'disputed' then 2
+      else 3
+    end,
+    tower.period_end(reporting_period) desc nulls last,
+    kpi_observation_id
+),
+project_claim_basis as (
+  select
+    p.*,
+    coalesce(r.kpi_count, 0) as kpi_count,
+    coalesce(r.has_disputed, false) as has_disputed,
+    coalesce(r.has_finance_metric, false) as has_finance_metric,
+    coalesce(r.has_supported_metric, false) as has_supported_metric,
+    r.kpi_hash,
+    s.kpi_id,
+    s.kpi_observation_id,
+    s.progress_ratio,
+    s.baseline_num,
+    s.actual_num,
+    s.target_num,
+    case
+      when coalesce(r.kpi_count, 0) = 0 then 'funded_no_baseline'
+      when coalesce(r.has_disputed, false) then 'disputed'
+      when coalesce(r.has_finance_metric, false) then 'finance_validated'
+      when coalesce(r.has_supported_metric, false) then 'usage_supported'
+      else 'baseline_captured'
+    end as derived_claim_state
+  from raw_enterprise_it.projects_investments p
+  left join project_kpi_rollup r
+    on r._tenant_key = p._tenant_key
+   and r.project_id = p.project_id
+  left join selected_kpi s
+    on s._tenant_key = p._tenant_key
+   and s.project_id = p.project_id
+  where nullif(p.project_id, '') is not null
+)
 insert into tower.value_claim (
-  claim_id, tenant_key, subject_ref, outcome_metric_ref, promised_value, calculated_value,
-  currency, attribution_basis, quality_guardrail_state, risk_guardrail_state, claim_state,
+  claim_id, tenant_key, subject_ref, outcome_metric_ref,
+  baseline_observation_id, target_observation_id, actual_observation_id,
+  promised_value, calculated_value, currency, attribution_basis,
+  quality_guardrail_state, risk_guardrail_state, claim_state,
   claim_rule_version, claim_input_hash, caveat, blocked_reason, next_gate, next_gate_owner_role
 )
 select
   'claim-project-' || project_id,
   _tenant_key,
   project_id,
-  'value.claimable_amount',
+  case when nullif(kpi_id, '') is not null then 'kpi.' || tower.slugify(kpi_id) else 'value.claimable_amount' end,
+  case when baseline_num is not null then 'obs-kpi-' || tower.slugify(kpi_observation_id || '-baseline') end,
+  case when target_num is not null then 'obs-kpi-' || tower.slugify(kpi_observation_id || '-target') end,
+  case when actual_num is not null then 'obs-kpi-' || tower.slugify(kpi_observation_id || '-actual') end,
   null,
-  null,
+  case
+    when derived_claim_state = 'finance_validated'
+     and progress_ratio is not null
+     and tower.parse_num(approved_budget) is not null
+      then round(tower.parse_num(approved_budget) * progress_ratio * 0.35, 2)
+    else null
+  end,
   'USD',
-  'project portfolio states expected value in text but lacks governed baseline/target/actual measurement',
-  'not_evaluated',
-  'not_evaluated',
-  'funded_no_baseline',
-  'tower_claim_rule_v1',
-  md5(_row_sha256 || ':funded_no_baseline'),
-  'Project has funding data, but outcome baseline, actual, attribution and attestations are incomplete.',
-  'Missing governed baseline/target/actual and business/finance attestation.',
-  'Capture value outcome ledger and metric provenance.',
+  case derived_claim_state
+    when 'finance_validated' then 'baseline/current/target KPI evidence is present from a finance or governed BI source; value remains partial until attested.'
+    when 'usage_supported' then 'baseline/current/target KPI evidence is present, but finance validation is not complete.'
+    when 'baseline_captured' then 'baseline/current/target KPI evidence is present, but source confidence is still estimated.'
+    when 'disputed' then 'baseline/current/target KPI evidence exists, but at least one linked KPI is disputed.'
+    else 'project funding exists, but no linked KPI baseline/current/target evidence is loaded.'
+  end,
+  case derived_claim_state
+    when 'finance_validated' then 'finance_validated'
+    when 'disputed' then 'disputed'
+    when 'funded_no_baseline' then 'not_evaluated'
+    else 'business_metric_present'
+  end,
+  case derived_claim_state
+    when 'finance_validated' then 'business_validated'
+    when 'disputed' then 'risk_review_required'
+    when 'funded_no_baseline' then 'not_evaluated'
+    else 'outcome_metric_present'
+  end,
+  derived_claim_state,
+  'tower_claim_rule_v2',
+  md5(concat_ws(':', coalesce(_row_sha256, ''), coalesce(kpi_hash, ''), derived_claim_state, coalesce(kpi_observation_id, ''))),
+  case derived_claim_state
+    when 'finance_validated' then 'Synthetic partial value is formula-derived from linked KPI progress and approved budget. It is not claimable until Finance and business attestations pass.'
+    when 'usage_supported' then 'Outcome movement is visible, but Finance validation and attestations are incomplete.'
+    when 'baseline_captured' then 'Comparable measurement evidence exists, but confidence and attestation gates remain open.'
+    when 'disputed' then 'Linked KPI evidence is disputed; Tower withholds the value from executive claimable totals.'
+    else 'Project has funding data, but no linked outcome baseline/current/target evidence.'
+  end,
+  case derived_claim_state
+    when 'finance_validated' then 'Awaiting Finance and business attestation before claimability.'
+    when 'usage_supported' then 'Missing Finance validation and business/finance attestation.'
+    when 'baseline_captured' then 'Missing accepted outcome confidence, attribution, and attestation.'
+    when 'disputed' then 'Resolve disputed KPI evidence before any value decision.'
+    else 'Missing governed baseline/current/target KPI evidence and attestation.'
+  end,
+  case derived_claim_state
+    when 'finance_validated' then 'Obtain Finance and business attestation.'
+    when 'usage_supported' then 'Validate attribution and Finance value method.'
+    when 'baseline_captured' then 'Instrument and validate outcome movement.'
+    when 'disputed' then 'Reconcile disputed metric evidence.'
+    else 'Capture comparable baseline/current/target outcome metrics.'
+  end,
   coalesce(business_sponsor_ref, it_portfolio_ref, 'PMO / Finance')
-from raw_enterprise_it.projects_investments
-where nullif(project_id, '') is not null
+from project_claim_basis
 on conflict (claim_id) do update set
+  subject_ref = excluded.subject_ref,
+  outcome_metric_ref = excluded.outcome_metric_ref,
+  baseline_observation_id = excluded.baseline_observation_id,
+  target_observation_id = excluded.target_observation_id,
+  actual_observation_id = excluded.actual_observation_id,
+  promised_value = excluded.promised_value,
+  calculated_value = excluded.calculated_value,
+  currency = excluded.currency,
+  attribution_basis = excluded.attribution_basis,
+  quality_guardrail_state = excluded.quality_guardrail_state,
+  risk_guardrail_state = excluded.risk_guardrail_state,
   claim_state = excluded.claim_state,
+  claim_rule_version = excluded.claim_rule_version,
   claim_input_hash = excluded.claim_input_hash,
-  blocked_reason = excluded.blocked_reason;
+  caveat = excluded.caveat,
+  blocked_reason = excluded.blocked_reason,
+  next_gate = excluded.next_gate,
+  next_gate_owner_role = excluded.next_gate_owner_role,
+  evaluated_at = now(),
+  stale_at = null,
+  stale_reason = null;
 
 insert into tower.value_claim (
   claim_id, tenant_key, subject_ref, outcome_metric_ref, promised_value, calculated_value,
@@ -967,11 +1119,11 @@ select
   null,
   'USD',
   'AI usage and cost are present; outcome attribution requires DORA/productivity or workflow before/after evidence.',
-  'not_evaluated',
-  'not_evaluated',
+  'usage_evidence_present',
+  'outcome_validation_required',
   case when sum(tower.parse_num(active_users)) > 0 then 'usage_supported' else 'funded_no_baseline' end,
-  'tower_claim_rule_v1',
-  md5(string_agg(_row_sha256, '' order by _source_row_number)),
+  'tower_claim_rule_v2',
+  md5(string_agg(coalesce(_row_sha256, ''), '' order by _source_row_number)),
   'Usage is visible, but claimable value is blocked until outcome, quality/risk guardrails, and attestations are complete.',
   'Missing DORA/productivity or ServiceNow/Workday workflow outcome evidence and finance/business attestation.',
   'Load before/after outcome metrics and attestations.',
@@ -980,6 +1132,21 @@ from raw_enterprise_it.ai_adoption_usage
 where nullif(tool_agent_product, '') is not null
 group by _tenant_key, tool_agent_product
 on conflict (claim_id) do update set
+  subject_ref = excluded.subject_ref,
+  outcome_metric_ref = excluded.outcome_metric_ref,
+  promised_value = excluded.promised_value,
+  calculated_value = excluded.calculated_value,
+  currency = excluded.currency,
+  attribution_basis = excluded.attribution_basis,
+  quality_guardrail_state = excluded.quality_guardrail_state,
+  risk_guardrail_state = excluded.risk_guardrail_state,
   claim_state = excluded.claim_state,
+  claim_rule_version = excluded.claim_rule_version,
   claim_input_hash = excluded.claim_input_hash,
-  blocked_reason = excluded.blocked_reason;
+  caveat = excluded.caveat,
+  blocked_reason = excluded.blocked_reason,
+  next_gate = excluded.next_gate,
+  next_gate_owner_role = excluded.next_gate_owner_role,
+  evaluated_at = now(),
+  stale_at = null,
+  stale_reason = null;

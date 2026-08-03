@@ -11,10 +11,14 @@ const EXPECTED = {
   metricDefinitionsMinimum: 18,
   metricObservations: 7174,
   valueClaims: 162,
-  fundedNoBaseline: 150,
-  usageSupported: 12,
-  financeValidated: 0,
+  fundedNoBaseline: 75,
+  baselineCaptured: 12,
+  usageSupported: 29,
+  financeValidated: 18,
+  disputed: 28,
   claimable: 0,
+  knownValueClaims: 18,
+  unknownValueClaims: 144,
 };
 
 function databaseUrl(): string {
@@ -148,9 +152,13 @@ async function main() {
     failUnless(asInt(towerRow.metric_definitions) >= EXPECTED.metricDefinitionsMinimum, failures, "tower.metric_definition count below expected minimum");
     failUnless(asInt(towerRow.metric_observations) === EXPECTED.metricObservations, failures, "tower.metric_observation count mismatch");
     failUnless(asInt(towerRow.value_claims) === EXPECTED.valueClaims, failures, "tower.value_claim count mismatch");
+    failUnless(asInt(towerRow.known_value_claims) === EXPECTED.knownValueClaims, failures, "known value claim count mismatch");
+    failUnless(asInt(towerRow.unknown_value_claims) === EXPECTED.unknownValueClaims, failures, "unknown value claim count mismatch");
     failUnless((claimStateDistribution.funded_no_baseline ?? 0) === EXPECTED.fundedNoBaseline, failures, "funded_no_baseline count mismatch");
+    failUnless((claimStateDistribution.baseline_captured ?? 0) === EXPECTED.baselineCaptured, failures, "baseline_captured count mismatch");
     failUnless((claimStateDistribution.usage_supported ?? 0) === EXPECTED.usageSupported, failures, "usage_supported count mismatch");
     failUnless((claimStateDistribution.finance_validated ?? 0) === EXPECTED.financeValidated, failures, "finance_validated count mismatch");
+    failUnless((claimStateDistribution.disputed ?? 0) === EXPECTED.disputed, failures, "disputed count mismatch");
     failUnless((claimStateDistribution.claimable ?? 0) === EXPECTED.claimable, failures, "claimable count mismatch");
 
     const result = {

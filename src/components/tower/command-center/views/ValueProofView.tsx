@@ -87,10 +87,7 @@ export function ValueProofView({
   onOpenProgram: (id: string) => void;
 }) {
   const s = view.summary;
-  const allValueUnknown =
-    s.valueClaimCount > 0 &&
-    s.knownValueClaimCount === 0 &&
-    s.unknownValueClaimCount > 0;
+  const proofMaturityMode = s.valueClaimCount > 0 && s.claimableClaimCount === 0;
   const rows = buildWaterfallRows(s);
   const noUsage = rows[1]?.usd ?? 0;
   const noFinance = rows[3]?.usd ?? 0;
@@ -107,12 +104,12 @@ export function ValueProofView({
     <div className={styles.view}>
       <ViewHead
         title={
-          allValueUnknown
+          proofMaturityMode
             ? "Where proof has to mature"
             : "Where the value disappears"
         }
         sub={
-          allValueUnknown
+          proofMaturityMode
             ? "Funded -> baseline captured -> usage supported -> outcome measured -> Finance validated -> claimable"
             : "Promised -> usage-supported -> finance-validated -> claimable"
         }
@@ -124,12 +121,12 @@ export function ValueProofView({
         style={{ gridTemplateColumns: "1.12fr 1fr" }}
       >
         <Card
-          eyebrow={allValueUnknown ? "Evidence progression" : "Value waterfall"}
-          right={allValueUnknown ? "claims · value status" : "FY26 · $M"}
+          eyebrow={proofMaturityMode ? "Evidence progression" : "Value waterfall"}
+          right={proofMaturityMode ? "claims · value status" : "FY26 · $M"}
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          {allValueUnknown ? (
+          {proofMaturityMode ? (
             <EvidenceProgression view={view} />
           ) : (
             <div
@@ -140,7 +137,7 @@ export function ValueProofView({
             </div>
           )}
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
-            {allValueUnknown
+            {proofMaturityMode
               ? view.evidenceMaturity.summaryRead
               : `${rows
                   .map(
@@ -157,8 +154,8 @@ export function ValueProofView({
             <div className={styles.ik}>The read</div>
             <p className={styles.itext}>
               <b>
-                {allValueUnknown
-                  ? `${s.unknownValueClaimCount} claims have unknown financial value; no executive value total is claimable from this dataset.`
+                {proofMaturityMode
+                  ? `${s.unknownValueClaimCount} claims have unknown financial value; ${s.knownValueClaimCount} carry partial finance-validated value; no executive value total is claimable from this dataset.`
                   : `${formatUsdM(noUsage)} never becomes usage-supported${
                       noFinance > 0
                         ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
@@ -178,12 +175,12 @@ export function ValueProofView({
         </Card>
 
         <Card
-          title={allValueUnknown ? "Top evidence blockers" : "Top 5 blockers by dollar impact"}
+          title={proofMaturityMode ? "Top evidence blockers" : "Top 5 blockers by dollar impact"}
           headId="tcc-blockers"
           bodyClassName={styles.scroll}
           bodyStyle={{ paddingTop: 8 }}
         >
-          {allValueUnknown ? (
+          {proofMaturityMode ? (
             <EvidenceGapLedger view={view} />
           ) : blockers.length === 0 ? (
             <p className={styles.lhSub}>
