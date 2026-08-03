@@ -393,6 +393,8 @@ jobs:
           const fs = require("node:fs");
           const app = JSON.parse(fs.readFileSync("audit-artifacts/aca-cube-lab-deploy/containerapp-before-sql-port.json", "utf8"));
           const identityId = process.env.RUNTIME_IDENTITY_ID;
+          const template = { ...app.properties.template };
+          delete template.revisionSuffix;
           const ingress = {
             ...(app.properties.configuration.ingress || {}),
             allowInsecure: false,
@@ -424,7 +426,7 @@ jobs:
                 secrets: app.properties.configuration.secrets,
               },
               managedEnvironmentId: app.properties.managedEnvironmentId,
-              template: app.properties.template,
+              template,
             },
             type: "Microsoft.App/containerApps",
           };
