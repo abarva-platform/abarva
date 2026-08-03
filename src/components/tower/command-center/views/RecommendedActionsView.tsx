@@ -68,10 +68,21 @@ export function RecommendedActionsView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="The executive action memo"
-        sub="Organised by who owns the next move — the bridge from Tower into Moves"
+        title="Recommended interventions"
+        sub="The work required to make value provable before Tower recommends scale, freeze, stop or fund"
         hint="Click any action to review & route"
       />
+
+      <section className={styles.interventionMemo}>
+        {view.evidenceMaturity.interventions.map((item) => (
+          <article key={item.id}>
+            <div className={styles.eyebrow2}>{item.ownerRole}</div>
+            <h3>{item.title}</h3>
+            <p>{item.why}</p>
+            <b>{item.nextAction}</b>
+          </article>
+        ))}
+      </section>
 
       {view.actions.length === 0 ? (
         <div className={styles.emptyPanel}>

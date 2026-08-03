@@ -10,7 +10,7 @@
 // decision is blocked") are re-groupings of the same gap rows — no new facts
 // are introduced by either.
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
   TowerEvidenceGapView,
@@ -120,22 +120,19 @@ function buildAnswers(
   }
 
   if (question === "missing") {
-    const atStake = gaps.reduce((sum, g) => sum + (g.valueAtStakeUsd ?? 0), 0);
+    const ledger = view.evidenceMaturity.gapLedger.filter((g) => g.count > 0);
+    const firstGapId = gaps[0]?.id;
     return {
-      meta:
-        `${gaps.length} gap${gaps.length === 1 ? "" : "s"} stand between promised value and a claim` +
-        (atStake > 0 ? ` · ${formatUsdM(atStake)} at stake` : ""),
-      items: gaps.map((g) => ({
-        id: g.id,
-        gapId: g.id,
-        name: g.missing,
-        detail: g.why,
-        // The dollar the gap holds up — the reason a CXO cares which gap to close first.
-        metric:
-          g.valueAtStakeUsd === null ? "Unknown" : formatUsdM(g.valueAtStakeUsd),
-        unit: "blocked",
-        tone: gapTone(g),
-        tag: g.owner ? `Owner · ${g.owner}` : "No owner recorded",
+      meta: `${ledger.length} evidence gap groups; claimable value at stake`,
+      items: ledger.map((g) => ({
+        id: g.key,
+        gapId: firstGapId,
+        name: g.label,
+        detail: `${g.nextAction} Basis: ${g.evidenceBasis}.`,
+        metric: formatCount(g.count),
+        unit: g.count === 1 ? "claim" : "claims",
+        tone: g.tone === "teal" ? "teal" : g.tone === "amber" ? "amber" : "red",
+        tag: `Owner · ${g.ownerRole}`,
       })),
     };
   }
