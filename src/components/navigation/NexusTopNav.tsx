@@ -7,7 +7,10 @@ import { useUser } from "@clerk/nextjs";
 import { useSignOut } from "@/lib/auth/use-sign-out";
 import { demoSafeClientText } from "@/lib/client-config";
 import { AdminInboxTopNavBadge } from "@/components/shell/AdminInboxTopNavBadge";
-import { getVisibleNavItems, type CockpitNavItem } from "@/components/shell/topbar-nav-items";
+import {
+  getVisibleNavItems,
+  type CockpitNavItem,
+} from "@/components/shell/topbar-nav-items";
 import styles from "./NexusTopNav.module.css";
 
 export interface NexusTopNavProps {
@@ -32,7 +35,10 @@ const NEXUS_NAV_LOCKUP = "/brand/nexus/abarva-nexus-navbar-dark-clearance.svg";
 function userDisplayName(user: ReturnType<typeof useUser>["user"]): string {
   const firstName = user?.firstName?.trim();
   const lastName = user?.lastName?.trim();
-  const explicitPersonName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const explicitPersonName = [firstName, lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
   const fallback =
     explicitPersonName ||
     user?.fullName?.split("·")[0]?.trim() ||
@@ -87,7 +93,9 @@ function NavLinks({
   );
 }
 
-export function NexusTopNav({ showProductNav: showProductNavProp = true }: NexusTopNavProps = {}) {
+export function NexusTopNav({
+  showProductNav: showProductNavProp = true,
+}: NexusTopNavProps = {}) {
   const pathname = usePathname() ?? "";
   const { isLoaded, user } = useUser();
   const signOut = useSignOut();
@@ -113,7 +121,7 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
           href="/home"
           prefetch
           className={styles.brandLink}
-          aria-label="AbarVa NEXUS Knowledge"
+          aria-label="AbarVa NEXUS Home"
         >
           <Image
             src={NEXUS_NAV_LOCKUP}
@@ -127,7 +135,11 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
       </div>
 
       {navItems.length > 0 ? (
-        <nav className={styles.primaryNav} aria-label="Primary" data-testid="nexus-primary-nav">
+        <nav
+          className={styles.primaryNav}
+          aria-label="Primary"
+          data-testid="nexus-primary-nav"
+        >
           <div className={styles.desktopLinks}>
             <NavLinks items={navItems} pathname={pathname} />
           </div>
@@ -148,7 +160,10 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
           <span className={styles.loadingSkeleton} aria-hidden="true" />
         ) : signedIn ? (
           <>
-            <div className={styles.userCluster} aria-label={`Signed in as ${displayName}`}>
+            <div
+              className={styles.userCluster}
+              aria-label={`Signed in as ${displayName}`}
+            >
               <span className={styles.avatar} aria-hidden="true">
                 {initials}
               </span>
@@ -156,7 +171,11 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
                 {displayName}
               </span>
             </div>
-            <button type="button" className={styles.signOutButton} onClick={handleSignOut}>
+            <button
+              type="button"
+              className={styles.signOutButton}
+              onClick={handleSignOut}
+            >
               Sign out
             </button>
           </>

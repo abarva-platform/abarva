@@ -1,11 +1,14 @@
 // Shared nav-item registry for the canonical NEXUS top navigation.
 //
-// Single source of truth for the canonical product nav: Knowledge,
+// Single source of truth for the canonical product nav: Home,
 // Intelligence, Moves, Source, Tower. Routes stay stable even when
-// labels evolve: Knowledge is still served from /home.
+// labels evolve: the Home command center is still served from /home.
 
 import type { useUser } from "@clerk/nextjs";
-import { resolveModuleAccess, type ProductModule } from "@/lib/auth/module-access";
+import {
+  resolveModuleAccess,
+  type ProductModule,
+} from "@/lib/auth/module-access";
 
 export type CockpitNavItem = {
   key: "home" | ProductModule;
@@ -18,7 +21,7 @@ export type CockpitNavItem = {
 export const NAV_ITEMS: CockpitNavItem[] = [
   {
     key: "home",
-    label: "Knowledge",
+    label: "Home",
     href: "/home",
     match: (pathname) =>
       pathname === "/" ||
