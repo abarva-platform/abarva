@@ -21,6 +21,7 @@ import {
   formatPct,
   formatUsdCompact,
 } from "@/lib/source/data-model/vendor-portfolio-view";
+import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import {
   RELATIONSHIP_METHOD_LABEL,
   type Contract360View,
@@ -102,11 +103,11 @@ function ConflictNote({
   label: string;
 }) {
   if (!flag) return null;
+  const resolved = numberFromDb(resolvedValue);
   return (
     <div style={{ ...SUBLINE_STYLE, color: ANALYTICS.RUST, margin: 0 }}>
       {label} conflict flagged across sources — resolved value used:{" "}
-      {resolvedValue != null ? formatUsdCompact(resolvedValue) : "not resolved"}
-      .
+      {resolved != null ? formatUsdCompact(resolved) : "not resolved"}.
     </div>
   );
 }
@@ -117,10 +118,19 @@ function CommercialTermsPanel({
   contract: Contract360View["contract"];
 }) {
   const facts: Array<[string, string]> = [
-    ["Annual value", formatUsdCompact(c.annual_value ?? 0)],
-    ["Total committed value", formatUsdCompact(c.total_committed_value ?? 0)],
-    ["Committed annual spend", formatUsdCompact(c.committed_annual_spend ?? 0)],
-    ["Actual annual spend", formatUsdCompact(c.actual_annual_spend ?? 0)],
+    ["Annual value", formatUsdCompact(numberFromDb(c.annual_value) ?? 0)],
+    [
+      "Total committed value",
+      formatUsdCompact(numberFromDb(c.total_committed_value) ?? 0),
+    ],
+    [
+      "Committed annual spend",
+      formatUsdCompact(numberFromDb(c.committed_annual_spend) ?? 0),
+    ],
+    [
+      "Actual annual spend",
+      formatUsdCompact(numberFromDb(c.actual_annual_spend) ?? 0),
+    ],
     [
       "End date",
       c.end_date
@@ -185,9 +195,9 @@ function CommercialTermsPanel({
           </div>
         ))}
       </dl>
-      {c.source_confidence != null ? (
+      {numberFromDb(c.source_confidence) != null ? (
         <div style={{ ...SUBLINE_STYLE, margin: 0, color: ANALYTICS.MUTED }}>
-          Extraction confidence: {formatPct(c.source_confidence)}
+          Extraction confidence: {formatPct(numberFromDb(c.source_confidence)!)}
         </div>
       ) : null}
     </section>
@@ -279,35 +289,31 @@ function FinancialExposurePanel({
         <dl style={FACT_GRID_STYLE}>
           <FactRow
             label="Linked budget"
-            value={
-              row.linked_budget_amount != null
-                ? formatUsdCompact(row.linked_budget_amount)
-                : "—"
-            }
+            value={(() => {
+              const n = numberFromDb(row.linked_budget_amount);
+              return n != null ? formatUsdCompact(n) : "—";
+            })()}
           />
           <FactRow
             label="Linked forecast"
-            value={
-              row.linked_forecast_amount != null
-                ? formatUsdCompact(row.linked_forecast_amount)
-                : "—"
-            }
+            value={(() => {
+              const n = numberFromDb(row.linked_forecast_amount);
+              return n != null ? formatUsdCompact(n) : "—";
+            })()}
           />
           <FactRow
             label="Linked actual"
-            value={
-              row.linked_actual_amount != null
-                ? formatUsdCompact(row.linked_actual_amount)
-                : "—"
-            }
+            value={(() => {
+              const n = numberFromDb(row.linked_actual_amount);
+              return n != null ? formatUsdCompact(n) : "—";
+            })()}
           />
           <FactRow
             label="Linked committed"
-            value={
-              row.linked_committed_amount != null
-                ? formatUsdCompact(row.linked_committed_amount)
-                : "—"
-            }
+            value={(() => {
+              const n = numberFromDb(row.linked_committed_amount);
+              return n != null ? formatUsdCompact(n) : "—";
+            })()}
           />
           <FactRow
             label="Linked budget lines"
@@ -351,27 +357,24 @@ function OperationalPerformancePanel({
             />
             <FactRow
               label="Change failure rate"
-              value={
-                row.avg_cloud_change_failure_rate != null
-                  ? formatPct(row.avg_cloud_change_failure_rate)
-                  : "—"
-              }
+              value={(() => {
+                const n = numberFromDb(row.avg_cloud_change_failure_rate);
+                return n != null ? formatPct(n) : "—";
+              })()}
             />
             <FactRow
               label="Service credits earned"
-              value={
-                row.service_credits_earned != null
-                  ? formatUsdCompact(row.service_credits_earned)
-                  : "—"
-              }
+              value={(() => {
+                const n = numberFromDb(row.service_credits_earned);
+                return n != null ? formatUsdCompact(n) : "—";
+              })()}
             />
             <FactRow
               label="Service credits claimed"
-              value={
-                row.service_credits_claimed != null
-                  ? formatUsdCompact(row.service_credits_claimed)
-                  : "—"
-              }
+              value={(() => {
+                const n = numberFromDb(row.service_credits_claimed);
+                return n != null ? formatUsdCompact(n) : "—";
+              })()}
             />
           </dl>
           {row.evidence_gap ? (
@@ -426,9 +429,10 @@ function InitiativeDependencyPanel({
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {r.approved_budget != null
-                  ? formatUsdCompact(r.approved_budget)
-                  : "—"}
+                {(() => {
+                  const n = numberFromDb(r.approved_budget);
+                  return n != null ? formatUsdCompact(n) : "—";
+                })()}
               </td>
               <td style={{ ...TD_STYLE, color: ANALYTICS.RUST }}>
                 {r.decision_needed ?? "—"}
@@ -520,9 +524,10 @@ function TowerOverlayPanel({ view }: { view: Contract360View }) {
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {claim.promised_value != null
-                        ? formatUsdCompact(claim.promised_value)
-                        : "—"}
+                      {(() => {
+                        const n = numberFromDb(claim.promised_value);
+                        return n != null ? formatUsdCompact(n) : "—";
+                      })()}
                     </td>
                     <td
                       style={{
@@ -531,9 +536,10 @@ function TowerOverlayPanel({ view }: { view: Contract360View }) {
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {claim.calculated_value != null
-                        ? formatUsdCompact(claim.calculated_value)
-                        : "—"}
+                      {(() => {
+                        const n = numberFromDb(claim.calculated_value);
+                        return n != null ? formatUsdCompact(n) : "—";
+                      })()}
                     </td>
                     <td style={TD_STYLE}>
                       {claim.claim_state}
@@ -559,8 +565,9 @@ function EvidenceLineagePanel({
     <section style={PANEL_STYLE} aria-label="Evidence lineage">
       <div style={SECTION_HEAD_STYLE}>Evidence lineage ({rows.length})</div>
       <p style={{ ...SUBLINE_STYLE, margin: 0 }}>
-        Exact clause/row provenance behind the commercial terms above — every
-        extraction cites the source file, page, and section it came from.
+        Exact clause/row provenance behind the commercial terms above — cites
+        the source file, plus page and section when the source was a parsed
+        document rather than a structured import.
       </p>
       {rows.length === 0 ? (
         <p style={{ ...SUBLINE_STYLE, margin: 0, color: ANALYTICS.MUTED }}>
@@ -602,7 +609,10 @@ function EvidenceLineagePanel({
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {r.confidence != null ? formatPct(r.confidence) : "—"}
+                  {(() => {
+                    const n = numberFromDb(r.confidence);
+                    return n != null ? formatPct(n) : "—";
+                  })()}
                 </td>
               </tr>
             ))}
