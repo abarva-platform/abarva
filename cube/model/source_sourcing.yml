@@ -36,16 +36,46 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+          - vendor_id
       - name: annual_value
         sql: annual_value
         type: sum
         format: currency
+        drill_members:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+          - vendor_id
       - name: contract_count
         sql: contract_count
         type: sum
+        drill_members:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+          - vendor_id
       - name: distinct_categories
         sql: supplier_category
         type: count_distinct
+        drill_members:
+          - supplier_category
+          - legal_name
+          - vendor_id
+    hierarchies:
+      - name: vendor_portfolio
+        title: Vendor Portfolio
+        levels:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
 
   - name: sourcing_contracts
     sql_table: consumption.sourcing_contract_v1
@@ -102,23 +132,72 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+          - expiration_date
       - name: annual_value
         sql: annual_value
         type: sum
         format: currency
+        drill_members:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+          - expiration_date
       - name: total_committed_value
         sql: total_committed_value
         type: sum
         format: currency
+        drill_members:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+          - expiration_date
       - name: auto_renew_count
         sql: "CASE WHEN auto_renew THEN 1 ELSE 0 END"
         type: sum
+        drill_members:
+          - renewal_type
+          - auto_renew
+          - vendor_name
+          - contract_id
+          - notice_deadline
       - name: notice_90_day_count
         sql: "CASE WHEN notice_deadline <= DATE '2027-09-28' THEN 1 ELSE 0 END"
         type: sum
+        drill_members:
+          - renewal_type
+          - auto_renew
+          - vendor_name
+          - contract_id
+          - notice_deadline
       - name: average_confidence
         sql: confidence
         type: avg
+        drill_members:
+          - quality_state
+          - vendor_name
+          - contract_id
+    hierarchies:
+      - name: contract_portfolio
+        title: Contract Portfolio
+        levels:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+      - name: renewal_calendar
+        title: Renewal Calendar
+        levels:
+          - renewal_type
+          - auto_renew
+          - expiration_date
+          - notice_deadline
 
   - name: sourcing_contract_scope
     sql_table: consumption.sourcing_contract_scope_v1
@@ -153,15 +232,47 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
       - name: explicit_scope_count
         sql: "CASE WHEN relationship_method = 'explicit_contract_scope' THEN 1 ELSE 0 END"
         type: sum
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
       - name: inferred_scope_count
         sql: "CASE WHEN relationship_method LIKE '%inference' THEN 1 ELSE 0 END"
         type: sum
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
       - name: average_relationship_confidence
         sql: relationship_confidence
         type: avg
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
+    hierarchies:
+      - name: scope_confidence
+        title: Scope Confidence
+        levels:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
 
   - name: sourcing_spend_monthly
     sql_table: consumption.sourcing_spend_monthly_v1
@@ -193,26 +304,71 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
       - name: committed_amount
         sql: committed_amount
         type: sum
         format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
       - name: actual_spend
         sql: actual_spend
         type: sum
         format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
       - name: invoice_amount
         sql: invoice_amount
         type: sum
         format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
       - name: overage_amount
         sql: overage_amount
         type: sum
         format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
       - name: service_credit_amount
         sql: service_credit_amount
         type: sum
         format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
+    hierarchies:
+      - name: spend_consumption
+        title: Spend Consumption
+        levels:
+          - business_unit
+          - cost_center
+          - service_category
+          - contract_id
+          - month
 
   - name: sourcing_performance
     sql_table: consumption.sourcing_performance_v1
@@ -244,25 +400,69 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - metric_name
+          - unit
+          - credit_eligible
+          - contract_id
+          - period_start
       - name: breach_count
         sql: breach_count
         type: sum
+        drill_members:
+          - metric_name
+          - unit
+          - credit_eligible
+          - contract_id
+          - period_start
       - name: credit_calculated
         sql: credit_calculated
         type: sum
         format: currency
+        drill_members:
+          - metric_name
+          - unit
+          - credit_eligible
+          - contract_id
+          - period_start
       - name: credit_claimed
         sql: credit_claimed
         type: sum
         format: currency
+        drill_members:
+          - metric_name
+          - unit
+          - credit_eligible
+          - contract_id
+          - period_start
       - name: credit_recovered
         sql: credit_recovered
         type: sum
         format: currency
+        drill_members:
+          - metric_name
+          - unit
+          - credit_eligible
+          - contract_id
+          - period_start
       - name: unclaimed_credit
         sql: "COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)"
         type: sum
         format: currency
+        drill_members:
+          - metric_name
+          - unit
+          - credit_eligible
+          - contract_id
+          - period_start
+    hierarchies:
+      - name: service_credit_path
+        title: Service Credit Path
+        levels:
+          - metric_name
+          - credit_eligible
+          - contract_id
+          - period_start
 
   - name: sourcing_opportunities
     sql_table: consumption.sourcing_opportunity_v1
@@ -300,17 +500,49 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - opportunity_type
+          - timing_window
+          - recommended_action
+          - title
+          - contract_id
       - name: value_low
         sql: value_low
         type: sum
         format: currency
+        drill_members:
+          - opportunity_type
+          - timing_window
+          - recommended_action
+          - title
+          - contract_id
       - name: value_high
         sql: value_high
         type: sum
         format: currency
+        drill_members:
+          - opportunity_type
+          - timing_window
+          - recommended_action
+          - title
+          - contract_id
       - name: average_confidence
         sql: confidence
         type: avg
+        drill_members:
+          - opportunity_type
+          - timing_window
+          - recommended_action
+          - title
+          - contract_id
+    hierarchies:
+      - name: opportunity_pipeline
+        title: Opportunity Pipeline
+        levels:
+          - opportunity_type
+          - timing_window
+          - recommended_action
+          - title
 
   - name: sourcing_events
     sql_table: consumption.sourcing_event_v1
@@ -346,6 +578,22 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - event_type
+          - service_scope
+          - event_status
+          - accountable_role
+          - event_id
+          - decision_due_date
+    hierarchies:
+      - name: event_pipeline
+        title: Event Pipeline
+        levels:
+          - event_type
+          - service_scope
+          - event_status
+          - accountable_role
+          - event_id
 
   - name: sourcing_event_suppliers
     sql_table: consumption.sourcing_event_supplier_v1
@@ -380,12 +628,38 @@ cubes:
     measures:
       - name: count
         type: count
+        drill_members:
+          - event_id
+          - supplier_status
+          - response_status
+          - recommendation
+          - supplier_name
       - name: risk_score
         sql: risk_score
         type: avg
+        drill_members:
+          - event_id
+          - supplier_status
+          - response_status
+          - recommendation
+          - supplier_name
       - name: weighted_score
         sql: weighted_score
         type: avg
+        drill_members:
+          - event_id
+          - supplier_status
+          - response_status
+          - recommendation
+          - supplier_name
+    hierarchies:
+      - name: supplier_response_path
+        title: Supplier Response Path
+        levels:
+          - response_status
+          - recommendation
+          - supplier_status
+          - supplier_name
 
 views:
   - name: source_executive_portfolio
@@ -397,12 +671,15 @@ views:
           - total_committed_value
           - auto_renew_count
           - notice_90_day_count
+          - contract_portfolio
+          - renewal_calendar
       - join_path: sourcing_opportunities
         prefix: true
         includes:
           - count
           - value_low
           - value_high
+          - opportunity_pipeline
 
   - name: source_vendor_concentration
     cubes:
@@ -414,6 +691,7 @@ views:
           - risk_tier
           - annual_value
           - contract_count
+          - vendor_portfolio
 
   - name: source_renewal_exposure
     cubes:
@@ -426,6 +704,8 @@ views:
           - auto_renew
           - annual_value
           - notice_90_day_count
+          - contract_portfolio
+          - renewal_calendar
 
   - name: source_contract_scope_confidence
     cubes:
@@ -440,6 +720,7 @@ views:
           - explicit_scope_count
           - inferred_scope_count
           - average_relationship_confidence
+          - scope_confidence
 
   - name: source_spend_consumption
     cubes:
@@ -453,6 +734,7 @@ views:
           - actual_spend
           - overage_amount
           - service_credit_amount
+          - spend_consumption
 
   - name: source_performance_and_credits
     cubes:
@@ -466,6 +748,7 @@ views:
           - credit_claimed
           - credit_recovered
           - unclaimed_credit
+          - service_credit_path
 
   - name: source_opportunity_pipeline
     cubes:
@@ -482,6 +765,7 @@ views:
           - value_low
           - value_high
           - average_confidence
+          - opportunity_pipeline
 
   - name: source_event_execution
     cubes:
@@ -494,12 +778,14 @@ views:
           - accountable_role
           - decision_due_date
           - count
+          - event_pipeline
       - join_path: sourcing_events.sourcing_event_suppliers
         prefix: true
         includes:
           - count
           - risk_score
           - weighted_score
+          - supplier_response_path
 
   - name: source_supplier_comparison
     cubes:
@@ -512,3 +798,4 @@ views:
           - recommendation
           - risk_score
           - weighted_score
+          - supplier_response_path

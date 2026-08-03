@@ -1,0 +1,518 @@
+name: ACA Cube lab deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/aca-cube-lab-deploy.yml
+      - Dockerfile.cube
+      - cube/**
+      - scripts/source/cube-runtime-entrypoint.mjs
+      - scripts/source/verify-source-cube-runtime.mjs
+  workflow_dispatch:
+
+concurrency:
+  group: aca-cube-lab-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_NAME: ${{ vars.AZURE_ACR_NAME || 'acrabarvalab001' }}
+  IMAGE_REPOSITORY: ${{ vars.AZURE_CUBE_IMAGE_REPOSITORY || 'abarva/cube' }}
+  CONTAINER_APP_NAME: ${{ vars.AZURE_CUBE_CONTAINER_APP_NAME || 'ca-abarva-cube-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_CUBE_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  ENVIRONMENT_NAME: ${{ vars.AZURE_CUBE_ENVIRONMENT_NAME || 'cae-abarva-scale-lab-eastus' }}
+  RUNTIME_IDENTITY_NAME: ${{ vars.AZURE_CUBE_RUNTIME_IDENTITY_NAME || 'id-abarva-scale-runtime-lab-eastus' }}
+  KEY_VAULT_NAME: ${{ vars.AZURE_KEY_VAULT_NAME || 'kv-abarva-lab-001' }}
+  SOURCE_TENANT_KEY: ${{ vars.SOURCE_CUBE_TENANT_KEY || 'skyharbor_global' }}
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+
+jobs:
+  deploy:
+    name: Build, deploy, and verify Cube lab runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Assert main deploy authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Cube lab runtime deploys may only run from refs/heads/main." >&2
+            echo "GITHUB_REF=${GITHUB_REF}" >&2
+            exit 1
+          fi
+          deployed_sha="$(git rev-parse HEAD)"
+          main_sha="$(git rev-parse origin/main)"
+          if [[ "$deployed_sha" != "$main_sha" ]]; then
+            echo "Cube lab runtime deploys must come from origin/main HEAD only." >&2
+            echo "deployed_sha=$deployed_sha" >&2
+            echo "origin_main_sha=$main_sha" >&2
+            exit 1
+          fi
+
+      - name: Resolve release identity
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          short_sha="${sha:0:8}"
+          tag="main-${short_sha}"
+          revision_suffix="c${short_sha}"
+
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Azure OIDC configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          if [[ -z "${AZURE_DEPLOY_CLIENT_ID}" ]]; then missing+=("AZURE_CLIENT_ID or AZURE_LAB_CLIENT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_TENANT_ID}" ]]; then missing+=("AZURE_TENANT_ID or AZURE_LAB_TENANT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_SUBSCRIPTION_ID}" ]]; then missing+=("AZURE_SUBSCRIPTION_ID or AZURE_LAB_SUBSCRIPTION_ID"); fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Azure deploy configuration:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Prepare evidence directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/aca-cube-lab-deploy
+          {
+            echo "github_actor=${GITHUB_ACTOR}"
+            echo "github_ref=${GITHUB_REF}"
+            echo "github_sha=${GITHUB_SHA}"
+            echo "container_app=${CONTAINER_APP_NAME}"
+            echo "tenant_key=${SOURCE_TENANT_KEY}"
+            echo "utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee audit-artifacts/aca-cube-lab-deploy/deploy-identity.txt
+
+      - name: Assert ACR registry policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          sku="$(az acr show --name "$ACR_NAME" --query sku.name --output tsv)"
+          if [[ "$sku" != "Premium" ]]; then
+            echo "ACR $ACR_NAME must be Premium for shared lab runtime builds." >&2
+            echo "actual_sku=${sku:-<empty>}" >&2
+            exit 1
+          fi
+          {
+            echo "acr_name=$ACR_NAME"
+            echo "acr_sku=$sku"
+            echo "image_repository=$IMAGE_REPOSITORY"
+            echo "utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee audit-artifacts/aca-cube-lab-deploy/acr-policy.txt
+
+      - name: Resolve Azure resource IDs
+        id: azure_resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity_id="$(az identity show \
+            --name "$RUNTIME_IDENTITY_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query id \
+            --output tsv)"
+          identity_principal_id="$(az identity show \
+            --name "$RUNTIME_IDENTITY_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query principalId \
+            --output tsv)"
+          env_id="$(az containerapp env show \
+            --name "$ENVIRONMENT_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query id \
+            --output tsv)"
+          acr_id="$(az acr show --name "$ACR_NAME" --query id --output tsv)"
+
+          if [[ -z "$identity_id" || -z "$identity_principal_id" || -z "$env_id" || -z "$acr_id" ]]; then
+            echo "Failed to resolve one or more Azure resource IDs." >&2
+            exit 1
+          fi
+
+          role_count="$(az role assignment list \
+            --assignee "$identity_principal_id" \
+            --scope "$acr_id" \
+            --query "[?roleDefinitionName=='AcrPull'] | length(@)" \
+            --output tsv)"
+          if [[ "$role_count" == "0" ]]; then
+            echo "Runtime identity lacks AcrPull on $ACR_NAME." >&2
+            exit 1
+          fi
+
+          echo "identity_id=$identity_id" >> "$GITHUB_OUTPUT"
+          echo "env_id=$env_id" >> "$GITHUB_OUTPUT"
+          echo "acr_id=$acr_id" >> "$GITHUB_OUTPUT"
+          {
+            echo "identity_id=$identity_id"
+            echo "identity_principal_id=$identity_principal_id"
+            echo "environment_id=$env_id"
+            echo "acr_id=$acr_id"
+          } | tee audit-artifacts/aca-cube-lab-deploy/azure-resources.txt
+
+      - name: Ensure Cube Key Vault secrets exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          ensure_secret() {
+            local name="$1"
+            if az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "$name" --query id --output tsv >/dev/null 2>&1; then
+              echo "secret=$name state=exists"
+              return
+            fi
+            value="$(openssl rand -base64 48 | tr -d '\n')"
+            az keyvault secret set \
+              --vault-name "$KEY_VAULT_NAME" \
+              --name "$name" \
+              --value "$value" \
+              --output none
+            echo "secret=$name state=created"
+          }
+
+          az keyvault secret show \
+            --vault-name "$KEY_VAULT_NAME" \
+            --name azure-postgres-control-database-url \
+            --query id \
+            --output tsv > audit-artifacts/aca-cube-lab-deploy/database-secret-id.txt
+          ensure_secret cube-api-secret | tee audit-artifacts/aca-cube-lab-deploy/cube-api-secret-state.txt
+          ensure_secret cube-sql-password | tee audit-artifacts/aca-cube-lab-deploy/cube-sql-password-state.txt
+
+      - name: Log in to ACR for Docker Buildx
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(az acr login --name "$ACR_NAME" --expose-token --query accessToken --output tsv)"
+          if [[ -z "$token" ]]; then
+            echo "Failed to acquire ACR access token for $ACR_NAME." >&2
+            exit 1
+          fi
+          echo "$token" | docker login "${ACR_NAME}.azurecr.io" \
+            --username 00000000-0000-0000-0000-000000000000 \
+            --password-stdin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Cube image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.cube
+          push: true
+          tags: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.release.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Refresh Azure login after image build
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Resolve Cube image digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="$(az acr manifest show-metadata \
+            --registry "$ACR_NAME" \
+            --name "${IMAGE_REPOSITORY}:${{ steps.release.outputs.tag }}" \
+            --query digest \
+            --output tsv)"
+          if [[ -z "$digest" ]]; then
+            echo "Failed to resolve image digest for ${IMAGE_REPOSITORY}:${{ steps.release.outputs.tag }}" >&2
+            exit 1
+          fi
+          image="${ACR_NAME}.azurecr.io/${IMAGE_REPOSITORY}@${digest}"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          {
+            echo "sha=${{ steps.release.outputs.sha }}"
+            echo "tag=${{ steps.release.outputs.tag }}"
+            echo "digest=$digest"
+            echo "image=$image"
+          } | tee audit-artifacts/aca-cube-lab-deploy/image.txt
+
+      - name: Deploy Cube lab Container App
+        id: deploy_cube
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          RUNTIME_IDENTITY_ID: ${{ steps.azure_resources.outputs.identity_id }}
+        run: |
+          set -euo pipefail
+          database_secret="database-url=keyvaultref:https://${KEY_VAULT_NAME}.vault.azure.net/secrets/azure-postgres-control-database-url,identityref:${RUNTIME_IDENTITY_ID}"
+          api_secret="cube-api-secret=keyvaultref:https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-api-secret,identityref:${RUNTIME_IDENTITY_ID}"
+          sql_secret="cube-sql-pass=keyvaultref:https://${KEY_VAULT_NAME}.vault.azure.net/secrets/cube-sql-password,identityref:${RUNTIME_IDENTITY_ID}"
+          env_vars=(
+            "NODE_ENV=production"
+            "DATABASE_URL=secretref:database-url"
+            "CUBEJS_API_SECRET=secretref:cube-api-secret"
+            "CUBEJS_SQL_PASSWORD=secretref:cube-sql-pass"
+            "CUBEJS_SQL_USER=cube"
+            "CUBEJS_DEV_MODE=false"
+            "CUBEJS_SCHEMA_PATH=model"
+            "CUBEJS_DB_TYPE=postgres"
+            "CUBEJS_DB_SSL=true"
+            "CUBEJS_PG_SQL_PORT=15432"
+            "CUBEJS_DEFAULT_API_SCOPES=meta,data,sql"
+            "CUBEJS_LOG_LEVEL=warn"
+          )
+
+          if az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --output none 2>/dev/null; then
+            az containerapp identity assign \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --user-assigned "$RUNTIME_IDENTITY_ID" \
+              --output none
+            az containerapp registry set \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --server "${ACR_NAME}.azurecr.io" \
+              --identity "$RUNTIME_IDENTITY_ID" \
+              --output none
+            az containerapp secret set \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --secrets "$database_secret" "$api_secret" "$sql_secret" \
+              --output none
+            az containerapp update \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --image "$IMAGE" \
+              --revision-suffix "${{ steps.release.outputs.revision_suffix }}" \
+              --cpu 1.0 \
+              --memory 2.0Gi \
+              --set-env-vars "${env_vars[@]}" \
+              --output json | tee audit-artifacts/aca-cube-lab-deploy/containerapp-update.json
+            az containerapp ingress update \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --type internal \
+              --target-port 4000 \
+              --transport http \
+              --allow-insecure false \
+              --output json | tee audit-artifacts/aca-cube-lab-deploy/ingress-update.json
+          else
+            az containerapp create \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "$ENVIRONMENT_NAME" \
+              --image "$IMAGE" \
+              --revision-suffix "${{ steps.release.outputs.revision_suffix }}" \
+              --container-name cube \
+              --user-assigned "$RUNTIME_IDENTITY_ID" \
+              --registry-server "${ACR_NAME}.azurecr.io" \
+              --registry-identity "$RUNTIME_IDENTITY_ID" \
+              --ingress internal \
+              --target-port 4000 \
+              --transport http \
+              --min-replicas 1 \
+              --max-replicas 2 \
+              --cpu 1.0 \
+              --memory 2.0Gi \
+              --secrets "$database_secret" "$api_secret" "$sql_secret" \
+              --env-vars "${env_vars[@]}" \
+              --output json | tee audit-artifacts/aca-cube-lab-deploy/containerapp-create.json
+          fi
+
+      - name: Configure internal Cube SQL API port
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          RUNTIME_IDENTITY_ID: ${{ steps.azure_resources.outputs.identity_id }}
+        run: |
+          set -euo pipefail
+          az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/aca-cube-lab-deploy/containerapp-before-sql-port.json
+          node <<'NODE'
+          const fs = require("node:fs");
+          const app = JSON.parse(fs.readFileSync("audit-artifacts/aca-cube-lab-deploy/containerapp-before-sql-port.json", "utf8"));
+          const identityId = process.env.RUNTIME_IDENTITY_ID;
+          const ingress = {
+            ...(app.properties.configuration.ingress || {}),
+            allowInsecure: false,
+            external: false,
+            targetPort: 4000,
+            transport: "http",
+            additionalPortMappings: [
+              {
+                exposedPort: 15432,
+                external: false,
+                targetPort: 15432,
+              },
+            ],
+          };
+          const resource = {
+            identity: {
+              type: "UserAssigned",
+              userAssignedIdentities: {
+                [identityId]: {},
+              },
+            },
+            location: app.location,
+            name: app.name,
+            properties: {
+              configuration: {
+                activeRevisionsMode: "Single",
+                ingress,
+                registries: app.properties.configuration.registries,
+                secrets: app.properties.configuration.secrets,
+              },
+              managedEnvironmentId: app.properties.managedEnvironmentId,
+              template: app.properties.template,
+            },
+            type: "Microsoft.App/containerApps",
+          };
+          fs.writeFileSync("audit-artifacts/aca-cube-lab-deploy/containerapp-sql-port.json", JSON.stringify(resource, null, 2));
+          NODE
+          az containerapp update \
+            --resource-group "$RESOURCE_GROUP" \
+            --yaml audit-artifacts/aca-cube-lab-deploy/containerapp-sql-port.json \
+            --image "$IMAGE" \
+            --output json | tee audit-artifacts/aca-cube-lab-deploy/sql-port-update.json
+
+      - name: Wait for Cube revision to become healthy
+        shell: bash
+        env:
+          EXPECTED_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          set -euo pipefail
+          max_attempts=80
+          sleep_seconds=15
+          healthy=false
+          for attempt in $(seq 1 "$max_attempts"); do
+            az containerapp show \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --output json > audit-artifacts/aca-cube-lab-deploy/containerapp-current.json
+            latest_revision="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-cube-lab-deploy/containerapp-current.json)"
+            latest_ready_revision="$(jq -r '.properties.latestReadyRevisionName // ""' audit-artifacts/aca-cube-lab-deploy/containerapp-current.json)"
+            if [[ -z "$latest_revision" || "$latest_revision" == "null" ]]; then
+              echo "attempt=$attempt/$max_attempts latest_revision=<none>"
+              sleep "$sleep_seconds"
+              continue
+            fi
+            az containerapp revision show \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --revision "$latest_revision" \
+              --output json > audit-artifacts/aca-cube-lab-deploy/revision.json
+            image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/aca-cube-lab-deploy/revision.json)"
+            provisioning_state="$(jq -r '.properties.provisioningState // ""' audit-artifacts/aca-cube-lab-deploy/revision.json)"
+            running_state="$(jq -r '.properties.runningState // ""' audit-artifacts/aca-cube-lab-deploy/revision.json)"
+            health_state="$(jq -r '.properties.healthState // ""' audit-artifacts/aca-cube-lab-deploy/revision.json)"
+            echo "attempt=$attempt/$max_attempts revision=$latest_revision ready=$latest_ready_revision provisioning=$provisioning_state running=$running_state health=$health_state"
+            if [[ "$image" != "$EXPECTED_IMAGE" ]]; then
+              echo "Latest Cube revision image does not match expected digest." >&2
+              echo "actual=$image" >&2
+              echo "expected=$EXPECTED_IMAGE" >&2
+              exit 1
+            fi
+            if [[ "$provisioning_state" == "Provisioned" && "$running_state" == "Running" && "$health_state" == "Healthy" ]]; then
+              healthy=true
+              break
+            fi
+            sleep "$sleep_seconds"
+          done
+          if [[ "$healthy" != "true" ]]; then
+            echo "Cube revision did not become Healthy/Running in time." >&2
+            cat audit-artifacts/aca-cube-lab-deploy/revision.json >&2 || true
+            exit 1
+          fi
+
+      - name: Verify Cube runtime invariant and private ingress
+        shell: bash
+        env:
+          EXPECTED_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          set -euo pipefail
+          az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json | tee audit-artifacts/aca-cube-lab-deploy/containerapp-after.json
+          node <<'NODE'
+          const fs = require("node:fs");
+          const app = JSON.parse(fs.readFileSync("audit-artifacts/aca-cube-lab-deploy/containerapp-after.json", "utf8"));
+          const expectedImage = process.env.EXPECTED_IMAGE;
+          const failures = [];
+          const image = app.properties.template.containers[0].image;
+          const ingress = app.properties.configuration.ingress || {};
+          const ports = ingress.additionalPortMappings || [];
+          if (image !== expectedImage) failures.push(`template image ${image} != ${expectedImage}`);
+          if (ingress.external !== false) failures.push("Cube HTTP ingress is not internal");
+          if (ingress.targetPort !== 4000) failures.push(`Cube HTTP targetPort ${ingress.targetPort} != 4000`);
+          if (!ports.some((port) => port.targetPort === 15432 && port.exposedPort === 15432 && port.external === false)) {
+            failures.push("Cube SQL API internal TCP port 15432 is not configured");
+          }
+          const result = {
+            ok: failures.length === 0,
+            container_app: app.name,
+            image,
+            ingress: {
+              external: ingress.external,
+              targetPort: ingress.targetPort,
+              additionalPortMappings: ports,
+            },
+            failures,
+          };
+          console.log(JSON.stringify(result, null, 2));
+          fs.writeFileSync("audit-artifacts/aca-cube-lab-deploy/runtime-invariant.json", JSON.stringify(result, null, 2));
+          if (!result.ok) process.exit(1);
+          NODE
+
+      - name: Run Cube API verifier inside private runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_revision="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-cube-lab-deploy/containerapp-after.json)"
+          if [[ -z "$latest_revision" || "$latest_revision" == "null" ]]; then
+            echo "Cannot resolve latest Cube revision for runtime verifier." >&2
+            exit 1
+          fi
+          az containerapp exec \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --revision "$latest_revision" \
+            --container cube \
+            --command "node /cube/conf/scripts/verify-source-cube-runtime.mjs --url=http://127.0.0.1:4000 --tenant=${SOURCE_TENANT_KEY}" \
+            | tee audit-artifacts/aca-cube-lab-deploy/cube-runtime-verifier.txt
+
+      - name: Upload Cube lab deploy evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aca-cube-lab-deploy-${{ steps.release.outputs.short_sha }}
+          path: audit-artifacts/aca-cube-lab-deploy
+          if-no-files-found: error
