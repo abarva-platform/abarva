@@ -73,7 +73,7 @@ async function inspectDatabase(label, connectionString) {
     const contractVendor360 = await maybeQuery(client, `
       SELECT
         COUNT(*)::bigint AS rows,
-        COUNT(DISTINCT vendor_id)::bigint AS vendors,
+        COUNT(DISTINCT vendor_ref)::bigint AS vendors,
         COALESCE(SUM(annual_value), 0)::numeric(18,2) AS annual_value,
         COALESCE(SUM(total_committed_value), 0)::numeric(18,2) AS total_committed_value
       FROM source.contract_vendor_360
