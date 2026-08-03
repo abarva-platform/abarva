@@ -43,6 +43,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - The deploy workflow recreates only the lab Cube Container App if an earlier failed first-time provision left that Cube service in `Failed` state before the runtime became usable.
 - The internal SQL API port update uses an explicit Container App name with the generated ARM payload to satisfy the Azure CLI update contract.
 - The internal SQL API port update omits the previous revision suffix from the generated payload so Azure can create the follow-up revision without suffix collision.
+- The private-runtime verifier runs the Azure Container App exec command under a pseudo-terminal wrapper so GitHub-hosted runners can satisfy the Azure CLI exec TTY contract while preserving the same in-container Cube API checks.
 
 ## QA / Validation
 
@@ -56,6 +57,7 @@ Adds the first deployable Cube Core runtime for the Source semantic layer in lab
 - PASS: deploy retry design handles a failed first-time Cube Container App provision by recreating the separate lab Cube service before reapplying the corrected runtime.
 - PASS: deploy retry design corrects the SQL-port update command to provide the required Container App name when applying the generated ingress payload.
 - PASS: deploy retry design removes reused revision suffixes from the generated SQL-port payload.
+- PASS: deploy retry design wraps the private-runtime exec verifier in a pseudo-terminal so the GitHub runner can invoke Azure CLI exec non-interactively without weakening the Cube API assertions.
 - NOT RUN locally: Postgres parity verifier, because this checkout does not contain a lab database URL. The deploy workflow obtains the database URL from Key Vault.
 
 ## Rollout Plan

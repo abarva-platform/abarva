@@ -537,12 +537,16 @@ jobs:
             echo "Cannot resolve latest Cube revision for runtime verifier." >&2
             exit 1
           fi
-          az containerapp exec \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --revision "$latest_revision" \
-            --container cube \
-            --command "node /cube/conf/scripts/verify-source-cube-runtime.mjs --url=http://127.0.0.1:4000 --tenant=${SOURCE_TENANT_KEY}" \
+          verifier_command=(
+            az containerapp exec
+            --name "$CONTAINER_APP_NAME"
+            --resource-group "$RESOURCE_GROUP"
+            --revision "$latest_revision"
+            --container cube
+            --command "node /cube/conf/scripts/verify-source-cube-runtime.mjs --url=http://127.0.0.1:4000 --tenant=${SOURCE_TENANT_KEY}"
+          )
+          printf -v verifier_command_quoted "%q " "${verifier_command[@]}"
+          script -q -e -c "$verifier_command_quoted" /dev/null \
             | tee audit-artifacts/aca-cube-lab-deploy/cube-runtime-verifier.txt
 
       - name: Upload Cube lab deploy evidence
