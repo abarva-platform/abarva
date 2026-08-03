@@ -31,12 +31,35 @@ import type {
 
 const MISSING_TABLE_EMPTY = { missingTable: "empty" as const };
 
+/**
+ * Known tenant_key spellings for the same real-world SkyHarbor tenant across
+ * different parts of this codebase. The app resolves the active client key
+ * as `skyharbor` or `skyharbor-air` (see src/lib/client-config.ts and the
+ * contract-optimization load script's DEFAULT_TENANT_KEY), but the source,
+ * tower, and doc schemas were verified against a real export under
+ * `tenant_key = 'skyharbor_global'` (see types.ts header). Querying by exact
+ * match on whichever spelling the caller happens to have produces a silent,
+ * honest-looking empty result — not an error — so this alias resolution is
+ * required, not optional, for this data model to ever return real rows.
+ */
+const SKYHARBOR_TENANT_ALIASES: readonly string[] = [
+  "skyharbor",
+  "skyharbor-air",
+  "skyharbor_global",
+];
+
+function tenantKeyAliases(tenantKey: string): string[] {
+  const normalized = tenantKey.trim().toLowerCase();
+  if (!SKYHARBOR_TENANT_ALIASES.includes(normalized)) return [normalized];
+  return [...SKYHARBOR_TENANT_ALIASES];
+}
+
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
   return azureRead.query<SourceContractVendor360Row>(
-    "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = $1 ORDER BY annual_value DESC NULLS LAST",
-    [tenantKey],
+    "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -45,8 +68,8 @@ export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
   return azureRead.query<SourceContract360Row>(
-    "SELECT * FROM source.contract_360 WHERE tenant_key = $1 ORDER BY annual_value DESC NULLS LAST",
-    [tenantKey],
+    "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -56,8 +79,8 @@ export async function getContract360(
   contractId: string,
 ): Promise<SourceContract360Row | null> {
   const rows = await azureRead.query<SourceContract360Row>(
-    "SELECT * FROM source.contract_360 WHERE tenant_key = $1 AND contract_id = $2 LIMIT 1",
-    [tenantKey, contractId],
+    "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
+    [tenantKeyAliases(tenantKey), contractId],
     MISSING_TABLE_EMPTY,
   );
   return rows[0] ?? null;
@@ -67,8 +90,8 @@ export async function listVendorContractPortfolio(
   tenantKey: string,
 ): Promise<SourceVendorContractPortfolioRow[]> {
   return azureRead.query<SourceVendorContractPortfolioRow>(
-    "SELECT * FROM source.vendor_contract_portfolio WHERE tenant_key = $1 ORDER BY annual_value DESC NULLS LAST",
-    [tenantKey],
+    "SELECT * FROM source.vendor_contract_portfolio WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -79,14 +102,14 @@ export async function listContractApplicationScope(
 ): Promise<SourceContractApplicationScopeRow[]> {
   if (contractId) {
     return azureRead.query<SourceContractApplicationScopeRow>(
-      "SELECT * FROM source.contract_application_scope WHERE tenant_key = $1 AND contract_id = $2",
-      [tenantKey, contractId],
+      "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[]) AND contract_id = $2",
+      [tenantKeyAliases(tenantKey), contractId],
       MISSING_TABLE_EMPTY,
     );
   }
   return azureRead.query<SourceContractApplicationScopeRow>(
-    "SELECT * FROM source.contract_application_scope WHERE tenant_key = $1",
-    [tenantKey],
+    "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[])",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -95,8 +118,8 @@ export async function listContractFinancialExposure(
   tenantKey: string,
 ): Promise<SourceContractFinancialExposureRow[]> {
   return azureRead.query<SourceContractFinancialExposureRow>(
-    "SELECT * FROM source.contract_financial_exposure WHERE tenant_key = $1",
-    [tenantKey],
+    "SELECT * FROM source.contract_financial_exposure WHERE tenant_key = ANY($1::text[])",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -105,8 +128,8 @@ export async function listContractOperationalPerformance(
   tenantKey: string,
 ): Promise<SourceContractOperationalPerformanceRow[]> {
   return azureRead.query<SourceContractOperationalPerformanceRow>(
-    "SELECT * FROM source.contract_operational_performance WHERE tenant_key = $1",
-    [tenantKey],
+    "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -117,14 +140,14 @@ export async function listContractInitiativeDependency(
 ): Promise<SourceContractInitiativeDependencyRow[]> {
   if (contractId) {
     return azureRead.query<SourceContractInitiativeDependencyRow>(
-      "SELECT * FROM source.contract_initiative_dependency WHERE tenant_key = $1 AND contract_id = $2",
-      [tenantKey, contractId],
+      "SELECT * FROM source.contract_initiative_dependency WHERE tenant_key = ANY($1::text[]) AND contract_id = $2",
+      [tenantKeyAliases(tenantKey), contractId],
       MISSING_TABLE_EMPTY,
     );
   }
   return azureRead.query<SourceContractInitiativeDependencyRow>(
-    "SELECT * FROM source.contract_initiative_dependency WHERE tenant_key = $1",
-    [tenantKey],
+    "SELECT * FROM source.contract_initiative_dependency WHERE tenant_key = ANY($1::text[])",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -133,8 +156,8 @@ export async function listApplicationVendorExposure(
   tenantKey: string,
 ): Promise<SourceApplicationVendorExposureRow[]> {
   return azureRead.query<SourceApplicationVendorExposureRow>(
-    "SELECT * FROM source.application_vendor_exposure WHERE tenant_key = $1",
-    [tenantKey],
+    "SELECT * FROM source.application_vendor_exposure WHERE tenant_key = ANY($1::text[])",
+    [tenantKeyAliases(tenantKey)],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -154,9 +177,9 @@ export async function listLatestTowerObservationsForSubjects(
   return azureRead.query<TowerMetricObservationRow>(
     `SELECT DISTINCT ON (subject_ref, metric_ref) *
        FROM tower.metric_observation
-      WHERE tenant_key = $1 AND subject_ref = ANY($2)
+      WHERE tenant_key = ANY($1::text[]) AND subject_ref = ANY($2)
       ORDER BY subject_ref, metric_ref, period_end DESC`,
-    [tenantKey, subjectRefs],
+    [tenantKeyAliases(tenantKey), subjectRefs],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -167,8 +190,8 @@ export async function listTowerValueClaimsForSubjects(
 ): Promise<TowerValueClaimRow[]> {
   if (subjectRefs.length === 0) return [];
   return azureRead.query<TowerValueClaimRow>(
-    "SELECT * FROM tower.value_claim WHERE tenant_key = $1 AND subject_ref = ANY($2) ORDER BY evaluated_at DESC NULLS LAST",
-    [tenantKey, subjectRefs],
+    "SELECT * FROM tower.value_claim WHERE tenant_key = ANY($1::text[]) AND subject_ref = ANY($2) ORDER BY evaluated_at DESC NULLS LAST",
+    [tenantKeyAliases(tenantKey), subjectRefs],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -179,8 +202,8 @@ export async function listTowerMetricProvenance(
 ): Promise<TowerMetricProvenanceRow[]> {
   if (provenanceIds.length === 0) return [];
   return azureRead.query<TowerMetricProvenanceRow>(
-    "SELECT * FROM tower.metric_provenance WHERE tenant_key = $1 AND provenance_id = ANY($2)",
-    [tenantKey, provenanceIds],
+    "SELECT * FROM tower.metric_provenance WHERE tenant_key = ANY($1::text[]) AND provenance_id = ANY($2)",
+    [tenantKeyAliases(tenantKey), provenanceIds],
     MISSING_TABLE_EMPTY,
   );
 }
@@ -191,8 +214,8 @@ export async function listDocExtractionsForSubject(
   subjectRef: string,
 ): Promise<DocExtractionRow[]> {
   return azureRead.query<DocExtractionRow>(
-    "SELECT * FROM doc.extraction WHERE tenant_key = $1 AND subject_ref = $2 ORDER BY extracted_at DESC",
-    [tenantKey, subjectRef],
+    "SELECT * FROM doc.extraction WHERE tenant_key = ANY($1::text[]) AND subject_ref = $2 ORDER BY extracted_at DESC",
+    [tenantKeyAliases(tenantKey), subjectRef],
     MISSING_TABLE_EMPTY,
   );
 }
