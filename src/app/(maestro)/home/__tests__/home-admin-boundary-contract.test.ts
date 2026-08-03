@@ -61,10 +61,32 @@ describe("Home/Admin boundary contract", () => {
     expect(commandCenterSource).not.toMatch(/href=\\{`#|href="#/);
     expect(commandCenterSource).not.toContain("IntersectionObserver");
     expect(commandCenterSource).not.toContain("document.getElementById");
+    expect(commandCenterSource).not.toContain("6 of 150 initiatives");
+    expect(commandCenterSource).not.toContain("<small>flows</small>");
+    expect(commandCenterSource).toContain("6 material choices");
+    expect(commandCenterSource).toContain("<small>relationships</small>");
     expect(architectureSource).toContain("Architecture review board");
     expect(architectureSource).toContain(
       'data-testid="current-state-architecture-board"',
     );
+  });
+
+  it("keeps tool usage as a drillable telemetry lens, not a value-claim substitute", () => {
+    const commandCenterSource = readRepoFile(
+      "src/components/home/ai-success-command-center/AiSuccessCommandCenter.tsx",
+    );
+    const dataSource = readRepoFile(
+      "src/lib/home/readSkyHarborAiSuccessHome.ts",
+    );
+
+    expect(commandCenterSource).toContain("Tool usage is a telemetry lens");
+    expect(commandCenterSource).toContain("onDoubleClick");
+    expect(commandCenterSource).toContain("Tool usage drill");
+    expect(commandCenterSource).toContain("active-user observations");
+    expect(dataSource).toContain("aiToolUsageSummary");
+    expect(dataSource).toContain("not deduped people");
+    expect(dataSource).toContain("_source_row_number");
+    expect(dataSource).toContain("evidence_ref");
   });
 
   it("keeps legacy setup-ish Home URLs redirected into Admin", () => {
