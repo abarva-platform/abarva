@@ -1,8 +1,21 @@
 import { COL, money, pct, fmtDate } from './viewModel';
 import type { WorkspaceViewModel, EnrichedContract, Urgency } from './viewModel';
 import type { DataTableRow, DataTableColumn } from './DataTable';
-import type { LeverageSignal } from '@/lib/source/data-model/vendor-contract-portfolio';
+import { numberFromDb, type LeverageSignal } from '@/lib/source/data-model/vendor-contract-portfolio';
 import type { SourcingOpportunityReason } from '@/lib/source/data-model/sourcing-opportunities';
+
+/**
+ * `node-postgres` returns NUMERIC/DECIMAL columns as strings; a lone value
+ * coerces fine through `money()`'s Math.abs/division, but `t + value` across
+ * two or more rows silently does string concatenation instead of addition
+ * (see 2026-08-03-source-numeric-string-aggregation-fix). Every raw `+`
+ * accumulation in this file over a governed row's numeric field must read
+ * through one of these, not `?? 0` alone.
+ */
+const addRowAnnualValue = (t: number, c: { row: { annual_value: number | null } }): number =>
+  t + (numberFromDb(c.row.annual_value) ?? 0);
+const addAnnualValue = (t: number, r: { annual_value: number | null }): number =>
+  t + (numberFromDb(r.annual_value) ?? 0);
 
 const REASON_LABEL: Record<SourcingOpportunityReason, string> = {
   high_priority_leverage: 'Weak leverage',
@@ -64,8 +77,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       ['Context', 'Context', '', ''], ['Spend & concentration', 'Concentration', '', money(summary.totalAnnualValue)],
       ['Explore', 'Explore', '', ''],
       ['Renewals', 'Renewals', String(rec180Fixed.expiringWithinWindow.length), money(rec180Fixed.expiringWithinWindowAnnualValue)],
-      ['Leverage', 'Leverage', String(rows.filter((c) => c.leverage.weakSignalCount >= 2).length), money(rows.filter((c) => c.leverage.weakSignalCount >= 2).reduce((t, c) => t + (c.row.annual_value ?? 0), 0))],
-      ['Opportunities', 'Opportunities', String(opportunities.length), money(opportunities.reduce((t, o) => t + o.annualValue, 0))],
+      ['Leverage', 'Leverage', String(rows.filter((c) => c.leverage.weakSignalCount >= 2).length), money(rows.filter((c) => c.leverage.weakSignalCount >= 2).reduce(addRowAnnualValue, 0))],
+      ['Opportunities', 'Opportunities', String(opportunities.length), money(opportunities.reduce((t, o) => t + (numberFromDb(o.annualValue) ?? 0), 0))],
       ['Sourcing agenda', 'Agenda', '', ''],
     ] as [string, string, string, string][]).forEach((x) =>
       T.push(node({ id: 'exec.' + x[1], label: x[0], depth: 1, badgeCount: x[2], badgeVal: x[3], active: kind === 'portfolio' && S.tabs.portfolio === x[1], onClick: () => vm.select('portfolio', null, x[1]) })));
@@ -75,7 +88,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     const cats = Array.from(new Set(vm.portfolio.vendors.map((v) => v.vendor_category ?? 'Unresolved')));
     cats.forEach((cat) => {
       const vs = vm.portfolio.vendors.filter((v) => (v.vendor_category ?? 'Unresolved') === cat);
-      T.push(node({ id: 'v.' + cat, label: cat, depth: 1, badgeCount: String(vs.length), badgeVal: money(vs.reduce((t, v) => t + (v.annual_value ?? 0), 0)), onClick: () => vm.select('vendorList', cat) }));
+      T.push(node({ id: 'v.' + cat, label: cat, depth: 1, badgeCount: String(vs.length), badgeVal: money(vs.reduce(addAnnualValue, 0)), onClick: () => vm.select('vendorList', cat) }));
     });
     T.push(node({ id: 'allVendors', label: 'All vendors', depth: 1, caret: S.open.allVendors ? '▾' : '▸', badgeCount: String(vm.portfolio.vendors.length), onClick: () => vm.toggle('allVendors') }));
     if (S.open.allVendors) {
@@ -89,7 +102,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       ['Notice decisions due in 90 days', 'win90', rec90.expiringWithinWindow], ['Contracts expiring in 180 days', 'win180', rec180Fixed.expiringWithinWindow],
       ['Notice deadline passed', 'passed', rec180Fixed.noticeDeadlinePassed], ['Weak leverage', 'weak', rows.filter((c) => c.leverage.weakSignalCount >= 2).map((c) => c.row)],
     ] as [string, string, readonly { contract_id: string; annual_value: number | null }[]][]).forEach((x) =>
-      T.push(node({ id: 'c.' + x[1], label: x[0], depth: 1, badgeCount: String(x[2].length), badgeVal: money(x[2].reduce((t, r) => t + (r.annual_value ?? 0), 0)), badgeColor: x[1] === 'passed' ? COL.red : '#888780', active: kind === 'contractList' && sel.id === x[1], onClick: () => vm.select('contractList', x[1]) })));
+      T.push(node({ id: 'c.' + x[1], label: x[0], depth: 1, badgeCount: String(x[2].length), badgeVal: money(x[2].reduce(addAnnualValue, 0)), badgeColor: x[1] === 'passed' ? COL.red : '#888780', active: kind === 'contractList' && sel.id === x[1], onClick: () => vm.select('contractList', x[1]) })));
     T.push(node({ id: 'allContracts', label: 'All contracts', depth: 1, caret: S.open.allContracts ? '▾' : '▸', badgeCount: String(summary.contractCount), onClick: () => vm.toggle('allContracts') }));
     if (S.open.allContracts) {
       rows.slice().sort((a, b) => (b.row.annual_value ?? 0) - (a.row.annual_value ?? 0)).slice(0, 10).forEach((c) =>
@@ -151,7 +164,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   } else if (kind === 'vendor') {
     title = vendorName;
     const rank = conc.byVendor.findIndex((r) => r.vendorRef === vendorRef) + 1;
-    thesis = money(vendorPortfolioRow?.annual_value ?? vendorContracts.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)) + ' of annual contract value across ' + (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts' + (rank ? ' · rank ' + rank + ' of ' + conc.byVendor.length : '') + '.';
+    thesis = money(vendorPortfolioRow?.annual_value ?? vendorContracts.reduce(addRowAnnualValue, 0)) + ' of annual contract value across ' + (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts' + (rank ? ' · rank ' + rank + ' of ' + conc.byVendor.length : '') + '.';
     crumbLabels = ['Source', 'Vendors', vendorCat ?? 'Unresolved', vendorName, activeTab];
   } else if (kind === 'contract' && contract) {
     title = contract.row.vendor_name + ' · ' + contract.row.contract_name;
@@ -169,12 +182,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     crumbLabels = ['Source', 'Evidence', activeTab];
   } else {
     title = (listDef[sel.id || ''] || listDef.passed)[0];
-    thesis = listRows.length + ' contracts · ' + money(listRows.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)) + ' annual contract value.';
+    thesis = listRows.length + ' contracts · ' + money(listRows.reduce(addRowAnnualValue, 0)) + ' annual contract value.';
     crumbLabels = ['Source', 'Contracts', title];
     if (kind === 'vendorList') {
       const vs = vm.portfolio.vendors.filter((v) => (v.vendor_category ?? 'Unresolved') === sel.id);
       title = (sel.id ?? 'Unresolved') + ' vendors';
-      thesis = vs.length + ' vendors · ' + money(vs.reduce((t, v) => t + (v.annual_value ?? 0), 0)) + ' annual contract value.';
+      thesis = vs.length + ' vendors · ' + money(vs.reduce(addAnnualValue, 0)) + ' annual contract value.';
       crumbLabels = ['Source', 'Vendors', sel.id ?? 'Unresolved'];
     }
   }
@@ -207,7 +220,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       vsItem('Annual contract value', money(vendorPortfolioRow?.annual_value ?? null), (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts'),
       vsItem('Total committed value', money(vendorPortfolioRow?.total_committed_value ?? null), 'Across remaining terms'),
       vsItem('Auto-renewing contracts', String(vendorPortfolioRow?.auto_renew_contracts ?? vendorContracts.filter((c) => c.row.auto_renew).length), 'source.vendor_contract_portfolio'),
-      vsItem('Renewal exposure', vRen.length ? money(vRen.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)) : null, vRen.length ? vRen.length + ' contracts inside 180 days' : 'No decision inside 180 days', vRen.length ? COL.red : undefined),
+      vsItem('Renewal exposure', vRen.length ? money(vRen.reduce(addRowAnnualValue, 0)) : null, vRen.length ? vRen.length + ' contracts inside 180 days' : 'No decision inside 180 days', vRen.length ? COL.red : undefined),
       vsItem('Weak leverage signals', String(Math.max(0, ...vendorContracts.map((c) => c.leverage.weakSignalCount))), 'Highest on any material contract'),
     ];
   } else {
@@ -279,7 +292,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       const vendors = matches.filter((c) => (seen.has(c.row.vendor_ref) ? false : (seen.add(c.row.vendor_ref), true)))
         .map((c) => ({ name: c.row.vendor_name, ref: c.row.vendor_ref, onClick: () => vm.select('vendor', c.row.vendor_ref) }));
       const isSel = S.concStrip === def.id;
-      return { id: def.id, label: def.label, note: def.note, vendors, vendorCount: vendors.length, contractCount: matches.length, value: money(matches.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)), selected: isSel, bg: isSel ? '#0a0a0b' : '#fff', fg: isSel ? '#fff' : '#0a0a0b', onClick: () => vm.setState({ concStrip: isSel ? null : def.id }) };
+      return { id: def.id, label: def.label, note: def.note, vendors, vendorCount: vendors.length, contractCount: matches.length, value: money(matches.reduce(addRowAnnualValue, 0)), selected: isSel, bg: isSel ? '#0a0a0b' : '#fff', fg: isSel ? '#fff' : '#0a0a0b', onClick: () => vm.setState({ concStrip: isSel ? null : def.id }) };
     });
   })();
 
@@ -310,7 +323,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         : q.id === 'consolidate' ? c.leverage.weakSignalCount >= 2 && !high
         : c.leverage.weakSignalCount < 2 && !high;
     });
-    return { id: q.id, label: q.label, action: q.action, count: inQ.length, value: money(inQ.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)), selected: S.quadrant === q.id, bg: S.quadrant === q.id ? '#0a0a0b' : '#fff', fg: S.quadrant === q.id ? '#fff' : '#0a0a0b', onClick: q.onClick, items: inQ.slice(0, 4).map((c) => ({ label: c.row.vendor_name + ' · ' + c.row.contract_name, value: money(c.row.annual_value), onClick: () => vm.select('contract', c.row.contract_id) })) };
+    return { id: q.id, label: q.label, action: q.action, count: inQ.length, value: money(inQ.reduce(addRowAnnualValue, 0)), selected: S.quadrant === q.id, bg: S.quadrant === q.id ? '#0a0a0b' : '#fff', fg: S.quadrant === q.id ? '#fff' : '#0a0a0b', onClick: q.onClick, items: inQ.slice(0, 4).map((c) => ({ label: c.row.vendor_name + ' · ' + c.row.contract_name, value: money(c.row.annual_value), onClick: () => vm.select('contract', c.row.contract_id) })) };
   });
   const signalDefs = (['benchmarking', 'alternatives', 'skill_dependency', 'regional_dependency'] as LeverageSignal[]).map((s) => ({
     id: s, label: vm.signalLabel(s), count: String(rows.filter((c) => c.leverage.weakSignals[s]).length) + ' of ' + rows.length,
@@ -321,7 +334,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     const items = opportunities.filter((o) => o.reasons.includes(reason));
     return {
       label: REASON_LABEL[reason], color: REASON_COLOR[reason], count: items.length,
-      value: items.length ? money(items.reduce((t, o) => t + o.annualValue, 0)) : '—',
+      value: items.length ? money(items.reduce((t, o) => t + (numberFromDb(o.annualValue) ?? 0), 0)) : '—',
       items: items.map((o) => ({ ref: o.contractId, vendor: o.vendorName, name: o.contractName, why: o.rationale.join(' '), exposed: money(o.annualValue), onClick: () => vm.select('opportunity', o.contractId) })),
     };
   });
@@ -338,7 +351,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       why: 'The right to change price, scope or supplier on those contracts has lapsed for the current term.',
       response: 'Confirm the renewal position on each contract this month.' },
     { ref: 'F-2', dot: COL.amber, headline: rows.filter((c) => c.leverage.weakSignalCount >= 2).length + ' contracts carry two or more weak leverage signals',
-      observed: 'Together worth ' + money(rows.filter((c) => c.leverage.weakSignalCount >= 2).reduce((t, c) => t + (c.row.annual_value ?? 0), 0)) + ' of annual value, computed by computeContractLeverageSignals from benchmarking_clause, alternatives_available, and concentration_note.',
+      observed: 'Together worth ' + money(rows.filter((c) => c.leverage.weakSignalCount >= 2).reduce(addRowAnnualValue, 0)) + ' of annual value, computed by computeContractLeverageSignals from benchmarking_clause, alternatives_available, and concentration_note.',
       why: 'Every position on the leverage axis is a countable signal, not a score.',
       response: 'Prioritise the leverage matrix’s top-right quadrant for renegotiation.' },
     { ref: 'F-3', dot: COL.blue, headline: 'Top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value',
@@ -573,7 +586,7 @@ function buildVendorDependencyMap(
 ) {
   const initiatives = vendorContracts.flatMap((c) => vm.initiativesFor(c.row.contract_id));
   const platforms = Array.from(new Set(vendorContracts.flatMap((c) => vm.scopeTiers(c.row.contract_id).explicit.concat(vm.scopeTiers(c.row.contract_id).unresolved).map((a) => a.hosting_model).filter((h): h is string => !!h))));
-  const criticalTotal = vendorContracts.reduce((t, c) => t + (c.row.critical_application_count ?? 0), 0);
+  const criticalTotal = vendorContracts.reduce((t, c) => t + (numberFromDb(c.row.critical_application_count) ?? 0), 0);
   return {
     vendor: vendorName, category: vendorCat ?? 'Unresolved',
     contracts: vendorContracts.slice(0, 6).map((c) => ({ id: c.row.contract_id, name: c.row.contract_name, onClick: () => vm.select('contract', c.row.contract_id) })),
