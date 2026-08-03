@@ -5,10 +5,12 @@ export const dynamic = 'force-dynamic';
 /**
  * Source landing.
  *
- * The analytics shell is now the canonical Source entry. `/source` lands on the
- * portfolio book so every tenant enters the same SourceAnalyticsCanvas family
- * instead of the retired decision-queue home.
+ * The governed Source Workspace (native-canvas explorer bound to
+ * source.contract_360 / source.vendor_contract_portfolio) is now the
+ * canonical Source entry. The prior portfolio-book dashboard remains
+ * reachable at `/source/portfolio` for any existing deep links, but is no
+ * longer the default landing surface.
  */
 export default function SourcePage() {
-  redirect('/source/portfolio');
+  redirect('/source/preview/workspace');
 }

@@ -3,6 +3,7 @@ import {
   computeContractLeverageSignals,
   computeRenewalExposure,
   computeVendorConcentration,
+  numberFromDb,
   summarizePortfolio,
   tierApplicationScopeByConfidence,
   type ContractLeverageEntry,
@@ -308,7 +309,7 @@ export class WorkspaceViewModel {
     const conc = this.concentration();
     const NAMED = 13, W = 1000, H = 286, L = 54, R = 44, T = 14, B = 56;
     const shown = conc.byVendor.slice(0, NAMED);
-    const tailVal = conc.byVendor.slice(NAMED).reduce((t, r) => t + r.annualValue, 0);
+    const tailVal = conc.byVendor.slice(NAMED).reduce((t, r) => t + (numberFromDb(r.annualValue) ?? 0), 0);
     type Bar = { vendorRef: string; vendorName: string; val: number; cumPct: number; share: number; tail?: boolean };
     const bars: Bar[] = shown
       .map((r): Bar => ({ vendorRef: r.vendorRef, vendorName: r.vendorName, val: r.annualValue, cumPct: r.cumulativeShare * 100, share: r.shareOfTotal * 100 }))
@@ -353,7 +354,7 @@ export class WorkspaceViewModel {
     return {
       w: W, h: T + shown.length * ROW + 26, left: L, right: W - R, asOfX: x(0), axisY: T - 12,
       laterNote: later.length
-        ? later.length + ' further active contracts (' + money(later.reduce((t, c) => t + (c.row.annual_value ?? 0), 0)) + ') carry decision dates beyond the selected window.'
+        ? later.length + ' further active contracts (' + money(later.reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0)) + ') carry decision dates beyond the selected window.'
         : 'All active contracts fall inside the selected window.',
       labels: ([] as ReactElement[])
         .concat([SVGT('asof', x(0), T - 30, 'Governed as-of · ' + fmtDate(this.portfolio.asOfDateIso), { fontSize: 10, fontWeight: 600, fill: '#0a0a0b', textAnchor: 'middle' })])
@@ -468,7 +469,7 @@ export class WorkspaceViewModel {
         const g = values[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0;
         return {
           label: v, count: String((live ? g.live : g.all).length),
-          value: money((live ? g.live : g.all).reduce((t, c) => t + (c.row.annual_value ?? 0), 0)),
+          value: money((live ? g.live : g.all).reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0)),
           bg: isSel ? '#0a0a0b' : live ? '#fff' : '#f4f2ec', fg: isSel ? '#fff' : live ? '#2c2c2a' : '#b4b2a9',
           border: isSel ? '#0a0a0b' : live ? 'rgba(10,10,11,.14)' : 'rgba(10,10,11,.07)', sub: isSel ? '#fff' : live ? '#888780' : '#c9c6bd',
           onClick: () => this.toggleValue(dimId, v),
@@ -482,13 +483,13 @@ export class WorkspaceViewModel {
     const selRows = allRows.filter((c) => this.matches(c));
     const base = allRows.filter((c) => this.matches(c, S.groupBy));
     const sel = slice[S.groupBy] || [];
-    const total = selRows.reduce((t, c) => t + (c.row.annual_value ?? 0), 0);
+    const total = selRows.reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0);
     const bucket: Record<string, { all: EnrichedContract[]; live: EnrichedContract[] }> = {};
     allRows.forEach((c) => { const v = dim.get(c); bucket[v] = bucket[v] || { all: [], live: [] }; bucket[v].all.push(c); });
     base.forEach((c) => { const v = dim.get(c); bucket[v].live.push(c); });
     const groups = Object.keys(bucket).map((v) => {
       const g = bucket[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0, list = live ? g.live : g.all;
-      return { key: v, list, live, isSel, val: list.reduce((t, c) => t + (c.row.annual_value ?? 0), 0) };
+      return { key: v, list, live, isSel, val: list.reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0) };
     }).sort((a, b) => (a.live === b.live ? b.val - a.val : a.live ? -1 : 1));
     const max = Math.max.apply(null, groups.map((g) => g.val).concat([1]));
     const liveTotal = groups.filter((g) => g.live).reduce((t, g) => t + g.val, 0);
