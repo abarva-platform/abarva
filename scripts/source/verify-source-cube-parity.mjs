@@ -19,6 +19,16 @@ const databaseUrl =
 
 const modelPath = "cube/model/source_sourcing.yml";
 const rewritePath = "cube/cube.py";
+const expectedHierarchies = {
+  sourcing_vendors: ["vendor_portfolio"],
+  sourcing_contracts: ["contract_portfolio", "renewal_calendar"],
+  sourcing_contract_scope: ["scope_confidence"],
+  sourcing_spend_monthly: ["spend_consumption"],
+  sourcing_performance: ["service_credit_path"],
+  sourcing_opportunities: ["opportunity_pipeline"],
+  sourcing_events: ["event_pipeline"],
+  sourcing_event_suppliers: ["supplier_response_path"],
+};
 
 function clientOptions() {
   if (!databaseUrl) {
@@ -89,8 +99,16 @@ async function validateCube(client, cube) {
 
   const measureResults = {};
   for (const measure of measures) {
+    if (!Array.isArray(measure.drill_members) || measure.drill_members.length === 0) {
+      throw new Error(`${cube.name}.${measure.name} does not define drill_members`);
+    }
     const result = await scalar(client, `SELECT ${measureSql(measure)} AS value FROM ${table} WHERE tenant_key = $1`, [tenantKey]);
     measureResults[measure.name] = result?.value ?? null;
+  }
+
+  const hierarchyNames = new Set((cube.hierarchies || []).map((hierarchy) => hierarchy.name));
+  for (const expectedHierarchy of expectedHierarchies[cube.name] || []) {
+    if (!hierarchyNames.has(expectedHierarchy)) throw new Error(`${cube.name} is missing hierarchy ${expectedHierarchy}`);
   }
 
   return {
@@ -98,6 +116,7 @@ async function validateCube(client, cube) {
     sql_table: cube.sql_table,
     rows: row.rows,
     primary_key_checks: primaryKeyChecks,
+    hierarchies: [...hierarchyNames].sort(),
     measures: measureResults,
   };
 }
@@ -176,6 +195,29 @@ async function main() {
       "source_supplier_comparison",
     ]) {
       if (!viewNames.has(expectedView)) failures.push(`missing Cube view ${expectedView}`);
+    }
+
+    const viewIncludes = new Map(
+      views.map((view) => [
+        view.name,
+        (view.cubes || []).flatMap((cube) => Array.isArray(cube.includes) ? cube.includes : []),
+      ]),
+    );
+    for (const expectedViewHierarchy of [
+      ["source_vendor_concentration", "vendor_portfolio"],
+      ["source_renewal_exposure", "contract_portfolio"],
+      ["source_renewal_exposure", "renewal_calendar"],
+      ["source_contract_scope_confidence", "scope_confidence"],
+      ["source_spend_consumption", "spend_consumption"],
+      ["source_performance_and_credits", "service_credit_path"],
+      ["source_opportunity_pipeline", "opportunity_pipeline"],
+      ["source_event_execution", "event_pipeline"],
+      ["source_supplier_comparison", "supplier_response_path"],
+    ]) {
+      const [viewName, hierarchyName] = expectedViewHierarchy;
+      if (!viewIncludes.get(viewName)?.includes(hierarchyName)) {
+        failures.push(`Cube view ${viewName} does not expose hierarchy ${hierarchyName}`);
+      }
     }
 
     const result = {
