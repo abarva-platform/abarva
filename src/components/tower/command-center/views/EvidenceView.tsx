@@ -10,10 +10,11 @@
 // decision is blocked") are re-groupings of the same gap rows — no new facts
 // are introduced by either.
 
-import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
-  TowerEvidenceGapView,
+  TowerEvidenceGapLedgerItem,
+  TowerInterventionLane,
 } from "@/lib/tower/command-center/types";
 
 import { Card, Dot, Unknown, ViewHead, cx } from "../primitives";
@@ -50,49 +51,70 @@ const TONE_CLASS: Record<Tone, string> = {
   red: "mRed",
 };
 
-function gapTone(gap: TowerEvidenceGapView): Tone {
-  if (gap.priority === "high") return "red";
-  if (gap.priority === "medium") return "amber";
-  return "teal";
+function ledgerTone(item: { tone: string }): Tone {
+  if (item.tone === "teal") return "teal";
+  if (item.tone === "amber") return "amber";
+  return "red";
 }
 
-/** Group gaps by their owner, so question 3 resolves every gap to one name. */
-function ownerAnswers(gaps: readonly TowerEvidenceGapView[]): AnswerItem[] {
-  const byOwner = new Map<string, TowerEvidenceGapView[]>();
-  for (const gap of gaps) {
-    const owner = gap.owner ?? "Unassigned";
-    byOwner.set(owner, [...(byOwner.get(owner) ?? []), gap]);
+/** Group the compact gap ledger by accountable owner role. */
+function ownerAnswers(
+  ledger: readonly TowerEvidenceGapLedgerItem[],
+): AnswerItem[] {
+  const byOwner = new Map<string, TowerEvidenceGapLedgerItem[]>();
+  for (const gap of ledger.filter((g) => g.count > 0)) {
+    byOwner.set(gap.ownerRole, [...(byOwner.get(gap.ownerRole) ?? []), gap]);
   }
+
   return [...byOwner.entries()]
-    .sort((a, b) => b[1].length - a[1].length)
+    .sort((a, b) => {
+      const countDelta =
+        b[1].reduce((sum, g) => sum + g.count, 0) -
+        a[1].reduce((sum, g) => sum + g.count, 0);
+      return countDelta || a[0].localeCompare(b[0]);
+    })
     .map(([owner, items]) => {
-      const high = items.filter((g) => g.priority === "high").length;
-      const knownValue = items.reduce(
-        (sum, g) => sum + (g.valueAtStakeUsd ?? 0),
-        0,
-      );
-      const valueUnknown =
-        knownValue === 0 && items.some((g) => g.valueAtStakeUsd === null);
+      const total = items.reduce((sum, g) => sum + g.count, 0);
+      const red = items.some((g) => g.tone === "red");
+      const amber = items.some((g) => g.tone === "amber");
       return {
         id: `owner:${owner}`,
         name: owner,
-        detail: items.map((g) => g.missing).join(" · "),
-        metric: valueUnknown ? "Unknown" : formatUsdM(knownValue),
-        unit:
-          items.length === 1
-            ? "1 gap to close"
-            : `${items.length} gaps to close`,
-        tone: (owner === "Unassigned"
-          ? "red"
-          : high > 0
-            ? "amber"
-            : "teal") as Tone,
-        tag:
-          owner === "Unassigned"
-            ? "No owner recorded"
-            : `${items.length} gap${items.length === 1 ? "" : "s"}${high > 0 ? ` · ${high} high` : ""}`,
+        detail: items
+          .map((g) => `${g.label}: ${g.nextAction}`)
+          .join(" · "),
+        metric: formatCount(total),
+        unit: total === 1 ? "claim-gate gap" : "claim-gate gaps",
+        tone: red ? "red" : amber ? "amber" : "teal",
+        tag: `${items.length} grouped gate${items.length === 1 ? "" : "s"}`,
       };
     });
+}
+
+function blockedDecisionAnswers(
+  lanes: readonly TowerInterventionLane[],
+): AnswerItem[] {
+  return lanes
+    .filter((lane) => lane.key !== "ready_for_decision" || lane.count > 0)
+    .map((lane) => ({
+      id: `decision:${lane.key}`,
+      name: lane.label,
+      detail: `${lane.description} ${lane.nextAction}`,
+      metric: formatCount(lane.count),
+      unit:
+        lane.key === "ready_for_decision"
+          ? lane.count === 1
+            ? "claim ready"
+            : "claims ready"
+          : lane.count === 1
+            ? "claim held"
+            : "claims held",
+      tone: ledgerTone(lane),
+      tag:
+        lane.key === "ready_for_decision"
+          ? "Decision queue"
+          : "Proof work before decision",
+    }));
 }
 
 function buildAnswers(
@@ -138,27 +160,17 @@ function buildAnswers(
   }
 
   if (question === "owner") {
-    const items = ownerAnswers(gaps);
+    const items = ownerAnswers(view.evidenceMaturity.gapLedger);
     return {
-      meta: "Every gap resolves to one named owner, or is flagged unassigned",
+      meta: `${items.length} accountable owner groups across open evidence gates`,
       items,
     };
   }
 
-  const blocking = gaps.filter((g) => g.blocking);
+  const items = blockedDecisionAnswers(view.evidenceMaturity.interventionLanes);
   return {
-    meta: `${blocking.length} decision${blocking.length === 1 ? "" : "s"} held until proof arrives`,
-    items: blocking.map((g) => ({
-      id: `blocked:${g.id}`,
-      gapId: g.id,
-      name: g.blockedDecision,
-      detail: g.why,
-      metric:
-        g.valueAtStakeUsd === null ? "Unknown" : formatUsdM(g.valueAtStakeUsd),
-      unit: g.linkedProgram ?? "no linked program",
-      tone: gapTone(g),
-      tag: g.owner ? `Blocked · ${g.owner}` : "Blocked · no owner",
-    })),
+    meta: "Scale, fund, freeze, and stop decisions wait on these proof gates",
+    items,
   };
 }
 

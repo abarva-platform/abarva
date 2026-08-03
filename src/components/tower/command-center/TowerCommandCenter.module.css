@@ -178,6 +178,8 @@
 .dq { display: flex; flex-direction: column; gap: 9px; }
 .dqi { display: flex; align-items: center; gap: 15px; text-align: left; background: var(--canon-bg-surface); border: 1px solid var(--canon-border); border-left: 4px solid var(--canon-amber); border-radius: 11px; padding: 13px 16px; cursor: pointer; transition: box-shadow var(--dur-base) var(--ease-out); font-family: var(--abarva-sans); width: 100%; }
 .dqi:hover { box-shadow: var(--shadow-pop); }
+.dqi.dqStatic { cursor: default; }
+.dqi.dqStatic:hover { box-shadow: none; }
 .dqi.laneStop, .dqi.laneFreeze { border-left-color: var(--canon-red); }
 .dqi.laneFund { border-left-color: var(--canon-teal); }
 .dqi.laneFix { border-left-color: var(--canon-amber); }
@@ -261,19 +263,19 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .ins .itext { font-size: 15px; line-height: 1.55; color: var(--canon-gray-900); margin-top: 6px; text-wrap: pretty; }
 .ins .itext b { font-weight: 600; }
 
-.progressionGrid { display: grid; grid-template-columns: repeat(7, minmax(124px, 1fr)); gap: 9px; min-height: 0; }
-.progressionStage { border: 1px solid var(--canon-border); border-top: 4px solid var(--canon-gray-200); border-radius: 10px; padding: 11px 10px; min-width: 0; display: flex; flex-direction: column; gap: 7px; background: var(--canon-bg-surface); }
-.progressionStage.teal { border-top-color: var(--canon-teal); }
-.progressionStage.amber { border-top-color: var(--canon-amber); }
-.progressionStage.red { border-top-color: var(--canon-red); }
-.progressionStage.gray { border-top-color: var(--canon-gray-300); }
-.progressionTop { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.progressionGrid { display: grid; grid-template-columns: 1fr; gap: 8px; min-height: 0; }
+.progressionStage { border: 1px solid var(--canon-border); border-left: 4px solid var(--canon-gray-200); border-radius: 10px; padding: 10px 12px; min-width: 0; display: grid; grid-template-columns: minmax(120px, 0.72fr) 72px minmax(145px, 1fr); gap: 10px 14px; align-items: start; background: var(--canon-bg-surface); }
+.progressionStage.teal { border-left-color: var(--canon-teal); }
+.progressionStage.amber { border-left-color: var(--canon-amber); }
+.progressionStage.red { border-left-color: var(--canon-red); }
+.progressionStage.gray { border-left-color: var(--canon-gray-300); }
+.progressionTop { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
 .progressionN { font-family: var(--abarva-mono); font-size: 9px; font-weight: 700; color: var(--canon-gray-500); background: var(--canon-gray-100); border-radius: 5px; padding: 2px 6px; }
 .progressionLabel { font-family: var(--abarva-serif); font-size: 14px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.1; }
-.progressionCount { font-family: var(--abarva-serif); font-size: 25px; line-height: 1; font-weight: 500; letter-spacing: -0.035em; color: var(--canon-gray-900); font-variant-numeric: tabular-nums; }
-.progressionSub { font-size: 11px; color: var(--canon-gray-500); min-height: 32px; }
-.progressionGate { font-size: 11.5px; line-height: 1.35; color: var(--canon-gray-700); min-height: 45px; }
-.progressionAction { margin-top: auto; border-top: 1px solid var(--canon-border); padding-top: 7px; display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; color: var(--canon-gray-500); }
+.progressionCount { font-family: var(--abarva-serif); font-size: 24px; line-height: 0.95; font-weight: 500; letter-spacing: -0.035em; color: var(--canon-gray-900); font-variant-numeric: tabular-nums; text-align: right; }
+.progressionSub { grid-column: 2; font-size: 10.5px; color: var(--canon-gray-500); text-align: right; }
+.progressionGate { font-size: 11.5px; line-height: 1.35; color: var(--canon-gray-700); }
+.progressionAction { border-left: 1px solid var(--canon-border); padding-left: 12px; display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; color: var(--canon-gray-500); }
 .progressionAction b { color: var(--canon-gray-900); font-size: 11px; line-height: 1.3; }
 
 .evidenceNote { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--canon-teal-light); border: 1px solid rgba(30, 163, 130, 0.28); border-radius: 10px; padding: 10px 13px; color: var(--canon-gray-700); font-size: 12.5px; }
@@ -393,7 +395,6 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .owncols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 @media (max-width: 1200px) { .owncols { grid-template-columns: repeat(3, 1fr); overflow-y: auto; } }
 @media (max-width: 1280px) {
-  .progressionGrid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
   .interventionLanes { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
   .interventionMemo { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
 }
@@ -527,6 +528,9 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   .ptiles { grid-template-columns: 1fr; }
   .diagnosticBand { flex-direction: column; }
   .diagnosticStats { width: 100%; min-width: 0; }
+  .progressionStage { grid-template-columns: 1fr; }
+  .progressionCount, .progressionSub { grid-column: auto; text-align: left; }
+  .progressionAction { border-left: 0; border-top: 1px solid var(--canon-border); padding-left: 0; padding-top: 7px; }
   .progressionGrid, .interventionLanes, .interventionMemo { grid-template-columns: 1fr; }
   .wrap { padding: 0 16px; }
   .drawer { width: 100%; }
