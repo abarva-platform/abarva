@@ -102,7 +102,7 @@ async function main() {
       `
       SELECT
         COUNT(*)::int AS contract_rows,
-        COUNT(DISTINCT vendor_id)::int AS vendor_rows,
+        COUNT(DISTINCT vendor_ref)::int AS vendor_rows,
         COALESCE(SUM(annual_value), 0)::numeric AS annual_value
       FROM source.contract_vendor_360
       WHERE tenant_key = $1
