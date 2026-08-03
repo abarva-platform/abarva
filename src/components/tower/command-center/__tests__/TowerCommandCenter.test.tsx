@@ -229,11 +229,20 @@ describe("TowerCommandCenter", () => {
       screen.getByRole("radio", { name: /Who owns the missing proof/ }),
     );
     expect(screen.getByText("Question 3 of 4")).toBeInTheDocument();
-    // Business evidence gaps resolve to the owning role the mart records for
-    // the program (finance owner for validation/claim gaps), so every gap has a
-    // named owner rather than falling to "Unassigned".
-    expect(screen.getAllByText(/gaps? to close/).length).toBeGreaterThan(0);
+    // Evidence ownership is grouped by accountable role rather than rendering
+    // repetitive per-program "Unknown" rows.
+    expect(screen.getByText(/accountable owner groups/)).toBeInTheDocument();
+    expect(screen.getAllByText(/claim-gate gaps/).length).toBeGreaterThan(0);
     expect(screen.queryByText("Unassigned")).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("radio", { name: /What decision is blocked/ }),
+    );
+    expect(screen.getByText("Question 4 of 4")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Scale, fund, freeze, and stop decisions wait/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Proof work before decision/).length).toBeGreaterThan(0);
   });
 
   it('answers "what is missing" from the claim chain, not the ETL backlog', () => {

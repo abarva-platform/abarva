@@ -221,6 +221,9 @@ export function CommandCenterView({
     s.unknownValueClaimCount > 0;
   const tiles = buildTiles(view);
   const queue = decisionQueue(view);
+  const measurementQueue = view.evidenceMaturity.interventionLanes
+    .filter((lane) => lane.key !== "ready_for_decision" && lane.count > 0)
+    .slice(0, 5);
 
   return (
     <div className={styles.view}>
@@ -357,7 +360,46 @@ export function CommandCenterView({
           headId="tcc-decision-queue"
           bodyClassName={styles.scroll}
         >
-          {queue.length === 0 ? (
+          {allValueUnknown && measurementQueue.length > 0 ? (
+            <div className={styles.dq}>
+              {measurementQueue.map((lane) => (
+                <div
+                  key={lane.key}
+                  className={cx(
+                    styles.dqi,
+                    styles.dqStatic,
+                    lane.tone === "red"
+                      ? styles.laneStop
+                      : lane.tone === "amber"
+                        ? styles.laneFix
+                        : styles.laneFund,
+                  )}
+                >
+                  <span
+                    className={cx(
+                      styles.laneTag,
+                      lane.tone === "red"
+                        ? styles.laneStop
+                        : lane.tone === "amber"
+                          ? styles.laneFix
+                          : styles.laneFund,
+                    )}
+                  >
+                    {formatCount(lane.count)}
+                  </span>
+                  <span className={styles.dqMain}>
+                    <span className={styles.dqTitle}>{lane.label}</span>
+                    <span className={styles.dqMeta}>
+                      <span>{lane.description}</span>
+                      <span>
+                        <b>{lane.nextAction}</b>
+                      </span>
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : queue.length === 0 ? (
             <p className={styles.lhSub}>
               No scale, fund, freeze, or stop decision is ready. Tower is
               prescribing measurement work first.
