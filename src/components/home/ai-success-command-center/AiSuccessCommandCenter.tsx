@@ -459,7 +459,7 @@ function AdvisoryValueMatrix({ data }: { data: AiSuccessHomeData }) {
                 fontWeight: 800,
               }}
             />
-            <ZAxis type="number" dataKey="z" range={[420, 820]} />
+            <ZAxis type="number" dataKey="z" range={[620, 1220]} />
             <Tooltip content={<MatrixTooltipContent />} />
             <Scatter data={matrixData} isAnimationActive={false}>
               {matrixData.map((idea) => (
@@ -469,7 +469,7 @@ function AdvisoryValueMatrix({ data }: { data: AiSuccessHomeData }) {
                 dataKey="shortLabel"
                 position="inside"
                 fill="#ffffff"
-                fontSize={11}
+                fontSize={9.5}
                 fontWeight={900}
               />
             </Scatter>
@@ -709,17 +709,16 @@ function ValueCanvas({
       <div className={styles.twoCol}>
         <div className={`${styles.panel} ${styles.chartBox}`}>
           <ResponsiveContainer width="100%" height={320}>
-            <FunnelChart>
+            <FunnelChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <Tooltip
                 contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
               />
-              <Funnel dataKey="claims" data={data.claimFunnel} nameKey="name">
-                <LabelList
-                  dataKey="name"
-                  position="right"
-                  fill="#11100f"
-                  stroke="none"
-                />
+              <Funnel
+                dataKey="claims"
+                data={data.claimFunnel}
+                nameKey="name"
+                isAnimationActive={false}
+              >
                 {data.claimFunnel.map((_, index) => (
                   <Cell
                     key={index}
@@ -729,6 +728,19 @@ function ValueCanvas({
               </Funnel>
             </FunnelChart>
           </ResponsiveContainer>
+          <div className={styles.funnelLegend} aria-label="Claim funnel stages">
+            {data.claimFunnel.map((stage, index) => (
+              <span key={stage.name}>
+                <i
+                  style={{
+                    background: CHART_COLORS[index % CHART_COLORS.length],
+                  }}
+                />
+                <b>{stage.name}</b>
+                {stage.claims}
+              </span>
+            ))}
+          </div>
         </div>
         <div className={`${styles.panel} ${styles.chartBox}`}>
           <span className={styles.eyebrow}>Observation coverage</span>
@@ -740,8 +752,9 @@ function ValueCanvas({
               <CartesianGrid stroke="#eee7dc" vertical={false} />
               <XAxis
                 dataKey="name"
+                tickFormatter={formatObservationLabel}
                 tick={{ fill: "#5d554b", fontSize: 10 }}
-                angle={-35}
+                angle={-28}
                 textAnchor="end"
                 interval={0}
               />
@@ -786,6 +799,10 @@ function ValueCanvas({
       </div>
     </>
   );
+}
+
+function formatObservationLabel(value: string) {
+  return value.replace(" present", "").replace("business metric", "business");
 }
 
 function AgendaCanvas({ data }: { data: AiSuccessHomeData }) {
