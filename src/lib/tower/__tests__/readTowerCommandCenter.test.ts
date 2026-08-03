@@ -34,17 +34,21 @@ describe("readTowerCommandCenter", () => {
         {
           tenant_key: "skyharbor_global",
           claim_count: 162,
-          known_value_claim_count: 0,
-          unknown_value_claim_count: 162,
+          known_value_claim_count: 18,
+          unknown_value_claim_count: 144,
           known_zero_value_claim_count: 0,
-          known_value_amount_usd: "0",
-          finance_attested_claim_count: 0,
-          business_attested_claim_count: 0,
+          known_value_amount_usd: "42400000",
+          finance_attested_claim_count: 18,
+          business_attested_claim_count: 18,
           claimable_count: 0,
-          usage_supported_count: 12,
-          funded_no_baseline_count: 150,
+          usage_supported_count: 29,
+          funded_no_baseline_count: 75,
           stale_count: 0,
-          disputed_count: 0,
+          disputed_count: 28,
+          baseline_linked_claim_count: 75,
+          target_linked_claim_count: 75,
+          actual_linked_claim_count: 75,
+          outcome_measured_claim_count: 75,
         },
       ])
       .mockResolvedValueOnce([
@@ -68,12 +72,12 @@ describe("readTowerCommandCenter", () => {
           priority: "High",
           source_file: "csv/enterprise_it/6_projects_investments.csv",
           source_row: "2",
-          claim_state: "funded_no_baseline",
-          blocked_reason: "Missing governed baseline/target/actual and business/finance attestation.",
-          next_gate: "Capture value outcome ledger and metric provenance.",
+          claim_state: "finance_validated",
+          blocked_reason: "Awaiting Finance and business attestation before claimability.",
+          next_gate: "Obtain Finance and business attestation.",
           next_gate_owner_role: "Finance partner",
-          quality_guardrail_state: "not_evaluated",
-          risk_guardrail_state: "not_evaluated",
+          quality_guardrail_state: "finance_validated",
+          risk_guardrail_state: "business_validated",
         },
       ])
       .mockResolvedValueOnce([
@@ -117,15 +121,20 @@ describe("readTowerCommandCenter", () => {
 
     expect(sqlText).not.toMatch(/cio_tower/i);
     expect(mart?.generatedFrom).toBe("tower_schema");
-    expect(mart?.command.unknownValueClaimCount).toBe(162);
-    expect(mart?.command.promisedValueFy26).toBe(0);
+    expect(mart?.command.unknownValueClaimCount).toBe(144);
+    expect(mart?.command.knownValueClaimCount).toBe(18);
+    expect(mart?.command.promisedValueFy26).toBe(42_400_000);
+    expect(mart?.command.baselineLinkedClaimCount).toBe(75);
+    expect(mart?.command.targetLinkedClaimCount).toBe(75);
+    expect(mart?.command.actualLinkedClaimCount).toBe(75);
+    expect(mart?.command.outcomeMeasuredClaimCount).toBe(75);
 
     const view = buildTowerCommandCenterView(mart, {
       tenantName: "SkyHarbor Air",
     });
-    expect(view?.summary.unknownValueClaimCount).toBe(162);
-    expect(view?.summary.knownValueClaimCount).toBe(0);
-    expect(view?.summary.promisedUsd).toBe(0);
-    expect(view?.summary.executiveSummary).toMatch(/unknown financial amount/i);
+    expect(view?.summary.unknownValueClaimCount).toBe(144);
+    expect(view?.summary.knownValueClaimCount).toBe(18);
+    expect(view?.summary.promisedUsd).toBe(42_400_000);
+    expect(view?.summary.executiveSummary).toMatch(/baseline\/current\/target outcome links/i);
   });
 });

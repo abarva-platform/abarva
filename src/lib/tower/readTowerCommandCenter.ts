@@ -28,6 +28,10 @@ interface ClaimSummaryRow {
   funded_no_baseline_count: number;
   stale_count: number;
   disputed_count: number;
+  baseline_linked_claim_count: number;
+  target_linked_claim_count: number;
+  actual_linked_claim_count: number;
+  outcome_measured_claim_count: number;
 }
 
 interface BudgetRow {
@@ -282,7 +286,15 @@ export async function readTowerCommandCenter(args: {
           count(*) filter (where lower(claim_state) = 'usage_supported')::int as usage_supported_count,
           count(*) filter (where lower(claim_state) = 'funded_no_baseline')::int as funded_no_baseline_count,
           count(*) filter (where stale_at is not null)::int as stale_count,
-          count(*) filter (where lower(claim_state) = 'disputed')::int as disputed_count
+          count(*) filter (where lower(claim_state) = 'disputed')::int as disputed_count,
+          count(*) filter (where baseline_observation_id is not null)::int as baseline_linked_claim_count,
+          count(*) filter (where target_observation_id is not null)::int as target_linked_claim_count,
+          count(*) filter (where actual_observation_id is not null)::int as actual_linked_claim_count,
+          count(*) filter (
+            where baseline_observation_id is not null
+              and target_observation_id is not null
+              and actual_observation_id is not null
+          )::int as outcome_measured_claim_count
          from tower.value_claim
         where tenant_key = $1
         group by tenant_key`,
@@ -440,7 +452,7 @@ export async function readTowerCommandCenter(args: {
       approvedProgramBudgetFy26: 0,
       aiTaggedSpendFy26NonAdditive: num(budget?.ai_tagged_spend_usd),
       promisedValueFy26: knownAmount,
-      partialFinanceValidatedValueYtd: 0,
+      partialFinanceValidatedValueYtd: knownAmount,
       realizedValueYtdAllowed: 0,
       valueClaimCount: summary.claim_count,
       knownValueClaimCount: summary.known_value_claim_count,
@@ -454,10 +466,10 @@ export async function readTowerCommandCenter(args: {
       fundedNoBaselineClaimCount: summary.funded_no_baseline_count,
       staleClaimCount: summary.stale_count,
       disputedClaimCount: summary.disputed_count,
-      baselineLinkedClaimCount: 0,
-      targetLinkedClaimCount: 0,
-      actualLinkedClaimCount: 0,
-      outcomeMeasuredClaimCount: 0,
+      baselineLinkedClaimCount: summary.baseline_linked_claim_count,
+      targetLinkedClaimCount: summary.target_linked_claim_count,
+      actualLinkedClaimCount: summary.actual_linked_claim_count,
+      outcomeMeasuredClaimCount: summary.outcome_measured_claim_count,
       candidateAiOpportunities: summary.unknown_value_claim_count,
       watchPressureSignals:
         summary.funded_no_baseline_count + summary.stale_count + summary.disputed_count,
@@ -471,7 +483,7 @@ export async function readTowerCommandCenter(args: {
         "Are AI and transformation investments producing claimable outcomes?",
       executiveSummary:
         summary.unknown_value_claim_count > 0
-          ? `${summary.claim_count} governed value claims are loaded, but ${summary.unknown_value_claim_count} still have unknown financial amount and no Finance/business attestation. Leadership should treat deployment and usage as evidence to investigate, not realized value.`
+          ? `${summary.claim_count} governed value claims are loaded. ${summary.outcome_measured_claim_count} have baseline/current/target outcome links, ${summary.known_value_claim_count} carry partial finance-validated value, and ${summary.unknown_value_claim_count} still have unknown financial amount. Leadership should treat deployment and usage as evidence to investigate, not realized value.`
           : `${summary.claim_count} governed value claims are loaded with ${formatCioTowerMoney(knownAmount)} of known value. Claimability still depends on attestation and guardrail gates.`,
       sourceFiles: [
         "tower.value_claim",
