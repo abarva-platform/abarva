@@ -43,5 +43,64 @@ export async function getContractOptimizationProfile(
     [aliases, sourceEventId],
     MISSING_TABLE_EMPTY,
   );
-  return rows[0]?.profile_payload ?? null;
+  const payload = rows[0]?.profile_payload ?? null;
+  if (!payload || !isRenderableContractOptimizationProfile(payload)) {
+    return null;
+  }
+  return payload;
+}
+
+/**
+ * `profile_payload` is a JSON snapshot written whenever the load script last
+ * ran. If the `ContractOptimizationMveProfile` shape has grown fields since
+ * that snapshot was taken (e.g. `visualInsights`, added after this event's
+ * profile was persisted), `ContractOptimizationProfilePanel` dereferences
+ * them without an optional-chain guard and will crash the whole event page.
+ * Validate the exact fields the panel reads unconditionally before treating
+ * a persisted row as renderable — a stale/incompatible snapshot degrades to
+ * "no profile" (today's baseline, honest) rather than a runtime crash.
+ */
+function isRenderableContractOptimizationProfile(
+  value: ContractOptimizationMveProfile,
+): boolean {
+  const p = value as unknown as Record<string, unknown>;
+  if (!Array.isArray(p.findings) || !Array.isArray(p.levers)) return false;
+  const visualInsights = p.visualInsights as
+    | Record<string, unknown>
+    | undefined;
+  if (
+    !visualInsights ||
+    !Array.isArray(visualInsights.exposureByDriver) ||
+    !Array.isArray(visualInsights.invoiceVarianceTrend) ||
+    visualInsights.operationalPressure == null
+  ) {
+    return false;
+  }
+  const contractBaseline = p.contractBaseline as
+    | Record<string, unknown>
+    | undefined;
+  if (
+    !contractBaseline ||
+    typeof contractBaseline.currentAnnualRunRateUsd !== "number" ||
+    typeof contractBaseline.evidenceCount !== "number"
+  ) {
+    return false;
+  }
+  const recommendedPath = p.recommendedPath as
+    | Record<string, unknown>
+    | undefined;
+  if (
+    !recommendedPath ||
+    typeof recommendedPath.immediateAction !== "string" ||
+    typeof recommendedPath.primaryPath !== "string" ||
+    typeof recommendedPath.fallbackPath !== "string" ||
+    typeof recommendedPath.doNotDo !== "string"
+  ) {
+    return false;
+  }
+  if (!Array.isArray(p.clientToComplete)) return false;
+  if (typeof p.readyForOptimization !== "string") return false;
+  if (typeof p.syntheticDemo !== "boolean") return false;
+  if (typeof p.sourceEventId !== "string") return false;
+  return true;
 }
