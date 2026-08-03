@@ -637,6 +637,7 @@
     "moves:member-ai-assist-correction:apply": "npx tsx scripts/programs/correct-member-ai-assist-phase.ts --mode apply",
     "ops:archive-existing-moves": "npx tsx scripts/ops/archive-existing-moves.ts",
     "source:contract-optimization:load-skyharbor": "npx tsx scripts/source/load-skyharbor-contract-optimization.ts --apply",
+    "source:skyharbor-v3:load-current-state": "npx tsx scripts/source/load-skyharbor-v3-current-state.ts",
     "source:inspect-skyharbor-reconciliation": "npx tsx scripts/source/inspect-skyharbor-reconciliation.ts",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:semantic2:l3-dossiers:proof": "node scripts/ops/submit-aca-operator-job.mjs --script semantic2:l3-dossiers:proof-job",
