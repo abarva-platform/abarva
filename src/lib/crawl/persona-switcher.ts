@@ -2,6 +2,10 @@ import { createClerkClient } from "@clerk/backend";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import type { CxoPersona } from "@/lib/auth/cxo-personas";
 import { AGENT_CLIENT_LOGINS } from "@/lib/auth/agent-client-logins";
+import {
+  createClerkTestingTokenForCrawl,
+  installClerkTestingTokenInterceptor,
+} from "@/lib/crawl/clerk-testing-token";
 
 export interface CrawlPersona {
   key: string;
@@ -320,6 +324,11 @@ async function signInPersonaWithClerkTicket(
     20_000,
     `crawl_clerk_ticket_create_timeout:${persona.key}`,
   );
+  const testingToken = await createClerkTestingTokenForCrawl();
+  await installClerkTestingTokenInterceptor(page, testingToken);
+  if (testingToken) {
+    console.log(`crawl_clerk_testing_token_installed:${persona.key}`);
+  }
 
   await page.goto(options.baseUrl, {
     waitUntil: "domcontentloaded",

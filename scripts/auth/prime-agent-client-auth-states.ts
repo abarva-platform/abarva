@@ -6,6 +6,10 @@ import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 
 import { AGENT_CLIENT_LOGINS } from '../../src/lib/auth/agent-client-logins';
+import {
+  createClerkTestingTokenForCrawl,
+  installClerkTestingTokenInterceptor,
+} from '../../src/lib/crawl/clerk-testing-token';
 
 import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
@@ -173,6 +177,7 @@ async function signInWithTicket(page: Page, baseUrl: string, userId: string): Pr
     userId,
     expiresInSeconds: 300,
   });
+  await installClerkTestingTokenInterceptor(page, await createClerkTestingTokenForCrawl());
 
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(

@@ -41,6 +41,13 @@ npx tsx scripts/provision-cxo-personas.ts --client skyharbor --clerk-only --appl
 
 Use `--client meridian`, `--client apexretail`, or another supported client when provisioning other clients.
 
+For CI or other automated browser runs against Clerk bot protection, provide a secret capable of minting Clerk testing tokens:
+
+- `CLERK_TESTING_TOKEN_SECRET_KEY`, preferred and scoped for testing-token creation; or
+- `CLERK_SECRET_KEY`, used as the fallback when no dedicated testing-token secret is configured.
+
+The crawl harness mints a short-lived Clerk testing token and injects it into Clerk Frontend API requests as `__clerk_testing_token` before the ticket sign-in exchange. This is a test-only automation allowance; it does not disable Clerk, bypass tenant metadata checks, or broaden any agent user's client access.
+
 ## Create Storage States
 
 List supported personas:
@@ -104,6 +111,7 @@ test('crawl Meridian signed-in pages', async ({ page }) => {
 | Failure | Meaning | Fix |
 | --- | --- | --- |
 | `Missing CLERK_SECRET_KEY` | The script cannot mint Clerk sign-in tickets. | Add the local secret to `.env.local`; do not commit it. |
+| `You have been banned` | Clerk bot protection blocked the browser-side ticket exchange before the app route was reached. | Ensure testing tokens are enabled in the Clerk instance and `CLERK_TESTING_TOKEN_SECRET_KEY` or `CLERK_SECRET_KEY` is available to the crawl. |
 | `No Clerk user found` | The canonical persona has not been provisioned in Clerk. | Run `scripts/provision-cxo-personas.ts` for that client. |
 | `publicMetadata.clientId=<x>; expected <y>` | The user is mapped to the wrong tenant. | Fix Clerk metadata before crawling. |
 | `Responsible AI training API returned <status>` | The training gate did not record completion for the signed-in user. | Confirm the training ledger is reachable and the acknowledgment was accepted first. |
