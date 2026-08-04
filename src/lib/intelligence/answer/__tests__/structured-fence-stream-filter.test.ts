@@ -14,7 +14,7 @@ describe("createStructuredFenceStreamFilter", () => {
     const visible =
       chunks.map((chunk) => filter.push(chunk)).join("") + filter.flush();
 
-    expect(visible).toBe("Agent assist leads.  Next, certify the data feed.");
+    expect(visible).toBe("Agent assist leads. Next, certify the data feed.");
     expect(visible).not.toContain("decision-table");
     expect(visible).not.toContain('"rows"');
     expect(visible).not.toContain("```");
@@ -45,7 +45,7 @@ describe("createStructuredFenceStreamFilter", () => {
       chunks.map((chunk) => filter.push(chunk)).join("") + filter.flush();
 
     expect(visible).toBe(
-      "Use the production assets as anchors.  Then clear the MRM gate before scaling Tier-1 assets.",
+      "Use the production assets as anchors. Then clear the MRM gate before scaling Tier-1 assets.",
     );
     expect(visible).not.toContain("abarva-canvas");
     expect(visible).not.toContain("canvasType");
@@ -63,7 +63,7 @@ describe("createStructuredFenceStreamFilter", () => {
       filter.flush();
 
     expect(visible).toBe(
-      "Anchor the portfolio.  Then certify the value case.",
+      "Anchor the portfolio. Then certify the value case.",
     );
     expect(visible).not.toContain("abarva-canvas");
     expect(visible).not.toContain("canvasType");
@@ -82,7 +82,7 @@ describe("createStructuredFenceStreamFilter", () => {
       chunks.map((chunk) => filter.push(chunk)).join("") + filter.flush();
 
     expect(visible).toBe(
-      "Move: fund the evidence-backed anchors.  Evidence boundary: validate before board use.",
+      "Move: fund the evidence-backed anchors. Evidence boundary: validate before board use.",
     );
     expect(visible).not.toContain("chart");
     expect(visible).not.toContain('"type":"horizontal-bar"');
@@ -109,6 +109,39 @@ describe("createStructuredFenceStreamFilter", () => {
     expect(visible).not.toContain('"records"');
     expect(visible).not.toContain('"type":"horizontal-bar"');
     expect(visible).not.toContain("followups");
+  });
+
+  it("removes raw inline decision-table row JSON from streaming text", () => {
+    const filter = createStructuredFenceStreamFilter();
+    const chunks = [
+      "The near-term move is to scope a contained supply-chain pilot, ",
+      '{"initiative":"AOG Risk & Parts Availability Alert Agent","value":"High","valueScore":80,',
+      '"complexity":"Medium","complexityScore":55,"readiness":"Medium","readinessScore":65,',
+      '"evidenceBasis":"AWS lake/event stream infrastructure confirmed","recommendation":"Sequence after demand forecasting pilot","nextAction":"Map the AOG alert workflow"}',
+      ',{"initiative":"Supplier Risk Monitoring Agent","value":"Medium-High","valueScore":68,"complexityScore":65,"readinessScore":54}',
+      " and then render the trend evidence.",
+    ];
+
+    const visible =
+      chunks.map((chunk) => filter.push(chunk)).join("") + filter.flush();
+
+    expect(visible).toBe(
+      "The near-term move is to scope a contained supply-chain pilot, and then render the trend evidence.",
+    );
+    expect(visible).not.toContain('"initiative"');
+    expect(visible).not.toContain("valueScore");
+    expect(visible).not.toContain("complexityScore");
+    expect(visible).not.toContain("readinessScore");
+  });
+
+  it("removes raw inline decision-table arrays from final packet prose", () => {
+    const visible = stripGovernedArtifactPayloadsFromText(
+      'Start with the AOG pilot, [{"initiative":"AOG Risk & Parts Availability Alert Agent","valueScore":80,"complexityScore":55,"readinessScore":65},{"initiative":"Supplier Risk Monitoring Agent","valueScore":68,"complexityScore":65,"readinessScore":54}] then show the chart.',
+    );
+
+    expect(visible).toBe("Start with the AOG pilot, then show the chart.");
+    expect(visible).not.toContain('"initiative"');
+    expect(visible).not.toContain("valueScore");
   });
 
   it("strips malformed near-fence artifact JSON from final packet prose", () => {

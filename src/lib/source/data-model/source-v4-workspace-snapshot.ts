@@ -40,6 +40,11 @@ export interface SourceV4WorkspaceSnapshot {
     readonly cloudRows: number;
     readonly performanceRows: number;
   };
+  readonly scopeConfidence: {
+    readonly rowCount: number;
+    readonly explicitScopeCount: number;
+    readonly inferredScopeCount: number;
+  };
   readonly executivePortfolio: {
     readonly contractCount: number;
     readonly annualValue: number;
@@ -139,6 +144,11 @@ export function createEmptySourceV4WorkspaceSnapshot(
       availability("context_coverage", "missing", 0),
     ],
     contextCoverage: EMPTY_CONTEXT_COVERAGE,
+    scopeConfidence: {
+      rowCount: 0,
+      explicitScopeCount: 0,
+      inferredScopeCount: 0,
+    },
     executivePortfolio: {
       contractCount: 0,
       annualValue: 0,
@@ -433,6 +443,11 @@ export async function loadSourceV4WorkspaceSnapshot(
       saasUsageRows: num(contextRow, "saas_usage_rows"),
       cloudRows: num(contextRow, "cloud_rows"),
       performanceRows: num(contextRow, "performance_rows"),
+    },
+    scopeConfidence: {
+      rowCount: num(scopeRow, "row_count"),
+      explicitScopeCount: num(scopeRow, "explicit_scope_count"),
+      inferredScopeCount: num(scopeRow, "inferred_scope_count"),
     },
     executivePortfolio: {
       contractCount: num(executiveRow, "contract_count"),

@@ -105,8 +105,10 @@ export function resolveAssistantAnswerText(
 ): string {
   void _hasArtifacts;
   const cleanPacketBody = packetBody.trim();
-  return stripNestedCxoBriefLabels(
-    cleanPacketBody ? packetBody : rawStreamedAnswer,
+  return stripGovernedArtifactPayloadsFromText(
+    stripNestedCxoBriefLabels(
+      cleanPacketBody ? packetBody : rawStreamedAnswer,
+    ),
   );
 }
 
@@ -237,7 +239,9 @@ export function AdvisoryIntelligencePage({
           return delta
             ? {
                 ...m,
-                answer: stripNestedCxoBriefLabels(`${m.answer}${delta}`),
+                answer: stripGovernedArtifactPayloadsFromText(
+                  stripNestedCxoBriefLabels(`${m.answer}${delta}`),
+                ),
                 streamStatus: undefined,
               }
             : { ...m, streamStatus: "Writing the executive read..." };

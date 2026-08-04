@@ -11,6 +11,10 @@ const STRUCTURED_FENCE_STARTS = STRUCTURED_ARTIFACT_LABELS.flatMap((label) => [
   `\`${label}`,
   label,
 ]);
+const RAW_STRUCTURED_JSON_KEY_RE =
+  /"(?:initiative|valueScore|complexityScore|readinessScore|evidenceBasis|nextAction|directional|canvasType|xKey|yKey|sourceNote|records|rows|data)"\s*:/i;
+const RAW_STRUCTURED_JSON_PARTIAL_KEY_RE =
+  /"(?:init(?:iative)?|value(?:Score)?|complex(?:ityScore)?|readiness(?:Score)?|evidence(?:Basis)?|next(?:Action)?|directional|canvas(?:Type)?|xKey|yKey|source(?:Note)?|records?|rows?|data)?$/i;
 
 function longestStructuredFencePrefixSuffix(value: string): number {
   const lower = value.toLowerCase();
@@ -52,6 +56,9 @@ export function createStructuredFenceStreamFilter(): {
   let insideString = false;
   let escaping = false;
   let suppressPostPayloadFenceTicks = false;
+  let suppressPostPayloadSeparators = false;
+  let payloadIsRawGovernedJson = false;
+  let lastOutputEndedWithWhitespace = false;
 
   const resetPayloadState = () => {
     insideStructuredPayload = false;
@@ -60,6 +67,7 @@ export function createStructuredFenceStreamFilter(): {
     payloadClose = null;
     insideString = false;
     escaping = false;
+    payloadIsRawGovernedJson = false;
   };
 
   const consumePayload = (): boolean => {
@@ -120,9 +128,11 @@ export function createStructuredFenceStreamFilter(): {
           while (cursor < buffer.length && /[\s`]/.test(buffer[cursor] ?? "")) {
             cursor += 1;
           }
+          const wasRawGovernedJson = payloadIsRawGovernedJson;
           buffer = buffer.slice(cursor);
           resetPayloadState();
           suppressPostPayloadFenceTicks = true;
+          suppressPostPayloadSeparators = wasRawGovernedJson;
           return true;
         }
         continue;
@@ -169,6 +179,45 @@ export function createStructuredFenceStreamFilter(): {
     return best;
   };
 
+  const findRawGovernedJsonStart = (): {
+    index: number;
+  } | null => {
+    for (let index = 0; index < buffer.length; index += 1) {
+      const char = buffer[index] ?? "";
+      if (char !== "{" && char !== "[") continue;
+      const previous = buffer[index - 1] ?? "";
+      if (previous && !/[\s,.;:!?([{]/.test(previous)) continue;
+
+      const tail = buffer.slice(index, index + 1600);
+      if (RAW_STRUCTURED_JSON_KEY_RE.test(tail)) return { index };
+    }
+    return null;
+  };
+
+  const rawGovernedJsonHoldBack = (): number => {
+    const start = Math.max(buffer.lastIndexOf("{"), buffer.lastIndexOf("["));
+    if (start < 0) return 0;
+    const previous = buffer[start - 1] ?? "";
+    if (previous && !/[\s,.;:!?([{]/.test(previous)) return 0;
+    const suffix = buffer.slice(start);
+    if (suffix.length > 240) return 0;
+    if (
+      /^(?:\{|\[)\s*(?:"?|\{\s*"?|\[\s*\{\s*"?)$/i.test(suffix) ||
+      RAW_STRUCTURED_JSON_PARTIAL_KEY_RE.test(suffix)
+    ) {
+      return suffix.length;
+    }
+    return 0;
+  };
+
+  const finishOutput = (value: string): string => {
+    const output = lastOutputEndedWithWhitespace
+      ? value.replace(/^\s+/, "")
+      : value;
+    if (output.length > 0) lastOutputEndedWithWhitespace = /\s$/.test(output);
+    return output;
+  };
+
   return {
     push(chunk: string): string {
       buffer += chunk;
@@ -176,18 +225,31 @@ export function createStructuredFenceStreamFilter(): {
 
       for (;;) {
         if (insideStructuredPayload) {
-          if (!consumePayload()) return output;
+          if (!consumePayload()) return finishOutput(output);
           continue;
         }
 
         if (suppressPostPayloadFenceTicks) {
-          if (buffer.length === 0) return output;
+          if (buffer.length === 0) return finishOutput(output);
           const originalLength = buffer.length;
           buffer = buffer.replace(/^\s*`+/, "");
           if (buffer.length === originalLength) {
             suppressPostPayloadFenceTicks = false;
           }
-          if (buffer.length === 0) return output;
+          if (buffer.length === 0) return finishOutput(output);
+        }
+
+        if (suppressPostPayloadSeparators) {
+          if (buffer.length === 0) return finishOutput(output);
+          const originalLength = buffer.length;
+          buffer = buffer.replace(/^\s*(?:[,;]\s*)+/, "");
+          if (/\s$/.test(output)) {
+            buffer = buffer.replace(/^\s+/, "");
+          }
+          if (buffer.length === originalLength) {
+            suppressPostPayloadSeparators = false;
+          }
+          if (buffer.length === 0) return finishOutput(output);
         }
 
         const firstStart = findStructuredArtifactStart();
@@ -198,15 +260,28 @@ export function createStructuredFenceStreamFilter(): {
           continue;
         }
 
+        const rawJsonStart = findRawGovernedJsonStart();
+        if (rawJsonStart) {
+          output += buffer.slice(0, rawJsonStart.index);
+          buffer = buffer.slice(rawJsonStart.index);
+          insideStructuredPayload = true;
+          payloadIsRawGovernedJson = true;
+          continue;
+        }
+
         const holdBack = Math.max(
           longestStructuredFencePrefixSuffix(buffer),
           trailingStructuredMarkerSuffix(buffer),
+          rawGovernedJsonHoldBack(),
         );
+        if (/\s$/.test(output)) {
+          buffer = buffer.replace(/^\s+/, "");
+        }
         const safeEnd = buffer.length - holdBack;
-        if (safeEnd <= 0) return output;
+        if (safeEnd <= 0) return finishOutput(output);
         output += buffer.slice(0, safeEnd);
         buffer = buffer.slice(safeEnd);
-        return output;
+        return finishOutput(output);
       }
     },
     flush(): string {
