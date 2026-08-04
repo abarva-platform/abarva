@@ -12,11 +12,6 @@ import type {
 import { sanitizeHomeKnowVisiblePayloadWithAudit } from "@/lib/home/know/home-demo-safe-response";
 import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import { scrubHomePublicAnswerText } from "@/lib/home/know/home-public-answer-scrub";
-import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
-import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
-import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
-import { answerHomeKnowFromV7 } from "@/lib/home/know/v7-home-ask";
-import { toHomeKnowResponseFromV7 } from "@/lib/home/know/v7-home-know-response";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const runtime = "nodejs";
@@ -39,7 +34,6 @@ export async function POST(req: NextRequest) {
   const tenantKey =
     tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null;
   let homeKnowFallbackReason: string | null = null;
-  let v7FallbackReason: string | null = null;
   const response = await buildEnterpriseHomeKnowResponse({
     question: payload.question,
     tenantKey,
@@ -56,53 +50,25 @@ export async function POST(req: NextRequest) {
           reason: homeKnowFallbackReason,
         });
       }
-      return buildV7HomeKnowResponse({
-        question: payload.question,
-        tenantKey,
-        tenantDisplayName: tenant?.displayName ?? null,
-        includeTrace,
-      });
-    })
-    .catch((error) => {
-      v7FallbackReason =
-        error instanceof Error ? error.message : String(error ?? "unknown");
-      if (includeTrace) {
-        console.warn("[home-know.v7-fallback]", {
-          route: "/api/home/know/ask",
-          tenantKey,
-          reason: v7FallbackReason,
-        });
-      }
-      return buildV6HomeKnowResponse({
-        question: payload.question,
-        tenantKey,
-        tenantDisplayName: tenant?.displayName ?? null,
-        includeTrace,
-      });
-    })
-    .catch((error): Promise<HomeKnowResponse> | HomeKnowResponse =>
-      blockedHomeKnowResponse({
+      return blockedHomeKnowResponse({
         question: payload.question,
         tenantKey: tenantKey ?? "unknown",
         reason:
           error instanceof Error
-            ? `V7 and V6 Home contracts unavailable: ${error.message}`
-            : "V7 and V6 Home contracts unavailable.",
-      }),
-    );
+            ? `Current governed Home context unavailable: ${error.message}`
+            : "Current governed Home context unavailable.",
+      });
+    });
 
   const { payload: safeResponse, audit: visibleSanitizer } =
     sanitizeHomeKnowVisiblePayloadWithAudit(response);
-  if (v7FallbackReason && safeResponse.safety.composerTrace) {
+  if (homeKnowFallbackReason && safeResponse.safety.composerTrace) {
     safeResponse.safety.composerTrace = {
       ...safeResponse.safety.composerTrace,
       fallbackUsed: true,
       reason: [
         safeResponse.safety.composerTrace.reason,
-        homeKnowFallbackReason
-          ? `Enterprise Home dossier fallback: ${homeKnowFallbackReason}`
-          : null,
-        `V7 request-time fallback: ${v7FallbackReason}`,
+        `Enterprise Home current-layer block: ${homeKnowFallbackReason}`,
       ]
         .filter(Boolean)
         .join(" "),
@@ -154,7 +120,6 @@ export async function POST(req: NextRequest) {
           trace: {
             composerTrace: finalResponse.safety.composerTrace ?? null,
             homeKnowFallbackReason,
-            v7FallbackReason,
             visibleSanitizer,
             finalPrompt:
               finalResponse.safety.composerTrace?.anthropicTrace?.finalPrompt ??
@@ -313,46 +278,6 @@ async function buildEnterpriseHomeKnowResponse(input: {
   });
 }
 
-async function buildV7HomeKnowResponse(input: {
-  question: string;
-  tenantKey: string | null;
-  tenantDisplayName: string | null;
-  includeTrace: boolean;
-}): Promise<HomeKnowResponse> {
-  const result = await answerHomeKnowFromV7({
-    question: input.question,
-    tenantKey: input.tenantKey ?? "apexretail",
-    tenantDisplayName: input.tenantDisplayName,
-    includeTrace: input.includeTrace,
-  });
-  return toHomeKnowResponseFromV7(result, { question: input.question });
-}
-
-async function buildV6HomeKnowResponse(input: {
-  question: string;
-  tenantKey: string | null;
-  tenantDisplayName: string | null;
-  includeTrace: boolean;
-}): Promise<HomeKnowResponse> {
-  const result = answerHomeKnowFromV6({
-    question: input.question,
-    tenantKey: input.tenantKey ?? "apexretail",
-    tenantDisplayName: input.tenantDisplayName,
-    includeTrace: input.includeTrace,
-  });
-  const response = toHomeKnowResponseFromV6(result, {
-    question: input.question,
-  });
-  const synthesized = await applyHomeV6ExecutiveSynthesis({
-    response,
-    v6Result: result,
-    question: input.question,
-    tenantKey: result.tenant.canonicalKey,
-    includeTrace: input.includeTrace,
-  });
-  return synthesized.response;
-}
-
 function blockedHomeKnowResponse(input: {
   question: string;
   tenantKey: string;
@@ -365,7 +290,7 @@ function blockedHomeKnowResponse(input: {
     intent: "browse",
     answerStatus: "blocked",
     prose:
-      "I could not use the V6 Home contract pack for this tenant, so I am not falling back to retired legacy Home layers.",
+      "I could not use the current governed Home context for this tenant. Retired V6 and V7 layers are disabled for Home aVa, so I am not falling back to old packs.",
     dimensionsUsed: [],
     facts: [],
     tables: [],
@@ -373,11 +298,11 @@ function blockedHomeKnowResponse(input: {
     graphs: [],
     gaps: [
       {
-        id: "home-v6-unavailable",
-        dimensionId: "home-v6-contract",
+        id: "home-current-context-unavailable",
+        dimensionId: "home-current-context",
         objectType: "runtime_contract",
-        expectedField: "v6_dataset_pack",
-        displayLabel: "V6 Home contract unavailable",
+        expectedField: "current_governed_home_context",
+        displayLabel: "Current governed Home context unavailable",
         severity: "critical",
         message: input.reason,
         citationIds: [],
@@ -411,7 +336,7 @@ function blockedHomeKnowResponse(input: {
       },
       composerTrace: {
         route: "/api/home/know/ask",
-        composer: "home_v6_dataset_contract",
+        composer: "home_know_blocked",
         goldenComposerAttempted: false,
         goldenComposerUsed: false,
         fallbackUsed: false,
@@ -442,7 +367,7 @@ function blockedHomeKnowResponse(input: {
           gaps: 1,
         },
         answerStatus: "blocked",
-        reason: input.reason,
+        reason: `${input.reason} Retired V6/V7 fallbacks are disabled.`,
       },
     },
   };
