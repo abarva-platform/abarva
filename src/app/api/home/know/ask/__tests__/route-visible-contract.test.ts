@@ -1,4 +1,5 @@
 import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
+import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
 import { POST } from "../route";
@@ -42,6 +43,10 @@ function req(body: unknown): import("next/server").NextRequest {
 }
 
 describe("/api/home/know/ask visible contract recovery", () => {
+  beforeEach(() => {
+    jest.mocked(buildHomeKnowResponse).mockResolvedValue(unsafeHomeKnowResponse());
+  });
+
   it("returns a safe Home answer when final prose leaks answer-construction language", async () => {
     const res = await POST(
       req({
@@ -66,6 +71,37 @@ describe("/api/home/know/ask visible contract recovery", () => {
       "final visible-answer fallback applied",
     );
     expect(assertVisibleAnswerContract(payload.prose).passed).toBe(true);
+  });
+
+  it("emits a terminal blocked answer when the streaming Home read fails", async () => {
+    jest
+      .mocked(buildHomeKnowResponse)
+      .mockRejectedValueOnce(new Error("mocked Home read failure"));
+
+    const res = await POST(
+      req({
+        question: "Can you provide a 2x2 explanation for value potential and proof readiness?",
+        tenantKey: "skyharbor_global",
+        stream: true,
+      }),
+    );
+    const text = await res.text();
+    const events = text
+      .split(/\n+/)
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    const answer = events.find((event) => event.type === "home-answer");
+    const done = events.find((event) => event.type === "done");
+    const response = answer?.response as HomeKnowResponse | undefined;
+
+    expect(res.status).toBe(200);
+    expect(events.map((event) => event.type)).toEqual(
+      expect.arrayContaining(["status", "home-answer", "done"]),
+    );
+    expect(events.at(-1)?.type).toBe("done");
+    expect(response?.answerStatus).toBe("blocked");
+    expect(response?.prose).toContain("not falling back to old packs");
+    expect(done?.answerStatus).toBe("blocked");
   });
 });
 

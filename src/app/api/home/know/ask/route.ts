@@ -182,10 +182,28 @@ function streamHomeKnowResponse(
   const startedAt = Date.now();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let terminalEmitted = false;
       const emit = (type: string, eventPayload: Record<string, unknown> = {}) => {
         controller.enqueue(
           encoder.encode(`${JSON.stringify({ type, ...eventPayload })}\n`),
         );
+      };
+      const emitTerminalAnswer = (
+        finalResponse: HomeKnowResponse,
+        status: number,
+        tracePayload: (HomeKnowResponse & { trace: Record<string, unknown> }) | null,
+      ) => {
+        emit("home-answer", {
+          status,
+          response: tracePayload ?? finalResponse,
+          elapsedMs: Date.now() - startedAt,
+        });
+        emit("done", {
+          status,
+          answerStatus: finalResponse.answerStatus,
+          elapsedMs: Date.now() - startedAt,
+        });
+        terminalEmitted = true;
       };
       emit("status", {
         phase: "accepted",
@@ -205,31 +223,32 @@ function streamHomeKnowResponse(
           label: "Validating governed evidence and visible answer policy...",
           elapsedMs: Date.now() - startedAt,
         });
-        emit("home-answer", {
-          status,
-          response: tracePayload ?? finalResponse,
-          elapsedMs: Date.now() - startedAt,
-        });
-        emit("done", {
-          status,
-          answerStatus: finalResponse.answerStatus,
-          elapsedMs: Date.now() - startedAt,
-        });
+        emitTerminalAnswer(finalResponse, status, tracePayload);
       } catch (error) {
         const status = error instanceof HomeKnowHttpError ? error.status : 502;
-        emit("error", {
+        console.warn("[home-know.stream-terminal-recovery]", {
+          route: "/api/home/know/ask",
+          tenantKey: payload.tenantKey ?? payload.client ?? null,
           status,
-          error:
-            error instanceof HomeKnowHttpError
-              ? error.payload
-              : {
-                  error: "home_know_stream_failed",
-                  detail:
-                    error instanceof Error ? error.message : String(error),
-                },
-          elapsedMs: Date.now() - startedAt,
+          reason: error instanceof Error ? error.message : String(error),
         });
+        const blockedResponse = blockedHomeKnowResponse({
+          question: payload.question,
+          tenantKey: payload.tenantKey ?? payload.client ?? "unknown",
+          reason:
+            "Home could not complete the current governed context read for this request. No retired context layer was used.",
+        });
+        emitTerminalAnswer(blockedResponse, status, null);
       } finally {
+        if (!terminalEmitted) {
+          const blockedResponse = blockedHomeKnowResponse({
+            question: payload.question,
+            tenantKey: payload.tenantKey ?? payload.client ?? "unknown",
+            reason:
+              "Home stream ended before a final governed answer was emitted. No retired context layer was used.",
+          });
+          emitTerminalAnswer(blockedResponse, 502, null);
+        }
         controller.close();
       }
     },
