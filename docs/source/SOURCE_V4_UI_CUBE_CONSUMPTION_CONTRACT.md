@@ -29,6 +29,8 @@ src/lib/source/data-model/source-v4-workspace-snapshot.ts
 
 That snapshot queries the same physical Source v4 tables behind the Cube views and exposes only portfolio counts, sums, availability states and top-N drill starters. It must not ship raw 195k-row extracts to the browser.
 
+The same snapshot is summarized into the workspace aVa `surfaceContext`, including the explicit rule that AI usage, seats and cost do not prove realized value without baseline and finance validation.
+
 ## Recommended Source Workspace Story
 
 | Tab             | Purpose                                                                   | Cube view                        |

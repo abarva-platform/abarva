@@ -6,7 +6,10 @@ import type {
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
-import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
+import {
+  createEmptySourceV4WorkspaceSnapshot,
+  type SourceV4WorkspaceSnapshot,
+} from "@/lib/source/data-model/source-v4-workspace-snapshot";
 
 // `node-postgres` returns NUMERIC/DECIMAL columns as strings, not numbers,
 // even though these row types declare them `number | null` (see
@@ -117,11 +120,39 @@ const VENDORS: SourceVendorContractPortfolioRow[] = [
   }),
 ];
 
+const EMPTY_V4_SNAPSHOT = createEmptySourceV4WorkspaceSnapshot(
+  "2027-06-30T00:00:00Z",
+);
+
+const V4_SNAPSHOT: SourceV4WorkspaceSnapshot = {
+  ...EMPTY_V4_SNAPSHOT,
+  availability: [
+    { lensId: "executive_portfolio", state: "available", rowCount: 100 },
+    { lensId: "ai_usage_value_proof", state: "available", rowCount: 24480 },
+  ],
+  executivePortfolio: {
+    contractCount: 100,
+    annualValue: 1480500000,
+    totalCommittedValue: 5151000000,
+    autoRenewCount: 12,
+    notice90DayCount: 74,
+  },
+  aiUsageValueProof: {
+    ...EMPTY_V4_SNAPSHOT.aiUsageValueProof,
+    rowCount: 24480,
+    assignedSeats: 705878,
+    activeUsers: 481200,
+    actualCost: 170200000,
+    claimableRows: 0,
+    topProducts: [{ name: "Claude Code", count: 960, amount: 8700000 }],
+  },
+};
+
 const PORTFOLIO: SourceWorkspacePortfolioData = {
   tenantKey: "skyharbor_global",
   asOfDateIso: "2027-06-30T00:00:00Z",
   semanticLayer: sourceV4CubeUiCatalogForAgent(),
-  v4Snapshot: createEmptySourceV4WorkspaceSnapshot("2027-06-30T00:00:00Z"),
+  v4Snapshot: V4_SNAPSHOT,
   contracts: CONTRACTS,
   vendors: VENDORS,
   applicationScope: [],
@@ -194,5 +225,39 @@ describe("buildViewModel numeric coercion", () => {
     expect(
       PORTFOLIO.v4Snapshot.availability.map((slice) => slice.lensId),
     ).toContain("ai_usage_value_proof");
+  });
+
+  it("adds Source v4 aggregate facts to the aVa surface context", () => {
+    const vm = buildVm();
+    const built = buildViewModel(vm) as {
+      avaSurfaceContext: {
+        sourceV4: {
+          executivePortfolio: { contracts: number; annualValue: string };
+          valueProof: {
+            assignedSeats: number;
+            actualCost: string;
+            claimableRows: number;
+            rule: string;
+          };
+        };
+      };
+    };
+
+    expect(built.avaSurfaceContext.sourceV4.executivePortfolio.contracts).toBe(
+      100,
+    );
+    expect(
+      built.avaSurfaceContext.sourceV4.executivePortfolio.annualValue,
+    ).toBe("$1.4805B");
+    expect(built.avaSurfaceContext.sourceV4.valueProof.assignedSeats).toBe(
+      705878,
+    );
+    expect(built.avaSurfaceContext.sourceV4.valueProof.actualCost).toBe(
+      "$170.2M",
+    );
+    expect(built.avaSurfaceContext.sourceV4.valueProof.claimableRows).toBe(0);
+    expect(built.avaSurfaceContext.sourceV4.valueProof.rule).toMatch(
+      /do not prove realized value/i,
+    );
   });
 });
