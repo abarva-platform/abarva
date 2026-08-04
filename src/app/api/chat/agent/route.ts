@@ -2218,14 +2218,18 @@ export async function POST(request: Request) {
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
   let pendingAgentOutput = "";
-  // Phase A + Phase B quality gate: when a Phase A OR Phase B mode was
-  // classified AND grounding is active, hold the agent's text back from the
-  // client until the full turn is in hand, run it through
-  // `runSourceAnswerQualityGate`, and emit the (possibly repaired) text in one
-  // shot instead of token-by-token. This is the ONLY behavior change vs. the
-  // existing token-streaming path, and it is strictly additive: any other
-  // surface/turn (including Source turns where no Phase A/B mode matched, or
-  // grounding is off) streams exactly as before.
+  // Phase A + Phase B quality gate (2026-08-04: telemetry-only — see
+  // docs/releases/records/2026-08-04-ava-source-quality-gate-telemetry-only.md):
+  // when a Phase A OR Phase B mode is classified AND grounding is active,
+  // still run the agent's full text through `runSourceAnswerQualityGate`
+  // after the turn completes — but the text now streams to the client
+  // live, token-by-token, exactly like every other surface. The gate no
+  // longer holds the answer back or ships a repaired substitute; it only
+  // logs unresolved checks for telemetry. Holding the whole answer for a
+  // 12-check pass cost 20-30s of visible silence on event-scoped modes
+  // (RFP/BAFO/pricing) — an unacceptable latency tradeoff now that
+  // upstream grounding (source portfolio + per-event) has substantially
+  // cut the fabrication risk this gate exists to catch.
   const sourceAvaQualityGateActive =
     sourceAvaAnswerMode !== null &&
     isGroundedAnswerMode(sourceAvaAnswerMode) &&
@@ -2237,11 +2241,8 @@ export async function POST(request: Request) {
         if (!pendingAgentOutput) return;
         const demoSafeText = demoSafeClientText(pendingAgentOutput);
         bufferedOutput += demoSafeText;
-        if (sourceAvaQualityGateActive) {
-          heldAgentText += demoSafeText;
-        } else {
-          controller.enqueue(encoder.encode(demoSafeText));
-        }
+        heldAgentText += demoSafeText;
+        controller.enqueue(encoder.encode(demoSafeText));
         pendingAgentOutput = "";
       };
       // Tools (commit_program) and the loop both write through this sink.
@@ -2254,11 +2255,8 @@ export async function POST(request: Request) {
             ? text
             : sanitizeRestrictedFinancialText(text, userAccessPolicy);
           bufferedOutput += safeText;
-          if (sourceAvaQualityGateActive) {
-            heldAgentText += safeText;
-          } else {
-            controller.enqueue(encoder.encode(safeText));
-          }
+          heldAgentText += safeText;
+          controller.enqueue(encoder.encode(safeText));
         },
       };
       try {
@@ -2340,10 +2338,11 @@ export async function POST(request: Request) {
         writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
         flushAgentOutput();
-        // Phase A + Phase B quality gate — the held-back text is checked (and,
-        // if needed, repaired once) here, BEFORE close, so the gated/repaired
-        // text is what the client actually receives. Best-effort: a gate
-        // failure never blocks the turn — the held text still ships.
+        // Phase A + Phase B quality gate — telemetry-only (2026-08-04). The
+        // full answer text has already streamed live to the client above;
+        // this pass runs the same 12 checks purely to log what would have
+        // failed, so quality regressions stay visible without holding the
+        // turn. Never blocks or re-ships text.
         if (sourceAvaQualityGateActive) {
           try {
             const gateResult = runSourceAnswerQualityGate({
@@ -2360,17 +2359,14 @@ export async function POST(request: Request) {
               groundingBlockText: sourceAvaModeGroundingBlockText || undefined,
               groundingHasSpecificAsk: sourceAvaModeHasSpecificAsk,
             });
-            const finalText = gateResult.finalText;
-            bufferedOutput += finalText;
-            controller.enqueue(encoder.encode(finalText));
             if (!gateResult.passed) {
               // Telemetry-only: the Phase A/B gate's check ids are not part of
               // the shared Intelligence `ViolationType` union (that file is
               // frozen for this change), so we log directly rather than widen
-              // a shared type. The repaired text still ships — this never
-              // blocks the turn, it only records what still fails.
+              // a shared type. The answer already streamed — this never
+              // blocks the turn, it only records what failed.
               console.warn(
-                "[source-ava-quality-gate] unresolved checks after repair",
+                "[source-ava-quality-gate] unresolved checks (telemetry-only, already streamed)",
                 {
                   surface,
                   tenantId: activeClientKey ?? undefined,
@@ -2380,10 +2376,7 @@ export async function POST(request: Request) {
               );
             }
           } catch {
-            // Gate failure is best-effort — ship the held text unmodified
-            // rather than silently dropping the turn.
-            bufferedOutput += heldAgentText;
-            controller.enqueue(encoder.encode(heldAgentText));
+            // Telemetry MUST NOT raise — the answer already streamed successfully.
           }
         }
         controller.close();
