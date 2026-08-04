@@ -275,21 +275,36 @@ async function insertRows(client, item, args) {
     "_row_sha256",
     "_loaded_at",
   ];
-  const sql = `INSERT INTO ${quoteIdent(RAW_SCHEMA)}.${quoteIdent(item.table)} (${columns.map(quoteIdent).join(", ")}) VALUES (${columns.map((_, i) => `$${i + 1}`).join(", ")})`;
   const loadedAt = new Date();
-  for (let index = 0; index < item.rows.length; index += 1) {
-    const row = item.rows[index];
-    await client.query(sql, [
-      ...item.originalHeaders.map((header) => row[header] ?? ""),
-      args.tenantKey,
-      args.datasetId,
-      args.loadRunId,
-      item.file,
-      index + 2,
-      item.csvSha256,
-      rowHash(row, item.originalHeaders),
-      loadedAt,
-    ]);
+  const maxParams = 30000;
+  const batchSize = Math.max(1, Math.floor(maxParams / columns.length));
+  for (let start = 0; start < item.rows.length; start += batchSize) {
+    const batch = item.rows.slice(start, start + batchSize);
+    const values = [];
+    const placeholders = [];
+    for (let rowIndex = 0; rowIndex < batch.length; rowIndex += 1) {
+      const row = batch[rowIndex];
+      const rowValues = [
+        ...item.originalHeaders.map((header) => row[header] ?? ""),
+        args.tenantKey,
+        args.datasetId,
+        args.loadRunId,
+        item.file,
+        start + rowIndex + 2,
+        item.csvSha256,
+        rowHash(row, item.originalHeaders),
+        loadedAt,
+      ];
+      const offset = values.length;
+      values.push(...rowValues);
+      placeholders.push(
+        `(${rowValues.map((_, index) => `$${offset + index + 1}`).join(", ")})`,
+      );
+    }
+    await client.query(
+      `INSERT INTO ${quoteIdent(RAW_SCHEMA)}.${quoteIdent(item.table)} (${columns.map(quoteIdent).join(", ")}) VALUES ${placeholders.join(", ")}`,
+      values,
+    );
   }
 }
 

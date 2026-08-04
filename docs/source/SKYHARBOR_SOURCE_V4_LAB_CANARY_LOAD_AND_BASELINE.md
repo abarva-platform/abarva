@@ -61,6 +61,20 @@ Run the offline question baseline:
 npm run source:v4:canary-answer-baseline -- --out /Users/anand/Downloads/SkyHarbor_Source_V4_Canary_Answer_Baseline.json
 ```
 
+Run the full operator-safe job locally in plan-only mode:
+
+```bash
+npm run source:v4:lab-canary:job -- --plan-only --out-dir /tmp/skyharbor-source-v4-lab-canary
+```
+
+Run the full lab job in apply mode:
+
+```bash
+npm run source:v4:lab-canary:job -- --out-dir /tmp/skyharbor-source-v4-lab-canary
+```
+
+The job script is designed for ACA operator execution. It generates the deterministic package inside the container, validates row depth, applies the loader, runs the 150-question baseline, performs a direct database readback, and emits a proof bundle marker that `scripts/ops/submit-aca-operator-job.mjs` can extract.
+
 ## Raw Load Contract
 
 The loader creates one raw table per package CSV. Original source columns are preserved as text, and the loader adds technical lineage:
@@ -113,3 +127,14 @@ The answer-baseline ledger records, per question:
 ## Local Execution Note
 
 The current local shell did not expose a lab database URL. Local validation therefore covered package parsing, hash/count verification, dry-run load planning, and offline question-baseline generation. The apply command is ready for the lab ACA/operator or any shell with a valid lab Postgres connection string.
+
+For ACA operator execution, prefer:
+
+```bash
+node scripts/ops/submit-aca-operator-job.mjs \
+  --image <digest-pinned-web-image> \
+  --script source:v4:lab-canary:job \
+  --out-dir /tmp/source-v4-lab-canary-operator-proof
+```
+
+The operator job must use a digest-pinned image that contains this script and must restore to idle afterward.
