@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { HomeKnowAnswerRenderer } from "@/components/home/know/HomeKnowAnswerRenderer";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
+import { readHomeKnowStream } from "@/lib/home/know/home-know-stream-client";
 
 const CSS = `
 .homeKnowAsk{--hka-line:#E7E3DA;--hka-ink:#1A1A18;--hka-muted:#6B6B63;--hka-faint:#9A998E;--hka-green:#1F6B3A;--hka-card:#fff;--hka-user:#F3F8F5;display:flex;flex-direction:column;gap:12px;min-height:0;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
@@ -51,6 +52,7 @@ type HomeKnowTurn = {
   response: HomeKnowResponse | null;
   fetching: boolean;
   error: string | null;
+  status: string | null;
 };
 
 function resizeAskTextarea(el: HTMLTextAreaElement | null) {
@@ -69,12 +71,6 @@ function newTurnId(): string {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const record = value as Record<string, unknown>;
-  return record.mode === "KNOW" && typeof record.intent === "string";
 }
 
 export function HomeKnowAsk({
@@ -153,6 +149,7 @@ export function HomeKnowAsk({
           response: null,
           fetching: true,
           error: null,
+          status: "Starting Home context lookup...",
         },
       ]);
 
@@ -160,31 +157,21 @@ export function HomeKnowAsk({
         const res = await fetch("/api/home/know/ask", {
           method: "POST",
           headers: {
-            Accept: "application/json",
+            Accept: "application/x-ndjson",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             question: trimmed,
             tenantKey,
             client,
+            stream: true,
           }),
           signal: ctrl.signal,
         });
 
-        const payload = await res.json().catch(() => null);
-        if (!res.ok || !isHomeKnowResponse(payload)) {
-          updateTurn({
-            error:
-              payload &&
-              typeof payload === "object" &&
-              !Array.isArray(payload) &&
-              typeof (payload as { error?: unknown }).error === "string"
-                ? (payload as { error: string }).error
-                : "aVa could not use the loaded Home context yet.",
-          });
-          return;
-        }
-
+        const payload = await readHomeKnowStream(res, (event) => {
+          if (event.label) updateTurn({ status: event.label });
+        });
         updateTurn({ response: payload });
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -238,7 +225,7 @@ export function HomeKnowAsk({
                 ) : turn.fetching ? (
                   <div className="hka-assistantRow">
                     <div className="hka-loading" role="status">
-                      Checking loaded context…
+                      {turn.status ?? "Checking loaded context..."}
                     </div>
                   </div>
                 ) : null}

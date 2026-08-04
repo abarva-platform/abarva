@@ -28,7 +28,7 @@ import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentSt
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { composeHomeKnowAvaAnswer } from "@/lib/ava-answer/homeComposer";
 import type { AiSuccessHomeData } from "@/lib/home/readSkyHarborAiSuccessHome";
-import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
+import { readHomeKnowStream } from "@/lib/home/know/home-know-stream-client";
 
 import { ArchitectureFlowDiagram } from "./ArchitectureFlowDiagram";
 import styles from "./AiSuccessCommandCenter.module.css";
@@ -927,6 +927,7 @@ type HomeAvaTurn = {
   answer: AvaAnswerPacket | null;
   loading: boolean;
   error: string | null;
+  status: string | null;
 };
 
 const HOME_AVA_SUGGESTIONS = [
@@ -971,7 +972,14 @@ function HomeCommandCenterAva({
       resetTextarea(textareaRef.current);
       setTurns((current) => [
         ...current,
-        { id, question: trimmed, answer: null, loading: true, error: null },
+        {
+          id,
+          question: trimmed,
+          answer: null,
+          loading: true,
+          error: null,
+          status: "Starting Home context lookup...",
+        },
       ]);
 
       const patchTurn = (
@@ -987,25 +995,19 @@ function HomeCommandCenterAva({
         const response = await fetch("/api/home/know/ask", {
           method: "POST",
           headers: {
-            Accept: "application/json",
+            Accept: "application/x-ndjson",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             question: trimmed,
             tenantKey,
             client: tenantKey,
+            stream: true,
           }),
         });
-        const payload = await response.json().catch(() => null);
-        if (!response.ok || !isHomeKnowResponse(payload)) {
-          patchTurn({
-            loading: false,
-            error:
-              extractError(payload) ??
-              "aVa could not bind this question to the loaded Home context.",
-          });
-          return;
-        }
+        const payload = await readHomeKnowStream(response, (event) => {
+          if (event.label) patchTurn({ status: event.label });
+        });
         patchTurn({
           loading: false,
           answer: composeHomeKnowAvaAnswer(payload),
@@ -1077,7 +1079,7 @@ function HomeCommandCenterAva({
                 <div className={styles.avaQuestion}>{turn.question}</div>
                 {turn.loading ? (
                   <div className={styles.avaLoading} role="status">
-                    Binding Home context and reasoning...
+                    {turn.status ?? "Binding Home context and reasoning..."}
                   </div>
                 ) : turn.error ? (
                   <div className={styles.avaError} role="status">
@@ -1140,23 +1142,6 @@ function newTurnId(): string {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-  const record = value as Record<string, unknown>;
-  return record.mode === "KNOW" && typeof record.intent === "string";
-}
-
-function extractError(value: unknown): string | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const error = (value as { error?: unknown }).error;
-  if (error === "visible_answer_contract_failed") {
-    return "aVa tightened this answer before display, but could not finish it safely. Try a narrower Home question.";
-  }
-  return typeof error === "string" && error.trim() ? error : null;
 }
 
 function resizeTextarea(el: HTMLTextAreaElement | null) {
