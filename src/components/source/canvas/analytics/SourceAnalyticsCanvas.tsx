@@ -39,6 +39,11 @@ import {
   SOURCE_STAGE_LABELS,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import {
+  adaptStageViewToSourceJourney,
+  sourceJourneyLabelForStage,
+  type SourceJourneyDefinition,
+} from "@/lib/source/sourcing-motion-journeys";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
@@ -136,6 +141,8 @@ interface SourceAnalyticsCanvasProps {
    * heuristic, so it can never appear on an unrelated event by mistake.
    */
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
+  /** Event-specific journey: competitive RFP by default, contract optimization for incumbent-renegotiation work. */
+  journey?: SourceJourneyDefinition;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -179,38 +186,46 @@ const BUTTON_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
-function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
+function sampleStageViewFor(
+  stageKey: SourceStageKey,
+  journey?: SourceJourneyDefinition,
+): StageAnalyticsView {
   const canonicalStageKey = normalizeSourceStageKey(stageKey) ?? stageKey;
 
-  switch (canonicalStageKey) {
-    case "strategy":
-      return SAMPLE_STRATEGY_STAGE;
-    case "scope":
-      return SAMPLE_SCOPE_STAGE;
-    case "rfp":
-      return SAMPLE_RFP_STAGE;
-    case "responses":
-      return SAMPLE_RESPONSES_STAGE;
-    case "evaluation":
-      return SAMPLE_EVALUATION_STAGE;
-    case "bafo":
-      return SAMPLE_BAFO_STAGE;
-    case "selection":
-      return SAMPLE_SELECTION_STAGE;
-    case "value":
-      return SAMPLE_VALUE_STAGE;
-    case "pricing":
-    case "executive_decision":
-    case "transition":
-      return placeholderStageViewFor(canonicalStageKey);
-    default:
-      return placeholderStageViewFor(canonicalStageKey);
-  }
+  const sample = (() => {
+    switch (canonicalStageKey) {
+      case "strategy":
+        return SAMPLE_STRATEGY_STAGE;
+      case "scope":
+        return SAMPLE_SCOPE_STAGE;
+      case "rfp":
+        return SAMPLE_RFP_STAGE;
+      case "responses":
+        return SAMPLE_RESPONSES_STAGE;
+      case "evaluation":
+        return SAMPLE_EVALUATION_STAGE;
+      case "bafo":
+        return SAMPLE_BAFO_STAGE;
+      case "selection":
+        return SAMPLE_SELECTION_STAGE;
+      case "value":
+        return SAMPLE_VALUE_STAGE;
+      case "pricing":
+      case "executive_decision":
+      case "transition":
+        return placeholderStageViewFor(canonicalStageKey, journey);
+      default:
+        return placeholderStageViewFor(canonicalStageKey, journey);
+    }
+  })();
+  return adaptStageViewToSourceJourney(sample, journey);
 }
 
-function placeholderStageViewFor(stageKey: string): StageAnalyticsView {
-  const stageLabel =
-    SOURCE_STAGE_LABELS[stageKey as SourceStageKey] ?? "Source stage";
+function placeholderStageViewFor(
+  stageKey: string,
+  journey?: SourceJourneyDefinition,
+): StageAnalyticsView {
+  const stageLabel = sourceJourneyLabelForStage(journey, stageKey);
   return {
     stageKey,
     stageName: stageLabel,
@@ -249,6 +264,7 @@ export function SourceAnalyticsCanvas({
   latestArtifactAcceptances = [],
   initialWorkspace,
   contractOptimizationProfile = null,
+  journey,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -268,8 +284,12 @@ export function SourceAnalyticsCanvas({
   );
 
   const baseStageView = useMemo(
-    () => stageView ?? sampleStageViewFor(viewStage),
-    [stageView, viewStage],
+    () =>
+      adaptStageViewToSourceJourney(
+        stageView ?? sampleStageViewFor(viewStage, journey),
+        journey,
+      ),
+    [journey, stageView, viewStage],
   );
   const resolvedStageView: StageAnalyticsView = useMemo(
     () => (stepInsight ? { ...baseStageView, stepInsight } : baseStageView),
@@ -291,6 +311,7 @@ export function SourceAnalyticsCanvas({
         intelligenceOpen: workspace === "intelligence",
         guidebook,
         latestArtifactAcceptancesById,
+        journey,
       }),
     [
       approvalItems,
@@ -299,6 +320,7 @@ export function SourceAnalyticsCanvas({
       event,
       guidebook,
       latestArtifactAcceptancesById,
+      journey,
       resolvedStageView,
       stepInsight,
       tenantName,
@@ -308,7 +330,8 @@ export function SourceAnalyticsCanvas({
   );
 
   const stageLabel =
-    SOURCE_STAGE_LABELS[viewStage] ?? resolvedStageView.stageName;
+    sourceJourneyLabelForStage(journey, viewStage) ??
+    resolvedStageView.stageName;
 
   return (
     <AppShell

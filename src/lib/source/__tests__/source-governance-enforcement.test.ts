@@ -301,6 +301,34 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it("allows adjacency against a journey-specific stage order", () => {
+    const verdict = evaluateStagePromotionReadiness({
+      currentStage: "scope",
+      targetStage: "pricing",
+      stageOrder: [
+        "strategy",
+        "scope",
+        "pricing",
+        "bafo",
+        "executive_decision",
+        "transition",
+        "value",
+      ],
+      criteria: [
+        criterion({ criterionId: "GATE-SCOPE-01", state: "met" }),
+        criterion({ criterionId: "GATE-SCOPE-02", state: "met" }),
+        criterion({ criterionId: "GATE-SCOPE-03", state: "met" }),
+        criterion({ criterionId: "GATE-SCOPE-04", state: "met" }),
+        criterion({ criterionId: "GATE-SCOPE-05", state: "met" }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.blockers.map((blocker) => blocker.code)).not.toContain(
+      "non_adjacent_stage_promotion",
+    );
+  });
+
   it("blocks adjacent promotion when legacy met criteria lack verified artifacts, evidence, or reason", () => {
     const verdict = evaluateStagePromotionReadiness({
       currentStage: "strategy",

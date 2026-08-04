@@ -4,11 +4,19 @@
 
 import "@testing-library/jest-dom";
 import { cleanup, render, screen } from "@testing-library/react";
-import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from "@/lib/source/constants";
+import {
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
+import { SOURCE_JOURNEYS } from "@/lib/source/sourcing-motion-journeys";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+  }),
   usePathname: () => "/source/events/evt-1",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ eventId: "evt-1" }),
@@ -85,7 +93,9 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
       );
 
       const stageLabel = SOURCE_STAGE_LABELS[stageKey];
-      expect(screen.getByRole("heading", { name: stageLabel })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: stageLabel }),
+      ).toBeInTheDocument();
 
       if (PLACEHOLDER_STAGES.has(stageKey)) {
         expect(
@@ -93,18 +103,52 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
             `No illustrative preview has been built for ${stageLabel} yet. Live Source facts will render here when available; this placeholder is intentionally empty rather than showing another stage's work.`,
           ),
         ).toBeInTheDocument();
-        expect(screen.getByText("No required steps are defined for this stage yet.")).toBeInTheDocument();
-        expect(screen.queryByText("Provide the volumetrics")).not.toBeInTheDocument();
+        expect(
+          screen.getByText("No required steps are defined for this stage yet."),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText("Provide the volumetrics"),
+        ).not.toBeInTheDocument();
         return;
       }
 
       const expectedMarker = EXPECTED_STAGE_MARKER[stageKey];
       expect(expectedMarker).toBeDefined();
-      expect(screen.getAllByText(expectedMarker as string).length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText(expectedMarker as string).length,
+      ).toBeGreaterThan(0);
 
       if (stageKey !== "scope") {
-        expect(screen.queryByText("Provide the volumetrics")).not.toBeInTheDocument();
+        expect(
+          screen.queryByText("Provide the volumetrics"),
+        ).not.toBeInTheDocument();
       }
     },
   );
+
+  it("renders the contract optimization journey without RFP checkpoints", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{
+          ...makeEvent(),
+          archetype: "Contract Renewal / Renegotiation",
+          currentStageKey: "pricing",
+          currentStageLabel: "Commercial Baseline",
+        }}
+        viewStage="pricing"
+        tenantName="Healthcare Demo"
+        stageView={undefined}
+        journey={SOURCE_JOURNEYS.contract_optimization}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Commercial Baseline" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Negotiation Plan").length).toBeGreaterThan(0);
+    expect(screen.queryByText("RFP")).not.toBeInTheDocument();
+    expect(screen.queryByText("Responses")).not.toBeInTheDocument();
+    expect(screen.queryByText("Evaluation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Selection")).not.toBeInTheDocument();
+  });
 });

@@ -6,12 +6,15 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
 import { listArtifactStatesForEvent } from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import { normalizeSourceStageKey } from "@/lib/source/constants";
 import {
-  SOURCE_STAGE_ORDER,
-  SOURCE_STAGE_LABELS,
-  normalizeSourceStageKey,
-  nextSourceStage,
-} from "@/lib/source/constants";
+  adaptStageViewToSourceJourney,
+  coerceStageToSourceJourney,
+  getSourceJourneyForEvent,
+  nextSourceStageForJourney,
+  sourceJourneyLabelForStage,
+  type SourceJourneyDefinition,
+} from "@/lib/source/sourcing-motion-journeys";
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import type { SourceStageKey } from "@/lib/source/types";
 import {
@@ -75,12 +78,6 @@ export default async function SourceEventDetailPage({
   const isLakeshoreDemoCaseStudy =
     /LAKE-SHARED-SERVICES-AMS-2026/i.test(event.code) ||
     /Lakeshore Shared Services AMS/i.test(event.name);
-  const viewStage: SourceStageKey =
-    normalizedView ??
-    (isLakeshoreDemoCaseStudy ? "responses" : null) ??
-    (SOURCE_STAGE_ORDER.includes(event.currentStageKey)
-      ? event.currentStageKey
-      : "strategy");
   const workspaceParam = typeof sp.workspace === "string" ? sp.workspace : null;
   const initialWorkspace = normalizeSourceShellWorkspace(workspaceParam);
 
@@ -116,6 +113,20 @@ export default async function SourceEventDetailPage({
             return null;
           })
         : null;
+    const sourceJourney = getSourceJourneyForEvent({
+      event,
+      hasContractOptimizationProfile: Boolean(contractOptimizationProfile),
+    });
+    const viewStage: SourceStageKey = coerceStageToSourceJourney(
+      sourceJourney,
+      normalizedView ?? (isLakeshoreDemoCaseStudy ? "responses" : null),
+      event.currentStageKey,
+    );
+    const effectiveCurrentStageKey = coerceStageToSourceJourney(
+      sourceJourney,
+      event.currentStageKey,
+      event.currentStageKey,
+    );
 
     // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation
     // stage and its gate IS the P0 approval — build it from the event's captured
@@ -368,6 +379,7 @@ export default async function SourceEventDetailPage({
               baselineLabel: "Value at stake (event estimate)",
               baselineAmount: event.valueAtStakeUsd ?? 0,
               stageKey: viewStage,
+              stageName: sourceJourneyLabelForStage(sourceJourney, viewStage),
             }) ?? undefined;
 
           // Arm the LIVE approve action on the gate ONLY when the event actually
@@ -379,7 +391,8 @@ export default async function SourceEventDetailPage({
               event.id,
               activeClient.key,
               viewStage,
-              event.currentStageKey,
+              effectiveCurrentStageKey,
+              sourceJourney,
             );
             if (approveAction) {
               liveStageView = {
@@ -402,7 +415,8 @@ export default async function SourceEventDetailPage({
         liveStageView = await buildStrategyStageForRoute(
           event.id,
           activeClient.key,
-          event.currentStageKey,
+          effectiveCurrentStageKey,
+          sourceJourney,
         );
       }
     }
@@ -417,13 +431,17 @@ export default async function SourceEventDetailPage({
     // reached a usable, persisted state — never a fabricated done. Never fatal.
     if (liveStageView) {
       try {
+        const journeyStageView = adaptStageViewToSourceJourney(
+          liveStageView,
+          sourceJourney,
+        );
         liveStageView = {
-          ...liveStageView,
+          ...journeyStageView,
           tasks: hydrateTaskEvidenceState({
-            tasks: liveStageView.tasks,
+            tasks: journeyStageView.tasks,
             factInputs: hydrationFactInputs,
             artifacts: analyticsHydrationArtifacts,
-            stageKey: liveStageView.stageKey,
+            stageKey: journeyStageView.stageKey,
           }),
         };
       } catch (error) {
@@ -448,6 +466,7 @@ export default async function SourceEventDetailPage({
         latestArtifactAcceptances={analyticsLatestAcceptances}
         initialWorkspace={initialWorkspace}
         contractOptimizationProfile={contractOptimizationProfile}
+        journey={sourceJourney}
       />
     );
   }
@@ -502,6 +521,7 @@ async function resolveStageGateAction(
   clientKey: string,
   viewStage: SourceStageKey,
   currentStageKey: SourceStageKey,
+  journey: SourceJourneyDefinition,
 ): Promise<StageGateActionView | null> {
   if (viewStage === "strategy") return null;
   if (viewStage !== currentStageKey) return null;
@@ -514,10 +534,10 @@ async function resolveStageGateAction(
   }).catch(() => null);
   if (policy?.canApproveSourceStages !== true) return null;
 
-  const nextStage = nextSourceStage(viewStage);
-  const stageLabel = SOURCE_STAGE_LABELS[viewStage] ?? viewStage;
+  const nextStage = nextSourceStageForJourney(viewStage, journey);
+  const stageLabel = sourceJourneyLabelForStage(journey, viewStage);
   const rationale = nextStage
-    ? `${stageLabel} gate confirmed on the unified canvas — evidence complete, inputs reviewed, ${stageLabel} final. Advancing to ${SOURCE_STAGE_LABELS[nextStage] ?? nextStage}.`
+    ? `${stageLabel} gate confirmed on the unified canvas — evidence complete, inputs reviewed, ${stageLabel} final. Advancing to ${sourceJourneyLabelForStage(journey, nextStage)}.`
     : `${stageLabel} gate confirmed on the unified canvas — the final value record is accepted; closing the event.`;
 
   return {
@@ -532,6 +552,7 @@ async function buildStrategyStageForRoute(
   eventId: string,
   clientKey: string,
   currentStageKey: string,
+  journey: SourceJourneyDefinition,
 ): Promise<StageAnalyticsView | undefined> {
   try {
     const { data } = await getAzureReadFluentClient()
@@ -566,11 +587,19 @@ async function buildStrategyStageForRoute(
       }
     }
 
-    return buildStrategyStageView({
-      facts,
-      provenance: "live",
-      approve: canApprove ? { eventId, redirectStageKey: "scope" } : null,
-    });
+    return adaptStageViewToSourceJourney(
+      buildStrategyStageView({
+        facts,
+        provenance: "live",
+        approve: canApprove
+          ? {
+              eventId,
+              redirectStageKey: nextSourceStageForJourney("strategy", journey),
+            }
+          : null,
+      }),
+      journey,
+    );
   } catch (error) {
     console.error(
       "[SourceEventDetailPage] strategy stage build failed; falling back to sample",
