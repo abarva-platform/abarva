@@ -647,6 +647,8 @@
     "source:sourcing-context:verify-live": "node scripts/source/verify-sourcing-context-depth.mjs",
     "source:cube:verify-live": "node scripts/source/verify-source-cube-parity.mjs",
     "source:cube:verify-runtime": "node scripts/source/verify-source-cube-runtime.mjs",
+    "source:v4:question-evidence:build": "node scripts/source/build-skyharbor-v4-question-evidence-contract.mjs && npx prettier --write docs/source/SKYHARBOR_SOURCE_V4_QUESTION_EVIDENCE_CONTRACT.md docs/source/SKYHARBOR_SOURCE_V4_GENERATOR_DESIGN.md docs/source/skyharbor-v4/source_v4_question_bank.json docs/source/skyharbor-v4/source_v4_question_coverage_matrix.json docs/source/skyharbor-v4/source_v4_model_fit_audit.json",
+    "source:v4:question-coverage:verify": "node scripts/source/verify-skyharbor-v4-question-coverage.mjs",
     "source:skyharbor:compare-live-lab": "node scripts/source/compare-skyharbor-live-lab-postgres.mjs",
     "source:sourcing-context:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260803160000_source_sourcing_context_depth_contract.sql",
     "source:sourcing-context:migrate:apply": "node scripts/source/guard-sourcing-context-migration-target.mjs && npx tsx src/scripts/run-migrations.ts --ci --force 20260803160000_source_sourcing_context_depth_contract.sql",

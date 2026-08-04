@@ -1,0 +1,272 @@
+{
+  "contract_id": "skyharbor-source-v4-question-evidence-contract",
+  "version": "v1",
+  "tenant_key": "skyharbor_global",
+  "dataset_id": "skyharbor-source-v4-202608",
+  "dataset_version": "v4",
+  "as_of_date": "2027-06-30",
+  "question_count": 150,
+  "observed_cube_views": [
+    "source_contract_scope_confidence",
+    "source_event_execution",
+    "source_executive_portfolio",
+    "source_opportunity_pipeline",
+    "source_performance_and_credits",
+    "source_renewal_exposure",
+    "source_spend_consumption",
+    "source_supplier_comparison",
+    "source_vendor_concentration"
+  ],
+  "audit_basis": [
+    "cube/model/source_sourcing.yml",
+    "docs/architecture/source/SOURCE_SOURCING_CONTEXT_DEPTH_CONTRACT_2026-08-03.md",
+    "docs/source/SKYHARBOR_SOURCE_V4_ROW_DEPTH_CONTRACT.md"
+  ],
+  "domains": [
+    {
+      "domain": "executive_portfolio_concentration",
+      "label": "Executive portfolio and concentration",
+      "question_count": 12,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_executive_portfolio",
+        "source_vendor_concentration"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "supplier_master",
+        "contract_header",
+        "financial_line",
+        "scope_mapping"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "vendor_360",
+      "label": "Vendor 360",
+      "question_count": 12,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_vendor_concentration",
+        "source_performance_and_credits",
+        "source_contract_scope_confidence"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "supplier_master",
+        "contract_header",
+        "financial_line",
+        "service_performance",
+        "scope_mapping"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "contract_economics_terms",
+      "label": "Contract economics and commercial terms",
+      "question_count": 18,
+      "model_fit_state": "partial",
+      "current_cube_views": [
+        "source_executive_portfolio",
+        "source_performance_and_credits"
+      ],
+      "required_next_views": [
+        "source_contract_terms_detail",
+        "source_legal_evidence_conflict"
+      ],
+      "required_source_domains": [
+        "contract_header",
+        "legal_evidence",
+        "financial_line",
+        "service_performance"
+      ],
+      "audit_note": "Current Cube views cover part of the path; v4 should add the listed view(s) only after canary evidence proves the need."
+    },
+    {
+      "domain": "spend_invoices_commitments",
+      "label": "Spend, invoices and commitments",
+      "question_count": 15,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_spend_consumption",
+        "source_executive_portfolio"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "financial_line",
+        "contract_header",
+        "supplier_master"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "saas_cloud_consumption_utilization",
+      "label": "SaaS/cloud consumption and utilization",
+      "question_count": 14,
+      "model_fit_state": "partial",
+      "current_cube_views": [
+        "source_spend_consumption",
+        "source_contract_scope_confidence"
+      ],
+      "required_next_views": [
+        "source_saas_usage_value",
+        "source_cloud_commitment"
+      ],
+      "required_source_domains": [
+        "saas_usage",
+        "cloud_consumption",
+        "contract_header",
+        "financial_line",
+        "scope_mapping"
+      ],
+      "audit_note": "Current Cube views cover part of the path; v4 should add the listed view(s) only after canary evidence proves the need."
+    },
+    {
+      "domain": "sla_incidents_service_credits",
+      "label": "SLA, incidents and service credits",
+      "question_count": 13,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_performance_and_credits",
+        "source_spend_consumption"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "service_performance",
+        "contract_header",
+        "legal_evidence",
+        "financial_line"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "renewals_notice_leverage",
+      "label": "Renewals, notice periods and leverage",
+      "question_count": 12,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_renewal_exposure",
+        "source_event_execution",
+        "source_supplier_comparison"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "contract_header",
+        "legal_evidence",
+        "financial_line",
+        "scope_mapping",
+        "sourcing_event"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "application_platform_dependencies",
+      "label": "Application/platform dependencies",
+      "question_count": 10,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_contract_scope_confidence",
+        "source_executive_portfolio"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "scope_mapping",
+        "contract_header",
+        "supplier_master",
+        "financial_line"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "workforce_rate_cards",
+      "label": "Workforce and rate cards",
+      "question_count": 9,
+      "model_fit_state": "partial",
+      "current_cube_views": ["source_spend_consumption"],
+      "required_next_views": ["source_workforce_rate_card"],
+      "required_source_domains": [
+        "workforce_rate_card",
+        "contract_header",
+        "financial_line",
+        "legal_evidence"
+      ],
+      "audit_note": "Current Cube views cover part of the path; v4 should add the listed view(s) only after canary evidence proves the need."
+    },
+    {
+      "domain": "cyber_vendor_risk",
+      "label": "Cyber/vendor risk",
+      "question_count": 5,
+      "model_fit_state": "partial",
+      "current_cube_views": [
+        "source_vendor_concentration",
+        "source_performance_and_credits"
+      ],
+      "required_next_views": ["source_vendor_risk"],
+      "required_source_domains": [
+        "supplier_master",
+        "legal_evidence",
+        "contract_header",
+        "service_performance"
+      ],
+      "audit_note": "Current Cube views cover part of the path; v4 should add the listed view(s) only after canary evidence proves the need."
+    },
+    {
+      "domain": "sourcing_events_supplier_bafo",
+      "label": "Sourcing events, supplier comparison and BAFO",
+      "question_count": 10,
+      "model_fit_state": "covered",
+      "current_cube_views": [
+        "source_event_execution",
+        "source_supplier_comparison"
+      ],
+      "required_next_views": [],
+      "required_source_domains": [
+        "sourcing_event",
+        "supplier_master",
+        "financial_line",
+        "contract_header"
+      ],
+      "audit_note": "Current Cube views can support the primary rollups and drill path once v4 rows exist."
+    },
+    {
+      "domain": "ai_adoption_productivity_value_proof",
+      "label": "AI adoption, productivity and value proof",
+      "question_count": 10,
+      "model_fit_state": "partial",
+      "current_cube_views": [
+        "source_spend_consumption",
+        "source_performance_and_credits"
+      ],
+      "required_next_views": [
+        "source_ai_value_proof",
+        "source_tower_claim_bridge"
+      ],
+      "required_source_domains": [
+        "saas_usage",
+        "service_performance",
+        "financial_line",
+        "scope_mapping"
+      ],
+      "audit_note": "Current Cube views cover part of the path; v4 should add the listed view(s) only after canary evidence proves the need."
+    },
+    {
+      "domain": "evidence_lineage_conflict_missing_proof",
+      "label": "Evidence lineage, conflict and missing proof",
+      "question_count": 10,
+      "model_fit_state": "partial",
+      "current_cube_views": [
+        "source_executive_portfolio",
+        "source_performance_and_credits"
+      ],
+      "required_next_views": ["source_legal_evidence_conflict"],
+      "required_source_domains": [
+        "legal_evidence",
+        "contract_header",
+        "financial_line",
+        "service_performance",
+        "sourcing_event"
+      ],
+      "audit_note": "Current Cube views cover part of the path; v4 should add the listed view(s) only after canary evidence proves the need."
+    }
+  ]
+}
