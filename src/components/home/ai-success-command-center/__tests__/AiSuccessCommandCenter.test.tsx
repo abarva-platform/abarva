@@ -140,3 +140,29 @@ it("wires expanded Ask aVa to the Home KNOW provider with export-capable renderi
     screen.getByRole("button", { name: /Export PDF/i }),
   ).toBeInTheDocument();
 });
+
+it("does not expose internal visible-contract errors in the Ask aVa drawer", async () => {
+  fetchMock.mockResolvedValueOnce({
+    ok: false,
+    json: async () => ({
+      error: "visible_answer_contract_failed",
+      detail: "internal display boundary",
+    }),
+  });
+
+  render(<AiSuccessCommandCenter data={readSkyHarborAiSuccessHome()} />);
+
+  fireEvent.click(screen.getAllByRole("button", { name: /Ask aVa/i })[0]);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Show the loaded context dimensions in a table/i,
+    }),
+  );
+
+  expect(
+    await screen.findByText(/aVa tightened this answer before display/i),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText(/visible_answer_contract_failed/i),
+  ).not.toBeInTheDocument();
+});

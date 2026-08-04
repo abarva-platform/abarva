@@ -1153,6 +1153,9 @@ function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
 function extractError(value: unknown): string | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const error = (value as { error?: unknown }).error;
+  if (error === "visible_answer_contract_failed") {
+    return "aVa tightened this answer before display, but could not finish it safely. Try a narrower Home question.";
+  }
   return typeof error === "string" && error.trim() ? error : null;
 }
 
