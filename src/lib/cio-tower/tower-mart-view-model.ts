@@ -19,6 +19,22 @@ export interface TowerMartCommandCenter {
   promisedValueFy26: number;
   partialFinanceValidatedValueYtd: number;
   realizedValueYtdAllowed: number;
+  valueClaimCount?: number;
+  knownValueClaimCount?: number;
+  unknownValueClaimCount?: number;
+  knownZeroValueClaimCount?: number;
+  knownValueAmountUsd?: number;
+  financeAttestedClaimCount?: number;
+  businessAttestedClaimCount?: number;
+  claimableClaimCount?: number;
+  usageSupportedClaimCount?: number;
+  fundedNoBaselineClaimCount?: number;
+  staleClaimCount?: number;
+  disputedClaimCount?: number;
+  baselineLinkedClaimCount?: number;
+  targetLinkedClaimCount?: number;
+  actualLinkedClaimCount?: number;
+  outcomeMeasuredClaimCount?: number;
   candidateAiOpportunities: number;
   watchPressureSignals: number;
   runRatio: number | null;
@@ -139,7 +155,7 @@ export interface TowerMartAiPortfolioCounts {
 }
 
 export interface TowerMartCommandViewModel {
-  generatedFrom: "cio_tower_mart";
+  generatedFrom: "cio_tower_mart" | "tower_schema";
   headline: string;
   command: TowerMartCommandCenter;
   valueFunnel: TowerMartValueFunnelStage[];

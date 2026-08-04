@@ -1,0 +1,14 @@
+FROM cubejs/cube:v1.7.16
+
+WORKDIR /cube/conf
+
+COPY cube/cube.py ./cube.py
+COPY cube/model ./model
+COPY scripts/source/cube-runtime-entrypoint.mjs ./scripts/cube-runtime-entrypoint.mjs
+COPY scripts/source/verify-source-cube-runtime.mjs ./scripts/verify-source-cube-runtime.mjs
+
+EXPOSE 4000
+EXPOSE 15432
+
+ENTRYPOINT ["node", "/cube/conf/scripts/cube-runtime-entrypoint.mjs"]
+CMD ["cubejs", "server"]

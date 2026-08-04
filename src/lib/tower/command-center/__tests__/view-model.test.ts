@@ -41,6 +41,13 @@ function command(
     promisedValueFy26: 35.5 * M,
     partialFinanceValidatedValueYtd: 3.8 * M,
     realizedValueYtdAllowed: 0,
+    valueClaimCount: 6,
+    knownValueClaimCount: 4,
+    unknownValueClaimCount: 2,
+    knownZeroValueClaimCount: 1,
+    knownValueAmountUsd: 35.5 * M,
+    financeAttestedClaimCount: 0,
+    businessAttestedClaimCount: 0,
     candidateAiOpportunities: 5,
     watchPressureSignals: 2,
     runRatio: 0.68,
@@ -118,7 +125,7 @@ function mart(
   overrides: Partial<TowerMartCommandViewModel> = {},
 ): TowerMartCommandViewModel {
   return {
-    generatedFrom: "cio_tower_mart",
+    generatedFrom: "tower_schema",
     headline: "Tower",
     command: command(),
     valueFunnel: [
@@ -230,6 +237,7 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.summary.promisedUsd).toBe(35.5 * M);
     expect(view.summary.financeValidatedUsd).toBe(3.8 * M);
     expect(view.summary.claimableUsd).toBe(0);
+    expect(view.summary.unknownValueClaimCount).toBe(2);
   });
 
   it("derives blocked value as promised minus claimable", () => {
@@ -413,8 +421,8 @@ describe("buildTowerCommandCenterView", () => {
 
   it("keeps data-pipeline gaps off the executive Evidence tab", () => {
     const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
-    // mart_required_field_gaps is an ETL backlog ("populate this column and
-    // rerun the projection"), so it lands in pipelineGaps, never in gaps.
+    // Pipeline field gaps are an ETL backlog ("populate this field and rerun
+    // the projection"), so they land in pipelineGaps, never in gaps.
     const [pipeline] = view.pipelineGaps;
     expect(pipeline.kind).toBe("pipeline");
     expect(pipeline.linkedProgram).toBe("Program One");
@@ -460,12 +468,18 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.gaps.map((g) => g.primaryBlockingGap)).toEqual([true, false]);
   });
 
-  it("raises no gap for a program with nothing promised", () => {
+  it("raises an unknown-value evidence gap for a claim with no promised amount", () => {
     const view = buildTowerCommandCenterView(
       mart({ programLanes: [lane({ promisedValueUsd: 0 })] }),
       { tenantName: "Demo" },
     )!;
-    expect(view.gaps).toHaveLength(0);
+    expect(view.gaps).toHaveLength(1);
+    expect(view.gaps[0]).toMatchObject({
+      kind: "claim_gate",
+      missing:
+        "Governed financial amount and baseline/target/actual proof for Program One",
+      valueAtStakeUsd: null,
+    });
   });
 
   it("still produces evidence gaps when the pipeline gap table is EMPTY", () => {

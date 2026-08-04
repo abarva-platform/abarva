@@ -12,6 +12,7 @@ import { dbConnectionConfig, setTenantContext } from "../knowledge/build-review-
 const DEFAULT_TENANT_KEY = "skyharbor-air";
 const DEFAULT_RELEASE_ID = "skyharbor-air-source-corpus-v1.0.0";
 const DEFAULT_OUT_DIR = path.join(os.tmpdir(), "skyharbor-day-one-breach-readback");
+const EXPECTED_DECLARED_INTAKE_DATA_SOURCES = 33;
 const APP_REF = "exp-entity-resolve-application-count-v1";
 const VENDOR_REF = "exp-entity-resolve-vendor-count-v1";
 const PROMOTABLE_REFS = Object.freeze([APP_REF, VENDOR_REF]);
@@ -329,7 +330,7 @@ async function buildReport(client, args) {
   const vendorExpected = distinctFieldCount(sourceFields, "07_vendors_contracts.csv", "vendor_name");
   const derivedExpected = derivedRules.reduce((total, row) => total + row.resolved, 0);
   const rows = [
-    ["exp-source-register-file-count-v1", "source-register", "source_file", "all declared intake sources", 48, undefined, await scalar(client, "SELECT count(*)::int FROM source_registry.source WHERE tenant_key=$1 AND source_visibility='client_visible' AND source_basis <> 'restricted_evaluator' AND metadata->>'releaseId'=$2", [args.tenantKey, args.releaseId])],
+    ["exp-source-register-file-count-v1", "source-register", "source_file", "declared intake data sources excluding workbook lineage companions", EXPECTED_DECLARED_INTAKE_DATA_SOURCES, undefined, await scalar(client, "SELECT count(*)::int FROM source_registry.source WHERE tenant_key=$1 AND source_visibility='client_visible' AND source_basis <> 'restricted_evaluator' AND metadata->>'releaseId'=$2", [args.tenantKey, args.releaseId])],
     ["exp-source-parse-evidence-row-count-v1", "source-parse", "evidence_row", "all declared parser-visible rows", 6362, undefined, await scalar(client, "SELECT count(*)::int FROM evidence.evidence_item WHERE tenant_key=$1", [args.tenantKey])],
     [APP_REF, "entity-resolve", "entity_candidate", "entity_type=application_platform", applicationExpected, undefined, await scalar(client, "SELECT count(*)::int FROM working.entity_candidate WHERE tenant_key=$1 AND entity_type='application_platform'", [args.tenantKey]), true],
     [VENDOR_REF, "entity-resolve", "entity_candidate", "entity_type=vendor", vendorExpected, undefined, await scalar(client, "SELECT count(*)::int FROM working.entity_candidate WHERE tenant_key=$1 AND entity_type='vendor'", [args.tenantKey]), true],

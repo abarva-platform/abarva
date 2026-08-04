@@ -607,6 +607,16 @@ const clerkProtectedProxy = clerkMiddleware(
       );
     }
 
+    if (
+      request.nextUrl.pathname === FOUNDATION_HOME_KNOWLEDGE_ROUTE ||
+      request.nextUrl.pathname.startsWith(`${FOUNDATION_HOME_KNOWLEDGE_ROUTE}/`)
+    ) {
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(new URL("/home", request.url), 302),
+      );
+    }
+
     const requiresAuth =
       authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request);
 

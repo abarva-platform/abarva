@@ -5,6 +5,8 @@
 // four posture tiles, "this week's read" with the week bar chart and a CTA into
 // Value Proof, and the "decisions waiting on you" queue.
 
+import type { ReactNode } from "react";
+
 import {
   formatCount,
   formatPct,
@@ -33,7 +35,7 @@ interface Tile {
   tone: Tone;
   key: string;
   status: { cls: "steal" | "samber" | "sred" | "sgray"; text: string };
-  hero: string;
+  hero: ReactNode;
   heroNote: string;
   rows: TileRow[];
 }
@@ -45,9 +47,15 @@ interface Tile {
  */
 function buildTiles(view: TowerCommandCenterView): Tile[] {
   const s = view.summary;
+  const allValueUnknown =
+    s.valueClaimCount > 0 &&
+    s.knownValueClaimCount === 0 &&
+    s.unknownValueClaimCount > 0;
+  const valueOrUnknown = (value: number, label = "Unknown") =>
+    allValueUnknown ? <Unknown label={label} /> : formatUsdM(value);
   const openGaps = view.gaps.length;
   // Program-derived risk signals — see the Risk posture tile below for why
-  // these do not come from `mart_required_field_gaps`.
+  // these do not come from the pipeline field-gap projection.
   const ownerGaps =
     view.programs.filter((p) => !p.ownerRole).length +
     view.gaps.filter((g) => !g.owner).length;
@@ -60,6 +68,9 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
 
   const laneCount = (lane: TowerProgramView["lane"]) =>
     view.programs.filter((p) => p.lane === lane).length;
+  const laneByKey = new Map(
+    view.evidenceMaturity.interventionLanes.map((lane) => [lane.key, lane]),
+  );
 
   return [
     {
@@ -97,27 +108,33 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
       key: "Value posture",
       status: {
         cls: s.claimableUsd > 0 ? "steal" : "sred",
-        text: s.claimableUsd > 0 ? "Partially proven" : "Unproven",
+        text: allValueUnknown
+          ? "Value unknown"
+          : s.claimableUsd > 0
+            ? "Partially proven"
+            : "Unproven",
       },
-      hero: formatUsdM(s.claimableUsd),
-      heroNote: "is claimable today",
+      hero: valueOrUnknown(s.claimableUsd),
+      heroNote: allValueUnknown
+        ? `${formatCount(s.unknownValueClaimCount)} claims need value evidence`
+        : "is claimable today",
       rows: [
-        { label: "Promised", value: formatUsdM(s.promisedUsd), tone: "" },
+        { label: "Promised", value: valueOrUnknown(s.promisedUsd), tone: "" },
         {
           label: "Usage-supported",
-          value: formatUsdM(s.usageSupportedUsd),
+          value: valueOrUnknown(s.usageSupportedUsd),
           tone: "vAmber",
         },
         {
           label: "Finance-validated",
-          value: formatUsdM(s.financeValidatedUsd),
+          value: valueOrUnknown(s.financeValidatedUsd),
           tone: "vAmber",
         },
-        { label: "Blocked", value: formatUsdM(s.blockedUsd), tone: "vRed" },
+        { label: "Blocked", value: valueOrUnknown(s.blockedUsd), tone: "vRed" },
       ],
     },
     {
-      // Risk posture reads the PROGRAMS, not just `mart_required_field_gaps`.
+      // Risk posture reads the PROGRAMS, not just the pipeline field-gap projection.
       //
       // Verified live on 2026-07-23: the Healthcare Composite Demo tenant has
       // ZERO required-field-gap rows, yet 12 programs that cannot claim value.
@@ -152,17 +169,29 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
       tone: "",
       key: "Decision posture",
       status: { cls: "sgray", text: "This week" },
-      hero: formatCount(view.actions.length),
-      heroNote: "decisions waiting on a named owner",
+      hero: formatCount(laneByKey.get("ready_for_decision")?.count ?? 0),
+      heroNote: "claims ready for scale / fund / freeze / stop",
       rows: [
-        { label: "Fund", value: formatCount(laneCount("fund")), tone: "vTeal" },
-        { label: "Fix", value: formatCount(laneCount("fix")), tone: "vAmber" },
         {
-          label: "Freeze",
-          value: formatCount(laneCount("freeze")),
+          label: "Establish baseline",
+          value: formatCount(laneByKey.get("establish_baseline")?.count ?? 0),
+          tone: "vAmber",
+        },
+        {
+          label: "Instrument outcome",
+          value: formatCount(laneByKey.get("instrument_outcome")?.count ?? 0),
           tone: "vRed",
         },
-        { label: "Stop", value: formatCount(laneCount("stop")), tone: "vRed" },
+        {
+          label: "Obtain attestation",
+          value: formatCount(laneByKey.get("obtain_attestation")?.count ?? 0),
+          tone: "vRed",
+        },
+        {
+          label: "Legacy lanes",
+          value: formatCount(laneCount("fix")),
+          tone: "",
+        },
       ],
     },
   ];
@@ -190,11 +219,46 @@ export function CommandCenterView({
   onGoToFunnel: () => void;
 }) {
   const s = view.summary;
+  const allValueUnknown =
+    s.valueClaimCount > 0 &&
+    s.knownValueClaimCount === 0 &&
+    s.unknownValueClaimCount > 0;
   const tiles = buildTiles(view);
   const queue = decisionQueue(view);
+  const measurementQueue = view.evidenceMaturity.interventionLanes
+    .filter((lane) => lane.key !== "ready_for_decision" && lane.count > 0)
+    .slice(0, 5);
 
   return (
     <div className={styles.view}>
+      <section className={styles.diagnosticBand}>
+        <div>
+          <div className={styles.eyebrow2}>Tower diagnosis</div>
+          <h2>{view.evidenceMaturity.headline}</h2>
+          <p>
+            {view.evidenceMaturity.summaryRead}{" "}
+            {view.evidenceMaturity.valueStatus}
+          </p>
+        </div>
+        <div className={styles.diagnosticStats}>
+          <span>
+            <b>{formatCount(s.valueClaimCount)}</b>
+            governed claims
+          </span>
+          <span>
+            <b>{formatCount(s.fundedNoBaselineClaimCount)}</b>
+            funded without baseline
+          </span>
+          <span>
+            <b>{formatCount(s.usageSupportedClaimCount)}</b>
+            usage-supported
+          </span>
+          <span>
+            <b>{formatCount(s.claimableClaimCount)}</b>
+            claimable
+          </span>
+        </div>
+      </section>
       <div className={styles.ptiles}>
         {tiles.map((tile) => (
           <div
@@ -235,24 +299,46 @@ export function CommandCenterView({
             <span className={styles.n}>{formatUsdM(s.budgetUsd)}</span> is in
             view. <span className={styles.n}>{formatUsdM(s.aiTaggedUsd)}</span>{" "}
             is AI-tagged.{" "}
-            <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span> is
-            promised value.{" "}
-            <span className={s.claimableUsd > 0 ? styles.n : styles.z}>
-              {formatUsdM(s.claimableUsd)}
-            </span>{" "}
-            is claimable.{" "}
+            {allValueUnknown ? (
+              <>
+                <span className={styles.n}>
+                  {formatCount(s.unknownValueClaimCount)}
+                </span>{" "}
+                value claims have unknown financial amount. Claimable value is{" "}
+                <Unknown label="not evidenced" />.{" "}
+              </>
+            ) : (
+              <>
+                <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span> is
+                promised value.{" "}
+                <span className={s.claimableUsd > 0 ? styles.n : styles.z}>
+                  {formatUsdM(s.claimableUsd)}
+                </span>{" "}
+                is claimable.{" "}
+              </>
+            )}
             {s.decisionQuestion ? (
               <span className={styles.turn}>{s.decisionQuestion}</span>
             ) : null}
           </p>
 
           <div className={styles.wkViz}>
-            <WeekReadChart summary={s} />
+            {allValueUnknown ? (
+              <div className={styles.emptyPanel}>
+                <h2>Value proof is not quantified yet</h2>
+                <p>
+                  Usage proves activity. It does not prove business value. Tower
+                  is waiting for baseline, actual, attribution and attestation
+                  evidence before it lets these claims become executive value.
+                </p>
+              </div>
+            ) : (
+              <WeekReadChart summary={s} />
+            )}
             <span className={styles.srOnly}>
-              Promised {formatUsdM(s.promisedUsd)}; usage-supported{" "}
-              {formatUsdM(s.usageSupportedUsd)}; finance-validated{" "}
-              {formatUsdM(s.financeValidatedUsd)}; claimable{" "}
-              {formatUsdM(s.claimableUsd)}.
+              {allValueUnknown
+                ? `${s.unknownValueClaimCount} claims have unknown financial value; no claimable amount is evidenced.`
+                : `Promised ${formatUsdM(s.promisedUsd)}; usage-supported ${formatUsdM(s.usageSupportedUsd)}; finance-validated ${formatUsdM(s.financeValidatedUsd)}; claimable ${formatUsdM(s.claimableUsd)}.`}
             </span>
           </div>
 
@@ -266,20 +352,60 @@ export function CommandCenterView({
               className={styles.wkCta}
               onClick={onGoToFunnel}
             >
-              See the value funnel
+              See evidence progression
             </button>
           </div>
         </section>
 
         <Card
-          title="Decisions waiting on you"
-          right="aVa proposes · you approve · nothing acts on its own"
+          title="Interventions waiting on you"
+          right="measurement work before scale decisions"
           headId="tcc-decision-queue"
           bodyClassName={styles.scroll}
         >
-          {queue.length === 0 ? (
+          {allValueUnknown && measurementQueue.length > 0 ? (
+            <div className={styles.dq}>
+              {measurementQueue.map((lane) => (
+                <div
+                  key={lane.key}
+                  className={cx(
+                    styles.dqi,
+                    styles.dqStatic,
+                    lane.tone === "red"
+                      ? styles.laneStop
+                      : lane.tone === "amber"
+                        ? styles.laneFix
+                        : styles.laneFund,
+                  )}
+                >
+                  <span
+                    className={cx(
+                      styles.laneTag,
+                      lane.tone === "red"
+                        ? styles.laneStop
+                        : lane.tone === "amber"
+                          ? styles.laneFix
+                          : styles.laneFund,
+                    )}
+                  >
+                    {formatCount(lane.count)}
+                  </span>
+                  <span className={styles.dqMain}>
+                    <span className={styles.dqTitle}>{lane.label}</span>
+                    <span className={styles.dqMeta}>
+                      <span>{lane.description}</span>
+                      <span>
+                        <b>{lane.nextAction}</b>
+                      </span>
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : queue.length === 0 ? (
             <p className={styles.lhSub}>
-              No program currently carries blocked value for this tenant.
+              No scale, fund, freeze, or stop decision is ready. Tower is
+              prescribing measurement work first.
             </p>
           ) : (
             <div className={styles.dq}>

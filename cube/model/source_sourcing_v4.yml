@@ -1,0 +1,999 @@
+cubes:
+  - name: source_v4_vendors
+    sql_table: consumption_v4_canary.sourcing_vendor_v1
+    public: true
+    joins:
+      - name: source_v4_contracts
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {source_v4_contracts.tenant_key} AND {CUBE.vendor_id} = {source_v4_contracts.vendor_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+        primary_key: true
+      - name: legal_name
+        sql: legal_name
+        type: string
+      - name: supplier_category
+        sql: supplier_category
+        type: string
+      - name: strategic_status
+        sql: strategic_status
+        type: string
+      - name: risk_tier
+        sql: risk_tier
+        type: string
+      - name: relationship_owner_role
+        sql: relationship_owner_role
+        type: string
+      - name: quality_state
+        sql: quality_state
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+          - vendor_id
+      - name: annual_value
+        sql: annual_value
+        type: sum
+        format: currency
+        drill_members:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+          - vendor_id
+      - name: contract_count
+        sql: contract_count
+        type: sum
+        drill_members:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+          - vendor_id
+    hierarchies:
+      - name: v4_vendor_portfolio
+        title: V4 Vendor Portfolio
+        levels:
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - legal_name
+
+  - name: source_v4_contracts
+    sql_table: consumption_v4_canary.sourcing_contract_v1
+    public: true
+    joins:
+      - name: source_v4_vendors
+        relationship: many_to_one
+        sql: "{CUBE.tenant_key} = {source_v4_vendors.tenant_key} AND {CUBE.vendor_id} = {source_v4_vendors.vendor_id}"
+      - name: source_v4_contract_scope
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {source_v4_contract_scope.tenant_key} AND {CUBE.contract_id} = {source_v4_contract_scope.contract_id}"
+      - name: source_v4_spend_monthly
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {source_v4_spend_monthly.tenant_key} AND {CUBE.contract_id} = {source_v4_spend_monthly.contract_id}"
+      - name: source_v4_performance
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {source_v4_performance.tenant_key} AND {CUBE.contract_id} = {source_v4_performance.contract_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: contract_id
+        sql: contract_id
+        type: string
+        primary_key: true
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: vendor_name
+        sql: vendor_name
+        type: string
+      - name: agreement_type
+        sql: agreement_type
+        type: string
+      - name: renewal_type
+        sql: renewal_type
+        type: string
+      - name: auto_renew
+        sql: auto_renew
+        type: boolean
+      - name: quality_state
+        sql: quality_state
+        type: string
+      - name: effective_date
+        sql: effective_date
+        type: time
+      - name: expiration_date
+        sql: expiration_date
+        type: time
+      - name: notice_deadline
+        sql: notice_deadline
+        type: time
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+          - expiration_date
+      - name: annual_value
+        sql: annual_value
+        type: sum
+        format: currency
+        drill_members:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+          - expiration_date
+      - name: total_committed_value
+        sql: total_committed_value
+        type: sum
+        format: currency
+        drill_members:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+          - expiration_date
+      - name: auto_renew_count
+        sql: "CASE WHEN auto_renew THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          - renewal_type
+          - auto_renew
+          - vendor_name
+          - contract_id
+          - notice_deadline
+      - name: notice_90_day_count
+        sql: "CASE WHEN notice_deadline <= DATE '2027-09-28' THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          - renewal_type
+          - auto_renew
+          - vendor_name
+          - contract_id
+          - notice_deadline
+    hierarchies:
+      - name: v4_contract_portfolio
+        title: V4 Contract Portfolio
+        levels:
+          - agreement_type
+          - renewal_type
+          - vendor_name
+          - contract_id
+      - name: v4_renewal_calendar
+        title: V4 Renewal Calendar
+        levels:
+          - renewal_type
+          - auto_renew
+          - expiration_date
+          - notice_deadline
+
+  - name: source_v4_contract_scope
+    sql_table: consumption_v4_canary.sourcing_contract_scope_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: contract_scope_id
+        sql: contract_scope_id
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: scope_type
+        sql: scope_type
+        type: string
+      - name: scope_name
+        sql: scope_name
+        type: string
+      - name: criticality
+        sql: criticality
+        type: string
+      - name: relationship_method
+        sql: relationship_method
+        type: string
+      - name: quality_state
+        sql: quality_state
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
+      - name: explicit_scope_count
+        sql: "CASE WHEN relationship_method = 'explicit_contract_scope' THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
+      - name: inferred_scope_count
+        sql: "CASE WHEN relationship_method <> 'explicit_contract_scope' THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
+      - name: average_relationship_confidence
+        sql: relationship_confidence
+        type: avg
+        drill_members:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+          - contract_id
+    hierarchies:
+      - name: v4_scope_confidence
+        title: V4 Scope Confidence
+        levels:
+          - scope_type
+          - criticality
+          - relationship_method
+          - scope_name
+
+  - name: source_v4_spend_monthly
+    sql_table: consumption_v4_canary.sourcing_spend_monthly_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: spend_monthly_id
+        sql: "tenant_key || ':' || contract_id || ':' || month::text || ':' || cost_center || ':' || matching_state"
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: business_unit
+        sql: business_unit
+        type: string
+      - name: cost_center
+        sql: cost_center
+        type: string
+      - name: matching_state
+        sql: matching_state
+        type: string
+      - name: month
+        sql: month
+        type: time
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - business_unit
+          - cost_center
+          - matching_state
+          - contract_id
+          - month
+      - name: invoice_lines
+        sql: invoice_lines
+        type: sum
+        drill_members:
+          - business_unit
+          - cost_center
+          - matching_state
+          - contract_id
+          - month
+      - name: actual_spend
+        sql: actual_spend
+        type: sum
+        format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - matching_state
+          - contract_id
+          - month
+      - name: committed_amount
+        sql: committed_amount
+        type: sum
+        format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - matching_state
+          - contract_id
+          - month
+      - name: off_contract_spend
+        sql: "CASE WHEN matching_state = 'off_contract' THEN actual_spend ELSE 0 END"
+        type: sum
+        format: currency
+        drill_members:
+          - business_unit
+          - cost_center
+          - matching_state
+          - contract_id
+          - month
+    hierarchies:
+      - name: v4_spend_consumption
+        title: V4 Spend Consumption
+        levels:
+          - business_unit
+          - cost_center
+          - matching_state
+          - contract_id
+          - month
+
+  - name: source_v4_performance
+    sql_table: consumption_v4_canary.sourcing_performance_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: performance_id
+        sql: "tenant_key || ':' || contract_id || ':' || service_id || ':' || metric_name || ':' || period_start::text"
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: service_id
+        sql: service_id
+        type: string
+      - name: metric_name
+        sql: metric_name
+        type: string
+      - name: claim_state
+        sql: claim_state
+        type: string
+      - name: dispute_status
+        sql: dispute_status
+        type: string
+      - name: quality_state
+        sql: quality_state
+        type: string
+      - name: period_start
+        sql: period_start
+        type: time
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+      - name: breach_count
+        sql: breach_count
+        type: sum
+        drill_members:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+      - name: credit_calculated
+        sql: credit_calculated
+        type: sum
+        format: currency
+        drill_members:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+      - name: credit_claimed
+        sql: credit_claimed
+        type: sum
+        format: currency
+        drill_members:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+      - name: credit_recovered
+        sql: credit_recovered
+        type: sum
+        format: currency
+        drill_members:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+      - name: unclaimed_credit
+        sql: "COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)"
+        type: sum
+        format: currency
+        drill_members:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+    hierarchies:
+      - name: v4_service_credit_path
+        title: V4 Service Credit Path
+        levels:
+          - metric_name
+          - claim_state
+          - dispute_status
+          - contract_id
+          - period_start
+
+  - name: source_v4_saas_usage
+    sql_table: raw_source_v4.entra_saas_usage_monthly
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: _tenant_key
+        type: string
+        public: false
+      - name: source_record_id
+        sql: source_record_id
+        type: string
+        primary_key: true
+      - name: product_name
+        sql: product_name
+        type: string
+      - name: function_ref
+        sql: function_ref
+        type: string
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: finance_validation_state
+        sql: finance_validation_state
+        type: string
+      - name: claimable_value_state
+        sql: claimable_value_state
+        type: string
+      - name: baseline_metric_state
+        sql: baseline_metric_state
+        type: string
+      - name: period_start
+        sql: period_start::date
+        type: time
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - period_start
+      - name: assigned_seats
+        sql: assigned_seats::numeric
+        type: sum
+        drill_members:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - period_start
+      - name: active_users
+        sql: active_users::numeric
+        type: sum
+        drill_members:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - period_start
+      - name: actual_cost
+        sql: actual_cost::numeric
+        type: sum
+        format: currency
+        drill_members:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - period_start
+      - name: claimable_rows
+        sql: "CASE WHEN claimable_value_state = 'claimable' THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - period_start
+    hierarchies:
+      - name: v4_ai_usage_value_proof
+        title: V4 AI Usage Value Proof
+        levels:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - period_start
+
+  - name: source_v4_cloud_cost
+    sql_table: raw_source_v4.azure_cost_monthly
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: _tenant_key
+        type: string
+        public: false
+      - name: source_record_id
+        sql: source_record_id
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: service_name
+        sql: service_name
+        type: string
+      - name: region
+        sql: region
+        type: string
+      - name: commitment_type
+        sql: commitment_type
+        type: string
+      - name: optimization_recommendation_state
+        sql: optimization_recommendation_state
+        type: string
+      - name: period_start
+        sql: period_start::date
+        type: time
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - service_name
+          - region
+          - commitment_type
+          - optimization_recommendation_state
+          - period_start
+      - name: actual_cost
+        sql: actual_cost::numeric
+        type: sum
+        format: currency
+        drill_members:
+          - service_name
+          - region
+          - commitment_type
+          - optimization_recommendation_state
+          - period_start
+      - name: amortized_cost
+        sql: amortized_cost::numeric
+        type: sum
+        format: currency
+        drill_members:
+          - service_name
+          - region
+          - commitment_type
+          - optimization_recommendation_state
+          - period_start
+      - name: overage_amount
+        sql: overage_amount::numeric
+        type: sum
+        format: currency
+        drill_members:
+          - service_name
+          - region
+          - commitment_type
+          - optimization_recommendation_state
+          - period_start
+    hierarchies:
+      - name: v4_cloud_optimization
+        title: V4 Cloud Optimization
+        levels:
+          - service_name
+          - region
+          - commitment_type
+          - optimization_recommendation_state
+          - period_start
+
+  - name: source_v4_workforce_rate_cards
+    sql_table: raw_source_v4.fieldglass_rate_card
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: _tenant_key
+        type: string
+        public: false
+      - name: source_record_id
+        sql: source_record_id
+        type: string
+        primary_key: true
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: role_title
+        sql: role_title
+        type: string
+      - name: level
+        sql: level
+        type: string
+      - name: location
+        sql: location
+        type: string
+      - name: approval_state
+        sql: approval_state
+        type: string
+      - name: rate_card_amendment_exists
+        sql: rate_card_amendment_exists
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - role_title
+          - level
+          - location
+          - approval_state
+          - contract_id
+      - name: hours
+        sql: hours::numeric
+        type: sum
+        drill_members:
+          - role_title
+          - level
+          - location
+          - approval_state
+          - contract_id
+      - name: bill_rate
+        sql: bill_rate::numeric
+        type: avg
+        format: currency
+        drill_members:
+          - role_title
+          - level
+          - location
+          - approval_state
+          - contract_id
+      - name: unapproved_variance_count
+        sql: "CASE WHEN approval_state = 'variance_unapproved' THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          - role_title
+          - level
+          - location
+          - approval_state
+          - contract_id
+    hierarchies:
+      - name: v4_rate_card_path
+        title: V4 Rate Card Path
+        levels:
+          - role_title
+          - level
+          - location
+          - approval_state
+          - contract_id
+
+  - name: source_v4_sourcing_events
+    sql_table: raw_source_v4.ariba_sourcing_events
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: _tenant_key
+        type: string
+        public: false
+      - name: source_record_id
+        sql: source_record_id
+        type: string
+        primary_key: true
+      - name: event_id
+        sql: event_id
+        type: string
+      - name: event_type
+        sql: event_type
+        type: string
+      - name: stage
+        sql: stage
+        type: string
+      - name: round
+        sql: round
+        type: string
+      - name: supplier_id
+        sql: supplier_id
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: response_status
+        sql: response_status
+        type: string
+      - name: bafo_marker
+        sql: bafo_marker
+        type: string
+      - name: comparability_flag
+        sql: comparability_flag
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          - event_type
+          - stage
+          - round
+          - response_status
+          - supplier_id
+          - event_id
+      - name: normalized_cost
+        sql: normalized_cost::numeric
+        type: sum
+        format: currency
+        drill_members:
+          - event_type
+          - stage
+          - round
+          - response_status
+          - supplier_id
+          - event_id
+      - name: line_item_cost
+        sql: line_item_cost::numeric
+        type: sum
+        format: currency
+        drill_members:
+          - event_type
+          - stage
+          - round
+          - response_status
+          - supplier_id
+          - event_id
+      - name: weighted_score
+        sql: score::numeric
+        type: avg
+        drill_members:
+          - event_type
+          - stage
+          - round
+          - response_status
+          - supplier_id
+          - event_id
+    hierarchies:
+      - name: v4_sourcing_event_path
+        title: V4 Sourcing Event Path
+        levels:
+          - event_type
+          - stage
+          - round
+          - response_status
+          - supplier_id
+          - event_id
+
+  - name: source_v4_context_coverage
+    sql_table: consumption_v4_canary.sourcing_context_coverage_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        primary_key: true
+        public: false
+    measures:
+      - name: vendors
+        sql: vendors
+        type: sum
+        drill_members:
+          - tenant_key
+      - name: contracts
+        sql: contracts
+        type: sum
+        drill_members:
+          - tenant_key
+      - name: annual_value
+        sql: annual_value
+        type: sum
+        format: currency
+        drill_members:
+          - tenant_key
+      - name: scope_rows
+        sql: scope_rows
+        type: sum
+        drill_members:
+          - tenant_key
+      - name: invoice_lines
+        sql: invoice_lines
+        type: sum
+        drill_members:
+          - tenant_key
+      - name: saas_usage_rows
+        sql: saas_usage_rows
+        type: sum
+        drill_members:
+          - tenant_key
+      - name: cloud_rows
+        sql: cloud_rows
+        type: sum
+        drill_members:
+          - tenant_key
+      - name: performance_rows
+        sql: performance_rows
+        type: sum
+        drill_members:
+          - tenant_key
+
+views:
+  - name: source_v4_executive_portfolio
+    cubes:
+      - join_path: source_v4_contracts
+        includes:
+          - count
+          - annual_value
+          - total_committed_value
+          - auto_renew_count
+          - notice_90_day_count
+          - v4_contract_portfolio
+          - v4_renewal_calendar
+      - join_path: source_v4_context_coverage
+        prefix: true
+        includes:
+          - vendors
+          - contracts
+          - annual_value
+          - scope_rows
+          - invoice_lines
+
+  - name: source_v4_vendor_concentration
+    cubes:
+      - join_path: source_v4_vendors
+        includes:
+          - legal_name
+          - supplier_category
+          - strategic_status
+          - risk_tier
+          - annual_value
+          - contract_count
+          - v4_vendor_portfolio
+
+  - name: source_v4_renewal_exposure
+    cubes:
+      - join_path: source_v4_contracts
+        includes:
+          - contract_id
+          - vendor_name
+          - renewal_type
+          - expiration_date
+          - notice_deadline
+          - auto_renew
+          - annual_value
+          - notice_90_day_count
+          - v4_renewal_calendar
+
+  - name: source_v4_scope_confidence
+    cubes:
+      - join_path: source_v4_contract_scope
+        includes:
+          - contract_id
+          - scope_type
+          - scope_name
+          - criticality
+          - relationship_method
+          - count
+          - explicit_scope_count
+          - inferred_scope_count
+          - average_relationship_confidence
+          - v4_scope_confidence
+
+  - name: source_v4_spend_consumption
+    cubes:
+      - join_path: source_v4_spend_monthly
+        includes:
+          - contract_id
+          - vendor_id
+          - business_unit
+          - cost_center
+          - matching_state
+          - month
+          - invoice_lines
+          - actual_spend
+          - committed_amount
+          - off_contract_spend
+          - v4_spend_consumption
+
+  - name: source_v4_performance_credits
+    cubes:
+      - join_path: source_v4_performance
+        includes:
+          - contract_id
+          - metric_name
+          - period_start
+          - breach_count
+          - credit_calculated
+          - credit_claimed
+          - credit_recovered
+          - unclaimed_credit
+          - v4_service_credit_path
+
+  - name: source_v4_ai_usage_value_proof
+    cubes:
+      - join_path: source_v4_saas_usage
+        includes:
+          - product_name
+          - function_ref
+          - finance_validation_state
+          - claimable_value_state
+          - baseline_metric_state
+          - period_start
+          - assigned_seats
+          - active_users
+          - actual_cost
+          - claimable_rows
+          - v4_ai_usage_value_proof
+
+  - name: source_v4_cloud_optimization
+    cubes:
+      - join_path: source_v4_cloud_cost
+        includes:
+          - service_name
+          - region
+          - commitment_type
+          - optimization_recommendation_state
+          - period_start
+          - actual_cost
+          - amortized_cost
+          - overage_amount
+          - v4_cloud_optimization
+
+  - name: source_v4_workforce_rate_card
+    cubes:
+      - join_path: source_v4_workforce_rate_cards
+        includes:
+          - contract_id
+          - role_title
+          - level
+          - location
+          - approval_state
+          - rate_card_amendment_exists
+          - hours
+          - bill_rate
+          - unapproved_variance_count
+          - v4_rate_card_path
+
+  - name: source_v4_sourcing_event_bafo
+    cubes:
+      - join_path: source_v4_sourcing_events
+        includes:
+          - event_id
+          - event_type
+          - stage
+          - round
+          - supplier_id
+          - response_status
+          - bafo_marker
+          - comparability_flag
+          - normalized_cost
+          - line_item_cost
+          - weighted_score
+          - v4_sourcing_event_path

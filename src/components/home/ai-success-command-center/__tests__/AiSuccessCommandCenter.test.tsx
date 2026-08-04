@@ -69,23 +69,25 @@ beforeEach(() => {
   fetchMock.mockReset();
   global.fetch = fetchMock as unknown as typeof fetch;
   Element.prototype.scrollIntoView = jest.fn();
+  window.scrollTo = jest.fn();
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
 });
 
-it("renders the generated architecture advisory thesis on the landing viewport", () => {
+it("renders the generated advisory story and architecture canvas", () => {
   render(<AiSuccessCommandCenter data={readSkyHarborAiSuccessHome()} />);
 
   expect(
-    screen.getByText(
-      /strategic imperative is not to accelerate AI deployment/i,
-    ),
+    screen.getByText(/AI scale is real. Value management has not caught up/i),
   ).toBeInTheDocument();
-  expect(
-    screen.getByText(/resolve the APP-APP-0011 lifecycle contradiction/i),
-  ).toBeInTheDocument();
+  expect(screen.getByText(/finance-validated outcomes/i)).toBeInTheDocument();
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Current-state architecture/i }),
+  );
+  expect(screen.getByText(/Evidence graph/i)).toBeInTheDocument();
   expect(
     screen.getByTestId("current-state-architecture-map"),
   ).toBeInTheDocument();

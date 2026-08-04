@@ -5,7 +5,7 @@
 // waterfall with "The read" callout, beside the top-5 blockers table sorted by
 // blocked dollars descending.
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
 import {
@@ -15,6 +15,73 @@ import {
 import { Card, Pips, ViewHead, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
+function EvidenceProgression({ view }: { view: TowerCommandCenterView }) {
+  return (
+    <div className={styles.progressionGrid}>
+      {view.evidenceMaturity.stages.map((stage, index) => (
+        <div
+          key={stage.key}
+          className={cx(styles.progressionStage, styles[stage.tone])}
+        >
+          <div className={styles.progressionTop}>
+            <span className={styles.progressionN}>{index + 1}</span>
+            <span className={styles.progressionLabel}>{stage.label}</span>
+          </div>
+          <div className={styles.progressionCount}>
+            {formatCount(stage.claimCount)}
+          </div>
+          <div className={styles.progressionSub}>
+            {stage.unknownValueCount > 0
+              ? `${formatCount(stage.unknownValueCount)} unknown-value claims`
+              : `${formatUsdM(stage.knownValueUsd)} known value`}
+          </div>
+          <div className={styles.progressionGate}>{stage.missingGate}</div>
+          <div className={styles.progressionAction}>
+            <span>{stage.ownerRole}</span>
+            <b>{stage.nextAction}</b>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EvidenceGapLedger({ view }: { view: TowerCommandCenterView }) {
+  return (
+    <table className={styles.tbl}>
+      <thead>
+        <tr>
+          <th scope="col">Evidence gap</th>
+          <th scope="col" className={styles.num}>
+            Claims
+          </th>
+          <th scope="col">Owner</th>
+          <th scope="col">Next action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {view.evidenceMaturity.gapLedger.map((gap) => (
+          <tr key={gap.key}>
+            <td>
+              <span className={styles.pname} style={{ fontSize: 14 }}>
+                {gap.label}
+              </span>
+              <div className={styles.psub}>{gap.evidenceBasis}</div>
+            </td>
+            <td className={styles.num}>
+              <span className={cx(styles.bignum, gap.count > 0 && styles.nRed)}>
+                {formatCount(gap.count)}
+              </span>
+            </td>
+            <td>{gap.ownerRole}</td>
+            <td className={styles.gateCell}>{gap.nextAction}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function ValueProofView({
   view,
   onOpenProgram,
@@ -23,6 +90,8 @@ export function ValueProofView({
   onOpenProgram: (id: string) => void;
 }) {
   const s = view.summary;
+  const proofMaturityMode =
+    s.valueClaimCount > 0 && s.claimableClaimCount === 0;
   const rows = buildWaterfallRows(s);
   const noUsage = rows[1]?.usd ?? 0;
   const noFinance = rows[3]?.usd ?? 0;
@@ -38,8 +107,16 @@ export function ValueProofView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="Where the value disappears"
-        sub="Promised → usage-supported → finance-validated → claimable"
+        title={
+          proofMaturityMode
+            ? "Where proof has to mature"
+            : "Where the value disappears"
+        }
+        sub={
+          proofMaturityMode
+            ? "Funded -> baseline captured -> usage supported -> outcome measured -> Finance validated -> claimable"
+            : "Promised -> usage-supported -> finance-validated -> claimable"
+        }
         hint="Click a program for its proof chain & usage evidence"
       />
 
@@ -48,22 +125,31 @@ export function ValueProofView({
         style={{ gridTemplateColumns: "1.12fr 1fr" }}
       >
         <Card
-          eyebrow="Value waterfall"
-          right="FY26 · $M"
+          eyebrow={
+            proofMaturityMode ? "Evidence progression" : "Value waterfall"
+          }
+          right={proofMaturityMode ? "claims · value status" : "FY26 · $M"}
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <div
-            className={styles.chartwrap}
-            aria-describedby="tcc-waterfall-alt"
-          >
-            <ValueWaterfallChart summary={s} />
-          </div>
+          {proofMaturityMode ? (
+            <EvidenceProgression view={view} />
+          ) : (
+            <div
+              className={styles.chartwrap}
+              aria-describedby="tcc-waterfall-alt"
+            >
+              <ValueWaterfallChart summary={s} />
+            </div>
+          )}
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
-            {rows
-              .map((r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`)
-              .join(". ")}
-            .
+            {proofMaturityMode
+              ? view.evidenceMaturity.summaryRead
+              : `${rows
+                  .map(
+                    (r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
+                  )
+                  .join(". ")}.`}
           </p>
 
           {/* "The read" — the mart's own executive summary, prefixed with the
@@ -73,10 +159,13 @@ export function ValueProofView({
             <div className={styles.ik}>The read</div>
             <p className={styles.itext}>
               <b>
-                {formatUsdM(noUsage)} never becomes usage-supported
-                {noFinance > 0
-                  ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
-                  : "."}
+                {proofMaturityMode
+                  ? `${s.unknownValueClaimCount} claims have unknown financial value; ${s.knownValueClaimCount} carry partial finance-validated value; no executive value total is claimable from this dataset.`
+                  : `${formatUsdM(noUsage)} never becomes usage-supported${
+                      noFinance > 0
+                        ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
+                        : "."
+                    }`}
               </b>{" "}
               {financeAheadOfUsage ? (
                 <>
@@ -91,12 +180,18 @@ export function ValueProofView({
         </Card>
 
         <Card
-          title="Top 5 blockers by dollar impact"
+          title={
+            proofMaturityMode
+              ? "Top evidence blockers"
+              : "Top 5 blockers by dollar impact"
+          }
           headId="tcc-blockers"
           bodyClassName={styles.scroll}
           bodyStyle={{ paddingTop: 8 }}
         >
-          {blockers.length === 0 ? (
+          {proofMaturityMode ? (
+            <EvidenceGapLedger view={view} />
+          ) : blockers.length === 0 ? (
             <p className={styles.lhSub}>
               No program currently carries blocked value.
             </p>

@@ -1,67 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
+import type { CSSProperties } from "react";
 
 import type {
   ArchitectureAdvisory,
-  ArchitectureEdge,
   ArchitectureGraph,
   ArchitectureLayer,
   ArchitectureNode,
 } from "@/types/architecture";
 
-const LAYERS: Array<{ layer: ArchitectureLayer; label: string; hint: string }> =
-  [
-    {
-      layer: "business",
-      label: "Business capabilities",
-      hint: "who depends on the estate",
-    },
-    {
-      layer: "source",
-      label: "Apps and source systems",
-      hint: "operational systems of record",
-    },
-    {
-      layer: "integration",
-      label: "Integration",
-      hint: "APIs, files and messaging",
-    },
-    {
-      layer: "transformation",
-      label: "Transformation",
-      hint: "ETL, pipelines and logic",
-    },
-    {
-      layer: "data_platform",
-      label: "Data platforms",
-      hint: "warehouses, lakes and marts",
-    },
-    {
-      layer: "consumption",
-      label: "Analytics and decisions",
-      hint: "BI, reports and decision use",
-    },
-    {
-      layer: "ai_and_decision",
-      label: "AI tools and outcomes",
-      hint: "AI activation and proof",
-    },
-  ];
-
-const ZONES = [
-  "Flight operations",
-  "Airport operations",
-  "Customer and commercial",
-  "Revenue and planning",
-  "Maintenance and safety",
-  "Finance and corporate",
-  "HR and workforce",
-  "Enterprise technology",
-] as const;
-
-const OVERLAYS = [
-  { ref: "", label: "Default" },
+const LENS_OPTIONS = [
+  { ref: "", label: "Current flow" },
   { ref: "annual_cost", label: "Cost" },
   { ref: "lifecycle_risk", label: "Modernization" },
   { ref: "criticality", label: "Risk" },
@@ -69,31 +19,75 @@ const OVERLAYS = [
   { ref: "evidence_completeness", label: "AI readiness" },
 ] as const;
 
-const FLOW_STEPS = [
-  "Business operations",
-  "Source systems",
-  "Integration",
-  "Transformation",
-  "Data platforms",
-  "Decision tools",
-  "AI-enabled work and outcomes",
-] as const;
+const ARCH_COLUMNS: Array<{
+  ref: string;
+  title: string;
+  subtitle: string;
+  layers: ArchitectureLayer[];
+  fill: string;
+  stroke: string;
+}> = [
+  {
+    ref: "business",
+    title: "Business Demand",
+    subtitle: "airline operating domains",
+    layers: ["business"],
+    fill: "#f8f4eb",
+    stroke: "#d5c9b9",
+  },
+  {
+    ref: "systems",
+    title: "Systems of Record",
+    subtitle: "applications and platforms",
+    layers: ["source"],
+    fill: "#fffaf1",
+    stroke: "#dfc892",
+  },
+  {
+    ref: "integration",
+    title: "Integration Fabric",
+    subtitle: "APIs, files, events",
+    layers: ["integration"],
+    fill: "#f0f6f3",
+    stroke: "#b9cbc3",
+  },
+  {
+    ref: "foundation",
+    title: "Data Foundation",
+    subtitle: "collect and organize",
+    layers: ["transformation", "data_platform"],
+    fill: "#eef5f8",
+    stroke: "#adcbd6",
+  },
+  {
+    ref: "decision",
+    title: "Decision Surfaces",
+    subtitle: "analyze and explain",
+    layers: ["consumption"],
+    fill: "#f7f2fa",
+    stroke: "#cdb9dc",
+  },
+  {
+    ref: "ai",
+    title: "AI Activation",
+    subtitle: "infuse into work",
+    layers: ["ai_and_decision"],
+    fill: "#edf7f1",
+    stroke: "#9dcab0",
+  },
+];
 
-type Zone = (typeof ZONES)[number];
-
-interface PositionedNode {
-  node: ArchitectureNode;
-  x: number;
-  y: number;
-  zone: Zone;
-}
-
-interface Layout {
-  nodes: PositionedNode[];
-  edges: ArchitectureEdge[];
-  positions: Map<string, PositionedNode>;
-  width: number;
-  height: number;
+interface ArchitectureColumn {
+  ref: string;
+  title: string;
+  subtitle: string;
+  layers: ArchitectureLayer[];
+  fill: string;
+  stroke: string;
+  nodes: ArchitectureNode[];
+  annualCost: number;
+  interfaceCount: number;
+  evidenceRatio: number;
 }
 
 export function CurrentStateArchitectureMap({
@@ -111,757 +105,603 @@ export function CurrentStateArchitectureMap({
   onOverlayChange: (overlay: string) => void;
   onSelect: (ref: string) => void;
 }) {
-  const layout = useMemo(() => buildLayout(graph, advisory), [graph, advisory]);
-  const callouts = useMemo(
-    () => normalizeDiagramCallouts(advisory),
-    [advisory],
+  const board = useMemo(
+    () => buildArchitectureBoard(graph, advisory),
+    [graph, advisory],
   );
+  const selected = selectedRef
+    ? (board.nodeByRef.get(selectedRef) ?? board.edgeByRef.get(selectedRef))
+    : undefined;
+  const lens = lensSummary(overlay, graph, board.columns);
 
   return (
-    <section style={shellStyle}>
+    <section
+      style={shellStyle}
+      data-testid="current-state-architecture-board"
+      data-active-lens={overlay || "current_flow"}
+    >
       <header style={headerStyle}>
         <div>
-          <strong style={{ fontSize: 14 }}>
-            End-to-end current-state architecture
-          </strong>
-          <p style={headerCopyStyle}>
-            Showing {layout.nodes.length} executive entities selected from{" "}
-            {graph.nodes.length} graph nodes and {graph.edges.length} evidenced
-            flows. The sequence runs from operations through source systems,
-            integration, data, analytics and AI outcome proof.
+          <div style={kickerStyle}>Architecture review board</div>
+          <h3 style={titleStyle}>How SkyHarbor is positioned for AI success</h3>
+          <p style={copyStyle}>
+            Generated from {graph.nodes.length} graph nodes and{" "}
+            {graph.edges.length} evidenced relationship flows. The board shows
+            business demand through systems, integration, data, decision
+            surfaces and AI activation; value proof is the governing constraint.
           </p>
         </div>
-        <div style={overlayWrapStyle} aria-label="Architecture overlay">
-          {OVERLAYS.map((item) => (
-            <button
-              key={item.ref || "default"}
-              type="button"
-              onClick={() => onOverlayChange(item.ref)}
-              aria-pressed={overlay === item.ref}
-              style={{
-                ...overlayButtonStyle,
-                background: overlay === item.ref ? "#17211e" : "#fffdf8",
-                color: overlay === item.ref ? "#e7f4ec" : "#3b352e",
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div style={metricWrapStyle}>
+          <Metric
+            label="Graph nodes"
+            value={graph.nodes.length.toLocaleString()}
+          />
+          <Metric label="Flows" value={graph.edges.length.toLocaleString()} />
+          <Metric label="Findings" value={graph.deterministicFindings.length} />
         </div>
       </header>
 
-      <div style={flowStripStyle} aria-label="Architecture flow sequence">
-        {FLOW_STEPS.map((step, index) => (
-          <div key={step} style={flowStepStyle}>
-            <span style={flowIndexStyle}>
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <span>{step}</span>
-          </div>
+      <div style={toolbarStyle} aria-label="Architecture lens selector">
+        {LENS_OPTIONS.map((item) => (
+          <button
+            key={item.ref || "default"}
+            type="button"
+            onClick={() => onOverlayChange(item.ref)}
+            aria-pressed={overlay === item.ref}
+            style={{
+              ...lensButtonStyle,
+              background: overlay === item.ref ? "#16211d" : "#fffdf8",
+              color: overlay === item.ref ? "#eaf5ef" : "#332f29",
+              borderColor: overlay === item.ref ? "#16211d" : "#d6ccbf",
+            }}
+          >
+            {item.label}
+          </button>
         ))}
       </div>
 
-      <div style={viewportStyle}>
-        <svg
-          role="img"
-          aria-label="SkyHarbor end-to-end current-state architecture"
-          viewBox={`0 0 ${layout.width} ${layout.height}`}
-          width={layout.width}
-          height={layout.height}
-          style={svgStyle}
-        >
-          <defs>
-            <marker
-              id="current-state-arrow"
-              markerWidth="10"
-              markerHeight="10"
-              refX="8"
-              refY="3"
-              orient="auto"
-              markerUnits="strokeWidth"
-            >
-              <path d="M0,0 L0,6 L8,3 z" fill="#596660" />
-            </marker>
-            <linearGradient id="flow-ribbon" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#157f74" stopOpacity="0.12" />
-              <stop offset="0.52" stopColor="#5e6b69" stopOpacity="0.08" />
-              <stop offset="1" stopColor="#a96d16" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
+      <div style={bodyStyle}>
+        <div style={diagramPanelStyle}>
+          <svg
+            role="img"
+            aria-label="SkyHarbor current-state architecture from business demand through AI value proof"
+            viewBox="0 0 1280 620"
+            width="100%"
+            style={svgStyle}
+          >
+            <defs>
+              <marker
+                id="architecture-board-arrow"
+                markerWidth="11"
+                markerHeight="11"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <path d="M0,0 L0,7 L9,3.5 z" fill="#53615b" />
+              </marker>
+              <linearGradient
+                id="architecture-flow"
+                x1="0"
+                x2="1"
+                y1="0"
+                y2="0"
+              >
+                <stop offset="0" stopColor="#158a7b" stopOpacity="0.18" />
+                <stop offset="0.45" stopColor="#1688ff" stopOpacity="0.08" />
+                <stop offset="1" stopColor="#bd720f" stopOpacity="0.14" />
+              </linearGradient>
+            </defs>
 
-          <rect
-            x={0}
-            y={0}
-            width={layout.width}
-            height={layout.height}
-            fill="#fffdf8"
-          />
-          <rect
-            x={148}
-            y={76}
-            width={layout.width - 176}
-            height={layout.height - 116}
-            rx={8}
-            fill="url(#flow-ribbon)"
-          />
+            <rect width="1280" height="620" rx="18" fill="#fffdf8" />
+            <rect
+              x="40"
+              y="52"
+              width="1200"
+              height="80"
+              rx="14"
+              fill="url(#architecture-flow)"
+              stroke="#e3dbcf"
+            />
+            <text x="62" y="84" fill="#151311" fontSize="20" fontWeight="900">
+              Current-state architecture spine
+            </text>
+            <text x="62" y="111" fill="#5f5a53" fontSize="14">
+              Demand moves through systems, integration, data, decision surfaces
+              and AI-enabled work; value proof is the governing constraint.
+            </text>
 
-          {ZONES.map((zone, index) => {
-            const x = zoneX(index);
-            return (
-              <g key={zone}>
-                <rect
-                  x={x - 4}
-                  y={16}
-                  width={zoneWidth - 12}
-                  height={layout.height - 44}
-                  rx={8}
-                  fill={index % 2 ? "#fbf8f1" : "#fffdf8"}
-                  stroke="#ece4d8"
-                />
-                <text
-                  x={x + 8}
-                  y={42}
-                  fill="#312c26"
-                  fontSize={12}
-                  fontWeight={900}
-                >
-                  {zone}
-                </text>
-              </g>
-            );
-          })}
+            {board.columns.map((column, index) => {
+              const x = 42 + index * 202;
+              const selectedColumn = selectedRef === column.ref;
+              return (
+                <g key={column.ref}>
+                  {index < board.columns.length - 1 ? (
+                    <path
+                      d={`M ${x + 182} 238 C ${x + 214} 238, ${x + 214} 238, ${
+                        x + 232
+                      } 238`}
+                      fill="none"
+                      stroke="#53615b"
+                      strokeWidth="2"
+                      markerEnd="url(#architecture-board-arrow)"
+                      opacity="0.72"
+                    />
+                  ) : null}
+                  <rect
+                    x={x}
+                    y="166"
+                    width="182"
+                    height="322"
+                    rx="16"
+                    fill={column.fill}
+                    stroke={selectedColumn ? "#1688ff" : column.stroke}
+                    strokeWidth={selectedColumn ? "3" : "1.2"}
+                    onClick={() => onSelect(column.ref)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <text
+                    x={x + 16}
+                    y="198"
+                    fill="#151311"
+                    fontSize="17"
+                    fontWeight="900"
+                  >
+                    {column.title}
+                  </text>
+                  <text x={x + 16} y="219" fill="#615a52" fontSize="12.5">
+                    {column.subtitle}
+                  </text>
+                  <text
+                    x={x + 16}
+                    y="248"
+                    fill={lens.color}
+                    fontSize="20"
+                    fontWeight="900"
+                  >
+                    {columnMetric(column, overlay)}
+                  </text>
+                  <text x={x + 16} y="269" fill="#6b655d" fontSize="11.5">
+                    {columnSubMetric(column, overlay)}
+                  </text>
+                  {column.nodes.slice(0, 3).map((node, nodeIndex) => (
+                    <NodeCard
+                      key={node.nodeRef}
+                      node={node}
+                      x={x + 16}
+                      y={296 + nodeIndex * 52}
+                      selected={selectedRef === node.nodeRef}
+                      overlay={overlay}
+                      onSelect={onSelect}
+                    />
+                  ))}
+                </g>
+              );
+            })}
 
-          {LAYERS.map((item, index) => {
-            const y = layerY(index);
-            return (
-              <g key={item.layer}>
-                <rect
-                  x={18}
-                  y={y - 16}
-                  width={128}
-                  height={rowHeight - 16}
-                  rx={8}
-                  fill={index % 2 ? "#f4efe6" : "#f7f4ee"}
-                  stroke="#ded5c8"
-                />
-                <text
-                  x={32}
-                  y={y + 5}
-                  fill="#161411"
-                  fontSize={12}
-                  fontWeight={900}
-                >
-                  {item.label}
-                </text>
-                <text x={32} y={y + 24} fill="#6d675f" fontSize={10}>
-                  {item.hint}
-                </text>
-                <line
-                  x1={150}
-                  y1={y - 16}
-                  x2={layout.width - 28}
-                  y2={y - 16}
-                  stroke="#e8dfd3"
-                />
-              </g>
-            );
-          })}
-
-          {layout.edges.map((edge) => {
-            const from = layout.positions.get(edge.fromNodeRef);
-            const to = layout.positions.get(edge.toNodeRef);
-            if (!from || !to) return null;
-            const [visualFrom, visualTo] = visualEdgeEndpoints(from, to);
-            const selected =
-              selectedRef === edge.edgeRef ||
-              selectedRef === edge.fromNodeRef ||
-              selectedRef === edge.toNodeRef;
-            return (
-              <path
-                key={edge.edgeRef}
-                d={edgePath(visualFrom, visualTo)}
-                fill="none"
-                stroke={edgeColor(edge, selected)}
-                strokeWidth={selected ? 3.2 : 1.4}
-                strokeDasharray={
-                  edge.evidenceState === "evidenced" ? undefined : "6 5"
-                }
-                markerEnd="url(#current-state-arrow)"
-                opacity={selected ? 0.95 : 0.48}
-                onClick={() => onSelect(edge.edgeRef)}
-                style={{ cursor: "pointer" }}
+            <g>
+              <rect
+                x="42"
+                y="520"
+                width="375"
+                height="62"
+                rx="14"
+                fill="#f7e5df"
+                stroke="#dbb0a4"
               />
-            );
-          })}
-
-          {layout.nodes.map(({ node, x, y }) => {
-            const selected = selectedRef === node.nodeRef;
-            const emphasis = advisory.nodeEmphasis.find(
-              (item) => item.nodeRef === node.nodeRef,
-            )?.emphasis;
-            const color = nodeColor(node, overlay);
-            return (
-              <g
-                key={node.nodeRef}
-                transform={`translate(${x}, ${y})`}
-                role="button"
-                tabIndex={0}
-                aria-label={`${node.label}, ${node.nodeKind}`}
-                onClick={() => onSelect(node.nodeRef)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ")
-                    onSelect(node.nodeRef);
-                }}
-                style={{ cursor: "pointer", outline: "none" }}
+              <text
+                x="62"
+                y="548"
+                fill="#151311"
+                fontSize="15"
+                fontWeight="900"
               >
-                {emphasis === "warning" || hasLifecycleConcern(node) ? (
-                  <rect
-                    x={-7}
-                    y={-7}
-                    width={nodeWidth + 14}
-                    height={nodeHeight + 14}
-                    rx={10}
-                    fill="#f8dfd8"
-                  />
-                ) : emphasis === "halo" || isCritical(node) ? (
-                  <rect
-                    x={-7}
-                    y={-7}
-                    width={nodeWidth + 14}
-                    height={nodeHeight + 14}
-                    rx={10}
-                    fill="#dff0ec"
-                  />
-                ) : null}
-                <rect
-                  width={nodeWidth}
-                  height={nodeHeight}
-                  rx={7}
-                  fill={color.fill}
-                  stroke={selected ? "#157f74" : color.stroke}
-                  strokeWidth={selected ? 2.6 : 1}
-                />
-                <text
-                  x={10}
-                  y={18}
-                  fill="#161411"
-                  fontSize={11.5}
-                  fontWeight={900}
-                >
-                  {trimLabel(node.shortLabel || node.label, 22)}
-                </text>
-                <text x={10} y={35} fill="#5d554b" fontSize={9.5}>
-                  {trimLabel(nodeSubtitle(node, overlay), 28)}
-                </text>
-                <text x={10} y={51} fill="#6d675f" fontSize={9}>
-                  {trimLabel(nodeMetric(node, overlay), 30)}
-                </text>
-                <circle
-                  cx={nodeWidth - 13}
-                  cy={15}
-                  r={4.5}
-                  fill={evidenceColor(node.evidenceState)}
-                />
-              </g>
-            );
-          })}
+                Finding: value proof has not caught up
+              </text>
+              <text x="62" y="570" fill="#625c54" fontSize="12.5">
+                Usage telemetry exists; finance-validated realized value is not
+                established.
+              </text>
+            </g>
 
-          {callouts.slice(0, 5).map((callout, index) => {
-            const anchor = layout.positions.get(callout.anchorRef);
-            const x = anchor
-              ? Math.min(layout.width - 310, anchor.x + 96)
-              : 165 + index * 290;
-            const y = anchor
-              ? Math.max(78, anchor.y - 38)
-              : layout.height - 124;
-            return (
-              <g
-                key={`${callout.anchorRef}-${index}`}
-                onClick={() => onSelect(callout.anchorRef)}
-                style={{ cursor: "pointer" }}
+            <g>
+              <rect
+                x="442"
+                y="520"
+                width="375"
+                height="62"
+                rx="14"
+                fill="#fbefd9"
+                stroke="#e2bc78"
+              />
+              <text
+                x="462"
+                y="548"
+                fill="#151311"
+                fontSize="15"
+                fontWeight="900"
               >
-                {anchor ? (
-                  <path
-                    d={`M ${x + 8} ${y + 48} L ${anchor.x + nodeWidth / 2} ${anchor.y + nodeHeight / 2}`}
-                    stroke="#a96d16"
-                    strokeWidth={1.2}
-                    strokeDasharray="4 4"
-                  />
-                ) : null}
-                <rect
-                  x={x}
-                  y={y}
-                  width={282}
-                  height={72}
-                  rx={8}
-                  fill="#fbefd9"
-                  stroke="#e0b76e"
-                />
-                <text
-                  x={x + 12}
-                  y={y + 20}
-                  fill="#161411"
-                  fontSize={11}
-                  fontWeight={900}
+                Control point: contract evidence pending
+              </text>
+              <text x="462" y="570" fill="#625c54" fontSize="12.5">
+                Annual contract value is known; clause/span evidence is the next
+                load.
+              </text>
+            </g>
+
+            <g>
+              <rect
+                x="842"
+                y="520"
+                width="398"
+                height="62"
+                rx="14"
+                fill="#eaf4f0"
+                stroke="#a9cfc4"
+              />
+              <text
+                x="862"
+                y="548"
+                fill="#151311"
+                fontSize="15"
+                fontWeight="900"
+              >
+                Operating model: measure before scale
+              </text>
+              <text x="862" y="570" fill="#625c54" fontSize="12.5">
+                Baseline, DORA/service metrics and owner sign-off gate funding.
+              </text>
+            </g>
+          </svg>
+        </div>
+
+        <aside
+          style={insightPanelStyle}
+          aria-label="Architecture insight panel"
+        >
+          <div style={kickerStyle}>Active lens</div>
+          <h4 style={panelTitleStyle} data-testid="architecture-active-lens">
+            {lens.title}
+          </h4>
+          <p style={panelCopyStyle}>{lens.body}</p>
+          <div style={statGridStyle}>
+            <Metric label="Evidence gaps" value={graph.evidenceGaps.length} />
+            <Metric
+              label="Evidenced nodes"
+              value={`${Math.round(board.evidencedNodeRatio * 100)}%`}
+            />
+          </div>
+
+          <div style={detailBoxStyle}>
+            <div style={kickerStyle}>Selected detail</div>
+            {selected ? (
+              <SelectedDetail value={selected} />
+            ) : selectedRef && board.columnByRef.has(selectedRef) ? (
+              <ColumnDetail column={board.columnByRef.get(selectedRef)!} />
+            ) : (
+              <p style={panelCopyStyle}>
+                Select a block or node to inspect source-backed details,
+                ownership hints, volumetrics and evidence state.
+              </p>
+            )}
+          </div>
+
+          <div style={detailBoxStyle}>
+            <div style={kickerStyle}>Review agenda</div>
+            {(advisory.leadershipDecisions ?? [])
+              .slice(0, 3)
+              .map((item, index) => (
+                <div
+                  key={`${item.decisionRef || item.headline}-${index}`}
+                  style={agendaItemStyle}
                 >
-                  {trimLabel(callout.headline, 36)}
-                </text>
-                <text x={x + 12} y={y + 40} fill="#5d554b" fontSize={9.5}>
-                  {trimLabel(callout.body, 46)}
-                </text>
-                <text
-                  x={x + 12}
-                  y={y + 58}
-                  fill="#8a5f18"
-                  fontSize={9}
-                  fontWeight={800}
-                >
-                  {callout.anchorRef}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+                  <strong>{item.headline}</strong>
+                  <span>{item.decisionOwnerRole}</span>
+                </div>
+              ))}
+          </div>
+        </aside>
       </div>
     </section>
   );
 }
 
-const zoneWidth = 194;
-const rowHeight = 154;
-const nodeWidth = 154;
-const nodeHeight = 62;
-
-function buildLayout(
-  graph: ArchitectureGraph,
-  advisory: ArchitectureAdvisory,
-): Layout {
-  const selectedNodes = selectExecutiveNodes(graph, advisory);
-  const positions = new Map<string, PositionedNode>();
-  const cellCounts = new Map<string, number>();
-  for (const node of selectedNodes) {
-    const zone = zoneForNode(node);
-    const layerIndex = LAYERS.findIndex((item) => item.layer === node.layer);
-    const zoneIndex = Math.max(0, ZONES.indexOf(zone));
-    const cellKey = `${zone}|${node.layer}`;
-    const offset = cellCounts.get(cellKey) ?? 0;
-    if (offset >= 3) continue;
-    cellCounts.set(cellKey, offset + 1);
-    positions.set(node.nodeRef, {
-      node,
-      zone,
-      x: zoneX(zoneIndex) + 8,
-      y: layerY(layerIndex) + offset * 46,
-    });
-  }
-  const visibleRefs = new Set(selectedNodes.map((node) => node.nodeRef));
-  const positionedRefs = new Set(positions.keys());
-  const visibleEdges = graph.edges
-    .filter(
-      (edge) =>
-        visibleRefs.has(edge.fromNodeRef) &&
-        visibleRefs.has(edge.toNodeRef) &&
-        positionedRefs.has(edge.fromNodeRef) &&
-        positionedRefs.has(edge.toNodeRef),
-    )
-    .sort((a, b) => edgeRank(b) - edgeRank(a))
-    .slice(0, 70);
-  return {
-    nodes: Array.from(positions.values()),
-    edges: visibleEdges,
-    positions,
-    width: 1660,
-    height: 1230,
-  };
+function Metric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div style={metricStyle}>
+      <span style={metricLabelStyle}>{label}</span>
+      <strong style={metricValueStyle}>{value}</strong>
+    </div>
+  );
 }
 
-function selectExecutiveNodes(
-  graph: ArchitectureGraph,
-  advisory: ArchitectureAdvisory,
-): ArchitectureNode[] {
-  const requiredRefs = new Set([
-    ...advisory.nodeEmphasis.map((item) => item.nodeRef),
-    ...normalizeDiagramCallouts(advisory).map((item) => item.anchorRef),
-  ]);
-  const picked = new Map<string, ArchitectureNode>();
-  const byRef = new Map(graph.nodes.map((node) => [node.nodeRef, node]));
-  const outgoing = groupEdges(graph.edges, "fromNodeRef");
-  const incoming = groupEdges(graph.edges, "toNodeRef");
-  const add = (node?: ArchitectureNode) => {
-    if (node) picked.set(node.nodeRef, node);
-  };
-  for (const ref of requiredRefs) add(byRef.get(ref));
+function NodeCard({
+  node,
+  x,
+  y,
+  selected,
+  overlay,
+  onSelect,
+}: {
+  node: ArchitectureNode;
+  x: number;
+  y: number;
+  selected: boolean;
+  overlay: string;
+  onSelect: (ref: string) => void;
+}) {
+  return (
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={`${node.label}, ${node.nodeKind}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(node.nodeRef);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onSelect(node.nodeRef);
+      }}
+      style={{ cursor: "pointer", outline: "none" }}
+    >
+      <rect
+        x={x}
+        y={y}
+        width="150"
+        height="42"
+        rx="9"
+        fill="#fffdf8"
+        stroke={selected ? "#1688ff" : "#d7cfc3"}
+        strokeWidth={selected ? "2.4" : "1"}
+      />
+      <circle
+        cx={x + 134}
+        cy={y + 14}
+        r="4.5"
+        fill={evidenceColor(node.evidenceState)}
+      />
+      <text x={x + 10} y={y + 17} fill="#151311" fontSize="12" fontWeight="900">
+        {trimLabel(node.shortLabel || node.label, 21)}
+      </text>
+      <text x={x + 10} y={y + 32} fill="#625c54" fontSize="10.5">
+        {trimLabel(nodeCaption(node, overlay), 26)}
+      </text>
+    </g>
+  );
+}
 
-  const sourceSeeds = graph.nodes
-    .filter((node) => node.layer === "source")
-    .sort(
-      (a, b) =>
-        nodeRank(b, advisory) - nodeRank(a, advisory) ||
-        a.label.localeCompare(b.label),
-    )
-    .slice(0, 9);
-  for (const source of sourceSeeds) {
-    add(source);
-    addBestNeighbor(source.nodeRef, "supports", outgoing, byRef, add);
-    const integration = addBestNeighbor(
-      source.nodeRef,
-      "extracts_from",
-      outgoing,
-      byRef,
-      add,
+function SelectedDetail({
+  value,
+}: {
+  value:
+    | ArchitectureNode
+    | {
+        edgeRef: string;
+        edgeKind: string;
+        evidenceState: string;
+        evidenceRefs: string[];
+      };
+}) {
+  if ("nodeRef" in value) {
+    return (
+      <div style={selectedDetailStyle}>
+        <strong>{value.label}</strong>
+        <span>{value.nodeKind.replaceAll("_", " ")}</span>
+        <span>
+          {value.ownerRole || value.vendorName || "Owner not supplied"}
+        </span>
+        <span>
+          {[
+            value.annualCost ? money(value.annualCost) : "",
+            value.interfaceCount ? `${value.interfaceCount} interfaces` : "",
+            value.userCount ? `${value.userCount.toLocaleString()} users` : "",
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Volumetrics pending"}
+        </span>
+        <span>Evidence: {value.evidenceState}</span>
+      </div>
     );
-    const data = integration
-      ? addBestNeighbor(integration.nodeRef, "feeds", outgoing, byRef, add)
-      : undefined;
-    const transform = data
-      ? addBestNeighbor(data.nodeRef, "transforms", outgoing, byRef, add)
-      : undefined;
-    if (transform)
-      addBestNeighbor(transform.nodeRef, "publishes_to", outgoing, byRef, add);
-    const business = addBestNeighbor(
-      source.nodeRef,
-      "supports",
-      outgoing,
-      byRef,
-      add,
-    );
-    if (business)
-      addBestNeighbor(business.nodeRef, "supports", outgoing, byRef, add);
-    for (const edge of incoming.get(source.nodeRef) ?? []) {
-      if (edge.edgeKind === "contracted_through")
-        add(byRef.get(edge.fromNodeRef));
-    }
-    if (picked.size >= 40) break;
   }
 
-  const quotas: Partial<Record<ArchitectureLayer, number>> = {
-    business: 6,
-    source: 8,
-    integration: 3,
-    transformation: 3,
-    data_platform: 5,
-    consumption: 4,
-    ai_and_decision: 5,
-  };
+  return (
+    <div style={selectedDetailStyle}>
+      <strong>{value.edgeRef}</strong>
+      <span>{value.edgeKind.replaceAll("_", " ")}</span>
+      <span>Evidence: {value.evidenceState}</span>
+      <span>{value.evidenceRefs.slice(0, 2).join(" · ")}</span>
+    </div>
+  );
+}
 
-  for (const layer of LAYERS.map((item) => item.layer)) {
-    const already = Array.from(picked.values()).filter(
-      (node) => node.layer === layer,
-    ).length;
-    const need = Math.max(0, (quotas[layer] ?? 0) - already);
-    graph.nodes
-      .filter((node) => node.layer === layer && !picked.has(node.nodeRef))
+function ColumnDetail({ column }: { column: ArchitectureColumn }) {
+  return (
+    <div style={selectedDetailStyle}>
+      <strong>{column.title}</strong>
+      <span>{column.layers.join(", ").replaceAll("_", " ")}</span>
+      <span>{column.nodes.length} representative graph entities</span>
+      <span>{money(column.annualCost)} annual cost visible</span>
+      <span>{column.interfaceCount.toLocaleString()} interface references</span>
+    </div>
+  );
+}
+
+function buildArchitectureBoard(
+  graph: ArchitectureGraph,
+  advisory: ArchitectureAdvisory,
+) {
+  const emphasisRefs = new Set([
+    ...advisory.nodeEmphasis.map((item) => item.nodeRef),
+    ...advisory.diagramCallouts.map((item) => item.anchorRef),
+  ]);
+  const edgesByRef = new Map(graph.edges.map((edge) => [edge.edgeRef, edge]));
+  const columns: ArchitectureColumn[] = ARCH_COLUMNS.map((column) => {
+    const nodes = graph.nodes
+      .filter((node) => column.layers.includes(node.layer))
       .sort(
         (a, b) =>
-          nodeRank(b, advisory) - nodeRank(a, advisory) ||
+          nodeRank(b, emphasisRefs) - nodeRank(a, emphasisRefs) ||
           a.label.localeCompare(b.label),
       )
-      .slice(0, need)
-      .forEach(add);
-  }
-
-  return Array.from(picked.values())
-    .sort((a, b) => {
-      const layerDelta =
-        LAYERS.findIndex((item) => item.layer === a.layer) -
-        LAYERS.findIndex((item) => item.layer === b.layer);
-      if (layerDelta) return layerDelta;
-      return (
-        ZONES.indexOf(zoneForNode(a)) - ZONES.indexOf(zoneForNode(b)) ||
-        nodeRank(b, advisory) - nodeRank(a, advisory)
-      );
-    })
-    .slice(0, 40);
+      .slice(0, 5);
+    const evidenceCount = nodes.filter(
+      (node) => node.evidenceState === "evidenced",
+    ).length;
+    return {
+      ...column,
+      nodes,
+      annualCost: nodes.reduce((sum, node) => sum + (node.annualCost ?? 0), 0),
+      interfaceCount: nodes.reduce(
+        (sum, node) => sum + (node.interfaceCount ?? 0),
+        0,
+      ),
+      evidenceRatio: nodes.length ? evidenceCount / nodes.length : 0,
+    };
+  });
+  const nodeByRef = new Map(graph.nodes.map((node) => [node.nodeRef, node]));
+  return {
+    columns,
+    nodeByRef,
+    edgeByRef: edgesByRef,
+    columnByRef: new Map(columns.map((column) => [column.ref, column])),
+    evidencedNodeRatio:
+      graph.nodes.filter((node) => node.evidenceState === "evidenced").length /
+      Math.max(1, graph.nodes.length),
+  };
 }
 
-function groupEdges(
-  edges: ArchitectureEdge[],
-  key: "fromNodeRef" | "toNodeRef",
+function lensSummary(
+  overlay: string,
+  graph: ArchitectureGraph,
+  columns: ArchitectureColumn[],
 ) {
-  const grouped = new Map<string, ArchitectureEdge[]>();
-  for (const edge of edges) {
-    const ref = edge[key];
-    grouped.set(ref, [...(grouped.get(ref) ?? []), edge]);
+  if (overlay === "annual_cost") {
+    return {
+      title: "Cost concentration",
+      body: `${money(
+        columns.reduce((sum, column) => sum + column.annualCost, 0),
+      )} is visible across the representative board entities. Use Tower for governed totals.`,
+      color: "#bd720f",
+    };
   }
-  for (const [ref, group] of grouped.entries()) {
-    grouped.set(
-      ref,
-      group.sort((a, b) => edgeRank(b) - edgeRank(a)),
-    );
+  if (overlay === "lifecycle_risk") {
+    const count = graph.nodes.filter((node) =>
+      `${node.lifecycleState ?? ""} ${node.modernizationState ?? ""}`.match(
+        /retire|replace|pending|disputed|maintain/i,
+      ),
+    ).length;
+    return {
+      title: "Modernization pressure",
+      body: `${count} graph entities carry lifecycle or modernization pressure. The board highlights where those decisions cross operating flows.`,
+      color: "#b3261e",
+    };
   }
-  return grouped;
+  if (overlay === "criticality") {
+    const count = graph.nodes.filter((node) =>
+      node.criticality?.match(/critical|tier 1|high/i),
+    ).length;
+    return {
+      title: "Criticality and control",
+      body: `${count} entities are marked critical or high impact. AI expansion should follow those dependency constraints, not run around them.`,
+      color: "#b3261e",
+    };
+  }
+  if (overlay === "vendor_concentration") {
+    const count = graph.nodes.filter((node) => node.vendorName).length;
+    return {
+      title: "Vendor exposure",
+      body: `${count} graph entities carry vendor context. Contract files and clause spans are still required for legal-grade findings.`,
+      color: "#7b5b0e",
+    };
+  }
+  if (overlay === "evidence_completeness") {
+    return {
+      title: "AI readiness",
+      body: "The architecture can show AI activation and usage telemetry. It cannot call value realized until baseline and outcome evidence are loaded.",
+      color: "#157f74",
+    };
+  }
+  return {
+    title: "Current operating flow",
+    body: "Read left to right: business demand, systems of record, integration, data foundation, decision surfaces and AI-infused work.",
+    color: "#157f74",
+  };
 }
 
-function addBestNeighbor(
-  ref: string,
-  edgeKind: ArchitectureEdge["edgeKind"],
-  edgesByFrom: Map<string, ArchitectureEdge[]>,
-  nodesByRef: Map<string, ArchitectureNode>,
-  add: (node?: ArchitectureNode) => void,
-) {
-  const edge = (edgesByFrom.get(ref) ?? []).find(
-    (item) => item.edgeKind === edgeKind,
-  );
-  const node = edge ? nodesByRef.get(edge.toNodeRef) : undefined;
-  add(node);
-  return node;
-}
-
-function nodeRank(node: ArchitectureNode, advisory: ArchitectureAdvisory) {
-  const emphasis = advisory.nodeEmphasis.find(
-    (item) => item.nodeRef === node.nodeRef,
-  );
+function nodeRank(node: ArchitectureNode, emphasisRefs: Set<string>) {
   return (
-    (emphasis ? 80 : 0) +
-    (isCritical(node) ? 45 : 0) +
-    (hasLifecycleConcern(node) ? 30 : 0) +
-    Math.min(22, (node.annualCost ?? 0) / 1_000_000) +
-    Math.min(16, node.interfaceCount ?? 0) +
-    (node.evidenceState === "evidenced" ? 8 : 0) +
-    (node.layer === "ai_and_decision" ? 16 : 0) +
-    (node.vendorName ? 6 : 0)
+    (emphasisRefs.has(node.nodeRef) ? 120 : 0) +
+    (node.criticality?.match(/critical|tier 1|high/i) ? 60 : 0) +
+    (node.annualCost ?? 0) / 1_000_000 +
+    Math.min(50, (node.interfaceCount ?? 0) * 2) +
+    Math.min(25, (node.userCount ?? 0) / 1000) +
+    (node.evidenceState === "evidenced" ? 20 : 0)
   );
 }
 
-function edgeRank(edge: ArchitectureEdge) {
-  return (
-    (edge.evidenceState === "evidenced" ? 10 : 0) +
-    (edge.criticality?.match(/critical|tier 1|high/i) ? 8 : 0) +
-    (edge.dataVolume ?? 0) / 1_000_000
-  );
-}
-
-function zoneForNode(node: ArchitectureNode): Zone {
-  const value = [
-    node.businessFunction,
-    node.businessCapability,
-    node.domain,
-    node.label,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  if (
-    matches(value, [
-      "flight",
-      "crew",
-      "dispatch",
-      "network",
-      "schedule",
-      "fleet",
-      "operations control",
-    ])
-  )
-    return "Flight operations";
-  if (matches(value, ["airport", "station", "baggage", "ground"]))
-    return "Airport operations";
-  if (
-    matches(value, [
-      "customer",
-      "passenger",
-      "contact",
-      "digital commerce",
-      "commerce",
-      "marketing",
-      "sales",
-      "distribution",
-      "loyalty",
-    ])
-  )
-    return "Customer and commercial";
-  if (
-    matches(value, [
-      "revenue",
-      "pricing",
-      "commercial strategy",
-      "alliance",
-      "cargo",
-    ])
-  )
-    return "Revenue and planning";
-  if (
-    matches(value, [
-      "maintenance",
-      "safety",
-      "technical operations",
-      "regulatory",
-    ])
-  )
-    return "Maintenance and safety";
-  if (
-    matches(value, [
-      "finance",
-      "treasury",
-      "corporate",
-      "legal",
-      "procurement",
-      "risk",
-      "audit",
-      "facility",
-      "communications",
-    ])
-  )
-    return "Finance and corporate";
-  if (matches(value, ["human resources", "hr", "workforce", "collaboration"]))
-    return "HR and workforce";
-  return "Enterprise technology";
-}
-
-function matches(value: string, terms: string[]) {
-  return terms.some((term) => value.includes(term));
-}
-
-function normalizeDiagramCallouts(
-  advisory: ArchitectureAdvisory,
-): Array<{ anchorRef: string; headline: string; body: string }> {
-  return (advisory.diagramCallouts as unknown as Array<Record<string, unknown>>)
-    .map((item) => {
-      const body = String(
-        item.body ?? item.businessImplication ?? item.calloutText ?? "",
-      );
-      return {
-        anchorRef: String(item.anchorRef ?? item.targetRef ?? ""),
-        headline: String(
-          item.headline ?? item.calloutText ?? "Architecture callout",
+function columnMetric(column: ArchitectureColumn, overlay: string) {
+  if (overlay === "annual_cost") return money(column.annualCost);
+  if (overlay === "evidence_completeness")
+    return `${Math.round(column.evidenceRatio * 100)}% evidenced`;
+  if (overlay === "vendor_concentration")
+    return `${column.nodes.filter((node) => node.vendorName).length} vendors`;
+  if (overlay === "criticality")
+    return `${column.nodes.filter((node) => node.criticality).length} critical`;
+  if (overlay === "lifecycle_risk")
+    return `${
+      column.nodes.filter((node) =>
+        `${node.lifecycleState ?? ""} ${node.modernizationState ?? ""}`.match(
+          /retire|replace|pending|disputed|maintain/i,
         ),
-        body,
-      };
-    })
-    .filter((item) => item.anchorRef && item.headline);
+      ).length
+    } pressured`;
+  return `${column.nodes.length} entities`;
 }
 
-function zoneX(index: number) {
-  return 158 + index * zoneWidth;
-}
-
-function layerY(index: number) {
-  return 94 + index * rowHeight;
-}
-
-function edgePath(from: PositionedNode, to: PositionedNode) {
-  const x1 = from.x + nodeWidth / 2;
-  const y1 = from.y + nodeHeight;
-  const x2 = to.x + nodeWidth / 2;
-  const y2 = to.y;
-  const midY = y1 + (y2 - y1) * 0.55;
-  return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
-}
-
-function visualEdgeEndpoints(
-  from: PositionedNode,
-  to: PositionedNode,
-): [PositionedNode, PositionedNode] {
-  const fromIndex = LAYERS.findIndex((item) => item.layer === from.node.layer);
-  const toIndex = LAYERS.findIndex((item) => item.layer === to.node.layer);
-  return fromIndex <= toIndex ? [from, to] : [to, from];
-}
-
-function isCritical(node: ArchitectureNode) {
-  return Boolean(node.criticality?.match(/critical|tier 1|high/i));
-}
-
-function hasLifecycleConcern(node: ArchitectureNode) {
-  return Boolean(
-    `${node.lifecycleState ?? ""} ${node.modernizationState ?? ""}`.match(
-      /retire|replace|pending|disputed|maintain/i,
-    ),
-  );
-}
-
-function nodeColor(node: ArchitectureNode, overlay: string) {
-  if (overlay === "annual_cost" && (node.annualCost ?? 0) > 20_000_000)
-    return { fill: "#f7e4e1", stroke: "#dc9b95" };
-  if (overlay === "annual_cost" && (node.annualCost ?? 0) > 5_000_000)
-    return { fill: "#fbefd9", stroke: "#e0b76e" };
-  if (overlay === "lifecycle_risk" && hasLifecycleConcern(node))
-    return { fill: "#f7e4e1", stroke: "#dc9b95" };
-  if (overlay === "criticality" && isCritical(node))
-    return { fill: "#fbefd9", stroke: "#e0b76e" };
-  if (overlay === "vendor_concentration" && node.vendorName)
-    return { fill: "#edf6e9", stroke: "#a8cda0" };
-  if (overlay === "evidence_completeness" && node.layer === "ai_and_decision")
-    return { fill: "#e7f4ec", stroke: "#9ecbc6" };
-  if (node.layer === "business") return { fill: "#f4efe6", stroke: "#d8cec0" };
-  if (node.layer === "ai_and_decision")
-    return { fill: "#e7f4ec", stroke: "#9ecbc6" };
-  if (node.layer === "data_platform" || node.layer === "consumption")
-    return { fill: "#eef3f0", stroke: "#b8c7c1" };
-  return { fill: "#fffdf8", stroke: "#cfc6b8" };
-}
-
-function nodeSubtitle(node: ArchitectureNode, overlay: string) {
+function columnSubMetric(column: ArchitectureColumn, overlay: string) {
   if (overlay === "annual_cost")
-    return node.annualCost ? money(node.annualCost) : "cost not supplied";
+    return `${column.interfaceCount.toLocaleString()} interfaces visible`;
+  if (overlay === "evidence_completeness")
+    return "dot indicates source evidence state";
+  if (overlay === "vendor_concentration") return "supplier linkage visible";
+  if (overlay === "criticality") return "criticality supplied in graph";
+  if (overlay === "lifecycle_risk") return "lifecycle/decision pressure";
+  return `${money(column.annualCost)} · ${column.interfaceCount.toLocaleString()} interfaces`;
+}
+
+function nodeCaption(node: ArchitectureNode, overlay: string) {
+  if (overlay === "annual_cost")
+    return node.annualCost ? money(node.annualCost) : "cost pending";
   if (overlay === "lifecycle_risk")
     return (
-      node.modernizationState || node.lifecycleState || "lifecycle not supplied"
+      node.modernizationState || node.lifecycleState || "lifecycle pending"
     );
   if (overlay === "criticality")
-    return node.criticality || "criticality not supplied";
+    return node.criticality || "criticality pending";
   if (overlay === "vendor_concentration")
-    return node.vendorName || "vendor not supplied";
-  if (overlay === "evidence_completeness")
-    return node.layer === "ai_and_decision"
-      ? "usage visible; value proof gated"
-      : node.evidenceState;
-  return node.nodeKind.replaceAll("_", " ");
-}
-
-function nodeMetric(node: ArchitectureNode, overlay: string) {
-  if (overlay === "annual_cost")
-    return (
-      [
-        node.userCount ? `${node.userCount.toLocaleString()} users` : "",
-        node.interfaceCount ? `${node.interfaceCount} interfaces` : "",
-      ]
-        .filter(Boolean)
-        .join(" | ") || "volumetrics pending"
-    );
-  if (overlay === "lifecycle_risk")
-    return node.lifecycleState || node.modernizationState || "decision pending";
-  if (overlay === "criticality")
-    return node.incidentVolume
-      ? `${node.incidentVolume} incidents`
-      : node.interfaceCount
-        ? `${node.interfaceCount} interfaces`
-        : "risk evidence";
-  if (overlay === "vendor_concentration")
-    return node.contractRefs?.length
-      ? `${node.contractRefs.length} contract refs`
-      : node.vendorRef || "contract link pending";
-  if (overlay === "evidence_completeness")
-    return node.evidenceRefs.length
-      ? `${node.evidenceRefs.length} evidence refs`
-      : "evidence gap";
+    return node.vendorName || "vendor pending";
+  if (overlay === "evidence_completeness") return node.evidenceState;
   return (
     [
       node.annualCost ? money(node.annualCost) : "",
       node.interfaceCount ? `${node.interfaceCount} interfaces` : "",
-      node.userCount ? `${node.userCount.toLocaleString()} users` : "",
     ]
       .filter(Boolean)
-      .slice(0, 2)
-      .join(" | ") || node.evidenceState
+      .join(" · ") || node.nodeKind.replaceAll("_", " ")
   );
-}
-
-function edgeColor(edge: ArchitectureEdge, selected: boolean) {
-  if (selected) return "#157f74";
-  if (edge.evidenceState === "unresolved") return "#aa3a32";
-  if (edge.evidenceState === "inferred") return "#a96d16";
-  return "#596660";
 }
 
 function evidenceColor(state: string) {
   if (state === "evidenced") return "#157f74";
-  if (state === "inferred") return "#a96d16";
-  return "#aa3a32";
+  if (state === "inferred") return "#bd720f";
+  return "#b3261e";
 }
 
 function money(value: number) {
+  if (!value) return "Not supplied";
   if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  return `$${Math.round(value).toLocaleString()}`;
+  return `$${Math.round(value).toLocaleString("en-US")}`;
 }
 
 function trimLabel(value: string, max: number) {
@@ -871,88 +711,170 @@ function trimLabel(value: string, max: number) {
 }
 
 const shellStyle = {
-  border: "1px solid #ded5c8",
-  borderRadius: 8,
+  minHeight: 560,
   background: "#fffdf8",
-  overflow: "hidden",
-} satisfies React.CSSProperties;
+} satisfies CSSProperties;
 
 const headerStyle = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
-  gap: 18,
-  padding: 14,
-  borderBottom: "1px solid #ece4d8",
-  alignItems: "center",
-} satisfies React.CSSProperties;
+  gridTemplateColumns: "minmax(0, 1fr)",
+  gap: 14,
+  padding: "18px 20px",
+  borderBottom: "1px solid #e4dccf",
+  alignItems: "start",
+} satisfies CSSProperties;
 
-const headerCopyStyle = {
-  margin: "4px 0 0",
-  color: "#5d554b",
-  fontSize: 12.5,
-  lineHeight: 1.45,
-} satisfies React.CSSProperties;
-
-const overlayWrapStyle = {
-  display: "flex",
-  gap: 6,
-  flexWrap: "wrap",
-  justifyContent: "flex-end",
-  maxWidth: 560,
-} satisfies React.CSSProperties;
-
-const overlayButtonStyle = {
-  border: "1px solid #cfc6b8",
-  borderRadius: 7,
-  minHeight: 30,
-  padding: "0 9px",
-  fontSize: 11,
-  fontWeight: 800,
-  cursor: "pointer",
-  letterSpacing: 0,
-} satisfies React.CSSProperties;
-
-const flowStripStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(7, minmax(120px, 1fr))",
-  gap: 8,
-  padding: "10px 14px",
-  borderBottom: "1px solid #ece4d8",
-  background: "#fbf8f1",
-  overflowX: "auto",
-} satisfies React.CSSProperties;
-
-const flowStepStyle = {
-  minHeight: 34,
-  border: "1px solid #ded5c8",
-  borderRadius: 7,
-  background: "#fffdf8",
-  display: "flex",
-  alignItems: "center",
-  gap: 7,
-  padding: "7px 9px",
-  color: "#2f2a24",
-  fontSize: 11,
-  fontWeight: 900,
-  whiteSpace: "nowrap",
-} satisfies React.CSSProperties;
-
-const flowIndexStyle = {
+const kickerStyle = {
   color: "#1688ff",
   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
   fontSize: 10,
-} satisfies React.CSSProperties;
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+} satisfies CSSProperties;
 
-const viewportStyle = {
-  overflow: "auto",
-  background: "#f7f4ee",
-  borderTop: "1px solid #fff",
-} satisfies React.CSSProperties;
+const titleStyle = {
+  margin: "6px 0 0",
+  color: "#151311",
+  fontSize: 24,
+  lineHeight: 1.08,
+  fontWeight: 900,
+  letterSpacing: 0,
+} satisfies CSSProperties;
+
+const copyStyle = {
+  maxWidth: 820,
+  margin: "8px 0 0",
+  color: "#625c54",
+  fontSize: 14,
+  lineHeight: 1.45,
+} satisfies CSSProperties;
+
+const metricWrapStyle = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  justifyContent: "flex-start",
+} satisfies CSSProperties;
+
+const metricStyle = {
+  minWidth: 104,
+  border: "1px solid #d9d1c5",
+  borderRadius: 8,
+  background: "#fffaf1",
+  padding: "9px 10px",
+} satisfies CSSProperties;
+
+const metricLabelStyle = {
+  display: "block",
+  color: "#716a61",
+  fontSize: 10,
+  textTransform: "uppercase",
+  letterSpacing: "0.1em",
+} satisfies CSSProperties;
+
+const metricValueStyle = {
+  display: "block",
+  marginTop: 3,
+  color: "#151311",
+  fontSize: 20,
+  lineHeight: 1,
+} satisfies CSSProperties;
+
+const toolbarStyle = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  padding: "12px 20px",
+  borderBottom: "1px solid #e4dccf",
+  background: "#fbf8f1",
+} satisfies CSSProperties;
+
+const lensButtonStyle = {
+  minHeight: 34,
+  border: "1px solid #d6ccbf",
+  borderRadius: 7,
+  padding: "0 12px",
+  fontSize: 12,
+  fontWeight: 850,
+  letterSpacing: 0,
+  cursor: "pointer",
+} satisfies CSSProperties;
+
+const bodyStyle = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr)",
+  gap: 0,
+  minHeight: 0,
+} satisfies CSSProperties;
+
+const diagramPanelStyle = {
+  minWidth: 0,
+  background: "#fffdf8",
+  overflow: "hidden",
+} satisfies CSSProperties;
 
 const svgStyle = {
   display: "block",
-  minWidth: 1280,
   width: "100%",
-  height: "min(76vh, 940px)",
+  minWidth: 0,
+  height: 430,
+  maxHeight: "none",
   background: "#fffdf8",
-} satisfies React.CSSProperties;
+} satisfies CSSProperties;
+
+const insightPanelStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  alignItems: "start",
+  gap: 14,
+  padding: 14,
+  background: "#f7f4ee",
+  borderTop: "1px solid #e4dccf",
+} satisfies CSSProperties;
+
+const panelTitleStyle = {
+  margin: "6px 0 0",
+  fontSize: 20,
+  lineHeight: 1.12,
+  fontWeight: 900,
+} satisfies CSSProperties;
+
+const panelCopyStyle = {
+  margin: "8px 0 0",
+  color: "#625c54",
+  fontSize: 13,
+  lineHeight: 1.45,
+} satisfies CSSProperties;
+
+const statGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+} satisfies CSSProperties;
+
+const detailBoxStyle = {
+  border: "1px solid #d9d1c5",
+  borderRadius: 9,
+  background: "#fffdf8",
+  padding: 12,
+} satisfies CSSProperties;
+
+const selectedDetailStyle = {
+  display: "grid",
+  gap: 7,
+  marginTop: 9,
+  color: "#4f4942",
+  fontSize: 12,
+  lineHeight: 1.35,
+} satisfies CSSProperties;
+
+const agendaItemStyle = {
+  display: "grid",
+  gap: 4,
+  borderTop: "1px solid #e6ded3",
+  paddingTop: 10,
+  marginTop: 10,
+  color: "#4f4942",
+  fontSize: 12,
+  lineHeight: 1.35,
+} satisfies CSSProperties;

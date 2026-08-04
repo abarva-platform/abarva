@@ -3,9 +3,10 @@
 // Tab 3 — Decision Lanes. Three sub-views: Program table (default), Kanban
 // lanes, Portfolio heatmap. Transcribed from `viewLanes()` (design line ~815).
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
+  TowerInterventionLane,
   TowerLaneKey,
   TowerProgramView,
 } from "@/lib/tower/command-center/types";
@@ -24,6 +25,7 @@ import {
   Pips,
   SubNav,
   USAGE_TONE,
+  Unknown,
   ViewHead,
   cx,
   laneClass,
@@ -46,13 +48,47 @@ const LANE_ORDER: Record<TowerLaneKey, number> = {
   watch: 4,
 };
 
+const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
+  teal: "toneTeal",
+  amber: "toneAmber",
+  red: "toneRed",
+  gray: "",
+};
+
+function EvidenceLaneBoard({ view }: { view: TowerCommandCenterView }) {
+  return (
+    <div className={styles.interventionLanes}>
+      {view.evidenceMaturity.interventionLanes.map((lane) => (
+        <section
+          key={lane.key}
+          className={cx(
+            styles.interventionLane,
+            INTERVENTION_TONE_CLASS[lane.tone] &&
+              styles[INTERVENTION_TONE_CLASS[lane.tone]],
+          )}
+          aria-label={`${lane.label} lane`}
+        >
+          <header>
+            <span className={styles.lhName}>{lane.label}</span>
+            <span className={styles.lhCnt}>{formatCount(lane.count)}</span>
+          </header>
+          <p>{lane.description}</p>
+          <b>{lane.nextAction}</b>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 // ── the decision table ─────────────────────────────────────────────────────
 
 function LaneTable({
   programs,
+  valueUnknown,
   onOpenProgram,
 }: {
   programs: readonly TowerProgramView[];
+  valueUnknown: boolean;
   onOpenProgram: (id: string) => void;
 }) {
   const rows = [...programs].sort(
@@ -121,7 +157,11 @@ function LaneTable({
             </td>
             <td className={styles.num}>
               <span className={cx(styles.bignum, styles.bignumSm)}>
-                {formatUsdM(p.promisedUsd)}
+                {valueUnknown ? (
+                  <Unknown label="Unknown" />
+                ) : (
+                  formatUsdM(p.promisedUsd)
+                )}
               </span>
             </td>
             <td className={styles.num}>
@@ -134,7 +174,11 @@ function LaneTable({
             </td>
             <td className={styles.num}>
               <span className={cx(styles.bignum, styles.bignumSm, styles.nRed)}>
-                {formatUsdM(p.blockedUsd)}
+                {valueUnknown ? (
+                  <Unknown label="Unknown" />
+                ) : (
+                  formatUsdM(p.blockedUsd)
+                )}
               </span>
             </td>
             <td className={styles.gateCell}>
@@ -151,9 +195,11 @@ function LaneTable({
 
 function LaneColumns({
   programs,
+  valueUnknown,
   onOpenProgram,
 }: {
   programs: readonly TowerProgramView[];
+  valueUnknown: boolean;
   onOpenProgram: (id: string) => void;
 }) {
   return (
@@ -182,7 +228,11 @@ function LaneColumns({
               </div>
               <div className={styles.lhSub}>{lane.sub}</div>
               <div className={cx(styles.lhVal, styles[valueTone])}>
-                {formatUsdM(total)} promised
+                {valueUnknown ? (
+                  <Unknown label="Value unknown" />
+                ) : (
+                  `${formatUsdM(total)} promised`
+                )}
               </div>
             </header>
             <div className={styles.laneBody}>
@@ -205,7 +255,12 @@ function LaneColumns({
                         {formatUsdM(p.fundedUsd)}
                       </span>
                       <span className={styles.p}>
-                        funded · {formatUsdM(p.promisedUsd)} promised
+                        funded ·{" "}
+                        {valueUnknown ? (
+                          <Unknown label="value unknown" />
+                        ) : (
+                          `${formatUsdM(p.promisedUsd)} promised`
+                        )}
                       </span>
                     </span>
                     <span className={styles.pcProof}>
@@ -241,9 +296,11 @@ function LaneColumns({
 
 function LaneLegendList({
   programs,
+  valueUnknown,
   onOpenProgram,
 }: {
   programs: readonly TowerProgramView[];
+  valueUnknown: boolean;
   onOpenProgram: (id: string) => void;
 }) {
   const ordered = [...programs].sort(
@@ -266,8 +323,12 @@ function LaneLegendList({
           <span className={styles.prNm}>
             {p.name}
             <small>
-              {p.ownerRole ?? "No owner recorded"} · {formatUsdM(p.promisedUsd)}{" "}
-              promised
+              {p.ownerRole ?? "No owner recorded"} ·{" "}
+              {valueUnknown ? (
+                <Unknown label="value unknown" />
+              ) : (
+                `${formatUsdM(p.promisedUsd)} promised`
+              )}
             </small>
           </span>
           <span
@@ -333,9 +394,29 @@ export function DecisionLanesView({
   onOpenProgram: (id: string) => void;
 }) {
   const programs = view.programs;
+  const valueUnknown =
+    view.summary.valueClaimCount > 0 &&
+    view.summary.knownValueClaimCount === 0 &&
+    view.summary.unknownValueClaimCount > 0;
 
   let body: React.ReactNode;
-  if (subView === "overview") {
+  if (valueUnknown && subView !== "heatmap") {
+    body = (
+      <Card
+        title="Evidence maturity lanes"
+        right="measurement gates before executive action"
+        headId="tcc-evidence-lanes"
+        style={{ flex: 1 }}
+        bodyStyle={{ display: "flex", flexDirection: "column", gap: 14 }}
+      >
+        <p className={styles.lhSub}>
+          Tower is holding scale / fund / freeze / stop posture until the proof
+          gates mature. These are the operating lanes for the current data.
+        </p>
+        <EvidenceLaneBoard view={view} />
+      </Card>
+    );
+  } else if (subView === "overview") {
     body = (
       <div
         className={styles.ccLower}
@@ -348,7 +429,11 @@ export function DecisionLanesView({
         >
           <HeatmapPanel programs={programs} onOpenProgram={onOpenProgram} />
         </Card>
-        <LaneColumns programs={programs} onOpenProgram={onOpenProgram} />
+        <LaneColumns
+          programs={programs}
+          valueUnknown={valueUnknown}
+          onOpenProgram={onOpenProgram}
+        />
       </div>
     );
   } else if (subView === "heatmap") {
@@ -373,7 +458,11 @@ export function DecisionLanesView({
           bodyStyle={{ padding: "10px 12px" }}
         >
           <div className={styles.pool}>
-            <LaneLegendList programs={programs} onOpenProgram={onOpenProgram} />
+            <LaneLegendList
+              programs={programs}
+              valueUnknown={valueUnknown}
+              onOpenProgram={onOpenProgram}
+            />
           </div>
         </Card>
       </div>
@@ -391,7 +480,11 @@ export function DecisionLanesView({
         {programs.length === 0 ? (
           <p className={styles.lhSub}>No programs recorded for this tenant.</p>
         ) : (
-          <LaneTable programs={programs} onOpenProgram={onOpenProgram} />
+          <LaneTable
+            programs={programs}
+            valueUnknown={valueUnknown}
+            onOpenProgram={onOpenProgram}
+          />
         )}
       </Card>
     );
@@ -400,8 +493,14 @@ export function DecisionLanesView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="The operating room"
-        hint="Click any program for its proof chain"
+        title={
+          valueUnknown ? "The evidence operating room" : "The operating room"
+        }
+        hint={
+          valueUnknown
+            ? "Sparse-state lanes prescribe proof work before investment decisions"
+            : "Click any program for its proof chain"
+        }
       >
         <SubNav
           label="Decision Lanes view"

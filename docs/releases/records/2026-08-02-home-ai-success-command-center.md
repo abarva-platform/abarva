@@ -33,9 +33,6 @@ Replaces the prior Home runtime with an evidence-bound AI Success Command Center
 - `/home` route now renders the AI Success Command Center data-bound page.
 - New Home data adapter reads governed local assessment reports and allowed values.
 - New Home command-center component uses Recharts and a current-state architecture renderer.
-- The first viewport now renders the generated architecture advisory thesis,
-  strengths, constraints, and leadership decision content instead of a static
-  compressed summary.
 - Ask aVa is wired as a real Home KNOW drawer. It calls `/api/home/know/ask`
   with the active tenant key, renders the shared aVa answer packet, supports
   compact and expanded states, and exposes the existing HTML/PDF export controls
@@ -49,10 +46,8 @@ Replaces the prior Home runtime with an evidence-bound AI Success Command Center
 - `NODE_OPTIONS="--max-old-space-size=8192" npx tsc --noEmit --pretty false` passed.
 - `npm run test:nav` passed: 26 tests.
 - `npm run test:behaviors` passed: 195 tests.
+- `NODE_OPTIONS="--max-old-space-size=8192" npm run build` passed.
 - `npx jest src/components/home/ai-success-command-center/__tests__/AiSuccessCommandCenter.test.tsx --runInBand` passed.
-- `NODE_OPTIONS="--max-old-space-size=8192" npm run build` passed after the Ask aVa repair.
-- `npm run test:nav` passed: 26 tests.
-- `npm run test:behaviors` passed: 195 tests.
 - Home audit package reported `local_release_candidate`.
 - Browser proof verified `/home` renders the expected headline, claim-threshold copy, architecture section, Recharts SVGs, no debug binding control, and no horizontal overflow.
 - Anonymous `/home` redirects to `/sign-in?redirect=%2Fhome` after local proof hook removal.

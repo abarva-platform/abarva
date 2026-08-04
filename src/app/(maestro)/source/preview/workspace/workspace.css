@@ -1,0 +1,52 @@
+/* Source Workspace design preview — base type/scrollbar + the design's
+   style-hover affordances, ported to real CSS classes (the original design
+   tool supported a style-hover="" attribute; React inline styles don't). */
+
+.sw-root {
+  margin: 0;
+  background: #f5f1eb;
+  color: #2c2c2a;
+  font-family: Inter, -apple-system, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.sw-root a {
+  color: #0066cc;
+  text-decoration: none;
+}
+.sw-root a:hover {
+  color: #0052a3;
+}
+.sw-root button {
+  font-family: inherit;
+}
+.sw-root svg text {
+  font-family: Inter, system-ui, sans-serif;
+}
+.sw-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.sw-root ::-webkit-scrollbar-thumb {
+  background: rgba(10, 10, 11, 0.18);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.sw-hover-cream:hover {
+  background: #fbfaf7 !important;
+}
+.sw-hover-ink-border:hover {
+  border-color: #0a0a0b !important;
+}
+.sw-hover-ink-text:hover {
+  color: #0a0a0b !important;
+}
+.sw-row:hover {
+  background: #fbfaf7;
+}
+.sw-quad:hover {
+  border-color: #0a0a0b !important;
+}

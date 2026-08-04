@@ -1,9 +1,9 @@
 // Tower Command Center v2 — the five derived presentation fields.
 //
 // The design at docs/design/tower/command-center-2026-07-23/ renders five
-// numbers per program that `cio_tower.mart_program_decision_lanes` does not
-// persist: usage-supported value, claimable value, blocked value, evidence
-// maturity (0–100) and proof level (0–3).
+// numbers per program that the governed Tower read model does not persist:
+// usage-supported value, claimable value, blocked value, evidence maturity
+// (0–100) and proof level (0–3).
 //
 // They are derived here — in ONE place, deterministically, with the arithmetic
 // written out — so the components never compute money and the derivation can be

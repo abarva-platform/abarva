@@ -67,10 +67,10 @@ export function TowerCommandCenter({
   tenantName,
   refreshedOn,
 }: {
-  /** `null` when the tenant has no governed Tower mart rows. */
+  /** `null` when the tenant has no governed Tower read-model rows. */
   view: TowerCommandCenterView | null;
   tenantName: string;
-  /** ISO date the mart view was read. */
+  /** ISO date the Tower read model was read. */
   refreshedOn: string;
 }) {
   const router = useRouter();
@@ -168,11 +168,12 @@ export function TowerCommandCenter({
           <div className={styles.emptyPanel}>
             <h2>No governed Tower data for this tenant</h2>
             <p>
-              The <code>cio_tower.mart_*</code> read models carry no rows for{" "}
-              {tenantName}. This page renders nothing rather than showing zeros
-              — a zero would be a claim that the budget, promised value and
-              claimable value are all nil, which is not what absent data means.
-              Run the Tower mart projection job for this tenant to populate it.
+              The <code>tower</code> read model carries no rows for {tenantName}
+              . This page renders nothing rather than showing zeros — a zero
+              would be a claim that the budget, promised value and claimable
+              value are all nil, which is not what absent data means. Load
+              governed Tower metric observations, claims and provenance for this
+              tenant to populate it.
             </p>
           </div>
         </div>

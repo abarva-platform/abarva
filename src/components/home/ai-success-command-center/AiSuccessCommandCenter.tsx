@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
@@ -11,20 +12,25 @@ import {
   LabelList,
   Pie,
   PieChart,
+  ReferenceArea,
+  Scatter,
+  ScatterChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from "recharts";
 
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentStateArchitectureMap";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { composeHomeKnowAvaAnswer } from "@/lib/ava-answer/homeComposer";
 import type { AiSuccessHomeData } from "@/lib/home/readSkyHarborAiSuccessHome";
-import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
+import { ArchitectureFlowDiagram } from "./ArchitectureFlowDiagram";
 import styles from "./AiSuccessCommandCenter.module.css";
 
 const SECTIONS = [
@@ -42,6 +48,10 @@ const SECTIONS = [
   ["limits", "Evidence required next", "6 stated gaps"],
 ] as const;
 
+type SectionId = (typeof SECTIONS)[number][0];
+
+const SECTION_IDS = new Set<string>(SECTIONS.map(([id]) => id));
+
 const CHART_COLORS = [
   "#11100f",
   "#6d6861",
@@ -52,7 +62,7 @@ const CHART_COLORS = [
 ];
 
 export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
-  const [activeSection, setActiveSection] = useState("executive");
+  const [activeSection, setActiveSection] = useState<SectionId>("executive");
   const [architectureOverlay, setArchitectureOverlay] = useState("");
   const [selectedArchitectureRef, setSelectedArchitectureRef] = useState<
     string | undefined
@@ -68,490 +78,163 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
     data.moneyBars[2]?.value && data.moneyBars[0]?.value
       ? data.moneyBars[2].value / data.moneyBars[0].value
       : 0;
-  const pieData = [
-    { name: "Contract-backed", value: Math.round(contractRatio * 1000) / 10 },
-    {
-      name: "Internal/unattributed",
-      value: Math.round((1 - contractRatio) * 1000) / 10,
-    },
-  ];
-  const advisoryPillars = [
-    {
-      label: "Strategic strength",
-      title:
-        data.advisory.strengths[0]?.headline ??
-        "Evidence coverage is strong enough for real portfolio choices",
-      body:
-        data.advisory.strengths[0]?.body ??
-        "The current-state architecture packet gives leadership a reliable starting point for sequencing decisions.",
-    },
-    {
-      label: "Constraint",
-      title:
-        data.advisory.constraints[0]?.headline ??
-        "Lifecycle contradictions are blocking execution",
-      body:
-        data.advisory.constraints[0]?.body ??
-        "Critical systems need executive resolution before AI scale can be defended.",
-    },
-    {
-      label: "Decision",
-      title:
-        advisoryText(data.advisory.leadershipDecisions[0], [
-          "headline",
-          "decision",
-        ]) ?? "Resolve the first non-deferrable architecture decision",
-      body:
-        advisoryText(data.advisory.leadershipDecisions[0], [
-          "body",
-          "context",
-        ]) ??
-        "Architecture ambiguity should be converted into an accountable leadership decision.",
-    },
-  ];
-
-  const sectionObserver = useMemo(
-    () => (id: string) => (node: HTMLElement | null) => {
-      if (!node || typeof IntersectionObserver === "undefined") return;
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry?.isIntersecting) setActiveSection(id);
-        },
-        { rootMargin: "-30% 0px -60% 0px", threshold: 0.01 },
-      );
-      observer.observe(node);
-      return () => observer.disconnect();
-    },
-    [],
+  const pieData = useMemo(
+    () => [
+      {
+        name: "Contract-backed",
+        value: Math.round(contractRatio * 1000) / 10,
+      },
+      {
+        name: "Internal/unattributed",
+        value: Math.round((1 - contractRatio) * 1000) / 10,
+      },
+    ],
+    [contractRatio],
   );
+
+  useEffect(() => {
+    const requested = window.location.hash.replace("#", "");
+    if (SECTION_IDS.has(requested)) setActiveSection(requested as SectionId);
+    if (window.location.hash) {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+    }
+    window.scrollTo({ top: 0, left: 0 });
+  }, []);
+
+  const activeMeta =
+    SECTIONS.find(([id]) => id === activeSection) ?? SECTIONS[0];
+  const activeIndex = SECTIONS.findIndex(([id]) => id === activeSection) + 1;
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div>
-          <span className={styles.brand}>
-            Abar<span className={styles.brandVa}>Va</span>
-          </span>
-          <span className={styles.domain}>app.abarva.ai</span>
-        </div>
-        <nav className={styles.nav} aria-label="Primary">
-          {["Home", "Intelligence", "Source", "Tower", "Moves"].map((item) => (
-            <button
-              key={item}
-              className={`${styles.navItem} ${item === "Home" ? styles.navItemActive : ""}`}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
-        <div className={styles.topActions}>
-          <button
-            type="button"
-            className={styles.blueButton}
-            onClick={() => {
-              setAvaOpen(true);
-              setAvaExpanded(true);
-            }}
-          >
-            V&nbsp; Ask aVa
-          </button>
-          <span className={styles.tenant}>SkyHarbor Global</span>
-          <span className={styles.avatar}>AK</span>
-        </div>
-      </header>
-
       <div className={styles.layout}>
-        <aside className={styles.rail}>
-          <div className={styles.railTitle}>On this page</div>
+        <aside className={styles.rail} aria-label="Home explorer">
+          <div className={styles.railIntro}>
+            <div className={styles.railTitle}>Executive Review</div>
+            <div className={styles.railDeck}>
+              AI value, architecture and evidence posture
+            </div>
+          </div>
           <div className={styles.railList}>
             {SECTIONS.map(([id, label, hint], index) => (
               <button
                 key={id}
                 type="button"
-                className={`${styles.railButton} ${activeSection === id ? styles.railButtonActive : ""}`}
-                onClick={() =>
-                  document
-                    .getElementById(id)
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                className={`${styles.railButton} ${
+                  activeSection === id ? styles.railButtonActive : ""
+                }`}
+                aria-current={activeSection === id ? "page" : undefined}
+                onClick={() => {
+                  setActiveSection(id);
+                  window.scrollTo({ top: 0, left: 0 });
+                }}
               >
                 <span className={styles.railNumber}>
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span>
+                <span className={styles.railText}>
                   <span className={styles.railLabel}>{label}</span>
                   <span className={styles.railHint}>{hint}</span>
                 </span>
               </button>
             ))}
           </div>
-          <p className={styles.railFoot}>
-            Snapshot {data.graphFingerprint.slice(0, 8)} ·{" "}
-            {formatDate(data.generatedAt)}. Home summarizes and routes; it is
-            not a workspace.
-          </p>
+          <div className={styles.railFoot}>
+            <span>Graph snapshot</span>
+            <strong>{data.graphFingerprint.slice(0, 8)}</strong>
+            <span>{formatDate(data.generatedAt)}</span>
+          </div>
         </aside>
 
         <main className={styles.main}>
-          <section
-            id="executive"
-            ref={sectionObserver("executive")}
-            className={`${styles.section} ${styles.heroGrid}`}
-          >
+          <header className={styles.canvasChrome}>
             <div>
-              <div className={styles.heroKicker}>Architecture Advisory</div>
-              <h1 className={styles.h1}>{data.advisory.title}</h1>
-              <p className={styles.lead}>{data.advisory.executiveThesis}</p>
-              <div className={styles.advisoryPillars}>
-                {advisoryPillars.map((pillar) => (
-                  <article key={pillar.label} className={styles.advisoryPillar}>
-                    <span>{pillar.label}</span>
-                    <strong>{pillar.title}</strong>
-                    <p>{pillar.body}</p>
-                  </article>
-                ))}
-              </div>
-              <Evidence
-                refs={[
-                  "Claude architecture advisory",
-                  "tower.value_claim · 162",
-                  "ALLOWED_VALUES · FY2027 $2.35B",
-                  "contracts · $1.4805B",
-                  "FIND-ARCH-AI-PROOF-GAP",
-                  `snapshot ${data.graphFingerprint.slice(0, 8)}`,
-                ]}
+              <span className={styles.eyebrow}>
+                {String(activeIndex).padStart(2, "0")} · SkyHarbor Global
+              </span>
+              <h1 className={styles.canvasTitle}>{activeMeta[1]}</h1>
+              <p className={styles.canvasSubtitle}>{activeMeta[2]}</p>
+            </div>
+            <div className={styles.commandStats} aria-label="Review context">
+              <span>
+                <b>{data.graph.nodes.length}</b>
+                <small>nodes</small>
+              </span>
+              <span>
+                <b>{data.graph.edges.length}</b>
+                <small>flows</small>
+              </span>
+              <span>
+                <b>{data.moneyBars[0]?.valueLabel ?? "$2.35B"}</b>
+                <small>FY2027 budget</small>
+              </span>
+              <Link
+                href="/intelligence/enterprise-landscape"
+                className={styles.openLink}
+              >
+                Intelligence explorer
+              </Link>
+              <button
+                type="button"
+                className={styles.askAvaCommand}
+                onClick={() => {
+                  setAvaOpen(true);
+                  setAvaExpanded(true);
+                }}
+              >
+                Ask aVa
+              </button>
+            </div>
+          </header>
+
+          <section
+            className={styles.canvas}
+            data-active-section={activeSection}
+            aria-live="polite"
+          >
+            {activeSection === "executive" ? (
+              <ExecutiveCanvas
+                data={data}
+                contractRatio={contractRatio}
+                aiCostRatio={aiCostRatio}
               />
-            </div>
-            <aside className={`${styles.panel} ${styles.moneyPanel}`}>
-              <span className={styles.eyebrow}>Board readout</span>
-              <h2 className={styles.panelTitle}>What must be resolved first</h2>
-              <p className={styles.panelBrief}>
-                {advisoryText(data.advisory.transformationPriorities[0], [
-                  "body",
-                  "rationale",
-                ]) ??
-                  "Resolve the gating architecture and value-proof decisions before scaling the AI portfolio."}
-              </p>
-              <div className={styles.barList}>
-                {data.moneyBars.map((bar, index) => (
-                  <MoneyBar
-                    key={bar.label}
-                    {...bar}
-                    percent={
-                      index === 0
-                        ? 100
-                        : index === 1
-                          ? contractRatio * 100
-                          : index === 2
-                            ? aiCostRatio * 100
-                            : 0
-                    }
-                  />
-                ))}
-              </div>
-            </aside>
-          </section>
-
-          <section
-            id="posture"
-            ref={sectionObserver("posture")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="02 · Posture"
-              title="AI success posture"
-              copy="Deterministic values only. Unknown value is named, never rendered as $0. The one zero shown is a Tower-established zero."
-            />
-            <div className={styles.grid4}>
-              {data.postureCards.map((card) => (
-                <article key={card.label} className={styles.postureCard}>
-                  <div>
-                    <div className={styles.postureLabel}>
-                      <StatusDot state={card.state} />
-                      {card.label}
-                    </div>
-                    <div className={styles.postureValue}>{card.value}</div>
-                  </div>
-                  <p className={styles.postureNote}>{card.note}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section
-            id="attention"
-            ref={sectionObserver("attention")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="03 · Attention"
-              title="What leadership must look at this quarter"
-              copy="Five material signals, each anchored to a deterministic finding or evidence gap."
-            />
-            <div className={styles.twoCol}>
-              <div className={styles.signals}>
-                {data.attentionSignals.map((signal) => (
-                  <article key={signal.ref} className={styles.signal}>
-                    <div className={styles.signalTop}>
-                      <span className={styles.signalRef}>{signal.ref}</span>
-                      <span className={styles.signalSeverity}>
-                        {signal.severity}
-                      </span>
-                    </div>
-                    <div className={styles.signalTitle}>{signal.title}</div>
-                    <p className={styles.signalBody}>{signal.body}</p>
-                    <Evidence refs={[signal.owner, signal.destination]} />
-                  </article>
-                ))}
-              </div>
-              <div className={`${styles.panel} ${styles.chartBox}`}>
-                <span className={styles.eyebrow}>Claim state pressure</span>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={data.claimFunnel}
-                    layout="vertical"
-                    margin={{ top: 20, right: 24, bottom: 12, left: 8 }}
-                  >
-                    <CartesianGrid stroke="#eee7dc" horizontal={false} />
-                    <XAxis type="number" hide />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      width={120}
-                      tick={{ fill: "#5d554b", fontSize: 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
-                    />
-                    <Bar dataKey="claims" radius={[0, 6, 6, 0]}>
-                      {data.claimFunnel.map((_, index) => (
-                        <Cell
-                          key={index}
-                          fill={CHART_COLORS[index % CHART_COLORS.length]}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </section>
-
-          <section
-            id="architecture"
-            ref={sectionObserver("architecture")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="04 · Current-state architecture"
-              title="How SkyHarbor is positioned for AI success"
-              copy="The centerpiece uses the PostgreSQL-derived ArchitectureGraph. Claude provides callouts only; it cannot create current-state nodes, edges or values."
-              right="Full explorer in Intelligence →"
-            />
-            <div className={styles.architectureFrame}>
-              <CurrentStateArchitectureMap
-                graph={data.graph}
-                advisory={data.advisory}
+            ) : null}
+            {activeSection === "posture" ? <PostureCanvas data={data} /> : null}
+            {activeSection === "attention" ? (
+              <AttentionCanvas data={data} />
+            ) : null}
+            {activeSection === "architecture" ? (
+              <ArchitectureCanvas
+                data={data}
                 overlay={architectureOverlay}
                 selectedRef={selectedArchitectureRef}
                 onOverlayChange={setArchitectureOverlay}
                 onSelect={setSelectedArchitectureRef}
               />
-            </div>
-          </section>
-
-          <section
-            id="portfolio"
-            ref={sectionObserver("portfolio")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="05 · Portfolio"
-              title="Scale, redesign, fix or stop"
-              copy="Six material initiatives are shown as recommended lanes. Approved choices are governed separately and currently empty."
-            />
-            <div className={styles.choiceGrid}>
-              {data.portfolioChoices.map((choice) => (
-                <article key={choice.ref} className={styles.choice}>
-                  <div className={styles.choiceLane}>{choice.lane}</div>
-                  <div className={styles.choiceTitle}>{choice.project}</div>
-                  <p className={styles.choiceMeta}>
-                    Approved budget <b>{money(choice.budget)}</b>
-                    <br />
-                    Evidence: {choice.evidence}
-                    <br />
-                    Next gate: {choice.gate}
-                  </p>
-                  <Evidence refs={[choice.ref]} />
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section
-            id="value"
-            ref={sectionObserver("value")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="06 · Value"
-              title="Value realization funnel"
-              copy="Tower states are deterministic. Usage, seats and hours-saved estimates are not realized value."
-            />
-            <div className={styles.twoCol}>
-              <div className={`${styles.panel} ${styles.chartBox}`}>
-                <ResponsiveContainer width="100%" height={320}>
-                  <FunnelChart>
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
-                    />
-                    <Funnel
-                      dataKey="claims"
-                      data={data.claimFunnel}
-                      nameKey="name"
-                    >
-                      <LabelList
-                        dataKey="name"
-                        position="right"
-                        fill="#11100f"
-                        stroke="none"
-                      />
-                      {data.claimFunnel.map((_, index) => (
-                        <Cell
-                          key={index}
-                          fill={CHART_COLORS[index % CHART_COLORS.length]}
-                        />
-                      ))}
-                    </Funnel>
-                  </FunnelChart>
-                </ResponsiveContainer>
-              </div>
-              <div className={`${styles.panel} ${styles.chartBox}`}>
-                <span className={styles.eyebrow}>Observation coverage</span>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={data.observationQuality}
-                    margin={{ top: 20, right: 12, left: 0, bottom: 72 }}
-                  >
-                    <CartesianGrid stroke="#eee7dc" vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fill: "#5d554b", fontSize: 10 }}
-                      angle={-35}
-                      textAnchor="end"
-                      interval={0}
-                    />
-                    <YAxis tick={{ fill: "#5d554b", fontSize: 11 }} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
-                    />
-                    <Bar dataKey="count" fill="#11100f" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </section>
-
-          <section
-            id="agenda"
-            ref={sectionObserver("agenda")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="07 · Agenda"
-              title="What must change, and what must be decided"
-              copy="Decisions are proposed routes, not approved governance outcomes."
-            />
-            <div className={styles.panel}>
-              <table className={styles.decisionTable}>
-                <thead>
-                  <tr>
-                    <th>Decision</th>
-                    <th>Consequence of delay</th>
-                    <th>Accountable</th>
-                    <th>Destination</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.decisions.map((item) => (
-                    <tr key={item.decision}>
-                      <td>
-                        <b>{item.decision}</b>
-                      </td>
-                      <td>{item.consequence}</td>
-                      <td>{item.owner}</td>
-                      <td>{item.destination} →</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section
-            id="limits"
-            ref={sectionObserver("limits")}
-            className={styles.section}
-          >
-            <SectionHeader
-              kicker="08 · Evidence required"
-              title="Evidence required next"
-              copy="Stated, not filled with inference. This is part of the product promise."
-            />
-            <div className={styles.limitsGrid}>
-              {data.limits.map((limit) => (
-                <article key={limit.title} className={styles.limit}>
-                  <div className={styles.choiceTitle}>{limit.title}</div>
-                  <p className={styles.choiceMeta}>{limit.body}</p>
-                  <span className={styles.chip}>Owner · {limit.owner}</span>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className={`${styles.panel} ${styles.panelPad}`}>
-            <div className={styles.twoCol}>
-              <div>
-                <span className={styles.eyebrow}>AI tool evidence</span>
-                <p className={styles.sectionCopy}>
-                  Top AI rows show adoption and directional use cost. They do
-                  not establish realized value.
-                </p>
-              </div>
-              <ResponsiveContainer width="100%" height={230}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={56}
-                    outerRadius={86}
-                    paddingAngle={3}
-                  >
-                    {pieData.map((_, index) => (
-                      <Cell key={index} fill={CHART_COLORS[index]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            ) : null}
+            {activeSection === "portfolio" ? (
+              <PortfolioCanvas data={data} />
+            ) : null}
+            {activeSection === "value" ? (
+              <ValueCanvas data={data} pieData={pieData} />
+            ) : null}
+            {activeSection === "agenda" ? <AgendaCanvas data={data} /> : null}
+            {activeSection === "limits" ? <LimitsCanvas data={data} /> : null}
           </section>
 
           <footer className={styles.footer}>
             <span>
               Design bound to export {data.datasetId}, generated{" "}
-              {formatDateTime(data.generatedAt)} from
-              abarva_skyharbor_current_state_dev.
+              {formatDateTime(data.generatedAt)}.
             </span>
-            <span>Abarva · Home V0.3 · Data-bound build</span>
+            <span>Home summarizes and routes; it is not a workspace.</span>
           </footer>
         </main>
       </div>
-
       <button
         type="button"
         className={styles.avaTab}
@@ -572,6 +255,646 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
         tenantName={data.tenantName}
       />
     </div>
+  );
+}
+
+function ExecutiveCanvas({
+  data,
+  contractRatio,
+  aiCostRatio,
+}: {
+  data: AiSuccessHomeData;
+  contractRatio: number;
+  aiCostRatio: number;
+}) {
+  const [activeTabId, setActiveTabId] = useState(
+    data.advisoryTabs[0]?.id ?? "thesis",
+  );
+  const activeTab =
+    data.advisoryTabs.find((tab) => tab.id === activeTabId) ??
+    data.advisoryTabs[0];
+
+  return (
+    <div className={styles.advisoryShell}>
+      <div
+        className={styles.advisoryTabs}
+        role="tablist"
+        aria-label="Advisory story"
+      >
+        {data.advisoryTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab?.id === tab.id}
+            aria-controls={`advisory-panel-${tab.id}`}
+            id={`advisory-tab-${tab.id}`}
+            className={`${styles.advisoryTab} ${
+              activeTab?.id === tab.id ? styles.advisoryTabActive : ""
+            }`}
+            onClick={() => {
+              setActiveTabId(tab.id);
+              requestAnimationFrame(() => {
+                window.scrollTo({ top: 0, left: 0 });
+              });
+            }}
+          >
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab ? (
+        <div
+          id={`advisory-panel-${activeTab.id}`}
+          role="tabpanel"
+          aria-labelledby={`advisory-tab-${activeTab.id}`}
+          className={`${styles.advisoryPanel} ${
+            activeTab.id === "ai-shift" ? styles.advisoryPanelMatrix : ""
+          }`}
+        >
+          <article className={styles.advisoryStory}>
+            <div className={styles.heroMeta}>
+              <span>{activeTab.kicker}</span>
+              <span>Evidence-bound</span>
+              <span>Human review required</span>
+            </div>
+            <h2 className={styles.h1}>{activeTab.headline}</h2>
+            {activeTab.id === "ai-shift" ? (
+              <AdvisoryValueMatrix data={data} />
+            ) : null}
+            <p className={styles.lead}>{activeTab.read}</p>
+            <div className={styles.advisoryPointGrid}>
+              {activeTab.points.map((point) => (
+                <div key={point.label} className={styles.advisoryPoint}>
+                  <span>{point.label}</span>
+                  <p>{point.body}</p>
+                </div>
+              ))}
+            </div>
+            <Evidence refs={activeTab.evidenceRefs} />
+          </article>
+
+          {activeTab.id !== "ai-shift" ? (
+            <aside className={`${styles.panel} ${styles.advisoryAside}`}>
+              <span className={styles.eyebrow}>Executive proof stack</span>
+              {activeTab.callout ? (
+                <div className={styles.advisoryCallout}>
+                  <span>{activeTab.callout.label}</span>
+                  <strong>{activeTab.callout.value}</strong>
+                  <p>{activeTab.callout.note}</p>
+                </div>
+              ) : null}
+              <div className={styles.barList}>
+                {data.moneyBars.map((bar, index) => (
+                  <MoneyBar
+                    key={bar.label}
+                    {...bar}
+                    percent={
+                      index === 0
+                        ? 100
+                        : index === 1
+                          ? contractRatio * 100
+                          : index === 2
+                            ? aiCostRatio * 100
+                            : 0
+                    }
+                  />
+                ))}
+              </div>
+            </aside>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AdvisoryValueMatrix({ data }: { data: AiSuccessHomeData }) {
+  const matrixData = data.advisoryValueMatrix.map((idea) => ({
+    ...idea,
+    z:
+      idea.valuePotential === "High"
+        ? 520
+        : idea.valuePotential === "Medium"
+          ? 430
+          : 340,
+  }));
+
+  return (
+    <div className={styles.valueMatrixShell}>
+      <div className={styles.matrixIntro}>
+        <div>
+          <span className={styles.eyebrow}>Value priority matrix</span>
+          <h3>Where the first dollar goes</h3>
+        </div>
+        <p>
+          Value potential x execution readiness. Use this as a workshop frame:
+          outside-in value ideas move only when source owners validate the
+          evidence gate.
+        </p>
+      </div>
+      <div
+        className={styles.matrixChartCard}
+        aria-label="AI use case priority matrix"
+      >
+        <ResponsiveContainer width="100%" height={360}>
+          <ScatterChart margin={{ top: 20, right: 24, bottom: 34, left: 40 }}>
+            <CartesianGrid stroke="#ffffff" strokeWidth={1.5} />
+            <ReferenceArea x1={0} x2={33.33} y1={0} y2={33.33} fill="#eef2f6" />
+            <ReferenceArea
+              x1={0}
+              x2={33.33}
+              y1={33.33}
+              y2={66.66}
+              fill="#eef2f6"
+            />
+            <ReferenceArea
+              x1={0}
+              x2={33.33}
+              y1={66.66}
+              y2={100}
+              fill="#f3ead6"
+            />
+            <ReferenceArea
+              x1={33.33}
+              x2={66.66}
+              y1={0}
+              y2={33.33}
+              fill="#eef2f6"
+            />
+            <ReferenceArea
+              x1={33.33}
+              x2={66.66}
+              y1={33.33}
+              y2={66.66}
+              fill="#f3ead6"
+            />
+            <ReferenceArea
+              x1={33.33}
+              x2={66.66}
+              y1={66.66}
+              y2={100}
+              fill="#dcece5"
+            />
+            <ReferenceArea
+              x1={66.66}
+              x2={100}
+              y1={0}
+              y2={33.33}
+              fill="#f3ead6"
+            />
+            <ReferenceArea
+              x1={66.66}
+              x2={100}
+              y1={33.33}
+              y2={66.66}
+              fill="#dcece5"
+            />
+            <ReferenceArea
+              x1={66.66}
+              x2={100}
+              y1={66.66}
+              y2={100}
+              fill="#dcece5"
+            />
+            <XAxis
+              type="number"
+              dataKey="x"
+              domain={[0, 100]}
+              ticks={[16.66, 50, 83.33]}
+              tickFormatter={readinessTick}
+              tick={{ fill: "#5f6f88", fontSize: 11, fontWeight: 800 }}
+              axisLine={{ stroke: "rgba(12, 26, 58, 0.26)" }}
+              tickLine={false}
+              label={{
+                value: "Execution readiness",
+                position: "insideBottom",
+                offset: -24,
+                fill: "#0c1a3a",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              domain={[0, 100]}
+              ticks={[16.66, 50, 83.33]}
+              tickFormatter={readinessTick}
+              tick={{ fill: "#5f6f88", fontSize: 11, fontWeight: 800 }}
+              axisLine={{ stroke: "rgba(12, 26, 58, 0.26)" }}
+              tickLine={false}
+              label={{
+                value: "Value potential",
+                angle: -90,
+                position: "insideLeft",
+                fill: "#0c1a3a",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            />
+            <ZAxis type="number" dataKey="z" range={[620, 1220]} />
+            <Tooltip content={<MatrixTooltipContent />} />
+            <Scatter data={matrixData} isAnimationActive={false}>
+              {matrixData.map((idea) => (
+                <Cell key={idea.id} fill={matrixColor(idea.zone)} />
+              ))}
+              <LabelList
+                dataKey="shortLabel"
+                position="inside"
+                fill="#ffffff"
+                fontSize={9.5}
+                fontWeight={900}
+              />
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+      <div className={styles.matrixLegend}>
+        <span>
+          <i className={styles.legendInvest} />
+          Invest now
+        </span>
+        <span>
+          <i className={styles.legendBuild} />
+          Build selectively
+        </span>
+        <span>
+          <i className={styles.legendMonitor} />
+          Monitor
+        </span>
+      </div>
+      <div className={styles.matrixIdeaList}>
+        {data.advisoryValueMatrix.map((idea) => (
+          <article key={idea.id}>
+            <span>{idea.zone.replace("-", " ")}</span>
+            <strong>{idea.title}</strong>
+            <p>{idea.note}</p>
+            <small>{idea.evidenceGate}</small>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function readinessTick(value: number) {
+  if (value < 34) return "Low";
+  if (value < 67) return "Medium";
+  return "High";
+}
+
+function matrixColor(
+  zone: AiSuccessHomeData["advisoryValueMatrix"][number]["zone"],
+) {
+  if (zone === "invest") return "#173e6d";
+  if (zone === "build") return "#9b6418";
+  return "#66758d";
+}
+
+function MatrixTooltipContent({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    payload?: AiSuccessHomeData["advisoryValueMatrix"][number];
+  }>;
+}) {
+  if (!active || !payload?.[0]?.payload) return null;
+  const idea = payload[0].payload;
+  return (
+    <div className={styles.matrixTooltip}>
+      <span>{idea.zone.replace("-", " ")}</span>
+      <strong>{idea.title}</strong>
+      <p>{idea.note}</p>
+      <small>{idea.evidenceGate}</small>
+    </div>
+  );
+}
+
+function PostureCanvas({ data }: { data: AiSuccessHomeData }) {
+  return (
+    <>
+      <SectionHeader
+        kicker="02 · Posture"
+        title="AI success posture"
+        copy="Deterministic values only. Unknown value is named, never rendered as $0. The one zero shown is a Tower-established zero."
+      />
+      <div className={styles.grid4}>
+        {data.postureCards.map((card) => (
+          <article key={card.label} className={styles.postureCard}>
+            <div>
+              <div className={styles.postureLabel}>
+                <StatusDot state={card.state} />
+                {card.label}
+              </div>
+              <div className={styles.postureValue}>{card.value}</div>
+            </div>
+            <p className={styles.postureNote}>{card.note}</p>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function AttentionCanvas({ data }: { data: AiSuccessHomeData }) {
+  return (
+    <>
+      <SectionHeader
+        kicker="03 · Attention"
+        title="What leadership must look at this quarter"
+        copy="Five material signals, each anchored to a deterministic finding or evidence gap."
+      />
+      <div className={styles.twoCol}>
+        <div className={styles.signals}>
+          {data.attentionSignals.map((signal) => (
+            <article key={signal.ref} className={styles.signal}>
+              <div className={styles.signalTop}>
+                <span className={styles.signalRef}>{signal.ref}</span>
+                <span className={styles.signalSeverity}>{signal.severity}</span>
+              </div>
+              <div className={styles.signalTitle}>{signal.title}</div>
+              <p className={styles.signalBody}>{signal.body}</p>
+              <Evidence refs={[signal.owner, signal.destination]} />
+            </article>
+          ))}
+        </div>
+        <div className={`${styles.panel} ${styles.chartBox}`}>
+          <span className={styles.eyebrow}>Claim state pressure</span>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={data.claimFunnel}
+              layout="vertical"
+              margin={{ top: 20, right: 24, bottom: 12, left: 8 }}
+            >
+              <CartesianGrid stroke="#eee7dc" horizontal={false} />
+              <XAxis type="number" hide />
+              <YAxis
+                dataKey="name"
+                type="category"
+                width={124}
+                tick={{ fill: "#5d554b", fontSize: 12 }}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
+              />
+              <Bar dataKey="claims" radius={[0, 6, 6, 0]}>
+                {data.claimFunnel.map((_, index) => (
+                  <Cell
+                    key={index}
+                    fill={CHART_COLORS[index % CHART_COLORS.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ArchitectureCanvas({
+  data,
+  overlay,
+  selectedRef,
+  onOverlayChange,
+  onSelect,
+}: {
+  data: AiSuccessHomeData;
+  overlay: string;
+  selectedRef?: string;
+  onOverlayChange: (overlay: string) => void;
+  onSelect: (ref: string) => void;
+}) {
+  return (
+    <div className={styles.architectureFrame}>
+      <ArchitectureFlowDiagram data={data} onSelect={onSelect} />
+      <div className={styles.architectureSecondary}>
+        <div className={styles.secondaryHeader}>
+          <div>
+            <span className={styles.eyebrow}>Detailed explorer</span>
+            <h3>Evidence graph</h3>
+          </div>
+          <Link
+            href="/intelligence/enterprise-landscape"
+            className={styles.secondaryLink}
+          >
+            Open full explorer
+          </Link>
+        </div>
+        <CurrentStateArchitectureMap
+          graph={data.graph}
+          advisory={data.advisory}
+          overlay={overlay}
+          selectedRef={selectedRef}
+          onOverlayChange={onOverlayChange}
+          onSelect={onSelect}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PortfolioCanvas({ data }: { data: AiSuccessHomeData }) {
+  return (
+    <>
+      <SectionHeader
+        kicker="05 · Portfolio"
+        title="Scale, redesign, fix or stop"
+        copy="Six material initiatives are shown as recommended lanes. Approved choices are governed separately and currently empty."
+      />
+      <div className={styles.choiceGrid}>
+        {data.portfolioChoices.map((choice) => (
+          <article key={choice.ref} className={styles.choice}>
+            <div className={styles.choiceLane}>{choice.lane}</div>
+            <div className={styles.choiceTitle}>{choice.project}</div>
+            <p className={styles.choiceMeta}>
+              Approved budget <b>{money(choice.budget)}</b>
+              <br />
+              Evidence: {choice.evidence}
+              <br />
+              Next gate: {choice.gate}
+            </p>
+            <Evidence refs={[choice.ref]} />
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ValueCanvas({
+  data,
+  pieData,
+}: {
+  data: AiSuccessHomeData;
+  pieData: Array<{ name: string; value: number }>;
+}) {
+  return (
+    <>
+      <SectionHeader
+        kicker="06 · Value"
+        title="Value realization funnel"
+        copy="Tower states are deterministic. Usage, seats and hours-saved estimates are not realized value."
+      />
+      <div className={styles.twoCol}>
+        <div className={`${styles.panel} ${styles.chartBox}`}>
+          <ResponsiveContainer width="100%" height={320}>
+            <FunnelChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <Tooltip
+                contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
+              />
+              <Funnel
+                dataKey="claims"
+                data={data.claimFunnel}
+                nameKey="name"
+                isAnimationActive={false}
+              >
+                {data.claimFunnel.map((_, index) => (
+                  <Cell
+                    key={index}
+                    fill={CHART_COLORS[index % CHART_COLORS.length]}
+                  />
+                ))}
+              </Funnel>
+            </FunnelChart>
+          </ResponsiveContainer>
+          <div className={styles.funnelLegend} aria-label="Claim funnel stages">
+            {data.claimFunnel.map((stage, index) => (
+              <span key={stage.name}>
+                <i
+                  style={{
+                    background: CHART_COLORS[index % CHART_COLORS.length],
+                  }}
+                />
+                <b>{stage.name}</b>
+                {stage.claims}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className={`${styles.panel} ${styles.chartBox}`}>
+          <span className={styles.eyebrow}>Observation coverage</span>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={data.observationQuality}
+              margin={{ top: 20, right: 12, left: 0, bottom: 72 }}
+            >
+              <CartesianGrid stroke="#eee7dc" vertical={false} />
+              <XAxis
+                dataKey="name"
+                tickFormatter={formatObservationLabel}
+                tick={{ fill: "#5d554b", fontSize: 10 }}
+                angle={-28}
+                textAnchor="end"
+                interval={0}
+              />
+              <YAxis tick={{ fill: "#5d554b", fontSize: 11 }} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
+              />
+              <Bar dataKey="count" fill="#11100f" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <div className={`${styles.panel} ${styles.panelPad}`}>
+        <div className={styles.twoColTight}>
+          <div>
+            <span className={styles.eyebrow}>AI tool evidence</span>
+            <p className={styles.sectionCopy}>
+              Top AI rows show adoption and directional use cost. They do not
+              establish realized value.
+            </p>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={54}
+                outerRadius={86}
+                paddingAngle={3}
+              >
+                {pieData.map((_, index) => (
+                  <Cell key={index} fill={CHART_COLORS[index]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ borderRadius: 8, borderColor: "#d8d0c5" }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function formatObservationLabel(value: string) {
+  return value.replace(" present", "").replace("business metric", "business");
+}
+
+function AgendaCanvas({ data }: { data: AiSuccessHomeData }) {
+  return (
+    <>
+      <SectionHeader
+        kicker="07 · Agenda"
+        title="What must change, and what must be decided"
+        copy="Decisions are proposed routes, not approved governance outcomes."
+      />
+      <div className={styles.panel}>
+        <table className={styles.decisionTable}>
+          <thead>
+            <tr>
+              <th>Decision</th>
+              <th>Consequence of delay</th>
+              <th>Accountable</th>
+              <th>Destination</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.decisions.map((item) => (
+              <tr key={item.decision}>
+                <td>
+                  <b>{item.decision}</b>
+                </td>
+                <td>{item.consequence}</td>
+                <td>{item.owner}</td>
+                <td>{item.destination}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function LimitsCanvas({ data }: { data: AiSuccessHomeData }) {
+  return (
+    <>
+      <SectionHeader
+        kicker="08 · Evidence required"
+        title="Evidence required next"
+        copy="Stated, not filled with inference. This is part of the product promise."
+      />
+      <div className={styles.limitsGrid}>
+        {data.limits.map((limit) => (
+          <article key={limit.title} className={styles.limit}>
+            <div className={styles.choiceTitle}>{limit.title}</div>
+            <p className={styles.choiceMeta}>{limit.body}</p>
+            <span className={styles.chip}>Owner · {limit.owner}</span>
+          </article>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -702,7 +1025,9 @@ function HomeCommandCenterAva({
   return (
     <aside
       aria-label="Ask aVa about Home knowledge"
-      className={`${styles.avaDrawer} ${expanded ? styles.avaDrawerExpanded : ""}`}
+      className={`${styles.avaDrawer} ${
+        expanded ? styles.avaDrawerExpanded : ""
+      }`}
     >
       <header className={styles.avaDrawerHeader}>
         <div className={styles.avaTitleBlock}>
@@ -842,16 +1167,6 @@ function resetTextarea(el: HTMLTextAreaElement | null) {
   el.style.height = "auto";
 }
 
-function advisoryText(value: unknown, keys: string[]): string | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  for (const key of keys) {
-    const text = record[key];
-    if (typeof text === "string" && text.trim()) return text;
-  }
-  return null;
-}
-
 function MoneyBar({
   label,
   valueLabel,
@@ -873,7 +1188,9 @@ function MoneyBar({
       </div>
       <div className={styles.track}>
         <div
-          className={`${styles.fill} ${tone === "amber" ? styles.fillAmber : ""} ${tone === "danger" ? styles.fillDanger : ""}`}
+          className={`${styles.fill} ${
+            tone === "amber" ? styles.fillAmber : ""
+          } ${tone === "danger" ? styles.fillDanger : ""}`}
           style={{ width: `${Math.max(1, Math.min(100, percent))}%` }}
         />
       </div>
