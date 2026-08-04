@@ -54,7 +54,12 @@ describe("/api/home/know/ask visible contract recovery", () => {
     expect(res.status).toBe(200);
     expect(payload.mode).toBe("KNOW");
     expect(payload.answerStatus).toBe("partial");
-    expect(payload.prose).toContain("I tightened the wording before display");
+    expect(payload.prose).toContain(
+      "The available evidence is being shown in a conservative review-safe form.",
+    );
+    expect(payload.prose).not.toContain("I tightened the wording");
+    expect(payload.prose).not.toContain("first draft");
+    expect(payload.prose).not.toContain("answer-construction language");
     expect(payload.tables).toHaveLength(1);
     expect(payload.safety.composerTrace?.fallbackUsed).toBe(true);
     expect(payload.safety.composerTrace?.reason).toContain(

@@ -55,6 +55,8 @@ const IMPLEMENTATION_ROWS_RE = /\brows\b/i;
 const STOCK_GENERIC_CLOSING_RE =
   /\binspect\b[\s\S]*?\b(?:compare|benchmark|challenge)\b[\s\S]*?\bor\b[\s\S]*?\bshape\b/i;
 const INTERNAL_DOSSIER_TERMS_RE = /\bread[- ]model\b/i;
+const ANSWER_CONSTRUCTION_LANGUAGE_RE =
+  /\b(?:tightened the wording|first draft|before display|answer-construction language|renderer may|rendered from)\b/i;
 const SESSION_HISTORY_RE =
   /\b(?:same answer as the last \w+ turns?|all session\b|has\s?n'?t moved\b.{0,20}session)/i;
 const ATLAS_BRANDING_RE = /\bAtlas\b/;
@@ -126,6 +128,11 @@ export function assertVisibleAnswerContract(
     INTERNAL_DOSSIER_TERMS_RE,
     "internal_dossier_terms",
     "Output references internal read-model/dossier vocabulary.",
+  );
+  check(
+    ANSWER_CONSTRUCTION_LANGUAGE_RE,
+    "answer_construction_language",
+    "Output narrates answer construction or renderer behavior instead of advisor prose.",
   );
   check(
     SESSION_HISTORY_RE,

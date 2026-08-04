@@ -281,13 +281,13 @@ function buildVisibleContractRecoveryProse(
     response.gaps.length > 0
       ? ` It also preserves ${response.gaps.length === 1 ? "one caveat" : "the caveats"} where the current business material is not ready for decision use.`
       : "";
-  const rewriteReason = contract.violations.length
-    ? " I tightened the wording before display because the first draft exposed answer-construction language instead of executive prose."
+  const evidenceBoundary = contract.violations.length
+    ? " The available evidence is being shown in a conservative review-safe form."
     : "";
 
   return [
-    `I can answer this at Home level.${rewriteReason}`,
-    `The safest view is the structured one below: ${artifactSummary}.${gapSummary}`,
+    `I can answer this at Home level.${evidenceBoundary}`,
+    `Use the structured view below: ${artifactSummary}.${gapSummary}`,
     "Use this as a leadership navigation layer for review. It is not approval to write, publish, activate a baseline, or promote anything into production.",
   ].join("\n\n");
 }

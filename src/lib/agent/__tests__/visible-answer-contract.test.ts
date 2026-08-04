@@ -84,6 +84,17 @@ describe("visible answer contract", () => {
     );
   });
 
+  it("blocks answer-construction recovery language", () => {
+    const gate = assertVisibleAnswerContract(
+      "I tightened the wording before display because the first draft exposed answer-construction language instead of executive prose.",
+    );
+
+    expect(gate.passed).toBe(false);
+    expect(gate.violations.map((violation) => violation.id)).toContain(
+      "answer_construction_language",
+    );
+  });
+
   it("blocks session-history language in visible answers", () => {
     const gate = assertVisibleAnswerContract(
       "Same answer as the last four turns: fix certified operational data first.",
