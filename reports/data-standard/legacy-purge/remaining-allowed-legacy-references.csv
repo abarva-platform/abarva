@@ -507,6 +507,7 @@ synthetic-v-folder-reference,scripts/verify/meridian-context-showcase.mjs,non-lo
 synthetic-v-folder-reference,scripts/verify/meridian-data-pack-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/northstar-context-layer-scaffold.mjs,non-loader historical reference
 old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,non-loader historical reference
+legacy-v-dimension-token,src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/app/api/admin/context-layer/manifest-load/route.ts,non-loader historical reference
 synthetic-v-folder-reference,src/components/admin/context-layer/__tests__/CsvUploadConnector.test.tsx,non-loader historical reference
 synthetic-v-folder-reference,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference

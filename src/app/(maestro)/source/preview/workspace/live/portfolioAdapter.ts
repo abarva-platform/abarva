@@ -15,6 +15,10 @@ import {
   type SourceV4WorkspaceSnapshot,
 } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import {
+  evaluateContractCategoryQuality,
+  type SourceContractCategoryQualitySummary,
+} from "@/lib/source/data-model/contract-category-quality";
+import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
@@ -39,6 +43,22 @@ export interface SourceWorkspacePortfolioData {
   readonly asOfDateIso: string;
   readonly semanticLayer: ReturnType<typeof sourceV4CubeUiCatalogForAgent>;
   readonly v4Snapshot: SourceV4WorkspaceSnapshot;
+  readonly categoryQuality: SourceContractCategoryQualitySummary;
+  readonly workspaceDiagnostics: {
+    readonly datasetLabel: string;
+    readonly datasetId: string;
+    readonly datasetVersion: string;
+    readonly analyticsProvider: string;
+    readonly activeLoadRunId: string | null;
+    readonly asOfDateIso: string;
+    readonly v4ContractCount: number;
+    readonly v4VendorCount: number;
+    readonly legacyContractCount: number;
+    readonly legacyVendorCount: number;
+    readonly exploreProvider: "LegacySourceContract360Provider";
+    readonly exploreMatchesV4: boolean;
+    readonly mismatchWarning: string | null;
+  };
   readonly contracts: readonly SourceContract360Row[];
   readonly vendors: readonly SourceVendorContractPortfolioRow[];
   readonly applicationScope: readonly SourceContractApplicationScopeRow[];
@@ -71,12 +91,36 @@ export async function loadSourceWorkspacePortfolio(
   ]);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
+  const categoryQuality = evaluateContractCategoryQuality(contracts);
+  const legacyVendorRefs = new Set(contracts.map((contract) => contract.vendor_ref));
+  const legacyVendorCount = legacyVendorRefs.size;
+  const v4ContractCount = v4Snapshot.executivePortfolio.contractCount || v4Snapshot.contextCoverage.contracts;
+  const v4VendorCount = v4Snapshot.contextCoverage.vendors || v4Snapshot.topVendors.length;
+  const exploreMatchesV4 = contracts.length === v4ContractCount && legacyVendorCount === v4VendorCount;
 
   return {
     tenantKey,
     asOfDateIso,
     semanticLayer: sourceV4CubeUiCatalogForAgent(),
     v4Snapshot,
+    categoryQuality,
+    workspaceDiagnostics: {
+      datasetLabel: v4Snapshot.datasetLabel,
+      datasetId: v4Snapshot.datasetId,
+      datasetVersion: v4Snapshot.datasetVersion,
+      analyticsProvider: v4Snapshot.analyticsProvider,
+      activeLoadRunId: v4Snapshot.activeLoadRunId,
+      asOfDateIso: v4Snapshot.asOfDateIso,
+      v4ContractCount,
+      v4VendorCount,
+      legacyContractCount: contracts.length,
+      legacyVendorCount,
+      exploreProvider: "LegacySourceContract360Provider",
+      exploreMatchesV4,
+      mismatchWarning: exploreMatchesV4
+        ? null
+        : `Explore lens is reading ${contracts.length} contracts / ${legacyVendorCount} vendors from source.contract_360 while the active Source V4 snapshot reports ${v4ContractCount} contract families / ${v4VendorCount} vendors.`,
+    },
     contracts,
     vendors,
     applicationScope,

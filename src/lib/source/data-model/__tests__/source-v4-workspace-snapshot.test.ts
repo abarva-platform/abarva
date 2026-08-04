@@ -15,6 +15,9 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
     mockedWithSession.mockImplementation(async (fn) => fn(run));
     run.mockImplementation(async (sql: string) => {
       if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("MAX(load_run_id)")) {
+        return [{ active_load_run_id: "source-v4-load-20260803" }];
+      }
       if (sql.includes("sourcing_context_coverage_v1")) {
         return [
           {
@@ -160,6 +163,10 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
       ]),
     );
     expect(snapshot.datasetId).toBe("skyharbor-source-v4-202608");
+    expect(snapshot.datasetVersion).toBe("v4");
+    expect(snapshot.datasetLabel).toBe("SkyHarbor Source v4");
+    expect(snapshot.analyticsProvider).toBe("CubeSourceProvider");
+    expect(snapshot.activeLoadRunId).toBe("source-v4-load-20260803");
     expect(snapshot.contextCoverage.contracts).toBe(100);
     expect(snapshot.executivePortfolio.annualValue).toBe(1480500000);
     expect(snapshot.scopeConfidence.rowCount).toBe(15840);

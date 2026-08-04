@@ -5,25 +5,21 @@ import type {
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
+import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 
 // Live-found bug (2026-08-04): selecting a value in the Explore lens (e.g.
 // Vendor = Salesforce) correctly updated the "current selection" total, but
-// the "Annual contract value by <dimension>" panel kept showing every
-// vendor at full color/value instead of greying out the ones excluded by
-// the selection — exactly the associative-selection behavior the listboxes
-// already got right. Root cause: explore()'s bucket-liveness computation
-// reused matches(c, S.groupBy), which deliberately ignores the CURRENTLY
-// GROUPED dimension's own filter (correct for listboxes — "what else could
-// I pick" — wrong for the main panel, where a bucket that isn't the
-// selected value must never read as live).
+// the "Annual contract value by <dimension>" panel kept showing every vendor.
+// The approved Source behavior is now selected-only by default; peers return
+// only when Compare all is explicit.
 
 function contractRow(
   overrides: Partial<SourceContract360Row> & { contract_id: string },
 ): SourceContract360Row {
   return {
     tenant_key: "skyharbor_global",
-    vendor_ref: "v-default",
+    vendor_ref: "vendor-default",
     vendor_name: "Default Vendor",
     vendor_category: null,
     contract_name: "Default Contract",
@@ -79,16 +75,16 @@ function vendorRow(
 // Salesforce selection should leave exactly one live bucket (Salesforce)
 // and mark CloudPeak / Microsoft excluded.
 const CONTRACTS: SourceContract360Row[] = [
-  contractRow({ contract_id: "c1", vendor_ref: "v-sf", vendor_name: "Salesforce", annual_value: 40_000_000 }),
-  contractRow({ contract_id: "c2", vendor_ref: "v-sf", vendor_name: "Salesforce", annual_value: 3_500_000 }),
-  contractRow({ contract_id: "c3", vendor_ref: "v-cp", vendor_name: "CloudPeak", annual_value: 30_000_000 }),
-  contractRow({ contract_id: "c4", vendor_ref: "v-ms", vendor_name: "Microsoft", annual_value: 25_000_000 }),
+  contractRow({ contract_id: "c1", vendor_ref: "vendor-salesforce", vendor_name: "Salesforce", annual_value: 40_000_000 }),
+  contractRow({ contract_id: "c2", vendor_ref: "vendor-salesforce", vendor_name: "Salesforce", annual_value: 3_500_000 }),
+  contractRow({ contract_id: "c3", vendor_ref: "vendor-cloudpeak", vendor_name: "CloudPeak", annual_value: 30_000_000 }),
+  contractRow({ contract_id: "c4", vendor_ref: "vendor-microsoft", vendor_name: "Microsoft", annual_value: 25_000_000 }),
 ];
 
 const VENDORS: SourceVendorContractPortfolioRow[] = [
-  vendorRow({ vendor_ref: "v-sf", vendor_name: "Salesforce", annual_value: 43_500_000, contract_count: 2 }),
-  vendorRow({ vendor_ref: "v-cp", vendor_name: "CloudPeak", annual_value: 30_000_000 }),
-  vendorRow({ vendor_ref: "v-ms", vendor_name: "Microsoft", annual_value: 25_000_000 }),
+  vendorRow({ vendor_ref: "vendor-salesforce", vendor_name: "Salesforce", annual_value: 43_500_000, contract_count: 2 }),
+  vendorRow({ vendor_ref: "vendor-cloudpeak", vendor_name: "CloudPeak", annual_value: 30_000_000 }),
+  vendorRow({ vendor_ref: "vendor-microsoft", vendor_name: "Microsoft", annual_value: 25_000_000 }),
 ];
 
 const EMPTY_V4_SNAPSHOT = createEmptySourceV4WorkspaceSnapshot("2027-06-30T00:00:00Z");
@@ -98,6 +94,23 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
   asOfDateIso: "2027-06-30T00:00:00Z",
   semanticLayer: sourceV4CubeUiCatalogForAgent(),
   v4Snapshot: EMPTY_V4_SNAPSHOT,
+  categoryQuality: evaluateContractCategoryQuality(CONTRACTS),
+  workspaceDiagnostics: {
+    datasetLabel: "SkyHarbor Source v4",
+    datasetId: "skyharbor-source-v4-202608",
+    datasetVersion: "v4",
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: null,
+    asOfDateIso: "2027-06-30T00:00:00Z",
+    v4ContractCount: 0,
+    v4VendorCount: 0,
+    legacyContractCount: CONTRACTS.length,
+    legacyVendorCount: VENDORS.length,
+    exploreProvider: "LegacySourceContract360Provider",
+    exploreMatchesV4: false,
+    mismatchWarning:
+      "Explore lens is reading 4 contracts / 3 vendors from source.contract_360 while the active Source V4 snapshot reports 0 contract families / 0 vendors.",
+  },
   contracts: CONTRACTS,
   vendors: VENDORS,
   applicationScope: [],
@@ -128,27 +141,23 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(ex.groups.every((g) => g.labelColor === "#0a0a0b")).toBe(true);
   });
 
-  it("selecting Vendor = Salesforce marks only the Salesforce bucket live — every other vendor bucket must grey out", () => {
+  it("selecting Vendor = Salesforce shows only the Salesforce bucket by default", () => {
     const vm = buildVm({ vendor: ["Salesforce"] });
     const ex = vm.explore(vm.enrich());
 
-    const salesforce = ex.groups.find((g) => g.key === "Salesforce");
-    const cloudPeak = ex.groups.find((g) => g.key === "CloudPeak");
-    const microsoft = ex.groups.find((g) => g.key === "Microsoft");
+    expect(ex.groups.map((g) => g.key)).toEqual(["Salesforce"]);
+    expect(ex.groups[0]?.labelColor).toBe("#0a0a0b");
+    expect(ex.groups[0]?.value).toBe("$43.5M");
+  });
 
-    expect(salesforce).toBeDefined();
-    expect(cloudPeak).toBeDefined();
-    expect(microsoft).toBeDefined();
+  it("Compare all intentionally restores excluded peers", () => {
+    const vm = buildVm({ vendor: ["Salesforce"] });
+    vm.state.compareExcluded = true;
+    const ex = vm.explore(vm.enrich());
 
-    // Live (selected) bucket renders in full ink color and keeps its real value.
-    expect(salesforce!.labelColor).toBe("#0a0a0b");
-    expect(salesforce!.value).toBe("$43.5M");
-
-    // Excluded buckets must grey out — this is exactly what the live bug
-    // failed to do: before the fix, every vendor rendered with labelColor
-    // '#0a0a0b' regardless of the active Vendor = Salesforce selection.
-    expect(cloudPeak!.labelColor).toBe("#b4b2a9");
-    expect(microsoft!.labelColor).toBe("#b4b2a9");
+    expect(ex.groups.map((g) => g.key)).toEqual(["Salesforce", "CloudPeak", "Microsoft"]);
+    expect(ex.groups.find((g) => g.key === "CloudPeak")?.labelColor).toBe("#b4b2a9");
+    expect(ex.groups.find((g) => g.key === "Microsoft")?.share).toBe("excluded");
   });
 
   it("cross-dimension grouping still respects an active filter on a different dimension", () => {
