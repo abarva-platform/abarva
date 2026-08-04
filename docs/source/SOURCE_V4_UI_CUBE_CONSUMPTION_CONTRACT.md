@@ -21,6 +21,14 @@ src/lib/source/data-model/source-v4-cube-ui-catalog.ts
 
 The catalog is threaded into `/source/preview/workspace` through `SourceWorkspacePortfolioData.semanticLayer`, so the page and aVa receive the same semantic contract.
 
+The workspace also receives a compact server-side aggregate snapshot from:
+
+```text
+src/lib/source/data-model/source-v4-workspace-snapshot.ts
+```
+
+That snapshot queries the same physical Source v4 tables behind the Cube views and exposes only portfolio counts, sums, availability states and top-N drill starters. It must not ship raw 195k-row extracts to the browser.
+
 ## Recommended Source Workspace Story
 
 | Tab             | Purpose                                                                   | Cube view                        |
@@ -58,7 +66,7 @@ The catalog is threaded into `/source/preview/workspace` through `SourceWorkspac
 Run the local catalog contract:
 
 ```bash
-npx jest src/lib/source/data-model/__tests__/source-v4-cube-ui-catalog.test.ts src/app/'(maestro)'/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts --runInBand
+npx jest src/lib/source/data-model/__tests__/source-v4-cube-ui-catalog.test.ts src/lib/source/data-model/__tests__/source-v4-workspace-snapshot.test.ts src/app/'(maestro)'/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts --runInBand
 ```
 
 The Cube runtime proof remains separate and is captured by the Cube lab deploy workflow. A signed-in UI proof is still required before claiming the Source Workspace visuals are live-proven.

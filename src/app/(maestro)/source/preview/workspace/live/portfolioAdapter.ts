@@ -11,6 +11,10 @@ import {
 import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import {
+  loadSourceV4WorkspaceSnapshot,
+  type SourceV4WorkspaceSnapshot,
+} from "@/lib/source/data-model/source-v4-workspace-snapshot";
+import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
@@ -34,6 +38,7 @@ export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
   readonly semanticLayer: ReturnType<typeof sourceV4CubeUiCatalogForAgent>;
+  readonly v4Snapshot: SourceV4WorkspaceSnapshot;
   readonly contracts: readonly SourceContract360Row[];
   readonly vendors: readonly SourceVendorContractPortfolioRow[];
   readonly applicationScope: readonly SourceContractApplicationScopeRow[];
@@ -51,13 +56,19 @@ export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
 ): Promise<SourceWorkspacePortfolioData> {
-  const [contractsRaw, vendors, applicationScope, initiativeDependencies] =
-    await Promise.all([
-      listContract360(tenantKey).catch(() => []),
-      listVendorContractPortfolio(tenantKey).catch(() => []),
-      listContractApplicationScope(tenantKey).catch(() => []),
-      listContractInitiativeDependency(tenantKey).catch(() => []),
-    ]);
+  const [
+    contractsRaw,
+    vendors,
+    applicationScope,
+    initiativeDependencies,
+    v4Snapshot,
+  ] = await Promise.all([
+    listContract360(tenantKey).catch(() => []),
+    listVendorContractPortfolio(tenantKey).catch(() => []),
+    listContractApplicationScope(tenantKey).catch(() => []),
+    listContractInitiativeDependency(tenantKey).catch(() => []),
+    loadSourceV4WorkspaceSnapshot(tenantKey, asOfDateIso),
+  ]);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
 
@@ -65,6 +76,7 @@ export async function loadSourceWorkspacePortfolio(
     tenantKey,
     asOfDateIso,
     semanticLayer: sourceV4CubeUiCatalogForAgent(),
+    v4Snapshot,
     contracts,
     vendors,
     applicationScope,
