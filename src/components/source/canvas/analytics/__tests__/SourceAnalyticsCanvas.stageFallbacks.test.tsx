@@ -150,5 +150,8 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
     expect(screen.queryByText("Responses")).not.toBeInTheDocument();
     expect(screen.queryByText("Evaluation")).not.toBeInTheDocument();
     expect(screen.queryByText("Selection")).not.toBeInTheDocument();
+    const rail = screen.getByTestId("source-shell-v2-rail");
+    expect(rail).toHaveTextContent("aVa guides Strategy through Agreement");
+    expect(rail).not.toHaveTextContent(/steps 1/i);
   });
 });

@@ -251,6 +251,39 @@ function placeholderStageViewFor(
   };
 }
 
+function isContractOptimizationJourney(view: SourceEventShellView): boolean {
+  const labels = new Set(view.journey.map((stage) => stage.label));
+  return (
+    labels.has("Commercial Baseline") &&
+    labels.has("Negotiation Plan") &&
+    labels.has("Agreement")
+  );
+}
+
+function SourceRailAdvisorNote({
+  view,
+}: {
+  view: SourceEventShellView;
+}): ReactNode {
+  if (isContractOptimizationJourney(view)) {
+    return (
+      <>
+        <b style={{ color: ANALYTICS.INK_2 }}>aVa</b> guides Strategy through
+        Agreement · <b style={{ color: ANALYTICS.INK_2 }}>Atlas</b> carries
+        Value proof.
+      </>
+    );
+  }
+
+  return (
+    <>
+      <b style={{ color: ANALYTICS.INK_2 }}>aVa</b> guides sourcing gates ·{" "}
+      <b style={{ color: ANALYTICS.INK_2 }}>Atlas</b> supports transition and
+      value proof.
+    </>
+  );
+}
+
 export function SourceAnalyticsCanvas({
   event,
   viewStage,
@@ -570,8 +603,7 @@ function SourceShellRail({
           Design contract →
         </Link>
         <div style={{ marginTop: 14 }}>
-          <b style={{ color: ANALYTICS.INK_2 }}>aVa</b> guides steps 1–9 · Atlas
-          takes over for Transition &amp; Value.
+          <SourceRailAdvisorNote view={view} />
         </div>
       </div>
     </aside>
@@ -627,10 +659,8 @@ function SourceWorkspace({
 function StageHeader({ view }: { view: SourceEventShellView }) {
   const stageIndex =
     view.journey.find((stage) => stage.key === view.stage.key)?.index ?? 1;
-  // Matches the rail note's own claim ("aVa guides steps 1-9 · Atlas takes
-  // over for Transition & Value") rather than the separate, richer
-  // Nexus/Sentinel/Governance/Atlas/aVa model in stage-canvas-config.ts —
-  // reconciling those two models is a separate product decision.
+  // Keep the headline owner simple; richer agent handoffs live in the stage
+  // work model and the journey-specific rail note.
   const leadAgentLabel =
     view.stage.key === "transition" || view.stage.key === "value"
       ? "Atlas"

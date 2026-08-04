@@ -37,6 +37,7 @@ Source events no longer all render and advance through the same competitive-RFP 
 - Adapts optimization-stage labels and sample copy so skipped RFP-specific language is not shown in a negotiation journey.
 - Aligns the Source portfolio book with the same journey resolver so optimization cards show the shorter journey and labels before opening the event detail.
 - Broadens the resolver to recognize commercial-renegotiation wording in event names and codes.
+- Replaces the hard-coded "steps 1-9" rail helper with journey-aware guidance so optimization events do not imply an 11-stage RFP path.
 - Adds focused tests for journey resolution, approval advancement, governance adjacency and shell rail rendering.
 
 ## QA / Validation
@@ -49,6 +50,7 @@ Source events no longer all render and advance through the same competitive-RFP 
 - PASS: `npm run release:check`
 - PASS: `NODE_OPTIONS='--max-old-space-size=8192' npm run build`
 - PASS: signed-in Source browser proof surfaced a portfolio/detail mismatch; this follow-up record covers the correction before redeploy.
+- PASS: signed-in Source browser proof after the corrected deployment showed the optimization portfolio and event detail on a 7-stage journey; the remaining rail-helper copy mismatch is corrected by this follow-up.
 - Pending: repeat signed-in Source browser proof after the corrected production deployment.
 
 ## Rollout Plan
@@ -73,6 +75,7 @@ Revert this PR and rerun the repo-owned web deploy workflow. No data rollback is
 
 - Local focused Jest, ESLint and TypeScript output.
 - Signed-in production browser proof against the first deployment showed the target optimization event still rendering the generic RFP journey, which this follow-up fixes.
+- Signed-in production browser proof against the second deployment showed the target optimization event rendering the right 7-stage journey but a stale rail helper still referenced the prior fixed step range, which this follow-up removes.
 - Release gate output.
 - PR review and merge record.
 - ACA deploy workflow run after merge.
