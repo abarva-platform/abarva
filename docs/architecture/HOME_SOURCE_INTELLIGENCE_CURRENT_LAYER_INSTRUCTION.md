@@ -27,6 +27,7 @@ Retired V6, V7, and CIO Tower layers must not be silent runtime fallbacks for Ho
   - `source_v4_sourcing_event_bafo`
 - Source aVa should cite the same Source V4 snapshot/Cube catalog used by the page. It should expose the query lens, metric family, selected filters, and source drill path in trace/debug output.
 - Source aVa should not answer from V6/V7 Intelligence packs. If a question needs cross-domain judgment, it should hand off to Intelligence with the Source V4 packet attached.
+- Status (verified 2026-08-04): Source's chat backend (`isSourceSurface` branch of `/api/chat/agent`, and the Source data-model read-adapter it calls) has zero references to `intelligence_v6` or `intelligence_v7` today. No purge work is needed on Source's aVa path for this decision — it was never wired to the retired layers.
 
 ## Intelligence aVa
 
@@ -34,6 +35,7 @@ Retired V6, V7, and CIO Tower layers must not be silent runtime fallbacks for Ho
 - Intelligence may reason across domains, but must preserve Source metric values exactly as supplied by Cube/Postgres. It must not recalculate Source financials from raw tables unless the question explicitly asks for audit/reconciliation.
 - Intelligence must not retrieve from `intelligence_v6` or `intelligence_v7` for active current-state answers once the current semantic dossier and Source V4 packet are available.
 - If the current semantic dossier or Source V4 packet is unavailable, Intelligence should say which evidence slice is missing and ask for refresh/load/signoff, rather than falling back to retired pack content.
+- Status (as of `2026-08-04-intelligence-curated-dossier-bridge`): unlike Home, Intelligence's core retrieval pipeline (`askIntelligence` in `src/lib/intelligence/ask/index.ts`) had **no** current-context Postgres path at all before this change — `retrieveV7DossierSources` was called unconditionally on every question and, when it returned data, suppressed every other tenant source (`hasActiveV7Dossier` gates `legacyTenantSources` to empty). Home's fix (delete the fallback) was safe only because a working replacement already existed; that replacement did not exist for Intelligence. This release adds `retrieveCuratedDossierSources` (reading the same `semantic2_dossiers` layer via `loadCuratedSemanticDossier`, the pattern Home and Atlas already use) as an **additive** source running alongside V7, not in place of it. V7 stays wired and dominant until the curated-dossier source is proven reliable across tenants and question types in production. **Gating V7 down (mirroring Home's `hasActiveV7Dossier` suppression logic, redirected to curated-dossier availability instead) is explicitly out of scope for this release and is the next phase, not yet started.**
 
 ## Tower Pages and Tower aVa
 

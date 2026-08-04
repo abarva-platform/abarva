@@ -11,6 +11,7 @@ import { generateFollowups, normalizeGeneratedFollowup } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
 import { retrieveRetailOverlaySources } from "./retrievers/retail-overlay";
+import { retrieveCuratedDossierSources } from "./retrievers/curated-dossier";
 import {
   retrieveTenantEnterpriseSources,
   retrieveTenantStructuredFacts,
@@ -285,6 +286,25 @@ export async function* askIntelligence(
         reason: "retired_v6_v7_layers_disabled",
       }),
     );
+    // Current-context bridge (2026-08-04): reads the same semantic2_dossiers
+    // Postgres layer Home and Atlas already serve from. Fills the grounding
+    // gap left by the V7 dossier retriever's removal above — Intelligence
+    // previously had no current-context Postgres source at all. Best-effort;
+    // an empty result here (no eligible dossier for this tenant/question)
+    // degrades to the existing tenant-context retrievers below, unchanged.
+    const curatedDossierStartedAt = Date.now();
+    const curatedDossier = await retrieveCuratedDossierSources(trimmed, {
+      tenantAppClientKey: opts.tenant?.appClientKey,
+      tenantInventoryKey: opts.tenantInventoryKey ?? opts.tenantClientKey,
+      surfaceContext: opts.surfaceContext,
+    });
+    emitTiming(
+      trace.finish(
+        "retrieval.curated_dossier.done",
+        curatedDossierStartedAt,
+        { sourceCount: curatedDossier.sources.length },
+      ),
+    );
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
     const tenantEnterpriseStartedAt = Date.now();
     const tenantEnterprise = await retrieveTenantEnterpriseSources(
@@ -395,6 +415,7 @@ export async function* askIntelligence(
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 9 : 18;
     const currentTenantSources = [
+      ...curatedDossier.sources,
       ...tenantStructuredFacts,
       ...tenantEnterprise,
       ...tenantTechnology,
