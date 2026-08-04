@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -74,9 +74,26 @@ reference screenshot), rather than `/source/events`' `side-rail` mode.
 - PASS: `npx jest src/lib/source/data-model/__tests__/ src/app/(maestro)/source/preview/workspace/__tests__/` (35/35, no regression from the numeric-coercion test added in the prior release)
 - Grep-verified no remaining references to any removed `ava*` symbol or the two deleted files anywhere
   under `src/app/(maestro)/source/preview/workspace/`.
-- Live signed-in proof: pending post-deploy — `/source` must show no second toolbar under the main
-  nav, and a collapsed aVa chip that expands into the shared modal (HTML/PDF export, suggested
-  questions, composer, approval disclaimer) matching the Moves "Move advisor" reference.
+- Live signed-in proof (PR #5927 merged as `fe9fca6b`, ACA main deploy run `30867976188`, revision
+  `ca-abarva-web-lab-eastus--mfe9fca6b`, image digest
+  `sha256:bb44d6c3b29e944537361c77d1f5088abfb1ecd2b747c233df744b5f5570fabf` at 100% traffic, confirmed
+  via `az containerapp show`/`revision list`):
+  - `https://app.abarva.ai/source` renders with exactly one toolbar — the page goes straight from the
+    black `SOURCE WORKSPACE · LIVE` status strip into the breadcrumb/title/tabs content. No repeated
+    logo, no in-page back/forward, no search field, no standalone "Ask aVa" button anywhere under the
+    main nav.
+  - A collapsed aVa chip (`a Va`) renders bottom-right, matching `AgentDock`'s collapsed mode.
+  - Clicking it opens the full expand overlay: header "aVa · Source Workspace advisor" with
+    layout/export icons and a close button, "Ask aVa anything." prompt, a "SUGGESTED QUESTIONS" block
+    showing the three portfolio-level `avaSuggestedActions` wired in this release ("Show the top
+    renewal exposures by annual value", "Why is concentration not the binding constraint?", "What
+    evidence is missing?"), an "Ask aVa…" composer, and the same "aVa can make mistakes" /
+    "HUMAN APPROVAL REQUIRED…" / "AI may produce errors…" footer chrome as the Moves reference — a
+    structural match to the target screenshot.
+  - Portfolio figures unaffected and still correct (119 contracts / 28 vendors / $1.4805B / $1.2817B),
+    confirming no regression to the numeric-coercion fix from the prior release.
+  - Zero console errors on page load and after opening the dock (checked via a fresh reload before
+    each check, so load-time errors weren't missed by late console-tracking attachment).
 
 ## Rollout Plan
 
@@ -91,7 +108,7 @@ feature flag — this is a code-only UI change.
 - ACA runtime invariant: standard post-deploy check applies.
 - Worker image invariant: not applicable.
 - Feature/env flag update path: not applicable.
-- Live signed-in proof required: required before this release is marked `released`.
+- Live signed-in proof required: required before this release is marked `released`. **Done — see QA / Validation.**
 
 ## Rollback Plan
 
@@ -105,8 +122,8 @@ composition over the same governed portfolio data the Workspace already reads.
   this release's backend wiring pattern is copied from.
 - `src/components/strategic-moves/StrategicMoveOriginateClient.tsx` (lines ~1005–1054) — the Moves
   `AgentDock` usage (`defaultMode`/`collapsedRestoreMode`/dock-mode config) this release matches.
-- Post-deploy: live signed-in screenshot of `/source` showing the single toolbar and the aVa dock in
-  both collapsed and expanded states.
+- Post-deploy: live signed-in screenshots of `/source` showing the single toolbar and the aVa dock in
+  both collapsed and expanded states, captured this session via an authenticated real-Chrome session.
 
 ## Known Gaps
 
@@ -121,4 +138,3 @@ composition over the same governed portfolio data the Workspace already reads.
   UI control pointing at them. The underlying state (`S.q`, `S.hist`/`S.hi`) is harmless dead
   plumbing — left in place rather than stripped further, since removing it serves no functional
   purpose and widens this release's diff for no benefit.
-- Live signed-in proof against the deployed revision is still pending (see Deployment Authority).
