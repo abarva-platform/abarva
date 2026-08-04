@@ -283,7 +283,10 @@ export async function buildHomeKnowResponse(
       prose: "I do not see an active tenant for this Home request.",
     });
   }
-  const dossierTenantKey = input.client?.trim() || tenantKey;
+  const dossierTenantKey = resolveHomeKnowDossierTenantKey({
+    tenantKey,
+    client: input.client,
+  });
   try {
     const curated = await loadCuratedSemanticDossier({
       tenantKey: dossierTenantKey,
@@ -509,6 +512,15 @@ export async function buildHomeKnowResponse(
       fallbackUsed: false,
     },
   );
+}
+
+export function resolveHomeKnowDossierTenantKey(input: {
+  tenantKey: string;
+  client?: string | null;
+}): string {
+  const requested = (input.client ?? input.tenantKey).trim();
+  const canonical = canonicalTenantKey(requested);
+  return canonical.trim() || input.tenantKey;
 }
 
 function withComposerTrace(
