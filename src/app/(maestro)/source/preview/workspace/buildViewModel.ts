@@ -366,7 +366,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const journeys = [
     { id: 'A', eyebrow: 'Path A · optimise an existing contract', title: 'Select a contract and build a fact-based renewal strategy',
       narrative: 'Use the governed register to build a renewal, renegotiation or optimisation strategy on a contract already held.',
-      cta: 'Select a contract to optimise', onClick: () => vm.select('contractList', 'passed'), primary: true },
+      cta: 'Select a contract to optimise', onClick: () => vm.select('contractList', 'weak'), primary: true },
   ];
 
   // ── list / saved views ──
@@ -525,7 +525,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     headerActions: kind === 'contract' && contract ? [
       { label: 'Build optimisation strategy', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
-      { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'passed') },
+      { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
     valueStrip: valueStrip.filter((v) => !v.missing), hasPending: valueStrip.filter((v) => v.missing).length > 0, pendingItems: valueStrip.filter((v) => v.missing).map((v) => ({ label: v.label, sub: v.sub })),
     stripFull: true, stripCompact: false, compactItems: [],
