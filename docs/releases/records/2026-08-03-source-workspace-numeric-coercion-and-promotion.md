@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -86,7 +86,34 @@ consumers) but is no longer the default entry point.
   `$InfinityB` on the Leverage exec-tree badge and `$8.453721447016953e+119B`-style figures on
   vendor-category badges, reproduced after a hard cache-busted reload (ruling out stale-bundle
   cache as the cause).
-- Live signed-in proof (post-fix): pending this PR's deploy — required before `released`.
+- Live signed-in proof (post-fix, PR #5922 merged as `cf394057b`, ACA revision
+  `ca-abarva-web-lab-eastus--mcf394057`, image digest
+  `sha256:ca229293c53f9885708a8993267babcddbe7832db9167ac100a0b06539c02341` at 100% traffic,
+  confirmed via `az containerapp show`/`revision list`):
+  - `https://app.abarva.ai/source` redirects to `/source/preview/workspace` (was `/source/portfolio`).
+  - Leverage exec-tree badge: `$863.8M` (was `$InfinityB`). Vendor-category badges: `$348.0M`,
+    `$206.0M`, `$247.7M`, `$193.6M`, `$160.8M`, `$173.6M`, `$150.7M` (were `$8.45e+119B`-style).
+    Leverage quadrant "Build alternatives and renegotiate": `$491.5M` (was `$4.35e+15B`).
+  - Portfolio reconciliation unchanged and correct: 119 contracts, 28 vendors, $1.4805B annual
+    value, $1.2817B actual spend, governed as-of 30 Jun 2027.
+  - Explorer lens-switching exercised across Context, Explore, Concentration, Renewals, Leverage,
+    Opportunities — each renders its own canvas with plausible figures, no fabricated heatmap, no
+    fabricated addressable-spend or rule-ID fields, decision strips and quadrant panels all correct.
+  - Contract detail API exercised on 3 contracts (CTR-064, CTR-090, CTR-063) — each triggered its
+    own `/api/source/workspace/contract/{id}` call (200), financial exposure loaded, operational
+    fields absent showed "Not established" (not fabricated zero), document evidence rows showed
+    real `source_file_id`/`review_state: unreviewed`, Scope tab showed honest
+    Explicit/Reviewed/Vendor-inferred/Unresolved counts (0/0/0/0 where no scope rows exist, not a
+    guessed value).
+  - MacBook width (1440×900): Explorer usable, aVa panel opens/collapses cleanly reflowing the
+    canvas, no horizontal overflow (`document.documentElement.scrollWidth` === `clientWidth`), zero
+    console errors across the whole session.
+  - Regression: `/source/vendor-portfolio`, `/source/sourcing-opportunities`, and `/source/events`
+    (→ `/source/portfolio`, the Door-1 event workflow — "SkyHarbor AMS Outsourcing RFP", step 2 of
+    11) all load correctly, unaffected by this change.
+  - Not independently re-verified this session: a second tenant's honest-empty-state behavior (no
+    second-tenant credential available in this session) — unchanged by this release's diff, so risk
+    is low, but this specific check was not re-run live.
 
 ## Rollout Plan
 
@@ -104,7 +131,7 @@ feature flag — this is a code-only fix plus a redirect-target change.
 - Live signed-in proof required: required before this release is marked `released` — the Leverage
   exec-tree badge and vendor-category badges must show plausible dollar figures (tens/hundreds of
   millions to low billions, not `Infinity` or scientific notation), and `/source` must land
-  signed-in users on the Source Workspace.
+  signed-in users on the Source Workspace. **Done — see QA / Validation.**
 
 ## Rollback Plan
 
@@ -138,4 +165,10 @@ already corrected.
 - `/source/portfolio` itself is unchanged and still reachable directly; it is not redirected to the
   workspace, to avoid breaking its `?stage=`/`?status=`/`?demo=` deep-link consumers. Whether to
   retire it fully is a separate decision, not made by this release.
-- Live signed-in proof against the deployed revision is still pending (see Deployment Authority).
+- Two pre-existing issues observed during live proof, neither introduced by this release and neither
+  fixed here: (1) a contract's "Source confidence" tile shows `NaN%` when `source_confidence` is
+  null — `pct()` doesn't guard against a null/undefined input the way `money()` does; (2) Next.js RSC
+  prefetch requests for `/tower`, `/source`, and `/strategic-moves` (triggered by top-nav link hover)
+  returned `503` during this session while `/intelligence` returned `200` — full-document navigation
+  to all of these routes worked correctly, and `/source` was affected identically to two routes this
+  PR never touched, so this is not attributable to this change. Both are real follow-up items.
