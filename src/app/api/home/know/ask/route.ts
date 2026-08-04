@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
+import {
+  assertVisibleAnswerContract,
+  type VisibleAnswerContractResult,
+} from "@/lib/agent/visible-answer-contract";
 import type {
   HomeKnowAskRequest,
   HomeKnowResponse,
+  HomeKnowSafety,
 } from "@/lib/home/know/home-know-contract";
 import { sanitizeHomeKnowVisiblePayloadWithAudit } from "@/lib/home/know/home-demo-safe-response";
 import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
+import { scrubHomePublicAnswerText } from "@/lib/home/know/home-public-answer-scrub";
 import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
@@ -104,30 +109,31 @@ export async function POST(req: NextRequest) {
     };
   }
   safeResponse.safety.visibleSanitizer = visibleSanitizer;
+  const finalResponse = recoverVisibleHomeKnowResponse(safeResponse);
 
   if (includeTrace) {
     console.info("[home-know.trace]", {
       route: "/api/home/know/ask",
-      tenantKey: safeResponse.tenantKey,
-      intent: safeResponse.intent,
-      answerStatus: safeResponse.answerStatus,
-      artifactStatus: safeResponse.artifactStatus ?? null,
+      tenantKey: finalResponse.tenantKey,
+      intent: finalResponse.intent,
+      answerStatus: finalResponse.answerStatus,
+      artifactStatus: finalResponse.artifactStatus ?? null,
       visibleSanitizer,
-      composerTrace: safeResponse.safety.composerTrace ?? null,
+      composerTrace: finalResponse.safety.composerTrace ?? null,
       packetShape: {
-        facts: safeResponse.facts.length,
-        tables: safeResponse.tables.map((table) => ({
+        facts: finalResponse.facts.length,
+        tables: finalResponse.tables.map((table) => ({
           id: table.id,
           rows: table.rows.length,
         })),
-        charts: safeResponse.charts.length,
-        graphs: safeResponse.graphs.length,
-        gaps: safeResponse.gaps.length,
+        charts: finalResponse.charts.length,
+        graphs: finalResponse.graphs.length,
+        gaps: finalResponse.gaps.length,
       },
     });
   }
 
-  const visibleContract = assertVisibleAnswerContract(safeResponse.prose);
+  const visibleContract = assertVisibleAnswerContract(finalResponse.prose);
   if (!visibleContract.passed) {
     return NextResponse.json(
       {
@@ -144,30 +150,150 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(
     includeTrace
       ? {
-          ...safeResponse,
+          ...finalResponse,
           trace: {
-            composerTrace: safeResponse.safety.composerTrace ?? null,
+            composerTrace: finalResponse.safety.composerTrace ?? null,
             homeKnowFallbackReason,
             v7FallbackReason,
             visibleSanitizer,
             finalPrompt:
-              safeResponse.safety.composerTrace?.anthropicTrace?.finalPrompt ??
-              safeResponse.safety.composerTrace?.promptSnapshot ??
+              finalResponse.safety.composerTrace?.anthropicTrace?.finalPrompt ??
+              finalResponse.safety.composerTrace?.promptSnapshot ??
               null,
             claudeRaw:
-              safeResponse.safety.composerTrace?.anthropicTrace?.claudeRaw ??
+              finalResponse.safety.composerTrace?.anthropicTrace?.claudeRaw ??
               null,
             model:
-              safeResponse.safety.composerTrace?.anthropicTrace?.model ?? null,
+              finalResponse.safety.composerTrace?.anthropicTrace?.model ?? null,
             params:
-              safeResponse.safety.composerTrace?.anthropicTrace?.params ?? null,
+              finalResponse.safety.composerTrace?.anthropicTrace?.params ??
+              null,
           },
         }
-      : safeResponse,
+      : finalResponse,
     {
-      status: safeResponse.answerStatus === "blocked" ? 503 : 200,
+      status: finalResponse.answerStatus === "blocked" ? 503 : 200,
     },
   );
+}
+
+function recoverVisibleHomeKnowResponse(
+  response: HomeKnowResponse,
+): HomeKnowResponse {
+  const scrubbedProse = scrubHomePublicAnswerText(response.prose);
+  const scrubbedResponse =
+    scrubbedProse === response.prose
+      ? response
+      : withVisibleContractRecovery(response, {
+          prose: scrubbedProse,
+          removedClaims: 1,
+          reason: "final visible-answer scrub applied",
+        });
+
+  const scrubbedContract = assertVisibleAnswerContract(scrubbedResponse.prose);
+  if (scrubbedContract.passed) return scrubbedResponse;
+
+  return withVisibleContractRecovery(scrubbedResponse, {
+    prose: buildVisibleContractRecoveryProse(
+      scrubbedResponse,
+      scrubbedContract,
+    ),
+    removedClaims: scrubbedContract.violations.length,
+    reason: `final visible-answer fallback applied: ${scrubbedContract.violations
+      .map((violation) => violation.id)
+      .join(", ")}`,
+    demoteAnsweredToPartial: true,
+  });
+}
+
+function buildVisibleContractRecoveryProse(
+  response: HomeKnowResponse,
+  contract: VisibleAnswerContractResult,
+): string {
+  const artifactSummary = summarizeVisibleArtifacts(response);
+  const gapSummary =
+    response.gaps.length > 0
+      ? ` It also preserves ${response.gaps.length === 1 ? "one caveat" : "the caveats"} where the current business material is not ready for decision use.`
+      : "";
+  const rewriteReason = contract.violations.length
+    ? " I tightened the wording before display because the first draft exposed answer-construction language instead of executive prose."
+    : "";
+
+  return [
+    `I can answer this at Home level.${rewriteReason}`,
+    `The safest view is the structured one below: ${artifactSummary}.${gapSummary}`,
+    "Use this as a leadership navigation layer for review. It is not approval to write, publish, activate a baseline, or promote anything into production.",
+  ].join("\n\n");
+}
+
+function summarizeVisibleArtifacts(response: HomeKnowResponse): string {
+  const artifacts: string[] = [];
+  if (response.tables.length > 0) {
+    artifacts.push(response.tables.length === 1 ? "one table" : "tables");
+  }
+  if (response.charts.length > 0) {
+    artifacts.push(response.charts.length === 1 ? "one chart" : "charts");
+  }
+  if (response.graphs.length > 0) {
+    artifacts.push(
+      response.graphs.length === 1
+        ? "one relationship view"
+        : "relationship views",
+    );
+  }
+  if (response.facts.length > 0) {
+    artifacts.push(
+      response.facts.length === 1 ? "one cited fact" : "cited facts",
+    );
+  }
+  return artifacts.length > 0
+    ? artifacts.join(", ")
+    : "the caveats and handoff guidance";
+}
+
+function withVisibleContractRecovery(
+  response: HomeKnowResponse,
+  input: {
+    prose: string;
+    removedClaims: number;
+    reason: string;
+    demoteAnsweredToPartial?: boolean;
+  },
+): HomeKnowResponse {
+  const answerStatus =
+    input.demoteAnsweredToPartial && response.answerStatus === "answered"
+      ? "partial"
+      : response.answerStatus;
+  return {
+    ...response,
+    answerStatus,
+    prose: input.prose,
+    safety: {
+      ...response.safety,
+      unsupportedClaimsRemoved:
+        response.safety.unsupportedClaimsRemoved + input.removedClaims,
+      frontendTripwireShouldFire: false,
+      composerTrace: appendHomeKnowComposerReason(
+        response.safety.composerTrace,
+        input.reason,
+        answerStatus,
+      ),
+    },
+  };
+}
+
+function appendHomeKnowComposerReason(
+  trace: HomeKnowSafety["composerTrace"] | undefined,
+  reason: string,
+  answerStatus: HomeKnowResponse["answerStatus"],
+): HomeKnowSafety["composerTrace"] | undefined {
+  if (!trace) return undefined;
+  return {
+    ...trace,
+    fallbackUsed: true,
+    answerStatus,
+    reason: [trace.reason, reason].filter(Boolean).join(" "),
+  };
 }
 
 async function buildEnterpriseHomeKnowResponse(input: {
