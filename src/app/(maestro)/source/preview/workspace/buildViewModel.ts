@@ -506,11 +506,81 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const missingCols: DataTableColumn[] = [{ label: 'Missing evidence' }, { label: 'Extent' }, { label: 'Consequence in Source' }, { label: 'Reason' }];
 
   // ── Ask aVa (AgentDock surfaceContext/suggestedActions — real chat, not a canned answer) ──
+  const v4Snapshot = vm.portfolio.v4Snapshot;
+  const availableV4Lenses = v4Snapshot.availability
+    .filter((slice) => slice.state === 'available')
+    .map((slice) => slice.lensId);
+  const unavailableV4Lenses = v4Snapshot.availability
+    .filter((slice) => slice.state !== 'available')
+    .map((slice) => ({ lensId: slice.lensId, state: slice.state }));
   const avaSurfaceContext = {
     tenant: vm.tenantName, module: 'Source',
     selection: kind === 'contract' && c ? c.contract_id + ' · ' + c.vendor_name : kind === 'vendor' ? vendorName : kind === 'opportunity' && opp ? opp.contractId : 'Executive portfolio',
     lens: activeTab || null, asOf: fmtDate(vm.portfolio.asOfDateIso),
     evidence: kind === 'contract' && c?.source_confidence != null ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level',
+    sourceV4: {
+      datasetId: v4Snapshot.datasetId,
+      asOf: fmtDate(v4Snapshot.asOfDateIso),
+      availableLenses: availableV4Lenses,
+      unavailableLenses: unavailableV4Lenses,
+      executivePortfolio: {
+        contracts: v4Snapshot.executivePortfolio.contractCount,
+        annualValue: money(v4Snapshot.executivePortfolio.annualValue),
+        totalCommittedValue: money(v4Snapshot.executivePortfolio.totalCommittedValue),
+        autoRenewCount: v4Snapshot.executivePortfolio.autoRenewCount,
+        notice90DayCount: v4Snapshot.executivePortfolio.notice90DayCount,
+      },
+      contextCoverage: {
+        vendors: v4Snapshot.contextCoverage.vendors,
+        contracts: v4Snapshot.contextCoverage.contracts,
+        scopeRows: v4Snapshot.contextCoverage.scopeRows,
+        invoiceLines: v4Snapshot.contextCoverage.invoiceLines,
+        saasUsageRows: v4Snapshot.contextCoverage.saasUsageRows,
+        cloudRows: v4Snapshot.contextCoverage.cloudRows,
+        performanceRows: v4Snapshot.contextCoverage.performanceRows,
+      },
+      valueProof: {
+        aiUsageRows: v4Snapshot.aiUsageValueProof.rowCount,
+        assignedSeats: v4Snapshot.aiUsageValueProof.assignedSeats,
+        activeUsers: v4Snapshot.aiUsageValueProof.activeUsers,
+        actualCost: money(v4Snapshot.aiUsageValueProof.actualCost),
+        claimableRows: v4Snapshot.aiUsageValueProof.claimableRows,
+        topProducts: v4Snapshot.aiUsageValueProof.topProducts,
+        rule: 'Usage, active users and cost do not prove realized value without baseline and finance validation.',
+      },
+      cloudOptimization: {
+        rows: v4Snapshot.cloudOptimization.rowCount,
+        actualCost: money(v4Snapshot.cloudOptimization.actualCost),
+        overageAmount: money(v4Snapshot.cloudOptimization.overageAmount),
+        topServices: v4Snapshot.cloudOptimization.topServices,
+      },
+      serviceCredits: {
+        rows: v4Snapshot.performanceCredits.rowCount,
+        calculated: money(v4Snapshot.performanceCredits.creditCalculated),
+        claimed: money(v4Snapshot.performanceCredits.creditClaimed),
+        recovered: money(v4Snapshot.performanceCredits.creditRecovered),
+        unclaimed: money(v4Snapshot.performanceCredits.unclaimedCredit),
+      },
+      workforceRateCards: {
+        rows: v4Snapshot.workforceRateCards.rowCount,
+        hours: v4Snapshot.workforceRateCards.hours,
+        averageBillRate: v4Snapshot.workforceRateCards.averageBillRate == null ? 'Not established' : money(v4Snapshot.workforceRateCards.averageBillRate),
+        unapprovedVarianceCount: v4Snapshot.workforceRateCards.unapprovedVarianceCount,
+      },
+      sourcingEvents: {
+        rows: v4Snapshot.sourcingEvents.rowCount,
+        normalizedCost: money(v4Snapshot.sourcingEvents.normalizedCost),
+        averageWeightedScore: v4Snapshot.sourcingEvents.averageWeightedScore,
+      },
+      topVendors: v4Snapshot.topVendors.slice(0, 5).map((vendor) => ({
+        vendorId: vendor.vendorId,
+        legalName: vendor.legalName,
+        supplierCategory: vendor.supplierCategory,
+        riskTier: vendor.riskTier,
+        annualValue: money(vendor.annualValue),
+        contractCount: vendor.contractCount,
+      })),
+    },
   };
   const avaSuggestedActions = (kind === 'contract' ? [
     ['weak-leverage', 'Why does this contract carry weak leverage?'], ['evidence-gaps', 'What evidence is missing for this contract?'],
