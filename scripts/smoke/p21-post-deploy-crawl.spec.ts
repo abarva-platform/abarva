@@ -35,14 +35,18 @@ assert.deepEqual(
 );
 const postDeployWorkflow = fs.readFileSync('.github/workflows/post-deploy-crawl.yml', 'utf8');
 const postDeployHarness = fs.readFileSync('scripts/crawl/post-deploy-harness.ts', 'utf8');
+const personaSwitcher = fs.readFileSync('src/lib/crawl/persona-switcher.ts', 'utf8');
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
+assert.match(postDeployWorkflow, /CLERK_TESTING_TOKEN_SECRET_KEY:/);
 assert.doesNotMatch(postDeployWorkflow, /Run candidate preview focused crawl/);
 assert.doesNotMatch(postDeployWorkflow, /candidate-preview-crawl/);
 assert.match(postDeployHarness, /runCandidatePreviewProof/);
 assert.match(postDeployHarness, /candidatePreview/);
 assert.match(postDeployHarness, /isAuthAutomationBlockMessage/);
 assert.match(postDeployHarness, /candidate-preview-auth-bootstrap/);
+assert.match(personaSwitcher, /createClerkTestingTokenForCrawl/);
+assert.match(personaSwitcher, /installClerkTestingTokenInterceptor/);
 assert.equal(isAuthAutomationBlockMessage('page.evaluate: e: You have been banned.'), true);
 assert.equal(isAuthAutomationBlockMessage('Candidate preview page did not render.'), false);
 
