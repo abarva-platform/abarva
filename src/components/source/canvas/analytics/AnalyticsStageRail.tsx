@@ -1,10 +1,13 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import type { CSSProperties } from 'react';
-import { ANALYTICS } from './analytics-tokens';
-import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
-import type { SourceStageKey } from '@/lib/source/types';
+import Link from "next/link";
+import type { CSSProperties } from "react";
+import { ANALYTICS } from "./analytics-tokens";
+import {
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
+import type { SourceStageKey } from "@/lib/source/types";
 
 interface AnalyticsStageRailProps {
   eventId: string;
@@ -14,12 +17,12 @@ interface AnalyticsStageRailProps {
   viewStage: SourceStageKey;
   /** The event's live progress stage (drives done / current / upcoming). */
   currentStage: SourceStageKey;
-  activeWorkspace: 'workflow' | 'intelligence';
-  onWorkspaceChange: (workspace: 'workflow' | 'intelligence') => void;
+  activeWorkspace: "workflow" | "intelligence";
+  onWorkspaceChange: (workspace: "workflow" | "intelligence") => void;
 }
 
 /**
- * The left rail — event header + the 11-stage journey. Secondary workspaces sit
+ * The left rail — event header + the sourcing journey. Secondary workspaces sit
  * below the stage list so the main canvas stays focused on the active workflow.
  */
 export function AnalyticsStageRail({
@@ -34,8 +37,8 @@ export function AnalyticsStageRail({
   const currentIndex = SOURCE_STAGE_ORDER.indexOf(currentStage);
 
   const railStyle: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
     gap: 4,
   };
 
@@ -47,8 +50,8 @@ export function AnalyticsStageRail({
           style={{
             fontSize: 12,
             color: ANALYTICS.MUTED,
-            textDecoration: 'none',
-            display: 'inline-block',
+            textDecoration: "none",
+            display: "inline-block",
             marginBottom: 10,
           }}
         >
@@ -59,7 +62,7 @@ export function AnalyticsStageRail({
             fontFamily: ANALYTICS.SERIF,
             fontSize: 17,
             fontWeight: 700,
-            letterSpacing: '-0.3px',
+            letterSpacing: "-0.3px",
             color: ANALYTICS.INK,
             lineHeight: 1.2,
           }}
@@ -75,10 +78,10 @@ export function AnalyticsStageRail({
         style={{
           fontSize: 11,
           letterSpacing: 0.5,
-          textTransform: 'uppercase',
+          textTransform: "uppercase",
           color: ANALYTICS.FAINT,
           fontWeight: 600,
-          margin: '0 0 8px 2px',
+          margin: "0 0 8px 2px",
         }}
       >
         Stages
@@ -94,39 +97,44 @@ export function AnalyticsStageRail({
               key={stageKey}
               href={`/source/events/${eventId}?stage=${stageKey}`}
               style={{
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 10,
-                padding: '7px 9px',
+                padding: "7px 9px",
                 borderRadius: ANALYTICS.RADIUS_SM,
-                textDecoration: 'none',
-                background: current ? ANALYTICS.CARD : 'transparent',
-                boxShadow: current ? ANALYTICS.SHADOW_SM : 'none',
-                border: current ? `1px solid ${ANALYTICS.LINE}` : '1px solid transparent',
+                textDecoration: "none",
+                background: current ? ANALYTICS.CARD : "transparent",
+                boxShadow: current ? ANALYTICS.SHADOW_SM : "none",
+                border: current
+                  ? `1px solid ${ANALYTICS.LINE}`
+                  : "1px solid transparent",
               }}
             >
               <span
                 style={{
                   width: 20,
                   height: 20,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   fontFamily: ANALYTICS.MONO,
                   fontSize: 9,
                   fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
                   background: done
                     ? ANALYTICS.INK
                     : current
                       ? ANALYTICS.BLUE
                       : ANALYTICS.CARD,
-                  color: done || current ? '#fff' : ANALYTICS.FAINT,
-                  border: done || current ? 'none' : `1.5px solid ${ANALYTICS.LINE_STRONG}`,
+                  color: done || current ? "#fff" : ANALYTICS.FAINT,
+                  border:
+                    done || current
+                      ? "none"
+                      : `1.5px solid ${ANALYTICS.LINE_STRONG}`,
                 }}
               >
-                {done ? '✓' : String(i + 1).padStart(2, '0')}
+                {done ? "✓" : String(i + 1).padStart(2, "0")}
               </span>
               <span
                 style={{
@@ -153,16 +161,16 @@ export function AnalyticsStageRail({
           type="button"
           title="Templates & deliverables library (coming with the analytics layer)"
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 10,
-            padding: '9px 8px',
+            padding: "9px 8px",
             borderRadius: ANALYTICS.RADIUS_SM,
-            border: 'none',
-            background: 'none',
-            width: '100%',
-            textAlign: 'left',
-            cursor: 'pointer',
+            border: "none",
+            background: "none",
+            width: "100%",
+            textAlign: "left",
+            cursor: "pointer",
             fontFamily: ANALYTICS.SANS,
             fontSize: 13.5,
             fontWeight: 500,
@@ -176,9 +184,9 @@ export function AnalyticsStageRail({
               borderRadius: 6,
               background: ANALYTICS.CARD,
               border: `1px solid ${ANALYTICS.LINE}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: 12,
               color: ANALYTICS.MUTED,
               flexShrink: 0,
@@ -191,22 +199,29 @@ export function AnalyticsStageRail({
         <button
           type="button"
           title="Show stage intelligence"
-          onClick={() => onWorkspaceChange('intelligence')}
+          onClick={() => onWorkspaceChange("intelligence")}
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 10,
-            padding: '9px 8px',
+            padding: "9px 8px",
             borderRadius: ANALYTICS.RADIUS_SM,
-            border: activeWorkspace === 'intelligence' ? `1px solid ${ANALYTICS.LINE}` : 'none',
-            background: activeWorkspace === 'intelligence' ? ANALYTICS.CARD : 'none',
-            width: '100%',
-            textAlign: 'left',
-            cursor: 'pointer',
+            border:
+              activeWorkspace === "intelligence"
+                ? `1px solid ${ANALYTICS.LINE}`
+                : "none",
+            background:
+              activeWorkspace === "intelligence" ? ANALYTICS.CARD : "none",
+            width: "100%",
+            textAlign: "left",
+            cursor: "pointer",
             fontFamily: ANALYTICS.SANS,
             fontSize: 13.5,
             fontWeight: 500,
-            color: activeWorkspace === 'intelligence' ? ANALYTICS.INK : ANALYTICS.INK_2,
+            color:
+              activeWorkspace === "intelligence"
+                ? ANALYTICS.INK
+                : ANALYTICS.INK_2,
           }}
         >
           <span
@@ -214,11 +229,11 @@ export function AnalyticsStageRail({
               width: 22,
               height: 22,
               borderRadius: 6,
-              background: 'rgba(63,184,168,0.16)',
+              background: "rgba(63,184,168,0.16)",
               border: `1px solid ${ANALYTICS.LINE}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: 12,
               color: ANALYTICS.TEAL_DEEP,
               flexShrink: 0,
@@ -238,9 +253,9 @@ export function AnalyticsStageRail({
           lineHeight: 1.5,
         }}
       >
-        <b style={{ color: ANALYTICS.MUTED }}>aVa</b> guides steps 1–9 ·{' '}
-        <b style={{ color: ANALYTICS.MUTED }}>Atlas</b> takes over for transition &amp;
-        value (10–11)
+        <b style={{ color: ANALYTICS.MUTED }}>aVa</b> guides sourcing gates ·{" "}
+        <b style={{ color: ANALYTICS.MUTED }}>Atlas</b> supports transition and
+        value proof
       </div>
     </aside>
   );
