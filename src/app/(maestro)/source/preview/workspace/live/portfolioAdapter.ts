@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 
 import {
   computeContractLeverageSignals,
@@ -7,20 +7,21 @@ import {
   excludeSupplementalContracts,
   summarizePortfolio,
   tierApplicationScopeByConfidence,
-} from '@/lib/source/data-model/vendor-contract-portfolio';
-import { computeSourcingOpportunities } from '@/lib/source/data-model/sourcing-opportunities';
+} from "@/lib/source/data-model/vendor-contract-portfolio";
+import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
+import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
   listVendorContractPortfolio,
-} from '@/lib/source/data-model/read-adapter';
+} from "@/lib/source/data-model/read-adapter";
 import type {
   SourceContract360Row,
   SourceContractApplicationScopeRow,
   SourceContractInitiativeDependencyRow,
   SourceVendorContractPortfolioRow,
-} from '@/lib/source/data-model/types';
+} from "@/lib/source/data-model/types";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Portfolio-wide read for the Source Workspace. One fetch, on the server,
@@ -32,16 +33,17 @@ import type {
 export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
+  readonly semanticLayer: ReturnType<typeof sourceV4CubeUiCatalogForAgent>;
   readonly contracts: readonly SourceContract360Row[];
   readonly vendors: readonly SourceVendorContractPortfolioRow[];
   readonly applicationScope: readonly SourceContractApplicationScopeRow[];
   readonly initiativeDependencies: readonly SourceContractInitiativeDependencyRow[];
   readonly isEmpty: boolean;
   readonly reads: {
-    readonly contracts: 'available' | 'missing';
-    readonly vendors: 'available' | 'missing';
-    readonly applicationScope: 'available' | 'missing';
-    readonly initiativeDependencies: 'available' | 'missing';
+    readonly contracts: "available" | "missing";
+    readonly vendors: "available" | "missing";
+    readonly applicationScope: "available" | "missing";
+    readonly initiativeDependencies: "available" | "missing";
   };
 }
 
@@ -49,28 +51,31 @@ export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
 ): Promise<SourceWorkspacePortfolioData> {
-  const [contractsRaw, vendors, applicationScope, initiativeDependencies] = await Promise.all([
-    listContract360(tenantKey).catch(() => []),
-    listVendorContractPortfolio(tenantKey).catch(() => []),
-    listContractApplicationScope(tenantKey).catch(() => []),
-    listContractInitiativeDependency(tenantKey).catch(() => []),
-  ]);
+  const [contractsRaw, vendors, applicationScope, initiativeDependencies] =
+    await Promise.all([
+      listContract360(tenantKey).catch(() => []),
+      listVendorContractPortfolio(tenantKey).catch(() => []),
+      listContractApplicationScope(tenantKey).catch(() => []),
+      listContractInitiativeDependency(tenantKey).catch(() => []),
+    ]);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
 
   return {
     tenantKey,
     asOfDateIso,
+    semanticLayer: sourceV4CubeUiCatalogForAgent(),
     contracts,
     vendors,
     applicationScope,
     initiativeDependencies,
     isEmpty: contracts.length === 0,
     reads: {
-      contracts: contractsRaw.length > 0 ? 'available' : 'missing',
-      vendors: vendors.length > 0 ? 'available' : 'missing',
-      applicationScope: applicationScope.length > 0 ? 'available' : 'missing',
-      initiativeDependencies: initiativeDependencies.length > 0 ? 'available' : 'missing',
+      contracts: contractsRaw.length > 0 ? "available" : "missing",
+      vendors: vendors.length > 0 ? "available" : "missing",
+      applicationScope: applicationScope.length > 0 ? "available" : "missing",
+      initiativeDependencies:
+        initiativeDependencies.length > 0 ? "available" : "missing",
     },
   };
 }
@@ -83,11 +88,16 @@ export function derivePortfolioSummary(data: SourceWorkspacePortfolioData) {
   return summarizePortfolio(data.contracts);
 }
 
-export function derivePortfolioConcentration(data: SourceWorkspacePortfolioData) {
+export function derivePortfolioConcentration(
+  data: SourceWorkspacePortfolioData,
+) {
   return computeVendorConcentration(data.contracts);
 }
 
-export function derivePortfolioRenewal(data: SourceWorkspacePortfolioData, windowDays = 180) {
+export function derivePortfolioRenewal(
+  data: SourceWorkspacePortfolioData,
+  windowDays = 180,
+) {
   return computeRenewalExposure(data.contracts, data.asOfDateIso, windowDays);
 }
 
@@ -95,12 +105,19 @@ export function derivePortfolioLeverage(data: SourceWorkspacePortfolioData) {
   return computeContractLeverageSignals(data.contracts);
 }
 
-export function derivePortfolioOpportunities(data: SourceWorkspacePortfolioData) {
+export function derivePortfolioOpportunities(
+  data: SourceWorkspacePortfolioData,
+) {
   return computeSourcingOpportunities(data.contracts, data.asOfDateIso);
 }
 
-export function deriveApplicationScopeTiers(data: SourceWorkspacePortfolioData, contractId?: string) {
-  const rows = contractId ? data.applicationScope.filter((r) => r.contract_id === contractId) : data.applicationScope;
+export function deriveApplicationScopeTiers(
+  data: SourceWorkspacePortfolioData,
+  contractId?: string,
+) {
+  const rows = contractId
+    ? data.applicationScope.filter((r) => r.contract_id === contractId)
+    : data.applicationScope;
   // No explicit (contract_id, application_ref) reference set is loaded in this
   // environment yet — every row stays `unresolved` rather than guessed into a
   // stronger tier. See tierApplicationScopeByConfidence's own doc comment.
