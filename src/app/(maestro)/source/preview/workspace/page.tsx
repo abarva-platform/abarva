@@ -5,6 +5,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
+import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import { loadSourceWorkspacePortfolio } from "./live/portfolioAdapter";
 
 export const metadata: Metadata = {
@@ -61,6 +62,7 @@ export default async function SourceWorkspacePreviewPage({
         tenantKey: "",
         asOfDateIso,
         semanticLayer: sourceV4CubeUiCatalogForAgent(),
+        v4Snapshot: createEmptySourceV4WorkspaceSnapshot(asOfDateIso),
         contracts: [],
         vendors: [],
         applicationScope: [],

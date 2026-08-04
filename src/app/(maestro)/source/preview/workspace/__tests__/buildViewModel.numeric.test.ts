@@ -6,6 +6,7 @@ import type {
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
+import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 
 // `node-postgres` returns NUMERIC/DECIMAL columns as strings, not numbers,
 // even though these row types declare them `number | null` (see
@@ -120,6 +121,7 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
   tenantKey: "skyharbor_global",
   asOfDateIso: "2027-06-30T00:00:00Z",
   semanticLayer: sourceV4CubeUiCatalogForAgent(),
+  v4Snapshot: createEmptySourceV4WorkspaceSnapshot("2027-06-30T00:00:00Z"),
   contracts: CONTRACTS,
   vendors: VENDORS,
   applicationScope: [],
@@ -179,7 +181,18 @@ describe("buildViewModel numeric coercion", () => {
   });
 
   it("keeps the Source v4 semantic catalog on the workspace payload", () => {
-    expect(PORTFOLIO.semanticLayer.datasetId).toBe("skyharbor-source-v4-202608");
-    expect(PORTFOLIO.semanticLayer.lenses.map((lens) => lens.cubeView)).toContain("source_v4_ai_usage_value_proof");
+    expect(PORTFOLIO.semanticLayer.datasetId).toBe(
+      "skyharbor-source-v4-202608",
+    );
+    expect(
+      PORTFOLIO.semanticLayer.lenses.map((lens) => lens.cubeView),
+    ).toContain("source_v4_ai_usage_value_proof");
+  });
+
+  it("keeps the Source v4 aggregate snapshot on the workspace payload", () => {
+    expect(PORTFOLIO.v4Snapshot.datasetId).toBe("skyharbor-source-v4-202608");
+    expect(
+      PORTFOLIO.v4Snapshot.availability.map((slice) => slice.lensId),
+    ).toContain("ai_usage_value_proof");
   });
 });
