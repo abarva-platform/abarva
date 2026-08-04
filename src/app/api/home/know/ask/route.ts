@@ -18,11 +18,47 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+type HomeKnowAskPayload = HomeKnowAskRequest & {
+  stream?: boolean;
+};
+
+class HomeKnowHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly payload: Record<string, unknown>,
+  ) {
+    super(
+      typeof payload.detail === "string"
+        ? payload.detail
+        : `Home KNOW request failed with status ${status}`,
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   const payload = await parsePayload(req);
   if (!payload.question.trim()) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
+  const wantsStream = shouldStreamHomeKnow(req, payload);
+  if (wantsStream) {
+    return streamHomeKnowResponse(req, payload);
+  }
+  const { finalResponse, status, tracePayload } = await buildFinalHomeKnowPayload(
+    req,
+    payload,
+  );
+  return NextResponse.json(tracePayload ?? finalResponse, { status });
+}
+
+async function buildFinalHomeKnowPayload(
+  req: NextRequest,
+  payload: HomeKnowAskRequest,
+): Promise<{
+  finalResponse: HomeKnowResponse;
+  status: number;
+  tracePayload: (HomeKnowResponse & { trace: Record<string, unknown> }) | null;
+}> {
   const includeTrace = shouldLogHomeKnowTrace(req);
 
   const tenant = await resolveTenant({
@@ -101,20 +137,19 @@ export async function POST(req: NextRequest) {
 
   const visibleContract = assertVisibleAnswerContract(finalResponse.prose);
   if (!visibleContract.passed) {
-    return NextResponse.json(
-      {
-        error: "visible_answer_contract_failed",
-        detail:
-          "aVa blocked this answer before display because it exposed non-user-facing answer language.",
-        version: visibleContract.version,
-        violations: visibleContract.violations,
-      },
-      { status: 422 },
-    );
+    throw new HomeKnowHttpError(422, {
+      error: "visible_answer_contract_failed",
+      detail:
+        "aVa blocked this answer before display because it exposed non-user-facing answer language.",
+      version: visibleContract.version,
+      violations: visibleContract.violations,
+    });
   }
 
-  return NextResponse.json(
-    includeTrace
+  return {
+    finalResponse,
+    status: finalResponse.answerStatus === "blocked" ? 503 : 200,
+    tracePayload: includeTrace
       ? {
           ...finalResponse,
           trace: {
@@ -135,11 +170,77 @@ export async function POST(req: NextRequest) {
               null,
           },
         }
-      : finalResponse,
-    {
-      status: finalResponse.answerStatus === "blocked" ? 503 : 200,
+      : null,
+  };
+}
+
+function streamHomeKnowResponse(
+  req: NextRequest,
+  payload: HomeKnowAskRequest,
+): Response {
+  const encoder = new TextEncoder();
+  const startedAt = Date.now();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const emit = (type: string, eventPayload: Record<string, unknown> = {}) => {
+        controller.enqueue(
+          encoder.encode(`${JSON.stringify({ type, ...eventPayload })}\n`),
+        );
+      };
+      emit("status", {
+        phase: "accepted",
+        label: "Reading your question...",
+        elapsedMs: 0,
+      });
+      try {
+        emit("status", {
+          phase: "tenant",
+          label: "Finding the active tenant context...",
+          elapsedMs: Date.now() - startedAt,
+        });
+        const { finalResponse, status, tracePayload } =
+          await buildFinalHomeKnowPayload(req, payload);
+        emit("status", {
+          phase: "validation",
+          label: "Validating governed evidence and visible answer policy...",
+          elapsedMs: Date.now() - startedAt,
+        });
+        emit("home-answer", {
+          status,
+          response: tracePayload ?? finalResponse,
+          elapsedMs: Date.now() - startedAt,
+        });
+        emit("done", {
+          status,
+          answerStatus: finalResponse.answerStatus,
+          elapsedMs: Date.now() - startedAt,
+        });
+      } catch (error) {
+        const status = error instanceof HomeKnowHttpError ? error.status : 502;
+        emit("error", {
+          status,
+          error:
+            error instanceof HomeKnowHttpError
+              ? error.payload
+              : {
+                  error: "home_know_stream_failed",
+                  detail:
+                    error instanceof Error ? error.message : String(error),
+                },
+          elapsedMs: Date.now() - startedAt,
+        });
+      } finally {
+        controller.close();
+      }
     },
-  );
+  });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
 
 function recoverVisibleHomeKnowResponse(
@@ -380,7 +481,19 @@ function shouldLogHomeKnowTrace(req: NextRequest): boolean {
   );
 }
 
-async function parsePayload(req: NextRequest): Promise<HomeKnowAskRequest> {
+function shouldStreamHomeKnow(
+  req: NextRequest,
+  payload: HomeKnowAskPayload,
+): boolean {
+  const accept = req.headers.get("accept") ?? "";
+  return (
+    accept.includes("application/x-ndjson") ||
+    accept.includes("text/event-stream") ||
+    payload.stream === true
+  );
+}
+
+async function parsePayload(req: NextRequest): Promise<HomeKnowAskPayload> {
   let body: unknown = null;
   try {
     body = await req.json();
@@ -395,6 +508,7 @@ async function parsePayload(req: NextRequest): Promise<HomeKnowAskRequest> {
     question: readString(record.question) ?? readString(record.q) ?? "",
     tenantKey: readString(record.tenantKey),
     client: readString(record.client),
+    stream: record.stream === true,
   };
 }
 

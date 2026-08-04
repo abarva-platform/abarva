@@ -13,6 +13,7 @@ import type {
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
 import { shapeHomeKnowResponseForRender } from "@/lib/home/know/home-render-layer-shaper";
+import { readHomeKnowStream } from "@/lib/home/know/home-know-stream-client";
 import type {
   IntelligenceBindingPayload,
   BindingDimension,
@@ -690,24 +691,6 @@ function isLineageColumn(
   return (
     /^__/.test(column.key) ||
     /^(loaded record|source family|basis|source basis)$/i.test(column.label)
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
-  return (
-    isRecord(value) &&
-    value.mode === "KNOW" &&
-    typeof value.tenantKey === "string" &&
-    typeof value.question === "string" &&
-    typeof value.prose === "string" &&
-    Array.isArray(value.tables) &&
-    Array.isArray(value.charts) &&
-    Array.isArray(value.graphs) &&
-    Array.isArray(value.citations)
   );
 }
 
@@ -3367,7 +3350,7 @@ export function HomeSurface({
       const pendingTurn: ChatMessage = {
         id: agentTurnId,
         role: "agent",
-        body: "",
+        body: "Starting Home context lookup...",
         at: new Date().toISOString(),
       };
 
@@ -3377,17 +3360,30 @@ export function HomeSurface({
       try {
         const res = await fetch("/api/home/know/ask", {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: {
+            accept: "application/x-ndjson",
+            "content-type": "application/json",
+          },
           body: JSON.stringify({
             question,
             client: clientKey ?? tenantKey,
             tenantKey,
+            stream: true,
           }),
         });
-        const json: unknown = await res.json();
-        if (!res.ok || !isHomeKnowResponse(json)) {
-          throw new Error("Home KNOW returned an invalid response.");
-        }
+        const json = await readHomeKnowStream(res, (event) => {
+          if (!event.label) return;
+          setThread((current) =>
+            current.map((turn) =>
+              turn.id === agentTurnId
+                ? {
+                    ...turn,
+                    body: event.label ?? turn.body,
+                  }
+                : turn,
+            ),
+          );
+        });
         const response = sanitizeVisibleStrings(
           shapeHomeKnowResponseForRender(json),
         );

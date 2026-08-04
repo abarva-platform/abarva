@@ -90,6 +90,10 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(ndjsonEvent(type, payload)));
         };
         try {
+          emit('status', {
+            phase: 'accepted',
+            label: 'Reading your Tower question...',
+          });
           for (const event of towerProgressEventsForQuestion(question)) {
             emit('status', event);
           }
