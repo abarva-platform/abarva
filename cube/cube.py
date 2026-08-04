@@ -10,6 +10,16 @@ TENANT_FILTERABLE_CUBES = {
     "sourcing_opportunities",
     "sourcing_events",
     "sourcing_event_suppliers",
+    "source_v4_vendors",
+    "source_v4_contracts",
+    "source_v4_contract_scope",
+    "source_v4_spend_monthly",
+    "source_v4_performance",
+    "source_v4_saas_usage",
+    "source_v4_cloud_cost",
+    "source_v4_workforce_rate_cards",
+    "source_v4_sourcing_events",
+    "source_v4_context_coverage",
 }
 
 VIEW_TO_CUBES = {
@@ -22,6 +32,19 @@ VIEW_TO_CUBES = {
     "source_opportunity_pipeline": ["sourcing_opportunities"],
     "source_event_execution": ["sourcing_events", "sourcing_event_suppliers"],
     "source_supplier_comparison": ["sourcing_event_suppliers"],
+    "source_v4_executive_portfolio": [
+        "source_v4_contracts",
+        "source_v4_context_coverage",
+    ],
+    "source_v4_vendor_concentration": ["source_v4_vendors"],
+    "source_v4_renewal_exposure": ["source_v4_contracts"],
+    "source_v4_scope_confidence": ["source_v4_contract_scope"],
+    "source_v4_spend_consumption": ["source_v4_spend_monthly"],
+    "source_v4_performance_credits": ["source_v4_performance"],
+    "source_v4_ai_usage_value_proof": ["source_v4_saas_usage"],
+    "source_v4_cloud_optimization": ["source_v4_cloud_cost"],
+    "source_v4_workforce_rate_card": ["source_v4_workforce_rate_cards"],
+    "source_v4_sourcing_event_bafo": ["source_v4_sourcing_events"],
 }
 
 
