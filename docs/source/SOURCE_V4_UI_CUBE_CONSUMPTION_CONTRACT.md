@@ -31,6 +31,8 @@ That snapshot queries the same physical Source v4 tables behind the Cube views a
 
 The same snapshot is summarized into the workspace aVa `surfaceContext`, including the explicit rule that AI usage, seats and cost do not prove realized value without baseline and finance validation.
 
+Each catalog lens declares one `defaultHierarchy`. That hierarchy must exist in `cube/model/source_sourcing_v4.yml`, must be exposed by the matching Cube view, and its ordered levels must exactly equal the lens `defaultDrillPath`. This makes the default Qlik-style drill path executable rather than a UI-only suggestion.
+
 ## Recommended Source Workspace Story
 
 | Tab             | Purpose                                                                   | Cube view                        |
@@ -51,6 +53,7 @@ The same snapshot is summarized into the workspace aVa `surfaceContext`, includi
 - Every visible mark should be selectable and should filter the rest of the canvas.
 - The page should expose clear-selection and selected-state chips.
 - Drill paths should end at a real source record or evidence row, not a narrative-only panel.
+- The first drill route for each tab should follow the code-backed `defaultHierarchy`; alternate drill routes can be added only when Cube exposes a second named hierarchy.
 - The left explorer should browse source domains and semantic views; the right rail should hold filters and current selection state.
 - The center canvas should refresh in place on click. Navigation clicks should not create long vertical scroll as the primary interaction.
 

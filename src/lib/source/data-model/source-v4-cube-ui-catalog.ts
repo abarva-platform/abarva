@@ -47,6 +47,7 @@ export interface SourceV4CubeUiLens {
   readonly cubeView: SourceV4CubeViewName;
   readonly requiredIncludes: readonly string[];
   readonly requiredHierarchies: readonly string[];
+  readonly defaultHierarchy: string;
   readonly questionDomains: readonly SourceV4QuestionDomain[];
   readonly sourceDomains: readonly string[];
   readonly defaultVisuals: readonly string[];
@@ -77,6 +78,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "invoice_lines",
     ],
     requiredHierarchies: ["v4_contract_portfolio", "v4_renewal_calendar"],
+    defaultHierarchy: "v4_contract_portfolio",
     questionDomains: [
       "executive_portfolio_concentration",
       "contract_economics_terms",
@@ -125,6 +127,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_vendor_portfolio",
     ],
     requiredHierarchies: ["v4_vendor_portfolio"],
+    defaultHierarchy: "v4_vendor_portfolio",
     questionDomains: [
       "executive_portfolio_concentration",
       "vendor_360",
@@ -172,6 +175,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_renewal_calendar",
     ],
     requiredHierarchies: ["v4_renewal_calendar"],
+    defaultHierarchy: "v4_renewal_calendar",
     questionDomains: [
       "renewals_notice_leverage",
       "contract_economics_terms",
@@ -185,6 +189,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
     ],
     defaultDrillPath: [
       "renewal_type",
+      "auto_renew",
       "notice_deadline",
       "expiration_date",
       "vendor_name",
@@ -217,6 +222,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_scope_confidence",
     ],
     requiredHierarchies: ["v4_scope_confidence"],
+    defaultHierarchy: "v4_scope_confidence",
     questionDomains: [
       "application_platform_dependencies",
       "vendor_360",
@@ -263,6 +269,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_spend_consumption",
     ],
     requiredHierarchies: ["v4_spend_consumption"],
+    defaultHierarchy: "v4_spend_consumption",
     questionDomains: [
       "spend_invoices_commitments",
       "contract_economics_terms",
@@ -312,6 +319,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_service_credit_path",
     ],
     requiredHierarchies: ["v4_service_credit_path"],
+    defaultHierarchy: "v4_service_credit_path",
     questionDomains: [
       "sla_incidents_service_credits",
       "vendor_360",
@@ -324,7 +332,13 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "financial_line",
     ],
     defaultVisuals: ["credit waterfall", "breach trend", "metric detail table"],
-    defaultDrillPath: ["contract_id", "metric_name", "period_start"],
+    defaultDrillPath: [
+      "metric_name",
+      "claim_state",
+      "dispute_status",
+      "contract_id",
+      "period_start",
+    ],
     qlikBehaviors: ["metric-filter", "period-brush", "credit-state-drill"],
     allowedConclusions: [
       "Unclaimed service-credit exposure can be named when calculated and claimed fields diverge.",
@@ -353,6 +367,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_ai_usage_value_proof",
     ],
     requiredHierarchies: ["v4_ai_usage_value_proof"],
+    defaultHierarchy: "v4_ai_usage_value_proof",
     questionDomains: [
       "ai_adoption_productivity_value_proof",
       "saas_cloud_consumption_utilization",
@@ -410,6 +425,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_cloud_optimization",
     ],
     requiredHierarchies: ["v4_cloud_optimization"],
+    defaultHierarchy: "v4_cloud_optimization",
     questionDomains: [
       "saas_cloud_consumption_utilization",
       "spend_invoices_commitments",
@@ -459,6 +475,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_rate_card_path",
     ],
     requiredHierarchies: ["v4_rate_card_path"],
+    defaultHierarchy: "v4_rate_card_path",
     questionDomains: ["workforce_rate_cards", "contract_economics_terms"],
     sourceDomains: [
       "workforce_rate_card",
@@ -472,11 +489,11 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "variance bar",
     ],
     defaultDrillPath: [
-      "contract_id",
       "role_title",
       "level",
       "location",
       "approval_state",
+      "contract_id",
     ],
     qlikBehaviors: [
       "role-filter",
@@ -512,6 +529,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "v4_sourcing_event_path",
     ],
     requiredHierarchies: ["v4_sourcing_event_path"],
+    defaultHierarchy: "v4_sourcing_event_path",
     questionDomains: [
       "sourcing_events_supplier_bafo",
       "renewals_notice_leverage",
@@ -531,6 +549,7 @@ export const SOURCE_V4_CUBE_UI_LENSES: readonly SourceV4CubeUiLens[] = [
       "event_type",
       "stage",
       "round",
+      "response_status",
       "supplier_id",
       "bafo_marker",
       "event_id",
@@ -582,7 +601,9 @@ export function sourceV4CubeUiCatalogForAgent() {
       label: lens.label,
       cubeView: lens.cubeView,
       storyRole: lens.storyRole,
+      defaultHierarchy: lens.defaultHierarchy,
       defaultDrillPath: lens.defaultDrillPath,
+      qlikBehaviors: lens.qlikBehaviors,
       allowedConclusions: lens.allowedConclusions,
       prohibitedOverstatements: lens.prohibitedOverstatements,
     })),

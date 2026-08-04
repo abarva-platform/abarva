@@ -7,6 +7,13 @@ import {
 } from "../source-v4-cube-ui-catalog";
 
 interface CubeModel {
+  cubes?: Array<{
+    name: string;
+    hierarchies?: Array<{
+      name: string;
+      levels?: string[];
+    }>;
+  }>;
   views?: Array<{
     name: string;
     cubes?: Array<{
@@ -38,6 +45,18 @@ function includesForView(viewName: string): Set<string> {
   return new Set((view?.cubes ?? []).flatMap((cube) => cube.includes ?? []));
 }
 
+function hierarchyLevelsByName(): Map<string, string[]> {
+  const levels = new Map<string, string[]>();
+
+  for (const cube of cubeModel.cubes ?? []) {
+    for (const hierarchy of cube.hierarchies ?? []) {
+      levels.set(hierarchy.name, hierarchy.levels ?? []);
+    }
+  }
+
+  return levels;
+}
+
 describe("Source v4 Cube UI catalog", () => {
   it("points every UI lens at a deployed v4 Cube view and exposed include list", () => {
     const viewNames = new Set((cubeModel.views ?? []).map((view) => view.name));
@@ -52,6 +71,18 @@ describe("Source v4 Cube UI catalog", () => {
       for (const hierarchy of lens.requiredHierarchies) {
         expect(exposedIncludes).toContain(hierarchy);
       }
+      expect(lens.requiredHierarchies).toContain(lens.defaultHierarchy);
+    }
+  });
+
+  it("backs every default drill path with an ordered Cube hierarchy", () => {
+    const hierarchyLevels = hierarchyLevelsByName();
+
+    for (const lens of SOURCE_V4_CUBE_UI_LENSES) {
+      expect(hierarchyLevels.has(lens.defaultHierarchy)).toBe(true);
+      expect(hierarchyLevels.get(lens.defaultHierarchy)).toEqual(
+        lens.defaultDrillPath,
+      );
     }
   });
 
@@ -64,6 +95,9 @@ describe("Source v4 Cube UI catalog", () => {
       const lenses = sourceV4CubeLensesForDomain(domain);
       expect(lenses.length).toBeGreaterThan(0);
       expect(lenses.every((lens) => lens.defaultDrillPath.length > 0)).toBe(
+        true,
+      );
+      expect(lenses.every((lens) => lens.defaultHierarchy.length > 0)).toBe(
         true,
       );
       expect(lenses.every((lens) => lens.sourceDomains.length > 0)).toBe(true);

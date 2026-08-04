@@ -182,8 +182,10 @@ cubes:
         levels:
           - renewal_type
           - auto_renew
-          - expiration_date
           - notice_deadline
+          - expiration_date
+          - vendor_name
+          - contract_id
 
   - name: source_v4_contract_scope
     sql_table: consumption_v4_canary.sourcing_contract_scope_v1
@@ -259,6 +261,7 @@ cubes:
           - criticality
           - relationship_method
           - scope_name
+          - contract_id
 
   - name: source_v4_spend_monthly
     sql_table: consumption_v4_canary.sourcing_spend_monthly_v1
@@ -345,6 +348,7 @@ cubes:
           - business_unit
           - cost_center
           - matching_state
+          - vendor_id
           - contract_id
           - month
 
@@ -537,6 +541,7 @@ cubes:
         levels:
           - product_name
           - function_ref
+          - baseline_metric_state
           - finance_validation_state
           - claimable_value_state
           - period_start
@@ -790,6 +795,7 @@ cubes:
           - round
           - response_status
           - supplier_id
+          - bafo_marker
           - event_id
 
   - name: source_v4_context_coverage
