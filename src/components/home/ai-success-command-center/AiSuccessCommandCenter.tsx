@@ -9,17 +9,12 @@ import {
   Cell,
   Funnel,
   FunnelChart,
-  LabelList,
   Pie,
   PieChart,
-  ReferenceArea,
-  Scatter,
-  ScatterChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
-  ZAxis,
 } from "recharts";
 
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
@@ -369,205 +364,103 @@ function ExecutiveCanvas({
 }
 
 function AdvisoryValueMatrix({ data }: { data: AiSuccessHomeData }) {
-  const matrixData = data.advisoryValueMatrix.map((idea) => ({
-    ...idea,
-    z:
-      idea.valuePotential === "High"
-        ? 520
-        : idea.valuePotential === "Medium"
-          ? 430
-          : 340,
-  }));
+  const quadrants = [
+    {
+      tone: styles.useCaseQuadrantWarning,
+      label: "Redesign first",
+      title: "High value, thinner proof",
+      body: "Material airline workflows where leadership should define control gates before scale.",
+      items: data.advisoryValueMatrix.filter(
+        (idea) =>
+          idea.valuePotential === "High" && idea.executionReadiness !== "High",
+      ),
+    },
+    {
+      tone: styles.useCaseQuadrantPrimary,
+      label: "Prove then scale",
+      title: "High value, stronger signal",
+      body: "The best first-dollar candidates once baseline and finance evidence are captured.",
+      items: data.advisoryValueMatrix.filter(
+        (idea) =>
+          idea.valuePotential === "High" && idea.executionReadiness === "High",
+      ),
+    },
+    {
+      tone: styles.useCaseQuadrantHold,
+      label: "Hold for baseline",
+      title: "Lower materiality, thinner proof",
+      body: "Useful ideas, but not board agenda items until outcome measures are real.",
+      items: data.advisoryValueMatrix.filter(
+        (idea) =>
+          idea.valuePotential !== "High" && idea.executionReadiness !== "High",
+      ),
+    },
+    {
+      tone: styles.useCaseQuadrantMonitor,
+      label: "Monitor and harvest",
+      title: "Lower materiality, stronger signal",
+      body: "Good operating candidates to track, with promotion only if the value mechanism becomes material.",
+      items: data.advisoryValueMatrix.filter(
+        (idea) =>
+          idea.valuePotential !== "High" && idea.executionReadiness === "High",
+      ),
+    },
+  ];
 
   return (
-    <div className={styles.valueMatrixShell}>
+    <div className={styles.useCaseMatrixShell}>
       <div className={styles.matrixIntro}>
         <div>
           <span className={styles.eyebrow}>Value priority matrix</span>
-          <h3>Where the first dollar goes</h3>
+          <h3>Which AI use cases deserve leadership capacity</h3>
         </div>
         <p>
-          Value potential x execution readiness. Use this as a workshop frame:
-          outside-in value ideas move only when source owners validate the
-          evidence gate.
+          Business materiality x evidence readiness. Use this to separate scale
+          candidates from attractive claims that still need proof.
         </p>
       </div>
+
       <div
-        className={styles.matrixChartCard}
-        aria-label="AI use case priority matrix"
+        className={styles.useCaseMatrixWrap}
+        aria-label="AI use case priority 2x2"
       >
-        <ResponsiveContainer width="100%" height={360}>
-          <ScatterChart margin={{ top: 20, right: 24, bottom: 34, left: 40 }}>
-            <CartesianGrid stroke="#ffffff" strokeWidth={1.5} />
-            <ReferenceArea x1={0} x2={33.33} y1={0} y2={33.33} fill="#eef2f6" />
-            <ReferenceArea
-              x1={0}
-              x2={33.33}
-              y1={33.33}
-              y2={66.66}
-              fill="#eef2f6"
-            />
-            <ReferenceArea
-              x1={0}
-              x2={33.33}
-              y1={66.66}
-              y2={100}
-              fill="#f3ead6"
-            />
-            <ReferenceArea
-              x1={33.33}
-              x2={66.66}
-              y1={0}
-              y2={33.33}
-              fill="#eef2f6"
-            />
-            <ReferenceArea
-              x1={33.33}
-              x2={66.66}
-              y1={33.33}
-              y2={66.66}
-              fill="#f3ead6"
-            />
-            <ReferenceArea
-              x1={33.33}
-              x2={66.66}
-              y1={66.66}
-              y2={100}
-              fill="#dcece5"
-            />
-            <ReferenceArea
-              x1={66.66}
-              x2={100}
-              y1={0}
-              y2={33.33}
-              fill="#f3ead6"
-            />
-            <ReferenceArea
-              x1={66.66}
-              x2={100}
-              y1={33.33}
-              y2={66.66}
-              fill="#dcece5"
-            />
-            <ReferenceArea
-              x1={66.66}
-              x2={100}
-              y1={66.66}
-              y2={100}
-              fill="#dcece5"
-            />
-            <XAxis
-              type="number"
-              dataKey="x"
-              domain={[0, 100]}
-              ticks={[16.66, 50, 83.33]}
-              tickFormatter={readinessTick}
-              tick={{ fill: "#5f6f88", fontSize: 11, fontWeight: 800 }}
-              axisLine={{ stroke: "rgba(12, 26, 58, 0.26)" }}
-              tickLine={false}
-              label={{
-                value: "Execution readiness",
-                position: "insideBottom",
-                offset: -24,
-                fill: "#0c1a3a",
-                fontSize: 11,
-                fontWeight: 800,
-              }}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              domain={[0, 100]}
-              ticks={[16.66, 50, 83.33]}
-              tickFormatter={readinessTick}
-              tick={{ fill: "#5f6f88", fontSize: 11, fontWeight: 800 }}
-              axisLine={{ stroke: "rgba(12, 26, 58, 0.26)" }}
-              tickLine={false}
-              label={{
-                value: "Value potential",
-                angle: -90,
-                position: "insideLeft",
-                fill: "#0c1a3a",
-                fontSize: 11,
-                fontWeight: 800,
-              }}
-            />
-            <ZAxis type="number" dataKey="z" range={[620, 1220]} />
-            <Tooltip content={<MatrixTooltipContent />} />
-            <Scatter data={matrixData} isAnimationActive={false}>
-              {matrixData.map((idea) => (
-                <Cell key={idea.id} fill={matrixColor(idea.zone)} />
-              ))}
-              <LabelList
-                dataKey="shortLabel"
-                position="inside"
-                fill="#ffffff"
-                fontSize={9.5}
-                fontWeight={900}
-              />
-            </Scatter>
-          </ScatterChart>
-        </ResponsiveContainer>
+        <div className={styles.useCaseAxisY}>Higher business materiality</div>
+        <div className={styles.useCaseMatrix}>
+          {quadrants.map((quadrant) => (
+            <article
+              key={quadrant.label}
+              className={`${styles.useCaseQuadrant} ${quadrant.tone}`}
+            >
+              <span>{quadrant.label}</span>
+              <h4>{quadrant.title}</h4>
+              <p>{quadrant.body}</p>
+              <div className={styles.useCaseList}>
+                {quadrant.items.map((idea) => (
+                  <div key={idea.id} className={styles.useCaseItem}>
+                    <strong>{idea.title}</strong>
+                    <small>{idea.evidenceGate}</small>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className={styles.useCaseAxisX}>Stronger evidence readiness</div>
       </div>
       <div className={styles.matrixLegend}>
         <span>
           <i className={styles.legendInvest} />
-          Invest now
+          Prove then scale
         </span>
         <span>
           <i className={styles.legendBuild} />
-          Build selectively
+          Redesign first
         </span>
         <span>
           <i className={styles.legendMonitor} />
-          Monitor
+          Monitor or hold
         </span>
       </div>
-      <div className={styles.matrixIdeaList}>
-        {data.advisoryValueMatrix.map((idea) => (
-          <article key={idea.id}>
-            <span>{idea.zone.replace("-", " ")}</span>
-            <strong>{idea.title}</strong>
-            <p>{idea.note}</p>
-            <small>{idea.evidenceGate}</small>
-          </article>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function readinessTick(value: number) {
-  if (value < 34) return "Low";
-  if (value < 67) return "Medium";
-  return "High";
-}
-
-function matrixColor(
-  zone: AiSuccessHomeData["advisoryValueMatrix"][number]["zone"],
-) {
-  if (zone === "invest") return "#173e6d";
-  if (zone === "build") return "#9b6418";
-  return "#66758d";
-}
-
-function MatrixTooltipContent({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{
-    payload?: AiSuccessHomeData["advisoryValueMatrix"][number];
-  }>;
-}) {
-  if (!active || !payload?.[0]?.payload) return null;
-  const idea = payload[0].payload;
-  return (
-    <div className={styles.matrixTooltip}>
-      <span>{idea.zone.replace("-", " ")}</span>
-      <strong>{idea.title}</strong>
-      <p>{idea.note}</p>
-      <small>{idea.evidenceGate}</small>
     </div>
   );
 }
