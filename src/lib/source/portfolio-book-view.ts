@@ -21,17 +21,15 @@
 // real derivations this composes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { SourcingEventSummary } from './types';
+import type { SourcingEventSummary } from "./types";
+import { computePortfolioKpis, attentionEvents } from "./portfolio-filtering";
+import { deriveValuePosture } from "./portfolio-derivations";
 import {
-  computePortfolioKpis,
-  attentionEvents,
-} from './portfolio-filtering';
-import {
-  deriveValuePosture,
-  stageIndex,
-  stageStepCount,
-} from './portfolio-derivations';
-import { SOURCE_STAGE_LABELS } from './constants';
+  coerceStageToSourceJourney,
+  getSourceJourneyForEvent,
+  sourceJourneyLabelForStage,
+  sourceJourneyStageKeys,
+} from "./sourcing-motion-journeys";
 
 // ── Event kind (Full event vs Door 1) ────────────────────────────────────────
 // The substrate has no first-class "door" column. We classify HONESTLY from the
@@ -40,17 +38,18 @@ import { SOURCE_STAGE_LABELS } from './constants';
 // "Door 1"; everything else is a "Full event". When the substrate adds a
 // first-class door field this becomes a passthrough.
 
-export type PortfolioEventKind = 'full' | 'door1';
+export type PortfolioEventKind = "full" | "door1";
 
-const DOOR1_SIGNAL = /\b(optimi[sz]|renewal|contract\s+optimization)\b/i;
-
-export function classifyEventKind(event: SourcingEventSummary): PortfolioEventKind {
-  const haystack = `${event.name} ${event.code} ${event.archetype}`;
-  return DOOR1_SIGNAL.test(haystack) ? 'door1' : 'full';
+export function classifyEventKind(
+  event: SourcingEventSummary,
+): PortfolioEventKind {
+  return getSourceJourneyForEvent({ event }).id === "contract_optimization"
+    ? "door1"
+    : "full";
 }
 
 export function eventKindLabel(kind: PortfolioEventKind): string {
-  return kind === 'door1' ? 'Door 1' : 'Full event';
+  return kind === "door1" ? "Door 1" : "Full event";
 }
 
 // ── Stat cards ───────────────────────────────────────────────────────────────
@@ -60,12 +59,12 @@ export function eventKindLabel(kind: PortfolioEventKind): string {
 // fabricates a live figure).
 
 export interface PortfolioStatCard {
-  key: 'active' | 'renewals' | 'spend' | 'value_captured';
+  key: "active" | "renewals" | "spend" | "value_captured";
   label: string;
   value: string;
   sub: string;
   /** Sub-line tone — drives the accent color in the renderer. */
-  tone: 'ink' | 'green' | 'amber';
+  tone: "ink" | "green" | "amber";
   /** True when this card has NO real backing and shows an honest empty state. */
   empty: boolean;
 }
@@ -125,7 +124,7 @@ export interface PortfolioBookView {
 }
 
 function formatCompactUsd(usd: number): string {
-  if (!Number.isFinite(usd) || usd <= 0) return '—';
+  if (!Number.isFinite(usd) || usd <= 0) return "—";
   if (usd >= 1_000_000_000) return `$${(usd / 1_000_000_000).toFixed(1)}B`;
   if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(1)}M`;
   if (usd >= 1_000) return `$${Math.round(usd / 1_000)}k`;
@@ -137,7 +136,7 @@ function formatValuePosture(
   canViewFinancialValues: boolean,
 ): { primary: string; secondary: string } | null {
   if (!canViewFinancialValues) {
-    return { primary: 'Restricted', secondary: 'financial visibility off' };
+    return { primary: "Restricted", secondary: "financial visibility off" };
   }
   const posture = deriveValuePosture(event);
   if (!posture) return null;
@@ -145,7 +144,7 @@ function formatValuePosture(
   const high = formatCompactUsd(posture.high);
   return {
     primary: low === high ? low : `${low} – ${high}`,
-    secondary: posture.isDerivedBand ? 'Projected · v2 pending' : 'Projected',
+    secondary: posture.isDerivedBand ? "Projected · v2 pending" : "Projected",
   };
 }
 
@@ -162,10 +161,14 @@ export function buildPortfolioBookView(
   const kpis = computePortfolioKpis(events);
 
   const openEvents = events.filter(
-    (e) => e.status !== 'completed' && e.status !== 'archived',
+    (e) => e.status !== "completed" && e.status !== "archived",
   );
-  const fullCount = openEvents.filter((e) => classifyEventKind(e) === 'full').length;
-  const door1Count = openEvents.filter((e) => classifyEventKind(e) === 'door1').length;
+  const fullCount = openEvents.filter(
+    (e) => classifyEventKind(e) === "full",
+  ).length;
+  const door1Count = openEvents.filter(
+    (e) => classifyEventKind(e) === "door1",
+  ).length;
   const contractCount = events.length;
 
   // Value captured YTD — from REAL realizedValueUsd only. This is 0 for every
@@ -182,42 +185,42 @@ export function buildPortfolioBookView(
 
   const statCards: PortfolioStatCard[] = [
     {
-      key: 'active',
-      label: 'Active events',
+      key: "active",
+      label: "Active events",
       value: String(openEvents.length),
-      sub: `${fullCount} full event${fullCount === 1 ? '' : 's'} · ${door1Count} optimization${door1Count === 1 ? '' : 's'}`,
-      tone: 'ink',
+      sub: `${fullCount} full event${fullCount === 1 ? "" : "s"} · ${door1Count} optimization${door1Count === 1 ? "" : "s"}`,
+      tone: "ink",
       empty: false,
     },
     {
       // Renewals · 90 days — NO renewal-date substrate. Honest empty.
-      key: 'renewals',
-      label: 'Renewals · 90 days',
-      value: '—',
-      sub: 'No renewal clock wired to this tenant yet',
-      tone: 'amber',
+      key: "renewals",
+      label: "Renewals · 90 days",
+      value: "—",
+      sub: "No renewal clock wired to this tenant yet",
+      tone: "amber",
       empty: true,
     },
     {
-      key: 'spend',
-      label: 'Spend under management',
-      value: hasSpend ? formatCompactUsd(spendUnderMgmtUsd) : '—',
+      key: "spend",
+      label: "Spend under management",
+      value: hasSpend ? formatCompactUsd(spendUnderMgmtUsd) : "—",
       sub: hasSpend
-        ? `across ${contractCount} contract${contractCount === 1 ? '' : 's'}`
+        ? `across ${contractCount} contract${contractCount === 1 ? "" : "s"}`
         : canViewFinancialValues
-          ? 'No open value at stake yet'
-          : 'Financial visibility off',
-      tone: 'ink',
+          ? "No open value at stake yet"
+          : "Financial visibility off",
+      tone: "ink",
       empty: !hasSpend,
     },
     {
-      key: 'value_captured',
-      label: 'Value captured YTD',
-      value: hasValueCaptured ? formatCompactUsd(valueCapturedUsd) : '—',
+      key: "value_captured",
+      label: "Value captured YTD",
+      value: hasValueCaptured ? formatCompactUsd(valueCapturedUsd) : "—",
       sub: hasValueCaptured
-        ? 'realized to date'
-        : 'No realized value recorded yet',
-      tone: 'green',
+        ? "realized to date"
+        : "No realized value recorded yet",
+      tone: "green",
       empty: !hasValueCaptured,
     },
   ];
@@ -227,10 +230,18 @@ export function buildPortfolioBookView(
     .sort((a, b) => (b.agingDays | 0) - (a.agingDays | 0))
     .map((event) => {
       const kind = classifyEventKind(event);
-      const idx = stageIndex(event.currentStageKey);
+      const journey = getSourceJourneyForEvent({ event });
+      const visibleStage = coerceStageToSourceJourney(
+        journey,
+        event.currentStageKey,
+        event.currentStageKey,
+      );
+      const stageKeys = sourceJourneyStageKeys(journey);
+      const idx = Math.max(0, stageKeys.indexOf(visibleStage));
+      const stepCount = stageKeys.length;
       const stageLabel =
-        event.currentStageLabel || SOURCE_STAGE_LABELS[event.currentStageKey] || 'Strategy';
-      const sponsor = (event.decisionOwner || event.owner || '').trim();
+        sourceJourneyLabelForStage(journey, visibleStage) || "Strategy";
+      const sponsor = (event.decisionOwner || event.owner || "").trim();
       const subline = sponsor
         ? `${event.accountName} · sponsor ${sponsor}`
         : event.accountName;
@@ -243,9 +254,9 @@ export function buildPortfolioBookView(
         kindLabel: eventKindLabel(kind),
         subline,
         stageIndex: idx,
-        stepCount: stageStepCount(),
+        stepCount,
         stageLabel,
-        progressLabel: `Now at ${stageLabel} · step ${idx + 1} of ${stageStepCount()}`,
+        progressLabel: `Now at ${stageLabel} · step ${idx + 1} of ${stepCount}`,
         value: formatValuePosture(event, canViewFinancialValues),
       };
     });
