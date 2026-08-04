@@ -211,6 +211,49 @@ describe("buildViewModel numeric coercion", () => {
     }
   });
 
+  it("never renders 'NaN%' for a non-finite source_confidence — falls back to an honest gap", () => {
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        sel: { kind: "contract", id: "c1" },
+      },
+      () => undefined,
+      {
+        ...PORTFOLIO,
+        contracts: [
+          contractRow({
+            contract_id: "c1",
+            vendor_ref: "v1",
+            vendor_name: "Vendor One",
+            // Live-found bug (2026-08-04): a malformed/unresolved confidence
+            // value from the data plane reached pct() as a non-numeric
+            // string, and (v * 100).toFixed(1) rendered the literal text
+            // "NaN%" on the Contract 360 header strip and Optimization tab.
+            source_confidence: "unresolved" as unknown as number,
+          }),
+        ],
+      },
+      "Airline Demo",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      valueStrip: Array<{ label: string; value: string }>;
+      pendingItems: Array<{ label: string; sub: string }>;
+    };
+
+    // A non-finite source_confidence must never render as "NaN%" anywhere in
+    // the header strip — it must fall through as a genuine, honestly-flagged
+    // gap (missing: true), which routes it to pendingItems instead of the
+    // rendered valueStrip.
+    for (const item of built.valueStrip) {
+      expect(item.value).not.toMatch(/NaN/);
+    }
+    const confidencePending = built.pendingItems.find(
+      (item) => item.label === "Source confidence",
+    );
+    expect(confidencePending).toBeDefined();
+  });
+
   it("keeps the Source v4 semantic catalog on the workspace payload", () => {
     expect(PORTFOLIO.semanticLayer.datasetId).toBe(
       "skyharbor-source-v4-202608",

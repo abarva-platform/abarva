@@ -48,6 +48,7 @@ export function money(m: number | null | undefined): string {
   return '$' + m.toFixed(0);
 }
 export function pct(v: number): string {
+  if (!Number.isFinite(v)) return 'Not established';
   return (v * 100).toFixed(1) + '%';
 }
 export function fmtDate(iso: string | null): string {
