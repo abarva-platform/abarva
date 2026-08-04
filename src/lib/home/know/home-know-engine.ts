@@ -36,6 +36,10 @@ import {
   isCuratedDossierNonFallbackError,
   loadCuratedSemanticDossier,
 } from "@/lib/semantic-dossiers";
+import {
+  loadSourceV4WorkspaceSnapshot,
+  type SourceV4WorkspaceSnapshot,
+} from "@/lib/source/data-model/source-v4-workspace-snapshot";
 
 export interface HomeDimensionCoverageRow {
   tenant_key: string;
@@ -150,6 +154,7 @@ export interface HomeKnowPacket {
   applications: HomeApplicationOwnershipViewRow[];
   vendors: HomeVendorLandscapeViewRow[];
   budgets: HomeBudgetPortfolioViewRow[];
+  sourceV4?: SourceV4WorkspaceSnapshot | null;
   relationships: HomeRelationshipRow[];
   records: HomeContextRecordRow[];
   gaps: HomeGapRegisterViewRow[];
@@ -234,6 +239,7 @@ export async function fetchHomeKnowPacket(
     tenantKey,
     readErrors,
   );
+  const sourceV4 = await fetchSourceV4OrNull(tenantKey, readErrors);
   const relationships = await fetchRowsOrEmpty<HomeRelationshipRow>(
     "enterprise_context_relationships",
     tenantKey,
@@ -262,12 +268,32 @@ export async function fetchHomeKnowPacket(
     applications,
     vendors,
     budgets,
+    sourceV4,
     relationships,
     records,
     gaps,
     conflicts,
     readErrors,
   };
+}
+
+async function fetchSourceV4OrNull(
+  tenantKey: string,
+  readErrors: string[],
+): Promise<SourceV4WorkspaceSnapshot | null> {
+  try {
+    const snapshot = await loadSourceV4WorkspaceSnapshot(tenantKey);
+    return sourceV4HasData(snapshot) ? snapshot : null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[home-know.source-v4] Source V4 context unavailable for ${tenantKey}: ${message}`,
+    );
+    readErrors.push(
+      "Source V4 cube-backed context did not return for this Home request",
+    );
+    return null;
+  }
 }
 
 export async function buildHomeKnowResponse(
@@ -846,7 +872,10 @@ function dimensionsForIntent(
   packet: HomeKnowPacket,
 ): string[] {
   if (intent === "decision_handoff" || intent === "browse") {
-    return packet.coverage.map((row) => row.dimension_id);
+    return [
+      ...packet.coverage.map((row) => row.dimension_id),
+      ...(packet.sourceV4 ? ["source_v4_cube"] : []),
+    ];
   }
   const normalized = question.toLowerCase();
   const dims = new Set<string>();
@@ -873,6 +902,7 @@ function dimensionsForIntent(
     )
   ) {
     dims.add("vendors_contracts");
+    if (packet.sourceV4) dims.add("source_v4_cube");
   }
   if (
     /\b(budget|budgets|spend|cost|costs|financial|financials)\b/.test(
@@ -880,6 +910,14 @@ function dimensionsForIntent(
     )
   ) {
     dims.add("it_budget_financials");
+    if (packet.sourceV4) dims.add("source_v4_cube");
+  }
+  if (
+    /\b(source v4|cube|invoice|invoices|off-contract|off contract|credit|credits|sla|saas|seat|seats|copilot|claude code|ai tool|cloud|azure|rate card|fieldglass|sourcing event|bafo|ariba)\b/.test(
+      normalized,
+    )
+  ) {
+    dims.add("source_v4_cube");
   }
   if (
     /\b(business function|business functions|business org|operating model)\b|\bbusiness\b.*\b(organized|organization|org|function|functions|model)\b/.test(
@@ -904,6 +942,7 @@ function dimensionsForIntent(
   ) {
     dims.add("initiatives_roadmap");
     dims.add("ai_automation_footprint");
+    if (packet.sourceV4) dims.add("source_v4_cube");
   }
   if (intent === "gap") dims.add("gap_register");
   if (dims.size === 0 && intent === "chart") {
@@ -995,6 +1034,19 @@ function buildCitations(
       confidence: row.trust_score,
       excerpt: `${row.dimension_label}: ${number(row.record_count)} records, ${number(row.fact_count)} source details, ${number(row.relationship_count)} relationships`,
     })),
+    ...(packet.sourceV4
+      ? [
+          {
+            dimensionId: "source_v4_cube",
+            sourceFile: null,
+            sourceRowNumber: null,
+            labelPrefix: "Source V4 cube snapshot",
+            sourceClass: "tenant-fact" as const,
+            confidence: 0.95,
+            excerpt: `${packet.sourceV4.datasetId}: ${packet.sourceV4.contextCoverage.contracts} contracts, ${packet.sourceV4.contextCoverage.vendors} vendors, ${packet.sourceV4.contextCoverage.invoiceLines} invoice lines`,
+          },
+        ]
+      : []),
   ];
   const wanted = new Set(dimensionsUsed);
   const seen = new Set<string>();
@@ -1089,6 +1141,56 @@ function buildFacts(
       });
     }
   }
+  if (dimensionsUsed.includes("source_v4_cube") && packet.sourceV4) {
+    const sourceCitationIds = citationIdForDimension(
+      "source_v4_cube",
+      citations,
+    );
+    facts.push(
+      {
+        id: "source-v4-contract-count",
+        dimensionId: "source_v4_cube",
+        label: "Source V4 contracts",
+        value: packet.sourceV4.executivePortfolio.contractCount,
+        citationIds: sourceCitationIds,
+      },
+      {
+        id: "source-v4-annual-value",
+        dimensionId: "source_v4_cube",
+        label: "Source V4 annual contract value",
+        value: packet.sourceV4.executivePortfolio.annualValue,
+        citationIds: sourceCitationIds,
+      },
+      {
+        id: "source-v4-invoice-lines",
+        dimensionId: "source_v4_cube",
+        label: "Source V4 invoice lines",
+        value: packet.sourceV4.spendConsumption.invoiceLines,
+        citationIds: sourceCitationIds,
+      },
+      {
+        id: "source-v4-off-contract-spend",
+        dimensionId: "source_v4_cube",
+        label: "Source V4 off-contract spend",
+        value: packet.sourceV4.spendConsumption.offContractSpend,
+        citationIds: sourceCitationIds,
+      },
+      {
+        id: "source-v4-unclaimed-credits",
+        dimensionId: "source_v4_cube",
+        label: "Source V4 unclaimed credits",
+        value: packet.sourceV4.performanceCredits.unclaimedCredit,
+        citationIds: sourceCitationIds,
+      },
+      {
+        id: "source-v4-ai-claimable-rows",
+        dimensionId: "source_v4_cube",
+        label: "Source V4 AI claimable rows",
+        value: packet.sourceV4.aiUsageValueProof.claimableRows,
+        citationIds: sourceCitationIds,
+      },
+    );
+  }
   return facts;
 }
 
@@ -1100,7 +1202,20 @@ function buildTablesForIntent(
 ): HomeKnowTable[] {
   const normalized = question.toLowerCase();
   if (intent === "gap") return [gapTable(packet.gaps, citations)];
-  if (intent === "browse") return [coverageTable(packet.coverage, citations)];
+  if (intent === "browse") {
+    return packet.sourceV4
+      ? [
+          coverageTable(packet.coverage, citations),
+          sourceV4PortfolioTable(packet.sourceV4, citations),
+        ]
+      : [coverageTable(packet.coverage, citations)];
+  }
+  const sourceV4Tables = sourceV4TablesForQuestion(
+    normalized,
+    packet.sourceV4 ?? null,
+    citations,
+  );
+  if (sourceV4Tables.length > 0) return sourceV4Tables;
   if (
     /\b(data product|analytics|data & analytics|data and analytics)\b/.test(
       normalized,
@@ -1470,6 +1585,304 @@ function budgetTable(
       owner_role: row.owner_role ?? "Not yet available",
     })),
     citationIds: citationIdForDimension("it_budget_financials", citations),
+  };
+}
+
+function sourceV4TablesForQuestion(
+  normalizedQuestion: string,
+  snapshot: SourceV4WorkspaceSnapshot | null,
+  citations: HomeKnowCitation[],
+): HomeKnowTable[] {
+  if (!sourceV4HasData(snapshot)) return [];
+  if (
+    /\b(ai|saas|seat|seats|copilot|claude code|ai tool|productivity|value proof|claimable)\b/.test(
+      normalizedQuestion,
+    )
+  ) {
+    return [sourceV4AiUsageTable(snapshot, citations)];
+  }
+  if (/\b(cloud|azure|overage|amortized|commitment)\b/.test(normalizedQuestion)) {
+    return [sourceV4CloudTable(snapshot, citations)];
+  }
+  if (/\b(rate card|rate-card|fieldglass|labor|workforce|bill rate)\b/.test(normalizedQuestion)) {
+    return [sourceV4RateCardTable(snapshot, citations)];
+  }
+  if (/\b(sourcing event|bafo|ariba|supplier response|rfp)\b/.test(normalizedQuestion)) {
+    return [sourceV4SourcingEventTable(snapshot, citations)];
+  }
+  if (/\b(credit|credits|sla|service level|service credit)\b/.test(normalizedQuestion)) {
+    return [sourceV4PerformanceCreditTable(snapshot, citations)];
+  }
+  if (/\b(invoice|invoices|off-contract|off contract|spend|actual spend|consumption)\b/.test(normalizedQuestion)) {
+    return [sourceV4SpendTable(snapshot, citations)];
+  }
+  if (/\b(scope|dependency|dependencies|application|applications|platform|platforms)\b/.test(normalizedQuestion)) {
+    return [sourceV4ScopeTable(snapshot, citations)];
+  }
+  if (
+    /\b(source v4|cube|vendor|vendors|contract|contracts|supplier|suppliers|renewal|renewals|portfolio)\b/.test(
+      normalizedQuestion,
+    )
+  ) {
+    return [
+      sourceV4PortfolioTable(snapshot, citations),
+      sourceV4TopVendorsTable(snapshot, citations),
+    ];
+  }
+  return [];
+}
+
+function sourceV4HasData(
+  snapshot: SourceV4WorkspaceSnapshot | null,
+): snapshot is SourceV4WorkspaceSnapshot {
+  return Boolean(
+    snapshot &&
+      (snapshot.contextCoverage.contracts > 0 ||
+        snapshot.contextCoverage.vendors > 0 ||
+        snapshot.contextCoverage.invoiceLines > 0 ||
+        snapshot.aiUsageValueProof.rowCount > 0 ||
+        snapshot.cloudOptimization.rowCount > 0),
+  );
+}
+
+function sourceV4CitationIds(citations: HomeKnowCitation[]): string[] {
+  return citationIdForDimension("source_v4_cube", citations);
+}
+
+function sourceV4PortfolioTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return {
+    id: "home-source-v4-executive-portfolio",
+    title: "Source V4 Contract Portfolio",
+    dimensionId: "source_v4_cube",
+    columns: [
+      { key: "metric", label: "Metric" },
+      { key: "value", label: "Value", align: "right", format: "number" },
+    ],
+    rows: [
+      { metric: "Contracts", value: snapshot.executivePortfolio.contractCount },
+      { metric: "Vendors", value: snapshot.contextCoverage.vendors },
+      {
+        metric: "Annual contract value",
+        value: snapshot.executivePortfolio.annualValue,
+      },
+      {
+        metric: "Total committed value",
+        value: snapshot.executivePortfolio.totalCommittedValue,
+      },
+      { metric: "Auto-renewals", value: snapshot.executivePortfolio.autoRenewCount },
+      {
+        metric: "Notice-window contracts",
+        value: snapshot.executivePortfolio.notice90DayCount,
+      },
+    ],
+    citationIds: sourceV4CitationIds(citations),
+    note: "Source V4 is a cube-backed semantic snapshot. It can support portfolio scale and exposure; it does not by itself prove savings or realized value.",
+  };
+}
+
+function sourceV4TopVendorsTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return {
+    id: "home-source-v4-top-vendors",
+    title: "Source V4 Top Vendors",
+    dimensionId: "source_v4_cube",
+    columns: [
+      { key: "legal_name", label: "Vendor" },
+      { key: "supplier_category", label: "Category" },
+      { key: "risk_tier", label: "Risk Tier" },
+      {
+        key: "annual_value",
+        label: "Annual Value",
+        align: "right",
+        format: "currency",
+      },
+      {
+        key: "contract_count",
+        label: "Contracts",
+        align: "right",
+        format: "number",
+      },
+    ],
+    rows: snapshot.topVendors.map((vendor) => ({
+      legal_name: vendor.legalName,
+      supplier_category: vendor.supplierCategory ?? "Not yet available",
+      risk_tier: vendor.riskTier ?? "Not yet available",
+      annual_value: vendor.annualValue,
+      contract_count: vendor.contractCount,
+    })),
+    citationIds: sourceV4CitationIds(citations),
+  };
+}
+
+function sourceV4SpendTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return metricRowsTable({
+    id: "home-source-v4-spend-consumption",
+    title: "Source V4 Spend and Invoice Consumption",
+    rows: [
+      ["Rows", snapshot.spendConsumption.rowCount],
+      ["Invoice lines", snapshot.spendConsumption.invoiceLines],
+      ["Actual spend", snapshot.spendConsumption.actualSpend],
+      ["Committed amount", snapshot.spendConsumption.committedAmount],
+      ["Off-contract spend", snapshot.spendConsumption.offContractSpend],
+    ],
+    citations,
+    note: "Off-contract spend is source-supported matching-state evidence, not automatically recoverable savings.",
+  });
+}
+
+function sourceV4PerformanceCreditTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return metricRowsTable({
+    id: "home-source-v4-performance-credits",
+    title: "Source V4 SLA and Service Credit Evidence",
+    rows: [
+      ["Rows", snapshot.performanceCredits.rowCount],
+      ["Breaches", snapshot.performanceCredits.breachCount],
+      ["Credits calculated", snapshot.performanceCredits.creditCalculated],
+      ["Credits claimed", snapshot.performanceCredits.creditClaimed],
+      ["Credits recovered", snapshot.performanceCredits.creditRecovered],
+      ["Unclaimed credits", snapshot.performanceCredits.unclaimedCredit],
+    ],
+    citations,
+    note: "Calculated, claimed, recovered and unclaimed credits are kept separate so aVa does not overstate recoverability.",
+  });
+}
+
+function sourceV4AiUsageTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return {
+    id: "home-source-v4-ai-usage-value-proof",
+    title: "Source V4 AI Usage and Value Proof",
+    dimensionId: "source_v4_cube",
+    columns: [
+      { key: "metric", label: "Metric" },
+      { key: "value", label: "Value", align: "right", format: "number" },
+    ],
+    rows: [
+      { metric: "Usage rows", value: snapshot.aiUsageValueProof.rowCount },
+      { metric: "Assigned seats", value: snapshot.aiUsageValueProof.assignedSeats },
+      { metric: "Active users", value: snapshot.aiUsageValueProof.activeUsers },
+      { metric: "Actual cost", value: snapshot.aiUsageValueProof.actualCost },
+      { metric: "Claimable rows", value: snapshot.aiUsageValueProof.claimableRows },
+      ...snapshot.aiUsageValueProof.topProducts.slice(0, 5).map((product) => ({
+        metric: product.name,
+        value: product.amount,
+      })),
+    ],
+    citationIds: sourceV4CitationIds(citations),
+    note: "Usage, seats and tool cost are evidence for adoption. Developer productivity requires before/after engineering telemetry such as deployment frequency, lead time, quality escape rate and recovery time.",
+  };
+}
+
+function sourceV4CloudTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return {
+    id: "home-source-v4-cloud-optimization",
+    title: "Source V4 Cloud Cost and Overage",
+    dimensionId: "source_v4_cube",
+    columns: [
+      { key: "metric", label: "Metric" },
+      { key: "value", label: "Value", align: "right", format: "number" },
+    ],
+    rows: [
+      { metric: "Rows", value: snapshot.cloudOptimization.rowCount },
+      { metric: "Actual cost", value: snapshot.cloudOptimization.actualCost },
+      { metric: "Amortized cost", value: snapshot.cloudOptimization.amortizedCost },
+      { metric: "Overage", value: snapshot.cloudOptimization.overageAmount },
+      ...snapshot.cloudOptimization.topServices.slice(0, 5).map((service) => ({
+        metric: service.name,
+        value: service.amount,
+      })),
+    ],
+    citationIds: sourceV4CitationIds(citations),
+  };
+}
+
+function sourceV4RateCardTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return metricRowsTable({
+    id: "home-source-v4-workforce-rate-cards",
+    title: "Source V4 Workforce Rate Cards",
+    rows: [
+      ["Rows", snapshot.workforceRateCards.rowCount],
+      ["Hours", snapshot.workforceRateCards.hours],
+      ["Average bill rate", snapshot.workforceRateCards.averageBillRate],
+      ["Unapproved variances", snapshot.workforceRateCards.unapprovedVarianceCount],
+    ],
+    citations,
+    note: "Rate-card variance is an approval signal. It is not a legal finding unless mapped to reviewed contract terms.",
+  });
+}
+
+function sourceV4SourcingEventTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return metricRowsTable({
+    id: "home-source-v4-sourcing-events",
+    title: "Source V4 Sourcing Events",
+    rows: [
+      ["Rows", snapshot.sourcingEvents.rowCount],
+      ["Normalized cost", snapshot.sourcingEvents.normalizedCost],
+      ["Line-item cost", snapshot.sourcingEvents.lineItemCost],
+      ["Average weighted score", snapshot.sourcingEvents.averageWeightedScore],
+    ],
+    citations,
+    note: "Sourcing-event data supports BAFO and supplier-response analysis when the event stages and response comparability fields are present.",
+  });
+}
+
+function sourceV4ScopeTable(
+  snapshot: SourceV4WorkspaceSnapshot,
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
+  return metricRowsTable({
+    id: "home-source-v4-scope-confidence",
+    title: "Source V4 Application and Platform Scope",
+    rows: [
+      ["Scope rows", snapshot.contextCoverage.scopeRows],
+      ["Contracts", snapshot.contextCoverage.contracts],
+      ["Vendors", snapshot.contextCoverage.vendors],
+    ],
+    citations,
+    note: "Scope rows support dependency exploration. Confirmed and inferred relationships must remain visibly distinct in Source and Intelligence.",
+  });
+}
+
+function metricRowsTable(input: {
+  id: string;
+  title: string;
+  rows: Array<[string, number | null]>;
+  citations: HomeKnowCitation[];
+  note?: string;
+}): HomeKnowTable {
+  return {
+    id: input.id,
+    title: input.title,
+    dimensionId: "source_v4_cube",
+    columns: [
+      { key: "metric", label: "Metric" },
+      { key: "value", label: "Value", align: "right", format: "number" },
+    ],
+    rows: input.rows.map(([metric, value]) => ({ metric, value })),
+    citationIds: sourceV4CitationIds(input.citations),
+    note: input.note,
   };
 }
 
@@ -2119,6 +2532,19 @@ function homeKnowProse(input: {
     /\b(security|compliance|control|controls|posture)\b/i.test(input.question)
   ) {
     return "The security and compliance readout is limited to available coverage and source-supported fields. Control strength is not inferred; missing control fields are shown as gaps.";
+  }
+  if (input.packet.sourceV4 && /\b(source v4|cube|invoice|invoices|off-contract|off contract|credit|credits|sla|saas|seat|seats|copilot|claude code|ai tool|cloud|azure|rate card|fieldglass|sourcing event|bafo|ariba)\b/i.test(input.question)) {
+    const v4 = input.packet.sourceV4;
+    if (/\b(ai|saas|seat|seats|copilot|claude code|ai tool|productivity|value proof|claimable)\b/i.test(input.question)) {
+      return `The Source V4 evidence can show AI-tool adoption and cost: ${v4.aiUsageValueProof.rowCount} usage rows, ${v4.aiUsageValueProof.assignedSeats.toLocaleString("en-US")} assigned seats, ${v4.aiUsageValueProof.activeUsers.toLocaleString("en-US")} active users, and ${formatUsd(v4.aiUsageValueProof.actualCost)} of tool cost. It does not prove developer productivity or realized value without before/after engineering and finance validation metrics.`;
+    }
+    if (/\b(credit|credits|sla|service level|service credit)\b/i.test(input.question)) {
+      return `The Source V4 service evidence separates calculated, claimed, recovered and unclaimed credits. It shows ${formatUsd(v4.performanceCredits.unclaimedCredit)} of unclaimed credits, but Home does not treat that as recoverable value without reviewed contract and legal evidence.`;
+    }
+    if (/\b(invoice|invoices|off-contract|off contract|spend|actual spend|consumption)\b/i.test(input.question)) {
+      return `The Source V4 spend layer connects invoice activity to contract matching state: ${v4.spendConsumption.invoiceLines.toLocaleString("en-US")} invoice lines, ${formatUsd(v4.spendConsumption.actualSpend)} actual spend, and ${formatUsd(v4.spendConsumption.offContractSpend)} marked off-contract. That is exposure evidence, not an automatic savings claim.`;
+    }
+    return `The Source V4 context adds the governed contract and vendor evidence Home was missing: ${v4.executivePortfolio.contractCount} contracts, ${v4.contextCoverage.vendors} vendors, ${formatUsd(v4.executivePortfolio.annualValue)} annual contract value, and ${v4.contextCoverage.scopeRows.toLocaleString("en-US")} scope rows. Use Source for drill-down and Intelligence for cross-domain judgment.`;
   }
   if (
     /\b(data product|analytics|data & analytics|data and analytics)\b/i.test(
