@@ -168,12 +168,12 @@ export function TowerCommandCenter({
           <div className={styles.emptyPanel}>
             <h2>No governed Tower data for this tenant</h2>
             <p>
-              The <code>tower</code> read model carries no rows for {tenantName}
-              . This page renders nothing rather than showing zeros — a zero
-              would be a claim that the budget, promised value and claimable
-              value are all nil, which is not what absent data means. Load
-              governed Tower metric observations, claims and provenance for this
-              tenant to populate it.
+              The <code>tower</code> read model carries no rows for{" "}
+              {tenantName}. This page renders nothing rather than showing zeros
+              — a zero would be a claim that the budget, promised value and
+              claimable value are all nil, which is not what absent data means.
+              Load governed Tower metric observations, claims and provenance for
+              this tenant to populate it.
             </p>
           </div>
         </div>

@@ -10,26 +10,26 @@ The authenticated screenshots supplied on 2026-08-02 also show a layout bug: Tow
 
 ## Page Map
 
-| Tab                 | Current data source                                                                        | Current behavior                                                                                            | Page-level judgment                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Command Center      | `tower.value_claim`, `tower.metric_observation`, `raw_enterprise_it.it_budget_allocations` | Shows budget and AI spend, then “Unknown” value posture because no claims have calculated value.            | Keep, but add a clear “claim ledger incomplete” state before tiles.                         |
-| Value Proof         | Derived from `tower.value_claim` and program rows                                          | Correctly withholds waterfall when all value is unknown. Empty blocker table says no dollar blocker exists. | Honest but visually weak; should make “value proof not quantified yet” the dominant state.  |
-| Decision Lanes      | `tower.value_claim` joined to `tower.tracked_subject`                                      | Program table shows many `$0` funded values and unknown proof states.                                       | Needs a “program exists, value ledger missing” lane, not just Fix/Freeze/Stop styling.      |
-| AI Portfolio        | AI metrics from `tower.metric_observation` plus AI subjects                                | Has strong usage/admin export data, but value posture is still blocked by missing outcome evidence.         | Useful, but must separate adoption/usage evidence from business value proof more loudly.    |
-| Evidence            | `tower.metric_provenance` plus derived business evidence gaps                              | “What exists” has provenance rows. Other questions derive repetitive gaps from claims with missing values.  | Needs a real evidence-gap projection. Current derivation is a bridge, not the final design. |
-| Recommended Actions | Derived from claim summary                                                                 | Produces generic actions: capture baselines, require attestation, keep unknown value out of totals.         | Correct, but too generic for an executive action memo until owners and field gaps are real. |
+| Tab | Current data source | Current behavior | Page-level judgment |
+| --- | --- | --- | --- |
+| Command Center | `tower.value_claim`, `tower.metric_observation`, `raw_enterprise_it.it_budget_allocations` | Shows budget and AI spend, then “Unknown” value posture because no claims have calculated value. | Keep, but add a clear “claim ledger incomplete” state before tiles. |
+| Value Proof | Derived from `tower.value_claim` and program rows | Correctly withholds waterfall when all value is unknown. Empty blocker table says no dollar blocker exists. | Honest but visually weak; should make “value proof not quantified yet” the dominant state. |
+| Decision Lanes | `tower.value_claim` joined to `tower.tracked_subject` | Program table shows many `$0` funded values and unknown proof states. | Needs a “program exists, value ledger missing” lane, not just Fix/Freeze/Stop styling. |
+| AI Portfolio | AI metrics from `tower.metric_observation` plus AI subjects | Has strong usage/admin export data, but value posture is still blocked by missing outcome evidence. | Useful, but must separate adoption/usage evidence from business value proof more loudly. |
+| Evidence | `tower.metric_provenance` plus derived business evidence gaps | “What exists” has provenance rows. Other questions derive repetitive gaps from claims with missing values. | Needs a real evidence-gap projection. Current derivation is a bridge, not the final design. |
+| Recommended Actions | Derived from claim summary | Produces generic actions: capture baselines, require attestation, keep unknown value out of totals. | Correct, but too generic for an executive action memo until owners and field gaps are real. |
 
 ## Mapping To New Data Model
 
-| New model object           | Tower page use                                                 | Status                                                                 |
-| -------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `doc.extraction`           | Not directly rendered in the command center.                   | Existing tables exist, but page does not yet expose document trace.    |
-| `tower.metric_observation` | Budget, AI usage, cloud, KPI, project observations.            | Populated and actively read.                                           |
-| `tower.metric_provenance`  | Evidence facts.                                                | Populated, but only 5 provenance rows and all `not_attested`.          |
-| `tower.value_claim`        | Claim states, known/unknown value, baseline/target/actual IDs. | Populated with 162 claims, but no calculated value or observation IDs. |
-| `narrative.finding_result` | Not used by current command center.                            | Gap for page-level deterministic findings.                             |
-| `narrative.artifact`       | aVa shell can synthesize, but page body is deterministic.      | Not part of the current page mapping.                                  |
-| `governance.review_event`  | Not rendered.                                                  | Gap for Finance/business attestation trail.                            |
+| New model object | Tower page use | Status |
+| --- | --- | --- |
+| `doc.extraction` | Not directly rendered in the command center. | Existing tables exist, but page does not yet expose document trace. |
+| `tower.metric_observation` | Budget, AI usage, cloud, KPI, project observations. | Populated and actively read. |
+| `tower.metric_provenance` | Evidence facts. | Populated, but only 5 provenance rows and all `not_attested`. |
+| `tower.value_claim` | Claim states, known/unknown value, baseline/target/actual IDs. | Populated with 162 claims, but no calculated value or observation IDs. |
+| `narrative.finding_result` | Not used by current command center. | Gap for page-level deterministic findings. |
+| `narrative.artifact` | aVa shell can synthesize, but page body is deterministic. | Not part of the current page mapping. |
+| `governance.review_event` | Not rendered. | Gap for Finance/business attestation trail. |
 
 ## Immediate Design Defects
 

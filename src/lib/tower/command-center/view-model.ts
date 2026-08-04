@@ -554,7 +554,8 @@ export function deriveBusinessEvidenceGaps(
         area: "Value evidence",
         linkedProgram: p.name,
         missing: `Governed financial amount and baseline/target/actual proof for ${p.name}`,
-        why: "Tower has a claim-state row, but no governed dollar amount. Unknown value is withheld from executive totals until the measurement, value amount, provenance and attestations are loaded.",
+        why:
+          "Tower has a claim-state row, but no governed dollar amount. Unknown value is withheld from executive totals until the measurement, value amount, provenance and attestations are loaded.",
         blockedDecision: `${LANE_DECISION_VERB[p.lane]} ${p.name}`,
         owner: p.financeOwnerRole ?? p.ownerRole,
         priority: "high",
@@ -861,10 +862,7 @@ function buildEvidenceMaturityView(
       "realized",
       "Realized",
       summary.claimableUsd > 0 ? summary.claimableClaimCount : 0,
-      Math.max(
-        0,
-        claims - (summary.claimableUsd > 0 ? summary.claimableClaimCount : 0),
-      ),
+      Math.max(0, claims - (summary.claimableUsd > 0 ? summary.claimableClaimCount : 0)),
       "Realized value evidence",
       "Executive sponsor",
       "Book realized value only after claimable value exists.",
@@ -1043,48 +1041,42 @@ function buildEvidenceMaturityView(
       title: "Establish comparable developer-AI baseline cohorts",
       ownerRole: "CIO / engineering productivity owner",
       why: "Developer AI investment is visible, but baseline and target movement are not governed.",
-      nextAction:
-        "Load baseline, target, actual, and cohort provenance for the developer productivity claims.",
+      nextAction: "Load baseline, target, actual, and cohort provenance for the developer productivity claims.",
     },
     {
       id: "servicenow-outcomes",
       title: "Instrument ServiceNow workflow outcomes",
       ownerRole: "Service management owner",
       why: "Activity can be counted before business outcome movement is proven.",
-      nextAction:
-        "Capture before-and-after cycle time, accepted resolution, quality, and attribution evidence.",
+      nextAction: "Capture before-and-after cycle time, accepted resolution, quality, and attribution evidence.",
     },
     {
       id: "workday-process-measures",
       title: "Capture Workday before-and-after process measures",
       ownerRole: "HR operations owner",
       why: "Agent usage does not become value until the process outcome moves.",
-      nextAction:
-        "Load baseline and actual process measures with business-owner sign-off.",
+      nextAction: "Load baseline and actual process measures with business-owner sign-off.",
     },
     {
       id: "outcome-ownership",
       title: "Define outcome ownership by business role",
       ownerRole: "Portfolio governance",
       why: "Every missing proof item needs one named accountable owner.",
-      nextAction:
-        "Assign owner roles for metric, attribution, Finance, and business attestation gates.",
+      nextAction: "Assign owner roles for metric, attribution, Finance, and business attestation gates.",
     },
     {
       id: "attestation-gates",
       title: "Complete Finance and business attestation",
       ownerRole: "Finance / business owners",
       why: "A claim is not claimable until method, amount, and business usability are attested.",
-      nextAction:
-        "Collect sign-offs after baseline, actuals, and attribution are present.",
+      nextAction: "Collect sign-offs after baseline, actuals, and attribution are present.",
     },
     {
       id: "pause-scaling",
       title: "Pause scaling where measurement and workflow redesign are absent",
       ownerRole: "Executive sponsor",
       why: "Scaling usage without measurement can amplify activity without proving business value.",
-      nextAction:
-        "Hold scale decisions until the relevant evidence lane clears.",
+      nextAction: "Hold scale decisions until the relevant evidence lane clears.",
     },
   ];
 

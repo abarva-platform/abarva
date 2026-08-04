@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
-export const metadata = { title: "Source · AbarVa" };
-export const dynamic = "force-dynamic";
+import { redirect } from 'next/navigation';
+export const metadata = { title: 'Source · AbarVa' };
+export const dynamic = 'force-dynamic';
 
 /**
  * Source landing.
@@ -12,5 +12,5 @@ export const dynamic = "force-dynamic";
  * longer the default landing surface.
  */
 export default function SourcePage() {
-  redirect("/source/preview/workspace");
+  redirect('/source/preview/workspace');
 }

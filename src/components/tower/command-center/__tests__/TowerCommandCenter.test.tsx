@@ -242,9 +242,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText(/Scale, fund, freeze, and stop decisions wait/),
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(/Proof work before decision/).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Proof work before decision/).length).toBeGreaterThan(0);
   });
 
   it('answers "what is missing" from the claim chain, not the ETL backlog', () => {

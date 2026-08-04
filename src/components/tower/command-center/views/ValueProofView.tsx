@@ -19,10 +19,7 @@ function EvidenceProgression({ view }: { view: TowerCommandCenterView }) {
   return (
     <div className={styles.progressionGrid}>
       {view.evidenceMaturity.stages.map((stage, index) => (
-        <div
-          key={stage.key}
-          className={cx(styles.progressionStage, styles[stage.tone])}
-        >
+        <div key={stage.key} className={cx(styles.progressionStage, styles[stage.tone])}>
           <div className={styles.progressionTop}>
             <span className={styles.progressionN}>{index + 1}</span>
             <span className={styles.progressionLabel}>{stage.label}</span>
@@ -90,8 +87,7 @@ export function ValueProofView({
   onOpenProgram: (id: string) => void;
 }) {
   const s = view.summary;
-  const proofMaturityMode =
-    s.valueClaimCount > 0 && s.claimableClaimCount === 0;
+  const proofMaturityMode = s.valueClaimCount > 0 && s.claimableClaimCount === 0;
   const rows = buildWaterfallRows(s);
   const noUsage = rows[1]?.usd ?? 0;
   const noFinance = rows[3]?.usd ?? 0;
@@ -125,9 +121,7 @@ export function ValueProofView({
         style={{ gridTemplateColumns: "1.12fr 1fr" }}
       >
         <Card
-          eyebrow={
-            proofMaturityMode ? "Evidence progression" : "Value waterfall"
-          }
+          eyebrow={proofMaturityMode ? "Evidence progression" : "Value waterfall"}
           right={proofMaturityMode ? "claims · value status" : "FY26 · $M"}
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
@@ -147,7 +141,8 @@ export function ValueProofView({
               ? view.evidenceMaturity.summaryRead
               : `${rows
                   .map(
-                    (r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
+                    (r) =>
+                      `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
                   )
                   .join(". ")}.`}
           </p>
@@ -180,11 +175,7 @@ export function ValueProofView({
         </Card>
 
         <Card
-          title={
-            proofMaturityMode
-              ? "Top evidence blockers"
-              : "Top 5 blockers by dollar impact"
-          }
+          title={proofMaturityMode ? "Top evidence blockers" : "Top 5 blockers by dollar impact"}
           headId="tcc-blockers"
           bodyClassName={styles.scroll}
           bodyStyle={{ paddingTop: 8 }}

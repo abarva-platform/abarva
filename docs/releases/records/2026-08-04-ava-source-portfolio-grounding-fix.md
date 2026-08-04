@@ -61,7 +61,7 @@ assumption (see Changes Included).
 - `src/app/api/chat/agent/route.ts`: wires the new grounding block in, following the exact pattern
   the existing per-event grounding (`ava-grounding-context.ts`) already established:
   - Populates `sourcePortfolioGroundingBlock` inside the same `isSourceSurface(surface) &&
-effectiveClientKey` condition that already builds `sourceTenantContextBlock` (best-effort,
+    effectiveClientKey` condition that already builds `sourceTenantContextBlock` (best-effort,
     try/catch, never breaks the turn).
   - Reuses the existing `AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD` (imported, not duplicated) — the guard
     now fires whenever EITHER the event grounding or the portfolio grounding produced a block.

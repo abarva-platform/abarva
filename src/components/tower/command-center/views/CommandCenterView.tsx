@@ -187,11 +187,7 @@ function buildTiles(view: TowerCommandCenterView): Tile[] {
           value: formatCount(laneByKey.get("obtain_attestation")?.count ?? 0),
           tone: "vRed",
         },
-        {
-          label: "Legacy lanes",
-          value: formatCount(laneCount("fix")),
-          tone: "",
-        },
+        { label: "Legacy lanes", value: formatCount(laneCount("fix")), tone: "" },
       ],
     },
   ];
@@ -309,8 +305,8 @@ export function CommandCenterView({
               </>
             ) : (
               <>
-                <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span> is
-                promised value.{" "}
+                <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span>{" "}
+                is promised value.{" "}
                 <span className={s.claimableUsd > 0 ? styles.n : styles.z}>
                   {formatUsdM(s.claimableUsd)}
                 </span>{" "}
@@ -327,9 +323,10 @@ export function CommandCenterView({
               <div className={styles.emptyPanel}>
                 <h2>Value proof is not quantified yet</h2>
                 <p>
-                  Usage proves activity. It does not prove business value. Tower
-                  is waiting for baseline, actual, attribution and attestation
-                  evidence before it lets these claims become executive value.
+                  Usage proves activity. It does not prove business value.
+                  Tower is waiting for baseline, actual, attribution and
+                  attestation evidence before it lets these claims become
+                  executive value.
                 </p>
               </div>
             ) : (

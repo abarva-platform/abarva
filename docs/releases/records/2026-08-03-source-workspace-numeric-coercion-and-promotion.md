@@ -109,7 +109,8 @@ consumers) but is no longer the default entry point.
     canvas, no horizontal overflow (`document.documentElement.scrollWidth` === `clientWidth`), zero
     console errors across the whole session.
   - Regression: `/source/vendor-portfolio`, `/source/sourcing-opportunities`, and `/source/events`
-    (→ `/source/portfolio`, the Door-1 event workflow — "SkyHarbor AMS Outsourcing RFP", step 2 of 11) all load correctly, unaffected by this change.
+    (→ `/source/portfolio`, the Door-1 event workflow — "SkyHarbor AMS Outsourcing RFP", step 2 of
+    11) all load correctly, unaffected by this change.
   - Not independently re-verified this session: a second tenant's honest-empty-state behavior (no
     second-tenant credential available in this session) — unchanged by this release's diff, so risk
     is low, but this specific check was not re-run live.

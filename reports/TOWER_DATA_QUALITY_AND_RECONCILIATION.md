@@ -10,43 +10,43 @@ The local Tower substrate is present and populated, but value realization is not
 
 ## Required Counts
 
-| Measure                          | Result |
-| -------------------------------- | -----: |
-| Metric definitions               |    138 |
-| Tracked subjects                 |    407 |
-| Metric observations              |  7,174 |
-| Metric provenance rows           |      5 |
-| Value claims                     |    162 |
-| Claims with known dollar value   |      0 |
-| Claims with unknown dollar value |    162 |
-| Claims with baseline observation |      0 |
-| Claims with target observation   |      0 |
-| Claims with actual observation   |      0 |
-| Claims with Finance attestation  |      0 |
-| Claims with business attestation |      0 |
-| Stale claims                     |      0 |
-| Disputed claims                  |      0 |
+| Measure | Result |
+| --- | ---: |
+| Metric definitions | 138 |
+| Tracked subjects | 407 |
+| Metric observations | 7,174 |
+| Metric provenance rows | 5 |
+| Value claims | 162 |
+| Claims with known dollar value | 0 |
+| Claims with unknown dollar value | 162 |
+| Claims with baseline observation | 0 |
+| Claims with target observation | 0 |
+| Claims with actual observation | 0 |
+| Claims with Finance attestation | 0 |
+| Claims with business attestation | 0 |
+| Stale claims | 0 |
+| Disputed claims | 0 |
 
 Table-count payload hash: `c4be15c63b5fdf58eac4666d187b678a`
 Claim-state payload hash: `8da33ffb0ac0c96238aa9829436456d2`
 
 ## Claim-State Distribution
 
-| Claim state          | Claims | Known values | Unknown values | Baseline | Target | Actual |
-| -------------------- | -----: | -----------: | -------------: | -------: | -----: | -----: |
-| `funded_no_baseline` |    150 |            0 |            150 |        0 |      0 |      0 |
-| `usage_supported`    |     12 |            0 |             12 |        0 |      0 |      0 |
+| Claim state | Claims | Known values | Unknown values | Baseline | Target | Actual |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `funded_no_baseline` | 150 | 0 | 150 | 0 | 0 | 0 |
+| `usage_supported` | 12 | 0 | 12 | 0 | 0 | 0 |
 
 ## Reconciled Control Figures
 
-| Control                                     | Query basis                                                              |        Result |
-| ------------------------------------------- | ------------------------------------------------------------------------ | ------------: |
-| FY2027 technology budget                    | `tower.metric_observation`, `finance.total_it_budget`, scenario `target` | 2,350,000,000 |
+| Control | Query basis | Result |
+| --- | --- | ---: |
+| FY2027 technology budget | `tower.metric_observation`, `finance.total_it_budget`, scenario `target` | 2,350,000,000 |
 | FY2026 technology actual/budget observation | `tower.metric_observation`, `finance.total_it_budget`, scenario `actual` | 2,180,000,000 |
-| Finance actual spend                        | `tower.metric_observation`, `finance.actual_spend`, scenario `actual`    | 3,770,437,521 |
-| AI estimated use cost                       | `tower.metric_observation`, `ai.estimated_use_cost`, scenario `actual`   |   170,249,334 |
-| Active AI users                             | `tower.metric_observation`, `ai.active_users`, scenario `actual`         |       705,878 |
-| AI seats purchased                          | `tower.metric_observation`, `ai.seats_purchased`, scenario `actual`      |     2,381,843 |
+| Finance actual spend | `tower.metric_observation`, `finance.actual_spend`, scenario `actual` | 3,770,437,521 |
+| AI estimated use cost | `tower.metric_observation`, `ai.estimated_use_cost`, scenario `actual` | 170,249,334 |
+| Active AI users | `tower.metric_observation`, `ai.active_users`, scenario `actual` | 705,878 |
+| AI seats purchased | `tower.metric_observation`, `ai.seats_purchased`, scenario `actual` | 2,381,843 |
 
 Contract annual value is present in the Source projection path, but it is not directly consumed by the current `/tower` command center read adapter.
 
@@ -56,13 +56,13 @@ AI seat utilization has data coverage through `ai.active_users`, `ai.seats_purch
 
 `tower.metric_provenance` contains 5 rows. All are `not_attested`.
 
-| Source system                    | Source table                                  | Attestation    |
-| -------------------------------- | --------------------------------------------- | -------------- |
-| AI tool admin exports            | `raw_enterprise_it.ai_adoption_usage`         | `not_attested` |
+| Source system | Source table | Attestation |
+| --- | --- | --- |
+| AI tool admin exports | `raw_enterprise_it.ai_adoption_usage` | `not_attested` |
 | Cloud cost and operations export | `raw_cloud_hybrid.cloud_operations_economics` | `not_attested` |
-| ERP / FP&A budget extract        | `raw_enterprise_it.it_budget_allocations`     | `not_attested` |
-| KPI source files                 | `raw_enterprise_it.kpis_outcomes`             | `not_attested` |
-| PMO project portfolio            | `raw_enterprise_it.projects_investments`      | `not_attested` |
+| ERP / FP&A budget extract | `raw_enterprise_it.it_budget_allocations` | `not_attested` |
+| KPI source files | `raw_enterprise_it.kpis_outcomes` | `not_attested` |
+| PMO project portfolio | `raw_enterprise_it.projects_investments` | `not_attested` |
 
 ## Null And Unknown Behavior
 

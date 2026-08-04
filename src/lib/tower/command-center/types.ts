@@ -317,7 +317,11 @@ export type TowerEvidenceMaturityStageKey =
   | "claimable"
   | "realized";
 
-export type TowerEvidenceMaturityTone = "teal" | "amber" | "red" | "gray";
+export type TowerEvidenceMaturityTone =
+  | "teal"
+  | "amber"
+  | "red"
+  | "gray";
 
 export interface TowerEvidenceMaturityStage {
   key: TowerEvidenceMaturityStageKey;

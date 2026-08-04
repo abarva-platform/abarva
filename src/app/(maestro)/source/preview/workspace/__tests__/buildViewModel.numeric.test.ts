@@ -179,11 +179,7 @@ describe("buildViewModel numeric coercion", () => {
   });
 
   it("keeps the Source v4 semantic catalog on the workspace payload", () => {
-    expect(PORTFOLIO.semanticLayer.datasetId).toBe(
-      "skyharbor-source-v4-202608",
-    );
-    expect(
-      PORTFOLIO.semanticLayer.lenses.map((lens) => lens.cubeView),
-    ).toContain("source_v4_ai_usage_value_proof");
+    expect(PORTFOLIO.semanticLayer.datasetId).toBe("skyharbor-source-v4-202608");
+    expect(PORTFOLIO.semanticLayer.lenses.map((lens) => lens.cubeView)).toContain("source_v4_ai_usage_value_proof");
   });
 });

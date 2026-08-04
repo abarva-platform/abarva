@@ -61,3 +61,4 @@ Financial values are withheld when the model has unknown value amounts:
 ## Handoffs
 
 The command-center action model keeps handoff labels to Moves and Source, but this branch does not implement new cross-product writes or promotion. Home, Source, Moves, Intelligence, and Tower remain projections of canonical data; no product owns the source of truth.
+

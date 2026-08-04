@@ -55,7 +55,11 @@ const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
   gray: "",
 };
 
-function EvidenceLaneBoard({ view }: { view: TowerCommandCenterView }) {
+function EvidenceLaneBoard({
+  view,
+}: {
+  view: TowerCommandCenterView;
+}) {
   return (
     <div className={styles.interventionLanes}>
       {view.evidenceMaturity.interventionLanes.map((lane) => (
@@ -493,9 +497,7 @@ export function DecisionLanesView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title={
-          valueUnknown ? "The evidence operating room" : "The operating room"
-        }
+        title={valueUnknown ? "The evidence operating room" : "The operating room"}
         hint={
           valueUnknown
             ? "Sparse-state lanes prescribe proof work before investment decisions"

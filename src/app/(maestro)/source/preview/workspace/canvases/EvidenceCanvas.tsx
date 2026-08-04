@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { DataTable } from "../DataTable";
-import type { SourceWorkspaceVM } from "../buildViewModel";
+import { DataTable } from '../DataTable';
+import type { SourceWorkspaceVM } from '../buildViewModel';
 
 export function EvidenceCanvas({ vm }: { vm: SourceWorkspaceVM }) {
   if (vm.evCoverage) {
@@ -30,22 +30,8 @@ export function EvidenceCanvas({ vm }: { vm: SourceWorkspaceVM }) {
   }
   if (vm.evDocs) {
     return (
-      <div
-        style={{
-          background: "#fff",
-          border: "1px solid rgba(10,10,11,.12)",
-          borderRadius: 8,
-          padding: "20px 24px",
-          fontSize: 13,
-          color: "#5f5e5a",
-          lineHeight: 1.65,
-          maxWidth: "100ch",
-        }}
-      >
-        Document evidence (doc.extraction) is not pre-loaded for the whole
-        portfolio — it would require a per-contract fan-out at page load. Open a
-        specific contract&rsquo;s Evidence tab to fetch its real document
-        extractions.
+      <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px', fontSize: 13, color: '#5f5e5a', lineHeight: 1.65, maxWidth: '100ch' }}>
+        Document evidence (doc.extraction) is not pre-loaded for the whole portfolio — it would require a per-contract fan-out at page load. Open a specific contract&rsquo;s Evidence tab to fetch its real document extractions.
       </div>
     );
   }

@@ -47,3 +47,4 @@ Branch: `codex/tower-command-center-local-model`
 3. Populate baseline, target, actual, calculated value, Finance attestation, and business attestation fields.
 4. Resolve promised-value source conflicts before allowing value totals.
 5. Run signed-in browser proof for `/tower` with the approved local/lab environment.
+

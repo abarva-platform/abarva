@@ -44,21 +44,21 @@
 import {
   listContract360,
   listVendorContractPortfolio,
-} from "@/lib/source/data-model/read-adapter";
+} from '@/lib/source/data-model/read-adapter';
 import {
   computeContractLeverageSignals,
   computeRenewalExposure,
   computeVendorConcentration,
   excludeSupplementalContracts,
   summarizePortfolio,
-} from "@/lib/source/data-model/vendor-contract-portfolio";
-import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
+} from '@/lib/source/data-model/vendor-contract-portfolio';
+import { computeSourcingOpportunities } from '@/lib/source/data-model/sourcing-opportunities';
 
-const USD_COMPACT = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
+const USD_COMPACT = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
   maximumFractionDigits: 1,
-  notation: "compact",
+  notation: 'compact',
 });
 
 function fmtUsd(value: number): string {
@@ -73,9 +73,9 @@ function fmtPct(share: number): string {
 // (src/app/(maestro)/source/preview/workspace/page.tsx) so the grounding
 // block's renewal-window numbers can never diverge from the canvas the user
 // is looking at.
-const SKYHARBOR_SYNTHETIC_AS_OF = "2027-06-30T00:00:00Z";
+const SKYHARBOR_SYNTHETIC_AS_OF = '2027-06-30T00:00:00Z';
 function resolveAsOfIso(tenantKey: string): string {
-  return tenantKey.toLowerCase().includes("skyharbor")
+  return tenantKey.toLowerCase().includes('skyharbor')
     ? SKYHARBOR_SYNTHETIC_AS_OF
     : new Date().toISOString();
 }
@@ -103,7 +103,7 @@ export async function buildAvaSourcePortfolioGrounding(
   ]);
   const contracts = excludeSupplementalContracts(contractsRaw);
   if (contracts.length === 0) {
-    return { block: "", hasLiveNumbers: false };
+    return { block: '', hasLiveNumbers: false };
   }
 
   const asOfIso = resolveAsOfIso(tenantKey);
@@ -111,10 +111,7 @@ export async function buildAvaSourcePortfolioGrounding(
   const concentration = computeVendorConcentration(contracts);
   const leverage = computeContractLeverageSignals(contracts);
   const weakLeverage = leverage.filter((entry) => entry.weakSignalCount >= 2);
-  const weakLeverageValue = weakLeverage.reduce(
-    (total, entry) => total + entry.annualValue,
-    0,
-  );
+  const weakLeverageValue = weakLeverage.reduce((total, entry) => total + entry.annualValue, 0);
   const renewal180 = computeRenewalExposure(contracts, asOfIso, 180);
   const opportunitiesResult = computeSourcingOpportunities(contracts, asOfIso);
   const opportunityValue = opportunitiesResult.opportunities.reduce(
@@ -123,23 +120,20 @@ export async function buildAvaSourcePortfolioGrounding(
   );
   const topVendors = concentration.byVendor
     .slice(0, 5)
-    .map(
-      (v) =>
-        `${v.vendorName} ${fmtUsd(v.annualValue)} (${fmtPct(v.shareOfTotal)})`,
-    )
-    .join("; ");
+    .map((v) => `${v.vendorName} ${fmtUsd(v.annualValue)} (${fmtPct(v.shareOfTotal)})`)
+    .join('; ');
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE PORTFOLIO GROUNDING (LIVE — source.contract_360 / source.vendor_contract_portfolio, tenant "${tenantKey}", as of ${asOfIso.slice(0, 10)}):`,
     `Contracts: ${summary.contractCount}. Vendors: ${summary.vendorCount} (${vendors.length} vendor rows read).`,
     `Annual contract value: ${fmtUsd(summary.totalAnnualValue)}. Actual annual spend: ${fmtUsd(summary.totalActualAnnualSpend)}. Total committed value: ${fmtUsd(summary.totalCommittedValue)}.`,
     `Auto-renewing contracts: ${summary.autoRenewCount} of ${summary.contractCount}.`,
-    topVendors ? `Top vendors by annual value: ${topVendors}.` : "",
+    topVendors ? `Top vendors by annual value: ${topVendors}.` : '',
     `Contracts with two or more weak leverage signals (no benchmark clause, no alternatives on record, skill/regional dependency): ${weakLeverage.length}, combined annual value ${fmtUsd(weakLeverageValue)}.`,
     `Renewal exposure within 180 days: ${renewal180.expiringWithinWindow.length} contracts, ${fmtUsd(renewal180.expiringWithinWindowAnnualValue)}. Notice deadline already passed while the contract remains active: ${renewal180.noticeDeadlinePassed.length} contracts, ${fmtUsd(renewal180.noticeDeadlinePassedAnnualValue)}.`,
     `Deterministic sourcing opportunities (computeSourcingOpportunities — weak leverage, missed notice deadlines, top-concentration vendor status, never a fabricated priority score): ${opportunitiesResult.opportunities.length}, combined annual value ${fmtUsd(opportunityValue)}.`,
-    "These are the ONLY governed Source portfolio numbers for this tenant. For a portfolio-wide contract/vendor/spend/leverage/renewal question, use ONLY these numbers — never a figure from generic tenant-context retrieval, a different corpus, or your own estimate. If the user asks about a single contract or vendor by name that is not listed above, say the portfolio-level grounding above does not include that contract's detail and it should be looked up on its Contract 360 page instead of guessed.",
+    'These are the ONLY governed Source portfolio numbers for this tenant. For a portfolio-wide contract/vendor/spend/leverage/renewal question, use ONLY these numbers — never a figure from generic tenant-context retrieval, a different corpus, or your own estimate. If the user asks about a single contract or vendor by name that is not listed above, say the portfolio-level grounding above does not include that contract\'s detail and it should be looked up on its Contract 360 page instead of guessed.',
   ].filter(Boolean);
 
-  return { block: lines.join("\n"), hasLiveNumbers: true };
+  return { block: lines.join('\n'), hasLiveNumbers: true };
 }

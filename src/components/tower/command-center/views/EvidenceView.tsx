@@ -80,7 +80,9 @@ function ownerAnswers(
       return {
         id: `owner:${owner}`,
         name: owner,
-        detail: items.map((g) => `${g.label}: ${g.nextAction}`).join(" · "),
+        detail: items
+          .map((g) => `${g.label}: ${g.nextAction}`)
+          .join(" · "),
         metric: formatCount(total),
         unit: total === 1 ? "claim-gate gap" : "claim-gate gaps",
         tone: red ? "red" : amber ? "amber" : "teal",
@@ -280,11 +282,7 @@ function EvidenceRowBody({
       </span>
       <span className={styles.ebigRight}>
         <span className={cx(styles.ebigMetric, styles[TONE_CLASS[item.tone]])}>
-          {item.metric === "Unknown" ? (
-            <Unknown label="Unknown" />
-          ) : (
-            item.metric
-          )}
+          {item.metric === "Unknown" ? <Unknown label="Unknown" /> : item.metric}
         </span>
         <span className={styles.ebigUnit}>{item.unit}</span>
         <span className={styles.ebigTag}>{item.tag}</span>

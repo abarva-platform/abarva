@@ -38,8 +38,7 @@ export function WeekReadChart({ summary }: { summary: TowerCommandSummary }) {
       aria-label="This week's value proof progression"
     >
       {rows.map((row) => {
-        const widthPct =
-          row.usd > 0 ? Math.max((row.usd / maxUsd) * 100, 3) : 0;
+        const widthPct = row.usd > 0 ? Math.max((row.usd / maxUsd) * 100, 3) : 0;
         return (
           <div className={styles.weekProofRow} key={row.name}>
             <span className={styles.weekProofLabel}>{row.name}</span>

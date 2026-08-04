@@ -76,8 +76,7 @@ describe("readTowerCommandCenter", () => {
           source_file: "csv/enterprise_it/6_projects_investments.csv",
           source_row: "2",
           claim_state: "finance_validated",
-          blocked_reason:
-            "Awaiting Finance and business attestation before claimability.",
+          blocked_reason: "Awaiting Finance and business attestation before claimability.",
           next_gate: "Obtain Finance and business attestation.",
           next_gate_owner_role: "Finance partner",
           quality_guardrail_state: "finance_validated",
@@ -87,8 +86,7 @@ describe("readTowerCommandCenter", () => {
           baseline_observation_id: "obs-kpi-prj-001-baseline",
           target_observation_id: "obs-kpi-prj-001-target",
           actual_observation_id: "obs-kpi-prj-001-actual",
-          caveat:
-            "Synthetic partial value is formula-derived from linked KPI progress and approved budget.",
+          caveat: "Synthetic partial value is formula-derived from linked KPI progress and approved budget.",
           approved_budget_usd: "16000000",
           actual_to_date_usd: "5500000",
           forecast_at_completion_usd: "17200000",
@@ -160,8 +158,6 @@ describe("readTowerCommandCenter", () => {
     expect(view?.summary.unknownValueClaimCount).toBe(144);
     expect(view?.summary.knownValueClaimCount).toBe(18);
     expect(view?.summary.promisedUsd).toBe(612_000_000);
-    expect(view?.summary.executiveSummary).toMatch(
-      /baseline\/current\/target outcome links/i,
-    );
+    expect(view?.summary.executiveSummary).toMatch(/baseline\/current\/target outcome links/i);
   });
 });

@@ -47,7 +47,9 @@ import {
   summarizeFinancialValueForPrompt,
   type RestrictedOutputPolicyLike,
 } from "@/lib/agent/restricted-output-policy";
-import { AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK } from "@/lib/ai-liability/human-decision-controls";
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+} from "@/lib/ai-liability/human-decision-controls";
 // AI surface control catalog evidence token:
 // sanitizeAutonomousDecisionLanguage
 // Global aVa Product Truth + Scope Guard (all agents, all surfaces).
@@ -745,10 +747,7 @@ export async function POST(request: Request) {
         }
 
         const movesAvaChatHardeningEnabled = isFeatureEnabled(
-          {
-            clientKey: activeClientKey ?? null,
-            clientId: activeClient?.id ?? null,
-          },
+          { clientKey: activeClientKey ?? null, clientId: activeClient?.id ?? null },
           "moves_ava_chat_hardening",
         );
         if (
@@ -781,8 +780,7 @@ export async function POST(request: Request) {
             ).length;
             const hardGateTotal = blockingGateScope.length;
             const hardGateOpen = hardGateTotal - hardGateMet;
-            const visibleEvidenceCount =
-              liveMove?.linkedEvidence.length ?? evidence.length;
+            const visibleEvidenceCount = liveMove?.linkedEvidence.length ?? evidence.length;
             const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
               tenancy,
               programId,
@@ -815,9 +813,8 @@ export async function POST(request: Request) {
                   nextPhaseLabel:
                     promptPhase < 5 ? `P${promptPhase + 1}` : "Tower",
                 },
-                evidenceNeedPackets: evidenceNeedPackets.map(
-                  formatMoveEvidenceNeedForAva,
-                ),
+                evidenceNeedPackets:
+                  evidenceNeedPackets.map(formatMoveEvidenceNeedForAva),
                 gateCriteria: liveGateCriteria.map((criterion) => ({
                   label: criterion.label,
                   met: criterion.completed,
@@ -827,12 +824,11 @@ export async function POST(request: Request) {
               message,
             );
             const { mode } = classifyMovesAvaQuestion(message);
-            movesAvaHardeningBlock = formatMovesAvaChatPacketForPrompt(
+            movesAvaHardeningBlock = formatMovesAvaChatPacketForPrompt(packet, mode);
+            movesAvaDeterministicAnswer = buildDeterministicMovesAvaStatusAnswer(
               packet,
               mode,
             );
-            movesAvaDeterministicAnswer =
-              buildDeterministicMovesAvaStatusAnswer(packet, mode);
           } catch {
             // Never block the chat turn on the hardening layer — fall back
             // to the existing phase-pack-only prompt.
@@ -1188,10 +1184,8 @@ export async function POST(request: Request) {
     }
   }
   const tenantSystemBlock =
-    (await buildTenantContextBlock(
-      tenantInventoryKey,
-      sourceEventScopeGuard,
-    )) ?? getTenantSystemBlock(effectiveClientKey);
+    (await buildTenantContextBlock(tenantInventoryKey, sourceEventScopeGuard)) ??
+    getTenantSystemBlock(effectiveClientKey);
   const tenantTechnologyContextBlock =
     agentName === "Sentinel" &&
     typeof surface === "string" &&
@@ -1343,8 +1337,9 @@ export async function POST(request: Request) {
   let hasSourcePortfolioGrounding = false;
   if (isSourceSurface(surface) && effectiveClientKey) {
     try {
-      const portfolioGrounding =
-        await buildAvaSourcePortfolioGrounding(effectiveClientKey);
+      const portfolioGrounding = await buildAvaSourcePortfolioGrounding(
+        effectiveClientKey,
+      );
       if (portfolioGrounding.block) {
         sourcePortfolioGroundingBlock = portfolioGrounding.block;
         hasSourcePortfolioGrounding = true;
@@ -1373,9 +1368,7 @@ export async function POST(request: Request) {
   // generation and gate check read the SAME facts (checklist item #9:
   // read-once, not a stale re-read). Left null/empty on every other
   // surface/turn (byte-identical).
-  let sourceAvaAnswerMode:
-    | ReturnType<typeof classifySourceAnswerMode>["mode"]
-    | null = null;
+  let sourceAvaAnswerMode: ReturnType<typeof classifySourceAnswerMode>["mode"] | null = null;
   let sourceAvaModeGroundingFacts: Record<string, string> = {};
   let sourceAvaModeEvidenceIncomplete = false;
   // Phase B only: the raw mode-grounding block text (for the quality gate's
@@ -1440,8 +1433,7 @@ export async function POST(request: Request) {
       });
       sourceAvaAnswerMode = modeClassification.mode;
       if (isGroundedAnswerMode(modeClassification.mode) && groundingEvent) {
-        const modeStageKey =
-          viewStageFromContext ?? groundingEvent.currentStageKey;
+        const modeStageKey = viewStageFromContext ?? groundingEvent.currentStageKey;
         const isPhaseB = isPhaseBImplementedMode(modeClassification.mode);
         const isPhaseC = isPhaseCImplementedMode(modeClassification.mode);
         // decision_recommendation and contract_optimization ALWAYS need the
@@ -1481,31 +1473,18 @@ export async function POST(request: Request) {
           // classifier pattern, but still needs the real protected/exposed
           // lever read, not the MODEL/all-exposed fallback).
           (isPhaseB && modeClassification.mode === "clause_coverage") ||
-          (modeClassification.mode === "general_advisory" &&
-            modeStageKey === "rfp")
+          (modeClassification.mode === "general_advisory" && modeStageKey === "rfp")
             ? readRfpClausePresentLeverKeys({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
-              }).catch(() => ({
-                signalPresent: false,
-                presentLeverKeys: new Set<string>(),
-              }))
-            : Promise.resolve({
-                signalPresent: false,
-                presentLeverKeys: new Set<string>(),
-              }),
+              }).catch(() => ({ signalPresent: false, presentLeverKeys: new Set<string>() }))
+            : Promise.resolve({ signalPresent: false, presentLeverKeys: new Set<string>() }),
           isPhaseB && modeClassification.mode === "committed_value"
             ? readCommittedValueLevers({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
-              }).catch(() => ({
-                signalPresent: false,
-                committedByLeverKey: new Map<string, number>(),
-              }))
-            : Promise.resolve({
-                signalPresent: false,
-                committedByLeverKey: new Map<string, number>(),
-              }),
+              }).catch(() => ({ signalPresent: false, committedByLeverKey: new Map<string, number>() }))
+            : Promise.resolve({ signalPresent: false, committedByLeverKey: new Map<string, number>() }),
           // decision_recommendation composites the BAFO facet
           // (buildBafoStrategyGrounding) — it needs the same signal.
           (isPhaseB && modeClassification.mode === "bafo_strategy") ||
@@ -1513,26 +1492,14 @@ export async function POST(request: Request) {
             ? readBafoConcessionLevers({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
-              }).catch(() => ({
-                signalPresent: false,
-                capturedByLeverKey: new Map<string, number>(),
-              }))
-            : Promise.resolve({
-                signalPresent: false,
-                capturedByLeverKey: new Map<string, number>(),
-              }),
+              }).catch(() => ({ signalPresent: false, capturedByLeverKey: new Map<string, number>() }))
+            : Promise.resolve({ signalPresent: false, capturedByLeverKey: new Map<string, number>() }),
           isPhaseB && modeClassification.mode === "value_realization"
             ? readRealizedValueLevers({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
-              }).catch(() => ({
-                signalPresent: false,
-                realizedByLeverKey: new Map<string, number>(),
-              }))
-            : Promise.resolve({
-                signalPresent: false,
-                realizedByLeverKey: new Map<string, number>(),
-              }),
+              }).catch(() => ({ signalPresent: false, realizedByLeverKey: new Map<string, number>() }))
+            : Promise.resolve({ signalPresent: false, realizedByLeverKey: new Map<string, number>() }),
           // decision_recommendation composites the vendor comparison facet
           // (buildVendorComparisonGrounding) — it needs the same signals.
           (isPhaseB && modeClassification.mode === "vendor_comparison") ||
@@ -1542,18 +1509,12 @@ export async function POST(request: Request) {
                 clientKey: activeClientKey,
               }).catch(() => ({
                 signalPresent: false,
-                statusByVendorLever: new Map<
-                  string,
-                  Map<string, "addressed" | "partial" | "dodged">
-                >(),
+                statusByVendorLever: new Map<string, Map<string, "addressed" | "partial" | "dodged">>(),
                 vendors: [] as string[],
               }))
             : Promise.resolve({
                 signalPresent: false,
-                statusByVendorLever: new Map<
-                  string,
-                  Map<string, "addressed" | "partial" | "dodged">
-                >(),
+                statusByVendorLever: new Map<string, Map<string, "addressed" | "partial" | "dodged">>(),
                 vendors: [] as string[],
               }),
           (isPhaseB &&
@@ -1640,10 +1601,7 @@ export async function POST(request: Request) {
               }
             : undefined,
           vendorBids: vendorBidSignal.signalPresent
-            ? {
-                bids: [...vendorBidSignal.bidsByVendor.values()],
-                vendors: vendorBidSignal.vendors,
-              }
+            ? { bids: [...vendorBidSignal.bidsByVendor.values()], vendors: vendorBidSignal.vendors }
             : undefined,
         });
         if (modeGrounding.block) {
@@ -1716,8 +1674,8 @@ export async function POST(request: Request) {
   // false for it), so it keeps receiving the generic receipt exactly as
   // before — unchanged behavior for every mode this fix does not target.
   const contextBundlePromptBlockForPrompt =
-    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
-    hasSourcePortfolioGrounding
+    (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
+      hasSourcePortfolioGrounding)
       ? ""
       : contextBundlePromptBlock;
 
@@ -1760,8 +1718,8 @@ export async function POST(request: Request) {
   // and is the demonstrated leak vector. `stakeholder_alignment` and any
   // non-Source surface keep receiving this block exactly as before.
   const agentTenantContextBlockForPrompt =
-    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
-    hasSourcePortfolioGrounding
+    (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
+      hasSourcePortfolioGrounding)
       ? ""
       : agentTenantContextBlock;
 
@@ -1800,8 +1758,8 @@ export async function POST(request: Request) {
   // `stakeholder_alignment` and every non-Source surface keep receiving
   // `tenantSystemBlock` exactly as before.
   const tenantSystemBlockForPrompt =
-    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
-    hasSourcePortfolioGrounding
+    (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
+      hasSourcePortfolioGrounding)
       ? ""
       : tenantSystemBlock;
 
@@ -2119,8 +2077,7 @@ export async function POST(request: Request) {
           "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
-          ...(typeof surfaceContext.sourceEventId === "string" &&
-          surfaceContext.sourceEventId.trim()
+          ...(typeof surfaceContext.sourceEventId === "string" && surfaceContext.sourceEventId.trim()
             ? [
                 "- EXISTING SOURCE EVENT READ-ONLY: this chat is grounded on an existing Source event. You may use the user's answer in this conversation, but do NOT say you saved, locked, registered, updated, captured, or wrote it into the Source/intake/event record unless a tool result in this turn explicitly confirms a write. For proposed facts, say 'I can use that here, but it is not saved to the Source record yet.'",
                 "- Do not imply tenant context contains named people unless retrieved context explicitly names them. If the user gives a role instead of a name, accept the role as a proposed accountable owner unless the visible task specifically requires a named person.",

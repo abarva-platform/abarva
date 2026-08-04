@@ -10,15 +10,15 @@ The local Tower model is populated enough to render an operational command cente
 
 ## Local Reconciliation
 
-| Check                                          | Result        |
-| ---------------------------------------------- | ------------- |
+| Check | Result |
+| --- | --- |
 | `tower.metric_observation` provenance coverage | 7,174 / 7,174 |
-| Value claims with known dollar amount          | 0 / 162       |
-| Claims with baseline/target/actual             | 0 / 162       |
-| Finance attestation                            | 0 / 162       |
-| Business attestation                           | 0 / 162       |
-| Disputed metric rows                           | 0             |
-| Stale metric rows                              | 0             |
+| Value claims with known dollar amount | 0 / 162 |
+| Claims with baseline/target/actual | 0 / 162 |
+| Finance attestation | 0 / 162 |
+| Business attestation | 0 / 162 |
+| Disputed metric rows | 0 |
+| Stale metric rows | 0 |
 
 Result hash: `f9cab2359aed07c0b2b9ff31899a6b165da650ae0724c26731e2067533fe2ce3`.
 

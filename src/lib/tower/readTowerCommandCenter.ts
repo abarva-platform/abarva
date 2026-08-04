@@ -133,11 +133,8 @@ function tenantCandidates(values: readonly (string | null | undefined)[]) {
   return [...out];
 }
 
-function decisionLaneFor(
-  row: ProgramRow,
-): TowerMartProgramLane["decisionLane"] {
-  const status =
-    `${row.status ?? ""} ${row.funding_status ?? ""}`.toLowerCase();
+function decisionLaneFor(row: ProgramRow): TowerMartProgramLane["decisionLane"] {
+  const status = `${row.status ?? ""} ${row.funding_status ?? ""}`.toLowerCase();
   if (status.includes("unfunded")) return "stop";
   if (status.includes("on hold") || status.includes("pending")) return "freeze";
   if (status.includes("at risk") || status.includes("constraint")) return "fix";
@@ -152,9 +149,7 @@ function claimAllowedFor(claimState: string): string {
 }
 
 function programLane(row: ProgramRow): TowerMartProgramLane {
-  const gate =
-    nullableText(row.next_gate) ??
-    "Load governed baseline, target, actual, and attestation evidence.";
+  const gate = nullableText(row.next_gate) ?? "Load governed baseline, target, actual, and attestation evidence.";
   const approvedFundingUsd = num(row.approved_budget_usd);
   const promisedValueUsd = num(row.promised_value);
   const financeValidatedValueUsd =
@@ -206,12 +201,9 @@ function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
   const seats = num(row.seats_purchased);
   const sourceRatePct = num(row.active_user_rate) * 100;
   const fallbackRatePct = seats > 0 ? (activeUsers / seats) * 100 : 0;
-  const adoptionPct = clampPct(
-    sourceRatePct > 0 ? sourceRatePct : fallbackRatePct,
-  );
+  const adoptionPct = clampPct(sourceRatePct > 0 ? sourceRatePct : fallbackRatePct);
   const readinessScore = Math.max(0, Math.min(100, Math.round(adoptionPct)));
-  const valueScore =
-    activeUsers > 0 ? Math.min(100, Math.round(activeUsers / 40)) : 0;
+  const valueScore = activeUsers > 0 ? Math.min(100, Math.round(activeUsers / 40)) : 0;
   return {
     aiPortfolioKey: `tower:${row.subject_ref}`,
     itemName: row.title,
@@ -249,9 +241,7 @@ function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
   };
 }
 
-function valueFunnelRows(
-  summary: ClaimSummaryRow,
-): TowerMartCommandViewModel["valueFunnel"] {
+function valueFunnelRows(summary: ClaimSummaryRow): TowerMartCommandViewModel["valueFunnel"] {
   const promisedValue = num(summary.promised_value_amount_usd);
   const financeValidatedValue = num(summary.finance_validated_value_usd);
   const claimableValue = num(summary.claimable_value_usd);
@@ -261,52 +251,25 @@ function valueFunnelRows(
       : "Known value amount is traceable through tower.value_claim.";
   const stages = [
     ["potential", "Potential", summary.claim_count, "portfolio", promisedValue],
-    [
-      "promised",
-      "Promised",
-      summary.known_value_claim_count,
-      "promised",
-      promisedValue,
-    ],
-    [
-      "usage_supported",
-      "Usage-supported",
-      summary.usage_supported_count,
-      "usage_supported",
-      0,
-    ],
-    [
-      "finance_validated",
-      "Finance-validated",
-      summary.finance_attested_claim_count,
-      "finance_validated",
-      financeValidatedValue,
-    ],
-    [
-      "claimable",
-      "Claimable",
-      summary.claimable_count,
-      "claimable",
-      claimableValue,
-    ],
+    ["promised", "Promised", summary.known_value_claim_count, "promised", promisedValue],
+    ["usage_supported", "Usage-supported", summary.usage_supported_count, "usage_supported", 0],
+    ["finance_validated", "Finance-validated", summary.finance_attested_claim_count, "finance_validated", financeValidatedValue],
+    ["claimable", "Claimable", summary.claimable_count, "claimable", claimableValue],
     ["realized", "Realized", 0, "not_realized", 0],
   ] as const;
-  return stages.map(
-    ([stageKey, stageLabel, count, claimStatus, valueNumeric], index) => ({
-      funnelKey: `tower:${summary.tenant_key}:funnel:${stageKey}`,
-      sequence: index + 1,
-      stageKey,
-      stageLabel,
-      valueNumeric,
-      denominatorStageKey: index === 0 ? null : stages[0][0],
-      conversionRatio:
-        summary.claim_count > 0 ? count / summary.claim_count : null,
-      claimStatus,
-      caveat,
-      sourceFile: "tower.value_claim",
-      sourceRow: null,
-    }),
-  );
+  return stages.map(([stageKey, stageLabel, count, claimStatus, valueNumeric], index) => ({
+    funnelKey: `tower:${summary.tenant_key}:funnel:${stageKey}`,
+    sequence: index + 1,
+    stageKey,
+    stageLabel,
+    valueNumeric,
+    denominatorStageKey: index === 0 ? null : stages[0][0],
+    conversionRatio: summary.claim_count > 0 ? count / summary.claim_count : null,
+    claimStatus,
+    caveat,
+    sourceFile: "tower.value_claim",
+    sourceRow: null,
+  }));
 }
 
 function actionRows(summary: ClaimSummaryRow): TowerMartCxoAction[] {
@@ -541,9 +504,7 @@ export async function readTowerCommandCenter(args: {
       ),
     ]);
 
-    const totalBudget = num(
-      budget?.target_budget_usd || budget?.total_budget_usd,
-    );
+    const totalBudget = num(budget?.target_budget_usd || budget?.total_budget_usd);
     const knownAmount = num(summary.known_value_amount_usd);
     const promisedAmount = num(summary.promised_value_amount_usd);
     const financeValidatedAmount = num(summary.finance_validated_value_usd);
@@ -558,8 +519,7 @@ export async function readTowerCommandCenter(args: {
     const command: TowerMartCommandCenter = {
       commandCenterKey: `tower:${tenantKey}:command-center`,
       tenantKey,
-      tenantName:
-        tenantKey === "skyharbor_global" ? "SkyHarbor Air" : tenantKey,
+      tenantName: tenantKey === "skyharbor_global" ? "SkyHarbor Air" : tenantKey,
       martVersion: "tower-schema-v1",
       sourceStandard: "tower.metric_observation/value_claim",
       formulaVersion: "tower_claim_state_v1",
@@ -589,13 +549,9 @@ export async function readTowerCommandCenter(args: {
       outcomeMeasuredClaimCount: summary.outcome_measured_claim_count,
       candidateAiOpportunities,
       watchPressureSignals:
-        summary.funded_no_baseline_count +
-        summary.stale_count +
-        summary.disputed_count,
-      runRatio:
-        totalBudget > 0 ? num(budget?.run_budget_usd) / totalBudget : null,
-      changeRatio:
-        totalBudget > 0 ? num(budget?.change_budget_usd) / totalBudget : null,
+        summary.funded_no_baseline_count + summary.stale_count + summary.disputed_count,
+      runRatio: totalBudget > 0 ? num(budget?.run_budget_usd) / totalBudget : null,
+      changeRatio: totalBudget > 0 ? num(budget?.change_budget_usd) / totalBudget : null,
       financeValidationRatio:
         summary.claim_count > 0
           ? summary.finance_attested_claim_count / summary.claim_count
@@ -614,19 +570,17 @@ export async function readTowerCommandCenter(args: {
       ],
     };
 
-    const evidenceLineage: TowerMartEvidenceLineage[] = evidenceRows.map(
-      (row) => ({
-        lineageKey: `tower:${row.provenance_id}`,
-        surfaceSection: "metric_observation",
-        displayedFact: `${row.source_system} · ${row.source_schema ?? "unknown"}.${row.source_table ?? "unknown"}`,
-        displayedValueText: `${row.observation_count} observations`,
-        displayedValueNumeric: row.observation_count,
-        sourceFile: row.source_file_id,
-        sourceRow: row.source_row_pointer,
-        sourceSystem: row.source_system,
-        caveat: `${row.attestation_status}; formula ${row.formula_version}; ${row.result_hashes?.length ?? 0} result hashes.`,
-      }),
-    );
+    const evidenceLineage: TowerMartEvidenceLineage[] = evidenceRows.map((row) => ({
+      lineageKey: `tower:${row.provenance_id}`,
+      surfaceSection: "metric_observation",
+      displayedFact: `${row.source_system} · ${row.source_schema ?? "unknown"}.${row.source_table ?? "unknown"}`,
+      displayedValueText: `${row.observation_count} observations`,
+      displayedValueNumeric: row.observation_count,
+      sourceFile: row.source_file_id,
+      sourceRow: row.source_row_pointer,
+      sourceSystem: row.source_system,
+      caveat: `${row.attestation_status}; formula ${row.formula_version}; ${row.result_hashes?.length ?? 0} result hashes.`,
+    }));
 
     return {
       generatedFrom: "tower_schema",
@@ -639,15 +593,9 @@ export async function readTowerCommandCenter(args: {
         total: aiRows.length,
         candidate: candidateAiOpportunities,
         active: aiRows.length,
-        funded: aiRows.filter((row) => row.subject_kind === "developer_ai_tool")
-          .length,
-        embeddedOrUsage: aiRows.filter(
-          (row) => row.subject_kind === "service_agent",
-        ).length,
-        attributedSpendUsd: aiRows.reduce(
-          (sum, row) => sum + num(row.estimated_use_cost),
-          0,
-        ),
+        funded: aiRows.filter((row) => row.subject_kind === "developer_ai_tool").length,
+        embeddedOrUsage: aiRows.filter((row) => row.subject_kind === "service_agent").length,
+        attributedSpendUsd: aiRows.reduce((sum, row) => sum + num(row.estimated_use_cost), 0),
       },
       cxoActions: actionRows(summary),
       evidenceLineage,

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { DataTable } from "../DataTable";
-import type { SourceWorkspaceVM } from "../buildViewModel";
+import { DataTable } from '../DataTable';
+import type { SourceWorkspaceVM } from '../buildViewModel';
 
 export function ListLens({ vm }: { vm: SourceWorkspaceVM }) {
   if (vm.isContractList) {
