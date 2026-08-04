@@ -8,11 +8,11 @@ export function ListLens({ vm }: { vm: SourceWorkspaceVM }) {
     return (
       <DataTable
         title="Contract register — saved view"
-        note="Row click opens Contract 360. Sort, filter and export happen server-side against the Cube view."
+        note="Row click opens Contract 360. Filtered client-side over the same governed register already loaded for this page — no separate query or dataset."
         binding="SourceRenewalExposure + SourceSourcingLeverage"
         columns={vm.listCols}
         rows={vm.listRows}
-        footnote="Saved views are filters on the governed register, not separate datasets. Nineteen material contracts are projected in this environment; the full register holds 119."
+        footnote="Saved views are filters on the governed register, not separate datasets — the full register holds 119 contracts."
       />
     );
   }

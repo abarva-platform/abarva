@@ -119,6 +119,16 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       T.push(node({ id: 'ev.' + x[0], label: x[0], depth: 1, active: kind === 'evidence' && S.tabs.evidence === x[0], onClick: () => vm.select('evidence', null, x[0]) })));
   }
 
+  // Sourcing events live on their own page tree (event workflow, intake) —
+  // this Workspace stays an analysis/explorer surface, not a rebuild of
+  // that flow. These two entries are external navigations, not vm.select().
+  T.push(grp('events', 'Sourcing events', ''));
+  if (S.open.events) {
+    T.push(node({ id: 'events.dashboard', label: 'Events dashboard', depth: 1, onClick: () => { window.location.href = '/source/portfolio'; } }));
+    T.push(node({ id: 'events.new', label: 'New event', depth: 1, onClick: () => { window.location.href = '/source/new'; } }));
+    T.push(node({ id: 'events.optimize', label: 'Optimize a contract', depth: 1, onClick: () => { window.location.href = '/source/new'; } }));
+  }
+
   const q = S.q.trim().toLowerCase();
   const tree = T.filter((n) => !q || n.label.toLowerCase().indexOf(q) >= 0).map((n) => Object.assign({}, n, {
     pad: '6px 8px 6px ' + (8 + n.depth * 14) + 'px',
@@ -366,7 +376,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const journeys = [
     { id: 'A', eyebrow: 'Path A · optimise an existing contract', title: 'Select a contract and build a fact-based renewal strategy',
       narrative: 'Use the governed register to build a renewal, renegotiation or optimisation strategy on a contract already held.',
-      cta: 'Select a contract to optimise', onClick: () => vm.select('contractList', 'passed'), primary: true },
+      cta: 'Select a contract to optimise', onClick: () => vm.select('contractList', 'weak'), primary: true },
   ];
 
   // ── list / saved views ──
@@ -525,7 +535,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     headerActions: kind === 'contract' && contract ? [
       { label: 'Build optimisation strategy', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
-      { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'passed') },
+      { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
     valueStrip: valueStrip.filter((v) => !v.missing), hasPending: valueStrip.filter((v) => v.missing).length > 0, pendingItems: valueStrip.filter((v) => v.missing).map((v) => ({ label: v.label, sub: v.sub })),
     stripFull: true, stripCompact: false, compactItems: [],
