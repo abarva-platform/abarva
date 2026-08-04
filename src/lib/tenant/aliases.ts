@@ -87,7 +87,11 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
     aliases: [
       "skyharbor",
       "skyharbor-air",
+      "skyharbor-global",
+      "skyharbor_global",
       "skyharbor air",
+      "skyharbor global",
+      "skyharbor global airlines group",
       "skyharbor airlines",
       "airline demo",
     ],
@@ -98,11 +102,7 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
     brokerKey: "lakeshore-holdings",
     displayName: getClientOption("lakeshore").name,
     industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.lakeshore,
-    aliases: [
-      "lakeshore",
-      "lakeshore-holdings",
-      "lakeshore holdings",
-    ],
+    aliases: ["lakeshore", "lakeshore-holdings", "lakeshore holdings"],
   },
 ] as const;
 
