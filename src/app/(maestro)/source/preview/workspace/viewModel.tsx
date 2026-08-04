@@ -98,8 +98,6 @@ export interface WorkspaceState {
   actionFilter: string;
   groupBy: string;
   slice: Record<string, string[]>;
-  ava: 'hidden' | 'expanded';
-  avaKey: string | null;
   pins: Record<string, PinItem[]>;
   q: string;
   tip: TipState | null;
@@ -111,7 +109,6 @@ export interface WorkspaceState {
   drawer: boolean;
   concStrip: string | null;
   explorerPinned: boolean;
-  avaCanvas: boolean;
   contractDetail: Record<string, Contract360Response | 'loading' | 'error'>;
 }
 
@@ -124,8 +121,6 @@ export const INITIAL_STATE: WorkspaceState = {
   actionFilter: 'all',
   groupBy: 'vendor',
   slice: {},
-  ava: 'hidden',
-  avaKey: null,
   pins: {},
   q: '',
   tip: null,
@@ -137,7 +132,6 @@ export const INITIAL_STATE: WorkspaceState = {
   drawer: false,
   concStrip: null,
   explorerPinned: false,
-  avaCanvas: false,
   contractDetail: {},
 };
 
@@ -192,7 +186,7 @@ export class WorkspaceViewModel {
     const s = this.state;
     const hist = s.hist.slice(0, s.hi + 1).concat([{ kind, id, tab }]);
     const tabs = tab ? Object.assign({}, s.tabs, { [kind]: tab }) : s.tabs;
-    this.setState({ sel: { kind, id }, tabs, hist, hi: hist.length - 1, quadrant: null, tip: null, avaCanvas: false });
+    this.setState({ sel: { kind, id }, tabs, hist, hi: hist.length - 1, quadrant: null, tip: null });
     if (kind === 'contract' && id) this.fetchContractDetail(id);
   };
   jump = (i: number) => {
@@ -221,8 +215,6 @@ export class WorkspaceViewModel {
     this.setState({ pins: Object.assign({}, this.state.pins, { [key]: list }) });
   };
   toggleExplorerPin = () => this.setState({ explorerPinned: !this.state.explorerPinned });
-  openAvaCanvas = () => this.setState({ avaCanvas: true, ava: 'expanded' });
-  closeAvaCanvas = () => this.setState({ avaCanvas: false });
 
   // ── governed derivations (thin calls into the real pure functions) ──────
   contracts(): readonly SourceContract360Row[] {

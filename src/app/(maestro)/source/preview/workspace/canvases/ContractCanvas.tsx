@@ -16,9 +16,6 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               <div style={{ fontSize: 13.5, lineHeight: 1.55, color: '#2c2c2a', maxWidth: '96ch' }}>
                 <b>Notice deadline passed</b> — {c.notice}. The contract remains active until {c.expiry}. The commercial lever for this term has lapsed; the available move is a variation or standstill, not a renewal negotiation.
               </div>
-              <button onClick={vm.askAvaWhy} style={{ marginLeft: 'auto', border: '1px solid rgba(10,10,11,.2)', background: '#fff', color: '#2c2c2a', borderRadius: 6, padding: '9px 15px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Ask aVa why this surfaced
-              </button>
             </div>
           ) : null}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'start' }}>
@@ -204,10 +201,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               ))}
             </div>
             <div style={{ padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-              <button onClick={vm.askAvaOptimize} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '11px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Ask aVa to draft the strategy
-              </button>
-              <span style={{ fontSize: 12.5, color: '#5f5e5a', marginLeft: 'auto' }}>aVa reads the same governed data as this canvas. It cannot create a value, a date or a priority.</span>
+              <span style={{ fontSize: 12.5, color: '#5f5e5a' }}>aVa reads the same governed data as this canvas. It cannot create a value, a date or a priority.</span>
             </div>
           </div>
         </>
