@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -22,8 +22,13 @@ import {
   ZAxis,
 } from "recharts";
 
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentStateArchitectureMap";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import { composeHomeKnowAvaAnswer } from "@/lib/ava-answer/homeComposer";
 import type { AiSuccessHomeData } from "@/lib/home/readSkyHarborAiSuccessHome";
+import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
 import { ArchitectureFlowDiagram } from "./ArchitectureFlowDiagram";
 import styles from "./AiSuccessCommandCenter.module.css";
@@ -62,6 +67,8 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
   const [selectedArchitectureRef, setSelectedArchitectureRef] = useState<
     string | undefined
   >();
+  const [avaOpen, setAvaOpen] = useState(false);
+  const [avaExpanded, setAvaExpanded] = useState(false);
 
   const contractRatio =
     data.moneyBars[1]?.value && data.moneyBars[0]?.value
@@ -171,6 +178,16 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
               >
                 Intelligence explorer
               </Link>
+              <button
+                type="button"
+                className={styles.askAvaCommand}
+                onClick={() => {
+                  setAvaOpen(true);
+                  setAvaExpanded(true);
+                }}
+              >
+                Ask aVa
+              </button>
             </div>
           </header>
 
@@ -218,6 +235,25 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
           </footer>
         </main>
       </div>
+      <button
+        type="button"
+        className={styles.avaTab}
+        onClick={() => {
+          setAvaOpen(true);
+          setAvaExpanded(false);
+        }}
+      >
+        <span className={styles.avaV}>V</span>
+        <span className={styles.avaLabel}>Ask aVa</span>
+      </button>
+      <HomeCommandCenterAva
+        expanded={avaExpanded}
+        open={avaOpen}
+        onClose={() => setAvaOpen(false)}
+        onExpandChange={setAvaExpanded}
+        tenantKey={data.tenantKey}
+        tenantName={data.tenantName}
+      />
     </div>
   );
 }
@@ -883,6 +919,252 @@ function SectionHeader({
       {right ? <span className={styles.signalRef}>{right}</span> : null}
     </header>
   );
+}
+
+type HomeAvaTurn = {
+  id: string;
+  question: string;
+  answer: AvaAnswerPacket | null;
+  loading: boolean;
+  error: string | null;
+};
+
+const HOME_AVA_SUGGESTIONS = [
+  "What is the highest-leverage architecture decision on this page?",
+  "Draw the value-proof funnel and explain where it breaks.",
+  "Show the loaded context dimensions in a table.",
+  "Which current-state architecture dependencies block AI scale?",
+  "What should go to Tower, Source, Moves, or Intelligence next?",
+];
+
+function HomeCommandCenterAva({
+  expanded,
+  open,
+  onClose,
+  onExpandChange,
+  tenantKey,
+  tenantName,
+}: {
+  expanded: boolean;
+  open: boolean;
+  onClose: () => void;
+  onExpandChange: (expanded: boolean) => void;
+  tenantKey: string;
+  tenantName: string;
+}) {
+  const [question, setQuestion] = useState("");
+  const [turns, setTurns] = useState<HomeAvaTurn[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    endRef.current?.scrollIntoView({ block: "nearest" });
+  }, [open, turns.length]);
+
+  const ask = useCallback(
+    async (rawQuestion: string) => {
+      const trimmed = rawQuestion.trim();
+      if (!trimmed) return;
+      const id = newTurnId();
+      setQuestion("");
+      resetTextarea(textareaRef.current);
+      setTurns((current) => [
+        ...current,
+        { id, question: trimmed, answer: null, loading: true, error: null },
+      ]);
+
+      const patchTurn = (
+        patch: Partial<Omit<HomeAvaTurn, "id" | "question">>,
+      ) =>
+        setTurns((current) =>
+          current.map((turn) =>
+            turn.id === id ? { ...turn, ...patch } : turn,
+          ),
+        );
+
+      try {
+        const response = await fetch("/api/home/know/ask", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: trimmed,
+            tenantKey,
+            client: tenantKey,
+          }),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !isHomeKnowResponse(payload)) {
+          patchTurn({
+            loading: false,
+            error:
+              extractError(payload) ??
+              "aVa could not bind this question to the loaded Home context.",
+          });
+          return;
+        }
+        patchTurn({
+          loading: false,
+          answer: composeHomeKnowAvaAnswer(payload),
+        });
+      } catch {
+        patchTurn({
+          loading: false,
+          error: "aVa could not reach the Home KNOW provider.",
+        });
+      }
+    },
+    [tenantKey],
+  );
+
+  if (!open) return null;
+
+  return (
+    <aside
+      aria-label="Ask aVa about Home knowledge"
+      className={`${styles.avaDrawer} ${
+        expanded ? styles.avaDrawerExpanded : ""
+      }`}
+    >
+      <header className={styles.avaDrawerHeader}>
+        <div className={styles.avaTitleBlock}>
+          <AvaAskMark />
+          <div>
+            <div className={styles.avaDrawerTitle}>Ask aVa</div>
+            <p>Home KNOW reasoning for {tenantName}</p>
+          </div>
+        </div>
+        <div className={styles.avaDrawerActions}>
+          <button
+            type="button"
+            onClick={() => onExpandChange(!expanded)}
+            aria-label={expanded ? "Collapse aVa" : "Expand aVa"}
+          >
+            {expanded ? "Collapse" : "Expand"}
+          </button>
+          <button type="button" onClick={onClose} aria-label="Close aVa">
+            Close
+          </button>
+        </div>
+      </header>
+      <div className={styles.avaDrawerBody}>
+        {turns.length === 0 ? (
+          <div className={styles.avaStarter}>
+            <p>
+              aVa binds questions to the Home context and knowledge layer, then
+              renders tables, charts, relationship exhibits, and evidence-bound
+              caveats through the shared answer renderer.
+            </p>
+            <div className={styles.avaSuggestionGrid}>
+              {HOME_AVA_SUGGESTIONS.map((suggestion) => (
+                <button
+                  type="button"
+                  key={suggestion}
+                  onClick={() => void ask(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={styles.avaThread} aria-label="aVa conversation">
+            {turns.map((turn) => (
+              <article className={styles.avaTurn} key={turn.id}>
+                <div className={styles.avaQuestion}>{turn.question}</div>
+                {turn.loading ? (
+                  <div className={styles.avaLoading} role="status">
+                    Binding Home context and reasoning...
+                  </div>
+                ) : turn.error ? (
+                  <div className={styles.avaError} role="status">
+                    {turn.error}
+                  </div>
+                ) : turn.answer ? (
+                  <div className={styles.avaAnswer}>
+                    <AgentAnswerRenderer
+                      answer={turn.answer}
+                      showChrome={expanded}
+                      showExport={expanded}
+                    />
+                  </div>
+                ) : null}
+              </article>
+            ))}
+            <div ref={endRef} />
+          </div>
+        )}
+      </div>
+      <form
+        className={styles.avaPrompt}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void ask(question);
+        }}
+      >
+        <textarea
+          ref={textareaRef}
+          aria-label="Ask aVa"
+          placeholder="Ask aVa about the Home context, architecture, proof gaps, or next decisions..."
+          rows={1}
+          value={question}
+          onChange={(event) => {
+            setQuestion(event.target.value);
+            resizeTextarea(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              void ask(question);
+            }
+          }}
+        />
+        <button type="submit" disabled={!question.trim()}>
+          Ask
+        </button>
+      </form>
+      <div className={styles.avaGuardrail}>
+        Home can summarize and reason over loaded context. Write actions,
+        promotions, baseline activation, and publication still require human
+        approval.
+      </div>
+    </aside>
+  );
+}
+
+function newTurnId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return record.mode === "KNOW" && typeof record.intent === "string";
+}
+
+function extractError(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const error = (value as { error?: unknown }).error;
+  return typeof error === "string" && error.trim() ? error : null;
+}
+
+function resizeTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(150, el.scrollHeight)}px`;
+}
+
+function resetTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
 }
 
 function MoneyBar({

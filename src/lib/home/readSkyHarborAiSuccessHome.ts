@@ -10,6 +10,7 @@ import dataCapabilityPacketSnapshot from "./ai-success-data/data-capability-pack
 type Json = Record<string, unknown>;
 
 export interface AiSuccessHomeData {
+  tenantKey: string;
   tenantName: string;
   datasetId: string;
   generatedAt: string;
@@ -147,6 +148,7 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
   );
 
   return {
+    tenantKey: textFrom(tenant.tenant_key, "skyharbor-air"),
     tenantName: textFrom(tenant.tenant_display_name, "SkyHarbor Global"),
     datasetId: textFrom(tenant.dataset_id, graph.scope.datasetId),
     generatedAt: textFrom(asOf.export_generated_at, graph.asOfDate),
