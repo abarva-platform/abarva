@@ -1395,6 +1395,11 @@ export async function answerCioTowerQuestion(args: {
   tenantName: string;
   question: string;
 }): Promise<CioTowerAnswerResult> {
+  void args;
+  throw new Error(
+    "retired_tower_layer_disabled: use answerCurrentTowerQuestion against tower.*",
+  );
+/*
   const startedAt = Date.now();
   const context = await loadCioTowerPromptContext(args);
   const promptText = buildCioTowerClaudePrompt(context);
@@ -1495,4 +1500,5 @@ export async function answerCioTowerQuestion(args: {
     gaps: context.gaps,
     v6VisibleOutputAudit: assertVisibleAnswerContract(parsedOutput.answer),
   };
+*/
 }

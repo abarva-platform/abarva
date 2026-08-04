@@ -1,12 +1,13 @@
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { answerCioTowerQuestion, canonicalCioTowerTenantKey } from '@/lib/cio-tower/answer';
+import { canonicalCioTowerTenantKey } from '@/lib/cio-tower/metric-packet';
+import { answerCurrentTowerQuestion } from '@/lib/tower/current-layer-answer';
 import { towerProgressEventsForQuestion } from '@/lib/cio-tower/visual-contract';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type TowerChatResult = Awaited<ReturnType<typeof answerCioTowerQuestion>>;
+type TowerChatResult = Awaited<ReturnType<typeof answerCurrentTowerQuestion>>;
 
 function buildTowerChatPayload(result: TowerChatResult) {
   return {
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
           for (const event of towerProgressEventsForQuestion(question)) {
             emit('status', event);
           }
-          const result = await answerCioTowerQuestion({
+          const result = await answerCurrentTowerQuestion({
             tenantId: tenancy.clientId,
             userId: tenancy.userId,
             tenantKey,
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await answerCioTowerQuestion({
+    const result = await answerCurrentTowerQuestion({
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
       tenantKey,

@@ -2,19 +2,15 @@
 // Body: { question: string }
 // Response: streaming plain text — Ava's Tower answer to a free-text question.
 //
-// Server-side Tower answer endpoint. Tower's visible route now uses the shared
+// Server-side Tower answer endpoint. Tower's visible route uses the shared
 // React aVa/Atlas AgentDock shell; this endpoint remains the lightweight
-// streaming seam for Tower questions that use the legacy `/api/tower/ask`
-// contract. The legacy path now delegates to the governed CIO Tower V6 answer
-// engine so it cannot drift into older demo-block or Apex fixture behavior.
+// streaming seam for Tower questions. It reads the current Tower semantic
+// layer (`tower.*`) and does not fall back to retired V6/V7/CIO Tower layers.
 
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
-import {
-  answerCioTowerQuestion,
-  canonicalCioTowerTenantKey,
-} from "@/lib/cio-tower/answer";
-import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+import { canonicalCioTowerTenantKey, canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 import { demoSafeClientText } from "@/lib/client-config";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
@@ -98,7 +94,7 @@ export async function POST(request: Request) {
           name: activeClient.name,
         }) ?? activeClient.name,
       ) ?? activeClient.name;
-    const result = await answerCioTowerQuestion({
+    const result = await answerCurrentTowerQuestion({
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
       tenantKey,
@@ -109,8 +105,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "X-Tower-Grounded": "true",
-        "X-AbarVa-V6-Contract": "1",
-        "X-AbarVa-V6-Surface": "tower",
+        "X-AbarVa-Tower-Layer": "tower-current",
         "X-AbarVa-Renderer-Policy": "placement-only",
         "X-AbarVa-Tower-Trace-Key": result.traceKey,
         "X-AbarVa-Tower-Validation": result.validationStatus,

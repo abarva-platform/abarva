@@ -587,6 +587,9 @@ export async function loadCioTowerCxoView(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
   tenantName: string;
 }): Promise<CioTowerCxoViewModel | null> {
+  void args;
+  return null;
+/*
   const tenantKeys = Array.from(
     new Set(
       args.tenantKeyCandidates
@@ -654,4 +657,5 @@ export async function loadCioTowerCxoView(args: {
   }
 
   return null;
+*/
 }
