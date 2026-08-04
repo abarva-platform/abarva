@@ -230,6 +230,14 @@
   margin: 0;
 }
 
+.heroKicker {
+  margin-bottom: 14px;
+  color: #0a6e92;
+  font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .lead {
   max-width: 880px;
   margin: 28px 0 0;
@@ -243,6 +251,42 @@
   font-size: 20px;
   line-height: 1.5;
   margin: 20px 0 0;
+}
+
+.advisoryPillars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.advisoryPillar {
+  min-width: 0;
+  border-top: 3px solid #0a6e92;
+  background: #fffdfa;
+  padding: 14px 14px 16px;
+}
+
+.advisoryPillar span {
+  color: #6a645d;
+  font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.advisoryPillar strong {
+  display: block;
+  margin-top: 9px;
+  color: #11100f;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.advisoryPillar p {
+  margin: 9px 0 0;
+  color: #4d4841;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .evidenceRow {
@@ -280,6 +324,13 @@
 .panelTitle {
   font: 700 24px/1.15 Georgia, "Times New Roman", serif;
   margin: 8px 0 20px;
+}
+
+.panelBrief {
+  margin: -8px 0 18px;
+  color: #4d4841;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .barList {
@@ -597,6 +648,213 @@
   text-transform: uppercase;
 }
 
+.avaDrawer {
+  position: fixed;
+  z-index: 45;
+  right: 18px;
+  bottom: 18px;
+  width: min(430px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 36px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  border: 1px solid #cfd6df;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 24px 80px rgba(9, 9, 10, 0.28);
+  overflow: hidden;
+}
+
+.avaDrawerExpanded {
+  width: min(1040px, calc(100vw - 56px));
+  height: min(820px, calc(100vh - 56px));
+}
+
+.avaDrawerHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid #e4e7ec;
+  background: #fbfcfd;
+  padding: 14px 16px;
+}
+
+.avaTitleBlock {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avaTitleBlock :global(.avaAskMark) {
+  flex: 0 0 auto;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.avaDrawerTitle {
+  color: #111827;
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.avaTitleBlock p {
+  margin: 2px 0 0;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.avaDrawerActions {
+  display: flex;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.avaDrawerActions button,
+.avaSuggestionGrid button,
+.avaPrompt button {
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.avaDrawerActions button {
+  padding: 7px 9px;
+}
+
+.avaDrawerActions button:hover,
+.avaSuggestionGrid button:hover {
+  border-color: #7ec9e5;
+  background: #f2fbff;
+}
+
+.avaDrawerBody {
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.avaStarter {
+  display: grid;
+  gap: 14px;
+}
+
+.avaStarter p {
+  margin: 0;
+  color: #475467;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.avaSuggestionGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.avaSuggestionGrid button {
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  line-height: 1.35;
+}
+
+.avaThread {
+  display: grid;
+  gap: 16px;
+}
+
+.avaTurn {
+  display: grid;
+  gap: 10px;
+}
+
+.avaQuestion {
+  justify-self: end;
+  max-width: min(680px, 88%);
+  border: 1px solid #d9e9df;
+  border-radius: 8px;
+  background: #f5fbf8;
+  color: #1f2b20;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.avaLoading,
+.avaError {
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #667085;
+  padding: 14px;
+  font-size: 13px;
+}
+
+.avaError {
+  border-color: #f3b4b4;
+  background: #fff7f7;
+  color: #9f1d1d;
+}
+
+.avaAnswer {
+  min-width: 0;
+}
+
+.avaPrompt {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  border-top: 1px solid #e4e7ec;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.avaPrompt textarea {
+  min-width: 0;
+  width: 100%;
+  max-height: 150px;
+  resize: none;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #111827;
+  font: 14px/1.4 Inter, ui-sans-serif, system-ui, sans-serif;
+  outline: none;
+}
+
+.avaPrompt textarea:focus {
+  border-color: #1688ff;
+  box-shadow: 0 0 0 3px rgba(22, 136, 255, 0.14);
+}
+
+.avaPrompt button {
+  min-height: 40px;
+  padding: 0 16px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.avaPrompt button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.avaGuardrail {
+  border-top: 1px solid #d7efe4;
+  background: #f2fbf7;
+  color: #0f6848;
+  padding: 9px 12px;
+  font: 10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 1180px) {
   .topbar {
     padding-left: 20px;
@@ -629,6 +887,10 @@
 
   .heroGrid,
   .twoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .advisoryPillars {
     grid-template-columns: 1fr;
   }
 
@@ -687,5 +949,22 @@
 
   .avaTab {
     display: none;
+  }
+
+  .avaDrawer,
+  .avaDrawerExpanded {
+    inset: auto 10px 10px;
+    width: calc(100vw - 20px);
+    height: min(760px, calc(100vh - 20px));
+    max-height: calc(100vh - 20px);
+  }
+
+  .avaDrawerHeader {
+    align-items: flex-start;
+  }
+
+  .avaDrawerActions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 }

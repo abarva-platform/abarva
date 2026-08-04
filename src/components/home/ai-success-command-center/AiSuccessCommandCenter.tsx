@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -17,8 +17,13 @@ import {
   YAxis,
 } from "recharts";
 
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { CurrentStateArchitectureMap } from "@/components/architecture/CurrentStateArchitectureMap";
+import { composeHomeKnowAvaAnswer } from "@/lib/ava-answer/homeComposer";
 import type { AiSuccessHomeData } from "@/lib/home/readSkyHarborAiSuccessHome";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
 import styles from "./AiSuccessCommandCenter.module.css";
 
@@ -52,6 +57,8 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
   const [selectedArchitectureRef, setSelectedArchitectureRef] = useState<
     string | undefined
   >();
+  const [avaOpen, setAvaOpen] = useState(false);
+  const [avaExpanded, setAvaExpanded] = useState(false);
 
   const contractRatio =
     data.moneyBars[1]?.value && data.moneyBars[0]?.value
@@ -66,6 +73,40 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
     {
       name: "Internal/unattributed",
       value: Math.round((1 - contractRatio) * 1000) / 10,
+    },
+  ];
+  const advisoryPillars = [
+    {
+      label: "Strategic strength",
+      title:
+        data.advisory.strengths[0]?.headline ??
+        "Evidence coverage is strong enough for real portfolio choices",
+      body:
+        data.advisory.strengths[0]?.body ??
+        "The current-state architecture packet gives leadership a reliable starting point for sequencing decisions.",
+    },
+    {
+      label: "Constraint",
+      title:
+        data.advisory.constraints[0]?.headline ??
+        "Lifecycle contradictions are blocking execution",
+      body:
+        data.advisory.constraints[0]?.body ??
+        "Critical systems need executive resolution before AI scale can be defended.",
+    },
+    {
+      label: "Decision",
+      title:
+        advisoryText(data.advisory.leadershipDecisions[0], [
+          "headline",
+          "decision",
+        ]) ?? "Resolve the first non-deferrable architecture decision",
+      body:
+        advisoryText(data.advisory.leadershipDecisions[0], [
+          "body",
+          "context",
+        ]) ??
+        "Architecture ambiguity should be converted into an accountable leadership decision.",
     },
   ];
 
@@ -105,7 +146,14 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
           ))}
         </nav>
         <div className={styles.topActions}>
-          <button type="button" className={styles.blueButton}>
+          <button
+            type="button"
+            className={styles.blueButton}
+            onClick={() => {
+              setAvaOpen(true);
+              setAvaExpanded(true);
+            }}
+          >
             V&nbsp; Ask aVa
           </button>
           <span className={styles.tenant}>SkyHarbor Global</span>
@@ -152,31 +200,21 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
             className={`${styles.section} ${styles.heroGrid}`}
           >
             <div>
-              <h1 className={styles.h1}>
-                AI is scaling across SkyHarbor. Value proof has not caught up.
-              </h1>
-              <p className={styles.lead}>
-                SkyHarbor is running AI at real scale: coding assistants, BI
-                copilots and ERP copilots against operations, crew, revenue
-                management and customer recovery. Adoption is uneven but
-                genuine. Of 162 governed value claims, none currently meets the
-                claimable threshold, and Tower establishes $0 of claimable
-                value.
-              </p>
-              <p className={styles.paragraph}>
-                The barrier is structural, not technical. Investment was
-                committed ahead of measurement: claims carry funding without a
-                baseline, adoption rows carry telemetry without an outcome, and
-                the applications AI touches are almost entirely Tier 1/Critical.
-              </p>
-              <p className={styles.paragraph}>
-                The agenda this quarter: force material investments into Scale,
-                Redesign, Fix, Consolidate or Stop; make a baseline the
-                precondition of funding; and load contract pages so the
-                commercial position rests on document evidence.
-              </p>
+              <div className={styles.heroKicker}>Architecture Advisory</div>
+              <h1 className={styles.h1}>{data.advisory.title}</h1>
+              <p className={styles.lead}>{data.advisory.executiveThesis}</p>
+              <div className={styles.advisoryPillars}>
+                {advisoryPillars.map((pillar) => (
+                  <article key={pillar.label} className={styles.advisoryPillar}>
+                    <span>{pillar.label}</span>
+                    <strong>{pillar.title}</strong>
+                    <p>{pillar.body}</p>
+                  </article>
+                ))}
+              </div>
               <Evidence
                 refs={[
+                  "Claude architecture advisory",
                   "tower.value_claim · 162",
                   "ALLOWED_VALUES · FY2027 $2.35B",
                   "contracts · $1.4805B",
@@ -186,8 +224,15 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
               />
             </div>
             <aside className={`${styles.panel} ${styles.moneyPanel}`}>
-              <span className={styles.eyebrow}>Where the money is</span>
-              <h2 className={styles.panelTitle}>and where the proof is</h2>
+              <span className={styles.eyebrow}>Board readout</span>
+              <h2 className={styles.panelTitle}>What must be resolved first</h2>
+              <p className={styles.panelBrief}>
+                {advisoryText(data.advisory.transformationPriorities[0], [
+                  "body",
+                  "rationale",
+                ]) ??
+                  "Resolve the gating architecture and value-proof decisions before scaling the AI portfolio."}
+              </p>
               <div className={styles.barList}>
                 {data.moneyBars.map((bar, index) => (
                   <MoneyBar
@@ -507,10 +552,25 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
         </main>
       </div>
 
-      <button type="button" className={styles.avaTab}>
+      <button
+        type="button"
+        className={styles.avaTab}
+        onClick={() => {
+          setAvaOpen(true);
+          setAvaExpanded(false);
+        }}
+      >
         <span className={styles.avaV}>V</span>
         <span className={styles.avaLabel}>Ask aVa</span>
       </button>
+      <HomeCommandCenterAva
+        expanded={avaExpanded}
+        open={avaOpen}
+        onClose={() => setAvaOpen(false)}
+        onExpandChange={setAvaExpanded}
+        tenantKey={data.tenantKey}
+        tenantName={data.tenantName}
+      />
     </div>
   );
 }
@@ -536,6 +596,260 @@ function SectionHeader({
       {right ? <span className={styles.signalRef}>{right}</span> : null}
     </header>
   );
+}
+
+type HomeAvaTurn = {
+  id: string;
+  question: string;
+  answer: AvaAnswerPacket | null;
+  loading: boolean;
+  error: string | null;
+};
+
+const HOME_AVA_SUGGESTIONS = [
+  "What is the highest-leverage architecture decision on this page?",
+  "Draw the value-proof funnel and explain where it breaks.",
+  "Show the loaded context dimensions in a table.",
+  "Which current-state architecture dependencies block AI scale?",
+  "What should go to Tower, Source, Moves, or Intelligence next?",
+];
+
+function HomeCommandCenterAva({
+  expanded,
+  open,
+  onClose,
+  onExpandChange,
+  tenantKey,
+  tenantName,
+}: {
+  expanded: boolean;
+  open: boolean;
+  onClose: () => void;
+  onExpandChange: (expanded: boolean) => void;
+  tenantKey: string;
+  tenantName: string;
+}) {
+  const [question, setQuestion] = useState("");
+  const [turns, setTurns] = useState<HomeAvaTurn[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    endRef.current?.scrollIntoView({ block: "nearest" });
+  }, [open, turns.length]);
+
+  const ask = useCallback(
+    async (rawQuestion: string) => {
+      const trimmed = rawQuestion.trim();
+      if (!trimmed) return;
+      const id = newTurnId();
+      setQuestion("");
+      resetTextarea(textareaRef.current);
+      setTurns((current) => [
+        ...current,
+        { id, question: trimmed, answer: null, loading: true, error: null },
+      ]);
+
+      const patchTurn = (
+        patch: Partial<Omit<HomeAvaTurn, "id" | "question">>,
+      ) =>
+        setTurns((current) =>
+          current.map((turn) =>
+            turn.id === id ? { ...turn, ...patch } : turn,
+          ),
+        );
+
+      try {
+        const response = await fetch("/api/home/know/ask", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: trimmed,
+            tenantKey,
+            client: tenantKey,
+          }),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !isHomeKnowResponse(payload)) {
+          patchTurn({
+            loading: false,
+            error:
+              extractError(payload) ??
+              "aVa could not bind this question to the loaded Home context.",
+          });
+          return;
+        }
+        patchTurn({
+          loading: false,
+          answer: composeHomeKnowAvaAnswer(payload),
+        });
+      } catch {
+        patchTurn({
+          loading: false,
+          error: "aVa could not reach the Home KNOW provider.",
+        });
+      }
+    },
+    [tenantKey],
+  );
+
+  if (!open) return null;
+
+  return (
+    <aside
+      aria-label="Ask aVa about Home knowledge"
+      className={`${styles.avaDrawer} ${expanded ? styles.avaDrawerExpanded : ""}`}
+    >
+      <header className={styles.avaDrawerHeader}>
+        <div className={styles.avaTitleBlock}>
+          <AvaAskMark />
+          <div>
+            <div className={styles.avaDrawerTitle}>Ask aVa</div>
+            <p>Home KNOW reasoning for {tenantName}</p>
+          </div>
+        </div>
+        <div className={styles.avaDrawerActions}>
+          <button
+            type="button"
+            onClick={() => onExpandChange(!expanded)}
+            aria-label={expanded ? "Collapse aVa" : "Expand aVa"}
+          >
+            {expanded ? "Collapse" : "Expand"}
+          </button>
+          <button type="button" onClick={onClose} aria-label="Close aVa">
+            Close
+          </button>
+        </div>
+      </header>
+      <div className={styles.avaDrawerBody}>
+        {turns.length === 0 ? (
+          <div className={styles.avaStarter}>
+            <p>
+              aVa binds questions to the Home context and knowledge layer, then
+              renders tables, charts, relationship exhibits, and evidence-bound
+              caveats through the shared answer renderer.
+            </p>
+            <div className={styles.avaSuggestionGrid}>
+              {HOME_AVA_SUGGESTIONS.map((suggestion) => (
+                <button
+                  type="button"
+                  key={suggestion}
+                  onClick={() => void ask(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={styles.avaThread} aria-label="aVa conversation">
+            {turns.map((turn) => (
+              <article className={styles.avaTurn} key={turn.id}>
+                <div className={styles.avaQuestion}>{turn.question}</div>
+                {turn.loading ? (
+                  <div className={styles.avaLoading} role="status">
+                    Binding Home context and reasoning...
+                  </div>
+                ) : turn.error ? (
+                  <div className={styles.avaError} role="status">
+                    {turn.error}
+                  </div>
+                ) : turn.answer ? (
+                  <div className={styles.avaAnswer}>
+                    <AgentAnswerRenderer
+                      answer={turn.answer}
+                      showChrome={expanded}
+                      showExport={expanded}
+                    />
+                  </div>
+                ) : null}
+              </article>
+            ))}
+            <div ref={endRef} />
+          </div>
+        )}
+      </div>
+      <form
+        className={styles.avaPrompt}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void ask(question);
+        }}
+      >
+        <textarea
+          ref={textareaRef}
+          aria-label="Ask aVa"
+          placeholder="Ask aVa about the Home context, architecture, proof gaps, or next decisions..."
+          rows={1}
+          value={question}
+          onChange={(event) => {
+            setQuestion(event.target.value);
+            resizeTextarea(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              void ask(question);
+            }
+          }}
+        />
+        <button type="submit" disabled={!question.trim()}>
+          Ask
+        </button>
+      </form>
+      <div className={styles.avaGuardrail}>
+        Home can summarize and reason over loaded context. Write actions,
+        promotions, baseline activation, and publication still require human
+        approval.
+      </div>
+    </aside>
+  );
+}
+
+function newTurnId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return record.mode === "KNOW" && typeof record.intent === "string";
+}
+
+function extractError(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const error = (value as { error?: unknown }).error;
+  return typeof error === "string" && error.trim() ? error : null;
+}
+
+function resizeTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(150, el.scrollHeight)}px`;
+}
+
+function resetTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+}
+
+function advisoryText(value: unknown, keys: string[]): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    const text = record[key];
+    if (typeof text === "string" && text.trim()) return text;
+  }
+  return null;
 }
 
 function MoneyBar({
