@@ -261,8 +261,8 @@ async function main() {
   const failures = [];
   if (!readyz.ok) failures.push(`readyz returned ${readyz.status}`);
   if (!livez.ok) failures.push(`livez returned ${livez.status}`);
-  if (noAuth.ok) failures.push("unauthenticated Cube load unexpectedly succeeded");
-  if (missingTenant.ok) failures.push("Cube load without tenant_key unexpectedly succeeded");
+  if (noAuth.status !== 403) failures.push(`unauthenticated Cube load expected 403, got ${noAuth.status}`);
+  if (missingTenant.status !== 403) failures.push(`Cube load without tenant_key expected controlled 403, got ${missingTenant.status}`);
   if (!contracts.ok) failures.push(`contracts Cube query failed with ${contracts.status}`);
   if (!vendors.ok) failures.push(`vendors Cube query failed with ${vendors.status}`);
   if (!scope.ok) failures.push(`contract scope Cube query failed with ${scope.status}`);
