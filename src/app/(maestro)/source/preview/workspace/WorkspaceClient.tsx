@@ -7,7 +7,7 @@ import { INITIAL_STATE, WorkspaceViewModel, type WorkspaceState } from './viewMo
 import { buildViewModel } from './buildViewModel';
 import type { SourceWorkspacePortfolioData } from './live/portfolioAdapter';
 import type { Contract360Response } from './live/contractDetail';
-import { AvaPanel } from './AvaPanel';
+import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/agent/AgentDock';
 import { Tooltip } from './Tooltip';
 import { ContextLens } from './lenses/ContextLens';
 import { ExploreLens } from './lenses/ExploreLens';
@@ -21,7 +21,9 @@ import { VendorCanvas } from './canvases/VendorCanvas';
 import { ContractCanvas } from './canvases/ContractCanvas';
 import { OpportunityCanvas } from './canvases/OpportunityCanvas';
 import { EvidenceCanvas } from './canvases/EvidenceCanvas';
-import { AvaOptimizationCanvas } from './canvases/AvaOptimizationCanvas';
+
+const SOURCE_WORKSPACE_AGENT = { initials: 'aVa', mark: 'ava' as const, name: 'aVa', role: 'Source Workspace advisor' };
+const SOURCE_WORKSPACE_AGENT_API_URL = '/api/chat/agent';
 
 export function WorkspaceClient({
   portfolio,
@@ -31,6 +33,7 @@ export function WorkspaceClient({
   tenantName: string;
 }) {
   const [state, setStateRaw] = useState<WorkspaceState>(INITIAL_STATE);
+  const [thread, setThread] = useState<ChatMessage[]>([]);
 
   const setState = useMemo(
     () => (patch: Partial<WorkspaceState> | ((s: WorkspaceState) => Partial<WorkspaceState>)) => {
@@ -50,24 +53,81 @@ export function WorkspaceClient({
       .catch(() => setStateRaw((prev) => ({ ...prev, contractDetail: { ...prev.contractDetail, [contractId]: 'error' } })));
   }, []);
 
+  const vm = useMemo(() => {
+    const logic = new WorkspaceViewModel(state, setState, portfolio, tenantName, fetchContractDetail);
+    return buildViewModel(logic);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, portfolio, tenantName]);
+
+  // AgentDock's onMessage contract — same runtime call as every other Source
+  // aVa surface (see SourceEventsAgentDockView.tsx), grounded in whatever the
+  // Explorer/canvas is currently showing via vm.avaSurfaceContext.
+  const onAvaMessage = useCallback(
+    async (text: string, attachments: AttachmentRef[]) => {
+      if (!text && attachments.length === 0) return;
+      const userBody =
+        attachments.length > 0
+          ? `${text}\n\n[attached: ${attachments.map((a) => a.file_name).join(', ')}]`
+          : text;
+      setThread((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', body: userBody }]);
+
+      const attachmentContext = attachments
+        .filter((a) => a.extracted_text_preview && a.extracted_text_preview.trim().length > 0)
+        .map((a) => `--- attachment: ${a.file_name} (${a.mime}) ---\n${a.extracted_text_preview}\n--- end attachment ---`)
+        .join('\n\n');
+      const messageForRuntime = attachmentContext ? `${text}\n\n${attachmentContext}` : text;
+
+      const context = `Surface: /source/preview/workspace. Agent: ${SOURCE_WORKSPACE_AGENT.name}. ${JSON.stringify(vm.avaSurfaceContext)}. The user is asking within the AbarVa platform.`;
+
+      let acc = '';
+      try {
+        const res = await fetch(SOURCE_WORKSPACE_AGENT_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: messageForRuntime,
+            context,
+            surface: '/source/preview/workspace',
+            agentName: SOURCE_WORKSPACE_AGENT.name,
+          }),
+        });
+        if (!res.ok) throw new Error(`aVa returned ${res.status}`);
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error('No response body');
+        const decoder = new TextDecoder();
+        let streaming = true;
+        while (streaming) {
+          const { done, value } = await reader.read();
+          if (done) {
+            streaming = false;
+            break;
+          }
+          acc += decoder.decode(value, { stream: true });
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Connection error';
+        acc = `I hit an error: ${message}`;
+      }
+
+      const trimmed = acc.trim();
+      const finalBody = trimmed.length > 0 ? trimmed : 'aVa did not return a response.';
+      setThread((prev) => [...prev, { id: `a-${Date.now()}`, role: 'agent', body: finalBody }]);
+    },
+    [vm.avaSurfaceContext],
+  );
+
   useEffect(() => {
     const onResize = () =>
       // "tight" spans the laptop band (roughly a 13"-16" MacBook browser
-      // window) where a 3-pane layout with aVa open would starve the canvas
-      // below its ~720-800px working width; "wide" is an external-monitor
-      // viewport with room for all three panes at once.
+      // window) where the Explorer starves the canvas below its ~720-800px
+      // working width; "wide" is an external-monitor viewport with room for
+      // both panes plus the aVa dock at once.
       setState({ narrow: window.innerWidth < 760, tight: window.innerWidth < 1440, wide: window.innerWidth >= 1440 });
     onResize();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const vm = useMemo(() => {
-    const logic = new WorkspaceViewModel(state, setState, portfolio, tenantName, fetchContractDetail);
-    return buildViewModel(logic);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, portfolio, tenantName]);
 
   return (
     <div className="sw-root" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#f5f1eb', overflow: 'hidden' }}>
@@ -88,43 +148,11 @@ export function WorkspaceClient({
             ? 'source.contract_360 returned no rows for tenant_key=' + (portfolio.tenantKey || '(none)') + ' — nothing below is estimated in its place.'
             : 'Governed source.contract_360 · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
         </span>
-      </div>
-
-      <div style={{ background: '#0a0a0b', color: '#fff', height: 56, display: 'flex', alignItems: 'center', gap: 22, padding: '0 20px', flexShrink: 0 }}>
-        <span style={{ fontFamily: 'Fraunces,Georgia,serif', fontSize: 20, fontWeight: 500, letterSpacing: '-0.02em' }}>
-          Abar<span style={{ color: '#5b9dff' }}>Va</span>
-        </span>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)' }}>
-          Source
-        </span>
-        <span style={{ width: 1, height: 22, background: 'rgba(255,255,255,.14)' }} />
-        <span style={{ fontFamily: 'Fraunces,Georgia,serif', fontStyle: 'italic', fontSize: 15.5, color: 'rgba(255,255,255,.82)' }}>
-          {tenantName}
-        </span>
         {vm.isNarrow ? (
-          <button onClick={vm.toggleDrawer} style={{ border: '1px solid rgba(255,255,255,.22)', background: 'transparent', color: '#fff', borderRadius: 5, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button onClick={vm.toggleDrawer} style={{ marginLeft: 'auto', border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             Explorer
           </button>
         ) : null}
-        <span style={{ display: 'flex', gap: 4, marginLeft: 12 }}>
-          <button onClick={vm.back} title="Back" style={{ border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: vm.backColor, width: 28, height: 26, borderRadius: 5, cursor: 'pointer', fontSize: 13 }}>‹</button>
-          <button onClick={vm.fwd} title="Forward" style={{ border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: vm.fwdColor, width: 28, height: 26, borderRadius: 5, cursor: 'pointer', fontSize: 13 }}>›</button>
-        </span>
-        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 6, padding: '6px 12px', minWidth: 230 }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,.4)' }}>⌘K</span>
-            <input
-              value={vm.query}
-              onChange={(e) => vm.onQuery(e.target.value)}
-              placeholder="Search vendors, contracts, clauses"
-              style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 12.5, width: '100%', fontFamily: 'inherit' }}
-            />
-          </span>
-          <button onClick={vm.toggleAva} style={{ border: `1px solid ${vm.avaBtnBorder}`, background: vm.avaBtnBg, color: vm.avaBtnFg, borderRadius: 6, padding: '7px 15px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#5b9dff' }} />
-            Ask aVa
-          </button>
-        </span>
       </div>
 
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: vm.shellCols, minHeight: 0 }}>
@@ -133,78 +161,85 @@ export function WorkspaceClient({
           <ExplorerPane vm={vm} />
         </div>
 
-        {/* ── Center canvas ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
-          <div style={{ background: '#fff', borderBottom: '1px solid rgba(10,10,11,.12)', padding: '16px 30px 0', position: 'sticky', top: 0, zIndex: 30 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 11 }}>
-              {vm.crumbs.map((c, i) => (
-                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: c.color }}>{c.label}</span>
-                  {c.sep ? <span style={{ color: '#d3d1c7' }}>{c.sep}</span> : null}
-                </span>
-              ))}
-              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9, textTransform: 'none', letterSpacing: 0 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: vm.availDot }} />
-                <span style={{ color: '#5f5e5a' }}>{vm.availLabel}</span>
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 460px', minWidth: 'min(100%,420px)' }}>
-                <h1 style={{ fontFamily: 'Fraunces,Georgia,serif', fontWeight: 500, fontSize: 'clamp(24px,2.2vw,32px)', lineHeight: 1.12, letterSpacing: '-0.022em', color: '#0a0a0b', margin: '0 0 8px' }}>
-                  {vm.title}
-                </h1>
-                <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#5f5e5a', margin: '0 0 14px', maxWidth: 'none' }}>{vm.thesis}</p>
-              </div>
-              <div style={{ display: 'flex', gap: 8, paddingBottom: 14 }}>
-                {vm.headerActions.map((a, i) => (
-                  <button key={i} onClick={a.onClick} style={{ border: `1px solid ${a.border}`, background: a.bg, color: a.fg, borderRadius: 6, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    {a.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
-              {vm.tabs.map((t, i) => (
-                <button key={i} onClick={t.onClick} style={{ border: 'none', borderBottom: `2px solid ${t.line}`, background: 'transparent', color: t.fg, fontSize: 13, fontWeight: t.weight, padding: '11px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ padding: '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {vm.stripFull ? (
-              <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
-                  {vm.valueStrip.map((v, i) => (
-                    <div key={i} style={{ flex: '1 1 190px', padding: '15px 17px', borderRight: '1px solid rgba(10,10,11,.09)', borderTop: '1px solid rgba(10,10,11,.09)', marginTop: -1 }}>
-                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 9, lineHeight: 1.35 }}>{v.label}</div>
-                      <div style={{ fontFamily: 'Fraunces,Georgia,serif', fontSize: v.size, fontWeight: 500, lineHeight: 1.05, color: v.color }}>{v.value}</div>
-                      <div style={{ fontSize: 11.5, color: '#5f5e5a', marginTop: 7, lineHeight: 1.4 }}>{v.sub}</div>
-                    </div>
+        {/* ── Canvas, wrapped in the shared aVa dock (same component/pattern as Moves' Move advisor) ── */}
+        <AgentDock
+          agent={SOURCE_WORKSPACE_AGENT}
+          surface="/source/preview/workspace"
+          defaultMode="collapsed"
+          collapsedRestoreMode="expand"
+          collapsedSummary={{ label: 'aVa', detail: vm.title }}
+          thread={thread}
+          onMessage={onAvaMessage}
+          suggestedActions={vm.avaSuggestedActions}
+          surfaceContext={vm.avaSurfaceContext}
+          workspace={
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflowY: 'auto' }}>
+              <div style={{ background: '#fff', borderBottom: '1px solid rgba(10,10,11,.12)', padding: '16px 30px 0', position: 'sticky', top: 0, zIndex: 30 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 11 }}>
+                  {vm.crumbs.map((c, i) => (
+                    <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: c.color }}>{c.label}</span>
+                      {c.sep ? <span style={{ color: '#d3d1c7' }}>{c.sep}</span> : null}
+                    </span>
+                  ))}
+                  <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9, textTransform: 'none', letterSpacing: 0 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: vm.availDot }} />
+                    <span style={{ color: '#5f5e5a' }}>{vm.availLabel}</span>
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 460px', minWidth: 'min(100%,420px)' }}>
+                    <h1 style={{ fontFamily: 'Fraunces,Georgia,serif', fontWeight: 500, fontSize: 'clamp(24px,2.2vw,32px)', lineHeight: 1.12, letterSpacing: '-0.022em', color: '#0a0a0b', margin: '0 0 8px' }}>
+                      {vm.title}
+                    </h1>
+                    <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#5f5e5a', margin: '0 0 14px', maxWidth: 'none' }}>{vm.thesis}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, paddingBottom: 14 }}>
+                    {vm.headerActions.map((a, i) => (
+                      <button key={i} onClick={a.onClick} style={{ border: `1px solid ${a.border}`, background: a.bg, color: a.fg, borderRadius: 6, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
+                  {vm.tabs.map((t, i) => (
+                    <button key={i} onClick={t.onClick} style={{ border: 'none', borderBottom: `2px solid ${t.line}`, background: 'transparent', color: t.fg, fontSize: 13, fontWeight: t.weight, padding: '11px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      {t.label}
+                    </button>
                   ))}
                 </div>
-                {vm.hasPending ? (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'baseline', background: '#fbfaf7', border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '11px 16px' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780' }}>Not yet established</span>
-                    {vm.pendingItems.map((p, i) => (
-                      <span key={i} style={{ display: 'flex', gap: 10 }}>
-                        <span style={{ fontSize: 12, color: '#5f5e5a' }}><b style={{ color: '#2c2c2a', fontWeight: 600 }}>{p.label}</b> — {p.sub}</span>
-                        <span style={{ color: '#d3d1c7' }}>·</span>
-                      </span>
-                    ))}
-                    <a onClick={vm.goEvidence} style={{ fontSize: 12, fontWeight: 600, marginLeft: 'auto', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      See what it needs →
-                    </a>
-                  </div>
-                ) : null}
-              </>
-            ) : null}
+              </div>
 
-            {vm.avaCanvas ? (
-              <AvaOptimizationCanvas vm={vm} />
-            ) : (
-              <>
+              <div style={{ padding: '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {vm.stripFull ? (
+                  <>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+                      {vm.valueStrip.map((v, i) => (
+                        <div key={i} style={{ flex: '1 1 190px', padding: '15px 17px', borderRight: '1px solid rgba(10,10,11,.09)', borderTop: '1px solid rgba(10,10,11,.09)', marginTop: -1 }}>
+                          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 9, lineHeight: 1.35 }}>{v.label}</div>
+                          <div style={{ fontFamily: 'Fraunces,Georgia,serif', fontSize: v.size, fontWeight: 500, lineHeight: 1.05, color: v.color }}>{v.value}</div>
+                          <div style={{ fontSize: 11.5, color: '#5f5e5a', marginTop: 7, lineHeight: 1.4 }}>{v.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {vm.hasPending ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'baseline', background: '#fbfaf7', border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '11px 16px' }}>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780' }}>Not yet established</span>
+                        {vm.pendingItems.map((p, i) => (
+                          <span key={i} style={{ display: 'flex', gap: 10 }}>
+                            <span style={{ fontSize: 12, color: '#5f5e5a' }}><b style={{ color: '#2c2c2a', fontWeight: 600 }}>{p.label}</b> — {p.sub}</span>
+                            <span style={{ color: '#d3d1c7' }}>·</span>
+                          </span>
+                        ))}
+                        <a onClick={vm.goEvidence} style={{ fontSize: 12, fontWeight: 600, marginLeft: 'auto', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          See what it needs →
+                        </a>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
                 {vm.isExplore ? <ExploreLens vm={vm} /> : null}
                 {vm.isConc ? <ConcentrationLens vm={vm} /> : null}
@@ -217,33 +252,28 @@ export function WorkspaceClient({
                 {vm.isContract ? <ContractCanvas vm={vm} /> : null}
                 {vm.isOpp ? <OpportunityCanvas vm={vm} /> : null}
                 {vm.isEvidence ? <EvidenceCanvas vm={vm} /> : null}
-              </>
-            )}
 
-            {vm.hasPins ? (
-              <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px' }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 12 }}>
-                  Pinned analyses · part of this workspace
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {vm.pins.map((p, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid rgba(10,10,11,.12)', borderRadius: 6, padding: '11px 14px' }}>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0066CC', border: '1px solid rgba(0,102,204,.3)', borderRadius: 3, padding: '2px 6px' }}>{p.type}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#0a0a0b' }}>{p.title}</span>
-                      <span style={{ fontSize: 12, color: '#5f5e5a' }}>{p.note}</span>
-                      <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#b4b2a9' }}>{p.when}</span>
+                {vm.hasPins ? (
+                  <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px' }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 12 }}>
+                      Pinned analyses · part of this workspace
                     </div>
-                  ))}
-                </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {vm.pins.map((p, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid rgba(10,10,11,.12)', borderRadius: 6, padding: '11px 14px' }}>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0066CC', border: '1px solid rgba(0,102,204,.3)', borderRadius: 3, padding: '2px 6px' }}>{p.type}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#0a0a0b' }}>{p.title}</span>
+                          <span style={{ fontSize: 12, color: '#5f5e5a' }}>{p.note}</span>
+                          <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#b4b2a9' }}>{p.when}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* ── Ask aVa panel ── */}
-        <div style={cssStringToObject(vm.avaStyle)}>
-          <AvaPanel vm={vm} />
-        </div>
+            </div>
+          }
+        />
       </div>
 
       <div style={{ background: '#fff', borderTop: '1px solid rgba(10,10,11,.12)', minHeight: 34, display: 'flex', alignItems: 'center', gap: 14, padding: '6px 20px', flexShrink: 0, fontSize: 11.5, color: '#5f5e5a', whiteSpace: 'nowrap', overflow: 'hidden' }}>

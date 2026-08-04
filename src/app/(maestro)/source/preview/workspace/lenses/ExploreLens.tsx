@@ -111,10 +111,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
             <div style={{ fontSize: 13.5, lineHeight: 1.65, color: '#2c2c2a' }}>This is the exact query the native canvas executes against source.contract_360 — re-grouped live, no separate calculation.</div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 'auto' }}>
-            <button onClick={vm.askAvaSlice} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 17px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              Ask aVa about this cut
-            </button>
-            <button onClick={vm.pinSlice} style={{ border: '1px solid rgba(10,10,11,.2)', background: '#fff', color: '#2c2c2a', borderRadius: 6, padding: '10px 17px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={vm.pinSlice} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 17px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Pin this cut
             </button>
           </div>

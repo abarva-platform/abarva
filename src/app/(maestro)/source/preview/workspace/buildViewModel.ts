@@ -495,45 +495,35 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   ];
   const missingCols: DataTableColumn[] = [{ label: 'Missing evidence' }, { label: 'Extent' }, { label: 'Consequence in Source' }, { label: 'Reason' }];
 
-  // ── Ask aVa ──
-  const avaCtx = ([
-    ['Tenant', vm.tenantName], ['Module', 'Source'],
-    ['Selection', kind === 'contract' && c ? c.contract_id + ' · ' + c.vendor_name : kind === 'vendor' ? vendorName : kind === 'opportunity' && opp ? opp.contractId : 'Executive portfolio'],
-    ['Lens', activeTab || '—'], ['As-of', fmtDate(vm.portfolio.asOfDateIso)],
-    ['Evidence', kind === 'contract' && c?.source_confidence != null ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level'],
-  ] as [string, string][]).map((x) => ({ k: x[0], v: x[1] }));
-  const avaSuggestions = (kind === 'contract' ? [
-    ['Why does this contract carry weak leverage?', 'why'], ['What evidence is missing for this contract?', 'gaps'],
+  // ── Ask aVa (AgentDock surfaceContext/suggestedActions — real chat, not a canned answer) ──
+  const avaSurfaceContext = {
+    tenant: vm.tenantName, module: 'Source',
+    selection: kind === 'contract' && c ? c.contract_id + ' · ' + c.vendor_name : kind === 'vendor' ? vendorName : kind === 'opportunity' && opp ? opp.contractId : 'Executive portfolio',
+    lens: activeTab || null, asOf: fmtDate(vm.portfolio.asOfDateIso),
+    evidence: kind === 'contract' && c?.source_confidence != null ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level',
+  };
+  const avaSuggestedActions = (kind === 'contract' ? [
+    ['weak-leverage', 'Why does this contract carry weak leverage?'], ['evidence-gaps', 'What evidence is missing for this contract?'],
   ] : kind === 'vendor' ? [
-    ['Show renewal exposure for this vendor', 'renewal'], ['What evidence is missing?', 'gaps'],
+    ['renewal-exposure', 'Show renewal exposure for this vendor'], ['evidence-gaps', 'What evidence is missing?'],
   ] : [
-    ['Show the top renewal exposures by annual value', 'renewal'], ['Why is concentration not the binding constraint?', 'why'], ['What evidence is missing?', 'gaps'],
-  ]).map((s) => ({ label: s[0], onClick: () => vm.setState({ avaKey: s[1] }) }));
-
-  const avaResult = buildAvaResult(vm, S.avaKey, { rows, summary, conc, rec180: rec180Fixed, opportunities, contract, kind });
-  const pinResult = () => { if (avaResult) vm.pin(avaResult.title, 'Analysis', 'From aVa · governed Source data'); };
-  const clearResult = () => vm.setState({ avaKey: null });
+    ['renewal-exposure', 'Show the top renewal exposures by annual value'], ['concentration', 'Why is concentration not the binding constraint?'], ['evidence-gaps', 'What evidence is missing?'],
+  ]).map((s) => ({ id: s[0], label: s[1], body: s[1] }));
 
   return {
     kind, activeTab, sel, contract, contractRow: c, cVm, vendorName, vendorCat, vendorRef, opp, o, rows, summary, conc, rec180: rec180Fixed, opportunities, tenantName: vm.tenantName, asOfDateIso: vm.portfolio.asOfDateIso,
-    explorerRail: !S.narrow && S.tight && S.ava === 'expanded' && !S.explorerPinned, explorerPinned: S.explorerPinned, toggleExplorerPin: vm.toggleExplorerPin,
-    avaCanvas: S.avaCanvas, openAvaCanvas: vm.openAvaCanvas, closeAvaCanvas: vm.closeAvaCanvas,
-    shellCols: S.narrow ? '0px minmax(0,1fr) ' + (S.ava === 'expanded' ? '0px' : '44px')
-      : ((!S.narrow && S.tight && S.ava === 'expanded' && !S.explorerPinned) ? '48px' : S.tight ? '214px' : '272px') + ' minmax(0,1fr) ' + (S.ava === 'expanded' ? (S.tight ? '380px' : '424px') : '44px'),
+    explorerRail: false, explorerPinned: S.explorerPinned, toggleExplorerPin: vm.toggleExplorerPin,
+    shellCols: S.narrow ? '0px minmax(0,1fr)' : (S.tight ? '214px' : '272px') + ' minmax(0,1fr)',
     explorerStyle: (S.narrow ? (S.drawer ? 'position:fixed;left:0;top:56px;bottom:34px;width:284px;z-index:70;box-shadow:0 8px 30px rgba(10,10,11,.22);' : 'display:none;') : '') + 'background:#fbfaf7;border-right:1px solid rgba(10,10,11,.12);display:flex;flex-direction:column;min-height:0;overflow:hidden',
-    avaStyle: (S.narrow && S.ava === 'expanded' ? 'position:fixed;left:0;right:0;bottom:34px;top:120px;z-index:70;box-shadow:0 -8px 30px rgba(10,10,11,.22);' : '') + 'border-left:1px solid rgba(10,10,11,.12);background:#fff;min-height:0;overflow-y:auto',
     isNarrow: S.narrow, showStatusDetail: !!S.wide,
     toggleDrawer: () => vm.setState({ drawer: !S.drawer }),
     query: S.q, onQuery: (v: string) => vm.setState({ q: v }),
     back: () => vm.jump(S.hi - 1), fwd: () => vm.jump(S.hi + 1),
     backColor: S.hi > 0 ? '#fff' : 'rgba(255,255,255,.28)', fwdColor: S.hi < S.hist.length - 1 ? '#fff' : 'rgba(255,255,255,.28)',
-    toggleAva: () => vm.setState({ ava: S.ava === 'expanded' ? 'hidden' : 'expanded' }),
-    avaBtnBg: S.ava === 'expanded' ? '#fff' : 'transparent', avaBtnFg: S.ava === 'expanded' ? '#0a0a0b' : '#fff', avaBtnBorder: S.ava === 'expanded' ? '#fff' : 'rgba(255,255,255,.3)',
     collapseAll: () => vm.setState({ open: {} }),
     tree, crumbs, title, thesis, tabs,
     headerActions: kind === 'contract' && contract ? [
       { label: 'Build optimisation strategy', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
-      { label: 'Ask aVa about this contract', bg: '#fff', fg: '#2c2c2a', border: 'rgba(10,10,11,.2)', onClick: () => vm.setState({ ava: 'expanded', avaKey: 'why' }) },
     ] : kind === 'portfolio' ? [
       { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'passed') },
     ] : [],
@@ -545,7 +535,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
     statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
 
-    isExplore: kind === 'portfolio' && activeTab === 'Explore', ex: vm.explore(rows), askAvaSlice: () => vm.setState({ ava: 'expanded', avaKey: 'renewal' }), pinSlice: () => vm.pin('Saved cut', 'Saved cut', 'Governed query'),
+    isExplore: kind === 'portfolio' && activeTab === 'Explore', ex: vm.explore(rows), pinSlice: () => vm.pin('Saved cut', 'Saved cut', 'Governed query'),
     isConc: kind === 'portfolio' && activeTab === 'Concentration', pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,
     isRenewals: kind === 'portfolio' && activeTab === 'Renewals', windowBtns, tl, urgLegend, reconCards, passedCols, passedRows,
     isLeverage: kind === 'portfolio' && activeTab === 'Leverage', mx, quadPanel, signalDefs,
@@ -562,7 +552,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     cOverview: activeTab === 'Overview', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: activeTab === 'Renewal', cLeverage: activeTab === 'Leverage', cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimization',
     termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
     weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios,
-    askAvaWhy: () => vm.setState({ ava: 'expanded', avaKey: 'why' }), askAvaOptimize: () => vm.setState({ ava: 'expanded', avaKey: 'optimize' }), goActions: () => vm.setTab('contract', 'Optimization'),
+    goActions: () => vm.setTab('contract', 'Optimization'),
     detailState, detail,
 
     isOpp: kind === 'opportunity' && !!opp, oppLevers, oppScenarios,
@@ -571,9 +561,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     evCoverage: kind === 'evidence' && activeTab === 'Coverage', evSystems: kind === 'evidence' && activeTab === 'Source systems', evDocs: kind === 'evidence' && activeTab === 'Contract documents', evConflicts: kind === 'evidence' && activeTab === 'Conflicts', evMissing: kind === 'evidence' && activeTab === 'Missing evidence',
     covCols, covRows, sysCols, sysRows, conflictCols, conflictRows, missingCols, missingRows,
 
-    avaOpen: S.ava === 'expanded', avaClosed: S.ava !== 'expanded',
-    openAva: () => vm.setState({ ava: 'expanded' }), closeAva: () => vm.setState({ ava: 'hidden', avaKey: null, avaCanvas: false }),
-    avaCtx, avaSuggestions, avaResult, pinResult, clearResult, pin: vm.pin,
+    avaSurfaceContext, avaSuggestedActions, pin: vm.pin,
   };
 }
 
@@ -592,43 +580,6 @@ function buildVendorDependencyMap(
     contracts: vendorContracts.slice(0, 6).map((c) => ({ id: c.row.contract_id, name: c.row.contract_name, onClick: () => vm.select('contract', c.row.contract_id) })),
     criticalApplications: criticalTotal, platforms, initiatives: initiatives.map((i) => ({ name: i.initiative_project_name, status: i.status ?? 'Not recorded' })),
     vendorRef,
-  };
-}
-
-function buildAvaResult(
-  vm: WorkspaceViewModel,
-  avaKey: string | null,
-  ctx: {
-    rows: EnrichedContract[]; summary: ReturnType<WorkspaceViewModel['summary']>; conc: ReturnType<WorkspaceViewModel['concentration']>;
-    rec180: ReturnType<WorkspaceViewModel['renewal']>; opportunities: readonly ReturnType<WorkspaceViewModel['opportunities']>[number][];
-    contract: EnrichedContract | null; kind: string;
-  },
-) {
-  if (!avaKey) return null;
-  if (avaKey === 'why' && ctx.contract) {
-    const c = ctx.contract;
-    return {
-      title: 'Why ' + c.row.contract_name + ' carries its leverage position', dataset: 'computeContractLeverageSignals(source.contract_360)',
-      answer: c.leverage.weakSignalCount + ' of 4 weak-leverage signals are set for ' + c.row.vendor_name + '. The position is the sum of named flags, not a score — remove a flag and the contract moves.',
-      table: { cols: [{ label: 'Signal' }, { label: 'State' }], rows: (Object.keys(c.leverage.weakSignals) as LeverageSignal[]).map((s) => ({ cells: [{ text: vm.signalLabel(s), weight: 600 }, { text: c.leverage.weakSignals[s] ? 'Weak' : 'OK', color: c.leverage.weakSignals[s] ? COL.red : COL.teal }] })) },
-      evidence: ['benchmarking_clause: ' + (c.row.benchmarking_clause ?? 'null'), 'alternatives_available: ' + (c.row.alternatives_available ?? 'null'), 'concentration_note: ' + (c.row.concentration_note ?? 'null')],
-      gaps: [], actions: ['Pin to canvas'], followUps: [],
-    };
-  }
-  if (avaKey === 'gaps') {
-    return {
-      title: 'Evidence gaps in this environment', dataset: 'read-adapter portfolio load',
-      answer: 'Application-scope confidence tiering has no explicit reference set loaded, so every scope row stays unresolved rather than being upgraded to a stronger tier. Financial exposure, operational performance, and document evidence are fetched per contract on selection, not pre-loaded for the whole portfolio.',
-      table: { cols: [{ label: 'Gap' }], rows: [{ cells: [{ text: 'No (contract_id, application_ref) explicit reference set loaded' }] }, { cells: [{ text: 'Portfolio-wide financial/operational/document rows not pre-fetched' }] }] },
-      evidence: [], gaps: ['See docs/architecture/SOURCE_WORKSPACE_FIXTURE_AUDIT.md'], actions: [], followUps: [],
-    };
-  }
-  const sortedWin180 = ctx.rec180.expiringWithinWindow.slice().sort((a, b) => (b.annual_value ?? 0) - (a.annual_value ?? 0));
-  return {
-    title: 'Renewal exposure ranked by annual value', dataset: 'computeRenewalExposure(source.contract_360, 180)',
-    answer: ctx.rec180.noticeDeadlinePassed.length + ' active contracts worth ' + money(ctx.rec180.noticeDeadlinePassedAnnualValue) + ' are already past their notice deadline.' + (sortedWin180[0] ? ' The largest single exposure inside 180 days is ' + sortedWin180[0].vendor_name + ' at ' + money(sortedWin180[0].annual_value) + '.' : ''),
-    table: { cols: [{ label: 'Vendor' }, { label: 'Contract' }, { label: 'Annual value', align: 'right' as const }], rows: sortedWin180.slice(0, 6).map((c) => ({ cells: [{ text: c.vendor_name, weight: 600 }, { text: c.contract_name, wrap: true, color: '#5f5e5a' }, { text: money(c.annual_value), align: 'right' as const, mono: true, weight: 600 }] })) },
-    evidence: ['Notice deadlines derived from end_date and notice_period_days at the governed as-of date.'], gaps: [], actions: ['Pin to canvas'], followUps: [],
   };
 }
 
