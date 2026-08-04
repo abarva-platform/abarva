@@ -63,7 +63,12 @@ export function LeverageLens({ vm }: { vm: SourceWorkspaceVM }) {
               <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>{q.label}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 10 }}>
                 {q.items.map((i, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: 10, fontSize: 12, opacity: 0.85 }}>
+                  <div
+                    key={idx}
+                    className="sw-quad-item"
+                    onClick={(e) => { e.stopPropagation(); i.onClick(); }}
+                    style={{ display: 'flex', gap: 10, fontSize: 12, opacity: 0.85, cursor: 'pointer' }}
+                  >
                     <span>{i.label}</span>
                     <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace" }}>{i.value}</span>
                   </div>
