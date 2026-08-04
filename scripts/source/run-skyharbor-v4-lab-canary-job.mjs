@@ -12,6 +12,7 @@ const EXPECTED_ROWS = 195_960;
 const EXPECTED_CONTRACTS = 100;
 const EXPECTED_VENDORS = 60;
 const EXPECTED_ANNUAL_VALUE = 1_480_500_000;
+let activeOutDir = null;
 
 function stamp() {
   return new Date()
@@ -77,6 +78,11 @@ function writeJson(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function tailText(value, maxLength = 12000) {
+  const text = String(value || "");
+  return text.length <= maxLength ? text : text.slice(text.length - maxLength);
+}
+
 function runStep(name, command, args, options) {
   const startedAt = new Date().toISOString();
   const result = spawnSync(command, args, {
@@ -101,8 +107,25 @@ function runStep(name, command, args, options) {
   fs.writeFileSync(record.stderrPath, result.stderr || "");
   writeJson(path.join(options.outDir, `${name}.json`), record);
   if (result.status !== 0) {
+    console.error(
+      JSON.stringify(
+        {
+          event: "skyharbor_v4_lab_canary_step_failed",
+          step: name,
+          status: result.status,
+          signal: result.signal,
+          error: result.error?.message || null,
+          stdout_tail: tailText(result.stdout),
+          stderr_tail: tailText(result.stderr),
+          stdout_path: record.stdoutPath,
+          stderr_path: record.stderrPath,
+        },
+        null,
+        2,
+      ),
+    );
     throw new Error(
-      `${name} failed with status ${result.status}. See ${record.stderrPath}`,
+      `${name} failed with status ${result.status}, signal ${result.signal || "none"}. See ${record.stderrPath}`,
     );
   }
   return {
@@ -302,6 +325,7 @@ function emitProofBundle(outDir) {
 
 async function main() {
   const args = parseArgs();
+  activeOutDir = args.outDir;
   fs.mkdirSync(args.outDir, { recursive: true });
   const generatedDir = path.join(args.outDir, "generated-package");
   const baselinePath = path.join(args.outDir, "canary-answer-baseline.json");
@@ -398,8 +422,38 @@ async function main() {
 }
 
 main().catch((error) => {
+  const args = parseArgs();
+  if (activeOutDir) args.outDir = activeOutDir;
+  fs.mkdirSync(args.outDir, { recursive: true });
+  writeJson(path.join(args.outDir, "summary.json"), {
+    event: "skyharbor_v4_lab_canary_job_failed",
+    ok: false,
+    plan_only: args.planOnly,
+    tenant_key: TENANT_KEY,
+    dataset_id: DATASET_ID,
+    finished_at: new Date().toISOString(),
+    out_dir: args.outDir,
+    error: error.stack || error.message,
+  });
   console.error(
     JSON.stringify({ ok: false, error: error.stack || error.message }, null, 2),
   );
+  if (args.emitProofBundle) {
+    try {
+      emitProofBundle(args.outDir);
+    } catch (proofError) {
+      console.error(
+        JSON.stringify(
+          {
+            ok: false,
+            event: "skyharbor_v4_lab_canary_failure_proof_emit_failed",
+            error: proofError.stack || proofError.message,
+          },
+          null,
+          2,
+        ),
+      );
+    }
+  }
   process.exit(1);
 });
