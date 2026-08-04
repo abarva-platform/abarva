@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -59,9 +59,21 @@ Live review found two issues in the Source Workspace's contract-list surface:
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit -p .`
 - PASS: `npx eslint` on both changed files
 - PASS: `npx jest src/lib/source/data-model/__tests__/ src/app/(maestro)/source/preview/workspace/__tests__/` (33/33, no regression)
-- Live signed-in proof: pending post-deploy — "Select a contract to optimise" must land on a non-empty
-  list, and the contract-list caption must no longer claim a Cube-server binding or an unexplained
-  contract count.
+- Live signed-in proof (PR #5931 merged as `2182c22f`, ACA revision `ca-abarva-web-lab-eastus--m2182c22f`,
+  image digest `sha256:dc6b706efa153c737a7a9e9c9676a8c5d0cf2f60959d71e4eac80ddccb1c3391` at 100%
+  traffic, confirmed via `az containerapp show`):
+  - `https://app.abarva.ai/source` → "Select a contract to optimise" now lands on "Two or more weak
+    leverage signals" (69 contracts · $863.8M annual contract value), a populated table, not the empty
+    "Notice deadline passed" view.
+  - The contract-list caption now reads "Row click opens Contract 360. Filtered client-side over the
+    same governed register already loaded for this page — no separate query or dataset." — no more
+    Cube-view claim, no more fabricated "Nineteen material contracts" count.
+  - The Explorer's new "Sourcing events" group renders with all three entries (Events dashboard, New
+    event, Optimize a contract). Clicked "Optimize a contract": navigates to `/source/new` ("New IT
+    Sourcing Intake"), which renders fully and correctly — a real split-pane "Sourcing event intake"
+    flow with an aVa co-pilot on the left ("Ready to stand up a new IT sourcing event for Airline
+    Demo...") and a structured intake form on the right (Why now/trigger, Decision owner, Scope
+    boundary, Value/savings target, Minimum data/baseline owner). Zero console errors on that page.
 
 ## Rollout Plan
 
@@ -76,7 +88,7 @@ feature flag.
 - ACA runtime invariant: standard post-deploy check applies.
 - Worker image invariant: not applicable.
 - Feature/env flag update path: not applicable.
-- Live signed-in proof required: required before this release is marked `released`.
+- Live signed-in proof required: required before this release is marked `released`. **Done — see QA / Validation.**
 
 ## Rollback Plan
 
@@ -91,4 +103,5 @@ Code rollback by reverting the PR. No data mutation.
 
 ## Known Gaps
 
-- Live signed-in proof against the deployed revision is still pending (see Deployment Authority).
+- None known — the "Optimize a contract" / "New event" flow reached from the Workspace was verified
+  live to render and function correctly, addressing the user's specific ask to be able to run it.
