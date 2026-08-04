@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -43,8 +43,14 @@ secondary path; this adds the primary, always-visible one.
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit -p .`
 - PASS: `npx eslint src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
 - PASS: `npx jest src/lib/source/data-model/__tests__/ src/app/(maestro)/source/preview/workspace/__tests__/` (33/33, no regression)
-- Live signed-in proof: pending post-deploy — both buttons must be visible on `/source` without any
-  scrolling, and must navigate correctly.
+- Live signed-in proof (PR #5935 merged as `196d865d`, ACA revision `ca-abarva-web-lab-eastus--m196d865d`,
+  image digest `sha256:f5b7c050d5049e900730e5427933c8db7c42e1628ba187b0f8a2470662884baf` at 100%
+  traffic, confirmed via `az containerapp show`):
+  - `https://app.abarva.ai/source` shows "Sourcing events ↗" and "New event ↗" in the top status
+    strip on first load, no scrolling required.
+  - "Sourcing events ↗" navigates to `/source/portfolio` ("Your sourcing book") and renders correctly.
+  - "New event ↗" navigates to `/source/new` (Sourcing event intake) and renders correctly.
+  - Zero console errors on either destination.
 
 ## Rollout Plan
 
@@ -59,7 +65,7 @@ feature flag.
 - ACA runtime invariant: standard post-deploy check applies.
 - Worker image invariant: not applicable.
 - Feature/env flag update path: not applicable.
-- Live signed-in proof required: required before this release is marked `released`.
+- Live signed-in proof required: required before this release is marked `released`. **Done — see QA / Validation.**
 
 ## Rollback Plan
 
@@ -74,4 +80,11 @@ Code rollback by reverting the PR. No data mutation.
 
 ## Known Gaps
 
-- Live signed-in proof against the deployed revision is still pending (see Deployment Authority).
+- Neither "Optimize a contract" nor "New event" pre-fills contract-specific context into the
+  `/source/new` intake form — both open a blank intake regardless of which contract, if any, the user
+  was viewing. A `resolveSourceIntakeShape`/`intent=` system exists and reshapes intake wording for
+  category-level intents (renewal, RFP-response, etc.), but nothing currently passes a specific
+  contract's id, name, value, or weak-leverage reasons through. Confirmed by reading
+  `SourceOriginatePage.tsx`/`intake-intent.ts` and by inspecting both "Optimize a contract" links (the
+  pre-existing one and this session's new one) — neither carries a query param. Not fixed in this
+  release; documented for the next person who wires that connection.
