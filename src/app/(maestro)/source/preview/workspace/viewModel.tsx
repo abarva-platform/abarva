@@ -481,7 +481,18 @@ export class WorkspaceViewModel {
     allRows.forEach((c) => { const v = dim.get(c); bucket[v] = bucket[v] || { all: [], live: [] }; bucket[v].all.push(c); });
     base.forEach((c) => { const v = dim.get(c); bucket[v].live.push(c); });
     const groups = Object.keys(bucket).map((v) => {
-      const g = bucket[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0, list = live ? g.live : g.all;
+      // `base` (via matches(c, S.groupBy)) deliberately ignores the
+      // currently-grouped dimension's OWN filter — correct for computing
+      // cross-dimension liveness, but on its own it means every bucket in
+      // this dimension looks "live" even when this exact dimension has an
+      // active selection (e.g. grouping by Vendor while Vendor=Salesforce
+      // is selected: every vendor's rows still pass `matches(c, 'vendor')`
+      // since that check skips the vendor filter entirely). A bucket in the
+      // grouped dimension can only be live if either nothing is selected on
+      // this dimension, or this bucket IS one of the selected values —
+      // matching the associative-selection semantics the listboxes already
+      // apply correctly.
+      const g = bucket[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0 && (sel.length === 0 || isSel), list = live ? g.live : g.all;
       return { key: v, list, live, isSel, val: list.reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0) };
     }).sort((a, b) => (a.live === b.live ? b.val - a.val : a.live ? -1 : 1));
     const max = Math.max.apply(null, groups.map((g) => g.val).concat([1]));
