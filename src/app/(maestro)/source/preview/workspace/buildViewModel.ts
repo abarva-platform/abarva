@@ -16,6 +16,8 @@ const addRowAnnualValue = (t: number, c: { row: { annual_value: number | null } 
   t + (numberFromDb(c.row.annual_value) ?? 0);
 const addAnnualValue = (t: number, r: { annual_value: number | null }): number =>
   t + (numberFromDb(r.annual_value) ?? 0);
+const whole = (value: number): string =>
+  new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
 
 const REASON_LABEL: Record<SourcingOpportunityReason, string> = {
   high_priority_leverage: 'Weak leverage',
@@ -155,6 +157,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const listRows = (listDef[sel.id || ''] || listDef.passed)[1];
 
   let title = '', thesis = '', crumbLabels: string[] = [];
+  const v4Snapshot = vm.portfolio.v4Snapshot;
+  const v4HasPortfolio = v4Snapshot.executivePortfolio.contractCount > 0 || v4Snapshot.contextCoverage.contracts > 0;
+
   if (kind === 'portfolio') {
     title = ({
       Context: 'What does the governed Source data plane show?', Explore: 'Slice the portfolio any way the question demands',
@@ -162,7 +167,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       Leverage: 'Where is leverage weak?', Opportunities: 'Where should leadership intervene?', Agenda: 'The sourcing agenda for this quarter',
     } as Record<string, string>)[activeTab];
     thesis = ({
-      Context: 'AbarVa reads ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts directly from source.contract_360, as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Where a read returned no rows, or the schema has no column for something, the page says so rather than guessing.',
+      Context: v4HasPortfolio
+        ? 'AbarVa reads the Source V4 semantic snapshot for ' + whole(v4Snapshot.contextCoverage.vendors) + ' material vendors, ' + whole(v4Snapshot.executivePortfolio.contractCount) + ' contract families, ' + whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit scope links and ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred scope links. Where value is exposure or an observation, the page labels it that way.'
+        : 'AbarVa reads ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts directly from source.contract_360, as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Where a read returned no rows, or the schema has no column for something, the page says so rather than guessing.',
       Explore: 'One governed query, re-grouped live against source.contract_360.',
       Concentration: 'The top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value.',
       Renewals: rec180Fixed.noticeDeadlinePassed.length + ' active contracts (' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ') are past their notice deadline. ' + rec180Fixed.expiringWithinWindow.length + ' contracts (' + money(rec180Fixed.expiringWithinWindowAnnualValue) + ') expire inside 180 days.',
@@ -235,13 +242,26 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ];
   } else {
     valueStrip = [
-      vsItem('Annual contract value', money(summary.totalAnnualValue), summary.contractCount + ' contracts · ' + summary.vendorCount + ' vendors'),
-      vsItem('Actual annual spend', money(summary.totalActualAnnualSpend), summary.totalActualAnnualSpend != null && summary.totalAnnualValue != null ? money(summary.totalAnnualValue - summary.totalActualAnnualSpend) + ' contracted-to-actual variance · cause not yet established' : 'Not established'),
-      vsItem('Total committed value', money(summary.totalCommittedValue), 'Across all governed contracts'),
+      vsItem('Annual contract value', money(v4HasPortfolio ? v4Snapshot.executivePortfolio.annualValue : summary.totalAnnualValue), (v4HasPortfolio ? v4Snapshot.executivePortfolio.contractCount : summary.contractCount) + ' contract families · ' + (v4HasPortfolio ? v4Snapshot.contextCoverage.vendors : summary.vendorCount) + ' vendors'),
+      vsItem(v4HasPortfolio ? 'Actual spend — 24 months' : 'Actual annual spend', money(v4HasPortfolio ? v4Snapshot.spendConsumption.actualSpend : summary.totalActualAnnualSpend), v4HasPortfolio ? whole(v4Snapshot.spendConsumption.invoiceLines) + ' invoice lines · not an annual variance' : summary.totalActualAnnualSpend != null && summary.totalAnnualValue != null ? money(summary.totalAnnualValue - summary.totalActualAnnualSpend) + ' contracted-to-actual variance · cause not yet established' : 'Not established'),
+      vsItem('Total committed value', money(v4HasPortfolio ? v4Snapshot.executivePortfolio.totalCommittedValue : summary.totalCommittedValue), v4HasPortfolio ? 'Across V4 contract-family terms' : 'Across all governed contracts'),
       vsItem('Renewal exposure ≤180d', money(rec180Fixed.expiringWithinWindowAnnualValue), rec180Fixed.expiringWithinWindow.length + ' contracts in an open decision window', COL.red),
-      vsItem('Auto-renewing', String(summary.autoRenewCount), 'of ' + summary.contractCount + ' contracts'),
+      vsItem('Auto-renewing', String(v4HasPortfolio ? v4Snapshot.executivePortfolio.autoRenewCount : summary.autoRenewCount), 'of ' + (v4HasPortfolio ? v4Snapshot.executivePortfolio.contractCount : summary.contractCount) + ' contracts'),
     ];
   }
+
+  const sourceV4ProofCards = [
+    { label: 'Material vendors', value: whole(v4Snapshot.contextCoverage.vendors), note: 'V4 context coverage', source: 'consumption_v4_canary.sourcing_context_coverage_v1' },
+    { label: 'Contract families', value: whole(v4Snapshot.executivePortfolio.contractCount), note: 'Annual value ' + money(v4Snapshot.executivePortfolio.annualValue), source: 'source_v4_executive_portfolio' },
+    { label: 'Scope relationships', value: whole(v4Snapshot.scopeConfidence.rowCount), note: whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit · ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred', source: 'source_v4_scope_confidence' },
+    { label: 'Invoice lines', value: whole(v4Snapshot.spendConsumption.invoiceLines), note: '24-month actual spend ' + money(v4Snapshot.spendConsumption.actualSpend), source: 'source_v4_spend_consumption' },
+    { label: 'Performance rows', value: whole(v4Snapshot.performanceCredits.rowCount), note: 'Unclaimed credits ' + money(v4Snapshot.performanceCredits.unclaimedCredit), source: 'source_v4_performance_credits' },
+    { label: 'SaaS observations', value: whole(v4Snapshot.aiUsageValueProof.rowCount), note: whole(v4Snapshot.aiUsageValueProof.assignedSeats) + ' assigned-seat observations', source: 'source_v4_ai_usage_value_proof' },
+    { label: 'Cloud observations', value: whole(v4Snapshot.cloudOptimization.rowCount), note: 'Observed overage ' + money(v4Snapshot.cloudOptimization.overageAmount), source: 'source_v4_cloud_optimization' },
+    { label: 'Rate-card rows', value: whole(v4Snapshot.workforceRateCards.rowCount), note: whole(v4Snapshot.workforceRateCards.unapprovedVarianceCount) + ' unapproved variance exceptions', source: 'source_v4_workforce_rate_card' },
+    { label: 'Sourcing-event rows', value: whole(v4Snapshot.sourcingEvents.rowCount), note: 'Normalized response cost basis ' + money(v4Snapshot.sourcingEvents.normalizedCost), source: 'source_v4_sourcing_event_bafo' },
+    { label: 'Off-contract exposure', value: money(v4Snapshot.spendConsumption.offContractSpend), note: 'Exposure, not savings', source: 'source_v4_spend_consumption' },
+  ];
 
   // ── context lens ──
   const passedN = rec180Fixed.noticeDeadlinePassed.length, autoN = rec180Fixed.noticeDeadlinePassedAutoRenew.length;
@@ -506,7 +526,6 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const missingCols: DataTableColumn[] = [{ label: 'Missing evidence' }, { label: 'Extent' }, { label: 'Consequence in Source' }, { label: 'Reason' }];
 
   // ── Ask aVa (AgentDock surfaceContext/suggestedActions — real chat, not a canned answer) ──
-  const v4Snapshot = vm.portfolio.v4Snapshot;
   const availableV4Lenses = v4Snapshot.availability
     .filter((slice) => slice.state === 'available')
     .map((slice) => slice.lensId);
@@ -614,6 +633,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     isPortfolioContext: kind === 'portfolio' && activeTab === 'Context', leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
     statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
+    sourceV4ProofCards, sourceV4DatasetId: v4Snapshot.datasetId, sourceV4AsOf: fmtDate(v4Snapshot.asOfDateIso),
 
     isExplore: kind === 'portfolio' && activeTab === 'Explore', ex: vm.explore(rows), pinSlice: () => vm.pin('Saved cut', 'Saved cut', 'Governed query'),
     isConc: kind === 'portfolio' && activeTab === 'Concentration', pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,

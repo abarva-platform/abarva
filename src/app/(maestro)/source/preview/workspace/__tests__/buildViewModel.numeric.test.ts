@@ -137,6 +137,22 @@ const V4_SNAPSHOT: SourceV4WorkspaceSnapshot = {
     autoRenewCount: 12,
     notice90DayCount: 74,
   },
+  scopeConfidence: {
+    rowCount: 5200,
+    explicitScopeCount: 2600,
+    inferredScopeCount: 2600,
+  },
+  spendConsumption: {
+    ...EMPTY_V4_SNAPSHOT.spendConsumption,
+    invoiceLines: 175000,
+    actualSpend: 2494900000,
+    offContractSpend: 25709000,
+  },
+  performanceCredits: {
+    ...EMPTY_V4_SNAPSHOT.performanceCredits,
+    rowCount: 7200,
+    unclaimedCredit: 12728000,
+  },
   aiUsageValueProof: {
     ...EMPTY_V4_SNAPSHOT.aiUsageValueProof,
     rowCount: 24480,
@@ -301,6 +317,50 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.avaSurfaceContext.sourceV4.valueProof.claimableRows).toBe(0);
     expect(built.avaSurfaceContext.sourceV4.valueProof.rule).toMatch(
       /do not prove realized value/i,
+    );
+  });
+
+  it("exposes Source v4 proof cards with governed period and exposure labels", () => {
+    const vm = buildVm();
+    const built = buildViewModel(vm) as {
+      title: string;
+      thesis: string;
+      sourceV4ProofCards: Array<{ label: string; value: string; note: string }>;
+      valueStrip: Array<{ label: string; value: string; sub: string }>;
+    };
+
+    expect(built.thesis).toContain("2,600 explicit scope links");
+    expect(built.sourceV4ProofCards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Contract families",
+          value: "100",
+        }),
+        expect.objectContaining({
+          label: "Scope relationships",
+          value: "5,200",
+          note: "2,600 explicit · 2,600 inferred",
+        }),
+        expect.objectContaining({
+          label: "Invoice lines",
+          value: "175,000",
+          note: expect.stringContaining("24-month actual spend"),
+        }),
+        expect.objectContaining({
+          label: "Off-contract exposure",
+          value: "$25.7M",
+          note: "Exposure, not savings",
+        }),
+      ]),
+    );
+    expect(built.valueStrip).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Actual spend — 24 months",
+          value: "$2.4949B",
+          sub: expect.stringContaining("not an annual variance"),
+        }),
+      ]),
     );
   });
 });

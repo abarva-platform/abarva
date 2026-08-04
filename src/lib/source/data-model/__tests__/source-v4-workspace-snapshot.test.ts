@@ -162,6 +162,9 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
     expect(snapshot.datasetId).toBe("skyharbor-source-v4-202608");
     expect(snapshot.contextCoverage.contracts).toBe(100);
     expect(snapshot.executivePortfolio.annualValue).toBe(1480500000);
+    expect(snapshot.scopeConfidence.rowCount).toBe(15840);
+    expect(snapshot.scopeConfidence.explicitScopeCount).toBe(6400);
+    expect(snapshot.scopeConfidence.inferredScopeCount).toBe(9440);
     expect(snapshot.performanceCredits.unclaimedCredit).toBe(345000);
     expect(snapshot.aiUsageValueProof.topProducts[0]).toEqual({
       name: "Claude Code",

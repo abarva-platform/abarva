@@ -86,4 +86,13 @@ describe("resolveAssistantAnswerText", () => {
       /(?:Answer|Proof|Move):\s*(?:Answer|Proof|Move)\b/i,
     );
   });
+
+  it("strips raw governed artifact row JSON from fallback stream text", () => {
+    const rawStreamed =
+      'The supply-chain AOG agent is the first candidate, {"initiative":"AOG Risk & Parts Availability Alert Agent","valueScore":80,"complexityScore":55,"readinessScore":65} then show the trend chart.';
+
+    expect(resolveAssistantAnswerText(rawStreamed, "", false)).toBe(
+      "The supply-chain AOG agent is the first candidate, then show the trend chart.",
+    );
+  });
 });

@@ -146,7 +146,7 @@ export function WorkspaceClient({
         <span>
           {portfolio.isEmpty
             ? 'source.contract_360 returned no rows for tenant_key=' + (portfolio.tenantKey || '(none)') + ' — nothing below is estimated in its place.'
-            : 'Governed source.contract_360 · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+            : 'Governed Source V4 semantic snapshot · dataset=' + portfolio.v4Snapshot.datasetId + ' · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
         </span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexShrink: 0 }}>
           <button onClick={() => { window.location.href = '/source/portfolio'; }} style={{ border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -245,6 +245,7 @@ export function WorkspaceClient({
                         </a>
                       </div>
                     ) : null}
+                    {vm.isPortfolioContext ? <SourceV4ProofPanel vm={vm} /> : null}
                   </>
                 ) : null}
 
@@ -301,6 +302,87 @@ export function WorkspaceClient({
 
       <Tooltip tip={vm.tip} />
     </div>
+  );
+}
+
+function SourceV4ProofPanel({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
+  return (
+    <section
+      aria-label="Source V4 semantic proof"
+      style={{
+        background: '#fff',
+        border: '1px solid rgba(10,10,11,.12)',
+        borderRadius: 8,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'baseline',
+          gap: 12,
+          padding: '16px 22px 13px',
+          borderBottom: '1px solid rgba(10,10,11,.12)',
+        }}
+      >
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0a0a0b' }}>
+          V4 semantic proof
+        </div>
+        <div style={{ fontSize: 12.5, color: '#5f5e5a' }}>
+          {vm.sourceV4DatasetId} · as of {vm.sourceV4AsOf} · labels preserve period, exposure and observation grain.
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', background: '#fff' }}>
+        {vm.sourceV4ProofCards.map((card, i) => (
+          <div
+            key={card.label}
+            style={{
+              minWidth: 0,
+              padding: '14px 17px',
+              borderRight: '1px solid rgba(10,10,11,.08)',
+              borderTop: i === 0 ? 'none' : '1px solid rgba(10,10,11,.08)',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 9.5,
+                fontWeight: 700,
+                letterSpacing: '.1em',
+                textTransform: 'uppercase',
+                color: '#0066CC',
+                marginBottom: 7,
+                lineHeight: 1.35,
+              }}
+            >
+              {card.label}
+            </div>
+            <div style={{ fontSize: 22, lineHeight: 1.05, fontWeight: 750, color: '#0a0a0b' }}>
+              {card.value}
+            </div>
+            <div style={{ fontSize: 11.5, lineHeight: 1.4, color: '#5f5e5a', marginTop: 7 }}>
+              {card.note}
+            </div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 9,
+                letterSpacing: '.04em',
+                color: '#b4b2a9',
+                marginTop: 8,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              title={card.source}
+            >
+              {card.source}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
