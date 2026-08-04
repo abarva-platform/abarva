@@ -69,12 +69,12 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     {
       id: 'scope.volumetrics',
       title: 'Provide the volumetrics',
-      subtitle: 'Ticket history + 18-month baseline',
+      subtitle: 'Service-tower economics',
       type: 'provide',
       state: 'todo',
       guide:
-        "The one thing we can't pre-fill. Upload your ticket history so we can size the support tier from real volumes.",
-      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'ServiceNow export' },
+        'Upload service-tower volumetrics: change-order spend, avoidable share, projected volume decline, automatable effort pool, and chronic SLA miss rate.',
+      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'ITSM / finance baseline' },
       cta: 'Confirm volumetrics',
       // A CSV/XLSX dropped here is parsed into typed volumetrics facts, flipping
       // the ✦ Intelligence step insight from MODEL to LIVE.
@@ -454,7 +454,7 @@ export const SAMPLE_RESPONSES_STAGE: StageAnalyticsView = {
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload the vendor response coverage matrix (CSV or XLSX): one row per vendor × value lever, with Vendor set to the bidding vendor, Lever Key set to the canonical value-lever key, and Addressed set to 1 (addressed), 0 (dodged), or 0.5 (partial). This flips Responses coverage from a model to a live per-vendor answered-vs-dodged read.',
+        'Upload one row per vendor × value lever: Vendor, Lever Key, and Addressed as 1, 0.5, or 0.',
       provenance: {
         owner: 'Sourcing lead',
         source: 'Vendor proposals / response matrix',
@@ -530,7 +530,7 @@ export const SAMPLE_EVALUATION_STAGE: StageAnalyticsView = {
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload the vendor bids (CSV or XLSX): one row per vendor, with Vendor set to the bidding vendor, Headline Bid (USD) set to the vendor’s stated price over the term, Retained FTE Delta set to the retained client/SME FTE the vendor’s model assumes (a plain count), and SLA Credit Cap (%) set to the maximum fee-pool share recoverable as SLA credits (whole number). This flips Evaluation should-cost from a model to a live per-vendor normalized-TCO read.',
+        'Upload one row per vendor: headline bid, retained-FTE delta, and SLA credit cap. Source normalizes bids from those facts.',
       provenance: {
         owner: 'Sourcing lead',
         source: 'Vendor proposals / bid tabulation',
@@ -654,4 +654,3 @@ export const SAMPLE_SCOPE_AVA: AvaLauncherView = {
     'Who owns the ticket extract?',
   ],
 };
-

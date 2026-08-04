@@ -18,6 +18,7 @@ import ExcelJS from "exceljs";
 
 import type { SourceEvidenceRequirement } from "@/lib/source/canonical-specs";
 import { templateFilenameTokenForRequirement } from "@/lib/source/canvas-substrate/upload-sync";
+import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
 import {
   SOURCE_XLSX,
   XLSX_CONTENT_TYPE,
@@ -39,42 +40,24 @@ export interface InputTemplateEventMeta {
   generatedAtIso: string;
 }
 
+const FACT_TEMPLATE_BY_REQUIREMENT_ID: Record<string, string> = {
+  "EVID-SRC-SCOPE-APP-INV": "APP_INVENTORY_V1",
+  "EVID-SRC-SCOPE-TICKET-HISTORY": "VOLUMETRICS_V1",
+  "EVID-SRC-RESP-PROPOSALS": "RESPONSE_COVERAGE_V1",
+  "EVID-SRC-PRICE-VENDOR-PRICING": "VENDOR_BIDS_V1",
+};
+
 /**
  * Per-requirement intake columns. Most requirements are narrative ("paste what
  * you have"); the few structured ones get a real column shape so the upload is
  * immediately useful. Falls back to a single guidance column.
  */
 const INTAKE_COLUMNS: Record<string, string[]> = {
-  "EVID-SRC-SCOPE-APP-INV": [
-    "Application name",
-    "Vendor",
-    "Business capability",
-    "Users",
-    "Annual run cost",
-    "In scope? (Y/N)",
-    "Notes",
-  ],
   "EVID-SRC-SCOPE-ORG": [
     "Role / team",
     "Headcount (FTE)",
     "Location",
     "In scope? (Y/N)",
-    "Notes",
-  ],
-  "EVID-SRC-SCOPE-TICKET-HISTORY": [
-    "Month",
-    "Ticket volume",
-    "P1/P2 count",
-    "Avg time to resolve",
-    "System",
-    "Notes",
-  ],
-  "EVID-SRC-PRICE-VENDOR-PRICING": [
-    "Line item",
-    "Unit",
-    "Quantity",
-    "Unit price",
-    "Annual cost",
     "Notes",
   ],
   "EVID-SRC-EVAL-RATER-SCORES": [
@@ -102,6 +85,14 @@ const INTAKE_COLUMNS: Record<string, string[]> = {
 const DEFAULT_INTAKE_COLUMNS = ["What you have", "Details", "Source / date", "Notes"];
 
 function intakeColumnsFor(requirementId: string): string[] {
+  const templateCode = FACT_TEMPLATE_BY_REQUIREMENT_ID[requirementId];
+  const template = templateCode ? templateFactMapByCode(templateCode) : undefined;
+  if (template) {
+    const entityRefHeaders = template.entityRefColumn
+      ? [template.entityRefColumn]
+      : template.entityRefColumns ?? [];
+    return [...entityRefHeaders, ...template.columns.map((column) => column.header)];
+  }
   return INTAKE_COLUMNS[requirementId] ?? DEFAULT_INTAKE_COLUMNS;
 }
 
