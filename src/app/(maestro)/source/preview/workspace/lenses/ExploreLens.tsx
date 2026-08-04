@@ -13,7 +13,27 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
             {dd.label}
           </button>
         ))}
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+          {ex.modeBtns.map((mode, i) => (
+            <button key={i} onClick={mode.onClick} style={{ border: `1px solid ${mode.border}`, background: mode.bg, color: mode.fg, borderRadius: 999, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {mode.label}
+            </button>
+          ))}
+        </span>
       </div>
+
+      {ex.quality.state !== 'available' ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: ex.quality.state === 'blocked' ? '#fff3e6' : '#fbfaf7', border: '1px solid rgba(186,117,23,.34)', borderRadius: 8, padding: '13px 16px' }}>
+          <div style={{ flex: '1 1 360px', minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0a0a0b', marginBottom: 4 }}>Category analysis is provisional</div>
+            <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#5f5e5a' }}>{ex.quality.message}</div>
+          </div>
+          <div style={{ flex: '0 1 112px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.affectedRows}</b> affected rows</div>
+          <div style={{ flex: '0 1 132px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.affectedValue}</b> affected value</div>
+          <div style={{ flex: '0 1 96px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#a32d2d', fontSize: 15 }}>{ex.quality.conflictedRows}</b> conflicts</div>
+          <div style={{ flex: '0 1 180px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#888780', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ex.quality.ruleVersion}</div>
+        </div>
+      ) : null}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, background: '#0a0a0b', borderRadius: 8, padding: '12px 16px' }}>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Current selection</span>
@@ -64,7 +84,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12, padding: '15px 20px 13px', borderBottom: '1px solid rgba(10,10,11,.12)' }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#0a0a0b' }}>Annual contract value by {ex.dimLabel}</div>
-            <div style={{ fontSize: 12, color: '#5f5e5a' }}>{ex.groupCount} in selection · {ex.excludedCount} excluded, still shown</div>
+            <div style={{ fontSize: 12, color: '#5f5e5a' }}>{ex.chartSubtitle}</div>
             <div style={{ marginLeft: 'auto', fontSize: 12, color: '#0066CC', fontWeight: 600 }}>Click any value to select it. Click again to release it.</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 520, overflowY: 'auto' }}>
@@ -79,7 +99,10 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
               >
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 12.5, fontWeight: 600, color: g.labelColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.label}</div>
-                  <div style={{ fontSize: 11, color: g.subColor, marginTop: 2 }}>{g.count} · worst {g.weak}</div>
+                  <div style={{ fontSize: 11, color: g.subColor, marginTop: 2 }}>{g.count} · worst {g.weak}{g.taxonomy.flagged ? ' · taxonomy ' + g.taxonomy.states : ''}</div>
+                  {g.taxonomy.flagged ? (
+                    <div style={{ fontSize: 10.5, color: '#ba7517', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>source: {g.taxonomy.sourceCategories}</div>
+                  ) : null}
                 </div>
                 <div style={{ height: 20, background: g.track, borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${g.pct}%`, background: g.fill }} />

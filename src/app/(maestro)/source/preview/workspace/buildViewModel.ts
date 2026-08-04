@@ -158,6 +158,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   let title = '', thesis = '', crumbLabels: string[] = [];
   const v4Snapshot = vm.portfolio.v4Snapshot;
+  const diagnostics = vm.portfolio.workspaceDiagnostics;
+  const categoryQuality = vm.portfolio.categoryQuality;
   const v4HasPortfolio = v4Snapshot.executivePortfolio.contractCount > 0 || v4Snapshot.contextCoverage.contracts > 0;
 
   if (kind === 'portfolio') {
@@ -170,7 +172,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       Context: v4HasPortfolio
         ? 'AbarVa reads the Source V4 semantic snapshot for ' + whole(v4Snapshot.contextCoverage.vendors) + ' material vendors, ' + whole(v4Snapshot.executivePortfolio.contractCount) + ' contract families, ' + whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit scope links and ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred scope links. Where value is exposure or an observation, the page labels it that way.'
         : 'AbarVa reads ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts directly from source.contract_360, as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Where a read returned no rows, or the schema has no column for something, the page says so rather than guessing.',
-      Explore: 'One governed query, re-grouped live against source.contract_360.',
+      Explore: diagnostics.exploreMatchesV4
+        ? 'One governed query, re-grouped live against source.contract_360 with selected-only behavior by default.'
+        : 'The Explore interaction is selected-only by default, but this lens is still reading the legacy contract projection while Source V4 reports a different 100-contract / 60-vendor portfolio.',
       Concentration: 'The top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value.',
       Renewals: rec180Fixed.noticeDeadlinePassed.length + ' active contracts (' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ') are past their notice deadline. ' + rec180Fixed.expiringWithinWindow.length + ' contracts (' + money(rec180Fixed.expiringWithinWindowAnnualValue) + ') expire inside 180 days.',
       Leverage: rows.filter((c) => c.leverage.weakSignalCount >= 2).length + ' contracts carry two or more weak leverage signals. Every position is a countable signal returned by computeContractLeverageSignals, not a score.',
@@ -274,8 +278,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   };
 
   const coverage = ([
+    ['Source V4 semantic snapshot', v4HasPortfolio ? 'available' as const : 'missing' as const, diagnostics.datasetLabel + ' · ' + diagnostics.analyticsProvider + ' · ' + whole(diagnostics.v4ContractCount) + ' contracts / ' + whole(diagnostics.v4VendorCount) + ' vendors.', 'consumption_v4_canary.*'],
     ['Vendor register', vm.portfolio.reads.vendors, summary.vendorCount + ' vendors reconciled to canonical vendor_ref.', 'source.vendor_contract_portfolio'],
     ['Contract register', vm.portfolio.reads.contracts, summary.contractCount + ' contracts with term, notice and renewal posture.', 'source.contract_360'],
+    ['Category semantic quality', categoryQuality.qualityState === 'available' ? 'available' as const : 'missing' as const, categoryQuality.qualityState === 'available' ? 'effective_category can be used for grouping.' : categoryQuality.qualityMessage, 'semantic contract_category_quality'],
     ['Application scope', vm.portfolio.reads.applicationScope, scopeAll.totalCount + ' scope rows; ' + scopeAll.explicit.length + ' explicit, ' + scopeAll.unresolved.length + ' unresolved (no reference set loaded).', 'source.contract_application_scope'],
     ['Initiative dependencies', vm.portfolio.reads.initiativeDependencies, vm.portfolio.initiativeDependencies.length + ' rows.', 'source.contract_initiative_dependency'],
     ['Financial exposure / operational performance / documents', 'available' as const, 'Fetched per contract on selection, not pre-loaded for the whole portfolio — open a contract’s Performance or Evidence tab.', 'source.contract_financial_exposure, source.contract_operational_performance, doc.extraction'],
@@ -286,6 +292,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   const contextTableCols: DataTableColumn[] = [{ label: 'Layer' }, { label: 'Amount', align: 'right' }, { label: 'Source' }];
   const contextTableRows: DataTableRow[] = [
+    { cells: [vm.cell('Active dataset', { weight: 600 }), vm.cell(diagnostics.datasetLabel, { align: 'right', mono: true, weight: 600 }), vm.cell(diagnostics.datasetId, { color: '#5f5e5a', mono: true })] },
+    { cells: [vm.cell('Analytics provider', { weight: 600 }), vm.cell(diagnostics.analyticsProvider, { align: 'right', mono: true, weight: 600 }), vm.cell('Source V4 Cube semantic snapshot', { color: '#5f5e5a' })] },
+    { cells: [vm.cell('Active load run', { weight: 600 }), vm.cell(diagnostics.activeLoadRunId ?? 'Not exposed', { align: 'right', mono: true, weight: 600, color: diagnostics.activeLoadRunId ? COL.ink : COL.amber }), vm.cell('consumption_v4_canary.sourcing_contract_v1.load_run_id', { color: '#5f5e5a', mono: true })] },
+    { cells: [vm.cell('V4 contract families / vendors', { weight: 600 }), vm.cell(whole(diagnostics.v4ContractCount) + ' / ' + whole(diagnostics.v4VendorCount), { align: 'right', mono: true, weight: 600 }), vm.cell('CubeSourceProvider', { color: '#5f5e5a', mono: true })] },
+    { cells: [vm.cell('Explore projection contracts / vendors', { weight: 600 }), vm.cell(whole(diagnostics.legacyContractCount) + ' / ' + whole(diagnostics.legacyVendorCount), { align: 'right', mono: true, weight: 600, color: diagnostics.exploreMatchesV4 ? COL.teal : COL.amber }), vm.cell(diagnostics.exploreProvider, { color: '#5f5e5a', mono: true })] },
+    { cells: [vm.cell('Category quality gate', { weight: 600 }), vm.cell(categoryQuality.qualityState === 'available' ? 'Available' : 'Withheld', { align: 'right', mono: true, weight: 600, color: categoryQuality.qualityState === 'available' ? COL.teal : COL.amber }), vm.cell(whole(categoryQuality.affectedRows) + ' affected rows · ' + money(categoryQuality.affectedAnnualValue), { color: '#5f5e5a' })] },
     { cells: [vm.cell('Vendors under contract', { weight: 600 }), vm.cell(String(summary.vendorCount), { align: 'right', mono: true, weight: 600 }), vm.cell('source.vendor_contract_portfolio', { color: '#5f5e5a', mono: true })] },
     { cells: [vm.cell('Contracts and SOWs', { weight: 600 }), vm.cell(String(summary.contractCount), { align: 'right', mono: true, weight: 600 }), vm.cell('source.contract_360', { color: '#5f5e5a', mono: true })] },
     { cells: [vm.cell('Annual contract value', { weight: 600 }), vm.cell(money(summary.totalAnnualValue), { align: 'right', mono: true, weight: 600, color: COL.ink }), vm.cell('source.contract_360.annual_value', { color: '#5f5e5a', mono: true })] },
@@ -539,6 +551,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     evidence: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level',
     sourceV4: {
       datasetId: v4Snapshot.datasetId,
+      datasetLabel: v4Snapshot.datasetLabel,
+      datasetVersion: v4Snapshot.datasetVersion,
+      analyticsProvider: v4Snapshot.analyticsProvider,
+      activeLoadRunId: v4Snapshot.activeLoadRunId,
       asOf: fmtDate(v4Snapshot.asOfDateIso),
       availableLenses: availableV4Lenses,
       unavailableLenses: unavailableV4Lenses,
@@ -599,6 +615,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         annualValue: money(vendor.annualValue),
         contractCount: vendor.contractCount,
       })),
+      workspaceDiagnostics: diagnostics,
+      categoryQuality: {
+        state: categoryQuality.qualityState,
+        message: categoryQuality.qualityMessage,
+        affectedRows: categoryQuality.affectedRows,
+        affectedValue: money(categoryQuality.affectedAnnualValue),
+        effectiveCategoryRule: 'Group by effective_category only. Do not auto-substitute suggested_category until reviewed.',
+      },
     },
   };
   const avaSuggestedActions = (kind === 'contract' ? [
@@ -606,7 +630,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   ] : kind === 'vendor' ? [
     ['renewal-exposure', 'Show renewal exposure for this vendor'], ['evidence-gaps', 'What evidence is missing?'],
   ] : [
-    ['renewal-exposure', 'Show the top renewal exposures by annual value'], ['concentration', 'Why is concentration not the binding constraint?'], ['evidence-gaps', 'What evidence is missing?'],
+    ['renewal-exposure', 'Show the top renewal exposures by annual value'], ['concentration', 'Why is concentration not the binding constraint?'], ['taxonomy-exceptions', 'Explain taxonomy exceptions'], ['evidence-gaps', 'What evidence is missing?'],
   ]).map((s) => ({ id: s[0], label: s[1], body: s[1] }));
 
   return {
@@ -633,7 +657,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     isPortfolioContext: kind === 'portfolio' && activeTab === 'Context', leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
     statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
-    sourceV4ProofCards, sourceV4DatasetId: v4Snapshot.datasetId, sourceV4AsOf: fmtDate(v4Snapshot.asOfDateIso),
+    sourceV4ProofCards, sourceV4DatasetId: v4Snapshot.datasetId, sourceV4AsOf: fmtDate(v4Snapshot.asOfDateIso), dataLayerDiagnostics: diagnostics, categoryQuality,
 
     isExplore: kind === 'portfolio' && activeTab === 'Explore', ex: vm.explore(rows), pinSlice: () => vm.pin('Saved cut', 'Saved cut', 'Governed query'),
     isConc: kind === 'portfolio' && activeTab === 'Concentration', pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,

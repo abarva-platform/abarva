@@ -146,8 +146,13 @@ export function WorkspaceClient({
         <span>
           {portfolio.isEmpty
             ? 'source.contract_360 returned no rows for tenant_key=' + (portfolio.tenantKey || '(none)') + ' — nothing below is estimated in its place.'
-            : 'Governed Source V4 semantic snapshot · dataset=' + portfolio.v4Snapshot.datasetId + ' · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+            : portfolio.workspaceDiagnostics.datasetLabel + ' · provider=' + portfolio.workspaceDiagnostics.analyticsProvider + ' · contracts/vendors=' + portfolio.workspaceDiagnostics.v4ContractCount + '/' + portfolio.workspaceDiagnostics.v4VendorCount + ' · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
         </span>
+        {!portfolio.isEmpty && portfolio.workspaceDiagnostics.mismatchWarning ? (
+          <span style={{ color: '#ffcf8a' }}>
+            Explore projection={portfolio.workspaceDiagnostics.legacyContractCount}/{portfolio.workspaceDiagnostics.legacyVendorCount}
+          </span>
+        ) : null}
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexShrink: 0 }}>
           <button onClick={() => { window.location.href = '/source/portfolio'; }} style={{ border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             Sourcing events ↗

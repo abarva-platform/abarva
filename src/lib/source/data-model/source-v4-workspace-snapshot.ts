@@ -28,6 +28,10 @@ export interface SourceV4SliceAvailability {
 
 export interface SourceV4WorkspaceSnapshot {
   readonly datasetId: string;
+  readonly datasetVersion: "v4";
+  readonly datasetLabel: "SkyHarbor Source v4";
+  readonly analyticsProvider: "CubeSourceProvider";
+  readonly activeLoadRunId: string | null;
   readonly asOfDateIso: string;
   readonly availability: readonly SourceV4SliceAvailability[];
   readonly contextCoverage: {
@@ -129,6 +133,10 @@ export function createEmptySourceV4WorkspaceSnapshot(
 ): SourceV4WorkspaceSnapshot {
   return {
     datasetId: SOURCE_V4_CUBE_DATASET_ID,
+    datasetVersion: "v4",
+    datasetLabel: "SkyHarbor Source v4",
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: null,
     asOfDateIso,
     availability: [
       availability("executive_portfolio", "missing", 0),
@@ -223,6 +231,7 @@ export async function loadSourceV4WorkspaceSnapshot(
     rateCards,
     sourcingEvents,
     scope,
+    metadata,
   ] = await Promise.all([
     safeQuery<NumericRow>(
       tenantKey,
@@ -362,6 +371,13 @@ export async function loadSourceV4WorkspaceSnapshot(
          FROM consumption_v4_canary.sourcing_contract_scope_v1
         WHERE tenant_key = ANY($1::text[])`,
     ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          MAX(load_run_id) AS active_load_run_id
+         FROM consumption_v4_canary.sourcing_contract_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
   ]);
 
   const contextRow = firstRow(context);
@@ -373,9 +389,14 @@ export async function loadSourceV4WorkspaceSnapshot(
   const rateCardRow = firstRow(rateCards);
   const sourcingEventRow = firstRow(sourcingEvents);
   const scopeRow = firstRow(scope);
+  const metadataRow = firstRow(metadata);
 
   return {
     datasetId: SOURCE_V4_CUBE_DATASET_ID,
+    datasetVersion: "v4",
+    datasetLabel: "SkyHarbor Source v4",
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: nullableString(metadataRow?.active_load_run_id),
     asOfDateIso,
     availability: [
       availability(

@@ -6,6 +6,7 @@ import type {
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
+import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
 import {
   createEmptySourceV4WorkspaceSnapshot,
   type SourceV4WorkspaceSnapshot,
@@ -24,7 +25,7 @@ function contractRow(
 ): SourceContract360Row {
   return {
     tenant_key: "skyharbor_global",
-    vendor_ref: "v-default",
+    vendor_ref: "vendor-default",
     vendor_name: "Default Vendor",
     vendor_category: null,
     contract_name: "Default Contract",
@@ -84,19 +85,19 @@ function vendorRow(
 const CONTRACTS: SourceContract360Row[] = [
   contractRow({
     contract_id: "c1",
-    vendor_ref: "v1",
+    vendor_ref: "vendor-one",
     vendor_name: "Vendor One",
     annual_value: "50000000.00" as unknown as number,
   }),
   contractRow({
     contract_id: "c2",
-    vendor_ref: "v2",
+    vendor_ref: "vendor-two",
     vendor_name: "Vendor Two",
     annual_value: "35000000.00" as unknown as number,
   }),
   contractRow({
     contract_id: "c3",
-    vendor_ref: "v3",
+    vendor_ref: "vendor-three",
     vendor_name: "Vendor Three",
     annual_value: "42000000.00" as unknown as number,
   }),
@@ -104,17 +105,17 @@ const CONTRACTS: SourceContract360Row[] = [
 
 const VENDORS: SourceVendorContractPortfolioRow[] = [
   vendorRow({
-    vendor_ref: "v1",
+    vendor_ref: "vendor-one",
     vendor_name: "Vendor One",
     annual_value: "50000000.00" as unknown as number,
   }),
   vendorRow({
-    vendor_ref: "v2",
+    vendor_ref: "vendor-two",
     vendor_name: "Vendor Two",
     annual_value: "35000000.00" as unknown as number,
   }),
   vendorRow({
-    vendor_ref: "v3",
+    vendor_ref: "vendor-three",
     vendor_name: "Vendor Three",
     annual_value: "42000000.00" as unknown as number,
   }),
@@ -169,6 +170,23 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
   asOfDateIso: "2027-06-30T00:00:00Z",
   semanticLayer: sourceV4CubeUiCatalogForAgent(),
   v4Snapshot: V4_SNAPSHOT,
+  categoryQuality: evaluateContractCategoryQuality(CONTRACTS),
+  workspaceDiagnostics: {
+    datasetLabel: "SkyHarbor Source v4",
+    datasetId: "skyharbor-source-v4-202608",
+    datasetVersion: "v4",
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: "source-v4-load-20260803",
+    asOfDateIso: "2027-06-30T00:00:00Z",
+    v4ContractCount: 100,
+    v4VendorCount: 60,
+    legacyContractCount: CONTRACTS.length,
+    legacyVendorCount: VENDORS.length,
+    exploreProvider: "LegacySourceContract360Provider",
+    exploreMatchesV4: false,
+    mismatchWarning:
+      "Explore lens is reading 3 contracts / 3 vendors from source.contract_360 while the active Source V4 snapshot reports 100 contract families / 60 vendors.",
+  },
   contracts: CONTRACTS,
   vendors: VENDORS,
   applicationScope: [],
@@ -239,7 +257,7 @@ describe("buildViewModel numeric coercion", () => {
         contracts: [
           contractRow({
             contract_id: "c1",
-            vendor_ref: "v1",
+            vendor_ref: "vendor-one",
             vendor_name: "Vendor One",
             // Live-found bug (2026-08-04): a malformed/unresolved confidence
             // value from the data plane reached pct() as a non-numeric
@@ -362,5 +380,81 @@ describe("buildViewModel numeric coercion", () => {
         }),
       ]),
     );
+  });
+
+  it("keeps Explore selected-only by default after a vendor selection", () => {
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        tabs: { ...INITIAL_STATE.tabs, portfolio: "Explore" },
+        groupBy: "vendor",
+        slice: { vendor: ["Vendor One"] },
+      },
+      () => undefined,
+      PORTFOLIO,
+      "Airline Demo",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      ex: { groups: Array<{ label: string }>; chartSubtitle: string };
+    };
+
+    expect(built.ex.groups.map((group) => group.label)).toEqual([
+      "Vendor One",
+    ]);
+    expect(built.ex.chartSubtitle).toContain("compare-all is off");
+  });
+
+  it("shows peer groups only when Explore compare-all mode is explicit", () => {
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        tabs: { ...INITIAL_STATE.tabs, portfolio: "Explore" },
+        groupBy: "vendor",
+        compareExcluded: true,
+        slice: { vendor: ["Vendor One"] },
+      },
+      () => undefined,
+      PORTFOLIO,
+      "Airline Demo",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      ex: { groups: Array<{ label: string; share: string }> };
+    };
+
+    expect(built.ex.groups.map((group) => group.label)).toEqual([
+      "Vendor One",
+      "Vendor Three",
+      "Vendor Two",
+    ]);
+    expect(built.ex.groups.find((group) => group.label === "Vendor Two")?.share).toBe(
+      "excluded",
+    );
+  });
+
+  it("marks category-dependent Explore conclusions as withheld", () => {
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        tabs: { ...INITIAL_STATE.tabs, portfolio: "Explore" },
+        groupBy: "category",
+      },
+      () => undefined,
+      PORTFOLIO,
+      "Airline Demo",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      ex: {
+        quality: { state: string; message: string };
+        groups: Array<{ label: string; taxonomy: { flagged: boolean } }>;
+      };
+    };
+
+    expect(built.ex.quality.state).toBe("blocked");
+    expect(built.ex.quality.message).toMatch(/withheld pending review/i);
+    expect(built.ex.groups[0]?.label).toBe("Needs classification");
+    expect(built.ex.groups[0]?.taxonomy.flagged).toBe(true);
   });
 });

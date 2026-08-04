@@ -15,6 +15,10 @@ import type {
   SourceContractInitiativeDependencyRow,
   SourceVendorContractPortfolioRow,
 } from '@/lib/source/data-model/types';
+import {
+  NEEDS_CLASSIFICATION_CATEGORY,
+  type SourceContractCategorySemanticRow,
+} from '@/lib/source/data-model/contract-category-quality';
 import type { SourceWorkspacePortfolioData } from './live/portfolioAdapter';
 import type { Contract360Response } from './live/contractDetail';
 import { SVGT, fitText } from './svgText';
@@ -98,6 +102,7 @@ export interface WorkspaceState {
   quadrant: string | null;
   actionFilter: string;
   groupBy: string;
+  compareExcluded: boolean;
   slice: Record<string, string[]>;
   pins: Record<string, PinItem[]>;
   q: string;
@@ -121,6 +126,7 @@ export const INITIAL_STATE: WorkspaceState = {
   quadrant: null,
   actionFilter: 'all',
   groupBy: 'vendor',
+  compareExcluded: false,
   slice: {},
   pins: {},
   q: '',
@@ -144,6 +150,7 @@ export type Urgency = 'urgent' | 'action_required' | 'prepare' | 'monitor';
 
 export interface EnrichedContract {
   row: SourceContract360Row;
+  categoryQuality: SourceContractCategorySemanticRow;
   leverage: ContractLeverageEntry;
   noticePassed: boolean;
   active: boolean;
@@ -254,6 +261,7 @@ export class WorkspaceViewModel {
   enrich(): EnrichedContract[] {
     const rows = this.contracts();
     const leverageByContract = new Map(this.leverage().map((l) => [l.contractId, l]));
+    const categoryByContract = new Map(this.portfolio.categoryQuality.semanticRows.map((row) => [row.contract_id, row]));
     const passed90 = new Set(this.renewal(90).noticeDeadlinePassed.map((r) => r.contract_id));
     const win90 = new Set(this.renewal(90).expiringWithinWindow.map((r) => r.contract_id));
     const win180 = new Set(this.renewal(180).expiringWithinWindow.map((r) => r.contract_id));
@@ -273,7 +281,20 @@ export class WorkspaceViewModel {
       const noticeDate = end && row.notice_period_days != null ? new Date(end.getTime() - row.notice_period_days * DAY) : null;
       const dNot = noticeDate ? daysBetween(this.asOf, noticeDate) : dExp;
       const urgency: Urgency = noticePassed ? 'urgent' : win90.has(row.contract_id) ? 'action_required' : win180.has(row.contract_id) ? 'prepare' : 'monitor';
-      return { row, leverage, noticePassed, active, expiringWithin90: win90.has(row.contract_id), expiringWithin180: win180.has(row.contract_id), urgency, dExp, noticeDate, dNot };
+      const categoryQuality = categoryByContract.get(row.contract_id) ?? {
+        tenant_key: row.tenant_key,
+        contract_id: row.contract_id,
+        source_category: row.vendor_category,
+        suggested_category: null,
+        effective_category: row.vendor_category ?? NEEDS_CLASSIFICATION_CATEGORY,
+        category_quality_state: row.vendor_category ? 'suspect' : 'unclassified',
+        category_quality_reason: row.vendor_category ? 'Category quality has not been evaluated.' : 'No source category is available.',
+        category_review_status: 'not_reviewed',
+        category_reviewed_by_role: null,
+        category_reviewed_at: null,
+        category_rule_version: 'unknown',
+      } satisfies SourceContractCategorySemanticRow;
+      return { row, categoryQuality, leverage, noticePassed, active, expiringWithin90: win90.has(row.contract_id), expiringWithin180: win180.has(row.contract_id), urgency, dExp, noticeDate, dNot };
     });
   }
 
@@ -427,7 +448,7 @@ export class WorkspaceViewModel {
   dims() {
     return [
       { id: 'vendor', label: 'Vendor', get: (c: EnrichedContract) => c.row.vendor_name },
-      { id: 'category', label: 'Vendor category', get: (c: EnrichedContract) => c.row.vendor_category ?? 'Unresolved' },
+      { id: 'category', label: 'Effective category', get: (c: EnrichedContract) => c.categoryQuality.effective_category ?? NEEDS_CLASSIFICATION_CATEGORY },
       { id: 'urgency', label: 'Renewal urgency', get: (c: EnrichedContract) => this.urgLabel(c.urgency) },
       { id: 'benchmark', label: 'Benchmark clause', get: (c: EnrichedContract) => c.row.benchmarking_clause ?? 'Not verified' },
       { id: 'alternatives', label: 'Supplier alternatives', get: (c: EnrichedContract) => c.row.alternatives_available ?? 'Not assessed' },
@@ -474,12 +495,12 @@ export class WorkspaceViewModel {
   explore(allRows: EnrichedContract[]) {
     const S = this.state, dim = this.dimById(S.groupBy), slice = S.slice || {};
     const selRows = allRows.filter((c) => this.matches(c));
-    const base = allRows.filter((c) => this.matches(c, S.groupBy));
     const sel = slice[S.groupBy] || [];
     const total = selRows.reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0);
+    const groupRows = S.compareExcluded ? allRows : selRows;
     const bucket: Record<string, { all: EnrichedContract[]; live: EnrichedContract[] }> = {};
-    allRows.forEach((c) => { const v = dim.get(c); bucket[v] = bucket[v] || { all: [], live: [] }; bucket[v].all.push(c); });
-    base.forEach((c) => { const v = dim.get(c); bucket[v].live.push(c); });
+    groupRows.forEach((c) => { const v = dim.get(c); bucket[v] = bucket[v] || { all: [], live: [] }; bucket[v].all.push(c); });
+    selRows.forEach((c) => { const v = dim.get(c); bucket[v] = bucket[v] || { all: [], live: [] }; bucket[v].live.push(c); });
     const groups = Object.keys(bucket).map((v) => {
       // `base` (via matches(c, S.groupBy)) deliberately ignores the
       // currently-grouped dimension's OWN filter — correct for computing
@@ -494,17 +515,50 @@ export class WorkspaceViewModel {
       // apply correctly.
       const g = bucket[v], isSel = sel.indexOf(v) >= 0, live = g.live.length > 0 && (sel.length === 0 || isSel), list = live ? g.live : g.all;
       return { key: v, list, live, isSel, val: list.reduce((t, c) => t + (numberFromDb(c.row.annual_value) ?? 0), 0) };
-    }).sort((a, b) => (a.live === b.live ? b.val - a.val : a.live ? -1 : 1));
+    }).filter((g) => S.compareExcluded || g.live).sort((a, b) => (a.live === b.live ? b.val - a.val : a.live ? -1 : 1));
     const max = Math.max.apply(null, groups.map((g) => g.val).concat([1]));
     const liveTotal = groups.filter((g) => g.live).reduce((t, g) => t + g.val, 0);
+    const quality = this.portfolio.categoryQuality;
+    const categoryInView = S.groupBy === 'category' || Object.prototype.hasOwnProperty.call(slice, 'category');
+    const categoryGateState = quality.qualityState === 'available' ? 'available' : categoryInView ? 'blocked' : 'provisional';
     return {
       dimLabel: dim.label, contractCount: selRows.length, totalVal: money(total),
       groupCount: groups.filter((g) => g.live).length, excludedCount: groups.filter((g) => !g.live).length,
+      chartSubtitle: S.compareExcluded
+        ? groups.filter((g) => g.live).length + ' in selection · ' + groups.filter((g) => !g.live).length + ' excluded, shown for comparison'
+        : groups.filter((g) => g.live).length + ' in selection · compare-all is off',
+      modeBtns: [
+        {
+          label: 'Selected only', onClick: () => this.setState({ compareExcluded: false, tip: null }),
+          bg: S.compareExcluded ? '#fff' : '#0a0a0b', fg: S.compareExcluded ? '#5f5e5a' : '#fff', border: S.compareExcluded ? 'rgba(10,10,11,.16)' : '#0a0a0b',
+        },
+        {
+          label: 'Compare all', onClick: () => this.setState({ compareExcluded: true, tip: null }),
+          bg: S.compareExcluded ? '#0a0a0b' : '#fff', fg: S.compareExcluded ? '#fff' : '#5f5e5a', border: S.compareExcluded ? '#0a0a0b' : 'rgba(10,10,11,.16)',
+        },
+      ],
+      quality: {
+        state: categoryGateState,
+        message: quality.qualityMessage,
+        affectedRows: quality.affectedRows,
+        affectedValue: money(quality.affectedAnnualValue),
+        cleanRows: quality.cleanRows,
+        conflictedRows: quality.conflictedRows,
+        suspectRows: quality.suspectRows,
+        unclassifiedRows: quality.unclassifiedRows,
+        ruleVersion: quality.ruleVersion,
+        categoryInView,
+      },
       groups: groups.map((g) => ({
         key: g.key, label: g.key, value: money(g.val),
         share: liveTotal && g.live ? pct(g.val / liveTotal) : 'excluded', pct: Math.max(1.5, (g.val / max) * 100),
         count: g.list.length + (g.list.length === 1 ? ' contract' : ' contracts'),
         weak: Math.max.apply(null, g.list.map((c) => c.leverage.weakSignalCount).concat([0])) + ' of 4',
+        taxonomy: {
+          flagged: g.list.some((c) => c.categoryQuality.category_quality_state !== 'clean'),
+          states: Array.from(new Set(g.list.map((c) => c.categoryQuality.category_quality_state))).join(', '),
+          sourceCategories: Array.from(new Set(g.list.map((c) => c.categoryQuality.source_category ?? 'Unclassified'))).slice(0, 3).join(', '),
+        },
         labelColor: g.live ? '#0a0a0b' : '#b4b2a9', subColor: g.live ? '#888780' : '#c9c6bd',
         valueColor: g.live ? '#0a0a0b' : '#b4b2a9', track: g.live ? '#f1efe8' : '#f7f5f0', rowBg: g.isSel ? 'rgba(10,10,11,.05)' : 'transparent',
         fill: !g.live ? '#e4e1d8' : g.list.some((c) => c.noticePassed) ? COL.red : g.list.every((c) => c.leverage.weakSignalCount === 0) ? COL.teal : '#3d6ea8',
@@ -519,8 +573,8 @@ export class WorkspaceViewModel {
       boxes: ['category', 'urgency', 'benchmark', 'alternatives'].map((id) => this.listbox(allRows, id)),
       chips: Object.keys(slice).reduce<{ label: string; onClick: () => void }[]>((acc, dd) => acc.concat(slice[dd].map((v) => ({ label: this.dimById(dd).label + ' = ' + v, onClick: () => this.toggleValue(dd, v) }))), []),
       hasFilters: Object.keys(slice).length > 0, noFilters: Object.keys(slice).length === 0,
-      clearAll: () => this.setState({ slice: {}, tip: null }),
-      query: 'query = {\n  view:       "source.contract_360",\n  measure:    "annual_value",\n  dimension:  "' + S.groupBy + '",\n  as_of_date: "' + this.portfolio.asOfDateIso.slice(0, 10) + '",\n  tenant_key: "' + this.portfolio.tenantKey + '"\n}',
+      clearAll: () => this.setState({ slice: {}, compareExcluded: false, tip: null }),
+      query: 'query = {\n  view:       "source.contract_360",\n  provider:   "' + this.portfolio.workspaceDiagnostics.exploreProvider + '",\n  measure:    "annual_value",\n  dimension:  "' + S.groupBy + '",\n  category_dimension: "effective_category",\n  as_of_date: "' + this.portfolio.asOfDateIso.slice(0, 10) + '",\n  tenant_key: "' + this.portfolio.tenantKey + '"\n}',
     };
   }
 

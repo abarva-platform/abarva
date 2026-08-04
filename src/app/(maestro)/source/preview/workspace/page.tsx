@@ -6,6 +6,7 @@ import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
+import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
 import { loadSourceWorkspacePortfolio } from "./live/portfolioAdapter";
 
 export const metadata: Metadata = {
@@ -55,6 +56,7 @@ export default async function SourceWorkspacePreviewPage({
     ? SKYHARBOR_SYNTHETIC_AS_OF
     : new Date().toISOString();
   const asOfDateIso = params.asOf?.trim() || defaultAsOf;
+  const emptyV4Snapshot = createEmptySourceV4WorkspaceSnapshot(asOfDateIso);
 
   const portfolio = tenantKey
     ? await loadSourceWorkspacePortfolio(tenantKey, asOfDateIso)
@@ -62,7 +64,23 @@ export default async function SourceWorkspacePreviewPage({
         tenantKey: "",
         asOfDateIso,
         semanticLayer: sourceV4CubeUiCatalogForAgent(),
-        v4Snapshot: createEmptySourceV4WorkspaceSnapshot(asOfDateIso),
+        v4Snapshot: emptyV4Snapshot,
+        categoryQuality: evaluateContractCategoryQuality([]),
+        workspaceDiagnostics: {
+          datasetLabel: emptyV4Snapshot.datasetLabel,
+          datasetId: emptyV4Snapshot.datasetId,
+          datasetVersion: emptyV4Snapshot.datasetVersion,
+          analyticsProvider: emptyV4Snapshot.analyticsProvider,
+          activeLoadRunId: emptyV4Snapshot.activeLoadRunId,
+          asOfDateIso: emptyV4Snapshot.asOfDateIso,
+          v4ContractCount: 0,
+          v4VendorCount: 0,
+          legacyContractCount: 0,
+          legacyVendorCount: 0,
+          exploreProvider: "LegacySourceContract360Provider" as const,
+          exploreMatchesV4: true,
+          mismatchWarning: null,
+        },
         contracts: [],
         vendors: [],
         applicationScope: [],
