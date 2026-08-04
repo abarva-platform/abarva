@@ -421,13 +421,13 @@ async function reconcile(client, args, itemCount) {
     await client.query(
       `
     SELECT
-      (SELECT count(*)::int FROM information_schema.tables WHERE table_schema = $2 AND table_type = 'BASE TABLE' AND table_name <> '_column_map') AS raw_tables,
-      (SELECT coalesce(sum((xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM %I.%I WHERE _tenant_key = %L AND _dataset_id = %L', table_schema, table_name, $1, $3), false, true, '')))[1]::text::int), 0)
+      (SELECT count(*)::int FROM information_schema.tables WHERE table_schema = $2::text AND table_type = 'BASE TABLE' AND table_name <> '_column_map') AS raw_tables,
+      (SELECT coalesce(sum((xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM %I.%I WHERE _tenant_key = %L AND _dataset_id = %L', table_schema, table_name, $1::text, $3::text), false, true, '')))[1]::text::int), 0)
          FROM information_schema.tables
-        WHERE table_schema = $2 AND table_type = 'BASE TABLE' AND table_name <> '_column_map') AS raw_rows,
-      (SELECT count(*)::int FROM ${quoteIdent(CANARY_SCHEMA)}.sourcing_contract_v1 WHERE tenant_key = $1) AS contracts,
-      (SELECT count(*)::int FROM ${quoteIdent(CANARY_SCHEMA)}.sourcing_vendor_v1 WHERE tenant_key = $1) AS vendors,
-      (SELECT coalesce(sum(annual_value), 0)::numeric FROM ${quoteIdent(CANARY_SCHEMA)}.sourcing_contract_v1 WHERE tenant_key = $1) AS annual_value
+        WHERE table_schema = $2::text AND table_type = 'BASE TABLE' AND table_name <> '_column_map') AS raw_rows,
+      (SELECT count(*)::int FROM ${quoteIdent(CANARY_SCHEMA)}.sourcing_contract_v1 WHERE tenant_key = $1::text) AS contracts,
+      (SELECT count(*)::int FROM ${quoteIdent(CANARY_SCHEMA)}.sourcing_vendor_v1 WHERE tenant_key = $1::text) AS vendors,
+      (SELECT coalesce(sum(annual_value), 0)::numeric FROM ${quoteIdent(CANARY_SCHEMA)}.sourcing_contract_v1 WHERE tenant_key = $1::text) AS annual_value
     `,
       [args.tenantKey, RAW_SCHEMA, args.datasetId],
     )
