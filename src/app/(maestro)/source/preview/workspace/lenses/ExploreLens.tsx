@@ -31,6 +31,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
           <div style={{ flex: '0 1 112px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.affectedRows}</b> affected rows</div>
           <div style={{ flex: '0 1 132px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.affectedValue}</b> affected value</div>
           <div style={{ flex: '0 1 96px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#a32d2d', fontSize: 15 }}>{ex.quality.conflictedRows}</b> conflicts</div>
+          <div style={{ flex: '0 1 118px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.cleanValuePct}</b> clean value</div>
           <div style={{ flex: '0 1 180px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#888780', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ex.quality.ruleVersion}</div>
         </div>
       ) : null}

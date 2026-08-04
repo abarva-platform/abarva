@@ -78,6 +78,9 @@ describe("contract category semantic quality", () => {
     ]);
 
     expect(summary.qualityState).toBe("blocked");
+    expect(summary.authorityGate).toBe("blocked");
+    expect(summary.categoryCleanContractPct).toBe(0);
+    expect(summary.categoryCleanValuePct).toBe(0);
     expect(summary.conflictedRows).toBe(1);
     expect(summary.semanticRows[0]).toEqual(
       expect.objectContaining({
@@ -85,7 +88,12 @@ describe("contract category semantic quality", () => {
         suggested_category: "Cybersecurity",
         effective_category: NEEDS_CLASSIFICATION_CATEGORY,
         category_quality_state: "conflicted",
+        category_quality_reasons: [
+          "Source category Application managed services conflicts with evidence signal Cybersecurity.",
+        ],
         category_review_status: "not_reviewed",
+        review_status: "not_reviewed",
+        review_ref: null,
       }),
     );
   });
@@ -101,6 +109,9 @@ describe("contract category semantic quality", () => {
     ]);
 
     expect(summary.qualityState).toBe("available");
+    expect(summary.authorityGate).toBe("primary_ready");
+    expect(summary.categoryCleanContractPct).toBe(1);
+    expect(summary.categoryCleanValuePct).toBe(1);
     expect(summary.semanticRows[0]?.effective_category).toBe("Data platform");
   });
 });

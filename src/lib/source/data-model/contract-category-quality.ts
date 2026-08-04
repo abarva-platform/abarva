@@ -20,7 +20,10 @@ export interface SourceContractCategorySemanticRow {
   readonly effective_category: string | null;
   readonly category_quality_state: SourceCategoryQualityState;
   readonly category_quality_reason: string;
+  readonly category_quality_reasons: readonly string[];
   readonly category_review_status: "not_reviewed" | "reviewed";
+  readonly review_status: "not_reviewed" | "reviewed";
+  readonly review_ref: string | null;
   readonly category_reviewed_by_role: string | null;
   readonly category_reviewed_at: string | null;
   readonly category_rule_version: string;
@@ -45,9 +48,17 @@ export interface SourceContractCategoryQualitySummary {
   readonly affectedRows: number;
   readonly affectedAnnualValue: number;
   readonly cleanRows: number;
+  readonly cleanOrReviewedRows: number;
   readonly conflictedRows: number;
   readonly suspectRows: number;
   readonly unclassifiedRows: number;
+  readonly reviewedRows: number;
+  readonly categoryCleanContractPct: number;
+  readonly categoryCleanValuePct: number;
+  readonly categoryConflictedContractCount: number;
+  readonly categoryUnclassifiedContractCount: number;
+  readonly categoryReviewedCount: number;
+  readonly authorityGate: "lab_warning" | "primary_ready" | "blocked";
   readonly qualityState: "available" | "provisional" | "blocked";
   readonly qualityMessage: string;
   readonly semanticRows: readonly SourceContractCategorySemanticRow[];
@@ -156,14 +167,32 @@ export function evaluateContractCategoryQuality(
     });
   const totalAnnualValue = rows.reduce((total, row) => total + (numberFromDb(row.annual_value) ?? 0), 0);
   const affectedAnnualValue = issues.reduce((total, issue) => total + issue.annualValue, 0);
+  const cleanOrReviewedRows = semanticRows.filter((row) =>
+    ["clean", "reviewed_confirmed", "reviewed_corrected"].includes(row.category_quality_state),
+  );
+  const cleanOrReviewedValue = cleanOrReviewedRows.reduce((total, row) => {
+    const source = byId.get(row.contract_id);
+    return total + (numberFromDb(source?.annual_value) ?? 0);
+  }, 0);
   const affectedShare = totalAnnualValue > 0 ? affectedAnnualValue / totalAnnualValue : 0;
   const affectedRowShare = rows.length > 0 ? issues.length / rows.length : 0;
+  const cleanContractPct = rows.length > 0 ? cleanOrReviewedRows.length / rows.length : 1;
+  const cleanValuePct = totalAnnualValue > 0 ? cleanOrReviewedValue / totalAnnualValue : 1;
+  const conflictedRows = semanticRows.filter((row) => row.category_quality_state === "conflicted").length;
+  const unclassifiedRows = semanticRows.filter((row) => row.category_quality_state === "unclassified").length;
+  const reviewedRows = semanticRows.filter((row) => row.category_review_status === "reviewed").length;
   const qualityState =
     issues.length === 0
       ? "available"
       : affectedShare >= 0.2 || affectedRowShare >= 0.2
         ? "blocked"
         : "provisional";
+  const authorityGate =
+    cleanContractPct >= 0.9 && cleanValuePct >= 0.95 && conflictedRows === 0
+      ? "primary_ready"
+      : qualityState === "blocked"
+        ? "blocked"
+        : "lab_warning";
 
   return {
     ruleVersion: SOURCE_CATEGORY_RULE_VERSION,
@@ -172,9 +201,17 @@ export function evaluateContractCategoryQuality(
     affectedRows: issues.length,
     affectedAnnualValue,
     cleanRows: semanticRows.filter((row) => row.category_quality_state === "clean").length,
-    conflictedRows: semanticRows.filter((row) => row.category_quality_state === "conflicted").length,
+    cleanOrReviewedRows: cleanOrReviewedRows.length,
+    conflictedRows,
     suspectRows: semanticRows.filter((row) => row.category_quality_state === "suspect").length,
-    unclassifiedRows: semanticRows.filter((row) => row.category_quality_state === "unclassified").length,
+    unclassifiedRows,
+    reviewedRows,
+    categoryCleanContractPct: cleanContractPct,
+    categoryCleanValuePct: cleanValuePct,
+    categoryConflictedContractCount: conflictedRows,
+    categoryUnclassifiedContractCount: unclassifiedRows,
+    categoryReviewedCount: reviewedRows,
+    authorityGate,
     qualityState,
     qualityMessage:
       qualityState === "available"
@@ -189,6 +226,7 @@ function categorySemanticRow(row: SourceContract360Row): SourceContractCategoryS
   const sourceCategory = normalizeContractCategory(row.vendor_category);
   const suggestedCategory = inferContractCategorySignal(row);
   const state = categoryQualityState(sourceCategory, suggestedCategory);
+  const reason = categoryQualityReason(state, sourceCategory, suggestedCategory);
   const effectiveCategory = state === "clean" ? sourceCategory : NEEDS_CLASSIFICATION_CATEGORY;
 
   return {
@@ -198,8 +236,11 @@ function categorySemanticRow(row: SourceContract360Row): SourceContractCategoryS
     suggested_category: suggestedCategory,
     effective_category: effectiveCategory,
     category_quality_state: state,
-    category_quality_reason: categoryQualityReason(state, sourceCategory, suggestedCategory),
+    category_quality_reason: reason,
+    category_quality_reasons: [reason],
     category_review_status: "not_reviewed",
+    review_status: "not_reviewed",
+    review_ref: null,
     category_reviewed_by_role: null,
     category_reviewed_at: null,
     category_rule_version: SOURCE_CATEGORY_RULE_VERSION,

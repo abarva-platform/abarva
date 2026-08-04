@@ -12,6 +12,8 @@
 
 Source Workspace now distinguishes the active Source V4 semantic snapshot from the legacy Explore projection, shows dataset/provider/count diagnostics in the product, defaults Explore charts to selected-only behavior, and withholds category-based conclusions when category assignments conflict with contract evidence.
 
+This is a semantic safety and governance layer. It does not yet correct the upstream category feed; the next lane must regenerate or repair the Source V4 category assignments and publish the same effective-category contract into the shared semantic layer.
+
 ## Layer Impact
 
 - **global-control-lane / Canonical model:** adds an append-only governance review ledger for contract category decisions. It preserves source-system categories and records reviewed effective-category overrides.
@@ -36,6 +38,8 @@ Source Workspace now distinguishes the active Source V4 semantic snapshot from t
 - `src/app/(maestro)/source/preview/workspace/lenses/ExploreLens.tsx`
 - `supabase/migrations/20260804173000_source_contract_category_review_semantic.sql`
 
+The semantic contract now carries source category, suggested category, effective category, category quality state, category quality reasons, review status, review reference, reviewer role/time, rule version, and category-authority threshold metrics.
+
 ## QA / Validation
 
 - Pass - `npx eslint` on changed Source workspace and category-quality files.
@@ -47,7 +51,17 @@ Source Workspace now distinguishes the active Source V4 semantic snapshot from t
 
 ## Rollout Plan
 
-Merge to main after validation. The migration can be applied in lab as part of the governed data-plane release path. Use lab preview for Source Workspace proof. Do not promote category-based Source conclusions to the primary experience until the active Source V4/Cube feed emits the shared category quality fields.
+Merge to main after validation. Use the controlled lab path:
+
+1. Run full CI, migration replay, and release gates.
+2. Merge to main.
+3. Deploy the web image through the repo-owned deployment workflow.
+4. Apply the additive category-review migration through the approved operator path.
+5. Verify migration/read compatibility.
+6. Run signed-in Source browser proof.
+7. Keep release status as candidate/lab-preview.
+
+Do not promote category-based Source conclusions to the primary experience until the active Source V4/Cube feed emits the shared category quality fields.
 
 ## Deployment Authority
 
@@ -70,3 +84,5 @@ Inspect the PR diff, validation output, release-check output, and signed-in Sour
 ## Known Gaps
 
 The Source V4/Cube feed still needs to emit `source_category`, `suggested_category`, `effective_category`, `category_quality_state`, `category_quality_reason`, `category_review_status`, `category_reviewed_by_role`, `category_reviewed_at`, and `category_rule_version` directly. Until then, category recommendations remain withheld.
+
+Primary executive Source should require at least 90% of contracts clean or reviewed, at least 95% of annual value clean or reviewed, and zero unacknowledged high-value category conflicts before category-based recommendations are enabled.
