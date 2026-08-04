@@ -217,6 +217,9 @@ export function towerMartMoney(value: number): string {
 export async function loadTowerMartCommandView(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
 }): Promise<TowerMartCommandViewModel | null> {
+  void args;
+  return null;
+/*
   const tenantKeys = Array.from(
     new Set(
       args.tenantKeyCandidates
@@ -491,4 +494,5 @@ export async function loadTowerMartCommandView(args: {
   }
 
   return null;
+*/
 }

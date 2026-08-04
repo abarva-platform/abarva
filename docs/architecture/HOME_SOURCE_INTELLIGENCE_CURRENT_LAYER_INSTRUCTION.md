@@ -2,7 +2,7 @@
 
 ## Decision
 
-Retired V6 and V7 context layers must not be silent runtime fallbacks for Home, Source, Intelligence, or aVa. Product surfaces should read current governed Postgres context and the Source V4/Cube semantic layer. If current context is unavailable, the product must return a visible evidence gap or handoff, not fall back to retired packs.
+Retired V6, V7, and CIO Tower layers must not be silent runtime fallbacks for Home, Source, Intelligence, Tower, or aVa. Product surfaces should read current governed Postgres context, the current Tower `tower.*` semantic read model, and the Source V4/Cube semantic layer. If current context is unavailable, the product must return a visible evidence gap or handoff, not fall back to retired packs.
 
 ## Home aVa
 
@@ -35,11 +35,19 @@ Retired V6 and V7 context layers must not be silent runtime fallbacks for Home, 
 - Intelligence must not retrieve from `intelligence_v6` or `intelligence_v7` for active current-state answers once the current semantic dossier and Source V4 packet are available.
 - If the current semantic dossier or Source V4 packet is unavailable, Intelligence should say which evidence slice is missing and ask for refresh/load/signoff, rather than falling back to retired pack content.
 
+## Tower Pages and Tower aVa
+
+- Tower UI and Tower aVa should treat `tower.*` as the current governed Tower semantic read model.
+- Tower should use Source V4/Cube only for Source-owned commercial evidence: vendor contracts, renewals, invoices, service credits, SaaS/tool usage, cloud cost, rate cards and sourcing events.
+- Tower must not read `cio_tower.*`, `intelligence_v6`, or `intelligence_v7` for active answers.
+- If a Tower metric, observation, claim state or provenance record is missing from `tower.*`, Tower should report the missing measurement/evidence gate. It must not backfill from retired CIO Tower mart/fact tables.
+- Developer-productivity, ServiceNow-agent and Workday-agent claims require before/after metric observations in `tower.metric_observation`, value claims in `tower.value_claim`, and provenance/attestation in `tower.metric_provenance`. Usage alone is not productivity improvement.
+
 ## Physical Purge Procedure
 
 Do not drop old schemas or files directly from a product PR. Run a separate operator/data-plane purge with these gates:
 
-1. Inventory all code imports and SQL references to `v6-home-*`, `v7-home-*`, `intelligence_v6`, and `intelligence_v7`.
+1. Inventory all code imports and SQL references to `v6-home-*`, `v7-home-*`, `intelligence_v6`, `intelligence_v7`, and `cio_tower`.
 2. Remove or gate product read paths first; deploy and prove no product route calls them.
 3. Export counts and checksums for any old database objects that will be archived or dropped.
 4. Capture signed-off dependency proof showing zero active product consumers.
@@ -48,7 +56,7 @@ Do not drop old schemas or files directly from a product PR. Run a separate oper
 
 ## Do Not Do
 
-- Do not silently query V6/V7 because a current table is empty.
+- Do not silently query V6/V7/CIO Tower because a current table is empty.
 - Do not make Home own Source data.
 - Do not let Intelligence recalculate governed Source metrics unless the task is an audit.
 - Do not turn missing productivity, finance or legal validation into zero-dollar value.

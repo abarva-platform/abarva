@@ -37,10 +37,10 @@ import {
 import { resolveTowerToday } from "@/lib/tower/today-resolution";
 import { selectAtlasPatterns } from "@/lib/tower/atlas-pattern-selectors";
 import {
-  answerCioTowerQuestion,
   canonicalCioTowerTenantKey,
-} from "@/lib/cio-tower/answer";
+} from "@/lib/cio-tower/metric-packet";
 import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 import type {
   AtlasChatResponse,
   AtlasDebugTrace,
@@ -240,7 +240,7 @@ async function runGovernedCioTowerTurn(input: {
     }) ??
     towerState.client.clientName ??
     tenantKey;
-  const answer = await answerCioTowerQuestion({
+  const answer = await answerCurrentTowerQuestion({
     tenantId: input.ctx.clientId,
     userId: input.ctx.userId,
     tenantKey,
@@ -270,7 +270,7 @@ async function runGovernedCioTowerTurn(input: {
       ],
       signalId: null,
       observationId: null,
-      toolsUsed: ["query_tower_current_state", "answer_cio_tower_question"],
+      toolsUsed: ["query_tower_current_state", "answer_current_tower_question"],
       atlasMode: "live",
       fallbackReason: null,
       debugTrace: wantsDebugTrace(input.surfaceContext)

@@ -30,7 +30,6 @@ import {
 } from "@/lib/tower/tower-budget-rollups";
 import { listMaterializedTowerReadModelForClient } from "@/lib/tower/tower-materialized-read-model";
 import { resolveTowerToday } from "@/lib/tower/today-resolution";
-import { loadV7TowerProjection } from "@/lib/tower/v7-tower-projection";
 import {
   canonicalTenantDisplayName,
   canonicalTenantKey,
@@ -333,7 +332,7 @@ export async function buildAtlasTowerCurrentState(input: {
     listInitiativesForClient(input.clientId),
     listVendorsForClient(input.clientId),
   ]);
-  const [materialized, loadedBudgetRollups, v7Projection] = await Promise.all([
+  const [materialized, loadedBudgetRollups] = await Promise.all([
     listMaterializedTowerReadModelForClient({
       clientId: input.clientId,
       tenantKey: client.tenantKey,
@@ -346,22 +345,6 @@ export async function buildAtlasTowerCurrentState(input: {
       clientId: input.clientId,
       tenantKey: client.tenantKey,
     }).catch(() => []),
-    loadV7TowerProjection({
-      tenantKeyCandidates: [
-        ...(input.tenantKeyCandidates ?? []),
-        client.tenantKey,
-        client.clientName,
-        input.clientKey,
-        input.clientName,
-        input.clientId,
-      ],
-    }).catch(() => ({
-      tenantKey: null,
-      source: "empty" as const,
-      initiatives: [],
-      vendors: [],
-      metricPackets: [],
-    })),
   ]);
   const materializedHasProgramValue = materialized.initiatives.some(
     (initiative) =>
@@ -374,13 +357,9 @@ export async function buildAtlasTowerCurrentState(input: {
   );
   const towerInitiatives = materialized.initiatives.length && materializedHasProgramValue
     ? materialized.initiatives
-    : v7Projection.initiatives.length
-      ? v7Projection.initiatives
     : initiatives;
   const towerVendors = materialized.vendors.length && materializedHasVendorValue
     ? materialized.vendors
-    : v7Projection.vendors.length
-      ? v7Projection.vendors
     : vendors;
   const budgetRollups = towerInitiatives.length
     ? resolveTowerBudgetRollups(

@@ -11,7 +11,6 @@ import { generateFollowups, normalizeGeneratedFollowup } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
 import { retrieveRetailOverlaySources } from "./retrievers/retail-overlay";
-import { retrieveV7DossierSources } from "./retrievers/v7-dossier";
 import {
   retrieveTenantEnterpriseSources,
   retrieveTenantStructuredFacts,
@@ -280,20 +279,13 @@ export async function* askIntelligence(
       };
       return;
     }
-    // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
-    const v7DossierStartedAt = Date.now();
-    const v7Dossier = await retrieveV7DossierSources(trimmed, {
-      tenantInventoryKey:
-        opts.tenant?.appClientKey ??
-        opts.tenantInventoryKey ??
-        opts.tenantClientKey,
-      surfaceContext: opts.surfaceContext,
-    });
     emitTiming(
-      trace.finish("retrieval.context_dossier.done", v7DossierStartedAt, {
-        sourceCount: v7Dossier.sources.length,
+      trace.mark("retrieval.context_dossier.disabled", {
+        sourceCount: 0,
+        reason: "retired_v6_v7_layers_disabled",
       }),
     );
+    // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
     const tenantEnterpriseStartedAt = Date.now();
     const tenantEnterprise = await retrieveTenantEnterpriseSources(
       opts.tenant ?? opts.tenantInventoryKey,
@@ -402,7 +394,13 @@ export async function* askIntelligence(
     );
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 9 : 18;
-    const hasActiveV7Dossier = v7Dossier.sources.length > 0;
+    const currentTenantSources = [
+      ...tenantStructuredFacts,
+      ...tenantEnterprise,
+      ...tenantTechnology,
+      ...routed.sources,
+      ...worldview.sources,
+    ];
     const clientGroundingPacket = buildClientGroundingPacketSource({
       query: trimmed,
       tenantKey:
@@ -411,31 +409,14 @@ export async function* askIntelligence(
         opts.tenant?.appClientKey ??
         opts.surfaceContext?.clientKey,
       tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
-      sources: [
-        ...v7Dossier.sources,
-        ...tenantStructuredFacts,
-        ...tenantEnterprise,
-        ...tenantTechnology,
-        ...routed.sources,
-        ...worldview.sources,
-      ],
+      sources: currentTenantSources,
     });
-    const legacyTenantSources = hasActiveV7Dossier
-      ? []
-      : [
-          ...tenantStructuredFacts,
-          ...tenantEnterprise,
-          ...tenantTechnology,
-          ...routed.sources,
-          ...worldview.sources,
-        ];
     const rawSources: AskSource[] = [
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
       ...(clientGroundingPacket ? [clientGroundingPacket] : []),
-      ...v7Dossier.sources,
       ...retailOverlay,
-      ...legacyTenantSources,
+      ...currentTenantSources,
     ].slice(0, sourceLimit);
     const selectedSources = conciseAsk
       ? compactSourceDetailsForConciseAsk(rawSources)
@@ -453,14 +434,8 @@ export async function* askIntelligence(
         retiredSourceSuppressedCount: sourceSafety.findings.length,
         sourceLimit,
         clientGroundingPacket: Boolean(clientGroundingPacket),
-        v7DossierDominant: hasActiveV7Dossier,
-        suppressedLegacySourceCount: hasActiveV7Dossier
-          ? tenantStructuredFacts.length +
-            tenantEnterprise.length +
-            tenantTechnology.length +
-            routed.sources.length +
-            worldview.sources.length
-          : 0,
+        v7DossierDominant: false,
+        suppressedLegacySourceCount: 0,
       }),
     );
     const averageConfidence =
