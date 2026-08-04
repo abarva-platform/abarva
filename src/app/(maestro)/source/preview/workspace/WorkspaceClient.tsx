@@ -148,11 +148,19 @@ export function WorkspaceClient({
             ? 'source.contract_360 returned no rows for tenant_key=' + (portfolio.tenantKey || '(none)') + ' — nothing below is estimated in its place.'
             : 'Governed source.contract_360 · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
         </span>
-        {vm.isNarrow ? (
-          <button onClick={vm.toggleDrawer} style={{ marginLeft: 'auto', border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            Explorer
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button onClick={() => { window.location.href = '/source/portfolio'; }} style={{ border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            Sourcing events ↗
           </button>
-        ) : null}
+          <button onClick={() => { window.location.href = '/source/new'; }} style={{ border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            New event ↗
+          </button>
+          {vm.isNarrow ? (
+            <button onClick={vm.toggleDrawer} style={{ border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Explorer
+            </button>
+          ) : null}
+        </span>
       </div>
 
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: vm.shellCols, minHeight: 0 }}>
