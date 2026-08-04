@@ -1,4 +1,8 @@
-import { comparePage, type CrawlPageObservation } from "../baseline-compare";
+import {
+  comparePage,
+  isAuthAutomationBlockMessage,
+  type CrawlPageObservation,
+} from "../baseline-compare";
 import {
   resolveCrawlPersonas,
   resolveCrawlSurfaces,
@@ -57,7 +61,7 @@ describe("post-deploy crawl guard", () => {
       resolveCrawlPersonas("agent-firstcapital").map(
         (persona) => persona.tenantName,
       ),
-    ).toEqual(["Financial Services Demo"]);
+    ).toEqual(["FS Demo"]);
   });
 
   it("includes the Admin Data Layer Explorer as a directly targetable crawl surface", () => {
@@ -206,5 +210,18 @@ describe("post-deploy crawl guard", () => {
         dimension: "auth-bootstrap",
       }),
     ]);
+  });
+
+  it("detects Clerk automation blocks separately from product failures", () => {
+    expect(
+      isAuthAutomationBlockMessage(
+        "page.evaluate: e: You have been banned. If you think this was by mistake, please contact support.",
+      ),
+    ).toBe(true);
+    expect(
+      isAuthAutomationBlockMessage(
+        "Signed-in browser did not land on /admin/candidate-preview.",
+      ),
+    ).toBe(false);
   });
 });

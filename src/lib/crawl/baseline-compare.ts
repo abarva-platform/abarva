@@ -112,6 +112,13 @@ const CLERK_DEV_BROWSER_CORS_PATTERNS = [
   /blocked by CORS policy/i,
 ] as const;
 const RESOURCE_FAILED_PATTERN = /Failed to load resource: net::ERR_FAILED/i;
+const AUTH_AUTOMATION_BLOCK_PATTERNS = [
+  /you have been banned/i,
+  /bot detection/i,
+  /automation(?:.*?)blocked/i,
+  /blocked(?:.*?)auth(?:entication)?(?:.*?)bootstrap/i,
+  /clerk(?:.*?)banned/i,
+] as const;
 
 export function compareCrawlToBaseline(
   run: CrawlRun,
@@ -343,6 +350,12 @@ export function hasP0(comparison: CrawlComparison): boolean {
 
 export function summarizeComparison(comparison: CrawlComparison): string {
   return `${comparison.p0} P0 · ${comparison.p1} P1 · ${comparison.p2} P2 findings`;
+}
+
+export function isAuthAutomationBlockMessage(message: string): boolean {
+  return AUTH_AUTOMATION_BLOCK_PATTERNS.some((pattern) =>
+    pattern.test(message),
+  );
 }
 
 function findBaselinePage(

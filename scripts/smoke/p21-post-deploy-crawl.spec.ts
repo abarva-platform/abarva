@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   compareCrawlToBaseline,
+  isAuthAutomationBlockMessage,
   summarizeComparison,
   type CrawlRun,
 } from '../../src/lib/crawl/baseline-compare';
@@ -19,7 +20,7 @@ assert.equal(CRAWL_PERSONAS.length, 5);
 assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-northstar'), false);
 assert.equal(resolveCrawlPersonas('agent-apexretail')[0]?.tenantName, 'Retail Demo');
 assert.equal(resolveCrawlPersonas('agent-meridian')[0]?.tenantName, 'Healthcare Demo');
-assert.equal(resolveCrawlPersonas('agent-firstcapital')[0]?.tenantName, 'Financial Services Demo');
+assert.equal(resolveCrawlPersonas('agent-firstcapital')[0]?.tenantName, 'FS Demo');
 assert.ok(PRIMARY_CRAWL_SURFACES.length >= 22);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
 assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);
@@ -40,6 +41,10 @@ assert.doesNotMatch(postDeployWorkflow, /Run candidate preview focused crawl/);
 assert.doesNotMatch(postDeployWorkflow, /candidate-preview-crawl/);
 assert.match(postDeployHarness, /runCandidatePreviewProof/);
 assert.match(postDeployHarness, /candidatePreview/);
+assert.match(postDeployHarness, /isAuthAutomationBlockMessage/);
+assert.match(postDeployHarness, /candidate-preview-auth-bootstrap/);
+assert.equal(isAuthAutomationBlockMessage('page.evaluate: e: You have been banned.'), true);
+assert.equal(isAuthAutomationBlockMessage('Candidate preview page did not render.'), false);
 
 const run: CrawlRun = {
   runId: 'smoke',

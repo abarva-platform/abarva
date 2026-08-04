@@ -10,6 +10,7 @@ import {
 } from '../../src/lib/crawl/persona-switcher';
 import {
   compareCrawlToBaseline,
+  isAuthAutomationBlockMessage,
   type CrawlBaseline,
   type CrawlComparison,
   type CrawlPageObservation,
@@ -277,22 +278,29 @@ function buildCandidatePreviewFailureComparison(
   runId: string,
   error: unknown,
 ): CandidatePreviewComparison {
+  const message = error instanceof Error ? error.message : String(error);
+  const authAutomationBlocked = isAuthAutomationBlockMessage(message);
   return {
     runId,
-    p0: 1,
-    p1: 0,
+    p0: authAutomationBlocked ? 0 : 1,
+    p1: authAutomationBlocked ? 1 : 0,
     p2: 0,
     findings: [
       {
-        severity: 'P0',
+        severity: authAutomationBlocked ? 'P1' : 'P0',
         tenantKey: 'skyharbor-air',
         personaKey: 'agent-skyharbor',
         surfaceId: 'admin-candidate-preview',
-        dimension: 'candidate-preview-execution',
-        message:
-          error instanceof Error
-            ? error.message
-            : String(error),
+        dimension: authAutomationBlocked
+          ? 'candidate-preview-auth-bootstrap'
+          : 'candidate-preview-execution',
+        message: authAutomationBlocked
+          ? 'Candidate preview crawl could not establish an authenticated Clerk session; the product route was not reached.'
+          : message,
+        evidence: {
+          originalMessage: message,
+          authAutomationBlocked,
+        },
       },
     ],
   };
