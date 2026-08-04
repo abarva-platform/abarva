@@ -1,4 +1,4 @@
-# 2026-08-04-source-workspace-optimise-cta-and-fabrication-fix — Fix the "Select a contract to optimise" empty landing and a fabricated Cube-view claim
+# 2026-08-04-source-workspace-optimise-cta-and-fabrication-fix — Fix the "Select a contract to optimise" empty landing, a fabricated Cube-view claim, and restore sourcing-event navigation
 
 ## Release ID
 
@@ -26,6 +26,11 @@ Live review found two issues in the Source Workspace's contract-list surface:
    export aren't implemented in this table at all) and "Nineteen material contracts are projected in
    this environment" (a fabricated number matching no real bucket size, and self-contradicting
    whatever the table is actually showing). Both corrected to describe what the page actually does.
+3. Since last week's `/source` → Workspace promotion, there was no way to reach the sourcing-event
+   dashboard (`/source/portfolio` — events in flight, "New event", "Optimize a contract") from the new
+   canonical page at all. Per explicit direction, added a "Sourcing events" entry to the Explorer
+   sidebar with three external links to the existing, already-working pages
+   (`/source/portfolio`, `/source/new` × 2) — no rebuild of that flow inside the Workspace.
 
 ## Layer Impact
 
@@ -43,6 +48,11 @@ Live review found two issues in the Source Workspace's contract-list surface:
 - `lenses/ListLens.tsx`: replaced the false Cube-view/server-side-export claim and the fabricated
   "Nineteen material contracts" count with accurate text describing client-side filtering over the
   already-loaded governed register.
+- `buildViewModel.ts`: added a "Sourcing events" Explorer group with "Events dashboard" (→
+  `/source/portfolio`), "New event" (→ `/source/new`), and "Optimize a contract" (→ `/source/new`) —
+  plain `window.location.href` navigations (buildViewModel.ts is a non-component function, so it can't
+  call `useRouter()`; these leave the Workspace's page tree entirely rather than changing internal
+  `sel` state).
 
 ## QA / Validation
 
