@@ -4,7 +4,17 @@ import os from "node:os";
 import path from "node:path";
 import JSZip from "jszip";
 
-const OUT_DIR = "/Users/anand/Downloads";
+function argValue(name) {
+  const args = process.argv.slice(2);
+  const index = args.indexOf(name);
+  if (index >= 0) return args[index + 1];
+  return args.find((arg) => arg.startsWith(`${name}=`))?.slice(name.length + 1);
+}
+
+const OUT_DIR =
+  argValue("--out-dir") ||
+  process.env.SOURCE_V4_OUT_DIR ||
+  "/Users/anand/Downloads";
 const DATASET_ID = "skyharbor-source-v4-202608";
 const DATASET_VERSION = "v4";
 const TENANT_KEY = "skyharbor_global";
