@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createTenantGuardProxy } from "./cube-tenant-guard.mjs";
 
 const DEFAULTS = {
   CUBEJS_DB_TYPE: "postgres",
@@ -11,6 +12,9 @@ const DEFAULTS = {
   CUBEJS_DEFAULT_API_SCOPES: "meta,data,sql",
   CUBEJS_LOG_LEVEL: "warn",
 };
+
+const DEFAULT_PUBLIC_PORT = "4000";
+const DEFAULT_INTERNAL_PORT = "4001";
 
 function setDefault(name, value) {
   if (!process.env[name]) process.env[name] = value;
@@ -64,15 +68,39 @@ if (missing.length > 0) {
 }
 
 const args = process.argv.slice(2);
+const publicPort = process.env.PORT || DEFAULT_PUBLIC_PORT;
+const internalPort = process.env.SOURCE_CUBE_INTERNAL_PORT || DEFAULT_INTERNAL_PORT;
+if (publicPort === internalPort) {
+  console.error(`Cube tenant guard requires distinct public and internal ports; both are ${publicPort}.`);
+  process.exit(1);
+}
+const childEnv = {
+  ...process.env,
+  PORT: internalPort,
+};
+const guardProxy = createTenantGuardProxy({ publicPort, targetPort: internalPort });
+guardProxy.listen();
 const child = spawn("/usr/local/bin/docker-entrypoint.sh", args.length > 0 ? args : ["cubejs", "server"], {
-  env: process.env,
+  env: childEnv,
   stdio: "inherit",
 });
 
+function closeGuardProxy() {
+  guardProxy.close();
+}
+
 child.on("exit", (code, signal) => {
+  closeGuardProxy();
   if (signal) {
     process.kill(process.pid, signal);
     return;
   }
   process.exit(code ?? 0);
 });
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    child.kill(signal);
+    closeGuardProxy();
+  });
+}
