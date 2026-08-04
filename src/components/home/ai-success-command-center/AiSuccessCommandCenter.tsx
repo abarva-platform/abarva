@@ -172,10 +172,7 @@ export function AiSuccessCommandCenter({ data }: { data: AiSuccessHomeData }) {
                 <b>{data.moneyBars[0]?.valueLabel ?? "$2.35B"}</b>
                 <small>FY2027 budget</small>
               </span>
-              <Link
-                href="/intelligence/enterprise-landscape"
-                className={styles.openLink}
-              >
+              <Link href="/intelligence#enterprise-context" className={styles.openLink}>
                 Intelligence explorer
               </Link>
               <button
@@ -680,10 +677,7 @@ function ArchitectureCanvas({
             <span className={styles.eyebrow}>Detailed explorer</span>
             <h3>Evidence graph</h3>
           </div>
-          <Link
-            href="/intelligence/enterprise-landscape"
-            className={styles.secondaryLink}
-          >
+          <Link href="/intelligence#enterprise-context" className={styles.secondaryLink}>
             Open full explorer
           </Link>
         </div>
