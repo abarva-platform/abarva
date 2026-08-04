@@ -219,12 +219,24 @@ export async function ingestSourceCanvasFacts(
     );
   }
 
+  const factsWritten =
+    typeof payload.factsWritten === 'number' ? payload.factsWritten : 0;
+  const unmappedColumns = Array.isArray(payload.unmappedColumns)
+    ? payload.unmappedColumns
+    : [];
+  if (factsWritten === 0) {
+    const unmapped =
+      unmappedColumns.length > 0
+        ? ` Unread columns: ${unmappedColumns.slice(0, 6).join(', ')}.`
+        : '';
+    throw new Error(
+      `No facts were written from this template upload.${unmapped} Download the template for this step and keep its column headers unchanged.`,
+    );
+  }
+
   return {
-    factsWritten:
-      typeof payload.factsWritten === 'number' ? payload.factsWritten : 0,
-    unmappedColumns: Array.isArray(payload.unmappedColumns)
-      ? payload.unmappedColumns
-      : [],
+    factsWritten,
+    unmappedColumns,
     rejectedRowCount: Array.isArray(payload.rejectedRows)
       ? payload.rejectedRows.length
       : 0,

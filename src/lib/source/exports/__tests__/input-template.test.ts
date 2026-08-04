@@ -12,6 +12,7 @@ import {
   buildInputTemplateWorkbook,
   inputTemplateFilename,
 } from "@/lib/source/exports/input-template";
+import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
 
 const SAMPLE_EVENT = {
   eventCode: "SRC-2026-014",
@@ -77,21 +78,44 @@ describe("source input template", () => {
     expect(flat).not.toContain("tenant_key");
   });
 
-  it("gives structured requirements a real column shape, narrative ones a default", async () => {
-    const appInv = SOURCE_EVIDENCE_REQUIREMENTS.find(
-      (r) => r.requirementId === "EVID-SRC-SCOPE-APP-INV",
-    );
-    if (!appInv) throw new Error("expected app-inventory requirement");
-    const buffer = await buildInputTemplateWorkbook({
-      requirement: appInv,
-      event: SAMPLE_EVENT,
-    });
-    const reloaded = new ExcelJS.Workbook();
-    await reloaded.xlsx.load(buffer as unknown as ArrayBuffer);
-    const header = JSON.stringify(
-      reloaded.getWorksheet("Intake")?.getRow(1).values ?? [],
-    );
-    expect(header).toContain("Application name");
-    expect(header).toContain("Annual run cost");
+  it("gives fact-backed requirements parser-aligned intake headers", async () => {
+    const factTemplatesByRequirement = {
+      "EVID-SRC-SCOPE-APP-INV": "APP_INVENTORY_V1",
+      "EVID-SRC-SCOPE-TICKET-HISTORY": "VOLUMETRICS_V1",
+      "EVID-SRC-RESP-PROPOSALS": "RESPONSE_COVERAGE_V1",
+      "EVID-SRC-PRICE-VENDOR-PRICING": "VENDOR_BIDS_V1",
+    } as const;
+
+    for (const [requirementId, templateCode] of Object.entries(
+      factTemplatesByRequirement,
+    )) {
+      const requirement = SOURCE_EVIDENCE_REQUIREMENTS.find(
+        (r) => r.requirementId === requirementId,
+      );
+      if (!requirement) throw new Error(`expected ${requirementId}`);
+
+      const template = templateFactMapByCode(templateCode);
+      if (!template) throw new Error(`expected ${templateCode}`);
+      const expectedHeaders = [
+        ...(template.entityRefColumn
+          ? [template.entityRefColumn]
+          : template.entityRefColumns ?? []),
+        ...template.columns.map((column) => column.header),
+      ];
+
+      const buffer = await buildInputTemplateWorkbook({
+        requirement,
+        event: SAMPLE_EVENT,
+      });
+      const reloaded = new ExcelJS.Workbook();
+      await reloaded.xlsx.load(buffer as unknown as ArrayBuffer);
+      const rowValues = reloaded.getWorksheet("Intake")?.getRow(1).values;
+      if (!Array.isArray(rowValues)) {
+        throw new Error(`expected array headers for ${requirementId}`);
+      }
+      const header = rowValues.slice(1);
+
+      expect(header).toEqual(expectedHeaders);
+    }
   });
 });

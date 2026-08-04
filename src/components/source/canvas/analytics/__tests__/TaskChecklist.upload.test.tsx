@@ -212,4 +212,54 @@ describe('TaskChecklist provide-task upload', () => {
     // And the page is refreshed so the step insight re-reads the new facts.
     await waitFor(() => expect(routerRefresh).toHaveBeenCalled());
   });
+
+  it('shows a parse warning instead of fake success when a template upload writes zero facts', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          artifact: {
+            id: 'artifact-1',
+            originalName: 'official-but-mismatched.csv',
+            sourceFormat: 'csv',
+            sizeBytes: 1024,
+            parseStatus: 'parsed',
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          eventId: 'evt-1',
+          templateCode: 'VOLUMETRICS_V1',
+          factsWritten: 0,
+          unmappedColumns: ['Month', 'Ticket volume', 'P1/P2 count'],
+          rejectedRows: [],
+        }),
+      });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const boundTask: StageTaskView = {
+      ...PROVIDE_TASK,
+      factTemplateCode: 'VOLUMETRICS_V1',
+    };
+    render(
+      <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
+    );
+
+    selectFile(
+      new File([new Uint8Array(16)], 'official-but-mismatched.csv', {
+        type: 'text/csv',
+      }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/No facts were written/i);
+    expect(alert).toHaveTextContent(/Month, Ticket volume, P1\/P2 count/i);
+    expect(screen.queryByText('official-but-mismatched.csv')).not.toBeInTheDocument();
+    expect(routerRefresh).not.toHaveBeenCalled();
+  });
 });
