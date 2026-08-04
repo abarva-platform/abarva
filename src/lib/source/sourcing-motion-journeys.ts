@@ -141,7 +141,7 @@ export function resolveSourceSourcingMotion(
     .toLowerCase();
 
   if (
-    /\b(contract\s+optimization|optimi[sz]e\s+(?:a\s+)?contract|renewal|renegotiat|incumbent\s+negotiation|sole[-\s]?source)\b/.test(
+    /\b(contract\s+optimization|optimi[sz]e\s+(?:a\s+)?contract|renewal|renegotiat\w*|incumbent\s+negotiation|sole[-\s]?source)\b/.test(
       text,
     )
   ) {

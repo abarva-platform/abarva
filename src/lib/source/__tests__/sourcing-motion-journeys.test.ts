@@ -66,6 +66,18 @@ describe("Source sourcing motion journeys", () => {
     );
   });
 
+  it("recognizes commercial renegotiation wording from event titles", () => {
+    const journey = getSourceJourneyForEvent({
+      eventName:
+        "CTR-090 commercial renegotiation — benchmarking rights, rate-card re-base, alternatives clause",
+      eventCode: "SKYH-CTR090-COMMERCIAL-RENEGOTIATION-2026-20F02DAE",
+      eventType: "managed_service",
+    });
+
+    expect(journey.id).toBe("contract_optimization");
+    expect(sourceJourneyStageKeys(journey)).toHaveLength(7);
+  });
+
   it("does not classify generic AMS managed-service work as renewal", () => {
     const journey = getSourceJourneyForEvent({
       eventName: "Application Managed Services Outsourcing RFP",

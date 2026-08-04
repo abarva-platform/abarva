@@ -35,6 +35,8 @@ Source events no longer all render and advance through the same competitive-RFP 
 - Threads journey selection through the Source event route, analytics canvas, event shell rail and approval API.
 - Lets approval and governance adjacency use the event journey order instead of the global RFP order.
 - Adapts optimization-stage labels and sample copy so skipped RFP-specific language is not shown in a negotiation journey.
+- Aligns the Source portfolio book with the same journey resolver so optimization cards show the shorter journey and labels before opening the event detail.
+- Broadens the resolver to recognize commercial-renegotiation wording in event names and codes.
 - Adds focused tests for journey resolution, approval advancement, governance adjacency and shell rail rendering.
 
 ## QA / Validation
@@ -46,7 +48,8 @@ Source events no longer all render and advance through the same competitive-RFP 
 - PASS: `npm run test:behaviors`
 - PASS: `npm run release:check`
 - PASS: `NODE_OPTIONS='--max-old-space-size=8192' npm run build`
-- Pending: signed-in Source browser proof before any production deployment claim.
+- PASS: signed-in Source browser proof surfaced a portfolio/detail mismatch; this follow-up record covers the correction before redeploy.
+- Pending: repeat signed-in Source browser proof after the corrected production deployment.
 
 ## Rollout Plan
 
@@ -69,6 +72,7 @@ Revert this PR and rerun the repo-owned web deploy workflow. No data rollback is
 ## Audit Evidence
 
 - Local focused Jest, ESLint and TypeScript output.
+- Signed-in production browser proof against the first deployment showed the target optimization event still rendering the generic RFP journey, which this follow-up fixes.
 - Release gate output.
 - PR review and merge record.
 - ACA deploy workflow run after merge.
