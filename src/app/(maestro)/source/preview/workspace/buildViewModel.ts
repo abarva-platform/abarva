@@ -213,7 +213,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       vsItem('Actual annual spend', money(c.actual_annual_spend), c.actual_annual_spend != null && c.annual_value != null ? money(c.annual_value - c.actual_annual_spend) + ' contracted-to-actual variance · cause not yet established' : 'Not established'),
       vsItem('Total committed value', money(c.total_committed_value), 'Across remaining term'),
       vsItem('Weak leverage signals', contract.leverage.weakSignalCount + ' of 4', contract.leverage.isHighPriority ? 'High priority: high spend + 2+ signals' : 'Not flagged high priority', contract.leverage.weakSignalCount >= 2 ? COL.red : undefined),
-      vsItem('Source confidence', c.source_confidence != null ? pct(c.source_confidence) : null, 'sem.extraction_resolved'),
+      vsItem('Source confidence', c.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : null, 'sem.extraction_resolved'),
       vsItem('Scoped applications', c.scoped_application_count != null ? String(c.scoped_application_count) : null, c.critical_application_count != null ? String(c.critical_application_count) + ' business-critical' : ''),
       vsItem('Value conflict flags', (c.annual_value_conflict_flag || c.total_committed_value_conflict_flag) ? 'Yes' : 'No', (c.annual_value_conflict_flag || c.total_committed_value_conflict_flag) ? 'Resolved value differs from raw extraction' : 'No conflict recorded', (c.annual_value_conflict_flag || c.total_committed_value_conflict_flag) ? COL.amber : undefined),
     ];
@@ -422,7 +422,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     urgency: contract ? vm.urgLabel(contract.urgency) : '', urgColor: contract ? vm.urgColor(contract.urgency) : COL.gray,
     noticePassed: contract?.noticePassed ?? false,
     role: c.renewal_owner_ref ?? 'Not assigned',
-    evidence: c.source_confidence != null ? pct(c.source_confidence) + ' source confidence' : 'Not established',
+    evidence: c.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Not established',
     scopeSummary: c.scope_summary ?? 'Not established',
   } : null;
   const termRows = c ? ([
@@ -517,7 +517,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     tenant: vm.tenantName, module: 'Source',
     selection: kind === 'contract' && c ? c.contract_id + ' · ' + c.vendor_name : kind === 'vendor' ? vendorName : kind === 'opportunity' && opp ? opp.contractId : 'Executive portfolio',
     lens: activeTab || null, asOf: fmtDate(vm.portfolio.asOfDateIso),
-    evidence: kind === 'contract' && c?.source_confidence != null ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level',
+    evidence: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level',
     sourceV4: {
       datasetId: v4Snapshot.datasetId,
       asOf: fmtDate(v4Snapshot.asOfDateIso),
@@ -613,7 +613,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     availDot: vm.portfolio.isEmpty ? COL.gray : COL.amber, availLabel: vm.portfolio.isEmpty ? 'Availability: no rows returned for this tenant' : 'Availability: live · source.contract_360',
     isPortfolioContext: kind === 'portfolio' && activeTab === 'Context', leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
-    statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
+    statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
 
     isExplore: kind === 'portfolio' && activeTab === 'Explore', ex: vm.explore(rows), pinSlice: () => vm.pin('Saved cut', 'Saved cut', 'Governed query'),
     isConc: kind === 'portfolio' && activeTab === 'Concentration', pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,
