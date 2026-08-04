@@ -603,6 +603,84 @@ jobs:
           }
           NODE
 
+      - name: Reconcile Cube metrics to Source Postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_revision="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-cube-lab-deploy/containerapp-after.json)"
+          if [[ -z "$latest_revision" || "$latest_revision" == "null" ]]; then
+            echo "Cannot resolve latest Cube revision for Postgres reconciliation." >&2
+            exit 1
+          fi
+          reconcile_command=(
+            az containerapp exec
+            --name "$CONTAINER_APP_NAME"
+            --resource-group "$RESOURCE_GROUP"
+            --revision "$latest_revision"
+            --container cube
+            --command "node /cube/conf/scripts/verify-source-cube-postgres-reconciliation.mjs --url=http://127.0.0.1:4000 --tenant=${SOURCE_TENANT_KEY}"
+          )
+          printf -v reconcile_command_quoted "%q " "${reconcile_command[@]}"
+          script -q -e -c "$reconcile_command_quoted" /dev/null \
+            | tee audit-artifacts/aca-cube-lab-deploy/cube-postgres-reconciliation.txt
+          node <<'NODE'
+          const fs = require("node:fs");
+          const text = fs
+            .readFileSync("audit-artifacts/aca-cube-lab-deploy/cube-postgres-reconciliation.txt", "utf8")
+            .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
+
+          function extractObjects(input) {
+            const objects = [];
+            for (let start = input.indexOf("{"); start !== -1; start = input.indexOf("{", start + 1)) {
+              let depth = 0;
+              let inString = false;
+              let escape = false;
+              for (let index = start; index < input.length; index += 1) {
+                const char = input[index];
+                if (escape) {
+                  escape = false;
+                  continue;
+                }
+                if (char === "\\") {
+                  escape = true;
+                  continue;
+                }
+                if (char === '"') {
+                  inString = !inString;
+                  continue;
+                }
+                if (inString) continue;
+                if (char === "{") depth += 1;
+                if (char === "}") depth -= 1;
+                if (depth === 0) {
+                  const candidate = input.slice(start, index + 1);
+                  try {
+                    objects.push(JSON.parse(candidate));
+                  } catch {
+                    // Keep scanning; the Azure exec wrapper can print non-JSON braces.
+                  }
+                  break;
+                }
+              }
+            }
+            return objects;
+          }
+
+          const reconciliation = extractObjects(text).find((object) =>
+            Object.prototype.hasOwnProperty.call(object, "ok") &&
+            Object.prototype.hasOwnProperty.call(object, "reconciled_family_count") &&
+            Array.isArray(object.failures)
+          );
+          if (!reconciliation) {
+            console.error("Cube/Postgres reconciliation did not emit a parseable result object.");
+            process.exit(1);
+          }
+          if (reconciliation.ok !== true) {
+            console.error(`Cube/Postgres reconciliation failed: ${JSON.stringify(reconciliation.failures)}`);
+            process.exit(1);
+          }
+          NODE
+
       - name: Upload Cube lab deploy evidence
         if: always()
         uses: actions/upload-artifact@v4

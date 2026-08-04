@@ -6,6 +6,7 @@ COPY cube/cube.py ./cube.py
 COPY cube/model ./model
 COPY scripts/source/cube-runtime-entrypoint.mjs ./scripts/cube-runtime-entrypoint.mjs
 COPY scripts/source/verify-source-cube-runtime.mjs ./scripts/verify-source-cube-runtime.mjs
+COPY scripts/source/verify-source-cube-postgres-reconciliation.mjs ./scripts/verify-source-cube-postgres-reconciliation.mjs
 
 EXPOSE 4000
 EXPOSE 15432
