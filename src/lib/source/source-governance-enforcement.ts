@@ -139,6 +139,7 @@ export function evaluateCriterionMetReadiness(input: {
 export function evaluateStagePromotionReadiness(input: {
   currentStage: SourceStageKey;
   targetStage: SourceStageKey;
+  stageOrder?: readonly SourceStageKey[];
   criteria: SourceEventGateCriterion[];
   artifacts?: SourceEventArtifactState[];
   evidence?: SourceEventEvidence[];
@@ -147,13 +148,15 @@ export function evaluateStagePromotionReadiness(input: {
   const blockers: SourceGovernanceBlocker[] = [
     ...validateApprovalReason(input.reason).blockers,
   ];
-  const currentIndex = SOURCE_STAGE_ORDER.indexOf(input.currentStage);
-  const targetIndex = SOURCE_STAGE_ORDER.indexOf(input.targetStage);
+  const stageOrder = input.stageOrder ?? SOURCE_STAGE_ORDER;
+  const currentIndex = stageOrder.indexOf(input.currentStage);
+  const targetIndex = stageOrder.indexOf(input.targetStage);
 
   if (currentIndex < 0 || targetIndex < 0) {
     blockers.push({
       code: "invalid_stage",
-      detail: "Current and target stages must both be canonical Source stages.",
+      detail:
+        "Current and target stages must both be valid stages in this Source journey.",
     });
   } else if (targetIndex !== currentIndex + 1) {
     blockers.push({

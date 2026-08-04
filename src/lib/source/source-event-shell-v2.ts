@@ -1,7 +1,10 @@
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import {
-  SOURCE_STAGE_LABELS,
-  SOURCE_STAGE_ORDER,
-} from "@/lib/source/constants";
+  SOURCE_JOURNEYS,
+  sourceJourneyLabelForStage,
+  sourceJourneyStageKeys,
+  type SourceJourneyDefinition,
+} from "@/lib/source/sourcing-motion-journeys";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 import {
@@ -253,6 +256,8 @@ export interface BuildSourceEventShellViewInput {
   guidebook?: SourceStageGuidebookRecord | null;
   /** Latest acceptance record per artifact id (SOURCE-SHELL-004), keyed by `source_artifacts.id`. Artifacts with no key present have never been accepted. */
   latestArtifactAcceptancesById?: ReadonlyMap<string, ArtifactAcceptanceRecord>;
+  /** Event-specific visible journey. Storage still uses canonical stage keys. */
+  journey?: SourceJourneyDefinition;
 }
 
 export function mergeSourceShellArtifactsWithArtifactStateBodies(
@@ -321,15 +326,22 @@ export function buildSourceEventShellView(
   const ready = tasks.filter((task) => isTaskCaptured(task)).length;
   const total = tasks.length;
   const viewedStageLabel =
-    SOURCE_STAGE_LABELS[input.viewedStageKey] ?? input.stageView.stageName;
-  const currentStageIndex = SOURCE_STAGE_ORDER.indexOf(
-    input.event.currentStageKey,
+    sourceJourneyLabelForStage(input.journey, input.viewedStageKey) ||
+    input.stageView.stageName;
+  const visibleStageOrder = sourceJourneyStageKeys(
+    input.journey ?? SOURCE_JOURNEYS.competitive_rfp,
   );
+  const visibleCurrentStageKey = visibleStageOrder.includes(
+    input.event.currentStageKey,
+  )
+    ? input.event.currentStageKey
+    : input.viewedStageKey;
+  const currentStageIndex = visibleStageOrder.indexOf(visibleCurrentStageKey);
 
-  const journey: SourceShellJourneyStage[] = SOURCE_STAGE_ORDER.map(
+  const journey: SourceShellJourneyStage[] = visibleStageOrder.map(
     (stageKey, index) => {
       const viewed = stageKey === input.viewedStageKey;
-      const current = stageKey === input.event.currentStageKey;
+      const current = stageKey === visibleCurrentStageKey;
       const stageDone =
         stageKey === input.viewedStageKey
           ? ready
@@ -342,7 +354,7 @@ export function buildSourceEventShellView(
         index < currentStageIndex ? "past" : current ? "current" : "future";
       return {
         key: stageKey,
-        label: SOURCE_STAGE_LABELS[stageKey] ?? stageKey,
+        label: sourceJourneyLabelForStage(input.journey, stageKey),
         index: index + 1,
         current,
         viewed,

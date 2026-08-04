@@ -1,23 +1,23 @@
 // Source event approval decision · pure logic
 //
 // Every Source stage gate is a real approval that advances the event to the next
-// stage in the canonical `SOURCE_STAGE_ORDER`. The event-creation approval IS the
+// stage in the event's resolved journey. The event-creation approval IS the
 // strategy gate — approving confirms the reviewer read the auto-generated strategy
 // memo, the value target, and the archetype + rigor call — and advances the event
 // to Scope (the first worked stage). Approving on any LATER stage advances the
-// event to that stage's successor (Scope→RFP, Pricing→BAFO, …); approving on the
+// event to that stage's successor; approving on the
 // final stage (`value`) closes without advancing.
 //
 // This module holds the pure decision function so the route stays thin and the
-// confirmation + state-transition rules are unit-testable without a DB. The next
-// stage is resolved through the canonical order (`nextSourceStage`), so a gate can
-// never advance to a stage the rail does not know about.
+// confirmation + state-transition rules are unit-testable without a DB. Callers
+// may pass a journey-specific next stage; absent that, the canonical RFP journey
+// remains the compatibility default.
 
-import { nextSourceStage } from './constants';
-import type { SourceStageKey } from './types';
+import { nextSourceStage } from "./constants";
+import type { SourceStageKey } from "./types";
 
 /** Actions an approver can take on a pending sourcing event. */
-export type SourceApprovalAction = 'approve' | 'reject' | 'send_back';
+export type SourceApprovalAction = "approve" | "reject" | "send_back";
 
 /**
  * The three things an approver attests to when approving. All three must be
@@ -34,9 +34,9 @@ export interface SourceApprovalConfirmations {
 }
 
 export const REQUIRED_APPROVAL_CONFIRMATIONS = [
-  'strategyMemoReviewed',
-  'valueTargetConfirmed',
-  'archetypeRigorConfirmed',
+  "strategyMemoReviewed",
+  "valueTargetConfirmed",
+  "archetypeRigorConfirmed",
 ] as const satisfies readonly (keyof SourceApprovalConfirmations)[];
 
 /**
@@ -49,7 +49,7 @@ export const REQUIRED_APPROVAL_CONFIRMATIONS = [
 export type SourceStageConfirmations = Record<string, boolean | undefined>;
 
 /** Lifecycle state the event moves to as a result of the decision. */
-export type SourceApprovalToState = 'active' | 'archived' | 'waiting_on_client';
+export type SourceApprovalToState = "active" | "archived" | "waiting_on_client";
 
 export interface SourceApprovalDecision {
   ok: boolean;
@@ -62,12 +62,12 @@ export interface SourceApprovalDecision {
   /**
    * current_stage_key to advance to when ok === true, or null to leave the
    * stage untouched. An approve advances the event to the NEXT stage after its
-   * current stage in `SOURCE_STAGE_ORDER` (strategy→scope, scope→rfp, …); null
-   * when the event is on the final stage (`value`) or its stage is unknown.
+   * current stage in the event's journey; null when the event is on the final
+   * stage (`value`) or its stage is unknown.
    */
   advanceStageTo?: SourceStageKey | null;
   /** Value recorded in the append-only source_event_approvals row. */
-  approvalAction: 'admin_review' | 'rejected' | 'sent_back';
+  approvalAction: "admin_review" | "rejected" | "sent_back";
   /** Confirmation keys still missing when error === 'confirmations_required'. */
   missingConfirmations?: string[];
 }
@@ -98,28 +98,34 @@ export function evaluateSourceApprovalDecision(
   opts?: {
     currentStageKey?: string | null;
     requiredConfirmationKeys?: readonly string[];
+    nextStageKey?: SourceStageKey | null;
   },
 ): SourceApprovalDecision {
-  if (action !== 'approve' && action !== 'reject' && action !== 'send_back') {
+  if (action !== "approve" && action !== "reject" && action !== "send_back") {
     return {
       ok: false,
-      error: 'invalid_action',
+      error: "invalid_action",
       detail: 'action must be "approve", "reject", or "send_back"',
       // Never consumed on the error path; kept in-union for type soundness.
-      approvalAction: 'admin_review',
+      approvalAction: "admin_review",
     };
   }
 
-  if (action === 'reject') {
-    return { ok: true, toState: 'archived', advanceStageTo: null, approvalAction: 'rejected' };
-  }
-
-  if (action === 'send_back') {
+  if (action === "reject") {
     return {
       ok: true,
-      toState: 'waiting_on_client',
+      toState: "archived",
       advanceStageTo: null,
-      approvalAction: 'sent_back',
+      approvalAction: "rejected",
+    };
+  }
+
+  if (action === "send_back") {
+    return {
+      ok: true,
+      toState: "waiting_on_client",
+      advanceStageTo: null,
+      approvalAction: "sent_back",
     };
   }
 
@@ -134,17 +140,24 @@ export function evaluateSourceApprovalDecision(
   if (missing.length > 0) {
     return {
       ok: false,
-      error: 'confirmations_required',
+      error: "confirmations_required",
       detail:
-        'Approving is a review gate: confirm every box this stage requires before approving.',
+        "Approving is a review gate: confirm every box this stage requires before approving.",
       missingConfirmations: [...missing],
-      approvalAction: 'admin_review',
+      approvalAction: "admin_review",
     };
   }
 
-  // Advance to the next stage in the canonical order. nextSourceStage returns
-  // null on the final stage (`value`) or an unknown/absent key, leaving the
-  // stage untouched.
-  const advanceStageTo = nextSourceStage(opts?.currentStageKey);
-  return { ok: true, toState: 'active', advanceStageTo, approvalAction: 'admin_review' };
+  // Advance to the next stage resolved by the caller's journey. Fall back to the
+  // canonical RFP order when a caller has no motion context.
+  const advanceStageTo =
+    opts && "nextStageKey" in opts
+      ? (opts.nextStageKey ?? null)
+      : nextSourceStage(opts?.currentStageKey);
+  return {
+    ok: true,
+    toState: "active",
+    advanceStageTo,
+    approvalAction: "admin_review",
+  };
 }

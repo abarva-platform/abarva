@@ -1,11 +1,11 @@
 // POST /api/v1/source/events/[eventId]/approve
 //
 // Client-scoped Source approval endpoint. EVERY stage gate is a real approval
-// that advances the event to the next stage in the canonical SOURCE_STAGE_ORDER.
+// that advances the event to the next stage in the event's resolved journey.
 // The event-creation approval IS the strategy gate (attests the reviewer read the
 // auto-generated strategy memo, the value target, and the archetype + rigor call)
 // and advances strategy → scope; approving on any later stage advances to that
-// stage's successor (scope → rfp, pricing → bafo, …). Confirmations are validated
+// stage's successor. Confirmations are validated
 // against the CURRENT stage's gate keys, not a hardcoded strategy set.
 //
 // Actions:
@@ -34,6 +34,13 @@ import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import {
+  coerceStageToSourceJourney,
+  getSourceJourneyForEvent,
+  nextSourceStageForJourney,
+  sourceJourneyStageKeys,
+} from "@/lib/source/sourcing-motion-journeys";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 
 interface ApproveBody {
   action: "approve" | "reject" | "send_back";
@@ -114,7 +121,7 @@ export async function POST(
   const { data: event, error: fetchError } = await supabase
     .from("source_events")
     .select(
-      "id, lifecycle_state, current_stage_key, event_name, event_code, client_key",
+      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, classified_category, trigger_description, client_key",
     )
     .eq("id", eventId)
     .eq("client_key", activeClient.key)
@@ -129,12 +136,39 @@ export async function POST(
   // validated against the CURRENT stage's gate keys — not a hardcoded strategy
   // set — so an approve on any stage requires exactly that stage's boxes.
   const currentStageKey = event.current_stage_key as string | null;
+  const currentStage = normalizeSourceStageKey(currentStageKey);
+  const normalizedClientKey = activeClient.key.trim().toLowerCase();
+  const hasContractOptimizationProfile =
+    normalizedClientKey === "skyharbor" ||
+    normalizedClientKey === "skyharbor-air"
+      ? Boolean(
+          await getContractOptimizationProfile(
+            normalizedClientKey,
+            eventId,
+          ).catch(() => null),
+        )
+      : false;
+  const journey = getSourceJourneyForEvent({
+    eventName: event.event_name as string | null,
+    eventCode: event.event_code as string | null,
+    eventType: event.event_type as string | null,
+    classifiedCategory: event.classified_category as string | null,
+    triggerDescription: event.trigger_description as string | null,
+    hasContractOptimizationProfile,
+  });
+  const effectiveCurrentStage = currentStage
+    ? coerceStageToSourceJourney(journey, currentStage, currentStage)
+    : null;
+  const nextStage = nextSourceStageForJourney(effectiveCurrentStage, journey);
   const decision = evaluateSourceApprovalDecision(
     body.action,
     body.confirmations,
     {
-      currentStageKey,
-      requiredConfirmationKeys: confirmationKeysForStage(currentStageKey),
+      currentStageKey: effectiveCurrentStage ?? currentStageKey,
+      requiredConfirmationKeys: confirmationKeysForStage(
+        effectiveCurrentStage ?? currentStageKey,
+      ),
+      nextStageKey: nextStage,
     },
   );
   if (!decision.ok) {
@@ -174,8 +208,7 @@ export async function POST(
   }
 
   if (body.action === "approve" && decision.advanceStageTo) {
-    const currentStage = normalizeSourceStageKey(currentStageKey);
-    if (!currentStage) {
+    if (!effectiveCurrentStage) {
       return Response.json(
         {
           error: "invalid_stage",
@@ -186,10 +219,11 @@ export async function POST(
       );
     }
 
-    const substrate = await getStageSubstrate(eventId, currentStage);
+    const substrate = await getStageSubstrate(eventId, effectiveCurrentStage);
     const gateContract = evaluateSourceGateAdvanceContract({
-      currentStage,
+      currentStage: effectiveCurrentStage,
       targetStage: decision.advanceStageTo,
+      stageOrder: sourceJourneyStageKeys(journey),
       confirmations: body.confirmations,
       criteria: substrate.criteria,
       artifacts: substrate.artifacts,
@@ -227,8 +261,12 @@ export async function POST(
     toState,
     approvalAction: decision.approvalAction,
     approvedByUserId: tenancy.userId,
-    notes: composeApprovalNotes(body.notes, body.action, currentStageKey),
-    stageKey: currentStageKey,
+    notes: composeApprovalNotes(
+      body.notes,
+      body.action,
+      effectiveCurrentStage ?? currentStageKey,
+    ),
+    stageKey: effectiveCurrentStage ?? currentStageKey,
   });
 
   if (!approvalWrite.ok) {

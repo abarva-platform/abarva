@@ -19,6 +19,7 @@ import type { SourceStageKey } from "./types";
 export interface SourceGateAdvanceContractInput {
   currentStage: SourceStageKey;
   targetStage: SourceStageKey;
+  stageOrder?: readonly SourceStageKey[];
   confirmations?: SourceStageConfirmations | null;
   criteria: SourceEventGateCriterion[];
   artifacts?: SourceEventArtifactState[];
@@ -58,11 +59,13 @@ export function evaluateSourceGateAdvanceContract(
     {
       currentStageKey: input.currentStage,
       requiredConfirmationKeys: confirmationKeysForStage(input.currentStage),
+      nextStageKey: input.targetStage,
     },
   );
   const readiness = evaluateStagePromotionReadiness({
     currentStage: input.currentStage,
     targetStage: input.targetStage,
+    stageOrder: input.stageOrder,
     criteria: input.criteria,
     artifacts: input.artifacts,
     evidence: input.evidence,

@@ -8,6 +8,7 @@ import {
 } from "@/lib/source/source-event-shell-v2";
 import { buildSourceArtifactLifecycleSummary } from "@/lib/source/artifact-lifecycle-matrix";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
+import { SOURCE_JOURNEYS } from "@/lib/source/sourcing-motion-journeys";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
 const EVENT: SourcingEventSummary = {
@@ -65,7 +66,9 @@ describe("buildSourceEventShellView", () => {
     expect(view.event.viewedStageKey).toBe("scope");
     expect(view.event.viewedStageLabel).toBe("Scope");
     expect(view.journey).toHaveLength(11);
-    expect(view.journey.find((stage) => stage.key === "responses")).toMatchObject({
+    expect(
+      view.journey.find((stage) => stage.key === "responses"),
+    ).toMatchObject({
       current: true,
       viewed: false,
       state: "current",
@@ -75,6 +78,45 @@ describe("buildSourceEventShellView", () => {
       viewed: true,
       state: "past",
     });
+  });
+
+  it("renders the contract optimization journey instead of the RFP rail", () => {
+    const optimizationEvent: SourcingEventSummary = {
+      ...EVENT,
+      archetype: "Contract Renewal / Renegotiation",
+      currentStageKey: "pricing",
+      currentStageLabel: "Commercial Baseline",
+    };
+
+    const view = buildSourceEventShellView({
+      event: optimizationEvent,
+      tenantName: "FS Demo",
+      viewedStageKey: "pricing",
+      stageView: {
+        ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+        stageKey: "pricing",
+        stageName: "Commercial Baseline",
+      },
+      journey: SOURCE_JOURNEYS.contract_optimization,
+    });
+
+    expect(view.journey.map((stage) => stage.key)).toEqual([
+      "strategy",
+      "scope",
+      "pricing",
+      "bafo",
+      "executive_decision",
+      "transition",
+      "value",
+    ]);
+    expect(view.journey.map((stage) => stage.label)).toContain(
+      "Commercial Baseline",
+    );
+    expect(view.journey.map((stage) => stage.label)).toContain(
+      "Negotiation Plan",
+    );
+    expect(view.journey.map((stage) => stage.key)).not.toContain("rfp");
+    expect(view.event.viewedStageLabel).toBe("Commercial Baseline");
   });
 
   it("groups stage work into design-ready blocks and marks only persisted/computed completion as captured", () => {
@@ -298,7 +340,8 @@ describe("buildSourceEventShellView", () => {
       stageKey: "strategy" as const,
       clientKey: null,
       title: "Strategy Gate Review",
-      purpose: "Get a clean sponsor decision on whether this event goes to market.",
+      purpose:
+        "Get a clean sponsor decision on whether this event goes to market.",
       durationMinutes: 20,
       status: "published" as const,
       sections: [
@@ -384,17 +427,20 @@ describe("mergeSourceShellArtifactsWithArtifactStateBodies", () => {
   });
 
   it("adds authored state-only artifacts and ignores blank state bodies", () => {
-    const merged = mergeSourceShellArtifactsWithArtifactStateBodies([], [
-      artifactState({
-        artifactCode: "d01_strategy_memo",
-        body: passingStrategyMemoBody,
-      }),
-      artifactState({
-        id: "state-blank",
-        artifactCode: "d05_scope_memo",
-        body: "   ",
-      }),
-    ]);
+    const merged = mergeSourceShellArtifactsWithArtifactStateBodies(
+      [],
+      [
+        artifactState({
+          artifactCode: "d01_strategy_memo",
+          body: passingStrategyMemoBody,
+        }),
+        artifactState({
+          id: "state-blank",
+          artifactCode: "d05_scope_memo",
+          body: "   ",
+        }),
+      ],
+    );
 
     expect(merged).toHaveLength(1);
     expect(merged[0]).toMatchObject({
