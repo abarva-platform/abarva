@@ -149,6 +149,10 @@ import {
   buildAvaSourceGrounding,
   AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD,
 } from "@/lib/source/facts/view/ava-grounding-context";
+// aVa DETERMINISTIC GROUNDING · Source portfolio (live-bug fix — see module
+// doc). Same wire pattern as the event grounding above, aimed at
+// portfolio-level questions instead of a single event.
+import { buildAvaSourcePortfolioGrounding } from "@/lib/source/facts/view/ava-portfolio-grounding-context";
 // Source aVa answer-mode hardening (Phase A + Phase B) — classify the question
 // into one of 16 modes, build mode-specific grounding for the 6 Phase A modes
 // (event status / workflow how-to / evidence readiness / artifact lineage &
@@ -1319,6 +1323,32 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── aVa DETERMINISTIC GROUNDING · Source portfolio (live-bug fix) ────────────
+  //
+  // Live-found: any /source* chat surface had no governed portfolio data path
+  // — a question like "total annual contract value" fell through to the
+  // generic tenant-context corpus (a different, unrelated dataset) and aVa
+  // answered with fabricated-looking vendor/contract data. This is the fix:
+  // read the SAME governed rows and pure functions the Source Workspace page
+  // itself uses and hand aVa the numbers to quote. Additive — a read failure
+  // or an empty portfolio (tenant has no source.contract_360 rows yet) leaves
+  // this block empty and the chat falls through to existing behavior.
+  let sourcePortfolioGroundingBlock = "";
+  let hasSourcePortfolioGrounding = false;
+  if (isSourceSurface(surface) && effectiveClientKey) {
+    try {
+      const portfolioGrounding = await buildAvaSourcePortfolioGrounding(
+        effectiveClientKey,
+      );
+      if (portfolioGrounding.block) {
+        sourcePortfolioGroundingBlock = portfolioGrounding.block;
+        hasSourcePortfolioGrounding = true;
+      }
+    } catch {
+      // Best-effort — a read failure here must never break the chat turn.
+    }
+  }
+
   // ── aVa DETERMINISTIC GROUNDING · Source event (flag-gated, additive) ────────
   //
   // The Source product is deterministic: `source_event_facts` + the archetype
@@ -1609,6 +1639,13 @@ export async function POST(request: Request) {
       sourceAvaModeHasSpecificAsk = false;
     }
   }
+  // The quote-not-compute guard governs EITHER grounding source — portfolio
+  // grounding fires independently of event grounding (no sourceEventId
+  // required), so make sure the guard is present whenever either produced a
+  // block, without duplicating the guard text if both did.
+  if (hasSourcePortfolioGrounding && !sourceAvaQuoteNotComputeGuard) {
+    sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
+  }
 
   // aVa Source polish gate — Gap 1 fix (live-found: "What evidence is
   // missing?" on the RFP stage answered with an unrelated cross-module risk
@@ -1637,7 +1674,8 @@ export async function POST(request: Request) {
   // false for it), so it keeps receiving the generic receipt exactly as
   // before — unchanged behavior for every mode this fix does not target.
   const contextBundlePromptBlockForPrompt =
-    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode)
+    (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
+      hasSourcePortfolioGrounding)
       ? ""
       : contextBundlePromptBlock;
 
@@ -1680,7 +1718,8 @@ export async function POST(request: Request) {
   // and is the demonstrated leak vector. `stakeholder_alignment` and any
   // non-Source surface keep receiving this block exactly as before.
   const agentTenantContextBlockForPrompt =
-    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode)
+    (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
+      hasSourcePortfolioGrounding)
       ? ""
       : agentTenantContextBlock;
 
@@ -1719,7 +1758,8 @@ export async function POST(request: Request) {
   // `stakeholder_alignment` and every non-Source surface keep receiving
   // `tenantSystemBlock` exactly as before.
   const tenantSystemBlockForPrompt =
-    shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode)
+    (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
+      hasSourcePortfolioGrounding)
       ? ""
       : tenantSystemBlock;
 
@@ -1890,6 +1930,13 @@ export async function POST(request: Request) {
     crossProgramSignalsBlock,
     "",
     sourceTenantContextBlock,
+    "",
+    // aVa DETERMINISTIC GROUNDING · authoritative portfolio numbers (live-bug
+    // fix — see ava-portfolio-grounding-context.ts module doc). Positioned
+    // before the per-event grounding so aVa reads portfolio-wide totals
+    // first, then narrows to the specific event if one is active. Empty
+    // string when the tenant has no governed contract rows.
+    sourcePortfolioGroundingBlock,
     "",
     // aVa DETERMINISTIC GROUNDING · authoritative value numbers for the active
     // Source event (flag-gated). Positioned with the source tenant context so aVa
