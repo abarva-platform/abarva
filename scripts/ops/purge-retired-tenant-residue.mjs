@@ -29,6 +29,8 @@ const TABLES = Object.freeze([
   "public.semantic2_source_rows",
 ]);
 
+const TRUNCATE_DEPENDENCY_TABLE_PATTERN = /^(public\.)?(semantic2_|enterprise_context_)/;
+
 const DEFAULT_CHUNK_SIZE = 5000;
 const DEFAULT_BUDGET_SECONDS = 7000;
 const DEFAULT_STATEMENT_TIMEOUT = "2min";
@@ -113,6 +115,12 @@ async function tableExists(client, tableRef) {
 }
 
 async function requireTenantKey(client, tableRef) {
+  if (!(await hasTenantKey(client, tableRef))) {
+    throw new Error(`${tableRef.qualifiedName} does not have required tenant_key column.`);
+  }
+}
+
+async function hasTenantKey(client, tableRef) {
   const result = await client.query(
     `
       select data_type
@@ -123,9 +131,7 @@ async function requireTenantKey(client, tableRef) {
     `,
     [tableRef.schema, tableRef.table],
   );
-  if (result.rowCount !== 1) {
-    throw new Error(`${tableRef.qualifiedName} does not have required tenant_key column.`);
-  }
+  return result.rowCount === 1;
 }
 
 async function countRows(client, tableRef, keys) {
@@ -202,6 +208,38 @@ async function prepareReferencingIndexes(client, tableRef) {
   return indexes;
 }
 
+function isAllowedTruncateDependency(tableRef) {
+  return tableRef.schema === "public" && TRUNCATE_DEPENDENCY_TABLE_PATTERN.test(tableRef.qualifiedName);
+}
+
+async function resolveTruncateTableRefs(client, tableRefs) {
+  const byName = new Map();
+  const queue = [];
+  for (const tableRef of tableRefs) {
+    if (!(await tableExists(client, tableRef))) continue;
+    byName.set(tableRef.qualifiedName, tableRef);
+    queue.push(tableRef);
+  }
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const tableRef = queue[index];
+    const foreignKeys = await getReferencingForeignKeys(client, tableRef);
+    for (const foreignKey of foreignKeys) {
+      const childRef = parseQualifiedName(foreignKey.childQualifiedName);
+      if (!isAllowedTruncateDependency(childRef)) {
+        throw new Error(
+          `${tableRef.qualifiedName} is referenced by non-residue table ${childRef.qualifiedName}; refusing truncate.`,
+        );
+      }
+      if (!byName.has(childRef.qualifiedName) && (await tableExists(client, childRef))) {
+        byName.set(childRef.qualifiedName, childRef);
+        queue.push(childRef);
+      }
+    }
+  }
+  return Array.from(byName.values()).sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
+}
+
 async function deleteChunk(client, tableRef, chunkSize) {
   const result = await client.query(
     `
@@ -239,34 +277,42 @@ async function audit(client, tableRefs) {
 
 async function truncateEmptyKeepTables(client, tableRefs) {
   const actions = [];
-  const existingTableRefs = [];
+  const existingTableRefs = await resolveTruncateTableRefs(client, tableRefs);
+  const existingTableNames = new Set(existingTableRefs.map((tableRef) => tableRef.qualifiedName));
   for (const tableRef of tableRefs) {
-    if (!(await tableExists(client, tableRef))) {
+    if (!existingTableNames.has(tableRef.qualifiedName)) {
       actions.push({ qualifiedName: tableRef.qualifiedName, skipped: true, reason: "missing_table" });
-      continue;
     }
-    await requireTenantKey(client, tableRef);
+  }
+  for (const tableRef of existingTableRefs) {
+    const tenantScoped = await hasTenantKey(client, tableRef);
     const beforeTotalRows = await countAllRows(client, tableRef);
-    const beforeRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
-    const beforeKeepRows = await countRows(client, tableRef, KEEP_KEYS);
-    if (beforeKeepRows !== 0) {
+    const beforeRetiredRows = tenantScoped ? await countRows(client, tableRef, RETIRED_KEYS) : null;
+    const beforeKeepRows = tenantScoped ? await countRows(client, tableRef, KEEP_KEYS) : null;
+    if (beforeKeepRows !== null && beforeKeepRows !== 0) {
       throw new Error(`${tableRef.qualifiedName} has ${beforeKeepRows} keep-key rows; refusing truncate.`);
     }
     actions.push({
       qualifiedName: tableRef.qualifiedName,
+      tenantScoped,
       beforeTotalRows,
       beforeRetiredRows,
       beforeKeepRows,
       rowsDeleted: beforeTotalRows,
-      retiredRowsDeleted: beforeRetiredRows,
+      retiredRowsDeleted: beforeRetiredRows ?? 0,
       strategy: "truncate_empty_keep",
     });
-    existingTableRefs.push(tableRef);
   }
 
   if (existingTableRefs.length > 0) {
     const tableList = existingTableRefs.map((tableRef) => qualified(tableRef.schema, tableRef.table)).join(", ");
-    console.log(JSON.stringify({ event: "retired_tenant_residue_truncate_start", tableCount: existingTableRefs.length, tableList: existingTableRefs.map((tableRef) => tableRef.qualifiedName) }));
+    console.log(
+      JSON.stringify({
+        event: "retired_tenant_residue_truncate_start",
+        tableCount: existingTableRefs.length,
+        tableList: existingTableRefs.map((tableRef) => tableRef.qualifiedName),
+      }),
+    );
     await client.query(`truncate table ${tableList}`);
     console.log(JSON.stringify({ event: "retired_tenant_residue_truncate_done", tableCount: existingTableRefs.length }));
   }
@@ -275,11 +321,21 @@ async function truncateEmptyKeepTables(client, tableRefs) {
     if (action.skipped) continue;
     const tableRef = parseQualifiedName(action.qualifiedName);
     action.afterTotalRows = await countAllRows(client, tableRef);
-    action.afterRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
-    action.afterKeepRows = await countRows(client, tableRef, KEEP_KEYS);
-    action.complete = action.afterRetiredRows === 0 && action.afterKeepRows === 0;
+    action.afterRetiredRows = action.tenantScoped ? await countRows(client, tableRef, RETIRED_KEYS) : null;
+    action.afterKeepRows = action.tenantScoped ? await countRows(client, tableRef, KEEP_KEYS) : null;
+    action.complete =
+      action.afterTotalRows === 0 &&
+      (action.afterRetiredRows === null || action.afterRetiredRows === 0) &&
+      (action.afterKeepRows === null || action.afterKeepRows === 0);
   }
-  return { actions, budgetExhausted: false, elapsedSeconds: 0, strategy: "truncate_empty_keep" };
+  return {
+    actions,
+    budgetExhausted: false,
+    elapsedSeconds: 0,
+    strategy: "truncate_empty_keep",
+    resolvedTableCount: existingTableRefs.length,
+    resolvedTables: existingTableRefs.map((tableRef) => tableRef.qualifiedName),
+  };
 }
 
 async function applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, statementTimeout }) {
