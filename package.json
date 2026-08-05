@@ -704,7 +704,8 @@
     "test:review-batch-dimensions": "node scripts/knowledge/__tests__/run-review-batch-dimensions-tests.mjs",
     "qa:airline-e2e-live-reconciliation-readback": "node scripts/qa/airline-e2e-live-reconciliation-readback.mjs --require-db --emit-proof-bundle",
     "qa:skair-phase-a-candidate-readback": "node scripts/qa/skyharbor-phase-a-candidate-readback.mjs --emit-proof-bundle",
-    "ops:airline-grant-reconciliation-readback": "node scripts/ops/airline-grant-reconciliation-readback.mjs"
+    "ops:airline-grant-reconciliation-readback": "node scripts/ops/airline-grant-reconciliation-readback.mjs",
+    "ops:purge-retired-data-layers:apply": "RETIRE_LAYER_PURGE_APPLY=1 node scripts/ops/purge-retired-data-layers.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
