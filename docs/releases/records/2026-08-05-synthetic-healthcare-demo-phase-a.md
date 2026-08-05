@@ -16,6 +16,7 @@ This correction hardens the Phase A audit gate so structural volume alone is ins
 The latest correction removes the arbitrary 40-file requirement, drops detailed payer claims/enrollment and Stars/HEDIS operational extracts from the core package, and replaces them with a small optional aggregate health-plan outcome snapshot. The validator now requires core-source completeness, blocks those detailed health-plan files in the Phase A core package, and checks optional-domain readiness without making sensitive health-plan data a prerequisite.
 This update supersedes the interim 39-file and 50-file Layer 1 plans. The plan-only Layer 1 release is now exactly 54 named CSV files: 38 enterprise-context files, 1 optional-domain context file, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files. It also adds machine-readable document archetype content contracts, a contract-family audit view and a future event-context snapshot contract without creating a snapshot or mutating runtime data.
 The current correction keeps the frozen package unchanged and fixes the blocked Layer 1 execution substrate: the PHS loader now targets only `foundation_v2_phs_demo`, uses PHS-specific writer/reader roles, requires the frozen source release ID, writes 54 source-file routing metadata rows and rejects local/non-ACA apply even if the old bypass env is present.
+The latest operator-readiness patch adds an exact PHS schema/RLS migration runner and lets the source-volume loader consume the approved proof ZIP by URL inside ACA, with SHA-256 verification before extraction.
 
 ## Layer Impact
 
@@ -36,6 +37,7 @@ Feature flag: not applicable.
 - `scripts/source/validate-phs-healthcare-demo-package.mjs`
 - `scripts/source/plan-phs-healthcare-demo-data-layers.mjs`
 - `scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs`
+- `scripts/foundation-v2/apply-phs-healthcare-demo-schema.mjs`
 - `scripts/source/fixtures/phs-healthcare-demo/canary-defects.json`
 - `docs/source/PHS_HEALTHCARE_DEMO_PHASE_A_PACKAGE.md`
 - `docs/source/PHS_HEALTHCARE_DEMO_MODEL_FIT_AUDIT.md`
@@ -61,8 +63,10 @@ Passed: `node --check scripts/source/plan-phs-healthcare-demo-data-layers.mjs`.
 Passed: `npm run source:phs-healthcare-demo:data-layer-plan -- --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z --out-dir /Users/anand/Downloads`.
 Passed: data-layer plan ZIP SHA-256 attestation matches `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T230818Z.zip`.
 Passed: `node --check scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs`.
+Passed: `node --check scripts/foundation-v2/apply-phs-healthcare-demo-schema.mjs`.
 Passed: `npm run source:phs-healthcare-demo:layer1:self-test -- --out-dir /tmp/phs-layer1-self-test`.
 Passed: `npm run source:phs-healthcare-demo:layer1:plan -- --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z --out-dir /tmp/phs-layer1-plan`.
+Passed: `npm run source:phs-healthcare-demo:layer1:plan -- --package-zip /Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip --package-zip-sha256 a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553 --out-dir /tmp/phs-layer1-plan-zip`.
 Passed: negative apply-gate check stopped before mutation authority because `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true` was not present.
 Passed: negative schema-target check rejected `PHS_HEALTHCARE_DEMO_DB_SCHEMA=foundation_v2_healthcare_gs` before database mutation path.
 Passed: negative local apply check rejected execution without `ACA_JOB_NAME` even with approval env and the exact proof SHA present.

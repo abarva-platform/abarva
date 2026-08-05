@@ -43,6 +43,7 @@ const PHS_EXECUTION_CONTRACT = Object.freeze({
   isolation_scope: ISOLATION_SCOPE,
   expected_source_file_context_rows: 54,
 });
+const EXPECTED_PROOF_ZIP_SHA256 = "a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553";
 const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
 const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
 const REQUIRED_LAYER1_RELEASE_FILES = new Set([
@@ -84,7 +85,7 @@ async function main() {
     return;
   }
 
-  const plan = buildSourceVolumePlan();
+  const plan = await buildSourceVolumePlan();
   assertPHSExecutionContract(plan);
   fs.mkdirSync(args.outDir, { recursive: true });
   writePlanProof(args.outDir, plan);
@@ -131,6 +132,9 @@ function parseArgs(argv) {
   const parsed = {
     mode: process.env.PHS_SOURCE_VOLUME_MODE || "plan",
     packageDir: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_DIR || "",
+    packageZip: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_ZIP || "",
+    packageZipUrl: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_ZIP_URL || "",
+    packageZipSha256: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_ZIP_SHA256 || "",
     outDir: process.env.PHS_SOURCE_VOLUME_OUT_DIR || path.join(os.tmpdir(), "phs-healthcare-demo-source-volume"),
     approvedProofSha256: process.env.PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256 || "",
     emitProofBundle:
@@ -146,6 +150,9 @@ function parseArgs(argv) {
     };
     if (arg === "--mode") parsed.mode = next();
     else if (arg === "--package-dir") parsed.packageDir = path.resolve(next());
+    else if (arg === "--package-zip") parsed.packageZip = path.resolve(next());
+    else if (arg === "--package-zip-url") parsed.packageZipUrl = next();
+    else if (arg === "--package-zip-sha256") parsed.packageZipSha256 = next();
     else if (arg === "--out-dir") parsed.outDir = path.resolve(next());
     else if (arg === "--approved-proof-sha256") parsed.approvedProofSha256 = next();
     else if (arg === "--emit-proof-bundle") parsed.emitProofBundle = true;
@@ -155,14 +162,15 @@ function parseArgs(argv) {
   if (!["plan", "preflight", "apply", "verify", "self-test"].includes(parsed.mode)) {
     throw new Error(`Unsupported mode ${parsed.mode}`);
   }
-  if (parsed.mode !== "self-test" && !parsed.packageDir) {
-    throw new Error("Explicit --package-dir is required for PHS source-volume modes; latest Downloads auto-selection is not allowed");
+  if (parsed.mode !== "self-test" && !parsed.packageDir && !parsed.packageZip && !parsed.packageZipUrl) {
+    throw new Error("Explicit --package-dir, --package-zip, or --package-zip-url is required for PHS source-volume modes; latest Downloads auto-selection is not allowed");
   }
   return parsed;
 }
 
-function buildSourceVolumePlan() {
-  const packageDir = path.resolve(args.packageDir);
+async function buildSourceVolumePlan() {
+  const resolvedPackage = await resolvePackageInput();
+  const packageDir = resolvedPackage.packageDir;
   const packageManifestPath = path.join(packageDir, "phs_healthcare_demo_package_manifest.json");
   const phaseResultPath = path.join(packageDir, "phase_a_result.json");
   assertFile(packageManifestPath);
@@ -170,14 +178,18 @@ function buildSourceVolumePlan() {
   const packageManifest = readJson(packageManifestPath);
   const phaseResult = readJson(phaseResultPath);
   assertPackageIdentity(packageManifest);
-  const proofZip = path.join(path.dirname(packageDir), phaseResult.proof_zip);
+  const proofZip = resolvedPackage.proofZip || path.join(path.dirname(packageDir), phaseResult.proof_zip);
   assertFile(proofZip);
   const proofZipSha256 = sha256(fs.readFileSync(proofZip));
+  if (proofZipSha256 !== EXPECTED_PROOF_ZIP_SHA256) {
+    throw new Error(`Proof ZIP SHA mismatch: expected ${EXPECTED_PROOF_ZIP_SHA256}, got ${proofZipSha256}`);
+  }
   const proofZipAttestation = `${proofZip}.sha256`;
-  assertFile(proofZipAttestation);
-  const attestation = fs.readFileSync(proofZipAttestation, "utf8");
-  if (!attestation.includes(proofZipSha256)) {
-    throw new Error(`Proof ZIP SHA attestation mismatch for ${proofZip}`);
+  if (fs.existsSync(proofZipAttestation)) {
+    const attestation = fs.readFileSync(proofZipAttestation, "utf8");
+    if (!attestation.includes(proofZipSha256)) {
+      throw new Error(`Proof ZIP SHA attestation mismatch for ${proofZip}`);
+    }
   }
   execFileSync("unzip", ["-t", proofZip], { stdio: "ignore" });
 
@@ -234,6 +246,31 @@ function buildSourceVolumePlan() {
       .filter((fileName) => RESTRICTED_DETAIL_HEALTH_PLAN_FILES.includes(fileName)),
     files,
   };
+}
+
+async function resolvePackageInput() {
+  if (args.packageDir) {
+    return { packageDir: path.resolve(args.packageDir), proofZip: "" };
+  }
+  const zipPath = args.packageZipUrl ? await downloadPackageZip(args.packageZipUrl) : path.resolve(args.packageZip);
+  assertFile(zipPath);
+  const actualSha256 = sha256(fs.readFileSync(zipPath));
+  const expectedSha256 = args.packageZipSha256 || args.approvedProofSha256 || process.env.PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256 || EXPECTED_PROOF_ZIP_SHA256;
+  if (actualSha256 !== expectedSha256) {
+    throw new Error(`PHS package ZIP SHA mismatch: expected ${expectedSha256}, got ${actualSha256}`);
+  }
+  const extractRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phs-healthcare-demo-package-"));
+  execFileSync("unzip", ["-q", zipPath, "-d", extractRoot], { stdio: "ignore" });
+  return { packageDir: extractRoot, proofZip: zipPath };
+}
+
+async function downloadPackageZip(url) {
+  const target = path.join(os.tmpdir(), `phs-healthcare-demo-approved-package-${shortHash(url, 12)}.zip`);
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to download PHS package ZIP: HTTP ${response.status}`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  fs.writeFileSync(target, bytes);
+  return target;
 }
 
 function assertPackageIdentity(manifest) {

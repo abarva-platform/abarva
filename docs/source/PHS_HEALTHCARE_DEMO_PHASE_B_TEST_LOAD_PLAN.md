@@ -92,9 +92,11 @@ npm run source:phs-healthcare-demo:layer1:plan -- \
 ```
 
 The loader reads only the approved `phs_healthcare_demo_package_manifest.json` and the 54 package-owned release CSVs classified in that manifest. It does not rely on folder names alone, does not reuse the separate `healthcare-demo-new` corpus root and does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
+For ACA execution, the loader may read an approved package ZIP through `PHS_HEALTHCARE_DEMO_PACKAGE_ZIP_URL`; it extracts the ZIP in-container and refuses to continue unless the SHA-256 matches `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`.
 
 Supported modes:
 
+- `migrate:dry` / `migrate:apply`: exact PHS schema/RLS migration proof for `foundation_v2_phs_demo`; no source rows are loaded by this step.
 - `self-test`: local SQL batch-order check with no package read and no database connection.
 - `plan`: package integrity, proof-ZIP SHA, source file, row, field and hash proof with no database connection.
 - `preflight`: isolated lab database read/write capability check inside a rolled-back transaction.

@@ -656,6 +656,8 @@
     "source:phs-healthcare-demo:build": "node scripts/source/build-phs-healthcare-demo-package.mjs",
     "source:phs-healthcare-demo:validate": "node scripts/source/validate-phs-healthcare-demo-package.mjs",
     "source:phs-healthcare-demo:data-layer-plan": "node scripts/source/plan-phs-healthcare-demo-data-layers.mjs",
+    "source:phs-healthcare-demo:layer1:migrate:dry": "node scripts/foundation-v2/apply-phs-healthcare-demo-schema.mjs --mode dry",
+    "source:phs-healthcare-demo:layer1:migrate:apply": "node scripts/foundation-v2/apply-phs-healthcare-demo-schema.mjs --mode apply",
     "source:phs-healthcare-demo:layer1:self-test": "node scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs --mode self-test",
     "source:phs-healthcare-demo:layer1:plan": "node scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs --mode plan",
     "source:phs-healthcare-demo:layer1:preflight": "node scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs --mode preflight",
