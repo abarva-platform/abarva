@@ -1,0 +1,65 @@
+{
+  "fixture_id": "phs-healthcare-demo-phase-a-canary-defects",
+  "generator_version": "phs-healthcare-demo-phase-a-v1",
+  "purpose": "Small committed canary contract for the offline validator. The bulk generated data is intentionally kept out of git.",
+  "expected_good_package": {
+    "tenant_key": "phs_health_demo_global",
+    "dataset_id": "phs-health-source-v1-202608",
+    "dataset_version": "v1",
+    "activation_state": "generated_not_loaded"
+  },
+  "corrupted_canaries": [
+    {
+      "defect": "missing tenant key",
+      "expected_failure": "tenant_key_mismatch"
+    },
+    {
+      "defect": "bad row hash",
+      "expected_failure": "bad_row_hash"
+    },
+    {
+      "defect": "invalid source record path",
+      "expected_failure": "invalid_source_record_path"
+    },
+    {
+      "defect": "duplicate native id",
+      "expected_failure": "duplicate_native_id"
+    },
+    {
+      "defect": "duplicate primary key",
+      "expected_failure": "duplicate_primary_key"
+    },
+    {
+      "defect": "PII email",
+      "expected_failure": "pii_email"
+    },
+    {
+      "defect": "suspected PHI",
+      "expected_failure": "suspected_phi_pii_marker"
+    },
+    {
+      "defect": "CDAO question count below 50",
+      "expected_failure": "cdao_question_count_below_50"
+    },
+    {
+      "defect": "missing required story domain",
+      "expected_failure": "missing_required_story_thread"
+    },
+    {
+      "defect": "incorrect time coverage",
+      "expected_failure": "missing_24_month_start"
+    },
+    {
+      "defect": "outcome map below range",
+      "expected_failure": "enterprise_outcomes_kpi_map_count_out_of_range"
+    },
+    {
+      "defect": "separate KPI value-driver tabs",
+      "expected_failure": "separate_kpi_value_driver_tabs_present"
+    },
+    {
+      "defect": "missing outcomes section in interview pack",
+      "expected_failure": "missing_outcomes_kpis_value_drivers_section"
+    }
+  ]
+}

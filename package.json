@@ -653,6 +653,8 @@
     "source:v4:question-evidence:build": "node scripts/source/build-skyharbor-v4-question-evidence-contract.mjs && npx prettier --write docs/source/SKYHARBOR_SOURCE_V4_QUESTION_EVIDENCE_CONTRACT.md docs/source/SKYHARBOR_SOURCE_V4_GENERATOR_DESIGN.md docs/source/skyharbor-v4/source_v4_question_bank.json docs/source/skyharbor-v4/source_v4_question_coverage_matrix.json docs/source/skyharbor-v4/source_v4_model_fit_audit.json",
     "source:v4:question-coverage:verify": "node scripts/source/verify-skyharbor-v4-question-coverage.mjs",
     "source:v4:synthetic-package:build": "node scripts/source/build-skyharbor-v4-synthetic-package.mjs",
+    "source:phs-healthcare-demo:build": "node scripts/source/build-phs-healthcare-demo-package.mjs",
+    "source:phs-healthcare-demo:validate": "node scripts/source/validate-phs-healthcare-demo-package.mjs",
     "source:v4:row-depth:verify": "node scripts/source/verify-skyharbor-v4-row-depth.mjs",
     "source:v4:lab-canary:plan": "node scripts/source/load-skyharbor-v4-lab-canary.mjs",
     "source:v4:lab-canary:apply": "node scripts/source/load-skyharbor-v4-lab-canary.mjs --apply",
