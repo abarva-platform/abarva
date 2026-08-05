@@ -14,7 +14,7 @@ import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
 import { TowerCommandCenter } from "./TowerCommandCenter";
 
-interface CioTowerChatResponse {
+interface TowerChatResponse {
   response?: string;
   modelOutput?: TowerChatVisibleAnswer;
   traceKey?: string;
@@ -31,7 +31,7 @@ type TowerChatStreamEvent =
     }
   | ({
       type: "tower-answer";
-    } & Partial<CioTowerChatResponse>)
+    } & Partial<TowerChatResponse>)
   | {
       type: "error";
       response?: string;
@@ -47,18 +47,18 @@ type TowerChatStreamEvent =
 async function readTowerChatStream(
   response: Response,
   onStatus: (label: string) => void,
-): Promise<Partial<CioTowerChatResponse>> {
+): Promise<Partial<TowerChatResponse>> {
   if (!response.body) {
     return (await response
       .json()
-      .catch(() => ({}))) as Partial<CioTowerChatResponse>;
+      .catch(() => ({}))) as Partial<TowerChatResponse>;
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let finalPayload: Partial<CioTowerChatResponse> | null = null;
-  let errorPayload: Partial<CioTowerChatResponse> | null = null;
+  let finalPayload: Partial<TowerChatResponse> | null = null;
+  let errorPayload: Partial<TowerChatResponse> | null = null;
 
   const handleLine = (line: string) => {
     const trimmed = line.trim();
@@ -187,7 +187,7 @@ export function TowerCommandCenterAvaShell({
       const timeout = window.setTimeout(() => controller.abort(), 90_000);
 
       try {
-        const res = await fetch("/api/tower/cio-chat", {
+        const res = await fetch("/api/tower/chat", {
           method: "POST",
           headers: {
             Accept: "application/x-ndjson",
@@ -205,7 +205,7 @@ export function TowerCommandCenterAvaShell({
           ? await readTowerChatStream(res, setPendingMessage)
           : ((await res
               .json()
-              .catch(() => ({}))) as Partial<CioTowerChatResponse>);
+              .catch(() => ({}))) as Partial<TowerChatResponse>);
         const modelOutput = json.modelOutput;
         if (!res.ok || !modelOutput?.answer) {
           setMessages((prev) => [

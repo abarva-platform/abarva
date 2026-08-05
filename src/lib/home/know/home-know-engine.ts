@@ -17,7 +17,6 @@ import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-char
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { repairHomeAnswerQuality } from "@/lib/home/know/home-answer-quality-gate";
 import { assessHomeAnswerRelevance } from "@/lib/home/know/home-answer-relevance-gate";
-import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-dimension-dossier";
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
 import {
@@ -388,63 +387,7 @@ export async function buildHomeKnowResponse(
       });
     }
     console.warn(
-      `[home-know.semantic2-dossier] Falling back to local dimension dossier for ${tenantKey}: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
-  }
-  try {
-    const { dossier, cacheHit, sourceSignature } =
-      buildHomeKnowDimensionDossier({
-        tenantKey: dossierTenantKey,
-        question: input.question,
-        requestedSurface: "home",
-      });
-    const response = buildHomeKnowResponseFromDossier({
-      tenantKey,
-      question: input.question.trim(),
-      dossier,
-    });
-    const validated = validateHomeKnowResponse({
-      ...response,
-      safety: {
-        ...response.safety,
-        composerTrace: response.safety.composerTrace
-          ? {
-              ...response.safety.composerTrace,
-              fallbackUsed: true,
-              reason: `local dimension dossier fallback used; cacheHit=${cacheHit}; sourceSignature=${sourceSignature}`,
-            }
-          : response.safety.composerTrace,
-      },
-    });
-    if (
-      isFeatureEnabled(
-        { clientKey: input.client ?? tenantKey, clientId: tenantKey },
-        "home_know_claude_synthesis",
-      )
-    ) {
-      const synthesis = await synthesizeHomeConsultantText({
-        dossier,
-        deterministicResponse: validated,
-        operatorTrace: input.operatorTrace === true,
-      });
-      if (isHomeConsultantTextSynthesisResult(synthesis)) {
-        return validateHomeKnowResponse(
-          applyHomeConsultantTextSynthesis(validated, synthesis),
-        );
-      }
-      if (synthesis?.attempted) {
-        return applyHomeConsultantTextSynthesisFailureTrace(
-          validated,
-          synthesis,
-        );
-      }
-    }
-    return validated;
-  } catch (error) {
-    console.warn(
-      `[home-know.local-dossier] Falling back to read-model packet for ${tenantKey}: ${
+      `[home-know.semantic2-dossier] Using current read-model packet for ${tenantKey}; retired local dossier fallback disabled: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

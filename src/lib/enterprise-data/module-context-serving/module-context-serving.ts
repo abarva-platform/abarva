@@ -85,6 +85,7 @@ const ACTIVE_ACCESS_SLUGS: Record<string, string> = {
   "meridian-health": "meridian",
   meridian: "meridian",
   "skyharbor-air": "skyharbor",
+  skyharbor_global: "skyharbor",
   skyharbor: "skyharbor",
 };
 
@@ -95,7 +96,9 @@ const REQUEST_TENANT_ALIASES: Record<string, string> = {
   firstcapital: "first-capital-financial",
   lakeshore: "lakeshore-holdings",
   meridian: "meridian-health",
-  skyharbor: "skyharbor-air",
+  skyharbor: "skyharbor_global",
+  "skyharbor-air": "skyharbor_global",
+  skyharbor_global: "skyharbor_global",
 };
 
 export interface ModuleContextServingOptions {

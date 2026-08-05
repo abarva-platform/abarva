@@ -188,7 +188,7 @@ const COMMON_NAME_WORDS = new Set([
 
 const TENANT_LEAKAGE_ALIASES: Record<string, string[]> = {
   "first-capital": ["First Capital Financial", "First Capital", "FS Demo"],
-  "skyharbor-air": ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
+  skyharbor_global: ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
 };
 
 /** Detect references to OTHER canonical tenants in the answer. */
@@ -202,7 +202,8 @@ export function detectTenantLeakage(
     roster ?? CANONICAL_TENANTS.map((t) => ({ key: t.key, name: t.name }));
   const findings: TenantLeakageFinding[] = [];
   for (const t of list) {
-    if (t.key === own) continue;
+    const tenantKey = canonicalTenantKey(t.key) || t.key;
+    if (tenantKey === own) continue;
     // Always match the full cover name + the canonical key. The single first
     // word is matched ONLY when it is a distinctive proper noun — common
     // English words ("First" in "First Capital") would otherwise false-positive
@@ -215,8 +216,8 @@ export function detectTenantLeakage(
     const tokens = [
       t.name,
       distinctiveFirst,
-      t.key,
-      ...(TENANT_LEAKAGE_ALIASES[t.key] ?? []),
+      tenantKey,
+      ...(TENANT_LEAKAGE_ALIASES[tenantKey] ?? []),
     ].filter((x): x is string => Boolean(x));
     for (const token of tokens) {
       const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -232,7 +233,7 @@ export function detectTenantLeakage(
           .trim();
         findings.push({
           detail: `referenced "${token}" — …${snippet}…`,
-          offendingTenantKey: t.key,
+          offendingTenantKey: tenantKey,
         });
         break;
       }

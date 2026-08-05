@@ -40,7 +40,7 @@ registerSynthesisCache("programs", synthesisCache, cacheCreatedAt);
 
 const MOVES_V6_SYNTHESIS_HEADERS = {
   "X-AbarVa-V6-Contract": MODULE_V6_ANSWER_CONTRACT_VERSION,
-  "X-AbarVa-V6-Surface": "moves",
+  "X-AbarVa-Moves-Layer": "moves-current",
   "X-AbarVa-Renderer-Policy": "placement-only",
 } as const;
 

@@ -12,8 +12,6 @@ import {
   type HomeSummarySnapshotMode,
 } from "@/lib/home/home-summary-snapshot";
 import { buildHomeRuntimeSummarySnapshot } from "@/lib/home/home-summary-runtime";
-import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
-import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const runtime = "nodejs";
@@ -26,13 +24,14 @@ const APP_CLIENT_BY_CANONICAL: Record<string, string> = {
   "lakeshore-industries": "lakeshore",
   "meridian-health": "meridian",
   "skyharbor-air": "skyharbor",
+  skyharbor_global: "skyharbor",
 };
 
 export async function GET(req: NextRequest) {
   const tenantParam =
     req.nextUrl.searchParams.get("tenantKey") ??
     req.nextUrl.searchParams.get("client") ??
-    "skyharbor";
+    "skyharbor_global";
   const requestedMode = req.nextUrl.searchParams.get("mode");
   const mode: HomeSummarySnapshotMode =
     requestedMode === "candidate_preview"
@@ -56,10 +55,6 @@ export async function GET(req: NextRequest) {
     tenant?.displayName ??
     clientOption?.name ??
     canonicalTenantKey;
-  const browser =
-    (await getHomeV7ContextBrowser({ tenantKey: appClientKey }).catch(
-      () => null,
-    )) ?? getHomeV6ContextBrowser(appClientKey);
   const setupControl =
     clientOption && tenant?.clientId
       ? buildAdminSetupControlReadModel({
@@ -81,7 +76,7 @@ export async function GET(req: NextRequest) {
     displayName,
     industry: clientOption?.vertical ?? null,
     mode,
-    browser,
+    browser: null,
     setupControl,
   });
 

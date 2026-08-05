@@ -40,7 +40,7 @@ registerSynthesisCache("source", synthesisCache, cacheCreatedAt);
 
 const SOURCE_V6_SYNTHESIS_HEADERS = {
   "X-AbarVa-V6-Contract": MODULE_V6_ANSWER_CONTRACT_VERSION,
-  "X-AbarVa-V6-Surface": "source",
+  "X-AbarVa-Source-Layer": "source-current",
   "X-AbarVa-Renderer-Policy": "placement-only",
 } as const;
 const SOURCE_V6_SYNTHESIS_PROMPT_VERSION =

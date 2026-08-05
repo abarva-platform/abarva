@@ -1,11 +1,11 @@
-import { getActiveClientRow } from '@/lib/active-client';
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { canonicalCioTowerTenantKey } from '@/lib/cio-tower/metric-packet';
-import { answerCurrentTowerQuestion } from '@/lib/tower/current-layer-answer';
-import { towerProgressEventsForQuestion } from '@/lib/cio-tower/visual-contract';
+import { getActiveClientRow } from "@/lib/active-client";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { canonicalCioTowerTenantKey } from "@/lib/cio-tower/metric-packet";
+import { towerProgressEventsForQuestion } from "@/lib/cio-tower/visual-contract";
+import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type TowerChatResult = Awaited<ReturnType<typeof answerCurrentTowerQuestion>>;
 
@@ -35,14 +35,14 @@ function buildTowerChatPayload(result: TowerChatResult) {
 
 function towerChatFailurePayload(message: string) {
   return {
-    error: 'tower_cio_chat_failed',
+    error: "tower_current_chat_failed",
     detail: message,
     response:
-      'aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.',
+      "aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.",
     modelOutput: {
-      version: 'cio_tower_visible_answer_v1',
+      version: "cio_tower_visible_answer_v1",
       answer:
-        'aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.',
+        "aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.",
       tables: [],
       tabs: [],
       followUpQuestion: null,
@@ -55,7 +55,7 @@ function towerChatFailurePayload(message: string) {
 }
 
 function ndjsonEvent(type: string, payload: object = {}) {
-  return JSON.stringify({ type, ...payload }) + '\n';
+  return `${JSON.stringify({ type, ...payload })}\n`;
 }
 
 export async function POST(request: Request) {
@@ -68,19 +68,25 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as {
     message?: string;
+    stream?: boolean;
   };
   const question = body.message?.trim();
   if (!question) {
-    return Response.json({ error: 'bad_request', detail: 'message required' }, { status: 400 });
+    return Response.json(
+      { error: "bad_request", detail: "message required" },
+      { status: 400 },
+    );
   }
 
   const activeClient = await getActiveClientRow().catch(() => null);
-  const tenantKey = canonicalCioTowerTenantKey(tenancy.clientKey ?? activeClient?.key ?? tenancy.clientId);
+  const tenantKey = canonicalCioTowerTenantKey(
+    tenancy.clientKey ?? activeClient?.key ?? tenancy.clientId,
+  );
   const tenantName = activeClient?.name ?? tenantKey;
   const wantsStream =
-    request.headers.get('accept')?.includes('application/x-ndjson') ||
-    request.headers.get('accept')?.includes('text/event-stream') ||
-    Boolean((body as { stream?: boolean }).stream);
+    request.headers.get("accept")?.includes("application/x-ndjson") ||
+    request.headers.get("accept")?.includes("text/event-stream") ||
+    body.stream === true;
 
   if (wantsStream) {
     const encoder = new TextEncoder();
@@ -90,12 +96,12 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(ndjsonEvent(type, payload)));
         };
         try {
-          emit('status', {
-            phase: 'accepted',
-            label: 'Reading your Tower question...',
+          emit("status", {
+            phase: "accepted",
+            label: "Reading your Tower question...",
           });
           for (const event of towerProgressEventsForQuestion(question)) {
-            emit('status', event);
+            emit("status", event);
           }
           const result = await answerCurrentTowerQuestion({
             tenantId: tenancy.clientId,
@@ -104,18 +110,18 @@ export async function POST(request: Request) {
             tenantName,
             question,
           });
-          emit('status', {
-            phase: 'validation',
-            label: 'Validating supporting evidence...',
+          emit("status", {
+            phase: "validation",
+            label: "Validating supporting evidence...",
           });
-          emit('tower-answer', buildTowerChatPayload(result));
-          emit('done', {
+          emit("tower-answer", buildTowerChatPayload(result));
+          emit("done", {
             traceKey: result.traceKey,
             latencyMs: result.latencyMs,
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          emit('error', towerChatFailurePayload(message));
+          emit("error", towerChatFailurePayload(message));
         } finally {
           controller.close();
         }
@@ -123,9 +129,10 @@ export async function POST(request: Request) {
     });
     return new Response(stream, {
       headers: {
-        'Content-Type': 'application/x-ndjson; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-        'X-Accel-Buffering': 'no',
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",
+        "X-AbarVa-Tower-Layer": "tower-current",
       },
     });
   }
@@ -138,12 +145,13 @@ export async function POST(request: Request) {
       tenantName,
       question,
     });
-    return Response.json(buildTowerChatPayload(result));
+    return Response.json(buildTowerChatPayload(result), {
+      headers: {
+        "X-AbarVa-Tower-Layer": "tower-current",
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return Response.json(
-      towerChatFailurePayload(message),
-      { status: 502 },
-    );
+    return Response.json(towerChatFailurePayload(message), { status: 502 });
   }
 }

@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       status: 502,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "X-AbarVa-V6-Surface": "tower",
+        "X-AbarVa-Tower-Layer": "tower-current",
         "X-AbarVa-Renderer-Policy": "placement-only",
         "X-AbarVa-Tower-Validation": "failed",
       },

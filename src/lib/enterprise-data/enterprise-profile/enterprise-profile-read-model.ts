@@ -40,8 +40,10 @@ const APP_TO_ENTERPRISE_TENANT: Record<string, string> = {
   "lakeshore-industries": "lakeshore-holdings",
   meridian: "meridian-health",
   "meridian-health": "meridian-health",
-  skyharbor: "skyharbor-air",
-  "skyharbor-air": "skyharbor-air",
+  skyharbor: "skyharbor_global",
+  "skyharbor-air": "skyharbor_global",
+  skyharbor_global: "skyharbor_global",
+  "skyharbor-global": "skyharbor_global",
 };
 
 let cachedProfiles:
