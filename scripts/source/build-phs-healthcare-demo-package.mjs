@@ -118,6 +118,8 @@ const sourceFileSpecs = [
   ["EPIC_MODULE_INVENTORY.csv", "clinical_platforms", "Epic", "Module Inventory", "module", "module_id"],
   ["EPIC_INTERFACE_INVENTORY.csv", "clinical_platforms", "Epic Bridges", "Interface Inventory", "interface", "interface_id"],
   ["CLARITY_CABOODLE_ASSET_INVENTORY.csv", "analytics_platforms", "Epic Clarity Caboodle", "Data Asset Inventory", "asset", "asset_id"],
+  ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "health_plan_operations", "Payer Claims Enrollment Analytics", "Claims Enrollment Monthly Aggregate", "plan_market_month", "claims_enrollment_month_id"],
+  ["STARS_HEDIS_MEASURE_PERFORMANCE.csv", "quality_stars_risk", "Stars HEDIS Quality Platform", "Measure Performance Monthly Aggregate", "measure_market_month", "measure_month_id"],
   ["HADOOP_CLUSTER_WORKLOADS.csv", "analytics_platforms", "Hadoop Inventory", "Cluster Workload", "workload", "workload_id"],
   ["SQL_SERVER_DATA_MARTS.csv", "analytics_platforms", "SQL Server Inventory", "Data Mart", "data_mart", "mart_id"],
   ["SAS_APPLICATIONS_AND_USERS.csv", "analytics_platforms", "SAS Platform Inventory", "SAS Application Usage", "application_month", "sas_usage_id"],
@@ -816,6 +818,16 @@ function buildRows() {
   const medCategories = ["gloves", "syringes", "wound care", "lab consumable", "procedure kit"];
   const workforceRoles = ["developer", "analyst", "architect", "service manager", "operations specialist"];
   const workforceLocations = ["US", "nearshore", "offshore"];
+  const payerMarkets = ["New Mexico", "West Texas", "Colorado Front Range", "Arizona Corridor", "Virtual Care"];
+  const planProducts = ["Medicare Advantage", "Commercial", "Medicaid Managed Care", "ACO Shared Risk", "Exchange"];
+  const qualityMeasures = [
+    ["QM-001", "Medication adherence diabetes", "stars"],
+    ["QM-002", "Controlling blood pressure", "hedis"],
+    ["QM-003", "Breast cancer screening", "hedis"],
+    ["QM-004", "Plan all-cause readmissions", "hedis"],
+    ["QM-005", "CAHPS care coordination", "stars"],
+    ["QM-006", "Medication reconciliation post discharge", "quality"],
+  ];
   const applications = Array.from({ length: 180 }, (_, i) => `APP-${pad(i + 1, 4)}`);
   const services = Array.from({ length: 220 }, (_, i) => `CI-${pad(i + 1, 4)}`);
 
@@ -897,6 +909,50 @@ function buildRows() {
   for (let i = 0; i < 34; i += 1) add(specs["EPIC_MODULE_INVENTORY.csv"], { module_id: `EPIC-MOD-${pad(i + 1, 3)}`, module_name: pick(["Resolute", "Cadence", "Prelude", "Willow", "Clarity", "Caboodle", "Bridges"]), support_scope_state: i % 6 === 0 ? "overlap_requires_resolution" : "explicit", contract_family_id: "CF-002", story_thread_ref: storyThreads[1] });
   for (let i = 0; i < 240; i += 1) add(specs["EPIC_INTERFACE_INVENTORY.csv"], { interface_id: `EPIC-IF-${pad(i + 1, 4)}`, module_id: `EPIC-MOD-${pad((i % 34) + 1, 3)}`, application_id: applications[i % applications.length], interface_type: pick(["HL7", "FHIR", "batch", "API"]), responsibility_state: i % 9 === 0 ? "unresolved" : "explicit", story_thread_ref: storyThreads[1] });
   for (let i = 0; i < 180; i += 1) add(specs["CLARITY_CABOODLE_ASSET_INVENTORY.csv"], { asset_id: `EC-ASSET-${pad(i + 1, 4)}`, platform: pick(["Clarity", "Caboodle"]), reporting_domain: pick(["clinical quality", "population health", "finance", "operations"]), downstream_mart_id: `MART-${pad((i % 140) + 1, 4)}`, story_thread_ref: storyThreads[6] });
+  for (let i = 0; i < 720; i += 1) {
+    const month = periodMonths[i % periodMonths.length];
+    const productLine = planProducts[i % planProducts.length];
+    const market = payerMarkets[Math.floor(i / planProducts.length) % payerMarkets.length];
+    add(specs["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv"], {
+      claims_enrollment_month_id: `PAY-CE-${pad(i + 1, 5)}`,
+      product_line: productLine,
+      market,
+      member_months: 4_500 + (i % 7) * 325 + Math.floor(random() * 600),
+      claim_count: 1_200 + (i % 11) * 75 + Math.floor(random() * 160),
+      allowed_amount: money(650_000 + random() * 1_900_000),
+      paid_amount: money(540_000 + random() * 1_620_000),
+      denied_claim_count: 15 + (i % 21),
+      risk_adjustment_gap_count: 30 + (i % 70),
+      data_freshness_days: 2 + (i % 18),
+      period_start: month.start,
+      period_end: month.end,
+      story_thread_ref: storyThreads[6],
+    });
+  }
+  for (let i = 0; i < 720; i += 1) {
+    const month = periodMonths[i % periodMonths.length];
+    const [measureId, measureName, measurePortfolio] = qualityMeasures[i % qualityMeasures.length];
+    const observedRate = money(0.62 + random() * 0.28);
+    const targetRate = money(0.78 + (i % 4) * 0.03);
+    add(specs["STARS_HEDIS_MEASURE_PERFORMANCE.csv"], {
+      measure_month_id: `QMS-${pad(i + 1, 5)}`,
+      measure_id: measureId,
+      measure_name: measureName,
+      measure_portfolio: measurePortfolio,
+      product_line: planProducts[i % planProducts.length],
+      market: payerMarkets[i % payerMarkets.length],
+      numerator_count: 420 + (i % 180),
+      denominator_count: 650 + (i % 260),
+      observed_rate: observedRate,
+      target_rate: targetRate,
+      gap_to_target: money(targetRate - observedRate),
+      data_freshness_days: 1 + (i % 14),
+      source_refresh_state: i % 9 === 0 ? "stale_extract_requires_followup" : "current_synthetic_monthly_extract",
+      period_start: month.start,
+      period_end: month.end,
+      story_thread_ref: storyThreads[6],
+    });
+  }
   for (let i = 0; i < 96; i += 1) add(specs["HADOOP_CLUSTER_WORKLOADS.csv"], { workload_id: `HD-WL-${pad(i + 1, 4)}`, cluster_ref: `HADOOP-${(i % 5) + 1}`, workload_name: `synthetic workload ${i + 1}`, retirement_dependency: i % 3 === 0 ? "contract_scope_fee_reduction_not_linked" : "migration_candidate", story_thread_ref: storyThreads[6] });
   for (let i = 0; i < 140; i += 1) add(specs["SQL_SERVER_DATA_MARTS.csv"], { mart_id: `MART-${pad(i + 1, 4)}`, owner_function: pick(["analytics", "finance", "clinical operations", "health plan"]), redundancy_state: i % 5 === 0 ? "overlap_with_sas_or_caboodle" : "unique_current_use", story_thread_ref: storyThreads[6] });
   for (let i = 0; i < 720; i += 1) {
@@ -1839,15 +1895,45 @@ function buildPhaseBPlan() {
 
 Status: designed_only. Do not execute without explicit approval.
 
+## Hard Gates
+
+Phase B may begin only after explicit Phase A audit approval and separate authorization for an isolated lab data build. Do not load data, apply migrations, refresh Cube, deploy, activate a tenant or mutate any existing tenant from this package without that approval.
+
+## Source Corpus Contract
+
+- Tenant key: ${EXPECTED.tenantKey}
+- Dataset id: ${EXPECTED.datasetId}
+- Dataset version: ${EXPECTED.datasetVersion}
+- Activation target: staged only
+- Source-system CSV extracts: ${EXPECTED.sourceSystemExtractCsvs}
+- Required package state: generated_not_loaded
+- Required proof: ZIP SHA-256, package manifest, validation report and 40-file source extract count.
+
+## Planned Lab Data Layers
+
+1. Layer 0 package proof: verify proof ZIP SHA-256, source ZIP integrity, package manifest counts and validator canaries.
+2. Layer 1 raw source landing: land source releases, 40 source files, source records and source field values with tenant_key, dataset_id, dataset_version, as_of_date, row hash and source URI.
+3. Layer 2 source adapters: transform each source-owner/native extract into adapter outputs without forcing the client into AbarVa canonical templates.
+4. Layer 3 canonical candidates: stage vendor, contract, spend, service, application, platform, claim/enrollment, quality, evidence and sourcing candidates with lineage and confidence.
+5. Layer 3 model-fit deltas: apply only approved additive objects or nullable fields after review of model-fit gaps.
+6. Layer 4 read models: build Source, Tower, Home, Intelligence, Moves and aVa projections from canonical candidates; no product reads Layer 1 files directly.
+7. Analytics runtime: refresh Cube only in the isolated lab, with securityContext including tenant_key, dataset_id, dataset_version and as_of_date.
+8. Proof and reconciliation: reconcile PostgreSQL against package counts and Cube/read-model counts before any signed-in product proof.
+
+## Execution Sequence
+
 1. Review Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
-2. Add only approved additive migrations and tenant bootstrap code through a separate PR.
-3. Load tenant_key=${EXPECTED.tenantKey}, dataset_id=${EXPECTED.datasetId}, activation_state=staged into an isolated lab/test tenant only.
-4. Load source-shaped raw records, canonical candidates, document evidence, source projections, tower metrics and consumption.sourcing_* views.
-5. Rebuild or refresh Cube in the isolated environment; securityContext must include tenant_key, dataset_id, dataset_version and as_of_date.
-6. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, BPO normalized TCO and evidence counts.
-7. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths.
-8. Run isolation checks: SkyHarbor sees no healthcare context; healthcare sees no airline context; invalid tenant blocks with no fallback.
-9. Keep activation_state=staged and stop again for approval.
+2. Add approved tenant bootstrap and additive migrations through the governed lab lane.
+3. Implement a PHS source-volume reader that consumes this package manifest and its 40 \`source_system_extracts/*.csv\` files; do not reuse a different healthcare corpus root as hidden truth.
+4. Run source-volume plan mode and produce a file, row, field and hash manifest with no database connection.
+5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
+6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
+7. Run independent reader verify and compare exact source-release/file/record/field/gate counts.
+8. Run source adapters and canonical-candidate staging in separate jobs with independent plan, preflight, apply and verify proof.
+9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, claims/enrollment aggregates, Stars/HEDIS measures, BPO normalized TCO and evidence counts.
+10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
+11. Run isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant blocks with no fallback.
+12. Keep activation_state=staged and stop again for approval.
 `;
 }
 

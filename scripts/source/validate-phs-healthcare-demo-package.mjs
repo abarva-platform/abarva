@@ -17,6 +17,7 @@ export const EXPECTED = {
   maxStructuredRows: 75_000,
   minEvidenceSpans: 15_000,
   maxEvidenceSpans: 30_000,
+  sourceSystemExtractCsvs: 40,
   minQuestions: 150,
   targetQuestions: 180,
   minInterviewQuestions: 20,
@@ -963,6 +964,15 @@ function validateManifestContract(failures, manifest, seen) {
       count: manifest.counts?.evidence_spans,
     });
   }
+  const sourceExtractCsvs = asArray(manifest.file_contracts).filter(
+    (contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv",
+  ).length;
+  if (sourceExtractCsvs !== EXPECTED.sourceSystemExtractCsvs) {
+    issue(failures, "source_system_extract_count_mismatch", "PHS tenant source-system extract count must match the lab-ready source corpus contract", {
+      expected: EXPECTED.sourceSystemExtractCsvs,
+      actual: sourceExtractCsvs,
+    });
+  }
   validateOutcomeMapContract(failures, manifest);
   for (const story of REQUIRED_STORY_THREADS) {
     if (!seen.storyThreads.has(story)) {
@@ -1109,6 +1119,9 @@ export async function validatePackage(packageDir) {
     warnings,
     summary: {
       structuredRows,
+      sourceSystemExtractCsvs: asArray(manifest.file_contracts).filter(
+        (contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv",
+      ).length,
       uniqueRowHashes: seen.rowHashes.size,
       storyThreads: Array.from(seen.storyThreads).sort(),
       evidenceStates: Array.from(seen.evidenceStates).sort(),

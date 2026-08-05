@@ -32,8 +32,9 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 
 ## Generated Counts From Latest Local Run
 
-- Structured rows: 70,485
+- Structured rows: 71,925
 - Evidence spans: 16,000
+- Source-system extract CSVs: 40
 - Vendors: 10
 - Existing contract families: 6
 - Legal instruments: 24
@@ -44,11 +45,11 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Enterprise outcomes/KPI map records: 44
 - CDAO questions: 71
 
-Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip`
-Latest corrected proof SHA-256: `e0d92407792070d0162cd6668bd9d73041302803c324dda2b1ed3d8f6446d475`
-Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip.sha256`
+Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip`
+Latest corrected proof SHA-256: `a93bd23ed798016ff5849ea1d66a1dddffb621aefbaa77d1d20b88a62b1aa44b`
+Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip.sha256`
 
-Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains 608 rows, with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker.
+Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains 608 rows, with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator now also requires exactly 40 source-system extract CSVs and the latest package includes `PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv` and `STARS_HEDIS_MEASURE_PERFORMANCE.csv` for healthcare plan and quality source coverage.
 
 ## Public Repository Discipline
 
