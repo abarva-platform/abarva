@@ -36,9 +36,10 @@ const ID_COLUMN_NAMES = new Set(["tenant_id", "client_id"]);
 
 const TEXT_TYPES = new Set(["character varying", "character", "text", "citext", "uuid"]);
 
-const DELETE_CHUNK_SIZE = 1000;
+const DEFAULT_DELETE_CHUNK_SIZE = 1000;
 const DEFAULT_MAX_CHUNKS_PER_OPERATION = 5;
 const DEFAULT_APPLY_BUDGET_SECONDS = 5400;
+const DEFAULT_STATEMENT_TIMEOUT = "2min";
 const INDEX_THRESHOLD_ROWS = 1000;
 
 const DELETE_PRIORITY = new Map([
@@ -75,6 +76,8 @@ Options:
   --max-passes <n>         Delete retry passes for FK ordering. Default: 12.
   --atomic                 Use the legacy all-or-nothing transaction. Default is staged commits.
   --max-chunks <n>         Max delete chunks per table operation before committing. Default: ${DEFAULT_MAX_CHUNKS_PER_OPERATION}.
+  --chunk-size <n>         Rows per delete chunk. Env: RETIRED_TENANT_ROW_PURGE_CHUNK_SIZE. Default: ${DEFAULT_DELETE_CHUNK_SIZE}.
+  --statement-timeout <v>  Per-operation statement timeout. Env: RETIRED_TENANT_ROW_PURGE_STATEMENT_TIMEOUT. Default: ${DEFAULT_STATEMENT_TIMEOUT}.
   --budget-seconds <n>     Graceful staged-apply budget before exiting partial. Default: ${DEFAULT_APPLY_BUDGET_SECONDS}.
   --validate-only          Parse config and exit without DB access.
   --help                   Show this help.
@@ -443,8 +446,8 @@ async function setTriggerOverrides(client, enabled) {
   }
 }
 
-async function deleteRows(client, operation, maxChunks = Number.POSITIVE_INFINITY) {
-  if (operation.rowCount <= DELETE_CHUNK_SIZE) {
+async function deleteRows(client, operation, maxChunks = Number.POSITIVE_INFINITY, chunkSize = DEFAULT_DELETE_CHUNK_SIZE) {
+  if (operation.rowCount <= chunkSize) {
     const where = rendered(operation);
     const result = await client.query(
       `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
@@ -458,16 +461,16 @@ async function deleteRows(client, operation, maxChunks = Number.POSITIVE_INFINIT
   for (;;) {
     const where = rendered(operation, "candidate");
     const result = await client.query(
-      `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${quoteIdent("target")}.ctid in (select ${quoteIdent("candidate")}.ctid from ${qualified(operation.schema, operation.table)} as ${quoteIdent("candidate")} where ${where.sql} limit ${DELETE_CHUNK_SIZE})`,
+      `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${quoteIdent("target")}.ctid in (select ${quoteIdent("candidate")}.ctid from ${qualified(operation.schema, operation.table)} as ${quoteIdent("candidate")} where ${where.sql} limit ${chunkSize})`,
       where.params,
     );
     const rowsDeleted = result.rowCount ?? 0;
     totalDeleted += rowsDeleted;
     chunks += 1;
-    if (chunks >= maxChunks && rowsDeleted === DELETE_CHUNK_SIZE) {
+    if (chunks >= maxChunks && rowsDeleted === chunkSize) {
       return { rowsDeleted: totalDeleted, chunkLimited: true };
     }
-    if (rowsDeleted < DELETE_CHUNK_SIZE) break;
+    if (rowsDeleted < chunkSize) break;
   }
   return { rowsDeleted: totalDeleted, chunkLimited: false };
 }
@@ -633,9 +636,9 @@ async function applyDeletesAtomic(client, operations, maxPasses) {
   return { actions, pending };
 }
 
-async function deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks) {
+async function deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks, chunkSize) {
   if (operation.qualifiedName !== "public.program_audit_log" || operation.rowCount === 0) return null;
-  const deletion = await deleteRows(client, operation, maxChunks);
+  const deletion = await deleteRows(client, operation, maxChunks, chunkSize);
   return {
     qualifiedName: operation.qualifiedName,
     rowsDeleted: deletion.rowsDeleted,
@@ -644,21 +647,21 @@ async function deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks)
   };
 }
 
-async function applyOneOperationStaged(client, operation, pass, maxChunks) {
+async function applyOneOperationStaged(client, operation, pass, maxChunks, chunkSize, statementTimeout) {
   await client.query("begin");
   try {
-    await client.query("set local statement_timeout = '2min'");
+    await client.query("select set_config('statement_timeout', $1, true)", [statementTimeout]);
     await setTriggerOverrides(client, false);
     const actions = [];
     const cleared = await clearKnownReferences(client, operation);
     if (cleared) {
       actions.push({ ...cleared, pass });
     }
-    const special = await deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks);
+    const special = await deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks, chunkSize);
     if (special) {
       actions.push({ ...special, pass });
     } else {
-      const deletion = await deleteRows(client, operation, maxChunks);
+      const deletion = await deleteRows(client, operation, maxChunks, chunkSize);
       actions.push({
         qualifiedName: operation.qualifiedName,
         rowsDeleted: deletion.rowsDeleted,
@@ -679,7 +682,7 @@ function elapsedSeconds(startedAt) {
   return (Date.now() - startedAt) / 1000;
 }
 
-async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds, preservedClientScope) {
+async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds, preservedClientScope, chunkSize, statementTimeout) {
   const actions = [];
   const errors = [];
   let budgetExhausted = false;
@@ -705,7 +708,7 @@ async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds, p
         break;
       }
       try {
-        const operationActions = await applyOneOperationStaged(client, operation, pass, maxChunks);
+        const operationActions = await applyOneOperationStaged(client, operation, pass, maxChunks, chunkSize, statementTimeout);
         actions.push(...operationActions);
         console.error(
           JSON.stringify({
@@ -783,6 +786,7 @@ function compactProof(proof) {
     run_id: proof.run_id,
     generated_at: proof.generated_at,
     mode: proof.mode,
+    config: proof.config ?? null,
     before: {
       tablesWithRetiredRows: proof.before.tablesWithRetiredRows,
       retiredRows: proof.before.retiredRows,
@@ -839,6 +843,12 @@ async function main() {
   const maxChunks = Number(
     argValue("--max-chunks", process.env.RETIRED_TENANT_ROW_PURGE_MAX_CHUNKS ?? String(DEFAULT_MAX_CHUNKS_PER_OPERATION)),
   );
+  const chunkSize = Number(
+    argValue("--chunk-size", process.env.RETIRED_TENANT_ROW_PURGE_CHUNK_SIZE ?? String(DEFAULT_DELETE_CHUNK_SIZE)),
+  );
+  const statementTimeout = String(
+    argValue("--statement-timeout", process.env.RETIRED_TENANT_ROW_PURGE_STATEMENT_TIMEOUT ?? DEFAULT_STATEMENT_TIMEOUT),
+  );
   const budgetSeconds = Number(
     argValue("--budget-seconds", process.env.RETIRED_TENANT_ROW_PURGE_BUDGET_SECONDS ?? String(DEFAULT_APPLY_BUDGET_SECONDS)),
   );
@@ -858,6 +868,8 @@ async function main() {
         keepKeys: KEEP_KEYS,
         maxPasses,
         maxChunks,
+        chunkSize,
+        statementTimeout,
         budgetSeconds,
         defaultStrategy: "staged",
       }),
@@ -879,6 +891,12 @@ async function main() {
   if (!Number.isInteger(maxChunks) || maxChunks < 1 || maxChunks > 1000) {
     throw new Error("--max-chunks must be an integer between 1 and 1000");
   }
+  if (!Number.isInteger(chunkSize) || chunkSize < 100 || chunkSize > 50000) {
+    throw new Error("--chunk-size must be an integer between 100 and 50000");
+  }
+  if (!/^\d+(ms|s|min)$/.test(statementTimeout)) {
+    throw new Error("--statement-timeout must use a PostgreSQL duration such as 120s, 2min, or 60000ms");
+  }
   if (!Number.isInteger(budgetSeconds) || budgetSeconds < 60 || budgetSeconds > 7000) {
     throw new Error("--budget-seconds must be an integer between 60 and 7000");
   }
@@ -897,6 +915,7 @@ async function main() {
       generated_at: new Date().toISOString(),
       mode: apply ? "apply" : "dry_run",
       scope: { retiredKeys: RETIRED_KEYS, keepKeys: KEEP_KEYS },
+      config: { maxPasses, maxChunks, chunkSize, statementTimeout, budgetSeconds },
       clientScope: before.clientScope,
       before: {
         tablesWithRetiredRows: beforePositive.length,
@@ -943,7 +962,15 @@ async function main() {
         await client.query("set statement_timeout = '10min'");
         const preparedIndexes = await preparePurgeIndexes(client, before.operations);
         await client.query("set statement_timeout = '5min'");
-        const deletion = await applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds, before.clientScope);
+        const deletion = await applyDeletesStaged(
+          client,
+          maxPasses,
+          maxChunks,
+          budgetSeconds,
+          before.clientScope,
+          chunkSize,
+          statementTimeout,
+        );
         proof.apply = {
           strategy: "staged",
           committed: true,
