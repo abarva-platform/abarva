@@ -30,7 +30,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 
 ## Changes Included
 
-- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, compact structured proof output, and rollback-on-pending behavior.
+- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, compact structured proof output, and rollback-on-pending behavior.
 - `package.json`: adds dry-run/apply npm entries for the row purge and changes the old data-layer apply script to use `--apply` directly.
 
 ## QA / Validation
@@ -42,6 +42,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: `npm run release:check -- --base origin/main --head HEAD`
 - PASS: `npm run secrets:staged`
 - PASS: a failed pre-fix apply attempt rolled back cleanly and a subsequent read-only inventory confirmed retired rows remained present rather than partially deleted.
+- PASS: a post-fix dry-run failure before any delete exposed a malformed FK metadata guard case; the follow-up guard keeps malformed FK metadata out of generated SQL.
 - NOT RUN: destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan
