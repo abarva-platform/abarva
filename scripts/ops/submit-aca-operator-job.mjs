@@ -159,7 +159,7 @@ function redactArgs(args) {
 }
 
 function isSensitiveName(name) {
-  return /(SECRET|TOKEN|KEY|PASSWORD|DATABASE_URL|CONNECTION)/i.test(String(name));
+  return /(SECRET|TOKEN|KEY|PASSWORD|DATABASE_URL|CONNECTION|SAS|SIGNED|URL)/i.test(String(name));
 }
 
 function envArgs(options) {
