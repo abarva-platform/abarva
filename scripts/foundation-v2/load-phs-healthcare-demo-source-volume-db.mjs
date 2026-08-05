@@ -7,7 +7,6 @@ import os from "node:os";
 import path from "node:path";
 
 import {
-  bindFoundationV2SqlContext,
   emitProofBundle,
   foundationPostgresClientOptions,
   proofRef,
@@ -27,10 +26,23 @@ const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
 const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-apply-v1";
 const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
 const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const ISOLATION_SCOPE = "ISOLATED_PHS_HEALTHCARE_DEMO_LAB_ONLY";
+const DATABASE_SCHEMA = "foundation_v2_phs_demo";
+const EXPECTED_SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
 const SOURCE_VOLUME_GATE_IDS = ["PHS-SOURCE-VOLUME-L0-L1", "PHS-SOURCE-VOLUME-L1-L2"];
-const WRITER_ROLE = process.env.PHS_HEALTHCARE_DEMO_DB_WRITER_ROLE || "foundation_v2_healthcare_gs_writer";
-const READER_ROLE = process.env.PHS_HEALTHCARE_DEMO_DB_READER_ROLE || "foundation_v2_healthcare_gs_reader";
+const WRITER_ROLE = "foundation_v2_phs_demo_writer";
+const READER_ROLE = "foundation_v2_phs_demo_reader";
+const PHS_EXECUTION_CONTRACT = Object.freeze({
+  database_schema: DATABASE_SCHEMA,
+  tenant_key: EXPECTED.tenantKey,
+  test_namespace: TEST_NAMESPACE,
+  writer_role: WRITER_ROLE,
+  reader_role: READER_ROLE,
+  foundation_release_alias: FOUNDATION_RELEASE_ALIAS,
+  expected_source_release_id: EXPECTED_SOURCE_RELEASE_ID,
+  isolation_scope: ISOLATION_SCOPE,
+  expected_source_file_context_rows: 54,
+});
 const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
 const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
 const REQUIRED_LAYER1_RELEASE_FILES = new Set([
@@ -73,6 +85,7 @@ async function main() {
   }
 
   const plan = buildSourceVolumePlan();
+  assertPHSExecutionContract(plan);
   fs.mkdirSync(args.outDir, { recursive: true });
   writePlanProof(args.outDir, plan);
 
@@ -86,7 +99,6 @@ async function main() {
   if (args.mode === "apply") assertApplyApproved(plan);
   const { Client } = await import("pg");
   const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-source-volume"));
-  bindFoundationV2SqlContext(client);
   await client.connect();
   try {
     if (args.mode === "preflight") {
@@ -190,11 +202,13 @@ function buildSourceVolumePlan() {
   const totalFields = files.reduce((sum, file) => sum + file.field_count, 0);
   const sourceGroupCounts = groupedCounts(files, "source_group");
   const demoPriorityCounts = groupedCounts(files, "demo_priority");
+  const sourceFileContextRows = sourceFileContextPlanRows(sourceReleaseId, files);
 
   return {
     tenant_key: EXPECTED.tenantKey,
     dataset_id: EXPECTED.datasetId,
     dataset_version: EXPECTED.datasetVersion,
+    database_schema: DATABASE_SCHEMA,
     test_namespace: TEST_NAMESPACE,
     source_release_id: sourceReleaseId,
     foundation_release_alias: FOUNDATION_RELEASE_ALIAS,
@@ -212,6 +226,9 @@ function buildSourceVolumePlan() {
     total_field_values: totalFields,
     source_field_value_rule: "insert_all_field_slots_including_explicit_blank_cells",
     max_columns: Math.max(...files.map((file) => file.headers.length)),
+    database_target_contract: PHS_EXECUTION_CONTRACT,
+    source_file_context_rows: sourceFileContextRows.length,
+    source_file_context: sourceFileContextRows,
     restricted_detail_health_plan_extracts_present: files
       .map((file) => file.file_name)
       .filter((fileName) => RESTRICTED_DETAIL_HEALTH_PLAN_FILES.includes(fileName)),
@@ -278,16 +295,67 @@ function groupedCounts(files, field) {
   return counts;
 }
 
+function sourceFileContextPlanRows(sourceReleaseId, files) {
+  return files.map((file) => ({
+    source_file_id: file.source_file_id,
+    source_release_id: sourceReleaseId,
+    tenant_key: EXPECTED.tenantKey,
+    test_namespace: TEST_NAMESPACE,
+    source_group: file.source_group,
+    context_treatment: file.context_treatment,
+    demo_priority: file.demo_priority,
+    event_id: file.event_id || "",
+    effective_as_of: file.effective_as_of,
+    content_sha256: file.content_sha256,
+  }));
+}
+
+function assertPHSExecutionContract(plan, overrides = {}) {
+  const actual = {
+    database_schema: overrides.database_schema ?? envOrConstant("PHS_HEALTHCARE_DEMO_DB_SCHEMA", DATABASE_SCHEMA),
+    tenant_key: overrides.tenant_key ?? envOrConstant("PHS_HEALTHCARE_DEMO_TENANT_KEY", plan.tenant_key),
+    test_namespace: overrides.test_namespace ?? envOrConstant("PHS_HEALTHCARE_DEMO_TEST_NAMESPACE", plan.test_namespace),
+    writer_role: overrides.writer_role ?? envOrConstant("PHS_HEALTHCARE_DEMO_DB_WRITER_ROLE", WRITER_ROLE),
+    reader_role: overrides.reader_role ?? envOrConstant("PHS_HEALTHCARE_DEMO_DB_READER_ROLE", READER_ROLE),
+    foundation_release_alias: overrides.foundation_release_alias ?? envOrConstant("PHS_HEALTHCARE_DEMO_FOUNDATION_RELEASE_ALIAS", plan.foundation_release_alias),
+    source_release_id: overrides.source_release_id ?? envOrConstant("PHS_HEALTHCARE_DEMO_SOURCE_RELEASE_ID", plan.source_release_id),
+    isolation_scope: overrides.isolation_scope ?? envOrConstant("PHS_HEALTHCARE_DEMO_ISOLATION_SCOPE", plan.isolation_scope),
+  };
+  const expected = {
+    database_schema: PHS_EXECUTION_CONTRACT.database_schema,
+    tenant_key: PHS_EXECUTION_CONTRACT.tenant_key,
+    test_namespace: PHS_EXECUTION_CONTRACT.test_namespace,
+    writer_role: PHS_EXECUTION_CONTRACT.writer_role,
+    reader_role: PHS_EXECUTION_CONTRACT.reader_role,
+    foundation_release_alias: PHS_EXECUTION_CONTRACT.foundation_release_alias,
+    source_release_id: PHS_EXECUTION_CONTRACT.expected_source_release_id,
+    isolation_scope: PHS_EXECUTION_CONTRACT.isolation_scope,
+  };
+  const mismatches = Object.entries(expected)
+    .filter(([key, value]) => actual[key] !== value)
+    .map(([key, value]) => ({ field: key, expected: value, actual: actual[key] }));
+  if (mismatches.length > 0) {
+    throw new Error(`PHS execution contract mismatch before DB mutation path: ${JSON.stringify(mismatches)}`);
+  }
+  if (plan.file_count !== PHS_EXECUTION_CONTRACT.expected_source_file_context_rows) {
+    throw new Error(`PHS source file context row contract mismatch: expected ${PHS_EXECUTION_CONTRACT.expected_source_file_context_rows}, got ${plan.file_count}`);
+  }
+}
+
+function envOrConstant(name, fallback) {
+  return process.env[name] || fallback;
+}
+
 async function preflight(client, plan) {
   await client.query("BEGIN");
   try {
     await setContext(client, plan, WRITER_ROLE);
-    const existing = await sourceVolumeCounts(client);
+    const existing = await sourceVolumeReadback(client, plan);
     await client.query("ROLLBACK");
-    const existingTotal = Object.values(existing).reduce((sum, value) => sum + Number(value || 0), 0);
-    const exact = exactSourceVolumeCounts(plan, existing);
+    const existingTotal = Object.values(existing.counts).reduce((sum, value) => sum + Number(value || 0), 0);
+    const exact = existing.exact_match;
     return manifest(existingTotal === 0 || exact ? "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_PREFLIGHT_PASSED" : "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_PREFLIGHT_FAILED", plan, {
-      existing_counts: existing,
+      existing_readback: existing,
       existing_total: existingTotal,
       existing_exact_match: exact,
     });
@@ -303,35 +371,36 @@ async function apply(client, plan) {
   try {
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`foundation-v2:${EXPECTED.tenantKey}:${TEST_NAMESPACE}:source-volume`]);
     await setContext(client, plan, WRITER_ROLE);
-    const existing = await sourceVolumeCounts(client);
-    if (Object.values(existing).some((value) => Number(value || 0) > 0)) {
-      if (!exactSourceVolumeCounts(plan, existing)) {
-        throw new Error(`Existing PHS source-volume rows do not match expected counts: ${JSON.stringify(existing)}`);
+    const existing = await sourceVolumeReadback(client, plan);
+    if (Object.values(existing.counts).some((value) => Number(value || 0) > 0)) {
+      if (!existing.exact_match) {
+        throw new Error(`Existing PHS source-volume rows do not match expected identity/hash contract: ${JSON.stringify(existing.variances)}`);
       }
       await client.query("ROLLBACK");
       return manifest("PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_ALREADY_APPLIED_EXACT_MATCH", plan, {
         started_at: startedAt,
         completed_at: new Date().toISOString(),
-        existing_counts: existing,
+        existing_readback: existing,
       });
     }
 
     await insertSourceRelease(client, plan);
     await insertSourceFiles(client, plan);
+    await insertSourceFileContext(client, plan);
     for (const file of plan.files) {
       await insertSourceRowsAndFields(client, plan, file);
     }
     await insertParserExecution(client, plan);
     await insertGateResults(client, plan);
-    const counts = await sourceVolumeCounts(client);
-    if (!exactSourceVolumeCounts(plan, counts)) {
-      throw new Error(`PHS source-volume variance after write: ${JSON.stringify(counts)}`);
+    const readback = await sourceVolumeReadback(client, plan);
+    if (!readback.exact_match) {
+      throw new Error(`PHS source-volume variance after write: ${JSON.stringify(readback.variances)}`);
     }
     await client.query("COMMIT");
     return manifest("PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_APPLIED", plan, {
       started_at: startedAt,
       completed_at: new Date().toISOString(),
-      actual_counts: counts,
+      actual_readback: readback,
     });
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -344,11 +413,11 @@ async function verify(client, plan) {
   try {
     const role = process.env.PHS_SOURCE_VOLUME_DB_ROLE === "writer" ? WRITER_ROLE : READER_ROLE;
     await setContext(client, plan, role);
-    const counts = await sourceVolumeCounts(client);
+    const readback = await sourceVolumeReadback(client, plan);
     await client.query("ROLLBACK");
-    const exact = exactSourceVolumeCounts(plan, counts);
+    const exact = readback.exact_match;
     return manifest(exact ? "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_VERIFIED" : "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_VERIFY_FAILED", plan, {
-      actual_counts: counts,
+      actual_readback: readback,
       exact_match: exact,
     });
   } catch (error) {
@@ -358,6 +427,7 @@ async function verify(client, plan) {
 }
 
 function assertApplyApproved(plan) {
+  assertPHSExecutionContract(plan);
   if (process.env.PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED !== "true") {
     throw new Error("PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true is required for apply");
   }
@@ -365,8 +435,8 @@ function assertApplyApproved(plan) {
   if (!approvedSha || approvedSha !== plan.proof_zip_sha256) {
     throw new Error("Approved proof SHA is required and must match the PHS proof ZIP SHA");
   }
-  if (!process.env.ACA_JOB_NAME && process.env.PHS_HEALTHCARE_DEMO_ALLOW_NON_ACA_APPLY !== "true") {
-    throw new Error("Apply must run from an ACA data-build job unless PHS_HEALTHCARE_DEMO_ALLOW_NON_ACA_APPLY=true is explicitly set");
+  if (!process.env.ACA_JOB_NAME) {
+    throw new Error("ACA_JOB_NAME is required; PHS Layer 1 apply must run from an approved ACA data-build job");
   }
   if (plan.restricted_detail_health_plan_extracts_present.length > 0) {
     throw new Error(`Restricted detailed health-plan extracts present: ${plan.restricted_detail_health_plan_extracts_present.join(", ")}`);
@@ -385,12 +455,12 @@ async function setContext(client, plan, roleName) {
 
 async function sourceVolumeCounts(client) {
   const output = {};
-  for (const table of ["source_releases", "source_files", "source_records", "source_field_values", "parser_executions", "gate_results"]) {
+  for (const table of ["source_releases", "source_files", "source_file_context", "source_records", "source_field_values", "parser_executions", "gate_results"]) {
     if (table === "gate_results") {
       output[table] = Number((await rows(
         client,
         `SELECT count(*)::int AS count
-           FROM foundation_v2.gate_results
+           FROM ${tableRef("gate_results")}
           WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id = ANY($3::text[])`,
         [EXPECTED.tenantKey, TEST_NAMESPACE, SOURCE_VOLUME_GATE_IDS],
       ))[0].count);
@@ -399,7 +469,7 @@ async function sourceVolumeCounts(client) {
     output[table] = Number((await rows(
       client,
       `SELECT count(*)::int AS count
-         FROM foundation_v2.${table}
+         FROM ${tableRef(table)}
         WHERE tenant_key=$1 AND test_namespace=$2`,
       [EXPECTED.tenantKey, TEST_NAMESPACE],
     ))[0].count);
@@ -407,10 +477,58 @@ async function sourceVolumeCounts(client) {
   return output;
 }
 
+async function sourceVolumeReadback(client, plan) {
+  const counts = await sourceVolumeCounts(client);
+  const releaseRows = await rows(
+    client,
+    `SELECT source_release_id, tenant_key, test_namespace, release_version, release_hash, source_release_state, isolation_scope, writer_job_id
+       FROM ${tableRef("source_releases")}
+      WHERE tenant_key=$1 AND test_namespace=$2
+      ORDER BY source_release_id`,
+    [EXPECTED.tenantKey, TEST_NAMESPACE],
+  );
+  const fileRows = await rows(
+    client,
+    `SELECT source_file_id, source_release_id, file_name, content_sha256, row_count, field_count
+       FROM ${tableRef("source_files")}
+      WHERE tenant_key=$1 AND test_namespace=$2
+      ORDER BY file_name`,
+    [EXPECTED.tenantKey, TEST_NAMESPACE],
+  );
+  const contextRows = await rows(
+    client,
+    `SELECT source_file_id, source_release_id, tenant_key, test_namespace, source_group, context_treatment,
+            demo_priority, event_id, effective_as_of::text AS effective_as_of, content_sha256
+       FROM ${tableRef("source_file_context")}
+      WHERE tenant_key=$1 AND test_namespace=$2
+      ORDER BY source_file_id`,
+    [EXPECTED.tenantKey, TEST_NAMESPACE],
+  );
+  return {
+    counts,
+    releases: releaseRows,
+    files: fileRows,
+    source_file_context: contextRows,
+    source_group_counts: groupedCounts(contextRows.map((row) => ({
+      source_group: row.source_group,
+      row_count: Number(fileRows.find((file) => file.source_file_id === row.source_file_id)?.row_count || 0),
+      field_count: Number(fileRows.find((file) => file.source_file_id === row.source_file_id)?.field_count || 0),
+    })), "source_group"),
+    demo_priority_counts: groupedCounts(contextRows.map((row) => ({
+      demo_priority: row.demo_priority,
+      row_count: Number(fileRows.find((file) => file.source_file_id === row.source_file_id)?.row_count || 0),
+      field_count: Number(fileRows.find((file) => file.source_file_id === row.source_file_id)?.field_count || 0),
+    })), "demo_priority"),
+    exact_match: exactSourceVolumeReadback(plan, { counts, releases: releaseRows, files: fileRows, source_file_context: contextRows }),
+    variances: sourceVolumeReadbackVariances(plan, { counts, releases: releaseRows, files: fileRows, source_file_context: contextRows }),
+  };
+}
+
 function exactSourceVolumeCounts(plan, counts) {
   return (
     Number(counts.source_releases || 0) === 1 &&
     Number(counts.source_files || 0) === plan.file_count &&
+    Number(counts.source_file_context || 0) === plan.file_count &&
     Number(counts.source_records || 0) === plan.total_source_rows &&
     Number(counts.source_field_values || 0) === plan.total_field_values &&
     Number(counts.parser_executions || 0) === 1 &&
@@ -418,10 +536,84 @@ function exactSourceVolumeCounts(plan, counts) {
   );
 }
 
+function exactSourceVolumeReadback(plan, readback) {
+  return sourceVolumeReadbackVariances(plan, readback).length === 0;
+}
+
+function sourceVolumeReadbackVariances(plan, readback) {
+  const variances = [];
+  if (!exactSourceVolumeCounts(plan, readback.counts || {})) {
+    variances.push({ field: "counts", expected: expectedCounts(plan), actual: readback.counts || {} });
+  }
+  if (readback.releases?.length !== 1) {
+    variances.push({ field: "source_releases", expected: 1, actual: readback.releases?.length || 0 });
+  } else {
+    const release = readback.releases[0];
+    for (const [field, expected] of Object.entries({
+      source_release_id: plan.source_release_id,
+      tenant_key: EXPECTED.tenantKey,
+      test_namespace: TEST_NAMESPACE,
+      release_version: plan.release_version,
+      release_hash: plan.release_hash,
+      isolation_scope: ISOLATION_SCOPE,
+    })) {
+      if (release[field] !== expected) variances.push({ field: `release.${field}`, expected, actual: release[field] });
+    }
+  }
+
+  const actualFiles = new Map((readback.files || []).map((file) => [file.file_name, file]));
+  const expectedFiles = new Map(plan.files.map((file) => [file.file_name, file]));
+  for (const fileName of expectedFiles.keys()) {
+    const expected = expectedFiles.get(fileName);
+    const actual = actualFiles.get(fileName);
+    if (!actual) {
+      variances.push({ field: "file.missing", expected: fileName, actual: null });
+      continue;
+    }
+    for (const field of ["source_file_id", "source_release_id", "content_sha256", "row_count", "field_count"]) {
+      const expectedValue = field === "source_release_id" ? plan.source_release_id : expected[field];
+      const actualValue = ["row_count", "field_count"].includes(field) ? Number(actual[field]) : actual[field];
+      if (actualValue !== expectedValue) variances.push({ field: `file.${fileName}.${field}`, expected: expectedValue, actual: actualValue });
+    }
+  }
+  for (const fileName of actualFiles.keys()) {
+    if (!expectedFiles.has(fileName)) variances.push({ field: "file.unexpected", expected: null, actual: fileName });
+  }
+
+  const actualContext = new Map((readback.source_file_context || []).map((row) => [row.source_file_id, row]));
+  const expectedContext = new Map(plan.source_file_context.map((row) => [row.source_file_id, row]));
+  for (const [sourceFileId, expected] of expectedContext.entries()) {
+    const actual = actualContext.get(sourceFileId);
+    if (!actual) {
+      variances.push({ field: "source_file_context.missing", expected: sourceFileId, actual: null });
+      continue;
+    }
+    for (const field of ["source_release_id", "tenant_key", "test_namespace", "source_group", "context_treatment", "demo_priority", "event_id", "effective_as_of", "content_sha256"]) {
+      if (actual[field] !== expected[field]) variances.push({ field: `source_file_context.${sourceFileId}.${field}`, expected: expected[field], actual: actual[field] });
+    }
+  }
+  for (const sourceFileId of actualContext.keys()) {
+    if (!expectedContext.has(sourceFileId)) variances.push({ field: "source_file_context.unexpected", expected: null, actual: sourceFileId });
+  }
+  return variances;
+}
+
+function expectedCounts(plan) {
+  return {
+    source_releases: 1,
+    source_files: plan.file_count,
+    source_file_context: plan.file_count,
+    source_records: plan.total_source_rows,
+    source_field_values: plan.total_field_values,
+    parser_executions: 1,
+    gate_results: 2,
+  };
+}
+
 async function insertSourceRelease(client, plan) {
   await q(
     client,
-    `INSERT INTO foundation_v2.source_releases
+    `INSERT INTO ${tableRef("source_releases")}
       (source_release_id, tenant_key, test_namespace, release_version, release_hash, source_release_state,
        isolation_scope, v1_component_classification, writer_job_id)
      VALUES ($1,$2,$3,$4,$5,'isolated_golden_slice',$6,'SUPERSEDE_WITH_V2',$7)`,
@@ -432,7 +624,7 @@ async function insertSourceRelease(client, plan) {
 async function insertSourceFiles(client, plan) {
   await insertBatches(
     client,
-    `INSERT INTO foundation_v2.source_files
+    `INSERT INTO ${tableRef("source_files")}
       (source_file_id, source_release_id, tenant_key, test_namespace, source_uri, file_name,
        content_sha256, row_count, field_count, writer_job_id)
      VALUES `,
@@ -449,6 +641,18 @@ async function insertSourceFiles(client, plan) {
       field_count: file.field_count,
       writer_job_id: plan.execution_id,
     })),
+  );
+}
+
+async function insertSourceFileContext(client, plan) {
+  await insertBatches(
+    client,
+    `INSERT INTO ${tableRef("source_file_context")}
+      (source_file_id, source_release_id, tenant_key, test_namespace, source_group, context_treatment,
+       demo_priority, event_id, effective_as_of, content_sha256)
+     VALUES `,
+    ["source_file_id", "source_release_id", "tenant_key", "test_namespace", "source_group", "context_treatment", "demo_priority", "event_id", "effective_as_of", "content_sha256"],
+    plan.source_file_context,
   );
 }
 
@@ -513,7 +717,7 @@ async function insertSourceRowsAndFields(client, plan, file) {
 async function flushRecordBatch(client, batch) {
   await insertBatches(
     client,
-    `INSERT INTO foundation_v2.source_records
+    `INSERT INTO ${tableRef("source_records")}
       (source_record_id, source_file_id, source_release_id, tenant_key, test_namespace, source_row_number,
        source_row_hash, row_disposition, row_disposition_reason, writer_job_id)
      VALUES `,
@@ -525,7 +729,7 @@ async function flushRecordBatch(client, batch) {
 async function flushFieldBatch(client, batch) {
   await insertBatches(
     client,
-    `INSERT INTO foundation_v2.source_field_values
+    `INSERT INTO ${tableRef("source_field_values")}
       (source_field_value_id, source_record_id, source_file_id, source_release_id, tenant_key, test_namespace,
        source_field_id, source_field_name, raw_value, normalized_value, field_disposition, target_object_type,
        target_field_name, adapter_rule_id, evidence_ref, restricted, writer_job_id)
@@ -538,7 +742,7 @@ async function flushFieldBatch(client, batch) {
 async function insertParserExecution(client, plan) {
   await q(
     client,
-    `INSERT INTO foundation_v2.parser_executions
+    `INSERT INTO ${tableRef("parser_executions")}
       (parser_execution_id, source_release_id, tenant_key, test_namespace, parser_contract_version,
        input_file_count, output_record_count, output_field_count, rejected_record_count, parser_status, writer_job_id)
      VALUES ($1,$2,$3,$4,'phs-healthcare-source-volume-v1',$5,$6,$7,0,'passed',$8)`,
@@ -562,7 +766,7 @@ async function insertGateResults(client, plan) {
   ];
   await insertBatches(
     client,
-    `INSERT INTO foundation_v2.gate_results
+    `INSERT INTO ${tableRef("gate_results")}
       (gate_result_id, tenant_key, test_namespace, gate_id, transition, input_count, output_count,
        unexplained_variance, gate_status, failure_classification, repair_owner, rerun_scope, proof_uri, writer_job_id)
      VALUES `,
@@ -587,6 +791,8 @@ async function insertGateResults(client, plan) {
 }
 
 async function runSourceVolumeSelfTest() {
+  const executionContractTests = runExecutionContractSelfTests();
+  const schemaProofTests = phsSchemaProofTests();
   const calls = [];
   const client = {
     async query(sql, params = []) {
@@ -622,7 +828,69 @@ async function runSourceVolumeSelfTest() {
     record_writes: recordWrites,
     field_writes: fieldWrites,
     field_values_replayed: headers.length,
+    execution_contract_tests: executionContractTests,
+    schema_proof_tests: schemaProofTests,
   };
+}
+
+function runExecutionContractSelfTests() {
+  const basePlan = {
+    tenant_key: EXPECTED.tenantKey,
+    test_namespace: TEST_NAMESPACE,
+    source_release_id: EXPECTED_SOURCE_RELEASE_ID,
+    foundation_release_alias: FOUNDATION_RELEASE_ALIAS,
+    isolation_scope: ISOLATION_SCOPE,
+    file_count: 54,
+  };
+  const cases = [
+    ["wrong_schema", { database_schema: "foundation_v2_healthcare_gs" }],
+    ["wrong_tenant", { tenant_key: "healthcare-demo-new" }],
+    ["wrong_namespace", { test_namespace: "foundation-v2-healthcare-progressive-golden-slice-v1" }],
+    ["wrong_release", { source_release_id: "healthcare-demo-new-foundation-v2-progressive-golden-slice-v1" }],
+    ["wrong_isolation_scope", { isolation_scope: "ISOLATED_PHS_HEALTHCARE_DEMO_LAB_ONLY" }],
+    ["writer_role_mismatch", { writer_role: "foundation_v2_healthcare_gs_writer" }],
+    ["reader_role_mismatch", { reader_role: "foundation_v2_healthcare_gs_reader" }],
+    ["same_counts_different_content", { source_release_id: `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}:samecounts00` }],
+  ];
+  const results = cases.map(([caseId, overrides]) => {
+    try {
+      assertPHSExecutionContract(basePlan, overrides);
+      return { case_id: caseId, expected: "blocked", actual: "allowed", passed: false };
+    } catch (error) {
+      return { case_id: caseId, expected: "blocked", actual: "blocked", passed: true, error: error.message };
+    }
+  });
+  const wrongFileContextCountPlan = { ...basePlan, file_count: 53 };
+  try {
+    assertPHSExecutionContract(wrongFileContextCountPlan);
+    results.push({ case_id: "source_file_context_row_mismatch", expected: "blocked", actual: "allowed", passed: false });
+  } catch (error) {
+    results.push({ case_id: "source_file_context_row_mismatch", expected: "blocked", actual: "blocked", passed: true, error: error.message });
+  }
+  if (results.some((result) => !result.passed)) {
+    throw new Error(`PHS execution contract self-test failed: ${JSON.stringify(results.filter((result) => !result.passed))}`);
+  }
+  return results;
+}
+
+function phsSchemaProofTests() {
+  return [
+    {
+      case_id: "missing_rls_policy",
+      expected: "blocked",
+      proof_query: `SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid = '${DATABASE_SCHEMA}.source_file_context'::regclass`,
+    },
+    {
+      case_id: "non_aca_execution",
+      expected: "blocked_before_db_connect",
+      required_env: ["PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true", "PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=<exact proof sha>", "ACA_JOB_NAME=<approved data-build job>"],
+    },
+    {
+      case_id: "file_hash_mismatch",
+      expected: "blocked",
+      comparison: "source_files.content_sha256 and source_file_context.content_sha256 must match package manifest hashes",
+    },
+  ];
 }
 
 async function insertBatches(client, sqlPrefix, columns, rowsToInsert) {
@@ -644,6 +912,8 @@ async function insertBatches(client, sqlPrefix, columns, rowsToInsert) {
 
 function writePlanProof(outDir, plan) {
   writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_EXPECTED_COUNTS.json"), publicPlanSummary(plan));
+  writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_DATABASE_TARGET_CONTRACT.json"), plan.database_target_contract);
+  writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_SCHEMA_PROOF_TESTS.json"), phsSchemaProofTests());
   writeCsv(
     proofRef(outDir, "PHS_SOURCE_VOLUME_FILES.csv"),
     ["file_name", "source_group", "context_treatment", "demo_priority", "event_id", "effective_as_of", "source_family", "row_count", "field_count", "content_sha256"],
@@ -694,6 +964,11 @@ function publicPlanSummary(plan) {
     total_field_values: plan.total_field_values,
     source_field_value_rule: plan.source_field_value_rule,
     max_columns: plan.max_columns,
+    database_schema: plan.database_schema,
+    database_target_contract: plan.database_target_contract,
+    source_file_context_rows: plan.source_file_context_rows,
+    expected_counts: expectedCounts(plan),
+    schema_proof_tests: phsSchemaProofTests(),
     restricted_detail_health_plan_extracts_present: plan.restricted_detail_health_plan_extracts_present,
   };
 }
@@ -782,4 +1057,8 @@ function slug(value) {
 function quoteIdent(value) {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) throw new Error(`Invalid SQL identifier: ${value}`);
   return `"${value.replace(/"/g, '""')}"`;
+}
+
+function tableRef(tableName) {
+  return `${quoteIdent(DATABASE_SCHEMA)}.${quoteIdent(tableName)}`;
 }

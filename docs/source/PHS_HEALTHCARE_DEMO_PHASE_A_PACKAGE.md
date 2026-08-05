@@ -35,7 +35,7 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Structured rows: 70,967
 - Evidence spans: 16,000
 - Source-system extract CSVs: 39 total; 38 required core enterprise extracts plus one lightweight optional health-plan outcome snapshot
-- Layer 1 release CSVs: 54 total; 39 enterprise/context files, 11 existing BPO event files and 4 BPO transition/transformation files
+- Layer 1 release CSVs: 54 total; 38 enterprise-context files, 1 optional-domain context file, 11 existing BPO event files and 4 BPO transition/transformation files
 - BPO transition/transformation files: `BPO_REBADGE_RETENTION_PLAN.csv`, `BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv`, `BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv`, `BPO_RETAINED_ORGANIZATION_SCENARIOS.csv`
 - Vendors: 10
 - Existing contract families: 6

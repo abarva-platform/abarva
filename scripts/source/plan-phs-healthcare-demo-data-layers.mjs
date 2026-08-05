@@ -10,6 +10,13 @@ import { EXPECTED, validatePackage } from "./validate-phs-healthcare-demo-packag
 const DEFAULT_OUT_DIR = "/Users/anand/Downloads";
 const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
 const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-plan-v1";
+const DATABASE_SCHEMA = "foundation_v2_phs_demo";
+const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
+const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
+const EXPECTED_SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
+const WRITER_ROLE = "foundation_v2_phs_demo_writer";
+const READER_ROLE = "foundation_v2_phs_demo_reader";
 const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
 const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
 const REQUIRED_LAYER1_RELEASE_FILES = [
@@ -93,9 +100,7 @@ async function main() {
   }
   execFileSync("unzip", ["-t", proofZip], { stdio: "ignore" });
 
-  const sourceFiles = await sourceFilePlans(packageDir, packageManifest);
-  const sourceRows = sourceFiles.reduce((sum, file) => sum + file.row_count, 0);
-  const sourceFieldSlots = sourceFiles.reduce((sum, file) => sum + file.field_count, 0);
+  let sourceFiles = await sourceFilePlans(packageDir, packageManifest);
   const releaseHash = sha256(
     stableJson(sourceFiles.map((file) => ({
       relative_path: file.relative_path,
@@ -110,8 +115,19 @@ async function main() {
     }))),
   );
   const sourceReleaseId = `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`;
+  if (sourceReleaseId !== EXPECTED_SOURCE_RELEASE_ID) {
+    throw new Error(`PHS source release drift: expected ${EXPECTED_SOURCE_RELEASE_ID}, got ${sourceReleaseId}`);
+  }
+  sourceFiles = sourceFiles.map((file) => ({
+    ...file,
+    source_file_id: `${sourceReleaseId}:source-file:${shortHash(file.relative_path, 16)}`,
+  }));
+  const sourceRows = sourceFiles.reduce((sum, file) => sum + file.row_count, 0);
+  const sourceFieldSlots = sourceFiles.reduce((sum, file) => sum + file.field_count, 0);
   const sourceGroupCounts = groupedCounts(sourceFiles, "source_group");
   const demoPriorityCounts = groupedCounts(sourceFiles, "demo_priority");
+  const databaseTargetContract = databaseTargetContractFor(sourceFiles);
+  const schemaProofTests = phsSchemaProofTests();
 
   const layer0 = {
     status: "PHS_HEALTHCARE_DEMO_LAYER0_PACKAGE_PROOF_READY",
@@ -138,6 +154,10 @@ async function main() {
     dataset_id: EXPECTED.datasetId,
     dataset_version: EXPECTED.datasetVersion,
     as_of_date: EXPECTED.asOfDate,
+    database_schema: DATABASE_SCHEMA,
+    test_namespace: TEST_NAMESPACE,
+    foundation_release_alias: FOUNDATION_RELEASE_ALIAS,
+    isolation_scope: ISOLATION_SCOPE,
     source_release_id: sourceReleaseId,
     source_volume_execution_id: `${sourceReleaseId}:${SOURCE_VOLUME_EXECUTION_SUFFIX}`,
     source_volume_release_version: `${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`,
@@ -152,8 +172,11 @@ async function main() {
     optional_health_plan_outcome_snapshot_rows: packageValidation.summary.optionalHealthPlanOutcomeSnapshotRows,
     source_records: sourceRows,
     source_field_values: sourceFieldSlots,
+    source_file_context_rows: sourceFiles.length,
     source_field_value_rule: "insert_all_field_slots_including_explicit_blank_cells",
     max_columns: Math.max(...sourceFiles.map((file) => file.headers.length)),
+    database_target_contract: databaseTargetContract,
+    schema_proof_tests: schemaProofTests,
     restricted_detail_health_plan_extracts_present: sourceFiles
       .map((file) => file.file_name)
       .filter((fileName) => RESTRICTED_DETAIL_HEALTH_PLAN_FILES.includes(fileName)),
@@ -164,6 +187,8 @@ async function main() {
 
   await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_LAYER0_PACKAGE_PROOF.json"), layer0);
   await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_LAYER1_SOURCE_VOLUME_PLAN.json"), layer1);
+  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATABASE_TARGET_CONTRACT.json"), databaseTargetContract);
+  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_SCHEMA_PROOF_TESTS.json"), schemaProofTests);
   await writeCsv(path.join(proofDir, "PHS_HEALTHCARE_DEMO_SOURCE_FILES.csv"), [
     "file_index",
     "source_group",
@@ -198,7 +223,10 @@ async function main() {
     bpo_transformation_files: layer1.bpo_transformation_files,
     source_records: layer1.source_records,
     source_field_values: layer1.source_field_values,
+    source_file_context_rows: layer1.source_file_context_rows,
     source_field_value_rule: layer1.source_field_value_rule,
+    database_target_contract: layer1.database_target_contract,
+    schema_proof_tests: layer1.schema_proof_tests,
     next_required_gate: layer1.next_required_gate,
   };
   await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
@@ -290,6 +318,97 @@ function groupedCounts(files, field) {
     counts[key].field_slots += file.field_count;
   }
   return counts;
+}
+
+function databaseTargetContractFor(sourceFiles) {
+  return {
+    database_schema: DATABASE_SCHEMA,
+    tenant_key: EXPECTED.tenantKey,
+    test_namespace: TEST_NAMESPACE,
+    writer_role: WRITER_ROLE,
+    reader_role: READER_ROLE,
+    foundation_release_alias: FOUNDATION_RELEASE_ALIAS,
+    expected_source_release_id: EXPECTED_SOURCE_RELEASE_ID,
+    isolation_scope: ISOLATION_SCOPE,
+    expected_source_file_context_rows: sourceFiles.length,
+    apply_required_env: [
+      "PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true",
+      "PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=<exact approved proof ZIP SHA>",
+      "ACA_JOB_NAME=<approved ACA data-build job identity>",
+    ],
+    disallowed_apply_bypass_env: "PHS_HEALTHCARE_DEMO_ALLOW_NON_ACA_APPLY",
+    verification_contract: [
+      "release_id_and_release_hash",
+      "all_54_filenames",
+      "per_file_content_sha256",
+      "per_file_row_and_field_counts",
+      "source_group_counts",
+      "demo_priority_counts",
+      "source_file_context_54_rows",
+      "total_source_records",
+      "total_source_field_values",
+    ],
+  };
+}
+
+function phsSchemaProofTests() {
+  return [
+    {
+      case_id: "wrong_schema",
+      expected: "blocked_before_db_mutation",
+      expected_value: DATABASE_SCHEMA,
+    },
+    {
+      case_id: "wrong_tenant",
+      expected: "blocked_before_db_mutation",
+      expected_value: EXPECTED.tenantKey,
+    },
+    {
+      case_id: "wrong_namespace",
+      expected: "blocked_before_db_mutation",
+      expected_value: TEST_NAMESPACE,
+    },
+    {
+      case_id: "wrong_release",
+      expected: "blocked_before_db_mutation",
+      expected_value: EXPECTED_SOURCE_RELEASE_ID,
+    },
+    {
+      case_id: "wrong_isolation_scope",
+      expected: "blocked_before_db_mutation",
+      expected_value: ISOLATION_SCOPE,
+    },
+    {
+      case_id: "writer_role_mismatch",
+      expected: "blocked_before_db_mutation",
+      expected_value: WRITER_ROLE,
+    },
+    {
+      case_id: "reader_role_mismatch",
+      expected: "blocked_before_db_mutation",
+      expected_value: READER_ROLE,
+    },
+    {
+      case_id: "missing_rls_policy",
+      expected: "blocked_by_schema_proof",
+      required_tables: ["source_releases", "source_files", "source_file_context", "source_records", "source_field_values", "parser_executions", "gate_results"],
+    },
+    {
+      case_id: "non_aca_execution",
+      expected: "blocked_before_db_connect",
+      required_env: ["ACA_JOB_NAME"],
+    },
+    {
+      case_id: "file_hash_mismatch",
+      expected: "blocked_by_plan_or_readback",
+      comparison: "content_sha256 must match source_files and source_file_context rows",
+    },
+    {
+      case_id: "same_counts_different_content",
+      expected: "blocked_by_release_id_or_per_file_hash",
+      comparison: "counts alone are insufficient",
+    },
+  ];
 }
 
 function parseCsvHeaders(text) {
@@ -398,8 +517,14 @@ No database load, migration, Cube refresh, runtime deploy, tenant activation or 
 
 - Tenant key: ${layer1.tenant_key}
 - Dataset id: ${layer1.dataset_id}
+- Database schema: ${layer1.database_schema}
+- Test namespace: ${layer1.test_namespace}
+- Writer role: ${layer1.database_target_contract.writer_role}
+- Reader role: ${layer1.database_target_contract.reader_role}
+- Isolation scope: ${layer1.isolation_scope}
 - Source release id: ${layer1.source_release_id}
 - Source files: ${layer1.source_files}
+- Source-file context rows: ${layer1.source_file_context_rows}
 - Required named Layer 1 release files: ${layer1.required_layer1_release_files}
 - Source-group counts: ${JSON.stringify(layer1.source_group_counts)}
 - Demo-priority counts: ${JSON.stringify(layer1.demo_priority_counts)}
@@ -417,8 +542,8 @@ No database load, migration, Cube refresh, runtime deploy, tenant activation or 
 Run only after approval through an isolated ACA data-build job:
 
 1. Preflight against the lab database with writer context and transaction rollback.
-2. Apply Layer 1 source release/files/records/field values only if the approved package SHA matches.
-3. Verify with independent reader counts.
+2. Apply Layer 1 source release/files/context metadata/records/field values only if the approved package SHA and exact PHS target contract match.
+3. Verify with independent reader readback of release hash, all 54 filenames, per-file SHA/counts, source-group counts, demo-priority counts, source-file context rows, total records and total field slots.
 4. Continue to source adapters and canonical candidates as separate gated jobs.
 `;
 }

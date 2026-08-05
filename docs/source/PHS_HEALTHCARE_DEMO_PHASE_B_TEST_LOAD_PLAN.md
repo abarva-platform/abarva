@@ -10,7 +10,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 - Dataset id: `phs-health-source-v1-202608`
 - Dataset version: `v1`
 - Activation target: `staged`
-- Layer 1 release CSVs: 54 named CSV files; 39 enterprise/context files, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files
+- Layer 1 release CSVs: 54 named CSV files; 38 enterprise-context files, 1 optional-domain context file, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files
 - Required package state: `generated_not_loaded`
 - Latest Phase A proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip`
 - Latest proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
@@ -29,12 +29,12 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 ## Execution Sequence
 
 1. Review the Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
-2. Add approved tenant bootstrap and additive migrations through the governed lab lane.
-3. Implement a PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and the 54 named Layer 1 release CSVs classified in the manifest; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
-4. Run source-volume plan mode and produce a file, row, field and hash manifest with no database connection.
+2. Add approved PHS-only schema/bootstrap through the governed lab lane; target schema is `foundation_v2_phs_demo`, not `foundation_v2_healthcare_gs`.
+3. Use the PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and the 54 named Layer 1 release CSVs classified in the manifest; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
+4. Run source-volume plan mode and produce a file, row, field, hash, source-file context and target-contract manifest with no database connection.
 5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
-6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
-7. Run independent reader verify and compare exact source-release, file, record, field and gate counts.
+6. Run the apply job as an ACA data-build job only after approval; write source release, files, source-file routing context, records, field values, parser execution and gate rows.
+7. Run independent reader verify and compare exact source-release identity/hash, all 54 filenames, per-file SHA/counts, 54 source-file context rows, source-group counts, demo-priority counts, record count, field count and gate counts.
 8. Run source adapters and canonical-candidate staging as separate plan, preflight, apply and verify jobs.
 9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, optional aggregate health-plan outcome snapshots, BPO normalized TCO and evidence counts.
 10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
@@ -51,8 +51,19 @@ npm run source:phs-healthcare-demo:data-layer-plan -- \
   --out-dir /Users/anand/Downloads
 ```
 
-Latest plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T223444Z.zip`
-Latest plan SHA-256: `a54c2d710fb81a57ea1d039116949eec9e99ac0a00c8a62df36c192e99742e3e`
+Latest plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T230818Z.zip`
+Latest plan SHA-256: `5f525057fec4202c173a4a65f0a5d522cb8635927bddd79e1a2083ce2544d783`
+
+Latest database target contract:
+
+- Schema: `foundation_v2_phs_demo`
+- Tenant key: `phs_health_demo_global`
+- Namespace: `phs-healthcare-demo-source-volume-v1`
+- Writer role: `foundation_v2_phs_demo_writer`
+- Reader role: `foundation_v2_phs_demo_reader`
+- Release alias: `phs-healthcare-demo-phase-a-source-volume-v1`
+- Expected source release: `phs-health-source-v1-202608:source-volume-v1:447910ac3c16`
+- Isolation scope: `ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY`
 
 Latest plan counts:
 
@@ -64,6 +75,7 @@ Latest plan counts:
 - Optional health-plan outcome snapshot rows: 12
 - Source records: 54,967
 - Source field slots: 1,640,131
+- Source-file context rows: 54
 - Source field-value rule: insert all field slots, including explicit blank cells
 - Restricted detailed health-plan extracts present: 0
 - Mutation executed: false
@@ -86,8 +98,8 @@ Supported modes:
 - `self-test`: local SQL batch-order check with no package read and no database connection.
 - `plan`: package integrity, proof-ZIP SHA, source file, row, field and hash proof with no database connection.
 - `preflight`: isolated lab database read/write capability check inside a rolled-back transaction.
-- `apply`: ACA data-build job only; requires `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA and an ACA job context unless a break-glass non-ACA override is explicitly set.
-- `verify`: independent reader readback of exact source release, source file, source record, source field, parser execution and gate counts.
+- `apply`: ACA data-build job only; requires `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA, exact PHS schema/role/tenant/namespace/release contract and an ACA job context.
+- `verify`: independent reader readback of exact source release identity/hash, all 54 filenames, per-file SHA/counts, source-file context rows, source record count, source field count, parser execution and gate counts.
 
 The apply command is intentionally hard-stopped until an isolated lab target and approved ACA data-build job are identified:
 
@@ -112,6 +124,8 @@ Adapter priority after a future approved Layer 1 apply:
 ## Non-Negotiable Stops
 
 - No source-volume apply without an approved package SHA.
+- No source-volume apply from local/non-ACA execution.
+- No source-volume apply into `foundation_v2_healthcare_gs` or any non-PHS schema.
 - No migration without an approved additive model-fit delta.
 - No Cube refresh until PostgreSQL source and canonical readbacks pass.
 - No product proof until read models are populated and reconciled.
