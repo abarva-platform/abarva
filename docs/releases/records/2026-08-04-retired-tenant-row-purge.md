@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column. Follow-up hardening adds chunked deletes for large tables and scoped trigger overrides for immutable audit-style tables during the approved purge transaction.
+This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column. Follow-up hardening adds chunked deletes for large tables, scoped trigger overrides for immutable audit-style tables, child-first semantic delete ordering, and a staged commit mode for large purge runs that exceed the operator execution window as a single transaction.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 
 ## Changes Included
 
-- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, chunked large-table deletes, scoped trigger overrides for known immutable audit tables, compact structured proof output, and rollback-on-pending behavior.
+- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, chunked large-table deletes, scoped trigger overrides for known immutable audit tables, staged table-level commits with partial-progress proof, compact structured proof output, and an explicit `--atomic` fallback for the earlier all-or-nothing transaction behavior.
 - `package.json`: adds dry-run/apply npm entries for the row purge and changes the old data-layer apply script to use `--apply` directly.
 
 ## QA / Validation
@@ -46,7 +46,8 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: a subsequent apply attempt rolled back cleanly after exposing large-table statement timeouts, append-only triggers, immutable triggers, and one dependent-artifact foreign-key blocker; this hardening addresses those blockers with chunking, scoped trigger overrides, and dependent FK row planning.
 - PASS: a follow-up apply attempt failed closed before commit when the special audit-log delete ran before trigger overrides; this patch moves the scoped trigger override around the special delete and the normal retry loop.
 - PASS: a later apply attempt failed closed with eight pending tables. This patch adds child-first ordering for semantic tables, smaller delete chunks, a scoped reference clear for retired move artifacts referenced by deliverables, all-user trigger overrides for program audit tables, and a longer per-statement timeout for large semantic deletes.
-- NOT RUN: destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
+- PASS: a later apply attempt reached the ACA execution timeout without a structured blocker list and restored the private operator job to idle. This patch changes the default apply strategy to staged commits with bounded per-operation chunks and final proof fields for `completed`, `budgetExhausted`, and remaining pending rows.
+- NOT RUN in this PR revision: staged destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan
 

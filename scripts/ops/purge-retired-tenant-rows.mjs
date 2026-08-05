@@ -36,7 +36,9 @@ const ID_COLUMN_NAMES = new Set(["tenant_id", "client_id"]);
 
 const TEXT_TYPES = new Set(["character varying", "character", "text", "citext", "uuid"]);
 
-const DELETE_CHUNK_SIZE = 5000;
+const DELETE_CHUNK_SIZE = 2000;
+const DEFAULT_MAX_CHUNKS_PER_OPERATION = 10;
+const DEFAULT_APPLY_BUDGET_SECONDS = 5400;
 
 const DELETE_PRIORITY = new Map([
   ["public.semantic2_evidence_refs", 10],
@@ -68,6 +70,9 @@ Options:
   --database-url <url>     Postgres URL. Defaults to DATABASE_URL / ABARVA_AZURE_DATABASE_URL / AZURE_DATABASE_URL.
   --out-dir <path>         Output directory. Defaults to /tmp/retired-tenant-row-purge.
   --max-passes <n>         Delete retry passes for FK ordering. Default: 12.
+  --atomic                 Use the legacy all-or-nothing transaction. Default is staged commits.
+  --max-chunks <n>         Max delete chunks per table operation before committing. Default: ${DEFAULT_MAX_CHUNKS_PER_OPERATION}.
+  --budget-seconds <n>     Graceful staged-apply budget before exiting partial. Default: ${DEFAULT_APPLY_BUDGET_SECONDS}.
   --validate-only          Parse config and exit without DB access.
   --help                   Show this help.
 `;
@@ -387,10 +392,11 @@ async function buildPlan(client) {
 
 async function deleteProgramAuditLogIfNeeded(client, operation) {
   if (operation.qualifiedName !== "public.program_audit_log" || operation.rowCount === 0) return null;
-  const rowsDeleted = await deleteRows(client, operation);
+  const deletion = await deleteRows(client, operation);
   return {
     qualifiedName: operation.qualifiedName,
-    rowsDeleted,
+    rowsDeleted: deletion.rowsDeleted,
+    chunkLimited: deletion.chunkLimited,
     specialCase: "disabled_program_audit_log_no_delete",
   };
 }
@@ -403,17 +409,18 @@ async function setTriggerOverrides(client, enabled) {
   }
 }
 
-async function deleteRows(client, operation) {
+async function deleteRows(client, operation, maxChunks = Number.POSITIVE_INFINITY) {
   if (operation.rowCount <= DELETE_CHUNK_SIZE) {
     const where = rendered(operation);
     const result = await client.query(
       `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
       where.params,
     );
-    return result.rowCount ?? 0;
+    return { rowsDeleted: result.rowCount ?? 0, chunkLimited: false };
   }
 
   let totalDeleted = 0;
+  let chunks = 0;
   for (;;) {
     const where = rendered(operation, "candidate");
     const result = await client.query(
@@ -422,9 +429,13 @@ async function deleteRows(client, operation) {
     );
     const rowsDeleted = result.rowCount ?? 0;
     totalDeleted += rowsDeleted;
+    chunks += 1;
+    if (chunks >= maxChunks && rowsDeleted === DELETE_CHUNK_SIZE) {
+      return { rowsDeleted: totalDeleted, chunkLimited: true };
+    }
     if (rowsDeleted < DELETE_CHUNK_SIZE) break;
   }
-  return totalDeleted;
+  return { rowsDeleted: totalDeleted, chunkLimited: false };
 }
 
 async function clearKnownReferences(client, operation) {
@@ -477,9 +488,8 @@ function deletePriority(operation) {
   return DELETE_PRIORITY.get(operation.qualifiedName) ?? 500;
 }
 
-async function applyDeletes(client, operations, maxPasses) {
-  const actions = [];
-  const pending = operations
+function sortedOperations(operations) {
+  return operations
     .filter((operation) => operation.rowCount > 0)
     .sort((a, b) => {
       const aPriority = deletePriority(a);
@@ -491,6 +501,11 @@ async function applyDeletes(client, operations, maxPasses) {
       if (aOverride !== bOverride) return aOverride - bOverride;
       return b.rowCount - a.rowCount || a.qualifiedName.localeCompare(b.qualifiedName);
     });
+}
+
+async function applyDeletesAtomic(client, operations, maxPasses) {
+  const actions = [];
+  const pending = sortedOperations(operations);
 
   await setTriggerOverrides(client, false);
   try {
@@ -519,9 +534,10 @@ async function applyDeletes(client, operations, maxPasses) {
         const savepoint = `retired_tenant_row_purge_${pass}_${savepointIndex}`;
         await client.query(`savepoint ${savepoint}`);
         try {
-          const rowsDeleted = await deleteRows(client, operation);
+          const deletion = await deleteRows(client, operation);
+          const rowsDeleted = deletion.rowsDeleted;
           await client.query(`release savepoint ${savepoint}`);
-          actions.push({ qualifiedName: operation.qualifiedName, rowsDeleted, pass });
+          actions.push({ qualifiedName: operation.qualifiedName, rowsDeleted, pass, chunkLimited: deletion.chunkLimited });
           if (rowsDeleted > 0) progress = true;
         } catch (error) {
           await client.query(`rollback to savepoint ${savepoint}`);
@@ -540,6 +556,110 @@ async function applyDeletes(client, operations, maxPasses) {
   }
 
   return { actions, pending };
+}
+
+async function deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks) {
+  if (operation.qualifiedName !== "public.program_audit_log" || operation.rowCount === 0) return null;
+  const deletion = await deleteRows(client, operation, maxChunks);
+  return {
+    qualifiedName: operation.qualifiedName,
+    rowsDeleted: deletion.rowsDeleted,
+    chunkLimited: deletion.chunkLimited,
+    specialCase: "disabled_program_audit_log_no_delete",
+  };
+}
+
+async function applyOneOperationStaged(client, operation, pass, maxChunks) {
+  await client.query("begin");
+  try {
+    await setTriggerOverrides(client, false);
+    const actions = [];
+    const cleared = await clearKnownReferences(client, operation);
+    if (cleared) {
+      actions.push({ ...cleared, pass });
+    }
+    const special = await deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks);
+    if (special) {
+      actions.push({ ...special, pass });
+    } else {
+      const deletion = await deleteRows(client, operation, maxChunks);
+      actions.push({
+        qualifiedName: operation.qualifiedName,
+        rowsDeleted: deletion.rowsDeleted,
+        pass,
+        chunkLimited: deletion.chunkLimited,
+      });
+    }
+    await setTriggerOverrides(client, true);
+    await client.query("commit");
+    return actions;
+  } catch (error) {
+    await client.query("rollback").catch(() => undefined);
+    throw error;
+  }
+}
+
+function elapsedSeconds(startedAt) {
+  return (Date.now() - startedAt) / 1000;
+}
+
+async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds) {
+  const actions = [];
+  const errors = [];
+  let budgetExhausted = false;
+  const startedAt = Date.now();
+
+  for (let pass = 1; pass <= maxPasses; pass += 1) {
+    if (elapsedSeconds(startedAt) >= budgetSeconds) {
+      budgetExhausted = true;
+      break;
+    }
+
+    const plan = await buildPlan(client);
+    const pending = sortedOperations(plan.operations);
+    if (pending.length === 0) break;
+
+    let progress = false;
+    for (const operation of pending) {
+      if (elapsedSeconds(startedAt) >= budgetSeconds) {
+        budgetExhausted = true;
+        break;
+      }
+      try {
+        const operationActions = await applyOneOperationStaged(client, operation, pass, maxChunks);
+        actions.push(...operationActions);
+        if (operationActions.some((action) => Number(action.rowsDeleted ?? action.rowsUpdated ?? 0) > 0)) {
+          progress = true;
+        }
+      } catch (error) {
+        errors.push({
+          ...stripParams(operation),
+          pass,
+          lastError: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    if (budgetExhausted) break;
+    if (!progress) {
+      const after = await buildPlan(client);
+      return {
+        actions,
+        pending: sortedOperations(after.operations).map((operation) => {
+          const error = errors.find((item) => item.qualifiedName === operation.qualifiedName);
+          return stripParams({ ...operation, lastError: error?.lastError });
+        }),
+        budgetExhausted,
+      };
+    }
+  }
+
+  const after = await buildPlan(client);
+  return {
+    actions,
+    pending: sortedOperations(after.operations).map(stripParams),
+    budgetExhausted,
+  };
 }
 
 function summarizeBySchema(operations) {
@@ -579,6 +699,9 @@ function compactProof(proof) {
     apply: proof.apply
       ? {
           committed: proof.apply.committed,
+          strategy: proof.apply.strategy,
+          completed: proof.apply.completed,
+          budgetExhausted: proof.apply.budgetExhausted,
           deletedRows: proof.apply.deletedRows,
           actionCount: proof.apply.actions?.length ?? 0,
           pendingCount: proof.apply.pending?.length ?? 0,
@@ -611,7 +734,14 @@ async function main() {
   }
 
   const apply = hasFlag("--apply") || process.env.RETIRED_TENANT_ROW_PURGE_APPLY === "1";
+  const atomic = hasFlag("--atomic") || process.env.RETIRED_TENANT_ROW_PURGE_ATOMIC === "1";
   const maxPasses = Number(argValue("--max-passes", process.env.RETIRED_TENANT_ROW_PURGE_MAX_PASSES ?? "12"));
+  const maxChunks = Number(
+    argValue("--max-chunks", process.env.RETIRED_TENANT_ROW_PURGE_MAX_CHUNKS ?? String(DEFAULT_MAX_CHUNKS_PER_OPERATION)),
+  );
+  const budgetSeconds = Number(
+    argValue("--budget-seconds", process.env.RETIRED_TENANT_ROW_PURGE_BUDGET_SECONDS ?? String(DEFAULT_APPLY_BUDGET_SECONDS)),
+  );
   const outDir =
     argValue("--out-dir", process.env.RETIRED_TENANT_ROW_PURGE_OUT_DIR) ??
     path.join(os.tmpdir(), "retired-tenant-row-purge");
@@ -627,6 +757,9 @@ async function main() {
         retiredKeys: RETIRED_KEYS,
         keepKeys: KEEP_KEYS,
         maxPasses,
+        maxChunks,
+        budgetSeconds,
+        defaultStrategy: "staged",
       }),
     );
     return;
@@ -642,6 +775,12 @@ async function main() {
   }
   if (!Number.isInteger(maxPasses) || maxPasses < 1 || maxPasses > 30) {
     throw new Error("--max-passes must be an integer between 1 and 30");
+  }
+  if (!Number.isInteger(maxChunks) || maxChunks < 1 || maxChunks > 1000) {
+    throw new Error("--max-chunks must be an integer between 1 and 1000");
+  }
+  if (!Number.isInteger(budgetSeconds) || budgetSeconds < 60 || budgetSeconds > 7000) {
+    throw new Error("--budget-seconds must be an integer between 60 and 7000");
   }
 
   fs.mkdirSync(outDir, { recursive: true });
@@ -674,27 +813,45 @@ async function main() {
     };
 
     if (apply) {
-      await client.query("begin");
-      const deletion = await applyDeletes(client, before.operations, maxPasses);
-      if (deletion.pending.length > 0) {
-        await client.query("rollback");
+      if (atomic) {
+        await client.query("begin");
+        const deletion = await applyDeletesAtomic(client, before.operations, maxPasses);
+        if (deletion.pending.length > 0) {
+          await client.query("rollback");
+          proof.apply = {
+            strategy: "atomic",
+            committed: false,
+            completed: false,
+            actions: deletion.actions,
+            pending: deletion.pending.map(stripParams),
+          };
+          proof.gates.applyAllowed = false;
+          fs.writeFileSync(path.join(outDir, `${runId}.json`), `${JSON.stringify(proof, null, 2)}\n`);
+          console.log(JSON.stringify(compactProof(proof), null, 2));
+          throw new Error(`Retired tenant purge blocked by ${deletion.pending.length} undeleted table(s).`);
+        }
+        await client.query("commit");
         proof.apply = {
-          committed: false,
+          strategy: "atomic",
+          committed: true,
+          completed: true,
           actions: deletion.actions,
-          pending: deletion.pending.map(stripParams),
+          deletedRows: deletion.actions.reduce((sum, action) => sum + Number(action.rowsDeleted ?? 0), 0),
+          applied_at: new Date().toISOString(),
         };
-        proof.gates.applyAllowed = false;
-        fs.writeFileSync(path.join(outDir, `${runId}.json`), `${JSON.stringify(proof, null, 2)}\n`);
-        console.log(JSON.stringify(compactProof(proof), null, 2));
-        throw new Error(`Retired tenant purge blocked by ${deletion.pending.length} undeleted table(s).`);
+      } else {
+        const deletion = await applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds);
+        proof.apply = {
+          strategy: "staged",
+          committed: true,
+          completed: deletion.pending.length === 0,
+          budgetExhausted: deletion.budgetExhausted,
+          actions: deletion.actions,
+          deletedRows: deletion.actions.reduce((sum, action) => sum + Number(action.rowsDeleted ?? 0), 0),
+          pending: deletion.pending,
+          applied_at: new Date().toISOString(),
+        };
       }
-      await client.query("commit");
-      proof.apply = {
-        committed: true,
-        actions: deletion.actions,
-        deletedRows: deletion.actions.reduce((sum, action) => sum + Number(action.rowsDeleted ?? 0), 0),
-        applied_at: new Date().toISOString(),
-      };
       const after = await buildPlan(client);
       const afterPositive = after.operations.filter((operation) => operation.rowCount > 0);
       proof.after = {
@@ -703,6 +860,7 @@ async function main() {
         bySchema: summarizeBySchema(after.operations),
         operations: afterPositive.map(stripParams),
       };
+      proof.gates.applyComplete = afterPositive.length === 0;
     }
 
     const proofPath = path.join(outDir, `${runId}.json`);
