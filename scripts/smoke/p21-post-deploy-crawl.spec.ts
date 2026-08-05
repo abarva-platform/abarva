@@ -15,6 +15,7 @@ import {
   resolveCrawlPersonas,
   resolveCrawlSurfaces,
 } from '../../src/lib/crawl/persona-switcher';
+import { SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE } from '../../src/lib/enterprise-data/candidate-preview-enablement/skyharbor-preview-package';
 
 assert.equal(CRAWL_PERSONAS.length, 1);
 assert.deepEqual(CRAWL_PERSONAS.map((persona) => persona.key), ['agent-skyharbor']);
@@ -46,10 +47,12 @@ assert.doesNotMatch(postDeployWorkflow, /Run candidate preview focused crawl/);
 assert.doesNotMatch(postDeployWorkflow, /candidate-preview-crawl/);
 assert.match(postDeployHarness, /runCandidatePreviewProof/);
 assert.match(postDeployHarness, /candidatePreview/);
+assert.match(postDeployHarness, /includeCandidatePreview/);
 assert.match(postDeployHarness, /isAuthAutomationBlockMessage/);
 assert.match(postDeployHarness, /candidate-preview-auth-bootstrap/);
 assert.match(personaSwitcher, /createClerkTestingTokenForCrawl/);
 assert.match(personaSwitcher, /installClerkTestingTokenInterceptor/);
+assert.equal(SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.tenantKey, 'skyharbor_global');
 assert.equal(isAuthAutomationBlockMessage('page.evaluate: e: You have been banned.'), true);
 assert.equal(isAuthAutomationBlockMessage('Candidate preview page did not render.'), false);
 
