@@ -52,6 +52,8 @@ const DELETE_PRIORITY = new Map([
   ["public.clients", 1000],
 ]);
 
+const CLIENTS_QUALIFIED_NAME = "public.clients";
+
 const TRIGGER_OVERRIDES = Object.freeze([
   { qualifiedName: "public.agent_context_traces", trigger: "user" },
   { qualifiedName: "public.evidence_ledger", trigger: "user" },
@@ -294,8 +296,35 @@ async function resolveClientIds(client) {
   };
 }
 
-async function buildPlan(client) {
-  const clientScope = await resolveClientIds(client);
+function uniqueStrings(values) {
+  return [...new Set(values.filter((value) => value != null && String(value).trim()).map((value) => String(value)))];
+}
+
+function parseCsv(value) {
+  return String(value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function mergeClientScope(resolved, preserved = null) {
+  return {
+    retiredClientIds: uniqueStrings([
+      ...resolved.retiredClientIds,
+      ...(preserved?.retiredClientIds ?? []),
+      ...parseCsv(process.env.RETIRED_TENANT_ROW_PURGE_RETIRED_CLIENT_IDS),
+    ]),
+    keepClientIds: uniqueStrings([
+      ...resolved.keepClientIds,
+      ...(preserved?.keepClientIds ?? []),
+      ...parseCsv(process.env.RETIRED_TENANT_ROW_PURGE_KEEP_CLIENT_IDS),
+    ]),
+    clientRows: resolved.clientRows,
+  };
+}
+
+async function buildPlan(client, preservedClientScope = null) {
+  const clientScope = mergeClientScope(await resolveClientIds(client), preservedClientScope);
   const overlap = clientScope.retiredClientIds.filter((id) => clientScope.keepClientIds.includes(id));
   if (overlap.length > 0) {
     throw new Error(`Refusing purge: retired/keep client id overlap detected: ${overlap.join(", ")}`);
@@ -389,6 +418,10 @@ async function buildPlan(client) {
   }
 
   return { clientScope, operations };
+}
+
+function shouldDeferClientDelete(operation, pending) {
+  return operation.qualifiedName === CLIENTS_QUALIFIED_NAME && pending.some((item) => item.qualifiedName !== CLIENTS_QUALIFIED_NAME);
 }
 
 async function deleteProgramAuditLogIfNeeded(client, operation) {
@@ -646,7 +679,7 @@ function elapsedSeconds(startedAt) {
   return (Date.now() - startedAt) / 1000;
 }
 
-async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds) {
+async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds, preservedClientScope) {
   const actions = [];
   const errors = [];
   let budgetExhausted = false;
@@ -658,12 +691,15 @@ async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds) {
       break;
     }
 
-    const plan = await buildPlan(client);
+    const plan = await buildPlan(client, preservedClientScope);
     const pending = sortedOperations(plan.operations);
     if (pending.length === 0) break;
 
     let progress = false;
     for (const operation of pending) {
+      if (shouldDeferClientDelete(operation, pending)) {
+        continue;
+      }
       if (elapsedSeconds(startedAt) >= budgetSeconds) {
         budgetExhausted = true;
         break;
@@ -697,7 +733,7 @@ async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds) {
 
     if (budgetExhausted) break;
     if (!progress) {
-      const after = await buildPlan(client);
+      const after = await buildPlan(client, preservedClientScope);
       return {
         actions,
         pending: sortedOperations(after.operations).map((operation) => {
@@ -709,7 +745,7 @@ async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds) {
     }
   }
 
-  const after = await buildPlan(client);
+  const after = await buildPlan(client, preservedClientScope);
   return {
     actions,
     pending: sortedOperations(after.operations).map(stripParams),
@@ -752,6 +788,12 @@ function compactProof(proof) {
       retiredRows: proof.before.retiredRows,
       bySchema: proof.before.bySchema,
     },
+    clientScope: proof.clientScope
+      ? {
+          retiredClientIdCount: proof.clientScope.retiredClientIds?.length ?? 0,
+          keepClientIdCount: proof.clientScope.keepClientIds?.length ?? 0,
+        }
+      : null,
     apply: proof.apply
       ? {
           committed: proof.apply.committed,
@@ -901,7 +943,7 @@ async function main() {
         await client.query("set statement_timeout = '10min'");
         const preparedIndexes = await preparePurgeIndexes(client, before.operations);
         await client.query("set statement_timeout = '5min'");
-        const deletion = await applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds);
+        const deletion = await applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds, before.clientScope);
         proof.apply = {
           strategy: "staged",
           committed: true,
@@ -914,7 +956,7 @@ async function main() {
           applied_at: new Date().toISOString(),
         };
       }
-      const after = await buildPlan(client);
+      const after = await buildPlan(client, before.clientScope);
       const afterPositive = after.operations.filter((operation) => operation.rowCount > 0);
       proof.after = {
         tablesWithRetiredRows: afterPositive.length,
