@@ -429,17 +429,17 @@ async function applyDeletes(client, operations, maxPasses) {
       return b.rowCount - a.rowCount || a.qualifiedName.localeCompare(b.qualifiedName);
     });
 
-  for (const operation of [...pending]) {
-    const special = await deleteProgramAuditLogIfNeeded(client, operation);
-    if (special) {
-      actions.push({ ...special, pass: 0 });
-      const index = pending.indexOf(operation);
-      pending.splice(index, 1);
-    }
-  }
-
   await setTriggerOverrides(client, false);
   try {
+    for (const operation of [...pending]) {
+      const special = await deleteProgramAuditLogIfNeeded(client, operation);
+      if (special) {
+        actions.push({ ...special, pass: 0 });
+        const index = pending.indexOf(operation);
+        pending.splice(index, 1);
+      }
+    }
+
     for (let pass = 1; pending.length > 0 && pass <= maxPasses; pass += 1) {
       const next = [];
       let progress = false;

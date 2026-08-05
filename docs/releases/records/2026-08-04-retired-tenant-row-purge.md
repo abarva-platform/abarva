@@ -44,6 +44,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: a failed pre-fix apply attempt rolled back cleanly and a subsequent read-only inventory confirmed retired rows remained present rather than partially deleted.
 - PASS: a post-fix dry-run failure before any delete exposed a malformed FK metadata guard case; the follow-up guard keeps malformed FK metadata out of generated SQL.
 - PASS: a subsequent apply attempt rolled back cleanly after exposing large-table statement timeouts, append-only triggers, immutable triggers, and one dependent-artifact foreign-key blocker; this hardening addresses those blockers with chunking, scoped trigger overrides, and dependent FK row planning.
+- PASS: a follow-up apply attempt failed closed before commit when the special audit-log delete ran before trigger overrides; this patch moves the scoped trigger override around the special delete and the normal retry loop.
 - NOT RUN: destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan
