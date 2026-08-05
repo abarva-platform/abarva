@@ -191,7 +191,7 @@ async function buildSourceVolumePlan() {
       throw new Error(`Proof ZIP SHA attestation mismatch for ${proofZip}`);
     }
   }
-  execFileSync("unzip", ["-t", proofZip], { stdio: "ignore" });
+  await assertZipReadable(proofZip);
 
   const baseFiles = sourceFilePlans(packageDir, packageManifest);
   const releaseHash = sha256(stableJson(baseFiles.map((file) => ({
@@ -260,7 +260,7 @@ async function resolvePackageInput() {
     throw new Error(`PHS package ZIP SHA mismatch: expected ${expectedSha256}, got ${actualSha256}`);
   }
   const extractRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phs-healthcare-demo-package-"));
-  execFileSync("unzip", ["-q", zipPath, "-d", extractRoot], { stdio: "ignore" });
+  await extractZipToDirectory(zipPath, extractRoot);
   return { packageDir: extractRoot, proofZip: zipPath };
 }
 
@@ -271,6 +271,46 @@ async function downloadPackageZip(url) {
   const bytes = Buffer.from(await response.arrayBuffer());
   fs.writeFileSync(target, bytes);
   return target;
+}
+
+async function assertZipReadable(zipPath) {
+  const JSZip = await optionalJSZip();
+  if (JSZip) {
+    await JSZip.loadAsync(fs.readFileSync(zipPath));
+    return;
+  }
+  execFileSync("unzip", ["-t", zipPath], { stdio: "ignore" });
+}
+
+async function extractZipToDirectory(zipPath, destinationDir) {
+  const JSZip = await optionalJSZip();
+  if (!JSZip) {
+    execFileSync("unzip", ["-q", zipPath, "-d", destinationDir], { stdio: "ignore" });
+    return;
+  }
+  const zip = await JSZip.loadAsync(fs.readFileSync(zipPath));
+  const destinationRoot = path.resolve(destinationDir);
+  for (const [entryName, entry] of Object.entries(zip.files)) {
+    const targetPath = path.resolve(destinationRoot, entryName);
+    if (targetPath !== destinationRoot && !targetPath.startsWith(`${destinationRoot}${path.sep}`)) {
+      throw new Error(`Unsafe ZIP entry path: ${entryName}`);
+    }
+    if (entry.dir) {
+      fs.mkdirSync(targetPath, { recursive: true });
+      continue;
+    }
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, await entry.async("nodebuffer"));
+  }
+}
+
+async function optionalJSZip() {
+  try {
+    return (await import("jszip")).default;
+  } catch (error) {
+    if (error?.code === "ERR_MODULE_NOT_FOUND") return null;
+    throw error;
+  }
 }
 
 function assertPackageIdentity(manifest) {
