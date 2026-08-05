@@ -31,7 +31,7 @@ export interface CrawlSurface {
 const CRAWL_VISIBLE_TENANT_NAMES: Partial<
   Record<CxoPersona["clientKey"], string>
 > = {
-  skyharbor: "Airline Demo",
+  skyharbor: "SkyHarbor Global",
 };
 
 // Crawl personas are DERIVED from the durable per-client agent roster

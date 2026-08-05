@@ -24,7 +24,7 @@ assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-apexretail'
 assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-meridian'), false);
 assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-firstcapital'), false);
 assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-lakeshore'), false);
-assert.equal(resolveCrawlPersonas('agent-skyharbor')[0]?.tenantName, 'Airline Demo');
+assert.equal(resolveCrawlPersonas('agent-skyharbor')[0]?.tenantName, 'SkyHarbor Global');
 assert.ok(PRIMARY_CRAWL_SURFACES.length >= 22);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
 assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);

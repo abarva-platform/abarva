@@ -32,21 +32,21 @@ export const AGENT_CLIENT_LOGINS: ReadonlyArray<CxoPersona> = [
     shortLabel: 'agent@skyharbor',
     firstName: 'Ava',
     lastName: 'Agent',
-    personaName: 'Ava · Airline Demo (agent)',
+    personaName: 'Ava · SkyHarbor Global (agent)',
     monogram: 'AV',
     titleShort: 'AGENT',
     titleFull: 'AbarVa automation agent',
-    tenant: 'Airline Demo',
+    tenant: 'SkyHarbor Global',
     clientKey: 'skyharbor',
     tenantKey: 'skyharbor_global',
     authRole: 'maestro',
     graphNodeId: 'person:agent:skyharbor',
     monogramBg: '#0369A1',
-    bioShort: 'Automation account — signed-in proofs & crawl for Airline Demo.',
+    bioShort: 'Automation account — signed-in proofs & crawl for SkyHarbor Global.',
     bioLong:
-      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the Airline Demo tenant via Clerk sign-in tokens (no password). Not a real person.',
+      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the SkyHarbor Global tenant via Clerk sign-in tokens (no password). Not a real person.',
     workspaceTeaser:
-      'Used to verify Airline Demo surfaces render and ground correctly under a real signed-in session.',
+      'Used to verify SkyHarbor Global surfaces render and ground correctly under a real signed-in session.',
   },
 ];
 
