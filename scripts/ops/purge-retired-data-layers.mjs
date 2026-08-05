@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { Client } from "pg";
@@ -53,21 +54,28 @@ async function main() {
   }
 
   const apply = hasFlag("--apply");
-  const allowDependencies = hasFlag("--allow-dependencies");
-  const outDir = argValue("--out-dir", process.cwd());
+  const envApply = process.env.RETIRED_LAYER_PURGE_APPLY === "1";
+  const allowDependencies =
+    hasFlag("--allow-dependencies") || process.env.RETIRED_LAYER_PURGE_ALLOW_DEPENDENCIES === "1";
+  const outDir =
+    argValue("--out-dir", process.env.RETIRED_LAYER_PURGE_OUT_DIR) ??
+    path.join(os.tmpdir(), "retired-layer-purge");
   const runId =
     argValue("--run-id") ??
     `retired-layer-purge-${new Date().toISOString().replace(/[:.]/g, "")}`;
-  const schemas = String(argValue("--schemas", DEFAULT_SCHEMAS.join(",")))
+  const schemas = String(
+    argValue("--schemas", process.env.RETIRED_LAYER_PURGE_SCHEMAS ?? DEFAULT_SCHEMAS.join(",")),
+  )
     .split(",")
     .map((schema) => schema.trim())
     .filter(Boolean);
+  const shouldApply = apply || envApply;
 
   fs.mkdirSync(outDir, { recursive: true });
 
   const client = new Client({
     connectionString: databaseUrl,
-    application_name: `abarva-retired-layer-purge-${apply ? "apply" : "dry-run"}`,
+    application_name: `abarva-retired-layer-purge-${shouldApply ? "apply" : "dry-run"}`,
   });
   await client.connect();
 
@@ -165,27 +173,27 @@ async function main() {
     const proof = {
       run_id: runId,
       generated_at: new Date().toISOString(),
-      mode: apply ? "apply" : "dry_run",
+      mode: shouldApply ? "apply" : "dry_run",
       schemas,
       dependencies_outside_retired_schemas: dependencyInventory,
       schema_inventory: schemaInventory,
       gates: {
         schemas_discovered: schemaInventory.filter((row) => row.exists).length,
         outside_dependencies: dependencyInventory.length,
-        apply_allowed: apply && (allowDependencies || dependencyInventory.length === 0),
+        apply_allowed: shouldApply && (allowDependencies || dependencyInventory.length === 0),
       },
     };
 
     const proofPath = path.join(outDir, `${runId}.json`);
     fs.writeFileSync(proofPath, `${JSON.stringify(proof, null, 2)}\n`);
 
-    if (apply && dependencyInventory.length > 0 && !allowDependencies) {
+    if (shouldApply && dependencyInventory.length > 0 && !allowDependencies) {
       throw new Error(
         `Refusing to apply: ${dependencyInventory.length} outside-schema dependencies found. Review ${proofPath}.`,
       );
     }
 
-    if (apply) {
+    if (shouldApply) {
       for (const schemaName of schemas) {
         await client.query(`drop schema if exists ${quoteIdent(schemaName)} cascade`);
       }
@@ -196,7 +204,7 @@ async function main() {
       await client.query("rollback");
     }
 
-    console.log(JSON.stringify({ ok: true, proof_path: proofPath, proof }, null, 2));
+    console.log(JSON.stringify({ event: "retired_data_layer_purge_proof", ok: true, proof_path: proofPath, proof }, null, 2));
   } catch (error) {
     await client.query("rollback").catch(() => undefined);
     throw error;
