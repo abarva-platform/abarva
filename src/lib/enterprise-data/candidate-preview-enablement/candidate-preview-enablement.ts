@@ -63,7 +63,7 @@ interface ModuleInspection {
 export interface CandidatePreviewEnablementReport {
   reportVersion: "candidate-preview-enablement/v1";
   generatedAt: string;
-  tenantKey: "skyharbor-air";
+  tenantKey: "skyharbor_global";
   candidateVersionId: string;
   qualityGateStatus: "pass" | "fail";
   enablementState: "enabled_for_explicit_request_only";

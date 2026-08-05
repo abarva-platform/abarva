@@ -11,6 +11,8 @@ import {
 } from "@/lib/enterprise-data/candidate-version-build/candidate-version-build";
 import { resolveAdminTenant } from "@/lib/admin/admin-tenant";
 
+const DEFAULT_CANDIDATE_PREVIEW_TENANT_KEY = "skyharbor_global";
+
 export const metadata = {
   title: "Candidate Preview | AbarVa Admin",
 };
@@ -42,7 +44,8 @@ export default async function CandidatePreviewPage({
     repoRoot: process.cwd(),
   });
   const candidateBuild = candidateBuildState.report;
-  const requestedTenantKey = params.tenantKey?.trim() || "skyharbor-air";
+  const requestedTenantKey =
+    params.tenantKey?.trim() || DEFAULT_CANDIDATE_PREVIEW_TENANT_KEY;
   const selectedCandidate =
     candidateBuild?.candidateVersions.find(
       (candidate) => candidate.tenantKey === requestedTenantKey,

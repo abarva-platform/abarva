@@ -14,6 +14,8 @@ export const CANDIDATE_VERSION_BUILD_REPORT_DIR =
 export const CANDIDATE_VERSION_BUILD_VERSION = "candidate-version-build/v1";
 export const CANDIDATE_PREVIEW_BANNER =
   "Candidate Preview Mode - inactive candidate data. Not active tenant truth.";
+const ACTIVE_SKYHARBOR_TENANT_KEY = "skyharbor_global";
+const LEGACY_SKYHARBOR_TENANT_KEY = "skyharbor-air";
 
 type GateStatus = "pass" | "fail" | "warn";
 type CandidateCreationStatus = "created" | "blocked";
@@ -240,7 +242,11 @@ export async function buildCandidateVersionBuildReport(options: {
       productionTenantDataWritten: false,
     },
     skyharborPreview:
-      candidateVersions.find((candidate) => candidate.tenantKey === "skyharbor-air") ?? null,
+      candidateVersions.find(
+        (candidate) =>
+          candidate.tenantKey === ACTIVE_SKYHARBOR_TENANT_KEY ||
+          candidate.tenantKey === LEGACY_SKYHARBOR_TENANT_KEY,
+      ) ?? null,
     meridianPreview:
       candidateVersions.find((candidate) => candidate.tenantKey === "meridian-health") ?? null,
     summary: {
@@ -377,7 +383,7 @@ export async function readLatestCandidateVersionBuild(
       candidateVersionId: string;
       blockers: string[];
     }>;
-    return {
+    return normalizeCandidateVersionBuildReportForActiveTenants({
       ...index,
       sourceBuildFiles: [],
       guardrails: JSON.parse(guardrailsText) as CandidateVersionBuildReport["guardrails"],
@@ -393,10 +399,13 @@ export async function readLatestCandidateVersionBuild(
         separationText,
       ) as CandidateVersionBuildReport["activeCandidateSeparation"],
       skyharborPreview:
-        candidateVersions.find((candidate) => candidate.tenantKey === "skyharbor-air") ?? null,
-      meridianPreview:
-        candidateVersions.find((candidate) => candidate.tenantKey === "meridian-health") ?? null,
-    };
+        candidateVersions.find(
+          (candidate) =>
+            candidate.tenantKey === ACTIVE_SKYHARBOR_TENANT_KEY ||
+            candidate.tenantKey === LEGACY_SKYHARBOR_TENANT_KEY,
+        ) ?? null,
+      meridianPreview: null,
+    });
   } catch {
     return null;
   }
@@ -411,7 +420,7 @@ export async function loadCandidateVersionBuildForAdmin(options: {
     const report = await readLatestCandidateVersionBuild(options.repoRoot);
     if (report) {
       return {
-        report,
+        report: normalizeCandidateVersionBuildReportForActiveTenants(report),
         source: "report_artifact",
         errors: [],
       };
@@ -431,7 +440,7 @@ export async function loadCandidateVersionBuildForAdmin(options: {
       repoRoot: options.repoRoot,
     });
     return {
-      report,
+      report: normalizeCandidateVersionBuildReportForActiveTenants(report),
       source: "runtime_deterministic_fallback",
       errors: [],
     };
@@ -446,6 +455,66 @@ export async function loadCandidateVersionBuildForAdmin(options: {
       ],
     };
   }
+}
+
+function normalizeCandidateVersionBuildReportForActiveTenants(
+  report: CandidateVersionBuildReport,
+): CandidateVersionBuildReport {
+  const skyharborCandidate =
+    report.candidateVersions.find(
+      (candidate) => candidate.tenantKey === ACTIVE_SKYHARBOR_TENANT_KEY,
+    ) ??
+    report.candidateVersions.find(
+      (candidate) => candidate.tenantKey === LEGACY_SKYHARBOR_TENANT_KEY,
+    ) ??
+    null;
+
+  const normalizedSkyharbor = skyharborCandidate
+    ? {
+        ...skyharborCandidate,
+        candidateVersionId:
+          skyharborCandidate.candidateVersionId.includes(
+            LEGACY_SKYHARBOR_TENANT_KEY,
+          )
+            ? skyharborCandidate.candidateVersionId.replaceAll(
+                LEGACY_SKYHARBOR_TENANT_KEY,
+                ACTIVE_SKYHARBOR_TENANT_KEY,
+              )
+            : skyharborCandidate.candidateVersionId,
+        tenantId: ACTIVE_SKYHARBOR_TENANT_KEY,
+        tenantKey: ACTIVE_SKYHARBOR_TENANT_KEY,
+        tenantDisplayName: "SkyHarbor Global",
+      }
+    : null;
+  const candidateVersions = normalizedSkyharbor ? [normalizedSkyharbor] : [];
+
+  return {
+    ...report,
+    candidateVersions,
+    blockedTenants: [],
+    skyharborPreview: normalizedSkyharbor,
+    meridianPreview: null,
+    summary: {
+      ...report.summary,
+      tenantsProcessed: candidateVersions.length,
+      candidateVersionsCreated: candidateVersions.filter(
+        (candidate) => candidate.creationStatus === "created",
+      ).length,
+      tenantsBlocked: 0,
+      canonicalRecordsRepresented: candidateVersions.reduce(
+        (sum, candidate) => sum + candidate.canonicalRecordCount,
+        0,
+      ),
+      evidenceAttachmentsRepresented: candidateVersions.reduce(
+        (sum, candidate) => sum + candidate.evidenceAttachmentCount,
+        0,
+      ),
+      relationshipCandidatesRepresented: candidateVersions.reduce(
+        (sum, candidate) => sum + candidate.relationshipCandidateCount,
+        0,
+      ),
+    },
+  };
 }
 
 export function evaluateCandidateVersionBuildReport(

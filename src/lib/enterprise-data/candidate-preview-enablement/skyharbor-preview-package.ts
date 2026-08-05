@@ -28,7 +28,7 @@ export interface CandidatePreviewModulePacketSummary {
 
 export interface SkyHarborCandidatePreviewPackage {
   packageVersion: "skyharbor-candidate-preview-package/v1";
-  tenantKey: "skyharbor-air";
+  tenantKey: "skyharbor_global";
   candidateVersionId: string;
   readinessState: "candidate_preview_ready_not_active_ready";
   generatedFrom: string[];
@@ -74,9 +74,9 @@ const BLOCKED_RUNTIME_ACTIONS = [
 export const SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE: SkyHarborCandidatePreviewPackage =
   {
     packageVersion: "skyharbor-candidate-preview-package/v1",
-    tenantKey: "skyharbor-air",
+    tenantKey: "skyharbor_global",
     candidateVersionId:
-      "skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run",
+      "skyharbor_global:skyharbor-global-candidate-preview:candidate-dry-run",
     readinessState: "candidate_preview_ready_not_active_ready",
     generatedFrom: [
       "reports/candidate-module-previews/skyharbor/preview-summary.json",

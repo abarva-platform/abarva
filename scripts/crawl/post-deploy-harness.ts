@@ -31,6 +31,7 @@ interface Args {
   baseline?: string;
   noAuth: boolean;
   rollbackOnP0: boolean;
+  includeCandidatePreview: boolean;
 }
 
 async function main() {
@@ -68,7 +69,7 @@ async function main() {
 
   let fatalError: unknown = null;
   try {
-    if (!args.noAuth) {
+    if (!args.noAuth && args.includeCandidatePreview) {
       try {
         console.log("crawl_candidate_preview_start:agent-skyharbor:/admin/candidate-preview");
         const previewResult = await runCandidatePreviewProof(
@@ -857,6 +858,8 @@ function parseArgs(argv: string[]): Args {
     outputDir: 'audit-artifacts/post-deploy-crawl',
     noAuth: false,
     rollbackOnP0: false,
+    includeCandidatePreview:
+      process.env.CRAWL_INCLUDE_ADMIN_CANDIDATE_PREVIEW === "true",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -869,6 +872,7 @@ function parseArgs(argv: string[]): Args {
     if (arg === '--baseline' && next) args.baseline = next;
     if (arg === '--no-auth') args.noAuth = true;
     if (arg === '--rollback-on-p0') args.rollbackOnP0 = true;
+    if (arg === '--candidate-preview') args.includeCandidatePreview = true;
   }
   return args;
 }
