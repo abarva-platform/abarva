@@ -10,10 +10,10 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 - Dataset id: `phs-health-source-v1-202608`
 - Dataset version: `v1`
 - Activation target: `staged`
-- Source-system extract CSVs: required core enterprise extracts plus approved optional domain snapshots
+- Layer 1 release CSVs: 54 named CSV files; 39 enterprise/context files, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files
 - Required package state: `generated_not_loaded`
-- Latest Phase A proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`
-- Latest proof SHA-256: `95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da`
+- Latest Phase A proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip`
+- Latest proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
 
 ## Planned Data Layers
 
@@ -30,7 +30,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 
 1. Review the Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
 2. Add approved tenant bootstrap and additive migrations through the governed lab lane.
-3. Implement a PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and its approved `source_system_extracts/*.csv` files; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
+3. Implement a PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and the 54 named Layer 1 release CSVs classified in the manifest; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
 4. Run source-volume plan mode and produce a file, row, field and hash manifest with no database connection.
 5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
@@ -47,20 +47,24 @@ The non-mutating plan command is:
 
 ```bash
 npm run source:phs-healthcare-demo:data-layer-plan -- \
-  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z \
+  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
   --out-dir /Users/anand/Downloads
 ```
 
-Latest plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T214902Z.zip`
-Latest plan SHA-256: `124b4d6aae69e7cfc42f635e2bc29b9e24b1d5b9263c5d81b4a5e101628af847`
+Latest plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T223444Z.zip`
+Latest plan SHA-256: `a54c2d710fb81a57ea1d039116949eec9e99ac0a00c8a62df36c192e99742e3e`
 
 Latest plan counts:
 
-- Source files: 39
+- Source files: 54
+- Enterprise/context files: 39
+- Existing BPO sourcing-event files: 11
+- BPO transition/transformation files: 4
 - Required core source extracts: 38
 - Optional health-plan outcome snapshot rows: 12
-- Source records: 50,597
-- Source field values: 1,519,811
+- Source records: 54,967
+- Source field slots: 1,640,131
+- Source field-value rule: insert all field slots, including explicit blank cells
 - Restricted detailed health-plan extracts present: 0
 - Mutation executed: false
 
@@ -71,11 +75,11 @@ The PHS-specific Layer 1 loader is:
 ```bash
 npm run source:phs-healthcare-demo:layer1:self-test
 npm run source:phs-healthcare-demo:layer1:plan -- \
-  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z \
+  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
   --out-dir /Users/anand/Downloads
 ```
 
-The loader reads only the approved `phs_healthcare_demo_package_manifest.json` and the package-owned `source_system_extracts/*.csv` files. It does not reuse the separate `healthcare-demo-new` corpus root and it does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
+The loader reads only the approved `phs_healthcare_demo_package_manifest.json` and the 54 package-owned release CSVs classified in that manifest. It does not rely on folder names alone, does not reuse the separate `healthcare-demo-new` corpus root and does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
 
 Supported modes:
 
@@ -89,11 +93,21 @@ The apply command is intentionally hard-stopped until an isolated lab target and
 
 ```bash
 PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true \
-PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da \
+PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553 \
 npm run source:phs-healthcare-demo:layer1:apply -- \
-  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z \
-  --approved-proof-sha256 95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da
+  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
+  --approved-proof-sha256 a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553
 ```
+
+## Event Context Architecture
+
+Tenant enterprise context flows into Source as context candidates. A sourcing event references selected applications, services, vendors, contracts and evidence IDs, then a later governed job may pin an immutable event-context snapshot. This plan-only step defines the future snapshot contract but does not create a snapshot, adapter output, canonical row, recommendation version, Move or outcome-tracking row.
+
+Adapter priority after a future approved Layer 1 apply:
+
+1. Priority A BPO hero: process volumes, workforce, cost baseline, rebadge and retention, transition and knowledge transfer, AI/process transformation commitments, retained organization, supplier responses, commercials, evaluation, clarifications, BAFO and normalized TCO.
+2. Priority B supporting enterprise context: CMDB applications, CSDM business services, vendor services, contract scope, contract terms and rates, ITSM/SLA performance, service credits, interfaces, dependencies, programs, risks and modernization initiatives.
+3. Deferred: optional health-plan outcome snapshot, med/surg experiences, non-demo analytics and low-value peripheral sources.
 
 ## Non-Negotiable Stops
 

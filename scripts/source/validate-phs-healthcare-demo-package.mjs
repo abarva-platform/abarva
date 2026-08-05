@@ -106,6 +106,58 @@ const RESTRICTED_DETAIL_SOURCE_EXTRACTS = new Set([
 
 const OPTIONAL_HEALTH_PLAN_SNAPSHOT = "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv";
 
+const REQUIRED_EXISTING_BPO_EVENT_EXTRACTS = new Set([
+  "BPO_CURRENT_STATE_PROCESS_VOLUMES.csv",
+  "BPO_CURRENT_STATE_WORKFORCE.csv",
+  "BPO_CURRENT_STATE_COST_BASELINE.csv",
+  "BPO_RFP_REQUIREMENTS.csv",
+  "BPO_SUPPLIERS.csv",
+  "BPO_SUPPLIER_RESPONSES.csv",
+  "BPO_COMMERCIAL_LINES.csv",
+  "BPO_EVALUATION_SCORES.csv",
+  "BPO_CLARIFICATIONS.csv",
+  "BPO_BAFO_RESPONSES.csv",
+  "BPO_NORMALIZED_TCO.csv",
+]);
+
+const REQUIRED_BPO_TRANSFORMATION_EXTRACTS = new Set([
+  "BPO_REBADGE_RETENTION_PLAN.csv",
+  "BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv",
+  "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv",
+  "BPO_RETAINED_ORGANIZATION_SCENARIOS.csv",
+]);
+
+const REQUIRED_LAYER1_RELEASE_FILES = new Set([
+  ...REQUIRED_CORE_SOURCE_EXTRACTS,
+  OPTIONAL_HEALTH_PLAN_SNAPSHOT,
+  ...REQUIRED_EXISTING_BPO_EVENT_EXTRACTS,
+  ...REQUIRED_BPO_TRANSFORMATION_EXTRACTS,
+]);
+
+const REQUIRED_DOCUMENT_TYPES = new Set([
+  "master services agreement",
+  "managed-services statement of work",
+  "SaaS order form/subscription agreement",
+  "rate-card/pricing schedule",
+  "SLA and service-credit schedule",
+  "security and privacy schedule",
+  "business associate agreement",
+  "amendment/change order",
+  "renewal/extension",
+  "termination/exit/transition schedule",
+  "vendor proposal",
+  "RFP response",
+  "commercial response",
+  "BAFO response",
+  "evaluation summary",
+  "monthly service report",
+  "quarterly business review",
+  "corrective-action plan",
+  "invoice",
+  "contract register extract",
+  "vendor-performance scorecard",
+]);
+
 const REQUIRED_INTERVIEW_ROLES = new Set([
   "CIO",
   "CTO",
@@ -1105,6 +1157,240 @@ function validateOptionalDomainExtracts(failures, indexes) {
   }
 }
 
+function layer1Contracts(manifest) {
+  return asArray(manifest.file_contracts).filter((contract) => REQUIRED_LAYER1_RELEASE_FILES.has(basename(contract.path)) && contract.format === "csv");
+}
+
+function validateLayer1ReleaseContract(failures, manifest) {
+  const contracts = layer1Contracts(manifest);
+  const basenames = new Set(contracts.map((contract) => basename(contract.path)));
+  for (const requiredFile of REQUIRED_LAYER1_RELEASE_FILES) {
+    if (!basenames.has(requiredFile)) {
+      issue(failures, "missing_layer1_release_file", "required Layer 1 release CSV is missing", { file: requiredFile });
+    }
+  }
+  if (contracts.length !== 54) {
+    issue(failures, "layer1_release_file_count_mismatch", "Layer 1 release must contain exactly 54 named CSV files", {
+      expected: 54,
+      actual: contracts.length,
+    });
+  }
+  const counts = {};
+  for (const contract of contracts) {
+    for (const field of ["source_group", "context_treatment", "demo_priority", "effective_as_of", "content_sha256", "expected_rows"]) {
+      if (contract[field] === undefined || contract[field] === "") {
+        issue(failures, "missing_file_classification_metadata", "Layer 1 file contract is missing required classification metadata", {
+          file: contract.path,
+          field,
+        });
+      }
+    }
+    if (contract.context_treatment === "event_native" && !contract.event_id) {
+      issue(failures, "event_native_file_missing_event_id", "event-native file contract must carry event_id", { file: contract.path });
+    }
+    counts[contract.source_group] = (counts[contract.source_group] || 0) + 1;
+  }
+  const expectedCounts = {
+    enterprise_context: 38,
+    optional_domain_context: 1,
+    bpo_sourcing_event: 11,
+    bpo_transformation_event: 4,
+  };
+  for (const [sourceGroup, expected] of Object.entries(expectedCounts)) {
+    if ((counts[sourceGroup] || 0) !== expected) {
+      issue(failures, "source_group_count_mismatch", "Layer 1 source-group count mismatch", {
+        source_group: sourceGroup,
+        expected,
+        actual: counts[sourceGroup] || 0,
+      });
+    }
+  }
+}
+
+function dateValue(value) {
+  const time = Date.parse(String(value || ""));
+  return Number.isFinite(time) ? time : NaN;
+}
+
+function validateBpoTransformationSemantics(failures, indexes) {
+  const rebadgeRows = indexes.rowsByBasename.get("BPO_REBADGE_RETENTION_PLAN.csv") || [];
+  const ktRows = indexes.rowsByBasename.get("BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv") || [];
+  const automationRows = indexes.rowsByBasename.get("BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv") || [];
+  const retainedRows = indexes.rowsByBasename.get("BPO_RETAINED_ORGANIZATION_SCENARIOS.csv") || [];
+  const tcoRows = indexes.rowsByBasename.get("BPO_NORMALIZED_TCO.csv") || [];
+  const benefitKeysInTco = new Set();
+
+  for (const row of rebadgeRows) {
+    if (Number(row.number_proposed_for_rebadge || 0) > Number(row.source_workforce_cohort_count || 0)) {
+      issue(failures, "rebadge_count_exceeds_source_workforce", "rebadge count exceeds declared source workforce cohort", {
+        source_record_id: row.source_record_id,
+      });
+    }
+    if (!row.retention_commitment_months || Number(row.retention_commitment_months) <= 0) {
+      issue(failures, "missing_retention_period", "rebadge row is missing a positive retention period", {
+        source_record_id: row.source_record_id,
+      });
+    }
+    const matchingKt = ktRows.find((candidate) => candidate.rebadged_cohort === row.employee_cohort);
+    if (matchingKt && dateValue(row.retention_end_date) < dateValue(matchingKt.completion_date)) {
+      issue(failures, "retention_completes_before_knowledge_transfer", "retention ends before knowledge-transfer completion", {
+        source_record_id: row.source_record_id,
+        kt_plan_id: matchingKt.kt_plan_id,
+      });
+    }
+    if (matchingKt && dateValue(row.location_move_date) < dateValue(matchingKt.completion_date)) {
+      issue(failures, "location_move_before_knowledge_transfer_completion", "location movement occurs before knowledge-transfer completion", {
+        source_record_id: row.source_record_id,
+        kt_plan_id: matchingKt.kt_plan_id,
+      });
+    }
+    if (/offshore/iu.test(row.proposed_supplier_location || "") && dateValue(row.location_move_date) < dateValue(row.stabilization_approval_date)) {
+      issue(failures, "offshore_move_before_stabilization_approval", "offshore movement occurs before stabilization approval", {
+        source_record_id: row.source_record_id,
+      });
+    }
+  }
+
+  for (const row of automationRows) {
+    if (!row.process_name || !row.delivery_milestone || !row.evidence_ref) {
+      issue(failures, "automation_claim_missing_process_milestone_or_evidence", "automation claim lacks process, milestone or evidence", {
+        source_record_id: row.source_record_id,
+      });
+    }
+    if (!row.funding_recovery_model) {
+      issue(failures, "transformation_benefit_missing_funding_model", "transformation benefit lacks funding model", {
+        source_record_id: row.source_record_id,
+      });
+    }
+    if (row.commitment_state === "aspirational" && Number(row.contracted_benefit_amount || 0) > 0) {
+      issue(failures, "aspirational_commitment_treated_as_contractual", "aspirational commitment carries contracted benefit", {
+        source_record_id: row.source_record_id,
+      });
+    }
+    if (row.counted_in_normalized_tco === "true") {
+      const key = row.benefit_accounting_key;
+      if (benefitKeysInTco.has(key)) {
+        issue(failures, "productivity_benefit_double_counted_in_tco", "productivity benefit is counted twice in normalized TCO", {
+          source_record_id: row.source_record_id,
+          benefit_accounting_key: key,
+        });
+      }
+      benefitKeysInTco.add(key);
+    }
+  }
+
+  for (const row of retainedRows) {
+    if (Number(row.steady_state_fte || 0) < Number(row.transition_fte || 0) && dateValue(row.retained_reduction_effective_date) < dateValue(row.supplier_capability_delivery_date)) {
+      issue(failures, "retained_org_reduced_before_supplier_capability", "retained organization is reduced before supplier capability delivery", {
+        source_record_id: row.source_record_id,
+      });
+    }
+  }
+
+  if (!tcoRows.some((row) => row.supplier_id === "BPO-C" && row.recommendation_state === "recommended_after_normalization")) {
+    issue(failures, "missing_normalized_value_recommendation", "BPO-C normalized value recommendation is missing");
+  }
+}
+
+async function validateEventSnapshotContract(failures, packageDir, indexes) {
+  const snapshotPath = path.join(packageDir, "phs_healthcare_demo_event_context_snapshot_contract.json");
+  const snapshot = await readJson(snapshotPath);
+  if (snapshot.mutation_executed !== false) {
+    issue(failures, "event_snapshot_mutation_executed", "event snapshot contract must remain plan-only");
+  }
+  const bindings = asArray(snapshot.bindings);
+  const seenBindings = new Set();
+  const knownApplications = new Set((indexes.rowsByBasename.get("SERVICENOW_CMDB_APPLICATIONS.csv") || []).map((row) => row.application_id));
+  const knownServices = new Set((indexes.rowsByBasename.get("SERVICENOW_CSDM_BUSINESS_SERVICES.csv") || []).flatMap((row) => [row.business_service_ref, row.ci_id]).filter(Boolean));
+  const knownVendors = new Set((indexes.rowsByBasename.get("WORKDAY_SUPPLIERS.csv") || []).map((row) => row.vendor_id));
+  const knownContracts = new Set((indexes.rowsByBasename.get("CONTRACT_REGISTER.csv") || []).map((row) => row.contract_family_id));
+  const knownEvidence = indexes.evidenceRefs;
+  for (const binding of bindings) {
+    if (!binding.event_id || !binding.enterprise_context_version || !binding.source_release_id) {
+      issue(failures, "unversioned_event_snapshot_binding", "event snapshot binding lacks event, context or source release version", { binding });
+    }
+    const key = `${binding.event_id}:${binding.enterprise_context_version}:${binding.source_release_id}`;
+    if (seenBindings.has(key)) {
+      issue(failures, "duplicate_event_snapshot_binding", "duplicate event snapshot binding", { key });
+    }
+    seenBindings.add(key);
+    for (const [field, known] of [
+      ["selected_application_ids", knownApplications],
+      ["selected_business_service_ids", knownServices],
+      ["selected_vendor_ids", knownVendors],
+      ["selected_contract_ids", knownContracts],
+      ["selected_evidence_ids", knownEvidence],
+    ]) {
+      for (const value of asArray(binding[field])) {
+        if (!known.has(value)) {
+          issue(failures, "unknown_enterprise_context_reference", "event snapshot references unknown enterprise-context ID", {
+            field,
+            value,
+          });
+        }
+      }
+    }
+  }
+}
+
+async function validateDocumentContentContracts(failures, packageDir, indexes) {
+  const contractsPath = path.join(packageDir, "phs_healthcare_demo_document_content_contracts.json");
+  const auditPath = path.join(packageDir, "phs_healthcare_demo_contract_family_audit_view.json");
+  const contentContracts = await readJson(contractsPath);
+  const audit = await readJson(auditPath);
+  const byType = new Map(asArray(contentContracts.archetype_contracts).map((contract) => [contract.document_type, contract]));
+  for (const requiredType of REQUIRED_DOCUMENT_TYPES) {
+    if (!byType.has(requiredType)) {
+      issue(failures, "missing_document_archetype_contract", "required document archetype contract is missing", { document_type: requiredType });
+    }
+  }
+  const auditDocs = new Map(asArray(audit.documents).map((document) => [document.document_ref, document]));
+  for (const evidenceRow of indexes.rowsByBasename.get("EVIDENCE_SPANS.csv") || []) {
+    if (!auditDocs.has(evidenceRow.document_ref)) {
+      issue(failures, "evidence_document_missing_from_family_audit", "evidence span points to a document not represented in the family audit", {
+        document_ref: evidenceRow.document_ref,
+        evidence_ref: evidenceRow.evidence_ref,
+      });
+    }
+  }
+  const fillerPatterns = [/lorem ipsum/iu, /fees will be mutually agreed/iu, /industry-standard service levels/iu, /(This document contains aggregate commercial, operational, service-level, renewal, exit, security or transition terms){2,}/iu];
+  for (const document of auditDocs.values()) {
+    const contentContract = byType.get(document.document_type);
+    if (!contentContract) continue;
+    const documentPath = path.join(packageDir, "contract_and_evidence_corpus", "documents", `${document.document_ref}.md`);
+    const text = await fs.readFile(documentPath, "utf8");
+    for (const pattern of fillerPatterns) {
+      if (pattern.test(text)) {
+        issue(failures, "document_generic_filler_detected", "document contains placeholder or filler language", {
+          document_ref: document.document_ref,
+        });
+      }
+    }
+    for (const section of asArray(contentContract.required_sections)) {
+      if (!new RegExp(`##\\s+${escapeRegExp(section)}\\b`, "iu").test(text)) {
+        issue(failures, "document_required_section_missing", "document lacks required content-contract section", {
+          document_ref: document.document_ref,
+          document_type: document.document_type,
+          section,
+        });
+      }
+    }
+    for (const concept of asArray(contentContract.required_concepts).slice(0, 8)) {
+      if (!text.toLowerCase().includes(String(concept).toLowerCase())) {
+        issue(failures, "document_required_concept_missing", "document lacks required content-contract concept", {
+          document_ref: document.document_ref,
+          document_type: document.document_type,
+          concept,
+        });
+      }
+    }
+  }
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
 export async function validatePackage(packageDir) {
   const failures = [];
   const warnings = [];
@@ -1214,7 +1500,11 @@ export async function validatePackage(packageDir) {
     });
   }
   validateManifestContract(failures, manifest, seen);
+  validateLayer1ReleaseContract(failures, manifest);
   validateOptionalDomainExtracts(failures, indexes);
+  validateBpoTransformationSemantics(failures, indexes);
+  await validateEventSnapshotContract(failures, packageDir, indexes);
+  await validateDocumentContentContracts(failures, packageDir, indexes);
   validateWorkbookOutcomeTab(failures, packageDir);
   validateWorkbookQuality(failures, packageDir);
   validateFieldSourceMap(failures, packageDir, indexes);
@@ -1239,6 +1529,9 @@ export async function validatePackage(packageDir) {
       sourceSystemExtractCsvs: asArray(manifest.file_contracts).filter(
         (contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv",
       ).length,
+      layer1ReleaseCsvs: layer1Contracts(manifest).length,
+      existingBpoEventCsvs: layer1Contracts(manifest).filter((contract) => contract.source_group === "bpo_sourcing_event").length,
+      bpoTransformationCsvs: layer1Contracts(manifest).filter((contract) => contract.source_group === "bpo_transformation_event").length,
       coreSourceExtracts: REQUIRED_CORE_SOURCE_EXTRACTS.size,
       optionalHealthPlanOutcomeSnapshotRows: (indexes.rowsByBasename.get(OPTIONAL_HEALTH_PLAN_SNAPSHOT) || []).length,
       uniqueRowHashes: seen.rowHashes.size,
@@ -1381,6 +1674,115 @@ export async function validateCorruptedCanaries(packageDir) {
       inject: (root) => mutateCsv(root, "BPO_SUPPLIER_RESPONSES.csv", (rows) => {
         rows[0].supplier_id = "BPO-Z";
       }),
+    },
+    {
+      defect: "rebadge count exceeds source workforce cohort",
+      expected_failure: "rebadge_count_exceeds_source_workforce",
+      inject: (root) => mutateCsv(root, "BPO_REBADGE_RETENTION_PLAN.csv", (rows) => {
+        rows[0].number_proposed_for_rebadge = Number(rows[0].source_workforce_cohort_count || 0) + 1;
+      }),
+    },
+    {
+      defect: "missing retention period",
+      expected_failure: "missing_retention_period",
+      inject: (root) => mutateCsv(root, "BPO_REBADGE_RETENTION_PLAN.csv", (rows) => {
+        rows[0].retention_commitment_months = "";
+      }),
+    },
+    {
+      defect: "retention completes before knowledge transfer",
+      expected_failure: "retention_completes_before_knowledge_transfer",
+      inject: (root) => mutateCsv(root, "BPO_REBADGE_RETENTION_PLAN.csv", (rows) => {
+        rows[0].retention_end_date = "2026-12-31";
+      }),
+    },
+    {
+      defect: "location move before knowledge transfer completion",
+      expected_failure: "location_move_before_knowledge_transfer_completion",
+      inject: (root) => mutateCsv(root, "BPO_REBADGE_RETENTION_PLAN.csv", (rows) => {
+        rows[0].location_move_date = "2026-12-31";
+      }),
+    },
+    {
+      defect: "offshore move before stabilization approval",
+      expected_failure: "offshore_move_before_stabilization_approval",
+      inject: (root) => mutateCsv(root, "BPO_REBADGE_RETENTION_PLAN.csv", (rows) => {
+        rows[0].proposed_supplier_location = "offshore delivery center";
+        rows[0].location_move_date = "2027-01-01";
+        rows[0].stabilization_approval_date = "2027-03-01";
+      }),
+    },
+    {
+      defect: "automation claim missing milestone and evidence",
+      expected_failure: "automation_claim_missing_process_milestone_or_evidence",
+      inject: (root) => mutateCsv(root, "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv", (rows) => {
+        rows[0].delivery_milestone = "";
+        rows[0].evidence_ref = "";
+      }),
+    },
+    {
+      defect: "aspirational commitment treated as contractual",
+      expected_failure: "aspirational_commitment_treated_as_contractual",
+      inject: (root) => mutateCsv(root, "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv", (rows) => {
+        rows[0].commitment_state = "aspirational";
+        rows[0].contracted_benefit_amount = "100000";
+      }),
+    },
+    {
+      defect: "transformation benefit missing funding model",
+      expected_failure: "transformation_benefit_missing_funding_model",
+      inject: (root) => mutateCsv(root, "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv", (rows) => {
+        rows[0].funding_recovery_model = "";
+      }),
+    },
+    {
+      defect: "productivity benefit double counted in TCO",
+      expected_failure: "productivity_benefit_double_counted_in_tco",
+      inject: (root) => mutateCsv(root, "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv", (rows) => {
+        rows[0].counted_in_normalized_tco = "true";
+        rows[1].counted_in_normalized_tco = "true";
+        rows[1].benefit_accounting_key = rows[0].benefit_accounting_key;
+      }),
+    },
+    {
+      defect: "retained organization reduced before supplier capability",
+      expected_failure: "retained_org_reduced_before_supplier_capability",
+      inject: (root) => mutateCsv(root, "BPO_RETAINED_ORGANIZATION_SCENARIOS.csv", (rows) => {
+        rows[0].transition_fte = "5";
+        rows[0].steady_state_fte = "2";
+        rows[0].supplier_capability_delivery_date = "2027-09-30";
+        rows[0].retained_reduction_effective_date = "2027-03-30";
+      }),
+    },
+    {
+      defect: "unknown application in event snapshot",
+      expected_failure: "unknown_enterprise_context_reference",
+      inject: async (root) => {
+        const snapshotPath = path.join(root, "phs_healthcare_demo_event_context_snapshot_contract.json");
+        const snapshot = await readJson(snapshotPath);
+        snapshot.bindings[0].selected_application_ids[0] = "APP-UNKNOWN";
+        await writeJsonFile(snapshotPath, snapshot);
+      },
+    },
+    {
+      defect: "unversioned event snapshot binding",
+      expected_failure: "unversioned_event_snapshot_binding",
+      inject: async (root) => {
+        const snapshotPath = path.join(root, "phs_healthcare_demo_event_context_snapshot_contract.json");
+        const snapshot = await readJson(snapshotPath);
+        snapshot.bindings[0].enterprise_context_version = "";
+        await writeJsonFile(snapshotPath, snapshot);
+      },
+    },
+    {
+      defect: "duplicate event snapshot binding",
+      expected_failure: "duplicate_event_snapshot_binding",
+      inject: async (root) => {
+        const snapshotPath = path.join(root, "phs_healthcare_demo_event_context_snapshot_contract.json");
+        const snapshot = await readJson(snapshotPath);
+        snapshot.bindings.push({ ...snapshot.bindings[0] });
+        await writeJsonFile(snapshotPath, snapshot);
+      },
     },
     {
       defect: "unsupported value claim",

@@ -10,9 +10,67 @@ import { EXPECTED, validatePackage } from "./validate-phs-healthcare-demo-packag
 const DEFAULT_OUT_DIR = "/Users/anand/Downloads";
 const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
 const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-plan-v1";
+const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
+const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
+const REQUIRED_LAYER1_RELEASE_FILES = [
+  "WORKDAY_SUPPLIERS.csv",
+  "WORKDAY_SUPPLIER_INVOICES.csv",
+  "WORKDAY_PAYMENTS.csv",
+  "WORKDAY_COST_CENTERS.csv",
+  "WORKDAY_SPEND_CATEGORIES.csv",
+  "WORKDAY_WORKER_ROLE_SUMMARY.csv",
+  "LOCAL_HOSPITAL_PURCHASES.csv",
+  "MEDSURG_ITEM_MASTER.csv",
+  "MEDSURG_PRICE_TIERS.csv",
+  "MEDSURG_BACKORDERS_SUBSTITUTIONS.csv",
+  "MEDSURG_REBATES_CREDITS.csv",
+  "CONTRACT_REGISTER.csv",
+  "CONTRACT_INSTRUMENTS.csv",
+  "CONTRACT_AMENDMENTS.csv",
+  "CONTRACT_RATE_CARDS.csv",
+  "CONTRACT_SLA_TERMS.csv",
+  "CONTRACT_RENEWAL_EXIT_TERMS.csv",
+  "SERVICENOW_VENDOR_SERVICES.csv",
+  "SERVICENOW_CMDB_APPLICATIONS.csv",
+  "SERVICENOW_CSDM_BUSINESS_SERVICES.csv",
+  "SERVICENOW_MONTHLY_ITSM_SUMMARY.csv",
+  "SERVICENOW_MONTHLY_SLA_SUMMARY.csv",
+  "SERVICENOW_SERVICE_CREDITS.csv",
+  "EPIC_MODULE_INVENTORY.csv",
+  "EPIC_INTERFACE_INVENTORY.csv",
+  "CLARITY_CABOODLE_ASSET_INVENTORY.csv",
+  "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv",
+  "HADOOP_CLUSTER_WORKLOADS.csv",
+  "SQL_SERVER_DATA_MARTS.csv",
+  "SAS_APPLICATIONS_AND_USERS.csv",
+  "ANALYTICS_PLATFORM_DEPENDENCIES.csv",
+  "SAAS_MODULE_USAGE_MONTHLY.csv",
+  "AWS_TARGET_COMMITMENT_SCENARIOS.csv",
+  "DATABRICKS_TARGET_COMMITMENT_SCENARIOS.csv",
+  "VENDOR_WORKFORCE_MONTHLY.csv",
+  "VENDOR_RATE_CARD_INVOICES.csv",
+  "CONTRACT_SCOPE_RELATIONSHIPS.csv",
+  "PROGRAMS_INITIATIVES_DEPENDENCIES.csv",
+  "RISK_CONTROL_OBSERVATIONS.csv",
+  "BPO_CURRENT_STATE_PROCESS_VOLUMES.csv",
+  "BPO_CURRENT_STATE_WORKFORCE.csv",
+  "BPO_CURRENT_STATE_COST_BASELINE.csv",
+  "BPO_RFP_REQUIREMENTS.csv",
+  "BPO_SUPPLIERS.csv",
+  "BPO_SUPPLIER_RESPONSES.csv",
+  "BPO_COMMERCIAL_LINES.csv",
+  "BPO_EVALUATION_SCORES.csv",
+  "BPO_CLARIFICATIONS.csv",
+  "BPO_BAFO_RESPONSES.csv",
+  "BPO_NORMALIZED_TCO.csv",
+  "BPO_REBADGE_RETENTION_PLAN.csv",
+  "BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv",
+  "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv",
+  "BPO_RETAINED_ORGANIZATION_SCENARIOS.csv",
+];
 
 async function main() {
-  const packageDir = await resolvePackageDir();
+  const packageDir = resolvePackageDir();
   const outDir = path.resolve(argValue("--out-dir", DEFAULT_OUT_DIR));
   const timestamp = new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z");
   const proofDir = path.join(outDir, `phs_healthcare_demo_data_layer_plan_${timestamp}`);
@@ -37,15 +95,23 @@ async function main() {
 
   const sourceFiles = await sourceFilePlans(packageDir, packageManifest);
   const sourceRows = sourceFiles.reduce((sum, file) => sum + file.row_count, 0);
-  const sourceFieldValues = sourceFiles.reduce((sum, file) => sum + file.field_count, 0);
+  const sourceFieldSlots = sourceFiles.reduce((sum, file) => sum + file.field_count, 0);
   const releaseHash = sha256(
     stableJson(sourceFiles.map((file) => ({
       relative_path: file.relative_path,
       content_sha256: file.content_sha256,
       row_count: file.row_count,
       field_count: file.field_count,
+      source_group: file.source_group,
+      context_treatment: file.context_treatment,
+      demo_priority: file.demo_priority,
+      event_id: file.event_id,
+      effective_as_of: file.effective_as_of,
     }))),
   );
+  const sourceReleaseId = `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`;
+  const sourceGroupCounts = groupedCounts(sourceFiles, "source_group");
+  const demoPriorityCounts = groupedCounts(sourceFiles, "demo_priority");
 
   const layer0 = {
     status: "PHS_HEALTHCARE_DEMO_LAYER0_PACKAGE_PROOF_READY",
@@ -72,19 +138,25 @@ async function main() {
     dataset_id: EXPECTED.datasetId,
     dataset_version: EXPECTED.datasetVersion,
     as_of_date: EXPECTED.asOfDate,
-    source_release_id: `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}`,
-    source_volume_execution_id: `${EXPECTED.datasetId}:${SOURCE_VOLUME_EXECUTION_SUFFIX}`,
-    source_volume_release_version: SOURCE_VOLUME_RELEASE_VERSION,
+    source_release_id: sourceReleaseId,
+    source_volume_execution_id: `${sourceReleaseId}:${SOURCE_VOLUME_EXECUTION_SUFFIX}`,
+    source_volume_release_version: `${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`,
     source_volume_release_hash: releaseHash,
     source_files: sourceFiles.length,
+    required_layer1_release_files: REQUIRED_LAYER1_RELEASE_FILES.length,
+    source_group_counts: sourceGroupCounts,
+    demo_priority_counts: demoPriorityCounts,
     required_core_source_extracts: packageValidation.summary.coreSourceExtracts,
+    existing_bpo_event_files: sourceGroupCounts.bpo_sourcing_event?.files || 0,
+    bpo_transformation_files: sourceGroupCounts.bpo_transformation_event?.files || 0,
     optional_health_plan_outcome_snapshot_rows: packageValidation.summary.optionalHealthPlanOutcomeSnapshotRows,
     source_records: sourceRows,
-    source_field_values: sourceFieldValues,
+    source_field_values: sourceFieldSlots,
+    source_field_value_rule: "insert_all_field_slots_including_explicit_blank_cells",
     max_columns: Math.max(...sourceFiles.map((file) => file.headers.length)),
     restricted_detail_health_plan_extracts_present: sourceFiles
       .map((file) => file.file_name)
-      .filter((fileName) => ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"].includes(fileName)),
+      .filter((fileName) => RESTRICTED_DETAIL_HEALTH_PLAN_FILES.includes(fileName)),
     apply_gate: "NOT_AUTHORIZED_IN_PLAN_MODE",
     next_required_gate: "approved ACA data-build job with isolated lab target and explicit package SHA",
     files: sourceFiles.map(({ rows, ...file }) => file),
@@ -94,6 +166,11 @@ async function main() {
   await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_LAYER1_SOURCE_VOLUME_PLAN.json"), layer1);
   await writeCsv(path.join(proofDir, "PHS_HEALTHCARE_DEMO_SOURCE_FILES.csv"), [
     "file_index",
+    "source_group",
+    "context_treatment",
+    "demo_priority",
+    "event_id",
+    "effective_as_of",
     "file_name",
     "domain_contract",
     "source_system",
@@ -106,24 +183,30 @@ async function main() {
   await fs.writeFile(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_EXECUTION_PLAN.md"), buildExecutionPlan(layer0, layer1));
 
   const proofZipPath = path.join(outDir, `PHS_Healthcare_Demo_Data_Layer_Plan_${timestamp}.zip`);
-  await fs.rm(proofZipPath, { force: true });
-  execFileSync("zip", ["-qr", proofZipPath, "."], { cwd: proofDir });
-  const dataLayerPlanSha256 = await sha256File(proofZipPath);
-  await fs.writeFile(`${proofZipPath}.sha256`, `${dataLayerPlanSha256}  ${path.basename(proofZipPath)}\n`);
-
   const result = {
     status: "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_READY",
     mutation_executed: false,
     package_dir: packageDir,
     proof_dir: proofDir,
     proof_zip: proofZipPath,
-    proof_zip_sha256: dataLayerPlanSha256,
+    proof_zip_sha256: "RECORDED_IN_SHA256_SIDECAR_AFTER_ZIP_CREATION",
     proof_zip_sha256_attestation: `${proofZipPath}.sha256`,
     source_files: layer1.source_files,
+    source_group_counts: layer1.source_group_counts,
+    demo_priority_counts: layer1.demo_priority_counts,
+    existing_bpo_event_files: layer1.existing_bpo_event_files,
+    bpo_transformation_files: layer1.bpo_transformation_files,
     source_records: layer1.source_records,
     source_field_values: layer1.source_field_values,
+    source_field_value_rule: layer1.source_field_value_rule,
     next_required_gate: layer1.next_required_gate,
   };
+  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
+  await fs.rm(proofZipPath, { force: true });
+  execFileSync("zip", ["-qr", proofZipPath, "."], { cwd: proofDir });
+  const dataLayerPlanSha256 = await sha256File(proofZipPath);
+  await fs.writeFile(`${proofZipPath}.sha256`, `${dataLayerPlanSha256}  ${path.basename(proofZipPath)}\n`);
+  result.proof_zip_sha256 = dataLayerPlanSha256;
   await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
   console.log(JSON.stringify(result, null, 2));
 }
@@ -135,16 +218,10 @@ function argValue(name, fallback = null) {
   return args.find((arg) => arg.startsWith(`${name}=`))?.slice(name.length + 1) ?? fallback;
 }
 
-async function resolvePackageDir() {
+function resolvePackageDir() {
   const explicit = argValue("--package-dir");
   if (explicit) return path.resolve(explicit);
-  const entries = await fs.readdir(DEFAULT_OUT_DIR, { withFileTypes: true });
-  const matches = entries
-    .filter((entry) => entry.isDirectory() && entry.name.startsWith("phs_healthcare_demo_phase_a_"))
-    .map((entry) => path.join(DEFAULT_OUT_DIR, entry.name))
-    .sort();
-  if (matches.length === 0) throw new Error("No PHS healthcare demo package found in /Users/anand/Downloads");
-  return matches[matches.length - 1];
+  throw new Error("Explicit --package-dir is required for the PHS Layer 0/Layer 1 plan; latest Downloads auto-selection is not allowed");
 }
 
 function resolveProofZip(packageDir, phaseResult) {
@@ -155,9 +232,15 @@ function resolveProofZip(packageDir, phaseResult) {
 }
 
 async function sourceFilePlans(packageDir, packageManifest) {
+  const required = new Set(REQUIRED_LAYER1_RELEASE_FILES);
   const contracts = (packageManifest.file_contracts || [])
-    .filter((contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv")
+    .filter((contract) => contract.format === "csv" && required.has(path.basename(contract.path)) && LAYER1_SOURCE_GROUPS.includes(contract.source_group))
     .sort((left, right) => String(left.path).localeCompare(String(right.path)));
+  const present = new Set(contracts.map((contract) => path.basename(contract.path)));
+  for (const file of REQUIRED_LAYER1_RELEASE_FILES) {
+    if (!present.has(file)) throw new Error(`Required Layer 1 release file is missing: ${file}`);
+  }
+  if (contracts.length !== 54) throw new Error(`Layer 1 release must contain exactly 54 CSV files, got ${contracts.length}`);
   const files = [];
   for (let index = 0; index < contracts.length; index += 1) {
     const contract = contracts[index];
@@ -176,6 +259,11 @@ async function sourceFilePlans(packageDir, packageManifest) {
       relative_path: relativePath,
       file_name: path.basename(relativePath),
       source_file_id: `${EXPECTED.datasetId}:source-file:${shortHash(relativePath, 16)}`,
+      source_group: contract.source_group,
+      context_treatment: contract.context_treatment,
+      demo_priority: contract.demo_priority,
+      event_id: contract.event_id || "",
+      effective_as_of: contract.effective_as_of,
       domain_contract: contract.domain_contract,
       source_system: contract.source_system,
       source_object: contract.source_object,
@@ -190,6 +278,18 @@ async function sourceFilePlans(packageDir, packageManifest) {
     });
   }
   return files;
+}
+
+function groupedCounts(files, field) {
+  const counts = {};
+  for (const file of files) {
+    const key = file[field] || "unclassified";
+    if (!counts[key]) counts[key] = { files: 0, records: 0, field_slots: 0 };
+    counts[key].files += 1;
+    counts[key].records += file.row_count;
+    counts[key].field_slots += file.field_count;
+  }
+  return counts;
 }
 
 function parseCsvHeaders(text) {
@@ -300,8 +400,14 @@ No database load, migration, Cube refresh, runtime deploy, tenant activation or 
 - Dataset id: ${layer1.dataset_id}
 - Source release id: ${layer1.source_release_id}
 - Source files: ${layer1.source_files}
+- Required named Layer 1 release files: ${layer1.required_layer1_release_files}
+- Source-group counts: ${JSON.stringify(layer1.source_group_counts)}
+- Demo-priority counts: ${JSON.stringify(layer1.demo_priority_counts)}
 - Source records: ${layer1.source_records}
-- Source field values: ${layer1.source_field_values}
+- Source field slots: ${layer1.source_field_values}
+- Source field rule: ${layer1.source_field_value_rule}
+- Existing BPO event files: ${layer1.existing_bpo_event_files}
+- BPO transition/transformation files: ${layer1.bpo_transformation_files}
 - Required core source extracts: ${layer1.required_core_source_extracts}
 - Optional health-plan outcome snapshot rows: ${layer1.optional_health_plan_outcome_snapshot_rows}
 - Restricted detailed health-plan extracts present: ${layer1.restricted_detail_health_plan_extracts_present.length}

@@ -24,7 +24,7 @@ The scripts are dependency-free Node modules. ZIPs are created through the local
 
 The generated manifest keeps `activation_state=generated_not_loaded`. The package must not be loaded, migrated, deployed, activated or used as live tenant truth until Phase A audit is explicitly approved.
 
-The offline validator now treats the audit blockers as hard package failures: weak outcome-map substance, unresolved outcome dependencies, placeholder hard questions, broken question-to-source coverage, missing semantic predicates, wrong-but-existing evidence, incomplete workbook usability metadata, inappropriate field/source guidance and fake canary evidence all fail validation.
+The offline validator now treats the audit blockers as hard package failures: weak outcome-map substance, unresolved outcome dependencies, placeholder hard questions, broken question-to-source coverage, missing semantic predicates, wrong-but-existing evidence, incomplete workbook usability metadata, inappropriate field/source guidance, unrealistic document content contracts, event-context reference drift and fake canary evidence all fail validation.
 
 ## Enterprise Outcomes And KPI Map
 
@@ -32,9 +32,11 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 
 ## Generated Counts From Latest Local Run
 
-- Structured rows: 70,497
+- Structured rows: 70,967
 - Evidence spans: 16,000
 - Source-system extract CSVs: 39 total; 38 required core enterprise extracts plus one lightweight optional health-plan outcome snapshot
+- Layer 1 release CSVs: 54 total; 39 enterprise/context files, 11 existing BPO event files and 4 BPO transition/transformation files
+- BPO transition/transformation files: `BPO_REBADGE_RETENTION_PLAN.csv`, `BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv`, `BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv`, `BPO_RETAINED_ORGANIZATION_SCENARIOS.csv`
 - Vendors: 10
 - Existing contract families: 6
 - Legal instruments: 24
@@ -44,12 +46,21 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Interview roles: 30
 - Enterprise outcomes/KPI map records: 44
 - CDAO questions: 71
+- Document archetype content contracts: 21
+- Contract-family audit documents: 30
+- Corrupted canaries: 45/45 passed
 
-Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`
-Latest corrected proof SHA-256: `95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da`
-Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip.sha256`
+Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip`
+Latest corrected proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
+Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip.sha256`
 
-Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains 608 rows, with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator requires all core enterprise source extracts, blocks detailed payer claims/enrollment and detailed Stars/HEDIS operational files from the core package, and allows only a small aggregate `HEALTH_PLAN_OUTCOME_SNAPSHOT.csv` optional domain file unless a future client explicitly approves deeper health-plan data.
+Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains generated native-field guidance with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator requires all 54 named Layer 1 release files, blocks detailed payer claims/enrollment and detailed Stars/HEDIS operational files from the core package, and allows only a small aggregate `HEALTH_PLAN_OUTCOME_SNAPSHOT.csv` optional domain file unless a future client explicitly approves deeper health-plan data.
+
+## Document And Event Context Contracts
+
+The package now emits machine-readable document archetype contracts and a contract-family audit view. Document quality is validated by required sections, required concepts, cross-document reconciliation and evidence lineage; page count is informational only.
+
+The package also emits a future event-context snapshot contract. Application, CMDB, vendor and contract rows are tenant enterprise-context candidates. The sourcing event references selected entity IDs and later pins an immutable snapshot; this Phase A package does not create or mutate any snapshot.
 
 ## Public Repository Discipline
 

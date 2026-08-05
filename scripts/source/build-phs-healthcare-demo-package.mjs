@@ -21,6 +21,8 @@ const SEED = 20260805;
 const LOAD_RUN_ID = "phs-phase-a-generated-not-loaded-20260805";
 const EXTRACT_TIMESTAMP = "2026-08-05T12:00:00.000Z";
 const DEFAULT_OUT_DIR = "/Users/anand/Downloads";
+const PHS_BPO_EVENT_ID = "PHS-BPO-RFP-2026-001";
+const ENTERPRISE_CONTEXT_VERSION = "phs-enterprise-context-candidate-v1";
 
 const COMMON_FIELDS = [
   "tenant_key",
@@ -145,6 +147,10 @@ const bpoFileSpecs = [
   ["BPO_CLARIFICATIONS.csv", "bpo_sourcing", "Clarification Log", "Clarification", "clarification", "clarification_id"],
   ["BPO_BAFO_RESPONSES.csv", "bpo_sourcing", "BAFO Workbook", "BAFO Response", "supplier_bafo_line", "bafo_response_id"],
   ["BPO_NORMALIZED_TCO.csv", "bpo_sourcing", "TCO Normalization Model", "Normalized TCO", "supplier_scenario_year", "normalized_tco_id"],
+  ["BPO_REBADGE_RETENTION_PLAN.csv", "bpo_sourcing", "Supplier Transition Workbook", "Rebadge Retention Plan", "supplier_function_role_cohort", "rebadge_plan_id"],
+  ["BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv", "bpo_sourcing", "Transition Planning Workbook", "Knowledge Transfer Plan", "process_wave", "kt_plan_id"],
+  ["BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv", "bpo_sourcing", "Supplier Transformation Workbook", "AI Automation Commitment", "supplier_process_use_case", "automation_commitment_id"],
+  ["BPO_RETAINED_ORGANIZATION_SCENARIOS.csv", "bpo_sourcing", "Retained Organization Model", "Retained Organization Scenario", "scenario_function_role", "retained_org_scenario_id"],
 ];
 
 function argValue(name, fallback = null) {
@@ -219,10 +225,23 @@ function common(meta, specific) {
 
 function makeSpec(tuple, group) {
   const [name, domain, sourceSystem, sourceObject, grain, primaryKey] = tuple;
+  const isHealthPlanSnapshot = name === "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv";
+  const isBpoTransformation = [
+    "BPO_REBADGE_RETENTION_PLAN.csv",
+    "BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv",
+    "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv",
+    "BPO_RETAINED_ORGANIZATION_SCENARIOS.csv",
+  ].includes(name);
+  const isBpoEvent = group === "bpo_sourcing_event" && !isBpoTransformation;
   return {
     name,
     path: `${group}/${name}`,
     format: "csv",
+    source_group: isHealthPlanSnapshot ? "optional_domain_context" : isBpoTransformation ? "bpo_transformation_event" : isBpoEvent ? "bpo_sourcing_event" : "enterprise_context",
+    context_treatment: group === "bpo_sourcing_event" ? "event_native" : "tenant_context_candidate",
+    demo_priority: isHealthPlanSnapshot ? "deferred" : group === "bpo_sourcing_event" ? "hero" : "supporting",
+    event_id: group === "bpo_sourcing_event" ? PHS_BPO_EVENT_ID : "",
+    effective_as_of: EXPECTED.asOfDate,
     domain_contract: domain,
     source_system: sourceSystem,
     source_object: sourceObject,
@@ -986,12 +1005,280 @@ function buildRows() {
   for (let i = 0; i < 180; i += 1) add(bpoSpecs["BPO_CLARIFICATIONS.csv"], { clarification_id: `BPO-CLAR-${pad(i + 1, 4)}`, supplier_id: suppliers[i % suppliers.length], requirement_id: `BPO-REQ-${pad((i % 360) + 1, 4)}`, topic: pick(["transition", "controls", "automation", "retained organization", "pricing"]), status: pick(["answered", "open", "incorporated_in_bafo"]), story_thread_ref: storyThreads[5] });
   for (let i = 0; i < 300; i += 1) add(bpoSpecs["BPO_BAFO_RESPONSES.csv"], { bafo_response_id: `BPO-BAFO-${pad(i + 1, 4)}`, supplier_id: suppliers[i % suppliers.length], function_ref: functions[i % functions.length], bafo_service_fee: money(22_000 + random() * 280_000), bafo_exception_state: i % 6 === 0 ? "exception_remains" : "accepted", story_thread_ref: storyThreads[5] });
   for (let i = 0; i < 25; i += 1) add(bpoSpecs["BPO_NORMALIZED_TCO.csv"], { normalized_tco_id: `BPO-TCO-${pad(i + 1, 3)}`, supplier_id: suppliers[i % suppliers.length], scenario: pick(["retain_and_automate", "hybrid_shared_services", "function_managed_services", "single_provider_bpo", "multi_provider_specialist"]), year: 2027 + (i % 5), headline_price: money(8_000_000 + random() * 25_000_000), normalized_five_year_tco: money((suppliers[i % suppliers.length] === "BPO-C" ? 42_000_000 : 45_000_000) + random() * 18_000_000), recommendation_state: suppliers[i % suppliers.length] === "BPO-C" ? "recommended_after_normalization" : "not_recommended_after_normalization", story_thread_ref: storyThreads[5] });
+  for (let i = 0; i < 150; i += 1) add(bpoSpecs["BPO_REBADGE_RETENTION_PLAN.csv"], {
+    rebadge_plan_id: `BPO-REB-${pad(i + 1, 4)}`,
+    supplier_id: suppliers[i % suppliers.length],
+    function_ref: functions[i % functions.length],
+    process_name: pick(["invoice processing", "employee inquiry", "supplier onboarding", "purchase support", "shared service administration"]),
+    current_role: pick(["processor", "specialist", "supervisor", "manager"]),
+    employee_cohort: `aggregate_cohort_${pad((i % 30) + 1, 2)}`,
+    source_workforce_cohort_count: 14 + (i % 20),
+    number_proposed_for_rebadge: 3 + (i % 10),
+    current_location: pick(["US regional hub", "US hospital shared services", "US remote"]),
+    proposed_supplier_location: pick(["US delivery center", "nearshore delivery center", "offshore delivery center"]),
+    retention_start_date: `2027-${pad((i % 6) + 1, 2)}-01`,
+    retention_end_date: `2028-${pad((i % 6) + 1, 2)}-01`,
+    retention_commitment_months: pick([6, 9, 12, 18]),
+    knowledge_critical_designation: i % 4 === 0 ? "knowledge_critical" : "standard_transition",
+    employment_term_protections: pick(["base_pay_protected_initial_period", "comparable_benefits_period", "role_level_protection"]),
+    attrition_assumption_pct: money(4 + random() * 14),
+    post_retention_disposition_assumption: pick(["absorbed_into_supplier_delivery", "converted_to_retained_control_role", "natural_attrition_backfill"]),
+    contractual_or_proposed_status: pick(["contractual", "proposed"]),
+    location_move_date: `2027-${pad((i % 6) + 3, 2)}-15`,
+    stabilization_approval_date: `2027-${pad((i % 6) + 2, 2)}-15`,
+    evidence_ref: `EVID-SPAN-${pad(((i + 3000) % 16_000) + 1, 5)}`,
+    story_thread_ref: storyThreads[5],
+  });
+  for (let i = 0; i < 120; i += 1) add(bpoSpecs["BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv"], {
+    kt_plan_id: `BPO-KT-${pad(i + 1, 4)}`,
+    supplier_id: suppliers[i % suppliers.length],
+    function_ref: functions[i % functions.length],
+    process_name: pick(["invoice processing", "employee inquiry", "supplier onboarding", "purchase support", "shared service administration"]),
+    transition_wave: `wave_${(i % 6) + 1}`,
+    start_date: `2027-${pad((i % 6) + 1, 2)}-01`,
+    completion_date: `2027-${pad((i % 6) + 2, 2)}-28`,
+    takeover_milestone: pick(["day_one_cutover", "parallel_run_exit", "supplier_operates_with_monitoring"]),
+    knowledge_owner_role: pick(["process owner", "operations lead", "control owner", "technology owner"]),
+    rebadged_cohort: `aggregate_cohort_${pad((i % 30) + 1, 2)}`,
+    documentation_requirements: pick(["desktop procedures", "control matrix", "exception playbook", "system job aid"]),
+    shadow_support_period_weeks: 2 + (i % 8),
+    reverse_shadow_period_weeks: 1 + (i % 4),
+    stabilization_period_weeks: 4 + (i % 8),
+    acceptance_criteria: pick(["parallel run complete", "control signoff complete", "volume migration accepted", "hypercare exit approved"]),
+    service_continuity_risk: pick(["low", "medium", "high"]),
+    exit_criteria: pick(["sla_baseline_stable", "control_defects_closed", "knowledge_artifacts_accepted", "retained_owner_signoff"]),
+    evidence_ref: `EVID-SPAN-${pad(((i + 5000) % 16_000) + 1, 5)}`,
+    story_thread_ref: storyThreads[5],
+  });
+  for (let i = 0; i < 125; i += 1) add(bpoSpecs["BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv"], {
+    automation_commitment_id: `BPO-AUTO-${pad(i + 1, 4)}`,
+    supplier_id: suppliers[i % suppliers.length],
+    process_name: pick(["invoice processing", "employee inquiry", "supplier onboarding", "purchase support", "shared service administration"]),
+    ai_rpa_use_case: pick(["invoice exception triage", "employee inquiry deflection", "supplier data validation", "purchase request routing", "control evidence summarization"]),
+    current_manual_volume: 500 + (i % 9000),
+    current_manual_effort_hours: money(80 + random() * 640),
+    target_automation_percentage: money(15 + random() * 55),
+    delivery_milestone: `2027-Q${(i % 4) + 1}`,
+    provider_investment_amount: money(50_000 + random() * 750_000),
+    client_investment_amount: money(i % 3 === 0 ? 10_000 + random() * 240_000 : 0),
+    funding_recovery_model: pick(["supplier_funded", "shared_investment", "client_funded_with_gainshare"]),
+    productivity_commitment_pct: money(4 + random() * 18),
+    fte_capacity_impact: money(0.5 + random() * 8),
+    contracted_benefit_amount: money(i % 3 === 2 ? 0 : 25_000 + random() * 450_000),
+    benefit_accounting_key: `BENEFIT-${pad(i + 1, 4)}`,
+    counted_in_normalized_tco: i % 2 === 0 ? "true" : "false",
+    evidence_required: pick(["working demo", "benefit baseline", "runbook update", "control evidence", "contractual milestone"]),
+    commitment_state: ["contractual", "conditional", "aspirational"][i % 3],
+    evidence_ref: `EVID-SPAN-${pad(((i + 7000) % 16_000) + 1, 5)}`,
+    story_thread_ref: storyThreads[5],
+  });
+  for (let i = 0; i < 75; i += 1) add(bpoSpecs["BPO_RETAINED_ORGANIZATION_SCENARIOS.csv"], {
+    retained_org_scenario_id: `BPO-RET-${pad(i + 1, 4)}`,
+    supplier_id: suppliers[i % suppliers.length],
+    sourcing_model: pick(["retain_and_automate", "hybrid_shared_services", "function_managed_services", "single_provider_bpo", "multi_provider_specialist"]),
+    phs_retained_function: functions[i % functions.length],
+    retained_role: pick(["service owner", "vendor manager", "control owner", "process architect", "business relationship lead"]),
+    transition_fte: money(1 + random() * 5),
+    steady_state_fte: money(0.5 + random() * 4),
+    location: pick(["US regional hub", "US remote", "central office"]),
+    responsibility: pick(["governance", "controls", "demand management", "process design", "supplier oversight"]),
+    decision_right: pick(["approve_service_change", "accept_risk", "approve_control_design", "approve_demand_scope"]),
+    control_accountability_retained: pick(["policy ownership", "risk acceptance", "audit response", "service acceptance"]),
+    annual_cost: money(90_000 + random() * 550_000),
+    dependency_on_supplier_transformation: pick(["automation milestone", "knowledge transfer completion", "rebadge retention period", "tooling integration"]),
+    supplier_capability_delivery_date: `2027-${pad((i % 6) + 4, 2)}-28`,
+    retained_reduction_effective_date: `2027-${pad((i % 6) + 5, 2)}-28`,
+    consequence_if_transformation_delayed: pick(["retain transition FTE longer", "defer productivity case", "increase governance cadence", "holdback benefit realization"]),
+    evidence_ref: `EVID-SPAN-${pad(((i + 9000) % 16_000) + 1, 5)}`,
+    story_thread_ref: storyThreads[5],
+  });
 
   for (const spec of fileContracts) {
     spec.expected_rows = fileRows.get(spec.path).length;
     spec.required_fields = Array.from(new Set(fileRows.get(spec.path).flatMap((row) => Object.keys(row)))).sort();
   }
   return { fileRows, fileContracts };
+}
+
+const REQUIRED_DOCUMENT_TYPES = [
+  "master services agreement",
+  "managed-services statement of work",
+  "SaaS order form/subscription agreement",
+  "rate-card/pricing schedule",
+  "SLA and service-credit schedule",
+  "security and privacy schedule",
+  "business associate agreement",
+  "amendment/change order",
+  "renewal/extension",
+  "termination/exit/transition schedule",
+  "vendor proposal",
+  "RFP response",
+  "commercial response",
+  "BAFO response",
+  "evaluation summary",
+  "monthly service report",
+  "quarterly business review",
+  "corrective-action plan",
+  "invoice",
+  "contract register extract",
+  "vendor-performance scorecard",
+];
+
+function documentContract(type, purpose, concepts, sections = []) {
+  const sectionList = sections.length > 0 ? sections : ["metadata", "scope", "commercial terms", "operational terms", "governance", "evidence lineage"];
+  return {
+    document_type: type,
+    document_business_purpose: purpose,
+    expected_parties: ["PHS synthetic tenant", "synthetic vendor or supplier"],
+    required_metadata: ["document_id", "contract_family_id", "document_type", "effective_date", "execution_state"],
+    required_sections: sectionList,
+    conditional_sections: ["healthcare data terms when healthcare data or clinical operations are in scope", "offshore restrictions when non-US delivery is proposed"],
+    inapplicable_or_prohibited_sections: ["patient-level detail", "employee names", "generic filler", "unsupported savings claims"],
+    required_tables: ["effective terms table", "evidence extraction table"],
+    required_commercial_concepts: concepts.filter((concept) => /(price|fee|rate|credit|invoice|cost|commercial|payment|investment|benefit|TCO)/iu.test(concept)),
+    required_operational_concepts: concepts.filter((concept) => /(service|SLA|transition|staffing|process|incident|availability|KT|automation|performance|governance)/iu.test(concept)),
+    required_legal_concepts: concepts.filter((concept) => /(termination|renewal|amendment|liability|indemnity|confidentiality|signature|order|agreement)/iu.test(concept)),
+    required_security_privacy_concepts: ["confidentiality", "access controls", "incident notification", "data return or destruction"],
+    required_healthcare_specific_concepts: ["no PHI generated", "minimum necessary access", "BAA applicability where relevant"],
+    required_cross_references_to_other_documents: ["contract_family_id", "document_ref", "SOW or MSA reference where applicable"],
+    structured_source_records_to_reconcile: ["CONTRACT_REGISTER.csv", "CONTRACT_INSTRUMENTS.csv", "CONTRACT_RATE_CARDS.csv", "CONTRACT_SLA_TERMS.csv", "EVIDENCE_SPANS.csv"],
+    question_bank_items_supported: ["contract economics", "SLA service credits", "scope clarity", "BPO transition risk", "normalized TCO"],
+    evidence_extractions_expected: ["document_id", "section_name", "clause_id", "page_or_section", "span_text", "structured_fact_created", "confidence", "review_state"],
+    acceptance_rules: [
+      "required sections contain substantive concepts, not headings only",
+      "commercial facts reconcile to structured CSV extracts",
+      "cross-references resolve to the contract family audit",
+      "page count is informational only",
+    ],
+    required_concepts: concepts,
+  };
+}
+
+function buildDocumentContentContracts() {
+  const commonManaged = ["parties", "agreement reference", "term", "fees", "service scope", "SLA targets", "service credits", "transition", "termination assistance", "data return", "signatures"];
+  const contracts = [
+    documentContract("master services agreement", "Governs the legal relationship and ordering structure.", ["parties", "definitions", "ordering structure", "fees and payment", "confidentiality", "information security", "privacy and data use", "subcontractors", "audit rights", "indemnification", "limitation of liability", "termination rights", "data return and destruction", "governing law", "signatures"]),
+    documentContract("managed-services statement of work", "Defines managed-service towers, operating model, transition and pricing references.", [...commonManaged, "service towers", "in scope", "out of scope", "staffing model", "RACI", "knowledge transfer", "automation commitments", "governance cadence"]),
+    documentContract("SaaS order form/subscription agreement", "Defines subscription scope, modules, users and commercial terms.", ["subscription term", "modules", "entitlements", "unit rates", "renewal", "usage true-up", "data processing", "support service levels"]),
+    documentContract("rate-card/pricing schedule", "Defines rate and price mechanics.", ["pricing model", "currency", "role rates", "location rates", "volume bands", "minimum commitments", "indexation", "transition fees", "transformation investment", "invoice frequency", "payment terms", "true-up process", "rate-card effective dates"], ["pricing table", "rate-card table", "true-up process"]),
+    documentContract("SLA and service-credit schedule", "Defines measurable performance obligations and remedies.", ["SLA ID", "metric definition", "target", "measurement period", "source system", "service window", "exclusions", "breach threshold", "credit eligibility", "credit calculation", "credit cap", "claim process"], ["SLA table", "credit calculation", "claim process"]),
+    documentContract("security and privacy schedule", "Defines security, privacy and continuity obligations.", ["access controls", "security incident notification", "data location", "offshore restrictions", "business continuity", "disaster recovery", "subcontractor obligations", "audit cooperation"]),
+    documentContract("business associate agreement", "Defines healthcare data obligations where applicable.", ["permitted data use", "minimum necessary access", "breach notification", "subcontractor obligations", "data retention", "regulatory cooperation", "no PHI generated"]),
+    documentContract("amendment/change order", "Changes existing scope, terms, dates or economics.", ["amendment reference", "superseded term", "effective date", "changed scope", "financial effect", "approval", "amendment hierarchy"]),
+    documentContract("renewal/extension", "Documents renewal term, notice and extension economics.", ["renewal period", "notice period", "price adjustment", "extension option", "termination rights"]),
+    documentContract("termination/exit/transition schedule", "Defines exit assistance, reversibility and knowledge transfer.", ["termination assistance", "knowledge transfer", "data return", "reverse transition", "exit milestone", "service continuity"]),
+    documentContract("vendor proposal", "Presents supplier solution, delivery model and commitments.", ["executive summary", "solution", "delivery model", "staffing pyramid", "transition approach", "automation commitments", "security approach", "risks and mitigations", "commercial response"]),
+    documentContract("RFP response", "Responds to event requirements with scope and exceptions.", ["requirement response", "compliance state", "dependencies", "assumptions", "exclusions", "implementation timeline", "contractual exceptions"]),
+    documentContract("commercial response", "Presents supplier pricing and commercial assumptions.", ["headline price", "service fees", "transition cost", "retained organization cost", "risk adjustment", "pricing assumptions", "payment terms"]),
+    documentContract("BAFO response", "Captures final supplier offer and remaining exceptions.", ["final service fee", "BAFO exception state", "commercial concession", "scope confirmation", "contractual status"]),
+    documentContract("evaluation summary", "Records scoring, tradeoffs and recommendation basis.", ["evaluation criteria", "weighted score", "risk adjustment", "normalized TCO", "recommendation", "evidence reference"]),
+    documentContract("monthly service report", "Reports monthly service performance and actions.", ["reporting period", "SLA results", "incident trends", "backlog", "change performance", "availability", "staffing and attrition", "service-credit calculation", "actions and owners"]),
+    documentContract("quarterly business review", "Adds executive business outcome and roadmap review.", ["business outcome discussion", "financial performance", "demand trends", "transformation progress", "automation progress", "chronic issues", "client satisfaction", "executive decisions required"]),
+    documentContract("corrective-action plan", "Tracks remediation for performance, control or transition gaps.", ["issue statement", "root cause", "corrective action", "owner", "due date", "evidence required", "closure criteria"]),
+    documentContract("invoice", "Documents billed fees and reconciliation keys.", ["invoice period", "contract reference", "rate card reference", "line amount", "payment terms", "taxes", "supporting evidence"]),
+    documentContract("contract register extract", "Lists contract family metadata and effective terms.", ["contract family ID", "vendor ID", "effective date", "expiration date", "value", "renewal window", "evidence tier"]),
+    documentContract("vendor-performance scorecard", "Summarizes performance, credits, risks and trend.", ["SLA attainment", "service credits", "incident volume", "availability", "risk trend", "governance actions"]),
+  ];
+  return {
+    status: "document_content_contracts_ready",
+    generated_at: EXTRACT_TIMESTAMP,
+    acceptance_principle: "Document quality is measured by substantive concepts, reconciliation and evidence lineage; page count is informational only.",
+    required_document_types: REQUIRED_DOCUMENT_TYPES,
+    archetype_contracts: contracts,
+  };
+}
+
+function buildEventContextSnapshotContract(fileRows) {
+  const sample = (base, key, count) => (fileRows.get(`source_system_extracts/${base}`) || [])
+    .slice(0, count)
+    .map((row) => row[key]);
+  const binding = {
+    event_id: PHS_BPO_EVENT_ID,
+    enterprise_context_version: ENTERPRISE_CONTEXT_VERSION,
+    source_release_id: "TO_BE_FILLED_BY_LAYER1_PLAN_HASH",
+    selected_application_ids: sample("SERVICENOW_CMDB_APPLICATIONS.csv", "application_id", 12),
+    selected_business_service_ids: sample("SERVICENOW_CSDM_BUSINESS_SERVICES.csv", "business_service_ref", 12),
+    selected_vendor_ids: ["VND-001", "VND-002", "VND-003", "VND-009"],
+    selected_contract_ids: ["CF-001", "CF-002", "CF-003"],
+    selected_evidence_ids: (fileRows.get("contract_and_evidence_corpus/EVIDENCE_SPANS.csv") || [])
+      .filter((row) => row.story_thread_ref === storyThreads[5])
+      .slice(0, 12)
+      .map((row) => row.evidence_ref),
+    snapshot_created_at: "PLAN_ONLY_NOT_CREATED",
+    snapshot_hash: "PLAN_ONLY_NOT_CREATED",
+    mutation_executed: false,
+  };
+  return {
+    status: "future_event_snapshot_contract_defined",
+    mutation_executed: false,
+    architecture_rule: "Sourcing events reference selected enterprise context IDs and later pin an immutable snapshot; they do not silently clone application, vendor or contract truth.",
+    required_fields: Object.keys(binding),
+    bindings: [binding],
+  };
+}
+
+function buildContractFamilyAudit(documentContracts) {
+  const types = documentContracts.archetype_contracts.map((contract) => contract.document_type);
+  const documents = Array.from({ length: 30 }, (_, i) => {
+    const contract = contractFamilies[i % contractFamilies.length];
+    const documentType = types[i % types.length];
+    return {
+      document_ref: `DOC-${pad(i + 1, 3)}`,
+      contract_family_id: contract[0],
+      contract_family_name: contract[1],
+      document_type: documentType,
+      quality_state: contract[4] === "tier_3_context_only" ? "partial_source_document" : "complete",
+      available: true,
+      expected_sections: documentContracts.archetype_contracts.find((candidate) => candidate.document_type === documentType)?.required_sections || [],
+      structured_records_reconciled: ["CONTRACT_REGISTER.csv", "CONTRACT_INSTRUMENTS.csv", "EVIDENCE_SPANS.csv"],
+      missing_documents: contract[4] === "tier_3_context_only" ? ["business associate agreement", "monthly service report"] : [],
+    };
+  });
+  return {
+    status: "contract_family_audit_ready",
+    generated_at: EXTRACT_TIMESTAMP,
+    document_family_principle: "A material vendor relationship is represented as a contract family, not a single artificial all-purpose document.",
+    documents,
+    family_summary: contractFamilies.map((contract) => ({
+      contract_family_id: contract[0],
+      contract_family_name: contract[1],
+      evidence_tier: contract[4],
+      expected_document_types: REQUIRED_DOCUMENT_TYPES,
+      available_document_refs: documents.filter((document) => document.contract_family_id === contract[0]).map((document) => document.document_ref),
+    })),
+  };
+}
+
+function buildEvidenceDocumentMarkdown(document, contentContract) {
+  const concepts = contentContract.required_concepts.slice(0, 12);
+  const sections = contentContract.required_sections;
+  return `# ${document.document_ref} ${contentContract.document_type}
+
+Document ID: ${document.document_ref}
+Contract family ID: ${document.contract_family_id}
+Document type: ${contentContract.document_type}
+Execution state: synthetic audit document
+Page count informational only: true
+
+## Metadata
+
+This synthetic document supports ${document.contract_family_name}. It reconciles to CONTRACT_REGISTER.csv, CONTRACT_INSTRUMENTS.csv and EVIDENCE_SPANS.csv. It contains no patient-level data, employee names or real credentials.
+Required concept coverage: ${contentContract.required_concepts.join("; ")}.
+
+${sections.map((section, index) => `## ${section}
+
+Substantive concepts covered: ${concepts.slice(index % Math.max(1, concepts.length - 3), (index % Math.max(1, concepts.length - 3)) + 4).join("; ")}.
+Evidence extraction target: ${document.document_ref} section ${index + 1} creates a structured fact for ${document.contract_family_id} with audit_ready review state.
+Structured reconciliation: contract_family_id=${document.contract_family_id}; document_ref=${document.document_ref}; source dataset=${EXPECTED.datasetId}.
+`).join("\n")}
+
+## Evidence Extraction Table
+
+| clause_id | section_name | structured_fact_created | confidence | review_state |
+| --- | --- | --- | --- | --- |
+| ${document.document_ref}-CL-001 | ${sections[0] || "metadata"} | ${concepts[0] || "document metadata"} | high | audit_ready |
+| ${document.document_ref}-CL-002 | ${sections[1] || "scope"} | ${concepts[1] || "scope fact"} | high | audit_ready |
+`;
 }
 
 function buildQuestionBank(fileRows) {
@@ -1944,13 +2231,23 @@ async function buildPackage() {
   const evidenceRows = buildEvidenceRows();
   const outcomeRows = buildEnterpriseOutcomesKpiMap();
   const evidenceSpec = makeSpec(["EVIDENCE_SPANS.csv", "contract_evidence", "SharePoint Contract Repository", "Evidence Span Extraction", "document_page_span", "evidence_ref"], "contract_and_evidence_corpus");
+  evidenceSpec.source_group = "evidence_store";
+  evidenceSpec.context_treatment = "evidence_package";
+  evidenceSpec.demo_priority = "supporting";
+  evidenceSpec.event_id = "";
   evidenceSpec.expected_rows = evidenceRows.length;
   evidenceSpec.required_fields = Array.from(new Set(evidenceRows.flatMap((row) => Object.keys(row)))).sort();
   fileContracts.push(evidenceSpec);
   fileRows.set(evidenceSpec.path, evidenceRows);
+  const documentContentContracts = buildDocumentContentContracts();
+  const contractFamilyAudit = buildContractFamilyAudit(documentContentContracts);
+  const eventContextSnapshotContract = buildEventContextSnapshotContract(fileRows);
 
   for (const [relativePath, rows] of fileRows.entries()) {
     await writeCsv(path.join(stageDir, relativePath), rows);
+  }
+  for (const contract of fileContracts) {
+    contract.content_sha256 = await sha256File(path.join(stageDir, contract.path));
   }
 
   const fieldGuidance = buildWorkbookFieldGuidance(fileRows);
@@ -1975,6 +2272,9 @@ async function buildPackage() {
 
   const roleMatrix = buildRoleMatrix();
   await writeJson(path.join(stageDir, "phs_healthcare_demo_role_domain_matrix.json"), roleMatrix);
+  await writeJson(path.join(stageDir, "phs_healthcare_demo_document_content_contracts.json"), documentContentContracts);
+  await writeJson(path.join(stageDir, "phs_healthcare_demo_contract_family_audit_view.json"), contractFamilyAudit);
+  await writeJson(path.join(stageDir, "phs_healthcare_demo_event_context_snapshot_contract.json"), eventContextSnapshotContract);
   await writeJson(path.join(stageDir, "phs_healthcare_demo_enterprise_outcomes_kpi_map.json"), {
     tenant_key: EXPECTED.tenantKey,
     dataset_id: EXPECTED.datasetId,
@@ -2058,16 +2358,13 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
     notes: "Generated manifest only; not committed under docs/governance/dataset-manifests until canonical tenant bootstrap is approved.",
   });
 
-  for (let i = 0; i < 30; i += 1) {
-    const contract = contractFamilies[i % contractFamilies.length];
-    await writeText(path.join(stageDir, "contract_and_evidence_corpus", "documents", `DOC-${pad(i + 1, 3)}.md`), `# Synthetic Evidence Document DOC-${pad(i + 1, 3)}
-
-Contract family: ${contract[1]}
-Evidence tier: ${contract[4]}
-Synthetic only: true
-
-This document contains aggregate commercial, operational, service-level, renewal, exit, security or transition terms for audit-only testing. It contains no patient-level data, no employee identity data and no real credentials.
-`);
+  const contentContractsByType = new Map(documentContentContracts.archetype_contracts.map((contract) => [contract.document_type, contract]));
+  for (const document of contractFamilyAudit.documents) {
+    const contentContract = contentContractsByType.get(document.document_type);
+    await writeText(
+      path.join(stageDir, "contract_and_evidence_corpus", "documents", `${document.document_ref}.md`),
+      buildEvidenceDocumentMarkdown(document, contentContract),
+    );
   }
   await writeText(path.join(stageDir, "bpo_sourcing_event", "BPO_RFP_STRATEGY.md"), "# Enterprise Back-Office BPO RFP Strategy\n\nAudit-only synthetic package comparing retain-and-automate, hybrid shared-services, function managed services, single-provider BPO and multi-provider specialist models. The planted recommendation selects normalized best value after transition, retained organization, automation, risk and service scope.\n");
 
@@ -2097,6 +2394,9 @@ This document contains aggregate commercial, operational, service-level, renewal
       hard_questions: questionBank.question_count,
       interview_roles: roleMatrix.roles.length,
       enterprise_outcomes_kpi_map: outcomeRows.length,
+      layer1_release_csv_files: 54,
+      document_archetype_contracts: documentContentContracts.archetype_contracts.length,
+      contract_family_audit_documents: contractFamilyAudit.documents.length,
     },
     file_contracts: fileContracts,
     counts_by_file: countsByFile,

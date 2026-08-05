@@ -24,14 +24,34 @@ const EXPECTED = {
 };
 
 const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
-const SOURCE_RELEASE_ID = `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}`;
-const SOURCE_VOLUME_EXECUTION_ID = `${EXPECTED.datasetId}:source-volume-apply-v1`;
+const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-apply-v1";
 const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
 const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
 const ISOLATION_SCOPE = "ISOLATED_PHS_HEALTHCARE_DEMO_LAB_ONLY";
 const SOURCE_VOLUME_GATE_IDS = ["PHS-SOURCE-VOLUME-L0-L1", "PHS-SOURCE-VOLUME-L1-L2"];
 const WRITER_ROLE = process.env.PHS_HEALTHCARE_DEMO_DB_WRITER_ROLE || "foundation_v2_healthcare_gs_writer";
 const READER_ROLE = process.env.PHS_HEALTHCARE_DEMO_DB_READER_ROLE || "foundation_v2_healthcare_gs_reader";
+const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
+const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
+const REQUIRED_LAYER1_RELEASE_FILES = new Set([
+  "WORKDAY_SUPPLIERS.csv", "WORKDAY_SUPPLIER_INVOICES.csv", "WORKDAY_PAYMENTS.csv", "WORKDAY_COST_CENTERS.csv",
+  "WORKDAY_SPEND_CATEGORIES.csv", "WORKDAY_WORKER_ROLE_SUMMARY.csv", "LOCAL_HOSPITAL_PURCHASES.csv", "MEDSURG_ITEM_MASTER.csv",
+  "MEDSURG_PRICE_TIERS.csv", "MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", "MEDSURG_REBATES_CREDITS.csv", "CONTRACT_REGISTER.csv",
+  "CONTRACT_INSTRUMENTS.csv", "CONTRACT_AMENDMENTS.csv", "CONTRACT_RATE_CARDS.csv", "CONTRACT_SLA_TERMS.csv",
+  "CONTRACT_RENEWAL_EXIT_TERMS.csv", "SERVICENOW_VENDOR_SERVICES.csv", "SERVICENOW_CMDB_APPLICATIONS.csv",
+  "SERVICENOW_CSDM_BUSINESS_SERVICES.csv", "SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", "SERVICENOW_MONTHLY_SLA_SUMMARY.csv",
+  "SERVICENOW_SERVICE_CREDITS.csv", "EPIC_MODULE_INVENTORY.csv", "EPIC_INTERFACE_INVENTORY.csv",
+  "CLARITY_CABOODLE_ASSET_INVENTORY.csv", "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv", "HADOOP_CLUSTER_WORKLOADS.csv",
+  "SQL_SERVER_DATA_MARTS.csv", "SAS_APPLICATIONS_AND_USERS.csv", "ANALYTICS_PLATFORM_DEPENDENCIES.csv",
+  "SAAS_MODULE_USAGE_MONTHLY.csv", "AWS_TARGET_COMMITMENT_SCENARIOS.csv", "DATABRICKS_TARGET_COMMITMENT_SCENARIOS.csv",
+  "VENDOR_WORKFORCE_MONTHLY.csv", "VENDOR_RATE_CARD_INVOICES.csv", "CONTRACT_SCOPE_RELATIONSHIPS.csv",
+  "PROGRAMS_INITIATIVES_DEPENDENCIES.csv", "RISK_CONTROL_OBSERVATIONS.csv", "BPO_CURRENT_STATE_PROCESS_VOLUMES.csv",
+  "BPO_CURRENT_STATE_WORKFORCE.csv", "BPO_CURRENT_STATE_COST_BASELINE.csv", "BPO_RFP_REQUIREMENTS.csv", "BPO_SUPPLIERS.csv",
+  "BPO_SUPPLIER_RESPONSES.csv", "BPO_COMMERCIAL_LINES.csv", "BPO_EVALUATION_SCORES.csv", "BPO_CLARIFICATIONS.csv",
+  "BPO_BAFO_RESPONSES.csv", "BPO_NORMALIZED_TCO.csv", "BPO_REBADGE_RETENTION_PLAN.csv",
+  "BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv", "BPO_AI_AUTOMATION_TRANSFORMATION_COMMITMENTS.csv",
+  "BPO_RETAINED_ORGANIZATION_SCENARIOS.csv",
+]);
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -98,7 +118,7 @@ async function main() {
 function parseArgs(argv) {
   const parsed = {
     mode: process.env.PHS_SOURCE_VOLUME_MODE || "plan",
-    packageDir: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_DIR || latestPackageDir(),
+    packageDir: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_DIR || "",
     outDir: process.env.PHS_SOURCE_VOLUME_OUT_DIR || path.join(os.tmpdir(), "phs-healthcare-demo-source-volume"),
     approvedProofSha256: process.env.PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256 || "",
     emitProofBundle:
@@ -123,17 +143,10 @@ function parseArgs(argv) {
   if (!["plan", "preflight", "apply", "verify", "self-test"].includes(parsed.mode)) {
     throw new Error(`Unsupported mode ${parsed.mode}`);
   }
+  if (parsed.mode !== "self-test" && !parsed.packageDir) {
+    throw new Error("Explicit --package-dir is required for PHS source-volume modes; latest Downloads auto-selection is not allowed");
+  }
   return parsed;
-}
-
-function latestPackageDir() {
-  const downloads = "/Users/anand/Downloads";
-  const matches = fs.readdirSync(downloads, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name.startsWith("phs_healthcare_demo_phase_a_"))
-    .map((entry) => path.join(downloads, entry.name))
-    .sort();
-  if (matches.length === 0) throw new Error("No PHS healthcare demo package found in /Users/anand/Downloads");
-  return matches[matches.length - 1];
 }
 
 function buildSourceVolumePlan() {
@@ -156,37 +169,52 @@ function buildSourceVolumePlan() {
   }
   execFileSync("unzip", ["-t", proofZip], { stdio: "ignore" });
 
-  const files = sourceFilePlans(packageDir, packageManifest);
-  const totalRows = files.reduce((sum, file) => sum + file.row_count, 0);
-  const totalFields = files.reduce((sum, file) => sum + file.field_count, 0);
-  const releaseHash = sha256(stableJson(files.map((file) => ({
+  const baseFiles = sourceFilePlans(packageDir, packageManifest);
+  const releaseHash = sha256(stableJson(baseFiles.map((file) => ({
     relative_path: file.relative_path,
     content_sha256: file.content_sha256,
     row_count: file.row_count,
     field_count: file.field_count,
+    source_group: file.source_group,
+    context_treatment: file.context_treatment,
+    demo_priority: file.demo_priority,
+    event_id: file.event_id,
+    effective_as_of: file.effective_as_of,
   }))));
+  const sourceReleaseId = `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`;
+  const files = baseFiles.map((file) => ({
+    ...file,
+    source_file_id: `${sourceReleaseId}:source-file:${shortHash(file.relative_path, 16)}`,
+  }));
+  const totalRows = files.reduce((sum, file) => sum + file.row_count, 0);
+  const totalFields = files.reduce((sum, file) => sum + file.field_count, 0);
+  const sourceGroupCounts = groupedCounts(files, "source_group");
+  const demoPriorityCounts = groupedCounts(files, "demo_priority");
 
   return {
     tenant_key: EXPECTED.tenantKey,
     dataset_id: EXPECTED.datasetId,
     dataset_version: EXPECTED.datasetVersion,
     test_namespace: TEST_NAMESPACE,
-    source_release_id: SOURCE_RELEASE_ID,
+    source_release_id: sourceReleaseId,
     foundation_release_alias: FOUNDATION_RELEASE_ALIAS,
-    execution_id: SOURCE_VOLUME_EXECUTION_ID,
-    release_version: SOURCE_VOLUME_RELEASE_VERSION,
+    execution_id: `${sourceReleaseId}:${SOURCE_VOLUME_EXECUTION_SUFFIX}`,
+    release_version: `${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`,
     release_hash: releaseHash,
     isolation_scope: ISOLATION_SCOPE,
     package_dir: packageDir,
     proof_zip: proofZip,
     proof_zip_sha256: proofZipSha256,
     file_count: files.length,
+    source_group_counts: sourceGroupCounts,
+    demo_priority_counts: demoPriorityCounts,
     total_source_rows: totalRows,
     total_field_values: totalFields,
+    source_field_value_rule: "insert_all_field_slots_including_explicit_blank_cells",
     max_columns: Math.max(...files.map((file) => file.headers.length)),
     restricted_detail_health_plan_extracts_present: files
       .map((file) => file.file_name)
-      .filter((fileName) => ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"].includes(fileName)),
+      .filter((fileName) => RESTRICTED_DETAIL_HEALTH_PLAN_FILES.includes(fileName)),
     files,
   };
 }
@@ -200,8 +228,13 @@ function assertPackageIdentity(manifest) {
 
 function sourceFilePlans(packageDir, packageManifest) {
   const contracts = (packageManifest.file_contracts || [])
-    .filter((contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv")
+    .filter((contract) => contract.format === "csv" && REQUIRED_LAYER1_RELEASE_FILES.has(path.basename(contract.path)) && LAYER1_SOURCE_GROUPS.includes(contract.source_group))
     .sort((left, right) => String(left.path).localeCompare(String(right.path)));
+  const present = new Set(contracts.map((contract) => path.basename(contract.path)));
+  for (const fileName of REQUIRED_LAYER1_RELEASE_FILES) {
+    if (!present.has(fileName)) throw new Error(`Missing required Layer 1 release file: ${fileName}`);
+  }
+  if (contracts.length !== 54) throw new Error(`Layer 1 release must contain exactly 54 CSV files, got ${contracts.length}`);
   return contracts.map((contract, index) => {
     const relativePath = contract.path;
     const absolutePath = path.join(packageDir, relativePath);
@@ -216,7 +249,11 @@ function sourceFilePlans(packageDir, packageManifest) {
       file_index: index + 1,
       relative_path: relativePath,
       file_name: path.basename(relativePath),
-      source_file_id: `${SOURCE_RELEASE_ID}:source-file:${shortHash(relativePath, 16)}`,
+      source_group: contract.source_group,
+      context_treatment: contract.context_treatment,
+      demo_priority: contract.demo_priority,
+      event_id: contract.event_id || "",
+      effective_as_of: contract.effective_as_of,
       source_family: contract.domain_contract,
       object_type: slug(contract.source_object || contract.grain || path.basename(relativePath, ".csv")).replace(/-/g, "_"),
       content_sha256: sha256(content),
@@ -229,10 +266,22 @@ function sourceFilePlans(packageDir, packageManifest) {
   });
 }
 
+function groupedCounts(files, field) {
+  const counts = {};
+  for (const file of files) {
+    const key = file[field] || "unclassified";
+    if (!counts[key]) counts[key] = { files: 0, records: 0, field_slots: 0 };
+    counts[key].files += 1;
+    counts[key].records += file.row_count;
+    counts[key].field_slots += file.field_count;
+  }
+  return counts;
+}
+
 async function preflight(client, plan) {
   await client.query("BEGIN");
   try {
-    await setContext(client, WRITER_ROLE);
+    await setContext(client, plan, WRITER_ROLE);
     const existing = await sourceVolumeCounts(client);
     await client.query("ROLLBACK");
     const existingTotal = Object.values(existing).reduce((sum, value) => sum + Number(value || 0), 0);
@@ -253,7 +302,7 @@ async function apply(client, plan) {
   await client.query("BEGIN");
   try {
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`foundation-v2:${EXPECTED.tenantKey}:${TEST_NAMESPACE}:source-volume`]);
-    await setContext(client, WRITER_ROLE);
+    await setContext(client, plan, WRITER_ROLE);
     const existing = await sourceVolumeCounts(client);
     if (Object.values(existing).some((value) => Number(value || 0) > 0)) {
       if (!exactSourceVolumeCounts(plan, existing)) {
@@ -294,7 +343,7 @@ async function verify(client, plan) {
   await client.query("BEGIN");
   try {
     const role = process.env.PHS_SOURCE_VOLUME_DB_ROLE === "writer" ? WRITER_ROLE : READER_ROLE;
-    await setContext(client, role);
+    await setContext(client, plan, role);
     const counts = await sourceVolumeCounts(client);
     await client.query("ROLLBACK");
     const exact = exactSourceVolumeCounts(plan, counts);
@@ -324,12 +373,12 @@ function assertApplyApproved(plan) {
   }
 }
 
-async function setContext(client, roleName) {
+async function setContext(client, plan, roleName) {
   await client.query("SET LOCAL row_security = on");
   await q(client, "SELECT set_config('app.tenant_key', $1, true)", [EXPECTED.tenantKey]);
   await q(client, "SELECT set_config('app.client_key', $1, true)", [EXPECTED.tenantKey]);
   await q(client, "SELECT set_config('app.foundation_v2_test_namespace', $1, true)", [TEST_NAMESPACE]);
-  await q(client, "SELECT set_config('app.foundation_v2_source_release_id', $1, true)", [SOURCE_RELEASE_ID]);
+  await q(client, "SELECT set_config('app.foundation_v2_source_release_id', $1, true)", [plan.source_release_id]);
   await q(client, "SELECT set_config('app.foundation_v2_release_alias', $1, true)", [FOUNDATION_RELEASE_ALIAS]);
   await client.query(`SET LOCAL ROLE ${quoteIdent(roleName)}`);
 }
@@ -376,7 +425,7 @@ async function insertSourceRelease(client, plan) {
       (source_release_id, tenant_key, test_namespace, release_version, release_hash, source_release_state,
        isolation_scope, v1_component_classification, writer_job_id)
      VALUES ($1,$2,$3,$4,$5,'isolated_golden_slice',$6,'SUPERSEDE_WITH_V2',$7)`,
-    [SOURCE_RELEASE_ID, EXPECTED.tenantKey, TEST_NAMESPACE, plan.release_version, plan.release_hash, ISOLATION_SCOPE, plan.execution_id],
+    [plan.source_release_id, EXPECTED.tenantKey, TEST_NAMESPACE, plan.release_version, plan.release_hash, ISOLATION_SCOPE, plan.execution_id],
   );
 }
 
@@ -390,7 +439,7 @@ async function insertSourceFiles(client, plan) {
     ["source_file_id", "source_release_id", "tenant_key", "test_namespace", "source_uri", "file_name", "content_sha256", "row_count", "field_count", "writer_job_id"],
     plan.files.map((file) => ({
       source_file_id: file.source_file_id,
-      source_release_id: SOURCE_RELEASE_ID,
+      source_release_id: plan.source_release_id,
       tenant_key: EXPECTED.tenantKey,
       test_namespace: TEST_NAMESPACE,
       source_uri: `package://${EXPECTED.datasetId}/${file.relative_path}`,
@@ -420,11 +469,11 @@ async function insertSourceRowsAndFields(client, plan, file) {
     const row = file.rows[rowIndex];
     const rowNumber = rowIndex + 1;
     const rowHash = sha256(stableJson({ path: file.relative_path, rowNumber, row }));
-    const sourceRecordId = `${SOURCE_RELEASE_ID}:source-record:${shortHash(file.relative_path, 10)}:${rowNumber}`;
+    const sourceRecordId = `${plan.source_release_id}:source-record:${shortHash(file.relative_path, 10)}:${rowNumber}`;
     recordBatch.push({
       source_record_id: sourceRecordId,
       source_file_id: file.source_file_id,
-      source_release_id: SOURCE_RELEASE_ID,
+      source_release_id: plan.source_release_id,
       tenant_key: EXPECTED.tenantKey,
       test_namespace: TEST_NAMESPACE,
       source_row_number: rowNumber,
@@ -437,10 +486,10 @@ async function insertSourceRowsAndFields(client, plan, file) {
       const header = file.headers[fieldIndex];
       const value = row[header] == null ? "" : String(row[header]);
       fieldBatch.push({
-        source_field_value_id: `${SOURCE_RELEASE_ID}:sfv:${rowHash.slice(0, 24)}:${String(fieldIndex + 1).padStart(2, "0")}`,
+        source_field_value_id: `${plan.source_release_id}:sfv:${rowHash.slice(0, 24)}:${String(fieldIndex + 1).padStart(2, "0")}`,
         source_record_id: sourceRecordId,
         source_file_id: file.source_file_id,
-        source_release_id: SOURCE_RELEASE_ID,
+        source_release_id: plan.source_release_id,
         tenant_key: EXPECTED.tenantKey,
         test_namespace: TEST_NAMESPACE,
         source_field_id: `${shortHash(file.relative_path, 10)}:${String(fieldIndex + 1).padStart(2, "0")}:${slug(header)}`,
@@ -494,8 +543,8 @@ async function insertParserExecution(client, plan) {
        input_file_count, output_record_count, output_field_count, rejected_record_count, parser_status, writer_job_id)
      VALUES ($1,$2,$3,$4,'phs-healthcare-source-volume-v1',$5,$6,$7,0,'passed',$8)`,
     [
-      `${SOURCE_RELEASE_ID}:parser-execution-001`,
-      SOURCE_RELEASE_ID,
+      `${plan.source_release_id}:parser-execution-001`,
+      plan.source_release_id,
       EXPECTED.tenantKey,
       TEST_NAMESPACE,
       plan.file_count,
@@ -519,7 +568,7 @@ async function insertGateResults(client, plan) {
      VALUES `,
     ["gate_result_id", "tenant_key", "test_namespace", "gate_id", "transition", "input_count", "output_count", "unexplained_variance", "gate_status", "failure_classification", "repair_owner", "rerun_scope", "proof_uri", "writer_job_id"],
     gates.map(([gateId, transition, inputCount, outputCount]) => ({
-      gate_result_id: `${SOURCE_RELEASE_ID}:${gateId}`,
+      gate_result_id: `${plan.source_release_id}:${gateId}`,
       tenant_key: EXPECTED.tenantKey,
       test_namespace: TEST_NAMESPACE,
       gate_id: gateId,
@@ -531,7 +580,7 @@ async function insertGateResults(client, plan) {
       failure_classification: null,
       repair_owner: "foundation-v2-agent",
       rerun_scope: "phs-source-volume",
-      proof_uri: `proof://foundation-v2/${SOURCE_VOLUME_EXECUTION_ID}/${gateId}`,
+      proof_uri: `proof://foundation-v2/${plan.execution_id}/${gateId}`,
       writer_job_id: plan.execution_id,
     })),
   );
@@ -550,7 +599,7 @@ async function runSourceVolumeSelfTest() {
   const row = Object.fromEntries(headers.map((header, index) => [header, `value-${index + 1}`]));
   await insertSourceRowsAndFields(
     client,
-    { execution_id: "phs-source-volume-self-test" },
+    { execution_id: "phs-source-volume-self-test", source_release_id: "phs-source-volume-self-test" },
     {
       relative_path: "source_system_extracts/self-test.csv",
       file_name: "self-test.csv",
@@ -597,9 +646,14 @@ function writePlanProof(outDir, plan) {
   writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_EXPECTED_COUNTS.json"), publicPlanSummary(plan));
   writeCsv(
     proofRef(outDir, "PHS_SOURCE_VOLUME_FILES.csv"),
-    ["file_name", "source_family", "row_count", "field_count", "content_sha256"],
+    ["file_name", "source_group", "context_treatment", "demo_priority", "event_id", "effective_as_of", "source_family", "row_count", "field_count", "content_sha256"],
     plan.files.map((file) => ({
       file_name: file.file_name,
+      source_group: file.source_group,
+      context_treatment: file.context_treatment,
+      demo_priority: file.demo_priority,
+      event_id: file.event_id,
+      effective_as_of: file.effective_as_of,
       source_family: file.source_family,
       row_count: file.row_count,
       field_count: file.field_count,
@@ -634,8 +688,11 @@ function publicPlanSummary(plan) {
     proof_zip: plan.proof_zip,
     proof_zip_sha256: plan.proof_zip_sha256,
     file_count: plan.file_count,
+    source_group_counts: plan.source_group_counts,
+    demo_priority_counts: plan.demo_priority_counts,
     total_source_rows: plan.total_source_rows,
     total_field_values: plan.total_field_values,
+    source_field_value_rule: plan.source_field_value_rule,
     max_columns: plan.max_columns,
     restricted_detail_health_plan_extracts_present: plan.restricted_detail_health_plan_extracts_present,
   };
