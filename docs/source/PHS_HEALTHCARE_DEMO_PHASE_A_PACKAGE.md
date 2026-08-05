@@ -24,6 +24,8 @@ The scripts are dependency-free Node modules. ZIPs are created through the local
 
 The generated manifest keeps `activation_state=generated_not_loaded`. The package must not be loaded, migrated, deployed, activated or used as live tenant truth until Phase A audit is explicitly approved.
 
+The offline validator now treats the audit blockers as hard package failures: weak outcome-map substance, unresolved outcome dependencies, placeholder hard questions, broken question-to-source coverage, incomplete workbook usability metadata, inappropriate field/source guidance and fake canary evidence all fail validation.
+
 ## Enterprise Outcomes And KPI Map
 
 The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI_MAP` tab for four-week lightweight discovery. The generator does not create separate enterprise value-driver, business-unit KPI catalog or KPI dependency-tree workbooks in this phase. Values, targets, formulas and detailed source lineage are optional; each row still declares purpose, owner roles, desired direction, decision use, connected systems/vendors/initiatives, evidence source and confidence state.
@@ -39,8 +41,11 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Contract-scope relationships: 720
 - Hard questions: 180
 - Interview roles: 30
-- Enterprise outcomes/KPI map records: 52
+- Enterprise outcomes/KPI map records: 44
 - CDAO questions: 71
+
+Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T163422Z.zip`
+Latest corrected proof SHA-256: `c3b6755086a0a35051dc13eef284a5d7cccc2e3df31be0d32ef56cf414839e20`
 
 ## Public Repository Discipline
 

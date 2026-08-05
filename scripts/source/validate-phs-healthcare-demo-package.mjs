@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 export const EXPECTED = {
@@ -71,6 +72,45 @@ const REQUIRED_INTERVIEW_ROLES = new Set([
   "VP Analytics BI and Data Science",
   "VP Supply Chain Operations",
   "VP Shared Services BPO",
+]);
+
+const REQUIRED_OUTCOME_PORTFOLIOS = new Set([
+  "enterprise",
+  "health plan",
+  "hospitals and clinical operations",
+  "revenue cycle",
+  "finance",
+  "supply chain and procurement",
+  "human resources",
+  "shared services",
+  "digital and patient/member experience",
+  "information technology",
+  "data, analytics and AI",
+  "cybersecurity",
+  "quality, compliance and enterprise risk",
+]);
+
+const OUTCOME_CLASSIFICATIONS = new Set([
+  "enterprise_outcome",
+  "business_unit_outcome",
+  "leading_driver",
+  "operational_indicator",
+  "risk_guardrail",
+]);
+
+const DESIRED_DIRECTIONS = new Set([
+  "increase",
+  "decrease",
+  "maintain",
+  "optimize",
+  "monitor",
+]);
+
+const CONFIDENCE_STATES = new Set([
+  "confirmed",
+  "reported",
+  "estimated",
+  "unresolved",
 ]);
 
 function argValue(name, fallback = null) {
@@ -168,6 +208,42 @@ function checkNoSensitiveText(failures, filePath, text) {
   }
 }
 
+function basename(filePath) {
+  return path.basename(filePath);
+}
+
+function decodeXml(value) {
+  return String(value)
+    .replaceAll("&quot;", '"')
+    .replaceAll("&gt;", ">")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&amp;", "&");
+}
+
+function readWorkbookSheetRows(workbookPath, sheetNumber) {
+  const xml = execFileSync("unzip", ["-p", workbookPath, `xl/worksheets/sheet${sheetNumber}.xml`], {
+    encoding: "utf8",
+  });
+  return Array.from(xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/gu)).map((rowMatch) =>
+    Array.from(rowMatch[1].matchAll(/<t>([\s\S]*?)<\/t>/gu)).map((cell) =>
+      decodeXml(cell[1]),
+    ),
+  );
+}
+
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+async function writeCsvFile(filePath, rows) {
+  const headers = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+  const text = [
+    headers.join(","),
+    ...rows.map((row) => headers.map((header) => csvEscape(row[header] ?? "")).join(",")),
+  ].join("\n") + "\n";
+  await fs.writeFile(filePath, text);
+}
+
 function validateRows(failures, rows, contract, seen) {
   const primaryField = contract.primary_key || "source_record_id";
   const nativeField = contract.native_id_field || "source_record_id";
@@ -248,7 +324,7 @@ function validateRows(failures, rows, contract, seen) {
   }
 }
 
-function validateQuestionBank(failures, questionBank, coverageMatrix) {
+function validateQuestionBank(failures, questionBank, coverageMatrix, indexes) {
   const questions = questionBank.questions || [];
   if (questions.length < EXPECTED.minQuestions) {
     issue(failures, "question_count_below_minimum", "question bank is below minimum", {
@@ -257,6 +333,7 @@ function validateQuestionBank(failures, questionBank, coverageMatrix) {
     });
   }
   const coverageByQuestion = new Map((coverageMatrix.coverage || []).map((row) => [row.question_id, row]));
+  const normalizedQuestions = new Set();
   for (const question of questions) {
     for (const field of [
       "question_id",
@@ -283,11 +360,112 @@ function validateQuestionBank(failures, questionBank, coverageMatrix) {
         });
       }
     }
+    const normalized = String(question.question || "")
+      .toLowerCase()
+      .replace(/\bphs-hq-\d+\b/gu, "")
+      .replace(/\d+/gu, "#")
+      .replace(/\s+/gu, " ")
+      .trim();
+    normalizedQuestions.add(normalized);
+    if (/synthetic story thread|which .+ pattern requires executive action/iu.test(question.question || "")) {
+      issue(failures, "placeholder_hard_question", "question text still uses scaffold pattern", {
+        question_id: question.question_id,
+        question: question.question,
+      });
+    }
     if (!coverageByQuestion.has(question.question_id)) {
       issue(failures, "missing_question_coverage", "question lacks coverage matrix row", {
         question_id: question.question_id,
       });
+    } else {
+      validateCoverageRow(failures, coverageByQuestion.get(question.question_id), question, indexes);
     }
+  }
+  if (normalizedQuestions.size < Math.floor(questions.length * 0.9)) {
+    issue(failures, "hard_question_repetition_excessive", "hard-question bank has too much repeated language", {
+      unique: normalizedQuestions.size,
+      total: questions.length,
+    });
+  }
+}
+
+function validateCoverageRow(failures, row, question, indexes) {
+  const files = asArray(row.required_source_files);
+  if (files.length === 0) {
+    issue(failures, "question_missing_source_files", "coverage row has no required source files", {
+      question_id: row.question_id,
+    });
+  }
+  const unionColumns = new Set();
+  for (const file of files) {
+    if (!indexes.rowsByBasename.has(file)) {
+      issue(failures, "mapped_source_file_missing", "question maps to a source file that does not exist", {
+        question_id: row.question_id,
+        file,
+      });
+      continue;
+    }
+    for (const column of indexes.columnsByBasename.get(file) || []) unionColumns.add(column);
+  }
+  for (const column of asArray(row.required_columns)) {
+    if (!unionColumns.has(column)) {
+      issue(failures, "mapped_column_missing", "required coverage column is absent from mapped source files", {
+        question_id: row.question_id,
+        column,
+        files,
+      });
+    }
+  }
+  for (const measure of asArray(row.required_measures || question.required_measures)) {
+    if (!unionColumns.has(measure)) {
+      issue(failures, "mapped_measure_missing", "required measure is absent from mapped source files", {
+        question_id: row.question_id,
+        measure,
+        files,
+      });
+    }
+  }
+  for (const dimension of asArray(row.required_dimensions || question.required_dimensions)) {
+    if (!unionColumns.has(dimension)) {
+      issue(failures, "mapped_dimension_missing", "required dimension is absent from mapped source files", {
+        question_id: row.question_id,
+        dimension,
+        files,
+      });
+    }
+  }
+  for (const recordId of asArray(row.planted_scenario_records)) {
+    const recordFiles = indexes.recordToBasenames.get(recordId);
+    if (!recordFiles) {
+      issue(failures, "planted_record_missing", "planted scenario record does not resolve to a generated source_record_id", {
+        question_id: row.question_id,
+        recordId,
+      });
+      continue;
+    }
+    if (!files.some((file) => recordFiles.has(file))) {
+      issue(failures, "planted_record_irrelevant_to_source_mapping", "planted record exists but not in the mapped source files", {
+        question_id: row.question_id,
+        recordId,
+        mappedFiles: files,
+        actualFiles: Array.from(recordFiles),
+      });
+    }
+  }
+  for (const evidenceRef of asArray(row.evidence_refs)) {
+    if (!indexes.evidenceRefs.has(evidenceRef)) {
+      issue(failures, "mapped_evidence_ref_missing", "mapped evidence reference does not exist", {
+        question_id: row.question_id,
+        evidenceRef,
+      });
+    }
+  }
+  if (files.length > 0 && asArray(row.planted_scenario_records).length < files.length) {
+    issue(failures, "insufficient_planted_records_for_mapping", "coverage row has fewer planted records than mapped source files", {
+      question_id: row.question_id,
+      files,
+      planted_scenario_records: row.planted_scenario_records,
+    });
   }
 }
 
@@ -331,6 +509,124 @@ function validateOutcomeMapContract(failures, manifest) {
   }
 }
 
+function validateOutcomeMapSubstance(failures, outcomeMap, indexes) {
+  const rows = outcomeMap.rows || [];
+  const portfolios = new Set(rows.map((row) => row.portfolio_or_function));
+  for (const portfolio of REQUIRED_OUTCOME_PORTFOLIOS) {
+    if (!portfolios.has(portfolio)) {
+      issue(failures, "missing_outcome_portfolio", "enterprise outcome map misses a required portfolio", {
+        portfolio,
+      });
+    }
+  }
+  const classifications = new Set(rows.map((row) => row.classification));
+  for (const classification of OUTCOME_CLASSIFICATIONS) {
+    if (!classifications.has(classification)) {
+      issue(failures, "missing_outcome_classification", "enterprise outcome map misses a required classification", {
+        classification,
+      });
+    }
+  }
+  const definitions = new Map();
+  const placeholderPattern = /\b(outcome|indicator)\s+\d+$|lightweight discovery record|enterprise outcome \d|business unit outcome \d/iu;
+  for (const row of rows) {
+    for (const field of [
+      "record_id",
+      "portfolio_or_function",
+      "business_purpose",
+      "outcome_or_indicator_name",
+      "classification",
+      "plain-English definition",
+      "why_it_matters",
+      "desired_direction",
+      "executive_owner_role",
+      "operating_owner_role",
+      "primary_decision_supported",
+      "review_forum",
+      "key_systems_or_data_sources",
+      "material_vendor_or_contract_dependency",
+      "related_initiatives",
+      "evidence_source",
+      "confidence_state",
+      "validation_owner_role",
+    ]) {
+      if (!row[field]) {
+        issue(failures, "outcome_map_missing_required_field", "outcome-map row has a blank required field", {
+          record_id: row.record_id || null,
+          field,
+        });
+      }
+    }
+    if (!OUTCOME_CLASSIFICATIONS.has(row.classification)) {
+      issue(failures, "invalid_outcome_classification", "outcome-map classification is invalid", {
+        record_id: row.record_id,
+        classification: row.classification,
+      });
+    }
+    if (!DESIRED_DIRECTIONS.has(row.desired_direction)) {
+      issue(failures, "invalid_desired_direction", "outcome-map desired direction is invalid", {
+        record_id: row.record_id,
+        desired_direction: row.desired_direction,
+      });
+    }
+    if (!CONFIDENCE_STATES.has(row.confidence_state)) {
+      issue(failures, "invalid_confidence_state", "outcome-map confidence state is invalid", {
+        record_id: row.record_id,
+        confidence_state: row.confidence_state,
+      });
+    }
+    if (placeholderPattern.test(row.outcome_or_indicator_name || "") || placeholderPattern.test(row["plain-English definition"] || "")) {
+      issue(failures, "placeholder_outcome_language", "outcome-map row uses scaffold language", {
+        record_id: row.record_id,
+        outcome_or_indicator_name: row.outcome_or_indicator_name,
+      });
+    }
+    const definition = (row["plain-English definition"] || "").toLowerCase().trim();
+    definitions.set(definition, (definitions.get(definition) || 0) + 1);
+    if (!/(Workday|ServiceNow|Epic|Clarity|Caboodle|GRC|BPO|scorecard|strategy|CONTRACT|RISK|AWS|DATABRICKS|SAS|HADOOP|SQL_SERVER|MEDSURG|LOCAL_HOSPITAL|evidence|PMO|validation report|model-fit|test-load|validator|application|dependency map)/iu.test(row.key_systems_or_data_sources || "")) {
+      issue(failures, "outcome_map_weak_source_state", "outcome-map row lacks credible source or evidence state", {
+        record_id: row.record_id,
+        key_systems_or_data_sources: row.key_systems_or_data_sources,
+      });
+    }
+    validateOutcomeReference(failures, row, indexes);
+  }
+  for (const [definition, count] of definitions.entries()) {
+    if (definition && count > 2) {
+      issue(failures, "repeated_outcome_definition", "outcome-map repeats a definition excessively", {
+        count,
+        definition,
+      });
+    }
+  }
+}
+
+function validateOutcomeReference(failures, row, indexes) {
+  const ref = String(row.material_vendor_or_contract_dependency || "").toLowerCase();
+  if (!ref || ref.includes("unresolved relationship candidate") || ref === "not applicable" || ref.includes("all material contract families")) return;
+  const matched =
+    indexes.vendorNames.some((name) => ref.includes(name.toLowerCase())) ||
+    indexes.contractNames.some((name) => ref.includes(name.toLowerCase())) ||
+    [
+      "bpo sourcing event",
+      "aws",
+      "databricks",
+      "aws and databricks",
+      "cybersecurity managed detection",
+      "workday saas and services",
+      "data analytics managed services",
+      "data and analytics managed services",
+      "medical surgical distribution",
+      "epic managed services",
+    ].some((known) => ref.includes(known));
+  if (!matched) {
+    issue(failures, "unresolved_outcome_dependency_reference", "outcome-map material vendor/platform/contract reference does not resolve or mark itself unresolved", {
+      record_id: row.record_id,
+      material_vendor_or_contract_dependency: row.material_vendor_or_contract_dependency,
+    });
+  }
+}
+
 function validateWorkbookOutcomeTab(failures, packageDir) {
   const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
   let workbookXml = "";
@@ -359,6 +655,59 @@ function validateWorkbookOutcomeTab(failures, packageDir) {
     issue(failures, "separate_kpi_value_driver_tabs_present", "client workbook must not contain separate KPI/value-driver tabs", {
       tabs: forbiddenKpiTabs,
     });
+  }
+}
+
+function validateWorkbookQuality(failures, packageDir) {
+  const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+  for (let sheetNumber = 1; sheetNumber <= 3; sheetNumber += 1) {
+    const xml = execFileSync("unzip", ["-p", workbookPath, `xl/worksheets/sheet${sheetNumber}.xml`], {
+      encoding: "utf8",
+    });
+    if (!xml.includes("<pane ") || !xml.includes('state="frozen"')) {
+      issue(failures, "workbook_missing_frozen_headers", "workbook sheet lacks frozen header pane", {
+        sheetNumber,
+      });
+    }
+    if (!xml.includes("<cols>")) {
+      issue(failures, "workbook_missing_column_widths", "workbook sheet lacks readable column width metadata", {
+        sheetNumber,
+      });
+    }
+    if (sheetNumber > 1 && !xml.includes("<autoFilter ")) {
+      issue(failures, "workbook_missing_filters", "data-bearing workbook sheet lacks filters", {
+        sheetNumber,
+      });
+    }
+  }
+}
+
+function validateFieldSourceMap(failures, packageDir) {
+  const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+  const rows = readWorkbookSheetRows(workbookPath, 5);
+  const [header = [], ...dataRows] = rows;
+  const tabIndex = header.indexOf("tab");
+  const sourceIndex = header.indexOf("preferred source system");
+  const objectIndex = header.indexOf("exact source object/table");
+  const ownerIndex = header.indexOf("responsible collecting role");
+  if ([tabIndex, sourceIndex, objectIndex, ownerIndex].some((index) => index < 0)) {
+    issue(failures, "field_source_map_header_missing", "field/source map lacks required guidance columns");
+    return;
+  }
+  for (const row of dataRows) {
+    const tab = row[tabIndex] || "";
+    const source = row[sourceIndex] || "";
+    if (/^(12_VENDORS|13_CONTRACT_FAMILIES|14_LEGAL_INSTRUMENTS|16_INVOICES_AND_SPEND|17_PURCHASE_ORDERS)/u.test(tab) && /Epic/iu.test(source)) {
+      issue(failures, "inappropriate_epic_source_mapping", "non-clinical vendor/contract/finance tab maps to Epic", {
+        tab,
+        source,
+      });
+    }
+    if (!source || !row[objectIndex] || !row[ownerIndex]) {
+      issue(failures, "field_source_guidance_incomplete", "field/source guidance row lacks source, object or owner", {
+        tab,
+      });
+    }
   }
 }
 
@@ -429,10 +778,12 @@ export async function validatePackage(packageDir) {
   const questionBankPath = path.join(packageDir, "phs_healthcare_demo_question_bank.json");
   const coveragePath = path.join(packageDir, "phs_healthcare_demo_question_coverage_matrix.json");
   const roleMatrixPath = path.join(packageDir, "phs_healthcare_demo_role_domain_matrix.json");
+  const outcomeMapPath = path.join(packageDir, "phs_healthcare_demo_enterprise_outcomes_kpi_map.json");
   const manifest = await readJson(manifestPath);
   const questionBank = await readJson(questionBankPath);
   const coverageMatrix = await readJson(coveragePath);
   const roleMatrix = await readJson(roleMatrixPath);
+  const outcomeMap = await readJson(outcomeMapPath);
   const seen = {
     storyThreads: new Set(),
     evidenceStates: new Set(),
@@ -441,6 +792,14 @@ export async function validatePackage(packageDir) {
     rowHashes: new Set(),
   };
   const allRows = [];
+  const indexes = {
+    rowsByBasename: new Map(),
+    columnsByBasename: new Map(),
+    recordToBasenames: new Map(),
+    evidenceRefs: new Set(),
+    vendorNames: [],
+    contractNames: [],
+  };
   let structuredRows = 0;
 
   for (const contract of manifest.file_contracts || []) {
@@ -449,6 +808,19 @@ export async function validatePackage(packageDir) {
     checkNoSensitiveText(failures, contract.path, text);
     if (contract.format !== "csv") continue;
     const rows = parseCsv(text);
+    const base = basename(contract.path);
+    indexes.rowsByBasename.set(base, rows);
+    indexes.columnsByBasename.set(base, new Set(rows.flatMap((row) => Object.keys(row))));
+    for (const row of rows) {
+      if (row.source_record_id) {
+        if (!indexes.recordToBasenames.has(row.source_record_id)) indexes.recordToBasenames.set(row.source_record_id, new Set());
+        indexes.recordToBasenames.get(row.source_record_id).add(base);
+      }
+      if (row.evidence_ref) indexes.evidenceRefs.add(row.evidence_ref);
+      if (base === "EVIDENCE_SPANS.csv" && row.evidence_ref) indexes.evidenceRefs.add(row.evidence_ref);
+      if (base === "WORKDAY_SUPPLIERS.csv" && row.legal_name) indexes.vendorNames.push(row.legal_name);
+      if (base === "CONTRACT_REGISTER.csv" && row.contract_name) indexes.contractNames.push(row.contract_name);
+    }
     structuredRows += rows.length;
     if (contract.expected_rows !== rows.length) {
       issue(failures, "row_count_expectation_mismatch", `${contract.path} row count mismatch`, {
@@ -502,7 +874,10 @@ export async function validatePackage(packageDir) {
   }
   validateManifestContract(failures, manifest, seen);
   validateWorkbookOutcomeTab(failures, packageDir);
-  validateQuestionBank(failures, questionBank, coverageMatrix);
+  validateWorkbookQuality(failures, packageDir);
+  validateFieldSourceMap(failures, packageDir);
+  validateOutcomeMapSubstance(failures, outcomeMap, indexes);
+  validateQuestionBank(failures, questionBank, coverageMatrix, indexes);
   validateInterviewPacks(failures, roleMatrix);
   await validateInterviewPackFiles(failures, packageDir, roleMatrix);
 
@@ -531,33 +906,251 @@ export async function validatePackage(packageDir) {
 }
 
 export async function validateCorruptedCanaries(packageDir) {
-  const manifest = await readJson(path.join(packageDir, "phs_healthcare_demo_package_manifest.json"));
-  const firstCsv = manifest.file_contracts.find((contract) => contract.format === "csv");
-  if (!firstCsv) throw new Error("No CSV contract available for canary validation.");
-  const originalPath = path.join(packageDir, firstCsv.path);
-  const originalText = await fs.readFile(originalPath, "utf8");
-  const [headerLine, firstLine] = originalText.split("\n");
-  const headers = parseCsv(`${headerLine}\n${firstLine}\n`)[0];
-  return [
-    { defect: "missing tenant key", expected_failure: "tenant_key_mismatch", observed: headers.tenant_key === EXPECTED.tenantKey ? "would_fail_when_blank" : "already_failed" },
-    { defect: "bad row hash", expected_failure: "bad_row_hash", observed: headers.row_hash ? "would_fail_when_hash_mutated" : "already_failed" },
-    { defect: "invalid source record path", expected_failure: "invalid_source_record_path", observed: "would_fail_when_source_path_mutated" },
-    { defect: "duplicate row hash", expected_failure: "duplicate_row_hash", observed: "would_fail_when_row_hash_reused" },
-    { defect: "duplicate native id", expected_failure: "duplicate_native_id", observed: "would_fail_when_native_id_reused" },
-    { defect: "duplicate primary key", expected_failure: "duplicate_primary_key", observed: "would_fail_when_primary_key_reused" },
-    { defect: "broken contract relationship", expected_failure: "broken_contract_relationship", observed: "would_fail_when_contract_family_unknown" },
-    { defect: "missing supplier event link", expected_failure: "missing_supplier_event_link", observed: "would_fail_when_bpo_supplier_unknown" },
-    { defect: "unsupported value claim", expected_failure: "unsupported_savings_language", observed: "would_fail_when_unverified_value_claim_inserted" },
-    { defect: "PII email", expected_failure: "pii_email", observed: "would_fail_when_email_inserted" },
-    { defect: "suspected PHI", expected_failure: "suspected_phi_pii_marker", observed: "would_fail_when_mrn_or_dob_marker_inserted" },
-    { defect: "incomplete role coverage", expected_failure: "incomplete_role_coverage", observed: "would_fail_when_accountability_fields_blank" },
-    { defect: "CDAO below 50 questions", expected_failure: "cdao_question_count_below_50", observed: "would_fail_when_role_count_lowered" },
-    { defect: "missing source-system guidance", expected_failure: "missing_source_system_guidance", observed: "would_fail_when_file_contract_guidance_removed" },
-    { defect: "missing story thread", expected_failure: "missing_required_story_thread", observed: "would_fail_when_thread_removed" },
-    { defect: "incorrect time coverage", expected_failure: "missing_24_month_start", observed: "would_fail_when_start_removed" },
-    { defect: "outcome map below range", expected_failure: "enterprise_outcomes_kpi_map_count_out_of_range", observed: "would_fail_when_outcome_rows_removed" },
-    { defect: "separate KPI workbook tabs", expected_failure: "separate_kpi_value_driver_tabs_present", observed: "would_fail_when_legacy_kpi_tabs_added" },
+  async function manifestFor(root) {
+    return readJson(path.join(root, "phs_healthcare_demo_package_manifest.json"));
+  }
+
+  async function writeJsonFile(filePath, data) {
+    await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`);
+  }
+
+  async function mutateCsv(root, targetBase, mutateRows, { rehash = true } = {}) {
+    const manifest = await manifestFor(root);
+    const contract = (manifest.file_contracts || []).find((candidate) => basename(candidate.path) === targetBase);
+    if (!contract) throw new Error(`Canary target CSV not found: ${targetBase}`);
+    const filePath = path.join(root, contract.path);
+    const rows = parseCsv(await fs.readFile(filePath, "utf8"));
+    mutateRows(rows);
+    if (rehash) {
+      for (const row of rows) row.row_hash = canonicalRowHash(row);
+    }
+    await writeCsvFile(filePath, rows);
+  }
+
+  async function mutateAllCsv(root, mutateRows) {
+    const manifest = await manifestFor(root);
+    for (const contract of manifest.file_contracts || []) {
+      if (contract.format !== "csv") continue;
+      const filePath = path.join(root, contract.path);
+      const rows = parseCsv(await fs.readFile(filePath, "utf8"));
+      mutateRows(rows);
+      for (const row of rows) row.row_hash = canonicalRowHash(row);
+      await writeCsvFile(filePath, rows);
+    }
+  }
+
+  async function runCanary({ defect, expected_failure, inject }) {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "phs-canary-"));
+    try {
+      await fs.cp(packageDir, tmp, { recursive: true });
+      await inject(tmp);
+      const result = await validatePackage(tmp);
+      const observed = Array.from(new Set(result.failures.map((failure) => failure.code))).sort();
+      return {
+        defect,
+        expected_failure,
+        observed_failure_codes: observed,
+        passed: observed.includes(expected_failure),
+      };
+    } finally {
+      await fs.rm(tmp, { recursive: true, force: true });
+    }
+  }
+
+  const canaries = [
+    {
+      defect: "missing tenant key",
+      expected_failure: "tenant_key_mismatch",
+      inject: (root) => mutateCsv(root, "WORKDAY_SUPPLIERS.csv", (rows) => {
+        rows[0].tenant_key = "";
+      }),
+    },
+    {
+      defect: "bad row hash",
+      expected_failure: "bad_row_hash",
+      inject: (root) => mutateCsv(root, "WORKDAY_SUPPLIERS.csv", (rows) => {
+        rows[0].row_hash = "bad-row-hash";
+      }, { rehash: false }),
+    },
+    {
+      defect: "invalid source record path",
+      expected_failure: "invalid_source_record_path",
+      inject: (root) => mutateCsv(root, "WORKDAY_SUPPLIERS.csv", (rows) => {
+        rows[0].source_record_url_or_path = "source://wrong-tenant/wrong-dataset/WORKDAY_SUPPLIERS.csv/VND-001";
+      }),
+    },
+    {
+      defect: "duplicate row hash",
+      expected_failure: "duplicate_row_hash",
+      inject: (root) => mutateCsv(root, "WORKDAY_SUPPLIERS.csv", (rows) => {
+        rows[1].row_hash = rows[0].row_hash;
+      }, { rehash: false }),
+    },
+    {
+      defect: "duplicate native id",
+      expected_failure: "duplicate_native_id",
+      inject: (root) => mutateCsv(root, "WORKDAY_SUPPLIERS.csv", (rows) => {
+        rows[1].vendor_id = rows[0].vendor_id;
+      }),
+    },
+    {
+      defect: "duplicate primary key",
+      expected_failure: "duplicate_primary_key",
+      inject: (root) => mutateCsv(root, "CONTRACT_INSTRUMENTS.csv", (rows) => {
+        rows[1].instrument_id = rows[0].instrument_id;
+      }),
+    },
+    {
+      defect: "broken contract relationship",
+      expected_failure: "broken_contract_relationship",
+      inject: (root) => mutateCsv(root, "WORKDAY_SUPPLIER_INVOICES.csv", (rows) => {
+        rows[0].contract_family_id = "CF-BAD";
+      }),
+    },
+    {
+      defect: "missing supplier event link",
+      expected_failure: "missing_supplier_event_link",
+      inject: (root) => mutateCsv(root, "BPO_SUPPLIER_RESPONSES.csv", (rows) => {
+        rows[0].supplier_id = "BPO-Z";
+      }),
+    },
+    {
+      defect: "unsupported value claim",
+      expected_failure: "unsupported_savings_language",
+      inject: (root) => fs.writeFile(path.join(root, "canary-unsupported-value-claim.txt"), "This synthetic package has guaranteed savings."),
+    },
+    {
+      defect: "PII email",
+      expected_failure: "pii_email",
+      inject: (root) => fs.writeFile(path.join(root, "canary-email.txt"), "Contact leader@example.com for source evidence."),
+    },
+    {
+      defect: "suspected PHI",
+      expected_failure: "suspected_phi_pii_marker",
+      inject: (root) => fs.writeFile(path.join(root, "canary-phi.txt"), "Patient aggregate includes MRN marker."),
+    },
+    {
+      defect: "incomplete role coverage",
+      expected_failure: "incomplete_role_coverage",
+      inject: async (root) => {
+        const rolePath = path.join(root, "phs_healthcare_demo_role_domain_matrix.json");
+        const roleMatrix = await readJson(rolePath);
+        roleMatrix.roles[0].accountable_executive = "";
+        await writeJsonFile(rolePath, roleMatrix);
+      },
+    },
+    {
+      defect: "CDAO below 50 questions",
+      expected_failure: "cdao_question_count_below_50",
+      inject: async (root) => {
+        const rolePath = path.join(root, "phs_healthcare_demo_role_domain_matrix.json");
+        const roleMatrix = await readJson(rolePath);
+        roleMatrix.roles.find((role) => role.role === "CDAO").question_count = 49;
+        await writeJsonFile(rolePath, roleMatrix);
+      },
+    },
+    {
+      defect: "missing source-system guidance",
+      expected_failure: "missing_source_system_guidance",
+      inject: async (root) => {
+        const manifestPath = path.join(root, "phs_healthcare_demo_package_manifest.json");
+        const manifest = await readJson(manifestPath);
+        manifest.file_contracts[0].source_system = "";
+        await writeJsonFile(manifestPath, manifest);
+      },
+    },
+    {
+      defect: "missing required story domain",
+      expected_failure: "missing_required_story_thread",
+      inject: (root) => mutateAllCsv(root, (rows) => {
+        for (const row of rows) {
+          if (row.story_thread_ref === "data_analytics_managed_services_value_leakage") {
+            row.story_thread_ref = "health_plan_analytics_and_cloud_decisions";
+          }
+        }
+      }),
+    },
+    {
+      defect: "incorrect time coverage",
+      expected_failure: "missing_24_month_start",
+      inject: (root) => mutateAllCsv(root, (rows) => {
+        for (const row of rows) {
+          if (row.period_start === EXPECTED.historyStart) row.period_start = "2024-09-01";
+        }
+      }),
+    },
+    {
+      defect: "outcome map below range",
+      expected_failure: "enterprise_outcomes_kpi_map_count_out_of_range",
+      inject: async (root) => {
+        const manifestPath = path.join(root, "phs_healthcare_demo_package_manifest.json");
+        const outcomePath = path.join(root, "phs_healthcare_demo_enterprise_outcomes_kpi_map.json");
+        const manifest = await readJson(manifestPath);
+        const outcomeMap = await readJson(outcomePath);
+        manifest.counts.enterprise_outcomes_kpi_map = 10;
+        outcomeMap.record_count = 10;
+        outcomeMap.rows = outcomeMap.rows.slice(0, 10);
+        await writeJsonFile(manifestPath, manifest);
+        await writeJsonFile(outcomePath, outcomeMap);
+      },
+    },
+    {
+      defect: "separate KPI value-driver tabs",
+      expected_failure: "separate_kpi_value_driver_tabs_present",
+      inject: async (root) => {
+        const workbookPath = path.join(root, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+        const unzipDir = await fs.mkdtemp(path.join(os.tmpdir(), "phs-xlsx-canary-"));
+        try {
+          execFileSync("unzip", ["-q", workbookPath, "-d", unzipDir]);
+          const workbookXmlPath = path.join(unzipDir, "xl", "workbook.xml");
+          const xml = await fs.readFile(workbookXmlPath, "utf8");
+          await fs.writeFile(workbookXmlPath, xml.replace('name="03_SOURCE_SYSTEM_INVENTORY"', 'name="KPI_CATALOG_LEGACY"'));
+          await fs.rm(workbookPath, { force: true });
+          execFileSync("zip", ["-qr", workbookPath, "."], { cwd: unzipDir });
+        } finally {
+          await fs.rm(unzipDir, { recursive: true, force: true });
+        }
+      },
+    },
+    {
+      defect: "missing outcomes section in interview pack",
+      expected_failure: "missing_outcomes_kpis_value_drivers_section",
+      inject: async (root) => {
+        const packPath = path.join(root, "interview_packs", "CDAO.json");
+        const pack = await readJson(packPath);
+        pack.questions = pack.questions.filter((question) => question.section !== "OUTCOMES, KPIS AND VALUE DRIVERS");
+        await writeJsonFile(packPath, pack);
+      },
+    },
+    {
+      defect: "irrelevant hard-question coverage",
+      expected_failure: "mapped_measure_missing",
+      inject: async (root) => {
+        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const matrix = await readJson(coveragePath);
+        matrix.coverage[0].required_source_files = ["WORKDAY_SUPPLIERS.csv"];
+        await writeJsonFile(coveragePath, matrix);
+      },
+    },
+    {
+      defect: "broken question-to-evidence lineage",
+      expected_failure: "mapped_evidence_ref_missing",
+      inject: async (root) => {
+        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const matrix = await readJson(coveragePath);
+        matrix.coverage[0].evidence_refs = ["EVID-SPAN-99999"];
+        await writeJsonFile(coveragePath, matrix);
+      },
+    },
   ];
+
+  const outputs = [];
+  for (const canary of canaries) outputs.push(await runCanary(canary));
+  const failed = outputs.filter((output) => !output.passed);
+  if (failed.length > 0) {
+    throw new Error(`Corrupted canary validation did not observe expected failures: ${JSON.stringify(failed, null, 2)}`);
+  }
+  return outputs;
 }
 
 async function main() {
