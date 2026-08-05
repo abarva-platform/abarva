@@ -36,13 +36,25 @@ const ID_COLUMN_NAMES = new Set(["tenant_id", "client_id"]);
 
 const TEXT_TYPES = new Set(["character varying", "character", "text", "citext", "uuid"]);
 
-const DELETE_CHUNK_SIZE = 25000;
+const DELETE_CHUNK_SIZE = 5000;
+
+const DELETE_PRIORITY = new Map([
+  ["public.semantic2_evidence_refs", 10],
+  ["public.semantic2_facts", 20],
+  ["public.semantic2_relationships", 30],
+  ["public.semantic2_entities", 40],
+  ["public.semantic2_source_rows", 50],
+  ["public.move_artifacts", 60],
+  ["public.engagements", 70],
+  ["public.clients", 1000],
+]);
 
 const TRIGGER_OVERRIDES = Object.freeze([
   { qualifiedName: "public.agent_context_traces", trigger: "user" },
   { qualifiedName: "public.evidence_ledger", trigger: "user" },
   { qualifiedName: "public.notification_events", trigger: "user" },
-  { qualifiedName: "public.program_audit_log", trigger: "program_audit_log_no_delete" },
+  { qualifiedName: "public.engagements", trigger: "user" },
+  { qualifiedName: "public.program_audit_log", trigger: "user" },
   { qualifiedName: "public.responsible_ai_acknowledgments", trigger: "user" },
   { qualifiedName: "public.responsible_ai_training_completions", trigger: "user" },
 ]);
@@ -415,13 +427,64 @@ async function deleteRows(client, operation) {
   return totalDeleted;
 }
 
+async function clearKnownReferences(client, operation) {
+  if (operation.qualifiedName !== "public.move_artifacts") return null;
+  const exists = await client.query(`
+    select
+      to_regclass('public.deliverables_v2')::text as deliverables_table,
+      to_regclass('public.move_artifacts')::text as move_artifacts_table,
+      exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'deliverables_v2'
+          and column_name = 'approved_artifact_id'
+      ) as has_approved_artifact_id,
+      exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'move_artifacts'
+          and column_name = 'id'
+      ) as has_move_artifact_id
+  `);
+  const row = exists.rows[0];
+  if (!row?.deliverables_table || !row?.move_artifacts_table || !row.has_approved_artifact_id || !row.has_move_artifact_id) {
+    return null;
+  }
+  const where = rendered(operation, "parent");
+  const result = await client.query(
+    `update public.deliverables_v2 as ${quoteIdent("target")}
+     set approved_artifact_id = null
+     where ${quoteIdent("target")}.approved_artifact_id is not null
+       and exists (
+         select 1
+         from public.move_artifacts as ${quoteIdent("parent")}
+         where ${quoteIdent("target")}.approved_artifact_id = ${quoteIdent("parent")}.id
+           and (${where.sql})
+       )`,
+    where.params,
+  );
+  return {
+    qualifiedName: "public.deliverables_v2",
+    rowsUpdated: result.rowCount ?? 0,
+    specialCase: "cleared_approved_artifact_id_for_retired_move_artifacts",
+  };
+}
+
+function deletePriority(operation) {
+  if (operation.depth > 0) return -operation.depth * 100;
+  return DELETE_PRIORITY.get(operation.qualifiedName) ?? 500;
+}
+
 async function applyDeletes(client, operations, maxPasses) {
   const actions = [];
   const pending = operations
     .filter((operation) => operation.rowCount > 0)
     .sort((a, b) => {
-      if (a.qualifiedName === "public.clients") return 1;
-      if (b.qualifiedName === "public.clients") return -1;
+      const aPriority = deletePriority(a);
+      const bPriority = deletePriority(b);
+      if (aPriority !== bPriority) return aPriority - bPriority;
       if (a.depth !== b.depth) return b.depth - a.depth;
       const aOverride = TRIGGER_OVERRIDES.some((override) => override.qualifiedName === a.qualifiedName) ? -1 : 0;
       const bOverride = TRIGGER_OVERRIDES.some((override) => override.qualifiedName === b.qualifiedName) ? -1 : 0;
@@ -431,6 +494,13 @@ async function applyDeletes(client, operations, maxPasses) {
 
   await setTriggerOverrides(client, false);
   try {
+    for (const operation of pending) {
+      const cleared = await clearKnownReferences(client, operation);
+      if (cleared) {
+        actions.push({ ...cleared, pass: 0 });
+      }
+    }
+
     for (const operation of [...pending]) {
       const special = await deleteProgramAuditLogIfNeeded(client, operation);
       if (special) {
@@ -578,7 +648,7 @@ async function main() {
   const client = new Client(postgresOptions(databaseUrl, `retired-tenant-row-purge-${apply ? "apply" : "dry-run"}`));
   await client.connect();
   try {
-    await client.query("set statement_timeout = '180s'");
+    await client.query("set statement_timeout = '15min'");
     await client.query("set lock_timeout = '5s'");
     const before = await buildPlan(client);
     const beforePositive = before.operations.filter((operation) => operation.rowCount > 0);
