@@ -781,6 +781,7 @@ function stripParams(operation) {
 
 function compactProof(proof) {
   const pending = proof.apply?.pending ?? [];
+  const dryRunPending = proof.apply ? [] : (proof.before?.operations ?? []);
   return {
     event: proof.event,
     run_id: proof.run_id,
@@ -791,6 +792,15 @@ function compactProof(proof) {
       tablesWithRetiredRows: proof.before.tablesWithRetiredRows,
       retiredRows: proof.before.retiredRows,
       bySchema: proof.before.bySchema,
+      pendingCount: dryRunPending.length,
+      pendingOmitted: Math.max(0, dryRunPending.length - 20),
+      pending: dryRunPending.slice(0, 20).map((operation) => ({
+        qualifiedName: operation.qualifiedName,
+        rowCount: operation.rowCount,
+        source: operation.source,
+        parentQualifiedName: operation.parentQualifiedName,
+        constraintName: operation.constraintName,
+      })),
     },
     clientScope: proof.clientScope
       ? {
