@@ -8,7 +8,7 @@ on:
         default: https://app.abarva.ai
         required: true
       persona:
-        description: Optional comma-separated persona keys, for example meridian-cdio,meridian-cdao
+        description: Optional comma-separated persona keys, for example agent-skyharbor
         required: false
       surface:
         description: Optional comma-separated crawl surface IDs, for example intelligence-ask

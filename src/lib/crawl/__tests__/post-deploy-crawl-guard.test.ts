@@ -37,31 +37,23 @@ function observation(
 }
 
 describe("post-deploy crawl guard", () => {
-  it("includes required personas in the standard production crawl", () => {
+  it("keeps the standard production crawl on the active SkyHarbor tenant only", () => {
     const personaKeys = resolveCrawlPersonas().map((persona) => persona.key);
 
-    expect(personaKeys).toEqual(
-      expect.arrayContaining(["agent-meridian", "agent-skyharbor"]),
-    );
+    expect(personaKeys).toEqual(["agent-skyharbor"]);
+    expect(personaKeys).not.toContain("agent-apexretail");
+    expect(personaKeys).not.toContain("agent-meridian");
+    expect(personaKeys).not.toContain("agent-firstcapital");
+    expect(personaKeys).not.toContain("agent-lakeshore");
     expect(personaKeys).not.toContain("agent-northstar");
   });
 
   it("uses active UI display names for tenant identity checks", () => {
     expect(
-      resolveCrawlPersonas("agent-apexretail").map(
+      resolveCrawlPersonas("agent-skyharbor").map(
         (persona) => persona.tenantName,
       ),
-    ).toEqual(["Retail Demo"]);
-    expect(
-      resolveCrawlPersonas("agent-meridian").map(
-        (persona) => persona.tenantName,
-      ),
-    ).toEqual(["Healthcare Demo"]);
-    expect(
-      resolveCrawlPersonas("agent-firstcapital").map(
-        (persona) => persona.tenantName,
-      ),
-    ).toEqual(["FS Demo"]);
+    ).toEqual(["Airline Demo"]);
   });
 
   it("includes the Admin Data Layer Explorer as a directly targetable crawl surface", () => {
