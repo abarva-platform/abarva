@@ -281,7 +281,7 @@ export function selectMovesRate(
   };
 }
 
-interface MaterializedProviderRateRow {
+export interface MaterializedProviderRateRow {
   rate_line_id: string;
   source_rate_band_code: string;
   role_code: string;
@@ -309,7 +309,7 @@ interface MaterializedProviderRateRow {
   version: string;
 }
 
-interface MaterializedInternalRateRow {
+export interface MaterializedInternalRateRow {
   rate_line_id: string;
   source_rate_band_code: string;
   role_code: string;
