@@ -236,6 +236,54 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function normalizedJoinValue(key, row) {
+  const aliases = {
+    contract_family_id: ["contract_family_id", "contract_id"],
+    contract_id: ["contract_id", "contract_family_id"],
+    application_id: ["application_id", "application_ref"],
+    application_ref: ["application_ref", "application_id"],
+    downstream_mart_id: ["downstream_mart_id", "mart_id"],
+    mart_id: ["mart_id", "downstream_mart_id"],
+  };
+  for (const field of aliases[key] || [key]) {
+    const value = row[field];
+    if (value === undefined || value === null || value === "") continue;
+    if (key === "normalized_location_model" || field === "location_model") {
+      const normalized = String(value).trim().toLowerCase().replaceAll(/[^a-z0-9]+/gu, "_").replace(/^_+|_+$/gu, "");
+      if (["us", "us_based_internal", "us_internal"].includes(normalized)) return "us_internal";
+      return normalized;
+    }
+    return String(value).trim().toLowerCase();
+  }
+  return "";
+}
+
+function validatePlantedSourceJoins(failures, row, plantedRows) {
+  const joinKeys = asArray(row.planted_source_join_keys);
+  const multiRecordRows = plantedRows.map((entry) => entry.row);
+  if (multiRecordRows.length > 1 && joinKeys.length === 0 && asArray(row.cross_domain_relationships).length === 0) {
+    issue(failures, "planted_source_join_keys_missing", "multi-record coverage row lacks explicit scenario join keys", {
+      question_id: row.question_id,
+      planted_scenario_records: row.planted_scenario_records,
+    });
+  }
+  for (const key of joinKeys) {
+    const values = multiRecordRows
+      .map((candidate) => normalizedJoinValue(key, candidate))
+      .filter(Boolean);
+    if (values.length < 2) continue;
+    const distinct = Array.from(new Set(values));
+    if (distinct.length > 1) {
+      issue(failures, "planted_source_join_mismatch", "planted source records exist but do not join on the declared scenario key", {
+        question_id: row.question_id,
+        join_key: key,
+        observed_values: distinct.sort(),
+        planted_scenario_records: row.planted_scenario_records,
+      });
+    }
+  }
+}
+
 async function writeCsvFile(filePath, rows) {
   const headers = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
   const text = [
@@ -476,6 +524,7 @@ function validateCoverageRow(failures, row, question, indexes) {
       if (contractRef && /^CF-/u.test(contractRef)) sourceContractRefs.add(contractRef);
     }
   }
+  validatePlantedSourceJoins(failures, row, plantedRows);
   const evidenceRows = [];
   for (const evidenceRef of asArray(row.evidence_refs)) {
     if (!indexes.evidenceRefs.has(evidenceRef)) {
@@ -504,6 +553,19 @@ function validateCoverageRow(failures, row, question, indexes) {
           expectedTypes: row.expected_evidence_span_types,
           actualType: evidenceRow.span_type,
         });
+      }
+      const expectedSubjectTerms = asArray(row.expected_evidence_subject_terms);
+      if (expectedSubjectTerms.length > 0) {
+        const subjectText = `${evidenceRow.evidence_subject || ""} ${evidenceRow.accepted_extraction || ""}`.toLowerCase();
+        const matched = expectedSubjectTerms.some((term) => subjectText.includes(String(term).toLowerCase()));
+        if (!matched) {
+          issue(failures, "mapped_evidence_subject_mismatch", "mapped evidence has the right reference shape but does not support the question subject", {
+            question_id: row.question_id,
+            evidenceRef,
+            expectedSubjectTerms,
+            evidenceSubject: evidenceRow.evidence_subject || "",
+          });
+        }
       }
     }
   }
@@ -1110,6 +1172,27 @@ export async function validateCorruptedCanaries(packageDir) {
     }
   }
 
+  async function coverageMatrixFor(root) {
+    return readJson(path.join(root, "phs_healthcare_demo_question_coverage_matrix.json"));
+  }
+
+  async function writeCoverageMatrix(root, matrix) {
+    await writeJsonFile(path.join(root, "phs_healthcare_demo_question_coverage_matrix.json"), matrix);
+  }
+
+  async function rowsFor(root, targetBase) {
+    const manifest = await manifestFor(root);
+    const contract = (manifest.file_contracts || []).find((candidate) => basename(candidate.path) === targetBase);
+    if (!contract) throw new Error(`Canary target CSV not found: ${targetBase}`);
+    return parseCsv(await fs.readFile(path.join(root, contract.path), "utf8"));
+  }
+
+  function coverageByPredicate(matrix, predicate) {
+    const coverage = matrix.coverage.find((candidate) => candidate.question_predicate === predicate);
+    if (!coverage) throw new Error(`Coverage row not found for predicate ${predicate}`);
+    return coverage;
+  }
+
   const canaries = [
     {
       defect: "missing tenant key",
@@ -1340,6 +1423,72 @@ export async function validateCorruptedCanaries(packageDir) {
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].evidence_refs = ["EVID-SPAN-00003"];
         await writeJsonFile(coveragePath, matrix);
+      },
+    },
+    {
+      defect: "same story different BPO supplier",
+      expected_failure: "planted_source_join_mismatch",
+      inject: async (root) => {
+        const matrix = await coverageMatrixFor(root);
+        const coverage = coverageByPredicate(matrix, "supplier_quality_tradeoff");
+        const response = (await rowsFor(root, "BPO_SUPPLIER_RESPONSES.csv")).find((row) => row.source_record_id === coverage.planted_scenario_records[0]);
+        const mismatchedScore = (await rowsFor(root, "BPO_EVALUATION_SCORES.csv")).find((row) => row.story_thread_ref === coverage.story_thread_ref && row.supplier_id !== response.supplier_id);
+        coverage.planted_scenario_records = [response.source_record_id, mismatchedScore.source_record_id];
+        await writeCoverageMatrix(root, matrix);
+      },
+    },
+    {
+      defect: "same contract different invoice",
+      expected_failure: "planted_source_join_mismatch",
+      inject: async (root) => {
+        const matrix = await coverageMatrixFor(root);
+        const coverage = coverageByPredicate(matrix, "finance_reconciliation_gap");
+        const payment = (await rowsFor(root, "WORKDAY_PAYMENTS.csv")).find((row) => row.source_record_id === coverage.planted_scenario_records[0]);
+        const mismatchedInvoice = (await rowsFor(root, "WORKDAY_SUPPLIER_INVOICES.csv")).find((row) => row.story_thread_ref === coverage.story_thread_ref && row.vendor_id === payment.vendor_id && row.invoice_id !== payment.invoice_id);
+        coverage.planted_scenario_records = [payment.source_record_id, mismatchedInvoice.source_record_id];
+        await writeCoverageMatrix(root, matrix);
+      },
+    },
+    {
+      defect: "same domain different item and facility",
+      expected_failure: "planted_source_join_mismatch",
+      inject: async (root) => {
+        const matrix = await coverageMatrixFor(root);
+        const coverage = coverageByPredicate(matrix, "substitution_cost");
+        const substitution = (await rowsFor(root, "MEDSURG_BACKORDERS_SUBSTITUTIONS.csv")).find((row) => row.source_record_id === coverage.planted_scenario_records[0]);
+        const mismatchedPurchase = (await rowsFor(root, "LOCAL_HOSPITAL_PURCHASES.csv")).find((row) => row.story_thread_ref === coverage.story_thread_ref && row.facility !== substitution.facility && row.item_id !== substitution.item_id);
+        coverage.planted_scenario_records = [substitution.source_record_id, mismatchedPurchase.source_record_id];
+        await writeCoverageMatrix(root, matrix);
+      },
+    },
+    {
+      defect: "same contract different document reference",
+      expected_failure: "planted_source_join_mismatch",
+      inject: async (root) => {
+        const matrix = await coverageMatrixFor(root);
+        const coverage = coverageByPredicate(matrix, "document_complete");
+        const instrument = (await rowsFor(root, "CONTRACT_INSTRUMENTS.csv")).find((row) => row.source_record_id === coverage.planted_scenario_records[0]);
+        const mismatchedEvidence = (await rowsFor(root, "EVIDENCE_SPANS.csv")).find((row) =>
+          row.story_thread_ref === coverage.story_thread_ref &&
+          row.contract_family_id === instrument.contract_family_id &&
+          row.document_ref !== instrument.document_ref &&
+          row.review_state === "audit_ready" &&
+          asArray(coverage.expected_evidence_span_types).includes(row.span_type));
+        coverage.planted_scenario_records = [instrument.source_record_id, mismatchedEvidence.source_record_id];
+        coverage.evidence_refs = [mismatchedEvidence.evidence_ref];
+        await writeCoverageMatrix(root, matrix);
+      },
+    },
+    {
+      defect: "correct span type with unrelated evidence subject",
+      expected_failure: "mapped_evidence_subject_mismatch",
+      inject: async (root) => {
+        const matrix = await coverageMatrixFor(root);
+        const coverage = matrix.coverage.find((candidate) => asArray(candidate.expected_evidence_subject_terms).length > 0 && asArray(candidate.evidence_refs).length > 0);
+        await mutateCsv(root, "EVIDENCE_SPANS.csv", (rows) => {
+          const evidence = rows.find((candidate) => candidate.evidence_ref === coverage.evidence_refs[0]);
+          if (evidence) evidence.evidence_subject = "Cybersecurity managed detection SLA evidence unrelated to the planted business scenario.";
+        });
       },
     },
   ];

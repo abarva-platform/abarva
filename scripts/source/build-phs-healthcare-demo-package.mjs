@@ -813,6 +813,9 @@ function buildRows() {
   const periodMonths = months();
   const facilities = ["Hospital North", "Hospital Central", "Hospital West", "Ambulatory East", "Plan Operations"];
   const functions = ["finance_operations", "hr_operations", "supply_chain_operations", "procurement_support", "shared_services_admin"];
+  const medCategories = ["gloves", "syringes", "wound care", "lab consumable", "procedure kit"];
+  const workforceRoles = ["developer", "analyst", "architect", "service manager", "operations specialist"];
+  const workforceLocations = ["US", "nearshore", "offshore"];
   const applications = Array.from({ length: 180 }, (_, i) => `APP-${pad(i + 1, 4)}`);
   const services = Array.from({ length: 220 }, (_, i) => `CI-${pad(i + 1, 4)}`);
 
@@ -847,21 +850,21 @@ function buildRows() {
   for (let i = 0; i < 32; i += 1) add(specs["WORKDAY_SPEND_CATEGORIES.csv"], { spend_category_id: `SC-${pad(i + 1, 3)}`, spend_category_name: pick(["managed services", "software subscriptions", "medical supplies", "facilities services", "professional services"]), category_owner_role: pick(["CPO delegate", "IT finance", "Facilities finance"]), story_thread_ref: storyThreads[i % storyThreads.length] });
   for (let i = 0; i < 1_800; i += 1) {
     const month = periodMonths[i % periodMonths.length];
-    add(specs["WORKDAY_WORKER_ROLE_SUMMARY.csv"], { role_month_id: `WD-WR-${pad(i + 1, 5)}`, function_ref: functions[i % functions.length], role_family: pick(["analyst", "specialist", "manager", "supervisor", "operations lead"]), location_model: "US_based_internal", fte_count: 1 + (i % 4), loaded_labor_cost: money(7_500 + random() * 8_000), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[5] });
+    add(specs["WORKDAY_WORKER_ROLE_SUMMARY.csv"], { role_month_id: `WD-WR-${pad(i + 1, 5)}`, function_ref: functions[i % functions.length], role_family: pick(["analyst", "specialist", "manager", "supervisor", "operations lead"]), location_model: "US_based_internal", normalized_location_model: "us_internal", fte_count: 1 + (i % 4), loaded_labor_cost: money(7_500 + random() * 8_000), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[5] });
   }
   for (let i = 0; i < 6_000; i += 1) {
     const month = periodMonths[i % periodMonths.length];
     add(specs["LOCAL_HOSPITAL_PURCHASES.csv"], { po_line_id: `LHP-PO-${pad(i + 1, 6)}`, facility: facilities[i % facilities.length], item_id: `ITEM-${pad((i % 420) + 1, 4)}`, contract_family_id: "CF-004", purchase_channel: i % 9 === 0 ? "off_contract_local" : "contracted_distributor", quantity: 1 + (i % 120), unit_price: money(3 + random() * 950), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[3] });
   }
-  for (let i = 0; i < 420; i += 1) add(specs["MEDSURG_ITEM_MASTER.csv"], { item_id: `ITEM-${pad(i + 1, 4)}`, category: pick(["gloves", "syringes", "wound care", "lab consumable", "procedure kit"]), equivalent_group: `EQ-${pad((i % 80) + 1, 3)}`, contracted_item: i % 7 === 0 ? "false" : "true", story_thread_ref: storyThreads[3] });
-  for (let i = 0; i < 840; i += 1) add(specs["MEDSURG_PRICE_TIERS.csv"], { price_tier_id: `MST-${pad(i + 1, 5)}`, item_id: `ITEM-${pad((i % 420) + 1, 4)}`, facility: facilities[i % facilities.length], tier: `tier_${(i % 4) + 1}`, unit_price: money(2 + random() * 900), story_thread_ref: storyThreads[3] });
+  for (let i = 0; i < 420; i += 1) add(specs["MEDSURG_ITEM_MASTER.csv"], { item_id: `ITEM-${pad(i + 1, 4)}`, category: medCategories[i % medCategories.length], equivalent_group: `EQ-${pad((i % 80) + 1, 3)}`, contracted_item: i % 7 === 0 ? "false" : "true", story_thread_ref: storyThreads[3] });
+  for (let i = 0; i < 840; i += 1) add(specs["MEDSURG_PRICE_TIERS.csv"], { price_tier_id: `MST-${pad(i + 1, 5)}`, item_id: `ITEM-${pad((i % 420) + 1, 4)}`, facility: facilities[i % facilities.length], category: medCategories[i % medCategories.length], tier: `tier_${(i % 4) + 1}`, unit_price: money(2 + random() * 900), story_thread_ref: storyThreads[3] });
   for (let i = 0; i < 720; i += 1) {
     const month = periodMonths[i % periodMonths.length];
     add(specs["MEDSURG_BACKORDERS_SUBSTITUTIONS.csv"], { substitution_id: `MSS-${pad(i + 1, 5)}`, item_id: `ITEM-${pad((i % 420) + 1, 4)}`, facility: facilities[i % facilities.length], backorder_count: i % 6, substitution_count: i % 5, incremental_cost: money(random() * 1200), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[3] });
   }
   for (let i = 0; i < 480; i += 1) {
     const month = periodMonths[i % periodMonths.length];
-    add(specs["MEDSURG_REBATES_CREDITS.csv"], { rebate_id: `MSR-${pad(i + 1, 5)}`, facility: facilities[i % facilities.length], category: pick(["gloves", "wound care", "procedure kit"]), earned_rebate_amount: money(300 + random() * 9000), reconciled_rebate_amount: money(200 + random() * 7000), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[3] });
+    add(specs["MEDSURG_REBATES_CREDITS.csv"], { rebate_id: `MSR-${pad(i + 1, 5)}`, facility: facilities[i % facilities.length], category: medCategories[i % medCategories.length], earned_rebate_amount: money(300 + random() * 9000), reconciled_rebate_amount: money(200 + random() * 7000), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[3] });
   }
   for (const contract of contractFamilies) {
     add(specs["CONTRACT_REGISTER.csv"], { contract_family_id: contract[0], contract_name: contract[1], vendor_id: contract[2], synthetic_midpoint_total_contract_value: contract[3], evidence_tier: contract[4], renewal_window: "2027 planning", story_thread_ref: contract[5] });
@@ -871,7 +874,7 @@ function buildRows() {
     add(specs["CONTRACT_INSTRUMENTS.csv"], { instrument_id: `LI-${pad(i + 1, 3)}`, contract_family_id: contract[0], instrument_type: pick(["MSA", "SOW", "Amendment", "Pricing Schedule", "SLA Schedule", "Security Schedule", "Exit Terms"]), effective_date: `202${4 + (i % 3)}-${pad((i % 12) + 1, 2)}-01`, document_ref: `DOC-${pad((i % 30) + 1, 3)}`, story_thread_ref: contract[5] });
   }
   for (let i = 0; i < 18; i += 1) add(specs["CONTRACT_AMENDMENTS.csv"], { amendment_id: `AMD-${pad(i + 1, 3)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], amendment_theme: pick(["scope change", "rate update", "term extension", "service level revision"]), financial_effect: money(-50_000 + random() * 400_000), story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
-  for (let i = 0; i < 420; i += 1) add(specs["CONTRACT_RATE_CARDS.csv"], { rate_card_id: `RC-${pad(i + 1, 4)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], role_title: pick(["developer", "analyst", "architect", "service manager", "operations specialist"]), location_model: pick(["US", "nearshore", "offshore"]), contracted_rate: money(45 + random() * 175), billed_rate_observed: money(48 + random() * 195), story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
+  for (let i = 0; i < 420; i += 1) add(specs["CONTRACT_RATE_CARDS.csv"], { rate_card_id: `RC-${pad(i + 1, 4)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], role_title: workforceRoles[i % workforceRoles.length], location_model: workforceLocations[i % workforceLocations.length], contracted_rate: money(45 + random() * 175), billed_rate_observed: money(48 + random() * 195), story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
   for (let i = 0; i < 96; i += 1) add(specs["CONTRACT_SLA_TERMS.csv"], { sla_term_id: `SLA-T-${pad(i + 1, 4)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], metric_name: pick(["P1 response", "P2 resolution", "availability", "backlog aging", "fill rate"]), target: pick(["95", "98", "99.5", "30 days"]), credit_formula_key: "synthetic_credit_schedule_v1", story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
   for (let i = 0; i < 54; i += 1) add(specs["CONTRACT_RENEWAL_EXIT_TERMS.csv"], { clause_id: `CL-${pad(i + 1, 4)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], clause_type: pick(["renewal notice", "termination for convenience", "exit assistance", "knowledge transfer", "data return"]), extracted_state: i % 5 === 0 ? "partial_evidence" : "accepted_extraction", story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
   for (let i = 0; i < 90; i += 1) add(specs["SERVICENOW_VENDOR_SERVICES.csv"], { vendor_service_id: `SN-VS-${pad(i + 1, 4)}`, vendor_id: contractFamilies[i % contractFamilies.length][2], contract_family_id: contractFamilies[i % contractFamilies.length][0], service_tower: pick(["application support", "data operations", "clinical platform", "facilities", "cyber operations"]), business_service_ref: `BS-${pad((i % 70) + 1, 3)}`, story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
@@ -915,7 +918,7 @@ function buildRows() {
   }
   for (let i = 0; i < 1_800; i += 1) {
     const month = periodMonths[i % periodMonths.length];
-    add(specs["VENDOR_WORKFORCE_MONTHLY.csv"], { workforce_month_id: `VWF-${pad(i + 1, 5)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], role_title: pick(["analyst", "developer", "service manager", "data engineer", "architect"]), location_model: pick(["US", "nearshore", "offshore"]), contracted_pyramid_band: pick(["lead", "senior", "mid", "junior"]), billed_fte: money(0.5 + random() * 8), contracted_mix_pct: money(5 + random() * 25), billed_mix_pct: money(5 + random() * 35), period_start: month.start, period_end: month.end, story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
+    add(specs["VENDOR_WORKFORCE_MONTHLY.csv"], { workforce_month_id: `VWF-${pad(i + 1, 5)}`, contract_family_id: contractFamilies[i % contractFamilies.length][0], role_title: workforceRoles[i % workforceRoles.length], location_model: workforceLocations[i % workforceLocations.length], contracted_pyramid_band: pick(["lead", "senior", "mid", "junior"]), billed_fte: money(0.5 + random() * 8), contracted_mix_pct: money(5 + random() * 25), billed_mix_pct: money(5 + random() * 35), period_start: month.start, period_end: month.end, story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
   }
   for (let i = 0; i < 2_400; i += 1) {
     const month = periodMonths[i % periodMonths.length];
@@ -932,7 +935,7 @@ function buildRows() {
     const month = periodMonths[i % periodMonths.length];
     add(bpoSpecs["BPO_CURRENT_STATE_PROCESS_VOLUMES.csv"], { process_volume_id: `BPO-PV-${pad(i + 1, 5)}`, function_ref: functions[i % functions.length], process_name: pick(["invoice processing", "employee inquiry", "supplier onboarding", "purchase support", "shared service administration"]), monthly_volume: 500 + (i % 9000), current_sla: pick(["2 days", "5 days", "10 days"]), automation_opportunity: i % 3 === 0 ? "high" : "medium", period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[5] });
   }
-  for (let i = 0; i < 150; i += 1) add(bpoSpecs["BPO_CURRENT_STATE_WORKFORCE.csv"], { current_workforce_id: `BPO-WF-${pad(i + 1, 4)}`, function_ref: functions[i % functions.length], role_family: pick(["processor", "specialist", "supervisor", "manager"]), location_model: "US_internal", resource_count: 1, loaded_labor_cost_annual: money(82_000 + random() * 48_000), leadership_or_retained_org: i % 15 === 0 ? "retained_leadership" : "delivery_baseline", story_thread_ref: storyThreads[5] });
+  for (let i = 0; i < 150; i += 1) add(bpoSpecs["BPO_CURRENT_STATE_WORKFORCE.csv"], { current_workforce_id: `BPO-WF-${pad(i + 1, 4)}`, function_ref: functions[i % functions.length], role_family: pick(["processor", "specialist", "supervisor", "manager"]), location_model: "US_internal", normalized_location_model: "us_internal", resource_count: 1, loaded_labor_cost_annual: money(82_000 + random() * 48_000), leadership_or_retained_org: i % 15 === 0 ? "retained_leadership" : "delivery_baseline", story_thread_ref: storyThreads[5] });
   for (let i = 0; i < 360; i += 1) {
     const month = periodMonths[i % periodMonths.length];
     add(bpoSpecs["BPO_CURRENT_STATE_COST_BASELINE.csv"], { cost_baseline_id: `BPO-COST-${pad(i + 1, 5)}`, function_ref: functions[i % functions.length], labor_cost: money(240_000 + random() * 900_000), technology_cost: money(20_000 + random() * 120_000), controls_cost: money(10_000 + random() * 50_000), period_start: month.start, period_end: month.end, story_thread_ref: storyThreads[5] });
@@ -966,21 +969,37 @@ function buildQuestionBank(fileRows) {
   const chooseContract = (base, story, contractId, predicate = () => true) =>
     choose(base, (row) => row.story_thread_ref === story && (row.contract_family_id === contractId || row.contract_id === contractId) && predicate(row));
   const evidenceRows = byBase("EVIDENCE_SPANS.csv");
-  const evidenceFor = (story, plantedRows, spanTypes = []) => {
+  const rowValue = (row, key) => {
+    const aliases = {
+      contract_family_id: ["contract_family_id", "contract_id"],
+      contract_id: ["contract_id", "contract_family_id"],
+      application_id: ["application_id", "application_ref"],
+      application_ref: ["application_ref", "application_id"],
+      downstream_mart_id: ["downstream_mart_id", "mart_id"],
+      mart_id: ["mart_id", "downstream_mart_id"],
+    };
+    for (const field of aliases[key] || [key]) {
+      if (row[field]) return row[field];
+    }
+    return "";
+  };
+  const evidenceFor = (story, plantedRows, spanTypes = [], subjectTerms = []) => {
     const contractRefs = new Set(plantedRows.map((row) => row.contract_family_id || row.contract_id).filter(Boolean));
+    const subjectMatches = (candidate) => subjectTerms.length === 0 || subjectTerms.some((term) => String(candidate.evidence_subject || candidate.accepted_extraction || "").toLowerCase().includes(term.toLowerCase()));
     for (const row of plantedRows) {
       if (!row.evidence_ref) continue;
       const evidence = evidenceRows.find((candidate) => candidate.evidence_ref === row.evidence_ref);
-      if (evidence && evidence.story_thread_ref === story && (contractRefs.size === 0 || contractRefs.has(evidence.contract_family_id)) && (spanTypes.length === 0 || spanTypes.includes(evidence.span_type))) return evidence;
+      if (evidence && evidence.story_thread_ref === story && (contractRefs.size === 0 || contractRefs.has(evidence.contract_family_id)) && (spanTypes.length === 0 || spanTypes.includes(evidence.span_type)) && subjectMatches(evidence)) return evidence;
     }
     return evidenceRows.find((candidate) =>
       candidate.story_thread_ref === story &&
       (contractRefs.size === 0 || contractRefs.has(candidate.contract_family_id)) &&
-      (spanTypes.length === 0 || spanTypes.includes(candidate.span_type)),
+      (spanTypes.length === 0 || spanTypes.includes(candidate.span_type)) &&
+      subjectMatches(candidate),
     ) || evidenceRows.find((candidate) => candidate.story_thread_ref === story);
   };
-  const makeScenario = ({ domain, story, files, rows, measures, dimensions, grain, challenge, cube, predicate, evidenceTypes = [] }) => {
-    const evidence = evidenceFor(story, rows, evidenceTypes);
+  const makeScenario = ({ domain, story, files, rows, measures, dimensions, grain, challenge, cube, predicate, evidenceTypes = [], evidenceSubjectTerms = [], joinKeys = [], crossDomainRelationships = [] }) => {
+    const evidence = evidenceFor(story, rows, evidenceTypes, evidenceSubjectTerms);
     if (!evidence) throw new Error(`Unable to find aligned evidence for ${domain}`);
     return {
       domain,
@@ -995,6 +1014,9 @@ function buildQuestionBank(fileRows) {
       predicate,
       evidence_ref: evidence.evidence_ref,
       evidence_type: evidence.span_type,
+      evidence_subject_terms: evidenceSubjectTerms,
+      join_keys: joinKeys.filter((key) => rows.filter((record) => rowValue(record, key)).length > 1),
+      cross_domain_relationships: crossDomainRelationships,
     };
   };
   const scenarios = [
@@ -1013,6 +1035,8 @@ function buildQuestionBank(fileRows) {
       cube: "source_contract_economics",
       predicate: "rate_overbilling",
       evidenceTypes: ["pricing", "rate_card"],
+      evidenceSubjectTerms: ["managed-services", "rate-card", "contract economics"],
+      joinKeys: ["contract_family_id"],
     }),
     makeScenario({
       domain: "SLA service credits",
@@ -1029,6 +1053,8 @@ function buildQuestionBank(fileRows) {
       cube: "source_service_performance",
       predicate: "unclaimed_credit",
       evidenceTypes: ["sla"],
+      evidenceSubjectTerms: ["SLA", "service credits"],
+      joinKeys: ["contract_family_id"],
     }),
     makeScenario({
       domain: "Epic operational performance",
@@ -1045,15 +1071,18 @@ function buildQuestionBank(fileRows) {
       cube: "source_service_performance",
       predicate: "incident_or_backlog_pressure",
       evidenceTypes: ["scope", "sla"],
+      evidenceSubjectTerms: ["Epic", "SLA", "scope"],
+      joinKeys: ["contract_family_id"],
     }),
     makeScenario({
       domain: "Epic interface scope",
       story: storyThreads[1],
       files: ["EPIC_INTERFACE_INVENTORY.csv", "CONTRACT_SCOPE_RELATIONSHIPS.csv"],
-      rows: [
-        choose("EPIC_INTERFACE_INVENTORY.csv", (row) => row.story_thread_ref === storyThreads[1] && row.responsibility_state === "unresolved"),
-        chooseContract("CONTRACT_SCOPE_RELATIONSHIPS.csv", storyThreads[1], "CF-002", (row) => row.relationship_confidence === "inferred_requires_review"),
-      ],
+      rows: (() => {
+        const iface = choose("EPIC_INTERFACE_INVENTORY.csv", (row) => row.story_thread_ref === storyThreads[1] && row.responsibility_state === "unresolved");
+        const scope = chooseContract("CONTRACT_SCOPE_RELATIONSHIPS.csv", storyThreads[1], "CF-002", (row) => row.relationship_confidence === "inferred_requires_review");
+        return [iface, scope];
+      })(),
       measures: ["responsibility_state", "relationship_confidence"],
       dimensions: ["module_id", "application_id", "contract_family_id"],
       grain: "interface_contract_scope",
@@ -1061,6 +1090,8 @@ function buildQuestionBank(fileRows) {
       cube: "source_contract_scope",
       predicate: "unresolved_scope",
       evidenceTypes: ["scope"],
+      evidenceSubjectTerms: ["Epic", "scope"],
+      crossDomainRelationships: ["Unresolved interface inventory and contract scope relationship rows are same-story evidence for Epic scope triage; the source adapter must resolve the exact interface-service bridge in Phase B."],
     }),
     makeScenario({
       domain: "Workday SaaS usage",
@@ -1076,51 +1107,62 @@ function buildQuestionBank(fileRows) {
       challenge: "persistently underused Workday or workflow modules before renewal",
       cube: "source_saas_usage",
       predicate: "low_utilization",
+      evidenceSubjectTerms: ["Workday", "module usage"],
+      joinKeys: ["vendor_id"],
     }),
     makeScenario({
       domain: "Workday BPO dependency",
       story: storyThreads[5],
       files: ["WORKDAY_WORKER_ROLE_SUMMARY.csv", "BPO_CURRENT_STATE_WORKFORCE.csv"],
-      rows: [
-        choose("WORKDAY_WORKER_ROLE_SUMMARY.csv", (row) => row.story_thread_ref === storyThreads[5] && n(row.loaded_labor_cost) > 0),
-        choose("BPO_CURRENT_STATE_WORKFORCE.csv", (row) => row.story_thread_ref === storyThreads[5] && row.leadership_or_retained_org === "retained_leadership"),
-      ],
+      rows: (() => {
+        const retainedRole = choose("BPO_CURRENT_STATE_WORKFORCE.csv", (row) => row.story_thread_ref === storyThreads[5] && row.leadership_or_retained_org === "retained_leadership");
+        const workerSummary = choose("WORKDAY_WORKER_ROLE_SUMMARY.csv", (row) => row.story_thread_ref === storyThreads[5] && row.function_ref === retainedRole.function_ref && row.normalized_location_model === retainedRole.normalized_location_model && n(row.loaded_labor_cost) > 0);
+        return [workerSummary, retainedRole];
+      })(),
       measures: ["fte_count", "loaded_labor_cost", "loaded_labor_cost_annual"],
-      dimensions: ["function_ref", "role_family", "location_model"],
+      dimensions: ["function_ref", "role_family", "location_model", "normalized_location_model"],
       grain: "role_function_location",
       challenge: "internal roles that must be retained or transitioned in the BPO model",
       cube: "consumption_sourcing_bpo",
       predicate: "workforce_transition_cost",
+      evidenceSubjectTerms: ["BPO", "retained organization", "transition"],
+      joinKeys: ["function_ref", "normalized_location_model"],
     }),
     makeScenario({
       domain: "medical surgical procurement",
       story: storyThreads[3],
       files: ["LOCAL_HOSPITAL_PURCHASES.csv", "MEDSURG_ITEM_MASTER.csv"],
-      rows: [
-        choose("LOCAL_HOSPITAL_PURCHASES.csv", (row) => row.story_thread_ref === storyThreads[3] && row.purchase_channel === "off_contract_local"),
-        choose("MEDSURG_ITEM_MASTER.csv", (row) => row.story_thread_ref === storyThreads[3] && row.item_id === "ITEM-0001"),
-      ],
+      rows: (() => {
+        const purchase = choose("LOCAL_HOSPITAL_PURCHASES.csv", (row) => row.story_thread_ref === storyThreads[3] && row.purchase_channel === "off_contract_local");
+        const item = choose("MEDSURG_ITEM_MASTER.csv", (row) => row.story_thread_ref === storyThreads[3] && row.item_id === purchase.item_id);
+        return [purchase, item];
+      })(),
       measures: ["quantity", "unit_price"],
       dimensions: ["facility", "item_id", "purchase_channel"],
       grain: "facility_item_month",
       challenge: "facility-level off-contract medical/surgical purchasing",
       cube: "source_medsurg_procurement",
       predicate: "off_contract_purchase",
+      evidenceSubjectTerms: ["Medical surgical", "facility", "item"],
+      joinKeys: ["item_id"],
     }),
     makeScenario({
       domain: "medical surgical rebate",
       story: storyThreads[3],
       files: ["MEDSURG_REBATES_CREDITS.csv", "MEDSURG_PRICE_TIERS.csv"],
-      rows: [
-        choose("MEDSURG_REBATES_CREDITS.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.earned_rebate_amount) > n(row.reconciled_rebate_amount)),
-        choose("MEDSURG_PRICE_TIERS.csv", (row) => row.story_thread_ref === storyThreads[3]),
-      ],
+      rows: (() => {
+        const rebate = choose("MEDSURG_REBATES_CREDITS.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.earned_rebate_amount) > n(row.reconciled_rebate_amount));
+        const tier = choose("MEDSURG_PRICE_TIERS.csv", (row) => row.story_thread_ref === storyThreads[3] && row.facility === rebate.facility && row.category === rebate.category);
+        return [rebate, tier];
+      })(),
       measures: ["earned_rebate_amount", "reconciled_rebate_amount", "unit_price"],
       dimensions: ["facility", "category", "item_id"],
       grain: "facility_category_month",
       challenge: "earned medical/surgical rebates that remain unreconciled",
       cube: "source_medsurg_procurement",
       predicate: "rebate_gap",
+      evidenceSubjectTerms: ["Medical surgical", "rebate", "price-tier"],
+      joinKeys: ["facility", "category"],
     }),
     makeScenario({
       domain: "facilities EVS service",
@@ -1137,6 +1179,8 @@ function buildQuestionBank(fileRows) {
       cube: "source_service_performance",
       predicate: "service_credit_gap",
       evidenceTypes: ["sla"],
+      evidenceSubjectTerms: ["Facilities EVS", "service credits"],
+      joinKeys: ["contract_family_id", "service_ref", "period_start"],
     }),
     makeScenario({
       domain: "BPO normalized TCO",
@@ -1153,36 +1197,44 @@ function buildQuestionBank(fileRows) {
       cube: "consumption_sourcing_bpo",
       predicate: "normalized_tco_recommendation",
       evidenceTypes: ["transition", "pricing"],
+      evidenceSubjectTerms: ["BPO", "normalized TCO", "transition"],
+      joinKeys: ["supplier_id"],
     }),
     makeScenario({
       domain: "BPO supplier quality",
       story: storyThreads[5],
       files: ["BPO_SUPPLIER_RESPONSES.csv", "BPO_EVALUATION_SCORES.csv"],
-      rows: [
-        choose("BPO_SUPPLIER_RESPONSES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.response_state !== "meets"),
-        choose("BPO_EVALUATION_SCORES.csv", (row) => row.story_thread_ref === storyThreads[5] && n(row.score) < 4),
-      ],
+      rows: (() => {
+        const response = choose("BPO_SUPPLIER_RESPONSES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.response_state !== "meets");
+        const score = choose("BPO_EVALUATION_SCORES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.supplier_id === response.supplier_id && row.requirement_id === response.requirement_id);
+        return [response, score];
+      })(),
       measures: ["automation_commitment", "score", "weighted_score"],
       dimensions: ["supplier_id", "requirement_id", "evaluator_role"],
       grain: "supplier_requirement_evaluator",
       challenge: "BPO suppliers that trade headline price for weaker scope, controls or automation commitments",
       cube: "consumption_sourcing_bpo",
       predicate: "supplier_quality_tradeoff",
+      evidenceSubjectTerms: ["BPO", "supplier", "controls", "automation"],
+      joinKeys: ["supplier_id", "requirement_id"],
     }),
     makeScenario({
       domain: "BPO clarification risk",
       story: storyThreads[5],
       files: ["BPO_CLARIFICATIONS.csv", "BPO_BAFO_RESPONSES.csv"],
-      rows: [
-        choose("BPO_CLARIFICATIONS.csv", (row) => row.story_thread_ref === storyThreads[5] && row.status === "open"),
-        choose("BPO_BAFO_RESPONSES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.bafo_exception_state === "exception_remains"),
-      ],
+      rows: (() => {
+        const bafo = choose("BPO_BAFO_RESPONSES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.bafo_exception_state === "exception_remains");
+        const clarification = choose("BPO_CLARIFICATIONS.csv", (row) => row.story_thread_ref === storyThreads[5] && row.supplier_id === bafo.supplier_id && row.status === "open");
+        return [clarification, bafo];
+      })(),
       measures: ["bafo_service_fee", "bafo_exception_state"],
       dimensions: ["supplier_id", "requirement_id", "topic"],
       grain: "supplier_clarification_bafo",
       challenge: "BAFO exceptions that should block a lowest-price recommendation",
       cube: "consumption_sourcing_bpo",
       predicate: "bafo_exception",
+      evidenceSubjectTerms: ["BPO", "supplier", "pricing"],
+      joinKeys: ["supplier_id"],
     }),
     makeScenario({
       domain: "health plan analytics",
@@ -1198,6 +1250,8 @@ function buildQuestionBank(fileRows) {
       challenge: "health-plan analytics capabilities dependent on legacy marts or Epic data assets",
       cube: "source_data_platform",
       predicate: "legacy_dependency",
+      evidenceSubjectTerms: ["health-plan analytics", "legacy", "Epic Caboodle"],
+      joinKeys: ["downstream_mart_id"],
     }),
     makeScenario({
       domain: "legacy platform retirement",
@@ -1213,6 +1267,8 @@ function buildQuestionBank(fileRows) {
       challenge: "Hadoop or SAS workloads creating transition risk",
       cube: "source_data_platform",
       predicate: "legacy_dependency",
+      evidenceSubjectTerms: ["legacy", "Hadoop", "SAS"],
+      crossDomainRelationships: ["Hadoop workloads and SAS usage are separate legacy platform facts joined by the same modernization story thread for retirement sequencing."],
     }),
     makeScenario({
       domain: "cloud commitment readiness",
@@ -1228,6 +1284,8 @@ function buildQuestionBank(fileRows) {
       challenge: "AWS or Databricks commitments waiting on prerequisite decisions",
       cube: "source_cloud_commitments",
       predicate: "cloud_prerequisite",
+      evidenceSubjectTerms: ["AWS", "Databricks", "cloud"],
+      crossDomainRelationships: ["AWS and Databricks commitment scenarios are paired by the same cloud decision story thread rather than a single source-system key."],
     }),
     makeScenario({
       domain: "architecture dependency",
@@ -1243,6 +1301,8 @@ function buildQuestionBank(fileRows) {
       challenge: "architecture dependencies that sequence the transformation roadmap",
       cube: "source_architecture_dependencies",
       predicate: "architecture_sequence",
+      evidenceSubjectTerms: ["architecture", "dependency", "roadmap"],
+      crossDomainRelationships: ["Architecture dependencies and PMO dependencies are joined by the same roadmap sequencing decision thread."],
     }),
     makeScenario({
       domain: "risk control readiness",
@@ -1258,6 +1318,8 @@ function buildQuestionBank(fileRows) {
       challenge: "control gaps that must be resolved before BPO or platform decisions",
       cube: "source_risk_controls",
       predicate: "risk_control_gap",
+      evidenceSubjectTerms: ["health-plan analytics", "cloud", "architecture"],
+      crossDomainRelationships: ["BPO requirements are cross-domain control inputs for platform decision gating in this story thread."],
     }),
     makeScenario({
       domain: "vendor 360",
@@ -1275,6 +1337,8 @@ function buildQuestionBank(fileRows) {
       cube: "source_vendor_360",
       predicate: "vendor_scope_ambiguity",
       evidenceTypes: ["scope"],
+      evidenceSubjectTerms: ["managed-services", "scope"],
+      joinKeys: ["vendor_id", "contract_family_id"],
     }),
     makeScenario({
       domain: "renewal leverage",
@@ -1291,6 +1355,8 @@ function buildQuestionBank(fileRows) {
       cube: "source_contract_economics",
       predicate: "renewal_leverage",
       evidenceTypes: ["renewal", "termination"],
+      evidenceSubjectTerms: ["Epic", "renewal"],
+      joinKeys: ["contract_family_id"],
     }),
     makeScenario({
       domain: "evidence lineage",
@@ -1306,21 +1372,26 @@ function buildQuestionBank(fileRows) {
       challenge: "conclusions blocked by partial evidence or low extraction confidence",
       cube: "source_evidence_lineage",
       predicate: "evidence_blocker",
+      evidenceSubjectTerms: ["managed-services", "contract economics"],
+      joinKeys: ["document_ref", "contract_family_id"],
     }),
     makeScenario({
       domain: "purchase substitution",
       story: storyThreads[3],
       files: ["MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", "LOCAL_HOSPITAL_PURCHASES.csv"],
-      rows: [
-        choose("MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.incremental_cost) > 0 && n(row.substitution_count) > 0),
-        choose("LOCAL_HOSPITAL_PURCHASES.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.unit_price) > 0),
-      ],
+      rows: (() => {
+        const substitution = choose("MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.incremental_cost) > 0 && n(row.substitution_count) > 0);
+        const purchase = choose("LOCAL_HOSPITAL_PURCHASES.csv", (row) => row.story_thread_ref === storyThreads[3] && row.facility === substitution.facility && row.item_id === substitution.item_id && n(row.unit_price) > 0);
+        return [substitution, purchase];
+      })(),
       measures: ["backorder_count", "substitution_count", "incremental_cost", "unit_price"],
       dimensions: ["facility", "item_id", "period_start"],
       grain: "facility_item_month",
       challenge: "substitutions increasing cost in fragmented local procurement",
       cube: "source_medsurg_procurement",
       predicate: "substitution_cost",
+      evidenceSubjectTerms: ["Medical surgical", "substitution", "item"],
+      joinKeys: ["facility", "item_id", "period_start"],
     }),
     makeScenario({
       domain: "service backlog",
@@ -1337,15 +1408,18 @@ function buildQuestionBank(fileRows) {
       cube: "source_service_performance",
       predicate: "incident_or_backlog_pressure",
       evidenceTypes: ["sla"],
+      evidenceSubjectTerms: ["Epic", "SLA"],
+      joinKeys: ["contract_family_id", "service_ref", "period_start"],
     }),
     makeScenario({
       domain: "workforce pyramid",
       story: storyThreads[0],
       files: ["VENDOR_WORKFORCE_MONTHLY.csv", "CONTRACT_RATE_CARDS.csv"],
-      rows: [
-        chooseContract("VENDOR_WORKFORCE_MONTHLY.csv", storyThreads[0], "CF-001", (row) => n(row.billed_mix_pct) !== n(row.contracted_mix_pct)),
-        chooseContract("CONTRACT_RATE_CARDS.csv", storyThreads[0], "CF-001"),
-      ],
+      rows: (() => {
+        const workforce = chooseContract("VENDOR_WORKFORCE_MONTHLY.csv", storyThreads[0], "CF-001", (row) => n(row.billed_mix_pct) !== n(row.contracted_mix_pct));
+        const rateCard = chooseContract("CONTRACT_RATE_CARDS.csv", storyThreads[0], "CF-001", (row) => row.role_title === workforce.role_title && row.location_model === workforce.location_model);
+        return [workforce, rateCard];
+      })(),
       measures: ["billed_fte", "contracted_mix_pct", "billed_mix_pct", "contracted_rate"],
       dimensions: ["contract_family_id", "role_title", "location_model"],
       grain: "role_location_month",
@@ -1353,21 +1427,26 @@ function buildQuestionBank(fileRows) {
       cube: "source_workforce_rate_card",
       predicate: "workforce_mix_variance",
       evidenceTypes: ["rate_card"],
+      evidenceSubjectTerms: ["managed-services", "rate-card"],
+      joinKeys: ["contract_family_id", "role_title", "location_model"],
     }),
     makeScenario({
       domain: "payments reconciliation",
       story: storyThreads[2],
       files: ["WORKDAY_PAYMENTS.csv", "WORKDAY_SUPPLIER_INVOICES.csv"],
-      rows: [
-        choose("WORKDAY_PAYMENTS.csv", (row) => row.story_thread_ref === storyThreads[2] && row.vendor_id === "VND-003" && n(row.payment_amount) > 0),
-        chooseContract("WORKDAY_SUPPLIER_INVOICES.csv", storyThreads[2], "CF-003", (row) => n(row.line_amount) > 0),
-      ],
+      rows: (() => {
+        const payment = choose("WORKDAY_PAYMENTS.csv", (row) => row.story_thread_ref === storyThreads[2] && row.vendor_id === "VND-003" && n(row.payment_amount) > 0);
+        const invoice = chooseContract("WORKDAY_SUPPLIER_INVOICES.csv", storyThreads[2], "CF-003", (row) => row.invoice_id === payment.invoice_id && n(row.line_amount) > 0);
+        return [payment, invoice];
+      })(),
       measures: ["payment_amount", "line_amount"],
       dimensions: ["vendor_id", "invoice_id", "period_start"],
       grain: "invoice_payment",
       challenge: "payment and invoice totals needing reconciliation before finance conclusions",
       cube: "source_financial_reconciliation",
       predicate: "finance_reconciliation_gap",
+      evidenceSubjectTerms: ["Workday", "invoice", "payment"],
+      joinKeys: ["vendor_id", "invoice_id"],
     }),
     makeScenario({
       domain: "BPO current baseline",
@@ -1383,6 +1462,8 @@ function buildQuestionBank(fileRows) {
       challenge: "current-state processes with the largest BPO baseline cost and volume exposure",
       cube: "consumption_sourcing_bpo",
       predicate: "bpo_baseline_exposure",
+      evidenceSubjectTerms: ["BPO", "baseline"],
+      joinKeys: ["function_ref", "period_start"],
     }),
     makeScenario({
       domain: "SaaS low usage",
@@ -1398,6 +1479,8 @@ function buildQuestionBank(fileRows) {
       challenge: "licensed SaaS modules that should be challenged before renewal",
       cube: "source_saas_usage",
       predicate: "low_utilization",
+      evidenceSubjectTerms: ["Workday", "module usage"],
+      joinKeys: ["vendor_id"],
     }),
     makeScenario({
       domain: "program sequencing",
@@ -1413,6 +1496,8 @@ function buildQuestionBank(fileRows) {
       challenge: "roadmap decisions that must precede cloud commitment approval",
       cube: "source_program_roadmap",
       predicate: "architecture_sequence",
+      evidenceSubjectTerms: ["cloud", "architecture", "dependency"],
+      crossDomainRelationships: ["PMO initiative dependencies and cloud commitment scenarios are joined by prerequisite decision context in the roadmap story thread."],
     }),
     makeScenario({
       domain: "quality guardrail",
@@ -1428,21 +1513,26 @@ function buildQuestionBank(fileRows) {
       challenge: "risk guardrails lacking evidence strong enough for executive claims",
       cube: "source_risk_evidence",
       predicate: "evidence_blocker",
+      evidenceSubjectTerms: ["health-plan analytics", "cloud", "risk"],
+      crossDomainRelationships: ["Risk observations and evidence spans are joined by the same audit guardrail story thread."],
     }),
     makeScenario({
       domain: "contract document completeness",
-      story: storyThreads[6],
+      story: storyThreads[0],
       files: ["CONTRACT_INSTRUMENTS.csv", "EVIDENCE_SPANS.csv"],
-      rows: [
-        chooseContract("CONTRACT_INSTRUMENTS.csv", storyThreads[6], "CF-006"),
-        choose("EVIDENCE_SPANS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.contract_family_id === "CF-006" && row.review_state === "audit_ready"),
-      ],
+      rows: (() => {
+        const evidence = choose("EVIDENCE_SPANS.csv", (row) => row.story_thread_ref === storyThreads[0] && row.contract_family_id === "CF-001" && row.review_state === "audit_ready" && row.evidence_state !== "document_unavailable_context_only");
+        const instrument = chooseContract("CONTRACT_INSTRUMENTS.csv", storyThreads[0], "CF-001", (row) => row.document_ref === evidence.document_ref);
+        return [instrument, evidence];
+      })(),
       measures: ["extraction_confidence", "review_state"],
       dimensions: ["instrument_type", "document_ref", "contract_family_id"],
       grain: "instrument_evidence",
       challenge: "contract instruments with enough evidence for pricing, SLA and exit analysis",
       cube: "source_evidence_lineage",
       predicate: "document_complete",
+      evidenceSubjectTerms: ["managed-services", "contract economics"],
+      joinKeys: ["document_ref", "contract_family_id"],
     }),
     makeScenario({
       domain: "supplier invitation coverage",
@@ -1458,6 +1548,8 @@ function buildQuestionBank(fileRows) {
       challenge: "invited suppliers covering critical BPO requirements",
       cube: "consumption_sourcing_bpo",
       predicate: "supplier_requirement_coverage",
+      evidenceSubjectTerms: ["BPO", "supplier"],
+      crossDomainRelationships: ["Supplier invitations and RFP requirements define event coverage together even though one row is supplier-grain and the other is requirement-grain."],
     }),
   ];
   const angleTemplates = [
@@ -1495,6 +1587,8 @@ function buildQuestionBank(fileRows) {
       acceptance_rule: `Pass if planted records satisfy predicate ${scenario.predicate} and align to the mapped evidence.`,
       story_thread_ref: scenario.story,
       question_predicate: scenario.predicate,
+      planted_source_join_keys: scenario.join_keys,
+      expected_evidence_subject_terms: scenario.evidence_subject_terms,
     });
     coverage.push({
       question_id: qidFixed,
@@ -1503,8 +1597,13 @@ function buildQuestionBank(fileRows) {
       planted_scenario_records: scenario.records,
       evidence_refs: [scenario.evidence_ref],
       expected_evidence_span_types: [scenario.evidence_type],
+      expected_evidence_subject_terms: scenario.evidence_subject_terms,
+      planted_source_join_keys: scenario.join_keys,
       question_predicate: scenario.predicate,
-      cross_domain_relationships: scenario.story === storyThreads[6] && scenario.files.includes("BPO_RFP_REQUIREMENTS.csv") ? ["BPO_RFP_REQUIREMENTS.csv is cross-domain control evidence for platform/BPO decision gating."] : [],
+      cross_domain_relationships: [
+        ...scenario.cross_domain_relationships,
+        ...(scenario.story === storyThreads[6] && scenario.files.includes("BPO_RFP_REQUIREMENTS.csv") ? ["BPO_RFP_REQUIREMENTS.csv is cross-domain control evidence for platform/BPO decision gating."] : []),
+      ],
       cube_view: scenario.cube,
       drill_members: ["tenant_key", "dataset_id", ...scenario.dimensions.slice(0, 4)],
       expected_answer: "Tenant-scoped, evidence-cited, audit-only answer.",
@@ -1647,12 +1746,35 @@ function questionsForRole(role, count, domain) {
   return questions;
 }
 
+function evidenceSubjectFor(contract, spanType) {
+  if (contract[5] === storyThreads[5]) {
+    return `Back-office BPO sourcing ${spanType} evidence for supplier scope, controls, transition, retained organization, pricing and normalized TCO.`;
+  }
+  if (contract[5] === storyThreads[6]) {
+    return `Health-plan analytics and cloud ${spanType} evidence for AWS, Databricks, legacy Hadoop, SAS, Epic Caboodle and architecture dependency decisions.`;
+  }
+  if (contract[5] === storyThreads[3]) {
+    return `Medical surgical procurement ${spanType} evidence for facility, item, category, price-tier, rebate and substitution analysis.`;
+  }
+  if (contract[5] === storyThreads[1]) {
+    return `Epic operational performance ${spanType} evidence for service scope, interface responsibility, SLA and renewal review.`;
+  }
+  if (contract[5] === storyThreads[2]) {
+    return `Workday SaaS and finance ${spanType} evidence for supplier, invoice, payment, module usage and BPO dependency review.`;
+  }
+  if (contract[5] === storyThreads[4]) {
+    return `Facilities EVS ${spanType} evidence for service-level performance, penalties and unclaimed service credits.`;
+  }
+  return `Analytics managed-services ${spanType} evidence for rate-card, SLA, scope, invoice and contract economics review.`;
+}
+
 function buildEvidenceRows() {
   const rows = [];
   for (let i = 0; i < 16_000; i += 1) {
     const contract = i % 7 === 5
       ? ["", "Back-Office BPO Sourcing Event", "", 0, "tier_1_full_evidence", storyThreads[5]]
       : contractFamilies[i % contractFamilies.length];
+    const spanType = pick(["pricing", "rate_card", "sla", "renewal", "termination", "scope", "security", "transition"]);
     rows.push(common({
       path: "contract_and_evidence_corpus/EVIDENCE_SPANS.csv",
       sourceSystem: "SharePoint Contract Repository",
@@ -1665,7 +1787,8 @@ function buildEvidenceRows() {
       document_ref: `DOC-${pad((i % 30) + 1, 3)}`,
       contract_family_id: contract[0],
       page_or_section: `section_${(i % 40) + 1}`,
-      span_type: pick(["pricing", "rate_card", "sla", "renewal", "termination", "scope", "security", "transition"]),
+      span_type: spanType,
+      evidence_subject: evidenceSubjectFor(contract, spanType),
       accepted_extraction: `Synthetic aggregate clause extraction ${i + 1} for ${contract[1]}.`,
       extraction_confidence: pick(["high", "medium"]),
       evidence_state: contract[4] === "tier_3_context_only" ? "document_unavailable_context_only" : "synthetic_evidence_available",

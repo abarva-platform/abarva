@@ -108,6 +108,26 @@
     {
       "defect": "source and evidence records exist but do not join",
       "expected_failure": "source_evidence_join_mismatch"
+    },
+    {
+      "defect": "same story different BPO supplier",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "same contract different invoice",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "same domain different item and facility",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "same contract different document reference",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "correct span type with unrelated evidence subject",
+      "expected_failure": "mapped_evidence_subject_mismatch"
     }
   ]
 }
