@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column. Follow-up hardening adds chunked deletes for large tables, scoped trigger overrides for immutable audit-style tables, child-first semantic delete ordering, staged commit mode for large purge runs, targeted purge indexes for large scoped tables, and smaller compact proof output that can be extracted from ACA logs.
+This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column. Follow-up hardening adds chunked deletes for large tables, scoped trigger overrides for immutable audit-style tables, child-first semantic delete ordering, staged commit mode for large purge runs, targeted purge indexes for large scoped tables, smaller compact proof output that can be extracted from ACA logs, and final-only deletion of client registry rows so staged passes do not lose the client-id scope they still need for later counts.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 
 ## Changes Included
 
-- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, targeted purge indexes, chunked large-table deletes, scoped trigger overrides for known immutable audit tables, staged table-level commits with partial-progress proof, compact structured proof output, and an explicit `--atomic` fallback for the earlier all-or-nothing transaction behavior.
+- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, targeted purge indexes, chunked large-table deletes, scoped trigger overrides for known immutable audit tables, staged table-level commits with partial-progress proof, compact structured proof output, preserved run-level client-id scope, final-only client registry deletion, and an explicit `--atomic` fallback for the earlier all-or-nothing transaction behavior.
 - `package.json`: adds dry-run/apply npm entries for the row purge and changes the old data-layer apply script to use `--apply` directly.
 
 ## QA / Validation
@@ -48,7 +48,8 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: a later apply attempt failed closed with eight pending tables. This patch adds child-first ordering for semantic tables, smaller delete chunks, a scoped reference clear for retired move artifacts referenced by deliverables, all-user trigger overrides for program audit tables, and a longer per-statement timeout for large semantic deletes.
 - PASS: a later apply attempt reached the ACA execution timeout without a structured blocker list and restored the private operator job to idle. This patch changes the default apply strategy to staged commits with bounded per-operation chunks and final proof fields for `completed`, `budgetExhausted`, and remaining pending rows.
 - PASS: a staged apply attempt committed partial progress but remained too slow and emitted compact proof too large for tail extraction. This patch adds targeted expression indexes for large scoped tables, shorter per-operation statement timeout, smaller delete chunks, progress events, and a 20-row cap for compact pending proof.
-- NOT RUN in this PR revision: indexed staged destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
+- PASS: indexed staged apply through the private operator committed partial progress, reduced retired residue from 138 tables to 10 tables, and restored the operator to idle, but a follow-up aggressive pass exposed that client registry rows must not be deleted before all other scoped rows are gone. This patch preserves the initial client-id scope for the whole run and defers client registry deletion until it is the only remaining scoped operation.
+- NOT RUN in this PR revision: final-only-client-delete destructive apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan
 
