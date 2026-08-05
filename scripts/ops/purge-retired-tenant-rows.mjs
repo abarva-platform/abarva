@@ -141,6 +141,7 @@ function renderWhere(operation, alias, params) {
       const join = condition.childColumns
         .map((childColumn, index) => `${aliasIdent(alias, childColumn)} = ${aliasIdent(parentAlias, condition.parentColumns[index])}`)
         .join(" and ");
+      if (!join) return "false";
       return `exists (select 1 from ${qualified(condition.parentSchema, condition.parentTable)} as ${quoteIdent(parentAlias)} where ${join} and (${renderWhere(condition.parentOperation, parentAlias, params)}))`;
     }
     throw new Error(`Unknown purge condition type: ${condition.type}`);
@@ -216,7 +217,7 @@ async function getForeignKeys(client) {
     ...row,
     child_columns: Array.isArray(row.child_columns) ? row.child_columns : [],
     parent_columns: Array.isArray(row.parent_columns) ? row.parent_columns : [],
-  }));
+  })).filter((row) => row.child_columns.length > 0 && row.child_columns.length === row.parent_columns.length);
 }
 
 async function resolveClientIds(client) {
