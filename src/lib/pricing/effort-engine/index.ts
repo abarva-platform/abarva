@@ -15,6 +15,7 @@ export * from "./archetypes";
 export * from "./activity-packs";
 export * from "./rate-card-resolver";
 export * from "./moves-rate-selection";
+export * from "./moves-pricing-reference-pack";
 export * from "./range-policy";
 export * from "./scenarios";
 export * from "./cost-engine";
