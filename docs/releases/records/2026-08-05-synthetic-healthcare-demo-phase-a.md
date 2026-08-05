@@ -31,6 +31,7 @@ Feature flag: not applicable.
 
 - `scripts/source/build-phs-healthcare-demo-package.mjs`
 - `scripts/source/validate-phs-healthcare-demo-package.mjs`
+- `scripts/source/plan-phs-healthcare-demo-data-layers.mjs`
 - `scripts/source/fixtures/phs-healthcare-demo/canary-defects.json`
 - `docs/source/PHS_HEALTHCARE_DEMO_PHASE_A_PACKAGE.md`
 - `docs/source/PHS_HEALTHCARE_DEMO_MODEL_FIT_AUDIT.md`
@@ -51,6 +52,9 @@ Passed: offline validation report records 32 corrupted canaries, 32 passed, 0 va
 Passed: semantic readback found 180/180 questions with aligned planted source records, 180/180 with aligned evidence refs and 180/180 with both source and evidence aligned.
 Passed: independent join audit found zero mismatches for BPO supplier quality, BAFO exception, med-surg rebate, purchase substitution, workforce pyramid, payments reconciliation, contract document completeness and workforce transition cost.
 Passed: field/source map readback found 608 rows, zero missing generated native fields and one explicit `client_native_field_to_confirm` marker.
+Passed: `node --check scripts/source/plan-phs-healthcare-demo-data-layers.mjs`.
+Passed: `npm run source:phs-healthcare-demo:data-layer-plan -- --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z --out-dir /Users/anand/Downloads`.
+Passed: data-layer plan ZIP SHA-256 attestation matches `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T214902Z.zip`.
 
 ## Rollout Plan
 
@@ -76,6 +80,9 @@ Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary ou
 Proof ZIP SHA-256: `95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da`.
 Proof ZIP SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip.sha256`.
 Latest generated counts: 70,497 structured rows; 39 source-system extract CSVs; 38 required core source extracts; 12 optional health-plan outcome snapshot rows; 16,000 evidence spans; 180 hard questions; 30 interview roles; 44 enterprise outcomes/KPI map records; 71 CDAO questions.
+Latest non-mutating data-layer plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T214902Z.zip`.
+Data-layer plan ZIP SHA-256: `124b4d6aae69e7cfc42f635e2bc29b9e24b1d5b9263c5d81b4a5e101628af847`.
+Layer 1 planned counts: 39 source files; 50,597 source records; 1,519,811 source field values; mutation executed: false.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
 ## Known Gaps

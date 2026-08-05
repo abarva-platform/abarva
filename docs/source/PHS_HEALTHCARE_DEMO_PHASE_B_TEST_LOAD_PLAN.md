@@ -30,7 +30,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 
 1. Review the Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
 2. Add approved tenant bootstrap and additive migrations through the governed lab lane.
-3. Implement a PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and its 40 `source_system_extracts/*.csv` files; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
+3. Implement a PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and its approved `source_system_extracts/*.csv` files; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
 4. Run source-volume plan mode and produce a file, row, field and hash manifest with no database connection.
 5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
@@ -40,6 +40,29 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
 11. Run cross-tenant isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant requests block with no fallback.
 12. Keep `activation_state=staged` and stop again for approval.
+
+## Layer 0 And Layer 1 Plan Output
+
+The non-mutating plan command is:
+
+```bash
+npm run source:phs-healthcare-demo:data-layer-plan -- \
+  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z \
+  --out-dir /Users/anand/Downloads
+```
+
+Latest plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T214902Z.zip`
+Latest plan SHA-256: `124b4d6aae69e7cfc42f635e2bc29b9e24b1d5b9263c5d81b4a5e101628af847`
+
+Latest plan counts:
+
+- Source files: 39
+- Required core source extracts: 38
+- Optional health-plan outcome snapshot rows: 12
+- Source records: 50,597
+- Source field values: 1,519,811
+- Restricted detailed health-plan extracts present: 0
+- Mutation executed: false
 
 ## Non-Negotiable Stops
 

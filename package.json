@@ -655,6 +655,7 @@
     "source:v4:synthetic-package:build": "node scripts/source/build-skyharbor-v4-synthetic-package.mjs",
     "source:phs-healthcare-demo:build": "node scripts/source/build-phs-healthcare-demo-package.mjs",
     "source:phs-healthcare-demo:validate": "node scripts/source/validate-phs-healthcare-demo-package.mjs",
+    "source:phs-healthcare-demo:data-layer-plan": "node scripts/source/plan-phs-healthcare-demo-data-layers.mjs",
     "source:v4:row-depth:verify": "node scripts/source/verify-skyharbor-v4-row-depth.mjs",
     "source:v4:lab-canary:plan": "node scripts/source/load-skyharbor-v4-lab-canary.mjs",
     "source:v4:lab-canary:apply": "node scripts/source/load-skyharbor-v4-lab-canary.mjs --apply",
