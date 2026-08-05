@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Agents need signed-in browser state to crawl client workspaces after Clerk gates private routes. This runbook creates one local Playwright `storageState` file per client/persona so crawlers can run without shared passwords, copied browser cookies, or cross-client access.
+Agents need signed-in browser state to crawl client workspaces after Clerk gates private routes. This runbook creates one local Playwright `storageState` file per active automation persona so crawlers can run without shared passwords, copied browser cookies, or cross-client access.
 
 ## Security Rules
 
-- Use one Clerk user per client/persona.
+- Use one Clerk user per active client/persona.
 - Never use a multi-client account for buyer/demo crawls.
 - Never commit `.auth/*.json`; those files contain live Clerk `__session` cookies.
 - Never place real personal phone numbers, OTPs, or private email/cell credentials in repo files.
@@ -16,14 +16,9 @@ Agents need signed-in browser state to crawl client workspaces after Clerk gates
 
 | Persona key | Client | Email | Storage state |
 | --- | --- | --- | --- |
-| `apexretail-cio` | Apex Retail Group | `cio@apex-retail.example.com` | `.auth/agent-apexretail-cio.json` |
-| `meridian-cdao` | Meridian Health System | `cdao@meridian-health.example.com` | `.auth/agent-meridian-cdao.json` |
-| `firstcapital-cio` | First Capital | `cio@firstcapital.example.com` | `.auth/agent-firstcapital-cio.json` |
-| `northstar-cio` | Northstar Clinical Technologies | `cio@northstar-clinical.example.com` | `.auth/agent-northstar-cio.json` |
-| `skyharbor-cto` | SkyHarbor Air | `cto@skyharbor-air.example.com` | `.auth/agent-skyharbor-cto.json` |
-| `skyharbor-admin` | SkyHarbor Air | `admin@skyharbor-air.example.com` | `.auth/agent-skyharbor-admin.json` |
-| `lakeshore-cfo` | Lakeshore Holdings | `cfo@lakeshore-holdings.example.com` | `.auth/agent-lakeshore-cfo.json` |
-| `lakeshore-cio` | Lakeshore Holdings | `cio@lakeshore-holdings.example.com` | `.auth/agent-lakeshore-cio.json` |
+| `agent-skyharbor` | Airline Demo | `skyharbor-agent@abarva.example.com` | `.auth/agent-skyharbor.json` |
+
+Retired demo tenants are intentionally absent from the automation roster. Recreate them only through the governed new-template onboarding flow, not by restoring old crawl personas.
 
 ## Prerequisites
 
@@ -35,11 +30,8 @@ Run from the repo root with a local `.env.local` containing:
 The target app must be reachable at `BASE_URL` and must have the corresponding Clerk users provisioned. If a user is missing, provision the canonical persona first:
 
 ```bash
-npx tsx scripts/provision-cxo-personas.ts --client lakeshore --clerk-only --apply
 npx tsx scripts/provision-cxo-personas.ts --client skyharbor --clerk-only --apply
 ```
-
-Use `--client meridian`, `--client apexretail`, or another supported client when provisioning other clients.
 
 For CI or other automated browser runs against Clerk bot protection, provide a secret capable of minting Clerk testing tokens:
 
@@ -65,15 +57,13 @@ BASE_URL=http://localhost:3000 npm run auth:agent-client-states -- --refresh
 Prime one client against production:
 
 ```bash
-BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --client lakeshore --refresh
-BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --client meridian --refresh
 BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --client skyharbor --refresh
 ```
 
 Prime one exact persona:
 
 ```bash
-BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --persona meridian-cdao --refresh
+BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --persona agent-skyharbor --refresh
 ```
 
 The script writes:
@@ -86,10 +76,10 @@ The script writes:
 ```ts
 import { test, expect } from '@playwright/test';
 
-test.use({ storageState: '.auth/agent-meridian-cdao.json' });
+test.use({ storageState: '.auth/agent-skyharbor.json' });
 
-test('crawl Meridian signed-in pages', async ({ page }) => {
-  await page.goto('/home?client=meridian');
+test('crawl Airline Demo signed-in pages', async ({ page }) => {
+  await page.goto('/home?client=skyharbor');
   await expect(page).not.toHaveURL(/sign-in/);
 });
 ```
@@ -122,8 +112,8 @@ test('crawl Meridian signed-in pages', async ({ page }) => {
 Refresh one persona:
 
 ```bash
-rm .auth/agent-meridian-cdao.json
-BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --persona meridian-cdao
+rm .auth/agent-skyharbor.json
+BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --persona agent-skyharbor
 ```
 
 Remove all local crawl auth:

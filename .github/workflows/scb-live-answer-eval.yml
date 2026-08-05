@@ -9,7 +9,7 @@ on:
         required: true
       persona:
         description: Agent crawl persona key
-        default: agent-meridian
+        default: agent-skyharbor
         required: true
       limit:
         description: Number of live-answer cases to run

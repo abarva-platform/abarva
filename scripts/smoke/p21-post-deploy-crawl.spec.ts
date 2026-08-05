@@ -16,22 +16,25 @@ import {
   resolveCrawlSurfaces,
 } from '../../src/lib/crawl/persona-switcher';
 
-assert.equal(CRAWL_PERSONAS.length, 5);
+assert.equal(CRAWL_PERSONAS.length, 1);
+assert.deepEqual(CRAWL_PERSONAS.map((persona) => persona.key), ['agent-skyharbor']);
 assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-northstar'), false);
-assert.equal(resolveCrawlPersonas('agent-apexretail')[0]?.tenantName, 'Retail Demo');
-assert.equal(resolveCrawlPersonas('agent-meridian')[0]?.tenantName, 'Healthcare Demo');
-assert.equal(resolveCrawlPersonas('agent-firstcapital')[0]?.tenantName, 'FS Demo');
+assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-apexretail'), false);
+assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-meridian'), false);
+assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-firstcapital'), false);
+assert.equal(CRAWL_PERSONAS.some((persona) => persona.key === 'agent-lakeshore'), false);
+assert.equal(resolveCrawlPersonas('agent-skyharbor')[0]?.tenantName, 'Airline Demo');
 assert.ok(PRIMARY_CRAWL_SURFACES.length >= 22);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
 assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);
 assert.equal(resolveCrawlQuestions('phs-meridian').length, 50);
 assert.equal(resolveCrawlQuestions('unknown').length, 10);
-assert.deepEqual(resolveCrawlPersonas('agent-apexretail').map((persona) => persona.key), ['agent-apexretail']);
+assert.deepEqual(resolveCrawlPersonas('agent-apexretail').map((persona) => persona.key), []);
 assert.equal(resolveCrawlSurfaces().some((surface) => surface.id === 'context-demo'), false);
 assert.deepEqual(resolveCrawlSurfaces('context-demo'), []);
 assert.deepEqual(
-  resolveCrawlPersonas('agent-meridian').map((persona) => persona.email),
-  ['meridian-agent@abarva.example.com'],
+  resolveCrawlPersonas('agent-skyharbor').map((persona) => persona.email),
+  ['skyharbor-agent@abarva.example.com'],
 );
 const postDeployWorkflow = fs.readFileSync('.github/workflows/post-deploy-crawl.yml', 'utf8');
 const postDeployHarness = fs.readFileSync('scripts/crawl/post-deploy-harness.ts', 'utf8');

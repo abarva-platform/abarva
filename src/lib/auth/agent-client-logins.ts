@@ -1,4 +1,4 @@
-// Agent client logins — one dedicated AUTOMATION identity per client tenant.
+// Agent client logins — one dedicated AUTOMATION identity per active client tenant.
 //
 // Purpose: durable, password-less per-tenant accounts that the signed-in proof
 // harness (scripts/auth/prime-agent-client-auth-states.ts) and the post-deploy
@@ -24,96 +24,8 @@
 
 import type { CxoPersona } from './cxo-personas';
 
-/** One automation agent per client tenant. clientKey is the canonical app key. */
+/** One automation agent per active client tenant. clientKey is the canonical app key. */
 export const AGENT_CLIENT_LOGINS: ReadonlyArray<CxoPersona> = [
-  {
-    slug: 'agent-apexretail',
-    email: 'apexretail-agent@abarva.example.com',
-    shortLabel: 'agent@apex',
-    firstName: 'Ava',
-    lastName: 'Agent',
-    personaName: 'Ava · Apex Retail (agent)',
-    monogram: 'AV',
-    titleShort: 'AGENT',
-    titleFull: 'AbarVa automation agent',
-    tenant: 'Apex Retail Group',
-    clientKey: 'apexretail',
-    tenantKey: 'apex-retail',
-    authRole: 'maestro',
-    graphNodeId: 'person:agent:apexretail',
-    monogramBg: '#C2410C',
-    bioShort: 'Automation account — signed-in proofs & crawl for Apex Retail.',
-    bioLong:
-      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the Apex Retail tenant via Clerk sign-in tokens (no password). Not a real person.',
-    workspaceTeaser:
-      'Used to verify Apex Retail surfaces (Intelligence / Tower / Source / Moves) render and ground correctly under a real signed-in session.',
-  },
-  {
-    slug: 'agent-meridian',
-    email: 'meridian-agent@abarva.example.com',
-    shortLabel: 'agent@meridian',
-    firstName: 'Ava',
-    lastName: 'Agent',
-    personaName: 'Ava · Meridian Health (agent)',
-    monogram: 'AV',
-    titleShort: 'AGENT',
-    titleFull: 'AbarVa automation agent',
-    tenant: 'Meridian Health System',
-    clientKey: 'meridian',
-    tenantKey: 'meridian-health',
-    authRole: 'maestro',
-    graphNodeId: 'person:agent:meridian',
-    monogramBg: '#0F766E',
-    bioShort: 'Automation account — signed-in proofs & crawl for Meridian Health.',
-    bioLong:
-      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the Meridian Health tenant via Clerk sign-in tokens (no password). Not a real person.',
-    workspaceTeaser:
-      'Used to verify Meridian Health surfaces render and ground correctly under a real signed-in session.',
-  },
-  {
-    slug: 'agent-firstcapital',
-    email: 'arcturus-agent@abarva.example.com',
-    shortLabel: 'agent@firstcapital',
-    firstName: 'Ava',
-    lastName: 'Agent',
-    personaName: 'Ava · First Capital (agent)',
-    monogram: 'AV',
-    titleShort: 'AGENT',
-    titleFull: 'AbarVa automation agent',
-    tenant: 'First Capital',
-    clientKey: 'arcturus',
-    tenantKey: 'firstcapital',
-    authRole: 'maestro',
-    graphNodeId: 'person:agent:arcturus',
-    monogramBg: '#1D4F8C',
-    bioShort: 'Automation account — signed-in proofs & crawl for First Capital.',
-    bioLong:
-      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the First Capital tenant (clientKey arcturus) via Clerk sign-in tokens (no password). Not a real person.',
-    workspaceTeaser:
-      'Used to verify First Capital surfaces (notably the Tower context_projection vs synthetic-fallback) under a real signed-in session.',
-  },
-  {
-    slug: 'agent-northstar',
-    email: 'northstar-agent@abarva.example.com',
-    shortLabel: 'agent@northstar',
-    firstName: 'Ava',
-    lastName: 'Agent',
-    personaName: 'Ava · Northstar (agent)',
-    monogram: 'AV',
-    titleShort: 'AGENT',
-    titleFull: 'AbarVa automation agent',
-    tenant: 'Northstar Clinical Technologies',
-    clientKey: 'northstar',
-    tenantKey: 'northstar-clinical',
-    authRole: 'maestro',
-    graphNodeId: 'person:agent:northstar',
-    monogramBg: '#6D28D9',
-    bioShort: 'Automation account — signed-in proofs & crawl for Northstar.',
-    bioLong:
-      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the Northstar Clinical Technologies tenant via Clerk sign-in tokens (no password). Not a real person.',
-    workspaceTeaser:
-      'Used to verify Northstar surfaces render and ground correctly under a real signed-in session.',
-  },
   {
     slug: 'agent-skyharbor',
     email: 'skyharbor-agent@abarva.example.com',
@@ -126,7 +38,7 @@ export const AGENT_CLIENT_LOGINS: ReadonlyArray<CxoPersona> = [
     titleFull: 'AbarVa automation agent',
     tenant: 'Airline Demo',
     clientKey: 'skyharbor',
-    tenantKey: 'skyharbor-air',
+    tenantKey: 'skyharbor_global',
     authRole: 'maestro',
     graphNodeId: 'person:agent:skyharbor',
     monogramBg: '#0369A1',
@@ -135,28 +47,6 @@ export const AGENT_CLIENT_LOGINS: ReadonlyArray<CxoPersona> = [
       'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the Airline Demo tenant via Clerk sign-in tokens (no password). Not a real person.',
     workspaceTeaser:
       'Used to verify Airline Demo surfaces render and ground correctly under a real signed-in session.',
-  },
-  {
-    slug: 'agent-lakeshore',
-    email: 'lakeshore-agent@abarva.example.com',
-    shortLabel: 'agent@lakeshore',
-    firstName: 'Ava',
-    lastName: 'Agent',
-    personaName: 'Ava · Lakeshore Holdings (agent)',
-    monogram: 'AV',
-    titleShort: 'AGENT',
-    titleFull: 'AbarVa automation agent',
-    tenant: 'Lakeshore Holdings',
-    clientKey: 'lakeshore',
-    tenantKey: 'lakeshore-holdings',
-    authRole: 'maestro',
-    graphNodeId: 'person:agent:lakeshore',
-    monogramBg: '#374151',
-    bioShort: 'Automation account — signed-in proofs & crawl for Lakeshore Holdings.',
-    bioLong:
-      'Non-human automation identity used by the signed-in proof harness and the post-deploy crawl/gauntlet to authenticate as the Lakeshore Holdings tenant via Clerk sign-in tokens (no password). Not a real person.',
-    workspaceTeaser:
-      'Used to verify Lakeshore Holdings surfaces (notably tenant isolation — no Apex leakage) under a real signed-in session.',
   },
 ];
 

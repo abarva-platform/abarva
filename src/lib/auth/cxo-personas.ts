@@ -49,6 +49,7 @@ export interface CxoPersona {
     | 'firstcapital'
     | 'northstar-clinical'
     | 'skyharbor-air'
+    | 'skyharbor_global'
     | 'lakeshore-holdings';
   /** Clerk publicMetadata.role override for demo operations accounts. */
   authRole?: 'maestro' | 'admin';
