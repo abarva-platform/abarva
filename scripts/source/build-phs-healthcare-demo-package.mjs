@@ -118,8 +118,7 @@ const sourceFileSpecs = [
   ["EPIC_MODULE_INVENTORY.csv", "clinical_platforms", "Epic", "Module Inventory", "module", "module_id"],
   ["EPIC_INTERFACE_INVENTORY.csv", "clinical_platforms", "Epic Bridges", "Interface Inventory", "interface", "interface_id"],
   ["CLARITY_CABOODLE_ASSET_INVENTORY.csv", "analytics_platforms", "Epic Clarity Caboodle", "Data Asset Inventory", "asset", "asset_id"],
-  ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "health_plan_operations", "Payer Claims Enrollment Analytics", "Claims Enrollment Monthly Aggregate", "plan_market_month", "claims_enrollment_month_id"],
-  ["STARS_HEDIS_MEASURE_PERFORMANCE.csv", "quality_stars_risk", "Stars HEDIS Quality Platform", "Measure Performance Monthly Aggregate", "measure_market_month", "measure_month_id"],
+  ["HEALTH_PLAN_OUTCOME_SNAPSHOT.csv", "optional_health_plan_outcomes", "Health Plan Strategy Scorecard", "Aggregate Outcome Snapshot", "aggregate_outcome", "health_plan_outcome_snapshot_id"],
   ["HADOOP_CLUSTER_WORKLOADS.csv", "analytics_platforms", "Hadoop Inventory", "Cluster Workload", "workload", "workload_id"],
   ["SQL_SERVER_DATA_MARTS.csv", "analytics_platforms", "SQL Server Inventory", "Data Mart", "data_mart", "mart_id"],
   ["SAS_APPLICATIONS_AND_USERS.csv", "analytics_platforms", "SAS Platform Inventory", "SAS Application Usage", "application_month", "sas_usage_id"],
@@ -818,15 +817,19 @@ function buildRows() {
   const medCategories = ["gloves", "syringes", "wound care", "lab consumable", "procedure kit"];
   const workforceRoles = ["developer", "analyst", "architect", "service manager", "operations specialist"];
   const workforceLocations = ["US", "nearshore", "offshore"];
-  const payerMarkets = ["New Mexico", "West Texas", "Colorado Front Range", "Arizona Corridor", "Virtual Care"];
-  const planProducts = ["Medicare Advantage", "Commercial", "Medicaid Managed Care", "ACO Shared Risk", "Exchange"];
-  const qualityMeasures = [
-    ["QM-001", "Medication adherence diabetes", "stars"],
-    ["QM-002", "Controlling blood pressure", "hedis"],
-    ["QM-003", "Breast cancer screening", "hedis"],
-    ["QM-004", "Plan all-cause readmissions", "hedis"],
-    ["QM-005", "CAHPS care coordination", "stars"],
-    ["QM-006", "Medication reconciliation post discharge", "quality"],
+  const healthPlanOutcomeSnapshots = [
+    ["Overall Stars rating", "quality_outcome", "4.0", "4.5", "stable", "Quality and Stars office", "reported_aggregate", "not_attested"],
+    ["Priority care-gap closure", "quality_driver", "selected measures improving", "sustained improvement", "improving", "Quality and Stars office", "reported_aggregate", "not_attested"],
+    ["Member experience stability", "experience_outcome", "watch", "improve", "flat", "Health plan operations", "reported_aggregate", "not_attested"],
+    ["Plan analytics data freshness", "data_driver", "monthly refresh", "weekly refresh", "improving", "Plan analytics owner", "synthetic_demo_placeholder", "not_attested"],
+    ["Risk-adjustment documentation readiness", "risk_guardrail", "requires validation", "controlled", "watch", "Compliance risk owner", "reported_aggregate", "not_attested"],
+    ["Regulated reporting control readiness", "risk_guardrail", "partial", "ready", "watch", "Compliance risk owner", "reported_aggregate", "not_attested"],
+    ["Population-health dashboard trust", "data_quality_indicator", "mixed confidence", "trusted for decisions", "improving", "VP Plan Analytics Population Health", "synthetic_demo_placeholder", "not_attested"],
+    ["Plan operating backlog visibility", "operational_indicator", "manual reconciliation", "automated view", "watch", "Health plan operations", "synthetic_demo_placeholder", "not_attested"],
+    ["Value-based care reporting alignment", "enterprise_linkage", "relationship candidate", "source-backed linkage", "watch", "Enterprise strategy sponsor", "reported_aggregate", "not_attested"],
+    ["Quality outcome evidence readiness", "evidence_readiness", "aggregate snapshot only", "source-approved detail if authorized", "stable", "Quality and Stars office", "reported_aggregate", "not_attested"],
+    ["Payer data sharing approval state", "approval_gate", "not approved for detailed load", "explicit approval required", "stable", "Data governance owner", "governance_attestation_needed", "not_attested"],
+    ["Plan outcome investment linkage", "decision_linkage", "directional relationship", "validated linkage", "watch", "Transformation Strategy Executive", "reported_aggregate", "not_attested"],
   ];
   const applications = Array.from({ length: 180 }, (_, i) => `APP-${pad(i + 1, 4)}`);
   const services = Array.from({ length: 220 }, (_, i) => `CI-${pad(i + 1, 4)}`);
@@ -909,47 +912,25 @@ function buildRows() {
   for (let i = 0; i < 34; i += 1) add(specs["EPIC_MODULE_INVENTORY.csv"], { module_id: `EPIC-MOD-${pad(i + 1, 3)}`, module_name: pick(["Resolute", "Cadence", "Prelude", "Willow", "Clarity", "Caboodle", "Bridges"]), support_scope_state: i % 6 === 0 ? "overlap_requires_resolution" : "explicit", contract_family_id: "CF-002", story_thread_ref: storyThreads[1] });
   for (let i = 0; i < 240; i += 1) add(specs["EPIC_INTERFACE_INVENTORY.csv"], { interface_id: `EPIC-IF-${pad(i + 1, 4)}`, module_id: `EPIC-MOD-${pad((i % 34) + 1, 3)}`, application_id: applications[i % applications.length], interface_type: pick(["HL7", "FHIR", "batch", "API"]), responsibility_state: i % 9 === 0 ? "unresolved" : "explicit", story_thread_ref: storyThreads[1] });
   for (let i = 0; i < 180; i += 1) add(specs["CLARITY_CABOODLE_ASSET_INVENTORY.csv"], { asset_id: `EC-ASSET-${pad(i + 1, 4)}`, platform: pick(["Clarity", "Caboodle"]), reporting_domain: pick(["clinical quality", "population health", "finance", "operations"]), downstream_mart_id: `MART-${pad((i % 140) + 1, 4)}`, story_thread_ref: storyThreads[6] });
-  for (let i = 0; i < 720; i += 1) {
-    const month = periodMonths[i % periodMonths.length];
-    const productLine = planProducts[i % planProducts.length];
-    const market = payerMarkets[Math.floor(i / planProducts.length) % payerMarkets.length];
-    add(specs["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv"], {
-      claims_enrollment_month_id: `PAY-CE-${pad(i + 1, 5)}`,
-      product_line: productLine,
-      market,
-      member_months: 4_500 + (i % 7) * 325 + Math.floor(random() * 600),
-      claim_count: 1_200 + (i % 11) * 75 + Math.floor(random() * 160),
-      allowed_amount: money(650_000 + random() * 1_900_000),
-      paid_amount: money(540_000 + random() * 1_620_000),
-      denied_claim_count: 15 + (i % 21),
-      risk_adjustment_gap_count: 30 + (i % 70),
-      data_freshness_days: 2 + (i % 18),
-      period_start: month.start,
-      period_end: month.end,
-      story_thread_ref: storyThreads[6],
-    });
-  }
-  for (let i = 0; i < 720; i += 1) {
-    const month = periodMonths[i % periodMonths.length];
-    const [measureId, measureName, measurePortfolio] = qualityMeasures[i % qualityMeasures.length];
-    const observedRate = money(0.62 + random() * 0.28);
-    const targetRate = money(0.78 + (i % 4) * 0.03);
-    add(specs["STARS_HEDIS_MEASURE_PERFORMANCE.csv"], {
-      measure_month_id: `QMS-${pad(i + 1, 5)}`,
-      measure_id: measureId,
-      measure_name: measureName,
-      measure_portfolio: measurePortfolio,
-      product_line: planProducts[i % planProducts.length],
-      market: payerMarkets[i % payerMarkets.length],
-      numerator_count: 420 + (i % 180),
-      denominator_count: 650 + (i % 260),
-      observed_rate: observedRate,
-      target_rate: targetRate,
-      gap_to_target: money(targetRate - observedRate),
-      data_freshness_days: 1 + (i % 14),
-      source_refresh_state: i % 9 === 0 ? "stale_extract_requires_followup" : "current_synthetic_monthly_extract",
-      period_start: month.start,
-      period_end: month.end,
+  for (let i = 0; i < healthPlanOutcomeSnapshots.length; i += 1) {
+    const [outcomeName, category, currentValue, targetValue, trendState, ownerRole, evidenceStatus, attestationStatus] = healthPlanOutcomeSnapshots[i];
+    add(specs["HEALTH_PLAN_OUTCOME_SNAPSHOT.csv"], {
+      health_plan_outcome_snapshot_id: `HPO-${pad(i + 1, 3)}`,
+      outcome_name: outcomeName,
+      outcome_category: category,
+      current_value_optional: currentValue,
+      target_value_optional: targetValue,
+      trend_state: trendState,
+      measurement_period: "aggregate planning snapshot",
+      data_owner_role: ownerRole,
+      evidence_status: evidenceStatus,
+      attestation_status: attestationStatus,
+      decision_linkage: "Directional enterprise outcome context only; detailed plan data requires client approval.",
+      sensitivity_classification: "optional_restricted_aggregate",
+      source_grain: "one row per aggregate outcome",
+      source_quality_state: "optional_domain_snapshot_synthetic",
+      period_start: EXPECTED.historyStart,
+      period_end: EXPECTED.historyEnd,
       story_thread_ref: storyThreads[6],
     });
   }
@@ -1905,16 +1886,16 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 - Dataset id: ${EXPECTED.datasetId}
 - Dataset version: ${EXPECTED.datasetVersion}
 - Activation target: staged only
-- Source-system CSV extracts: ${EXPECTED.sourceSystemExtractCsvs}
+- Source-system CSV extracts: required core files plus approved optional domain snapshots
 - Required package state: generated_not_loaded
-- Required proof: ZIP SHA-256, package manifest, validation report and 40-file source extract count.
+- Required proof: ZIP SHA-256, package manifest, validation report, core-source completeness and optional-domain readiness gates.
 
 ## Planned Lab Data Layers
 
 1. Layer 0 package proof: verify proof ZIP SHA-256, source ZIP integrity, package manifest counts and validator canaries.
-2. Layer 1 raw source landing: land source releases, 40 source files, source records and source field values with tenant_key, dataset_id, dataset_version, as_of_date, row hash and source URI.
+2. Layer 1 raw source landing: land source releases, approved source files, source records and source field values with tenant_key, dataset_id, dataset_version, as_of_date, row hash and source URI.
 3. Layer 2 source adapters: transform each source-owner/native extract into adapter outputs without forcing the client into AbarVa canonical templates.
-4. Layer 3 canonical candidates: stage vendor, contract, spend, service, application, platform, claim/enrollment, quality, evidence and sourcing candidates with lineage and confidence.
+4. Layer 3 canonical candidates: stage vendor, contract, spend, service, application, platform, optional aggregate outcome, evidence and sourcing candidates with lineage and confidence.
 5. Layer 3 model-fit deltas: apply only approved additive objects or nullable fields after review of model-fit gaps.
 6. Layer 4 read models: build Source, Tower, Home, Intelligence, Moves and aVa projections from canonical candidates; no product reads Layer 1 files directly.
 7. Analytics runtime: refresh Cube only in the isolated lab, with securityContext including tenant_key, dataset_id, dataset_version and as_of_date.
@@ -1930,7 +1911,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
 7. Run independent reader verify and compare exact source-release/file/record/field/gate counts.
 8. Run source adapters and canonical-candidate staging in separate jobs with independent plan, preflight, apply and verify proof.
-9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, claims/enrollment aggregates, Stars/HEDIS measures, BPO normalized TCO and evidence counts.
+9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, optional aggregate health-plan outcome snapshots, BPO normalized TCO and evidence counts.
 10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
 11. Run isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant blocks with no fallback.
 12. Keep activation_state=staged and stop again for approval.

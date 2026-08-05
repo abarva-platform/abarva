@@ -32,9 +32,9 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 
 ## Generated Counts From Latest Local Run
 
-- Structured rows: 71,925
+- Structured rows: 70,497
 - Evidence spans: 16,000
-- Source-system extract CSVs: 40
+- Source-system extract CSVs: 39 total; 38 required core enterprise extracts plus one lightweight optional health-plan outcome snapshot
 - Vendors: 10
 - Existing contract families: 6
 - Legal instruments: 24
@@ -45,11 +45,11 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Enterprise outcomes/KPI map records: 44
 - CDAO questions: 71
 
-Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip`
-Latest corrected proof SHA-256: `a93bd23ed798016ff5849ea1d66a1dddffb621aefbaa77d1d20b88a62b1aa44b`
-Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip.sha256`
+Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`
+Latest corrected proof SHA-256: `95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da`
+Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip.sha256`
 
-Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains 608 rows, with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator now also requires exactly 40 source-system extract CSVs and the latest package includes `PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv` and `STARS_HEDIS_MEASURE_PERFORMANCE.csv` for healthcare plan and quality source coverage.
+Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains 608 rows, with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator requires all core enterprise source extracts, blocks detailed payer claims/enrollment and detailed Stars/HEDIS operational files from the core package, and allows only a small aggregate `HEALTH_PLAN_OUTCOME_SNAPSHOT.csv` optional domain file unless a future client explicitly approves deeper health-plan data.
 
 ## Public Repository Discipline
 

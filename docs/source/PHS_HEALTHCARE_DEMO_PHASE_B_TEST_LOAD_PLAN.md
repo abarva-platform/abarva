@@ -10,17 +10,17 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 - Dataset id: `phs-health-source-v1-202608`
 - Dataset version: `v1`
 - Activation target: `staged`
-- Source-system extract CSVs: 40
+- Source-system extract CSVs: required core enterprise extracts plus approved optional domain snapshots
 - Required package state: `generated_not_loaded`
-- Latest Phase A proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip`
-- Latest proof SHA-256: `a93bd23ed798016ff5849ea1d66a1dddffb621aefbaa77d1d20b88a62b1aa44b`
+- Latest Phase A proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`
+- Latest proof SHA-256: `95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da`
 
 ## Planned Data Layers
 
-1. Layer 0 package proof: verify proof ZIP SHA-256, source ZIP integrity, package manifest counts, validator output, canary output and the 40-file source extract count.
-2. Layer 1 raw source landing: land source release, 40 source files, source records and source field values with tenant key, dataset id, dataset version, as-of date, row hash and source URI.
+1. Layer 0 package proof: verify proof ZIP SHA-256, source ZIP integrity, package manifest counts, validator output, canary output, core-source completeness and optional-domain readiness.
+2. Layer 1 raw source landing: land source release, approved source files, source records and source field values with tenant key, dataset id, dataset version, as-of date, row hash and source URI.
 3. Layer 2 source adapters: transform each source-owner/native extract into adapter outputs without forcing client intake into AbarVa canonical templates.
-4. Layer 3 canonical candidates: stage vendor, contract, spend, service, application, platform, claims/enrollment, Stars/HEDIS, evidence and sourcing candidates with lineage and confidence.
+4. Layer 3 canonical candidates: stage vendor, contract, spend, service, application, platform, optional aggregate outcome, evidence and sourcing candidates with lineage and confidence.
 5. Layer 3 model-fit deltas: apply only reviewed additive tables, nullable fields or projections required by the model-fit audit.
 6. Layer 4 read models: build Source, Tower, Home, Intelligence, Moves and aVa projections from canonical candidates; no product reads Layer 1 files directly.
 7. Analytics runtime: refresh Cube only in the isolated lab with security context including tenant key, dataset id, dataset version and as-of date.
@@ -36,7 +36,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
 7. Run independent reader verify and compare exact source-release, file, record, field and gate counts.
 8. Run source adapters and canonical-candidate staging as separate plan, preflight, apply and verify jobs.
-9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, claims/enrollment aggregates, Stars/HEDIS measures, BPO normalized TCO and evidence counts.
+9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, optional aggregate health-plan outcome snapshots, BPO normalized TCO and evidence counts.
 10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
 11. Run cross-tenant isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant requests block with no fallback.
 12. Keep `activation_state=staged` and stop again for approval.

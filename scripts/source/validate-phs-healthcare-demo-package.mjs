@@ -17,7 +17,6 @@ export const EXPECTED = {
   maxStructuredRows: 75_000,
   minEvidenceSpans: 15_000,
   maxEvidenceSpans: 30_000,
-  sourceSystemExtractCsvs: 40,
   minQuestions: 150,
   targetQuestions: 180,
   minInterviewQuestions: 20,
@@ -58,6 +57,54 @@ const REQUIRED_STORY_THREADS = new Set([
   "bpo_normalized_tco_not_lowest_price",
   "health_plan_analytics_and_cloud_decisions",
 ]);
+
+const REQUIRED_CORE_SOURCE_EXTRACTS = new Set([
+  "WORKDAY_SUPPLIERS.csv",
+  "WORKDAY_SUPPLIER_INVOICES.csv",
+  "WORKDAY_PAYMENTS.csv",
+  "WORKDAY_COST_CENTERS.csv",
+  "WORKDAY_SPEND_CATEGORIES.csv",
+  "WORKDAY_WORKER_ROLE_SUMMARY.csv",
+  "LOCAL_HOSPITAL_PURCHASES.csv",
+  "MEDSURG_ITEM_MASTER.csv",
+  "MEDSURG_PRICE_TIERS.csv",
+  "MEDSURG_BACKORDERS_SUBSTITUTIONS.csv",
+  "MEDSURG_REBATES_CREDITS.csv",
+  "CONTRACT_REGISTER.csv",
+  "CONTRACT_INSTRUMENTS.csv",
+  "CONTRACT_AMENDMENTS.csv",
+  "CONTRACT_RATE_CARDS.csv",
+  "CONTRACT_SLA_TERMS.csv",
+  "CONTRACT_RENEWAL_EXIT_TERMS.csv",
+  "SERVICENOW_VENDOR_SERVICES.csv",
+  "SERVICENOW_CMDB_APPLICATIONS.csv",
+  "SERVICENOW_CSDM_BUSINESS_SERVICES.csv",
+  "SERVICENOW_MONTHLY_ITSM_SUMMARY.csv",
+  "SERVICENOW_MONTHLY_SLA_SUMMARY.csv",
+  "SERVICENOW_SERVICE_CREDITS.csv",
+  "EPIC_MODULE_INVENTORY.csv",
+  "EPIC_INTERFACE_INVENTORY.csv",
+  "CLARITY_CABOODLE_ASSET_INVENTORY.csv",
+  "HADOOP_CLUSTER_WORKLOADS.csv",
+  "SQL_SERVER_DATA_MARTS.csv",
+  "SAS_APPLICATIONS_AND_USERS.csv",
+  "ANALYTICS_PLATFORM_DEPENDENCIES.csv",
+  "SAAS_MODULE_USAGE_MONTHLY.csv",
+  "AWS_TARGET_COMMITMENT_SCENARIOS.csv",
+  "DATABRICKS_TARGET_COMMITMENT_SCENARIOS.csv",
+  "VENDOR_WORKFORCE_MONTHLY.csv",
+  "VENDOR_RATE_CARD_INVOICES.csv",
+  "CONTRACT_SCOPE_RELATIONSHIPS.csv",
+  "PROGRAMS_INITIATIVES_DEPENDENCIES.csv",
+  "RISK_CONTROL_OBSERVATIONS.csv",
+]);
+
+const RESTRICTED_DETAIL_SOURCE_EXTRACTS = new Set([
+  "PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv",
+  "STARS_HEDIS_MEASURE_PERFORMANCE.csv",
+]);
+
+const OPTIONAL_HEALTH_PLAN_SNAPSHOT = "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv";
 
 const REQUIRED_INTERVIEW_ROLES = new Set([
   "CIO",
@@ -964,13 +1011,28 @@ function validateManifestContract(failures, manifest, seen) {
       count: manifest.counts?.evidence_spans,
     });
   }
-  const sourceExtractCsvs = asArray(manifest.file_contracts).filter(
+  const sourceExtractContracts = asArray(manifest.file_contracts).filter(
     (contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv",
-  ).length;
-  if (sourceExtractCsvs !== EXPECTED.sourceSystemExtractCsvs) {
-    issue(failures, "source_system_extract_count_mismatch", "PHS tenant source-system extract count must match the lab-ready source corpus contract", {
-      expected: EXPECTED.sourceSystemExtractCsvs,
-      actual: sourceExtractCsvs,
+  );
+  const sourceExtractBasenames = new Set(sourceExtractContracts.map((contract) => basename(contract.path)));
+  for (const requiredFile of REQUIRED_CORE_SOURCE_EXTRACTS) {
+    if (!sourceExtractBasenames.has(requiredFile)) {
+      issue(failures, "missing_core_source_extract", "required core source-system extract is missing", {
+        file: requiredFile,
+      });
+    }
+  }
+  for (const restrictedFile of RESTRICTED_DETAIL_SOURCE_EXTRACTS) {
+    if (sourceExtractBasenames.has(restrictedFile)) {
+      issue(failures, "restricted_detail_source_extract_present", "detailed health-plan operational extracts must stay out of the core Phase A package unless separately approved", {
+        file: restrictedFile,
+      });
+    }
+  }
+  if (sourceExtractContracts.length < REQUIRED_CORE_SOURCE_EXTRACTS.size) {
+    issue(failures, "source_system_core_extract_count_below_required", "source-system extract set is smaller than the required core enterprise package", {
+      required_core_extracts: REQUIRED_CORE_SOURCE_EXTRACTS.size,
+      actual: sourceExtractContracts.length,
     });
   }
   validateOutcomeMapContract(failures, manifest);
@@ -986,6 +1048,60 @@ function validateManifestContract(failures, manifest, seen) {
   }
   if (!seen.periodEnds.has(EXPECTED.historyEnd)) {
     issue(failures, "missing_24_month_end", "24-month coverage end is absent");
+  }
+}
+
+function validateOptionalDomainExtracts(failures, indexes) {
+  const snapshotRows = indexes.rowsByBasename.get(OPTIONAL_HEALTH_PLAN_SNAPSHOT) || [];
+  if (snapshotRows.length === 0) return;
+  if (snapshotRows.length > 25) {
+    issue(failures, "optional_health_plan_snapshot_too_detailed", "optional health-plan outcome snapshot must stay lightweight and aggregate-only", {
+      file: OPTIONAL_HEALTH_PLAN_SNAPSHOT,
+      rows: snapshotRows.length,
+      max_rows: 25,
+    });
+  }
+  const columns = indexes.columnsByBasename.get(OPTIONAL_HEALTH_PLAN_SNAPSHOT) || new Set();
+  for (const requiredColumn of [
+    "health_plan_outcome_snapshot_id",
+    "outcome_name",
+    "outcome_category",
+    "current_value_optional",
+    "target_value_optional",
+    "trend_state",
+    "measurement_period",
+    "data_owner_role",
+    "evidence_status",
+    "attestation_status",
+    "decision_linkage",
+    "sensitivity_classification",
+  ]) {
+    if (!columns.has(requiredColumn)) {
+      issue(failures, "optional_health_plan_snapshot_missing_field", "optional health-plan outcome snapshot is missing an aggregate governance field", {
+        file: OPTIONAL_HEALTH_PLAN_SNAPSHOT,
+        field: requiredColumn,
+      });
+    }
+  }
+  for (const restrictedColumn of [
+    "member_months",
+    "claim_count",
+    "allowed_amount",
+    "paid_amount",
+    "denied_claim_count",
+    "risk_adjustment_gap_count",
+    "numerator_count",
+    "denominator_count",
+    "observed_rate",
+    "target_rate",
+    "gap_to_target",
+  ]) {
+    if (columns.has(restrictedColumn)) {
+      issue(failures, "restricted_health_plan_operational_field_present", "optional health-plan snapshot must not include detailed claims, enrollment or measure-performance operational fields", {
+        file: OPTIONAL_HEALTH_PLAN_SNAPSHOT,
+        field: restrictedColumn,
+      });
+    }
   }
 }
 
@@ -1098,6 +1214,7 @@ export async function validatePackage(packageDir) {
     });
   }
   validateManifestContract(failures, manifest, seen);
+  validateOptionalDomainExtracts(failures, indexes);
   validateWorkbookOutcomeTab(failures, packageDir);
   validateWorkbookQuality(failures, packageDir);
   validateFieldSourceMap(failures, packageDir, indexes);
@@ -1122,6 +1239,8 @@ export async function validatePackage(packageDir) {
       sourceSystemExtractCsvs: asArray(manifest.file_contracts).filter(
         (contract) => String(contract.path || "").startsWith("source_system_extracts/") && contract.format === "csv",
       ).length,
+      coreSourceExtracts: REQUIRED_CORE_SOURCE_EXTRACTS.size,
+      optionalHealthPlanOutcomeSnapshotRows: (indexes.rowsByBasename.get(OPTIONAL_HEALTH_PLAN_SNAPSHOT) || []).length,
       uniqueRowHashes: seen.rowHashes.size,
       storyThreads: Array.from(seen.storyThreads).sort(),
       evidenceStates: Array.from(seen.evidenceStates).sort(),
@@ -1307,6 +1426,41 @@ export async function validateCorruptedCanaries(packageDir) {
         manifest.file_contracts[0].source_system = "";
         await writeJsonFile(manifestPath, manifest);
       },
+    },
+    {
+      defect: "restricted detailed health-plan extract in core package",
+      expected_failure: "restricted_detail_source_extract_present",
+      inject: async (root) => {
+        const manifestPath = path.join(root, "phs_healthcare_demo_package_manifest.json");
+        const manifest = await readJson(manifestPath);
+        const snapshotContract = (manifest.file_contracts || []).find((candidate) => basename(candidate.path) === OPTIONAL_HEALTH_PLAN_SNAPSHOT);
+        if (!snapshotContract) throw new Error("Optional health-plan snapshot contract not found");
+        const restrictedPath = "source_system_extracts/PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv";
+        await fs.copyFile(path.join(root, snapshotContract.path), path.join(root, restrictedPath));
+        manifest.file_contracts.push({
+          ...snapshotContract,
+          path: restrictedPath,
+          source_system: "Payer Claims Enrollment Analytics",
+          source_object: "Claims Enrollment Monthly Aggregate",
+        });
+        manifest.counts_by_file[restrictedPath] = snapshotContract.expected_rows;
+        await writeJsonFile(manifestPath, manifest);
+      },
+    },
+    {
+      defect: "optional health-plan snapshot too detailed",
+      expected_failure: "optional_health_plan_snapshot_too_detailed",
+      inject: (root) => mutateCsv(root, OPTIONAL_HEALTH_PLAN_SNAPSHOT, (rows) => {
+        while (rows.length < 26) {
+          const nextId = `HPO-X-${String(rows.length + 1).padStart(3, "0")}`;
+          rows.push({
+            ...rows[0],
+            health_plan_outcome_snapshot_id: nextId,
+            source_record_id: nextId,
+            source_record_url_or_path: `source://${EXPECTED.tenantKey}/${EXPECTED.datasetId}/source_system_extracts/${OPTIONAL_HEALTH_PLAN_SNAPSHOT}/${nextId}`,
+          });
+        }
+      }),
     },
     {
       defect: "missing required story domain",

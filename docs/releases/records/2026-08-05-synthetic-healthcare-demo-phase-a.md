@@ -13,7 +13,7 @@
 Adds a dependency-free audit-only generator and validator for a synthetic healthcare demo package. The reusable repo code emits the large package into Downloads and keeps generated data out of git.
 It also uses one lightweight enterprise outcomes/KPI map tab instead of separate value-driver or KPI catalog workbooks.
 This correction hardens the Phase A audit gate so structural volume alone is insufficient: outcome-map substance, hard-question lineage, semantic predicates, planted source join keys, evidence subject relevance, field/source guidance, workbook usability and corrupted canaries must now pass before the package is audit-ready.
-The latest correction completes the tenant source-system extract corpus at 40 CSV files by adding healthcare-native payer claims/enrollment and Stars/HEDIS measure-performance extracts, then makes that count a validator invariant. It also expands the designed-only Phase B plan into a lab data-layer population sequence while preserving the hard stop before any load.
+The latest correction removes the arbitrary 40-file requirement, drops detailed payer claims/enrollment and Stars/HEDIS operational extracts from the core package, and replaces them with a small optional aggregate health-plan outcome snapshot. The validator now requires core-source completeness, blocks those detailed health-plan files in the Phase A core package, and checks optional-domain readiness without making sensitive health-plan data a prerequisite.
 
 ## Layer Impact
 
@@ -42,12 +42,12 @@ Feature flag: not applicable.
 
 Passed: `node --check scripts/source/build-phs-healthcare-demo-package.mjs && node --check scripts/source/validate-phs-healthcare-demo-package.mjs`.
 Passed: `node scripts/source/build-phs-healthcare-demo-package.mjs --out-dir /Users/anand/Downloads`.
-Passed: `node scripts/source/validate-phs-healthcare-demo-package.mjs --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T185307Z`.
-Passed: `unzip -t /Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip`.
-Passed: source-system extract readback found exactly 40 CSV files, including `PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv` and `STARS_HEDIS_MEASURE_PERFORMANCE.csv`.
-Passed: SHA-256 attestation matches `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip`.
+Passed: `node scripts/source/validate-phs-healthcare-demo-package.mjs --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z`.
+Passed: `unzip -t /Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`.
+Passed: source-system extract readback found all required core enterprise extracts plus optional `HEALTH_PLAN_OUTCOME_SNAPSHOT.csv`; detailed payer claims/enrollment and detailed Stars/HEDIS extracts are absent.
+Passed: SHA-256 attestation matches `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`.
 Passed: workbook inspection found exactly one `ENTERPRISE_OUTCOMES_AND_KPI_MAP` tab, no separate KPI/value-driver/dependency-tree tabs and 36 total sheets.
-Passed: offline validation report records 30 corrupted canaries, 30 passed, 0 validation failures.
+Passed: offline validation report records 32 corrupted canaries, 32 passed, 0 validation failures.
 Passed: semantic readback found 180/180 questions with aligned planted source records, 180/180 with aligned evidence refs and 180/180 with both source and evidence aligned.
 Passed: independent join audit found zero mismatches for BPO supplier quality, BAFO exception, med-surg rebate, purchase substitution, workforce pyramid, payments reconciliation, contract document completeness and workforce transition cost.
 Passed: field/source map readback found 608 rows, zero missing generated native fields and one explicit `client_native_field_to_confirm` marker.
@@ -72,10 +72,10 @@ Revert the generator, validator, fixtures, docs and npm scripts. Generated Downl
 
 ## Audit Evidence
 
-Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary outputs and hard-stop statement produced by the generator. The latest local proof ZIP is `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip`.
-Proof ZIP SHA-256: `a93bd23ed798016ff5849ea1d66a1dddffb621aefbaa77d1d20b88a62b1aa44b`.
-Proof ZIP SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T185307Z.zip.sha256`.
-Latest generated counts: 71,925 structured rows; 40 source-system extract CSVs; 16,000 evidence spans; 180 hard questions; 30 interview roles; 44 enterprise outcomes/KPI map records; 71 CDAO questions.
+Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary outputs and hard-stop statement produced by the generator. The latest local proof ZIP is `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip`.
+Proof ZIP SHA-256: `95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da`.
+Proof ZIP SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T214256Z.zip.sha256`.
+Latest generated counts: 70,497 structured rows; 39 source-system extract CSVs; 38 required core source extracts; 12 optional health-plan outcome snapshot rows; 16,000 evidence spans; 180 hard questions; 30 interview roles; 44 enterprise outcomes/KPI map records; 71 CDAO questions.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
 ## Known Gaps
