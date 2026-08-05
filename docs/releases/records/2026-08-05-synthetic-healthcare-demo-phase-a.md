@@ -18,6 +18,7 @@ The latest correction removes the arbitrary 40-file requirement, drops detailed 
 ## Layer Impact
 
 Layer 1 client intake lane: creates source-owner-shaped workbooks and source-system-shaped synthetic extracts for audit. Layer 2 adapter lane: documents future adapter expectations but does not execute adapters. Layer 3 canonical lane: records candidate model-fit gaps only. Layer 4 product lane: no product runtime or projection is changed.
+The latest update adds an executable Layer 1 source-volume loader with `self-test`, `plan`, `preflight`, `apply` and `verify` modes. It remains gated: plan and self-test are local only, while apply requires an approved proof SHA and an ACA data-build job context.
 
 ## Client Applicability
 
@@ -32,6 +33,7 @@ Feature flag: not applicable.
 - `scripts/source/build-phs-healthcare-demo-package.mjs`
 - `scripts/source/validate-phs-healthcare-demo-package.mjs`
 - `scripts/source/plan-phs-healthcare-demo-data-layers.mjs`
+- `scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs`
 - `scripts/source/fixtures/phs-healthcare-demo/canary-defects.json`
 - `docs/source/PHS_HEALTHCARE_DEMO_PHASE_A_PACKAGE.md`
 - `docs/source/PHS_HEALTHCARE_DEMO_MODEL_FIT_AUDIT.md`
@@ -55,10 +57,15 @@ Passed: field/source map readback found 608 rows, zero missing generated native 
 Passed: `node --check scripts/source/plan-phs-healthcare-demo-data-layers.mjs`.
 Passed: `npm run source:phs-healthcare-demo:data-layer-plan -- --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z --out-dir /Users/anand/Downloads`.
 Passed: data-layer plan ZIP SHA-256 attestation matches `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T214902Z.zip`.
+Passed: `node --check scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs`.
+Passed: `npm run source:phs-healthcare-demo:layer1:self-test -- --out-dir /tmp/phs-layer1-self-test`.
+Passed: `npm run source:phs-healthcare-demo:layer1:plan -- --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z --out-dir /tmp/phs-layer1-plan`.
+Passed: negative apply-gate check stopped before mutation authority because `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true` was not present.
 
 ## Rollout Plan
 
 No runtime rollout. This PR can merge as reusable audit tooling only. A future Phase B load requires separate approval, tenant bootstrap, additive migrations if approved, isolated lab/test deployment and signed-in proof.
+Layer 1 apply must run as an approved ACA data-build job with the exact proof SHA and isolated lab target; local plan proof is not activation proof.
 
 ## Deployment Authority
 
@@ -83,6 +90,7 @@ Latest generated counts: 70,497 structured rows; 39 source-system extract CSVs; 
 Latest non-mutating data-layer plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T214902Z.zip`.
 Data-layer plan ZIP SHA-256: `124b4d6aae69e7cfc42f635e2bc29b9e24b1d5b9263c5d81b4a5e101628af847`.
 Layer 1 planned counts: 39 source files; 50,597 source records; 1,519,811 source field values; mutation executed: false.
+Layer 1 executable loader proof remains non-mutating unless `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA and the ACA job context are present.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
 ## Known Gaps

@@ -64,6 +64,37 @@ Latest plan counts:
 - Restricted detailed health-plan extracts present: 0
 - Mutation executed: false
 
+## Layer 1 Executable Source-Volume Loader
+
+The PHS-specific Layer 1 loader is:
+
+```bash
+npm run source:phs-healthcare-demo:layer1:self-test
+npm run source:phs-healthcare-demo:layer1:plan -- \
+  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z \
+  --out-dir /Users/anand/Downloads
+```
+
+The loader reads only the approved `phs_healthcare_demo_package_manifest.json` and the package-owned `source_system_extracts/*.csv` files. It does not reuse the separate `healthcare-demo-new` corpus root and it does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
+
+Supported modes:
+
+- `self-test`: local SQL batch-order check with no package read and no database connection.
+- `plan`: package integrity, proof-ZIP SHA, source file, row, field and hash proof with no database connection.
+- `preflight`: isolated lab database read/write capability check inside a rolled-back transaction.
+- `apply`: ACA data-build job only; requires `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA and an ACA job context unless a break-glass non-ACA override is explicitly set.
+- `verify`: independent reader readback of exact source release, source file, source record, source field, parser execution and gate counts.
+
+The apply command is intentionally hard-stopped until an isolated lab target and approved ACA data-build job are identified:
+
+```bash
+PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true \
+PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da \
+npm run source:phs-healthcare-demo:layer1:apply -- \
+  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T214256Z \
+  --approved-proof-sha256 95c3cd7540903551faa1a5a9705de8f8add3f449b8c03ceb61647a8f11e5c0da
+```
+
 ## Non-Negotiable Stops
 
 - No source-volume apply without an approved package SHA.
