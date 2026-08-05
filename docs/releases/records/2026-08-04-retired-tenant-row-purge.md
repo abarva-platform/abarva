@@ -31,6 +31,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 ## Changes Included
 
 - `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, targeted purge indexes, chunked large-table deletes, configurable chunk size and per-operation statement timeout, scoped trigger overrides for known immutable audit tables, staged table-level commits with partial-progress proof, compact structured proof output, preserved run-level client-id scope, final-only client registry deletion, and an explicit `--atomic` fallback for the earlier all-or-nothing transaction behavior.
+- `scripts/ops/audit-retired-tenant-residue.mjs`: read-only residue audit for the concentrated final tables, including total rows and tenant-key distributions.
 - `package.json`: adds dry-run/apply npm entries for the row purge and changes the old data-layer apply script to use `--apply` directly.
 
 ## QA / Validation
@@ -51,6 +52,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: indexed staged apply through the private operator committed partial progress, reduced retired residue from 138 tables to 10 tables, and restored the operator to idle, but a follow-up aggressive pass exposed that client registry rows must not be deleted before all other scoped rows are gone. This patch preserves the initial client-id scope for the whole run and defers client registry deletion until it is the only remaining scoped operation.
 - PASS: a final drain attempt on the remaining direct tenant-key rows progressed safely but showed that fixed 1,000-row chunks were too slow for the last large semantic tables. This patch makes chunk size and per-operation statement timeout configurable and stamps those settings in the proof.
 - PASS: follow-up dry-runs exposed that compact proof totals were not enough to choose the next purge primitive for concentrated residue. This patch includes the top dry-run pending table names and row counts in compact proof output.
+- PASS: the final residue is concentrated in five direct-scoped tables. This patch adds a read-only tenant-distribution audit so operators can decide whether a table can be safely handled with a faster table-level operation or must continue through row-level deletes.
 - NOT RUN in this PR revision: final-only-client-delete destructive apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan
