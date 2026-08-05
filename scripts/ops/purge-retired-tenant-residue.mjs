@@ -213,30 +213,37 @@ function isAllowedTruncateDependency(tableRef) {
 }
 
 async function resolveTruncateTableRefs(client, tableRefs) {
-  const byName = new Map();
-  const queue = [];
+  const result = await client.query(
+    `
+      select table_schema, table_name
+      from information_schema.tables
+      where table_schema = 'public'
+        and table_type = 'BASE TABLE'
+        and (
+          table_name like 'semantic2\\_%' escape '\\'
+          or table_name like 'enterprise_context\\_%' escape '\\'
+        )
+      order by table_schema, table_name
+    `,
+  );
+  const byName = new Map(
+    result.rows.map((row) => {
+      const tableRef = parseQualifiedName(`${row.table_schema}.${row.table_name}`);
+      return [tableRef.qualifiedName, tableRef];
+    }),
+  );
+
   for (const tableRef of tableRefs) {
     if (!(await tableExists(client, tableRef))) continue;
     byName.set(tableRef.qualifiedName, tableRef);
-    queue.push(tableRef);
   }
 
-  for (let index = 0; index < queue.length; index += 1) {
-    const tableRef = queue[index];
-    const foreignKeys = await getReferencingForeignKeys(client, tableRef);
-    for (const foreignKey of foreignKeys) {
-      const childRef = parseQualifiedName(foreignKey.childQualifiedName);
-      if (!isAllowedTruncateDependency(childRef)) {
-        throw new Error(
-          `${tableRef.qualifiedName} is referenced by non-residue table ${childRef.qualifiedName}; refusing truncate.`,
-        );
-      }
-      if (!byName.has(childRef.qualifiedName) && (await tableExists(client, childRef))) {
-        byName.set(childRef.qualifiedName, childRef);
-        queue.push(childRef);
-      }
+  for (const tableRef of byName.values()) {
+    if (!isAllowedTruncateDependency(tableRef)) {
+      throw new Error(`${tableRef.qualifiedName} is not an allowed residue truncate table.`);
     }
   }
+
   return Array.from(byName.values()).sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
 }
 
