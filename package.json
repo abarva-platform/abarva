@@ -707,6 +707,8 @@
     "ops:airline-grant-reconciliation-readback": "node scripts/ops/airline-grant-reconciliation-readback.mjs",
     "ops:purge-retired-data-layers:apply": "node scripts/ops/purge-retired-data-layers.mjs --apply",
     "ops:audit-retired-tenant-residue": "node scripts/ops/audit-retired-tenant-residue.mjs",
+    "ops:purge-retired-tenant-residue": "node scripts/ops/purge-retired-tenant-residue.mjs",
+    "ops:purge-retired-tenant-residue:apply": "node scripts/ops/purge-retired-tenant-residue.mjs --apply",
     "ops:purge-retired-tenant-rows": "node scripts/ops/purge-retired-tenant-rows.mjs",
     "ops:purge-retired-tenant-rows:apply": "node scripts/ops/purge-retired-tenant-rows.mjs --apply"
   },
