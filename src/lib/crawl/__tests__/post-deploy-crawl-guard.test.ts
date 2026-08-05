@@ -13,12 +13,12 @@ function observation(
 ): CrawlPageObservation {
   return {
     tenantKey: "skyharbor",
-    expectedTenantName: "SkyHarbor Air",
+    expectedTenantName: "SkyHarbor Global",
     personaKey: "agent-skyharbor",
     surfaceId: "intelligence-root",
     path: "/intelligence",
     url: "https://app.abarva.ai/intelligence",
-    visibleText: "SkyHarbor Air intelligence overview",
+    visibleText: "SkyHarbor Global intelligence overview",
     consoleErrors: [],
     networkErrors: [],
     evidenceChipCount: 0,
@@ -53,7 +53,7 @@ describe("post-deploy crawl guard", () => {
       resolveCrawlPersonas("agent-skyharbor").map(
         (persona) => persona.tenantName,
       ),
-    ).toEqual(["Airline Demo"]);
+    ).toEqual(["SkyHarbor Global"]);
   });
 
   it("includes the Admin Data Layer Explorer as a directly targetable crawl surface", () => {
@@ -69,7 +69,7 @@ describe("post-deploy crawl guard", () => {
     const skyharborFindings = comparePage(
       observation({
         visibleText:
-          "SkyHarbor Air Art of Possible Clinical care ambient AI MH-07 Innovaccer revenue cycle",
+          "SkyHarbor Global Art of Possible Clinical care ambient AI MH-07 Innovaccer revenue cycle",
       }),
     );
 
@@ -115,7 +115,7 @@ describe("post-deploy crawl guard", () => {
         path: "/admin/releases",
         url: "https://app.abarva.ai/admin/releases",
         visibleText:
-          "SkyHarbor Air release record: guard terms Clinical care ambient AI MH-07 Innovaccer revenue cycle are documented here as audit evidence.",
+          "SkyHarbor Global release record: guard terms Clinical care ambient AI MH-07 Innovaccer revenue cycle are documented here as audit evidence.",
       }),
     );
 
@@ -152,7 +152,7 @@ describe("post-deploy crawl guard", () => {
       observation({
         surfaceId: "intelligence-ask",
         path: "/intelligence/ask",
-        visibleText: "SkyHarbor Air ask Sentinel",
+        visibleText: "SkyHarbor Global ask Sentinel",
         hardQuestionExactFieldCitations: 0,
         hardQuestionGroundingEvidence: 0,
       }),
@@ -173,7 +173,7 @@ describe("post-deploy crawl guard", () => {
       observation({
         surfaceId: "intelligence-ask",
         path: "/intelligence/ask",
-        visibleText: "SkyHarbor Air ask Sentinel",
+        visibleText: "SkyHarbor Global ask Sentinel",
         hardQuestionExactFieldCitations: 0,
         hardQuestionGroundingEvidence: 2,
       }),
