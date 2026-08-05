@@ -92,6 +92,22 @@
     {
       "defect": "broken question-to-evidence lineage",
       "expected_failure": "mapped_evidence_ref_missing"
+    },
+    {
+      "defect": "existing source record from wrong story thread",
+      "expected_failure": "planted_record_story_thread_mismatch"
+    },
+    {
+      "defect": "existing evidence reference from wrong contract family",
+      "expected_failure": "mapped_evidence_contract_mismatch"
+    },
+    {
+      "defect": "existing source record fails question predicate",
+      "expected_failure": "question_predicate_not_satisfied"
+    },
+    {
+      "defect": "source and evidence records exist but do not join",
+      "expected_failure": "source_evidence_join_mismatch"
     }
   ]
 }

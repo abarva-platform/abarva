@@ -12,7 +12,7 @@
 
 Adds a dependency-free audit-only generator and validator for a synthetic healthcare demo package. The reusable repo code emits the large package into Downloads and keeps generated data out of git.
 It also uses one lightweight enterprise outcomes/KPI map tab instead of separate value-driver or KPI catalog workbooks.
-This correction hardens the Phase A audit gate so structural volume alone is insufficient: outcome-map substance, hard-question lineage, field/source guidance, workbook usability and corrupted canaries must now pass before the package is audit-ready.
+This correction hardens the Phase A audit gate so structural volume alone is insufficient: outcome-map substance, hard-question lineage, semantic predicates, evidence joins, field/source guidance, workbook usability and corrupted canaries must now pass before the package is audit-ready.
 
 ## Layer Impact
 
@@ -41,10 +41,12 @@ Feature flag: not applicable.
 
 Passed: `node --check scripts/source/build-phs-healthcare-demo-package.mjs && node --check scripts/source/validate-phs-healthcare-demo-package.mjs`.
 Passed: `node scripts/source/build-phs-healthcare-demo-package.mjs --out-dir /Users/anand/Downloads`.
-Passed: `node scripts/source/validate-phs-healthcare-demo-package.mjs --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T163422Z`.
-Passed: `unzip -t /Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T163422Z.zip`.
+Passed: `node scripts/source/validate-phs-healthcare-demo-package.mjs --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T170559Z`.
+Passed: `unzip -t /Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip`.
 Passed: workbook inspection found exactly one `ENTERPRISE_OUTCOMES_AND_KPI_MAP` tab, no separate KPI/value-driver/dependency-tree tabs and 36 total sheets.
-Passed: offline validation report records 21 corrupted canaries, 21 passed, 0 validation failures.
+Passed: offline validation report records 25 corrupted canaries, 25 passed, 0 validation failures.
+Passed: semantic readback found 180/180 questions with aligned planted source records, 180/180 with aligned evidence refs and 180/180 with both source and evidence aligned.
+Passed: field/source map readback found 608 rows, zero missing generated native fields and one explicit `client_native_field_to_confirm` marker.
 
 ## Rollout Plan
 
@@ -66,10 +68,11 @@ Revert the generator, validator, fixtures, docs and npm scripts. Generated Downl
 
 ## Audit Evidence
 
-Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary outputs and hard-stop statement produced by the generator. The latest local proof ZIP is `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T163422Z.zip`.
-Proof ZIP SHA-256: `c3b6755086a0a35051dc13eef284a5d7cccc2e3df31be0d32ef56cf414839e20`.
+Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary outputs and hard-stop statement produced by the generator. The latest local proof ZIP is `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip`.
+Proof ZIP SHA-256: `e0d92407792070d0162cd6668bd9d73041302803c324dda2b1ed3d8f6446d475`.
+Proof ZIP SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip.sha256`.
 Latest generated counts: 70,485 structured rows; 16,000 evidence spans; 180 hard questions; 30 interview roles; 44 enterprise outcomes/KPI map records; 71 CDAO questions.
-Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios and real injected negative canaries.
+Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins and real injected negative canaries.
 
 ## Known Gaps
 

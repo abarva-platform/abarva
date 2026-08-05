@@ -24,7 +24,7 @@ The scripts are dependency-free Node modules. ZIPs are created through the local
 
 The generated manifest keeps `activation_state=generated_not_loaded`. The package must not be loaded, migrated, deployed, activated or used as live tenant truth until Phase A audit is explicitly approved.
 
-The offline validator now treats the audit blockers as hard package failures: weak outcome-map substance, unresolved outcome dependencies, placeholder hard questions, broken question-to-source coverage, incomplete workbook usability metadata, inappropriate field/source guidance and fake canary evidence all fail validation.
+The offline validator now treats the audit blockers as hard package failures: weak outcome-map substance, unresolved outcome dependencies, placeholder hard questions, broken question-to-source coverage, missing semantic predicates, wrong-but-existing evidence, incomplete workbook usability metadata, inappropriate field/source guidance and fake canary evidence all fail validation.
 
 ## Enterprise Outcomes And KPI Map
 
@@ -44,8 +44,11 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Enterprise outcomes/KPI map records: 44
 - CDAO questions: 71
 
-Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T163422Z.zip`
-Latest corrected proof SHA-256: `c3b6755086a0a35051dc13eef284a5d7cccc2e3df31be0d32ef56cf414839e20`
+Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip`
+Latest corrected proof SHA-256: `e0d92407792070d0162cd6668bd9d73041302803c324dda2b1ed3d8f6446d475`
+Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T170559Z.zip.sha256`
+
+Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains 608 rows, with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker.
 
 ## Public Repository Discipline
 

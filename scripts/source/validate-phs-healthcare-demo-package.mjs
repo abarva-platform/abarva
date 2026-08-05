@@ -223,6 +223,7 @@ function decodeXml(value) {
 function readWorkbookSheetRows(workbookPath, sheetNumber) {
   const xml = execFileSync("unzip", ["-p", workbookPath, `xl/worksheets/sheet${sheetNumber}.xml`], {
     encoding: "utf8",
+    maxBuffer: 20 * 1024 * 1024,
   });
   return Array.from(xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/gu)).map((rowMatch) =>
     Array.from(rowMatch[1].matchAll(/<t>([\s\S]*?)<\/t>/gu)).map((cell) =>
@@ -367,7 +368,7 @@ function validateQuestionBank(failures, questionBank, coverageMatrix, indexes) {
       .replace(/\s+/gu, " ")
       .trim();
     normalizedQuestions.add(normalized);
-    if (/synthetic story thread|which .+ pattern requires executive action/iu.test(question.question || "")) {
+    if (/synthetic story thread|which .+ pattern requires executive action|from which/iu.test(question.question || "")) {
       issue(failures, "placeholder_hard_question", "question text still uses scaffold pattern", {
         question_id: question.question_id,
         question: question.question,
@@ -391,6 +392,8 @@ function validateQuestionBank(failures, questionBank, coverageMatrix, indexes) {
 
 function validateCoverageRow(failures, row, question, indexes) {
   const files = asArray(row.required_source_files);
+  const plantedRows = [];
+  const sourceContractRefs = new Set();
   if (files.length === 0) {
     issue(failures, "question_missing_source_files", "coverage row has no required source files", {
       question_id: row.question_id,
@@ -451,19 +454,138 @@ function validateCoverageRow(failures, row, question, indexes) {
         actualFiles: Array.from(recordFiles),
       });
     }
+    for (const recordEntry of indexes.recordRows.get(recordId) || []) {
+      if (!files.includes(recordEntry.file)) continue;
+      plantedRows.push(recordEntry);
+      const actualStory = recordEntry.row.story_thread_ref;
+      const expectedStory = row.story_thread_ref || question.story_thread_ref;
+      const crossDomainJustified = asArray(row.cross_domain_relationships).some((entry) => {
+        const text = String(entry).toLowerCase();
+        return text.includes(recordId.toLowerCase()) || text.includes(recordEntry.file.toLowerCase()) || (actualStory && text.includes(actualStory.toLowerCase()));
+      });
+      if (expectedStory && actualStory !== expectedStory && !crossDomainJustified) {
+        issue(failures, "planted_record_story_thread_mismatch", "planted source record exists but does not align to the question story thread", {
+          question_id: row.question_id,
+          recordId,
+          file: recordEntry.file,
+          expectedStory,
+          actualStory,
+        });
+      }
+      const contractRef = recordEntry.row.contract_family_id || recordEntry.row.contract_id;
+      if (contractRef && /^CF-/u.test(contractRef)) sourceContractRefs.add(contractRef);
+    }
   }
+  const evidenceRows = [];
   for (const evidenceRef of asArray(row.evidence_refs)) {
     if (!indexes.evidenceRefs.has(evidenceRef)) {
       issue(failures, "mapped_evidence_ref_missing", "mapped evidence reference does not exist", {
         question_id: row.question_id,
         evidenceRef,
       });
+      continue;
+    }
+    const evidenceRow = indexes.evidenceRowsByRef.get(evidenceRef);
+    if (evidenceRow) {
+      evidenceRows.push(evidenceRow);
+      const expectedStory = row.story_thread_ref || question.story_thread_ref;
+      if (expectedStory && evidenceRow.story_thread_ref !== expectedStory) {
+        issue(failures, "mapped_evidence_story_thread_mismatch", "mapped evidence exists but does not align to the question story thread", {
+          question_id: row.question_id,
+          evidenceRef,
+          expectedStory,
+          actualStory: evidenceRow.story_thread_ref,
+        });
+      }
+      if (Array.isArray(row.expected_evidence_span_types) && !row.expected_evidence_span_types.includes(evidenceRow.span_type)) {
+        issue(failures, "mapped_evidence_type_mismatch", "mapped evidence type does not support the question evidence need", {
+          question_id: row.question_id,
+          evidenceRef,
+          expectedTypes: row.expected_evidence_span_types,
+          actualType: evidenceRow.span_type,
+        });
+      }
     }
   }
+  const evidenceContractRefs = new Set(evidenceRows.map((evidenceRow) => evidenceRow.contract_family_id).filter(Boolean));
+  if (sourceContractRefs.size > 0 && evidenceContractRefs.size > 0) {
+    const joined = Array.from(sourceContractRefs).some((contractRef) => evidenceContractRefs.has(contractRef));
+    if (!joined) {
+      issue(failures, "mapped_evidence_contract_mismatch", "mapped evidence exists but does not align to the planted source contract family", {
+        question_id: row.question_id,
+        sourceContractRefs: Array.from(sourceContractRefs).sort(),
+        evidenceContractRefs: Array.from(evidenceContractRefs).sort(),
+      });
+      issue(failures, "source_evidence_join_mismatch", "planted source and evidence records exist but do not join to one another", {
+        question_id: row.question_id,
+        sourceContractRefs: Array.from(sourceContractRefs).sort(),
+        evidenceContractRefs: Array.from(evidenceContractRefs).sort(),
+      });
+    }
+  }
+  validateQuestionPredicate(failures, row, question, plantedRows.map((entry) => entry.row));
   if (files.length > 0 && asArray(row.planted_scenario_records).length < files.length) {
     issue(failures, "insufficient_planted_records_for_mapping", "coverage row has fewer planted records than mapped source files", {
       question_id: row.question_id,
       files,
+      planted_scenario_records: row.planted_scenario_records,
+    });
+  }
+}
+
+function numberValue(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function validateQuestionPredicate(failures, row, question, plantedRows) {
+  const predicate = row.question_predicate || question.question_predicate;
+  if (!predicate) {
+    issue(failures, "question_predicate_missing", "coverage row lacks a semantic predicate for the planted records", {
+      question_id: row.question_id,
+    });
+    return;
+  }
+  const any = (fn) => plantedRows.some(fn);
+  const all = (fn) => plantedRows.length > 0 && plantedRows.every(fn);
+  const checks = {
+    rate_overbilling: () => any((candidate) => numberValue(candidate.billed_rate_observed || candidate.billed_rate) > numberValue(candidate.contracted_rate) || /variance|above_contract/iu.test(`${candidate.rate_card_match_state || ""} ${candidate.variance_state || ""}`)),
+    unclaimed_credit: () => any((candidate) => numberValue(candidate.eligible_amount || candidate.service_credit_eligible_amount) > numberValue(candidate.claimed_amount || candidate.service_credit_claimed_amount)),
+    incident_or_backlog_pressure: () => any((candidate) => numberValue(candidate.p1_count) > 0 || numberValue(candidate.p2_count) > 0 || numberValue(candidate.sla_breach_count) > 0 || numberValue(candidate.backlog_over_30_days) > 0),
+    unresolved_scope: () => any((candidate) => /unresolved|inferred_requires_review|overlap_requires_resolution/iu.test(`${candidate.responsibility_state || ""} ${candidate.relationship_confidence || ""} ${candidate.support_scope_state || ""}`)),
+    low_utilization: () => any((candidate) => candidate.low_usage_flag === "true" || (numberValue(candidate.entitled_users) > 0 && numberValue(candidate.active_users) / numberValue(candidate.entitled_users) < 0.5)),
+    workforce_transition_cost: () => any((candidate) => numberValue(candidate.fte_count || candidate.resource_count) > 0 || numberValue(candidate.loaded_labor_cost || candidate.loaded_labor_cost_annual) > 0),
+    off_contract_purchase: () => any((candidate) => candidate.purchase_channel === "off_contract_local"),
+    rebate_gap: () => any((candidate) => numberValue(candidate.earned_rebate_amount) > numberValue(candidate.reconciled_rebate_amount)),
+    service_credit_gap: () => any((candidate) => numberValue(candidate.breach_count) > 0 || numberValue(candidate.actual_pct) < numberValue(candidate.target_pct) || numberValue(candidate.eligible_amount) > numberValue(candidate.claimed_amount)),
+    normalized_tco_recommendation: () => any((candidate) => candidate.recommendation_state === "recommended_after_normalization") && any((candidate) => numberValue(candidate.transition_cost) + numberValue(candidate.retained_org_cost) + numberValue(candidate.risk_adjustment) > 0),
+    supplier_quality_tradeoff: () => any((candidate) => /exception|partially/iu.test(`${candidate.response_state || ""}`) || numberValue(candidate.score) < 4 || numberValue(candidate.weighted_score) < 5),
+    bafo_exception: () => any((candidate) => /exception_remains|open/iu.test(`${candidate.bafo_exception_state || ""} ${candidate.status || ""}`)),
+    legacy_dependency: () => any((candidate) => /needs_decision|contract_scope|overlap|migration_candidate/iu.test(`${candidate.retirement_dependency || ""} ${candidate.migration_state || ""} ${candidate.redundancy_state || ""}`)),
+    cloud_prerequisite: () => any((candidate) => Boolean(candidate.prerequisite_decision)),
+    architecture_sequence: () => any((candidate) => candidate.decision_required === "true" || Boolean(candidate.target_quarter)),
+    risk_control_gap: () => any((candidate) => /gap_requires_validation|must_have/iu.test(`${candidate.observation_state || ""} ${candidate.criticality || ""}`)),
+    vendor_scope_ambiguity: () => any((candidate) => /inferred_requires_review|strategic/iu.test(`${candidate.relationship_confidence || ""} ${candidate.risk_tier || ""}`)),
+    renewal_leverage: () => any((candidate) => /partial_evidence|renewal|termination|exit/iu.test(`${candidate.extracted_state || ""} ${candidate.clause_type || ""}`) || numberValue(candidate.financial_effect) !== 0),
+    evidence_blocker: () => any((candidate) => /needs_audit_review|medium|partial_evidence/iu.test(`${candidate.review_state || ""} ${candidate.extraction_confidence || ""} ${candidate.extracted_state || ""}`)),
+    substitution_cost: () => any((candidate) => numberValue(candidate.backorder_count) > 0 || numberValue(candidate.substitution_count) > 0 || numberValue(candidate.incremental_cost) > 0),
+    workforce_mix_variance: () => any((candidate) => numberValue(candidate.billed_mix_pct) !== numberValue(candidate.contracted_mix_pct)),
+    finance_reconciliation_gap: () => any((candidate) => numberValue(candidate.payment_amount) > 0 || numberValue(candidate.line_amount) > 0),
+    bpo_baseline_exposure: () => any((candidate) => numberValue(candidate.monthly_volume) > 0 || numberValue(candidate.labor_cost) > 0 || numberValue(candidate.technology_cost) > 0 || numberValue(candidate.controls_cost) > 0),
+    document_complete: () => all((candidate) => /audit_ready|high|accepted_extraction|MSA|SOW|Amendment|Pricing|SLA|Security|Exit/iu.test(`${candidate.review_state || ""} ${candidate.extraction_confidence || ""} ${candidate.instrument_type || ""}`)),
+    supplier_requirement_coverage: () => any((candidate) => candidate.invitation_state === "invited" || /must_have|weighted/iu.test(candidate.criticality || "")),
+  };
+  if (!checks[predicate]) {
+    issue(failures, "question_predicate_unknown", "coverage row names an unsupported semantic predicate", {
+      question_id: row.question_id,
+      predicate,
+    });
+    return;
+  }
+  if (!checks[predicate]()) {
+    issue(failures, "question_predicate_not_satisfied", "planted source records exist but do not satisfy the question predicate", {
+      question_id: row.question_id,
+      predicate,
       planted_scenario_records: row.planted_scenario_records,
     });
   }
@@ -682,15 +804,19 @@ function validateWorkbookQuality(failures, packageDir) {
   }
 }
 
-function validateFieldSourceMap(failures, packageDir) {
+function validateFieldSourceMap(failures, packageDir, indexes) {
   const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
   const rows = readWorkbookSheetRows(workbookPath, 5);
   const [header = [], ...dataRows] = rows;
   const tabIndex = header.indexOf("tab");
+  const exportIndex = header.indexOf("exact report/API/export name");
+  const targetIndex = header.indexOf("target field");
+  const nativeIndex = header.indexOf("native source field");
+  const transformIndex = header.indexOf("transformation/mapping");
   const sourceIndex = header.indexOf("preferred source system");
   const objectIndex = header.indexOf("exact source object/table");
   const ownerIndex = header.indexOf("responsible collecting role");
-  if ([tabIndex, sourceIndex, objectIndex, ownerIndex].some((index) => index < 0)) {
+  if ([tabIndex, exportIndex, targetIndex, nativeIndex, transformIndex, sourceIndex, objectIndex, ownerIndex].some((index) => index < 0)) {
     issue(failures, "field_source_map_header_missing", "field/source map lacks required guidance columns");
     return;
   }
@@ -707,6 +833,26 @@ function validateFieldSourceMap(failures, packageDir) {
       issue(failures, "field_source_guidance_incomplete", "field/source guidance row lacks source, object or owner", {
         tab,
       });
+    }
+    if (!row[targetIndex] || !row[nativeIndex] || !row[transformIndex]) {
+      issue(failures, "field_source_mapping_incomplete", "field/source row does not separate target field, native source field and transformation", {
+        tab,
+      });
+    }
+    const nativeField = row[nativeIndex] || "";
+    if (nativeField !== "client_native_field_to_confirm") {
+      const exportFiles = (row[exportIndex] || "")
+        .split(";")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.endsWith(".csv"));
+      const existsInNamedExtract = exportFiles.some((file) => indexes.columnsByBasename.get(file)?.has(nativeField));
+      if (!existsInNamedExtract) {
+        issue(failures, "native_source_field_missing", "field/source row names a native source field absent from the generated extract headers", {
+          tab,
+          nativeField,
+          exportFiles,
+        });
+      }
     }
   }
 }
@@ -796,7 +942,9 @@ export async function validatePackage(packageDir) {
     rowsByBasename: new Map(),
     columnsByBasename: new Map(),
     recordToBasenames: new Map(),
+    recordRows: new Map(),
     evidenceRefs: new Set(),
+    evidenceRowsByRef: new Map(),
     vendorNames: [],
     contractNames: [],
   };
@@ -815,9 +963,14 @@ export async function validatePackage(packageDir) {
       if (row.source_record_id) {
         if (!indexes.recordToBasenames.has(row.source_record_id)) indexes.recordToBasenames.set(row.source_record_id, new Set());
         indexes.recordToBasenames.get(row.source_record_id).add(base);
+        if (!indexes.recordRows.has(row.source_record_id)) indexes.recordRows.set(row.source_record_id, []);
+        indexes.recordRows.get(row.source_record_id).push({ file: base, row });
       }
       if (row.evidence_ref) indexes.evidenceRefs.add(row.evidence_ref);
-      if (base === "EVIDENCE_SPANS.csv" && row.evidence_ref) indexes.evidenceRefs.add(row.evidence_ref);
+      if (base === "EVIDENCE_SPANS.csv" && row.evidence_ref) {
+        indexes.evidenceRefs.add(row.evidence_ref);
+        indexes.evidenceRowsByRef.set(row.evidence_ref, row);
+      }
       if (base === "WORKDAY_SUPPLIERS.csv" && row.legal_name) indexes.vendorNames.push(row.legal_name);
       if (base === "CONTRACT_REGISTER.csv" && row.contract_name) indexes.contractNames.push(row.contract_name);
     }
@@ -875,7 +1028,7 @@ export async function validatePackage(packageDir) {
   validateManifestContract(failures, manifest, seen);
   validateWorkbookOutcomeTab(failures, packageDir);
   validateWorkbookQuality(failures, packageDir);
-  validateFieldSourceMap(failures, packageDir);
+  validateFieldSourceMap(failures, packageDir, indexes);
   validateOutcomeMapSubstance(failures, outcomeMap, indexes);
   validateQuestionBank(failures, questionBank, coverageMatrix, indexes);
   validateInterviewPacks(failures, roleMatrix);
@@ -1139,6 +1292,53 @@ export async function validateCorruptedCanaries(packageDir) {
         const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].evidence_refs = ["EVID-SPAN-99999"];
+        await writeJsonFile(coveragePath, matrix);
+      },
+    },
+    {
+      defect: "existing source record from wrong story thread",
+      expected_failure: "planted_record_story_thread_mismatch",
+      inject: async (root) => {
+        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const matrix = await readJson(coveragePath);
+        matrix.coverage[0].planted_scenario_records = ["WD-INV-L-000005", matrix.coverage[0].planted_scenario_records[1]];
+        await writeJsonFile(coveragePath, matrix);
+      },
+    },
+    {
+      defect: "existing evidence reference from wrong contract family",
+      expected_failure: "mapped_evidence_contract_mismatch",
+      inject: async (root) => {
+        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const matrix = await readJson(coveragePath);
+        matrix.coverage[0].evidence_refs = ["EVID-SPAN-00002"];
+        await writeJsonFile(coveragePath, matrix);
+      },
+    },
+    {
+      defect: "existing source record fails question predicate",
+      expected_failure: "question_predicate_not_satisfied",
+      inject: async (root) => {
+        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const matrix = await readJson(coveragePath);
+        const [invoiceId, rateCardId] = matrix.coverage[0].planted_scenario_records;
+        await mutateCsv(root, "WORKDAY_SUPPLIER_INVOICES.csv", (rows) => {
+          const row = rows.find((candidate) => candidate.invoice_line_id === invoiceId);
+          if (row) row.rate_card_match_state = "matched_or_expected";
+        });
+        await mutateCsv(root, "CONTRACT_RATE_CARDS.csv", (rows) => {
+          const row = rows.find((candidate) => candidate.rate_card_id === rateCardId);
+          if (row) row.billed_rate_observed = String(Math.max(0, numberValue(row.contracted_rate) - 25));
+        });
+      },
+    },
+    {
+      defect: "source and evidence records exist but do not join",
+      expected_failure: "source_evidence_join_mismatch",
+      inject: async (root) => {
+        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const matrix = await readJson(coveragePath);
+        matrix.coverage[0].evidence_refs = ["EVID-SPAN-00003"];
         await writeJsonFile(coveragePath, matrix);
       },
     },

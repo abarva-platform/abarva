@@ -242,7 +242,7 @@ function makeSpec(tuple, group) {
   };
 }
 
-function buildWorkbookFieldGuidance() {
+function buildWorkbookFieldGuidance(fileRows = new Map()) {
   const domainContracts = {
     "12_VENDORS": {
       domain: "vendor master",
@@ -567,19 +567,27 @@ function buildWorkbookFieldGuidance() {
       validator: "Risk/control reviewer",
     },
   };
+  const rowsByBase = new Map(Array.from(fileRows.entries()).map(([relativePath, rows]) => [path.basename(relativePath), rows]));
   const domainTabs = Object.keys(domainContracts);
   const fields = [];
   for (const tab of domainTabs) {
     const contract = domainContracts[tab];
-    for (const field of ["native_id", "owner_role", "financial_amount", "service_scope", "period_month", "evidence_ref", "quality_state"]) {
-      const isAmountField = field === "financial_amount";
-      const isPeriodField = field === "period_month";
-      const isEvidenceField = field === "evidence_ref";
+    const exportFiles = contract.export
+      .split(";")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.endsWith(".csv"));
+    const nativeFields = Array.from(new Set(exportFiles.flatMap((file) => Object.keys(rowsByBase.get(file)?.[0] || {}))));
+    const fieldsToMap = nativeFields.length > 0 ? nativeFields : ["client_native_field_to_confirm"];
+    for (const field of fieldsToMap) {
+      const isEvidenceField = field === "evidence_ref" || field === "document_ref";
+      const isAmountField = /amount|cost|price|rate|value|fee|commitment|credit|rebate|spend|tco|score|pct|count|users|fte|hours|volume/iu.test(field);
+      const isPeriodField = /period|date|month|quarter|year/iu.test(field);
+      const targetField = COMMON_FIELDS.includes(field) ? field : `${contract.entity.replaceAll(/[^A-Za-z0-9]+/gu, "_").toLowerCase()}_${field}`;
       fields.push({
         tab,
         "AbarVa target domain": contract.domain,
         "AbarVa target entity": contract.entity,
-        "target field": field,
+        "target field": targetField,
         "plain-English definition": `${field.replaceAll("_", " ")} at the ${contract.grain} grain.`,
         "why it matters": "Needed for source-first answerability, evidence lineage, reconciliation and later Cube drill paths.",
         requirement: isEvidenceField || isAmountField ? "conditional" : "required",
@@ -594,7 +602,7 @@ function buildWorkbookFieldGuidance() {
         "primary key": contract.primary,
         "join key": contract.join,
         "time period": isPeriodField ? "2024-08-01 through 2026-07-31 for monthly history" : "Current snapshot, with monthly history where applicable",
-        "transformation/mapping": "Map native field to canonical candidate; preserve upstream lineage without product shaping.",
+        "transformation/mapping": field === "client_native_field_to_confirm" ? "Client confirms exact native export field during collection." : `Map native ${field} to ${targetField}; preserve upstream source path and row hash.`,
         "allowed values": "Declared enums in template or explicit evidence gap.",
         "realistic example": `${contract.primary.split(" ")[0].toUpperCase()}-${pad(fields.length + 1, 5)}`,
         "responsible collecting role": contract.owner,
@@ -879,13 +887,14 @@ function buildRows() {
   }
   for (let i = 0; i < 720; i += 1) {
     const month = periodMonths[i % periodMonths.length];
-    const eligible = money((i % 3 === 0 ? 1 : 0) * (800 + random() * 12_000));
+    const contract = contractFamilies[i % contractFamilies.length];
+    const eligible = money(((i % 3 === 0 || (contract[0] === "CF-005" && i % 10 === 4)) ? 1 : 0) * (800 + random() * 12_000));
     add(specs["SERVICENOW_SERVICE_CREDITS.csv"], { service_credit_id: `SN-CRED-${pad(i + 1, 5)}`, contract_id: contractFamilies[i % contractFamilies.length][0], service_ref: `SV-${pad((i % 90) + 1, 3)}`, eligible_amount: eligible, claimed_amount: money(eligible * (i % 4 === 0 ? 0.25 : 0)), claim_state: eligible > 0 ? "eligible_underclaimed" : "not_earned", period_start: month.start, period_end: month.end, story_thread_ref: contractFamilies[i % contractFamilies.length][5] });
   }
   for (let i = 0; i < 34; i += 1) add(specs["EPIC_MODULE_INVENTORY.csv"], { module_id: `EPIC-MOD-${pad(i + 1, 3)}`, module_name: pick(["Resolute", "Cadence", "Prelude", "Willow", "Clarity", "Caboodle", "Bridges"]), support_scope_state: i % 6 === 0 ? "overlap_requires_resolution" : "explicit", contract_family_id: "CF-002", story_thread_ref: storyThreads[1] });
   for (let i = 0; i < 240; i += 1) add(specs["EPIC_INTERFACE_INVENTORY.csv"], { interface_id: `EPIC-IF-${pad(i + 1, 4)}`, module_id: `EPIC-MOD-${pad((i % 34) + 1, 3)}`, application_id: applications[i % applications.length], interface_type: pick(["HL7", "FHIR", "batch", "API"]), responsibility_state: i % 9 === 0 ? "unresolved" : "explicit", story_thread_ref: storyThreads[1] });
   for (let i = 0; i < 180; i += 1) add(specs["CLARITY_CABOODLE_ASSET_INVENTORY.csv"], { asset_id: `EC-ASSET-${pad(i + 1, 4)}`, platform: pick(["Clarity", "Caboodle"]), reporting_domain: pick(["clinical quality", "population health", "finance", "operations"]), downstream_mart_id: `MART-${pad((i % 140) + 1, 4)}`, story_thread_ref: storyThreads[6] });
-  for (let i = 0; i < 96; i += 1) add(specs["HADOOP_CLUSTER_WORKLOADS.csv"], { workload_id: `HD-WL-${pad(i + 1, 4)}`, cluster_ref: `HADOOP-${(i % 5) + 1}`, workload_name: `synthetic workload ${i + 1}`, retirement_dependency: i % 3 === 0 ? "contract_scope_fee_reduction_not_linked" : "migration_candidate", story_thread_ref: storyThreads[0] });
+  for (let i = 0; i < 96; i += 1) add(specs["HADOOP_CLUSTER_WORKLOADS.csv"], { workload_id: `HD-WL-${pad(i + 1, 4)}`, cluster_ref: `HADOOP-${(i % 5) + 1}`, workload_name: `synthetic workload ${i + 1}`, retirement_dependency: i % 3 === 0 ? "contract_scope_fee_reduction_not_linked" : "migration_candidate", story_thread_ref: storyThreads[6] });
   for (let i = 0; i < 140; i += 1) add(specs["SQL_SERVER_DATA_MARTS.csv"], { mart_id: `MART-${pad(i + 1, 4)}`, owner_function: pick(["analytics", "finance", "clinical operations", "health plan"]), redundancy_state: i % 5 === 0 ? "overlap_with_sas_or_caboodle" : "unique_current_use", story_thread_ref: storyThreads[6] });
   for (let i = 0; i < 720; i += 1) {
     const month = periodMonths[i % periodMonths.length];
@@ -945,46 +954,519 @@ function buildRows() {
   return { fileRows, fileContracts };
 }
 
-function buildQuestionBank() {
+function buildQuestionBank(fileRows) {
+  const rowsByBase = new Map(Array.from(fileRows.entries()).map(([relativePath, rows]) => [path.basename(relativePath), rows]));
+  const byBase = (base) => rowsByBase.get(base) || [];
+  const n = (value) => Number(value || 0);
+  const choose = (base, predicate) => {
+    const row = byBase(base).find(predicate);
+    if (!row) throw new Error(`Unable to find planted question row in ${base}`);
+    return row;
+  };
+  const chooseContract = (base, story, contractId, predicate = () => true) =>
+    choose(base, (row) => row.story_thread_ref === story && (row.contract_family_id === contractId || row.contract_id === contractId) && predicate(row));
+  const evidenceRows = byBase("EVIDENCE_SPANS.csv");
+  const evidenceFor = (story, plantedRows, spanTypes = []) => {
+    const contractRefs = new Set(plantedRows.map((row) => row.contract_family_id || row.contract_id).filter(Boolean));
+    for (const row of plantedRows) {
+      if (!row.evidence_ref) continue;
+      const evidence = evidenceRows.find((candidate) => candidate.evidence_ref === row.evidence_ref);
+      if (evidence && evidence.story_thread_ref === story && (contractRefs.size === 0 || contractRefs.has(evidence.contract_family_id)) && (spanTypes.length === 0 || spanTypes.includes(evidence.span_type))) return evidence;
+    }
+    return evidenceRows.find((candidate) =>
+      candidate.story_thread_ref === story &&
+      (contractRefs.size === 0 || contractRefs.has(candidate.contract_family_id)) &&
+      (spanTypes.length === 0 || spanTypes.includes(candidate.span_type)),
+    ) || evidenceRows.find((candidate) => candidate.story_thread_ref === story);
+  };
+  const makeScenario = ({ domain, story, files, rows, measures, dimensions, grain, challenge, cube, predicate, evidenceTypes = [] }) => {
+    const evidence = evidenceFor(story, rows, evidenceTypes);
+    if (!evidence) throw new Error(`Unable to find aligned evidence for ${domain}`);
+    return {
+      domain,
+      story,
+      files,
+      records: rows.map((row) => row.source_record_id),
+      measures,
+      dimensions,
+      grain,
+      challenge,
+      cube,
+      predicate,
+      evidence_ref: evidence.evidence_ref,
+      evidence_type: evidence.span_type,
+    };
+  };
   const scenarios = [
-    ["contract economics", storyThreads[0], ["WORKDAY_SUPPLIER_INVOICES.csv", "CONTRACT_RATE_CARDS.csv"], ["WD-INV-L-000017", "RC-0017"], ["line_amount", "billed_rate_observed", "contracted_rate"], ["vendor_id", "contract_family_id", "period_start"], "vendor_contract_month", "Which analytics managed-services invoice lines exceed contracted role rates?", "source_contract_economics"],
-    ["SLA service credits", storyThreads[0], ["SERVICENOW_SERVICE_CREDITS.csv", "CONTRACT_SLA_TERMS.csv"], ["SN-CRED-00013", "SLA-T-0013"], ["eligible_amount", "claimed_amount"], ["contract_id", "service_ref", "period_start"], "contract_service_month", "Which service credits were earned but not claimed for managed services?", "source_service_performance"],
-    ["Epic operational performance", storyThreads[1], ["SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", "EPIC_MODULE_INVENTORY.csv"], ["SN-ITSM-000021", "EPIC-MOD-021"], ["p1_count", "p2_count", "sla_breach_count", "backlog_over_30_days"], ["contract_id", "application_ref", "ci_ref"], "application_service_month", "Which Epic support areas show recurring incident concentration or backlog aging?", "source_service_performance"],
-    ["Epic interface scope", storyThreads[1], ["EPIC_INTERFACE_INVENTORY.csv", "CONTRACT_SCOPE_RELATIONSHIPS.csv"], ["EPIC-IF-0009", "SCOPE-00009"], ["responsibility_state", "relationship_confidence"], ["module_id", "application_id", "contract_family_id"], "interface_contract_scope", "Which Epic interface responsibilities are unresolved before renewal scope decisions?", "source_contract_scope"],
-    ["Workday SaaS usage", storyThreads[2], ["SAAS_MODULE_USAGE_MONTHLY.csv", "WORKDAY_SUPPLIERS.csv"], ["SAAS-U-00005", "VND-003"], ["entitled_users", "active_users", "low_usage_flag"], ["vendor_id", "module_name", "period_start"], "module_month", "Which Workday or workflow modules are persistently underused before renewal?", "source_saas_usage"],
-    ["Workday BPO dependency", storyThreads[2], ["WORKDAY_WORKER_ROLE_SUMMARY.csv", "BPO_CURRENT_STATE_WORKFORCE.csv"], ["WD-WR-00005", "BPO-WF-0005"], ["fte_count", "loaded_labor_cost", "loaded_labor_cost_annual"], ["function_ref", "role_family", "location_model"], "role_function_location", "Which internal workforce roles must be retained or transitioned in the BPO model?", "consumption_sourcing_bpo"],
-    ["medical surgical procurement", storyThreads[3], ["LOCAL_HOSPITAL_PURCHASES.csv", "MEDSURG_ITEM_MASTER.csv"], ["LHP-PO-000009", "ITEM-0009"], ["quantity", "unit_price"], ["facility", "item_id", "purchase_channel"], "facility_item_month", "Which facilities have material off-contract medical/surgical purchases?", "source_medsurg_procurement"],
-    ["medical surgical rebate", storyThreads[3], ["MEDSURG_REBATES_CREDITS.csv", "MEDSURG_PRICE_TIERS.csv"], ["MSR-00009", "MST-00009"], ["earned_rebate_amount", "reconciled_rebate_amount", "unit_price"], ["facility", "category", "item_id"], "facility_category_month", "Which earned medical/surgical rebates remain unreconciled?", "source_medsurg_procurement"],
-    ["facilities EVS service", storyThreads[4], ["SERVICENOW_MONTHLY_SLA_SUMMARY.csv", "SERVICENOW_SERVICE_CREDITS.csv"], ["SN-SLA-000026", "SN-CRED-00026"], ["actual_pct", "breach_count", "eligible_amount", "claimed_amount"], ["contract_id", "service_ref", "period_start"], "facility_service_month", "Which operational-services SLA misses create unclaimed penalty exposure?", "source_service_performance"],
-    ["BPO normalized TCO", storyThreads[5], ["BPO_COMMERCIAL_LINES.csv", "BPO_NORMALIZED_TCO.csv"], ["BPO-COM-00001", "BPO-TCO-001"], ["headline_price", "normalized_five_year_tco", "transition_cost", "retained_org_cost", "risk_adjustment"], ["supplier_id", "scenario", "year"], "supplier_scenario_year", "Which BPO supplier remains best after normalized transition, retained organization, automation and risk costs?", "consumption_sourcing_bpo"],
-    ["BPO supplier quality", storyThreads[5], ["BPO_SUPPLIER_RESPONSES.csv", "BPO_EVALUATION_SCORES.csv"], ["BPO-RSP-00001", "BPO-EVAL-00001"], ["automation_commitment", "score", "weighted_score"], ["supplier_id", "requirement_id", "evaluator_role"], "supplier_requirement_evaluator", "Which BPO suppliers trade price for weaker scope, controls or automation commitments?", "consumption_sourcing_bpo"],
-    ["BPO clarification risk", storyThreads[5], ["BPO_CLARIFICATIONS.csv", "BPO_BAFO_RESPONSES.csv"], ["BPO-CLAR-0001", "BPO-BAFO-0001"], ["bafo_service_fee", "bafo_exception_state"], ["supplier_id", "requirement_id", "topic"], "supplier_clarification_bafo", "Which BAFO exceptions should prevent a lowest-price recommendation?", "consumption_sourcing_bpo"],
-    ["health plan analytics", storyThreads[6], ["CLARITY_CABOODLE_ASSET_INVENTORY.csv", "SQL_SERVER_DATA_MARTS.csv"], ["EC-ASSET-0001", "MART-0001"], ["reporting_domain", "redundancy_state"], ["platform", "downstream_mart_id", "owner_function"], "asset_mart_dependency", "Which health-plan analytics capabilities depend on legacy marts or Epic data assets?", "source_data_platform"],
-    ["legacy platform retirement", storyThreads[6], ["HADOOP_CLUSTER_WORKLOADS.csv", "SAS_APPLICATIONS_AND_USERS.csv"], ["HD-WL-0003", "SAS-U-00006"], ["retirement_dependency", "active_user_count", "migration_state"], ["cluster_ref", "application_ref", "usage_group"], "legacy_platform_workload_month", "Which Hadoop or SAS workloads create the greatest transition risk?", "source_data_platform"],
-    ["cloud commitment readiness", storyThreads[6], ["AWS_TARGET_COMMITMENT_SCENARIOS.csv", "DATABRICKS_TARGET_COMMITMENT_SCENARIOS.csv"], ["AWS-SC-00001", "DBX-SC-00001"], ["estimated_monthly_commitment", "estimated_dbu_commitment"], ["scenario", "service_name", "workspace", "prerequisite_decision"], "platform_commitment_scenario_month", "Which AWS or Databricks commitments should wait for unresolved prerequisite decisions?", "source_cloud_commitments"],
-    ["architecture dependency", storyThreads[6], ["ANALYTICS_PLATFORM_DEPENDENCIES.csv", "PROGRAMS_INITIATIVES_DEPENDENCIES.csv"], ["DEP-00001", "PROG-DEP-00001"], ["decision_required", "target_quarter"], ["source_ref", "target_ref", "dependency_ref"], "dependency_initiative", "Which architecture dependencies must sequence the transformation roadmap?", "source_architecture_dependencies"],
-    ["risk control readiness", storyThreads[6], ["RISK_CONTROL_OBSERVATIONS.csv", "BPO_RFP_REQUIREMENTS.csv"], ["RC-OBS-00006", "BPO-REQ-0006"], ["observation_state", "criticality"], ["risk_ref", "control_ref", "requirement_domain"], "risk_control_requirement", "Which control gaps must be resolved before BPO or platform decisions?", "source_risk_controls"],
-    ["vendor 360", storyThreads[0], ["WORKDAY_SUPPLIERS.csv", "CONTRACT_REGISTER.csv", "CONTRACT_SCOPE_RELATIONSHIPS.csv"], ["VND-001", "CF-001", "SCOPE-00001"], ["synthetic_midpoint_total_contract_value", "relationship_confidence"], ["vendor_id", "contract_family_id", "business_service_ref"], "vendor_contract_scope", "Which strategic vendors have the most ambiguous contract-to-service scope?", "source_vendor_360"],
-    ["renewal leverage", storyThreads[1], ["CONTRACT_RENEWAL_EXIT_TERMS.csv", "CONTRACT_AMENDMENTS.csv"], ["CL-0001", "AMD-001"], ["financial_effect", "extracted_state"], ["contract_family_id", "clause_type", "amendment_theme"], "contract_clause_amendment", "Which renewal or exit terms create near-term leverage or risk?", "source_contract_economics"],
-    ["evidence lineage", storyThreads[0], ["EVIDENCE_SPANS.csv", "CONTRACT_INSTRUMENTS.csv"], ["EVID-SPAN-00001", "LI-001"], ["extraction_confidence", "review_state"], ["document_ref", "contract_family_id", "span_type"], "document_page_span", "Which conclusions are blocked by partial evidence or low extraction confidence?", "source_evidence_lineage"],
-    ["purchase substitution", storyThreads[3], ["MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", "LOCAL_HOSPITAL_PURCHASES.csv"], ["MSS-00006", "LHP-PO-000006"], ["backorder_count", "substitution_count", "incremental_cost", "unit_price"], ["facility", "item_id", "period_start"], "facility_item_month", "Which substitutions are increasing cost in fragmented local procurement?", "source_medsurg_procurement"],
-    ["service backlog", storyThreads[1], ["SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", "SERVICENOW_MONTHLY_SLA_SUMMARY.csv"], ["SN-ITSM-000077", "SN-SLA-000077"], ["backlog_count", "backlog_over_30_days", "actual_pct", "breach_count"], ["contract_id", "service_ref", "period_start"], "service_month", "Which vendor services have backlog aging above contractual targets?", "source_service_performance"],
-    ["workforce pyramid", storyThreads[0], ["VENDOR_WORKFORCE_MONTHLY.csv", "CONTRACT_RATE_CARDS.csv"], ["VWF-00008", "RC-0008"], ["billed_fte", "contracted_mix_pct", "billed_mix_pct", "contracted_rate"], ["contract_family_id", "role_title", "location_model"], "role_location_month", "Where does billed staffing mix differ from the contracted pyramid?", "source_workforce_rate_card"],
-    ["payments reconciliation", storyThreads[2], ["WORKDAY_PAYMENTS.csv", "WORKDAY_SUPPLIER_INVOICES.csv"], ["WD-PAY-00005", "WD-INV-L-000005"], ["payment_amount", "line_amount"], ["vendor_id", "invoice_id", "period_start"], "invoice_payment", "Which payment and invoice totals need reconciliation before finance conclusions?", "source_financial_reconciliation"],
-    ["BPO current baseline", storyThreads[5], ["BPO_CURRENT_STATE_PROCESS_VOLUMES.csv", "BPO_CURRENT_STATE_COST_BASELINE.csv"], ["BPO-PV-00001", "BPO-COST-00001"], ["monthly_volume", "labor_cost", "technology_cost", "controls_cost"], ["function_ref", "process_name", "period_start"], "function_process_month", "Which current-state processes create the largest BPO baseline cost and volume exposure?", "consumption_sourcing_bpo"],
-    ["SaaS low usage", storyThreads[2], ["SAAS_MODULE_USAGE_MONTHLY.csv", "CONTRACT_REGISTER.csv"], ["SAAS-U-00010", "CF-003"], ["entitled_users", "active_users", "low_usage_flag"], ["vendor_id", "module_name", "period_start"], "module_month", "Which licensed SaaS modules should be challenged before renewal?", "source_saas_usage"],
-    ["program sequencing", storyThreads[6], ["PROGRAMS_INITIATIVES_DEPENDENCIES.csv", "AWS_TARGET_COMMITMENT_SCENARIOS.csv"], ["PROG-DEP-00008", "AWS-SC-00008"], ["target_quarter", "estimated_monthly_commitment"], ["program_ref", "initiative_ref", "prerequisite_decision"], "initiative_platform_scenario", "Which roadmap decisions must precede cloud commitment approval?", "source_program_roadmap"],
-    ["quality guardrail", storyThreads[6], ["RISK_CONTROL_OBSERVATIONS.csv", "EVIDENCE_SPANS.csv"], ["RC-OBS-00012", "EVID-SPAN-00012"], ["observation_state", "extraction_confidence"], ["domain", "risk_ref", "span_type"], "risk_evidence", "Which risk guardrails lack evidence strong enough for executive claims?", "source_risk_evidence"],
-    ["contract document completeness", storyThreads[0], ["CONTRACT_INSTRUMENTS.csv", "EVIDENCE_SPANS.csv"], ["LI-006", "EVID-SPAN-00006"], ["extraction_confidence", "review_state"], ["instrument_type", "document_ref", "contract_family_id"], "instrument_evidence", "Which contract instruments have enough evidence for pricing, SLA and exit analysis?", "source_evidence_lineage"],
-    ["supplier invitation coverage", storyThreads[5], ["BPO_SUPPLIERS.csv", "BPO_RFP_REQUIREMENTS.csv"], ["BPO-SUP-001", "BPO-REQ-0001"], ["headline_price_rank", "normalized_recommendation_rank", "criticality"], ["supplier_id", "requirement_domain"], "supplier_requirement", "Which invited suppliers cover the critical BPO requirements?", "consumption_sourcing_bpo"],
+    makeScenario({
+      domain: "contract economics",
+      story: storyThreads[0],
+      files: ["WORKDAY_SUPPLIER_INVOICES.csv", "CONTRACT_RATE_CARDS.csv"],
+      rows: [
+        chooseContract("WORKDAY_SUPPLIER_INVOICES.csv", storyThreads[0], "CF-001", (row) => row.rate_card_match_state === "variance_requires_review"),
+        chooseContract("CONTRACT_RATE_CARDS.csv", storyThreads[0], "CF-001", (row) => n(row.billed_rate_observed) > n(row.contracted_rate)),
+      ],
+      measures: ["line_amount", "billed_rate_observed", "contracted_rate"],
+      dimensions: ["vendor_id", "contract_family_id", "period_start"],
+      grain: "vendor_contract_month",
+      challenge: "analytics managed-services invoice lines exceeding contracted role rates",
+      cube: "source_contract_economics",
+      predicate: "rate_overbilling",
+      evidenceTypes: ["pricing", "rate_card"],
+    }),
+    makeScenario({
+      domain: "SLA service credits",
+      story: storyThreads[0],
+      files: ["SERVICENOW_SERVICE_CREDITS.csv", "CONTRACT_SLA_TERMS.csv"],
+      rows: [
+        chooseContract("SERVICENOW_SERVICE_CREDITS.csv", storyThreads[0], "CF-001", (row) => n(row.eligible_amount) > n(row.claimed_amount)),
+        chooseContract("CONTRACT_SLA_TERMS.csv", storyThreads[0], "CF-001"),
+      ],
+      measures: ["eligible_amount", "claimed_amount"],
+      dimensions: ["contract_id", "service_ref", "period_start"],
+      grain: "contract_service_month",
+      challenge: "managed-services credits earned but not claimed",
+      cube: "source_service_performance",
+      predicate: "unclaimed_credit",
+      evidenceTypes: ["sla"],
+    }),
+    makeScenario({
+      domain: "Epic operational performance",
+      story: storyThreads[1],
+      files: ["SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", "EPIC_MODULE_INVENTORY.csv"],
+      rows: [
+        chooseContract("SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", storyThreads[1], "CF-002", (row) => n(row.p1_count) > 0 || n(row.backlog_over_30_days) > 0),
+        choose("EPIC_MODULE_INVENTORY.csv", (row) => row.story_thread_ref === storyThreads[1] && row.contract_family_id === "CF-002" && row.support_scope_state === "overlap_requires_resolution"),
+      ],
+      measures: ["p1_count", "p2_count", "sla_breach_count", "backlog_over_30_days"],
+      dimensions: ["contract_id", "application_ref", "ci_ref"],
+      grain: "application_service_month",
+      challenge: "Epic support areas with recurring incident concentration or backlog aging",
+      cube: "source_service_performance",
+      predicate: "incident_or_backlog_pressure",
+      evidenceTypes: ["scope", "sla"],
+    }),
+    makeScenario({
+      domain: "Epic interface scope",
+      story: storyThreads[1],
+      files: ["EPIC_INTERFACE_INVENTORY.csv", "CONTRACT_SCOPE_RELATIONSHIPS.csv"],
+      rows: [
+        choose("EPIC_INTERFACE_INVENTORY.csv", (row) => row.story_thread_ref === storyThreads[1] && row.responsibility_state === "unresolved"),
+        chooseContract("CONTRACT_SCOPE_RELATIONSHIPS.csv", storyThreads[1], "CF-002", (row) => row.relationship_confidence === "inferred_requires_review"),
+      ],
+      measures: ["responsibility_state", "relationship_confidence"],
+      dimensions: ["module_id", "application_id", "contract_family_id"],
+      grain: "interface_contract_scope",
+      challenge: "unresolved Epic interface responsibilities before renewal decisions",
+      cube: "source_contract_scope",
+      predicate: "unresolved_scope",
+      evidenceTypes: ["scope"],
+    }),
+    makeScenario({
+      domain: "Workday SaaS usage",
+      story: storyThreads[2],
+      files: ["SAAS_MODULE_USAGE_MONTHLY.csv", "WORKDAY_SUPPLIERS.csv"],
+      rows: [
+        choose("SAAS_MODULE_USAGE_MONTHLY.csv", (row) => row.story_thread_ref === storyThreads[2] && row.vendor_id === "VND-003" && row.low_usage_flag === "true"),
+        choose("WORKDAY_SUPPLIERS.csv", (row) => row.story_thread_ref === storyThreads[2] && row.vendor_id === "VND-003"),
+      ],
+      measures: ["entitled_users", "active_users", "low_usage_flag"],
+      dimensions: ["vendor_id", "module_name", "period_start"],
+      grain: "module_month",
+      challenge: "persistently underused Workday or workflow modules before renewal",
+      cube: "source_saas_usage",
+      predicate: "low_utilization",
+    }),
+    makeScenario({
+      domain: "Workday BPO dependency",
+      story: storyThreads[5],
+      files: ["WORKDAY_WORKER_ROLE_SUMMARY.csv", "BPO_CURRENT_STATE_WORKFORCE.csv"],
+      rows: [
+        choose("WORKDAY_WORKER_ROLE_SUMMARY.csv", (row) => row.story_thread_ref === storyThreads[5] && n(row.loaded_labor_cost) > 0),
+        choose("BPO_CURRENT_STATE_WORKFORCE.csv", (row) => row.story_thread_ref === storyThreads[5] && row.leadership_or_retained_org === "retained_leadership"),
+      ],
+      measures: ["fte_count", "loaded_labor_cost", "loaded_labor_cost_annual"],
+      dimensions: ["function_ref", "role_family", "location_model"],
+      grain: "role_function_location",
+      challenge: "internal roles that must be retained or transitioned in the BPO model",
+      cube: "consumption_sourcing_bpo",
+      predicate: "workforce_transition_cost",
+    }),
+    makeScenario({
+      domain: "medical surgical procurement",
+      story: storyThreads[3],
+      files: ["LOCAL_HOSPITAL_PURCHASES.csv", "MEDSURG_ITEM_MASTER.csv"],
+      rows: [
+        choose("LOCAL_HOSPITAL_PURCHASES.csv", (row) => row.story_thread_ref === storyThreads[3] && row.purchase_channel === "off_contract_local"),
+        choose("MEDSURG_ITEM_MASTER.csv", (row) => row.story_thread_ref === storyThreads[3] && row.item_id === "ITEM-0001"),
+      ],
+      measures: ["quantity", "unit_price"],
+      dimensions: ["facility", "item_id", "purchase_channel"],
+      grain: "facility_item_month",
+      challenge: "facility-level off-contract medical/surgical purchasing",
+      cube: "source_medsurg_procurement",
+      predicate: "off_contract_purchase",
+    }),
+    makeScenario({
+      domain: "medical surgical rebate",
+      story: storyThreads[3],
+      files: ["MEDSURG_REBATES_CREDITS.csv", "MEDSURG_PRICE_TIERS.csv"],
+      rows: [
+        choose("MEDSURG_REBATES_CREDITS.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.earned_rebate_amount) > n(row.reconciled_rebate_amount)),
+        choose("MEDSURG_PRICE_TIERS.csv", (row) => row.story_thread_ref === storyThreads[3]),
+      ],
+      measures: ["earned_rebate_amount", "reconciled_rebate_amount", "unit_price"],
+      dimensions: ["facility", "category", "item_id"],
+      grain: "facility_category_month",
+      challenge: "earned medical/surgical rebates that remain unreconciled",
+      cube: "source_medsurg_procurement",
+      predicate: "rebate_gap",
+    }),
+    makeScenario({
+      domain: "facilities EVS service",
+      story: storyThreads[4],
+      files: ["SERVICENOW_MONTHLY_SLA_SUMMARY.csv", "SERVICENOW_SERVICE_CREDITS.csv"],
+      rows: [
+        chooseContract("SERVICENOW_MONTHLY_SLA_SUMMARY.csv", storyThreads[4], "CF-005", (row) => n(row.breach_count) > 0),
+        chooseContract("SERVICENOW_SERVICE_CREDITS.csv", storyThreads[4], "CF-005", (row) => n(row.eligible_amount) > n(row.claimed_amount)),
+      ],
+      measures: ["actual_pct", "breach_count", "eligible_amount", "claimed_amount"],
+      dimensions: ["contract_id", "service_ref", "period_start"],
+      grain: "facility_service_month",
+      challenge: "operational-services SLA misses that create unclaimed penalty exposure",
+      cube: "source_service_performance",
+      predicate: "service_credit_gap",
+      evidenceTypes: ["sla"],
+    }),
+    makeScenario({
+      domain: "BPO normalized TCO",
+      story: storyThreads[5],
+      files: ["BPO_COMMERCIAL_LINES.csv", "BPO_NORMALIZED_TCO.csv"],
+      rows: [
+        choose("BPO_COMMERCIAL_LINES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.supplier_id === "BPO-C"),
+        choose("BPO_NORMALIZED_TCO.csv", (row) => row.story_thread_ref === storyThreads[5] && row.supplier_id === "BPO-C" && row.recommendation_state === "recommended_after_normalization"),
+      ],
+      measures: ["headline_price", "normalized_five_year_tco", "transition_cost", "retained_org_cost", "risk_adjustment"],
+      dimensions: ["supplier_id", "scenario", "year"],
+      grain: "supplier_scenario_year",
+      challenge: "BPO supplier choice after transition, retained organization, automation and risk normalization",
+      cube: "consumption_sourcing_bpo",
+      predicate: "normalized_tco_recommendation",
+      evidenceTypes: ["transition", "pricing"],
+    }),
+    makeScenario({
+      domain: "BPO supplier quality",
+      story: storyThreads[5],
+      files: ["BPO_SUPPLIER_RESPONSES.csv", "BPO_EVALUATION_SCORES.csv"],
+      rows: [
+        choose("BPO_SUPPLIER_RESPONSES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.response_state !== "meets"),
+        choose("BPO_EVALUATION_SCORES.csv", (row) => row.story_thread_ref === storyThreads[5] && n(row.score) < 4),
+      ],
+      measures: ["automation_commitment", "score", "weighted_score"],
+      dimensions: ["supplier_id", "requirement_id", "evaluator_role"],
+      grain: "supplier_requirement_evaluator",
+      challenge: "BPO suppliers that trade headline price for weaker scope, controls or automation commitments",
+      cube: "consumption_sourcing_bpo",
+      predicate: "supplier_quality_tradeoff",
+    }),
+    makeScenario({
+      domain: "BPO clarification risk",
+      story: storyThreads[5],
+      files: ["BPO_CLARIFICATIONS.csv", "BPO_BAFO_RESPONSES.csv"],
+      rows: [
+        choose("BPO_CLARIFICATIONS.csv", (row) => row.story_thread_ref === storyThreads[5] && row.status === "open"),
+        choose("BPO_BAFO_RESPONSES.csv", (row) => row.story_thread_ref === storyThreads[5] && row.bafo_exception_state === "exception_remains"),
+      ],
+      measures: ["bafo_service_fee", "bafo_exception_state"],
+      dimensions: ["supplier_id", "requirement_id", "topic"],
+      grain: "supplier_clarification_bafo",
+      challenge: "BAFO exceptions that should block a lowest-price recommendation",
+      cube: "consumption_sourcing_bpo",
+      predicate: "bafo_exception",
+    }),
+    makeScenario({
+      domain: "health plan analytics",
+      story: storyThreads[6],
+      files: ["CLARITY_CABOODLE_ASSET_INVENTORY.csv", "SQL_SERVER_DATA_MARTS.csv"],
+      rows: [
+        choose("CLARITY_CABOODLE_ASSET_INVENTORY.csv", (row) => row.story_thread_ref === storyThreads[6]),
+        choose("SQL_SERVER_DATA_MARTS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.redundancy_state === "overlap_with_sas_or_caboodle"),
+      ],
+      measures: ["reporting_domain", "redundancy_state"],
+      dimensions: ["platform", "downstream_mart_id", "owner_function"],
+      grain: "asset_mart_dependency",
+      challenge: "health-plan analytics capabilities dependent on legacy marts or Epic data assets",
+      cube: "source_data_platform",
+      predicate: "legacy_dependency",
+    }),
+    makeScenario({
+      domain: "legacy platform retirement",
+      story: storyThreads[6],
+      files: ["HADOOP_CLUSTER_WORKLOADS.csv", "SAS_APPLICATIONS_AND_USERS.csv"],
+      rows: [
+        choose("HADOOP_CLUSTER_WORKLOADS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.retirement_dependency === "contract_scope_fee_reduction_not_linked"),
+        choose("SAS_APPLICATIONS_AND_USERS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.migration_state === "needs_decision"),
+      ],
+      measures: ["retirement_dependency", "active_user_count", "migration_state"],
+      dimensions: ["cluster_ref", "application_ref", "usage_group"],
+      grain: "legacy_platform_workload_month",
+      challenge: "Hadoop or SAS workloads creating transition risk",
+      cube: "source_data_platform",
+      predicate: "legacy_dependency",
+    }),
+    makeScenario({
+      domain: "cloud commitment readiness",
+      story: storyThreads[6],
+      files: ["AWS_TARGET_COMMITMENT_SCENARIOS.csv", "DATABRICKS_TARGET_COMMITMENT_SCENARIOS.csv"],
+      rows: [
+        choose("AWS_TARGET_COMMITMENT_SCENARIOS.csv", (row) => row.story_thread_ref === storyThreads[6] && Boolean(row.prerequisite_decision)),
+        choose("DATABRICKS_TARGET_COMMITMENT_SCENARIOS.csv", (row) => row.story_thread_ref === storyThreads[6] && Boolean(row.prerequisite_decision)),
+      ],
+      measures: ["estimated_monthly_commitment", "estimated_dbu_commitment"],
+      dimensions: ["scenario", "service_name", "workspace", "prerequisite_decision"],
+      grain: "platform_commitment_scenario_month",
+      challenge: "AWS or Databricks commitments waiting on prerequisite decisions",
+      cube: "source_cloud_commitments",
+      predicate: "cloud_prerequisite",
+    }),
+    makeScenario({
+      domain: "architecture dependency",
+      story: storyThreads[6],
+      files: ["ANALYTICS_PLATFORM_DEPENDENCIES.csv", "PROGRAMS_INITIATIVES_DEPENDENCIES.csv"],
+      rows: [
+        choose("ANALYTICS_PLATFORM_DEPENDENCIES.csv", (row) => row.story_thread_ref === storyThreads[6] && row.decision_required === "true"),
+        choose("PROGRAMS_INITIATIVES_DEPENDENCIES.csv", (row) => row.story_thread_ref === storyThreads[6] && Boolean(row.target_quarter)),
+      ],
+      measures: ["decision_required", "target_quarter"],
+      dimensions: ["source_ref", "target_ref", "dependency_ref"],
+      grain: "dependency_initiative",
+      challenge: "architecture dependencies that sequence the transformation roadmap",
+      cube: "source_architecture_dependencies",
+      predicate: "architecture_sequence",
+    }),
+    makeScenario({
+      domain: "risk control readiness",
+      story: storyThreads[6],
+      files: ["RISK_CONTROL_OBSERVATIONS.csv", "BPO_RFP_REQUIREMENTS.csv"],
+      rows: [
+        choose("RISK_CONTROL_OBSERVATIONS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.observation_state === "gap_requires_validation"),
+        choose("BPO_RFP_REQUIREMENTS.csv", (row) => row.story_thread_ref === storyThreads[5] && row.criticality === "must_have"),
+      ],
+      measures: ["observation_state", "criticality"],
+      dimensions: ["risk_ref", "control_ref", "requirement_domain"],
+      grain: "risk_control_requirement",
+      challenge: "control gaps that must be resolved before BPO or platform decisions",
+      cube: "source_risk_controls",
+      predicate: "risk_control_gap",
+    }),
+    makeScenario({
+      domain: "vendor 360",
+      story: storyThreads[0],
+      files: ["WORKDAY_SUPPLIERS.csv", "CONTRACT_REGISTER.csv", "CONTRACT_SCOPE_RELATIONSHIPS.csv"],
+      rows: [
+        choose("WORKDAY_SUPPLIERS.csv", (row) => row.story_thread_ref === storyThreads[0] && row.vendor_id === "VND-001"),
+        chooseContract("CONTRACT_REGISTER.csv", storyThreads[0], "CF-001"),
+        chooseContract("CONTRACT_SCOPE_RELATIONSHIPS.csv", storyThreads[0], "CF-001", (row) => row.relationship_confidence === "inferred_requires_review"),
+      ],
+      measures: ["synthetic_midpoint_total_contract_value", "relationship_confidence"],
+      dimensions: ["vendor_id", "contract_family_id", "business_service_ref"],
+      grain: "vendor_contract_scope",
+      challenge: "strategic vendors with ambiguous contract-to-service scope",
+      cube: "source_vendor_360",
+      predicate: "vendor_scope_ambiguity",
+      evidenceTypes: ["scope"],
+    }),
+    makeScenario({
+      domain: "renewal leverage",
+      story: storyThreads[1],
+      files: ["CONTRACT_RENEWAL_EXIT_TERMS.csv", "CONTRACT_AMENDMENTS.csv"],
+      rows: [
+        chooseContract("CONTRACT_RENEWAL_EXIT_TERMS.csv", storyThreads[1], "CF-002", (row) => row.extracted_state === "partial_evidence"),
+        chooseContract("CONTRACT_AMENDMENTS.csv", storyThreads[1], "CF-002", (row) => n(row.financial_effect) !== 0),
+      ],
+      measures: ["financial_effect", "extracted_state"],
+      dimensions: ["contract_family_id", "clause_type", "amendment_theme"],
+      grain: "contract_clause_amendment",
+      challenge: "renewal or exit terms creating near-term leverage or risk",
+      cube: "source_contract_economics",
+      predicate: "renewal_leverage",
+      evidenceTypes: ["renewal", "termination"],
+    }),
+    makeScenario({
+      domain: "evidence lineage",
+      story: storyThreads[0],
+      files: ["EVIDENCE_SPANS.csv", "CONTRACT_INSTRUMENTS.csv"],
+      rows: [
+        choose("EVIDENCE_SPANS.csv", (row) => row.story_thread_ref === storyThreads[0] && row.contract_family_id === "CF-001" && row.review_state === "needs_audit_review"),
+        chooseContract("CONTRACT_INSTRUMENTS.csv", storyThreads[0], "CF-001"),
+      ],
+      measures: ["extraction_confidence", "review_state"],
+      dimensions: ["document_ref", "contract_family_id", "span_type"],
+      grain: "document_page_span",
+      challenge: "conclusions blocked by partial evidence or low extraction confidence",
+      cube: "source_evidence_lineage",
+      predicate: "evidence_blocker",
+    }),
+    makeScenario({
+      domain: "purchase substitution",
+      story: storyThreads[3],
+      files: ["MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", "LOCAL_HOSPITAL_PURCHASES.csv"],
+      rows: [
+        choose("MEDSURG_BACKORDERS_SUBSTITUTIONS.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.incremental_cost) > 0 && n(row.substitution_count) > 0),
+        choose("LOCAL_HOSPITAL_PURCHASES.csv", (row) => row.story_thread_ref === storyThreads[3] && n(row.unit_price) > 0),
+      ],
+      measures: ["backorder_count", "substitution_count", "incremental_cost", "unit_price"],
+      dimensions: ["facility", "item_id", "period_start"],
+      grain: "facility_item_month",
+      challenge: "substitutions increasing cost in fragmented local procurement",
+      cube: "source_medsurg_procurement",
+      predicate: "substitution_cost",
+    }),
+    makeScenario({
+      domain: "service backlog",
+      story: storyThreads[1],
+      files: ["SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", "SERVICENOW_MONTHLY_SLA_SUMMARY.csv"],
+      rows: [
+        chooseContract("SERVICENOW_MONTHLY_ITSM_SUMMARY.csv", storyThreads[1], "CF-002", (row) => n(row.backlog_over_30_days) > 0),
+        chooseContract("SERVICENOW_MONTHLY_SLA_SUMMARY.csv", storyThreads[1], "CF-002", (row) => n(row.breach_count) > 0),
+      ],
+      measures: ["backlog_count", "backlog_over_30_days", "actual_pct", "breach_count"],
+      dimensions: ["contract_id", "service_ref", "period_start"],
+      grain: "service_month",
+      challenge: "vendor services with backlog aging above contractual targets",
+      cube: "source_service_performance",
+      predicate: "incident_or_backlog_pressure",
+      evidenceTypes: ["sla"],
+    }),
+    makeScenario({
+      domain: "workforce pyramid",
+      story: storyThreads[0],
+      files: ["VENDOR_WORKFORCE_MONTHLY.csv", "CONTRACT_RATE_CARDS.csv"],
+      rows: [
+        chooseContract("VENDOR_WORKFORCE_MONTHLY.csv", storyThreads[0], "CF-001", (row) => n(row.billed_mix_pct) !== n(row.contracted_mix_pct)),
+        chooseContract("CONTRACT_RATE_CARDS.csv", storyThreads[0], "CF-001"),
+      ],
+      measures: ["billed_fte", "contracted_mix_pct", "billed_mix_pct", "contracted_rate"],
+      dimensions: ["contract_family_id", "role_title", "location_model"],
+      grain: "role_location_month",
+      challenge: "billed staffing mix diverging from the contracted pyramid",
+      cube: "source_workforce_rate_card",
+      predicate: "workforce_mix_variance",
+      evidenceTypes: ["rate_card"],
+    }),
+    makeScenario({
+      domain: "payments reconciliation",
+      story: storyThreads[2],
+      files: ["WORKDAY_PAYMENTS.csv", "WORKDAY_SUPPLIER_INVOICES.csv"],
+      rows: [
+        choose("WORKDAY_PAYMENTS.csv", (row) => row.story_thread_ref === storyThreads[2] && row.vendor_id === "VND-003" && n(row.payment_amount) > 0),
+        chooseContract("WORKDAY_SUPPLIER_INVOICES.csv", storyThreads[2], "CF-003", (row) => n(row.line_amount) > 0),
+      ],
+      measures: ["payment_amount", "line_amount"],
+      dimensions: ["vendor_id", "invoice_id", "period_start"],
+      grain: "invoice_payment",
+      challenge: "payment and invoice totals needing reconciliation before finance conclusions",
+      cube: "source_financial_reconciliation",
+      predicate: "finance_reconciliation_gap",
+    }),
+    makeScenario({
+      domain: "BPO current baseline",
+      story: storyThreads[5],
+      files: ["BPO_CURRENT_STATE_PROCESS_VOLUMES.csv", "BPO_CURRENT_STATE_COST_BASELINE.csv"],
+      rows: [
+        choose("BPO_CURRENT_STATE_PROCESS_VOLUMES.csv", (row) => row.story_thread_ref === storyThreads[5] && n(row.monthly_volume) > 0),
+        choose("BPO_CURRENT_STATE_COST_BASELINE.csv", (row) => row.story_thread_ref === storyThreads[5] && n(row.labor_cost) > 0),
+      ],
+      measures: ["monthly_volume", "labor_cost", "technology_cost", "controls_cost"],
+      dimensions: ["function_ref", "process_name", "period_start"],
+      grain: "function_process_month",
+      challenge: "current-state processes with the largest BPO baseline cost and volume exposure",
+      cube: "consumption_sourcing_bpo",
+      predicate: "bpo_baseline_exposure",
+    }),
+    makeScenario({
+      domain: "SaaS low usage",
+      story: storyThreads[2],
+      files: ["SAAS_MODULE_USAGE_MONTHLY.csv", "CONTRACT_REGISTER.csv"],
+      rows: [
+        choose("SAAS_MODULE_USAGE_MONTHLY.csv", (row) => row.story_thread_ref === storyThreads[2] && row.vendor_id === "VND-003" && row.low_usage_flag === "true"),
+        chooseContract("CONTRACT_REGISTER.csv", storyThreads[2], "CF-003"),
+      ],
+      measures: ["entitled_users", "active_users", "low_usage_flag"],
+      dimensions: ["vendor_id", "module_name", "period_start"],
+      grain: "module_month",
+      challenge: "licensed SaaS modules that should be challenged before renewal",
+      cube: "source_saas_usage",
+      predicate: "low_utilization",
+    }),
+    makeScenario({
+      domain: "program sequencing",
+      story: storyThreads[6],
+      files: ["PROGRAMS_INITIATIVES_DEPENDENCIES.csv", "AWS_TARGET_COMMITMENT_SCENARIOS.csv"],
+      rows: [
+        choose("PROGRAMS_INITIATIVES_DEPENDENCIES.csv", (row) => row.story_thread_ref === storyThreads[6] && Boolean(row.target_quarter)),
+        choose("AWS_TARGET_COMMITMENT_SCENARIOS.csv", (row) => row.story_thread_ref === storyThreads[6] && Boolean(row.prerequisite_decision)),
+      ],
+      measures: ["target_quarter", "estimated_monthly_commitment"],
+      dimensions: ["program_ref", "initiative_ref", "prerequisite_decision"],
+      grain: "initiative_platform_scenario",
+      challenge: "roadmap decisions that must precede cloud commitment approval",
+      cube: "source_program_roadmap",
+      predicate: "architecture_sequence",
+    }),
+    makeScenario({
+      domain: "quality guardrail",
+      story: storyThreads[6],
+      files: ["RISK_CONTROL_OBSERVATIONS.csv", "EVIDENCE_SPANS.csv"],
+      rows: [
+        choose("RISK_CONTROL_OBSERVATIONS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.observation_state === "gap_requires_validation"),
+        choose("EVIDENCE_SPANS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.review_state === "needs_audit_review"),
+      ],
+      measures: ["observation_state", "extraction_confidence"],
+      dimensions: ["domain", "risk_ref", "span_type"],
+      grain: "risk_evidence",
+      challenge: "risk guardrails lacking evidence strong enough for executive claims",
+      cube: "source_risk_evidence",
+      predicate: "evidence_blocker",
+    }),
+    makeScenario({
+      domain: "contract document completeness",
+      story: storyThreads[6],
+      files: ["CONTRACT_INSTRUMENTS.csv", "EVIDENCE_SPANS.csv"],
+      rows: [
+        chooseContract("CONTRACT_INSTRUMENTS.csv", storyThreads[6], "CF-006"),
+        choose("EVIDENCE_SPANS.csv", (row) => row.story_thread_ref === storyThreads[6] && row.contract_family_id === "CF-006" && row.review_state === "audit_ready"),
+      ],
+      measures: ["extraction_confidence", "review_state"],
+      dimensions: ["instrument_type", "document_ref", "contract_family_id"],
+      grain: "instrument_evidence",
+      challenge: "contract instruments with enough evidence for pricing, SLA and exit analysis",
+      cube: "source_evidence_lineage",
+      predicate: "document_complete",
+    }),
+    makeScenario({
+      domain: "supplier invitation coverage",
+      story: storyThreads[5],
+      files: ["BPO_SUPPLIERS.csv", "BPO_RFP_REQUIREMENTS.csv"],
+      rows: [
+        choose("BPO_SUPPLIERS.csv", (row) => row.story_thread_ref === storyThreads[5] && row.supplier_id === "BPO-C"),
+        choose("BPO_RFP_REQUIREMENTS.csv", (row) => row.story_thread_ref === storyThreads[5] && row.criticality === "must_have"),
+      ],
+      measures: ["headline_price_rank", "normalized_recommendation_rank", "criticality"],
+      dimensions: ["supplier_id", "requirement_domain"],
+      grain: "supplier_requirement",
+      challenge: "invited suppliers covering critical BPO requirements",
+      cube: "consumption_sourcing_bpo",
+      predicate: "supplier_requirement_coverage",
+    }),
   ];
   const angleTemplates = [
-    { label: "executive_decision", prefix: "What executive decision should be made from", action: "set the decision owner and next evidence request", visual: "table" },
-    { label: "evidence_gap", prefix: "Which evidence gap could invalidate", action: "withhold the claim until evidence is complete", visual: "evidence_drawer" },
-    { label: "trend_or_variance", prefix: "What trend or variance is visible in", action: "prioritize reconciliation or remediation", visual: "time_series" },
-    { label: "commercial_leverage", prefix: "Where is the strongest commercial leverage in", action: "prepare supplier challenge or negotiation", visual: "waterfall" },
-    { label: "risk_guardrail", prefix: "Which risk guardrail constrains action on", action: "escalate the guardrail before recommendation", visual: "heatmap" },
-    { label: "cube_drill", prefix: "How should a Cube drill prove or disprove", action: "drill to tenant-scoped source rows and evidence", visual: "funnel" },
+    { label: "executive_decision", make: (scenario) => `Which executive decision follows from the planted evidence on ${scenario.challenge}?`, action: "set the decision owner and next evidence request", visual: "table" },
+    { label: "evidence_gap", make: (scenario) => `What evidence gap could change the decision on ${scenario.challenge}?`, action: "withhold the claim until evidence is complete", visual: "evidence_drawer" },
+    { label: "trend_or_variance", make: (scenario) => `What trend or variance in the source rows should leaders investigate for ${scenario.challenge}?`, action: "prioritize reconciliation or remediation", visual: "time_series" },
+    { label: "commercial_leverage", make: (scenario) => `Where does the cited source evidence create negotiation leverage for ${scenario.challenge}?`, action: "prepare supplier challenge or negotiation", visual: "waterfall" },
+    { label: "risk_guardrail", make: (scenario) => `Which risk guardrail constrains the recommended action on ${scenario.challenge}?`, action: "escalate the guardrail before recommendation", visual: "heatmap" },
+    { label: "cube_drill", make: (scenario) => `How should a Cube drill prove or disprove the finding on ${scenario.challenge}?`, action: "drill to tenant-scoped source rows and evidence", visual: "funnel" },
   ];
   const questions = [];
   const coverage = [];
@@ -994,38 +1476,42 @@ function buildQuestionBank() {
       const qidFixed = `PHS-HQ-${pad(index + 1, 3)}`;
     questions.push({
       question_id: qidFixed,
-      domain: scenario[0],
-      question: `${angle.prefix} ${scenario[7].replace(/^\w/u, (char) => char.toLowerCase())}`,
-      executive_intent: `Use ${scenario[0]} evidence to ${angle.action}.`,
-      expected_answer: `Answer must cite ${scenario[2].join(", ")} records ${scenario[3].join(", ")} and evidence ${`EVID-SPAN-${pad((index % 16000) + 1, 5)}`}.`,
-      required_source_domains: Array.from(new Set(scenario[2].map((file) => file.replace(/\.csv$/u, "").toLowerCase()))),
-      required_measures: scenario[4],
-      required_dimensions: scenario[5],
-      required_grain: scenario[6],
+      domain: scenario.domain,
+      question: angle.make(scenario),
+      executive_intent: `Use ${scenario.domain} evidence to ${angle.action}.`,
+      expected_answer: `Answer must cite ${scenario.files.join(", ")} records ${scenario.records.join(", ")} and evidence ${scenario.evidence_ref}.`,
+      required_source_domains: Array.from(new Set(scenario.files.map((file) => file.replace(/\.csv$/u, "").toLowerCase()))),
+      required_measures: scenario.measures,
+      required_dimensions: scenario.dimensions,
+      required_grain: scenario.grain,
       required_relationship: "Tenant -> dataset -> source file -> planted source_record_id -> evidence_ref -> decision.",
-      required_history: scenario[6].includes("month") ? "24 months where source is monthly" : "current snapshot with source lineage",
-      required_evidence_depth: { min_source_domains: Math.min(2, scenario[2].length), min_source_records: scenario[3].length, evidence_tier: scenario[1].includes("bpo") ? "tier_1_full_evidence" : "source_or_selected_evidence" },
+      required_history: scenario.grain.includes("month") ? "24 months where source is monthly" : "current snapshot with source lineage",
+      required_evidence_depth: { min_source_domains: Math.min(2, scenario.files.length), min_source_records: scenario.records.length, evidence_tier: scenario.story.includes("bpo") ? "tier_1_full_evidence" : "source_or_selected_evidence" },
       expected_visualization: angle.visual,
-      expected_cube_drill_path: ["tenant_key", "dataset_id", ...scenario[5].slice(0, 3)],
+      expected_cube_drill_path: ["tenant_key", "dataset_id", ...scenario.dimensions.slice(0, 3)],
       allowed_conclusion: "May identify exposure, opportunity, risk, evidence gap or next action as synthetic demo analysis.",
       prohibited_overstatement: "Must not call an estimate verified, realized, live-proven or production-active without Phase B evidence.",
       expected_action: angle.action,
-      acceptance_rule: "Pass if all mapped source files, planted source_record_id values, evidence refs, measures and dimensions resolve in the package.",
-      story_thread_ref: scenario[1],
+      acceptance_rule: `Pass if planted records satisfy predicate ${scenario.predicate} and align to the mapped evidence.`,
+      story_thread_ref: scenario.story,
+      question_predicate: scenario.predicate,
     });
     coverage.push({
       question_id: qidFixed,
-      required_source_files: scenario[2],
-      required_columns: Array.from(new Set(["tenant_key", "dataset_id", "source_record_id", ...scenario[4], ...scenario[5]])),
-      planted_scenario_records: scenario[3],
-      evidence_refs: [`EVID-SPAN-${pad((index % 16_000) + 1, 5)}`],
-      cube_view: scenario[8],
-      drill_members: ["tenant_key", "dataset_id", ...scenario[5].slice(0, 4)],
+      required_source_files: scenario.files,
+      required_columns: Array.from(new Set(["tenant_key", "dataset_id", "source_record_id", "story_thread_ref", ...scenario.measures, ...scenario.dimensions])),
+      planted_scenario_records: scenario.records,
+      evidence_refs: [scenario.evidence_ref],
+      expected_evidence_span_types: [scenario.evidence_type],
+      question_predicate: scenario.predicate,
+      cross_domain_relationships: scenario.story === storyThreads[6] && scenario.files.includes("BPO_RFP_REQUIREMENTS.csv") ? ["BPO_RFP_REQUIREMENTS.csv is cross-domain control evidence for platform/BPO decision gating."] : [],
+      cube_view: scenario.cube,
+      drill_members: ["tenant_key", "dataset_id", ...scenario.dimensions.slice(0, 4)],
       expected_answer: "Tenant-scoped, evidence-cited, audit-only answer.",
-      evidence_requirement: "Mapped source files, planted records and structured evidence refs must resolve.",
-      required_measures: scenario[4],
-      required_dimensions: scenario[5],
-      story_thread_ref: scenario[1],
+      evidence_requirement: "Mapped source files, planted records, semantic predicates, story threads and evidence refs must resolve.",
+      required_measures: scenario.measures,
+      required_dimensions: scenario.dimensions,
+      story_thread_ref: scenario.story,
     });
     }
   }
@@ -1164,7 +1650,9 @@ function questionsForRole(role, count, domain) {
 function buildEvidenceRows() {
   const rows = [];
   for (let i = 0; i < 16_000; i += 1) {
-    const contract = contractFamilies[i % contractFamilies.length];
+    const contract = i % 7 === 5
+      ? ["", "Back-Office BPO Sourcing Event", "", 0, "tier_1_full_evidence", storyThreads[5]]
+      : contractFamilies[i % contractFamilies.length];
     rows.push(common({
       path: "contract_and_evidence_corpus/EVIDENCE_SPANS.csv",
       sourceSystem: "SharePoint Contract Repository",
@@ -1275,7 +1763,7 @@ async function buildPackage() {
     await writeCsv(path.join(stageDir, relativePath), rows);
   }
 
-  const fieldGuidance = buildWorkbookFieldGuidance();
+  const fieldGuidance = buildWorkbookFieldGuidance(fileRows);
   const clientWorkbookSheets = [
     { name: "00_READ_ME", rows: [["Purpose", "Audit-only synthetic healthcare demo collection workbook"], ["Tenant", EXPECTED.tenantKey], ["Dataset", EXPECTED.datasetId], ["No runtime mutation", "true"]] },
     { name: "01_COLLECTION_PLAN", rows: [["Domain", "Owner", "Source-first extract", "Fallback"], ...Array.from(new Set(fieldGuidance.map((row) => row.tab))).map((tab) => [tab, "Named data owner", "Authoritative native export", "Interview attestation with validation"])] },
@@ -1345,7 +1833,7 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
 `);
   }
 
-  const { questionBank, coverageMatrix } = buildQuestionBank();
+  const { questionBank, coverageMatrix } = buildQuestionBank(fileRows);
   await writeJson(path.join(stageDir, "phs_healthcare_demo_question_bank.json"), questionBank);
   await writeJson(path.join(stageDir, "phs_healthcare_demo_question_coverage_matrix.json"), coverageMatrix);
   await writeText(path.join(stageDir, "phs_healthcare_demo_model_fit_audit.md"), buildModelFitAudit(questionBank.question_count));
@@ -1496,7 +1984,7 @@ This document contains aggregate commercial, operational, service-level, renewal
   await writeJson(path.join(stageDir, "phase_a_result.json"), {
     stage_dir: stageDir,
     proof_zip: `PHS_Healthcare_Demo_Audit_Proof_${timestamp}.zip`,
-    proof_zip_sha256: "computed_after_zip_creation",
+    proof_zip_sha256_attestation: `PHS_Healthcare_Demo_Audit_Proof_${timestamp}.zip.sha256`,
     downloads,
     manifest_counts: manifest.counts,
     validation_ok: validation.ok,
@@ -1504,10 +1992,13 @@ This document contains aggregate commercial, operational, service-level, renewal
   const proofZip = path.join(outDir, `PHS_Healthcare_Demo_Audit_Proof_${timestamp}.zip`);
   await zipDir(stageDir, proofZip);
   const proofSha = await sha256File(proofZip);
+  const proofShaPath = `${proofZip}.sha256`;
+  await writeText(proofShaPath, `${proofSha}  ${path.basename(proofZip)}\n`);
   console.log(JSON.stringify({
     stage_dir: stageDir,
     proof_zip: proofZip,
     proof_zip_sha256: proofSha,
+    proof_zip_sha256_attestation: proofShaPath,
     downloads,
     counts: manifest.counts,
     validation_ok: validation.ok,
