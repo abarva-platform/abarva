@@ -36,9 +36,10 @@ const ID_COLUMN_NAMES = new Set(["tenant_id", "client_id"]);
 
 const TEXT_TYPES = new Set(["character varying", "character", "text", "citext", "uuid"]);
 
-const DELETE_CHUNK_SIZE = 2000;
-const DEFAULT_MAX_CHUNKS_PER_OPERATION = 10;
+const DELETE_CHUNK_SIZE = 1000;
+const DEFAULT_MAX_CHUNKS_PER_OPERATION = 5;
 const DEFAULT_APPLY_BUDGET_SECONDS = 5400;
+const INDEX_THRESHOLD_ROWS = 1000;
 
 const DELETE_PRIORITY = new Map([
   ["public.semantic2_evidence_refs", 10],
@@ -438,6 +439,47 @@ async function deleteRows(client, operation, maxChunks = Number.POSITIVE_INFINIT
   return { rowsDeleted: totalDeleted, chunkLimited: false };
 }
 
+function purgeIndexName(operation, condition) {
+  const basis = `${operation.qualifiedName}.${condition.column}.${condition.type}`;
+  let hash = 0;
+  for (let index = 0; index < basis.length; index += 1) {
+    hash = (hash * 31 + basis.charCodeAt(index)) >>> 0;
+  }
+  return `retired_purge_${hash.toString(16)}_idx`;
+}
+
+function purgeIndexExpression(condition) {
+  if (condition.type === "retired_key") {
+    return `(lower(${quoteIdent(condition.column)}::text))`;
+  }
+  if (condition.type === "retired_client_id") {
+    return `((${quoteIdent(condition.column)}::text))`;
+  }
+  return null;
+}
+
+async function preparePurgeIndexes(client, operations) {
+  const indexed = [];
+  const candidates = operations.filter(
+    (operation) =>
+      operation.source === "direct" &&
+      operation.rowCount >= INDEX_THRESHOLD_ROWS &&
+      operation.conditions.some((condition) => condition.type === "retired_key" || condition.type === "retired_client_id"),
+  );
+  for (const operation of candidates) {
+    for (const condition of operation.conditions) {
+      const expression = purgeIndexExpression(condition);
+      if (!expression) continue;
+      const indexName = purgeIndexName(operation, condition);
+      await client.query(
+        `create index if not exists ${quoteIdent(indexName)} on ${qualified(operation.schema, operation.table)} ${expression}`,
+      );
+      indexed.push({ qualifiedName: operation.qualifiedName, column: condition.column, indexName });
+    }
+  }
+  return indexed;
+}
+
 async function clearKnownReferences(client, operation) {
   if (operation.qualifiedName !== "public.move_artifacts") return null;
   const exists = await client.query(`
@@ -572,6 +614,7 @@ async function deleteProgramAuditLogIfNeededStaged(client, operation, maxChunks)
 async function applyOneOperationStaged(client, operation, pass, maxChunks) {
   await client.query("begin");
   try {
+    await client.query("set local statement_timeout = '2min'");
     await setTriggerOverrides(client, false);
     const actions = [];
     const cleared = await clearKnownReferences(client, operation);
@@ -628,6 +671,18 @@ async function applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds) {
       try {
         const operationActions = await applyOneOperationStaged(client, operation, pass, maxChunks);
         actions.push(...operationActions);
+        console.error(
+          JSON.stringify({
+            event: "retired_tenant_row_purge_progress",
+            pass,
+            qualifiedName: operation.qualifiedName,
+            rowsChanged: operationActions.reduce(
+              (sum, action) => sum + Number(action.rowsDeleted ?? action.rowsUpdated ?? 0),
+              0,
+            ),
+            chunkLimited: operationActions.some((action) => action.chunkLimited),
+          }),
+        );
         if (operationActions.some((action) => Number(action.rowsDeleted ?? action.rowsUpdated ?? 0) > 0)) {
           progress = true;
         }
@@ -686,6 +741,7 @@ function stripParams(operation) {
 }
 
 function compactProof(proof) {
+  const pending = proof.apply?.pending ?? [];
   return {
     event: proof.event,
     run_id: proof.run_id,
@@ -702,10 +758,12 @@ function compactProof(proof) {
           strategy: proof.apply.strategy,
           completed: proof.apply.completed,
           budgetExhausted: proof.apply.budgetExhausted,
+          preparedIndexCount: proof.apply.preparedIndexes?.length ?? 0,
           deletedRows: proof.apply.deletedRows,
           actionCount: proof.apply.actions?.length ?? 0,
-          pendingCount: proof.apply.pending?.length ?? 0,
-          pending: proof.apply.pending?.map((operation) => ({
+          pendingCount: pending.length,
+          pendingOmitted: Math.max(0, pending.length - 20),
+          pending: pending.slice(0, 20).map((operation) => ({
             qualifiedName: operation.qualifiedName,
             rowCount: operation.rowCount,
             source: operation.source,
@@ -840,12 +898,16 @@ async function main() {
           applied_at: new Date().toISOString(),
         };
       } else {
+        await client.query("set statement_timeout = '10min'");
+        const preparedIndexes = await preparePurgeIndexes(client, before.operations);
+        await client.query("set statement_timeout = '5min'");
         const deletion = await applyDeletesStaged(client, maxPasses, maxChunks, budgetSeconds);
         proof.apply = {
           strategy: "staged",
           committed: true,
           completed: deletion.pending.length === 0,
           budgetExhausted: deletion.budgetExhausted,
+          preparedIndexes,
           actions: deletion.actions,
           deletedRows: deletion.actions.reduce((sum, action) => sum + Number(action.rowsDeleted ?? 0), 0),
           pending: deletion.pending,
