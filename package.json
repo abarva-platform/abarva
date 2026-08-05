@@ -503,6 +503,7 @@
     "audit:control-plane-purity": "node scripts/audit/control-plane-tenant-purity.mjs",
     "audit:control-plane-purity:check": "node scripts/audit/control-plane-tenant-purity.mjs --check",
     "audit:control-plane-purity:baseline": "node scripts/audit/control-plane-tenant-purity.mjs --baseline",
+    "audit:retired-tenant-inventory": "node scripts/governance/retired-tenant-inventory.mjs",
     "db:seed": "npx tsx src/scripts/run-seeds.ts",
     "db:seed:all": "npx tsx src/scripts/run-seeds.ts --all",
     "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list",
