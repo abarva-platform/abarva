@@ -100,6 +100,11 @@ function indexName(tableRef) {
   return `retired_residue_${tableRef.schema}_${tableRef.table}_tenant_key_idx`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 62);
 }
 
+function fkIndexName(foreignKey) {
+  const basis = `${foreignKey.childSchema}_${foreignKey.childTable}_${foreignKey.constraintName}_idx`;
+  return `retired_residue_fk_${basis}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 62);
+}
+
 async function tableExists(client, tableRef) {
   const result = await client.query("select to_regclass($1)::text as regclass", [tableRef.qualifiedName]);
   return Boolean(result.rows[0]?.regclass);
@@ -133,6 +138,61 @@ async function prepareIndex(client, tableRef) {
   await client.query(
     `create index if not exists ${quoteIdent(indexName(tableRef))} on ${qualified(tableRef.schema, tableRef.table)} ((lower(${quoteIdent("tenant_key")}::text)))`,
   );
+}
+
+async function getReferencingForeignKeys(client, tableRef) {
+  const result = await client.query(
+    `
+      select
+        child_ns.nspname as child_schema,
+        child.relname as child_table,
+        con.conname as constraint_name,
+        array_agg(child_att.attname order by key_position.ordinality) as child_columns
+      from pg_constraint con
+      join pg_class parent on parent.oid = con.confrelid
+      join pg_namespace parent_ns on parent_ns.oid = parent.relnamespace
+      join pg_class child on child.oid = con.conrelid
+      join pg_namespace child_ns on child_ns.oid = child.relnamespace
+      join unnest(con.conkey) with ordinality as key_position(child_attnum, ordinality) on true
+      join pg_attribute child_att on child_att.attrelid = child.oid and child_att.attnum = key_position.child_attnum
+      where con.contype = 'f'
+        and parent_ns.nspname = $1
+        and parent.relname = $2
+        and child_ns.nspname not in ('pg_catalog', 'information_schema')
+        and child_ns.nspname not like 'pg_toast%'
+      group by child_ns.nspname, child.relname, con.conname
+      order by child_ns.nspname, child.relname, con.conname
+    `,
+    [tableRef.schema, tableRef.table],
+  );
+  return result.rows.map((row) => ({
+    parentQualifiedName: tableRef.qualifiedName,
+    childSchema: row.child_schema,
+    childTable: row.child_table,
+    childQualifiedName: `${row.child_schema}.${row.child_table}`,
+    constraintName: row.constraint_name,
+    childColumns: Array.isArray(row.child_columns) ? row.child_columns : [],
+  })).filter((row) => row.childColumns.length > 0);
+}
+
+async function prepareReferencingIndexes(client, tableRef) {
+  const foreignKeys = await getReferencingForeignKeys(client, tableRef);
+  const indexes = [];
+  for (const foreignKey of foreignKeys) {
+    const columns = foreignKey.childColumns.map((column) => quoteIdent(column)).join(", ");
+    if (!columns) continue;
+    await client.query(
+      `create index if not exists ${quoteIdent(fkIndexName(foreignKey))} on ${qualified(foreignKey.childSchema, foreignKey.childTable)} (${columns})`,
+    );
+    indexes.push({
+      parentQualifiedName: foreignKey.parentQualifiedName,
+      childQualifiedName: foreignKey.childQualifiedName,
+      constraintName: foreignKey.constraintName,
+      childColumns: foreignKey.childColumns,
+      indexName: fkIndexName(foreignKey),
+    });
+  }
+  return indexes;
 }
 
 async function deleteChunk(client, tableRef, chunkSize) {
@@ -181,6 +241,7 @@ async function applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, state
     }
     await requireTenantKey(client, tableRef);
     await prepareIndex(client, tableRef);
+    const referencingIndexes = await prepareReferencingIndexes(client, tableRef);
 
     const beforeRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
     const beforeKeepRows = await countRows(client, tableRef, KEEP_KEYS);
@@ -208,6 +269,7 @@ async function applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, state
       afterRetiredRows,
       beforeKeepRows,
       afterKeepRows,
+      referencingIndexes,
       rowsDeleted,
       chunks,
       complete: afterRetiredRows === 0,
