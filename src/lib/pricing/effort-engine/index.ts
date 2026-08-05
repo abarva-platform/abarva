@@ -14,6 +14,7 @@ export * from "./pack-loader";
 export * from "./archetypes";
 export * from "./activity-packs";
 export * from "./rate-card-resolver";
+export * from "./moves-rate-selection";
 export * from "./range-policy";
 export * from "./scenarios";
 export * from "./cost-engine";
