@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column.
+This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column. Follow-up hardening adds chunked deletes for large tables and scoped trigger overrides for immutable audit-style tables during the approved purge transaction.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 
 ## Changes Included
 
-- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, compact structured proof output, and rollback-on-pending behavior.
+- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, defensive FK metadata guards, chunked large-table deletes, scoped trigger overrides for known immutable audit tables, compact structured proof output, and rollback-on-pending behavior.
 - `package.json`: adds dry-run/apply npm entries for the row purge and changes the old data-layer apply script to use `--apply` directly.
 
 ## QA / Validation
@@ -43,6 +43,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: `npm run secrets:staged`
 - PASS: a failed pre-fix apply attempt rolled back cleanly and a subsequent read-only inventory confirmed retired rows remained present rather than partially deleted.
 - PASS: a post-fix dry-run failure before any delete exposed a malformed FK metadata guard case; the follow-up guard keeps malformed FK metadata out of generated SQL.
+- PASS: a subsequent apply attempt rolled back cleanly after exposing large-table statement timeouts, append-only triggers, immutable triggers, and one dependent-artifact foreign-key blocker; this hardening addresses those blockers with chunking, scoped trigger overrides, and dependent FK row planning.
 - NOT RUN: destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan

@@ -36,6 +36,17 @@ const ID_COLUMN_NAMES = new Set(["tenant_id", "client_id"]);
 
 const TEXT_TYPES = new Set(["character varying", "character", "text", "citext", "uuid"]);
 
+const DELETE_CHUNK_SIZE = 25000;
+
+const TRIGGER_OVERRIDES = Object.freeze([
+  { qualifiedName: "public.agent_context_traces", trigger: "user" },
+  { qualifiedName: "public.evidence_ledger", trigger: "user" },
+  { qualifiedName: "public.notification_events", trigger: "user" },
+  { qualifiedName: "public.program_audit_log", trigger: "program_audit_log_no_delete" },
+  { qualifiedName: "public.responsible_ai_acknowledgments", trigger: "user" },
+  { qualifiedName: "public.responsible_ai_training_completions", trigger: "user" },
+]);
+
 function usage() {
   return `Usage:
   node scripts/ops/purge-retired-tenant-rows.mjs [options]
@@ -149,10 +160,10 @@ function renderWhere(operation, alias, params) {
   return clauses.map((clause) => `(${clause})`).join(" or ");
 }
 
-function rendered(operation) {
+function rendered(operation, alias = "target") {
   const params = [];
   return {
-    sql: renderWhere(operation, "target", params),
+    sql: renderWhere(operation, alias, params),
     params,
   };
 }
@@ -319,7 +330,8 @@ async function buildPlan(client) {
     const childForeignKeys = foreignKeysByParent.get(parentOperation.qualifiedName) ?? [];
     for (const foreignKey of childForeignKeys) {
       const childQualifiedName = `${foreignKey.child_schema}.${foreignKey.child_table}`;
-      if (directOperationByTable.has(childQualifiedName)) continue;
+      const directChildOperation = directOperationByTable.get(childQualifiedName);
+      if (directChildOperation?.rowCount > 0) continue;
       const dependentKey = `${childQualifiedName}:${foreignKey.constraint_name}:${parentOperation.qualifiedName}`;
       if (dependentKeys.has(dependentKey)) continue;
       dependentKeys.add(dependentKey);
@@ -363,21 +375,44 @@ async function buildPlan(client) {
 
 async function deleteProgramAuditLogIfNeeded(client, operation) {
   if (operation.qualifiedName !== "public.program_audit_log" || operation.rowCount === 0) return null;
-  await client.query("alter table public.program_audit_log disable trigger program_audit_log_no_delete");
-  try {
+  const rowsDeleted = await deleteRows(client, operation);
+  return {
+    qualifiedName: operation.qualifiedName,
+    rowsDeleted,
+    specialCase: "disabled_program_audit_log_no_delete",
+  };
+}
+
+async function setTriggerOverrides(client, enabled) {
+  const action = enabled ? "enable" : "disable";
+  for (const override of TRIGGER_OVERRIDES) {
+    const [schema, table] = override.qualifiedName.split(".");
+    await client.query(`alter table ${qualified(schema, table)} ${action} trigger ${override.trigger === "user" ? "user" : quoteIdent(override.trigger)}`);
+  }
+}
+
+async function deleteRows(client, operation) {
+  if (operation.rowCount <= DELETE_CHUNK_SIZE) {
     const where = rendered(operation);
     const result = await client.query(
       `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
       where.params,
     );
-    return {
-      qualifiedName: operation.qualifiedName,
-      rowsDeleted: result.rowCount ?? 0,
-      specialCase: "disabled_program_audit_log_no_delete",
-    };
-  } finally {
-    await client.query("alter table public.program_audit_log enable trigger program_audit_log_no_delete");
+    return result.rowCount ?? 0;
   }
+
+  let totalDeleted = 0;
+  for (;;) {
+    const where = rendered(operation, "candidate");
+    const result = await client.query(
+      `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${quoteIdent("target")}.ctid in (select ${quoteIdent("candidate")}.ctid from ${qualified(operation.schema, operation.table)} as ${quoteIdent("candidate")} where ${where.sql} limit ${DELETE_CHUNK_SIZE})`,
+      where.params,
+    );
+    const rowsDeleted = result.rowCount ?? 0;
+    totalDeleted += rowsDeleted;
+    if (rowsDeleted < DELETE_CHUNK_SIZE) break;
+  }
+  return totalDeleted;
 }
 
 async function applyDeletes(client, operations, maxPasses) {
@@ -388,6 +423,9 @@ async function applyDeletes(client, operations, maxPasses) {
       if (a.qualifiedName === "public.clients") return 1;
       if (b.qualifiedName === "public.clients") return -1;
       if (a.depth !== b.depth) return b.depth - a.depth;
+      const aOverride = TRIGGER_OVERRIDES.some((override) => override.qualifiedName === a.qualifiedName) ? -1 : 0;
+      const bOverride = TRIGGER_OVERRIDES.some((override) => override.qualifiedName === b.qualifiedName) ? -1 : 0;
+      if (aOverride !== bOverride) return aOverride - bOverride;
       return b.rowCount - a.rowCount || a.qualifiedName.localeCompare(b.qualifiedName);
     });
 
@@ -400,35 +438,35 @@ async function applyDeletes(client, operations, maxPasses) {
     }
   }
 
-  for (let pass = 1; pending.length > 0 && pass <= maxPasses; pass += 1) {
-    const next = [];
-    let progress = false;
-    let savepointIndex = 0;
-    for (const operation of pending) {
-      savepointIndex += 1;
-      const savepoint = `retired_tenant_row_purge_${pass}_${savepointIndex}`;
-      await client.query(`savepoint ${savepoint}`);
-      try {
-        const where = rendered(operation);
-        const result = await client.query(
-          `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
-          where.params,
-        );
-        await client.query(`release savepoint ${savepoint}`);
-        const rowsDeleted = result.rowCount ?? 0;
-        actions.push({ qualifiedName: operation.qualifiedName, rowsDeleted, pass });
-        if (rowsDeleted > 0) progress = true;
-      } catch (error) {
-        await client.query(`rollback to savepoint ${savepoint}`);
-        await client.query(`release savepoint ${savepoint}`);
-        next.push({
-          ...operation,
-          lastError: error instanceof Error ? error.message : String(error),
-        });
+  await setTriggerOverrides(client, false);
+  try {
+    for (let pass = 1; pending.length > 0 && pass <= maxPasses; pass += 1) {
+      const next = [];
+      let progress = false;
+      let savepointIndex = 0;
+      for (const operation of pending) {
+        savepointIndex += 1;
+        const savepoint = `retired_tenant_row_purge_${pass}_${savepointIndex}`;
+        await client.query(`savepoint ${savepoint}`);
+        try {
+          const rowsDeleted = await deleteRows(client, operation);
+          await client.query(`release savepoint ${savepoint}`);
+          actions.push({ qualifiedName: operation.qualifiedName, rowsDeleted, pass });
+          if (rowsDeleted > 0) progress = true;
+        } catch (error) {
+          await client.query(`rollback to savepoint ${savepoint}`);
+          await client.query(`release savepoint ${savepoint}`);
+          next.push({
+            ...operation,
+            lastError: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
+      if (!progress && next.length === pending.length) break;
+      pending.splice(0, pending.length, ...next);
     }
-    if (!progress && next.length === pending.length) break;
-    pending.splice(0, pending.length, ...next);
+  } finally {
+    await setTriggerOverrides(client, true);
   }
 
   return { actions, pending };
