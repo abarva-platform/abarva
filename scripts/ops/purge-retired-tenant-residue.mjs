@@ -39,6 +39,8 @@ function usage() {
 
 Options:
   --apply                  Delete matching rows. Env: RETIRED_TENANT_RESIDUE_PURGE_APPLY=1
+  --truncate-empty-keep    In apply mode, truncate scoped tables only if all have zero keep-key rows.
+                           Env: RETIRED_TENANT_RESIDUE_PURGE_TRUNCATE_EMPTY_KEEP=1
   --database-url <url>     Postgres URL. Defaults to DATABASE_URL / ABARVA_AZURE_DATABASE_URL / AZURE_DATABASE_URL.
   --out-dir <path>         Output directory. Defaults to /tmp/retired-tenant-residue-purge.
   --chunk-size <n>         Rows per delete chunk. Env: RETIRED_TENANT_RESIDUE_PURGE_CHUNK_SIZE. Default: ${DEFAULT_CHUNK_SIZE}.
@@ -134,6 +136,11 @@ async function countRows(client, tableRef, keys) {
   return Number(result.rows[0]?.row_count ?? 0);
 }
 
+async function countAllRows(client, tableRef) {
+  const result = await client.query(`select count(*)::bigint as row_count from ${qualified(tableRef.schema, tableRef.table)}`);
+  return Number(result.rows[0]?.row_count ?? 0);
+}
+
 async function prepareIndex(client, tableRef) {
   await client.query(
     `create index if not exists ${quoteIdent(indexName(tableRef))} on ${qualified(tableRef.schema, tableRef.table)} ((lower(${quoteIdent("tenant_key")}::text)))`,
@@ -222,11 +229,57 @@ async function audit(client, tableRefs) {
     tables.push({
       qualifiedName: tableRef.qualifiedName,
       exists: true,
+      totalRows: await countAllRows(client, tableRef),
       retiredRows: await countRows(client, tableRef, RETIRED_KEYS),
       keepRows: await countRows(client, tableRef, KEEP_KEYS),
     });
   }
   return tables;
+}
+
+async function truncateEmptyKeepTables(client, tableRefs) {
+  const actions = [];
+  const existingTableRefs = [];
+  for (const tableRef of tableRefs) {
+    if (!(await tableExists(client, tableRef))) {
+      actions.push({ qualifiedName: tableRef.qualifiedName, skipped: true, reason: "missing_table" });
+      continue;
+    }
+    await requireTenantKey(client, tableRef);
+    const beforeTotalRows = await countAllRows(client, tableRef);
+    const beforeRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
+    const beforeKeepRows = await countRows(client, tableRef, KEEP_KEYS);
+    if (beforeKeepRows !== 0) {
+      throw new Error(`${tableRef.qualifiedName} has ${beforeKeepRows} keep-key rows; refusing truncate.`);
+    }
+    actions.push({
+      qualifiedName: tableRef.qualifiedName,
+      beforeTotalRows,
+      beforeRetiredRows,
+      beforeKeepRows,
+      rowsDeleted: beforeTotalRows,
+      retiredRowsDeleted: beforeRetiredRows,
+      strategy: "truncate_empty_keep",
+    });
+    existingTableRefs.push(tableRef);
+  }
+
+  if (existingTableRefs.length > 0) {
+    const tableList = existingTableRefs.map((tableRef) => qualified(tableRef.schema, tableRef.table)).join(", ");
+    console.log(JSON.stringify({ event: "retired_tenant_residue_truncate_start", tableCount: existingTableRefs.length, tableList: existingTableRefs.map((tableRef) => tableRef.qualifiedName) }));
+    await client.query(`truncate table ${tableList}`);
+    console.log(JSON.stringify({ event: "retired_tenant_residue_truncate_done", tableCount: existingTableRefs.length }));
+  }
+
+  for (const action of actions) {
+    if (action.skipped) continue;
+    const tableRef = parseQualifiedName(action.qualifiedName);
+    action.afterTotalRows = await countAllRows(client, tableRef);
+    action.afterRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
+    action.afterKeepRows = await countRows(client, tableRef, KEEP_KEYS);
+    action.complete = action.afterRetiredRows === 0 && action.afterKeepRows === 0;
+  }
+  return { actions, budgetExhausted: false, elapsedSeconds: 0, strategy: "truncate_empty_keep" };
 }
 
 async function applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, statementTimeout }) {
@@ -287,6 +340,8 @@ async function main() {
   }
 
   const apply = hasFlag("--apply") || process.env.RETIRED_TENANT_RESIDUE_PURGE_APPLY === "1";
+  const truncateEmptyKeep =
+    hasFlag("--truncate-empty-keep") || process.env.RETIRED_TENANT_RESIDUE_PURGE_TRUNCATE_EMPTY_KEEP === "1";
   const chunkSize = Number(argValue("--chunk-size", process.env.RETIRED_TENANT_RESIDUE_PURGE_CHUNK_SIZE ?? String(DEFAULT_CHUNK_SIZE)));
   const budgetSeconds = Number(argValue("--budget-seconds", process.env.RETIRED_TENANT_RESIDUE_PURGE_BUDGET_SECONDS ?? String(DEFAULT_BUDGET_SECONDS)));
   const statementTimeout = argValue("--statement-timeout", process.env.RETIRED_TENANT_RESIDUE_PURGE_STATEMENT_TIMEOUT ?? DEFAULT_STATEMENT_TIMEOUT);
@@ -304,7 +359,7 @@ async function main() {
     throw new Error("--budget-seconds must be an integer between 60 and 7000");
   }
   if (hasFlag("--validate-only")) {
-    console.log(JSON.stringify({ ok: true, apply, chunkSize, budgetSeconds, statementTimeout }));
+    console.log(JSON.stringify({ ok: true, apply, truncateEmptyKeep, chunkSize, budgetSeconds, statementTimeout }));
     return;
   }
 
@@ -325,14 +380,18 @@ async function main() {
     await client.query("set lock_timeout = '30s'");
     await client.query("select set_config('statement_timeout', $1, false)", [statementTimeout]);
     const before = await audit(client, tableRefs);
-    const deletion = apply ? await applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, statementTimeout }) : null;
+    const deletion = apply
+      ? truncateEmptyKeep
+        ? await truncateEmptyKeepTables(client, tableRefs)
+        : await applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, statementTimeout })
+      : null;
     const after = await audit(client, tableRefs);
     const proof = {
       event: "retired_tenant_residue_purge",
       run_id: runId,
       generated_at: new Date().toISOString(),
       mode: apply ? "apply" : "dry_run",
-      config: { chunkSize, budgetSeconds, statementTimeout },
+      config: { chunkSize, budgetSeconds, statementTimeout, truncateEmptyKeep },
       scope: { retiredKeys: RETIRED_KEYS, keepKeys: KEEP_KEYS, tables: TABLES },
       before,
       deletion,
@@ -342,6 +401,8 @@ async function main() {
         retiredRowsAfter: after.reduce((sum, table) => sum + table.retiredRows, 0),
         keepRowsBefore: before.reduce((sum, table) => sum + table.keepRows, 0),
         keepRowsAfter: after.reduce((sum, table) => sum + table.keepRows, 0),
+        totalRowsBefore: before.reduce((sum, table) => sum + (table.totalRows ?? 0), 0),
+        totalRowsAfter: after.reduce((sum, table) => sum + (table.totalRows ?? 0), 0),
         rowsDeleted: deletion?.actions?.reduce((sum, action) => sum + (action.rowsDeleted ?? 0), 0) ?? 0,
         completed: after.every((table) => table.retiredRows === 0),
         budgetExhausted: deletion?.budgetExhausted ?? false,
