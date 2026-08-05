@@ -100,34 +100,59 @@ function isIdColumn(column) {
 
 function buildWhere(columns, retiredClientIds) {
   const clauses = [];
-  const params = [];
-
   for (const column of columns) {
-    const identifier = quoteIdent(column.column_name);
     if (isTenantColumn(column) && TEXT_TYPES.has(column.data_type)) {
-      params.push(RETIRED_KEYS.map((key) => key.toLowerCase()));
       clauses.push({
+        type: "retired_key",
         column: column.column_name,
         kind: "retired_key",
-        sql: `lower(${identifier}::text) = any($${params.length}::text[])`,
       });
       continue;
     }
     if (retiredClientIds.length > 0 && isIdColumn(column) && TEXT_TYPES.has(column.data_type)) {
-      params.push(retiredClientIds);
       clauses.push({
+        type: "retired_client_id",
         column: column.column_name,
         kind: "retired_client_id",
-        sql: `${identifier}::text = any($${params.length}::text[])`,
       });
     }
   }
 
   if (clauses.length === 0) return null;
+  return clauses;
+}
+
+function aliasIdent(alias, column) {
+  return `${quoteIdent(alias)}.${quoteIdent(column)}`;
+}
+
+function renderWhere(operation, alias, params) {
+  const clauses = operation.conditions.map((condition) => {
+    if (condition.type === "retired_key") {
+      params.push(RETIRED_KEYS.map((key) => key.toLowerCase()));
+      return `(lower(${aliasIdent(alias, condition.column)}::text) = any($${params.length}::text[]))`;
+    }
+    if (condition.type === "retired_client_id") {
+      params.push(operation.retiredClientIds);
+      return `(${aliasIdent(alias, condition.column)}::text = any($${params.length}::text[]))`;
+    }
+    if (condition.type === "fk_parent") {
+      const parentAlias = `${alias}_parent_${params.length + 1}`;
+      const join = condition.childColumns
+        .map((childColumn, index) => `${aliasIdent(alias, childColumn)} = ${aliasIdent(parentAlias, condition.parentColumns[index])}`)
+        .join(" and ");
+      return `exists (select 1 from ${qualified(condition.parentSchema, condition.parentTable)} as ${quoteIdent(parentAlias)} where ${join} and (${renderWhere(condition.parentOperation, parentAlias, params)}))`;
+    }
+    throw new Error(`Unknown purge condition type: ${condition.type}`);
+  });
+  return clauses.map((clause) => `(${clause})`).join(" or ");
+}
+
+function rendered(operation) {
+  const params = [];
   return {
-    sql: clauses.map((clause) => `(${clause.sql})`).join(" or "),
+    sql: renderWhere(operation, "target", params),
     params,
-    matchedColumns: clauses.map(({ column, kind }) => ({ column, kind })),
   };
 }
 
@@ -159,6 +184,39 @@ async function getColumnsByTable(client) {
     byTable.set(key, columns);
   }
   return byTable;
+}
+
+async function getForeignKeys(client) {
+  const result = await client.query(`
+    select
+      child_ns.nspname as child_schema,
+      child.relname as child_table,
+      parent_ns.nspname as parent_schema,
+      parent.relname as parent_table,
+      con.conname as constraint_name,
+      array_agg(child_att.attname order by key_position.ordinality) as child_columns,
+      array_agg(parent_att.attname order by key_position.ordinality) as parent_columns
+    from pg_constraint con
+    join pg_class child on child.oid = con.conrelid
+    join pg_namespace child_ns on child_ns.oid = child.relnamespace
+    join pg_class parent on parent.oid = con.confrelid
+    join pg_namespace parent_ns on parent_ns.oid = parent.relnamespace
+    join unnest(con.conkey, con.confkey) with ordinality as key_position(child_attnum, parent_attnum, ordinality) on true
+    join pg_attribute child_att on child_att.attrelid = child.oid and child_att.attnum = key_position.child_attnum
+    join pg_attribute parent_att on parent_att.attrelid = parent.oid and parent_att.attnum = key_position.parent_attnum
+    where con.contype = 'f'
+      and child_ns.nspname not in ('pg_catalog', 'information_schema')
+      and parent_ns.nspname not in ('pg_catalog', 'information_schema')
+      and child_ns.nspname not like 'pg_toast%'
+      and parent_ns.nspname not like 'pg_toast%'
+    group by child_ns.nspname, child.relname, parent_ns.nspname, parent.relname, con.conname
+    order by parent_ns.nspname, parent.relname, child_ns.nspname, child.relname, con.conname
+  `);
+  return result.rows.map((row) => ({
+    ...row,
+    child_columns: Array.isArray(row.child_columns) ? row.child_columns : [],
+    parent_columns: Array.isArray(row.parent_columns) ? row.parent_columns : [],
+  }));
 }
 
 async function resolveClientIds(client) {
@@ -215,26 +273,88 @@ async function buildPlan(client) {
 
   const tables = await getTables(client);
   const columnsByTable = await getColumnsByTable(client);
+  const foreignKeys = await getForeignKeys(client);
+  const foreignKeysByParent = new Map();
+  for (const foreignKey of foreignKeys) {
+    const parentKey = `${foreignKey.parent_schema}.${foreignKey.parent_table}`;
+    const list = foreignKeysByParent.get(parentKey) ?? [];
+    list.push(foreignKey);
+    foreignKeysByParent.set(parentKey, list);
+  }
   const operations = [];
+  const directOperationByTable = new Map();
 
   for (const table of tables) {
     const columns = columnsByTable.get(`${table.table_schema}.${table.table_name}`) ?? [];
-    const where = buildWhere(columns, clientScope.retiredClientIds);
-    if (!where) continue;
-    const result = await client.query(
-      `select count(*)::bigint as row_count from ${qualified(table.table_schema, table.table_name)} where ${where.sql}`,
-      where.params,
-    );
-    const rowCount = Number(result.rows[0]?.row_count ?? 0);
-    operations.push({
+    const conditions = buildWhere(columns, clientScope.retiredClientIds);
+    if (!conditions) continue;
+    const operation = {
       schema: table.table_schema,
       table: table.table_name,
       qualifiedName: `${table.table_schema}.${table.table_name}`,
-      rowCount,
-      matchedColumns: where.matchedColumns,
-      whereSql: where.sql,
-      params: where.params,
-    });
+      rowCount: 0,
+      source: "direct",
+      depth: 0,
+      matchedColumns: conditions.map(({ column, kind }) => ({ column, kind })),
+      conditions,
+      retiredClientIds: clientScope.retiredClientIds,
+    };
+    const where = rendered(operation);
+    const result = await client.query(
+      `select count(*)::bigint as row_count from ${qualified(table.table_schema, table.table_name)} as ${quoteIdent("target")} where ${where.sql}`,
+      where.params,
+    );
+    const rowCount = Number(result.rows[0]?.row_count ?? 0);
+    operation.rowCount = rowCount;
+    operations.push(operation);
+    directOperationByTable.set(operation.qualifiedName, operation);
+  }
+
+  const queuedParents = operations.filter((operation) => operation.rowCount > 0);
+  const dependentKeys = new Set();
+  for (let index = 0; index < queuedParents.length; index += 1) {
+    const parentOperation = queuedParents[index];
+    if (parentOperation.depth >= 6) continue;
+    const childForeignKeys = foreignKeysByParent.get(parentOperation.qualifiedName) ?? [];
+    for (const foreignKey of childForeignKeys) {
+      const childQualifiedName = `${foreignKey.child_schema}.${foreignKey.child_table}`;
+      if (directOperationByTable.has(childQualifiedName)) continue;
+      const dependentKey = `${childQualifiedName}:${foreignKey.constraint_name}:${parentOperation.qualifiedName}`;
+      if (dependentKeys.has(dependentKey)) continue;
+      dependentKeys.add(dependentKey);
+      const operation = {
+        schema: foreignKey.child_schema,
+        table: foreignKey.child_table,
+        qualifiedName: childQualifiedName,
+        rowCount: 0,
+        source: "dependent_fk",
+        depth: parentOperation.depth + 1,
+        parentQualifiedName: parentOperation.qualifiedName,
+        constraintName: foreignKey.constraint_name,
+        matchedColumns: foreignKey.child_columns.map((column) => ({ column, kind: "dependent_fk" })),
+        conditions: [
+          {
+            type: "fk_parent",
+            childColumns: foreignKey.child_columns,
+            parentColumns: foreignKey.parent_columns,
+            parentSchema: foreignKey.parent_schema,
+            parentTable: foreignKey.parent_table,
+            parentOperation,
+          },
+        ],
+        retiredClientIds: clientScope.retiredClientIds,
+      };
+      const where = rendered(operation);
+      const result = await client.query(
+        `select count(*)::bigint as row_count from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
+        where.params,
+      );
+      operation.rowCount = Number(result.rows[0]?.row_count ?? 0);
+      if (operation.rowCount > 0) {
+        operations.push(operation);
+        queuedParents.push(operation);
+      }
+    }
   }
 
   return { clientScope, operations };
@@ -244,9 +364,10 @@ async function deleteProgramAuditLogIfNeeded(client, operation) {
   if (operation.qualifiedName !== "public.program_audit_log" || operation.rowCount === 0) return null;
   await client.query("alter table public.program_audit_log disable trigger program_audit_log_no_delete");
   try {
+    const where = rendered(operation);
     const result = await client.query(
-      `delete from ${qualified(operation.schema, operation.table)} where ${operation.whereSql}`,
-      operation.params,
+      `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
+      where.params,
     );
     return {
       qualifiedName: operation.qualifiedName,
@@ -265,6 +386,7 @@ async function applyDeletes(client, operations, maxPasses) {
     .sort((a, b) => {
       if (a.qualifiedName === "public.clients") return 1;
       if (b.qualifiedName === "public.clients") return -1;
+      if (a.depth !== b.depth) return b.depth - a.depth;
       return b.rowCount - a.rowCount || a.qualifiedName.localeCompare(b.qualifiedName);
     });
 
@@ -286,9 +408,10 @@ async function applyDeletes(client, operations, maxPasses) {
       const savepoint = `retired_tenant_row_purge_${pass}_${savepointIndex}`;
       await client.query(`savepoint ${savepoint}`);
       try {
+        const where = rendered(operation);
         const result = await client.query(
-          `delete from ${qualified(operation.schema, operation.table)} where ${operation.whereSql}`,
-          operation.params,
+          `delete from ${qualified(operation.schema, operation.table)} as ${quoteIdent("target")} where ${where.sql}`,
+          where.params,
         );
         await client.query(`release savepoint ${savepoint}`);
         const rowsDeleted = result.rowCount ?? 0;
@@ -319,9 +442,57 @@ function summarizeBySchema(operations) {
 }
 
 function stripParams(operation) {
-  const copy = { ...operation };
-  delete copy.params;
-  return copy;
+  return {
+    schema: operation.schema,
+    table: operation.table,
+    qualifiedName: operation.qualifiedName,
+    rowCount: operation.rowCount,
+    source: operation.source,
+    depth: operation.depth,
+    parentQualifiedName: operation.parentQualifiedName,
+    constraintName: operation.constraintName,
+    matchedColumns: operation.matchedColumns,
+    lastError: operation.lastError,
+  };
+}
+
+function compactProof(proof) {
+  return {
+    event: proof.event,
+    run_id: proof.run_id,
+    generated_at: proof.generated_at,
+    mode: proof.mode,
+    before: {
+      tablesWithRetiredRows: proof.before.tablesWithRetiredRows,
+      retiredRows: proof.before.retiredRows,
+      bySchema: proof.before.bySchema,
+    },
+    apply: proof.apply
+      ? {
+          committed: proof.apply.committed,
+          deletedRows: proof.apply.deletedRows,
+          actionCount: proof.apply.actions?.length ?? 0,
+          pendingCount: proof.apply.pending?.length ?? 0,
+          pending: proof.apply.pending?.map((operation) => ({
+            qualifiedName: operation.qualifiedName,
+            rowCount: operation.rowCount,
+            source: operation.source,
+            parentQualifiedName: operation.parentQualifiedName,
+            constraintName: operation.constraintName,
+            lastError: operation.lastError,
+          })),
+          applied_at: proof.apply.applied_at,
+        }
+      : null,
+    after: proof.after
+      ? {
+          tablesWithRetiredRows: proof.after.tablesWithRetiredRows,
+          retiredRows: proof.after.retiredRows,
+          bySchema: proof.after.bySchema,
+        }
+      : null,
+    gates: proof.gates,
+  };
 }
 
 async function main() {
@@ -405,6 +576,7 @@ async function main() {
         };
         proof.gates.applyAllowed = false;
         fs.writeFileSync(path.join(outDir, `${runId}.json`), `${JSON.stringify(proof, null, 2)}\n`);
+        console.log(JSON.stringify(compactProof(proof), null, 2));
         throw new Error(`Retired tenant purge blocked by ${deletion.pending.length} undeleted table(s).`);
       }
       await client.query("commit");
@@ -426,7 +598,7 @@ async function main() {
 
     const proofPath = path.join(outDir, `${runId}.json`);
     fs.writeFileSync(proofPath, `${JSON.stringify(proof, null, 2)}\n`);
-    console.log(JSON.stringify({ event: proof.event, ok: true, proof_path: proofPath, proof }, null, 2));
+    console.log(JSON.stringify({ ...compactProof(proof), ok: true, proof_path: proofPath }, null, 2));
   } catch (error) {
     await client.query("rollback").catch(() => undefined);
     throw error;

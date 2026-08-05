@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit.
+This release adds a governed private-operator script for deleting rows that are explicitly scoped to retired tenant keys. It is limited to the approved retired aliases and protects the current `skyharbor_global` tenant by checking that keep-client IDs do not overlap retired-client IDs before any delete can commit. The operator also handles unscoped dependent child rows that reference scoped parent rows through foreign keys, so parent rows are not blocked by child evidence rows that do not carry their own tenant column.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 
 ## Changes Included
 
-- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, and structured proof output.
+- `scripts/ops/purge-retired-tenant-rows.mjs`: exact-key row purge operator with dry-run, apply, FK-order retry passes, dependent FK child-row planning, compact structured proof output, and rollback-on-pending behavior.
 - `package.json`: adds dry-run/apply npm entries for the row purge and changes the old data-layer apply script to use `--apply` directly.
 
 ## QA / Validation
@@ -41,6 +41,7 @@ Operations: adds dry-run, apply, and post-verify proof for tenant-key row retire
 - PASS: `git diff --check`
 - PASS: `npm run release:check -- --base origin/main --head HEAD`
 - PASS: `npm run secrets:staged`
+- PASS: a failed pre-fix apply attempt rolled back cleanly and a subsequent read-only inventory confirmed retired rows remained present rather than partially deleted.
 - NOT RUN: destructive retired tenant-row apply. That is a separate private ACA operator execution after deploy.
 
 ## Rollout Plan
