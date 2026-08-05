@@ -7,7 +7,7 @@ describe("Home KNOW tenant binding", () => {
         tenantKey: "skyharbor-air",
         client: "skyharbor_global",
       }),
-    ).toBe("skyharbor-air");
+    ).toBe("skyharbor_global");
   });
 
   it("keeps the resolved canonical key when no display client is supplied", () => {
@@ -16,6 +16,6 @@ describe("Home KNOW tenant binding", () => {
         tenantKey: "skyharbor-air",
         client: null,
       }),
-    ).toBe("skyharbor-air");
+    ).toBe("skyharbor_global");
   });
 });

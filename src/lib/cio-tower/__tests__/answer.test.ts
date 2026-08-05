@@ -352,7 +352,8 @@ function towerV3RuntimeView(): TowerV3RuntimeViewModel {
 
 describe('cio tower answer contract', () => {
   it('normalizes app tenant aliases into cio_tower package keys', () => {
-    expect(canonicalCioTowerTenantKey('skyharbor')).toBe('skyharbor-air');
+    expect(canonicalCioTowerTenantKey('skyharbor')).toBe('skyharbor_global');
+    expect(canonicalCioTowerTenantKey('skyharbor-air')).toBe('skyharbor_global');
     expect(canonicalCioTowerTenantKey('lakeshore')).toBe('lakeshore-holdings');
     expect(canonicalCioTowerTenantKey('Lakeshore Holdings')).toBe('lakeshore-holdings');
     expect(canonicalCioTowerTenantKey('lakeshore-industries')).toBe('lakeshore-industries');

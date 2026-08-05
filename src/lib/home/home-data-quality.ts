@@ -190,7 +190,13 @@ export function normalizeHomeQualityTenantKey(
 ): string {
   const normalized = value?.trim().toLowerCase().replace(/_/g, "-") ?? "";
   if (!normalized) return "unknown";
-  if (normalized === "skyharbor") return "skyharbor-air";
+  if (
+    normalized === "skyharbor" ||
+    normalized === "skyharbor-air" ||
+    normalized === "skyharbor-global"
+  ) {
+    return "skyharbor_global";
+  }
   if (normalized === "lakeshore" || normalized === "lakeshore-industries") {
     return "lakeshore-holdings";
   }

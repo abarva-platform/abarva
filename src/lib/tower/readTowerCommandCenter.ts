@@ -126,7 +126,7 @@ function tenantCandidates(values: readonly (string | null | undefined)[]) {
     if (!value?.trim()) continue;
     const canonical = canonicalCioTowerTenantKey(value);
     out.add(canonical);
-    if (canonical === "skyharbor-air" || value === "skyharbor_global") {
+    if (canonical === "skyharbor_global" || value === "skyharbor-air") {
       out.add("skyharbor_global");
     }
   }

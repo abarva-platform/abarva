@@ -80,8 +80,8 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
   },
   {
     appClientKey: "skyharbor",
-    canonicalKey: "skyharbor-air",
-    brokerKey: "skyharbor-air",
+    canonicalKey: "skyharbor_global",
+    brokerKey: "skyharbor_global",
     displayName: getClientOption("skyharbor").name,
     industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.skyharbor,
     aliases: [
