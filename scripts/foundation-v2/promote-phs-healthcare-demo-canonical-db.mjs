@@ -64,6 +64,66 @@ const MASTER_ENTITY_FILES = [
   "BPO_SUPPLIERS.csv",
   "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv",
 ];
+const LAYER3_REPAIR_DELETE_GRANT_SQL = `
+GRANT DELETE ON foundation_v2_phs_demo.canonical_entities TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_phs_demo.canonical_observations TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_phs_demo.canonical_relationships TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_phs_demo.canonical_evidence_records TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_phs_demo.event_native_records TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_phs_demo.canonical_promotion_decisions TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_phs_demo.gate_results TO foundation_v2_phs_demo_writer;
+
+DO $$
+DECLARE
+  rel regclass;
+BEGIN
+  FOREACH rel IN ARRAY ARRAY[
+    'foundation_v2_phs_demo.canonical_entities'::regclass,
+    'foundation_v2_phs_demo.canonical_observations'::regclass,
+    'foundation_v2_phs_demo.canonical_relationships'::regclass,
+    'foundation_v2_phs_demo.canonical_evidence_records'::regclass,
+    'foundation_v2_phs_demo.event_native_records'::regclass,
+    'foundation_v2_phs_demo.canonical_promotion_decisions'::regclass
+  ]
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS phs_demo_delete ON %s', rel);
+    EXECUTE format(
+      'CREATE POLICY phs_demo_delete ON %s
+         FOR DELETE
+         TO foundation_v2_phs_demo_writer
+         USING (
+           tenant_key = ''phs_health_demo_global''
+           AND tenant_key = current_setting(''app.tenant_key'', true)
+           AND test_namespace = ''phs-healthcare-demo-source-volume-v1''
+           AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
+           AND source_release_id = ''phs-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)
+           AND current_setting(''app.foundation_v2_release_alias'', true) = ''phs-healthcare-demo-phase-a-source-volume-v1''
+         )',
+      rel
+    );
+  END LOOP;
+END $$;
+
+DROP POLICY IF EXISTS phs_demo_delete ON foundation_v2_phs_demo.gate_results;
+CREATE POLICY phs_demo_delete ON foundation_v2_phs_demo.gate_results
+  FOR DELETE
+  TO foundation_v2_phs_demo_writer
+  USING (
+    tenant_key = 'phs_health_demo_global'
+    AND tenant_key = current_setting('app.tenant_key', true)
+    AND test_namespace = 'phs-healthcare-demo-source-volume-v1'
+    AND test_namespace = current_setting('app.foundation_v2_test_namespace', true)
+    AND gate_id = ANY(ARRAY[
+      'PHS-L3-K3A-IDENTITY-CONSOLIDATION',
+      'PHS-L3-K3B-OBSERVATION-RELATIONSHIP-GRAIN',
+      'PHS-L3-K3C-CANDIDATE-DECISION-COVERAGE',
+      'PHS-L3-K3D-CANONICAL-BOUNDARY'
+    ])
+    AND current_setting('app.foundation_v2_source_release_id', true) = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND current_setting('app.foundation_v2_release_alias', true) = 'phs-healthcare-demo-phase-a-source-volume-v1'
+  );
+`;
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -218,6 +278,8 @@ async function apply(client) {
   try {
     progress("apply.begin", { execution_id: PROMOTION_EXECUTION_ID });
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`${DATABASE_SCHEMA}:${TENANT_KEY}:${TEST_NAMESPACE}:canonical-promotion`]);
+    await ensureLayer3RepairPrivileges(client);
+    progress("apply.repair_privileges_ready");
     await setContext(client, WRITER_ROLE);
     const sourceCounts = await sourceVolumeCounts(client);
     if (!exactObject(sourceCounts, SOURCE_VOLUME_COUNTS)) throw new Error(`PHS source counts are not exact: ${stableJson(sourceCounts)}`);
@@ -500,6 +562,10 @@ async function resetLayer3Rows(client) {
     `DELETE FROM ${tableRef("gate_results")} WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id = ANY($3::text[])`,
     [TENANT_KEY, TEST_NAMESPACE, LAYER3_GATE_IDS],
   );
+}
+
+async function ensureLayer3RepairPrivileges(client) {
+  await client.query(LAYER3_REPAIR_DELETE_GRANT_SQL);
 }
 
 async function insertCanonicalRelationships(client) {
