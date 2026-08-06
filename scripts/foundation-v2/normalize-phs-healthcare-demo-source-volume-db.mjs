@@ -79,6 +79,13 @@ async function main() {
       if (result.status !== "PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFIED") process.exitCode = 1;
       return;
     }
+    if (args.mode === "lock-diagnostic") {
+      const result = await lockDiagnostic(client);
+      writeProofSet(args.outDir, result);
+      console.log(JSON.stringify(result, null, 2));
+      maybeEmitProofBundle();
+      return;
+    }
     if (args.mode !== "apply") throw new Error(`Unsupported mode ${args.mode}`);
     const result = await apply(client);
     writeProofSet(args.outDir, result);
@@ -114,7 +121,7 @@ function parseArgs(argv) {
     else if (arg === "--emit-proof-bundle") parsed.emitProofBundle = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!["self-test", "preflight", "apply", "verify"].includes(parsed.mode)) {
+  if (!["self-test", "preflight", "apply", "verify", "lock-diagnostic"].includes(parsed.mode)) {
     throw new Error(`Unsupported mode ${parsed.mode}`);
   }
   return parsed;
@@ -250,6 +257,38 @@ async function verify(client) {
     await client.query("ROLLBACK").catch(() => {});
     throw error;
   }
+}
+
+async function lockDiagnostic(client) {
+  const terminateRequested = process.env.PHS_NORMALIZATION_TERMINATE_LOCK_HOLDERS === "true";
+  const diagnosticRows = await lockDiagnosticRows(client);
+  const terminationCandidates = diagnosticRows
+    .filter((row) => row.application_name === "phs-healthcare-demo-normalize")
+    .filter((row) => row.pid !== row.current_pid)
+    .map((row) => ({
+      pid: row.pid,
+      application_name: row.application_name,
+      state: row.state,
+      wait_event_type: row.wait_event_type,
+      wait_event: row.wait_event,
+      query_age_seconds: row.query_age_seconds,
+    }));
+  const terminationResults = [];
+  if (terminateRequested) {
+    for (const candidate of terminationCandidates) {
+      const [result] = await rows(client, "SELECT pg_terminate_backend($1)::boolean AS terminated", [candidate.pid]);
+      terminationResults.push({ ...candidate, terminated: Boolean(result.terminated) });
+    }
+  }
+  return manifest(terminateRequested
+    ? "PHS_HEALTHCARE_DEMO_LOCK_TERMINATION_COMPLETED"
+    : "PHS_HEALTHCARE_DEMO_LOCK_DIAGNOSTIC_COMPLETED", {
+    mutation_executed: terminateRequested,
+    terminate_requested: terminateRequested,
+    diagnostic_rows: diagnosticRows,
+    termination_candidates: terminationCandidates,
+    termination_results: terminationResults,
+  });
 }
 
 function assertApplyApproved() {
@@ -659,6 +698,38 @@ async function identitySummaryRows(client) {
       GROUP BY identity_resolution_state
       ORDER BY identity_resolution_state`,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
+  );
+}
+
+async function lockDiagnosticRows(client) {
+  return rows(
+    client,
+    `
+    SELECT pg_backend_pid() AS current_pid,
+           a.pid,
+           a.usename,
+           a.application_name,
+           a.state,
+           a.wait_event_type,
+           a.wait_event,
+           extract(epoch FROM now() - a.query_start)::int AS query_age_seconds,
+           left(a.query, 300) AS query,
+           l.locktype,
+           l.mode,
+           l.granted,
+           l.classid,
+           l.objid,
+           l.objsubid
+      FROM pg_stat_activity a
+      LEFT JOIN pg_locks l
+        ON l.pid = a.pid
+       AND l.locktype = 'advisory'
+     WHERE a.application_name IN ('phs-healthcare-demo-normalize', 'phs-healthcare-demo-lock-diagnostic')
+        OR a.query ILIKE '%phs-healthcare-demo-source-volume-v1%'
+        OR a.query ILIKE '%normalization%'
+        OR l.locktype = 'advisory'
+     ORDER BY a.pid, l.granted DESC NULLS LAST
+    `,
   );
 }
 
