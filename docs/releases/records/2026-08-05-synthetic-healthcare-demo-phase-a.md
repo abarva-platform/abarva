@@ -17,11 +17,13 @@ The latest correction removes the arbitrary 40-file requirement, drops detailed 
 This update supersedes the interim 39-file and 50-file Layer 1 plans. The plan-only Layer 1 release is now exactly 54 named CSV files: 38 enterprise-context files, 1 optional-domain context file, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files. It also adds machine-readable document archetype content contracts, a contract-family audit view and a future event-context snapshot contract without creating a snapshot or mutating runtime data.
 The current correction keeps the frozen package unchanged and fixes the blocked Layer 1 execution substrate: the PHS loader now targets only `foundation_v2_phs_demo`, uses PHS-specific writer/reader roles, requires the frozen source release ID, writes 54 source-file routing metadata rows and rejects local/non-ACA apply even if the old bypass env is present.
 The latest operator-readiness patch adds an exact PHS schema/RLS migration runner and lets the source-volume loader consume the approved proof ZIP by URL inside ACA, with SHA-256 verification before extraction.
+The continuous lab execution update adds isolated Layer 2 adapter/candidate staging for the loaded PHS source volume. It stages normalized source-record objects and review candidates only; it does not publish canonical objects, activate baselines, refresh Cube or bind product runtime surfaces.
 
 ## Layer Impact
 
 Layer 1 client intake lane: creates source-owner-shaped workbooks and source-system-shaped synthetic extracts for audit. Layer 2 adapter lane: documents future adapter expectations but does not execute adapters. Layer 3 canonical lane: records candidate model-fit gaps only. Layer 4 product lane: no product runtime or projection is changed.
 The latest update adds an executable Layer 1 source-volume loader with `self-test`, `plan`, `preflight`, `apply` and `verify` modes. It remains gated: plan and self-test are local only, while apply requires an approved proof SHA, exact PHS schema/tenant/namespace/release/role contract and an ACA data-build job context. Application, CMDB, vendor and contract rows are tenant enterprise-context candidates; the sourcing event references selected entity IDs and later pins an immutable event-context snapshot through a separate governed action.
+The continuous lab execution update adds Layer 2 migration, self-test, preflight, apply and verify commands. Layer 2 writes only isolated normalized-object and knowledge-candidate staging rows in `foundation_v2_phs_demo`; canonical promotion and product projections remain out of scope.
 
 ## Client Applicability
 
@@ -38,12 +40,15 @@ Feature flag: not applicable.
 - `scripts/source/plan-phs-healthcare-demo-data-layers.mjs`
 - `scripts/foundation-v2/load-phs-healthcare-demo-source-volume-db.mjs`
 - `scripts/foundation-v2/apply-phs-healthcare-demo-schema.mjs`
+- `scripts/foundation-v2/apply-phs-healthcare-demo-layer2-schema.mjs`
+- `scripts/foundation-v2/normalize-phs-healthcare-demo-source-volume-db.mjs`
 - `scripts/source/fixtures/phs-healthcare-demo/canary-defects.json`
 - `docs/source/PHS_HEALTHCARE_DEMO_PHASE_A_PACKAGE.md`
 - `docs/source/PHS_HEALTHCARE_DEMO_MODEL_FIT_AUDIT.md`
 - `docs/source/PHS_HEALTHCARE_DEMO_PHASE_B_TEST_LOAD_PLAN.md`
 - `docs/source/PHS_HEALTHCARE_DEMO_ONE_CLICK_MIGRATION_SPEC.md`
 - `supabase/migrations/20260805230000_foundation_v2_phs_demo_source_volume.sql`
+- `supabase/migrations/20260806002000_foundation_v2_phs_demo_adapter_candidates.sql`
 - `package.json` npm scripts
 
 ## QA / Validation
@@ -71,11 +76,14 @@ Passed: negative apply-gate check stopped before mutation authority because `PHS
 Passed: negative schema-target check rejected `PHS_HEALTHCARE_DEMO_DB_SCHEMA=foundation_v2_healthcare_gs` before database mutation path.
 Passed: negative local apply check rejected execution without `ACA_JOB_NAME` even with approval env and the exact proof SHA present.
 Passed: negative local apply check still rejected execution without `ACA_JOB_NAME` when the removed `PHS_HEALTHCARE_DEMO_ALLOW_NON_ACA_APPLY=true` bypass env was present.
+Passed: ACA Layer 1 schema apply, source-volume preflight, apply and independent reader verify against `foundation_v2_phs_demo`; final readback matched 54 source files, 54 source-file context rows, 54,967 source records and 1,640,131 source field values.
+Passed: `node --check scripts/foundation-v2/apply-phs-healthcare-demo-layer2-schema.mjs && node --check scripts/foundation-v2/normalize-phs-healthcare-demo-source-volume-db.mjs`.
+Passed: `npm run source:phs-healthcare-demo:layer2:self-test -- --out-dir /tmp/phs-layer2-self-test`.
 
 ## Rollout Plan
 
-No runtime rollout. This PR can merge as reusable audit tooling only. A future Phase B load requires separate approval, tenant bootstrap, additive migrations if approved, isolated lab/test deployment and signed-in proof.
-Layer 1 apply must run as an approved ACA data-build job with the exact proof SHA and isolated PHS lab target; local plan proof is not activation proof. The approved target is schema `foundation_v2_phs_demo`, tenant `phs_health_demo_global`, namespace `phs-healthcare-demo-source-volume-v1`, writer role `foundation_v2_phs_demo_writer`, reader role `foundation_v2_phs_demo_reader` and source release `phs-health-source-v1-202608:source-volume-v1:447910ac3c16`.
+No product/runtime rollout. Continue lab-only execution in the existing branch and draft PR audit trail. Layer 1 has been applied through the approved ACA data-build job path and independently verified. Layer 2 may proceed through the same ACA data-build job path for isolated candidate staging only.
+The approved target remains schema `foundation_v2_phs_demo`, tenant `phs_health_demo_global`, namespace `phs-healthcare-demo-source-volume-v1`, writer role `foundation_v2_phs_demo_writer`, reader role `foundation_v2_phs_demo_reader` and source release `phs-health-source-v1-202608:source-volume-v1:447910ac3c16`.
 
 ## Deployment Authority
 
@@ -99,10 +107,10 @@ Proof ZIP SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit
 Latest generated counts: 70,967 structured rows; 54 Layer 1 release CSVs; 38 enterprise-context files; 1 optional-domain context file; 11 existing BPO sourcing-event files; 4 BPO transition/transformation files; 16,000 evidence spans; 180 hard questions; 30 interview roles; 44 enterprise outcomes/KPI map records; 71 CDAO questions; 21 document archetype content contracts; 30 contract-family audit documents.
 Latest non-mutating data-layer plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T230818Z.zip`.
 Data-layer plan ZIP SHA-256: `5f525057fec4202c173a4a65f0a5d522cb8635927bddd79e1a2083ce2544d783`.
-Layer 1 planned counts: 54 source files; 54 source-file context rows; 54,967 source records; 1,640,131 source field slots; mutation executed: false.
-Layer 1 executable loader proof remains non-mutating unless `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA, the exact PHS target contract and the ACA job context are present.
+Layer 1 verified ACA readback counts: 54 source files; 54 source-file context rows; 54,967 source records; 1,640,131 source field slots; 1 parser execution; 2 source-volume gates.
+Layer 2 expected candidate-staging counts: 54,967 normalized objects; 54,967 knowledge candidates; 3 adapter gates.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
 ## Known Gaps
 
-The synthetic healthcare tenant is not active in canonical tenant code. No database load, migration, Cube update, web deployment, Source/Tower/Home/Intelligence/Moves/aVa proof or tenant activation has occurred.
+The synthetic healthcare tenant is not active in canonical tenant code. No canonical promotion, Cube update, web deployment, Source/Tower/Home/Intelligence/Moves/aVa proof or tenant activation has occurred.

@@ -1,8 +1,8 @@
 # Synthetic Healthcare Demo Phase B Lab Data-Layer Population Plan
 
-Status: designed_only, not_executed
+Status: continuous_lab_execution_in_progress
 
-Phase B may begin only after explicit Phase A audit approval and separate authorization for an isolated lab data build. This plan does not authorize a database load, migration, Cube/runtime update, deployment, tenant activation or mutation of any existing tenant.
+Phase B lab execution is proceeding only inside the isolated `foundation_v2_phs_demo` schema through the approved ACA data-build job path. This plan still does not authorize canonical promotion, Cube/runtime update, deployment, tenant activation or mutation of any existing tenant.
 
 ## Source Corpus Contract
 
@@ -35,7 +35,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, source-file routing context, records, field values, parser execution and gate rows.
 7. Run independent reader verify and compare exact source-release identity/hash, all 54 filenames, per-file SHA/counts, 54 source-file context rows, source-group counts, demo-priority counts, record count, field count and gate counts.
-8. Run source adapters and canonical-candidate staging as separate plan, preflight, apply and verify jobs.
+8. Run source adapters and candidate staging as separate migration, self-test, preflight, apply and verify jobs.
 9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, optional aggregate health-plan outcome snapshots, BPO normalized TCO and evidence counts.
 10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
 11. Run cross-tenant isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant requests block with no fallback.
@@ -112,6 +112,31 @@ npm run source:phs-healthcare-demo:layer1:apply -- \
   --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
   --approved-proof-sha256 a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553
 ```
+
+Layer 1 ACA execution has now passed schema apply, source-volume preflight, source-volume apply and independent reader verify. The verified counts are 54 source files, 54 source-file context rows, 54,967 source records, 1,640,131 source field values, one parser execution and two source-volume gates.
+
+## Layer 2 Adapter/Candidate Staging
+
+The PHS-specific Layer 2 commands are:
+
+```bash
+npm run source:phs-healthcare-demo:layer2:migrate:dry
+npm run source:phs-healthcare-demo:layer2:migrate:apply
+npm run source:phs-healthcare-demo:layer2:self-test
+npm run source:phs-healthcare-demo:layer2:preflight
+npm run source:phs-healthcare-demo:layer2:apply
+npm run source:phs-healthcare-demo:layer2:verify
+```
+
+Layer 2 writes only `normalized_objects`, `knowledge_candidates` and three adapter gate rows inside `foundation_v2_phs_demo`. It preserves field-level lineage from the loaded source-field slots and keeps every candidate in `pending_review`.
+
+Expected Layer 2 counts:
+
+- Normalized objects: 54,967
+- Knowledge candidates: 54,967
+- Adapter gates: 3
+
+Layer 2 does not create canonical objects, publish baselines, refresh Cube, update product read models or activate the PHS tenant.
 
 ## Event Context Architecture
 
