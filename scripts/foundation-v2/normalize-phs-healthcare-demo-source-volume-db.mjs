@@ -259,9 +259,10 @@ async function insertNormalizedObjects(client) {
                 END,
                 sfv.source_field_id
               ) FILTER (WHERE nullif(sfv.normalized_value, '') IS NOT NULL))[1] AS declared_business_key,
-             jsonb_object_agg(sfv.target_field_name, sfv.normalized_value ORDER BY sfv.source_field_id) AS fields,
              count(*)::int AS field_count,
-             count(*) FILTER (WHERE sfv.restricted)::int AS restricted_field_count
+             count(*) FILTER (WHERE sfv.restricted)::int AS restricted_field_count,
+             min(sfv.source_field_id) AS first_source_field_id,
+             max(sfv.source_field_id) AS last_source_field_id
         FROM ${tableRef("source_records")} sr
         JOIN ${tableRef("source_files")} sf USING (tenant_key, test_namespace, source_file_id)
         JOIN ${tableRef("source_file_context")} sfc USING (tenant_key, test_namespace, source_file_id)
@@ -312,7 +313,12 @@ async function insertNormalizedObjects(client) {
              'source_row_number', k.source_row_number,
              'source_row_hash', k.source_row_hash,
              'business_key', k.resolved_business_key,
-             'fields', k.fields,
+             'field_summary', jsonb_build_object(
+               'field_count', k.field_count,
+               'restricted_field_count', k.restricted_field_count,
+               'first_source_field_id', k.first_source_field_id,
+               'last_source_field_id', k.last_source_field_id
+             ),
              'field_lineage_ref', jsonb_build_object(
                'source_table', 'source_field_values',
                'source_record_id', k.source_record_id,
