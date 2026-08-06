@@ -1,0 +1,953 @@
+cubes:
+  - name: phs_vendor_portfolio
+    sql_table: foundation_v2_phs_cube_canary.phs_vendor_portfolio_v1
+    public: true
+    joins:
+      - name: phs_contract_families
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {phs_contract_families.tenant_key} AND {CUBE.vendor_id} = {phs_contract_families.vendor_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: legal_name
+        sql: legal_name
+        type: string
+      - name: supplier_category
+        sql: supplier_category
+        type: string
+      - name: risk_tier
+        sql: risk_tier
+        type: string
+      - name: status
+        sql: status
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [supplier_category, risk_tier, legal_name, vendor_id]
+      - name: contract_family_count
+        sql: contract_family_count
+        type: sum
+        drill_members: [supplier_category, risk_tier, legal_name, vendor_id]
+      - name: supported_service_count
+        sql: supported_service_count
+        type: sum
+        drill_members: [supplier_category, risk_tier, legal_name, vendor_id]
+      - name: invoice_line_count
+        sql: invoice_line_count
+        type: sum
+        drill_members: [supplier_category, risk_tier, legal_name, vendor_id]
+      - name: invoice_line_amount
+        sql: invoice_line_amount
+        type: sum
+        format: currency
+        drill_members: [supplier_category, risk_tier, legal_name, vendor_id]
+    hierarchies:
+      - name: phs_vendor_360
+        title: PHS Vendor 360
+        levels: [supplier_category, risk_tier, legal_name, vendor_id]
+
+  - name: phs_contract_families
+    sql_table: foundation_v2_phs_cube_canary.phs_contract_family_v1
+    public: true
+    joins:
+      - name: phs_vendor_portfolio
+        relationship: many_to_one
+        sql: "{CUBE.tenant_key} = {phs_vendor_portfolio.tenant_key} AND {CUBE.vendor_id} = {phs_vendor_portfolio.vendor_id}"
+      - name: phs_contract_scope
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {phs_contract_scope.tenant_key} AND {CUBE.contract_family_id} = {phs_contract_scope.contract_family_id}"
+      - name: phs_spend_invoice_history
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {phs_spend_invoice_history.tenant_key} AND {CUBE.contract_family_id} = {phs_spend_invoice_history.contract_family_id}"
+      - name: phs_sla_itsm_performance
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {phs_sla_itsm_performance.tenant_key} AND {CUBE.contract_family_id} = {phs_sla_itsm_performance.contract_id}"
+      - name: phs_service_credits
+        relationship: one_to_many
+        sql: "{CUBE.tenant_key} = {phs_service_credits.tenant_key} AND {CUBE.contract_family_id} = {phs_service_credits.contract_id}"
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: contract_family_id
+        sql: contract_family_id
+        type: string
+      - name: contract_name
+        sql: contract_name
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: evidence_tier
+        sql: evidence_tier
+        type: string
+      - name: renewal_window
+        sql: renewal_window
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [renewal_window, evidence_tier, contract_name, contract_family_id]
+      - name: total_contract_value
+        sql: synthetic_midpoint_total_contract_value
+        type: sum
+        format: currency
+        drill_members:
+          [renewal_window, evidence_tier, contract_name, contract_family_id]
+      - name: amendment_count
+        sql: amendment_count
+        type: sum
+        drill_members:
+          [renewal_window, evidence_tier, contract_name, contract_family_id]
+      - name: sla_term_count
+        sql: sla_term_count
+        type: sum
+        drill_members:
+          [renewal_window, evidence_tier, contract_name, contract_family_id]
+    hierarchies:
+      - name: phs_contract_family
+        title: PHS Contract Family
+        levels:
+          [renewal_window, evidence_tier, contract_name, contract_family_id]
+
+  - name: phs_contract_scope
+    sql_table: foundation_v2_phs_cube_canary.phs_contract_scope_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: scope_relationship_id
+        sql: scope_relationship_id
+        type: string
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: contract_family_id
+        sql: contract_family_id
+        type: string
+      - name: contracted_service_id
+        sql: contracted_service_id
+        type: string
+      - name: business_service_ref
+        sql: business_service_ref
+        type: string
+      - name: application_ref
+        sql: application_ref
+        type: string
+      - name: ci_ref
+        sql: ci_ref
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [
+            vendor_id,
+            contract_family_id,
+            business_service_ref,
+            application_ref,
+            scope_relationship_id,
+          ]
+      - name: average_relationship_confidence
+        sql: relationship_confidence
+        type: avg
+        drill_members:
+          [
+            vendor_id,
+            contract_family_id,
+            business_service_ref,
+            application_ref,
+            scope_relationship_id,
+          ]
+    hierarchies:
+      - name: phs_contract_to_service_application
+        title: PHS Contract to Service Application
+        levels:
+          [vendor_id, contract_family_id, business_service_ref, application_ref]
+
+  - name: phs_spend_invoice_history
+    sql_table: foundation_v2_phs_cube_canary.phs_spend_invoice_history_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: contract_family_id
+        sql: contract_family_id
+        type: string
+      - name: invoice_month
+        sql: invoice_month
+        type: time
+    measures:
+      - name: count
+        type: count
+        drill_members: [vendor_id, contract_family_id, invoice_month]
+      - name: invoice_lines
+        sql: invoice_line_count
+        type: sum
+        drill_members: [vendor_id, contract_family_id, invoice_month]
+      - name: line_amount
+        sql: line_amount
+        type: sum
+        format: currency
+        drill_members: [vendor_id, contract_family_id, invoice_month]
+      - name: rate_card_matched_lines
+        sql: rate_card_matched_lines
+        type: sum
+        drill_members: [vendor_id, contract_family_id, invoice_month]
+    hierarchies:
+      - name: phs_spend_history
+        title: PHS Spend History
+        levels: [vendor_id, contract_family_id, invoice_month]
+
+  - name: phs_workforce_rate_card_economics
+    sql_table: foundation_v2_phs_cube_canary.phs_workforce_rate_card_economics_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: contract_family_id
+        sql: contract_family_id
+        type: string
+      - name: role_title
+        sql: role_title
+        type: string
+      - name: location_model
+        sql: location_model
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [contract_family_id, role_title, location_model]
+      - name: billed_fte
+        sql: billed_fte
+        type: sum
+        drill_members: [contract_family_id, role_title, location_model]
+      - name: average_billed_mix_pct
+        sql: average_billed_mix_pct
+        type: avg
+        drill_members: [contract_family_id, role_title, location_model]
+    hierarchies:
+      - name: phs_rate_card_economics
+        title: PHS Rate Card Economics
+        levels: [contract_family_id, role_title, location_model]
+
+  - name: phs_sla_itsm_performance
+    sql_table: foundation_v2_phs_cube_canary.phs_sla_itsm_performance_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: vendor_id
+        sql: vendor_id
+        type: string
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: service_ref
+        sql: service_ref
+        type: string
+      - name: business_service_ref
+        sql: business_service_ref
+        type: string
+      - name: application_ref
+        sql: application_ref
+        type: string
+      - name: service_tower
+        sql: service_tower
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [service_tower, vendor_id, contract_id, service_ref, application_ref]
+      - name: tickets_opened
+        sql: tickets_opened
+        type: sum
+        drill_members:
+          [service_tower, vendor_id, contract_id, service_ref, application_ref]
+      - name: sla_breach_count
+        sql: sla_breach_count
+        type: sum
+        drill_members:
+          [service_tower, vendor_id, contract_id, service_ref, application_ref]
+      - name: service_credit_eligible_amount
+        sql: service_credit_eligible_amount
+        type: sum
+        format: currency
+        drill_members:
+          [service_tower, vendor_id, contract_id, service_ref, application_ref]
+      - name: service_credit_claimed_amount
+        sql: service_credit_claimed_amount
+        type: sum
+        format: currency
+        drill_members:
+          [service_tower, vendor_id, contract_id, service_ref, application_ref]
+    hierarchies:
+      - name: phs_service_performance
+        title: PHS Service Performance
+        levels:
+          [service_tower, vendor_id, contract_id, service_ref, application_ref]
+
+  - name: phs_service_credits
+    sql_table: foundation_v2_phs_cube_canary.phs_service_credit_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: service_credit_id
+        sql: service_credit_id
+        type: string
+      - name: contract_id
+        sql: contract_id
+        type: string
+      - name: service_ref
+        sql: service_ref
+        type: string
+      - name: claim_state
+        sql: claim_state
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [claim_state, contract_id, service_ref, service_credit_id]
+      - name: eligible_amount
+        sql: eligible_amount
+        type: sum
+        format: currency
+        drill_members:
+          [claim_state, contract_id, service_ref, service_credit_id]
+      - name: claimed_amount
+        sql: claimed_amount
+        type: sum
+        format: currency
+        drill_members:
+          [claim_state, contract_id, service_ref, service_credit_id]
+      - name: unclaimed_amount
+        sql: "coalesce(eligible_amount, 0) - coalesce(claimed_amount, 0)"
+        type: sum
+        format: currency
+        drill_members:
+          [claim_state, contract_id, service_ref, service_credit_id]
+    hierarchies:
+      - name: phs_service_credit_recovery
+        title: PHS Service Credit Recovery
+        levels: [claim_state, contract_id, service_ref]
+
+  - name: phs_application_dependencies
+    sql_table: foundation_v2_phs_cube_canary.phs_application_dependency_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: application_id
+        sql: application_id
+        type: string
+      - name: application_name
+        sql: application_name
+        type: string
+      - name: owner_function
+        sql: owner_function
+        type: string
+      - name: lifecycle
+        sql: lifecycle
+        type: string
+      - name: criticality
+        sql: criticality
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [
+            owner_function,
+            lifecycle,
+            criticality,
+            application_name,
+            application_id,
+          ]
+      - name: epic_interface_count
+        sql: epic_interface_count
+        type: sum
+        drill_members:
+          [
+            owner_function,
+            lifecycle,
+            criticality,
+            application_name,
+            application_id,
+          ]
+      - name: analytics_dependency_count
+        sql: analytics_dependency_count
+        type: sum
+        drill_members:
+          [
+            owner_function,
+            lifecycle,
+            criticality,
+            application_name,
+            application_id,
+          ]
+    hierarchies:
+      - name: phs_application_roadmap
+        title: PHS Application Roadmap
+        levels: [owner_function, lifecycle, criticality, application_name]
+
+  - name: phs_renewal_exit_terms
+    sql_table: foundation_v2_phs_cube_canary.phs_renewal_exit_term_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: contract_family_id
+        sql: contract_family_id
+        type: string
+      - name: renewal_window
+        sql: renewal_window
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [renewal_window, contract_family_id]
+      - name: source_record_count
+        sql: source_record_count
+        type: sum
+        drill_members: [renewal_window, contract_family_id]
+    hierarchies:
+      - name: phs_renewal_exit
+        title: PHS Renewal Exit
+        levels: [renewal_window, contract_family_id]
+
+  - name: phs_program_dependencies
+    sql_table: foundation_v2_phs_cube_canary.phs_program_dependency_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: program_ref
+        sql: program_ref
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [program_ref]
+      - name: source_dependency_rows
+        sql: source_dependency_rows
+        type: sum
+        drill_members: [program_ref]
+      - name: canonical_initiative_concept_count
+        sql: canonical_initiative_concept_count
+        type: sum
+        drill_members: [program_ref]
+    hierarchies:
+      - name: phs_program_modernization
+        title: PHS Program Modernization
+        levels: [program_ref]
+
+  - name: phs_enterprise_outcomes
+    sql_table: foundation_v2_phs_cube_canary.phs_enterprise_outcome_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: outcome_name
+        sql: outcome_name
+        type: string
+      - name: outcome_category
+        sql: outcome_category
+        type: string
+      - name: trend_state
+        sql: trend_state
+        type: string
+      - name: evidence_status
+        sql: evidence_status
+        type: string
+      - name: attestation_status
+        sql: attestation_status
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [outcome_category, trend_state, evidence_status, outcome_name]
+    hierarchies:
+      - name: phs_outcomes
+        title: PHS Outcomes
+        levels: [outcome_category, trend_state, evidence_status, outcome_name]
+
+  - name: phs_bpo_baseline
+    sql_table: foundation_v2_phs_cube_canary.phs_bpo_baseline_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: event_id
+        sql: event_id
+        type: string
+      - name: function_ref
+        sql: function_ref
+        type: string
+      - name: process_name
+        sql: process_name
+        type: string
+      - name: automation_opportunity
+        sql: automation_opportunity
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: monthly_volume
+        sql: monthly_volume
+        type: sum
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: baseline_cost
+        sql: "coalesce(baseline_labor_cost, 0) + coalesce(baseline_technology_cost, 0) + coalesce(baseline_controls_cost, 0)"
+        type: sum
+        format: currency
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: current_resource_count
+        sql: current_resource_count
+        type: sum
+        drill_members: [function_ref, automation_opportunity, process_name]
+    hierarchies:
+      - name: phs_bpo_baseline
+        title: PHS BPO Baseline
+        levels: [function_ref, automation_opportunity, process_name]
+
+  - name: phs_supplier_proposals_bafo
+    sql_table: foundation_v2_phs_cube_canary.phs_supplier_proposal_bafo_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: event_id
+        sql: event_id
+        type: string
+      - name: supplier_id
+        sql: supplier_id
+        type: string
+      - name: invitation_state
+        sql: invitation_state
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [invitation_state, supplier_id]
+      - name: evaluation_weighted_score
+        sql: evaluation_weighted_score
+        type: avg
+        drill_members: [invitation_state, supplier_id]
+      - name: five_year_service_fee
+        sql: five_year_service_fee
+        type: sum
+        format: currency
+        drill_members: [invitation_state, supplier_id]
+      - name: transition_cost
+        sql: transition_cost
+        type: sum
+        format: currency
+        drill_members: [invitation_state, supplier_id]
+      - name: risk_adjustment
+        sql: risk_adjustment
+        type: sum
+        format: currency
+        drill_members: [invitation_state, supplier_id]
+    hierarchies:
+      - name: phs_supplier_comparison
+        title: PHS Supplier Comparison
+        levels: [invitation_state, supplier_id]
+
+  - name: phs_rebadge_transition_commitments
+    sql_table: foundation_v2_phs_cube_canary.phs_rebadge_transition_commitment_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: supplier_id
+        sql: supplier_id
+        type: string
+      - name: function_ref
+        sql: function_ref
+        type: string
+      - name: process_name
+        sql: process_name
+        type: string
+      - name: employee_cohort
+        sql: employee_cohort
+        type: string
+      - name: contractual_or_proposed_status
+        sql: contractual_or_proposed_status
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [supplier_id, function_ref, process_name, employee_cohort]
+      - name: number_proposed_for_rebadge
+        sql: number_proposed_for_rebadge
+        type: sum
+        drill_members:
+          [supplier_id, function_ref, process_name, employee_cohort]
+      - name: kt_plan_count
+        sql: kt_plan_count
+        type: sum
+        drill_members:
+          [supplier_id, function_ref, process_name, employee_cohort]
+    hierarchies:
+      - name: phs_rebadge_transition
+        title: PHS Rebadge Transition
+        levels: [supplier_id, function_ref, process_name, employee_cohort]
+
+  - name: phs_ai_automation_commitments
+    sql_table: foundation_v2_phs_cube_canary.phs_ai_automation_commitment_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: supplier_id
+        sql: supplier_id
+        type: string
+      - name: process_name
+        sql: process_name
+        type: string
+      - name: ai_rpa_use_case
+        sql: ai_rpa_use_case
+        type: string
+      - name: commitment_state
+        sql: commitment_state
+        type: string
+      - name: automation_basis
+        sql: automation_basis
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [
+            automation_basis,
+            commitment_state,
+            supplier_id,
+            process_name,
+            ai_rpa_use_case,
+          ]
+      - name: current_manual_volume
+        sql: current_manual_volume
+        type: sum
+        drill_members:
+          [
+            automation_basis,
+            commitment_state,
+            supplier_id,
+            process_name,
+            ai_rpa_use_case,
+          ]
+      - name: contracted_benefit_amount
+        sql: contracted_benefit_amount
+        type: sum
+        format: currency
+        drill_members:
+          [
+            automation_basis,
+            commitment_state,
+            supplier_id,
+            process_name,
+            ai_rpa_use_case,
+          ]
+      - name: contractual_commitments
+        sql: "CASE WHEN automation_basis = 'contractual' THEN 1 ELSE 0 END"
+        type: sum
+        drill_members:
+          [
+            automation_basis,
+            commitment_state,
+            supplier_id,
+            process_name,
+            ai_rpa_use_case,
+          ]
+    hierarchies:
+      - name: phs_automation_commitments
+        title: PHS Automation Commitments
+        levels: [automation_basis, commitment_state, supplier_id, process_name]
+
+  - name: phs_retained_org_scenarios
+    sql_table: foundation_v2_phs_cube_canary.phs_retained_org_scenario_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: supplier_id
+        sql: supplier_id
+        type: string
+      - name: sourcing_model
+        sql: sourcing_model
+        type: string
+      - name: phs_retained_function
+        sql: phs_retained_function
+        type: string
+      - name: retained_role
+        sql: retained_role
+        type: string
+      - name: location
+        sql: location
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [
+            sourcing_model,
+            supplier_id,
+            phs_retained_function,
+            retained_role,
+            location,
+          ]
+      - name: transition_fte
+        sql: transition_fte
+        type: sum
+        drill_members:
+          [
+            sourcing_model,
+            supplier_id,
+            phs_retained_function,
+            retained_role,
+            location,
+          ]
+      - name: steady_state_fte
+        sql: steady_state_fte
+        type: sum
+        drill_members:
+          [
+            sourcing_model,
+            supplier_id,
+            phs_retained_function,
+            retained_role,
+            location,
+          ]
+      - name: annual_cost
+        sql: annual_cost
+        type: sum
+        format: currency
+        drill_members:
+          [
+            sourcing_model,
+            supplier_id,
+            phs_retained_function,
+            retained_role,
+            location,
+          ]
+    hierarchies:
+      - name: phs_retained_org
+        title: PHS Retained Organization
+        levels:
+          [sourcing_model, supplier_id, phs_retained_function, retained_role]
+
+  - name: phs_normalized_tco_recommendation_inputs
+    sql_table: foundation_v2_phs_cube_canary.phs_normalized_tco_recommendation_input_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: supplier_id
+        sql: supplier_id
+        type: string
+      - name: scenario
+        sql: scenario
+        type: string
+      - name: recommendation_state
+        sql: recommendation_state
+        type: string
+      - name: recommendation_basis
+        sql: recommendation_basis
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members: [recommendation_state, scenario, supplier_id]
+      - name: headline_price
+        sql: headline_price
+        type: sum
+        format: currency
+        drill_members: [recommendation_state, scenario, supplier_id]
+      - name: normalized_five_year_tco
+        sql: normalized_five_year_tco
+        type: sum
+        format: currency
+        drill_members: [recommendation_state, scenario, supplier_id]
+      - name: transition_cost
+        sql: transition_cost
+        type: sum
+        format: currency
+        drill_members: [recommendation_state, scenario, supplier_id]
+      - name: retained_org_cost
+        sql: retained_org_cost
+        type: sum
+        format: currency
+        drill_members: [recommendation_state, scenario, supplier_id]
+      - name: risk_adjustment
+        sql: risk_adjustment
+        type: sum
+        format: currency
+        drill_members: [recommendation_state, scenario, supplier_id]
+    hierarchies:
+      - name: phs_normalized_recommendation
+        title: PHS Normalized Recommendation
+        levels: [recommendation_state, scenario, supplier_id]
+
+  - name: phs_event_context_snapshot
+    sql_table: foundation_v2_phs_cube_canary.phs_event_context_snapshot_v1
+    public: true
+    dimensions:
+      - name: tenant_key
+        sql: tenant_key
+        type: string
+        public: false
+      - name: projection_row_id
+        sql: projection_row_id
+        type: string
+        primary_key: true
+      - name: event_id
+        sql: event_id
+        type: string
+      - name: event_context_snapshot_id
+        sql: event_context_snapshot_id
+        type: string
+      - name: snapshot_version
+        sql: snapshot_version
+        type: string
+      - name: snapshot_hash
+        sql: snapshot_hash
+        type: string
+    measures:
+      - name: count
+        type: count
+        drill_members:
+          [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
+      - name: selected_source_record_count
+        sql: selected_source_record_count
+        type: sum
+        drill_members:
+          [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
+      - name: selected_canonical_entity_count
+        sql: selected_canonical_entity_count
+        type: sum
+        drill_members:
+          [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
+      - name: selected_canonical_relationship_count
+        sql: selected_canonical_relationship_count
+        type: sum
+        drill_members:
+          [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
+    hierarchies:
+      - name: phs_event_snapshot
+        title: PHS Event Snapshot
+        levels: [event_id, event_context_snapshot_id, snapshot_version]

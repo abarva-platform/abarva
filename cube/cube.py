@@ -20,6 +20,24 @@ TENANT_FILTERABLE_CUBES = {
     "source_v4_workforce_rate_cards",
     "source_v4_sourcing_events",
     "source_v4_context_coverage",
+    "phs_vendor_portfolio",
+    "phs_contract_families",
+    "phs_contract_scope",
+    "phs_spend_invoice_history",
+    "phs_workforce_rate_card_economics",
+    "phs_sla_itsm_performance",
+    "phs_service_credits",
+    "phs_application_dependencies",
+    "phs_renewal_exit_terms",
+    "phs_program_dependencies",
+    "phs_enterprise_outcomes",
+    "phs_bpo_baseline",
+    "phs_supplier_proposals_bafo",
+    "phs_rebadge_transition_commitments",
+    "phs_ai_automation_commitments",
+    "phs_retained_org_scenarios",
+    "phs_normalized_tco_recommendation_inputs",
+    "phs_event_context_snapshot",
 }
 
 VIEW_TO_CUBES = {
@@ -45,6 +63,27 @@ VIEW_TO_CUBES = {
     "source_v4_cloud_optimization": ["source_v4_cloud_cost"],
     "source_v4_workforce_rate_card": ["source_v4_workforce_rate_cards"],
     "source_v4_sourcing_event_bafo": ["source_v4_sourcing_events"],
+    "phs_vendor_360": ["phs_vendor_portfolio", "phs_contract_families"],
+    "phs_contract_360": [
+        "phs_contract_families",
+        "phs_contract_scope",
+        "phs_sla_itsm_performance",
+        "phs_service_credits",
+    ],
+    "phs_bpo_supplier_comparison": [
+        "phs_bpo_baseline",
+        "phs_supplier_proposals_bafo",
+        "phs_rebadge_transition_commitments",
+        "phs_ai_automation_commitments",
+        "phs_retained_org_scenarios",
+        "phs_normalized_tco_recommendation_inputs",
+    ],
+    "phs_decision_handoff": [
+        "phs_normalized_tco_recommendation_inputs",
+        "phs_event_context_snapshot",
+        "phs_program_dependencies",
+        "phs_application_dependencies",
+    ],
 }
 
 
