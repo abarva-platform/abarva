@@ -1048,10 +1048,11 @@ function manifest(status, extra = {}) {
 
 function writeProofSet(outDir, result) {
   writeJson(proofRef(outDir, "PHS_LAYER4_PROJECTIONS.json"), result);
-  writeCsv(proofRef(outDir, "PHS_LAYER4_PROJECTION_SUMMARY.csv"), [
+  writeCsv(
+    proofRef(outDir, "PHS_LAYER4_PROJECTION_SUMMARY.csv"),
     ["projection_namespace", "projection_name", "business_grain", "authority_row_count", "actual_row_count", "projection_hash"],
-    ...(result.projection_summaries || []).map((row) => [row.projection_namespace, row.projection_name, row.business_grain, row.authority_row_count, row.actual_row_count, row.projection_hash]),
-  ]);
+    result.projection_summaries || [],
+  );
 }
 
 function maybeEmitProofBundle() {
