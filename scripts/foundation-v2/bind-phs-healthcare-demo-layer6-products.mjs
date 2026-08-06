@@ -1029,15 +1029,13 @@ async function insertArtifact(client, artifact) {
 }
 
 async function verifiedManifest(client, extra = {}) {
-  const [schema, layer4, layer5, counts, status, unsupported, skyharbor] = await Promise.all([
-    schemaReadback(client),
-    layer4Readback(client),
-    layer5Readback(client),
-    layer6Counts(client),
-    layer6Status(client),
-    unsupportedNarrativeClaims(client),
-    readSkyHarborCounts(client),
-  ]);
+  const schema = await schemaReadback(client);
+  const layer4 = await layer4Readback(client);
+  const layer5 = await layer5Readback(client);
+  const counts = await layer6Counts(client);
+  const status = await layer6Status(client);
+  const unsupported = await unsupportedNarrativeClaims(client);
+  const skyharbor = await readSkyHarborCounts(client);
   const defects = [
     ...schema.defects,
     ...layer4.defects,
@@ -1139,11 +1137,9 @@ async function layer6Counts(client) {
 }
 
 async function layer6Status(client) {
-  const [bindings, findings, artifacts] = await Promise.all([
-    client.query(`SELECT module_key, readiness_status, jsonb_array_length(projection_authority_ids) AS projection_authority_count FROM ${t("layer6_app_module_bindings")} WHERE tenant_key=$1 ORDER BY module_key`, [TENANT_KEY]),
-    client.query(`SELECT hero_step_order, hero_step_key, finding_status, deterministic_result FROM ${t("layer6_hero_journey_findings")} WHERE tenant_key=$1 ORDER BY hero_step_order`, [TENANT_KEY]),
-    client.query(`SELECT artifact_kind, readiness_status, unsupported_claim_count, jsonb_array_length(evidence_finding_ids) AS evidence_finding_count FROM ${t("layer6_governed_narrative_artifacts")} WHERE tenant_key=$1 ORDER BY artifact_kind`, [TENANT_KEY]),
-  ]);
+  const bindings = await client.query(`SELECT module_key, readiness_status, jsonb_array_length(projection_authority_ids) AS projection_authority_count FROM ${t("layer6_app_module_bindings")} WHERE tenant_key=$1 ORDER BY module_key`, [TENANT_KEY]);
+  const findings = await client.query(`SELECT hero_step_order, hero_step_key, finding_status, deterministic_result FROM ${t("layer6_hero_journey_findings")} WHERE tenant_key=$1 ORDER BY hero_step_order`, [TENANT_KEY]);
+  const artifacts = await client.query(`SELECT artifact_kind, readiness_status, unsupported_claim_count, jsonb_array_length(evidence_finding_ids) AS evidence_finding_count FROM ${t("layer6_governed_narrative_artifacts")} WHERE tenant_key=$1 ORDER BY artifact_kind`, [TENANT_KEY]);
   const defects = [];
   for (const row of bindings.rows) if (row.readiness_status !== "bound") defects.push(`module_binding_blocked:${row.module_key}`);
   for (const row of findings.rows) if (row.finding_status !== "supported") defects.push(`hero_finding_not_supported:${row.hero_step_key}`);
