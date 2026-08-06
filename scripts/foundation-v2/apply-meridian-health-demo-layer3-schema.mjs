@@ -62,7 +62,10 @@ async function main() {
     await ensureMigrationLedger(client);
     const before = await migrationLedgerReadback(client);
     const applied = [];
-    if (args.mode === "apply" && !before.present) {
+    const forceReapply =
+      process.env.MERIDIAN_HEALTH_DEMO_SCHEMA_FORCE_REAPPLY === "true" ||
+      process.env.MERIDIAN_HEALTH_LAYER3_SCHEMA_FORCE_REAPPLY === "true";
+    if (args.mode === "apply" && (!before.present || (forceReapply && before.sha256 !== EXPECTED_MIGRATION_SHA256))) {
       await client.query(sql);
       await client.query(
         `INSERT INTO schema_migrations(name, sha256, applied_at)
@@ -86,6 +89,7 @@ async function main() {
       generated_at: new Date().toISOString(),
       mode: args.mode,
       mutation_executed: args.mode === "apply" && applied.length > 0,
+      force_reapply_requested: forceReapply,
       migration_name: MIGRATION_NAME,
       migration_sha256: fileSha256,
       pending_before: before.present ? [] : [MIGRATION_NAME],
