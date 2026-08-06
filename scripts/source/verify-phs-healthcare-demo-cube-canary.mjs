@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 
 import dotenv from "dotenv";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import pg from "pg";
 
 dotenv.config({ path: ".env.local", quiet: true });
