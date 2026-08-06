@@ -147,19 +147,33 @@ async function preflight(client) {
 }
 
 async function apply(client) {
+  progress("PHS_LAYER2_APPLY_APPROVAL_CHECK_START");
   assertApplyApproved();
+  progress("PHS_LAYER2_APPLY_APPROVAL_CHECK_DONE");
   const startedAt = new Date().toISOString();
+  progress("PHS_LAYER2_APPLY_TRANSACTION_BEGIN_START");
   await client.query("BEGIN");
+  progress("PHS_LAYER2_APPLY_TRANSACTION_BEGIN_DONE");
   try {
+    progress("PHS_LAYER2_APPLY_ADVISORY_LOCK_START");
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`${DATABASE_SCHEMA}:${TENANT_KEY}:${TEST_NAMESPACE}:normalization`]);
+    progress("PHS_LAYER2_APPLY_ADVISORY_LOCK_DONE");
+    progress("PHS_LAYER2_APPLY_CONTEXT_START");
     await setContext(client, WRITER_ROLE);
+    progress("PHS_LAYER2_APPLY_CONTEXT_DONE");
+    progress("PHS_LAYER2_APPLY_SOURCE_COUNTS_START");
     const sourceCounts = await sourceVolumeCounts(client);
+    progress("PHS_LAYER2_APPLY_SOURCE_COUNTS_DONE", sourceCounts);
     if (!exactSourceCounts(sourceCounts)) throw new Error(`PHS source-volume counts are not verified: ${JSON.stringify(sourceCounts)}`);
+    progress("PHS_LAYER2_APPLY_DOWNSTREAM_COUNTS_START");
     const existingCounts = await downstreamCounts(client);
+    progress("PHS_LAYER2_APPLY_DOWNSTREAM_COUNTS_DONE", existingCounts);
     const existingTotal = Object.values(existingCounts).reduce((sum, value) => sum + Number(value || 0), 0);
     if (existingTotal > 0) {
       if (!exactDownstreamCounts(existingCounts)) throw new Error(`Existing PHS normalization rows are partial or divergent: ${JSON.stringify(existingCounts)}`);
+      progress("PHS_LAYER2_APPLY_ALREADY_VERIFIED_ROLLBACK_START");
       await client.query("ROLLBACK");
+      progress("PHS_LAYER2_APPLY_ALREADY_VERIFIED_ROLLBACK_DONE");
       return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_NORMALIZATION_ALREADY_VERIFIED", {
         mutation_executed: false,
         started_at: startedAt,
@@ -167,20 +181,37 @@ async function apply(client) {
       });
     }
 
+    progress("PHS_LAYER2_APPLY_NORMALIZED_OBJECTS_START");
     await insertNormalizedObjects(client);
+    progress("PHS_LAYER2_APPLY_NORMALIZED_OBJECTS_DONE");
+    progress("PHS_LAYER2_APPLY_J2A_READBACK_START");
     const j2a = await j2aReadback(client);
+    progress("PHS_LAYER2_APPLY_J2A_READBACK_DONE", j2a);
     assertGate(j2a.status, "PHS_HEALTHCARE_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED", j2a);
+    progress("PHS_LAYER2_APPLY_J2A_GATE_INSERT_START");
     await insertGateResult(client, ADAPTER_GATE_IDS[0], "Layer 1 source records to Layer 2 normalized adapter outputs", j2a.source_records, j2a.normalized_objects);
+    progress("PHS_LAYER2_APPLY_J2A_GATE_INSERT_DONE");
 
+    progress("PHS_LAYER2_APPLY_KNOWLEDGE_CANDIDATES_START");
     await insertKnowledgeCandidates(client);
+    progress("PHS_LAYER2_APPLY_KNOWLEDGE_CANDIDATES_DONE");
+    progress("PHS_LAYER2_APPLY_J2B_READBACK_START");
     const j2b = await j2bReadback(client);
+    progress("PHS_LAYER2_APPLY_J2B_READBACK_DONE", j2b);
     assertGate(j2b.status, "PHS_HEALTHCARE_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED", j2b);
+    progress("PHS_LAYER2_APPLY_J2B_GATE_INSERT_START");
     await insertGateResult(client, ADAPTER_GATE_IDS[1], "Layer 2 normalized adapter outputs to candidate staging", j2b.normalized_objects, j2b.knowledge_candidates);
+    progress("PHS_LAYER2_APPLY_J2B_GATE_INSERT_DONE");
 
+    progress("PHS_LAYER2_APPLY_J2C_READBACK_START");
     const j2c = await fieldLineageReadback(client);
+    progress("PHS_LAYER2_APPLY_J2C_READBACK_DONE", j2c);
     assertGate(j2c.status, "PHS_HEALTHCARE_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED", j2c);
+    progress("PHS_LAYER2_APPLY_J2C_GATE_INSERT_START");
     await insertGateResult(client, ADAPTER_GATE_IDS[2], "Layer 1 source fields to Layer 2 field dispositions", j2c.source_field_values, j2c.downstream_field_dispositions);
+    progress("PHS_LAYER2_APPLY_J2C_GATE_INSERT_DONE");
 
+    progress("PHS_LAYER2_APPLY_VERIFIED_MANIFEST_START");
     const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFIED", {
       mutation_executed: true,
       started_at: startedAt,
@@ -189,10 +220,15 @@ async function apply(client) {
       j2b,
       j2c,
     });
+    progress("PHS_LAYER2_APPLY_VERIFIED_MANIFEST_DONE");
+    progress("PHS_LAYER2_APPLY_COMMIT_START");
     await client.query("COMMIT");
+    progress("PHS_LAYER2_APPLY_COMMIT_DONE");
     return result;
   } catch (error) {
+    progress("PHS_LAYER2_APPLY_ROLLBACK_START", { error: error.message });
     await client.query("ROLLBACK").catch(() => {});
+    progress("PHS_LAYER2_APPLY_ROLLBACK_DONE");
     throw error;
   }
 }
@@ -647,6 +683,10 @@ function manifest(status, extra) {
     expected_downstream_counts: DOWNSTREAM_COUNTS,
     ...extra,
   };
+}
+
+function progress(event, fields = {}) {
+  console.log(JSON.stringify({ event, generated_at: new Date().toISOString(), ...fields }));
 }
 
 function selfTest() {
