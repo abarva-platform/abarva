@@ -226,7 +226,41 @@ function assertApplyApproved() {
 }
 
 async function insertNormalizedObjects(client) {
-  await q(
+  const sourceFiles = await rows(
+    client,
+    `
+    SELECT source_file_id, file_name, row_count
+      FROM ${tableRef("source_files")}
+     WHERE tenant_key=$1
+       AND test_namespace=$2
+       AND source_release_id=$3
+     ORDER BY file_name
+    `,
+    [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
+  );
+
+  for (const [index, sourceFile] of sourceFiles.entries()) {
+    console.log(JSON.stringify({
+      event: "PHS_LAYER2_NORMALIZED_OBJECT_FILE_START",
+      index: index + 1,
+      total: sourceFiles.length,
+      source_file_id: sourceFile.source_file_id,
+      file_name: sourceFile.file_name,
+      row_count: Number(sourceFile.row_count || 0),
+    }));
+    const result = await insertNormalizedObjectsForFile(client, sourceFile.source_file_id);
+    console.log(JSON.stringify({
+      event: "PHS_LAYER2_NORMALIZED_OBJECT_FILE_DONE",
+      index: index + 1,
+      total: sourceFiles.length,
+      source_file_id: sourceFile.source_file_id,
+      row_count: result.rowCount,
+    }));
+  }
+}
+
+async function insertNormalizedObjectsForFile(client, sourceFileId) {
+  return await q(
     client,
     `
     INSERT INTO ${tableRef("normalized_objects")}
@@ -260,6 +294,7 @@ async function insertNormalizedObjects(client) {
        WHERE sr.tenant_key=$1
          AND sr.test_namespace=$2
          AND sr.source_release_id=$3
+         AND sr.source_file_id=$6
     ),
     keyed AS (
       SELECT *,
@@ -312,7 +347,7 @@ async function insertNormalizedObjects(client) {
            $5::text
       FROM keyed k
     `,
-    [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, NORMALIZE_VERSION, NORMALIZE_EXECUTION_ID],
+    [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, NORMALIZE_VERSION, NORMALIZE_EXECUTION_ID, sourceFileId],
   );
 }
 
