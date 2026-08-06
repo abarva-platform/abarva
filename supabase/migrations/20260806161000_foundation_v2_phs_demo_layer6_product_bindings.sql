@@ -91,7 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_phs_l6_artifacts_kind
 GRANT SELECT, INSERT, DELETE ON foundation_v2_phs_demo.layer6_app_module_bindings TO foundation_v2_phs_demo_writer;
 GRANT SELECT, INSERT, DELETE ON foundation_v2_phs_demo.layer6_hero_journey_findings TO foundation_v2_phs_demo_writer;
 GRANT SELECT, INSERT, DELETE ON foundation_v2_phs_demo.layer6_governed_narrative_artifacts TO foundation_v2_phs_demo_writer;
-GRANT SELECT, INSERT, DELETE ON foundation_v2_phs_demo.layer6_gate_results TO foundation_v2_phs_demo_writer;
+GRANT SELECT, INSERT, UPDATE, DELETE ON foundation_v2_phs_demo.layer6_gate_results TO foundation_v2_phs_demo_writer;
 
 GRANT SELECT ON foundation_v2_phs_demo.layer6_app_module_bindings TO foundation_v2_phs_demo_reader;
 GRANT SELECT ON foundation_v2_phs_demo.layer6_hero_journey_findings TO foundation_v2_phs_demo_reader;
