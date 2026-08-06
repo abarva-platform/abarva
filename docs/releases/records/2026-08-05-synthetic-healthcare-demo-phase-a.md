@@ -186,6 +186,24 @@ Layer 6 proof ZIP SHA-256: `cf493c42313484886b3eae9e9b0e40e659414d7c54ab2f2bbf24
 Governed narrative acceptance now requires side-by-side audit from narrative claim to packet fact/finding to source record to evidence span to Cube measure where applicable; document rendering alone is not acceptable proof.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
+### Layer 4-6 Semantic Remediation Addendum
+
+The semantic remediation pass repaired Layer 4/6 business-grain handling and reran Layer 4 projections, Layer 5 canary reconciliation, private Cube verification and Layer 6 product bindings on the existing branch and PR. It did not regenerate the 54-file source package, open a new PR, shift shared Cube traffic, shift shared web traffic, activate a tenant or publish shared canonical records.
+
+Final private operator image: `acrabarvalab001.azurecr.io/abarva/phs-healthcare-demo-lab@sha256:c18133fff648718622485daf1b412b51869126060bd38cbc9f7e5473dc4f69b3`.
+Private Cube canary image: `acrabarvalab001.azurecr.io/abarva/phs-cube-canary@sha256:f0503de6a14a7fe012323acdbb011aee0e6c2d2b016f2f37861cd1515570c103`.
+Final semantic remediation proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Semantic_Remediation_Layer4_6_Proof_20260806T205136Z.zip`.
+Final semantic remediation proof ZIP SHA-256: `0b4d4d0294b8a4cc15ee3fd58acc628d8535b63307368a298fcda27360b78b3b`.
+Final summary file inside proof ZIP: `phs-healthcare-demo-semantic-aca-20260806T202418Z/FINAL_SEMANTIC_REMEDIATION_SUMMARY.json`.
+
+Final Layer 4 forced apply and independent verify both returned `PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_VERIFIED`, `exact_match=true` and zero defects; the forced apply recorded `mutation_executed=true`.
+Final Layer 5 apply and independent verify both returned `PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_VERIFIED`, `exact_match=true`, 18 typed canary tables and zero defects; the apply recorded `mutation_executed=true`.
+Final Cube canary runtime proof returned `PHS_HEALTHCARE_DEMO_CUBE_CANARY_VERIFIED`, 18 cubes, 18 hierarchies, 66 measures, health 200, missing-tenant rejection 403, zero tenant-isolation cross-read counts and zero SkyHarbor reconciliation failures.
+Final Layer 6 apply and independent verify both returned `PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED`, `exact_match=true`, `structural_exact_match=true`, `semantic_plausibility_pass=true`, `narrative_quality_pass=true`, `unsupported_claim_hits=0`, zero cross-tenant defects, zero SkyHarbor regression defects and zero defects.
+
+The semantic gate now proves the corrected grains: SLA and service-credit measures are not multiplied through application scope traversal; analytics contract performance reconciles to native SLA and credit rows; BPO baseline cost is not repeated across process rows; rebadge evidence is supplier/scenario-specific rather than summed across mutually exclusive proposals; recommendation counts match exact `recommended_after_normalization` rows; supplier ranks use the declared rank grain; and legacy technology lifecycle context remains visible in the Home/Intelligence linkage.
+The governed artifact set is the final six requested PHS executive artifacts: Enterprise Current-State Brief, Data & Analytics Current-State Assessment, Technology Architecture Current-State Assessment, Procurement & Vendor Landscape Brief, BPO Sourcing Decision Brief and AWS / Databricks Decision Brief. Each artifact includes final narrative text in the Layer 6 proof, uses the same governed AdvisoryPacket shape as live aVa, scores 9.2 overall quality, 9.4 tenant specificity and 9.3 evidence grounding, and records zero unsupported claims and zero contradictions.
+
 ## Known Gaps
 
 The synthetic healthcare tenant is not active in canonical tenant code. Isolated PHS Layers 1 through 6 have been applied and verified in private lab substrates, but no shared canonical publication, shared Cube traffic shift, web deployment, signed-in product-route proof or tenant activation has occurred.
