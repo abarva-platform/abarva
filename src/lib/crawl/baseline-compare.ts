@@ -170,7 +170,12 @@ export function comparePage(
     return findings;
   }
 
-  if (!observation.visibleText.includes(observation.expectedTenantName)) {
+  if (
+    !normalizedTextIncludes(
+      observation.visibleText,
+      observation.expectedTenantName,
+    )
+  ) {
     add(
       base ? "P0" : "P1",
       "tenant-identity",
@@ -356,6 +361,16 @@ export function isAuthAutomationBlockMessage(message: string): boolean {
   return AUTH_AUTOMATION_BLOCK_PATTERNS.some((pattern) =>
     pattern.test(message),
   );
+}
+
+function normalizedTextIncludes(haystack: string, needle: string): boolean {
+  const normalize = (value: string) =>
+    value
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLocaleLowerCase("en-US");
+
+  return normalize(haystack).includes(normalize(needle));
 }
 
 function findBaselinePage(
