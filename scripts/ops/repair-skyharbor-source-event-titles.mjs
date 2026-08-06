@@ -96,6 +96,7 @@ async function readMatchingRows(client, columns, staleOnly = true) {
   const selected = selectColumns(columns);
   const textPredicate = stalePredicate(columns);
   const where = staleOnly ? `AND (${textPredicate})` : "";
+  const values = staleOnly ? [APP_CLIENT_KEYS, STALE_LABEL] : [APP_CLIENT_KEYS];
   const result = await client.query(
     `SELECT ${selected.map(quoteIdentifier).join(", ")}
        FROM public.source_events
@@ -103,7 +104,7 @@ async function readMatchingRows(client, columns, staleOnly = true) {
         ${where}
       ORDER BY ${quoteIdentifier("updated_at")} DESC NULLS LAST, ${quoteIdentifier("event_code")} NULLS LAST, ${quoteIdentifier("id")}
       LIMIT 50`,
-    [APP_CLIENT_KEYS, STALE_LABEL],
+    values,
   );
   return result.rows;
 }
@@ -194,16 +195,24 @@ function selfTest() {
   const columns = new Set(["id", "client_key", "event_code", "event_name", "scope_description", "updated_at"]);
   const sql = buildUpdateSql(columns);
   const sample = replaceStaleText("Airline Demo Normalize the sectioned narrative responses");
+  const drySampleParams = [APP_CLIENT_KEYS, STALE_LABEL];
+  const allSampleParams = [APP_CLIENT_KEYS];
   const result = {
     event: "skyharbor_source_event_title_repair_self_test",
     status:
       sql.includes("UPDATE public.source_events") &&
       sql.includes('"client_key" = ANY($1::text[])') &&
-      sample === "SkyHarbor Global Normalize the sectioned narrative responses"
+      sample === "SkyHarbor Global Normalize the sectioned narrative responses" &&
+      drySampleParams.length === 2 &&
+      allSampleParams.length === 1
         ? "passed"
         : "failed",
     updateSql: sql,
     sample,
+    sampleParams: {
+      staleOnly: drySampleParams.length,
+      allRows: allSampleParams.length,
+    },
   };
   console.log(JSON.stringify(result, null, 2));
   if (result.status !== "passed") process.exitCode = 1;

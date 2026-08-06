@@ -42,10 +42,13 @@ Candidate validation:
 - Pass: `node scripts/ops/repair-skyharbor-source-event-titles.mjs --self-test`
 - Pass: `node --check scripts/ops/repair-skyharbor-source-event-titles.mjs`
 - Pass: `npm run release:check`
+- Follow-up pass: `node scripts/ops/repair-skyharbor-source-event-titles.mjs --self-test` after fixing final readback parameter handling.
+- Follow-up pass: `node --check scripts/ops/repair-skyharbor-source-event-titles.mjs`
 
 Live validation required after merge and deploy:
 
-- Pending: Run through the ACA private operator job with the deployed digest-pinned image.
+- First operator attempt reached the script but failed after the update phase during final sample readback because the non-filtered sample query supplied an extra SQL parameter. The operator restored idle successfully.
+- Pending: Rerun through the ACA private operator job with the deployed digest-pinned image.
 - Pending: Inspect the structured proof event `skyharbor_source_event_title_repair`.
 - Pending: Run signed-in Source portfolio proof and confirm the stale label is absent.
 
