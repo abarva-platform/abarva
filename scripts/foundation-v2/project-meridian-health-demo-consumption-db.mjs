@@ -14,17 +14,17 @@ import {
   writeJson,
 } from "./golden-slice-support.mjs";
 
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const TENANT_KEY = "phs_health_demo_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const WRITER_ROLE = "foundation_v2_phs_demo_writer";
-const READER_ROLE = "foundation_v2_phs_demo_reader";
-const PROJECTION_VERSION = "phs-layer4-consumption-projections-v1";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const TENANT_KEY = "meridian_health_global";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
+const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
+const PROJECTION_VERSION = "meridian-health-layer4-consumption-projections-v1";
 const PROJECTION_EXECUTION_ID = `${SOURCE_RELEASE_ID}:${PROJECTION_VERSION}`;
-const EVENT_ID = "PHS-BPO-RFP-2026-001";
-const EVENT_CONTEXT_SNAPSHOT_ID = `phs:event-context:${EVENT_ID}:v1`;
+const EVENT_ID = "MERIDIAN-BPO-RFP-2026-001";
+const EVENT_CONTEXT_SNAPSHOT_ID = `meridian-health:event-context:${EVENT_ID}:v1`;
 const LAYER3_COUNTS = {
   canonical_entities: 439,
   canonical_observations: 47_941,
@@ -57,14 +57,14 @@ const REQUIRED_PROJECTIONS = [
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
 async function main() {
   fs.mkdirSync(args.outDir, { recursive: true });
   if (args.mode === "self-test") {
-    const result = manifest("PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_SELF_TEST_PASSED", {
+    const result = manifest("MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_SELF_TEST_PASSED", {
       mutation_executed: false,
       projection_version: PROJECTION_VERSION,
       required_projection_count: REQUIRED_PROJECTIONS.length,
@@ -75,13 +75,13 @@ async function main() {
       })),
       rule: "Layer 4 exposes typed business-grain projections; generic observations are not product-facing.",
     });
-    writeJson(proofRef(args.outDir, "PHS_LAYER4_PROJECTION_SELF_TEST.json"), result);
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_LAYER4_PROJECTION_SELF_TEST.json"), result);
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   const { Client } = await import("pg");
-  const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-layer4-projections"));
+  const client = new Client(await foundationPostgresClientOptions("meridian-health-demo-layer4-projections"));
   await client.connect();
   try {
     if (args.mode === "preflight") {
@@ -89,7 +89,7 @@ async function main() {
       writeProofSet(args.outDir, result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_PREFLIGHT_PASSED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_PREFLIGHT_PASSED") process.exitCode = 1;
       return;
     }
     if (args.mode === "verify") {
@@ -97,7 +97,7 @@ async function main() {
       writeProofSet(args.outDir, result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_VERIFIED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_VERIFIED") process.exitCode = 1;
       return;
     }
     if (args.mode !== "apply") throw new Error(`Unsupported mode ${args.mode}`);
@@ -105,7 +105,7 @@ async function main() {
     writeProofSet(args.outDir, result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
-    if (!["PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_VERIFIED", "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_ALREADY_VERIFIED"].includes(result.status)) {
+    if (!["MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_VERIFIED", "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_ALREADY_VERIFIED"].includes(result.status)) {
       process.exitCode = 1;
     }
   } finally {
@@ -115,13 +115,13 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_LAYER4_PROJECTION_MODE || "preflight",
+    mode: process.env.MERIDIAN_HEALTH_LAYER4_PROJECTION_MODE || "preflight",
     outDir:
-      process.env.PHS_LAYER4_PROJECTION_OUT_DIR ||
-      path.join(os.tmpdir(), `phs-healthcare-demo-layer4-${new Date().toISOString().replace(/[:.]/g, "-")}`),
+      process.env.MERIDIAN_HEALTH_LAYER4_PROJECTION_OUT_DIR ||
+      path.join(os.tmpdir(), `meridian-health-demo-layer4-${new Date().toISOString().replace(/[:.]/g, "-")}`),
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
-      process.env.PHS_LAYER4_PROJECTION_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_LAYER4_PROJECTION_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -149,7 +149,7 @@ async function preflight(client) {
     const exact = await layer4Exact(client, { schema, layer3, existing });
     await client.query("ROLLBACK");
     const ready = schema.defects.length === 0 && exact.layer3_ok && (existing.projection_rows === 0 || exact.ok);
-    return manifest(ready ? "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_PREFLIGHT_PASSED" : "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_PREFLIGHT_FAILED", {
+    return manifest(ready ? "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_PREFLIGHT_PASSED" : "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_PREFLIGHT_FAILED", {
       mutation_executed: false,
       schema,
       layer3_counts: layer3,
@@ -178,10 +178,10 @@ async function apply(client) {
     const existing = await projectionReadback(client);
     if (existing.projection_rows > 0) {
       const exact = await layer4Exact(client, { schema, layer3, existing });
-      const forceRebuild = process.env.PHS_LAYER4_PROJECTION_FORCE_REBUILD === "true";
+      const forceRebuild = process.env.MERIDIAN_HEALTH_LAYER4_PROJECTION_FORCE_REBUILD === "true";
       if (exact.ok && !forceRebuild) {
         await client.query("ROLLBACK");
-        return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_ALREADY_VERIFIED", {
+        return await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_ALREADY_VERIFIED", {
           mutation_executed: false,
           started_at: startedAt,
           completed_at: new Date().toISOString(),
@@ -203,7 +203,7 @@ async function apply(client) {
       await insertProjection(client, projection, layer3);
       progress("apply.projection_ready", { projection_name: projection.name, projection_rows: projection.rows.length });
     }
-    const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_VERIFIED", {
+    const result = await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_VERIFIED", {
       mutation_executed: true,
       started_at: startedAt,
       completed_at: new Date().toISOString(),
@@ -223,11 +223,11 @@ async function verify(client) {
   await client.query("BEGIN");
   try {
     await setContext(client, READER_ROLE);
-    const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_VERIFIED", {
+    const result = await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_VERIFIED", {
       mutation_executed: false,
     });
     await client.query("ROLLBACK");
-    if (!result.exact_match) result.status = "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_VERIFY_FAILED";
+    if (!result.exact_match) result.status = "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_VERIFY_FAILED";
     return result;
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -237,7 +237,7 @@ async function verify(client) {
 
 async function createTempSourcePayload(client) {
   await client.query(`
-    CREATE TEMP TABLE phs_l4_source_payload AS
+    CREATE TEMP TABLE meridian_health_l4_source_payload AS
     SELECT sr.source_record_id,
            sf.file_name,
            sfc.source_group,
@@ -259,12 +259,12 @@ async function createTempSourcePayload(client) {
      WHERE sr.tenant_key=$1 AND sr.test_namespace=$2 AND sr.source_release_id=$3
      GROUP BY sr.source_record_id, sf.file_name, sfc.source_group, sfc.event_id
   `, [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID]);
-  await client.query("CREATE INDEX ON phs_l4_source_payload(file_name)");
-  await client.query("CREATE INDEX ON phs_l4_source_payload(source_record_id)");
+  await client.query("CREATE INDEX ON meridian_health_l4_source_payload(file_name)");
+  await client.query("CREATE INDEX ON meridian_health_l4_source_payload(source_record_id)");
 }
 
 async function sourcePayloadRows(client) {
-  return rows(client, "SELECT source_record_id, file_name, source_group, event_id, payload FROM phs_l4_source_payload ORDER BY file_name, source_record_id");
+  return rows(client, "SELECT source_record_id, file_name, source_group, event_id, payload FROM meridian_health_l4_source_payload ORDER BY file_name, source_record_id");
 }
 
 async function canonicalBundle(client) {
@@ -524,6 +524,7 @@ function buildBpoBaseline(ctx) {
   const processRows = fileRows(ctx, "BPO_CURRENT_STATE_PROCESS_VOLUMES.csv");
   const costsByFunction = groupBy(fileRows(ctx, "BPO_CURRENT_STATE_COST_BASELINE.csv"), (row) => v(row, "function_ref"));
   const workforceByFunction = groupBy(fileRows(ctx, "BPO_CURRENT_STATE_WORKFORCE.csv"), (row) => v(row, "function_ref"));
+  const baselineHorizonYears = 5;
   const processCountByFunction = new Map();
   for (const row of processRows) {
     const functionRef = v(row, "function_ref");
@@ -538,7 +539,12 @@ function buildBpoBaseline(ctx) {
     const functionLaborCost = sum(costs, "labor_cost");
     const functionTechnologyCost = sum(costs, "technology_cost");
     const functionControlsCost = sum(costs, "controls_cost");
+    const functionFiveYearBaselineCost = functionLaborCost + functionTechnologyCost + functionControlsCost;
     const functionResourceCount = sum(workforce, "resource_count");
+    const allocatedLaborCost = round(functionLaborCost / processCount, 2);
+    const allocatedTechnologyCost = round(functionTechnologyCost / processCount, 2);
+    const allocatedControlsCost = round(functionControlsCost / processCount, 2);
+    const allocatedFiveYearBaselineCost = round(functionFiveYearBaselineCost / processCount, 2);
     return makeProjectionRow(ctx, "sourcing_event", "bpo_baseline", "function_process", key, {
       event_id: EVENT_ID,
       function_ref: functionRef,
@@ -546,13 +552,22 @@ function buildBpoBaseline(ctx) {
       monthly_volume: num(v(row, "monthly_volume")),
       current_sla: v(row, "current_sla"),
       automation_opportunity: v(row, "automation_opportunity"),
-      baseline_labor_cost: round(functionLaborCost / processCount, 2),
-      baseline_technology_cost: round(functionTechnologyCost / processCount, 2),
-      baseline_controls_cost: round(functionControlsCost / processCount, 2),
+      baseline_cost_time_horizon: "five_year",
+      baseline_cost_horizon_years: baselineHorizonYears,
+      baseline_labor_cost: allocatedLaborCost,
+      baseline_technology_cost: allocatedTechnologyCost,
+      baseline_controls_cost: allocatedControlsCost,
+      five_year_current_state_baseline_cost: allocatedFiveYearBaselineCost,
+      annualized_current_state_cost: round(allocatedFiveYearBaselineCost / baselineHorizonYears, 2),
+      five_year_labor_cost: allocatedLaborCost,
+      five_year_technology_platform_cost: allocatedTechnologyCost,
+      five_year_controls_or_other_cost: allocatedControlsCost,
       current_resource_count: round(functionResourceCount / processCount, 4),
       function_total_labor_cost: functionLaborCost,
       function_total_technology_cost: functionTechnologyCost,
       function_total_controls_cost: functionControlsCost,
+      function_five_year_current_state_baseline_cost: functionFiveYearBaselineCost,
+      function_annualized_current_state_cost: round(functionFiveYearBaselineCost / baselineHorizonYears, 2),
       function_total_resource_count: functionResourceCount,
       function_process_row_count: processCount,
       additive_measure_policy: "allocated_function_total_to_process_grain",
@@ -589,24 +604,69 @@ function buildSupplierProposalsBafo(ctx) {
 function buildRebadgeTransitionCommitments(ctx) {
   const rebadge = fileRows(ctx, "BPO_REBADGE_RETENTION_PLAN.csv");
   const ktBySupplierProcess = groupBy(fileRows(ctx, "BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv"), (row) => [v(row, "supplier_id"), v(row, "function_ref"), v(row, "process_name")].join("|"));
+  const eligibleUniqueWorkforce = bpoEligibleUniqueCurrentWorkforce(ctx);
+  const rowsBySupplier = groupBy(rebadge, (row) => v(row, "supplier_id"));
+  const supplierProposedCounts = new Map();
+  for (const [supplierId, supplierRows] of rowsBySupplier.entries()) {
+    supplierProposedCounts.set(supplierId, supplierRebadgeCount(supplierId, eligibleUniqueWorkforce, supplierRows));
+  }
   return projection("sourcing_event", "rebadge_transition_commitments", "supplier_transition_commitment", ["BPO_REBADGE_RETENTION_PLAN.csv", "BPO_TRANSITION_KNOWLEDGE_TRANSFER_PLAN.csv"], rebadge.map((row) => {
     const key = [v(row, "supplier_id"), v(row, "function_ref"), v(row, "process_name"), v(row, "employee_cohort")].join("|");
     const ktRows = ktBySupplierProcess.get([v(row, "supplier_id"), v(row, "function_ref"), v(row, "process_name")].join("|")) || [];
+    const supplierId = v(row, "supplier_id");
+    const supplierRows = rowsBySupplier.get(supplierId) || [];
+    const sourceSupplierProposedCount = sum(supplierRows, "number_proposed_for_rebadge");
+    const normalizedSupplierProposedCount = supplierProposedCounts.get(supplierId) || 0;
+    const rowShare = sourceSupplierProposedCount > 0 ? num(v(row, "number_proposed_for_rebadge")) / sourceSupplierProposedCount : 1 / Math.max(supplierRows.length, 1);
     return makeProjectionRow(ctx, "sourcing_event", "rebadge_transition_commitments", "supplier_transition_commitment", key, {
       event_id: EVENT_ID,
-      supplier_id: v(row, "supplier_id"),
+      supplier_id: supplierId,
       function_ref: v(row, "function_ref"),
       process_name: v(row, "process_name"),
       employee_cohort: v(row, "employee_cohort"),
       source_workforce_cohort_count: num(v(row, "source_workforce_cohort_count")),
-      number_proposed_for_rebadge: num(v(row, "number_proposed_for_rebadge")),
+      source_proposed_rebadge_count: num(v(row, "number_proposed_for_rebadge")),
+      eligible_unique_current_workforce_count: eligibleUniqueWorkforce,
+      rebadge_denominator_policy: "unique_current_people_or_positions_in_bpo_scope",
+      rebadge_strategy: supplierRebadgeStrategy(supplierId),
+      number_proposed_for_rebadge: round(normalizedSupplierProposedCount * rowShare, 4),
+      normalized_supplier_proposed_rebadge_count: normalizedSupplierProposedCount,
       retention_commitment_months: num(v(row, "retention_commitment_months")),
       knowledge_critical_designation: v(row, "knowledge_critical_designation"),
       contractual_or_proposed_status: v(row, "contractual_or_proposed_status"),
       kt_plan_count: ktRows.length,
       continuity_risks: unique(ktRows.map((item) => v(item, "service_continuity_risk"))),
-    }, collectSources([row], ktRows), [entity(ctx, "bpo_supplier", v(row, "supplier_id"))], EVENT_CONTEXT_SNAPSHOT_ID);
+    }, collectSources([row], ktRows), [entity(ctx, "bpo_supplier", supplierId)], EVENT_CONTEXT_SNAPSHOT_ID);
   }));
+}
+
+function bpoEligibleUniqueCurrentWorkforce(ctx) {
+  const workforce = fileRows(ctx, "BPO_CURRENT_STATE_WORKFORCE.csv");
+  return round(sum(workforce, "resource_count"), 4);
+}
+
+function supplierRebadgeStrategy(supplierId) {
+  const strategies = {
+    "BPO-A": { label: "low rebadge / aggressive migration", ratio: 0.45 },
+    "BPO-B": { label: "moderate rebadge / stabilize then transform", ratio: 0.60 },
+    "BPO-C": { label: "continuity-first transition", ratio: 0.75 },
+    "BPO-D": { label: "high rebadge / continuity-heavy transition", ratio: 0.85 },
+    "BPO-E": { label: "maximum rebadge / lowest near-term disruption", ratio: 0.90 },
+  };
+  return strategies[supplierId]?.label || "supplier-specific rebadge strategy";
+}
+
+function supplierRebadgeCount(supplierId, eligibleUniqueWorkforce, supplierRows) {
+  const ratios = {
+    "BPO-A": 0.45,
+    "BPO-B": 0.60,
+    "BPO-C": 0.75,
+    "BPO-D": 0.85,
+    "BPO-E": 0.90,
+  };
+  const sourceCount = sum(supplierRows, "number_proposed_for_rebadge");
+  const ratio = ratios[supplierId] || 0.65;
+  return Math.min(Math.round(eligibleUniqueWorkforce * ratio), Math.floor(eligibleUniqueWorkforce), sourceCount);
 }
 
 function buildAiAutomationCommitments(ctx) {
@@ -639,7 +699,7 @@ function buildRetainedOrgScenarios(ctx) {
       retained_org_scenario_id: key,
       supplier_id: v(row, "supplier_id"),
       sourcing_model: v(row, "sourcing_model"),
-      phs_retained_function: v(row, "phs_retained_function"),
+      meridian_health_retained_function: v(row, "meridian_health_retained_function"),
       retained_role: v(row, "retained_role"),
       transition_fte: num(v(row, "transition_fte")),
       steady_state_fte: num(v(row, "steady_state_fte")),
@@ -731,7 +791,7 @@ function projection(namespace, name, businessGrain, sourceFileNames, rowsForProj
   }));
   const hash = sha256(stableJson(rows.map((row) => ({ business_key: row.business_key, row_hash: row.row_hash })).sort(compareByBusinessKey)));
   return {
-    id: `phs:projection-authority:${namespace}:${name}:v1`,
+    id: `meridian-health:projection-authority:${namespace}:${name}:v1`,
     namespace,
     name,
     business_grain: businessGrain,
@@ -760,7 +820,7 @@ function makeProjectionRow(ctx, namespace, name, businessGrain, businessKey, pay
     eventContextSnapshotId,
   }));
   return {
-    row_id: `phs:projection-row:${namespace}:${name}:${slug(businessKey || rowHash)}:${rowHash.slice(0, 16)}`,
+    row_id: `meridian-health:projection-row:${namespace}:${name}:${slug(businessKey || rowHash)}:${rowHash.slice(0, 16)}`,
     business_key: businessKey || rowHash,
     source_record_ids: sourceRecordIds,
     canonical_entity_ids: entityIds,
@@ -860,7 +920,7 @@ async function insertRowsInBatches(client, projectionRow) {
     );
   }
   const lineageRows = projectionRow.rows.map((row) => ({
-    id: `phs:projection-lineage:${slug(row.row_id)}:${row.row_hash.slice(0, 16)}:payload`,
+    id: `meridian-health:projection-lineage:${slug(row.row_id)}:${row.row_hash.slice(0, 16)}:payload`,
     row_id: row.row_id,
     source_record_id: row.source_record_ids[0] || null,
     canonical_entity_id: row.canonical_entity_ids[0] || null,
@@ -892,7 +952,7 @@ async function resetLayer4Rows(client) {
     await client.query(`DELETE FROM ${tableRef(table)} WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3`, [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID]);
   }
   await client.query(
-    `DELETE FROM ${tableRef("gate_results")} WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id LIKE 'PHS-L4-%'`,
+    `DELETE FROM ${tableRef("gate_results")} WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id LIKE 'Meridian Health-L4-%'`,
     [TENANT_KEY, TEST_NAMESPACE],
   );
 }
@@ -1027,19 +1087,19 @@ async function layer4Exact(client, precomputed = {}) {
 
 async function insertGateResults(client, result) {
   const rowsForGate = [
-    ["PHS-L4-K4A-TYPED-PROJECTION-COVERAGE", "Layer 3 canonical facts to typed projection authorities", REQUIRED_PROJECTIONS.length, result.projection_counts.projection_authority],
-    ["PHS-L4-K4B-BUSINESS-GRAIN-ROWS", "Typed projection authorities to business-grain rows", result.projection_counts.projection_authority, result.projection_counts.projection_rows],
-    ["PHS-L4-K4C-PROJECTION-LINEAGE", "Projection rows to source/canonical lineage", result.projection_counts.projection_rows, result.projection_counts.projection_field_lineage],
-    ["PHS-L4-K4D-EVENT-CONTEXT-SNAPSHOT", "Sourcing event selected canonical IDs to immutable event snapshot", 1, result.projection_counts.event_context_snapshots],
+    ["Meridian Health-L4-K4A-TYPED-PROJECTION-COVERAGE", "Layer 3 canonical facts to typed projection authorities", REQUIRED_PROJECTIONS.length, result.projection_counts.projection_authority],
+    ["Meridian Health-L4-K4B-BUSINESS-GRAIN-ROWS", "Typed projection authorities to business-grain rows", result.projection_counts.projection_authority, result.projection_counts.projection_rows],
+    ["Meridian Health-L4-K4C-PROJECTION-LINEAGE", "Projection rows to source/canonical lineage", result.projection_counts.projection_rows, result.projection_counts.projection_field_lineage],
+    ["Meridian Health-L4-K4D-EVENT-CONTEXT-SNAPSHOT", "Sourcing event selected canonical IDs to immutable event snapshot", 1, result.projection_counts.event_context_snapshots],
   ];
   for (const [gateId, transition, inputCount, outputCount] of rowsForGate) {
     await client.query(
       `INSERT INTO ${tableRef("gate_results")}
         (gate_result_id, tenant_key, test_namespace, gate_id, transition, input_count, output_count,
          unexplained_variance, gate_status, failure_classification, repair_owner, rerun_scope, proof_uri, writer_job_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,0,'passed',NULL,'foundation-v2-phs-layer4','none',$8,$9)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,0,'passed',NULL,'foundation-v2-meridian-health-layer4','none',$8,$9)
        ON CONFLICT (tenant_key, test_namespace, gate_id, writer_job_id) DO NOTHING`,
-      [`${PROJECTION_EXECUTION_ID}:${gateId}`, TENANT_KEY, TEST_NAMESPACE, gateId, transition, inputCount, outputCount, `proof://phs-layer4/${gateId}`, PROJECTION_EXECUTION_ID],
+      [`${PROJECTION_EXECUTION_ID}:${gateId}`, TENANT_KEY, TEST_NAMESPACE, gateId, transition, inputCount, outputCount, `proof://meridian-health-layer4/${gateId}`, PROJECTION_EXECUTION_ID],
     );
   }
 }
@@ -1065,8 +1125,8 @@ function assertManifestOk(result) {
 }
 
 function assertApplyApproved() {
-  if (process.env.PHS_LAYER4_PROJECTION_APPLY_APPROVED !== "true") {
-    throw new Error("PHS_LAYER4_PROJECTION_APPLY_APPROVED=true is required for apply mode");
+  if (process.env.MERIDIAN_HEALTH_LAYER4_PROJECTION_APPLY_APPROVED !== "true") {
+    throw new Error("MERIDIAN_HEALTH_LAYER4_PROJECTION_APPLY_APPROVED=true is required for apply mode");
   }
 }
 
@@ -1085,9 +1145,9 @@ function manifest(status, extra = {}) {
 }
 
 function writeProofSet(outDir, result) {
-  writeJson(proofRef(outDir, "PHS_LAYER4_PROJECTIONS.json"), result);
+  writeJson(proofRef(outDir, "MERIDIAN_HEALTH_LAYER4_PROJECTIONS.json"), result);
   writeCsv(
-    proofRef(outDir, "PHS_LAYER4_PROJECTION_SUMMARY.csv"),
+    proofRef(outDir, "MERIDIAN_HEALTH_LAYER4_PROJECTION_SUMMARY.csv"),
     ["projection_namespace", "projection_name", "business_grain", "authority_row_count", "actual_row_count", "projection_hash"],
     result.projection_summaries || [],
   );
@@ -1204,5 +1264,5 @@ function slug(value) {
 }
 
 function progress(event, payload = {}) {
-  console.log(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_PROGRESS", event, generated_at: new Date().toISOString(), ...payload }));
+  console.log(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_PROGRESS", event, generated_at: new Date().toISOString(), ...payload }));
 }

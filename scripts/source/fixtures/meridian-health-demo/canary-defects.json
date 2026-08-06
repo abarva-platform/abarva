@@ -1,10 +1,10 @@
 {
-  "fixture_id": "phs-healthcare-demo-phase-a-canary-defects",
-  "generator_version": "phs-healthcare-demo-phase-a-v1",
+  "fixture_id": "meridian-health-demo-phase-a-canary-defects",
+  "generator_version": "meridian-health-demo-phase-a-v1",
   "purpose": "Small committed canary contract for the offline validator. The bulk generated data is intentionally kept out of git.",
   "expected_good_package": {
-    "tenant_key": "phs_health_demo_global",
-    "dataset_id": "phs-health-source-v1-202608",
+    "tenant_key": "meridian_health_global",
+    "dataset_id": "meridian-health-source-v1-202608",
     "dataset_version": "v1",
     "activation_state": "generated_not_loaded"
   },

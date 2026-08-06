@@ -14,8 +14,8 @@ This document describes the reusable Phase A generator and validator for the syn
 ## Commands
 
 ```bash
-npm run source:phs-healthcare-demo:build
-node scripts/source/validate-phs-healthcare-demo-package.mjs --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_<timestamp>
+npm run source:meridian-health-demo:build
+node scripts/source/validate-meridian-health-demo-package.mjs --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_<timestamp>
 ```
 
 The scripts are dependency-free Node modules. ZIPs are created through the local `zip` executable, and `.xlsx` workbooks are emitted as standard Office Open XML.
@@ -50,9 +50,9 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Contract-family audit documents: 30
 - Corrupted canaries: 45/45 passed
 
-Latest corrected proof bundle: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip`
+Latest corrected proof bundle: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip`
 Latest corrected proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
-Latest proof SHA-256 attestation: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip.sha256`
+Latest proof SHA-256 attestation: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip.sha256`
 
 Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains generated native-field guidance with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator requires all 54 named Layer 1 release files, blocks detailed payer claims/enrollment and detailed Stars/HEDIS operational files from the core package, and allows only a small aggregate `HEALTH_PLAN_OUTCOME_SNAPSHOT.csv` optional domain file unless a future client explicitly approves deeper health-plan data.
 

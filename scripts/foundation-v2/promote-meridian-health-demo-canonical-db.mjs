@@ -13,14 +13,14 @@ import {
   writeJson,
 } from "./golden-slice-support.mjs";
 
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const TENANT_KEY = "phs_health_demo_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const WRITER_ROLE = "foundation_v2_phs_demo_writer";
-const READER_ROLE = "foundation_v2_phs_demo_reader";
-const PROMOTION_VERSION = "phs-canonical-promotion-v1";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const TENANT_KEY = "meridian_health_global";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
+const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
+const PROMOTION_VERSION = "meridian-health-canonical-promotion-v1";
 const PROMOTION_EXECUTION_ID = `${SOURCE_RELEASE_ID}:${PROMOTION_VERSION}`;
 const SOURCE_VOLUME_COUNTS = {
   source_files: 54,
@@ -42,10 +42,10 @@ const LAYER3_TABLES = [
   "canonical_promotion_decisions",
 ];
 const LAYER3_GATE_IDS = [
-  "PHS-L3-K3A-IDENTITY-CONSOLIDATION",
-  "PHS-L3-K3B-OBSERVATION-RELATIONSHIP-GRAIN",
-  "PHS-L3-K3C-CANDIDATE-DECISION-COVERAGE",
-  "PHS-L3-K3D-CANONICAL-BOUNDARY",
+  "Meridian Health-L3-K3A-IDENTITY-CONSOLIDATION",
+  "Meridian Health-L3-K3B-OBSERVATION-RELATIONSHIP-GRAIN",
+  "Meridian Health-L3-K3C-CANDIDATE-DECISION-COVERAGE",
+  "Meridian Health-L3-K3D-CANONICAL-BOUNDARY",
 ];
 const RELATIONSHIP_FILES = [
   "ANALYTICS_PLATFORM_DEPENDENCIES.csv",
@@ -65,70 +65,70 @@ const MASTER_ENTITY_FILES = [
   "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv",
 ];
 const LAYER3_REPAIR_DELETE_GRANT_SQL = `
-GRANT DELETE ON foundation_v2_phs_demo.canonical_entities TO foundation_v2_phs_demo_writer;
-GRANT DELETE ON foundation_v2_phs_demo.canonical_observations TO foundation_v2_phs_demo_writer;
-GRANT DELETE ON foundation_v2_phs_demo.canonical_relationships TO foundation_v2_phs_demo_writer;
-GRANT DELETE ON foundation_v2_phs_demo.canonical_evidence_records TO foundation_v2_phs_demo_writer;
-GRANT DELETE ON foundation_v2_phs_demo.event_native_records TO foundation_v2_phs_demo_writer;
-GRANT DELETE ON foundation_v2_phs_demo.canonical_promotion_decisions TO foundation_v2_phs_demo_writer;
-GRANT DELETE ON foundation_v2_phs_demo.gate_results TO foundation_v2_phs_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.canonical_entities TO foundation_v2_meridian_health_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.canonical_observations TO foundation_v2_meridian_health_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.canonical_relationships TO foundation_v2_meridian_health_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.canonical_evidence_records TO foundation_v2_meridian_health_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.event_native_records TO foundation_v2_meridian_health_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.canonical_promotion_decisions TO foundation_v2_meridian_health_demo_writer;
+GRANT DELETE ON foundation_v2_meridian_health_demo.gate_results TO foundation_v2_meridian_health_demo_writer;
 
 DO $$
 DECLARE
   rel regclass;
 BEGIN
   FOREACH rel IN ARRAY ARRAY[
-    'foundation_v2_phs_demo.canonical_entities'::regclass,
-    'foundation_v2_phs_demo.canonical_observations'::regclass,
-    'foundation_v2_phs_demo.canonical_relationships'::regclass,
-    'foundation_v2_phs_demo.canonical_evidence_records'::regclass,
-    'foundation_v2_phs_demo.event_native_records'::regclass,
-    'foundation_v2_phs_demo.canonical_promotion_decisions'::regclass
+    'foundation_v2_meridian_health_demo.canonical_entities'::regclass,
+    'foundation_v2_meridian_health_demo.canonical_observations'::regclass,
+    'foundation_v2_meridian_health_demo.canonical_relationships'::regclass,
+    'foundation_v2_meridian_health_demo.canonical_evidence_records'::regclass,
+    'foundation_v2_meridian_health_demo.event_native_records'::regclass,
+    'foundation_v2_meridian_health_demo.canonical_promotion_decisions'::regclass
   ]
   LOOP
-    EXECUTE format('DROP POLICY IF EXISTS phs_demo_delete ON %s', rel);
+    EXECUTE format('DROP POLICY IF EXISTS meridian_health_demo_delete ON %s', rel);
     EXECUTE format(
-      'CREATE POLICY phs_demo_delete ON %s
+      'CREATE POLICY meridian_health_demo_delete ON %s
          FOR DELETE
-         TO foundation_v2_phs_demo_writer
+         TO foundation_v2_meridian_health_demo_writer
          USING (
-           tenant_key = ''phs_health_demo_global''
+           tenant_key = ''meridian_health_global''
            AND tenant_key = current_setting(''app.tenant_key'', true)
-           AND test_namespace = ''phs-healthcare-demo-source-volume-v1''
+           AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND source_release_id = ''phs-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
            AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)
-           AND current_setting(''app.foundation_v2_release_alias'', true) = ''phs-healthcare-demo-phase-a-source-volume-v1''
+           AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
          )',
       rel
     );
   END LOOP;
 END $$;
 
-DROP POLICY IF EXISTS phs_demo_delete ON foundation_v2_phs_demo.gate_results;
-CREATE POLICY phs_demo_delete ON foundation_v2_phs_demo.gate_results
+DROP POLICY IF EXISTS meridian_health_demo_delete ON foundation_v2_meridian_health_demo.gate_results;
+CREATE POLICY meridian_health_demo_delete ON foundation_v2_meridian_health_demo.gate_results
   FOR DELETE
-  TO foundation_v2_phs_demo_writer
+  TO foundation_v2_meridian_health_demo_writer
   USING (
-    tenant_key = 'phs_health_demo_global'
+    tenant_key = 'meridian_health_global'
     AND tenant_key = current_setting('app.tenant_key', true)
-    AND test_namespace = 'phs-healthcare-demo-source-volume-v1'
+    AND test_namespace = 'meridian-health-source-volume-v1'
     AND test_namespace = current_setting('app.foundation_v2_test_namespace', true)
     AND gate_id = ANY(ARRAY[
-      'PHS-L3-K3A-IDENTITY-CONSOLIDATION',
-      'PHS-L3-K3B-OBSERVATION-RELATIONSHIP-GRAIN',
-      'PHS-L3-K3C-CANDIDATE-DECISION-COVERAGE',
-      'PHS-L3-K3D-CANONICAL-BOUNDARY'
+      'Meridian Health-L3-K3A-IDENTITY-CONSOLIDATION',
+      'Meridian Health-L3-K3B-OBSERVATION-RELATIONSHIP-GRAIN',
+      'Meridian Health-L3-K3C-CANDIDATE-DECISION-COVERAGE',
+      'Meridian Health-L3-K3D-CANONICAL-BOUNDARY'
     ])
-    AND current_setting('app.foundation_v2_source_release_id', true) = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_release_alias', true) = 'phs-healthcare-demo-phase-a-source-volume-v1'
+    AND current_setting('app.foundation_v2_source_release_id', true) = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND current_setting('app.foundation_v2_release_alias', true) = 'meridian-health-demo-phase-a-source-volume-v1'
   );
 `;
 
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
@@ -136,13 +136,13 @@ async function main() {
   fs.mkdirSync(args.outDir, { recursive: true });
   if (args.mode === "self-test") {
     const result = selfTest();
-    writeJson(proofRef(args.outDir, "PHS_CANONICAL_PROMOTION_SELF_TEST.json"), result);
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_CANONICAL_PROMOTION_SELF_TEST.json"), result);
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   const { Client } = await import("pg");
-  const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-canonical-promotion"));
+  const client = new Client(await foundationPostgresClientOptions("meridian-health-demo-canonical-promotion"));
   await client.connect();
   try {
     if (args.mode === "preflight") {
@@ -150,7 +150,7 @@ async function main() {
       writeProofSet(args.outDir, result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_PREFLIGHT_PASSED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_PREFLIGHT_PASSED") process.exitCode = 1;
       return;
     }
     if (args.mode === "verify") {
@@ -158,7 +158,7 @@ async function main() {
       writeProofSet(args.outDir, result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFIED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_VERIFIED") process.exitCode = 1;
       return;
     }
     if (args.mode !== "apply") throw new Error(`Unsupported mode ${args.mode}`);
@@ -166,7 +166,7 @@ async function main() {
     writeProofSet(args.outDir, result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
-    if (!["PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFIED", "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_ALREADY_VERIFIED"].includes(result.status)) {
+    if (!["MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_VERIFIED", "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_ALREADY_VERIFIED"].includes(result.status)) {
       process.exitCode = 1;
     }
   } finally {
@@ -176,13 +176,13 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_CANONICAL_PROMOTION_MODE || "preflight",
+    mode: process.env.MERIDIAN_HEALTH_CANONICAL_PROMOTION_MODE || "preflight",
     outDir:
-      process.env.PHS_CANONICAL_PROMOTION_OUT_DIR ||
-      path.join(os.tmpdir(), `phs-healthcare-demo-canonical-${new Date().toISOString().replace(/[:.]/g, "-")}`),
+      process.env.MERIDIAN_HEALTH_CANONICAL_PROMOTION_OUT_DIR ||
+      path.join(os.tmpdir(), `meridian-health-demo-canonical-${new Date().toISOString().replace(/[:.]/g, "-")}`),
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
-      process.env.PHS_CANONICAL_PROMOTION_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_CANONICAL_PROMOTION_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -203,7 +203,7 @@ function parseArgs(argv) {
 }
 
 function selfTest() {
-  return manifest("PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_SELF_TEST_PASSED", {
+  return manifest("MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_SELF_TEST_PASSED", {
     mutation_executed: false,
     resolution_states: [
       "ACCEPTED_NEW",
@@ -253,8 +253,8 @@ async function preflight(client) {
     const existingLayer3Ok = existingTotal === 0 || existingExact.ok;
     const ready = sourceExact && layer2Exact && existingLayer3Ok;
     return manifest(ready
-      ? "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_PREFLIGHT_PASSED"
-      : "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_PREFLIGHT_FAILED", {
+      ? "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_PREFLIGHT_PASSED"
+      : "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_PREFLIGHT_FAILED", {
       mutation_executed: false,
       source_counts: sourceCounts,
       source_exact_match: sourceExact,
@@ -282,16 +282,16 @@ async function apply(client) {
     progress("apply.repair_privileges_ready");
     await setContext(client, WRITER_ROLE);
     const sourceCounts = await sourceVolumeCounts(client);
-    if (!exactObject(sourceCounts, SOURCE_VOLUME_COUNTS)) throw new Error(`PHS source counts are not exact: ${stableJson(sourceCounts)}`);
+    if (!exactObject(sourceCounts, SOURCE_VOLUME_COUNTS)) throw new Error(`Meridian Health source counts are not exact: ${stableJson(sourceCounts)}`);
     const layer2Counts = await layer2CountsReadback(client);
-    if (!exactObject(layer2Counts, LAYER2_COUNTS)) throw new Error(`PHS Layer 2 counts are not exact: ${stableJson(layer2Counts)}`);
+    if (!exactObject(layer2Counts, LAYER2_COUNTS)) throw new Error(`Meridian Health Layer 2 counts are not exact: ${stableJson(layer2Counts)}`);
     const existingCounts = await layer3Counts(client);
     const existingTotal = layer3Total(existingCounts);
     if (existingTotal > 0) {
       const existingExact = await layer3Exact(client);
       if (existingExact.ok) {
         await client.query("ROLLBACK");
-        return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_ALREADY_VERIFIED", {
+        return await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_ALREADY_VERIFIED", {
           mutation_executed: false,
           started_at: startedAt,
           completed_at: new Date().toISOString(),
@@ -318,7 +318,7 @@ async function apply(client) {
     progress("apply.observations_ready");
     await insertPromotionDecisions(client);
     progress("apply.promotion_decisions_ready");
-    const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFIED", {
+    const result = await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_VERIFIED", {
       mutation_executed: true,
       started_at: startedAt,
       completed_at: new Date().toISOString(),
@@ -338,11 +338,11 @@ async function verify(client) {
   await client.query("BEGIN");
   try {
     await setContext(client, READER_ROLE);
-    const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFIED", {
+    const result = await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_VERIFIED", {
       mutation_executed: false,
     });
     await client.query("ROLLBACK");
-    if (!result.exact_match) result.status = "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFY_FAILED";
+    if (!result.exact_match) result.status = "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_VERIFY_FAILED";
     return result;
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -354,7 +354,7 @@ async function createTempHelpers(client) {
   await q(
     client,
     `
-    CREATE OR REPLACE FUNCTION pg_temp.phs_l3_slug(input_value text)
+    CREATE OR REPLACE FUNCTION pg_temp.meridian_health_l3_slug(input_value text)
     RETURNS text
     LANGUAGE sql
     IMMUTABLE
@@ -374,11 +374,11 @@ async function createTempHelpers(client) {
 }
 
 async function createTempRowPayload(client) {
-  await q(client, "DROP TABLE IF EXISTS phs_l3_row_payload");
+  await q(client, "DROP TABLE IF EXISTS meridian_health_l3_row_payload");
   await q(
     client,
     `
-    CREATE TEMP TABLE phs_l3_row_payload ON COMMIT DROP AS
+    CREATE TEMP TABLE meridian_health_l3_row_payload ON COMMIT DROP AS
     SELECT sr.source_record_id,
            sr.source_file_id,
            sr.source_release_id,
@@ -404,18 +404,18 @@ async function createTempRowPayload(client) {
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
   );
-  await q(client, "CREATE INDEX ON phs_l3_row_payload(file_name)");
-  await q(client, "CREATE INDEX ON phs_l3_row_payload(source_group)");
-  await q(client, "CREATE INDEX ON phs_l3_row_payload(source_record_id)");
-  await q(client, "ANALYZE phs_l3_row_payload");
+  await q(client, "CREATE INDEX ON meridian_health_l3_row_payload(file_name)");
+  await q(client, "CREATE INDEX ON meridian_health_l3_row_payload(source_group)");
+  await q(client, "CREATE INDEX ON meridian_health_l3_row_payload(source_record_id)");
+  await q(client, "ANALYZE meridian_health_l3_row_payload");
 }
 
 async function createTempCandidateMap(client) {
-  await q(client, "DROP TABLE IF EXISTS phs_l3_candidate_map");
+  await q(client, "DROP TABLE IF EXISTS meridian_health_l3_candidate_map");
   await q(
     client,
     `
-    CREATE TEMP TABLE phs_l3_candidate_map ON COMMIT DROP AS
+    CREATE TEMP TABLE meridian_health_l3_candidate_map ON COMMIT DROP AS
     SELECT candidate_id,
            source_record_id
       FROM ${tableRef("knowledge_candidates")}
@@ -425,9 +425,9 @@ async function createTempCandidateMap(client) {
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
   );
-  await q(client, "CREATE INDEX ON phs_l3_candidate_map(source_record_id)");
-  await q(client, "CREATE INDEX ON phs_l3_candidate_map(candidate_id)");
-  await q(client, "ANALYZE phs_l3_candidate_map");
+  await q(client, "CREATE INDEX ON meridian_health_l3_candidate_map(source_record_id)");
+  await q(client, "CREATE INDEX ON meridian_health_l3_candidate_map(candidate_id)");
+  await q(client, "ANALYZE meridian_health_l3_candidate_map");
 }
 
 async function insertCanonicalEntities(client) {
@@ -468,7 +468,7 @@ async function insertCanonicalEntities(client) {
              file_name,
              source_record_id,
              payload
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE file_name = ANY($4::text[])
     ),
     derived_entities AS (
@@ -478,26 +478,26 @@ async function insertCanonicalEntities(client) {
              file_name,
              source_record_id,
              jsonb_build_object('derived_from', file_name, 'service_tower', payload->>'service_tower') AS payload
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE file_name='SERVICENOW_MONTHLY_ITSM_SUMMARY.csv' AND coalesce(payload->>'service_tower','') <> ''
       UNION ALL
       SELECT 'risk', payload->>'risk_ref', payload->>'risk_ref', file_name, source_record_id,
              jsonb_build_object('derived_from', file_name, 'risk_ref', payload->>'risk_ref')
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE file_name='RISK_CONTROL_OBSERVATIONS.csv' AND coalesce(payload->>'risk_ref','') <> ''
       UNION ALL
       SELECT 'control', payload->>'control_ref', payload->>'control_ref', file_name, source_record_id,
              jsonb_build_object('derived_from', file_name, 'control_ref', payload->>'control_ref')
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE file_name='RISK_CONTROL_OBSERVATIONS.csv' AND coalesce(payload->>'control_ref','') <> ''
       UNION ALL
       SELECT 'program', payload->>'program_ref', payload->>'program_ref', file_name, source_record_id,
              jsonb_build_object('derived_from', file_name, 'program_ref', payload->>'program_ref')
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE file_name='PROGRAMS_INITIATIVES_DEPENDENCIES.csv' AND coalesce(payload->>'program_ref','') <> ''
       UNION ALL
       SELECT 'initiative',
-             'initiative_concept:' || pg_temp.phs_l3_slug(payload->>'dependency_ref'),
+             'initiative_concept:' || pg_temp.meridian_health_l3_slug(payload->>'dependency_ref'),
              payload->>'dependency_ref',
              file_name,
              source_record_id,
@@ -507,7 +507,7 @@ async function insertCanonicalEntities(client) {
                'dependency_ref', payload->>'dependency_ref',
                'source_initiative_ref', payload->>'initiative_ref'
              )
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE file_name='PROGRAMS_INITIATIVES_DEPENDENCIES.csv' AND coalesce(payload->>'dependency_ref','') <> ''
     ),
     all_entities AS (
@@ -515,7 +515,7 @@ async function insertCanonicalEntities(client) {
       UNION ALL
       SELECT * FROM derived_entities
     )
-    SELECT 'phs:entity:' || canonical_entity_type || ':' || pg_temp.phs_l3_slug(business_key),
+    SELECT 'meridian-health:entity:' || canonical_entity_type || ':' || pg_temp.meridian_health_l3_slug(business_key),
            $1, $2, $3,
            canonical_entity_type,
            business_key,
@@ -575,7 +575,7 @@ async function insertCanonicalRelationships(client) {
     INSERT INTO ${tableRef("canonical_relationships")}
       (canonical_relationship_id, tenant_key, test_namespace, source_release_id, source_record_id, relationship_type,
        source_entity_ref, target_entity_ref, relationship_state, relationship_payload, confidence, writer_job_id)
-    SELECT 'phs:relationship:' || source_record_id,
+    SELECT 'meridian-health:relationship:' || source_record_id,
            $1, $2, $3,
            source_record_id,
            lower(regexp_replace(regexp_replace(file_name, '\\.csv$', ''), '[^a-zA-Z0-9]+', '_', 'g')),
@@ -610,7 +610,7 @@ async function insertCanonicalRelationships(client) {
              ELSE 0.9500
            END,
            $4
-      FROM phs_l3_row_payload
+      FROM meridian_health_l3_row_payload
      WHERE file_name = ANY($5::text[])
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, PROMOTION_EXECUTION_ID, RELATIONSHIP_FILES],
@@ -624,16 +624,16 @@ async function insertEventNativeRecords(client) {
     INSERT INTO ${tableRef("event_native_records")}
       (event_native_record_id, tenant_key, test_namespace, source_release_id, event_id, source_record_id,
        event_record_type, business_key, event_payload, confidence, writer_job_id)
-    SELECT 'phs:event-native:' || source_record_id,
+    SELECT 'meridian-health:event-native:' || source_record_id,
            $1, $2, $3,
-           coalesce(nullif(event_id,''), 'PHS-BPO-RFP-2026-001'),
+           coalesce(nullif(event_id,''), 'MERIDIAN-BPO-RFP-2026-001'),
            source_record_id,
            lower(regexp_replace(regexp_replace(file_name, '\\.csv$', ''), '[^a-zA-Z0-9]+', '_', 'g')),
            source_record_id,
            payload,
            0.9500,
            $4
-      FROM phs_l3_row_payload
+      FROM meridian_health_l3_row_payload
      WHERE source_group IN ('bpo_sourcing_event', 'bpo_transformation_event')
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, PROMOTION_EXECUTION_ID],
@@ -654,11 +654,11 @@ async function insertEvidenceReferences(client) {
              coalesce(payload->>'document_ref','') AS document_ref,
              coalesce(payload->>'story_thread_ref','') AS evidence_subject,
              payload
-        FROM phs_l3_row_payload
+        FROM meridian_health_l3_row_payload
        WHERE coalesce(payload->>'evidence_ref','') <> ''
        ORDER BY payload->>'evidence_ref', source_record_id
     )
-    SELECT 'phs:evidence:' || pg_temp.phs_l3_slug(evidence_ref),
+    SELECT 'meridian-health:evidence:' || pg_temp.meridian_health_l3_slug(evidence_ref),
            $1, $2, $3,
            source_record_id,
            evidence_ref,
@@ -680,7 +680,7 @@ async function insertCanonicalObservations(client) {
     INSERT INTO ${tableRef("canonical_observations")}
       (canonical_observation_id, tenant_key, test_namespace, source_release_id, source_record_id,
        observation_type, observation_grain, business_key, related_entity_refs, observation_payload, confidence, writer_job_id)
-    SELECT 'phs:observation:' || source_record_id,
+    SELECT 'meridian-health:observation:' || source_record_id,
            $1, $2, $3,
            source_record_id,
            lower(regexp_replace(regexp_replace(file_name, '\\.csv$', ''), '[^a-zA-Z0-9]+', '_', 'g')),
@@ -698,7 +698,7 @@ async function insertCanonicalObservations(client) {
            payload,
            CASE WHEN coalesce(payload->>'evidence_state','')='document_unavailable_context_only' THEN 0.8200 ELSE 0.9300 END,
            $4
-      FROM phs_l3_row_payload
+      FROM meridian_health_l3_row_payload
      WHERE source_group NOT IN ('bpo_sourcing_event', 'bpo_transformation_event')
        AND file_name <> ALL($5::text[])
        AND file_name <> ALL($6::text[])
@@ -733,16 +733,16 @@ async function insertPromotionDecisions(client) {
                ELSE 'observation'
              END AS target_type,
              CASE
-               WHEN rp.file_name='WORKDAY_SUPPLIERS.csv' THEN 'phs:entity:vendor:' || pg_temp.phs_l3_slug(rp.payload->>'vendor_id')
-               WHEN rp.file_name='CONTRACT_REGISTER.csv' THEN 'phs:entity:contract_family:' || pg_temp.phs_l3_slug(rp.payload->>'contract_family_id')
-               WHEN rp.file_name='CONTRACT_INSTRUMENTS.csv' THEN 'phs:entity:legal_instrument:' || pg_temp.phs_l3_slug(rp.payload->>'instrument_id')
-               WHEN rp.file_name='SERVICENOW_CMDB_APPLICATIONS.csv' THEN 'phs:entity:application:' || pg_temp.phs_l3_slug(rp.payload->>'application_id')
-               WHEN rp.file_name='EPIC_MODULE_INVENTORY.csv' THEN 'phs:entity:epic_module:' || pg_temp.phs_l3_slug(rp.payload->>'module_id')
-               WHEN rp.file_name='BPO_SUPPLIERS.csv' THEN 'phs:entity:bpo_supplier:' || pg_temp.phs_l3_slug(rp.payload->>'supplier_id')
-               WHEN rp.file_name='HEALTH_PLAN_OUTCOME_SNAPSHOT.csv' THEN 'phs:entity:outcome:' || pg_temp.phs_l3_slug(rp.payload->>'health_plan_outcome_snapshot_id')
-               WHEN rp.file_name = ANY($4::text[]) THEN 'phs:relationship:' || rp.source_record_id
-               WHEN rp.source_group IN ('bpo_sourcing_event', 'bpo_transformation_event') THEN 'phs:event-native:' || rp.source_record_id
-               ELSE 'phs:observation:' || rp.source_record_id
+               WHEN rp.file_name='WORKDAY_SUPPLIERS.csv' THEN 'meridian-health:entity:vendor:' || pg_temp.meridian_health_l3_slug(rp.payload->>'vendor_id')
+               WHEN rp.file_name='CONTRACT_REGISTER.csv' THEN 'meridian-health:entity:contract_family:' || pg_temp.meridian_health_l3_slug(rp.payload->>'contract_family_id')
+               WHEN rp.file_name='CONTRACT_INSTRUMENTS.csv' THEN 'meridian-health:entity:legal_instrument:' || pg_temp.meridian_health_l3_slug(rp.payload->>'instrument_id')
+               WHEN rp.file_name='SERVICENOW_CMDB_APPLICATIONS.csv' THEN 'meridian-health:entity:application:' || pg_temp.meridian_health_l3_slug(rp.payload->>'application_id')
+               WHEN rp.file_name='EPIC_MODULE_INVENTORY.csv' THEN 'meridian-health:entity:epic_module:' || pg_temp.meridian_health_l3_slug(rp.payload->>'module_id')
+               WHEN rp.file_name='BPO_SUPPLIERS.csv' THEN 'meridian-health:entity:bpo_supplier:' || pg_temp.meridian_health_l3_slug(rp.payload->>'supplier_id')
+               WHEN rp.file_name='HEALTH_PLAN_OUTCOME_SNAPSHOT.csv' THEN 'meridian-health:entity:outcome:' || pg_temp.meridian_health_l3_slug(rp.payload->>'health_plan_outcome_snapshot_id')
+               WHEN rp.file_name = ANY($4::text[]) THEN 'meridian-health:relationship:' || rp.source_record_id
+               WHEN rp.source_group IN ('bpo_sourcing_event', 'bpo_transformation_event') THEN 'meridian-health:event-native:' || rp.source_record_id
+               ELSE 'meridian-health:observation:' || rp.source_record_id
              END AS target_id,
              CASE
                WHEN rp.file_name = ANY($5::text[]) THEN 'ACCEPTED_NEW'
@@ -756,11 +756,11 @@ async function insertPromotionDecisions(client) {
                WHEN rp.source_group IN ('bpo_sourcing_event', 'bpo_transformation_event') THEN 'deterministic_event_native_record_rule'
                ELSE 'deterministic_transactional_observation_grain'
              END AS resolution_rule
-        FROM phs_l3_candidate_map kc
-        JOIN phs_l3_row_payload rp
+        FROM meridian_health_l3_candidate_map kc
+        JOIN meridian_health_l3_row_payload rp
           ON rp.source_record_id = kc.source_record_id
     )
-    SELECT candidate_id || ':phs-canonical-promotion-v1',
+    SELECT candidate_id || ':meridian-health-canonical-promotion-v1',
            candidate_id,
            $1, $2, $3,
            source_record_id,
@@ -796,7 +796,7 @@ async function insertGateResults(client, result) {
       `INSERT INTO ${tableRef("gate_results")}
         (gate_result_id, tenant_key, test_namespace, gate_id, transition, input_count, output_count,
          unexplained_variance, gate_status, failure_classification, repair_owner, rerun_scope, proof_uri, writer_job_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'passed',NULL,'foundation-v2-agent','phs-canonical-promotion',$9,$10)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'passed',NULL,'foundation-v2-agent','meridian-health-canonical-promotion',$9,$10)`,
       [
         `${SOURCE_RELEASE_ID}:${gateId}`,
         TENANT_KEY,
@@ -1074,18 +1074,18 @@ async function skyharborCounts(client) {
 }
 
 function writeProofSet(outDir, result) {
-  writeJson(proofRef(outDir, "PHS_CANONICAL_PROMOTION.json"), result);
+  writeJson(proofRef(outDir, "MERIDIAN_HEALTH_CANONICAL_PROMOTION.json"), result);
   if (Array.isArray(result.entity_type_summary)) {
-    writeCsv(proofRef(outDir, "PHS_CANONICAL_ENTITY_TYPES.csv"), ["canonical_entity_type", "canonical_entities", "source_record_refs"], result.entity_type_summary);
+    writeCsv(proofRef(outDir, "MERIDIAN_HEALTH_CANONICAL_ENTITY_TYPES.csv"), ["canonical_entity_type", "canonical_entities", "source_record_refs"], result.entity_type_summary);
   }
   if (Array.isArray(result.decision_summary)) {
-    writeCsv(proofRef(outDir, "PHS_CANONICAL_PROMOTION_DECISIONS.csv"), ["resolution_state", "decisions"], result.decision_summary);
+    writeCsv(proofRef(outDir, "MERIDIAN_HEALTH_CANONICAL_PROMOTION_DECISIONS.csv"), ["resolution_state", "decisions"], result.decision_summary);
   }
   if (Array.isArray(result.relationship_state_summary)) {
-    writeCsv(proofRef(outDir, "PHS_CANONICAL_RELATIONSHIP_STATES.csv"), ["relationship_state", "relationships"], result.relationship_state_summary);
+    writeCsv(proofRef(outDir, "MERIDIAN_HEALTH_CANONICAL_RELATIONSHIP_STATES.csv"), ["relationship_state", "relationships"], result.relationship_state_summary);
   }
   if (Array.isArray(result.file_resolution_summary)) {
-    writeCsv(proofRef(outDir, "PHS_CANONICAL_FILE_RESOLUTION_SUMMARY.csv"), ["source_file_name", "resolution_state", "canonical_entity_type", "decisions"], result.file_resolution_summary);
+    writeCsv(proofRef(outDir, "MERIDIAN_HEALTH_CANONICAL_FILE_RESOLUTION_SUMMARY.csv"), ["source_file_name", "resolution_state", "canonical_entity_type", "decisions"], result.file_resolution_summary);
   }
 }
 
@@ -1094,17 +1094,17 @@ function maybeEmitProofBundle() {
 }
 
 function assertApplyApproved() {
-  if (process.env.PHS_CANONICAL_PROMOTION_APPLY_APPROVED !== "true") {
-    throw new Error("PHS canonical promotion apply requires PHS_CANONICAL_PROMOTION_APPLY_APPROVED=true");
+  if (process.env.MERIDIAN_HEALTH_CANONICAL_PROMOTION_APPLY_APPROVED !== "true") {
+    throw new Error("Meridian Health canonical promotion apply requires MERIDIAN_HEALTH_CANONICAL_PROMOTION_APPLY_APPROVED=true");
   }
   if (process.env.ACA_JOB_NAME !== "job-abarva-private-operator-eus") {
-    throw new Error("PHS canonical promotion apply must run through approved ACA data-build job context");
+    throw new Error("Meridian Health canonical promotion apply must run through approved ACA data-build job context");
   }
 }
 
 function assertManifestOk(result) {
   if (!result.exact_match) {
-    throw new Error(`PHS canonical promotion manifest failed: ${stableJson(result.defects || [])}`);
+    throw new Error(`Meridian Health canonical promotion manifest failed: ${stableJson(result.defects || [])}`);
   }
 }
 
@@ -1136,7 +1136,7 @@ async function q(client, text, params = []) {
 }
 
 function progress(event, payload = {}) {
-  console.log(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_PROGRESS", event, generated_at: new Date().toISOString(), ...payload }));
+  console.log(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_CANONICAL_PROMOTION_PROGRESS", event, generated_at: new Date().toISOString(), ...payload }));
 }
 
 async function rows(client, text, params = []) {

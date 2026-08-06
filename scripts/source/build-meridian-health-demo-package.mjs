@@ -12,17 +12,17 @@ import {
   csvEscape,
   validateCorruptedCanaries,
   validatePackage,
-} from "./validate-phs-healthcare-demo-package.mjs";
+} from "./validate-meridian-health-demo-package.mjs";
 
 const execFileAsync = promisify(execFile);
 
-const GENERATOR_VERSION = "phs-healthcare-demo-phase-a-v1";
+const GENERATOR_VERSION = "meridian-health-demo-phase-a-v1";
 const SEED = 20260805;
-const LOAD_RUN_ID = "phs-phase-a-generated-not-loaded-20260805";
+const LOAD_RUN_ID = "meridian-health-phase-a-generated-not-loaded-20260805";
 const EXTRACT_TIMESTAMP = "2026-08-05T12:00:00.000Z";
 const DEFAULT_OUT_DIR = "/Users/anand/Downloads";
-const PHS_BPO_EVENT_ID = "PHS-BPO-RFP-2026-001";
-const ENTERPRISE_CONTEXT_VERSION = "phs-enterprise-context-candidate-v1";
+const MERIDIAN_HEALTH_DEMO_BPO_EVENT_ID = "MERIDIAN-BPO-RFP-2026-001";
+const ENTERPRISE_CONTEXT_VERSION = "meridian-health-enterprise-context-candidate-v1";
 
 const COMMON_FIELDS = [
   "tenant_key",
@@ -240,7 +240,7 @@ function makeSpec(tuple, group) {
     source_group: isHealthPlanSnapshot ? "optional_domain_context" : isBpoTransformation ? "bpo_transformation_event" : isBpoEvent ? "bpo_sourcing_event" : "enterprise_context",
     context_treatment: group === "bpo_sourcing_event" ? "event_native" : "tenant_context_candidate",
     demo_priority: isHealthPlanSnapshot ? "deferred" : group === "bpo_sourcing_event" ? "hero" : "supporting",
-    event_id: group === "bpo_sourcing_event" ? PHS_BPO_EVENT_ID : "",
+    event_id: group === "bpo_sourcing_event" ? MERIDIAN_HEALTH_DEMO_BPO_EVENT_ID : "",
     effective_as_of: EXPECTED.asOfDate,
     domain_contract: domain,
     source_system: sourceSystem,
@@ -767,7 +767,7 @@ function colName(index) {
 }
 
 async function writeXlsx(filePath, sheets) {
-  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "phs-xlsx-"));
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "meridian-health-xlsx-"));
   await fs.mkdir(path.join(tmp, "_rels"), { recursive: true });
   await fs.mkdir(path.join(tmp, "xl", "_rels"), { recursive: true });
   await fs.mkdir(path.join(tmp, "xl", "worksheets"), { recursive: true });
@@ -1076,7 +1076,7 @@ function buildRows() {
     retained_org_scenario_id: `BPO-RET-${pad(i + 1, 4)}`,
     supplier_id: suppliers[i % suppliers.length],
     sourcing_model: pick(["retain_and_automate", "hybrid_shared_services", "function_managed_services", "single_provider_bpo", "multi_provider_specialist"]),
-    phs_retained_function: functions[i % functions.length],
+    meridian_health_retained_function: functions[i % functions.length],
     retained_role: pick(["service owner", "vendor manager", "control owner", "process architect", "business relationship lead"]),
     transition_fte: money(1 + random() * 5),
     steady_state_fte: money(0.5 + random() * 4),
@@ -1129,7 +1129,7 @@ function documentContract(type, purpose, concepts, sections = []) {
   return {
     document_type: type,
     document_business_purpose: purpose,
-    expected_parties: ["PHS synthetic tenant", "synthetic vendor or supplier"],
+    expected_parties: ["Meridian Health synthetic tenant", "synthetic vendor or supplier"],
     required_metadata: ["document_id", "contract_family_id", "document_type", "effective_date", "execution_state"],
     required_sections: sectionList,
     conditional_sections: ["healthcare data terms when healthcare data or clinical operations are in scope", "offshore restrictions when non-US delivery is proposed"],
@@ -1193,7 +1193,7 @@ function buildEventContextSnapshotContract(fileRows) {
     .slice(0, count)
     .map((row) => row[key]);
   const binding = {
-    event_id: PHS_BPO_EVENT_ID,
+    event_id: MERIDIAN_HEALTH_DEMO_BPO_EVENT_ID,
     enterprise_context_version: ENTERPRISE_CONTEXT_VERSION,
     source_release_id: "TO_BE_FILLED_BY_LAYER1_PLAN_HASH",
     selected_application_ids: sample("SERVICENOW_CMDB_APPLICATIONS.csv", "application_id", 12),
@@ -1889,7 +1889,7 @@ function buildQuestionBank(fileRows) {
   for (const scenario of scenarios) {
     for (const angle of angleTemplates) {
       const index = questions.length;
-      const qidFixed = `PHS-HQ-${pad(index + 1, 3)}`;
+      const qidFixed = `Meridian Health-HQ-${pad(index + 1, 3)}`;
     questions.push({
       question_id: qidFixed,
       domain: scenario.domain,
@@ -2192,7 +2192,7 @@ Phase B may begin only after explicit Phase A audit approval and separate author
 
 1. Review Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
 2. Add approved tenant bootstrap and additive migrations through the governed lab lane.
-3. Implement a PHS source-volume reader that consumes this package manifest and its 40 \`source_system_extracts/*.csv\` files; do not reuse a different healthcare corpus root as hidden truth.
+3. Implement a Meridian Health source-volume reader that consumes this package manifest and its 40 \`source_system_extracts/*.csv\` files; do not reuse a different healthcare corpus root as hidden truth.
 4. Run source-volume plan mode and produce a file, row, field and hash manifest with no database connection.
 5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, records, field values, parser execution and gate rows.
@@ -2223,7 +2223,7 @@ It must never truncate shared tables, mutate SkyHarbor, make the healthcare tena
 async function buildPackage() {
   const outDir = argValue("--out-dir", DEFAULT_OUT_DIR);
   const timestamp = new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z");
-  const stageDir = path.join(outDir, `phs_healthcare_demo_phase_a_${timestamp}`);
+  const stageDir = path.join(outDir, `meridian_health_demo_phase_a_${timestamp}`);
   await fs.rm(stageDir, { recursive: true, force: true });
   await fs.mkdir(stageDir, { recursive: true });
 
@@ -2267,15 +2267,15 @@ async function buildPackage() {
     { name: "ENTERPRISE_OUTCOMES_AND_KPI_MAP", rows: [Object.keys(outcomeRows[0]), ...outcomeRows.map((row) => Object.values(row))] },
     ...Array.from(new Set(fieldGuidance.map((row) => row.tab))).map((tab) => ({ name: tab, rows: [Object.keys(fieldGuidance[0]), ...fieldGuidance.filter((row) => row.tab === tab).map((row) => Object.values(row))] })),
   ];
-  const clientWorkbook = path.join(stageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+  const clientWorkbook = path.join(stageDir, "Meridian_Health_Demo_Client_Data_Request.xlsx");
   await writeXlsx(clientWorkbook, clientWorkbookSheets);
 
   const roleMatrix = buildRoleMatrix();
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_role_domain_matrix.json"), roleMatrix);
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_document_content_contracts.json"), documentContentContracts);
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_contract_family_audit_view.json"), contractFamilyAudit);
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_event_context_snapshot_contract.json"), eventContextSnapshotContract);
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_enterprise_outcomes_kpi_map.json"), {
+  await writeJson(path.join(stageDir, "meridian_health_demo_role_domain_matrix.json"), roleMatrix);
+  await writeJson(path.join(stageDir, "meridian_health_demo_document_content_contracts.json"), documentContentContracts);
+  await writeJson(path.join(stageDir, "meridian_health_demo_contract_family_audit_view.json"), contractFamilyAudit);
+  await writeJson(path.join(stageDir, "meridian_health_demo_event_context_snapshot_contract.json"), eventContextSnapshotContract);
+  await writeJson(path.join(stageDir, "meridian_health_demo_enterprise_outcomes_kpi_map.json"), {
     tenant_key: EXPECTED.tenantKey,
     dataset_id: EXPECTED.datasetId,
     dataset_version: EXPECTED.datasetVersion,
@@ -2324,10 +2324,10 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
   }
 
   const { questionBank, coverageMatrix } = buildQuestionBank(fileRows);
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_question_bank.json"), questionBank);
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_question_coverage_matrix.json"), coverageMatrix);
-  await writeText(path.join(stageDir, "phs_healthcare_demo_model_fit_audit.md"), buildModelFitAudit(questionBank.question_count));
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_reconciliation_expectations.json"), {
+  await writeJson(path.join(stageDir, "meridian_health_demo_question_bank.json"), questionBank);
+  await writeJson(path.join(stageDir, "meridian_health_demo_question_coverage_matrix.json"), coverageMatrix);
+  await writeText(path.join(stageDir, "meridian_health_demo_model_fit_audit.md"), buildModelFitAudit(questionBank.question_count));
+  await writeJson(path.join(stageDir, "meridian_health_demo_reconciliation_expectations.json"), {
     tenant_key: EXPECTED.tenantKey,
     dataset_id: EXPECTED.datasetId,
     expectations: [
@@ -2338,9 +2338,9 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
       "unknown values remain blank or explicit unknown, never zero-filled",
     ],
   });
-  await writeText(path.join(stageDir, "phs_healthcare_demo_test_load_plan.md"), buildPhaseBPlan());
-  await writeText(path.join(stageDir, "phs_healthcare_demo_one_click_migration_spec.md"), buildPhaseCSpec());
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_dataset_policy_manifest.generated_not_loaded.json"), {
+  await writeText(path.join(stageDir, "meridian_health_demo_test_load_plan.md"), buildPhaseBPlan());
+  await writeText(path.join(stageDir, "meridian_health_demo_one_click_migration_spec.md"), buildPhaseCSpec());
+  await writeJson(path.join(stageDir, "meridian_health_demo_dataset_policy_manifest.generated_not_loaded.json"), {
     dataset_id: EXPECTED.datasetId,
     title: "Synthetic healthcare demo source package",
     client_key: EXPECTED.tenantKey,
@@ -2372,7 +2372,7 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
   const countsByFile = Object.fromEntries(Array.from(fileRows.entries()).map(([file, rows]) => [file, rows.length]));
   const manifest = {
     tenant_key: EXPECTED.tenantKey,
-    display_name: "Presbyterian Health Services - Synthetic Demonstration Tenant",
+    display_name: "Meridian Health - Synthetic Demonstration Tenant",
     dataset_id: EXPECTED.datasetId,
     dataset_version: EXPECTED.datasetVersion,
     data_classification: "synthetic_demo",
@@ -2415,7 +2415,7 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
       "No PHI, PII, patient-level detail, employee identities or real credentials are generated.",
     ],
   };
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_package_manifest.json"), manifest);
+  await writeJson(path.join(stageDir, "meridian_health_demo_package_manifest.json"), manifest);
 
   const normalizedSheets = [
     { name: "Summary", rows: [["Metric", "Value"], ...Object.entries(manifest.counts).map(([key, value]) => [key, value])] },
@@ -2424,7 +2424,7 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
     { name: "Outcome Map", rows: [Object.keys(outcomeRows[0]), ...outcomeRows.map((row) => Object.values(row))] },
     { name: "Model Fit Gaps", rows: [["Gap", "Classification"], ["contract scope relationship", "MISSING_ADDITIVE_TABLE"], ["BPO normalized TCO", "NEW_CONSUMPTION_PROJECTION_REQUIRED"]] },
   ];
-  await writeXlsx(path.join(stageDir, "PHS_Healthcare_Demo_Normalized_Audit_View.xlsx"), normalizedSheets);
+  await writeXlsx(path.join(stageDir, "Meridian_Health_Demo_Normalized_Audit_View.xlsx"), normalizedSheets);
 
   const validation = await validatePackage(stageDir);
   const canaryOutputs = await validateCorruptedCanaries(stageDir);
@@ -2437,32 +2437,32 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
     corrupted_canaries: canaryOutputs,
     no_runtime_mutation_statement: "No database, migration, Cube runtime, web runtime, ACA runtime or SkyHarbor data mutation was executed.",
   };
-  await writeJson(path.join(stageDir, "phs_healthcare_demo_offline_validation_report.json"), validationReport);
-  await writeText(path.join(stageDir, "phs_healthcare_demo_offline_validation_report.html"), `<!doctype html><html><head><meta charset="utf-8"><title>PHS Healthcare Demo Offline Validation</title></head><body><h1>Offline Validation Report</h1><p>Status: ${validation.ok ? "PASS" : "FAIL"}</p><p>Structured rows: ${validation.summary.structuredRows}</p><p>Questions: ${validation.summary.questions}</p><p>CDAO questions: ${validation.summary.cdaoQuestions}</p><p>PII/PHI scan: ${validation.failures.some((f) => /pii|phi/iu.test(f.code)) ? "FAIL" : "PASS"}</p><p>No database/runtime mutation occurred.</p><pre>${xmlEscape(JSON.stringify(validationReport, null, 2))}</pre></body></html>`);
+  await writeJson(path.join(stageDir, "meridian_health_demo_offline_validation_report.json"), validationReport);
+  await writeText(path.join(stageDir, "meridian_health_demo_offline_validation_report.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Meridian Health Offline Validation</title></head><body><h1>Offline Validation Report</h1><p>Status: ${validation.ok ? "PASS" : "FAIL"}</p><p>Structured rows: ${validation.summary.structuredRows}</p><p>Questions: ${validation.summary.questions}</p><p>CDAO questions: ${validation.summary.cdaoQuestions}</p><p>PII/PHI scan: ${validation.failures.some((f) => /pii|phi/iu.test(f.code)) ? "FAIL" : "PASS"}</p><p>No database/runtime mutation occurred.</p><pre>${xmlEscape(JSON.stringify(validationReport, null, 2))}</pre></body></html>`);
 
   const downloads = [];
   for (const name of [
-    "PHS_Healthcare_Demo_Client_Data_Request.xlsx",
-    "PHS_Healthcare_Demo_Normalized_Audit_View.xlsx",
-    "phs_healthcare_demo_package_manifest.json",
-    "phs_healthcare_demo_question_bank.json",
-    "phs_healthcare_demo_question_coverage_matrix.json",
-    "phs_healthcare_demo_role_domain_matrix.json",
-    "phs_healthcare_demo_enterprise_outcomes_kpi_map.json",
-    "phs_healthcare_demo_model_fit_audit.md",
-    "phs_healthcare_demo_reconciliation_expectations.json",
-    "phs_healthcare_demo_test_load_plan.md",
-    "phs_healthcare_demo_one_click_migration_spec.md",
-    "phs_healthcare_demo_offline_validation_report.html",
-    "phs_healthcare_demo_offline_validation_report.json",
+    "Meridian_Health_Demo_Client_Data_Request.xlsx",
+    "Meridian_Health_Demo_Normalized_Audit_View.xlsx",
+    "meridian_health_demo_package_manifest.json",
+    "meridian_health_demo_question_bank.json",
+    "meridian_health_demo_question_coverage_matrix.json",
+    "meridian_health_demo_role_domain_matrix.json",
+    "meridian_health_demo_enterprise_outcomes_kpi_map.json",
+    "meridian_health_demo_model_fit_audit.md",
+    "meridian_health_demo_reconciliation_expectations.json",
+    "meridian_health_demo_test_load_plan.md",
+    "meridian_health_demo_one_click_migration_spec.md",
+    "meridian_health_demo_offline_validation_report.html",
+    "meridian_health_demo_offline_validation_report.json",
   ]) {
     downloads.push(await copyToDownloads(path.join(stageDir, name), path.join(outDir, name)));
   }
   const zipTargets = [
-    ["interview_packs", "PHS_Healthcare_Demo_Interview_Packs.zip"],
-    ["source_system_extracts", "PHS_Healthcare_Demo_Synthetic_System_Extracts.zip"],
-    ["contract_and_evidence_corpus", "PHS_Healthcare_Demo_Contract_and_Evidence_Corpus.zip"],
-    ["bpo_sourcing_event", "PHS_Healthcare_Demo_BPO_Sourcing_Event.zip"],
+    ["interview_packs", "Meridian_Health_Demo_Interview_Packs.zip"],
+    ["source_system_extracts", "Meridian_Health_Demo_Synthetic_System_Extracts.zip"],
+    ["contract_and_evidence_corpus", "Meridian_Health_Demo_Contract_and_Evidence_Corpus.zip"],
+    ["bpo_sourcing_event", "Meridian_Health_Demo_BPO_Sourcing_Event.zip"],
   ];
   for (const [folder, zipName] of zipTargets) {
     const zipPath = path.join(outDir, zipName);
@@ -2473,13 +2473,13 @@ ${questions.filter((q) => q.section === "DIRECT EXECUTIVE QUESTIONS").map((q) =>
   await writeText(path.join(stageDir, "AUDIT_STOP_STATEMENT.txt"), "PHASE A HARD STOP: no synthetic healthcare data was loaded; no migration was applied; no Cube runtime was changed; no web runtime was deployed; SkyHarbor was not mutated; execution stopped for audit.\n");
   await writeJson(path.join(stageDir, "phase_a_result.json"), {
     stage_dir: stageDir,
-    proof_zip: `PHS_Healthcare_Demo_Audit_Proof_${timestamp}.zip`,
-    proof_zip_sha256_attestation: `PHS_Healthcare_Demo_Audit_Proof_${timestamp}.zip.sha256`,
+    proof_zip: `Meridian_Health_Demo_Audit_Proof_${timestamp}.zip`,
+    proof_zip_sha256_attestation: `Meridian_Health_Demo_Audit_Proof_${timestamp}.zip.sha256`,
     downloads,
     manifest_counts: manifest.counts,
     validation_ok: validation.ok,
   });
-  const proofZip = path.join(outDir, `PHS_Healthcare_Demo_Audit_Proof_${timestamp}.zip`);
+  const proofZip = path.join(outDir, `Meridian_Health_Demo_Audit_Proof_${timestamp}.zip`);
   await zipDir(stageDir, proofZip);
   const proofSha = await sha256File(proofZip);
   const proofShaPath = `${proofZip}.sha256`;

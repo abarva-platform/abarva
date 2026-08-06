@@ -14,20 +14,20 @@ import {
   writeJson,
 } from "./golden-slice-support.mjs";
 
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const TENANT_KEY = "phs_health_demo_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const WRITER_ROLE = "foundation_v2_phs_demo_writer";
-const READER_ROLE = "foundation_v2_phs_demo_reader";
-const NORMALIZE_VERSION = "phs-source-adapters-candidates-v1";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const TENANT_KEY = "meridian_health_global";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
+const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
+const NORMALIZE_VERSION = "meridian-health-source-adapters-candidates-v1";
 const NORMALIZE_EXECUTION_ID = `${SOURCE_RELEASE_ID}:${NORMALIZE_VERSION}`;
-const SOURCE_VOLUME_GATE_IDS = ["PHS-SOURCE-VOLUME-L0-L1", "PHS-SOURCE-VOLUME-L1-L2"];
+const SOURCE_VOLUME_GATE_IDS = ["Meridian Health-SOURCE-VOLUME-L0-L1", "Meridian Health-SOURCE-VOLUME-L1-L2"];
 const ADAPTER_GATE_IDS = [
-  "PHS-L2-J2A-ADAPTER-NORMALIZATION",
-  "PHS-L2-J2B-CANDIDATE-CLASSIFICATION",
-  "PHS-L2-J2C-LINEAGE-RECONCILIATION",
+  "Meridian Health-L2-J2A-ADAPTER-NORMALIZATION",
+  "Meridian Health-L2-J2B-CANDIDATE-CLASSIFICATION",
+  "Meridian Health-L2-J2C-LINEAGE-RECONCILIATION",
 ];
 const SOURCE_VOLUME_COUNTS = {
   source_files: 54,
@@ -46,7 +46,7 @@ const DOWNSTREAM_COUNTS = {
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_NORMALIZATION_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_NORMALIZATION_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
@@ -54,13 +54,13 @@ async function main() {
   fs.mkdirSync(args.outDir, { recursive: true });
   if (args.mode === "self-test") {
     const result = selfTest();
-    writeJson(proofRef(args.outDir, "PHS_NORMALIZATION_SELF_TEST.json"), result);
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_NORMALIZATION_SELF_TEST.json"), result);
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   const { Client } = await import("pg");
-  const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-normalize"));
+  const client = new Client(await foundationPostgresClientOptions("meridian-health-demo-normalize"));
   await client.connect();
   try {
     if (args.mode === "preflight") {
@@ -68,7 +68,7 @@ async function main() {
       writeProofSet(args.outDir, result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_NORMALIZATION_PREFLIGHT_PASSED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_NORMALIZATION_PREFLIGHT_PASSED") process.exitCode = 1;
       return;
     }
     if (args.mode === "verify") {
@@ -76,7 +76,7 @@ async function main() {
       writeProofSet(args.outDir, result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFIED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_NORMALIZATION_VERIFIED") process.exitCode = 1;
       return;
     }
     if (args.mode === "lock-diagnostic") {
@@ -91,7 +91,7 @@ async function main() {
     writeProofSet(args.outDir, result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
-    if (!["PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFIED", "PHS_HEALTHCARE_DEMO_NORMALIZATION_ALREADY_VERIFIED"].includes(result.status)) {
+    if (!["MERIDIAN_HEALTH_DEMO_NORMALIZATION_VERIFIED", "MERIDIAN_HEALTH_DEMO_NORMALIZATION_ALREADY_VERIFIED"].includes(result.status)) {
       process.exitCode = 1;
     }
   } finally {
@@ -101,13 +101,13 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_NORMALIZATION_MODE || "preflight",
+    mode: process.env.MERIDIAN_HEALTH_NORMALIZATION_MODE || "preflight",
     outDir:
-      process.env.PHS_NORMALIZATION_OUT_DIR ||
-      path.join(os.tmpdir(), `phs-healthcare-demo-normalize-${new Date().toISOString().replace(/[:.]/g, "-")}`),
+      process.env.MERIDIAN_HEALTH_NORMALIZATION_OUT_DIR ||
+      path.join(os.tmpdir(), `meridian-health-demo-normalize-${new Date().toISOString().replace(/[:.]/g, "-")}`),
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
-      process.env.PHS_NORMALIZATION_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_NORMALIZATION_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -138,8 +138,8 @@ async function preflight(client) {
     const existingTotal = Object.values(existingCounts).reduce((sum, value) => sum + Number(value || 0), 0);
     const existingExact = exactDownstreamCounts(existingCounts);
     return manifest(sourceExact && (existingTotal === 0 || existingExact)
-      ? "PHS_HEALTHCARE_DEMO_NORMALIZATION_PREFLIGHT_PASSED"
-      : "PHS_HEALTHCARE_DEMO_NORMALIZATION_PREFLIGHT_FAILED", {
+      ? "MERIDIAN_HEALTH_DEMO_NORMALIZATION_PREFLIGHT_PASSED"
+      : "MERIDIAN_HEALTH_DEMO_NORMALIZATION_PREFLIGHT_FAILED", {
       mutation_executed: false,
       source_counts: sourceCounts,
       source_exact_match: sourceExact,
@@ -154,72 +154,72 @@ async function preflight(client) {
 }
 
 async function apply(client) {
-  progress("PHS_LAYER2_APPLY_APPROVAL_CHECK_START");
+  progress("MERIDIAN_HEALTH_LAYER2_APPLY_APPROVAL_CHECK_START");
   assertApplyApproved();
-  progress("PHS_LAYER2_APPLY_APPROVAL_CHECK_DONE");
+  progress("MERIDIAN_HEALTH_LAYER2_APPLY_APPROVAL_CHECK_DONE");
   const startedAt = new Date().toISOString();
-  progress("PHS_LAYER2_APPLY_TRANSACTION_BEGIN_START");
+  progress("MERIDIAN_HEALTH_LAYER2_APPLY_TRANSACTION_BEGIN_START");
   await client.query("BEGIN");
-  progress("PHS_LAYER2_APPLY_TRANSACTION_BEGIN_DONE");
+  progress("MERIDIAN_HEALTH_LAYER2_APPLY_TRANSACTION_BEGIN_DONE");
   try {
-    progress("PHS_LAYER2_APPLY_ADVISORY_LOCK_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_ADVISORY_LOCK_START");
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`${DATABASE_SCHEMA}:${TENANT_KEY}:${TEST_NAMESPACE}:normalization`]);
-    progress("PHS_LAYER2_APPLY_ADVISORY_LOCK_DONE");
-    progress("PHS_LAYER2_APPLY_CONTEXT_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_ADVISORY_LOCK_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_CONTEXT_START");
     await setContext(client, WRITER_ROLE);
-    progress("PHS_LAYER2_APPLY_CONTEXT_DONE");
-    progress("PHS_LAYER2_APPLY_SOURCE_COUNTS_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_CONTEXT_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_SOURCE_COUNTS_START");
     const sourceCounts = await sourceVolumeCounts(client);
-    progress("PHS_LAYER2_APPLY_SOURCE_COUNTS_DONE", sourceCounts);
-    if (!exactSourceCounts(sourceCounts)) throw new Error(`PHS source-volume counts are not verified: ${JSON.stringify(sourceCounts)}`);
-    progress("PHS_LAYER2_APPLY_DOWNSTREAM_COUNTS_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_SOURCE_COUNTS_DONE", sourceCounts);
+    if (!exactSourceCounts(sourceCounts)) throw new Error(`Meridian Health source-volume counts are not verified: ${JSON.stringify(sourceCounts)}`);
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_DOWNSTREAM_COUNTS_START");
     const existingCounts = await downstreamCounts(client);
-    progress("PHS_LAYER2_APPLY_DOWNSTREAM_COUNTS_DONE", existingCounts);
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_DOWNSTREAM_COUNTS_DONE", existingCounts);
     const existingTotal = Object.values(existingCounts).reduce((sum, value) => sum + Number(value || 0), 0);
     if (existingTotal > 0) {
-      if (!exactDownstreamCounts(existingCounts)) throw new Error(`Existing PHS normalization rows are partial or divergent: ${JSON.stringify(existingCounts)}`);
-      progress("PHS_LAYER2_APPLY_ALREADY_VERIFIED_ROLLBACK_START");
+      if (!exactDownstreamCounts(existingCounts)) throw new Error(`Existing Meridian Health normalization rows are partial or divergent: ${JSON.stringify(existingCounts)}`);
+      progress("MERIDIAN_HEALTH_LAYER2_APPLY_ALREADY_VERIFIED_ROLLBACK_START");
       await client.query("ROLLBACK");
-      progress("PHS_LAYER2_APPLY_ALREADY_VERIFIED_ROLLBACK_DONE");
-      return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_NORMALIZATION_ALREADY_VERIFIED", {
+      progress("MERIDIAN_HEALTH_LAYER2_APPLY_ALREADY_VERIFIED_ROLLBACK_DONE");
+      return await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_NORMALIZATION_ALREADY_VERIFIED", {
         mutation_executed: false,
         started_at: startedAt,
         completed_at: new Date().toISOString(),
       });
     }
 
-    progress("PHS_LAYER2_APPLY_NORMALIZED_OBJECTS_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_NORMALIZED_OBJECTS_START");
     await insertNormalizedObjects(client);
-    progress("PHS_LAYER2_APPLY_NORMALIZED_OBJECTS_DONE");
-    progress("PHS_LAYER2_APPLY_J2A_READBACK_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_NORMALIZED_OBJECTS_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2A_READBACK_START");
     const j2a = await j2aReadback(client);
-    progress("PHS_LAYER2_APPLY_J2A_READBACK_DONE", j2a);
-    assertGate(j2a.status, "PHS_HEALTHCARE_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED", j2a);
-    progress("PHS_LAYER2_APPLY_J2A_GATE_INSERT_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2A_READBACK_DONE", j2a);
+    assertGate(j2a.status, "MERIDIAN_HEALTH_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED", j2a);
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2A_GATE_INSERT_START");
     await insertGateResult(client, ADAPTER_GATE_IDS[0], "Layer 1 source records to Layer 2 normalized adapter outputs", j2a.source_records, j2a.normalized_objects);
-    progress("PHS_LAYER2_APPLY_J2A_GATE_INSERT_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2A_GATE_INSERT_DONE");
 
-    progress("PHS_LAYER2_APPLY_KNOWLEDGE_CANDIDATES_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_KNOWLEDGE_CANDIDATES_START");
     await insertKnowledgeCandidates(client);
-    progress("PHS_LAYER2_APPLY_KNOWLEDGE_CANDIDATES_DONE");
-    progress("PHS_LAYER2_APPLY_J2B_READBACK_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_KNOWLEDGE_CANDIDATES_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2B_READBACK_START");
     const j2b = await j2bReadback(client);
-    progress("PHS_LAYER2_APPLY_J2B_READBACK_DONE", j2b);
-    assertGate(j2b.status, "PHS_HEALTHCARE_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED", j2b);
-    progress("PHS_LAYER2_APPLY_J2B_GATE_INSERT_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2B_READBACK_DONE", j2b);
+    assertGate(j2b.status, "MERIDIAN_HEALTH_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED", j2b);
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2B_GATE_INSERT_START");
     await insertGateResult(client, ADAPTER_GATE_IDS[1], "Layer 2 normalized adapter outputs to candidate staging", j2b.normalized_objects, j2b.knowledge_candidates);
-    progress("PHS_LAYER2_APPLY_J2B_GATE_INSERT_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2B_GATE_INSERT_DONE");
 
-    progress("PHS_LAYER2_APPLY_J2C_READBACK_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2C_READBACK_START");
     const j2c = await fieldLineageReadback(client);
-    progress("PHS_LAYER2_APPLY_J2C_READBACK_DONE", j2c);
-    assertGate(j2c.status, "PHS_HEALTHCARE_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED", j2c);
-    progress("PHS_LAYER2_APPLY_J2C_GATE_INSERT_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2C_READBACK_DONE", j2c);
+    assertGate(j2c.status, "MERIDIAN_HEALTH_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED", j2c);
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2C_GATE_INSERT_START");
     await insertGateResult(client, ADAPTER_GATE_IDS[2], "Layer 1 source fields to Layer 2 field dispositions", j2c.source_field_values, j2c.downstream_field_dispositions);
-    progress("PHS_LAYER2_APPLY_J2C_GATE_INSERT_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_J2C_GATE_INSERT_DONE");
 
-    progress("PHS_LAYER2_APPLY_VERIFIED_MANIFEST_START");
-    const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFIED", {
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_VERIFIED_MANIFEST_START");
+    const result = await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_NORMALIZATION_VERIFIED", {
       mutation_executed: true,
       started_at: startedAt,
       completed_at: new Date().toISOString(),
@@ -227,15 +227,15 @@ async function apply(client) {
       j2b,
       j2c,
     });
-    progress("PHS_LAYER2_APPLY_VERIFIED_MANIFEST_DONE");
-    progress("PHS_LAYER2_APPLY_COMMIT_START");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_VERIFIED_MANIFEST_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_COMMIT_START");
     await client.query("COMMIT");
-    progress("PHS_LAYER2_APPLY_COMMIT_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_COMMIT_DONE");
     return result;
   } catch (error) {
-    progress("PHS_LAYER2_APPLY_ROLLBACK_START", { error: error.message });
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_ROLLBACK_START", { error: error.message });
     await client.query("ROLLBACK").catch(() => {});
-    progress("PHS_LAYER2_APPLY_ROLLBACK_DONE");
+    progress("MERIDIAN_HEALTH_LAYER2_APPLY_ROLLBACK_DONE");
     throw error;
   }
 }
@@ -244,14 +244,14 @@ async function verify(client) {
   await client.query("BEGIN");
   try {
     await setContext(client, READER_ROLE);
-    const result = await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFIED", {
+    const result = await verifiedManifest(client, "MERIDIAN_HEALTH_DEMO_NORMALIZATION_VERIFIED", {
       mutation_executed: false,
       j2a: await j2aReadback(client),
       j2b: await j2bReadback(client),
       j2c: await fieldLineageReadback(client),
     });
     await client.query("ROLLBACK");
-    if (!result.exact_match) result.status = "PHS_HEALTHCARE_DEMO_NORMALIZATION_VERIFY_FAILED";
+    if (!result.exact_match) result.status = "MERIDIAN_HEALTH_DEMO_NORMALIZATION_VERIFY_FAILED";
     return result;
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -260,10 +260,10 @@ async function verify(client) {
 }
 
 async function lockDiagnostic(client) {
-  const terminateRequested = process.env.PHS_NORMALIZATION_TERMINATE_LOCK_HOLDERS === "true";
+  const terminateRequested = process.env.MERIDIAN_HEALTH_NORMALIZATION_TERMINATE_LOCK_HOLDERS === "true";
   const diagnosticRows = await lockDiagnosticRows(client);
   const terminationCandidates = diagnosticRows
-    .filter((row) => row.application_name === "phs-healthcare-demo-normalize")
+    .filter((row) => row.application_name === "meridian-health-demo-normalize")
     .filter((row) => row.pid !== row.current_pid)
     .map((row) => ({
       pid: row.pid,
@@ -281,8 +281,8 @@ async function lockDiagnostic(client) {
     }
   }
   return manifest(terminateRequested
-    ? "PHS_HEALTHCARE_DEMO_LOCK_TERMINATION_COMPLETED"
-    : "PHS_HEALTHCARE_DEMO_LOCK_DIAGNOSTIC_COMPLETED", {
+    ? "MERIDIAN_HEALTH_DEMO_LOCK_TERMINATION_COMPLETED"
+    : "MERIDIAN_HEALTH_DEMO_LOCK_DIAGNOSTIC_COMPLETED", {
     mutation_executed: terminateRequested,
     terminate_requested: terminateRequested,
     diagnostic_rows: diagnosticRows,
@@ -292,11 +292,11 @@ async function lockDiagnostic(client) {
 }
 
 function assertApplyApproved() {
-  if (process.env.PHS_NORMALIZATION_APPLY_APPROVED !== "true") {
-    throw new Error("PHS_NORMALIZATION_APPLY_APPROVED=true is required for Layer 2 apply");
+  if (process.env.MERIDIAN_HEALTH_NORMALIZATION_APPLY_APPROVED !== "true") {
+    throw new Error("MERIDIAN_HEALTH_NORMALIZATION_APPLY_APPROVED=true is required for Layer 2 apply");
   }
   if (process.env.ACA_JOB_NAME !== "job-abarva-private-operator-eus") {
-    throw new Error("PHS Layer 2 apply must run from job-abarva-private-operator-eus");
+    throw new Error("Meridian Health Layer 2 apply must run from job-abarva-private-operator-eus");
   }
 }
 
@@ -316,7 +316,7 @@ async function insertNormalizedObjects(client) {
 
   for (const [index, sourceFile] of sourceFiles.entries()) {
     console.log(JSON.stringify({
-      event: "PHS_LAYER2_NORMALIZED_OBJECT_FILE_START",
+      event: "MERIDIAN_HEALTH_LAYER2_NORMALIZED_OBJECT_FILE_START",
       index: index + 1,
       total: sourceFiles.length,
       source_file_id: sourceFile.source_file_id,
@@ -325,7 +325,7 @@ async function insertNormalizedObjects(client) {
     }));
     const result = await insertNormalizedObjectsForFile(client, sourceFile.source_file_id);
     console.log(JSON.stringify({
-      event: "PHS_LAYER2_NORMALIZED_OBJECT_FILE_DONE",
+      event: "MERIDIAN_HEALTH_LAYER2_NORMALIZED_OBJECT_FILE_DONE",
       index: index + 1,
       total: sourceFiles.length,
       source_file_id: sourceFile.source_file_id,
@@ -377,7 +377,7 @@ async function insertNormalizedObjectsForFile(client, sourceFileId) {
              coalesce(declared_business_key, source_record_id) AS resolved_business_key
         FROM record_rollup
     )
-    SELECT k.source_record_id || ':phs-normalized-v1',
+    SELECT k.source_record_id || ':meridian-health-normalized-v1',
            k.source_record_id,
            k.source_file_id,
            k.source_release_id,
@@ -487,7 +487,7 @@ async function insertGateResult(client, gateId, transition, inputCount, outputCo
     `INSERT INTO ${tableRef("gate_results")}
       (gate_result_id, tenant_key, test_namespace, gate_id, transition, input_count, output_count,
        unexplained_variance, gate_status, failure_classification, repair_owner, rerun_scope, proof_uri, writer_job_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'passed',NULL,'foundation-v2-agent','phs-normalization-candidates',$9,$10)`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'passed',NULL,'foundation-v2-agent','meridian-health-normalization-candidates',$9,$10)`,
     [
       `${SOURCE_RELEASE_ID}:${gateId}`,
       TENANT_KEY,
@@ -504,30 +504,30 @@ async function insertGateResult(client, gateId, transition, inputCount, outputCo
 }
 
 async function verifiedManifest(client, status, extra) {
-  progress("PHS_LAYER2_MANIFEST_SOURCE_COUNTS_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_SOURCE_COUNTS_START");
   const sourceCounts = await sourceVolumeCounts(client);
-  progress("PHS_LAYER2_MANIFEST_SOURCE_COUNTS_DONE", sourceCounts);
-  progress("PHS_LAYER2_MANIFEST_DOWNSTREAM_COUNTS_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_SOURCE_COUNTS_DONE", sourceCounts);
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_DOWNSTREAM_COUNTS_START");
   const actualCounts = await downstreamCounts(client);
-  progress("PHS_LAYER2_MANIFEST_DOWNSTREAM_COUNTS_DONE", actualCounts);
-  progress("PHS_LAYER2_MANIFEST_J2A_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_DOWNSTREAM_COUNTS_DONE", actualCounts);
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_J2A_START");
   const j2a = extra.j2a || await j2aReadback(client);
-  progress("PHS_LAYER2_MANIFEST_J2A_DONE", j2a);
-  progress("PHS_LAYER2_MANIFEST_J2B_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_J2A_DONE", j2a);
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_J2B_START");
   const j2b = extra.j2b || await j2bReadback(client);
-  progress("PHS_LAYER2_MANIFEST_J2B_DONE", j2b);
-  progress("PHS_LAYER2_MANIFEST_J2C_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_J2B_DONE", j2b);
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_J2C_START");
   const j2c = extra.j2c || await fieldLineageReadback(client);
-  progress("PHS_LAYER2_MANIFEST_J2C_DONE", j2c);
-  progress("PHS_LAYER2_MANIFEST_SOURCE_GROUPS_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_J2C_DONE", j2c);
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_SOURCE_GROUPS_START");
   const sourceGroupReconciliation = await sourceGroupReconciliationRows(client);
-  progress("PHS_LAYER2_MANIFEST_SOURCE_GROUPS_DONE", { groups: sourceGroupReconciliation.length });
-  progress("PHS_LAYER2_MANIFEST_CANDIDATE_TYPES_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_SOURCE_GROUPS_DONE", { groups: sourceGroupReconciliation.length });
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_CANDIDATE_TYPES_START");
   const candidateTypeSummary = await candidateTypeSummaryRows(client);
-  progress("PHS_LAYER2_MANIFEST_CANDIDATE_TYPES_DONE", { candidate_types: candidateTypeSummary.length });
-  progress("PHS_LAYER2_MANIFEST_IDENTITY_SUMMARY_START");
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_CANDIDATE_TYPES_DONE", { candidate_types: candidateTypeSummary.length });
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_IDENTITY_SUMMARY_START");
   const identitySummary = await identitySummaryRows(client);
-  progress("PHS_LAYER2_MANIFEST_IDENTITY_SUMMARY_DONE", { identity_states: identitySummary.length });
+  progress("MERIDIAN_HEALTH_LAYER2_MANIFEST_IDENTITY_SUMMARY_DONE", { identity_states: identitySummary.length });
   const exact = exactSourceCounts(sourceCounts) && exactDownstreamCounts(actualCounts) && j2a.status.endsWith("_PASSED") && j2b.status.endsWith("_PASSED") && j2c.status.endsWith("_PASSED");
   return manifest(status, {
     ...extra,
@@ -590,8 +590,8 @@ async function j2aReadback(client) {
     status:
       summary.source_records === SOURCE_VOLUME_COUNTS.source_records &&
       summary.normalized_objects === summary.source_records
-        ? "PHS_HEALTHCARE_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED"
-        : "PHS_HEALTHCARE_DEMO_J2A_ADAPTER_NORMALIZATION_FAILED",
+        ? "MERIDIAN_HEALTH_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED"
+        : "MERIDIAN_HEALTH_DEMO_J2A_ADAPTER_NORMALIZATION_FAILED",
     ...summary,
   };
 }
@@ -613,8 +613,8 @@ async function j2bReadback(client) {
       summary.normalized_objects === DOWNSTREAM_COUNTS.normalized_objects &&
       summary.knowledge_candidates === summary.normalized_objects &&
       summary.pending_review_candidates === summary.knowledge_candidates
-        ? "PHS_HEALTHCARE_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED"
-        : "PHS_HEALTHCARE_DEMO_J2B_CANDIDATE_CLASSIFICATION_FAILED",
+        ? "MERIDIAN_HEALTH_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED"
+        : "MERIDIAN_HEALTH_DEMO_J2B_CANDIDATE_CLASSIFICATION_FAILED",
     ...summary,
   };
 }
@@ -634,8 +634,8 @@ async function fieldLineageReadback(client) {
     status:
       summary.source_field_values === SOURCE_VOLUME_COUNTS.source_field_values &&
       summary.downstream_field_dispositions === summary.source_field_values
-        ? "PHS_HEALTHCARE_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED"
-        : "PHS_HEALTHCARE_DEMO_J2C_LINEAGE_RECONCILIATION_FAILED",
+        ? "MERIDIAN_HEALTH_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED"
+        : "MERIDIAN_HEALTH_DEMO_J2C_LINEAGE_RECONCILIATION_FAILED",
     ...summary,
   };
 }
@@ -724,8 +724,8 @@ async function lockDiagnosticRows(client) {
       LEFT JOIN pg_locks l
         ON l.pid = a.pid
        AND l.locktype = 'advisory'
-     WHERE a.application_name IN ('phs-healthcare-demo-normalize', 'phs-healthcare-demo-lock-diagnostic')
-        OR a.query ILIKE '%phs-healthcare-demo-source-volume-v1%'
+     WHERE a.application_name IN ('meridian-health-demo-normalize', 'meridian-health-demo-lock-diagnostic')
+        OR a.query ILIKE '%meridian-health-source-volume-v1%'
         OR a.query ILIKE '%normalization%'
         OR l.locktype = 'advisory'
      ORDER BY a.pid, l.granted DESC NULLS LAST
@@ -743,33 +743,33 @@ function exactDownstreamCounts(counts) {
 
 function assertGate(actualStatus, expectedStatus, details) {
   if (actualStatus !== expectedStatus) {
-    throw new Error(`PHS Layer 2 gate failed: expected ${expectedStatus}, got ${actualStatus}: ${stableJson(details)}`);
+    throw new Error(`Meridian Health Layer 2 gate failed: expected ${expectedStatus}, got ${actualStatus}: ${stableJson(details)}`);
   }
 }
 
 function earliestBrokenTransition(sourceCounts, actualCounts, j2a, j2b, j2c) {
   if (!exactSourceCounts(sourceCounts)) return "SOURCE_VOLUME_READBACK";
-  if (j2a.status !== "PHS_HEALTHCARE_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED") return "J2A_ADAPTER_NORMALIZATION";
-  if (j2b.status !== "PHS_HEALTHCARE_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED") return "J2B_CANDIDATE_CLASSIFICATION";
-  if (j2c.status !== "PHS_HEALTHCARE_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED") return "J2C_LINEAGE_RECONCILIATION";
+  if (j2a.status !== "MERIDIAN_HEALTH_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED") return "J2A_ADAPTER_NORMALIZATION";
+  if (j2b.status !== "MERIDIAN_HEALTH_DEMO_J2B_CANDIDATE_CLASSIFICATION_PASSED") return "J2B_CANDIDATE_CLASSIFICATION";
+  if (j2c.status !== "MERIDIAN_HEALTH_DEMO_J2C_LINEAGE_RECONCILIATION_PASSED") return "J2C_LINEAGE_RECONCILIATION";
   if (!exactDownstreamCounts(actualCounts)) return "ADAPTER_GATE_READBACK";
   return null;
 }
 
 function writeProofSet(outDir, result) {
-  writeJson(proofRef(outDir, "PHS_NORMALIZATION_CANDIDATES.json"), result);
+  writeJson(proofRef(outDir, "MERIDIAN_HEALTH_NORMALIZATION_CANDIDATES.json"), result);
   if (Array.isArray(result.source_group_reconciliation)) {
     writeCsv(
-      proofRef(outDir, "PHS_NORMALIZATION_SOURCE_GROUP_RECONCILIATION.csv"),
+      proofRef(outDir, "MERIDIAN_HEALTH_NORMALIZATION_SOURCE_GROUP_RECONCILIATION.csv"),
       ["source_group", "source_records", "normalized_objects", "knowledge_candidates", "field_dispositions"],
       result.source_group_reconciliation,
     );
   }
   if (Array.isArray(result.candidate_type_summary)) {
-    writeCsv(proofRef(outDir, "PHS_NORMALIZATION_CANDIDATE_TYPES.csv"), ["candidate_type", "candidates"], result.candidate_type_summary);
+    writeCsv(proofRef(outDir, "MERIDIAN_HEALTH_NORMALIZATION_CANDIDATE_TYPES.csv"), ["candidate_type", "candidates"], result.candidate_type_summary);
   }
   if (Array.isArray(result.identity_summary)) {
-    writeCsv(proofRef(outDir, "PHS_NORMALIZATION_IDENTITY_SUMMARY.csv"), ["identity_resolution_state", "normalized_objects"], result.identity_summary);
+    writeCsv(proofRef(outDir, "MERIDIAN_HEALTH_NORMALIZATION_IDENTITY_SUMMARY.csv"), ["identity_resolution_state", "normalized_objects"], result.identity_summary);
   }
 }
 
@@ -799,12 +799,12 @@ function selfTest() {
   for (const forbidden of ["canonical_objects", "domain_publications", "publication_members", "baselines", "baseline_object_memberships", "projection_rows"]) {
     if (new RegExp(`INSERT\\s+INTO\\s+[^\\n]*${forbidden}`, "i").test(script)) defects.push(`unexpected insert into ${forbidden}`);
   }
-  for (const required of ["field_lineage_ref", "source_field_values", "restricted_candidate", "PHS_NORMALIZATION_APPLY_APPROVED", "assertGate"]) {
+  for (const required of ["field_lineage_ref", "source_field_values", "restricted_candidate", "MERIDIAN_HEALTH_NORMALIZATION_APPLY_APPROVED", "assertGate"]) {
     if (!script.includes(required)) defects.push(`missing ${required}`);
   }
-  if (defects.length > 0) throw new Error(`PHS normalization self-test failed: ${defects.join("; ")}`);
+  if (defects.length > 0) throw new Error(`Meridian Health normalization self-test failed: ${defects.join("; ")}`);
   return {
-    status: "PHS_HEALTHCARE_DEMO_NORMALIZATION_SELF_TEST_PASSED",
+    status: "MERIDIAN_HEALTH_DEMO_NORMALIZATION_SELF_TEST_PASSED",
     mutation_executed: false,
     source_counts_sha256: sha256(stableJson(SOURCE_VOLUME_COUNTS)),
     downstream_counts_sha256: sha256(stableJson(DOWNSTREAM_COUNTS)),

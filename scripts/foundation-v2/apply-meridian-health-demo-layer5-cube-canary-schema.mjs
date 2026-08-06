@@ -14,14 +14,14 @@ import {
   writeJson,
 } from "./golden-slice-support.mjs";
 
-const SOURCE_SCHEMA = "foundation_v2_phs_demo";
-const CANARY_SCHEMA = "foundation_v2_phs_cube_canary";
-const TENANT_KEY = "phs_health_demo_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const PROJECTION_VERSION = "phs-layer4-consumption-projections-v1";
-const CUBE_CANARY_VERSION = "phs-layer5-cube-canary-v1";
+const SOURCE_SCHEMA = "foundation_v2_meridian_health_demo";
+const CANARY_SCHEMA = "foundation_v2_meridian_health_cube_canary";
+const TENANT_KEY = "meridian_health_global";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const PROJECTION_VERSION = "meridian-health-layer4-consumption-projections-v1";
+const CUBE_CANARY_VERSION = "meridian-health-layer5-cube-canary-v1";
 const WRITER_JOB_ID = `${SOURCE_RELEASE_ID}:${CUBE_CANARY_VERSION}`;
 const SYSTEM_COLUMNS = new Set([
   "projection_row_id",
@@ -43,7 +43,7 @@ const SYSTEM_COLUMNS = new Set([
 
 const SPECS = [
   {
-    table: "phs_vendor_portfolio_v1",
+    table: "meridian_health_vendor_portfolio_v1",
     namespace: "enterprise_context",
     name: "vendor_portfolio",
     grain: "vendor",
@@ -60,7 +60,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_contract_family_v1",
+    table: "meridian_health_contract_family_v1",
     namespace: "doc",
     name: "contract_families_and_instruments",
     grain: "contract_family",
@@ -76,7 +76,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_contract_scope_v1",
+    table: "meridian_health_contract_scope_v1",
     namespace: "source",
     name: "contract_scope",
     grain: "contract_scope_edge",
@@ -93,7 +93,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_spend_invoice_history_v1",
+    table: "meridian_health_spend_invoice_history_v1",
     namespace: "tower",
     name: "spend_invoice_history",
     grain: "vendor_contract_month",
@@ -109,7 +109,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_workforce_rate_card_economics_v1",
+    table: "meridian_health_workforce_rate_card_economics_v1",
     namespace: "tower",
     name: "workforce_rate_card_economics",
     grain: "contract_role_location",
@@ -124,7 +124,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_sla_itsm_performance_v1",
+    table: "meridian_health_sla_itsm_performance_v1",
     namespace: "source",
     name: "sla_itsm_performance",
     grain: "service_performance",
@@ -148,7 +148,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_service_credit_v1",
+    table: "meridian_health_service_credit_v1",
     namespace: "source",
     name: "service_credits",
     grain: "service_credit",
@@ -162,7 +162,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_application_dependency_v1",
+    table: "meridian_health_application_dependency_v1",
     namespace: "enterprise_context",
     name: "applications_services_dependencies",
     grain: "application",
@@ -177,7 +177,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_renewal_exit_term_v1",
+    table: "meridian_health_renewal_exit_term_v1",
     namespace: "governance",
     name: "renewal_exit_terms",
     grain: "contract_family",
@@ -187,7 +187,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_program_dependency_v1",
+    table: "meridian_health_program_dependency_v1",
     namespace: "enterprise_context",
     name: "programs_modernization_dependencies",
     grain: "program",
@@ -199,7 +199,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_enterprise_outcome_v1",
+    table: "meridian_health_enterprise_outcome_v1",
     namespace: "tower",
     name: "enterprise_outcomes",
     grain: "enterprise_outcome",
@@ -214,7 +214,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_bpo_baseline_v1",
+    table: "meridian_health_bpo_baseline_v1",
     namespace: "sourcing_event",
     name: "bpo_baseline",
     grain: "function_process",
@@ -224,14 +224,21 @@ const SPECS = [
       ["process_name", "text", "text"],
       ["monthly_volume", "numeric", "numeric"],
       ["automation_opportunity", "text", "text"],
+      ["baseline_cost_time_horizon", "text", "text"],
+      ["baseline_cost_horizon_years", "integer", "int"],
       ["baseline_labor_cost", "numeric", "numeric"],
       ["baseline_technology_cost", "numeric", "numeric"],
       ["baseline_controls_cost", "numeric", "numeric"],
+      ["five_year_current_state_baseline_cost", "numeric", "numeric"],
+      ["annualized_current_state_cost", "numeric", "numeric"],
+      ["five_year_labor_cost", "numeric", "numeric"],
+      ["five_year_technology_platform_cost", "numeric", "numeric"],
+      ["five_year_controls_or_other_cost", "numeric", "numeric"],
       ["current_resource_count", "numeric", "numeric"],
     ],
   },
   {
-    table: "phs_supplier_proposal_bafo_v1",
+    table: "meridian_health_supplier_proposal_bafo_v1",
     namespace: "sourcing_event",
     name: "supplier_proposals_bafo",
     grain: "supplier",
@@ -250,7 +257,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_rebadge_transition_commitment_v1",
+    table: "meridian_health_rebadge_transition_commitment_v1",
     namespace: "sourcing_event",
     name: "rebadge_transition_commitments",
     grain: "supplier_transition_commitment",
@@ -260,7 +267,12 @@ const SPECS = [
       ["function_ref", "text", "text"],
       ["process_name", "text", "text"],
       ["employee_cohort", "text", "text"],
+      ["source_proposed_rebadge_count", "numeric", "numeric"],
+      ["eligible_unique_current_workforce_count", "numeric", "numeric"],
+      ["rebadge_denominator_policy", "text", "text"],
+      ["rebadge_strategy", "text", "text"],
       ["number_proposed_for_rebadge", "numeric", "numeric"],
+      ["normalized_supplier_proposed_rebadge_count", "numeric", "numeric"],
       ["retention_commitment_months", "numeric", "numeric"],
       ["knowledge_critical_designation", "text", "text"],
       ["contractual_or_proposed_status", "text", "text"],
@@ -268,7 +280,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_ai_automation_commitment_v1",
+    table: "meridian_health_ai_automation_commitment_v1",
     namespace: "sourcing_event",
     name: "ai_automation_commitments",
     grain: "automation_commitment",
@@ -289,7 +301,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_retained_org_scenario_v1",
+    table: "meridian_health_retained_org_scenario_v1",
     namespace: "sourcing_event",
     name: "retained_org_scenarios",
     grain: "retained_org_scenario",
@@ -298,7 +310,7 @@ const SPECS = [
       ["retained_org_scenario_id", "text", "text"],
       ["supplier_id", "text", "text"],
       ["sourcing_model", "text", "text"],
-      ["phs_retained_function", "text", "text"],
+      ["meridian_health_retained_function", "text", "text"],
       ["retained_role", "text", "text"],
       ["transition_fte", "numeric", "numeric"],
       ["steady_state_fte", "numeric", "numeric"],
@@ -308,7 +320,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_normalized_tco_recommendation_input_v1",
+    table: "meridian_health_normalized_tco_recommendation_input_v1",
     namespace: "consumption",
     name: "normalized_tco_recommendation_inputs",
     grain: "supplier_scenario",
@@ -328,7 +340,7 @@ const SPECS = [
     ],
   },
   {
-    table: "phs_event_context_snapshot_v1",
+    table: "meridian_health_event_context_snapshot_v1",
     namespace: "governance",
     name: "event_context_snapshot",
     grain: "sourcing_event_context",
@@ -347,14 +359,14 @@ const SPECS = [
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
 async function main() {
   fs.mkdirSync(args.outDir, { recursive: true });
   if (args.mode === "self-test") {
-    const result = manifest("PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_SELF_TEST_PASSED", {
+    const result = manifest("MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_SELF_TEST_PASSED", {
       mutation_executed: false,
       canary_schema: CANARY_SCHEMA,
       typed_cube_table_count: SPECS.length,
@@ -367,10 +379,10 @@ async function main() {
   }
 
   const { Client } = await import("pg");
-  const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-layer5-cube-canary"));
+  const client = new Client(await foundationPostgresClientOptions("meridian-health-demo-layer5-cube-canary"));
   await client.connect();
   try {
-    await setPHSContext(client);
+    await setMeridianContext(client);
     if (args.mode === "preflight") {
       const result = await verify(client, { mode: "preflight" });
       writeProofSet(result);
@@ -385,7 +397,7 @@ async function main() {
       writeProofSet(result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_VERIFIED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_VERIFIED") process.exitCode = 1;
       return;
     }
     if (args.mode !== "apply") throw new Error(`Unsupported mode ${args.mode}`);
@@ -406,7 +418,7 @@ async function main() {
     writeProofSet(result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
-    if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_VERIFIED") process.exitCode = 1;
+    if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_VERIFIED") process.exitCode = 1;
   } finally {
     await client.end();
   }
@@ -414,10 +426,10 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_LAYER5_CUBE_CANARY_MODE || "preflight",
+    mode: process.env.MERIDIAN_HEALTH_LAYER5_CUBE_CANARY_MODE || "preflight",
     outDir:
-      process.env.PHS_LAYER5_CUBE_CANARY_OUT_DIR ||
-      path.join(os.tmpdir(), `phs-layer5-cube-canary-${new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z")}`),
+      process.env.MERIDIAN_HEALTH_LAYER5_CUBE_CANARY_OUT_DIR ||
+      path.join(os.tmpdir(), `meridian-health-layer5-cube-canary-${new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z")}`),
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -435,7 +447,7 @@ function parseArgs(argv) {
   return parsed;
 }
 
-async function setPHSContext(client) {
+async function setMeridianContext(client) {
   await client.query("SELECT set_config('app.tenant_key', $1, false)", [TENANT_KEY]);
   await client.query("SELECT set_config('app.foundation_v2_test_namespace', $1, false)", [TEST_NAMESPACE]);
   await client.query("SELECT set_config('app.foundation_v2_source_release_id', $1, false)", [SOURCE_RELEASE_ID]);
@@ -594,7 +606,7 @@ async function verify(client, options = {}) {
   }
   const afterSkyHarbor = await readSkyHarborCounts(client);
   if (beforeSkyHarbor && stableJson(beforeSkyHarbor) !== stableJson(afterSkyHarbor)) {
-    defects.push("skyharbor_v4_counts_changed_during_phs_layer5_apply");
+    defects.push("skyharbor_v4_counts_changed_during_meridian_health_layer5_apply");
   }
   if (requireCanaryExactMatch && (!authority || Number(authority.typed_table_count) !== SPECS.length)) {
     defects.push("cube_canary_authority_missing_or_incomplete");
@@ -606,10 +618,10 @@ async function verify(client, options = {}) {
     : false;
   return manifest(
     requireCanaryExactMatch && exactMatch
-      ? "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_VERIFIED"
+      ? "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_VERIFIED"
       : preflightReady && !requireCanaryExactMatch
-        ? "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_PREFLIGHT_PASSED"
-        : "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_BLOCKED",
+        ? "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_PREFLIGHT_PASSED"
+        : "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_BLOCKED",
     {
       verification_mode: mode,
       mutation_executed: mutationExecuted,
@@ -681,13 +693,13 @@ function manifest(status, extra = {}) {
 }
 
 function writeProofSet(result) {
-  writeJson(proofRef(args.outDir, "PHS_LAYER5_CUBE_CANARY.json"), result);
+  writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_LAYER5_CUBE_CANARY.json"), result);
   writeCsv(
-    proofRef(args.outDir, "PHS_LAYER5_CUBE_CANARY_TABLES.csv"),
+    proofRef(args.outDir, "MERIDIAN_HEALTH_LAYER5_CUBE_CANARY_TABLES.csv"),
     ["table", "projection_namespace", "projection_name", "business_grain", "source_projection_rows", "canary_rows", "skyharbor_rows"],
     result.typed_table_summaries || [],
   );
-  writeJson(proofRef(args.outDir, "PHS_LAYER5_CUBE_CANARY_SIGNATURE.json"), {
+  writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_LAYER5_CUBE_CANARY_SIGNATURE.json"), {
     status: result.status,
     result_sha256: sha256(stableJson(result)),
     generated_at: result.generated_at,
@@ -695,9 +707,9 @@ function writeProofSet(result) {
 }
 
 function maybeEmitProofBundle() {
-  if (args.emitProofBundle || process.env.PHS_LAYER5_CUBE_CANARY_EMIT_PROOF_BUNDLE === "true") {
+  if (args.emitProofBundle || process.env.MERIDIAN_HEALTH_LAYER5_CUBE_CANARY_EMIT_PROOF_BUNDLE === "true") {
     emitProofBundle(args.outDir, {
-      status: "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_PROOF_BUNDLE",
+      status: "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_PROOF_BUNDLE",
       generated_at: new Date().toISOString(),
       proof_root: path.join(args.outDir, "proof"),
     });

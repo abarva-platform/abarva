@@ -8,8 +8,8 @@ Future command shape:
 
 ```bash
 ops:aca-job --script source:healthcare-demo:activate \
-  --tenant-key phs_health_demo_global \
-  --dataset-id phs-health-source-v1-202608 \
+  --tenant-key meridian_health_global \
+  --dataset-id meridian-health-source-v1-202608 \
   --package-sha <approved-sha> \
   --dry-run
 ```

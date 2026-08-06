@@ -5,18 +5,18 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { EXPECTED, validatePackage } from "./validate-phs-healthcare-demo-package.mjs";
+import { EXPECTED, validatePackage } from "./validate-meridian-health-demo-package.mjs";
 
 const DEFAULT_OUT_DIR = "/Users/anand/Downloads";
 const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
 const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-plan-v1";
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const EXPECTED_SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const EXPECTED_SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
 const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
-const WRITER_ROLE = "foundation_v2_phs_demo_writer";
-const READER_ROLE = "foundation_v2_phs_demo_reader";
+const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
+const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
 const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
 const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
 const REQUIRED_LAYER1_RELEASE_FILES = [
@@ -80,16 +80,16 @@ async function main() {
   const packageDir = resolvePackageDir();
   const outDir = path.resolve(argValue("--out-dir", DEFAULT_OUT_DIR));
   const timestamp = new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z");
-  const proofDir = path.join(outDir, `phs_healthcare_demo_data_layer_plan_${timestamp}`);
+  const proofDir = path.join(outDir, `meridian_health_demo_data_layer_plan_${timestamp}`);
   await fs.rm(proofDir, { recursive: true, force: true });
   await fs.mkdir(proofDir, { recursive: true });
 
   const packageValidation = await validatePackage(packageDir);
   if (!packageValidation.ok) {
-    throw new Error(`PHS package validation failed: ${JSON.stringify(packageValidation.failures.slice(0, 5))}`);
+    throw new Error(`Meridian Health package validation failed: ${JSON.stringify(packageValidation.failures.slice(0, 5))}`);
   }
 
-  const packageManifest = await readJson(path.join(packageDir, "phs_healthcare_demo_package_manifest.json"));
+  const packageManifest = await readJson(path.join(packageDir, "meridian_health_demo_package_manifest.json"));
   const phaseResult = await readJson(path.join(packageDir, "phase_a_result.json"));
   const proofZip = resolveProofZip(packageDir, phaseResult);
   const proofZipSha256 = await sha256File(proofZip);
@@ -116,7 +116,7 @@ async function main() {
   );
   const sourceReleaseId = `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}:${releaseHash.slice(0, 12)}`;
   if (sourceReleaseId !== EXPECTED_SOURCE_RELEASE_ID) {
-    throw new Error(`PHS source release drift: expected ${EXPECTED_SOURCE_RELEASE_ID}, got ${sourceReleaseId}`);
+    throw new Error(`Meridian Health source release drift: expected ${EXPECTED_SOURCE_RELEASE_ID}, got ${sourceReleaseId}`);
   }
   sourceFiles = sourceFiles.map((file) => ({
     ...file,
@@ -127,10 +127,10 @@ async function main() {
   const sourceGroupCounts = groupedCounts(sourceFiles, "source_group");
   const demoPriorityCounts = groupedCounts(sourceFiles, "demo_priority");
   const databaseTargetContract = databaseTargetContractFor(sourceFiles);
-  const schemaProofTests = phsSchemaProofTests();
+  const schemaProofTests = meridianSchemaProofTests();
 
   const layer0 = {
-    status: "PHS_HEALTHCARE_DEMO_LAYER0_PACKAGE_PROOF_READY",
+    status: "MERIDIAN_HEALTH_DEMO_LAYER0_PACKAGE_PROOF_READY",
     generated_at: new Date().toISOString(),
     mutation_executed: false,
     tenant_key: EXPECTED.tenantKey,
@@ -147,7 +147,7 @@ async function main() {
   };
 
   const layer1 = {
-    status: "PHS_HEALTHCARE_DEMO_LAYER1_SOURCE_VOLUME_PLAN_READY",
+    status: "MERIDIAN_HEALTH_DEMO_LAYER1_SOURCE_VOLUME_PLAN_READY",
     generated_at: new Date().toISOString(),
     mutation_executed: false,
     tenant_key: EXPECTED.tenantKey,
@@ -185,11 +185,11 @@ async function main() {
     files: sourceFiles.map(({ rows, ...file }) => file),
   };
 
-  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_LAYER0_PACKAGE_PROOF.json"), layer0);
-  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_LAYER1_SOURCE_VOLUME_PLAN.json"), layer1);
-  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATABASE_TARGET_CONTRACT.json"), databaseTargetContract);
-  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_SCHEMA_PROOF_TESTS.json"), schemaProofTests);
-  await writeCsv(path.join(proofDir, "PHS_HEALTHCARE_DEMO_SOURCE_FILES.csv"), [
+  await writeJson(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_LAYER0_PACKAGE_PROOF.json"), layer0);
+  await writeJson(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_LAYER1_SOURCE_VOLUME_PLAN.json"), layer1);
+  await writeJson(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_DATABASE_TARGET_CONTRACT.json"), databaseTargetContract);
+  await writeJson(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_SCHEMA_PROOF_TESTS.json"), schemaProofTests);
+  await writeCsv(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_SOURCE_FILES.csv"), [
     "file_index",
     "source_group",
     "context_treatment",
@@ -205,11 +205,11 @@ async function main() {
     "field_count",
     "content_sha256",
   ], sourceFiles);
-  await fs.writeFile(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_EXECUTION_PLAN.md"), buildExecutionPlan(layer0, layer1));
+  await fs.writeFile(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_DATA_LAYER_EXECUTION_PLAN.md"), buildExecutionPlan(layer0, layer1));
 
-  const proofZipPath = path.join(outDir, `PHS_Healthcare_Demo_Data_Layer_Plan_${timestamp}.zip`);
+  const proofZipPath = path.join(outDir, `Meridian_Health_Demo_Data_Layer_Plan_${timestamp}.zip`);
   const result = {
-    status: "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_READY",
+    status: "MERIDIAN_HEALTH_DEMO_DATA_LAYER_PLAN_READY",
     mutation_executed: false,
     package_dir: packageDir,
     proof_dir: proofDir,
@@ -229,13 +229,13 @@ async function main() {
     schema_proof_tests: layer1.schema_proof_tests,
     next_required_gate: layer1.next_required_gate,
   };
-  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
+  await writeJson(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
   await fs.rm(proofZipPath, { force: true });
   execFileSync("zip", ["-qr", proofZipPath, "."], { cwd: proofDir });
   const dataLayerPlanSha256 = await sha256File(proofZipPath);
   await fs.writeFile(`${proofZipPath}.sha256`, `${dataLayerPlanSha256}  ${path.basename(proofZipPath)}\n`);
   result.proof_zip_sha256 = dataLayerPlanSha256;
-  await writeJson(path.join(proofDir, "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
+  await writeJson(path.join(proofDir, "MERIDIAN_HEALTH_DEMO_DATA_LAYER_PLAN_RESULT.json"), result);
   console.log(JSON.stringify(result, null, 2));
 }
 
@@ -249,7 +249,7 @@ function argValue(name, fallback = null) {
 function resolvePackageDir() {
   const explicit = argValue("--package-dir");
   if (explicit) return path.resolve(explicit);
-  throw new Error("Explicit --package-dir is required for the PHS Layer 0/Layer 1 plan; latest Downloads auto-selection is not allowed");
+  throw new Error("Explicit --package-dir is required for the Meridian Health Layer 0/Layer 1 plan; latest Downloads auto-selection is not allowed");
 }
 
 function resolveProofZip(packageDir, phaseResult) {
@@ -332,11 +332,11 @@ function databaseTargetContractFor(sourceFiles) {
     isolation_scope: ISOLATION_SCOPE,
     expected_source_file_context_rows: sourceFiles.length,
     apply_required_env: [
-      "PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true",
-      "PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=<exact approved proof ZIP SHA>",
+      "MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true",
+      "MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256=<exact approved proof ZIP SHA>",
       "ACA_JOB_NAME=<approved ACA data-build job identity>",
     ],
-    disallowed_apply_bypass_env: "PHS_HEALTHCARE_DEMO_ALLOW_NON_ACA_APPLY",
+    disallowed_apply_bypass_env: "MERIDIAN_HEALTH_DEMO_ALLOW_NON_ACA_APPLY",
     verification_contract: [
       "release_id_and_release_hash",
       "all_54_filenames",
@@ -351,7 +351,7 @@ function databaseTargetContractFor(sourceFiles) {
   };
 }
 
-function phsSchemaProofTests() {
+function meridianSchemaProofTests() {
   return [
     {
       case_id: "wrong_schema",
@@ -499,7 +499,7 @@ function csvEscape(value) {
 }
 
 function buildExecutionPlan(layer0, layer1) {
-  return `# PHS Healthcare Demo Data-Layer Execution Plan
+  return `# Meridian Health Data-Layer Execution Plan
 
 Status: plan_ready, not_loaded
 
@@ -542,13 +542,13 @@ No database load, migration, Cube refresh, runtime deploy, tenant activation or 
 Run only after approval through an isolated ACA data-build job:
 
 1. Preflight against the lab database with writer context and transaction rollback.
-2. Apply Layer 1 source release/files/context metadata/records/field values only if the approved package SHA and exact PHS target contract match.
+2. Apply Layer 1 source release/files/context metadata/records/field values only if the approved package SHA and exact Meridian Health target contract match.
 3. Verify with independent reader readback of release hash, all 54 filenames, per-file SHA/counts, source-group counts, demo-priority counts, source-file context rows, total records and total field slots.
 4. Continue to source adapters and canonical candidates as separate gated jobs.
 `;
 }
 
 main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_DATA_LAYER_PLAN_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_DATA_LAYER_PLAN_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });

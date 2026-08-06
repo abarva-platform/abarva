@@ -2,17 +2,17 @@
 
 Status: continuous_lab_execution_in_progress
 
-Phase B lab execution is proceeding only inside the isolated `foundation_v2_phs_demo` schema through the approved ACA data-build job path. This plan still does not authorize canonical promotion, Cube/runtime update, deployment, tenant activation or mutation of any existing tenant.
+Phase B lab execution is proceeding only inside the isolated `foundation_v2_meridian_health_demo` schema through the approved ACA data-build job path. This plan still does not authorize canonical promotion, Cube/runtime update, deployment, tenant activation or mutation of any existing tenant.
 
 ## Source Corpus Contract
 
-- Tenant key: `phs_health_demo_global`
-- Dataset id: `phs-health-source-v1-202608`
+- Tenant key: `meridian_health_global`
+- Dataset id: `meridian-health-source-v1-202608`
 - Dataset version: `v1`
 - Activation target: `staged`
 - Layer 1 release CSVs: 54 named CSV files; 38 enterprise-context files, 1 optional-domain context file, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files
 - Required package state: `generated_not_loaded`
-- Latest Phase A proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Audit_Proof_20260805T223224Z.zip`
+- Latest Phase A proof ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip`
 - Latest proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
 
 ## Planned Data Layers
@@ -30,7 +30,7 @@ Phase B lab execution is proceeding only inside the isolated `foundation_v2_phs_
 
 Narrative is the final governed layer. Do not generate final Home, architecture, Source, Intelligence, Moves or aVa prose until the relevant Layer 2 through Layer 5 data, relationships, deterministic findings, evidence and Cube/read-model reconciliations pass.
 
-The prior generic consultant-narrative pattern is explicitly rejected. PHS executive artifacts must be assembled from a typed advisory packet, not from a thin raw-file prompt. The same packet assembler must serve both pre-generated governed artifacts and live aVa answers so there is one truth path.
+The prior generic consultant-narrative pattern is explicitly rejected. Meridian Health executive artifacts must be assembled from a typed advisory packet, not from a thin raw-file prompt. The same packet assembler must serve both pre-generated governed artifacts and live aVa answers so there is one truth path.
 
 The packet contract must separate `modelVisiblePacket`, `auditLineage` and `retrievalDiagnostics`. Claude receives only the model-visible packet. The audit path must preserve tenant and dataset identity, audience role, module, artifact type, as-of date, enterprise profile, business units, strategic priorities, entities, relationships, governed metrics, deterministic findings, risks, initiatives, decisions pending, evidence, interview assertions, conflicts, missing evidence, allowed conclusions, prohibited conclusions, required topics, required entity mentions, governed numbers, visuals and finding/result hash.
 
@@ -43,7 +43,7 @@ Module boundaries:
 
 Role-specific lenses must be separate for Chief Procurement Officer, CDAO, CIO/CTO, health-plan executive and enterprise transformation sponsor. The lens changes emphasis and decision framing, not the underlying facts.
 
-PHS artifacts must use governed PHS context when relevant, including hospital and health-plan operating context, Epic, Clarity, Caboodle, Hadoop retirement, SQL Server data marts, SAS, analytics managed services, Epic managed services, Workday, ServiceNow/CMDB, AWS and Databricks decision state, BPO current-state baseline and contractual versus aspirational supplier commitments. Do not force every entity into every artifact, but reject any artifact that could be reused unchanged for another health system.
+Meridian Health artifacts must use governed Meridian Health context when relevant, including hospital and health-plan operating context, Epic, Clarity, Caboodle, Hadoop retirement, SQL Server data marts, SAS, analytics managed services, Epic managed services, Workday, ServiceNow/CMDB, AWS and Databricks decision state, BPO current-state baseline and contractual versus aspirational supplier commitments. Do not force every entity into every artifact, but reject any artifact that could be reused unchanged for another health system.
 
 Required narrative structures:
 
@@ -64,8 +64,8 @@ Final demo acceptance must show a side-by-side audit for each governed artifact:
 ## Execution Sequence
 
 1. Review the Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
-2. Add approved PHS-only schema/bootstrap through the governed lab lane; target schema is `foundation_v2_phs_demo`, not `foundation_v2_healthcare_gs`.
-3. Use the PHS source-volume reader that consumes `phs_healthcare_demo_package_manifest.json` and the 54 named Layer 1 release CSVs classified in the manifest; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
+2. Add approved Meridian Health-only schema/bootstrap through the governed lab lane; target schema is `foundation_v2_meridian_health_demo`, not `foundation_v2_healthcare_gs`.
+3. Use the Meridian Health source-volume reader that consumes `meridian_health_demo_package_manifest.json` and the 54 named Layer 1 release CSVs classified in the manifest; do not silently substitute the separate `clients/healthcare-demo-new` corpus root.
 4. Run source-volume plan mode and produce a file, row, field, hash, source-file context and target-contract manifest with no database connection.
 5. Run source-volume preflight against the isolated lab database using least-privilege writer context and roll back the transaction.
 6. Run the apply job as an ACA data-build job only after approval; write source release, files, source-file routing context, records, field values, parser execution and gate rows.
@@ -84,23 +84,23 @@ Final demo acceptance must show a side-by-side audit for each governed artifact:
 The non-mutating plan command is:
 
 ```bash
-npm run source:phs-healthcare-demo:data-layer-plan -- \
-  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
+npm run source:meridian-health-demo:data-layer-plan -- \
+  --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260805T223224Z \
   --out-dir /Users/anand/Downloads
 ```
 
-Latest plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Data_Layer_Plan_20260805T230818Z.zip`
+Latest plan ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Data_Layer_Plan_20260805T230818Z.zip`
 Latest plan SHA-256: `5f525057fec4202c173a4a65f0a5d522cb8635927bddd79e1a2083ce2544d783`
 
 Latest database target contract:
 
-- Schema: `foundation_v2_phs_demo`
-- Tenant key: `phs_health_demo_global`
-- Namespace: `phs-healthcare-demo-source-volume-v1`
-- Writer role: `foundation_v2_phs_demo_writer`
-- Reader role: `foundation_v2_phs_demo_reader`
-- Release alias: `phs-healthcare-demo-phase-a-source-volume-v1`
-- Expected source release: `phs-health-source-v1-202608:source-volume-v1:447910ac3c16`
+- Schema: `foundation_v2_meridian_health_demo`
+- Tenant key: `meridian_health_global`
+- Namespace: `meridian-health-source-volume-v1`
+- Writer role: `foundation_v2_meridian_health_demo_writer`
+- Reader role: `foundation_v2_meridian_health_demo_reader`
+- Release alias: `meridian-health-demo-phase-a-source-volume-v1`
+- Expected source release: `meridian-health-source-v1-202608:source-volume-v1:447910ac3c16`
 - Isolation scope: `ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY`
 
 Latest plan counts:
@@ -120,34 +120,34 @@ Latest plan counts:
 
 ## Layer 1 Executable Source-Volume Loader
 
-The PHS-specific Layer 1 loader is:
+The Meridian Health-specific Layer 1 loader is:
 
 ```bash
-npm run source:phs-healthcare-demo:layer1:self-test
-npm run source:phs-healthcare-demo:layer1:plan -- \
-  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
+npm run source:meridian-health-demo:layer1:self-test
+npm run source:meridian-health-demo:layer1:plan -- \
+  --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260805T223224Z \
   --out-dir /Users/anand/Downloads
 ```
 
-The loader reads only the approved `phs_healthcare_demo_package_manifest.json` and the 54 package-owned release CSVs classified in that manifest. It does not rely on folder names alone, does not reuse the separate `healthcare-demo-new` corpus root and does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
-For ACA execution, the loader may read an approved package ZIP through `PHS_HEALTHCARE_DEMO_PACKAGE_ZIP_URL`; it extracts the ZIP in-container and refuses to continue unless the SHA-256 matches `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`.
+The loader reads only the approved `meridian_health_demo_package_manifest.json` and the 54 package-owned release CSVs classified in that manifest. It does not rely on folder names alone, does not reuse the separate `healthcare-demo-new` corpus root and does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
+For ACA execution, the loader may read an approved package ZIP through `MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_URL`; it extracts the ZIP in-container and refuses to continue unless the SHA-256 matches `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`.
 
 Supported modes:
 
-- `migrate:dry` / `migrate:apply`: exact PHS schema/RLS migration proof for `foundation_v2_phs_demo`; no source rows are loaded by this step.
+- `migrate:dry` / `migrate:apply`: exact Meridian Health schema/RLS migration proof for `foundation_v2_meridian_health_demo`; no source rows are loaded by this step.
 - `self-test`: local SQL batch-order check with no package read and no database connection.
 - `plan`: package integrity, proof-ZIP SHA, source file, row, field and hash proof with no database connection.
 - `preflight`: isolated lab database read/write capability check inside a rolled-back transaction.
-- `apply`: ACA data-build job only; requires `PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA, exact PHS schema/role/tenant/namespace/release contract and an ACA job context.
+- `apply`: ACA data-build job only; requires `MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true`, the approved proof SHA, exact Meridian Health schema/role/tenant/namespace/release contract and an ACA job context.
 - `verify`: independent reader readback of exact source release identity/hash, all 54 filenames, per-file SHA/counts, source-file context rows, source record count, source field count, parser execution and gate counts.
 
 The apply command is intentionally hard-stopped until an isolated lab target and approved ACA data-build job are identified:
 
 ```bash
-PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true \
-PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553 \
-npm run source:phs-healthcare-demo:layer1:apply -- \
-  --package-dir /Users/anand/Downloads/phs_healthcare_demo_phase_a_20260805T223224Z \
+MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true \
+MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256=a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553 \
+npm run source:meridian-health-demo:layer1:apply -- \
+  --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260805T223224Z \
   --approved-proof-sha256 a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553
 ```
 
@@ -155,18 +155,18 @@ Layer 1 ACA execution has now passed schema apply, source-volume preflight, sour
 
 ## Layer 2 Adapter/Candidate Staging
 
-The PHS-specific Layer 2 commands are:
+The Meridian Health-specific Layer 2 commands are:
 
 ```bash
-npm run source:phs-healthcare-demo:layer2:migrate:dry
-npm run source:phs-healthcare-demo:layer2:migrate:apply
-npm run source:phs-healthcare-demo:layer2:self-test
-npm run source:phs-healthcare-demo:layer2:preflight
-npm run source:phs-healthcare-demo:layer2:apply
-npm run source:phs-healthcare-demo:layer2:verify
+npm run source:meridian-health-demo:layer2:migrate:dry
+npm run source:meridian-health-demo:layer2:migrate:apply
+npm run source:meridian-health-demo:layer2:self-test
+npm run source:meridian-health-demo:layer2:preflight
+npm run source:meridian-health-demo:layer2:apply
+npm run source:meridian-health-demo:layer2:verify
 ```
 
-Layer 2 writes only `normalized_objects`, `knowledge_candidates` and three adapter gate rows inside `foundation_v2_phs_demo`. It preserves field-level lineage from the loaded source-field slots and keeps every candidate in `pending_review`.
+Layer 2 writes only `normalized_objects`, `knowledge_candidates` and three adapter gate rows inside `foundation_v2_meridian_health_demo`. It preserves field-level lineage from the loaded source-field slots and keeps every candidate in `pending_review`.
 
 Expected Layer 2 counts:
 
@@ -176,22 +176,22 @@ Expected Layer 2 counts:
 
 Layer 2 ACA execution has now passed schema apply, source-adapter preflight, source-adapter apply and independent reader verify. The verified counts are 54,967 normalized objects, 54,967 knowledge candidates and three adapter gate rows, with exact source-to-adapter reconciliation across 54,967 source records and 1,640,131 source field dispositions.
 
-Layer 2 does not create canonical objects, publish baselines, refresh Cube, update product read models or activate the PHS tenant.
+Layer 2 does not create canonical objects, publish baselines, refresh Cube, update product read models or activate the Meridian Health tenant.
 
 ## Layer 3 Canonical Promotion
 
-The PHS-specific Layer 3 commands are:
+The Meridian Health-specific Layer 3 commands are:
 
 ```bash
-npm run source:phs-healthcare-demo:layer3:migrate:dry
-npm run source:phs-healthcare-demo:layer3:migrate:apply
-npm run source:phs-healthcare-demo:layer3:self-test
-npm run source:phs-healthcare-demo:layer3:preflight
-npm run source:phs-healthcare-demo:layer3:apply
-npm run source:phs-healthcare-demo:layer3:verify
+npm run source:meridian-health-demo:layer3:migrate:dry
+npm run source:meridian-health-demo:layer3:migrate:apply
+npm run source:meridian-health-demo:layer3:self-test
+npm run source:meridian-health-demo:layer3:preflight
+npm run source:meridian-health-demo:layer3:apply
+npm run source:meridian-health-demo:layer3:verify
 ```
 
-Layer 3 writes only the isolated PHS canonical-promotion substrate:
+Layer 3 writes only the isolated Meridian Health canonical-promotion substrate:
 
 - `canonical_entities`
 - `canonical_observations`
@@ -223,7 +223,7 @@ Expected Layer 3 proof shape:
 
 Layer 3 ACA execution has now passed schema apply, post-stop preflight, canonical promotion apply and independent reader verify. The independent verify proof records 54,967 promotion decisions, 794 canonical master entities, 47,941 transactional observations, 2,390 relationships, 16,000 evidence records and 4,370 event-native records, with `exact_match=true` and no defects. The canonical master entities include 10 vendors, 6 contract families, 24 legal instruments, 180 applications, 34 Epic modules and 5 BPO suppliers.
 
-A result with 54,967 canonical master entities is a defect. Layer 3 does not publish shared canonical objects, activate baselines, refresh Cube, update product read models, generate recommendations, bind runtime surfaces or activate the PHS tenant.
+A result with 54,967 canonical master entities is a defect. Layer 3 does not publish shared canonical objects, activate baselines, refresh Cube, update product read models, generate recommendations, bind runtime surfaces or activate the Meridian Health tenant.
 
 ## Event Context Architecture
 
@@ -239,7 +239,7 @@ Adapter priority after a future approved Layer 1 apply:
 
 - No source-volume apply without an approved package SHA.
 - No source-volume apply from local/non-ACA execution.
-- No source-volume apply into `foundation_v2_healthcare_gs` or any non-PHS schema.
+- No source-volume apply into `foundation_v2_healthcare_gs` or any non-Meridian Health schema.
 - No migration without an approved additive model-fit delta.
 - No Cube refresh until PostgreSQL source and canonical readbacks pass.
 - No product proof until read models are populated and reconciled.

@@ -1,7 +1,7 @@
--- PHS Healthcare demo isolated Layer 1 source-volume substrate.
+-- Meridian Health demo isolated Layer 1 source-volume substrate.
 --
 -- Scope:
---   Declares the additive, isolated schema contract required before the PHS
+--   Declares the additive, isolated schema contract required before the Meridian Health
 --   source-volume loader may run in an approved ACA data-build job.
 --
 -- Non-goals:
@@ -11,12 +11,12 @@
 
 BEGIN;
 
-CREATE SCHEMA IF NOT EXISTS foundation_v2_phs_demo;
+CREATE SCHEMA IF NOT EXISTS foundation_v2_meridian_health_demo;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'foundation_v2_phs_demo_writer') THEN
-    CREATE ROLE foundation_v2_phs_demo_writer
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'foundation_v2_meridian_health_demo_writer') THEN
+    CREATE ROLE foundation_v2_meridian_health_demo_writer
       NOLOGIN
       NOSUPERUSER
       NOCREATEDB
@@ -25,8 +25,8 @@ BEGIN
       NOBYPASSRLS
       NOINHERIT;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'foundation_v2_phs_demo_reader') THEN
-    CREATE ROLE foundation_v2_phs_demo_reader
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'foundation_v2_meridian_health_demo_reader') THEN
+    CREATE ROLE foundation_v2_meridian_health_demo_reader
       NOLOGIN
       NOSUPERUSER
       NOCREATEDB
@@ -37,7 +37,7 @@ BEGIN
   END IF;
 END $$;
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_releases (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_releases (
   source_release_id text PRIMARY KEY,
   tenant_key text NOT NULL,
   test_namespace text NOT NULL,
@@ -60,12 +60,12 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_releases (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (source_release_id, tenant_key, test_namespace),
   UNIQUE (tenant_key, test_namespace, release_version),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1'),
-  CHECK (source_release_id = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1'),
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
 );
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_files (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_files (
   source_file_id text PRIMARY KEY,
   source_release_id text NOT NULL,
   tenant_key text NOT NULL,
@@ -80,17 +80,17 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_files (
   writer_job_id text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (source_release_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_releases(source_release_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_releases(source_release_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   UNIQUE (source_file_id, tenant_key, test_namespace),
   UNIQUE (source_release_id, file_name),
   UNIQUE (source_release_id, content_sha256),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1'),
-  CHECK (source_release_id = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1'),
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
 );
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_file_context (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_file_context (
   source_file_id text PRIMARY KEY,
   source_release_id text NOT NULL,
   tenant_key text NOT NULL,
@@ -104,18 +104,18 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_file_context (
   content_sha256 text NOT NULL CHECK (content_sha256 ~ '^[a-f0-9]{64}$'),
   created_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (source_file_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_files(source_file_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_files(source_file_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   FOREIGN KEY (source_release_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_releases(source_release_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_releases(source_release_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   UNIQUE (source_release_id, source_file_id),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1'),
-  CHECK (source_release_id = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1'),
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
 );
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_records (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_records (
   source_record_id text PRIMARY KEY,
   source_file_id text NOT NULL,
   source_release_id text NOT NULL,
@@ -129,20 +129,20 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_records (
   writer_job_id text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (source_file_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_files(source_file_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_files(source_file_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   FOREIGN KEY (source_release_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_releases(source_release_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_releases(source_release_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   UNIQUE (source_record_id, tenant_key, test_namespace),
   UNIQUE (source_file_id, source_row_number),
   UNIQUE (source_release_id, source_row_hash),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1'),
-  CHECK (source_release_id = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1'),
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
 );
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_field_values (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_field_values (
   source_field_value_id text PRIMARY KEY,
   source_record_id text NOT NULL,
   source_file_id text NOT NULL,
@@ -177,22 +177,22 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.source_field_values (
     OR (target_object_type IS NOT NULL AND target_field_name IS NOT NULL)
   ),
   FOREIGN KEY (source_record_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_records(source_record_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_records(source_record_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   FOREIGN KEY (source_file_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_files(source_file_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_files(source_file_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   FOREIGN KEY (source_release_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_releases(source_release_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_releases(source_release_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   UNIQUE (source_field_value_id, tenant_key, test_namespace),
   UNIQUE (source_record_id, source_field_id),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1'),
-  CHECK (source_release_id = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1'),
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
 );
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.parser_executions (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.parser_executions (
   parser_execution_id text PRIMARY KEY,
   source_release_id text NOT NULL,
   tenant_key text NOT NULL,
@@ -206,15 +206,15 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.parser_executions (
   writer_job_id text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (source_release_id, tenant_key, test_namespace)
-    REFERENCES foundation_v2_phs_demo.source_releases(source_release_id, tenant_key, test_namespace)
+    REFERENCES foundation_v2_meridian_health_demo.source_releases(source_release_id, tenant_key, test_namespace)
     ON DELETE RESTRICT,
   UNIQUE (parser_execution_id, tenant_key, test_namespace),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1'),
-  CHECK (source_release_id = 'phs-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1'),
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
 );
 
-CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.gate_results (
+CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.gate_results (
   gate_result_id text PRIMARY KEY,
   tenant_key text NOT NULL,
   test_namespace text NOT NULL,
@@ -232,14 +232,14 @@ CREATE TABLE IF NOT EXISTS foundation_v2_phs_demo.gate_results (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (gate_result_id, tenant_key, test_namespace),
   UNIQUE (tenant_key, test_namespace, gate_id, writer_job_id),
-  CHECK (tenant_key = 'phs_health_demo_global'),
-  CHECK (test_namespace = 'phs-healthcare-demo-source-volume-v1')
+  CHECK (tenant_key = 'meridian_health_global'),
+  CHECK (test_namespace = 'meridian-health-source-volume-v1')
 );
 
-GRANT USAGE ON SCHEMA foundation_v2_phs_demo TO foundation_v2_phs_demo_writer;
-GRANT USAGE ON SCHEMA foundation_v2_phs_demo TO foundation_v2_phs_demo_reader;
-GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA foundation_v2_phs_demo TO foundation_v2_phs_demo_writer;
-GRANT SELECT ON ALL TABLES IN SCHEMA foundation_v2_phs_demo TO foundation_v2_phs_demo_reader;
+GRANT USAGE ON SCHEMA foundation_v2_meridian_health_demo TO foundation_v2_meridian_health_demo_writer;
+GRANT USAGE ON SCHEMA foundation_v2_meridian_health_demo TO foundation_v2_meridian_health_demo_reader;
+GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA foundation_v2_meridian_health_demo TO foundation_v2_meridian_health_demo_writer;
+GRANT SELECT ON ALL TABLES IN SCHEMA foundation_v2_meridian_health_demo TO foundation_v2_meridian_health_demo_reader;
 
 DO $$
 DECLARE
@@ -248,13 +248,13 @@ DECLARE
   release_check text;
 BEGIN
   FOREACH rel IN ARRAY ARRAY[
-    'foundation_v2_phs_demo.source_releases'::regclass,
-    'foundation_v2_phs_demo.source_files'::regclass,
-    'foundation_v2_phs_demo.source_file_context'::regclass,
-    'foundation_v2_phs_demo.source_records'::regclass,
-    'foundation_v2_phs_demo.source_field_values'::regclass,
-    'foundation_v2_phs_demo.parser_executions'::regclass,
-    'foundation_v2_phs_demo.gate_results'::regclass
+    'foundation_v2_meridian_health_demo.source_releases'::regclass,
+    'foundation_v2_meridian_health_demo.source_files'::regclass,
+    'foundation_v2_meridian_health_demo.source_file_context'::regclass,
+    'foundation_v2_meridian_health_demo.source_records'::regclass,
+    'foundation_v2_meridian_health_demo.source_field_values'::regclass,
+    'foundation_v2_meridian_health_demo.parser_executions'::regclass,
+    'foundation_v2_meridian_health_demo.gate_results'::regclass
   ]
   LOOP
     rel_name := split_part(rel::text, '.', 2);
@@ -262,45 +262,45 @@ BEGIN
     IF EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'foundation_v2_phs_demo'
+      WHERE table_schema = 'foundation_v2_meridian_health_demo'
         AND table_name = rel_name
         AND column_name = 'source_release_id'
     ) THEN
-      release_check := ' AND source_release_id = ''phs-health-source-v1-202608:source-volume-v1:447910ac3c16''
+      release_check := ' AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
                          AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)';
     END IF;
 
     EXECUTE format('ALTER TABLE %s ENABLE ROW LEVEL SECURITY', rel);
     EXECUTE format('ALTER TABLE %s FORCE ROW LEVEL SECURITY', rel);
-    EXECUTE format('DROP POLICY IF EXISTS phs_demo_select ON %s', rel);
+    EXECUTE format('DROP POLICY IF EXISTS meridian_health_demo_select ON %s', rel);
     EXECUTE format(
-      'CREATE POLICY phs_demo_select ON %s
+      'CREATE POLICY meridian_health_demo_select ON %s
          FOR SELECT
-         TO foundation_v2_phs_demo_writer, foundation_v2_phs_demo_reader
+         TO foundation_v2_meridian_health_demo_writer, foundation_v2_meridian_health_demo_reader
          USING (
-           tenant_key = ''phs_health_demo_global''
+           tenant_key = ''meridian_health_global''
            AND tenant_key = current_setting(''app.tenant_key'', true)
-           AND test_namespace = ''phs-healthcare-demo-source-volume-v1''
+           AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''phs-health-source-v1-202608:source-volume-v1:447910ac3c16''
-           AND current_setting(''app.foundation_v2_release_alias'', true) = ''phs-healthcare-demo-phase-a-source-volume-v1''
+           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
            %s
          )',
       rel,
       release_check
     );
-    EXECUTE format('DROP POLICY IF EXISTS phs_demo_insert ON %s', rel);
+    EXECUTE format('DROP POLICY IF EXISTS meridian_health_demo_insert ON %s', rel);
     EXECUTE format(
-      'CREATE POLICY phs_demo_insert ON %s
+      'CREATE POLICY meridian_health_demo_insert ON %s
          FOR INSERT
-         TO foundation_v2_phs_demo_writer
+         TO foundation_v2_meridian_health_demo_writer
          WITH CHECK (
-           tenant_key = ''phs_health_demo_global''
+           tenant_key = ''meridian_health_global''
            AND tenant_key = current_setting(''app.tenant_key'', true)
-           AND test_namespace = ''phs-healthcare-demo-source-volume-v1''
+           AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''phs-health-source-v1-202608:source-volume-v1:447910ac3c16''
-           AND current_setting(''app.foundation_v2_release_alias'', true) = ''phs-healthcare-demo-phase-a-source-volume-v1''
+           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
            %s
          )',
       rel,
@@ -309,16 +309,16 @@ BEGIN
   END LOOP;
 END $$;
 
-COMMENT ON SCHEMA foundation_v2_phs_demo IS
-  'Isolated PHS Healthcare demo source-volume schema; Layer 1 only, no product activation.';
+COMMENT ON SCHEMA foundation_v2_meridian_health_demo IS
+  'Isolated Meridian Health demo source-volume schema; Layer 1 only, no product activation.';
 
-COMMENT ON TABLE foundation_v2_phs_demo.source_file_context IS
-  'PHS source-file routing metadata required by later source adapters; inserted atomically with source files.';
+COMMENT ON TABLE foundation_v2_meridian_health_demo.source_file_context IS
+  'Meridian Health source-file routing metadata required by later source adapters; inserted atomically with source files.';
 
-COMMENT ON ROLE foundation_v2_phs_demo_writer IS
-  'No-login NOINHERIT writer role for approved PHS Healthcare demo Layer 1 ACA data-build jobs only.';
+COMMENT ON ROLE foundation_v2_meridian_health_demo_writer IS
+  'No-login NOINHERIT writer role for approved Meridian Health demo Layer 1 ACA data-build jobs only.';
 
-COMMENT ON ROLE foundation_v2_phs_demo_reader IS
-  'No-login NOINHERIT reader role for independent PHS Healthcare demo Layer 1 readback verification only.';
+COMMENT ON ROLE foundation_v2_meridian_health_demo_reader IS
+  'No-login NOINHERIT reader role for independent Meridian Health demo Layer 1 readback verification only.';
 
 COMMIT;

@@ -1,11 +1,11 @@
 cubes:
-  - name: phs_vendor_portfolio
-    sql_table: foundation_v2_phs_cube_canary.phs_vendor_portfolio_v1
+  - name: meridian_health_vendor_portfolio
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1
     public: true
     joins:
-      - name: phs_contract_families
+      - name: meridian_health_contract_families
         relationship: one_to_many
-        sql: "{CUBE.tenant_key} = {phs_contract_families.tenant_key} AND {CUBE.vendor_id} = {phs_contract_families.vendor_id}"
+        sql: "{CUBE.tenant_key} = {meridian_health_contract_families.tenant_key} AND {CUBE.vendor_id} = {meridian_health_contract_families.vendor_id}"
     dimensions:
       - name: tenant_key
         sql: tenant_key
@@ -52,29 +52,29 @@ cubes:
         format: currency
         drill_members: [supplier_category, risk_tier, legal_name, vendor_id]
     hierarchies:
-      - name: phs_vendor_360
-        title: PHS Vendor 360
+      - name: meridian_health_vendor_360
+        title: Meridian Health Vendor 360
         levels: [supplier_category, risk_tier, legal_name, vendor_id]
 
-  - name: phs_contract_families
-    sql_table: foundation_v2_phs_cube_canary.phs_contract_family_v1
+  - name: meridian_health_contract_families
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_contract_family_v1
     public: true
     joins:
-      - name: phs_vendor_portfolio
+      - name: meridian_health_vendor_portfolio
         relationship: many_to_one
-        sql: "{CUBE.tenant_key} = {phs_vendor_portfolio.tenant_key} AND {CUBE.vendor_id} = {phs_vendor_portfolio.vendor_id}"
-      - name: phs_contract_scope
+        sql: "{CUBE.tenant_key} = {meridian_health_vendor_portfolio.tenant_key} AND {CUBE.vendor_id} = {meridian_health_vendor_portfolio.vendor_id}"
+      - name: meridian_health_contract_scope
         relationship: one_to_many
-        sql: "{CUBE.tenant_key} = {phs_contract_scope.tenant_key} AND {CUBE.contract_family_id} = {phs_contract_scope.contract_family_id}"
-      - name: phs_spend_invoice_history
+        sql: "{CUBE.tenant_key} = {meridian_health_contract_scope.tenant_key} AND {CUBE.contract_family_id} = {meridian_health_contract_scope.contract_family_id}"
+      - name: meridian_health_spend_invoice_history
         relationship: one_to_many
-        sql: "{CUBE.tenant_key} = {phs_spend_invoice_history.tenant_key} AND {CUBE.contract_family_id} = {phs_spend_invoice_history.contract_family_id}"
-      - name: phs_sla_itsm_performance
+        sql: "{CUBE.tenant_key} = {meridian_health_spend_invoice_history.tenant_key} AND {CUBE.contract_family_id} = {meridian_health_spend_invoice_history.contract_family_id}"
+      - name: meridian_health_sla_itsm_performance
         relationship: one_to_many
-        sql: "{CUBE.tenant_key} = {phs_sla_itsm_performance.tenant_key} AND {CUBE.contract_family_id} = {phs_sla_itsm_performance.contract_id}"
-      - name: phs_service_credits
+        sql: "{CUBE.tenant_key} = {meridian_health_sla_itsm_performance.tenant_key} AND {CUBE.contract_family_id} = {meridian_health_sla_itsm_performance.contract_id}"
+      - name: meridian_health_service_credits
         relationship: one_to_many
-        sql: "{CUBE.tenant_key} = {phs_service_credits.tenant_key} AND {CUBE.contract_family_id} = {phs_service_credits.contract_id}"
+        sql: "{CUBE.tenant_key} = {meridian_health_service_credits.tenant_key} AND {CUBE.contract_family_id} = {meridian_health_service_credits.contract_id}"
     dimensions:
       - name: tenant_key
         sql: tenant_key
@@ -121,13 +121,13 @@ cubes:
         drill_members:
           [renewal_window, evidence_tier, contract_name, contract_family_id]
     hierarchies:
-      - name: phs_contract_family
-        title: PHS Contract Family
+      - name: meridian_health_contract_family
+        title: Meridian Health Contract Family
         levels:
           [renewal_window, evidence_tier, contract_name, contract_family_id]
 
-  - name: phs_contract_scope
-    sql_table: foundation_v2_phs_cube_canary.phs_contract_scope_v1
+  - name: meridian_health_contract_scope
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_contract_scope_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -182,13 +182,13 @@ cubes:
             scope_relationship_id,
           ]
     hierarchies:
-      - name: phs_contract_to_service_application
-        title: PHS Contract to Service Application
+      - name: meridian_health_contract_to_service_application
+        title: Meridian Health Contract to Service Application
         levels:
           [vendor_id, contract_family_id, business_service_ref, application_ref]
 
-  - name: phs_spend_invoice_history
-    sql_table: foundation_v2_phs_cube_canary.phs_spend_invoice_history_v1
+  - name: meridian_health_spend_invoice_history
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_spend_invoice_history_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -226,12 +226,12 @@ cubes:
         type: sum
         drill_members: [vendor_id, contract_family_id, invoice_month]
     hierarchies:
-      - name: phs_spend_history
-        title: PHS Spend History
+      - name: meridian_health_spend_history
+        title: Meridian Health Spend History
         levels: [vendor_id, contract_family_id, invoice_month]
 
-  - name: phs_workforce_rate_card_economics
-    sql_table: foundation_v2_phs_cube_canary.phs_workforce_rate_card_economics_v1
+  - name: meridian_health_workforce_rate_card_economics
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_workforce_rate_card_economics_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -264,12 +264,12 @@ cubes:
         type: avg
         drill_members: [contract_family_id, role_title, location_model]
     hierarchies:
-      - name: phs_rate_card_economics
-        title: PHS Rate Card Economics
+      - name: meridian_health_rate_card_economics
+        title: Meridian Health Rate Card Economics
         levels: [contract_family_id, role_title, location_model]
 
-  - name: phs_sla_itsm_performance
-    sql_table: foundation_v2_phs_cube_canary.phs_sla_itsm_performance_v1
+  - name: meridian_health_sla_itsm_performance
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_sla_itsm_performance_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -326,13 +326,13 @@ cubes:
         drill_members:
           [service_tower, vendor_id, contract_id, service_ref, application_ref]
     hierarchies:
-      - name: phs_service_performance
-        title: PHS Service Performance
+      - name: meridian_health_service_performance
+        title: Meridian Health Service Performance
         levels:
           [service_tower, vendor_id, contract_id, service_ref, application_ref]
 
-  - name: phs_service_credits
-    sql_table: foundation_v2_phs_cube_canary.phs_service_credit_v1
+  - name: meridian_health_service_credits
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_service_credit_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -379,12 +379,12 @@ cubes:
         drill_members:
           [claim_state, contract_id, service_ref, service_credit_id]
     hierarchies:
-      - name: phs_service_credit_recovery
-        title: PHS Service Credit Recovery
+      - name: meridian_health_service_credit_recovery
+        title: Meridian Health Service Credit Recovery
         levels: [claim_state, contract_id, service_ref]
 
-  - name: phs_application_dependencies
-    sql_table: foundation_v2_phs_cube_canary.phs_application_dependency_v1
+  - name: meridian_health_application_dependencies
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_application_dependency_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -444,12 +444,12 @@ cubes:
             application_id,
           ]
     hierarchies:
-      - name: phs_application_roadmap
-        title: PHS Application Roadmap
+      - name: meridian_health_application_roadmap
+        title: Meridian Health Application Roadmap
         levels: [owner_function, lifecycle, criticality, application_name]
 
-  - name: phs_renewal_exit_terms
-    sql_table: foundation_v2_phs_cube_canary.phs_renewal_exit_term_v1
+  - name: meridian_health_renewal_exit_terms
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_renewal_exit_term_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -475,12 +475,12 @@ cubes:
         type: sum
         drill_members: [renewal_window, contract_family_id]
     hierarchies:
-      - name: phs_renewal_exit
-        title: PHS Renewal Exit
+      - name: meridian_health_renewal_exit
+        title: Meridian Health Renewal Exit
         levels: [renewal_window, contract_family_id]
 
-  - name: phs_program_dependencies
-    sql_table: foundation_v2_phs_cube_canary.phs_program_dependency_v1
+  - name: meridian_health_program_dependencies
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_program_dependency_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -507,12 +507,12 @@ cubes:
         type: sum
         drill_members: [program_ref]
     hierarchies:
-      - name: phs_program_modernization
-        title: PHS Program Modernization
+      - name: meridian_health_program_modernization
+        title: Meridian Health Program Modernization
         levels: [program_ref]
 
-  - name: phs_enterprise_outcomes
-    sql_table: foundation_v2_phs_cube_canary.phs_enterprise_outcome_v1
+  - name: meridian_health_enterprise_outcomes
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_enterprise_outcome_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -544,12 +544,12 @@ cubes:
         drill_members:
           [outcome_category, trend_state, evidence_status, outcome_name]
     hierarchies:
-      - name: phs_outcomes
-        title: PHS Outcomes
+      - name: meridian_health_outcomes
+        title: Meridian Health Outcomes
         levels: [outcome_category, trend_state, evidence_status, outcome_name]
 
-  - name: phs_bpo_baseline
-    sql_table: foundation_v2_phs_cube_canary.phs_bpo_baseline_v1
+  - name: meridian_health_bpo_baseline
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_bpo_baseline_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -572,6 +572,9 @@ cubes:
       - name: automation_opportunity
         sql: automation_opportunity
         type: string
+      - name: baseline_cost_time_horizon
+        sql: baseline_cost_time_horizon
+        type: string
     measures:
       - name: count
         type: count
@@ -585,17 +588,42 @@ cubes:
         type: sum
         format: currency
         drill_members: [function_ref, automation_opportunity, process_name]
+      - name: five_year_current_state_baseline_cost
+        sql: five_year_current_state_baseline_cost
+        type: sum
+        format: currency
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: annualized_current_state_cost
+        sql: annualized_current_state_cost
+        type: sum
+        format: currency
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: five_year_labor_cost
+        sql: five_year_labor_cost
+        type: sum
+        format: currency
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: five_year_technology_platform_cost
+        sql: five_year_technology_platform_cost
+        type: sum
+        format: currency
+        drill_members: [function_ref, automation_opportunity, process_name]
+      - name: five_year_controls_or_other_cost
+        sql: five_year_controls_or_other_cost
+        type: sum
+        format: currency
+        drill_members: [function_ref, automation_opportunity, process_name]
       - name: current_resource_count
         sql: current_resource_count
         type: sum
         drill_members: [function_ref, automation_opportunity, process_name]
     hierarchies:
-      - name: phs_bpo_baseline
-        title: PHS BPO Baseline
+      - name: meridian_health_bpo_baseline
+        title: Meridian Health BPO Baseline
         levels: [function_ref, automation_opportunity, process_name]
 
-  - name: phs_supplier_proposals_bafo
-    sql_table: foundation_v2_phs_cube_canary.phs_supplier_proposal_bafo_v1
+  - name: meridian_health_supplier_proposals_bafo
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_supplier_proposal_bafo_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -639,12 +667,12 @@ cubes:
         format: currency
         drill_members: [invitation_state, supplier_id]
     hierarchies:
-      - name: phs_supplier_comparison
-        title: PHS Supplier Comparison
+      - name: meridian_health_supplier_comparison
+        title: Meridian Health Supplier Comparison
         levels: [invitation_state, supplier_id]
 
-  - name: phs_rebadge_transition_commitments
-    sql_table: foundation_v2_phs_cube_canary.phs_rebadge_transition_commitment_v1
+  - name: meridian_health_rebadge_transition_commitments
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_rebadge_transition_commitment_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -670,6 +698,12 @@ cubes:
       - name: contractual_or_proposed_status
         sql: contractual_or_proposed_status
         type: string
+      - name: rebadge_strategy
+        sql: rebadge_strategy
+        type: string
+      - name: rebadge_denominator_policy
+        sql: rebadge_denominator_policy
+        type: string
     measures:
       - name: count
         type: count
@@ -680,18 +714,28 @@ cubes:
         type: sum
         drill_members:
           [supplier_id, function_ref, process_name, employee_cohort]
+      - name: eligible_unique_current_workforce_count
+        sql: eligible_unique_current_workforce_count
+        type: max
+        drill_members:
+          [supplier_id, function_ref, process_name, employee_cohort]
+      - name: source_proposed_rebadge_count
+        sql: source_proposed_rebadge_count
+        type: sum
+        drill_members:
+          [supplier_id, function_ref, process_name, employee_cohort]
       - name: kt_plan_count
         sql: kt_plan_count
         type: sum
         drill_members:
           [supplier_id, function_ref, process_name, employee_cohort]
     hierarchies:
-      - name: phs_rebadge_transition
-        title: PHS Rebadge Transition
+      - name: meridian_health_rebadge_transition
+        title: Meridian Health Rebadge Transition
         levels: [supplier_id, function_ref, process_name, employee_cohort]
 
-  - name: phs_ai_automation_commitments
-    sql_table: foundation_v2_phs_cube_canary.phs_ai_automation_commitment_v1
+  - name: meridian_health_ai_automation_commitments
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_ai_automation_commitment_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -763,12 +807,12 @@ cubes:
             ai_rpa_use_case,
           ]
     hierarchies:
-      - name: phs_automation_commitments
-        title: PHS Automation Commitments
+      - name: meridian_health_automation_commitments
+        title: Meridian Health Automation Commitments
         levels: [automation_basis, commitment_state, supplier_id, process_name]
 
-  - name: phs_retained_org_scenarios
-    sql_table: foundation_v2_phs_cube_canary.phs_retained_org_scenario_v1
+  - name: meridian_health_retained_org_scenarios
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_retained_org_scenario_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -785,8 +829,8 @@ cubes:
       - name: sourcing_model
         sql: sourcing_model
         type: string
-      - name: phs_retained_function
-        sql: phs_retained_function
+      - name: meridian_health_retained_function
+        sql: meridian_health_retained_function
         type: string
       - name: retained_role
         sql: retained_role
@@ -801,7 +845,7 @@ cubes:
           [
             sourcing_model,
             supplier_id,
-            phs_retained_function,
+            meridian_health_retained_function,
             retained_role,
             location,
           ]
@@ -812,7 +856,7 @@ cubes:
           [
             sourcing_model,
             supplier_id,
-            phs_retained_function,
+            meridian_health_retained_function,
             retained_role,
             location,
           ]
@@ -823,7 +867,7 @@ cubes:
           [
             sourcing_model,
             supplier_id,
-            phs_retained_function,
+            meridian_health_retained_function,
             retained_role,
             location,
           ]
@@ -835,18 +879,23 @@ cubes:
           [
             sourcing_model,
             supplier_id,
-            phs_retained_function,
+            meridian_health_retained_function,
             retained_role,
             location,
           ]
     hierarchies:
-      - name: phs_retained_org
-        title: PHS Retained Organization
+      - name: meridian_health_retained_org
+        title: Meridian Health Retained Organization
         levels:
-          [sourcing_model, supplier_id, phs_retained_function, retained_role]
+          [
+            sourcing_model,
+            supplier_id,
+            meridian_health_retained_function,
+            retained_role,
+          ]
 
-  - name: phs_normalized_tco_inputs
-    sql_table: foundation_v2_phs_cube_canary.phs_normalized_tco_recommendation_input_v1
+  - name: meridian_health_normalized_tco_inputs
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -899,12 +948,12 @@ cubes:
         format: currency
         drill_members: [recommendation_state, scenario, supplier_id]
     hierarchies:
-      - name: phs_normalized_recommendation
-        title: PHS Normalized Recommendation
+      - name: meridian_health_normalized_recommendation
+        title: Meridian Health Normalized Recommendation
         levels: [recommendation_state, scenario, supplier_id]
 
-  - name: phs_event_context_snapshot
-    sql_table: foundation_v2_phs_cube_canary.phs_event_context_snapshot_v1
+  - name: meridian_health_event_context_snapshot
+    sql_table: foundation_v2_meridian_health_cube_canary.meridian_health_event_context_snapshot_v1
     public: true
     dimensions:
       - name: tenant_key
@@ -948,6 +997,6 @@ cubes:
         drill_members:
           [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
     hierarchies:
-      - name: phs_event_snapshot
-        title: PHS Event Snapshot
+      - name: meridian_health_event_snapshot
+        title: Meridian Health Event Snapshot
         levels: [event_id, event_context_snapshot_id, snapshot_version]

@@ -12,16 +12,16 @@ import {
   writeJson,
 } from "./golden-slice-support.mjs";
 
-const MIGRATION_NAME = "20260806132000_foundation_v2_phs_demo_layer4_projections.sql";
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const TENANT_KEY = "phs_health_demo_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const MIGRATION_NAME = "20260806132000_foundation_v2_meridian_health_demo_layer4_projections.sql";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const TENANT_KEY = "meridian_health_global";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
 const LAYER4_TABLES = ["event_context_snapshots", "projection_authority", "projection_rows", "projection_field_lineage"];
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_LAYER4_SCHEMA_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_LAYER4_SCHEMA_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
@@ -32,7 +32,7 @@ async function main() {
   const url = databaseUrl();
   if (!url) throw new Error("ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL or DATABASE_URL is required");
   const { Client } = await import("pg");
-  const client = new Client(postgresClientOptions(url, "phs-healthcare-demo-layer4-schema"));
+  const client = new Client(postgresClientOptions(url, "meridian-health-demo-layer4-schema"));
   await client.connect();
   try {
     await ensureMigrationLedger(client);
@@ -54,10 +54,10 @@ async function main() {
     const proof = {
       status:
         defects.length > 0
-          ? "PHS_HEALTHCARE_DEMO_LAYER4_SCHEMA_FAILED"
+          ? "MERIDIAN_HEALTH_DEMO_LAYER4_SCHEMA_FAILED"
           : args.mode === "dry"
-            ? "PHS_HEALTHCARE_DEMO_LAYER4_SCHEMA_DRY_RUN_PASSED"
-            : "PHS_HEALTHCARE_DEMO_LAYER4_SCHEMA_APPLIED",
+            ? "MERIDIAN_HEALTH_DEMO_LAYER4_SCHEMA_DRY_RUN_PASSED"
+            : "MERIDIAN_HEALTH_DEMO_LAYER4_SCHEMA_APPLIED",
       generated_at: new Date().toISOString(),
       mode: args.mode,
       mutation_executed: args.mode === "apply" && applied.length > 0,
@@ -79,10 +79,10 @@ async function main() {
       product_activation_executed: false,
       cube_refresh_executed: false,
     };
-    writeJson(proofRef(args.outDir, "PHS_LAYER4_SCHEMA_PROOF.json"), proof);
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_LAYER4_SCHEMA_PROOF.json"), proof);
     console.log(JSON.stringify(proof, null, 2));
     if (args.emitProofBundle) emitProofBundle(args.outDir);
-    if (proof.status === "PHS_HEALTHCARE_DEMO_LAYER4_SCHEMA_FAILED") process.exitCode = 1;
+    if (proof.status === "MERIDIAN_HEALTH_DEMO_LAYER4_SCHEMA_FAILED") process.exitCode = 1;
   } finally {
     await client.end();
   }
@@ -138,7 +138,7 @@ async function schemaReadback(client) {
        FROM pg_roles
       WHERE rolname=ANY($1::text[])
       ORDER BY rolname`,
-    [["foundation_v2_phs_demo_writer", "foundation_v2_phs_demo_reader"]],
+    [["foundation_v2_meridian_health_demo_writer", "foundation_v2_meridian_health_demo_reader"]],
   );
   return {
     tables: tables.rows.map((row) => row.table_name),
@@ -163,7 +163,7 @@ function schemaDefects(migrationLedger, readback) {
     }
   }
   const roleNames = new Set(readback.roles.map((row) => row.rolname));
-  for (const role of ["foundation_v2_phs_demo_writer", "foundation_v2_phs_demo_reader"]) {
+  for (const role of ["foundation_v2_meridian_health_demo_writer", "foundation_v2_meridian_health_demo_reader"]) {
     if (!roleNames.has(role)) defects.push(`role_missing:${role}`);
   }
   for (const role of readback.roles) {
@@ -177,13 +177,13 @@ function schemaDefects(migrationLedger, readback) {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_LAYER4_SCHEMA_MODE || "dry",
+    mode: process.env.MERIDIAN_HEALTH_LAYER4_SCHEMA_MODE || "dry",
     outDir:
-      process.env.PHS_LAYER4_SCHEMA_OUT_DIR ||
-      path.join("/tmp", `phs-healthcare-demo-layer4-schema-${new Date().toISOString().replace(/[:.]/g, "-")}`),
+      process.env.MERIDIAN_HEALTH_LAYER4_SCHEMA_OUT_DIR ||
+      path.join("/tmp", `meridian-health-demo-layer4-schema-${new Date().toISOString().replace(/[:.]/g, "-")}`),
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
-      process.env.PHS_LAYER4_SCHEMA_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_LAYER4_SCHEMA_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];

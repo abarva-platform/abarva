@@ -12,12 +12,12 @@ import {
   writeMarkdown,
 } from "./golden-slice-support.mjs";
 
-const MIGRATION_NAME = "20260806041000_foundation_v2_phs_demo_canonical_promotion.sql";
+const MIGRATION_NAME = "20260806041000_foundation_v2_meridian_health_demo_canonical_promotion.sql";
 const EXPECTED_MIGRATION_SHA256 = "b3d0fb1548df1ee8f98113b692af8290063f8a133a39ed6f7e2d95e627d753f9";
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const TENANT_KEY = "phs_health_demo_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const TENANT_KEY = "meridian_health_global";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
 const LAYER3_TABLES = [
   "canonical_entities",
   "canonical_observations",
@@ -41,7 +41,7 @@ const LAYER2_COUNTS = {
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
@@ -50,13 +50,13 @@ async function main() {
   const sql = fs.readFileSync(migrationPath, "utf8");
   const fileSha256 = sha256(sql);
   if (fileSha256 !== EXPECTED_MIGRATION_SHA256) {
-    throw new Error(`PHS Layer 3 schema migration SHA mismatch: expected ${EXPECTED_MIGRATION_SHA256}, got ${fileSha256}`);
+    throw new Error(`Meridian Health Layer 3 schema migration SHA mismatch: expected ${EXPECTED_MIGRATION_SHA256}, got ${fileSha256}`);
   }
 
   const url = databaseUrl();
   if (!url) throw new Error("ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL or DATABASE_URL is required");
   const { Client } = await import("pg");
-  const client = new Client(postgresClientOptions(url, "phs-healthcare-demo-layer3-schema"));
+  const client = new Client(postgresClientOptions(url, "meridian-health-demo-layer3-schema"));
   await client.connect();
   try {
     await ensureMigrationLedger(client);
@@ -79,10 +79,10 @@ async function main() {
     const proof = {
       status:
         defects.length > 0
-          ? "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_FAILED"
+          ? "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_FAILED"
           : args.mode === "dry"
-            ? "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_DRY_RUN_PASSED"
-            : "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_APPLIED",
+            ? "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_DRY_RUN_PASSED"
+            : "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_APPLIED",
       generated_at: new Date().toISOString(),
       mode: args.mode,
       mutation_executed: args.mode === "apply" && applied.length > 0,
@@ -107,11 +107,11 @@ async function main() {
       product_activation_executed: false,
       cube_refresh_executed: false,
     };
-    writeJson(path.join(args.outDir, "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_PROOF.json"), proof);
-    writeMarkdown(path.join(args.outDir, "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_PROOF.md"), schemaMarkdown(proof));
+    writeJson(path.join(args.outDir, "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_PROOF.json"), proof);
+    writeMarkdown(path.join(args.outDir, "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_PROOF.md"), schemaMarkdown(proof));
     console.log(JSON.stringify(proof, null, 2));
     if (args.emitProofBundle) emitProofBundle(args.outDir);
-    if (proof.status === "PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_FAILED") process.exitCode = 1;
+    if (proof.status === "MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_FAILED") process.exitCode = 1;
   } finally {
     await client.end();
   }
@@ -171,7 +171,7 @@ async function schemaReadback(client) {
        FROM pg_roles
       WHERE rolname = ANY($1::text[])
       ORDER BY rolname`,
-    [["foundation_v2_phs_demo_writer", "foundation_v2_phs_demo_reader"]],
+    [["foundation_v2_meridian_health_demo_writer", "foundation_v2_meridian_health_demo_reader"]],
   );
   const sourceCounts = await client.query(
     `
@@ -240,7 +240,7 @@ function schemaDefects(migrationLedger, readback) {
     if (Number(readback.layer2_counts[key] || 0) !== expected) defects.push(`layer2_count_mismatch:${key}:${readback.layer2_counts[key]}:expected:${expected}`);
   }
   const roleNames = new Set(readback.roles.map((row) => row.rolname));
-  for (const role of ["foundation_v2_phs_demo_writer", "foundation_v2_phs_demo_reader"]) {
+  for (const role of ["foundation_v2_meridian_health_demo_writer", "foundation_v2_meridian_health_demo_reader"]) {
     if (!roleNames.has(role)) defects.push(`role_missing:${role}`);
   }
   for (const role of readback.roles) {
@@ -254,13 +254,13 @@ function schemaDefects(migrationLedger, readback) {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_MODE || "dry",
+    mode: process.env.MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_MODE || "dry",
     outDir:
-      process.env.PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_OUT_DIR ||
-      `/tmp/phs-healthcare-demo-layer3-schema-${new Date().toISOString().replace(/[:.]/g, "-")}`,
+      process.env.MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_OUT_DIR ||
+      `/tmp/meridian-health-demo-layer3-schema-${new Date().toISOString().replace(/[:.]/g, "-")}`,
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
-      process.env.PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_DEMO_LAYER3_SCHEMA_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -290,7 +290,7 @@ function sanitizedDatabaseTarget(url) {
 }
 
 function schemaMarkdown(proof) {
-  return `# PHS Healthcare Demo Layer 3 Schema Proof
+  return `# Meridian Health Layer 3 Schema Proof
 
 Status: ${proof.status}
 
@@ -303,7 +303,7 @@ Status: ${proof.status}
 - Current Layer 3 rows: ${proof.canonical_promotion_current_rows}
 - Defects: ${proof.defects.length}
 
-This proof is limited to the isolated Layer 3 canonical promotion substrate. It does not bulk-copy candidates into shared canonical tables, activate product projections, refresh Cube, bind runtime surfaces, or promote PHS data beyond the PHS demo schema.
+This proof is limited to the isolated Layer 3 canonical promotion substrate. It does not bulk-copy candidates into shared canonical tables, activate product projections, refresh Cube, bind runtime surfaces, or promote Meridian Health data beyond the Meridian Health demo schema.
 `;
 }
 

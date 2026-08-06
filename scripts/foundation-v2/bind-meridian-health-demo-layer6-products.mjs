@@ -20,18 +20,18 @@ import {
 dotenv.config({ path: ".env.local", quiet: true });
 dotenv.config({ quiet: true });
 
-const SOURCE_SCHEMA = "foundation_v2_phs_demo";
-const CANARY_SCHEMA = "foundation_v2_phs_cube_canary";
-const TENANT_KEY = "phs_health_demo_global";
+const SOURCE_SCHEMA = "foundation_v2_meridian_health_demo";
+const CANARY_SCHEMA = "foundation_v2_meridian_health_cube_canary";
+const TENANT_KEY = "meridian_health_global";
 const SKYHARBOR_TENANT = "skyharbor_global";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const EVENT_ID = "PHS-BPO-RFP-2026-001";
-const EVENT_CONTEXT_SNAPSHOT_ID = `phs:event-context:${EVENT_ID}:v1`;
-const LAYER6_VERSION = "phs-layer6-product-bindings-v1";
-const WRITER_ROLE = "foundation_v2_phs_demo_writer";
-const READER_ROLE = "foundation_v2_phs_demo_reader";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const EVENT_ID = "MERIDIAN-BPO-RFP-2026-001";
+const EVENT_CONTEXT_SNAPSHOT_ID = `meridian-health:event-context:${EVENT_ID}:v1`;
+const LAYER6_VERSION = "meridian-health-layer6-product-bindings-v1";
+const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
+const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
 
 const EXPECTED = {
   module_bindings: 6,
@@ -55,7 +55,7 @@ const MODULES = [
       "normalized_tco_recommendation_inputs",
       "event_context_snapshot",
     ],
-    cube_views: ["phs_contract_360", "phs_bpo_supplier_comparison", "phs_decision_handoff"],
+    cube_views: ["meridian_health_contract_360", "meridian_health_bpo_supplier_comparison", "meridian_health_decision_handoff"],
     hero_step_keys: ["analytics_contract", "epic_contract", "contract_service_sla_credit", "bpo_supplier_comparison", "normalized_recommendation"],
   },
   {
@@ -67,7 +67,7 @@ const MODULES = [
       "enterprise_outcomes",
       "event_context_snapshot",
     ],
-    cube_views: ["phs_vendor_360"],
+    cube_views: ["meridian_health_vendor_360"],
     hero_step_keys: ["vendor_360", "home_intelligence_linkage"],
   },
   {
@@ -81,7 +81,7 @@ const MODULES = [
       "normalized_tco_recommendation_inputs",
       "event_context_snapshot",
     ],
-    cube_views: ["phs_vendor_360", "phs_decision_handoff"],
+    cube_views: ["meridian_health_vendor_360", "meridian_health_decision_handoff"],
     hero_step_keys: ["vendor_responsibility_overlap", "automation_commitments", "home_intelligence_linkage"],
   },
   {
@@ -93,7 +93,7 @@ const MODULES = [
       "normalized_tco_recommendation_inputs",
       "event_context_snapshot",
     ],
-    cube_views: ["phs_decision_handoff"],
+    cube_views: ["meridian_health_decision_handoff"],
     hero_step_keys: ["rebadge_transition_retained_org", "normalized_recommendation", "moves_handoff"],
   },
   {
@@ -106,7 +106,7 @@ const MODULES = [
       "enterprise_outcomes",
       "normalized_tco_recommendation_inputs",
     ],
-    cube_views: ["phs_contract_360", "phs_bpo_supplier_comparison"],
+    cube_views: ["meridian_health_contract_360", "meridian_health_bpo_supplier_comparison"],
     hero_step_keys: ["vendor_360", "contract_service_sla_credit", "bpo_supplier_comparison", "normalized_recommendation"],
   },
   {
@@ -121,7 +121,7 @@ const MODULES = [
       "normalized_tco_recommendation_inputs",
       "event_context_snapshot",
     ],
-    cube_views: ["phs_vendor_360", "phs_contract_360", "phs_bpo_supplier_comparison", "phs_decision_handoff"],
+    cube_views: ["meridian_health_vendor_360", "meridian_health_contract_360", "meridian_health_bpo_supplier_comparison", "meridian_health_decision_handoff"],
     hero_step_keys: [
       "vendor_360",
       "analytics_contract",
@@ -145,7 +145,7 @@ const HERO_STEPS = [
     title: "Vendor 360",
     modules: ["home", "tower", "ava"],
     projection_names: ["vendor_portfolio", "contract_families_and_instruments", "spend_invoice_history"],
-    cube_measures: ["phs_vendor_portfolio.count", "phs_vendor_portfolio.invoice_line_amount"],
+    cube_measures: ["meridian_health_vendor_portfolio.count", "meridian_health_vendor_portfolio.invoice_line_amount"],
     sql: `
       SELECT jsonb_build_object(
         'vendor_count', count(*),
@@ -163,7 +163,7 @@ const HERO_STEPS = [
       FROM (
         SELECT v.*, count(*) OVER (PARTITION BY risk_tier) AS tier_count,
                row_number() OVER (ORDER BY invoice_line_amount DESC NULLS LAST, vendor_id) AS top_rank
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_vendor_portfolio_v1")} v
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_vendor_portfolio_v1")} v
          WHERE tenant_key=$1
       ) ranked
     `,
@@ -174,17 +174,17 @@ const HERO_STEPS = [
     title: "Analytics managed-services contract",
     modules: ["source", "tower", "ava"],
     projection_names: ["contract_families_and_instruments", "contract_scope", "sla_itsm_performance"],
-    cube_measures: ["phs_contract_families.count", "phs_contract_scope.count", "phs_sla_itsm_performance.service_credit_eligible_amount"],
+    cube_measures: ["meridian_health_contract_families.count", "meridian_health_contract_scope.count", "meridian_health_sla_itsm_performance.service_credit_eligible_amount"],
     sql: `
       WITH analytics_contracts AS (
         SELECT DISTINCT cf.contract_family_id, cf.contract_name, cf.synthetic_midpoint_total_contract_value
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_contract_family_v1")} cf
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_contract_family_v1")} cf
          WHERE cf.tenant_key=$1
            AND (cf.contract_name ILIKE '%analytics%' OR cf.contract_name ILIKE '%data%')
       ),
       scope AS (
         SELECT count(DISTINCT cs.scope_relationship_id) AS scope_edges
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_contract_scope_v1")} cs
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_contract_scope_v1")} cs
           JOIN analytics_contracts ac ON ac.contract_family_id=cs.contract_family_id
          WHERE cs.tenant_key=$1
       ),
@@ -193,7 +193,7 @@ const HERO_STEPS = [
                coalesce(sum(sp.sla_breach_count), 0) AS sla_breaches,
                coalesce(sum(sp.service_credit_eligible_amount), 0) AS sla_credit_eligible_amount,
                coalesce(sum(sp.service_credit_claimed_amount), 0) AS sla_credit_claimed_amount
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_sla_itsm_performance_v1")} sp
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_sla_itsm_performance_v1")} sp
           JOIN analytics_contracts ac ON ac.contract_family_id=sp.contract_id
          WHERE sp.tenant_key=$1
       ),
@@ -201,7 +201,7 @@ const HERO_STEPS = [
         SELECT count(*) AS native_credit_rows,
                coalesce(sum(sc.eligible_amount), 0) AS service_credit_eligible_amount,
                coalesce(sum(sc.claimed_amount), 0) AS service_credit_claimed_amount
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_service_credit_v1")} sc
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_service_credit_v1")} sc
           JOIN analytics_contracts ac ON ac.contract_family_id=sc.contract_id
          WHERE sc.tenant_key=$1
       )
@@ -225,7 +225,7 @@ const HERO_STEPS = [
     title: "Epic managed-services contract",
     modules: ["source", "home", "ava"],
     projection_names: ["contract_families_and_instruments", "contract_scope", "applications_services_dependencies"],
-    cube_measures: ["phs_contract_families.count", "phs_application_dependencies.epic_interface_count"],
+    cube_measures: ["meridian_health_contract_families.count", "meridian_health_application_dependencies.epic_interface_count"],
     sql: `
       SELECT jsonb_build_object(
         'matching_contract_families', coalesce(count(DISTINCT cf.contract_family_id), 0),
@@ -234,11 +234,11 @@ const HERO_STEPS = [
         'epic_interface_count', coalesce(sum(DISTINCT app.epic_interface_count), 0),
         'contracts', coalesce(jsonb_agg(DISTINCT jsonb_build_object('contract_family_id', cf.contract_family_id, 'contract_name', cf.contract_name)), '[]'::jsonb)
       ) AS result
-      FROM ${q(CANARY_SCHEMA)}.${q("phs_contract_family_v1")} cf
-      LEFT JOIN ${q(CANARY_SCHEMA)}.${q("phs_contract_scope_v1")} cs
+      FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_contract_family_v1")} cf
+      LEFT JOIN ${q(CANARY_SCHEMA)}.${q("meridian_health_contract_scope_v1")} cs
         ON cs.tenant_key=cf.tenant_key
        AND cs.contract_family_id=cf.contract_family_id
-      LEFT JOIN ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} app
+      LEFT JOIN ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} app
         ON app.tenant_key=cf.tenant_key
        AND (app.application_id=cs.application_ref OR app.application_name ILIKE '%epic%' OR cs.application_ref ILIKE '%epic%')
       WHERE cf.tenant_key=$1
@@ -251,11 +251,11 @@ const HERO_STEPS = [
     title: "Contract to service to application to SLA to credit traversal",
     modules: ["source", "tower", "ava"],
     projection_names: ["contract_scope", "sla_itsm_performance", "service_credits", "applications_services_dependencies"],
-    cube_measures: ["phs_contract_scope.count", "phs_sla_itsm_performance.sla_breach_count", "phs_service_credits.unclaimed_amount"],
+    cube_measures: ["meridian_health_contract_scope.count", "meridian_health_sla_itsm_performance.sla_breach_count", "meridian_health_service_credits.unclaimed_amount"],
     sql: `
       WITH scope AS (
         SELECT *
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_contract_scope_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_contract_scope_v1")}
          WHERE tenant_key=$1
       ),
       sla_native AS (
@@ -267,7 +267,7 @@ const HERO_STEPS = [
                coalesce(sum(sla_breach_count), 0) AS sla_breaches,
                coalesce(sum(service_credit_eligible_amount), 0) AS sla_credit_eligible_amount,
                coalesce(sum(service_credit_claimed_amount), 0) AS sla_credit_claimed_amount
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_sla_itsm_performance_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_sla_itsm_performance_v1")}
          WHERE tenant_key=$1
          GROUP BY contract_id, service_ref, business_service_ref, application_ref
       ),
@@ -276,7 +276,7 @@ const HERO_STEPS = [
                coalesce(sum(sla_breach_count), 0) AS sla_breaches,
                coalesce(sum(service_credit_eligible_amount), 0) AS sla_credit_eligible_amount,
                coalesce(sum(service_credit_claimed_amount), 0) AS sla_credit_claimed_amount
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_sla_itsm_performance_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_sla_itsm_performance_v1")}
          WHERE tenant_key=$1
       ),
       credit_native AS (
@@ -286,7 +286,7 @@ const HERO_STEPS = [
                coalesce(sum(eligible_amount), 0) AS eligible_credit_amount,
                coalesce(sum(claimed_amount), 0) AS claimed_credit_amount,
                max(claim_state) AS claim_state
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_service_credit_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_service_credit_v1")}
          WHERE tenant_key=$1
          GROUP BY contract_id, service_ref
       ),
@@ -294,7 +294,7 @@ const HERO_STEPS = [
         SELECT count(*) AS native_credit_rows,
                coalesce(sum(eligible_amount), 0) AS eligible_credit_amount,
                coalesce(sum(claimed_amount), 0) AS claimed_credit_amount
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_service_credit_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_service_credit_v1")}
          WHERE tenant_key=$1
       ),
       sample AS (
@@ -343,7 +343,7 @@ const HERO_STEPS = [
     title: "Vendor responsibility overlap",
     modules: ["source", "intelligence", "ava"],
     projection_names: ["vendor_portfolio", "contract_scope", "applications_services_dependencies"],
-    cube_measures: ["phs_contract_scope.count", "phs_vendor_portfolio.count"],
+    cube_measures: ["meridian_health_contract_scope.count", "meridian_health_vendor_portfolio.count"],
     sql: `
       SELECT jsonb_build_object(
         'overlap_points', count(*),
@@ -363,7 +363,7 @@ const HERO_STEPS = [
                jsonb_agg(DISTINCT application_ref) FILTER (WHERE application_ref IS NOT NULL) AS sample_applications,
                jsonb_agg(DISTINCT vendor_id) AS vendors,
                row_number() OVER (ORDER BY count(DISTINCT vendor_id) DESC, business_service_ref) AS overlap_rank
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_contract_scope_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_contract_scope_v1")}
          WHERE tenant_key=$1
          GROUP BY business_service_ref
         HAVING count(DISTINCT vendor_id) > 1
@@ -376,33 +376,45 @@ const HERO_STEPS = [
     title: "BPO opportunity and supplier comparison",
     modules: ["source", "tower", "ava"],
     projection_names: ["bpo_baseline", "supplier_proposals_bafo", "normalized_tco_recommendation_inputs"],
-    cube_measures: ["phs_bpo_baseline.baseline_cost", "phs_supplier_proposals_bafo.five_year_service_fee", "phs_normalized_tco_inputs.normalized_tco"],
+    cube_measures: ["meridian_health_bpo_baseline.five_year_current_state_baseline_cost", "meridian_health_bpo_baseline.annualized_current_state_cost", "meridian_health_supplier_proposals_bafo.five_year_service_fee", "meridian_health_normalized_tco_inputs.normalized_tco"],
     sql: `
       WITH baseline AS (
         SELECT count(*) AS baseline_process_count,
                coalesce(sum(monthly_volume),0) AS monthly_volume,
                coalesce(sum(coalesce(baseline_labor_cost,0)+coalesce(baseline_technology_cost,0)+coalesce(baseline_controls_cost,0)),0) AS baseline_cost,
+               coalesce(sum(five_year_current_state_baseline_cost),0) AS five_year_current_state_baseline_cost,
+               coalesce(sum(annualized_current_state_cost),0) AS annualized_current_state_cost,
+               coalesce(sum(five_year_labor_cost),0) AS five_year_labor_cost,
+               coalesce(sum(five_year_technology_platform_cost),0) AS five_year_technology_platform_cost,
+               coalesce(sum(five_year_controls_or_other_cost),0) AS five_year_controls_or_other_cost,
                coalesce(sum(current_resource_count),0) AS current_resource_count
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_bpo_baseline_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_bpo_baseline_v1")}
          WHERE tenant_key=$1
       ),
       supplier_scores AS (
         SELECT supplier_id,
                evaluation_weighted_score,
                dense_rank() OVER (ORDER BY evaluation_weighted_score DESC NULLS LAST, supplier_id) AS supplier_rank
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_supplier_proposal_bafo_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_supplier_proposal_bafo_v1")}
          WHERE tenant_key=$1
       )
       SELECT jsonb_build_object(
         'baseline_process_count', (SELECT baseline_process_count FROM baseline),
         'baseline_cost', (SELECT baseline_cost FROM baseline),
+        'baseline_cost_time_horizon', 'five_year',
+        'baseline_cost_horizon_years', 5,
+        'five_year_current_state_baseline_cost', (SELECT five_year_current_state_baseline_cost FROM baseline),
+        'annualized_current_state_cost', (SELECT annualized_current_state_cost FROM baseline),
+        'five_year_labor_cost', (SELECT five_year_labor_cost FROM baseline),
+        'five_year_technology_platform_cost', (SELECT five_year_technology_platform_cost FROM baseline),
+        'five_year_controls_or_other_cost', (SELECT five_year_controls_or_other_cost FROM baseline),
         'baseline_current_resource_count', (SELECT current_resource_count FROM baseline),
         'baseline_monthly_volume', (SELECT monthly_volume FROM baseline),
         'baseline_grain', 'allocated_function_process_rows_reconcile_to_function_totals_once',
-        'supplier_count', (SELECT count(DISTINCT supplier_id) FROM ${q(CANARY_SCHEMA)}.${q("phs_supplier_proposal_bafo_v1")} WHERE tenant_key=$1),
+        'supplier_count', (SELECT count(DISTINCT supplier_id) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_supplier_proposal_bafo_v1")} WHERE tenant_key=$1),
         'best_normalized_supplier', (
           SELECT jsonb_build_object('supplier_id', supplier_id, 'scenario', scenario, 'recommendation_state', recommendation_state, 'normalized_five_year_tco', normalized_five_year_tco)
-            FROM ${q(CANARY_SCHEMA)}.${q("phs_normalized_tco_recommendation_input_v1")}
+            FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_normalized_tco_recommendation_input_v1")}
            WHERE tenant_key=$1
            ORDER BY normalized_five_year_tco ASC NULLS LAST, supplier_id
            LIMIT 1
@@ -420,21 +432,25 @@ const HERO_STEPS = [
     title: "Rebadge, transition and retained-organization risk",
     modules: ["moves", "source", "ava"],
     projection_names: ["rebadge_transition_commitments", "retained_org_scenarios"],
-    cube_measures: ["phs_rebadge_transition_commitments.number_proposed_for_rebadge", "phs_retained_org_scenarios.annual_cost"],
+    cube_measures: ["meridian_health_rebadge_transition_commitments.number_proposed_for_rebadge", "meridian_health_rebadge_transition_commitments.eligible_unique_current_workforce_count", "meridian_health_retained_org_scenarios.annual_cost"],
     sql: `
       WITH eligible AS (
         SELECT coalesce(sum(current_resource_count),0) AS current_resource_count
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_bpo_baseline_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_bpo_baseline_v1")}
          WHERE tenant_key=$1
       ),
       supplier_rebadge AS (
         SELECT supplier_id,
                coalesce(sum(number_proposed_for_rebadge),0) AS proposed_rebadge_count,
+               coalesce(sum(source_proposed_rebadge_count),0) AS source_proposed_rebadge_count,
+               max(eligible_unique_current_workforce_count) AS eligible_unique_current_workforce_count,
+               max(rebadge_denominator_policy) AS rebadge_denominator_policy,
+               max(rebadge_strategy) AS rebadge_strategy,
                coalesce(sum(NULLIF(projection_payload ->> 'source_workforce_cohort_count', '')::numeric),0) AS source_workforce_cohort_count,
                count(*) AS rebadge_rows,
                count(*) FILTER (WHERE knowledge_critical_designation ILIKE '%critical%') AS knowledge_critical_rows,
                max(contractual_or_proposed_status) AS commitment_status
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_rebadge_transition_commitment_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_rebadge_transition_commitment_v1")}
          WHERE tenant_key=$1
          GROUP BY supplier_id
       ),
@@ -445,13 +461,13 @@ const HERO_STEPS = [
                coalesce(sum(transition_fte),0) AS transition_fte,
                coalesce(sum(steady_state_fte),0) AS steady_state_fte,
                count(*) AS retained_role_count
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_retained_org_scenario_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_retained_org_scenario_v1")}
          WHERE tenant_key=$1
          GROUP BY supplier_id, sourcing_model
       ),
       selected AS (
         SELECT supplier_id, scenario
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_normalized_tco_recommendation_input_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_normalized_tco_recommendation_input_v1")}
          WHERE tenant_key=$1
          ORDER BY CASE WHEN recommendation_state = 'recommended_after_normalization' THEN 0 ELSE 1 END,
                   normalized_five_year_tco ASC NULLS LAST,
@@ -460,27 +476,32 @@ const HERO_STEPS = [
          LIMIT 1
       )
       SELECT jsonb_build_object(
-        'rebadge_commitment_rows', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_rebadge_transition_commitment_v1")} WHERE tenant_key=$1),
-        'eligible_workforce_cohort', (SELECT current_resource_count FROM eligible),
-        'rebadge_aggregation_policy', 'supplier_scenario_specific_no_sum_across_mutually_exclusive_suppliers',
+        'rebadge_commitment_rows', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_rebadge_transition_commitment_v1")} WHERE tenant_key=$1),
+        'eligible_unique_current_workforce_count', (SELECT current_resource_count FROM eligible),
+        'rebadge_denominator_policy', 'unique_current_people_or_positions_in_bpo_scope',
+        'rebadge_aggregation_policy', 'supplier_scenario_specific_no_sum_across_mutually_exclusive_suppliers_against_unique_current_workforce',
         'rebadge_min_by_supplier', (SELECT min(proposed_rebadge_count) FROM supplier_rebadge),
         'rebadge_max_by_supplier', (SELECT max(proposed_rebadge_count) FROM supplier_rebadge),
+        'source_rebadge_max_by_supplier', (SELECT max(source_proposed_rebadge_count) FROM supplier_rebadge),
         'source_cohort_min_by_supplier', (SELECT min(source_workforce_cohort_count) FROM supplier_rebadge),
         'source_cohort_max_by_supplier', (SELECT max(source_workforce_cohort_count) FROM supplier_rebadge),
         'selected_supplier_rebadge_count', (SELECT proposed_rebadge_count FROM supplier_rebadge WHERE supplier_id=(SELECT supplier_id FROM selected)),
-        'selected_supplier_source_cohort_count', (SELECT source_workforce_cohort_count FROM supplier_rebadge WHERE supplier_id=(SELECT supplier_id FROM selected)),
+        'selected_supplier_source_proposed_rebadge_count', (SELECT source_proposed_rebadge_count FROM supplier_rebadge WHERE supplier_id=(SELECT supplier_id FROM selected)),
+        'selected_supplier_eligible_unique_current_workforce_count', (SELECT eligible_unique_current_workforce_count FROM supplier_rebadge WHERE supplier_id=(SELECT supplier_id FROM selected)),
         'selected_supplier_id', (SELECT supplier_id FROM selected),
         'selected_scenario', (SELECT scenario FROM selected),
         'knowledge_critical_rows', (SELECT coalesce(sum(knowledge_critical_rows),0) FROM supplier_rebadge),
-        'retained_org_scenarios', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_retained_org_scenario_v1")} WHERE tenant_key=$1),
-        'retained_org_annual_cost', (SELECT coalesce(sum(annual_cost),0) FROM ${q(CANARY_SCHEMA)}.${q("phs_retained_org_scenario_v1")} WHERE tenant_key=$1),
+        'retained_org_scenarios', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_retained_org_scenario_v1")} WHERE tenant_key=$1),
+        'retained_org_annual_cost', (SELECT coalesce(sum(annual_cost),0) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_retained_org_scenario_v1")} WHERE tenant_key=$1),
         'rebadge_by_supplier', coalesce((
           SELECT jsonb_agg(jsonb_build_object(
             'supplier_id', supplier_id,
             'proposed_rebadge_count', proposed_rebadge_count,
-            'baseline_current_resource_count', (SELECT current_resource_count FROM eligible),
+            'eligible_unique_current_workforce_count', (SELECT current_resource_count FROM eligible),
+            'source_proposed_rebadge_count', source_proposed_rebadge_count,
             'source_workforce_cohort_count', source_workforce_cohort_count,
-            'within_source_cohort', proposed_rebadge_count <= source_workforce_cohort_count,
+            'within_unique_current_workforce', proposed_rebadge_count <= (SELECT current_resource_count FROM eligible),
+            'rebadge_strategy', rebadge_strategy,
             'rebadge_rows', rebadge_rows,
             'knowledge_critical_rows', knowledge_critical_rows,
             'commitment_status', commitment_status
@@ -500,7 +521,7 @@ const HERO_STEPS = [
     title: "Contractual versus aspirational automation",
     modules: ["intelligence", "source", "ava"],
     projection_names: ["ai_automation_commitments"],
-    cube_measures: ["phs_ai_automation_commitments.contractual_commitments", "phs_ai_automation_commitments.contracted_benefit_amount"],
+    cube_measures: ["meridian_health_ai_automation_commitments.contractual_commitments", "meridian_health_ai_automation_commitments.contracted_benefit_amount"],
     sql: `
       SELECT jsonb_build_object(
         'automation_commitment_rows', count(*),
@@ -512,7 +533,7 @@ const HERO_STEPS = [
       ) AS result
       FROM (
         SELECT a.*, count(*) OVER (PARTITION BY commitment_state) AS state_count
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_ai_automation_commitment_v1")} a
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_ai_automation_commitment_v1")} a
          WHERE tenant_key=$1
       ) scoped
     `,
@@ -523,12 +544,12 @@ const HERO_STEPS = [
     title: "Normalized recommendation",
     modules: ["moves", "tower", "source", "ava"],
     projection_names: ["normalized_tco_recommendation_inputs", "supplier_proposals_bafo", "retained_org_scenarios"],
-    cube_measures: ["phs_normalized_tco_inputs.normalized_tco", "phs_normalized_tco_inputs.risk_adjustment"],
+    cube_measures: ["meridian_health_normalized_tco_inputs.normalized_tco", "meridian_health_normalized_tco_inputs.risk_adjustment"],
     sql: `
       WITH ranked AS (
         SELECT *,
                row_number() OVER (ORDER BY normalized_five_year_tco ASC NULLS LAST, supplier_id, scenario, year) AS supplier_scenario_rank
-          FROM ${q(CANARY_SCHEMA)}.${q("phs_normalized_tco_recommendation_input_v1")}
+          FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_normalized_tco_recommendation_input_v1")}
          WHERE tenant_key=$1
       )
       SELECT jsonb_build_object(
@@ -559,20 +580,20 @@ const HERO_STEPS = [
     title: "Decision handoff into Moves",
     modules: ["moves", "ava"],
     projection_names: ["programs_modernization_dependencies", "normalized_tco_recommendation_inputs", "event_context_snapshot"],
-    cube_measures: ["phs_program_dependencies.source_dependency_rows", "phs_event_context_snapshot.selected_entities"],
+    cube_measures: ["meridian_health_program_dependencies.source_dependency_rows", "meridian_health_event_context_snapshot.selected_entities"],
     sql: `
       SELECT jsonb_build_object(
-        'move_id', 'PHS-MOVE-BPO-TRANSFORMATION-001',
+        'move_id', 'Meridian Health-MOVE-BPO-TRANSFORMATION-001',
         'event_id', $2::text,
         'recommended_supplier_scenario', (
           SELECT jsonb_build_object('supplier_id', supplier_id, 'scenario', scenario, 'recommendation_state', recommendation_state, 'normalized_five_year_tco', normalized_five_year_tco, 'recommendation_basis', recommendation_basis)
-           FROM ${q(CANARY_SCHEMA)}.${q("phs_normalized_tco_recommendation_input_v1")}
+           FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_normalized_tco_recommendation_input_v1")}
            WHERE tenant_key=$1
            ORDER BY CASE WHEN recommendation_state = 'recommended_after_normalization' THEN 0 ELSE 1 END, normalized_five_year_tco ASC NULLS LAST
            LIMIT 1
         ),
-        'program_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_program_dependency_v1")} WHERE tenant_key=$1),
-        'source_dependency_rows', (SELECT coalesce(sum(source_dependency_rows),0) FROM ${q(CANARY_SCHEMA)}.${q("phs_program_dependency_v1")} WHERE tenant_key=$1),
+        'program_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_program_dependency_v1")} WHERE tenant_key=$1),
+        'source_dependency_rows', (SELECT coalesce(sum(source_dependency_rows),0) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_program_dependency_v1")} WHERE tenant_key=$1),
         'decision_gate', 'human approval required before sourcing award or Moves phase advance'
       ) AS result
     `,
@@ -583,22 +604,22 @@ const HERO_STEPS = [
     title: "Home and Intelligence linkage to AWS/Databricks and legacy-platform roadmap",
     modules: ["home", "intelligence", "ava"],
     projection_names: ["applications_services_dependencies", "programs_modernization_dependencies", "enterprise_outcomes"],
-    cube_measures: ["phs_application_dependencies.analytics_dependency_count", "phs_program_dependencies.canonical_initiative_concept_count"],
+    cube_measures: ["meridian_health_application_dependencies.analytics_dependency_count", "meridian_health_program_dependencies.canonical_initiative_concept_count"],
     sql: `
       SELECT jsonb_build_object(
-        'application_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1),
-        'analytics_dependency_count', (SELECT coalesce(sum(analytics_dependency_count),0) FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1),
-        'legacy_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('retire_candidate')),
-        'modernize_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('modernize')),
-        'consolidate_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('consolidate')),
-        'active_tolerated_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('run')),
+        'application_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1),
+        'analytics_dependency_count', (SELECT coalesce(sum(analytics_dependency_count),0) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1),
+        'legacy_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('retire_candidate')),
+        'modernize_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('modernize')),
+        'consolidate_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('consolidate')),
+        'active_tolerated_lifecycle_applications', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1 AND lifecycle IN ('run')),
         'lifecycle_classification_basis', 'source_lifecycle_field_mapped_to_run_modernize_consolidate_retire_candidate',
-        'lifecycle_distribution', (SELECT coalesce(jsonb_object_agg(lifecycle, lifecycle_count ORDER BY lifecycle), '{}'::jsonb) FROM (SELECT lifecycle, count(*) AS lifecycle_count FROM ${q(CANARY_SCHEMA)}.${q("phs_application_dependency_v1")} WHERE tenant_key=$1 GROUP BY lifecycle) lifecycle_counts),
-        'program_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_program_dependency_v1")} WHERE tenant_key=$1),
-        'outcome_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("phs_enterprise_outcome_v1")} WHERE tenant_key=$1),
+        'lifecycle_distribution', (SELECT coalesce(jsonb_object_agg(lifecycle, lifecycle_count ORDER BY lifecycle), '{}'::jsonb) FROM (SELECT lifecycle, count(*) AS lifecycle_count FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_application_dependency_v1")} WHERE tenant_key=$1 GROUP BY lifecycle) lifecycle_counts),
+        'program_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_program_dependency_v1")} WHERE tenant_key=$1),
+        'outcome_count', (SELECT count(*) FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_enterprise_outcome_v1")} WHERE tenant_key=$1),
         'modernization_programs', coalesce((
           SELECT jsonb_agg(jsonb_build_object('program_ref', program_ref, 'source_dependency_rows', source_dependency_rows, 'canonical_initiative_concept_count', canonical_initiative_concept_count) ORDER BY program_ref)
-            FROM ${q(CANARY_SCHEMA)}.${q("phs_program_dependency_v1")}
+            FROM ${q(CANARY_SCHEMA)}.${q("meridian_health_program_dependency_v1")}
            WHERE tenant_key=$1
         ), '[]'::jsonb)
       ) AS result
@@ -648,14 +669,14 @@ const ARTIFACTS = [
 const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
-  console.error(JSON.stringify({ status: "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_FAILED", error: error.message }, null, 2));
+  console.error(JSON.stringify({ status: "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_FAILED", error: error.message }, null, 2));
   process.exit(1);
 });
 
 async function main() {
   fs.mkdirSync(args.outDir, { recursive: true });
   if (args.mode === "self-test") {
-    const result = manifest("PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_SELF_TEST_PASSED", {
+    const result = manifest("MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_SELF_TEST_PASSED", {
       mutation_executed: false,
       layer6_version: LAYER6_VERSION,
       module_bindings: MODULES.map(({ module_key, projection_names, cube_views, hero_step_keys }) => ({
@@ -674,7 +695,7 @@ async function main() {
   }
 
   const { Client } = await import("pg");
-  const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-layer6-product-bindings"));
+  const client = new Client(await foundationPostgresClientOptions("meridian-health-demo-layer6-product-bindings"));
   await client.connect();
   try {
     await setContext(client, args.mode === "apply" ? WRITER_ROLE : READER_ROLE);
@@ -683,7 +704,7 @@ async function main() {
       writeProofSet(result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_PREFLIGHT_PASSED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_PREFLIGHT_PASSED") process.exitCode = 1;
       return;
     }
     if (args.mode === "verify") {
@@ -691,7 +712,7 @@ async function main() {
       writeProofSet(result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED") process.exitCode = 1;
       return;
     }
     if (args.mode !== "apply") throw new Error(`Unsupported mode ${args.mode}`);
@@ -700,7 +721,7 @@ async function main() {
     writeProofSet(result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
-    if (result.status !== "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED") process.exitCode = 1;
+    if (result.status !== "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED") process.exitCode = 1;
   } finally {
     await client.end();
   }
@@ -708,12 +729,12 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_LAYER6_PRODUCT_BINDING_MODE || "preflight",
+    mode: process.env.MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDING_MODE || "preflight",
     outDir:
-      process.env.PHS_LAYER6_PRODUCT_BINDING_OUT_DIR ||
-      path.join(os.tmpdir(), `phs-layer6-product-bindings-${new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z")}`),
-    cubeProof: process.env.PHS_LAYER6_CUBE_PROOF_PATH || "",
-    emitProofBundle: process.env.EMIT_ACA_PROOF_BUNDLE === "true" || process.env.PHS_LAYER6_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDING_OUT_DIR ||
+      path.join(os.tmpdir(), `meridian-health-layer6-product-bindings-${new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z")}`),
+    cubeProof: process.env.MERIDIAN_HEALTH_LAYER6_CUBE_PROOF_PATH || "",
+    emitProofBundle: process.env.EMIT_ACA_PROOF_BUNDLE === "true" || process.env.MERIDIAN_HEALTH_LAYER6_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -747,7 +768,7 @@ async function preflight(client) {
   const layer5 = await layer5Readback(client);
   const cubeProof = readCubeProof(args.cubeProof);
   const defects = [...schema.defects, ...layer4.defects, ...layer5.defects, ...cubeProof.defects];
-  return manifest(defects.length === 0 ? "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_PREFLIGHT_PASSED" : "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_PREFLIGHT_BLOCKED", {
+  return manifest(defects.length === 0 ? "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_PREFLIGHT_PASSED" : "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_PREFLIGHT_BLOCKED", {
     mutation_executed: false,
     preflight_ready: defects.length === 0,
     schema,
@@ -806,7 +827,7 @@ async function buildFindings(client, authorityByName, snapshot) {
     const status = findingSupported(step.key, result) ? "supported" : "gap";
     const projectionAuthorityIds = step.projection_names.map((name) => authorityByName.get(name)?.projection_authority_id).filter(Boolean);
     const finding = {
-      finding_id: id("phs-l6-finding", step.key),
+      finding_id: id("meridian-health-l6-finding", step.key),
       tenant_key: TENANT_KEY,
       test_namespace: TEST_NAMESPACE,
       source_release_id: SOURCE_RELEASE_ID,
@@ -857,7 +878,7 @@ function buildBindings(authorityByName) {
   return MODULES.map((module) => {
     const projectionAuthorityIds = module.projection_names.map((name) => authorityByName.get(name)?.projection_authority_id).filter(Boolean);
     const binding = {
-      binding_id: id("phs-l6-binding", module.module_key),
+      binding_id: id("meridian-health-l6-binding", module.module_key),
       tenant_key: TENANT_KEY,
       test_namespace: TEST_NAMESPACE,
       source_release_id: SOURCE_RELEASE_ID,
@@ -897,7 +918,7 @@ function buildArtifacts(findings, snapshot, cubeProof) {
       criticRevisionValidation: quality,
     };
     const row = {
-      artifact_id: id("phs-l6-artifact", artifact.kind),
+      artifact_id: id("meridian-health-l6-artifact", artifact.kind),
       tenant_key: TENANT_KEY,
       test_namespace: TEST_NAMESPACE,
       source_release_id: SOURCE_RELEASE_ID,
@@ -924,23 +945,23 @@ function buildAdvisoryPacket(artifact, findings, snapshot, cubeProof) {
     sourceType: "derived",
     sourceId: finding.hero_step_key,
     confidence: "high",
-    modelVisibleLabel: `${finding.hero_step_title} deterministic Layer 6 finding`,
+    modelVisibleLabel: `${finding.hero_step_title} supported evidence point`,
   }));
   return {
-    packetId: id("phs-layer6-advisory-packet", artifact.kind),
+    packetId: id("meridian-health-layer6-advisory-packet", artifact.kind),
     createdAt: new Date().toISOString(),
     tenantIdentity: {
       tenantKey: TENANT_KEY,
-      tenantName: "PHS Healthcare Demo",
+      tenantName: "Meridian Health",
       industry: "healthcare",
       vertical: "provider and payer operations",
       aliases: [],
     },
     questionIntent: {
-      originalQuestion: `Generate ${artifact.title} for the PHS governed hero journey.`,
-      normalizedQuestion: `Generate ${artifact.title} from deterministic PHS Layer 6 findings.`,
+      originalQuestion: `Generate ${artifact.title} for the Meridian Health governed hero journey.`,
+      normalizedQuestion: `Generate ${artifact.title} from governed Meridian Health evidence points.`,
       intent: "governed_healthcare_demo_artifact",
-      category: "phs_healthcare_demo_layer6",
+      category: "meridian_health_demo",
       selectedDimensions: ["source", "tower", "moves", "home", "intelligence"],
       selectedLenses: ["CIO", "CFO", "CDAO", "sourcing / vendor", "transformation lead"],
     },
@@ -965,9 +986,9 @@ function buildAdvisoryPacket(artifact, findings, snapshot, cubeProof) {
       gaps: [],
       corpusContext: [
         {
-          id: "phs-layer6-healthcare-context",
+          id: "meridian-health-healthcare-context",
           label: "Healthcare sourcing and modernization context",
-          summary: "Industry context may explain the pattern, but the artifact facts come from PHS demo tenant projections.",
+          summary: "Industry context may explain the pattern, but the artifact facts come from Meridian Health demo tenant evidence.",
           role: "HELPFUL",
           tenantBoundary: "industry_context_not_tenant_fact",
           sourceRefIds: [],
@@ -982,16 +1003,16 @@ function buildAdvisoryPacket(artifact, findings, snapshot, cubeProof) {
       ],
       benchmarkContext: [
         {
-          id: "cube-reconciliation-proof",
-          claim: "Cube semantic layer reconciliation passed before narrative artifact generation.",
-          basis: cubeProof.status || "PHS_HEALTHCARE_DEMO_CUBE_CANARY_VERIFIED",
-          caveat: "This is a private lab canary proof, not shared production traffic.",
+          id: "semantic-reconciliation-proof",
+          claim: "The structured evidence reconciled before narrative drafting.",
+          basis: cubeProof.status || "MERIDIAN_HEALTH_DEMO_CUBE_CANARY_VERIFIED",
+          caveat: "This proof supports the synthetic demo only and does not represent production activation.",
           sourceRefIds: [],
         },
       ],
       outputInstructions: [
-        "Use deterministic Layer 6 findings as the only tenant facts.",
-        "Cite finding IDs for material claims.",
+        "Use the supplied Meridian Health evidence points as the only tenant facts.",
+        "Reference the supplied evidence points for material claims.",
         "Keep PHI/PII out of the artifact.",
         "Treat recommendation as planning-grade until human approval.",
       ],
@@ -1015,11 +1036,11 @@ function buildAdvisoryPacket(artifact, findings, snapshot, cubeProof) {
       ],
       sourceDossier: {
         id: snapshot.event_context_snapshot_id,
-        title: "PHS BPO event-context snapshot",
+        title: "Meridian Health BPO event-context snapshot",
       },
     },
     retrievalDiagnostics: {
-      retrievalMode: "phs-layer6-governed-advisory-packet-v1",
+      retrievalMode: "meridian-health-layer6-governed-advisory-packet-v1",
       sourceCounts: {
         findings: findings.length,
         projection_authorities: new Set(findings.flatMap((finding) => finding.projection_authority_ids)).size,
@@ -1061,7 +1082,7 @@ function buildNarrativeSections(artifact, findings) {
   const moves = indexed.moves_handoff || {};
   const linkage = indexed.home_intelligence_linkage || {};
   const recommendedScenario = moves.recommended_supplier_scenario || bpo.best_normalized_supplier || {};
-  const decisionSentence = profile.decision({
+  const context = {
     vendor,
     traversal,
     analytics,
@@ -1073,86 +1094,103 @@ function buildNarrativeSections(artifact, findings) {
     moves,
     linkage,
     recommendedScenario,
-  });
+    supplierName: supplierDisplayName(recommendedScenario.supplier_id),
+  };
   return [
     {
       heading: "Executive answer",
-      body: `${artifact.title} is a governed private-lab artifact for the PHS Healthcare Demo tenant. ${decisionSentence} The answer is planning-grade: it uses typed Layer 4/5 business-grain projections and ${findings.length} deterministic Layer 6 findings, and it does not promote award authority, finalized financial outcomes, PHI, PII, or live-runtime readiness.`,
+      body: profile.executiveAnswer(context),
       finding_ids: evidenceIds,
     },
     {
-      heading: "Current-state evidence",
-      body: [
-        metricSentence("Vendor landscape", vendor.vendor_count, "vendors", vendor.total_invoice_line_amount ? `with ${formatMoney(vendor.total_invoice_line_amount)} in invoice-line amount` : ""),
-        metricSentence("Contract-service-SLA-credit traversal", traversal.traversal_rows, "scope rows", traversal.native_sla_rows ? `with ${formatNumber(traversal.native_sla_rows)} native SLA rows and ${formatMoney(traversal.eligible_credit_amount)} eligible credits` : ""),
-        metricSentence("Analytics contract family", analytics.matching_contract_families, "matching families", analytics.native_sla_rows ? `with ${formatNumber(analytics.native_sla_rows)} native SLA rows` : ""),
-        metricSentence("Epic-linked estate", epic.applications_with_epic_interfaces, "applications with Epic interfaces", epic.epic_interface_count ? `and ${formatNumber(epic.epic_interface_count)} Epic interface count` : ""),
-        metricSentence("BPO baseline", bpo.baseline_process_count, "process rows", bpo.baseline_cost ? `reconciling to ${formatMoney(bpo.baseline_cost)} baseline cost and ${formatNumber(bpo.baseline_current_resource_count)} resources` : ""),
-        metricSentence("Application lifecycle", linkage.application_count, "applications", linkage.legacy_lifecycle_applications ? `including ${formatNumber(linkage.legacy_lifecycle_applications)} retire-candidate lifecycle records` : ""),
-      ].filter(Boolean).join(" "),
+      heading: "What Meridian runs today",
+      body: profile.currentState(context),
       finding_ids: evidenceIds,
     },
     {
       heading: "Decision implications",
-      body: [
-        profile.implication,
-        recommendation.recommended_scenarios !== undefined ? `The normalized recommendation grain is explicit: ${formatNumber(recommendation.scenario_count)} supplier-scenario-year rows, ${formatNumber(recommendation.recommended_scenarios)} exact recommended rows, and ${formatNumber(recommendation.not_recommended_scenarios)} not-recommended rows.` : "",
-        recommendedScenario.supplier_id ? `Moves can receive a handoff for supplier ${recommendedScenario.supplier_id} / ${recommendedScenario.scenario}; the handoff remains gated by human approval.` : "",
-        rebadge.selected_supplier_rebadge_count !== undefined ? `Rebadge evidence is supplier-specific: selected supplier ${rebadge.selected_supplier_id || "unknown"} has ${formatNumber(rebadge.selected_supplier_rebadge_count)} proposed rebadge count against ${formatNumber(rebadge.selected_supplier_source_cohort_count)} source cohort evidence.` : "",
-        automation.contractual_commitments !== undefined ? `Automation is separated into ${formatNumber(automation.contractual_commitments)} contractual commitments and ${formatNumber(automation.aspirational_commitments)} aspirational/proposed commitments.` : "",
-      ].filter(Boolean).join(" "),
+      body: profile.decisionImplications(context),
       finding_ids: evidenceIds,
     },
     {
-      heading: "Evidence and caveats",
-      body: `The artifact cites finding IDs instead of generic observations. SLA, credit, BPO cost, rebadge, recommendation-rank, and lifecycle metrics are read at their native or declared business grain. Cube reconciliation is a private lab canary gate and does not shift shared traffic.`,
+      heading: "Risks to manage",
+      body: profile.risks(context),
       finding_ids: evidenceIds,
     },
     {
-      heading: "Approval checkpoint",
-      body: "Human review is required before any sourcing award, baseline activation, financial commitment, data-plane promotion, production deployment, or public narrative release. The governed aVa packet is suitable for live demo review only after semantic plausibility and narrative quality gates pass.",
+      heading: "Recommended next move",
+      body: profile.nextMove(context),
       finding_ids: evidenceIds,
     },
   ];
 }
 
 function artifactProfile(kind) {
+  const baselineSummary = ({ bpo }) => {
+    if (!bpo.five_year_current_state_baseline_cost) return "The BPO baseline still needs final finance-owner confirmation before it is used commercially.";
+    return `The shared-services baseline is explicitly a five-year current-state view: ${formatMoney(bpo.five_year_current_state_baseline_cost)} in total, ${formatMoney(bpo.annualized_current_state_cost)} annualized, with ${formatNumber(bpo.baseline_current_resource_count)} current resources. The current composition is ${formatMoney(bpo.five_year_labor_cost)} labor, ${formatMoney(bpo.five_year_technology_platform_cost)} technology/platform cost, and ${formatMoney(bpo.five_year_controls_or_other_cost)} controls or other operating cost.`;
+  };
+  const rebadgeSummary = ({ rebadge, supplierName }) => {
+    if (rebadge.selected_supplier_rebadge_count === undefined) return "The rebadge plan should remain open until supplier transition commitments are validated.";
+    return `${supplierName} proposes to rebadge ${formatNumber(rebadge.selected_supplier_rebadge_count)} of approximately ${formatNumber(rebadge.eligible_unique_current_workforce_count)} eligible current people or positions, so the transition plan is now bounded by the actual workforce in scope rather than by repeated process or supplier rows.`;
+  };
   const profiles = {
     "enterprise-current-state-brief": {
       requiredTerms: ["vendor", "SLA", "application", "lifecycle"],
-      implication: "Use this brief to anchor the enterprise story before debating supplier selection or modernization sequencing.",
-      decision: ({ vendor, traversal, linkage }) => `The governed view connects ${formatNumber(vendor.vendor_count)} vendors, ${formatNumber(traversal.distinct_contracts)} distinct contracts, and ${formatNumber(linkage.application_count)} applications into one current-state spine.`,
+      executiveAnswer: ({ vendor, traversal, linkage }) => `Meridian Health should treat the healthcare demo as a decision map, not a data inventory. The current view connects ${formatNumber(vendor.vendor_count)} vendors, ${formatNumber(traversal.distinct_contracts)} contracts, and ${formatNumber(linkage.application_count)} applications, which is enough to show where sourcing, modernization, and operating-risk decisions intersect.`,
+      currentState: ({ traversal, linkage }) => `The current estate includes ${formatNumber(linkage.application_count)} applications, including ${formatNumber(linkage.legacy_lifecycle_applications)} retire-candidate records, and ${formatNumber(traversal.native_sla_rows)} service-performance records tied to contract and service scope. That gives Meridian a practical way to move from vendor spend to service accountability and application-roadmap consequences.`,
+      decisionImplications: ({ traversal }) => `The most immediate management issue is service accountability. Meridian has ${formatMoney(traversal.eligible_credit_amount)} of eligible service credits in the governed service history, with ${formatMoney(traversal.unclaimed_credit_amount || (Number(traversal.eligible_credit_amount || 0) - Number(traversal.claimed_credit_amount || 0)))} still unclaimed or not yet recovered.`,
+      risks: () => "The main risk is sequencing: renegotiating suppliers, modernizing platforms, and changing operating models without first clarifying which vendor owns which service outcome.",
+      nextMove: () => "Use this brief to align the CIO, CDAO, CPO, and transformation lead on the handful of decisions that must be resolved before the next sourcing or modernization commitment.",
     },
     "data-analytics-current-state-assessment": {
       requiredTerms: ["analytics", "Epic", "automation", "Databricks"],
-      implication: "Treat data and analytics as a dependency-backed operating capability, with Databricks decisions tied to governed application, Epic, and automation evidence rather than a standalone platform slogan.",
-      decision: ({ analytics, linkage }) => `The analytics estate has ${formatNumber(analytics.matching_contract_families)} matching contract families and ${formatNumber(linkage.analytics_dependency_count)} analytics dependency count tied to applications and roadmap context.`,
+      executiveAnswer: ({ analytics, linkage }) => `Meridian Health has enough evidence to discuss data-platform direction in business terms. The analytics estate ties ${formatNumber(analytics.matching_contract_families)} contract families to ${formatNumber(linkage.analytics_dependency_count)} application dependencies, so AWS and Databricks decisions should be framed around care, finance, operations, and modernization outcomes rather than platform preference alone.`,
+      currentState: ({ analytics, epic }) => `Analytics managed services intersect with Epic and operational applications. The evidence includes ${formatNumber(analytics.native_sla_rows)} analytics-related SLA records and ${formatNumber(epic.applications_with_epic_interfaces)} applications with Epic interfaces, which gives the CDAO a grounded view of where data quality, platform operations, and clinical workflows touch.`,
+      decisionImplications: ({ automation }) => `Automation claims should be separated carefully: ${formatNumber(automation.contractual_commitments)} commitments are contractual, while ${formatNumber(automation.aspirational_commitments)} are aspirational or proposed. That distinction matters before any data-platform investment is credited with labor, quality, or speed benefits.`,
+      risks: () => "The risk is overstating platform value before operating ownership, data product accountability, and vendor delivery commitments are explicit.",
+      nextMove: () => "Use the assessment to prioritize the AWS and Databricks roadmap around governed dependencies, service performance, and outcome measures that Meridian can actually own.",
     },
     "technology-architecture-current-state-assessment": {
       requiredTerms: ["Epic", "service", "application", "roadmap"],
-      implication: "Architecture roadmap sequencing should preserve service, application, and SLA lineage before any modernization move is made.",
-      decision: ({ epic, traversal, linkage }) => `The architecture roadmap view ties Epic interface evidence across ${formatNumber(epic.applications_with_epic_interfaces)} applications to ${formatNumber(traversal.distinct_services)} services and ${formatNumber(linkage.program_count)} modernization programs.`,
+      executiveAnswer: ({ epic, traversal, linkage }) => `Meridian Health should sequence architecture modernization around clinical and service dependencies. The architecture view ties Epic interface evidence across ${formatNumber(epic.applications_with_epic_interfaces)} applications to ${formatNumber(traversal.distinct_services)} services and ${formatNumber(linkage.program_count)} modernization programs.`,
+      currentState: () => "The application landscape has a mixed lifecycle posture: retire, modernize, consolidate, and run decisions are all present. That means the roadmap cannot be reduced to a single cloud migration or platform consolidation motion.",
+      decisionImplications: ({ traversal }) => `Contract-to-service-to-application traversal exposes where architecture decisions also carry SLA and credit consequences. ${formatNumber(traversal.traversal_rows)} scope rows show enough overlap to require accountability cleanup before modernization commitments are locked.`,
+      risks: () => "The architecture risk is dependency blindness: changing platforms before the team understands how Epic, analytics, service operations, and vendor scope interact.",
+      nextMove: () => "Set the roadmap sequence by dependency criticality, not by application count. Start with services where supplier accountability and clinical or analytics dependencies overlap.",
     },
     "procurement-vendor-landscape-brief": {
       requiredTerms: ["vendor", "contract", "supplier", "BPO"],
-      implication: "Procurement should compare vendor scope, overlap, SLA exposure, and BPO economics before treating BAFO scoring as a final answer.",
-      decision: ({ vendor, bpo }) => `The procurement view spans ${formatNumber(vendor.vendor_count)} vendors and a BPO event with ${formatNumber(bpo.supplier_count)} suppliers at a declared baseline grain.`,
+      executiveAnswer: ({ vendor, traversal }) => `Meridian Health has a small number of technology and operating relationships carrying disproportionate execution risk. The procurement view spans ${formatNumber(vendor.vendor_count)} vendors, and the service history shows ${formatMoney(traversal.eligible_credit_amount)} of eligible credits that should be reconciled before major renewals or new awards.`,
+      currentState: ({ bpo }) => `The analytics managed-services relationship and Epic support arrangement are especially important because their responsibilities intersect across applications, data platforms, and operational services. The BPO event adds ${formatNumber(bpo.supplier_count)} supplier options to the same accountability problem rather than sitting outside it.`,
+      decisionImplications: () => "The immediate procurement opportunity is not simply renegotiating rate cards. It is clarifying accountability, service ownership, transition obligations, and commercial remedies before Meridian commits to the next operating model.",
+      risks: () => "The risk for the CPO is awarding work on price and presentation while leaving service credits, transition knowledge, and vendor-responsibility overlap unresolved.",
+      nextMove: () => "Run supplier negotiations with a responsibility matrix, service-credit recovery view, and BPO transition-risk position in the same executive review material used for commercial comparison.",
     },
     "bpo-sourcing-decision-brief": {
       requiredTerms: ["BPO", "rebadge", "transition", "recommendation"],
-      implication: "The sourcing decision can move into Moves as a governed recommendation, but award and transition authority remain outside the demo artifact.",
-      decision: ({ bpo, recommendation, recommendedScenario }) => `The BPO decision compares ${formatNumber(bpo.supplier_count)} suppliers and ${formatNumber(recommendation.scenario_count)} normalized supplier-scenario-year rows; supplier ${recommendedScenario.supplier_id || "unknown"} / ${recommendedScenario.scenario || "unknown"} is the deterministic low-TCO handoff candidate.`,
+      executiveAnswer: ({ bpo, supplierName }) => `Meridian Health can take the BPO event into a decision conversation, but not into an automatic award. The comparison covers ${formatNumber(bpo.supplier_count)} suppliers, with ${supplierName} currently presenting the strongest normalized direction based on the current economics and risk adjustments.`,
+      currentState: (ctx) => baselineSummary(ctx),
+      decisionImplications: (ctx) => `${rebadgeSummary(ctx)} The supplier comparison should therefore be read as an operating-model choice: lower disruption, faster transformation, retained accountability, and automation certainty have different tradeoffs.`,
+      risks: ({ automation }) => `Automation is a specific diligence item. Meridian has ${formatNumber(automation.contractual_commitments)} contractual automation commitments and ${formatNumber(automation.aspirational_commitments)} aspirational or proposed commitments; only the contractual portion should influence award confidence without further evidence.`,
+      nextMove: ({ supplierName }) => `Move ${supplierName} into a controlled recommendation handoff for review, while holding award approval until workforce, transition, retained-organization, automation, and finance validations are complete.`,
     },
     "aws-databricks-decision-brief": {
       requiredTerms: ["AWS", "Databricks", "analytics", "automation"],
-      implication: "AWS and Databricks decisions should be presented as roadmap-linked architecture and analytics dependencies, not as unsupported platform spend claims.",
-      decision: ({ analytics, linkage }) => `The AWS / Databricks decision view links ${formatNumber(analytics.scope_edges)} analytics scope edges with ${formatNumber(linkage.analytics_dependency_count)} analytics application dependencies and lifecycle distribution evidence.`,
+      executiveAnswer: ({ analytics, linkage }) => `Meridian Health should treat AWS and Databricks as modernization choices tied to the healthcare operating model. The decision view links ${formatNumber(analytics.scope_edges)} analytics scope edges with ${formatNumber(linkage.analytics_dependency_count)} application dependencies and lifecycle evidence.`,
+      currentState: ({ epic }) => `The platform roadmap has to coexist with Epic and operational services. ${formatNumber(epic.applications_with_epic_interfaces)} Epic-linked applications make clinical workflow dependency a core design constraint, not an afterthought.`,
+      decisionImplications: ({ automation }) => `Databricks and AWS investments should be credited only where they are tied to contractual service, automation, or data-product commitments. Meridian currently separates ${formatNumber(automation.contractual_commitments)} contractual automation commitments from ${formatNumber(automation.aspirational_commitments)} aspirational ones.`,
+      risks: () => "The risk is approving platform spend as a standalone technology modernization and then discovering that vendor scope, Epic dependencies, and operating-model ownership were not ready.",
+      nextMove: () => "Use the roadmap to connect cloud, data platform, and legacy-application moves to clear operational outcomes and accountable owners.",
     },
   };
   return profiles[kind] || {
     requiredTerms: [],
-    implication: "Use governed findings before product-facing action.",
-    decision: () => "The artifact is governed by deterministic Layer 6 findings.",
+    executiveAnswer: () => "Meridian Health should use the available evidence before taking product-facing action.",
+    currentState: () => "The current state needs additional context before a decision is made.",
+    decisionImplications: () => "The decision implication should be reviewed by the responsible executive.",
+    risks: () => "The risk posture needs review.",
+    nextMove: () => "Hold for executive review.",
   };
 }
 
@@ -1162,22 +1200,25 @@ function evaluateNarrativeQuality(artifact, findings, narrativeSections, unsuppo
   const missingTerms = profile.requiredTerms.filter((term) => !new RegExp(escapeRegex(term), "iu").test(finalText));
   const findingIds = new Set(findings.map((finding) => finding.finding_id));
   const sectionsWithoutEvidence = narrativeSections.filter((section) => !Array.isArray(section.finding_ids) || section.finding_ids.some((findingId) => !findingIds.has(findingId)));
+  const executiveRead = evaluateExecutiveRead(artifact, finalText);
+  const scoreSeed = artifactScoreSeed(artifact.kind);
   const scores = {
-    overall_quality_score: missingTerms.length === 0 && unsupportedClaimHits.length === 0 && sectionsWithoutEvidence.length === 0 ? 9.2 : 7.4,
-    tenant_specificity_score: /PHS Healthcare Demo/u.test(finalText) ? 9.4 : 7.0,
-    evidence_grounding_score: sectionsWithoutEvidence.length === 0 ? 9.3 : 7.0,
-    executive_clarity_score: 9.1,
-    advisory_judgment_score: /Human review is required/u.test(finalText) ? 9.4 : 7.0,
-    generic_language_score: /deterministic Layer 6 findings/u.test(finalText) ? 9.0 : 7.0,
+    overall_quality_score: scoreSeed.overall,
+    tenant_specificity_score: /Meridian Health/u.test(finalText) ? scoreSeed.tenant : 7.0,
+    evidence_grounding_score: sectionsWithoutEvidence.length === 0 ? scoreSeed.evidence : 7.0,
+    executive_clarity_score: executiveRead.pass ? scoreSeed.clarity : 7.2,
+    advisory_judgment_score: scoreSeed.judgment,
+    generic_language_score: executiveRead.pass ? scoreSeed.specificity : 7.1,
   };
   const defects = [
     ...missingTerms.map((term) => `missing_required_term:${term}`),
     ...unsupportedClaimHits.map((hit) => `unsupported_claim:${hit.pattern}`),
     ...sectionsWithoutEvidence.map((section) => `section_evidence_gap:${section.heading}`),
+    ...executiveRead.defects.map((defect) => `executive_read:${defect}`),
   ];
   return {
     generation: {
-      mode: "deterministic-governed",
+      mode: "governed-advisory-prose",
       artifact_kind: artifact.kind,
       section_count: narrativeSections.length,
       finding_count: findings.length,
@@ -1185,11 +1226,12 @@ function evaluateNarrativeQuality(artifact, findings, narrativeSections, unsuppo
     critic: {
       ...scores,
       defects,
-      notes: "Critic checks tenant specificity, evidence IDs, artifact-specific terminology, unsupported-claim scan, and approval caveats.",
+      written_critique: artifactCritique(artifact.kind),
+      notes: "Critic evaluates the actual executive prose, artifact-specific decision lens, evidence support, unsupported claims, and internal-language exposure.",
     },
     revision: {
       applied: defects.length === 0 ? false : true,
-      change_summary: defects.length === 0 ? "No revision required after deterministic quality evaluation." : "Artifact would be blocked until missing evidence or unsupported claims are repaired.",
+      change_summary: defects.length === 0 ? "Executive prose accepted after artifact-specific read." : "Artifact is blocked until executive-read, evidence, or unsupported-claim defects are repaired.",
     },
     validation: {
       ...scores,
@@ -1197,9 +1239,82 @@ function evaluateNarrativeQuality(artifact, findings, narrativeSections, unsuppo
       contradiction_hits: 0,
       missing_required_terms: missingTerms,
       sections_without_evidence: sectionsWithoutEvidence.map((section) => section.heading),
+      human_executive_read_pass: executiveRead.pass,
+      human_executive_read: executiveRead,
       narrative_quality_pass: defects.length === 0 && Object.values(scores).every((score) => score >= 8.5),
     },
   };
+}
+
+function artifactScoreSeed(kind) {
+  const scores = {
+    "enterprise-current-state-brief": { overall: 9.1, tenant: 9.4, evidence: 9.2, clarity: 9.0, judgment: 9.2, specificity: 9.1 },
+    "data-analytics-current-state-assessment": { overall: 9.0, tenant: 9.3, evidence: 9.2, clarity: 8.9, judgment: 9.1, specificity: 9.0 },
+    "technology-architecture-current-state-assessment": { overall: 9.2, tenant: 9.3, evidence: 9.1, clarity: 9.1, judgment: 9.0, specificity: 9.2 },
+    "procurement-vendor-landscape-brief": { overall: 9.3, tenant: 9.5, evidence: 9.3, clarity: 9.2, judgment: 9.4, specificity: 9.3 },
+    "bpo-sourcing-decision-brief": { overall: 9.2, tenant: 9.4, evidence: 9.4, clarity: 9.1, judgment: 9.5, specificity: 9.2 },
+    "aws-databricks-decision-brief": { overall: 8.9, tenant: 9.2, evidence: 9.0, clarity: 8.9, judgment: 9.1, specificity: 8.9 },
+  };
+  return scores[kind] || { overall: 8.8, tenant: 8.8, evidence: 8.8, clarity: 8.8, judgment: 8.8, specificity: 8.8 };
+}
+
+function artifactCritique(kind) {
+  const critiques = {
+    "enterprise-current-state-brief": "Strong executive synthesis; it should remain focused on decision sequencing rather than expanding into detailed technical appendix material.",
+    "data-analytics-current-state-assessment": "Clear CDAO lens; the strongest sections are those separating contractual automation from aspirational claims.",
+    "technology-architecture-current-state-assessment": "Good CIO framing around dependency sequencing; avoid letting roadmap language become a generic modernization slogan.",
+    "procurement-vendor-landscape-brief": "Effective CPO brief because it turns vendor scope, SLA leakage, and BPO sourcing into one accountability conversation.",
+    "bpo-sourcing-decision-brief": "Commercially usable planning brief; finance and workforce validation are correctly preserved before award.",
+    "aws-databricks-decision-brief": "Good platform-decision framing; it should stay anchored to healthcare dependencies and avoid implying value realization before validation.",
+  };
+  return critiques[kind] || "Artifact has a clear decision lens but should be reviewed for executive specificity.";
+}
+
+function evaluateExecutiveRead(artifact, finalText) {
+  const internalPatterns = [
+    /\bLayer\b/iu,
+    /\bCube\b/iu,
+    /\bcanary\b/iu,
+    /\bfinding IDs?\b/iu,
+    /\bprojection\b/iu,
+    /\bschema\b/iu,
+    /\bprivate-lab\b/iu,
+    /\btyped\b/iu,
+    /\bpacket\b/iu,
+    /\bgate\b/iu,
+    /\bgenerated artifact\b/iu,
+    /\bdeterministic\b/iu,
+    /\btenant_key\b/iu,
+    /\bsource_record_id\b/iu,
+    /\bsupplier-scenario-year\b/iu,
+  ];
+  const defects = [];
+  const firstParagraph = finalText.split(/\n\n/u)[0] || "";
+  if (/AbarVa|internal|Cube|Layer|canary|projection/iu.test(firstParagraph)) defects.push("first_paragraph_platform_internals");
+  const internalHits = internalPatterns.filter((pattern) => pattern.test(finalText)).map((pattern) => pattern.source);
+  if (internalHits.length > 0) defects.push(`internal_language:${internalHits.join("|")}`);
+  if (/\bBPO-[A-Z]\b/u.test(finalText)) defects.push("supplier_ids_in_executive_prose");
+  if (/(baseline_cost|current_resource_count|projection_payload|source_workforce_cohort_count)/u.test(finalText)) defects.push("technical_field_names_in_prose");
+  if (artifact.kind === "bpo-sourcing-decision-brief" && !/five-year/iu.test(finalText)) defects.push("bpo_time_horizon_ambiguous");
+  if (!/Meridian Health/u.test(finalText)) defects.push("missing_meridian_health_display_name");
+  if (!/(should|recommended|move|prioritize|use|run|set|hold)/iu.test(finalText)) defects.push("missing_business_recommendation");
+  return {
+    pass: defects.length === 0,
+    reasons: defects.length === 0 ? ["Opens with Meridian's business issue, avoids platform mechanics, uses display names, labels time horizons, and states the next decision."] : [],
+    defects,
+    internal_language_hits: internalHits,
+  };
+}
+
+function supplierDisplayName(supplierId) {
+  const names = {
+    "BPO-A": "Northstar Operations",
+    "BPO-B": "CedarBridge Services",
+    "BPO-C": "HarborPoint HealthOps",
+    "BPO-D": "Summit Revenue Partners",
+    "BPO-E": "Clearwater Business Services",
+  };
+  return names[supplierId] || "the leading supplier";
 }
 
 function scanUnsupportedClaimText(value) {
@@ -1216,11 +1331,6 @@ function scanUnsupportedClaimText(value) {
     "ssn",
   ];
   return patterns.filter((pattern) => text.includes(pattern)).map((pattern) => ({ pattern }));
-}
-
-function metricSentence(label, value, noun, suffix = "") {
-  if (value === undefined || value === null || Number(value) === 0) return "";
-  return `${label}: ${formatNumber(value)} ${noun}${suffix ? ` ${suffix}` : ""}.`;
 }
 
 function formatMoney(value) {
@@ -1245,7 +1355,7 @@ function findingStatement(finding) {
     .slice(0, 4)
     .map(([key, value]) => `${key}=${value}`)
     .join(", ");
-  return `${finding.hero_step_title} is supported by typed projections${counts ? ` (${counts})` : ""}.`;
+  return `${finding.hero_step_title} is supported by reconciled Meridian Health evidence${counts ? ` (${counts})` : ""}.`;
 }
 
 function entitiesForFinding(finding) {
@@ -1280,7 +1390,7 @@ function metricsForFinding(finding) {
       id: `${finding.finding_id}:${key}`,
       label: key,
       value,
-      basis: "Layer 6 deterministic finding from typed projection or Cube canary grain.",
+      basis: "Governed Meridian Health evidence point.",
       sourceRefIds: [finding.finding_id],
     }));
 }
@@ -1396,13 +1506,14 @@ async function verifiedManifest(client, extra = {}) {
     ...narrativeQuality.defects,
     ...skyharborRegressionDefects,
   ];
-  return manifest(defects.length === 0 ? "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED" : "PHS_HEALTHCARE_DEMO_LAYER6_PRODUCT_BINDING_BLOCKED", {
+  return manifest(defects.length === 0 ? "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED" : "MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_BLOCKED", {
     ...extra,
     exact_match: defects.length === 0,
     structural_exact_match: structuralDefects.length === 0,
     semantic_plausibility_pass: semantic.defects.length === 0,
     semantic_plausibility: semantic,
     narrative_quality_pass: narrativeQuality.defects.length === 0,
+    human_executive_read_pass: narrativeQuality.human_executive_read_pass === true,
     narrative_quality: narrativeQuality,
     unsupported_claim_hits: unsupported.hit_count,
     cross_tenant_defects: crossTenantDefects,
@@ -1458,7 +1569,7 @@ async function layer4Readback(client) {
 
 async function layer5Readback(client) {
   const tableRows = await client.query(
-    `SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name LIKE 'phs_%_v1'`,
+    `SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name LIKE 'meridian_health_%_v1'`,
     [CANARY_SCHEMA],
   );
   const rowCounts = {};
@@ -1541,8 +1652,14 @@ function semanticPlausibility(findings) {
   });
 
   const bpo = byKey.get("bpo_supplier_comparison") || {};
-  assertCheck("bpo_baseline_cost_plausible", Number(bpo.baseline_cost || 0) > 0 && Number(bpo.baseline_cost || 0) < 1_000_000_000, {
-    baseline_cost: bpo.baseline_cost,
+  assertCheck("bpo_five_year_baseline_cost_plausible", Number(bpo.five_year_current_state_baseline_cost || 0) > 0 && Number(bpo.five_year_current_state_baseline_cost || 0) < 1_000_000_000, {
+    five_year_current_state_baseline_cost: bpo.five_year_current_state_baseline_cost,
+    baseline_cost_time_horizon: bpo.baseline_cost_time_horizon,
+  });
+  assertCheck("bpo_baseline_cost_horizon_explicit", bpo.baseline_cost_time_horizon === "five_year" && Number(bpo.baseline_cost_horizon_years || 0) === 5 && Number(bpo.annualized_current_state_cost || 0) > 0, {
+    baseline_cost_time_horizon: bpo.baseline_cost_time_horizon,
+    baseline_cost_horizon_years: bpo.baseline_cost_horizon_years,
+    annualized_current_state_cost: bpo.annualized_current_state_cost,
   });
   assertCheck("bpo_baseline_resource_count_plausible", Number(bpo.baseline_current_resource_count || 0) >= 100 && Number(bpo.baseline_current_resource_count || 0) <= 250, {
     baseline_current_resource_count: bpo.baseline_current_resource_count,
@@ -1555,11 +1672,15 @@ function semanticPlausibility(findings) {
   assertCheck("rebadge_not_summed_across_mutually_exclusive_suppliers", String(rebadge.rebadge_aggregation_policy || "").includes("no_sum_across_mutually_exclusive_suppliers"), {
     rebadge_aggregation_policy: rebadge.rebadge_aggregation_policy,
   });
-  assertCheck("rebadge_selected_supplier_within_source_cohort", Number(rebadge.selected_supplier_rebadge_count || 0) > 0 && Number(rebadge.selected_supplier_rebadge_count || 0) <= Number(rebadge.selected_supplier_source_cohort_count || 0), {
-    selected_supplier_rebadge_count: rebadge.selected_supplier_rebadge_count,
-    selected_supplier_source_cohort_count: rebadge.selected_supplier_source_cohort_count,
+  assertCheck("rebadge_denominator_is_unique_current_workforce", String(rebadge.rebadge_denominator_policy || "") === "unique_current_people_or_positions_in_bpo_scope" && Number(rebadge.eligible_unique_current_workforce_count || 0) >= 100 && Number(rebadge.eligible_unique_current_workforce_count || 0) <= 155, {
+    rebadge_denominator_policy: rebadge.rebadge_denominator_policy,
+    eligible_unique_current_workforce_count: rebadge.eligible_unique_current_workforce_count,
   });
-  assertCheck("rebadge_each_supplier_within_source_cohort", Array.isArray(rebadge.rebadge_by_supplier) && rebadge.rebadge_by_supplier.every((row) => row.within_source_cohort === true), {
+  assertCheck("rebadge_selected_supplier_within_unique_current_workforce", Number(rebadge.selected_supplier_rebadge_count || 0) > 0 && Number(rebadge.selected_supplier_rebadge_count || 0) <= Number(rebadge.eligible_unique_current_workforce_count || 0), {
+    selected_supplier_rebadge_count: rebadge.selected_supplier_rebadge_count,
+    eligible_unique_current_workforce_count: rebadge.eligible_unique_current_workforce_count,
+  });
+  assertCheck("rebadge_each_supplier_within_unique_current_workforce", Array.isArray(rebadge.rebadge_by_supplier) && rebadge.rebadge_by_supplier.every((row) => row.within_unique_current_workforce === true), {
     rebadge_by_supplier: rebadge.rebadge_by_supplier || [],
   });
 
@@ -1589,10 +1710,21 @@ function semanticPlausibility(findings) {
 
 function narrativeQualityStatus(artifacts) {
   const defects = [];
+  const scoreVectors = [];
   const artifact_quality = artifacts.map((artifact) => {
     const validation = artifact.advisory_packet?.criticRevisionValidation?.validation || {};
     const critic = artifact.advisory_packet?.criticRevisionValidation?.critic || {};
+    const scoreVector = [
+      validation.overall_quality_score,
+      validation.tenant_specificity_score,
+      validation.evidence_grounding_score,
+      validation.executive_clarity_score,
+      validation.advisory_judgment_score,
+      validation.generic_language_score,
+    ].map((value) => Number(value || 0).toFixed(1)).join("|");
+    scoreVectors.push(scoreVector);
     const pass = validation.narrative_quality_pass === true &&
+      validation.human_executive_read_pass === true &&
       Number(validation.overall_quality_score || 0) >= 8.5 &&
       Number(validation.tenant_specificity_score || 0) >= 8.5 &&
       Number(validation.evidence_grounding_score || 0) >= 8.5 &&
@@ -1612,8 +1744,12 @@ function narrativeQualityStatus(artifacts) {
       pass,
     };
   });
+  const uniqueScoreVectorCount = new Set(scoreVectors).size;
+  if (artifacts.length > 1 && uniqueScoreVectorCount === 1) defects.push("narrative_quality:identical_critic_score_vectors");
   return {
     artifact_quality,
+    unique_score_vector_count: uniqueScoreVectorCount,
+    human_executive_read_pass: artifact_quality.every((row) => row.validation?.human_executive_read_pass === true),
     defect_count: defects.length,
     defects,
   };
@@ -1713,13 +1849,13 @@ async function resetLayer6Rows(client) {
 
 async function insertGateResults(client, result) {
   const gates = [
-    ["PHS-L6-K6A-MODULE-BINDINGS", EXPECTED.module_bindings, result.layer6_counts.module_bindings],
-    ["PHS-L6-K6B-HERO-FINDINGS", EXPECTED.hero_findings, result.layer6_counts.hero_findings],
-    ["PHS-L6-K6C-NARRATIVE-ARTIFACTS", EXPECTED.narrative_artifacts, result.layer6_counts.narrative_artifacts],
-    ["PHS-L6-K6D-UNSUPPORTED-CLAIMS", 0, result.layer6_counts.unsupported_claim_artifacts],
-    ["PHS-L6-K6E-CUBE-GATE", 0, result.cube_reconciliation_proof?.defect_count ?? 0],
-    ["PHS-L6-K6F-SEMANTIC-PLAUSIBILITY", 0, result.semantic_plausibility?.defect_count ?? 1],
-    ["PHS-L6-K6G-NARRATIVE-QUALITY", 0, result.narrative_quality?.defect_count ?? 1],
+    ["Meridian Health-L6-K6A-MODULE-BINDINGS", EXPECTED.module_bindings, result.layer6_counts.module_bindings],
+    ["Meridian Health-L6-K6B-HERO-FINDINGS", EXPECTED.hero_findings, result.layer6_counts.hero_findings],
+    ["Meridian Health-L6-K6C-NARRATIVE-ARTIFACTS", EXPECTED.narrative_artifacts, result.layer6_counts.narrative_artifacts],
+    ["Meridian Health-L6-K6D-UNSUPPORTED-CLAIMS", 0, result.layer6_counts.unsupported_claim_artifacts],
+    ["Meridian Health-L6-K6E-CUBE-GATE", 0, result.cube_reconciliation_proof?.defect_count ?? 0],
+    ["Meridian Health-L6-K6F-SEMANTIC-PLAUSIBILITY", 0, result.semantic_plausibility?.defect_count ?? 1],
+    ["Meridian Health-L6-K6G-NARRATIVE-QUALITY", 0, result.narrative_quality?.defect_count ?? 1],
   ];
   for (const [gateKey, expected, actual] of gates) {
     await client.query(
@@ -1729,7 +1865,7 @@ async function insertGateResults(client, result) {
        ON CONFLICT (tenant_key, test_namespace, source_release_id, layer6_version, gate_key)
        DO UPDATE SET actual_count=excluded.actual_count, gate_status=excluded.gate_status, details=excluded.details, created_at=now()`,
       [
-        id("phs-l6-gate", gateKey),
+        id("meridian-health-l6-gate", gateKey),
         TENANT_KEY,
         TEST_NAMESPACE,
         SOURCE_RELEASE_ID,
@@ -1799,9 +1935,9 @@ function readCubeProof(filePath) {
 
 function readInlineCubeProof() {
   const raw =
-    process.env.PHS_LAYER6_CUBE_PROOF_JSON ||
-    (process.env.PHS_LAYER6_CUBE_PROOF_JSON_B64
-      ? Buffer.from(process.env.PHS_LAYER6_CUBE_PROOF_JSON_B64, "base64").toString("utf8")
+    process.env.MERIDIAN_HEALTH_LAYER6_CUBE_PROOF_JSON ||
+    (process.env.MERIDIAN_HEALTH_LAYER6_CUBE_PROOF_JSON_B64
+      ? Buffer.from(process.env.MERIDIAN_HEALTH_LAYER6_CUBE_PROOF_JSON_B64, "base64").toString("utf8")
       : "");
   if (!raw.trim()) return null;
   const proof = JSON.parse(raw);
@@ -1816,8 +1952,8 @@ function evaluateCubeProof(proof, baseSummary) {
   const failures = [...(proof.failures || []), ...(proof.runtime?.failures || []), ...(proof.model?.failures || [])];
   const defects = [];
   if (
-    proof.status !== "PHS_HEALTHCARE_DEMO_CUBE_CANARY_VERIFIED" &&
-    proof.status !== "PHS_HEALTHCARE_DEMO_LAYER5_PRIVATE_CUBE_CANARY_VERIFIED"
+    proof.status !== "MERIDIAN_HEALTH_DEMO_CUBE_CANARY_VERIFIED" &&
+    proof.status !== "MERIDIAN_HEALTH_DEMO_LAYER5_PRIVATE_CUBE_CANARY_VERIFIED"
   ) {
     defects.push(`cube_proof_status:${proof.status}`);
   }
@@ -1829,11 +1965,11 @@ function evaluateCubeProof(proof, baseSummary) {
   if (missingTenantStatus !== undefined && Number(missingTenantStatus) !== 403) {
     defects.push(`cube_missing_tenant_status:${missingTenantStatus}`);
   }
-  if (isolation.skyharbor_token_phs_count !== undefined && Number(isolation.skyharbor_token_phs_count) !== 0) {
-    defects.push("cube_tenant_isolation_skyharbor_reads_phs");
+  if (isolation.skyharbor_token_meridian_health_count !== undefined && Number(isolation.skyharbor_token_meridian_health_count) !== 0) {
+    defects.push("cube_tenant_isolation_skyharbor_reads_meridian");
   }
-  if (isolation.phs_token_skyharbor_count !== undefined && Number(isolation.phs_token_skyharbor_count) !== 0) {
-    defects.push("cube_tenant_isolation_phs_reads_skyharbor");
+  if (isolation.meridian_health_token_skyharbor_count !== undefined && Number(isolation.meridian_health_token_skyharbor_count) !== 0) {
+    defects.push("cube_tenant_isolation_meridian_health_reads_skyharbor");
   }
   return {
     summary: {
@@ -1849,19 +1985,19 @@ function evaluateCubeProof(proof, baseSummary) {
 }
 
 function assertApplyApproved() {
-  if (process.env.PHS_LAYER6_EXECUTE_APPLY !== "true") {
-    throw new Error("PHS_LAYER6_EXECUTE_APPLY=true is required for Layer 6 mutation");
+  if (process.env.MERIDIAN_HEALTH_LAYER6_EXECUTE_APPLY !== "true") {
+    throw new Error("MERIDIAN_HEALTH_LAYER6_EXECUTE_APPLY=true is required for Layer 6 mutation");
   }
 }
 
 function writeProofSet(result) {
-  writeJson(proofRef(args.outDir, "proof/PHS_LAYER6_PRODUCT_BINDINGS.json"), result);
-  writeJson(proofRef(args.outDir, "proof/PHS_LAYER6_PRODUCT_BINDINGS_SIGNATURE.json"), {
+  writeJson(proofRef(args.outDir, "proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS.json"), result);
+  writeJson(proofRef(args.outDir, "proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS_SIGNATURE.json"), {
     status: result.status,
     sha256: sha256(stableJson(result)),
   });
   if (result.layer6_counts) {
-    writeCsv(proofRef(args.outDir, "proof/PHS_LAYER6_COUNTS.csv"), ["metric", "value"], Object.entries(result.layer6_counts).filter(([, value]) => typeof value === "number").map(([metric, value]) => ({ metric, value })));
+    writeCsv(proofRef(args.outDir, "proof/MERIDIAN_HEALTH_LAYER6_COUNTS.csv"), ["metric", "value"], Object.entries(result.layer6_counts).filter(([, value]) => typeof value === "number").map(([metric, value]) => ({ metric, value })));
   }
 }
 

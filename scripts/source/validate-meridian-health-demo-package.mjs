@@ -7,8 +7,8 @@ import os from "node:os";
 import path from "node:path";
 
 export const EXPECTED = {
-  tenantKey: "phs_health_demo_global",
-  datasetId: "phs-health-source-v1-202608",
+  tenantKey: "meridian_health_global",
+  datasetId: "meridian-health-source-v1-202608",
   datasetVersion: "v1",
   asOfDate: "2026-07-31",
   historyStart: "2024-08-01",
@@ -427,7 +427,7 @@ function validateRows(failures, rows, contract, seen) {
         source_record_id: row.source_record_id,
       });
     }
-    if (!/^source:\/\/phs_health_demo_global\/phs-health-source-v1-202608\//u.test(row.source_record_url_or_path || "")) {
+    if (!/^source:\/\/meridian_health_global\/meridian-health-source-v1-202608\//u.test(row.source_record_url_or_path || "")) {
       issue(failures, "invalid_source_record_path", `${contract.path} has invalid source path`, {
         file: contract.path,
         source_record_id: row.source_record_id,
@@ -511,7 +511,7 @@ function validateQuestionBank(failures, questionBank, coverageMatrix, indexes) {
     }
     const normalized = String(question.question || "")
       .toLowerCase()
-      .replace(/\bphs-hq-\d+\b/gu, "")
+      .replace(/\bmeridian-health-hq-\d+\b/gu, "")
       .replace(/\d+/gu, "#")
       .replace(/\s+/gu, " ")
       .trim();
@@ -912,7 +912,7 @@ function validateOutcomeReference(failures, row, indexes) {
 }
 
 function validateWorkbookOutcomeTab(failures, packageDir) {
-  const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+  const workbookPath = path.join(packageDir, "Meridian_Health_Demo_Client_Data_Request.xlsx");
   let workbookXml = "";
   try {
     workbookXml = execFileSync("unzip", ["-p", workbookPath, "xl/workbook.xml"], {
@@ -943,7 +943,7 @@ function validateWorkbookOutcomeTab(failures, packageDir) {
 }
 
 function validateWorkbookQuality(failures, packageDir) {
-  const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+  const workbookPath = path.join(packageDir, "Meridian_Health_Demo_Client_Data_Request.xlsx");
   for (let sheetNumber = 1; sheetNumber <= 3; sheetNumber += 1) {
     const xml = execFileSync("unzip", ["-p", workbookPath, `xl/worksheets/sheet${sheetNumber}.xml`], {
       encoding: "utf8",
@@ -967,7 +967,7 @@ function validateWorkbookQuality(failures, packageDir) {
 }
 
 function validateFieldSourceMap(failures, packageDir, indexes) {
-  const workbookPath = path.join(packageDir, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
+  const workbookPath = path.join(packageDir, "Meridian_Health_Demo_Client_Data_Request.xlsx");
   const rows = readWorkbookSheetRows(workbookPath, 5);
   const [header = [], ...dataRows] = rows;
   const tabIndex = header.indexOf("tab");
@@ -1048,7 +1048,7 @@ async function validateInterviewPackFiles(failures, packageDir, roleMatrix) {
 
 function validateManifestContract(failures, manifest, seen) {
   if (manifest.tenant_key !== EXPECTED.tenantKey || manifest.dataset_id !== EXPECTED.datasetId) {
-    issue(failures, "manifest_identity_mismatch", "manifest identity does not match expected PHS package identity");
+    issue(failures, "manifest_identity_mismatch", "manifest identity does not match expected Meridian Health package identity");
   }
   if (manifest.activation_state !== "generated_not_loaded") {
     issue(failures, "manifest_activation_state_not_audit_only", "manifest must remain generated_not_loaded");
@@ -1293,7 +1293,7 @@ function validateBpoTransformationSemantics(failures, indexes) {
 }
 
 async function validateEventSnapshotContract(failures, packageDir, indexes) {
-  const snapshotPath = path.join(packageDir, "phs_healthcare_demo_event_context_snapshot_contract.json");
+  const snapshotPath = path.join(packageDir, "meridian_health_demo_event_context_snapshot_contract.json");
   const snapshot = await readJson(snapshotPath);
   if (snapshot.mutation_executed !== false) {
     issue(failures, "event_snapshot_mutation_executed", "event snapshot contract must remain plan-only");
@@ -1334,8 +1334,8 @@ async function validateEventSnapshotContract(failures, packageDir, indexes) {
 }
 
 async function validateDocumentContentContracts(failures, packageDir, indexes) {
-  const contractsPath = path.join(packageDir, "phs_healthcare_demo_document_content_contracts.json");
-  const auditPath = path.join(packageDir, "phs_healthcare_demo_contract_family_audit_view.json");
+  const contractsPath = path.join(packageDir, "meridian_health_demo_document_content_contracts.json");
+  const auditPath = path.join(packageDir, "meridian_health_demo_contract_family_audit_view.json");
   const contentContracts = await readJson(contractsPath);
   const audit = await readJson(auditPath);
   const byType = new Map(asArray(contentContracts.archetype_contracts).map((contract) => [contract.document_type, contract]));
@@ -1394,11 +1394,11 @@ function escapeRegExp(value) {
 export async function validatePackage(packageDir) {
   const failures = [];
   const warnings = [];
-  const manifestPath = path.join(packageDir, "phs_healthcare_demo_package_manifest.json");
-  const questionBankPath = path.join(packageDir, "phs_healthcare_demo_question_bank.json");
-  const coveragePath = path.join(packageDir, "phs_healthcare_demo_question_coverage_matrix.json");
-  const roleMatrixPath = path.join(packageDir, "phs_healthcare_demo_role_domain_matrix.json");
-  const outcomeMapPath = path.join(packageDir, "phs_healthcare_demo_enterprise_outcomes_kpi_map.json");
+  const manifestPath = path.join(packageDir, "meridian_health_demo_package_manifest.json");
+  const questionBankPath = path.join(packageDir, "meridian_health_demo_question_bank.json");
+  const coveragePath = path.join(packageDir, "meridian_health_demo_question_coverage_matrix.json");
+  const roleMatrixPath = path.join(packageDir, "meridian_health_demo_role_domain_matrix.json");
+  const outcomeMapPath = path.join(packageDir, "meridian_health_demo_enterprise_outcomes_kpi_map.json");
   const manifest = await readJson(manifestPath);
   const questionBank = await readJson(questionBankPath);
   const coverageMatrix = await readJson(coveragePath);
@@ -1547,7 +1547,7 @@ export async function validatePackage(packageDir) {
 
 export async function validateCorruptedCanaries(packageDir) {
   async function manifestFor(root) {
-    return readJson(path.join(root, "phs_healthcare_demo_package_manifest.json"));
+    return readJson(path.join(root, "meridian_health_demo_package_manifest.json"));
   }
 
   async function writeJsonFile(filePath, data) {
@@ -1580,7 +1580,7 @@ export async function validateCorruptedCanaries(packageDir) {
   }
 
   async function runCanary({ defect, expected_failure, inject }) {
-    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "phs-canary-"));
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "meridian-health-canary-"));
     try {
       await fs.cp(packageDir, tmp, { recursive: true });
       await inject(tmp);
@@ -1598,11 +1598,11 @@ export async function validateCorruptedCanaries(packageDir) {
   }
 
   async function coverageMatrixFor(root) {
-    return readJson(path.join(root, "phs_healthcare_demo_question_coverage_matrix.json"));
+    return readJson(path.join(root, "meridian_health_demo_question_coverage_matrix.json"));
   }
 
   async function writeCoverageMatrix(root, matrix) {
-    await writeJsonFile(path.join(root, "phs_healthcare_demo_question_coverage_matrix.json"), matrix);
+    await writeJsonFile(path.join(root, "meridian_health_demo_question_coverage_matrix.json"), matrix);
   }
 
   async function rowsFor(root, targetBase) {
@@ -1758,7 +1758,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "unknown application in event snapshot",
       expected_failure: "unknown_enterprise_context_reference",
       inject: async (root) => {
-        const snapshotPath = path.join(root, "phs_healthcare_demo_event_context_snapshot_contract.json");
+        const snapshotPath = path.join(root, "meridian_health_demo_event_context_snapshot_contract.json");
         const snapshot = await readJson(snapshotPath);
         snapshot.bindings[0].selected_application_ids[0] = "APP-UNKNOWN";
         await writeJsonFile(snapshotPath, snapshot);
@@ -1768,7 +1768,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "unversioned event snapshot binding",
       expected_failure: "unversioned_event_snapshot_binding",
       inject: async (root) => {
-        const snapshotPath = path.join(root, "phs_healthcare_demo_event_context_snapshot_contract.json");
+        const snapshotPath = path.join(root, "meridian_health_demo_event_context_snapshot_contract.json");
         const snapshot = await readJson(snapshotPath);
         snapshot.bindings[0].enterprise_context_version = "";
         await writeJsonFile(snapshotPath, snapshot);
@@ -1778,7 +1778,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "duplicate event snapshot binding",
       expected_failure: "duplicate_event_snapshot_binding",
       inject: async (root) => {
-        const snapshotPath = path.join(root, "phs_healthcare_demo_event_context_snapshot_contract.json");
+        const snapshotPath = path.join(root, "meridian_health_demo_event_context_snapshot_contract.json");
         const snapshot = await readJson(snapshotPath);
         snapshot.bindings.push({ ...snapshot.bindings[0] });
         await writeJsonFile(snapshotPath, snapshot);
@@ -1803,7 +1803,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "incomplete role coverage",
       expected_failure: "incomplete_role_coverage",
       inject: async (root) => {
-        const rolePath = path.join(root, "phs_healthcare_demo_role_domain_matrix.json");
+        const rolePath = path.join(root, "meridian_health_demo_role_domain_matrix.json");
         const roleMatrix = await readJson(rolePath);
         roleMatrix.roles[0].accountable_executive = "";
         await writeJsonFile(rolePath, roleMatrix);
@@ -1813,7 +1813,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "CDAO below 50 questions",
       expected_failure: "cdao_question_count_below_50",
       inject: async (root) => {
-        const rolePath = path.join(root, "phs_healthcare_demo_role_domain_matrix.json");
+        const rolePath = path.join(root, "meridian_health_demo_role_domain_matrix.json");
         const roleMatrix = await readJson(rolePath);
         roleMatrix.roles.find((role) => role.role === "CDAO").question_count = 49;
         await writeJsonFile(rolePath, roleMatrix);
@@ -1823,7 +1823,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "missing source-system guidance",
       expected_failure: "missing_source_system_guidance",
       inject: async (root) => {
-        const manifestPath = path.join(root, "phs_healthcare_demo_package_manifest.json");
+        const manifestPath = path.join(root, "meridian_health_demo_package_manifest.json");
         const manifest = await readJson(manifestPath);
         manifest.file_contracts[0].source_system = "";
         await writeJsonFile(manifestPath, manifest);
@@ -1833,7 +1833,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "restricted detailed health-plan extract in core package",
       expected_failure: "restricted_detail_source_extract_present",
       inject: async (root) => {
-        const manifestPath = path.join(root, "phs_healthcare_demo_package_manifest.json");
+        const manifestPath = path.join(root, "meridian_health_demo_package_manifest.json");
         const manifest = await readJson(manifestPath);
         const snapshotContract = (manifest.file_contracts || []).find((candidate) => basename(candidate.path) === OPTIONAL_HEALTH_PLAN_SNAPSHOT);
         if (!snapshotContract) throw new Error("Optional health-plan snapshot contract not found");
@@ -1888,8 +1888,8 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "outcome map below range",
       expected_failure: "enterprise_outcomes_kpi_map_count_out_of_range",
       inject: async (root) => {
-        const manifestPath = path.join(root, "phs_healthcare_demo_package_manifest.json");
-        const outcomePath = path.join(root, "phs_healthcare_demo_enterprise_outcomes_kpi_map.json");
+        const manifestPath = path.join(root, "meridian_health_demo_package_manifest.json");
+        const outcomePath = path.join(root, "meridian_health_demo_enterprise_outcomes_kpi_map.json");
         const manifest = await readJson(manifestPath);
         const outcomeMap = await readJson(outcomePath);
         manifest.counts.enterprise_outcomes_kpi_map = 10;
@@ -1903,8 +1903,8 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "separate KPI value-driver tabs",
       expected_failure: "separate_kpi_value_driver_tabs_present",
       inject: async (root) => {
-        const workbookPath = path.join(root, "PHS_Healthcare_Demo_Client_Data_Request.xlsx");
-        const unzipDir = await fs.mkdtemp(path.join(os.tmpdir(), "phs-xlsx-canary-"));
+        const workbookPath = path.join(root, "Meridian_Health_Demo_Client_Data_Request.xlsx");
+        const unzipDir = await fs.mkdtemp(path.join(os.tmpdir(), "meridian-health-xlsx-canary-"));
         try {
           execFileSync("unzip", ["-q", workbookPath, "-d", unzipDir]);
           const workbookXmlPath = path.join(unzipDir, "xl", "workbook.xml");
@@ -1931,7 +1931,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "irrelevant hard-question coverage",
       expected_failure: "mapped_measure_missing",
       inject: async (root) => {
-        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const coveragePath = path.join(root, "meridian_health_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].required_source_files = ["WORKDAY_SUPPLIERS.csv"];
         await writeJsonFile(coveragePath, matrix);
@@ -1941,7 +1941,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "broken question-to-evidence lineage",
       expected_failure: "mapped_evidence_ref_missing",
       inject: async (root) => {
-        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const coveragePath = path.join(root, "meridian_health_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].evidence_refs = ["EVID-SPAN-99999"];
         await writeJsonFile(coveragePath, matrix);
@@ -1951,7 +1951,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "existing source record from wrong story thread",
       expected_failure: "planted_record_story_thread_mismatch",
       inject: async (root) => {
-        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const coveragePath = path.join(root, "meridian_health_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].planted_scenario_records = ["WD-INV-L-000005", matrix.coverage[0].planted_scenario_records[1]];
         await writeJsonFile(coveragePath, matrix);
@@ -1961,7 +1961,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "existing evidence reference from wrong contract family",
       expected_failure: "mapped_evidence_contract_mismatch",
       inject: async (root) => {
-        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const coveragePath = path.join(root, "meridian_health_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].evidence_refs = ["EVID-SPAN-00002"];
         await writeJsonFile(coveragePath, matrix);
@@ -1971,7 +1971,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "existing source record fails question predicate",
       expected_failure: "question_predicate_not_satisfied",
       inject: async (root) => {
-        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const coveragePath = path.join(root, "meridian_health_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         const [invoiceId, rateCardId] = matrix.coverage[0].planted_scenario_records;
         await mutateCsv(root, "WORKDAY_SUPPLIER_INVOICES.csv", (rows) => {
@@ -1988,7 +1988,7 @@ export async function validateCorruptedCanaries(packageDir) {
       defect: "source and evidence records exist but do not join",
       expected_failure: "source_evidence_join_mismatch",
       inject: async (root) => {
-        const coveragePath = path.join(root, "phs_healthcare_demo_question_coverage_matrix.json");
+        const coveragePath = path.join(root, "meridian_health_demo_question_coverage_matrix.json");
         const matrix = await readJson(coveragePath);
         matrix.coverage[0].evidence_refs = ["EVID-SPAN-00003"];
         await writeJsonFile(coveragePath, matrix);
@@ -2074,7 +2074,7 @@ export async function validateCorruptedCanaries(packageDir) {
 async function main() {
   const packageDir = argValue("--package-dir");
   if (!packageDir) {
-    console.error("Usage: node scripts/source/validate-phs-healthcare-demo-package.mjs --package-dir <dir>");
+    console.error("Usage: node scripts/source/validate-meridian-health-demo-package.mjs --package-dir <dir>");
     process.exit(2);
   }
   const result = await validatePackage(packageDir);

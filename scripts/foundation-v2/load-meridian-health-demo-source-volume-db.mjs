@@ -16,23 +16,23 @@ import {
 } from "./golden-slice-support.mjs";
 
 const EXPECTED = {
-  tenantKey: "phs_health_demo_global",
-  datasetId: "phs-health-source-v1-202608",
+  tenantKey: "meridian_health_global",
+  datasetId: "meridian-health-source-v1-202608",
   datasetVersion: "v1",
   asOfDate: "2026-07-31",
 };
 
 const SOURCE_VOLUME_RELEASE_VERSION = "source-volume-v1";
 const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-apply-v1";
-const TEST_NAMESPACE = "phs-healthcare-demo-source-volume-v1";
-const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
-const DATABASE_SCHEMA = "foundation_v2_phs_demo";
-const EXPECTED_SOURCE_RELEASE_ID = "phs-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const TEST_NAMESPACE = "meridian-health-source-volume-v1";
+const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
+const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
+const EXPECTED_SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
 const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
-const SOURCE_VOLUME_GATE_IDS = ["PHS-SOURCE-VOLUME-L0-L1", "PHS-SOURCE-VOLUME-L1-L2"];
-const WRITER_ROLE = "foundation_v2_phs_demo_writer";
-const READER_ROLE = "foundation_v2_phs_demo_reader";
-const PHS_EXECUTION_CONTRACT = Object.freeze({
+const SOURCE_VOLUME_GATE_IDS = ["Meridian Health-SOURCE-VOLUME-L0-L1", "Meridian Health-SOURCE-VOLUME-L1-L2"];
+const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
+const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
+const MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT = Object.freeze({
   database_schema: DATABASE_SCHEMA,
   tenant_key: EXPECTED.tenantKey,
   test_namespace: TEST_NAMESPACE,
@@ -70,7 +70,7 @@ const args = parseArgs(process.argv.slice(2));
 
 await main().catch((error) => {
   console.error(JSON.stringify({
-    status: "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_FAILED",
+    status: "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_FAILED",
     error: error.message,
   }, null, 2));
   process.exit(1);
@@ -80,47 +80,47 @@ async function main() {
   if (args.mode === "self-test") {
     fs.mkdirSync(args.outDir, { recursive: true });
     const result = await runSourceVolumeSelfTest();
-    writeJson(proofRef(args.outDir, "PHS_SOURCE_VOLUME_SELF_TEST.json"), result);
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_SELF_TEST.json"), result);
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   const plan = await buildSourceVolumePlan();
-  assertPHSExecutionContract(plan);
+  assertMeridianExecutionContract(plan);
   fs.mkdirSync(args.outDir, { recursive: true });
   writePlanProof(args.outDir, plan);
 
   if (args.mode === "plan") {
-    const result = manifest("PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_PLAN_READY", plan, {});
-    writeJson(proofRef(args.outDir, "PHS_SOURCE_VOLUME_PLAN.json"), result);
+    const result = manifest("MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_PLAN_READY", plan, {});
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_PLAN.json"), result);
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   if (args.mode === "apply") assertApplyApproved(plan);
   const { Client } = await import("pg");
-  const client = new Client(await foundationPostgresClientOptions("phs-healthcare-demo-source-volume"));
+  const client = new Client(await foundationPostgresClientOptions("meridian-health-demo-source-volume"));
   await client.connect();
   try {
     if (args.mode === "preflight") {
       const result = await preflight(client, plan);
-      writeJson(proofRef(args.outDir, "PHS_SOURCE_VOLUME_PREFLIGHT.json"), result);
+      writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_PREFLIGHT.json"), result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_PREFLIGHT_PASSED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_PREFLIGHT_PASSED") process.exitCode = 1;
       return;
     }
     if (args.mode === "verify") {
       const result = await verify(client, plan);
-      writeJson(proofRef(args.outDir, "PHS_SOURCE_VOLUME_VERIFY.json"), result);
+      writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_VERIFY.json"), result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
-      if (result.status !== "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_VERIFIED") process.exitCode = 1;
+      if (result.status !== "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_VERIFIED") process.exitCode = 1;
       return;
     }
     if (args.mode !== "apply") throw new Error(`Unsupported mode ${args.mode}`);
     const result = await apply(client, plan);
-    writeJson(proofRef(args.outDir, "PHS_SOURCE_VOLUME_APPLY.json"), result);
+    writeJson(proofRef(args.outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_APPLY.json"), result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
   } finally {
@@ -130,16 +130,16 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
-    mode: process.env.PHS_SOURCE_VOLUME_MODE || "plan",
-    packageDir: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_DIR || "",
-    packageZip: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_ZIP || "",
-    packageZipUrl: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_ZIP_URL || "",
-    packageZipSha256: process.env.PHS_HEALTHCARE_DEMO_PACKAGE_ZIP_SHA256 || "",
-    outDir: process.env.PHS_SOURCE_VOLUME_OUT_DIR || path.join(os.tmpdir(), "phs-healthcare-demo-source-volume"),
-    approvedProofSha256: process.env.PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256 || "",
+    mode: process.env.MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_MODE || "plan",
+    packageDir: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_DIR || "",
+    packageZip: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP || "",
+    packageZipUrl: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_URL || "",
+    packageZipSha256: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_SHA256 || "",
+    outDir: process.env.MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_OUT_DIR || path.join(os.tmpdir(), "meridian-health-demo-source-volume"),
+    approvedProofSha256: process.env.MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256 || "",
     emitProofBundle:
       process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
-      process.env.PHS_SOURCE_VOLUME_EMIT_PROOF_BUNDLE === "true",
+      process.env.MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_EMIT_PROOF_BUNDLE === "true",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -163,7 +163,7 @@ function parseArgs(argv) {
     throw new Error(`Unsupported mode ${parsed.mode}`);
   }
   if (parsed.mode !== "self-test" && !parsed.packageDir && !parsed.packageZip && !parsed.packageZipUrl) {
-    throw new Error("Explicit --package-dir, --package-zip, or --package-zip-url is required for PHS source-volume modes; latest Downloads auto-selection is not allowed");
+    throw new Error("Explicit --package-dir, --package-zip, or --package-zip-url is required for Meridian Health source-volume modes; latest Downloads auto-selection is not allowed");
   }
   return parsed;
 }
@@ -171,7 +171,7 @@ function parseArgs(argv) {
 async function buildSourceVolumePlan() {
   const resolvedPackage = await resolvePackageInput();
   const packageDir = resolvedPackage.packageDir;
-  const packageManifestPath = path.join(packageDir, "phs_healthcare_demo_package_manifest.json");
+  const packageManifestPath = path.join(packageDir, "meridian_health_demo_package_manifest.json");
   const phaseResultPath = path.join(packageDir, "phase_a_result.json");
   assertFile(packageManifestPath);
   assertFile(phaseResultPath);
@@ -238,7 +238,7 @@ async function buildSourceVolumePlan() {
     total_field_values: totalFields,
     source_field_value_rule: "insert_all_field_slots_including_explicit_blank_cells",
     max_columns: Math.max(...files.map((file) => file.headers.length)),
-    database_target_contract: PHS_EXECUTION_CONTRACT,
+    database_target_contract: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT,
     source_file_context_rows: sourceFileContextRows.length,
     source_file_context: sourceFileContextRows,
     restricted_detail_health_plan_extracts_present: files
@@ -255,19 +255,19 @@ async function resolvePackageInput() {
   const zipPath = args.packageZipUrl ? await downloadPackageZip(args.packageZipUrl) : path.resolve(args.packageZip);
   assertFile(zipPath);
   const actualSha256 = sha256(fs.readFileSync(zipPath));
-  const expectedSha256 = args.packageZipSha256 || args.approvedProofSha256 || process.env.PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256 || EXPECTED_PROOF_ZIP_SHA256;
+  const expectedSha256 = args.packageZipSha256 || args.approvedProofSha256 || process.env.MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256 || EXPECTED_PROOF_ZIP_SHA256;
   if (actualSha256 !== expectedSha256) {
-    throw new Error(`PHS package ZIP SHA mismatch: expected ${expectedSha256}, got ${actualSha256}`);
+    throw new Error(`Meridian Health package ZIP SHA mismatch: expected ${expectedSha256}, got ${actualSha256}`);
   }
-  const extractRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phs-healthcare-demo-package-"));
+  const extractRoot = fs.mkdtempSync(path.join(os.tmpdir(), "meridian-health-demo-package-"));
   await extractZipToDirectory(zipPath, extractRoot);
   return { packageDir: extractRoot, proofZip: zipPath };
 }
 
 async function downloadPackageZip(url) {
-  const target = path.join(os.tmpdir(), `phs-healthcare-demo-approved-package-${shortHash(url, 12)}.zip`);
+  const target = path.join(os.tmpdir(), `meridian-health-demo-approved-package-${shortHash(url, 12)}.zip`);
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to download PHS package ZIP: HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`Failed to download Meridian Health package ZIP: HTTP ${response.status}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   fs.writeFileSync(target, bytes);
   return target;
@@ -387,35 +387,35 @@ function sourceFileContextPlanRows(sourceReleaseId, files) {
   }));
 }
 
-function assertPHSExecutionContract(plan, overrides = {}) {
+function assertMeridianExecutionContract(plan, overrides = {}) {
   const actual = {
-    database_schema: overrides.database_schema ?? envOrConstant("PHS_HEALTHCARE_DEMO_DB_SCHEMA", DATABASE_SCHEMA),
-    tenant_key: overrides.tenant_key ?? envOrConstant("PHS_HEALTHCARE_DEMO_TENANT_KEY", plan.tenant_key),
-    test_namespace: overrides.test_namespace ?? envOrConstant("PHS_HEALTHCARE_DEMO_TEST_NAMESPACE", plan.test_namespace),
-    writer_role: overrides.writer_role ?? envOrConstant("PHS_HEALTHCARE_DEMO_DB_WRITER_ROLE", WRITER_ROLE),
-    reader_role: overrides.reader_role ?? envOrConstant("PHS_HEALTHCARE_DEMO_DB_READER_ROLE", READER_ROLE),
-    foundation_release_alias: overrides.foundation_release_alias ?? envOrConstant("PHS_HEALTHCARE_DEMO_FOUNDATION_RELEASE_ALIAS", plan.foundation_release_alias),
-    source_release_id: overrides.source_release_id ?? envOrConstant("PHS_HEALTHCARE_DEMO_SOURCE_RELEASE_ID", plan.source_release_id),
-    isolation_scope: overrides.isolation_scope ?? envOrConstant("PHS_HEALTHCARE_DEMO_ISOLATION_SCOPE", plan.isolation_scope),
+    database_schema: overrides.database_schema ?? envOrConstant("MERIDIAN_HEALTH_DEMO_DB_SCHEMA", DATABASE_SCHEMA),
+    tenant_key: overrides.tenant_key ?? envOrConstant("MERIDIAN_HEALTH_DEMO_TENANT_KEY", plan.tenant_key),
+    test_namespace: overrides.test_namespace ?? envOrConstant("MERIDIAN_HEALTH_DEMO_TEST_NAMESPACE", plan.test_namespace),
+    writer_role: overrides.writer_role ?? envOrConstant("MERIDIAN_HEALTH_DEMO_DB_WRITER_ROLE", WRITER_ROLE),
+    reader_role: overrides.reader_role ?? envOrConstant("MERIDIAN_HEALTH_DEMO_DB_READER_ROLE", READER_ROLE),
+    foundation_release_alias: overrides.foundation_release_alias ?? envOrConstant("MERIDIAN_HEALTH_DEMO_FOUNDATION_RELEASE_ALIAS", plan.foundation_release_alias),
+    source_release_id: overrides.source_release_id ?? envOrConstant("MERIDIAN_HEALTH_DEMO_SOURCE_RELEASE_ID", plan.source_release_id),
+    isolation_scope: overrides.isolation_scope ?? envOrConstant("MERIDIAN_HEALTH_DEMO_ISOLATION_SCOPE", plan.isolation_scope),
   };
   const expected = {
-    database_schema: PHS_EXECUTION_CONTRACT.database_schema,
-    tenant_key: PHS_EXECUTION_CONTRACT.tenant_key,
-    test_namespace: PHS_EXECUTION_CONTRACT.test_namespace,
-    writer_role: PHS_EXECUTION_CONTRACT.writer_role,
-    reader_role: PHS_EXECUTION_CONTRACT.reader_role,
-    foundation_release_alias: PHS_EXECUTION_CONTRACT.foundation_release_alias,
-    source_release_id: PHS_EXECUTION_CONTRACT.expected_source_release_id,
-    isolation_scope: PHS_EXECUTION_CONTRACT.isolation_scope,
+    database_schema: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.database_schema,
+    tenant_key: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.tenant_key,
+    test_namespace: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.test_namespace,
+    writer_role: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.writer_role,
+    reader_role: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.reader_role,
+    foundation_release_alias: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.foundation_release_alias,
+    source_release_id: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.expected_source_release_id,
+    isolation_scope: MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.isolation_scope,
   };
   const mismatches = Object.entries(expected)
     .filter(([key, value]) => actual[key] !== value)
     .map(([key, value]) => ({ field: key, expected: value, actual: actual[key] }));
   if (mismatches.length > 0) {
-    throw new Error(`PHS execution contract mismatch before DB mutation path: ${JSON.stringify(mismatches)}`);
+    throw new Error(`Meridian Health execution contract mismatch before DB mutation path: ${JSON.stringify(mismatches)}`);
   }
-  if (plan.file_count !== PHS_EXECUTION_CONTRACT.expected_source_file_context_rows) {
-    throw new Error(`PHS source file context row contract mismatch: expected ${PHS_EXECUTION_CONTRACT.expected_source_file_context_rows}, got ${plan.file_count}`);
+  if (plan.file_count !== MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.expected_source_file_context_rows) {
+    throw new Error(`Meridian Health source file context row contract mismatch: expected ${MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT.expected_source_file_context_rows}, got ${plan.file_count}`);
   }
 }
 
@@ -431,7 +431,7 @@ async function preflight(client, plan) {
     await client.query("ROLLBACK");
     const existingTotal = Object.values(existing.counts).reduce((sum, value) => sum + Number(value || 0), 0);
     const exact = existing.exact_match;
-    return manifest(existingTotal === 0 || exact ? "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_PREFLIGHT_PASSED" : "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_PREFLIGHT_FAILED", plan, {
+    return manifest(existingTotal === 0 || exact ? "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_PREFLIGHT_PASSED" : "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_PREFLIGHT_FAILED", plan, {
       existing_readback: existing,
       existing_total: existingTotal,
       existing_exact_match: exact,
@@ -451,10 +451,10 @@ async function apply(client, plan) {
     const existing = await sourceVolumeReadback(client, plan);
     if (Object.values(existing.counts).some((value) => Number(value || 0) > 0)) {
       if (!existing.exact_match) {
-        throw new Error(`Existing PHS source-volume rows do not match expected identity/hash contract: ${JSON.stringify(existing.variances)}`);
+        throw new Error(`Existing Meridian Health source-volume rows do not match expected identity/hash contract: ${JSON.stringify(existing.variances)}`);
       }
       await client.query("ROLLBACK");
-      return manifest("PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_ALREADY_APPLIED_EXACT_MATCH", plan, {
+      return manifest("MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_ALREADY_APPLIED_EXACT_MATCH", plan, {
         started_at: startedAt,
         completed_at: new Date().toISOString(),
         existing_readback: existing,
@@ -471,10 +471,10 @@ async function apply(client, plan) {
     await insertGateResults(client, plan);
     const readback = await sourceVolumeReadback(client, plan);
     if (!readback.exact_match) {
-      throw new Error(`PHS source-volume variance after write: ${JSON.stringify(readback.variances)}`);
+      throw new Error(`Meridian Health source-volume variance after write: ${JSON.stringify(readback.variances)}`);
     }
     await client.query("COMMIT");
-    return manifest("PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_APPLIED", plan, {
+    return manifest("MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_APPLIED", plan, {
       started_at: startedAt,
       completed_at: new Date().toISOString(),
       actual_readback: readback,
@@ -488,12 +488,12 @@ async function apply(client, plan) {
 async function verify(client, plan) {
   await client.query("BEGIN");
   try {
-    const role = process.env.PHS_SOURCE_VOLUME_DB_ROLE === "writer" ? WRITER_ROLE : READER_ROLE;
+    const role = process.env.MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_DB_ROLE === "writer" ? WRITER_ROLE : READER_ROLE;
     await setContext(client, plan, role);
     const readback = await sourceVolumeReadback(client, plan);
     await client.query("ROLLBACK");
     const exact = readback.exact_match;
-    return manifest(exact ? "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_VERIFIED" : "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_VERIFY_FAILED", plan, {
+    return manifest(exact ? "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_VERIFIED" : "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_VERIFY_FAILED", plan, {
       actual_readback: readback,
       exact_match: exact,
     });
@@ -504,16 +504,16 @@ async function verify(client, plan) {
 }
 
 function assertApplyApproved(plan) {
-  assertPHSExecutionContract(plan);
-  if (process.env.PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED !== "true") {
-    throw new Error("PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true is required for apply");
+  assertMeridianExecutionContract(plan);
+  if (process.env.MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED !== "true") {
+    throw new Error("MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true is required for apply");
   }
-  const approvedSha = args.approvedProofSha256 || process.env.PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256 || "";
+  const approvedSha = args.approvedProofSha256 || process.env.MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256 || "";
   if (!approvedSha || approvedSha !== plan.proof_zip_sha256) {
-    throw new Error("Approved proof SHA is required and must match the PHS proof ZIP SHA");
+    throw new Error("Approved proof SHA is required and must match the Meridian Health proof ZIP SHA");
   }
   if (!process.env.ACA_JOB_NAME) {
-    throw new Error("ACA_JOB_NAME is required; PHS Layer 1 apply must run from an approved ACA data-build job");
+    throw new Error("ACA_JOB_NAME is required; Meridian Health Layer 1 apply must run from an approved ACA data-build job");
   }
   if (plan.restricted_detail_health_plan_extracts_present.length > 0) {
     throw new Error(`Restricted detailed health-plan extracts present: ${plan.restricted_detail_health_plan_extracts_present.join(", ")}`);
@@ -760,7 +760,7 @@ async function insertSourceRowsAndFields(client, plan, file) {
       source_row_number: rowNumber,
       source_row_hash: rowHash,
       row_disposition: "MATCHED",
-      row_disposition_reason: `phs-source-volume:${file.file_name}`,
+      row_disposition_reason: `meridian-health-source-volume:${file.file_name}`,
       writer_job_id: plan.execution_id,
     });
     for (let fieldIndex = 0; fieldIndex < file.headers.length; fieldIndex += 1) {
@@ -780,7 +780,7 @@ async function insertSourceRowsAndFields(client, plan, file) {
         field_disposition: "PRESERVED_AS_EVIDENCE",
         target_object_type: file.object_type,
         target_field_name: slug(header),
-        adapter_rule_id: `phs-healthcare-source-volume-v1:${file.object_type}:${slug(header)}`,
+        adapter_rule_id: `meridian-health-healthcare-source-volume-v1:${file.object_type}:${slug(header)}`,
         evidence_ref: `package://${EXPECTED.datasetId}/${file.relative_path}#row=${rowNumber}`,
         restricted: file.file_name === "HEALTH_PLAN_OUTCOME_SNAPSHOT.csv",
         writer_job_id: plan.execution_id,
@@ -822,7 +822,7 @@ async function insertParserExecution(client, plan) {
     `INSERT INTO ${tableRef("parser_executions")}
       (parser_execution_id, source_release_id, tenant_key, test_namespace, parser_contract_version,
        input_file_count, output_record_count, output_field_count, rejected_record_count, parser_status, writer_job_id)
-     VALUES ($1,$2,$3,$4,'phs-healthcare-source-volume-v1',$5,$6,$7,0,'passed',$8)`,
+     VALUES ($1,$2,$3,$4,'meridian-health-healthcare-source-volume-v1',$5,$6,$7,0,'passed',$8)`,
     [
       `${plan.source_release_id}:parser-execution-001`,
       plan.source_release_id,
@@ -838,8 +838,8 @@ async function insertParserExecution(client, plan) {
 
 async function insertGateResults(client, plan) {
   const gates = [
-    ["PHS-SOURCE-VOLUME-L0-L1", "source files to landed rows", plan.total_source_rows, plan.total_source_rows],
-    ["PHS-SOURCE-VOLUME-L1-L2", "landed rows to parsed fields", plan.total_source_rows, plan.total_field_values],
+    ["Meridian Health-SOURCE-VOLUME-L0-L1", "source files to landed rows", plan.total_source_rows, plan.total_source_rows],
+    ["Meridian Health-SOURCE-VOLUME-L1-L2", "landed rows to parsed fields", plan.total_source_rows, plan.total_field_values],
   ];
   await insertBatches(
     client,
@@ -860,7 +860,7 @@ async function insertGateResults(client, plan) {
       gate_status: "passed",
       failure_classification: null,
       repair_owner: "foundation-v2-agent",
-      rerun_scope: "phs-source-volume",
+      rerun_scope: "meridian-health-source-volume",
       proof_uri: `proof://foundation-v2/${plan.execution_id}/${gateId}`,
       writer_job_id: plan.execution_id,
     })),
@@ -869,7 +869,7 @@ async function insertGateResults(client, plan) {
 
 async function runSourceVolumeSelfTest() {
   const executionContractTests = runExecutionContractSelfTests();
-  const schemaProofTests = phsSchemaProofTests();
+  const schemaProofTests = meridianSchemaProofTests();
   const calls = [];
   const client = {
     async query(sql, params = []) {
@@ -882,11 +882,11 @@ async function runSourceVolumeSelfTest() {
   const row = Object.fromEntries(headers.map((header, index) => [header, `value-${index + 1}`]));
   await insertSourceRowsAndFields(
     client,
-    { execution_id: "phs-source-volume-self-test", source_release_id: "phs-source-volume-self-test" },
+    { execution_id: "meridian-health-source-volume-self-test", source_release_id: "meridian-health-source-volume-self-test" },
     {
       relative_path: "source_system_extracts/self-test.csv",
       file_name: "self-test.csv",
-      source_file_id: "phs-source-volume-self-test:file",
+      source_file_id: "meridian-health-source-volume-self-test:file",
       object_type: "self_test_object",
       headers,
       rows: [row],
@@ -897,10 +897,10 @@ async function runSourceVolumeSelfTest() {
   const fieldWrites = calls.filter((call) => call.table === "source_field_values").length;
   const passed = firstWrite === "source_records" && recordWrites === 1 && fieldWrites === 1;
   if (!passed) {
-    throw new Error(`PHS source-volume row/field FK write order failed: ${JSON.stringify(calls)}`);
+    throw new Error(`Meridian Health source-volume row/field FK write order failed: ${JSON.stringify(calls)}`);
   }
   return {
-    status: "PHS_HEALTHCARE_DEMO_SOURCE_VOLUME_SELF_TEST_PASSED",
+    status: "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_SELF_TEST_PASSED",
     first_write: firstWrite,
     record_writes: recordWrites,
     field_writes: fieldWrites,
@@ -924,14 +924,14 @@ function runExecutionContractSelfTests() {
     ["wrong_tenant", { tenant_key: "healthcare-demo-new" }],
     ["wrong_namespace", { test_namespace: "foundation-v2-healthcare-progressive-golden-slice-v1" }],
     ["wrong_release", { source_release_id: "healthcare-demo-new-foundation-v2-progressive-golden-slice-v1" }],
-    ["wrong_isolation_scope", { isolation_scope: "ISOLATED_PHS_HEALTHCARE_DEMO_LAB_ONLY" }],
+    ["wrong_isolation_scope", { isolation_scope: "ISOLATED_MERIDIAN_HEALTH_DEMO_LAB_ONLY" }],
     ["writer_role_mismatch", { writer_role: "foundation_v2_healthcare_gs_writer" }],
     ["reader_role_mismatch", { reader_role: "foundation_v2_healthcare_gs_reader" }],
     ["same_counts_different_content", { source_release_id: `${EXPECTED.datasetId}:${SOURCE_VOLUME_RELEASE_VERSION}:samecounts00` }],
   ];
   const results = cases.map(([caseId, overrides]) => {
     try {
-      assertPHSExecutionContract(basePlan, overrides);
+      assertMeridianExecutionContract(basePlan, overrides);
       return { case_id: caseId, expected: "blocked", actual: "allowed", passed: false };
     } catch (error) {
       return { case_id: caseId, expected: "blocked", actual: "blocked", passed: true, error: error.message };
@@ -939,18 +939,18 @@ function runExecutionContractSelfTests() {
   });
   const wrongFileContextCountPlan = { ...basePlan, file_count: 53 };
   try {
-    assertPHSExecutionContract(wrongFileContextCountPlan);
+    assertMeridianExecutionContract(wrongFileContextCountPlan);
     results.push({ case_id: "source_file_context_row_mismatch", expected: "blocked", actual: "allowed", passed: false });
   } catch (error) {
     results.push({ case_id: "source_file_context_row_mismatch", expected: "blocked", actual: "blocked", passed: true, error: error.message });
   }
   if (results.some((result) => !result.passed)) {
-    throw new Error(`PHS execution contract self-test failed: ${JSON.stringify(results.filter((result) => !result.passed))}`);
+    throw new Error(`Meridian Health execution contract self-test failed: ${JSON.stringify(results.filter((result) => !result.passed))}`);
   }
   return results;
 }
 
-function phsSchemaProofTests() {
+function meridianSchemaProofTests() {
   return [
     {
       case_id: "missing_rls_policy",
@@ -960,7 +960,7 @@ function phsSchemaProofTests() {
     {
       case_id: "non_aca_execution",
       expected: "blocked_before_db_connect",
-      required_env: ["PHS_HEALTHCARE_DEMO_LAYER1_APPLY_APPROVED=true", "PHS_HEALTHCARE_DEMO_APPROVED_PROOF_SHA256=<exact proof sha>", "ACA_JOB_NAME=<approved data-build job>"],
+      required_env: ["MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true", "MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256=<exact proof sha>", "ACA_JOB_NAME=<approved data-build job>"],
     },
     {
       case_id: "file_hash_mismatch",
@@ -988,11 +988,11 @@ async function insertBatches(client, sqlPrefix, columns, rowsToInsert) {
 }
 
 function writePlanProof(outDir, plan) {
-  writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_EXPECTED_COUNTS.json"), publicPlanSummary(plan));
-  writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_DATABASE_TARGET_CONTRACT.json"), plan.database_target_contract);
-  writeJson(proofRef(outDir, "PHS_SOURCE_VOLUME_SCHEMA_PROOF_TESTS.json"), phsSchemaProofTests());
+  writeJson(proofRef(outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_EXPECTED_COUNTS.json"), publicPlanSummary(plan));
+  writeJson(proofRef(outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_DATABASE_TARGET_CONTRACT.json"), plan.database_target_contract);
+  writeJson(proofRef(outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_SCHEMA_PROOF_TESTS.json"), meridianSchemaProofTests());
   writeCsv(
-    proofRef(outDir, "PHS_SOURCE_VOLUME_FILES.csv"),
+    proofRef(outDir, "MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_FILES.csv"),
     ["file_name", "source_group", "context_treatment", "demo_priority", "event_id", "effective_as_of", "source_family", "row_count", "field_count", "content_sha256"],
     plan.files.map((file) => ({
       file_name: file.file_name,
@@ -1045,7 +1045,7 @@ function publicPlanSummary(plan) {
     database_target_contract: plan.database_target_contract,
     source_file_context_rows: plan.source_file_context_rows,
     expected_counts: expectedCounts(plan),
-    schema_proof_tests: phsSchemaProofTests(),
+    schema_proof_tests: meridianSchemaProofTests(),
     restricted_detail_health_plan_extracts_present: plan.restricted_detail_health_plan_extracts_present,
   };
 }

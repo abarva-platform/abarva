@@ -1,1 +1,0 @@
-GRANT UPDATE ON foundation_v2_phs_demo.layer6_gate_results TO foundation_v2_phs_demo_writer;
