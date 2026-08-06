@@ -519,7 +519,9 @@ function valueExpression(name, cast) {
     return `coalesce(jsonb_array_length(coalesce(projection_payload -> '${payloadField}', '[]'::jsonb)), 0) AS ${quoteIdent(name)}`;
   }
   if (cast === "text") return `(projection_payload ->> '${name}') AS ${quoteIdent(name)}`;
-  if (cast === "date") return `NULLIF(projection_payload ->> '${name}', '')::date AS ${quoteIdent(name)}`;
+  if (cast === "date") {
+    return `CASE WHEN NULLIF(projection_payload ->> '${name}', '') ~ '^\\d{4}-\\d{2}$' THEN ((projection_payload ->> '${name}') || '-01')::date ELSE NULLIF(projection_payload ->> '${name}', '')::date END AS ${quoteIdent(name)}`;
+  }
   if (cast === "int") return `NULLIF(projection_payload ->> '${name}', '')::integer AS ${quoteIdent(name)}`;
   if (cast === "numeric") return `NULLIF(projection_payload ->> '${name}', '')::numeric AS ${quoteIdent(name)}`;
   throw new Error(`Unsupported cast ${cast}`);
@@ -598,13 +600,11 @@ async function verify(client, mutationExecuted, beforeSkyHarbor = null) {
 async function readSkyHarborCounts(client) {
   const exists = await schemaExists(client, "consumption_v4_canary");
   if (!exists) return { available: false };
-  const [contracts, vendors, scope, spend, performance] = await Promise.all([
-    one(client, "SELECT count(*)::int AS rows, coalesce(sum(annual_value),0)::numeric AS annual_value FROM consumption_v4_canary.sourcing_contract_v1 WHERE tenant_key = 'skyharbor_global'"),
-    one(client, "SELECT count(*)::int AS rows, coalesce(sum(contract_count),0)::int AS contract_count FROM consumption_v4_canary.sourcing_vendor_v1 WHERE tenant_key = 'skyharbor_global'"),
-    one(client, "SELECT count(*)::int AS rows FROM consumption_v4_canary.sourcing_contract_scope_v1 WHERE tenant_key = 'skyharbor_global'"),
-    one(client, "SELECT coalesce(sum(invoice_lines),0)::int AS invoice_lines, coalesce(sum(actual_spend),0)::numeric AS actual_spend FROM consumption_v4_canary.sourcing_spend_monthly_v1 WHERE tenant_key = 'skyharbor_global'"),
-    one(client, "SELECT count(*)::int AS rows, coalesce(sum(credit_calculated),0)::numeric AS credit_calculated FROM consumption_v4_canary.sourcing_performance_v1 WHERE tenant_key = 'skyharbor_global'"),
-  ]);
+  const contracts = await one(client, "SELECT count(*)::int AS rows, coalesce(sum(annual_value),0)::numeric AS annual_value FROM consumption_v4_canary.sourcing_contract_v1 WHERE tenant_key = 'skyharbor_global'");
+  const vendors = await one(client, "SELECT count(*)::int AS rows, coalesce(sum(contract_count),0)::int AS contract_count FROM consumption_v4_canary.sourcing_vendor_v1 WHERE tenant_key = 'skyharbor_global'");
+  const scope = await one(client, "SELECT count(*)::int AS rows FROM consumption_v4_canary.sourcing_contract_scope_v1 WHERE tenant_key = 'skyharbor_global'");
+  const spend = await one(client, "SELECT coalesce(sum(invoice_lines),0)::int AS invoice_lines, coalesce(sum(actual_spend),0)::numeric AS actual_spend FROM consumption_v4_canary.sourcing_spend_monthly_v1 WHERE tenant_key = 'skyharbor_global'");
+  const performance = await one(client, "SELECT count(*)::int AS rows, coalesce(sum(credit_calculated),0)::numeric AS credit_calculated FROM consumption_v4_canary.sourcing_performance_v1 WHERE tenant_key = 'skyharbor_global'");
   return { available: true, contracts, vendors, scope, spend, performance };
 }
 
