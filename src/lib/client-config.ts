@@ -13,7 +13,7 @@ export const DEMO_SAFE_CLIENT_NAMES = {
   meridian: "Healthcare Demo",
   arcturus: "FS Demo",
   northstar: "Clinical Technology Demo",
-  skyharbor: "Airline Demo",
+  skyharbor: "SkyHarbor Global",
   lakeshore: "Lakeshore Holdings",
 } as const satisfies Record<string, string>;
 
@@ -55,7 +55,7 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bSkyHarbor Air Group\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Airlines\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
-  [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor\b(?!\s+Global\b)/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bLakeshore Holdings Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [
@@ -81,7 +81,6 @@ const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
   ["SkyHarbor Air Group", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
-  ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["Lakeshore Holdings Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],
@@ -209,7 +208,12 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   ],
   apexretail: ["Apex Retail", "Apex Retail Group"],
   northstar: ["Northstar Clinical Technologies", "Northstar"],
-  skyharbor: ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
+  skyharbor: [
+    "SkyHarbor Global",
+    "SkyHarbor Air",
+    "SkyHarbor Airlines",
+    "SkyHarbor",
+  ],
   // Keep retired aliases only as inbound lookup aliases. User-visible output is
   // canonicalized to DEMO_SAFE_CLIENT_NAMES.lakeshore.
   lakeshore: ["Lakeshore Industries", "Lakeshore Holdings", "Lakeshore"],
@@ -335,6 +339,7 @@ export function canonicalClientDisplayName(args: {
     key === "skyharbor-air" ||
     key === "skyharbor" ||
     normalizedName === "skyharbor air group" ||
+    normalizedName === "skyharbor global" ||
     normalizedName === "skyharbor airlines" ||
     normalizedName === "skyharbor air" ||
     normalizedName === "skyharbor"
