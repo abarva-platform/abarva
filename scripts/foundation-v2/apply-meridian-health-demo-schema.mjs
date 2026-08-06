@@ -13,7 +13,7 @@ import {
 } from "./golden-slice-support.mjs";
 
 const MIGRATION_NAME = "20260805230000_foundation_v2_meridian_health_demo_source_volume.sql";
-const EXPECTED_MIGRATION_SHA256 = "fafd2cb062985b8dea12728621f4aa37c7879aafe360cb3234eb6b4c9a98eb6b";
+const EXPECTED_MIGRATION_SHA256 = "b10d2fd49d481e089f164b2260bff5f6838c5dbb56ff90834536cfccb57d5158";
 const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
 const TENANT_KEY = "meridian_health_global";
 const TEST_NAMESPACE = "meridian-health-source-volume-v1";

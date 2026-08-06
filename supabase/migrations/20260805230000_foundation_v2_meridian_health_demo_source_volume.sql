@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_releases (
   UNIQUE (tenant_key, test_namespace, release_version),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_files (
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_files (
   UNIQUE (source_release_id, content_sha256),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_file_context (
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_file_contex
   UNIQUE (source_release_id, source_file_id),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_records (
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_records (
   UNIQUE (source_release_id, source_row_hash),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_field_values (
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.source_field_value
   UNIQUE (source_record_id, source_field_id),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.parser_executions (
@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.parser_executions 
   UNIQUE (parser_execution_id, tenant_key, test_namespace),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.gate_results (
@@ -235,6 +235,31 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.gate_results (
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1')
 );
+
+DO $$
+DECLARE
+  rel regclass;
+  rel_name text;
+BEGIN
+  FOREACH rel IN ARRAY ARRAY[
+    'foundation_v2_meridian_health_demo.source_releases'::regclass,
+    'foundation_v2_meridian_health_demo.source_files'::regclass,
+    'foundation_v2_meridian_health_demo.source_file_context'::regclass,
+    'foundation_v2_meridian_health_demo.source_records'::regclass,
+    'foundation_v2_meridian_health_demo.source_field_values'::regclass,
+    'foundation_v2_meridian_health_demo.parser_executions'::regclass
+  ]
+  LOOP
+    rel_name := split_part(rel::text, '.', 2);
+    EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', rel, rel_name || '_source_release_id_check');
+    EXECUTE format(
+      'ALTER TABLE %s ADD CONSTRAINT %I CHECK (source_release_id = %L)',
+      rel,
+      rel_name || '_source_release_id_check',
+      'meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    );
+  END LOOP;
+END $$;
 
 GRANT USAGE ON SCHEMA foundation_v2_meridian_health_demo TO foundation_v2_meridian_health_demo_writer;
 GRANT USAGE ON SCHEMA foundation_v2_meridian_health_demo TO foundation_v2_meridian_health_demo_reader;
@@ -266,7 +291,7 @@ BEGIN
         AND table_name = rel_name
         AND column_name = 'source_release_id'
     ) THEN
-      release_check := ' AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+      release_check := ' AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
                          AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)';
     END IF;
 
@@ -282,7 +307,7 @@ BEGIN
            AND tenant_key = current_setting(''app.tenant_key'', true)
            AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
            AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
            %s
          )',
@@ -299,7 +324,7 @@ BEGIN
            AND tenant_key = current_setting(''app.tenant_key'', true)
            AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND current_setting(''app.foundation_v2_source_release_id'', true) = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
            AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
            %s
          )',
