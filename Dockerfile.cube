@@ -2,6 +2,8 @@ FROM cubejs/cube:v1.7.16
 
 WORKDIR /cube/conf
 
+RUN npm install --no-audit --no-fund dotenv js-yaml pg
+
 COPY cube/cube.py ./cube.py
 COPY cube/model ./model
 COPY scripts/source/cube-tenant-guard.mjs ./scripts/cube-tenant-guard.mjs
