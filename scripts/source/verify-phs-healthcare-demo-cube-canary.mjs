@@ -17,8 +17,8 @@ const { Client } = pg;
 const PHS_TENANT = "phs_health_demo_global";
 const SKYHARBOR_TENANT = "skyharbor_global";
 const CANARY_SCHEMA = "foundation_v2_phs_cube_canary";
-const MODEL_PATH = "cube/model/phs_healthcare_demo.yml";
-const REWRITE_PATH = "cube/cube.py";
+const MODEL_PATH = firstExistingPath(["cube/model/phs_healthcare_demo.yml", "model/phs_healthcare_demo.yml"]);
+const REWRITE_PATH = firstExistingPath(["cube/cube.py", "cube.py"]);
 
 const args = parseArgs(process.argv.slice(2));
 const baseUrl = (args.url || process.env.PHS_CUBE_CANARY_URL || process.env.SOURCE_CUBE_URL || "http://127.0.0.1:4000").replace(/\/$/u, "");
@@ -30,6 +30,10 @@ const databaseUrl =
   process.env.ABARVA_AZURE_DATABASE_URL ||
   process.env.AZURE_DATABASE_URL ||
   process.env.DATABASE_URL;
+
+function firstExistingPath(candidates) {
+  return candidates.find((candidate) => fs.existsSync(candidate)) || candidates[0];
+}
 
 const phsFamilies = [
   {
