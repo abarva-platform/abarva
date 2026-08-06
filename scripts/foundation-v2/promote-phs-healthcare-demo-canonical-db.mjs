@@ -168,6 +168,9 @@ function selfTest() {
       contract_families: "5..6",
       legal_instruments: "20..30",
       applications_services_cis: "150..250",
+      program_entities: 24,
+      initiative_concepts: 5,
+      program_dependency_relationships: 360,
       bpo_sourcing_events: 1,
       bpo_suppliers: "4..5",
       canonical_entities_must_not_equal_source_records: true,
@@ -224,13 +227,16 @@ async function apply(client) {
     const existingTotal = layer3Total(existingCounts);
     if (existingTotal > 0) {
       const existingExact = await layer3Exact(client);
-      if (!existingExact.ok) throw new Error(`Existing Layer 3 rows are partial or divergent: ${stableJson(existingExact)}`);
-      await client.query("ROLLBACK");
-      return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_ALREADY_VERIFIED", {
-        mutation_executed: false,
-        started_at: startedAt,
-        completed_at: new Date().toISOString(),
-      });
+      if (existingExact.ok) {
+        await client.query("ROLLBACK");
+        return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_ALREADY_VERIFIED", {
+          mutation_executed: false,
+          started_at: startedAt,
+          completed_at: new Date().toISOString(),
+        });
+      }
+      progress("apply.repair_reset_layer3_rows", { existing_layer3_counts: existingCounts, existing_layer3_defects: existingExact.defects });
+      await resetLayer3Rows(client);
     }
 
     await createTempHelpers(client);
@@ -428,10 +434,19 @@ async function insertCanonicalEntities(client) {
         FROM phs_l3_row_payload
        WHERE file_name='PROGRAMS_INITIATIVES_DEPENDENCIES.csv' AND coalesce(payload->>'program_ref','') <> ''
       UNION ALL
-      SELECT 'initiative', payload->>'initiative_ref', payload->>'initiative_ref', file_name, source_record_id,
-             jsonb_build_object('derived_from', file_name, 'initiative_ref', payload->>'initiative_ref')
+      SELECT 'initiative',
+             'initiative_concept:' || pg_temp.phs_l3_slug(payload->>'dependency_ref'),
+             payload->>'dependency_ref',
+             file_name,
+             source_record_id,
+             jsonb_build_object(
+               'derived_from', file_name,
+               'initiative_identity_rule', 'dependency_ref_business_concept',
+               'dependency_ref', payload->>'dependency_ref',
+               'source_initiative_ref', payload->>'initiative_ref'
+             )
         FROM phs_l3_row_payload
-       WHERE file_name='PROGRAMS_INITIATIVES_DEPENDENCIES.csv' AND coalesce(payload->>'initiative_ref','') <> ''
+       WHERE file_name='PROGRAMS_INITIATIVES_DEPENDENCIES.csv' AND coalesce(payload->>'dependency_ref','') <> ''
     ),
     all_entities AS (
       SELECT * FROM base_entities
@@ -448,7 +463,12 @@ async function insertCanonicalEntities(client) {
            jsonb_build_object(
              'business_key', business_key,
              'sample_payload', (array_agg(payload ORDER BY source_record_id))[1],
-             'source_record_ids', to_jsonb(array_agg(source_record_id ORDER BY source_record_id))
+             'source_record_ids', to_jsonb(array_agg(source_record_id ORDER BY source_record_id)),
+             'source_initiative_refs', CASE
+               WHEN canonical_entity_type='initiative'
+                 THEN to_jsonb(array_agg(DISTINCT payload->>'source_initiative_ref' ORDER BY payload->>'source_initiative_ref'))
+               ELSE '[]'::jsonb
+             END
            ),
            0.9800,
            $5
@@ -457,6 +477,28 @@ async function insertCanonicalEntities(client) {
      GROUP BY canonical_entity_type, business_key
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, MASTER_ENTITY_FILES, PROMOTION_EXECUTION_ID],
+  );
+}
+
+async function resetLayer3Rows(client) {
+  for (const table of [
+    "canonical_promotion_decisions",
+    "canonical_observations",
+    "canonical_evidence_records",
+    "event_native_records",
+    "canonical_relationships",
+    "canonical_entities",
+  ]) {
+    await q(
+      client,
+      `DELETE FROM ${tableRef(table)} WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3`,
+      [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
+    );
+  }
+  await q(
+    client,
+    `DELETE FROM ${tableRef("gate_results")} WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id = ANY($3::text[])`,
+    [TENANT_KEY, TEST_NAMESPACE, LAYER3_GATE_IDS],
   );
 }
 
@@ -713,6 +755,7 @@ async function verifiedManifest(client, status, extra) {
   const decisionSummary = await decisionSummaryRows(client);
   const fileResolutionSummary = await fileResolutionSummaryRows(client);
   const relationshipSummary = await relationshipSummaryRows(client);
+  const semanticIdentity = await programInitiativeSemanticIdentity(client);
   const observationSummary = await observationSummaryRows(client);
   const eventSummary = await eventSummaryRows(client);
   const exact = await layer3Exact(client, {
@@ -722,6 +765,7 @@ async function verifiedManifest(client, status, extra) {
     entityTypeSummary,
     decisionSummary,
     relationshipSummary,
+    semanticIdentity,
   });
   return manifest(status, {
     ...extra,
@@ -734,6 +778,7 @@ async function verifiedManifest(client, status, extra) {
     decision_summary: decisionSummary,
     file_resolution_summary: fileResolutionSummary,
     relationship_state_summary: relationshipSummary,
+    program_initiative_semantic_identity: semanticIdentity,
     observation_type_summary: observationSummary,
     event_record_type_summary: eventSummary,
     earliest_broken_transition: exact.ok ? null : exact.defects[0],
@@ -747,6 +792,7 @@ async function layer3Exact(client, precomputed = {}) {
   const entityTypeSummary = precomputed.entityTypeSummary || await entityTypeSummaryRows(client);
   const decisionSummary = precomputed.decisionSummary || await decisionSummaryRows(client);
   const relationshipSummary = precomputed.relationshipSummary || await relationshipSummaryRows(client);
+  const semanticIdentity = precomputed.semanticIdentity || await programInitiativeSemanticIdentity(client);
   const entityCount = (type) => Number(entityTypeSummary.find((row) => row.canonical_entity_type === type)?.canonical_entities || 0);
   const decisions = (state) => Number(decisionSummary.find((row) => row.resolution_state === state)?.decisions || 0);
   const defects = [];
@@ -759,6 +805,14 @@ async function layer3Exact(client, precomputed = {}) {
   if (entityCount("legal_instrument") < 20 || entityCount("legal_instrument") > 30) defects.push(`legal_instrument_count_out_of_range:${entityCount("legal_instrument")}`);
   const appServiceCi = entityCount("application") + entityCount("epic_module");
   if (appServiceCi < 150 || appServiceCi > 250) defects.push(`application_service_ci_count_out_of_range:${appServiceCi}`);
+  if (entityCount("program") !== 24) defects.push(`program_count_mismatch:${entityCount("program")}`);
+  if (entityCount("initiative") !== 5) defects.push(`initiative_concept_count_mismatch:${entityCount("initiative")}`);
+  if (Number(semanticIdentity.distinct_source_program_ids || 0) !== 24) defects.push(`source_program_identity_mismatch:${semanticIdentity.distinct_source_program_ids}`);
+  if (Number(semanticIdentity.distinct_source_initiative_ids || 0) !== 360) defects.push(`source_initiative_id_count_mismatch:${semanticIdentity.distinct_source_initiative_ids}`);
+  if (Number(semanticIdentity.canonical_program_count || 0) !== 24) defects.push(`canonical_program_identity_mismatch:${semanticIdentity.canonical_program_count}`);
+  if (Number(semanticIdentity.canonical_initiative_count || 0) !== 5) defects.push(`canonical_initiative_identity_mismatch:${semanticIdentity.canonical_initiative_count}`);
+  if (Number(semanticIdentity.dependency_relationship_count || 0) !== 360) defects.push(`dependency_relationship_count_mismatch:${semanticIdentity.dependency_relationship_count}`);
+  if (Number(semanticIdentity.orphan_initiatives || 0) !== 0) defects.push(`orphan_initiatives:${semanticIdentity.orphan_initiatives}`);
   if (entityCount("bpo_supplier") < 4 || entityCount("bpo_supplier") > 5) defects.push(`bpo_supplier_count_out_of_range:${entityCount("bpo_supplier")}`);
   if (layer3.event_native_records !== 4370) defects.push(`event_native_record_count_mismatch:${layer3.event_native_records}`);
   if (layer3.canonical_relationships !== 2390) defects.push(`relationship_count_mismatch:${layer3.canonical_relationships}`);
@@ -867,6 +921,57 @@ async function relationshipSummaryRows(client) {
       ORDER BY relationship_state`,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
   );
+}
+
+async function programInitiativeSemanticIdentity(client) {
+  const [summary] = await rows(
+    client,
+    `
+    WITH program_source_records AS (
+      SELECT sr.source_record_id
+        FROM ${tableRef("source_records")} sr
+        JOIN ${tableRef("source_files")} sf USING (tenant_key, test_namespace, source_file_id, source_release_id)
+       WHERE sr.tenant_key=$1
+         AND sr.test_namespace=$2
+         AND sr.source_release_id=$3
+         AND sf.file_name='PROGRAMS_INITIATIVES_DEPENDENCIES.csv'
+    ),
+    program_rows AS (
+      SELECT psr.source_record_id,
+             max(sfv.raw_value) FILTER (WHERE sfv.source_field_name='program_ref') AS program_ref,
+             max(sfv.raw_value) FILTER (WHERE sfv.source_field_name='initiative_ref') AS initiative_ref,
+             max(sfv.raw_value) FILTER (WHERE sfv.source_field_name='dependency_ref') AS dependency_ref
+        FROM program_source_records psr
+        JOIN ${tableRef("source_field_values")} sfv
+          ON sfv.tenant_key=$1
+         AND sfv.test_namespace=$2
+         AND sfv.source_release_id=$3
+         AND sfv.source_record_id=psr.source_record_id
+       GROUP BY psr.source_record_id
+    ),
+    duplicate_names AS (
+      SELECT dependency_ref
+        FROM program_rows
+       WHERE coalesce(dependency_ref,'') <> ''
+       GROUP BY dependency_ref
+      HAVING count(DISTINCT initiative_ref) > 1
+    )
+    SELECT
+      count(DISTINCT program_ref)::int AS distinct_source_program_ids,
+      count(DISTINCT initiative_ref)::int AS distinct_source_initiative_ids,
+      (SELECT count(*)::int FROM ${tableRef("canonical_entities")}
+        WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3 AND canonical_entity_type='program') AS canonical_program_count,
+      (SELECT count(*)::int FROM ${tableRef("canonical_entities")}
+        WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3 AND canonical_entity_type='initiative') AS canonical_initiative_count,
+      (SELECT count(*)::int FROM ${tableRef("canonical_relationships")}
+        WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3 AND relationship_type='programs_initiatives_dependencies') AS dependency_relationship_count,
+      (SELECT count(*)::int FROM duplicate_names) AS duplicate_names_across_different_ids,
+      count(*) FILTER (WHERE coalesce(program_ref,'')='')::int AS orphan_initiatives
+      FROM program_rows
+    `,
+    [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
+  );
+  return numericObject(summary);
 }
 
 async function observationSummaryRows(client) {
