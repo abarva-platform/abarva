@@ -690,6 +690,7 @@
     "source:phs-healthcare-demo:cube-canary:verify": "node scripts/source/verify-phs-healthcare-demo-cube-canary.mjs --mode all",
     "source:phs-healthcare-demo:layer6:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260806161000_foundation_v2_phs_demo_layer6_product_bindings.sql",
     "source:phs-healthcare-demo:layer6:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260806161000_foundation_v2_phs_demo_layer6_product_bindings.sql",
+    "source:phs-healthcare-demo:layer6:canary-grants:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260806162500_foundation_v2_phs_demo_layer6_canary_read_grants.sql",
     "source:phs-healthcare-demo:layer6:self-test": "node scripts/foundation-v2/bind-phs-healthcare-demo-layer6-products.mjs --mode self-test",
     "source:phs-healthcare-demo:layer6:preflight": "node scripts/foundation-v2/bind-phs-healthcare-demo-layer6-products.mjs --mode preflight",
     "source:phs-healthcare-demo:layer6:apply": "node scripts/foundation-v2/bind-phs-healthcare-demo-layer6-products.mjs --mode apply",
