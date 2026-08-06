@@ -56,6 +56,19 @@ describe("post-deploy crawl guard", () => {
     ).toEqual(["SkyHarbor Global"]);
   });
 
+  it("accepts uppercase tenant headings as visible tenant identity", () => {
+    const findings = comparePage(
+      observation({
+        visibleText:
+          "IT INVESTMENT TOWER · FY26 · SKYHARBOR GLOBAL\nValue proof dashboard",
+      }),
+    );
+
+    expect(
+      findings.some((finding) => finding.dimension === "tenant-identity"),
+    ).toBe(false);
+  });
+
   it("includes the Admin Data Layer Explorer as a directly targetable crawl surface", () => {
     expect(resolveCrawlSurfaces("admin-data-layer-explorer")).toEqual([
       expect.objectContaining({
