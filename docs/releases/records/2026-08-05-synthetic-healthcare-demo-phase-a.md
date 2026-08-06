@@ -101,6 +101,7 @@ Passed: ACA Layer 3 schema apply against `foundation_v2_phs_demo`; migration `20
 Passed: ACA Layer 3 post-stop preflight with the optimized lab image; source readback and Layer 2 readback matched exactly, and existing Layer 3 row count was zero.
 Passed: ACA Layer 3 canonical promotion apply through the approved data-build job path; proof status `PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFIED` recorded 54,967 promotion decisions, 794 canonical entities, 47,941 observations, 2,390 relationships, 16,000 evidence records, 4,370 event-native records, `exact_match=true` and no defects.
 Passed: ACA Layer 3 independent reader verify repeated the same counts with `mutation_executed=false`, `exact_match=true` and no defects.
+Passed: source-to-Layer 3 reconciliation packet compared verified Layer 1 source-file rows, verified Layer 2 normalized/candidate rows and verified Layer 3 file-resolution rows. All 54 loaded source files reconciled with zero file-level failures and zero defects.
 
 ## Rollout Plan
 
@@ -139,6 +140,8 @@ Layer 3 verified ACA readback counts: 54,967 promotion decisions; 794 canonical 
 Layer 3 ACA proof paths: `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/01-layer3-schema-apply/proof/PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_PROOF.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/04-layer3-preflight-after-stopped-apply/proof/PHS_CANONICAL_PROMOTION.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/05-layer3-apply-optimized/proof/PHS_CANONICAL_PROMOTION.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/06-layer3-verify/proof/PHS_CANONICAL_PROMOTION.json`.
 Layer 3 ACA proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Layer3_ACA_Proof_20260806T122300Z.zip`.
 Layer 3 ACA proof ZIP SHA-256: `83934b64a809b153ccc52e25812d4c0c84d6561c08bc8d801cfd760637bee47f`.
+Source-to-Layer 3 reconciliation packet: `/Users/anand/Downloads/PHS_Healthcare_Demo_Source_Reconciliation_20260806T123700Z.zip`.
+Source-to-Layer 3 reconciliation packet SHA-256: `67f9fc4df82f56c4cf7affbb3d638e3bb00bda0ddd8f67cb52117e88489c39e0`.
 Governed narrative acceptance now requires side-by-side audit from narrative claim to packet fact/finding to source record to evidence span to Cube measure where applicable; document rendering alone is not acceptable proof.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
