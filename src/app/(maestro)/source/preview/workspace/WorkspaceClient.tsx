@@ -225,34 +225,8 @@ export function WorkspaceClient({
               </div>
 
               <div style={{ padding: '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {vm.stripFull ? (
-                  <>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
-                      {vm.valueStrip.map((v, i) => (
-                        <div key={i} style={{ flex: '1 1 190px', padding: '15px 17px', borderRight: '1px solid rgba(10,10,11,.09)', borderTop: '1px solid rgba(10,10,11,.09)', marginTop: -1 }}>
-                          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 9, lineHeight: 1.35 }}>{v.label}</div>
-                          <div style={{ fontFamily: 'Fraunces,Georgia,serif', fontSize: v.size, fontWeight: 500, lineHeight: 1.05, color: v.color }}>{v.value}</div>
-                          <div style={{ fontSize: 11.5, color: '#5f5e5a', marginTop: 7, lineHeight: 1.4 }}>{v.sub}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {vm.hasPending ? (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'baseline', background: '#fbfaf7', border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '11px 16px' }}>
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780' }}>Not yet established</span>
-                        {vm.pendingItems.map((p, i) => (
-                          <span key={i} style={{ display: 'flex', gap: 10 }}>
-                            <span style={{ fontSize: 12, color: '#5f5e5a' }}><b style={{ color: '#2c2c2a', fontWeight: 600 }}>{p.label}</b> — {p.sub}</span>
-                            <span style={{ color: '#d3d1c7' }}>·</span>
-                          </span>
-                        ))}
-                        <a onClick={vm.goEvidence} style={{ fontSize: 12, fontWeight: 600, marginLeft: 'auto', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                          See what it needs →
-                        </a>
-                      </div>
-                    ) : null}
-                    {vm.isPortfolioContext ? <SourceV4ProofPanel vm={vm} /> : null}
-                  </>
-                ) : null}
+                {vm.stripFull ? <FullContextStrip vm={vm} /> : null}
+                {vm.stripCompact ? <ExploreCompactStrip vm={vm} /> : null}
 
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
                 {vm.isExplore ? <ExploreLens vm={vm} /> : null}
@@ -307,6 +281,72 @@ export function WorkspaceClient({
 
       <Tooltip tip={vm.tip} />
     </div>
+  );
+}
+
+function FullContextStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
+  return (
+    <>
+      <div style={{ display: 'flex', flexWrap: 'wrap', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+        {vm.valueStrip.map((v, i) => (
+          <div key={i} style={{ flex: '1 1 190px', padding: '15px 17px', borderRight: '1px solid rgba(10,10,11,.09)', borderTop: '1px solid rgba(10,10,11,.09)', marginTop: -1 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 9, lineHeight: 1.35 }}>{v.label}</div>
+            <div style={{ fontFamily: 'Fraunces,Georgia,serif', fontSize: v.size, fontWeight: 500, lineHeight: 1.05, color: v.color }}>{v.value}</div>
+            <div style={{ fontSize: 11.5, color: '#5f5e5a', marginTop: 7, lineHeight: 1.4 }}>{v.sub}</div>
+          </div>
+        ))}
+      </div>
+      {vm.hasPending ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'baseline', background: '#fbfaf7', border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '11px 16px' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780' }}>Not yet established</span>
+          {vm.pendingItems.map((p, i) => (
+            <span key={i} style={{ display: 'flex', gap: 10 }}>
+              <span style={{ fontSize: 12, color: '#5f5e5a' }}><b style={{ color: '#2c2c2a', fontWeight: 600 }}>{p.label}</b> — {p.sub}</span>
+              <span style={{ color: '#d3d1c7' }}>·</span>
+            </span>
+          ))}
+          <a onClick={vm.goEvidence} style={{ fontSize: 12, fontWeight: 600, marginLeft: 'auto', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            See what it needs →
+          </a>
+        </div>
+      ) : null}
+      <SourceV4ProofPanel vm={vm} />
+    </>
+  );
+}
+
+function ExploreCompactStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
+  const [expanded, setExpanded] = useState(false);
+  const ringDeg = Math.max(0, Math.min(100, vm.categoryCleanPctRaw * 100));
+  return (
+    <>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, padding: '10px 16px', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, background: '#fff', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: '#5f5e5a' }}>
+        {vm.compactItems.map((it, i) => (
+          <span key={i}>
+            <b style={{ color: '#0a0a0b' }}>{it.value}</b> {it.label}
+          </span>
+        ))}
+        <span
+          style={{
+            width: 22, height: 22, borderRadius: '50%', flex: 'none',
+            background: `conic-gradient(#ba7517 0 ${ringDeg}%, #f1efe8 ${ringDeg}% 100%)`,
+            display: 'grid', placeItems: 'center',
+          }}
+        >
+          <span style={{ width: 13, height: 13, borderRadius: '50%', background: '#fff' }} />
+        </span>
+        <span style={{ color: '#ba7517' }}>
+          <b>{vm.categoryCleanPct}</b> category-clean
+        </span>
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          style={{ marginLeft: 'auto', border: '1px solid rgba(10,10,11,.16)', background: '#fff', color: '#5f5e5a', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+        >
+          {expanded ? '– hide full context' : '+ full context ▾'}
+        </button>
+      </div>
+      {expanded ? <FullContextStrip vm={vm} /> : null}
+    </>
   );
 }
 
