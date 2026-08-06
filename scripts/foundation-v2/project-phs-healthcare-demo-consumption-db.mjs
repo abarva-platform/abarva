@@ -178,7 +178,8 @@ async function apply(client) {
     const existing = await projectionReadback(client);
     if (existing.projection_rows > 0) {
       const exact = await layer4Exact(client, { schema, layer3, existing });
-      if (exact.ok) {
+      const forceRebuild = process.env.PHS_LAYER4_PROJECTION_FORCE_REBUILD === "true";
+      if (exact.ok && !forceRebuild) {
         await client.query("ROLLBACK");
         return await verifiedManifest(client, "PHS_HEALTHCARE_DEMO_LAYER4_PROJECTION_ALREADY_VERIFIED", {
           mutation_executed: false,
@@ -186,7 +187,7 @@ async function apply(client) {
           completed_at: new Date().toISOString(),
         });
       }
-      progress("apply.repair_reset_layer4_rows", { existing_projection_counts: existing, existing_defects: exact.defects });
+      progress("apply.repair_reset_layer4_rows", { existing_projection_counts: existing, existing_defects: exact.defects, force_rebuild: forceRebuild });
       await resetLayer4Rows(client);
     }
     progress("apply.source_payload_start");
