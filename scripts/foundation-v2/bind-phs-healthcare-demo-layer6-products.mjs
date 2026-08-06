@@ -630,7 +630,7 @@ async function verify(client) {
 async function buildFindings(client, authorityByName, snapshot) {
   const findings = [];
   for (const step of HERO_STEPS) {
-    const resultRow = await one(client, step.sql, [TENANT_KEY, EVENT_ID]);
+    const resultRow = await one(client, step.sql, step.sql.includes("$2") ? [TENANT_KEY, EVENT_ID] : [TENANT_KEY]);
     const result = resultRow.result || {};
     const sourceLineage = await lineageForProjectionNames(client, step.projection_names);
     const status = findingSupported(step.key, result) ? "supported" : "gap";
