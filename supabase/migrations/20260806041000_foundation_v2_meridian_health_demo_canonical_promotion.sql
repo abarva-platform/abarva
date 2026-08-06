@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_entities
   UNIQUE (tenant_key, test_namespace, canonical_entity_type, business_key),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_observations (
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_observat
   UNIQUE (tenant_key, test_namespace, observation_type, business_key),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_relationships (
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_relation
   UNIQUE (tenant_key, test_namespace, relationship_type, source_record_id),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_evidence_records (
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_evidence
   UNIQUE (tenant_key, test_namespace, evidence_ref),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.event_native_records (
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.event_native_recor
   UNIQUE (tenant_key, test_namespace, event_id, event_record_type, business_key),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_promotion_decisions (
@@ -160,8 +160,43 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.canonical_promotio
   UNIQUE (candidate_id, tenant_key, test_namespace),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
+
+DO $$
+DECLARE
+  table_name text;
+  rel regclass;
+  constraint_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'canonical_entities',
+    'canonical_observations',
+    'canonical_relationships',
+    'canonical_evidence_records',
+    'event_native_records',
+    'canonical_promotion_decisions'
+  ]
+  LOOP
+    rel := format('foundation_v2_meridian_health_demo.%I', table_name)::regclass;
+    FOR constraint_name IN
+      SELECT c.conname
+        FROM pg_constraint c
+       WHERE c.conrelid = rel
+         AND c.contype = 'c'
+         AND pg_get_constraintdef(c.oid) LIKE '%source_release_id%'
+    LOOP
+      EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', rel, constraint_name);
+    END LOOP;
+
+    EXECUTE format(
+      'ALTER TABLE %s ADD CONSTRAINT %I CHECK (source_release_id = %L)',
+      rel,
+      table_name || '_source_release_id_current_check',
+      'meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    );
+  END LOOP;
+END $$;
 
 GRANT SELECT, INSERT ON foundation_v2_meridian_health_demo.canonical_entities TO foundation_v2_meridian_health_demo_writer;
 GRANT SELECT, INSERT ON foundation_v2_meridian_health_demo.canonical_observations TO foundation_v2_meridian_health_demo_writer;
@@ -202,8 +237,8 @@ CREATE POLICY meridian_health_demo_select ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_insert ON foundation_v2_meridian_health_demo.canonical_entities;
@@ -213,8 +248,8 @@ CREATE POLICY meridian_health_demo_insert ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_select ON foundation_v2_meridian_health_demo.canonical_observations;
@@ -224,8 +259,8 @@ CREATE POLICY meridian_health_demo_select ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_insert ON foundation_v2_meridian_health_demo.canonical_observations;
@@ -235,8 +270,8 @@ CREATE POLICY meridian_health_demo_insert ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_select ON foundation_v2_meridian_health_demo.canonical_relationships;
@@ -246,8 +281,8 @@ CREATE POLICY meridian_health_demo_select ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_insert ON foundation_v2_meridian_health_demo.canonical_relationships;
@@ -257,8 +292,8 @@ CREATE POLICY meridian_health_demo_insert ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_select ON foundation_v2_meridian_health_demo.canonical_evidence_records;
@@ -268,8 +303,8 @@ CREATE POLICY meridian_health_demo_select ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_insert ON foundation_v2_meridian_health_demo.canonical_evidence_records;
@@ -279,8 +314,8 @@ CREATE POLICY meridian_health_demo_insert ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_select ON foundation_v2_meridian_health_demo.event_native_records;
@@ -290,8 +325,8 @@ CREATE POLICY meridian_health_demo_select ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_insert ON foundation_v2_meridian_health_demo.event_native_records;
@@ -301,8 +336,8 @@ CREATE POLICY meridian_health_demo_insert ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_select ON foundation_v2_meridian_health_demo.canonical_promotion_decisions;
@@ -312,8 +347,8 @@ CREATE POLICY meridian_health_demo_select ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 DROP POLICY IF EXISTS meridian_health_demo_insert ON foundation_v2_meridian_health_demo.canonical_promotion_decisions;
@@ -323,8 +358,8 @@ CREATE POLICY meridian_health_demo_insert ON foundation_v2_meridian_health_demo.
     AND current_setting('app.tenant_key', true)='meridian_health_global'
     AND test_namespace='meridian-health-source-volume-v1'
     AND current_setting('app.foundation_v2_test_namespace', true)='meridian-health-source-volume-v1'
-    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
-    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND source_release_id='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    AND current_setting('app.foundation_v2_source_release_id', true)='meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true)='meridian-health-demo-phase-a-source-volume-v1');
 
 COMMENT ON TABLE foundation_v2_meridian_health_demo.canonical_entities IS

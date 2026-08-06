@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.event_context_snap
   UNIQUE (event_context_snapshot_id, tenant_key, test_namespace),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.projection_authority (
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.projection_authori
   UNIQUE (tenant_key, test_namespace, source_release_id, projection_namespace, projection_name, projection_version),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.projection_rows (
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.projection_rows (
   UNIQUE (projection_authority_id, row_hash),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
 
 CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.projection_field_lineage (
@@ -105,8 +105,41 @@ CREATE TABLE IF NOT EXISTS foundation_v2_meridian_health_demo.projection_field_l
   UNIQUE (projection_field_lineage_id, tenant_key, test_namespace),
   CHECK (tenant_key = 'meridian_health_global'),
   CHECK (test_namespace = 'meridian-health-source-volume-v1'),
-  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16')
+  CHECK (source_release_id = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88')
 );
+
+DO $$
+DECLARE
+  table_name text;
+  rel regclass;
+  constraint_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'event_context_snapshots',
+    'projection_authority',
+    'projection_rows',
+    'projection_field_lineage'
+  ]
+  LOOP
+    rel := format('foundation_v2_meridian_health_demo.%I', table_name)::regclass;
+    FOR constraint_name IN
+      SELECT c.conname
+        FROM pg_constraint c
+       WHERE c.conrelid = rel
+         AND c.contype = 'c'
+         AND pg_get_constraintdef(c.oid) LIKE '%source_release_id%'
+    LOOP
+      EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', rel, constraint_name);
+    END LOOP;
+
+    EXECUTE format(
+      'ALTER TABLE %s ADD CONSTRAINT %I CHECK (source_release_id = %L)',
+      rel,
+      table_name || '_source_release_id_current_check',
+      'meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
+    );
+  END LOOP;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_meridian_health_l4_projection_authority_name
   ON foundation_v2_meridian_health_demo.projection_authority (tenant_key, test_namespace, projection_namespace, projection_name);
@@ -150,7 +183,7 @@ BEGIN
            AND tenant_key = current_setting(''app.tenant_key'', true)
            AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
            AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)
            AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
          )',
@@ -166,7 +199,7 @@ BEGIN
            AND tenant_key = current_setting(''app.tenant_key'', true)
            AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
            AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)
            AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
          )',
@@ -182,7 +215,7 @@ BEGIN
            AND tenant_key = current_setting(''app.tenant_key'', true)
            AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
            AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)
            AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
          )',

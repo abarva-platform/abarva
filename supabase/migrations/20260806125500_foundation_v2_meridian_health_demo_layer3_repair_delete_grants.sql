@@ -31,7 +31,7 @@ BEGIN
            AND tenant_key = current_setting(''app.tenant_key'', true)
            AND test_namespace = ''meridian-health-source-volume-v1''
            AND test_namespace = current_setting(''app.foundation_v2_test_namespace'', true)
-           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:447910ac3c16''
+           AND source_release_id = ''meridian-health-source-v1-202608:source-volume-v1:05889e763f88''
            AND source_release_id = current_setting(''app.foundation_v2_source_release_id'', true)
            AND current_setting(''app.foundation_v2_release_alias'', true) = ''meridian-health-demo-phase-a-source-volume-v1''
          )',
@@ -55,7 +55,7 @@ CREATE POLICY meridian_health_demo_delete ON foundation_v2_meridian_health_demo.
       'Meridian Health-L3-K3C-CANDIDATE-DECISION-COVERAGE',
       'Meridian Health-L3-K3D-CANONICAL-BOUNDARY'
     ])
-    AND current_setting('app.foundation_v2_source_release_id', true) = 'meridian-health-source-v1-202608:source-volume-v1:447910ac3c16'
+    AND current_setting('app.foundation_v2_source_release_id', true) = 'meridian-health-source-v1-202608:source-volume-v1:05889e763f88'
     AND current_setting('app.foundation_v2_release_alias', true) = 'meridian-health-demo-phase-a-source-volume-v1'
   );
 
