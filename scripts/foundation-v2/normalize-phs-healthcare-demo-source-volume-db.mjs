@@ -465,14 +465,30 @@ async function insertGateResult(client, gateId, transition, inputCount, outputCo
 }
 
 async function verifiedManifest(client, status, extra) {
+  progress("PHS_LAYER2_MANIFEST_SOURCE_COUNTS_START");
   const sourceCounts = await sourceVolumeCounts(client);
+  progress("PHS_LAYER2_MANIFEST_SOURCE_COUNTS_DONE", sourceCounts);
+  progress("PHS_LAYER2_MANIFEST_DOWNSTREAM_COUNTS_START");
   const actualCounts = await downstreamCounts(client);
+  progress("PHS_LAYER2_MANIFEST_DOWNSTREAM_COUNTS_DONE", actualCounts);
+  progress("PHS_LAYER2_MANIFEST_J2A_START");
   const j2a = extra.j2a || await j2aReadback(client);
+  progress("PHS_LAYER2_MANIFEST_J2A_DONE", j2a);
+  progress("PHS_LAYER2_MANIFEST_J2B_START");
   const j2b = extra.j2b || await j2bReadback(client);
+  progress("PHS_LAYER2_MANIFEST_J2B_DONE", j2b);
+  progress("PHS_LAYER2_MANIFEST_J2C_START");
   const j2c = extra.j2c || await fieldLineageReadback(client);
+  progress("PHS_LAYER2_MANIFEST_J2C_DONE", j2c);
+  progress("PHS_LAYER2_MANIFEST_SOURCE_GROUPS_START");
   const sourceGroupReconciliation = await sourceGroupReconciliationRows(client);
+  progress("PHS_LAYER2_MANIFEST_SOURCE_GROUPS_DONE", { groups: sourceGroupReconciliation.length });
+  progress("PHS_LAYER2_MANIFEST_CANDIDATE_TYPES_START");
   const candidateTypeSummary = await candidateTypeSummaryRows(client);
+  progress("PHS_LAYER2_MANIFEST_CANDIDATE_TYPES_DONE", { candidate_types: candidateTypeSummary.length });
+  progress("PHS_LAYER2_MANIFEST_IDENTITY_SUMMARY_START");
   const identitySummary = await identitySummaryRows(client);
+  progress("PHS_LAYER2_MANIFEST_IDENTITY_SUMMARY_DONE", { identity_states: identitySummary.length });
   const exact = exactSourceCounts(sourceCounts) && exactDownstreamCounts(actualCounts) && j2a.status.endsWith("_PASSED") && j2b.status.endsWith("_PASSED") && j2c.status.endsWith("_PASSED");
   return manifest(status, {
     ...extra,
@@ -589,17 +605,34 @@ async function sourceGroupReconciliationRows(client) {
   return rows(
     client,
     `
-    SELECT no.normalized_payload->>'source_group' AS source_group,
-           count(DISTINCT sr.source_record_id)::int AS source_records,
-           count(DISTINCT no.normalized_object_id)::int AS normalized_objects,
-           count(DISTINCT kc.candidate_id)::int AS knowledge_candidates,
-           sum(no.field_disposition_count)::int AS field_dispositions
-      FROM ${tableRef("normalized_objects")} no
-      JOIN ${tableRef("source_records")} sr USING (tenant_key, test_namespace, source_record_id)
-      LEFT JOIN ${tableRef("knowledge_candidates")} kc USING (tenant_key, test_namespace, normalized_object_id)
-     WHERE no.tenant_key=$1 AND no.test_namespace=$2 AND no.source_release_id=$3
-     GROUP BY no.normalized_payload->>'source_group'
-     ORDER BY source_group
+    WITH normalized_summary AS (
+      SELECT normalized_payload->>'source_group' AS source_group,
+             count(*)::int AS source_records,
+             count(*)::int AS normalized_objects,
+             sum(field_disposition_count)::int AS field_dispositions
+        FROM ${tableRef("normalized_objects")}
+       WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3
+       GROUP BY normalized_payload->>'source_group'
+    ),
+    candidate_summary AS (
+      SELECT no.normalized_payload->>'source_group' AS source_group,
+             count(*)::int AS knowledge_candidates
+        FROM ${tableRef("knowledge_candidates")} kc
+        JOIN ${tableRef("normalized_objects")} no
+          ON no.tenant_key = kc.tenant_key
+         AND no.test_namespace = kc.test_namespace
+         AND no.normalized_object_id = kc.normalized_object_id
+       WHERE kc.tenant_key=$1 AND kc.test_namespace=$2 AND kc.source_release_id=$3
+       GROUP BY no.normalized_payload->>'source_group'
+    )
+    SELECT ns.source_group,
+           ns.source_records,
+           ns.normalized_objects,
+           coalesce(cs.knowledge_candidates, 0)::int AS knowledge_candidates,
+           ns.field_dispositions
+      FROM normalized_summary ns
+      LEFT JOIN candidate_summary cs USING (source_group)
+     ORDER BY ns.source_group
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
   );
