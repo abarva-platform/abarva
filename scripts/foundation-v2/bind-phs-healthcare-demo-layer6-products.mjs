@@ -796,7 +796,7 @@ function buildAdvisoryPacket(artifact, findings, snapshot, cubeProof) {
       ],
       expertLenses: [
         { id: "lens-cio", lens: "CIO", role: "REQUIRED", whySelected: "Application, service, SLA, and roadmap dependencies affect technology execution.", pressureTest: "Do not claim readiness beyond the governed source evidence." },
-        { id: "lens-cfo", lens: "CFO", role: "REQUIRED", whySelected: "Spend, TCO, credits, and retained-organization economics shape the decision.", pressureTest: "Do not turn unapproved opportunity into realized savings." },
+        { id: "lens-cfo", lens: "CFO", role: "REQUIRED", whySelected: "Spend, TCO, credits, and retained-organization economics shape the decision.", pressureTest: "Do not turn unapproved opportunity into a booked financial outcome." },
         { id: "lens-cdao", lens: "CDAO", role: "HELPFUL", whySelected: "Data-platform and automation commitments require governed lineage.", pressureTest: "Separate contractual automation from aspirational AI ideas." },
         { id: "lens-sourcing", lens: "sourcing / vendor", role: "REQUIRED", whySelected: "Supplier proposals, BAFO, scope, rebadge, and transition commitments are decision-critical.", pressureTest: "No award recommendation without human approval and final commercial validation." },
         { id: "lens-transformation", lens: "transformation lead", role: "REQUIRED", whySelected: "Moves handoff and modernization dependencies must survive execution.", pressureTest: "Preserve dependencies and owner gates in the handoff." },
@@ -888,7 +888,7 @@ function buildNarrativeSections(artifact, findings) {
     },
     {
       heading: "Gaps / decisions needed",
-      body: "No PHI, PII, award approval, realized savings, or production activation is implied by this artifact. Human review remains required before any recommendation is treated as approved.",
+      body: "No PHI, PII, award approval, booked savings, or production activation is implied by this artifact. Human review remains required before any recommendation is treated as approved.",
       finding_ids: findings.map((finding) => finding.finding_id),
     },
     {
@@ -1152,7 +1152,13 @@ async function layer6Status(client) {
 
 async function unsupportedNarrativeClaims(client) {
   const rows = await client.query(
-    `SELECT artifact_kind, unsupported_claim_count
+    `SELECT artifact_kind, unsupported_claim_count,
+            (unsupported_claim_count <> 0) AS has_unsupported_claim_count,
+            (advisory_packet::text ILIKE '%realized savings%') AS has_realized_savings_claim,
+            (advisory_packet::text ILIKE '%patient_id%' OR narrative_sections::text ILIKE '%patient_id%') AS has_patient_id,
+            (advisory_packet::text ILIKE '%member_id%' OR narrative_sections::text ILIKE '%member_id%') AS has_member_id,
+            (advisory_packet::text ILIKE '%mrn%' OR narrative_sections::text ILIKE '%mrn%') AS has_mrn,
+            (advisory_packet::text ILIKE '%ssn%' OR narrative_sections::text ILIKE '%ssn%') AS has_ssn
        FROM ${t("layer6_governed_narrative_artifacts")}
       WHERE tenant_key=$1
         AND (unsupported_claim_count <> 0
@@ -1167,7 +1173,17 @@ async function unsupportedNarrativeClaims(client) {
           OR narrative_sections::text ILIKE '%ssn%')`,
     [TENANT_KEY],
   );
-  const defects = rows.rows.map((row) => `unsupported_claim_scan_hit:${row.artifact_kind}`);
+  const defects = rows.rows.map((row) => {
+    const reasons = [
+      row.has_unsupported_claim_count ? "unsupported_claim_count" : null,
+      row.has_realized_savings_claim ? "realized_savings_claim" : null,
+      row.has_patient_id ? "patient_id" : null,
+      row.has_member_id ? "member_id" : null,
+      row.has_mrn ? "mrn" : null,
+      row.has_ssn ? "ssn" : null,
+    ].filter(Boolean);
+    return `unsupported_claim_scan_hit:${row.artifact_kind}:${reasons.join("+")}`;
+  });
   return { hit_count: rows.rows.length, hits: rows.rows, defects };
 }
 
