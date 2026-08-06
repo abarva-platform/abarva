@@ -21,15 +21,16 @@ The continuous lab execution update adds isolated Layer 2 adapter/candidate stag
 The latest lab execution pass applies and independently verifies Layer 2 inside `foundation_v2_phs_demo`: 54,967 normalized objects, 54,967 knowledge candidates, three adapter gates and 1,640,131 field dispositions now reconcile exactly to the verified Layer 1 source volume.
 This update also adds the governed expert narrative and architecture quality gate to the PHS Phase B execution plan. Home, architecture, Source, Intelligence, Moves and aVa prose must wait until the data, relationships, findings, evidence and reconciliations pass; accepted artifacts must come from the shared advisory-packet path with deterministic lint, independent critique, revision and validation.
 The current Layer 3 continuation adds isolated canonical-promotion tables and operator commands that resolve every Layer 2 candidate into a deterministic promotion decision while separating master entities, observations, relationships, evidence records and event-native sourcing records. It explicitly blocks the defective pattern of treating every row-level candidate as a canonical enterprise master entity.
+The latest Layer 3 lab execution applies and independently verifies canonical promotion inside `foundation_v2_phs_demo`: 54,967 promotion decisions resolve into 794 canonical master entities, 47,941 transactional observations, 2,390 relationships, 16,000 evidence records and 4,370 event-native records, with exact match and no defects.
 
 ## Layer Impact
 
-Layer 1 client intake lane: creates source-owner-shaped workbooks and source-system-shaped synthetic extracts for audit. Layer 2 adapter lane: documents future adapter expectations but does not execute adapters. Layer 3 canonical lane: records candidate model-fit gaps only. Layer 4 product lane: no product runtime or projection is changed.
+Layer 1 client intake lane: creates source-owner-shaped workbooks and source-system-shaped synthetic extracts for audit. Layer 2 adapter lane: stages normalized objects and knowledge candidates. Layer 3 canonical lane: promotes verified candidates into the isolated PHS canonical-promotion substrate only. Layer 4 product lane: no product runtime or projection is changed.
 The latest update adds an executable Layer 1 source-volume loader with `self-test`, `plan`, `preflight`, `apply` and `verify` modes. It remains gated: plan and self-test are local only, while apply requires an approved proof SHA, exact PHS schema/tenant/namespace/release/role contract and an ACA data-build job context. Application, CMDB, vendor and contract rows are tenant enterprise-context candidates; the sourcing event references selected entity IDs and later pins an immutable event-context snapshot through a separate governed action.
 The continuous lab execution update adds Layer 2 migration, self-test, preflight, apply and verify commands. Layer 2 writes only isolated normalized-object and knowledge-candidate staging rows in `foundation_v2_phs_demo`; canonical promotion and product projections remain out of scope.
 The latest lab execution update moves Layer 2 from expected to verified in the isolated lab schema only. It does not advance candidate rows into canonical objects, data products, Cube, product read models or tenant activation.
 The narrative gate affects only future Layer 4/5 artifact generation and signed-in proof. It does not authorize early narrative generation, canonical publication, Cube refresh, product runtime binding or tenant activation.
-The current Layer 3 update remains in the isolated PHS schema. It adds a PHS-only canonical-promotion substrate and proof commands, but does not publish shared canonical objects, refresh Cube, activate product read models, generate recommendations or activate a tenant.
+The current Layer 3 update remains in the isolated PHS schema. It applies and verifies the PHS-only canonical-promotion substrate, but does not publish shared canonical objects, refresh Cube, activate product read models, generate recommendations or activate a tenant.
 
 ## Client Applicability
 
@@ -96,11 +97,15 @@ Passed: PHS Phase B plan updated to require the shared governed advisory packet,
 Passed: `node --check scripts/foundation-v2/apply-phs-healthcare-demo-layer3-schema.mjs && node --check scripts/foundation-v2/promote-phs-healthcare-demo-canonical-db.mjs`.
 Passed: `npm run source:phs-healthcare-demo:layer3:self-test -- --out-dir /tmp/phs-layer3-self-test`.
 Blocked locally, as expected: Layer 3 schema dry-run and preflight require an Azure/Postgres database URL; database proof is expected through the ACA data-build job with the configured database secret.
+Passed: ACA Layer 3 schema apply against `foundation_v2_phs_demo`; migration `20260806041000_foundation_v2_phs_demo_canonical_promotion.sql` created the isolated canonical-promotion tables with forced RLS and no Layer 3 rows.
+Passed: ACA Layer 3 post-stop preflight with the optimized lab image; source readback and Layer 2 readback matched exactly, and existing Layer 3 row count was zero.
+Passed: ACA Layer 3 canonical promotion apply through the approved data-build job path; proof status `PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_VERIFIED` recorded 54,967 promotion decisions, 794 canonical entities, 47,941 observations, 2,390 relationships, 16,000 evidence records, 4,370 event-native records, `exact_match=true` and no defects.
+Passed: ACA Layer 3 independent reader verify repeated the same counts with `mutation_executed=false`, `exact_match=true` and no defects.
 
 ## Rollout Plan
 
-No product/runtime rollout. Continue lab-only execution in the existing branch and release evidence trail. Layer 1 and Layer 2 have both been applied through the approved ACA data-build job path and independently verified inside the isolated lab schema.
-Layer 3 is limited to the isolated PHS canonical-promotion substrate and operator jobs. Promotion output remains staged inside `foundation_v2_phs_demo` until independent verification passes, and no later product projection or tenant activation is authorized by this record.
+No product/runtime rollout. Continue lab-only execution in the existing branch and release evidence trail. Layers 1, 2 and 3 have been applied through the approved ACA data-build job path and independently verified inside the isolated lab schema.
+Layer 3 is limited to the isolated PHS canonical-promotion substrate and operator jobs. Promotion output remains staged inside `foundation_v2_phs_demo`; no later product projection, Cube refresh or tenant activation is authorized by this record.
 Narrative artifacts remain blocked until the later data layers, relationships, findings, evidence, read models and Cube reconciliation pass. The only approved pre-generated artifacts are the six governed demo artifacts named in the Phase B plan, and only after the shared packet assembler and quality gates exist.
 The approved target remains schema `foundation_v2_phs_demo`, tenant `phs_health_demo_global`, namespace `phs-healthcare-demo-source-volume-v1`, writer role `foundation_v2_phs_demo_writer`, reader role `foundation_v2_phs_demo_reader` and source release `phs-health-source-v1-202608:source-volume-v1:447910ac3c16`.
 
@@ -108,7 +113,7 @@ The approved target remains schema `foundation_v2_phs_demo`, tenant `phs_health_
 
 Repo-owned deploy workflow: not applicable.
 Shared runtime mutators: none.
-Approved image digest: not applicable for shared runtime. The lab ACA data-build job used the isolated PHS lab image digest `acrabarvalab001.azurecr.io/abarva/phs-healthcare-demo-lab@sha256:81a2abb534066a3683e8609887842aba0983ed9e3b2bfc4e32b7795b27cc2fdf`.
+Approved image digest: not applicable for shared runtime. Layer 1/2 lab jobs used isolated PHS lab image digest `acrabarvalab001.azurecr.io/abarva/phs-healthcare-demo-lab@sha256:81a2abb534066a3683e8609887842aba0983ed9e3b2bfc4e32b7795b27cc2fdf`. Layer 3 optimized lab jobs used isolated PHS lab image digest `acrabarvalab001.azurecr.io/abarva/phs-healthcare-demo-lab@sha256:977d51d005c650af1550f3ef27cdf2dac7b3b032c2cc458cce452831331bf268`.
 ACA runtime invariant: no ACA runtime change.
 Worker image invariant: no worker image change.
 Feature/env flag update path: none.
@@ -130,9 +135,13 @@ Layer 1 verified ACA readback counts: 54 source files; 54 source-file context ro
 Layer 2 verified ACA readback counts: 54,967 normalized objects; 54,967 knowledge candidates; 3 adapter gates; 1,640,131 field dispositions; `exact_match=true`; no broken transition.
 Layer 2 ACA proof paths: `/Users/anand/Downloads/phs-healthcare-demo-layer2-aca-20260806T003650Z/20-layer2-preflight-after-lock-cleanup/proof/PHS_NORMALIZATION_CANDIDATES.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer2-aca-20260806T003650Z/21-layer2-apply-after-lock-cleanup/proof/PHS_NORMALIZATION_CANDIDATES.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer2-aca-20260806T003650Z/22-layer2-verify-after-lock-cleanup/proof/PHS_NORMALIZATION_CANDIDATES.json`.
 Layer 3 local self-test proof path: `/tmp/phs-layer3-self-test/proof/PHS_CANONICAL_PROMOTION_SELF_TEST.json`.
+Layer 3 verified ACA readback counts: 54,967 promotion decisions; 794 canonical master entities; 47,941 transactional observations; 2,390 relationships; 16,000 evidence records; 4,370 event-native records; `exact_match=true`; no defects.
+Layer 3 ACA proof paths: `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/01-layer3-schema-apply/proof/PHS_HEALTHCARE_DEMO_LAYER3_SCHEMA_PROOF.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/04-layer3-preflight-after-stopped-apply/proof/PHS_CANONICAL_PROMOTION.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/05-layer3-apply-optimized/proof/PHS_CANONICAL_PROMOTION.json`, `/Users/anand/Downloads/phs-healthcare-demo-layer3-aca-20260806T113500Z/06-layer3-verify/proof/PHS_CANONICAL_PROMOTION.json`.
+Layer 3 ACA proof ZIP: `/Users/anand/Downloads/PHS_Healthcare_Demo_Layer3_ACA_Proof_20260806T122300Z.zip`.
+Layer 3 ACA proof ZIP SHA-256: `83934b64a809b153ccc52e25812d4c0c84d6561c08bc8d801cfd760637bee47f`.
 Governed narrative acceptance now requires side-by-side audit from narrative claim to packet fact/finding to source record to evidence span to Cube measure where applicable; document rendering alone is not acceptable proof.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
 ## Known Gaps
 
-The synthetic healthcare tenant is not active in canonical tenant code. No canonical promotion, Cube update, web deployment, Source/Tower/Home/Intelligence/Moves/aVa proof or tenant activation has occurred.
+The synthetic healthcare tenant is not active in canonical tenant code. Isolated PHS Layer 3 canonical promotion has been applied and verified inside `foundation_v2_phs_demo`, but no shared canonical publication, Cube update, web deployment, Source/Tower/Home/Intelligence/Moves/aVa proof or tenant activation has occurred.

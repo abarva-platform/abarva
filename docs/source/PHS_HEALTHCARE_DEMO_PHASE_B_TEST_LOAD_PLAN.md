@@ -221,6 +221,8 @@ Expected Layer 3 proof shape:
 - Event-native records: 4,370
 - Relationships from named relationship files: 2,390
 
+Layer 3 ACA execution has now passed schema apply, post-stop preflight, canonical promotion apply and independent reader verify. The independent verify proof records 54,967 promotion decisions, 794 canonical master entities, 47,941 transactional observations, 2,390 relationships, 16,000 evidence records and 4,370 event-native records, with `exact_match=true` and no defects. The canonical master entities include 10 vendors, 6 contract families, 24 legal instruments, 180 applications, 34 Epic modules and 5 BPO suppliers.
+
 A result with 54,967 canonical master entities is a defect. Layer 3 does not publish shared canonical objects, activate baselines, refresh Cube, update product read models, generate recommendations, bind runtime surfaces or activate the PHS tenant.
 
 ## Event Context Architecture
