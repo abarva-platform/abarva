@@ -1130,8 +1130,8 @@ function artifactProfile(kind) {
     },
     "technology-architecture-current-state-assessment": {
       requiredTerms: ["Epic", "service", "application", "roadmap"],
-      implication: "Architecture sequencing should preserve service, application, and SLA lineage before any modernization move is made.",
-      decision: ({ epic, traversal, linkage }) => `The architecture view ties Epic interface evidence across ${formatNumber(epic.applications_with_epic_interfaces)} applications to ${formatNumber(traversal.distinct_services)} services and ${formatNumber(linkage.program_count)} modernization programs.`,
+      implication: "Architecture roadmap sequencing should preserve service, application, and SLA lineage before any modernization move is made.",
+      decision: ({ epic, traversal, linkage }) => `The architecture roadmap view ties Epic interface evidence across ${formatNumber(epic.applications_with_epic_interfaces)} applications to ${formatNumber(traversal.distinct_services)} services and ${formatNumber(linkage.program_count)} modernization programs.`,
     },
     "procurement-vendor-landscape-brief": {
       requiredTerms: ["vendor", "contract", "supplier", "BPO"],
