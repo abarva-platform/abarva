@@ -270,20 +270,22 @@ const HERO_STEPS = [
         'max_vendor_count_on_same_responsibility', coalesce(max(vendor_count), 0),
         'overlaps', coalesce(jsonb_agg(jsonb_build_object(
           'business_service_ref', business_service_ref,
-          'application_ref', application_ref,
+          'application_count', application_count,
+          'sample_applications', sample_applications,
           'vendor_count', vendor_count,
           'vendors', vendors
         ) ORDER BY vendor_count DESC, business_service_ref) FILTER (WHERE overlap_rank <= 10), '[]'::jsonb)
       ) AS result
       FROM (
         SELECT business_service_ref,
-               application_ref,
+               count(DISTINCT application_ref) AS application_count,
                count(DISTINCT vendor_id) AS vendor_count,
+               jsonb_agg(DISTINCT application_ref) FILTER (WHERE application_ref IS NOT NULL) AS sample_applications,
                jsonb_agg(DISTINCT vendor_id) AS vendors,
                row_number() OVER (ORDER BY count(DISTINCT vendor_id) DESC, business_service_ref) AS overlap_rank
           FROM ${q(CANARY_SCHEMA)}.${q("phs_contract_scope_v1")}
          WHERE tenant_key=$1
-         GROUP BY business_service_ref, application_ref
+         GROUP BY business_service_ref
         HAVING count(DISTINCT vendor_id) > 1
       ) overlap
     `,
