@@ -590,6 +590,12 @@ function exactDownstreamCounts(counts) {
   return Object.entries(DOWNSTREAM_COUNTS).every(([key, value]) => Number(counts[key] || 0) === value);
 }
 
+function assertGate(actualStatus, expectedStatus, details) {
+  if (actualStatus !== expectedStatus) {
+    throw new Error(`PHS Layer 2 gate failed: expected ${expectedStatus}, got ${actualStatus}: ${stableJson(details)}`);
+  }
+}
+
 function earliestBrokenTransition(sourceCounts, actualCounts, j2a, j2b, j2c) {
   if (!exactSourceCounts(sourceCounts)) return "SOURCE_VOLUME_READBACK";
   if (j2a.status !== "PHS_HEALTHCARE_DEMO_J2A_ADAPTER_NORMALIZATION_PASSED") return "J2A_ADAPTER_NORMALIZATION";
@@ -638,7 +644,7 @@ function selfTest() {
   for (const forbidden of ["canonical_objects", "domain_publications", "publication_members", "baselines", "baseline_object_memberships", "projection_rows"]) {
     if (new RegExp(`INSERT\\s+INTO\\s+[^\\n]*${forbidden}`, "i").test(script)) defects.push(`unexpected insert into ${forbidden}`);
   }
-  for (const required of ["field_dispositions", "source_field_value_id", "restricted_candidate", "PHS_NORMALIZATION_APPLY_APPROVED"]) {
+  for (const required of ["field_dispositions", "source_field_value_id", "restricted_candidate", "PHS_NORMALIZATION_APPLY_APPROVED", "assertGate"]) {
     if (!script.includes(required)) defects.push(`missing ${required}`);
   }
   if (defects.length > 0) throw new Error(`PHS normalization self-test failed: ${defects.join("; ")}`);
