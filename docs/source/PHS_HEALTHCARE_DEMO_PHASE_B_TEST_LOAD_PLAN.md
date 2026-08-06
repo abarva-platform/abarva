@@ -173,6 +173,8 @@ Expected Layer 2 counts:
 - Knowledge candidates: 54,967
 - Adapter gates: 3
 
+Layer 2 ACA execution has now passed schema apply, source-adapter preflight, source-adapter apply and independent reader verify. The verified counts are 54,967 normalized objects, 54,967 knowledge candidates and three adapter gate rows, with exact source-to-adapter reconciliation across 54,967 source records and 1,640,131 source field dispositions.
+
 Layer 2 does not create canonical objects, publish baselines, refresh Cube, update product read models or activate the PHS tenant.
 
 ## Event Context Architecture
