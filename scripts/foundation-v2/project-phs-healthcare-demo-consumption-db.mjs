@@ -887,6 +887,7 @@ async function insertRowsInBatches(client, projectionRow) {
 }
 
 async function resetLayer4Rows(client) {
+  await resetLayer6RowsForProjectionRebuild(client);
   for (const table of ["projection_field_lineage", "projection_rows", "projection_authority", "event_context_snapshots"]) {
     await client.query(`DELETE FROM ${tableRef(table)} WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3`, [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID]);
   }
@@ -894,6 +895,25 @@ async function resetLayer4Rows(client) {
     `DELETE FROM ${tableRef("gate_results")} WHERE tenant_key=$1 AND test_namespace=$2 AND gate_id LIKE 'PHS-L4-%'`,
     [TENANT_KEY, TEST_NAMESPACE],
   );
+}
+
+async function resetLayer6RowsForProjectionRebuild(client) {
+  const layer6Tables = [
+    "layer6_gate_results",
+    "layer6_governed_narrative_artifacts",
+    "layer6_hero_journey_findings",
+    "layer6_app_module_bindings",
+  ];
+  const existing = await rows(
+    client,
+    `SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name = ANY($2::text[])`,
+    [DATABASE_SCHEMA, layer6Tables],
+  );
+  const existingNames = new Set(existing.map((row) => row.table_name));
+  for (const table of layer6Tables) {
+    if (!existingNames.has(table)) continue;
+    await client.query(`DELETE FROM ${tableRef(table)} WHERE tenant_key=$1 AND test_namespace=$2 AND source_release_id=$3`, [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID]);
+  }
 }
 
 async function verifiedManifest(client, status, extra = {}) {
