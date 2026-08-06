@@ -742,7 +742,7 @@ function makeProjectionRow(ctx, namespace, name, businessGrain, businessKey, pay
     eventContextSnapshotId,
   }));
   return {
-    row_id: `phs:projection-row:${namespace}:${name}:${slug(businessKey || rowHash)}`,
+    row_id: `phs:projection-row:${namespace}:${name}:${slug(businessKey || rowHash)}:${rowHash.slice(0, 16)}`,
     business_key: businessKey || rowHash,
     source_record_ids: sourceRecordIds,
     canonical_entity_ids: entityIds,
@@ -842,7 +842,7 @@ async function insertRowsInBatches(client, projectionRow) {
     );
   }
   const lineageRows = projectionRow.rows.map((row) => ({
-    id: `phs:projection-lineage:${slug(row.row_id)}:payload`,
+    id: `phs:projection-lineage:${slug(row.row_id)}:${row.row_hash.slice(0, 16)}:payload`,
     row_id: row.row_id,
     source_record_id: row.source_record_ids[0] || null,
     canonical_entity_id: row.canonical_entity_ids[0] || null,
@@ -1008,6 +1008,7 @@ async function insertGateResults(client, result) {
 
 function assertProjectionSet(set) {
   const keys = new Set(set.projections.map((projectionRow) => `${projectionRow.namespace}.${projectionRow.name}`));
+  const rowIds = new Set();
   for (const [namespace, name] of REQUIRED_PROJECTIONS) {
     if (!keys.has(`${namespace}.${name}`)) throw new Error(`Projection not built: ${namespace}.${name}`);
   }
@@ -1015,6 +1016,8 @@ function assertProjectionSet(set) {
     if (projectionRow.rows.length === 0) throw new Error(`Projection is empty: ${projectionRow.namespace}.${projectionRow.name}`);
     for (const row of projectionRow.rows) {
       if (row.source_record_ids.length === 0) throw new Error(`Projection row lacks source refs: ${projectionRow.namespace}.${projectionRow.name}:${row.business_key}`);
+      if (rowIds.has(row.row_id)) throw new Error(`Duplicate projection row id: ${row.row_id}`);
+      rowIds.add(row.row_id);
     }
   }
 }
