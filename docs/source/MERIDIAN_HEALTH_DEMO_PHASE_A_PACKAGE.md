@@ -50,9 +50,10 @@ The master collection workbook contains exactly one `ENTERPRISE_OUTCOMES_AND_KPI
 - Contract-family audit documents: 30
 - Corrupted canaries: 45/45 passed
 
-Latest corrected proof bundle: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip`
-Latest corrected proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
-Latest proof SHA-256 attestation: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip.sha256`
+Latest corrected proof bundle: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260806T212611Z.zip`
+Latest corrected proof SHA-256: `02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de`
+Latest package ZIP for ACA source-volume loading: `/Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z_package_20260806T222957Z.zip`
+Latest package ZIP SHA-256: `7350881433187abab8b1700f92837257bb3da64240a97066e929a588919cda2e`
 
 Latest semantic readback: 180/180 questions have aligned planted source records, 180/180 have aligned evidence refs and 180/180 have both source and evidence aligned. The field/source map contains generated native-field guidance with zero missing generated native fields and one explicit `client_native_field_to_confirm` marker. The validator requires all 54 named Layer 1 release files, blocks detailed payer claims/enrollment and detailed Stars/HEDIS operational files from the core package, and allows only a small aggregate `HEALTH_PLAN_OUTCOME_SNAPSHOT.csv` optional domain file unless a future client explicitly approves deeper health-plan data.
 

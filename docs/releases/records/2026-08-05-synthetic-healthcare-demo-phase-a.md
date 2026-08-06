@@ -98,7 +98,7 @@ Passed: `node --check scripts/foundation-v2/load-meridian-health-demo-source-vol
 Passed: `node --check scripts/foundation-v2/apply-meridian-health-demo-schema.mjs`.
 Passed: `npm run source:meridian-health-demo:layer1:self-test -- --out-dir /tmp/meridian-health-layer1-self-test`.
 Passed: `npm run source:meridian-health-demo:layer1:plan -- --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260805T223224Z --out-dir /tmp/meridian-health-layer1-plan`.
-Passed: `npm run source:meridian-health-demo:layer1:plan -- --package-zip /Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip --package-zip-sha256 a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553 --out-dir /tmp/meridian-health-layer1-plan-zip`.
+Passed: `npm run source:meridian-health-demo:layer1:plan -- --package-zip /Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z_package_20260806T222957Z.zip --package-zip-sha256 7350881433187abab8b1700f92837257bb3da64240a97066e929a588919cda2e --proof-zip /Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260806T212611Z.zip --proof-zip-sha256 02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de --approved-proof-sha256 02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de --out-dir /tmp/meridian-health-layer1-plan-two-artifact`.
 Passed: negative apply-gate check stopped before mutation authority because `MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true` was not present.
 Passed: negative schema-target check rejected `MERIDIAN_HEALTH_DEMO_DB_SCHEMA=foundation_v2_healthcare_gs` before database mutation path.
 Passed: negative local apply check rejected execution without `ACA_JOB_NAME` even with approval env and the exact proof SHA present.
@@ -136,7 +136,7 @@ Passed: Layer 6 apply proof recorded no production impact, no traffic shift and 
 No shared product/runtime rollout. Continue lab-only execution in the existing branch and release evidence trail. Layers 1 through 6 have been applied through private operator jobs and independently verified inside isolated/private-lab substrates.
 Layer 3 remains limited to the isolated Meridian Health canonical-promotion substrate and operator jobs. Layer 4 remains isolated typed projection output. Layer 5 remains a private internal Cube canary with no shared Cube traffic shift. Layer 6 remains product-binding proof and governed planning-grade artifact generation only; no tenant activation is authorized by this record.
 The six governed demo artifacts are generated only after deterministic findings and Cube reconciliation pass and are not treated as approved recommendations.
-The approved target remains schema `foundation_v2_meridian_health_demo`, tenant `meridian_health_global`, namespace `meridian-health-source-volume-v1`, writer role `foundation_v2_meridian_health_demo_writer`, reader role `foundation_v2_meridian_health_demo_reader` and source release `meridian-health-source-v1-202608:source-volume-v1:447910ac3c16`.
+The approved target remains schema `foundation_v2_meridian_health_demo`, tenant `meridian_health_global`, namespace `meridian-health-source-volume-v1`, writer role `foundation_v2_meridian_health_demo_writer`, reader role `foundation_v2_meridian_health_demo_reader` and source release `meridian-health-source-v1-202608:source-volume-v1:05889e763f88`.
 
 ## Deployment Authority
 
@@ -155,9 +155,10 @@ Revert the generator, validator, fixtures, migrations, scripts, Cube canary file
 
 ## Audit Evidence
 
-Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary outputs and hard-stop statement produced by the generator. The latest local proof ZIP is `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip`.
-Proof ZIP SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`.
-Proof ZIP SHA-256 attestation: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip.sha256`.
+Inspect the local proof ZIP, validation report JSON/HTML, file hashes, canary outputs and hard-stop statement produced by the generator. The latest local proof ZIP is `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260806T212611Z.zip`.
+Proof ZIP SHA-256: `02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de`.
+Package ZIP for ACA source-volume loading: `/Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z_package_20260806T222957Z.zip`.
+Package ZIP SHA-256: `7350881433187abab8b1700f92837257bb3da64240a97066e929a588919cda2e`.
 Latest generated counts: 70,967 structured rows; 54 Layer 1 release CSVs; 38 enterprise-context files; 1 optional-domain context file; 11 existing BPO sourcing-event files; 4 BPO transition/transformation files; 16,000 evidence spans; 180 hard questions; 30 interview roles; 44 enterprise outcomes/KPI map records; 71 CDAO questions; 21 document archetype content contracts; 30 contract-family audit documents.
 Latest non-mutating data-layer plan ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Data_Layer_Plan_20260805T230818Z.zip`.
 Data-layer plan ZIP SHA-256: `5f525057fec4202c173a4a65f0a5d522cb8635927bddd79e1a2083ce2544d783`.
@@ -220,6 +221,8 @@ Local proof:
 - Passed: `npm run source:meridian-health-demo:layer6:self-test -- --out-dir /tmp/meridian-layer6-self-test`.
 - Passed: `npm run source:meridian-health-demo:build`; regenerated proof ZIP `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260806T212611Z.zip`.
 - Proof ZIP SHA-256: `02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de`.
+- Package ZIP for ACA source-volume loading: `/Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z_package_20260806T222957Z.zip`.
+- Package ZIP SHA-256: `7350881433187abab8b1700f92837257bb3da64240a97066e929a588919cda2e`.
 - Passed: `npm run source:meridian-health-demo:validate -- --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z`; validation reported 70,967 structured rows, 54 Layer 1 release CSVs, 39 source-system extract CSVs, 11 existing BPO event CSVs, 4 BPO transformation CSVs and zero failures/warnings.
 - Passed: case-insensitive scans for the old identity across active demo source paths, the regenerated stage directory, the proof ZIP entries, proof ZIP extracted contents and the individual generated Meridian ZIPs in Downloads.
 - Blocked locally: database preflight for Layer 4/6 could not run in this shell because no `ABARVA_AZURE_DATABASE_URL`, `AZURE_DATABASE_URL` or `DATABASE_URL` is configured in the worktree. Database row scrub and live Cube metadata scrub still require the private-lab operator environment.

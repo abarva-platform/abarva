@@ -12,8 +12,10 @@ Phase B lab execution is proceeding only inside the isolated `foundation_v2_meri
 - Activation target: `staged`
 - Layer 1 release CSVs: 54 named CSV files; 38 enterprise-context files, 1 optional-domain context file, 11 existing BPO sourcing-event files and 4 BPO transition/transformation files
 - Required package state: `generated_not_loaded`
-- Latest Phase A proof ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260805T223224Z.zip`
-- Latest proof SHA-256: `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`
+- Latest Phase A proof ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Audit_Proof_20260806T212611Z.zip`
+- Latest proof SHA-256: `02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de`
+- Latest package ZIP: `/Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z_package_20260806T222957Z.zip`
+- Latest package SHA-256: `7350881433187abab8b1700f92837257bb3da64240a97066e929a588919cda2e`
 
 ## Planned Data Layers
 
@@ -100,7 +102,7 @@ Latest database target contract:
 - Writer role: `foundation_v2_meridian_health_demo_writer`
 - Reader role: `foundation_v2_meridian_health_demo_reader`
 - Release alias: `meridian-health-demo-phase-a-source-volume-v1`
-- Expected source release: `meridian-health-source-v1-202608:source-volume-v1:447910ac3c16`
+- Expected source release: `meridian-health-source-v1-202608:source-volume-v1:05889e763f88`
 - Isolation scope: `ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY`
 
 Latest plan counts:
@@ -130,7 +132,7 @@ npm run source:meridian-health-demo:layer1:plan -- \
 ```
 
 The loader reads only the approved `meridian_health_demo_package_manifest.json` and the 54 package-owned release CSVs classified in that manifest. It does not rely on folder names alone, does not reuse the separate `healthcare-demo-new` corpus root and does not require the detailed payer claims/enrollment or detailed Stars/HEDIS extracts.
-For ACA execution, the loader may read an approved package ZIP through `MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_URL`; it extracts the ZIP in-container and refuses to continue unless the SHA-256 matches `a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553`.
+For ACA execution, the loader may read an approved package ZIP through `MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_URL`; it extracts the ZIP in-container and refuses to continue unless the SHA-256 matches `MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_SHA256`. The separate governed proof ZIP may be supplied through `MERIDIAN_HEALTH_DEMO_PROOF_ZIP_URL`; apply still refuses to continue unless `MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256` matches the proof ZIP SHA.
 
 Supported modes:
 
@@ -145,10 +147,10 @@ The apply command is intentionally hard-stopped until an isolated lab target and
 
 ```bash
 MERIDIAN_HEALTH_DEMO_LAYER1_APPLY_APPROVED=true \
-MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256=a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553 \
+MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256=02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de \
 npm run source:meridian-health-demo:layer1:apply -- \
-  --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260805T223224Z \
-  --approved-proof-sha256 a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553
+  --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z \
+  --approved-proof-sha256 02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de
 ```
 
 Layer 1 ACA execution has now passed schema apply, source-volume preflight, source-volume apply and independent reader verify. The verified counts are 54 source files, 54 source-file context rows, 54,967 source records, 1,640,131 source field values, one parser execution and two source-volume gates.

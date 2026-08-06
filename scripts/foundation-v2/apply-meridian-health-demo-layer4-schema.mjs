@@ -16,7 +16,7 @@ const MIGRATION_NAME = "20260806132000_foundation_v2_meridian_health_demo_layer4
 const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
 const TENANT_KEY = "meridian_health_global";
 const TEST_NAMESPACE = "meridian-health-source-volume-v1";
-const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:05889e763f88";
 const LAYER4_TABLES = ["event_context_snapshots", "projection_authority", "projection_rows", "projection_field_lineage"];
 const args = parseArgs(process.argv.slice(2));
 

@@ -17,7 +17,7 @@ const EXPECTED_MIGRATION_SHA256 = "fafd2cb062985b8dea12728621f4aa37c7879aafe360c
 const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
 const TENANT_KEY = "meridian_health_global";
 const TEST_NAMESPACE = "meridian-health-source-volume-v1";
-const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:05889e763f88";
 const TABLES = [
   "source_releases",
   "source_files",

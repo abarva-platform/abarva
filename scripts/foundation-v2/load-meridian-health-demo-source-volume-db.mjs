@@ -27,7 +27,7 @@ const SOURCE_VOLUME_EXECUTION_SUFFIX = "source-volume-apply-v1";
 const TEST_NAMESPACE = "meridian-health-source-volume-v1";
 const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
 const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
-const EXPECTED_SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const EXPECTED_SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:05889e763f88";
 const ISOLATION_SCOPE = "ISOLATED_FOUNDATION_V2_GOLDEN_SLICE_ONLY";
 const SOURCE_VOLUME_GATE_IDS = ["Meridian Health-SOURCE-VOLUME-L0-L1", "Meridian Health-SOURCE-VOLUME-L1-L2"];
 const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
@@ -43,7 +43,7 @@ const MERIDIAN_HEALTH_DEMO_EXECUTION_CONTRACT = Object.freeze({
   isolation_scope: ISOLATION_SCOPE,
   expected_source_file_context_rows: 54,
 });
-const EXPECTED_PROOF_ZIP_SHA256 = "a800303a62b2a2a88badcfdb25d83790f236a53416dd267ae18c40ab312ba553";
+const EXPECTED_PROOF_ZIP_SHA256 = "02866d7ede177f1f0046f4a2ca936c098e9fd86b3036ac74a74bab9420c0f8de";
 const LAYER1_SOURCE_GROUPS = ["enterprise_context", "optional_domain_context", "bpo_sourcing_event", "bpo_transformation_event"];
 const RESTRICTED_DETAIL_HEALTH_PLAN_FILES = ["PAYER_CLAIMS_ENROLLMENT_MONTHLY.csv", "STARS_HEDIS_MEASURE_PERFORMANCE.csv"];
 const REQUIRED_LAYER1_RELEASE_FILES = new Set([
@@ -135,6 +135,9 @@ function parseArgs(argv) {
     packageZip: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP || "",
     packageZipUrl: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_URL || "",
     packageZipSha256: process.env.MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_SHA256 || "",
+    proofZip: process.env.MERIDIAN_HEALTH_DEMO_PROOF_ZIP || "",
+    proofZipUrl: process.env.MERIDIAN_HEALTH_DEMO_PROOF_ZIP_URL || "",
+    proofZipSha256: process.env.MERIDIAN_HEALTH_DEMO_PROOF_ZIP_SHA256 || "",
     outDir: process.env.MERIDIAN_HEALTH_DEMO_SOURCE_VOLUME_OUT_DIR || path.join(os.tmpdir(), "meridian-health-demo-source-volume"),
     approvedProofSha256: process.env.MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256 || "",
     emitProofBundle:
@@ -153,6 +156,9 @@ function parseArgs(argv) {
     else if (arg === "--package-zip") parsed.packageZip = path.resolve(next());
     else if (arg === "--package-zip-url") parsed.packageZipUrl = next();
     else if (arg === "--package-zip-sha256") parsed.packageZipSha256 = next();
+    else if (arg === "--proof-zip") parsed.proofZip = path.resolve(next());
+    else if (arg === "--proof-zip-url") parsed.proofZipUrl = next();
+    else if (arg === "--proof-zip-sha256") parsed.proofZipSha256 = next();
     else if (arg === "--out-dir") parsed.outDir = path.resolve(next());
     else if (arg === "--approved-proof-sha256") parsed.approvedProofSha256 = next();
     else if (arg === "--emit-proof-bundle") parsed.emitProofBundle = true;
@@ -178,7 +184,7 @@ async function buildSourceVolumePlan() {
   const packageManifest = readJson(packageManifestPath);
   const phaseResult = readJson(phaseResultPath);
   assertPackageIdentity(packageManifest);
-  const proofZip = resolvedPackage.proofZip || path.join(path.dirname(packageDir), phaseResult.proof_zip);
+  const proofZip = await resolveProofZip(packageDir, phaseResult);
   assertFile(proofZip);
   const proofZipSha256 = sha256(fs.readFileSync(proofZip));
   if (proofZipSha256 !== EXPECTED_PROOF_ZIP_SHA256) {
@@ -250,24 +256,48 @@ async function buildSourceVolumePlan() {
 
 async function resolvePackageInput() {
   if (args.packageDir) {
-    return { packageDir: path.resolve(args.packageDir), proofZip: "" };
+    return { packageDir: path.resolve(args.packageDir) };
   }
   const zipPath = args.packageZipUrl ? await downloadPackageZip(args.packageZipUrl) : path.resolve(args.packageZip);
   assertFile(zipPath);
   const actualSha256 = sha256(fs.readFileSync(zipPath));
-  const expectedSha256 = args.packageZipSha256 || args.approvedProofSha256 || process.env.MERIDIAN_HEALTH_DEMO_APPROVED_PROOF_SHA256 || EXPECTED_PROOF_ZIP_SHA256;
+  const expectedSha256 = args.packageZipSha256;
+  if (!expectedSha256) {
+    throw new Error("MERIDIAN_HEALTH_DEMO_PACKAGE_ZIP_SHA256 or --package-zip-sha256 is required for package ZIP inputs");
+  }
   if (actualSha256 !== expectedSha256) {
     throw new Error(`Meridian Health package ZIP SHA mismatch: expected ${expectedSha256}, got ${actualSha256}`);
   }
   const extractRoot = fs.mkdtempSync(path.join(os.tmpdir(), "meridian-health-demo-package-"));
   await extractZipToDirectory(zipPath, extractRoot);
-  return { packageDir: extractRoot, proofZip: zipPath };
+  return { packageDir: extractRoot };
+}
+
+async function resolveProofZip(packageDir, phaseResult) {
+  const proofZip = args.proofZipUrl ? await downloadProofZip(args.proofZipUrl) : args.proofZip;
+  const resolvedProofZip = proofZip || path.join(path.dirname(packageDir), phaseResult.proof_zip);
+  assertFile(resolvedProofZip);
+  const actualSha256 = sha256(fs.readFileSync(resolvedProofZip));
+  const expectedSha256 = args.proofZipSha256 || args.approvedProofSha256 || EXPECTED_PROOF_ZIP_SHA256;
+  if (actualSha256 !== expectedSha256) {
+    throw new Error(`Meridian Health proof ZIP SHA mismatch: expected ${expectedSha256}, got ${actualSha256}`);
+  }
+  return resolvedProofZip;
 }
 
 async function downloadPackageZip(url) {
   const target = path.join(os.tmpdir(), `meridian-health-demo-approved-package-${shortHash(url, 12)}.zip`);
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to download Meridian Health package ZIP: HTTP ${response.status}`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  fs.writeFileSync(target, bytes);
+  return target;
+}
+
+async function downloadProofZip(url) {
+  const target = path.join(os.tmpdir(), `meridian-health-demo-approved-proof-${shortHash(url, 12)}.zip`);
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to download Meridian Health proof ZIP: HTTP ${response.status}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   fs.writeFileSync(target, bytes);
   return target;

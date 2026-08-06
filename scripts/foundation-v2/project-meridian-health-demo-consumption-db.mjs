@@ -17,7 +17,7 @@ import {
 const DATABASE_SCHEMA = "foundation_v2_meridian_health_demo";
 const TENANT_KEY = "meridian_health_global";
 const TEST_NAMESPACE = "meridian-health-source-volume-v1";
-const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:447910ac3c16";
+const SOURCE_RELEASE_ID = "meridian-health-source-v1-202608:source-volume-v1:05889e763f88";
 const FOUNDATION_RELEASE_ALIAS = "meridian-health-demo-phase-a-source-volume-v1";
 const WRITER_ROLE = "foundation_v2_meridian_health_demo_writer";
 const READER_ROLE = "foundation_v2_meridian_health_demo_reader";
