@@ -398,7 +398,7 @@ const HERO_STEPS = [
     sql: `
       SELECT jsonb_build_object(
         'move_id', 'PHS-MOVE-BPO-TRANSFORMATION-001',
-        'event_id', $2,
+        'event_id', $2::text,
         'recommended_supplier_scenario', (
           SELECT jsonb_build_object('supplier_id', supplier_id, 'scenario', scenario, 'recommendation_state', recommendation_state, 'normalized_five_year_tco', normalized_five_year_tco, 'recommendation_basis', recommendation_basis)
             FROM ${q(CANARY_SCHEMA)}.${q("phs_normalized_tco_recommendation_input_v1")}
