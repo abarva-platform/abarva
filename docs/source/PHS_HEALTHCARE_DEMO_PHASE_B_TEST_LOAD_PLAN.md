@@ -26,6 +26,41 @@ Phase B lab execution is proceeding only inside the isolated `foundation_v2_phs_
 7. Analytics runtime: refresh Cube only in the isolated lab with security context including tenant key, dataset id, dataset version and as-of date.
 8. Proof and reconciliation: reconcile PostgreSQL against package counts and Cube/read-model counts before signed-in product proof.
 
+## Governed Expert Narrative And Architecture Quality
+
+Narrative is the final governed layer. Do not generate final Home, architecture, Source, Intelligence, Moves or aVa prose until the relevant Layer 2 through Layer 5 data, relationships, deterministic findings, evidence and Cube/read-model reconciliations pass.
+
+The prior generic consultant-narrative pattern is explicitly rejected. PHS executive artifacts must be assembled from a typed advisory packet, not from a thin raw-file prompt. The same packet assembler must serve both pre-generated governed artifacts and live aVa answers so there is one truth path.
+
+The packet contract must separate `modelVisiblePacket`, `auditLineage` and `retrievalDiagnostics`. Claude receives only the model-visible packet. The audit path must preserve tenant and dataset identity, audience role, module, artifact type, as-of date, enterprise profile, business units, strategic priorities, entities, relationships, governed metrics, deterministic findings, risks, initiatives, decisions pending, evidence, interview assertions, conflicts, missing evidence, allowed conclusions, prohibited conclusions, required topics, required entity mentions, governed numbers, visuals and finding/result hash.
+
+Module boundaries:
+
+- Home describes known enterprise context, business units, systems, vendors, initiatives, outcomes, risks and evidence gaps. Home may explain implications but must not make sourcing awards or unsupported strategic recommendations.
+- Architecture describes governed current state: applications, platforms, interfaces, hosting, data flows, operational ownership, vendor responsibilities, modernization dependencies, constraints and evidence gaps. It must not become a generic target-state cloud recommendation artifact.
+- Source explains vendor, contract, performance, renewal, leverage and sourcing implications using governed commercial and operational facts.
+- Intelligence and Moves provide options, trade-offs, recommendations, sequencing, risks, controls and decision actions after current state is established.
+
+Role-specific lenses must be separate for Chief Procurement Officer, CDAO, CIO/CTO, health-plan executive and enterprise transformation sponsor. The lens changes emphasis and decision framing, not the underlying facts.
+
+PHS artifacts must use governed PHS context when relevant, including hospital and health-plan operating context, Epic, Clarity, Caboodle, Hadoop retirement, SQL Server data marts, SAS, analytics managed services, Epic managed services, Workday, ServiceNow/CMDB, AWS and Databricks decision state, BPO current-state baseline and contractual versus aspirational supplier commitments. Do not force every entity into every artifact, but reject any artifact that could be reused unchanged for another health system.
+
+Required narrative structures:
+
+- Home executive brief: enterprise at a glance; what drives the business; operating model and business-unit context; technology and data landscape; strategic vendors and dependencies; transformations in motion; material risks and constraints; evidence confidence; unresolved questions; leadership decisions ahead.
+- Current-state architecture assessment: executive architecture summary; business capabilities supported; application and platform landscape; data flows and integration; hosting and infrastructure; data and analytics estate; vendor and managed-service responsibilities; security, resilience and operations; modernization programs and dependencies; current-state constraints; evidence gaps and conflicts; decisions required before target-state commitment.
+- Advisory decision brief: decision; evidence; why now; options; trade-offs; recommended direction; conditions for success; risks and controls; sequencing; decisions and actions.
+
+Every material statement must distinguish observed fact, deterministic finding, expert interpretation, assumption, evidence gap or recommendation. Claude must not invent facts or numbers, change metrics, change Tower claim states, resolve evidence conflicts, treat unknown as zero, treat usage as value, label exposure as savings, treat aspirational supplier statements as contractual or attest on behalf of Finance, procurement or business leaders.
+
+Generic-language control must reject filler when it substitutes for evidence, including phrases such as "rapidly evolving healthcare landscape", "embrace digital transformation", "unlock synergies", "leverage best-in-class capabilities", "drive innovation and operational excellence" and "establish a single source of truth".
+
+No first model response is publishable. The required process is governed generation, deterministic structure/evidence lint, independent expert critic, revision and final deterministic validation. Accepted artifacts require overall score at least 8.5/10, tenant specificity at least 9/10, evidence grounding at least 9/10, no prohibited-claim failures and no unresolved factual contradictions represented as resolved.
+
+Pre-generate only these governed artifacts for the demo after the required data layers pass: Enterprise Current-State Brief, Data and Analytics Current-State Assessment, Technology Architecture Current-State Assessment, Procurement and Vendor Landscape Brief, BPO Sourcing Decision Brief and AWS/Databricks Decision Brief. Store each accepted artifact as `narrative.artifact` with tenant key, dataset id/version, artifact type, audience role, packet hash, finding/result hash, generated timestamp, model/version, critic score, evidence references and staleness state. If the underlying dataset, findings or decisions change, mark the artifact stale.
+
+Final demo acceptance must show a side-by-side audit for each governed artifact: narrative claim to packet fact/finding to source record to evidence span to Cube measure where applicable. Rendering a document is not quality proof.
+
 ## Execution Sequence
 
 1. Review the Phase A proof ZIP, generated package SHA-256 values, model-fit gaps and canary output.
@@ -37,9 +72,11 @@ Phase B lab execution is proceeding only inside the isolated `foundation_v2_phs_
 7. Run independent reader verify and compare exact source-release identity/hash, all 54 filenames, per-file SHA/counts, 54 source-file context rows, source-group counts, demo-priority counts, record count, field count and gate counts.
 8. Run source adapters and candidate staging as separate migration, self-test, preflight, apply and verify jobs.
 9. Reconcile vendor counts, contract counts, invoice totals, service credits, scope relationships, off-contract med/surg spend, rate-card variance, SaaS utilization, optional aggregate health-plan outcome snapshots, BPO normalized TCO and evidence counts.
-10. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof exists.
-11. Run cross-tenant isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant requests block with no fallback.
-12. Keep `activation_state=staged` and stop again for approval.
+10. Assemble governed advisory packets only after Layer 2 through Layer 5 data, relationships, deterministic findings, evidence and Cube/read-model reconciliations pass.
+11. Generate and validate only the six approved governed artifacts, using the shared packet assembler, deterministic lint, independent critic, revision and final validation.
+12. Exercise Source, Home, Tower, Intelligence, Moves and aVa signed-in paths only after read-model proof and narrative artifact quality proof exist.
+13. Run cross-tenant isolation checks: other tenants see no healthcare context; healthcare sees no other-tenant context; invalid tenant requests block with no fallback.
+14. Keep `activation_state=staged` and stop again for approval.
 
 ## Layer 0 And Layer 1 Plan Output
 

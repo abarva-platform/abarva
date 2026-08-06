@@ -18,12 +18,14 @@ This update supersedes the interim 39-file and 50-file Layer 1 plans. The plan-o
 The current correction keeps the frozen package unchanged and fixes the blocked Layer 1 execution substrate: the PHS loader now targets only `foundation_v2_phs_demo`, uses PHS-specific writer/reader roles, requires the frozen source release ID, writes 54 source-file routing metadata rows and rejects local/non-ACA apply even if the old bypass env is present.
 The latest operator-readiness patch adds an exact PHS schema/RLS migration runner and lets the source-volume loader consume the approved proof ZIP by URL inside ACA, with SHA-256 verification before extraction.
 The continuous lab execution update adds isolated Layer 2 adapter/candidate staging for the loaded PHS source volume. It stages normalized source-record objects and review candidates only; it does not publish canonical objects, activate baselines, refresh Cube or bind product runtime surfaces.
+This update also adds the governed expert narrative and architecture quality gate to the PHS Phase B execution plan. Home, architecture, Source, Intelligence, Moves and aVa prose must wait until the data, relationships, findings, evidence and reconciliations pass; accepted artifacts must come from the shared advisory-packet path with deterministic lint, independent critique, revision and validation.
 
 ## Layer Impact
 
 Layer 1 client intake lane: creates source-owner-shaped workbooks and source-system-shaped synthetic extracts for audit. Layer 2 adapter lane: documents future adapter expectations but does not execute adapters. Layer 3 canonical lane: records candidate model-fit gaps only. Layer 4 product lane: no product runtime or projection is changed.
 The latest update adds an executable Layer 1 source-volume loader with `self-test`, `plan`, `preflight`, `apply` and `verify` modes. It remains gated: plan and self-test are local only, while apply requires an approved proof SHA, exact PHS schema/tenant/namespace/release/role contract and an ACA data-build job context. Application, CMDB, vendor and contract rows are tenant enterprise-context candidates; the sourcing event references selected entity IDs and later pins an immutable event-context snapshot through a separate governed action.
 The continuous lab execution update adds Layer 2 migration, self-test, preflight, apply and verify commands. Layer 2 writes only isolated normalized-object and knowledge-candidate staging rows in `foundation_v2_phs_demo`; canonical promotion and product projections remain out of scope.
+The narrative gate affects only future Layer 4/5 artifact generation and signed-in proof. It does not authorize early narrative generation, canonical publication, Cube refresh, product runtime binding or tenant activation.
 
 ## Client Applicability
 
@@ -79,10 +81,12 @@ Passed: negative local apply check still rejected execution without `ACA_JOB_NAM
 Passed: ACA Layer 1 schema apply, source-volume preflight, apply and independent reader verify against `foundation_v2_phs_demo`; final readback matched 54 source files, 54 source-file context rows, 54,967 source records and 1,640,131 source field values.
 Passed: `node --check scripts/foundation-v2/apply-phs-healthcare-demo-layer2-schema.mjs && node --check scripts/foundation-v2/normalize-phs-healthcare-demo-source-volume-db.mjs`.
 Passed: `npm run source:phs-healthcare-demo:layer2:self-test -- --out-dir /tmp/phs-layer2-self-test`.
+Passed: PHS Phase B plan updated to require the shared governed advisory packet, module-boundary rules, role-specific lenses, generic-language control, critique/revision loop and side-by-side claim-to-evidence artifact audit before any Home, architecture, Source, Intelligence, Moves or aVa narrative is accepted.
 
 ## Rollout Plan
 
-No product/runtime rollout. Continue lab-only execution in the existing branch and draft PR audit trail. Layer 1 has been applied through the approved ACA data-build job path and independently verified. Layer 2 may proceed through the same ACA data-build job path for isolated candidate staging only.
+No product/runtime rollout. Continue lab-only execution in the existing branch and release evidence trail. Layer 1 has been applied through the approved ACA data-build job path and independently verified. Layer 2 may proceed through the same ACA data-build job path for isolated candidate staging only.
+Narrative artifacts remain blocked until the later data layers, relationships, findings, evidence, read models and Cube reconciliation pass. The only approved pre-generated artifacts are the six governed demo artifacts named in the Phase B plan, and only after the shared packet assembler and quality gates exist.
 The approved target remains schema `foundation_v2_phs_demo`, tenant `phs_health_demo_global`, namespace `phs-healthcare-demo-source-volume-v1`, writer role `foundation_v2_phs_demo_writer`, reader role `foundation_v2_phs_demo_reader` and source release `phs-health-source-v1-202608:source-volume-v1:447910ac3c16`.
 
 ## Deployment Authority
@@ -109,6 +113,7 @@ Latest non-mutating data-layer plan ZIP: `/Users/anand/Downloads/PHS_Healthcare_
 Data-layer plan ZIP SHA-256: `5f525057fec4202c173a4a65f0a5d522cb8635927bddd79e1a2083ce2544d783`.
 Layer 1 verified ACA readback counts: 54 source files; 54 source-file context rows; 54,967 source records; 1,640,131 source field slots; 1 parser execution; 2 source-volume gates.
 Layer 2 expected candidate-staging counts: 54,967 normalized objects; 54,967 knowledge candidates; 3 adapter gates.
+Governed narrative acceptance now requires side-by-side audit from narrative claim to packet fact/finding to source record to evidence span to Cube measure where applicable; document rendering alone is not acceptable proof.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
 ## Known Gaps

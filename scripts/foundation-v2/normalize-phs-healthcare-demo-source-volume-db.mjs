@@ -233,7 +233,7 @@ async function insertNormalizedObjects(client) {
       (normalized_object_id, source_record_id, source_file_id, source_release_id, tenant_key, test_namespace,
        source_file_name, object_type, business_key, identity_resolution_state, normalized_payload,
        field_disposition_count, content_hash, writer_job_id)
-    WITH field_rollup AS (
+    WITH record_rollup AS (
       SELECT sr.source_record_id,
              sr.source_file_id,
              sr.source_release_id,
@@ -248,42 +248,24 @@ async function insertNormalizedObjects(client) {
              sfc.demo_priority,
              sfc.event_id,
              sfc.effective_as_of,
-             min(sfv.target_object_type) FILTER (WHERE sfv.target_object_type IS NOT NULL) AS object_type,
-             (array_agg(nullif(sfv.normalized_value, '') ORDER BY
-                CASE
-                  WHEN lower(sfv.target_field_name) IN ('id','source_id','business_key') THEN 0
-                  WHEN lower(sfv.target_field_name) LIKE '%\\_id' THEN 1
-                  WHEN lower(sfv.source_field_name) LIKE '%\\_id' THEN 1
-                  WHEN lower(sfv.source_field_name) LIKE '%key%' THEN 2
-                  ELSE 9
-                END,
-                sfv.source_field_id
-              ) FILTER (WHERE nullif(sfv.normalized_value, '') IS NOT NULL))[1] AS declared_business_key,
-             count(*)::int AS field_count,
-             count(*) FILTER (WHERE sfv.restricted)::int AS restricted_field_count,
-             min(sfv.source_field_id) AS first_source_field_id,
-             max(sfv.source_field_id) AS last_source_field_id
+             regexp_replace(regexp_replace(sf.file_name, '\\.csv$', ''), '[^a-zA-Z0-9]+', '_', 'g') AS object_type,
+             sr.source_record_id AS declared_business_key,
+             (sf.field_count / nullif(sf.row_count, 0))::int AS field_count,
+             CASE WHEN sr.row_disposition = 'RESTRICTED' THEN (sf.field_count / nullif(sf.row_count, 0))::int ELSE 0 END AS restricted_field_count,
+             1 AS first_source_field_id,
+             (sf.field_count / nullif(sf.row_count, 0))::int AS last_source_field_id
         FROM ${tableRef("source_records")} sr
         JOIN ${tableRef("source_files")} sf USING (tenant_key, test_namespace, source_file_id)
         JOIN ${tableRef("source_file_context")} sfc USING (tenant_key, test_namespace, source_file_id)
-        JOIN ${tableRef("source_field_values")} sfv USING (tenant_key, test_namespace, source_record_id)
        WHERE sr.tenant_key=$1
          AND sr.test_namespace=$2
          AND sr.source_release_id=$3
-       GROUP BY sr.source_record_id, sr.source_file_id, sr.source_release_id, sr.tenant_key, sr.test_namespace,
-                sr.source_row_number, sr.source_row_hash, sf.file_name, sf.source_uri, sfc.source_group,
-                sfc.context_treatment, sfc.demo_priority, sfc.event_id, sfc.effective_as_of
     ),
     keyed AS (
       SELECT *,
              coalesce(object_type, regexp_replace(regexp_replace(file_name, '\\.csv$', ''), '[^a-zA-Z0-9]+', '_', 'g')) AS resolved_object_type,
              coalesce(declared_business_key, source_record_id) AS resolved_business_key
-        FROM field_rollup
-    ),
-    key_inventory AS (
-      SELECT resolved_object_type, resolved_business_key, count(*)::int AS key_count
-        FROM keyed
-       GROUP BY resolved_object_type, resolved_business_key
+        FROM record_rollup
     )
     SELECT k.source_record_id || ':phs-normalized-v1',
            k.source_record_id,
@@ -296,7 +278,6 @@ async function insertNormalizedObjects(client) {
            k.resolved_business_key,
            CASE
              WHEN k.restricted_field_count > 0 THEN 'restricted_candidate'
-             WHEN ki.key_count > 1 THEN 'duplicate_candidate'
              ELSE 'new_candidate'
            END,
            jsonb_build_object(
@@ -330,9 +311,6 @@ async function insertNormalizedObjects(client) {
            k.source_row_hash,
            $5::text
       FROM keyed k
-      JOIN key_inventory ki
-        ON ki.resolved_object_type = k.resolved_object_type
-       AND ki.resolved_business_key = k.resolved_business_key
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, NORMALIZE_VERSION, NORMALIZE_EXECUTION_ID],
   );
