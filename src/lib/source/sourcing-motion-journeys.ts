@@ -26,9 +26,10 @@ export interface ResolveSourceJourneyInput {
   event?: Partial<
     Pick<
       SourcingEventSummary,
-      "code" | "name" | "archetype" | "classifiedCategory"
+      "code" | "name" | "archetype" | "classifiedCategory" | "sourcingMotion"
     >
   > | null;
+  sourcingMotion?: SourceSourcingMotion | string | null;
   eventType?: string | null;
   classifiedCategory?: string | null;
   archetype?: string | null;
@@ -121,6 +122,11 @@ export function getSourceJourneyForEvent(
 export function resolveSourceSourcingMotion(
   input: ResolveSourceJourneyInput,
 ): SourceSourcingMotion {
+  const explicitMotion =
+    parseSourceSourcingMotion(input.sourcingMotion) ??
+    parseSourceSourcingMotion(input.event?.sourcingMotion);
+  if (explicitMotion) return explicitMotion;
+
   if (input.hasContractOptimizationProfile) return "contract_optimization";
 
   const classifiedCategory =
@@ -149,6 +155,15 @@ export function resolveSourceSourcingMotion(
   }
 
   return "competitive_rfp";
+}
+
+function parseSourceSourcingMotion(
+  value: string | null | undefined,
+): SourceSourcingMotion | null {
+  if (value === "competitive_rfp" || value === "contract_optimization") {
+    return value;
+  }
+  return null;
 }
 
 export function sourceJourneyStageKeys(

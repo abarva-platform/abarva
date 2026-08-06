@@ -54,6 +54,7 @@ import {
   loadArtifactTemplate,
   type SourceEventArtifactState,
 } from "./canvas-substrate";
+import type { SourceSourcingMotion } from "./sourcing-motion-journeys";
 import { specByCode } from "./canonical-specs";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
@@ -69,6 +70,7 @@ export interface SourceEventRow {
   event_code: string;
   event_name: string;
   event_type: string;
+  sourcing_motion?: SourceSourcingMotion | null;
   classified_category?: string | null;
   current_stage_key: string;
   lifecycle_state: string;
@@ -93,6 +95,7 @@ export interface CreateSourcingEventInput {
   estimatedValueUsd?: number;
   createdByUserId?: string;
   creationRequestId?: string;
+  sourcingMotion?: SourceSourcingMotion;
 }
 
 function generateEventCode(
@@ -217,6 +220,7 @@ export async function createSourcingEvent(
         event_code: eventCode,
         event_name: input.eventName,
         event_type: input.eventType,
+        sourcing_motion: input.sourcingMotion ?? null,
         trigger_description: input.triggerDescription || null,
         decision_owner: input.decisionOwner || null,
         scope_description: input.scopeDescription || null,
@@ -499,6 +503,7 @@ export function sourceEventRowToSummary(
     nextDecision: waitingForApproval
       ? `Approval authority: ${approvalCopy}`
       : row.scope_description || "Continue Source workflow from current stage.",
+    sourcingMotion: row.sourcing_motion ?? null,
     classifiedCategory: row.classified_category ?? null,
   };
 }

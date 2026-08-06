@@ -99,7 +99,7 @@ function BookHeader({ tenantName }: { tenantName: string }) {
           Vendor &amp; Contract Portfolio
         </Link>
         <Link
-          href="/source/new"
+          href="/source/new?intent=contract-optimization"
           style={GHOST_BTN_STYLE}
           data-testid="source-book-optimize"
         >

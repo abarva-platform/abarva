@@ -84,6 +84,10 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
     expect(screen.getByTestId("source-book-stat-spend")).toHaveTextContent(
       "$12.0M",
     );
+    expect(screen.getByTestId("source-book-optimize")).toHaveAttribute(
+      "href",
+      "/source/new?intent=contract-optimization",
+    );
   });
 
   it("renders an events-in-flight card with an 11-dot stage rail", () => {

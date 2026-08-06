@@ -10,6 +10,7 @@ import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { createSourcingEvent } from '@/lib/source/queries';
 import { buildSourceScopeDescription } from '@/lib/source/intake-summary';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import type { SourceSourcingMotion } from '@/lib/source/sourcing-motion-journeys';
 
 interface CreateSourceEventBody {
   eventName?: string;
@@ -20,9 +21,17 @@ interface CreateSourceEventBody {
   valueTargetDescription?: string;
   baselineOwnerDescription?: string;
   categoryLabel?: string;
+  sourcingMotion?: SourceSourcingMotion;
   creationRequestId?: string;
   linkedProgramId?: string;
   estimatedValueUsd?: number;
+}
+
+function parseSourcingMotion(value: unknown): SourceSourcingMotion | undefined {
+  if (value === 'competitive_rfp' || value === 'contract_optimization') {
+    return value;
+  }
+  return undefined;
 }
 
 function parseEventType(value: unknown): NonNullable<CreateSourceEventBody['eventType']> {
@@ -122,6 +131,7 @@ export async function POST(request: Request) {
       estimatedValueUsd: parseOptionalNumber(body.estimatedValueUsd),
       createdByUserId: tenancy.userId,
       creationRequestId: parseOptionalString(body.creationRequestId),
+      sourcingMotion: parseSourcingMotion(body.sourcingMotion),
     });
 
     if (tenancy.userId) {

@@ -24,6 +24,7 @@ import {
   type IntakeFieldId,
   type SourceIntakeShape,
 } from "@/lib/source/intake-intent";
+import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import {
   parseSourceIntakeText,
 } from "@/lib/source/intake-summary";
@@ -319,6 +320,49 @@ const AGENT_GUIDANCE = [
   },
 ];
 
+interface Door1ContractContext {
+  contractId?: string;
+  contractName?: string;
+  vendorName?: string;
+}
+
+function isDoor1Intent(intent: string | null | undefined): boolean {
+  return intent === "contract-optimization" || intent === "renewal";
+}
+
+function readDoor1ContractContext(
+  searchParams: ReturnType<typeof useSearchParams>,
+): Door1ContractContext {
+  return {
+    contractId: searchParams?.get("contractId")?.trim() || undefined,
+    contractName: searchParams?.get("contractName")?.trim() || undefined,
+    vendorName: searchParams?.get("vendorName")?.trim() || undefined,
+  };
+}
+
+function buildDoor1ContractPrefill(
+  context: Door1ContractContext,
+): Partial<IntakeState> {
+  if (!context.contractId && !context.contractName && !context.vendorName) {
+    return {};
+  }
+  const contractLabel = context.contractName ?? context.contractId ?? "selected contract";
+  const vendorLabel = context.vendorName ? ` with ${context.vendorName}` : "";
+  const contractRef = context.contractId ? ` Contract ref: ${context.contractId}.` : "";
+  return {
+    trigger: `Optimize ${contractLabel}${vendorLabel}.${contractRef}`,
+    scopeBoundary: `Use the loaded Contract 360 record for ${contractLabel}${vendorLabel} as the starting scope. Confirm included services, SOWs, applications, geographies, amendments, and exclusions before negotiating.`,
+    baselineOwner:
+      "Vendor management owns the executed agreement and SOWs; AP owns invoice history; the service owner owns SLA and usage evidence.",
+  };
+}
+
+function motionForIntent(
+  intent: string | null | undefined,
+): SourceSourcingMotion | undefined {
+  return isDoor1Intent(intent) ? "contract_optimization" : undefined;
+}
+
 const initialIntakeState: IntakeState = {
   trigger: "",
   decisionOwner: "",
@@ -567,6 +611,12 @@ export function SourceOriginatePage({
     () => resolveSourceIntakeShape(searchParams?.get("intent")),
     [searchParams],
   );
+  const sourceIntent = intakeShape?.intent ?? null;
+  const sourcingMotion = motionForIntent(sourceIntent);
+  const door1ContractContext = useMemo(
+    () => readDoor1ContractContext(searchParams),
+    [searchParams],
+  );
   const intakeFields: IntakeFieldDefinition[] =
     intakeShape?.fields ?? INTAKE_FIELDS;
 
@@ -593,6 +643,26 @@ export function SourceOriginatePage({
   useEffect(() => {
     clearLegacyAutosavedDraft(clientKey);
   }, [clientKey]);
+
+  useEffect(() => {
+    if (!isDoor1Intent(sourceIntent)) return;
+    const prefill = buildDoor1ContractPrefill(door1ContractContext);
+    const entries = Object.entries(prefill).filter(
+      (entry): entry is [IntakeFieldId, string] =>
+        typeof entry[1] === "string" && entry[1].trim().length > 0,
+    );
+    if (entries.length === 0) return;
+    setIntake((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const [fieldId, value] of entries) {
+        if (next[fieldId].trim().length > 0) continue;
+        next[fieldId] = value;
+        changed = true;
+      }
+      return changed ? next : current;
+    });
+  }, [door1ContractContext, sourceIntent]);
 
   const handleArtifact = useCallback((artifact: Artifact) => {
     if (artifact.type !== "brief-progress") return;
@@ -704,6 +774,7 @@ export function SourceOriginatePage({
         valueTargetDescription: intake.valueTarget || undefined,
         baselineOwnerDescription: intake.baselineOwner || undefined,
         categoryLabel: selectedCategory?.label,
+        sourcingMotion,
         creationRequestId,
         estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
       }),
@@ -732,6 +803,11 @@ export function SourceOriginatePage({
       window.localStorage.removeItem(explicitDraftKey(clientKey));
     } catch {
       /* local draft cleanup is best-effort */
+    }
+    if (sourcingMotion === "contract_optimization") {
+      void fetch(`/api/v1/source/${payload.event.id}/door1/diagnose`, {
+        method: "POST",
+      }).catch(() => undefined);
     }
     const approvalUrl = `/source/events/${payload.event.id}/approval`;
     // Forward the tour into approval; the canvas unlocks after approval.
@@ -1083,7 +1159,8 @@ export function SourceOriginatePage({
         sourceIntakeMode: true,
         clientKey,
         clientName,
-        sourceIntent: intakeShape?.intent,
+        sourceIntent,
+        sourceSourcingMotion: sourcingMotion,
         context: intakeShape
           ? `New IT sourcing event intake — ${intakeShape.eyebrow} (aVa guided)`
           : "New IT sourcing event intake — aVa guided",

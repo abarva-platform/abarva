@@ -15,6 +15,7 @@
 
 export type SourceIntakeIntent =
   | 'vendor'
+  | 'contract-optimization'
   | 'renewal'
   | 'rfp-response'
   | 'business-request'
@@ -23,6 +24,7 @@ export type SourceIntakeIntent =
 
 export const SOURCE_INTAKE_INTENTS: readonly SourceIntakeIntent[] = [
   'vendor',
+  'contract-optimization',
   'renewal',
   'rfp-response',
   'business-request',
@@ -142,6 +144,54 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
       label: 'Vendor evaluation event',
       description:
         'Opens a sourcing event scoped to the vendor so the choice is evidenced, not assumed.',
+    },
+  },
+  'contract-optimization': {
+    intent: 'contract-optimization',
+    eyebrow: 'Door 1 · Contract optimization',
+    heading: 'Optimize an existing contract',
+    subhead:
+      'Start with the incumbent contract, invoices, SLA evidence, and renewal economics. Source diagnoses leakage and builds a negotiation path before escalating to an RFP.',
+    prefilledPrompt:
+      'I want to optimize an existing contract. Help me diagnose leakage, quantify the recovery range, and prepare the negotiation path.',
+    initialQuote:
+      'Door 1 is the fast contract-optimization path. Name the contract and baseline owners; I will keep this out of the RFP journey unless the evidence says rebid.',
+    fields: [
+      {
+        id: 'trigger',
+        label: 'Contract and reason to optimize',
+        prompt: 'Which contract should be optimized, and what makes the economics worth challenging now?',
+        placeholder: 'e.g. CTR-090 AMS renewal has 90-day notice, above-market rates, and unclaimed SLA credits.',
+      },
+      {
+        id: 'decisionOwner',
+        label: 'Negotiation decision owner',
+        prompt: 'Who owns the decision to renegotiate, restructure, renew, or escalate to rebid?',
+        placeholder: 'CIO, CFO delegate, procurement sponsor, vendor-management lead...',
+      },
+      {
+        id: 'scopeBoundary',
+        label: 'Contract scope and boundaries',
+        prompt: 'What services, products, towers, geographies, or applications are in the current contract and what is out?',
+        placeholder: 'In: AMS run support and integration fixes. Out: new transformation projects and security operations.',
+      },
+      {
+        id: 'valueTarget',
+        label: 'Recovery hypothesis',
+        prompt: 'What value should the optimization test without pretending it is already proven?',
+        placeholder: '10-15% rate-card reduction, $400K SLA credits, remove shelfware, apply volume tier.',
+      },
+      {
+        id: 'baselineOwner',
+        label: 'Evidence and baseline owner',
+        prompt: 'Who can provide the contract, amendments, invoices, SLA reports, usage, and benchmark evidence?',
+        placeholder: 'Vendor manager owns contract/SOWs; AP owns invoices; service owner owns SLA reports.',
+      },
+    ],
+    routingHint: {
+      label: 'Door 1 Diagnose → Recover',
+      description:
+        'Creates a contract-optimization event with an explicit Door 1 motion, then runs the deterministic diagnose path when evidence is available.',
     },
   },
   renewal: {

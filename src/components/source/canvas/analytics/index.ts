@@ -11,7 +11,6 @@ export { ScopeGate } from './ScopeGate';
 export { ValueTypeChip, ValueTypeLegend } from './ValueTypeChip';
 export { ValueWaterfall } from './ValueWaterfall';
 export { AvaLauncher } from './AvaLauncher';
-export { AnalyticsStageRail } from './AnalyticsStageRail';
 export {
   StepInsightPanel,
   ValuePoolInsight,

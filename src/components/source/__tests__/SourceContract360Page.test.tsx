@@ -200,6 +200,21 @@ describe("SourceContract360Page", () => {
 
     // Extraction confidence percentage renders instead of being swallowed.
     expect(screen.getByText(/Extraction confidence/)).toBeInTheDocument();
+
+    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+      "href",
+      expect.stringContaining("intent=contract-optimization"),
+    );
+    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+      "href",
+      expect.stringContaining("contractId=c1"),
+    );
+    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+      "href",
+      expect.stringContaining(
+        "contractName=Salesforce%20Data%20Platform%20Agreement%203",
+      ),
+    );
   });
 
   it("shows a dash rather than 'Not available' when a value is genuinely absent", () => {
