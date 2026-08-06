@@ -523,11 +523,21 @@ function buildBpoBaseline(ctx) {
   const processRows = fileRows(ctx, "BPO_CURRENT_STATE_PROCESS_VOLUMES.csv");
   const costsByFunction = groupBy(fileRows(ctx, "BPO_CURRENT_STATE_COST_BASELINE.csv"), (row) => v(row, "function_ref"));
   const workforceByFunction = groupBy(fileRows(ctx, "BPO_CURRENT_STATE_WORKFORCE.csv"), (row) => v(row, "function_ref"));
+  const processCountByFunction = new Map();
+  for (const row of processRows) {
+    const functionRef = v(row, "function_ref");
+    processCountByFunction.set(functionRef, (processCountByFunction.get(functionRef) || 0) + 1);
+  }
   return projection("sourcing_event", "bpo_baseline", "function_process", ["BPO_CURRENT_STATE_PROCESS_VOLUMES.csv", "BPO_CURRENT_STATE_COST_BASELINE.csv", "BPO_CURRENT_STATE_WORKFORCE.csv"], processRows.map((row) => {
     const functionRef = v(row, "function_ref");
     const key = [functionRef, v(row, "process_name")].join("|");
     const costs = costsByFunction.get(functionRef) || [];
     const workforce = workforceByFunction.get(functionRef) || [];
+    const processCount = Math.max(processCountByFunction.get(functionRef) || 1, 1);
+    const functionLaborCost = sum(costs, "labor_cost");
+    const functionTechnologyCost = sum(costs, "technology_cost");
+    const functionControlsCost = sum(costs, "controls_cost");
+    const functionResourceCount = sum(workforce, "resource_count");
     return makeProjectionRow(ctx, "sourcing_event", "bpo_baseline", "function_process", key, {
       event_id: EVENT_ID,
       function_ref: functionRef,
@@ -535,10 +545,16 @@ function buildBpoBaseline(ctx) {
       monthly_volume: num(v(row, "monthly_volume")),
       current_sla: v(row, "current_sla"),
       automation_opportunity: v(row, "automation_opportunity"),
-      baseline_labor_cost: sum(costs, "labor_cost"),
-      baseline_technology_cost: sum(costs, "technology_cost"),
-      baseline_controls_cost: sum(costs, "controls_cost"),
-      current_resource_count: sum(workforce, "resource_count"),
+      baseline_labor_cost: round(functionLaborCost / processCount, 2),
+      baseline_technology_cost: round(functionTechnologyCost / processCount, 2),
+      baseline_controls_cost: round(functionControlsCost / processCount, 2),
+      current_resource_count: round(functionResourceCount / processCount, 4),
+      function_total_labor_cost: functionLaborCost,
+      function_total_technology_cost: functionTechnologyCost,
+      function_total_controls_cost: functionControlsCost,
+      function_total_resource_count: functionResourceCount,
+      function_process_row_count: processCount,
+      additive_measure_policy: "allocated_function_total_to_process_grain",
     }, collectSources([row], costs, workforce), [], EVENT_CONTEXT_SNAPSHOT_ID);
   }));
 }
@@ -581,6 +597,7 @@ function buildRebadgeTransitionCommitments(ctx) {
       function_ref: v(row, "function_ref"),
       process_name: v(row, "process_name"),
       employee_cohort: v(row, "employee_cohort"),
+      source_workforce_cohort_count: num(v(row, "source_workforce_cohort_count")),
       number_proposed_for_rebadge: num(v(row, "number_proposed_for_rebadge")),
       retention_commitment_months: num(v(row, "retention_commitment_months")),
       knowledge_critical_designation: v(row, "knowledge_critical_designation"),
@@ -1106,6 +1123,10 @@ function num(value) {
 
 function sum(rowsForSum = [], field) {
   return Number(rowsForSum.reduce((total, row) => total + num(v(row, field)), 0).toFixed(4));
+}
+
+function round(value, digits = 2) {
+  return Number((Number(value) || 0).toFixed(digits));
 }
 
 function avg(rowsForAvg = [], field) {
