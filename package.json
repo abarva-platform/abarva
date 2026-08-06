@@ -660,6 +660,8 @@
     "source:sourcing-context:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260803160000_source_sourcing_context_depth_contract.sql",
     "source:sourcing-context:migrate:apply": "node scripts/source/guard-sourcing-context-migration-target.mjs && npx tsx src/scripts/run-migrations.ts --ci --force 20260803160000_source_sourcing_context_depth_contract.sql",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
+    "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
+    "ops:skyharbor-client-registry:repair:apply": "node scripts/ops/repair-skyharbor-client-registry.mjs --apply",
     "ops:purge-retired-data-layers": "node scripts/ops/purge-retired-data-layers.mjs",
     "ops:semantic2:l3-dossiers:proof": "node scripts/ops/submit-aca-operator-job.mjs --script semantic2:l3-dossiers:proof-job",
     "tenant-v6:generate": "node scripts/audit/block-legacy-dataset-generation.mjs tenant-v6:generate",
