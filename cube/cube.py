@@ -36,7 +36,7 @@ TENANT_FILTERABLE_CUBES = {
     "phs_rebadge_transition_commitments",
     "phs_ai_automation_commitments",
     "phs_retained_org_scenarios",
-    "phs_normalized_tco_recommendation_inputs",
+    "phs_normalized_tco_inputs",
     "phs_event_context_snapshot",
 }
 
@@ -76,10 +76,10 @@ VIEW_TO_CUBES = {
         "phs_rebadge_transition_commitments",
         "phs_ai_automation_commitments",
         "phs_retained_org_scenarios",
-        "phs_normalized_tco_recommendation_inputs",
+        "phs_normalized_tco_inputs",
     ],
     "phs_decision_handoff": [
-        "phs_normalized_tco_recommendation_inputs",
+        "phs_normalized_tco_inputs",
         "phs_event_context_snapshot",
         "phs_program_dependencies",
         "phs_application_dependencies",

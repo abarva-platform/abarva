@@ -217,33 +217,33 @@ const phsFamilies = [
   {
     name: "normalized_tco",
     cubeMeasures: [
-      "phs_normalized_tco_recommendation_inputs.count",
-      "phs_normalized_tco_recommendation_inputs.headline_price",
-      "phs_normalized_tco_recommendation_inputs.normalized_five_year_tco",
-      "phs_normalized_tco_recommendation_inputs.risk_adjustment",
+      "phs_normalized_tco_inputs.count",
+      "phs_normalized_tco_inputs.headline_price",
+      "phs_normalized_tco_inputs.normalized_tco",
+      "phs_normalized_tco_inputs.risk_adjustment",
     ],
     sourceSql: `SELECT count(*)::int AS count, sum(headline_price)::numeric AS headline_price, sum(normalized_five_year_tco)::numeric AS normalized_five_year_tco, sum(risk_adjustment)::numeric AS risk_adjustment FROM ${CANARY_SCHEMA}.phs_normalized_tco_recommendation_input_v1 WHERE tenant_key=$1`,
     pairs: [
-      ["phs_normalized_tco_recommendation_inputs.count", "count", 0],
-      ["phs_normalized_tco_recommendation_inputs.headline_price", "headline_price", 0.01],
-      ["phs_normalized_tco_recommendation_inputs.normalized_five_year_tco", "normalized_five_year_tco", 0.01],
-      ["phs_normalized_tco_recommendation_inputs.risk_adjustment", "risk_adjustment", 0.01],
+      ["phs_normalized_tco_inputs.count", "count", 0],
+      ["phs_normalized_tco_inputs.headline_price", "headline_price", 0.01],
+      ["phs_normalized_tco_inputs.normalized_tco", "normalized_five_year_tco", 0.01],
+      ["phs_normalized_tco_inputs.risk_adjustment", "risk_adjustment", 0.01],
     ],
   },
   {
     name: "event_context_snapshot",
     cubeMeasures: [
       "phs_event_context_snapshot.count",
-      "phs_event_context_snapshot.selected_source_record_count",
-      "phs_event_context_snapshot.selected_canonical_entity_count",
-      "phs_event_context_snapshot.selected_canonical_relationship_count",
+      "phs_event_context_snapshot.selected_sources",
+      "phs_event_context_snapshot.selected_entities",
+      "phs_event_context_snapshot.selected_relationships",
     ],
     sourceSql: `SELECT count(*)::int AS count, sum(selected_source_record_count)::numeric AS selected_source_record_count, sum(selected_canonical_entity_count)::numeric AS selected_canonical_entity_count, sum(selected_canonical_relationship_count)::numeric AS selected_canonical_relationship_count FROM ${CANARY_SCHEMA}.phs_event_context_snapshot_v1 WHERE tenant_key=$1`,
     pairs: [
       ["phs_event_context_snapshot.count", "count", 0],
-      ["phs_event_context_snapshot.selected_source_record_count", "selected_source_record_count", 0.01],
-      ["phs_event_context_snapshot.selected_canonical_entity_count", "selected_canonical_entity_count", 0.01],
-      ["phs_event_context_snapshot.selected_canonical_relationship_count", "selected_canonical_relationship_count", 0.01],
+      ["phs_event_context_snapshot.selected_sources", "selected_source_record_count", 0.01],
+      ["phs_event_context_snapshot.selected_entities", "selected_canonical_entity_count", 0.01],
+      ["phs_event_context_snapshot.selected_relationships", "selected_canonical_relationship_count", 0.01],
     ],
   },
 ];
@@ -380,7 +380,7 @@ function validateModel() {
     "phs_rebadge_transition_commitments",
     "phs_ai_automation_commitments",
     "phs_retained_org_scenarios",
-    "phs_normalized_tco_recommendation_inputs",
+    "phs_normalized_tco_inputs",
     "phs_event_context_snapshot",
   ]);
   for (const cube of expectedCubes) {
@@ -507,11 +507,11 @@ async function verifyIsolation(phsToken, skyToken, failures) {
 
 async function verifyDrillMembers(token, failures) {
   const query = {
-    measures: ["phs_normalized_tco_recommendation_inputs.normalized_five_year_tco"],
+    measures: ["phs_normalized_tco_inputs.normalized_tco"],
     dimensions: [
-      "phs_normalized_tco_recommendation_inputs.recommendation_state",
-      "phs_normalized_tco_recommendation_inputs.scenario",
-      "phs_normalized_tco_recommendation_inputs.supplier_id",
+      "phs_normalized_tco_inputs.recommendation_state",
+      "phs_normalized_tco_inputs.scenario",
+      "phs_normalized_tco_inputs.supplier_id",
     ],
     limit: 10,
   };

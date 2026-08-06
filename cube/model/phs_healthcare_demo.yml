@@ -845,7 +845,7 @@ cubes:
         levels:
           [sourcing_model, supplier_id, phs_retained_function, retained_role]
 
-  - name: phs_normalized_tco_recommendation_inputs
+  - name: phs_normalized_tco_inputs
     sql_table: foundation_v2_phs_cube_canary.phs_normalized_tco_recommendation_input_v1
     public: true
     dimensions:
@@ -878,7 +878,7 @@ cubes:
         type: sum
         format: currency
         drill_members: [recommendation_state, scenario, supplier_id]
-      - name: normalized_five_year_tco
+      - name: normalized_tco
         sql: normalized_five_year_tco
         type: sum
         format: currency
@@ -932,17 +932,17 @@ cubes:
         type: count
         drill_members:
           [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
-      - name: selected_source_record_count
+      - name: selected_sources
         sql: selected_source_record_count
         type: sum
         drill_members:
           [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
-      - name: selected_canonical_entity_count
+      - name: selected_entities
         sql: selected_canonical_entity_count
         type: sum
         drill_members:
           [event_id, event_context_snapshot_id, snapshot_version, snapshot_hash]
-      - name: selected_canonical_relationship_count
+      - name: selected_relationships
         sql: selected_canonical_relationship_count
         type: sum
         drill_members:
