@@ -236,6 +236,8 @@ async function apply(client) {
     await createTempHelpers(client);
     await createTempRowPayload(client);
     progress("apply.row_payload_ready");
+    await createTempCandidateMap(client);
+    progress("apply.candidate_map_ready");
     await insertCanonicalEntities(client);
     progress("apply.canonical_entities_ready");
     await insertCanonicalRelationships(client);
@@ -337,6 +339,27 @@ async function createTempRowPayload(client) {
   await q(client, "CREATE INDEX ON phs_l3_row_payload(file_name)");
   await q(client, "CREATE INDEX ON phs_l3_row_payload(source_group)");
   await q(client, "CREATE INDEX ON phs_l3_row_payload(source_record_id)");
+  await q(client, "ANALYZE phs_l3_row_payload");
+}
+
+async function createTempCandidateMap(client) {
+  await q(client, "DROP TABLE IF EXISTS phs_l3_candidate_map");
+  await q(
+    client,
+    `
+    CREATE TEMP TABLE phs_l3_candidate_map ON COMMIT DROP AS
+    SELECT candidate_id,
+           source_record_id
+      FROM ${tableRef("knowledge_candidates")}
+     WHERE tenant_key=$1
+       AND test_namespace=$2
+       AND source_release_id=$3
+    `,
+    [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID],
+  );
+  await q(client, "CREATE INDEX ON phs_l3_candidate_map(source_record_id)");
+  await q(client, "CREATE INDEX ON phs_l3_candidate_map(candidate_id)");
+  await q(client, "ANALYZE phs_l3_candidate_map");
 }
 
 async function insertCanonicalEntities(client) {
@@ -625,14 +648,9 @@ async function insertPromotionDecisions(client) {
                WHEN rp.source_group IN ('bpo_sourcing_event', 'bpo_transformation_event') THEN 'deterministic_event_native_record_rule'
                ELSE 'deterministic_transactional_observation_grain'
              END AS resolution_rule
-        FROM ${tableRef("knowledge_candidates")} kc
+        FROM phs_l3_candidate_map kc
         JOIN phs_l3_row_payload rp
-          ON rp.tenant_key = kc.tenant_key
-         AND rp.test_namespace = kc.test_namespace
-         AND rp.source_record_id = kc.source_record_id
-       WHERE kc.tenant_key=$1
-         AND kc.test_namespace=$2
-         AND kc.source_release_id=$3
+          ON rp.source_record_id = kc.source_record_id
     )
     SELECT candidate_id || ':phs-canonical-promotion-v1',
            candidate_id,
