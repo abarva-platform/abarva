@@ -662,6 +662,8 @@
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
     "ops:skyharbor-client-registry:repair:apply": "node scripts/ops/repair-skyharbor-client-registry.mjs --apply",
+    "ops:skyharbor-source-event-title:repair": "node scripts/ops/repair-skyharbor-source-event-titles.mjs",
+    "ops:skyharbor-source-event-title:repair:apply": "node scripts/ops/repair-skyharbor-source-event-titles.mjs --apply",
     "ops:purge-retired-data-layers": "node scripts/ops/purge-retired-data-layers.mjs",
     "ops:semantic2:l3-dossiers:proof": "node scripts/ops/submit-aca-operator-job.mjs --script semantic2:l3-dossiers:proof-job",
     "tenant-v6:generate": "node scripts/audit/block-legacy-dataset-generation.mjs tenant-v6:generate",
