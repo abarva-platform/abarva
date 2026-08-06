@@ -260,18 +260,6 @@ async function insertNormalizedObjects(client) {
                 sfv.source_field_id
               ) FILTER (WHERE nullif(sfv.normalized_value, '') IS NOT NULL))[1] AS declared_business_key,
              jsonb_object_agg(sfv.target_field_name, sfv.normalized_value ORDER BY sfv.source_field_id) AS fields,
-             jsonb_agg(
-               jsonb_build_object(
-                 'source_field_value_id', sfv.source_field_value_id,
-                 'source_field_name', sfv.source_field_name,
-                 'target_field_name', sfv.target_field_name,
-                 'field_disposition', sfv.field_disposition,
-                 'adapter_rule_id', sfv.adapter_rule_id,
-                 'evidence_ref', sfv.evidence_ref,
-                 'restricted', sfv.restricted
-               )
-               ORDER BY sfv.source_field_id
-             ) AS field_dispositions,
              count(*)::int AS field_count,
              count(*) FILTER (WHERE sfv.restricted)::int AS restricted_field_count
         FROM ${tableRef("source_records")} sr
@@ -325,7 +313,11 @@ async function insertNormalizedObjects(client) {
              'source_row_hash', k.source_row_hash,
              'business_key', k.resolved_business_key,
              'fields', k.fields,
-             'field_dispositions', k.field_dispositions,
+             'field_lineage_ref', jsonb_build_object(
+               'source_table', 'source_field_values',
+               'source_record_id', k.source_record_id,
+               'field_disposition_count', k.field_count
+             ),
              'restricted_field_count', k.restricted_field_count
            ),
            k.field_count,
@@ -644,7 +636,7 @@ function selfTest() {
   for (const forbidden of ["canonical_objects", "domain_publications", "publication_members", "baselines", "baseline_object_memberships", "projection_rows"]) {
     if (new RegExp(`INSERT\\s+INTO\\s+[^\\n]*${forbidden}`, "i").test(script)) defects.push(`unexpected insert into ${forbidden}`);
   }
-  for (const required of ["field_dispositions", "source_field_value_id", "restricted_candidate", "PHS_NORMALIZATION_APPLY_APPROVED", "assertGate"]) {
+  for (const required of ["field_lineage_ref", "source_field_values", "restricted_candidate", "PHS_NORMALIZATION_APPLY_APPROVED", "assertGate"]) {
     if (!script.includes(required)) defects.push(`missing ${required}`);
   }
   if (defects.length > 0) throw new Error(`PHS normalization self-test failed: ${defects.join("; ")}`);
