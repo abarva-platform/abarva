@@ -997,9 +997,9 @@ async function insertGateResults(client, result) {
   for (const [gateId, transition, inputCount, outputCount] of rowsForGate) {
     await client.query(
       `INSERT INTO ${tableRef("gate_results")}
-        (gate_result_id, tenant_key, test_namespace, gate_id, transition_name, input_count, output_count,
-         unexplained_variance, gate_status, proof_uri, writer_job_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,0,'PASSED',$8,$9)
+        (gate_result_id, tenant_key, test_namespace, gate_id, transition, input_count, output_count,
+         unexplained_variance, gate_status, failure_classification, repair_owner, rerun_scope, proof_uri, writer_job_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,0,'passed',NULL,'foundation-v2-phs-layer4','none',$8,$9)
        ON CONFLICT (tenant_key, test_namespace, gate_id, writer_job_id) DO NOTHING`,
       [`${PROJECTION_EXECUTION_ID}:${gateId}`, TENANT_KEY, TEST_NAMESPACE, gateId, transition, inputCount, outputCount, `proof://phs-layer4/${gateId}`, PROJECTION_EXECUTION_ID],
     );
