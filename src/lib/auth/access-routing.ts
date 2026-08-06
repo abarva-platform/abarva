@@ -229,7 +229,6 @@ export function resolvePostSignInPath(
   if (foundationTenantKey) {
     return foundationKnowledgePath(foundationTenantKey);
   }
-  const pinnedClientId = resolvePinnedSessionClientKey(input);
   const resolvedClientId = resolveSessionClientKey(input);
 
   if (isNewClientSetupEmail(input.email)) {
@@ -251,7 +250,7 @@ export function resolvePostSignInPath(
   // `/home` as before. Investors and externals are intentionally excluded.
   if (input.hasTowerPortfolio === true) {
     if (resolvedRole === "client" || resolvedRole === "maestro") {
-      return pinnedClientId ? `/tower?client=${pinnedClientId}` : "/tower";
+      return "/tower";
     }
     if (resolvedRole === "admin") {
       return `/tower?client=${resolvedClientId}`;
@@ -264,9 +263,6 @@ export function resolvePostSignInPath(
   }
 
   if (resolvedRole === "client" || resolvedRole === "maestro") {
-    if (pinnedClientId) {
-      return `/home?client=${pinnedClientId}`;
-    }
     return "/home";
   }
 
