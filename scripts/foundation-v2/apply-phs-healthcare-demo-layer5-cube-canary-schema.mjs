@@ -23,6 +23,23 @@ const FOUNDATION_RELEASE_ALIAS = "phs-healthcare-demo-phase-a-source-volume-v1";
 const PROJECTION_VERSION = "phs-layer4-consumption-projections-v1";
 const CUBE_CANARY_VERSION = "phs-layer5-cube-canary-v1";
 const WRITER_JOB_ID = `${SOURCE_RELEASE_ID}:${CUBE_CANARY_VERSION}`;
+const SYSTEM_COLUMNS = new Set([
+  "projection_row_id",
+  "tenant_key",
+  "test_namespace",
+  "source_release_id",
+  "business_key",
+  "business_grain",
+  "event_context_snapshot_id",
+  "source_record_count",
+  "canonical_entity_count",
+  "canonical_relationship_count",
+  "row_hash",
+  "projection_payload",
+  "cube_canary_version",
+  "writer_job_id",
+  "loaded_at",
+]);
 
 const SPECS = [
   {
@@ -451,7 +468,8 @@ async function createSchema(client) {
 }
 
 async function createTable(client, spec) {
-  const typedColumns = spec.columns.map(([name, type]) => `${quoteIdent(name)} ${type}`).join(",\n      ");
+  const typedColumns = typedProjectionColumns(spec).map(([name, type]) => `${quoteIdent(name)} ${type}`).join(",\n      ");
+  const typedColumnSql = typedColumns ? `,\n      ${typedColumns}` : "";
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${quoteIdent(CANARY_SCHEMA)}.${quoteIdent(spec.table)} (
       projection_row_id text PRIMARY KEY,
@@ -465,8 +483,7 @@ async function createTable(client, spec) {
       canonical_entity_count integer NOT NULL,
       canonical_relationship_count integer NOT NULL,
       row_hash text NOT NULL,
-      projection_payload jsonb NOT NULL,
-      ${typedColumns},
+      projection_payload jsonb NOT NULL${typedColumnSql},
       cube_canary_version text NOT NULL,
       writer_job_id text NOT NULL,
       loaded_at timestamptz NOT NULL DEFAULT now()
@@ -476,14 +493,17 @@ async function createTable(client, spec) {
 }
 
 async function loadTable(client, spec) {
-  const columnNames = spec.columns.map(([name]) => quoteIdent(name));
-  const expressions = spec.columns.map(([name, , cast]) => valueExpression(name, cast));
+  const typedColumns = typedProjectionColumns(spec);
+  const columnNames = typedColumns.map(([name]) => quoteIdent(name));
+  const expressions = typedColumns.map(([name, , cast]) => valueExpression(name, cast));
+  const typedColumnSql = columnNames.length ? `, ${columnNames.join(", ")}` : "";
+  const typedExpressionSql = expressions.length ? `,\n      ${expressions.join(",\n      ")}` : "";
   await client.query(
     `
     INSERT INTO ${quoteIdent(CANARY_SCHEMA)}.${quoteIdent(spec.table)} (
       projection_row_id, tenant_key, test_namespace, source_release_id, business_key, business_grain,
       event_context_snapshot_id, source_record_count, canonical_entity_count, canonical_relationship_count,
-      row_hash, projection_payload, ${columnNames.join(", ")}, cube_canary_version, writer_job_id
+      row_hash, projection_payload${typedColumnSql}, cube_canary_version, writer_job_id
     )
     SELECT
       projection_row_id,
@@ -497,8 +517,7 @@ async function loadTable(client, spec) {
       jsonb_array_length(canonical_entity_ids),
       jsonb_array_length(canonical_relationship_ids),
       row_hash,
-      projection_payload,
-      ${expressions.join(",\n      ")},
+      projection_payload${typedExpressionSql},
       $4,
       $5
     FROM ${quoteIdent(SOURCE_SCHEMA)}.projection_rows
@@ -511,6 +530,10 @@ async function loadTable(client, spec) {
     `,
     [TENANT_KEY, TEST_NAMESPACE, SOURCE_RELEASE_ID, CUBE_CANARY_VERSION, WRITER_JOB_ID],
   );
+}
+
+function typedProjectionColumns(spec) {
+  return spec.columns.filter(([name]) => !SYSTEM_COLUMNS.has(name));
 }
 
 function valueExpression(name, cast) {
