@@ -468,6 +468,7 @@ async function createSchema(client) {
       created_at timestamptz NOT NULL DEFAULT now()
     )
   `);
+  await repairSourceReleaseCheck(client, "cube_canary_authority");
   await client.query(
     `INSERT INTO ${quoteIdent(CANARY_SCHEMA)}.cube_canary_authority
       (canary_version, tenant_key, test_namespace, source_release_id, source_projection_version, typed_table_count, writer_job_id)
@@ -502,7 +503,34 @@ async function createTable(client, spec) {
       loaded_at timestamptz NOT NULL DEFAULT now()
     )
   `);
+  await repairSourceReleaseCheck(client, spec.table);
   await client.query(`DELETE FROM ${quoteIdent(CANARY_SCHEMA)}.${quoteIdent(spec.table)} WHERE tenant_key = $1`, [TENANT_KEY]);
+}
+
+async function repairSourceReleaseCheck(client, tableName) {
+  const result = await client.query(
+    `
+    SELECT c.conname
+      FROM pg_constraint c
+      JOIN pg_class t ON t.oid = c.conrelid
+      JOIN pg_namespace n ON n.oid = t.relnamespace
+     WHERE n.nspname = $1
+       AND t.relname = $2
+       AND c.contype = 'c'
+       AND pg_get_constraintdef(c.oid) LIKE '%source_release_id%'
+    `,
+    [CANARY_SCHEMA, tableName],
+  );
+  for (const row of result.rows) {
+    await client.query(
+      `ALTER TABLE ${quoteIdent(CANARY_SCHEMA)}.${quoteIdent(tableName)} DROP CONSTRAINT IF EXISTS ${quoteIdent(row.conname)}`,
+    );
+  }
+  const safeConstraintName = `${tableName.slice(0, 36)}_source_release_id_current_check`;
+  await client.query(
+    `ALTER TABLE ${quoteIdent(CANARY_SCHEMA)}.${quoteIdent(tableName)}
+       ADD CONSTRAINT ${quoteIdent(safeConstraintName)} CHECK (source_release_id = '${SOURCE_RELEASE_ID}')`,
+  );
 }
 
 async function loadTable(client, spec) {
