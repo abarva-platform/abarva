@@ -372,7 +372,7 @@ async function main() {
   try {
     await setPHSContext(client);
     if (args.mode === "preflight") {
-      const result = await verify(client, false);
+      const result = await verify(client, { mode: "preflight" });
       writeProofSet(result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
@@ -380,7 +380,8 @@ async function main() {
       return;
     }
     if (args.mode === "verify") {
-      const result = await verify(client, false);
+      const beforeSkyHarbor = await readSkyHarborCounts(client);
+      const result = await verify(client, { mode: "readback", beforeSkyHarbor });
       writeProofSet(result);
       console.log(JSON.stringify(result, null, 2));
       maybeEmitProofBundle();
@@ -401,7 +402,7 @@ async function main() {
       await client.query("ROLLBACK");
       throw error;
     }
-    const result = await verify(client, true, beforeSkyHarbor);
+    const result = await verify(client, { mode: "apply", beforeSkyHarbor });
     writeProofSet(result);
     console.log(JSON.stringify(result, null, 2));
     maybeEmitProofBundle();
@@ -550,7 +551,12 @@ function valueExpression(name, cast) {
   throw new Error(`Unsupported cast ${cast}`);
 }
 
-async function verify(client, mutationExecuted, beforeSkyHarbor = null) {
+async function verify(client, options = {}) {
+  const mode = options.mode || "preflight";
+  const mutationExecuted = mode === "apply";
+  const readbackVerificationExecuted = mode === "readback";
+  const requireCanaryExactMatch = mutationExecuted || readbackVerificationExecuted;
+  const beforeSkyHarbor = options.beforeSkyHarbor || null;
   const authority = await maybeOne(
     client,
     `SELECT canary_version, typed_table_count FROM ${quoteIdent(CANARY_SCHEMA)}.cube_canary_authority WHERE canary_version = $1`,
@@ -574,7 +580,7 @@ async function verify(client, mutationExecuted, beforeSkyHarbor = null) {
       ? await one(client, `SELECT count(*)::int AS rows FROM ${quoteIdent(CANARY_SCHEMA)}.${quoteIdent(spec.table)} WHERE tenant_key LIKE 'skyharbor%'`, [])
       : { rows: 0 };
     if (Number(source.rows) <= 0) defects.push(`source_projection_empty:${spec.namespace}.${spec.name}`);
-    if (mutationExecuted && Number(source.rows) !== Number(target.rows)) defects.push(`canary_row_count_mismatch:${spec.table}:${source.rows}:${target.rows}`);
+    if (requireCanaryExactMatch && Number(source.rows) !== Number(target.rows)) defects.push(`canary_row_count_mismatch:${spec.table}:${source.rows}:${target.rows}`);
     if (Number(skyharborRows.rows) !== 0) defects.push(`skyharbor_rows_present:${spec.table}:${skyharborRows.rows}`);
     rows.push({
       table: spec.table,
@@ -590,22 +596,24 @@ async function verify(client, mutationExecuted, beforeSkyHarbor = null) {
   if (beforeSkyHarbor && stableJson(beforeSkyHarbor) !== stableJson(afterSkyHarbor)) {
     defects.push("skyharbor_v4_counts_changed_during_phs_layer5_apply");
   }
-  if (mutationExecuted && (!authority || Number(authority.typed_table_count) !== SPECS.length)) {
+  if (requireCanaryExactMatch && (!authority || Number(authority.typed_table_count) !== SPECS.length)) {
     defects.push("cube_canary_authority_missing_or_incomplete");
   }
 
   const preflightReady = rows.every((row) => row.source_projection_rows > 0);
-  const exactMatch = mutationExecuted
+  const exactMatch = requireCanaryExactMatch
     ? defects.length === 0 && rows.every((row) => row.source_projection_rows === row.canary_rows)
     : false;
   return manifest(
-    mutationExecuted && exactMatch
+    requireCanaryExactMatch && exactMatch
       ? "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_VERIFIED"
-      : preflightReady && !mutationExecuted
+      : preflightReady && !requireCanaryExactMatch
         ? "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_PREFLIGHT_PASSED"
         : "PHS_HEALTHCARE_DEMO_LAYER5_CUBE_CANARY_BLOCKED",
     {
+      verification_mode: mode,
       mutation_executed: mutationExecuted,
+      readback_verification_executed: readbackVerificationExecuted,
       preflight_ready: preflightReady,
       canary_schema: CANARY_SCHEMA,
       canary_version: CUBE_CANARY_VERSION,
