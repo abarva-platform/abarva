@@ -84,11 +84,27 @@ describe("resolvePostSignInPath — Tower-as-landing", () => {
     expect(path.startsWith("/home")).toBe(true);
   });
 
-  it("hasTowerPortfolio=true pins the client query param when a tenant is bound", () => {
+  it("hasTowerPortfolio=true keeps locked client users off query-param tenant routing", () => {
     const path = resolvePostSignInPath("client", {
       email: "cio@apex-retail.example.com",
       hasTowerPortfolio: true,
     });
-    expect(path).toContain("client=");
+    expect(path).toBe("/tower");
+  });
+
+  it("keeps empty-portfolio locked client users off query-param tenant routing", () => {
+    const path = resolvePostSignInPath("client", {
+      email: "cio@apex-retail.example.com",
+      hasTowerPortfolio: false,
+    });
+    expect(path).toBe("/home");
+  });
+
+  it("preserves query-param tenant routing for admins", () => {
+    const path = resolvePostSignInPath("admin", {
+      clientId: "skyharbor",
+      hasTowerPortfolio: true,
+    });
+    expect(path).toBe("/tower?client=skyharbor");
   });
 });
