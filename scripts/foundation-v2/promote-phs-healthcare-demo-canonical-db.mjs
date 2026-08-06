@@ -187,7 +187,8 @@ async function preflight(client) {
     await client.query("ROLLBACK");
     const sourceExact = exactObject(sourceCounts, SOURCE_VOLUME_COUNTS);
     const layer2Exact = exactObject(layer2Counts, LAYER2_COUNTS);
-    const ready = sourceExact && layer2Exact && (existingTotal === 0 || existingExact.ok);
+    const existingLayer3Ok = existingTotal === 0 || existingExact.ok;
+    const ready = sourceExact && layer2Exact && existingLayer3Ok;
     return manifest(ready
       ? "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_PREFLIGHT_PASSED"
       : "PHS_HEALTHCARE_DEMO_CANONICAL_PROMOTION_PREFLIGHT_FAILED", {
@@ -198,8 +199,8 @@ async function preflight(client) {
       layer2_exact_match: layer2Exact,
       existing_layer3_counts: existingCounts,
       existing_layer3_total: existingTotal,
-      existing_layer3_exact_match: existingExact.ok,
-      existing_layer3_defects: existingExact.defects,
+      existing_layer3_exact_match: existingLayer3Ok,
+      existing_layer3_defects: existingTotal === 0 ? [] : existingExact.defects,
     });
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
