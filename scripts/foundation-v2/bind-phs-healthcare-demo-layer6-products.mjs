@@ -1254,17 +1254,33 @@ async function insertGateResults(client, result) {
 }
 
 async function readSkyHarborCounts(client) {
+  const roleBefore = await currentRole(client);
+  await client.query("RESET ROLE");
   const candidates = [
     ["contracts", "consumption_v4_canary", "sourcing_contract_v1", "count(*)::int AS rows, sum(annual_value)::numeric AS annual_value"],
     ["vendors", "consumption_v4_canary", "sourcing_vendor_v1", "count(*)::int AS rows, sum(contract_count)::numeric AS contract_count"],
     ["scope", "consumption_v4_canary", "sourcing_contract_scope_v1", "count(*)::int AS rows"],
   ];
-  const result = {};
-  for (const [name, schema, table, select] of candidates) {
-    const exists = await tableExists(client, schema, table);
-    result[name] = exists ? numObj(await one(client, `SELECT ${select} FROM ${q(schema)}.${q(table)} WHERE tenant_key=$1`, [SKYHARBOR_TENANT])) : { missing: true };
+  try {
+    const result = {};
+    for (const [name, schema, table, select] of candidates) {
+      const exists = await tableExists(client, schema, table);
+      result[name] = exists ? numObj(await one(client, `SELECT ${select} FROM ${q(schema)}.${q(table)} WHERE tenant_key=$1`, [SKYHARBOR_TENANT])) : { missing: true };
+    }
+    return result;
+  } finally {
+    await restoreRole(client, roleBefore);
   }
-  return result;
+}
+
+async function currentRole(client) {
+  const row = await one(client, "SELECT current_role::text AS current_role, session_user::text AS session_user", []);
+  return row.current_role && row.current_role !== row.session_user ? row.current_role : "";
+}
+
+async function restoreRole(client, role) {
+  if (!role) return;
+  await client.query(`SET ROLE ${q(role)}`);
 }
 
 function readCubeProof(filePath) {
