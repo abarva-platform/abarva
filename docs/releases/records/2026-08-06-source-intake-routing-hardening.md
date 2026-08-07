@@ -33,6 +33,7 @@ This release hardens Source event origination so a completed intake either opens
 - `src/components/source/onboarding/SourceOnboardingTour.tsx`
 - `src/components/agent/AgentDock.tsx`
 - `src/components/agent/__tests__/AgentDock.test.tsx`
+- `src/app/globals.css`
 - `src/components/marketing/LoggedOutLandingPage.tsx`
 - `src/components/marketing/RequestAccessController.tsx`
 - `src/__tests__/integration/source/source-originate-page.test.ts`
