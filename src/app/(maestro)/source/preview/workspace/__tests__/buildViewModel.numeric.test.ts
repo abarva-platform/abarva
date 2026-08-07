@@ -294,6 +294,84 @@ describe("buildViewModel numeric coercion", () => {
     );
   });
 
+  it("keeps Vendor 360 contract counts aligned to the visible material-contract table", () => {
+    const salesforceContracts = [
+      contractRow({
+        contract_id: "CTR-090",
+        vendor_ref: "salesforce",
+        vendor_name: "Salesforce",
+        contract_name: "Salesforce Data Platform Agreement 3",
+        annual_value: "43500000.00" as unknown as number,
+      }),
+      contractRow({
+        contract_id: "CTR-088",
+        vendor_ref: "salesforce",
+        vendor_name: "Salesforce",
+        contract_name: "Salesforce AMS Agreement 1",
+        annual_value: "35600000.00" as unknown as number,
+      }),
+      contractRow({
+        contract_id: "CTR-089",
+        vendor_ref: "salesforce",
+        vendor_name: "Salesforce",
+        contract_name: "Salesforce Implementation Services Agreement 2",
+        annual_value: "30300000.00" as unknown as number,
+      }),
+      contractRow({
+        contract_id: "CTR-091",
+        vendor_ref: "salesforce",
+        vendor_name: "Salesforce",
+        contract_name: "Salesforce Cybersecurity Agreement 4",
+        annual_value: "24600000.00" as unknown as number,
+      }),
+    ];
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        sel: { kind: "vendor", id: "salesforce" },
+      },
+      () => undefined,
+      {
+        ...PORTFOLIO,
+        contracts: salesforceContracts,
+        vendors: [
+          vendorRow({
+            vendor_ref: "salesforce",
+            vendor_name: "Salesforce",
+            vendor_category: "SaaS",
+            // The rollup can represent families; the Vendor 360 headline must
+            // not use it as the visible contract-row count.
+            contract_count: 2,
+            annual_value: "133900000.00" as unknown as number,
+          }),
+        ],
+        categoryQuality: evaluateContractCategoryQuality(salesforceContracts),
+      },
+      "SkyHarbor Global",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      thesis: string;
+      vendorStats: Array<{ label: string; value: string }>;
+      valueStrip: Array<{ label: string; sub: string }>;
+      vendorContractRows: unknown[];
+    };
+
+    expect(built.vendorContractRows).toHaveLength(4);
+    expect(built.thesis).toContain("across 4 material contracts shown");
+    expect(built.thesis).not.toContain("across 2 governed contracts");
+    expect(built.vendorStats).toEqual(
+      expect.arrayContaining([
+        { label: "Material contracts shown", value: "4" },
+        { label: "Rollup contract families", value: "2" },
+      ]),
+    );
+    expect(
+      built.valueStrip.find((item) => item.label === "Annual contract value")
+        ?.sub,
+    ).toBe("4 material contracts shown");
+  });
+
   it("sums the leverage quadrant panel without string-concatenation", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as { quadPanel: Array<{ value: string }> };
@@ -453,13 +531,18 @@ describe("buildViewModel numeric coercion", () => {
       () => undefined,
     );
     const built = buildViewModel(vm) as {
-      ex: { groups: Array<{ label: string }>; chartSubtitle: string };
+      ex: {
+        groups: Array<{ label: string }>;
+        chartSubtitle: string;
+        quality: { showBanner: boolean };
+      };
     };
 
     expect(built.ex.groups.map((group) => group.label)).toEqual([
       "Vendor One",
     ]);
     expect(built.ex.chartSubtitle).toContain("compare-all is off");
+    expect(built.ex.quality.showBanner).toBe(false);
   });
 
   it("shows peer groups only when Explore compare-all mode is explicit", () => {
@@ -504,12 +587,13 @@ describe("buildViewModel numeric coercion", () => {
     );
     const built = buildViewModel(vm) as {
       ex: {
-        quality: { state: string; message: string };
+        quality: { state: string; message: string; showBanner: boolean };
         groups: Array<{ label: string; taxonomy: { flagged: boolean } }>;
       };
     };
 
     expect(built.ex.quality.state).toBe("blocked");
+    expect(built.ex.quality.showBanner).toBe(true);
     expect(built.ex.quality.message).toMatch(/withheld pending review/i);
     expect(built.ex.groups[0]?.label).toBe("Needs classification");
     expect(built.ex.groups[0]?.taxonomy.flagged).toBe(true);

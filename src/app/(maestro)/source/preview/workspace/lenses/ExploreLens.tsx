@@ -9,6 +9,19 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
   const [showQuality, setShowQuality] = useState(false);
   return (
     <>
+      <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '14px 16px', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 16, alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>{ex.intentTitle}</div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.5, color: '#5f5e5a', maxWidth: 900 }}>
+            {ex.intentBody}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a', border: '1px solid rgba(10,10,11,.12)', borderRadius: 999, padding: '5px 9px', background: '#fbfaf7' }}>{ex.contractCount} contracts in view</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#0a0a0b', border: '1px solid rgba(10,10,11,.12)', borderRadius: 999, padding: '5px 9px', background: '#fbfaf7' }}>{ex.totalVal}</span>
+        </div>
+      </div>
+
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780' }}>Group by</span>
         {ex.dimBtns.map((dd, i) => (
@@ -25,7 +38,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         </span>
       </div>
 
-      {ex.quality.state !== 'available' ? (
+      {ex.quality.showBanner ? (
         <div style={{ flex: '0 0 auto' }}>
           <button
             onClick={() => setShowQuality((s) => !s)}
@@ -50,7 +63,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
       ) : null}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, background: '#0a0a0b', borderRadius: 8, padding: '12px 16px' }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Current selection</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Selection</span>
         {ex.hasFilters ? (
           <span style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center' }}>
             {ex.chips.map((c, i) => (
@@ -64,7 +77,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
           </span>
         ) : null}
         {ex.noFilters ? (
-          <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.62)' }}>Nothing selected — the whole governed portfolio. Click any value to narrow it.</span>
+          <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.72)' }}>{ex.emptySelectionCopy}</span>
         ) : null}
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'baseline' }}>
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 600, color: '#fff' }}>{ex.totalVal}</span>
@@ -99,7 +112,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12, padding: '15px 20px 13px', borderBottom: '1px solid rgba(10,10,11,.12)', flex: '0 0 auto' }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#0a0a0b' }}>Annual contract value by {ex.dimLabel}</div>
             <div style={{ fontSize: 12, color: '#5f5e5a' }}>{ex.chartSubtitle}</div>
-            <div style={{ marginLeft: 'auto', fontSize: 12, color: '#0066CC', fontWeight: 600 }}>Click any value to select it. Click again to release it.</div>
+            <div style={{ marginLeft: 'auto', fontSize: 12, color: '#0066CC', fontWeight: 600 }}>{ex.chartInstruction}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
             {ex.groups.map((g) => (

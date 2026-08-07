@@ -61,6 +61,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ?? vendorContracts.reduce(addRowAnnualValue, 0);
   const vendorName = vendorPortfolioRow?.vendor_name ?? vendorConcentration?.vendorName ?? vendorContracts[0]?.row.vendor_name ?? vendorRef ?? '';
   const vendorCat = vendorPortfolioRow?.vendor_category ?? vendorContracts[0]?.row.vendor_category ?? null;
+  const vendorMaterialContractCount = vendorContracts.length;
+  const vendorRollupContractCount = vendorPortfolioRow?.contract_count ?? vendorMaterialContractCount;
+  const vendorRollupDiffers = vendorPortfolioRow?.contract_count != null && vendorPortfolioRow.contract_count !== vendorMaterialContractCount;
 
   const opp = kind === 'opportunity' ? opportunities.find((o) => o.contractId === sel.id) ?? opportunities[0] ?? null : opportunities[0] ?? null;
   const oppContract = opp ? byId.get(opp.contractId) ?? null : null;
@@ -170,7 +173,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   } else if (kind === 'vendor') {
     title = vendorName;
     const rank = conc.byVendor.findIndex((r) => r.vendorRef === vendorRef) + 1;
-    thesis = money(vendorAnnualValue) + ' of annual contract value across ' + (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts' + (rank ? ' · rank ' + rank + ' of ' + conc.byVendor.length : '') + '.';
+    thesis = money(vendorAnnualValue) + ' of annual contract value across ' + vendorMaterialContractCount + ' material contract' + (vendorMaterialContractCount === 1 ? '' : 's') + ' shown' + (rank ? ' · rank ' + rank + ' of ' + conc.byVendor.length : '') + '.';
     crumbLabels = ['Source', 'Vendors', vendorCat ?? 'Unresolved', vendorName, activeTab];
   } else if (kind === 'contract' && contract) {
     title = contract.row.vendor_name + ' · ' + contract.row.contract_name;
@@ -223,7 +226,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   } else if (kind === 'vendor') {
     const vRen = vendorContracts.filter((c) => c.expiringWithin180);
     valueStrip = [
-      vsItem('Annual contract value', money(vendorAnnualValue), (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts'),
+      vsItem('Annual contract value', money(vendorAnnualValue), vendorMaterialContractCount + ' material contract' + (vendorMaterialContractCount === 1 ? '' : 's') + ' shown'),
       vsItem('Total committed value', money(vendorPortfolioRow?.total_committed_value ?? null), 'Across remaining terms'),
       vsItem('Auto-renewing contracts', String(vendorPortfolioRow?.auto_renew_contracts ?? vendorContracts.filter((c) => c.row.auto_renew).length), 'source.vendor_contract_portfolio'),
       vsItem('Renewal exposure', vRen.length ? money(vRen.reduce(addRowAnnualValue, 0)) : null, vRen.length ? vRen.length + ' contracts inside 180 days' : 'No decision inside 180 days', vRen.length ? COL.red : undefined),
@@ -437,7 +440,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const vendorStats = [
     { label: 'Portfolio rank', value: (conc.byVendor.findIndex((r) => r.vendorRef === vendorRef) + 1 || '—') + ' of ' + conc.byVendor.length },
     { label: 'Share of annual contract value', value: vendorConcentration ? pct(vendorConcentration.shareOfTotal) : '—' },
-    { label: 'Governed contracts', value: String(vendorPortfolioRow?.contract_count ?? vendorContracts.length) },
+    { label: 'Material contracts shown', value: String(vendorMaterialContractCount) },
+    ...(vendorRollupDiffers ? [{ label: 'Rollup contract families', value: String(vendorRollupContractCount) }] : []),
     { label: 'Auto-renewing', value: String(vendorPortfolioRow?.auto_renew_contracts ?? vendorContracts.filter((c) => c.row.auto_renew).length) },
     { label: 'Next contract end date', value: vendorPortfolioRow?.next_end_date ? fmtDate(vendorPortfolioRow.next_end_date) : 'Not established' },
   ];
@@ -623,8 +627,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const optCtaLabel = optLaunch?.status === 'loading'
     ? 'Starting Door 1...'
     : optLaunch?.status === 'error'
-      ? 'Retry Door 1 workflow'
-      : 'Start / continue Door 1 workflow';
+      ? 'Retry Door 1 optimization'
+      : 'Start / continue Door 1 optimization';
   const optCtaError = optLaunch?.status === 'error'
     ? optLaunch.message ?? 'Could not start optimization workflow.'
     : null;
@@ -781,7 +785,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     collapseAll: () => vm.setState({ open: {} }),
     tree, crumbs, title, thesis, tabs,
     headerActions: kind === 'contract' && contract && activeTab !== 'Optimization' ? [
-      { label: 'Open optimization cockpit', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
+      { label: 'Review Door 1 optimization', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
       { label: 'Select a contract to optimize', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],

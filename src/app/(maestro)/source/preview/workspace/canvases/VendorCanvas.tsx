@@ -27,7 +27,7 @@ export function VendorCanvas({ vm }: { vm: SourceWorkspaceVM }) {
             binding="SourceRenewalExposure"
             columns={vm.listCols}
             rows={vm.vendorContractRows}
-            footnote="Material contracts only. Governed contract count for this vendor may be higher; totals come from the vendor rollup, not this table."
+            footnote="Material contract rows shown. If the vendor rollup groups rows into contract families, that family count is labeled separately."
           />
         </div>
       ) : null}

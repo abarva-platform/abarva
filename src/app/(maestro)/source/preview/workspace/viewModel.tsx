@@ -532,6 +532,8 @@ export class WorkspaceViewModel {
     const categoryInView = S.groupBy === 'category' || Object.prototype.hasOwnProperty.call(slice, 'category');
     const categoryGateState = quality.qualityState === 'available' ? 'available' : categoryInView ? 'blocked' : 'provisional';
     return {
+      intentTitle: 'Find the contracts worth a leadership conversation.',
+      intentBody: 'Start with vendor concentration, then narrow by renewal urgency, benchmark rights, supplier alternatives, or weak leverage. The chart shows the current cut; use Compare all only when you want peers shown beside the selected cut.',
       dimLabel: dim.label, contractCount: selRows.length, totalVal: money(total),
       groupCount: groups.filter((g) => g.live).length, excludedCount: groups.filter((g) => !g.live).length,
       chartSubtitle: S.compareExcluded
@@ -562,6 +564,7 @@ export class WorkspaceViewModel {
         authorityGate: quality.authorityGate,
         ruleVersion: quality.ruleVersion,
         categoryInView,
+        showBanner: categoryInView && quality.qualityState !== 'available',
       },
       groups: groups.map((g) => ({
         key: g.key, label: g.key, value: money(g.val),
@@ -584,9 +587,11 @@ export class WorkspaceViewModel {
         label: dd.label, onClick: () => this.setState({ groupBy: dd.id, tip: null }),
         bg: dd.id === S.groupBy ? '#0a0a0b' : '#fff', fg: dd.id === S.groupBy ? '#fff' : '#5f5e5a', border: dd.id === S.groupBy ? '#0a0a0b' : 'rgba(10,10,11,.16)',
       })),
-      boxes: ['category', 'urgency', 'benchmark', 'alternatives'].map((id) => this.listbox(allRows, id)),
+      boxes: ['urgency', 'benchmark', 'alternatives', 'autoRenew', 'weak'].map((id) => this.listbox(allRows, id)),
       chips: Object.keys(slice).reduce<{ label: string; onClick: () => void }[]>((acc, dd) => acc.concat(slice[dd].map((v) => ({ label: this.dimById(dd).label + ' = ' + v, onClick: () => this.toggleValue(dd, v) }))), []),
       hasFilters: Object.keys(slice).length > 0, noFilters: Object.keys(slice).length === 0,
+      emptySelectionCopy: 'Whole portfolio. Pick a vendor, urgency, benchmark clause, or alternatives state to narrow the decision cut.',
+      chartInstruction: 'Click a row to narrow. Click the selected chip to clear.',
       clearAll: () => this.setState({ slice: {}, compareExcluded: false, tip: null }),
       query: 'query = {\n  view:       "source.contract_360",\n  provider:   "' + this.portfolio.workspaceDiagnostics.exploreProvider + '",\n  measure:    "annual_value",\n  dimension:  "' + S.groupBy + '",\n  category_dimension: "effective_category",\n  as_of_date: "' + this.portfolio.asOfDateIso.slice(0, 10) + '",\n  tenant_key: "' + this.portfolio.tenantKey + '"\n}',
     };
