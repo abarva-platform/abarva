@@ -15,10 +15,11 @@ const REQUIRED_FIELD_IDS: IntakeFieldId[] = [
   'baselineOwner',
 ];
 
-// The six mid-stream entry buttons on the Decision Queue link to
+// The mid-stream entry buttons on Source surfaces link to
 // `/source/new?intent=<id>`. These are the contract.
 const QUEUE_ENTRY_INTENTS: SourceIntakeIntent[] = [
   'vendor',
+  'contract-optimization',
   'renewal',
   'rfp-response',
   'business-request',
@@ -55,7 +56,7 @@ describe('parseSourceIntakeIntent', () => {
 });
 
 describe('SOURCE_INTAKE_INTENTS', () => {
-  it('exposes exactly the six Decision Queue entry intents', () => {
+  it('exposes exactly the supported Source entry intents', () => {
     expect([...SOURCE_INTAKE_INTENTS].sort()).toEqual([...QUEUE_ENTRY_INTENTS].sort());
   });
 });
@@ -106,6 +107,14 @@ describe('getSourceIntakeShape', () => {
     const shape = getSourceIntakeShape('renewal')!;
     expect(shape.routingHint.label).toMatch(/renewal cockpit/i);
     expect(shape.fields[0].label).toMatch(/contract/i);
+  });
+
+  it('routes contract optimization toward Door 1 Diagnose to Recover', () => {
+    const shape = getSourceIntakeShape('contract-optimization')!;
+    expect(shape.eyebrow).toMatch(/door 1/i);
+    expect(shape.heading).toMatch(/optimize an existing contract/i);
+    expect(shape.routingHint.label).toMatch(/diagnose/i);
+    expect(shape.subhead).not.toMatch(/\bRFP\b.*default/i);
   });
 
   it('routes rfp-response toward proposal normalization', () => {

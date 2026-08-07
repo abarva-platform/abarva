@@ -39,6 +39,7 @@ export interface SourceEventDbRow {
   event_code: string;
   event_name: string;
   event_type: string;
+  sourcing_motion?: 'competitive_rfp' | 'contract_optimization' | null;
   current_stage_key: string;
   lifecycle_state: string;
   linked_program_id: string | null;
@@ -81,7 +82,7 @@ export interface SourceEventsReadAdapter {
 
 /** The `source_events` column projection — `SELECT *` lifted explicit. */
 const SOURCE_EVENT_COLUMNS =
-  'id, client_key, event_code, event_name, event_type, current_stage_key, '
+  'id, client_key, event_code, event_name, event_type, sourcing_motion, current_stage_key, '
   + 'lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, '
   + 'scope_description, decision_owner, created_by_user_id, created_at, updated_at';
 

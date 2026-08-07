@@ -4,6 +4,7 @@ import {
   coerceStageToSourceJourney,
   getSourceJourneyForEvent,
   nextSourceStageForJourney,
+  resolveSourceSourcingMotion,
   sourceJourneyLabelForStage,
   sourceJourneyStageKeys,
 } from "../sourcing-motion-journeys";
@@ -64,6 +65,24 @@ describe("Source sourcing motion journeys", () => {
     expect(sourceJourneyLabelForStage(journey, "bafo")).toBe(
       "Negotiation Plan",
     );
+  });
+
+  it("prefers explicit stored sourcing motion over category and text inference", () => {
+    expect(
+      resolveSourceSourcingMotion({
+        sourcingMotion: "contract_optimization",
+        eventName: "Application Managed Services Outsourcing RFP",
+        classifiedCategory: "ams",
+      }),
+    ).toBe("contract_optimization");
+
+    expect(
+      resolveSourceSourcingMotion({
+        sourcingMotion: "competitive_rfp",
+        eventName: "Contract renewal renegotiation",
+        classifiedCategory: "saas_renewal",
+      }),
+    ).toBe("competitive_rfp");
   });
 
   it("recognizes commercial renegotiation wording from event titles", () => {

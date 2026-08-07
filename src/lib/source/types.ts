@@ -261,6 +261,12 @@ export interface SourcingEventSummary {
   projectedValueUsd: number;
   realizedValueUsd: number;
   nextDecision: string;
+  /**
+   * Explicit creation-time workflow motion. When present it decides whether
+   * Source renders the 7-stage contract optimization path or the 11-stage
+   * competitive sourcing path.
+   */
+  sourcingMotion?: 'competitive_rfp' | 'contract_optimization' | null;
   /** Deterministic categoryId from classifySourcingEvent stored at intake (Slice 1.1). Null for events pre-dating this slice. */
   classifiedCategory?: string | null;
 }

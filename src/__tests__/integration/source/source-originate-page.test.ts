@@ -15,6 +15,7 @@ import {
 } from "@/components/source/SourceOriginatePage";
 
 const mockRouterPush = jest.fn();
+let mockSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/source/new",
@@ -24,7 +25,7 @@ jest.mock("next/navigation", () => ({
     refresh: jest.fn(),
     prefetch: jest.fn(),
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams,
 }));
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -104,6 +105,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
     window.localStorage.clear();
     (global.fetch as jest.Mock | undefined)?.mockReset?.();
   });
@@ -219,6 +221,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
 
   it("wires intake submission to persisted Source event creation", () => {
     expect(source).toContain("/api/v1/source/events");
+    expect(source).toContain("sourcingMotion");
     expect(source).toContain("/approval");
     expect(source).not.toContain("Opening event canvas");
     expect(html).not.toContain("Open event for approval");
@@ -339,6 +342,77 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(payload.creationRequestId).toEqual(expect.any(String));
     expect(payload.creationRequestId).not.toHaveLength(0);
     expect(payload.eventName).not.toContain(payload.creationRequestId ?? "");
+  });
+
+  it("creates Door 1 events with explicit contract-optimization motion and diagnoses after creation", async () => {
+    mockSearchParams = new URLSearchParams({
+      intent: "contract-optimization",
+      contractId: "CTR-090",
+      contractName: "Crestline AMS Master Services Agreement",
+      vendorName: "Crestline",
+    });
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          event: { id: "event-door1" },
+          eventUrl: "/source/events/event-door1?stage=Strategy",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true }),
+      });
+    global.fetch = fetchMock;
+
+    render(
+      createElement(SourceOriginatePage, {
+        clientName: "SkyHarbor Global",
+        clientShortName: "SkyHarbor",
+        clientKey: "skyharbor_global",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue(
+          "Optimize Crestline AMS Master Services Agreement with Crestline. Contract ref: CTR-090.",
+        ),
+      ).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText(/Negotiation decision owner/i), {
+      target: { value: "CIO and procurement sponsor" },
+    });
+    fireEvent.change(screen.getByLabelText(/Recovery hypothesis/i), {
+      target: { value: "$3M-$4M recoverable range to test" },
+    });
+    fireEvent.click(screen.getByTestId("source-intake-open-event"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const createRequest = fetchMock.mock.calls[0]?.[1] as { body?: string };
+    const payload = JSON.parse(createRequest.body ?? "{}") as {
+      sourcingMotion?: string;
+      triggerDescription?: string;
+      scopeDescription?: string;
+      baselineOwnerDescription?: string;
+    };
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/source/events");
+    expect(payload.sourcingMotion).toBe("contract_optimization");
+    expect(payload.triggerDescription).toContain("CTR-090");
+    expect(payload.scopeDescription).toContain(
+      "Crestline AMS Master Services Agreement",
+    );
+    expect(payload.baselineOwnerDescription).toMatch(/Vendor management owns/i);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "/api/v1/source/event-door1/door1/diagnose",
+    );
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: "POST" });
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/source/events/event-door1/approval",
+    );
   });
 
   it("names integration-fabric events as a clean commercial-control event instead of echoing the scope clause", () => {

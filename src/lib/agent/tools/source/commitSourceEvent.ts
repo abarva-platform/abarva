@@ -18,6 +18,7 @@ import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { createSourcingEvent } from '@/lib/source/queries';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import type { SourceSourcingMotion } from '@/lib/source/sourcing-motion-journeys';
 
 interface CommitSourceEventInput {
   event_name: string;
@@ -27,6 +28,7 @@ interface CommitSourceEventInput {
   scope_description?: string;
   linked_program_id?: string;
   estimated_value_usd?: number;
+  sourcing_motion?: SourceSourcingMotion;
 }
 
 export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
@@ -70,6 +72,12 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
         type: 'number',
         description: 'Estimated total contract value in USD (e.g. 2400000 for $2.4M).',
       },
+      sourcing_motion: {
+        type: 'string',
+        enum: ['competitive_rfp', 'contract_optimization'],
+        description:
+          'Explicit sourcing motion. Use contract_optimization only when the user is optimizing or renegotiating an existing contract without starting an RFP.',
+      },
     },
     required: ['event_name', 'event_type', 'trigger_description'],
   },
@@ -99,6 +107,7 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
         linkedProgramId: input.linked_program_id?.trim(),
         estimatedValueUsd: input.estimated_value_usd,
         createdByUserId: ctx.userId,
+        sourcingMotion: input.sourcing_motion,
       });
 
       if (ctx.userId) {

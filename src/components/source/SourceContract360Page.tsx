@@ -76,6 +76,11 @@ export function SourceContract360Page({
 }
 
 function Header({ contract }: { contract: Contract360View["contract"] }) {
+  const optimizeHref =
+    `/source/new?intent=contract-optimization` +
+    `&contractId=${encodeURIComponent(contract.contract_id)}` +
+    `&contractName=${encodeURIComponent(contract.contract_name)}` +
+    `&vendorName=${encodeURIComponent(contract.vendor_name)}`;
   return (
     <header style={HEADER_STYLE}>
       <div style={{ minWidth: 0, display: "grid", gap: 6 }}>
@@ -89,6 +94,13 @@ function Header({ contract }: { contract: Contract360View["contract"] }) {
           <p style={SUBLINE_STYLE}>{contract.scope_summary}</p>
         ) : null}
       </div>
+      <Link
+        href={optimizeHref}
+        style={PRIMARY_ACTION_STYLE}
+        data-testid="contract-360-optimize"
+      >
+        Optimize this contract
+      </Link>
     </header>
   );
 }
@@ -692,6 +704,23 @@ const SUBLINE_STYLE: CSSProperties = {
   lineHeight: 1.5,
   color: ANALYTICS.MUTED,
   maxWidth: 780,
+};
+
+const PRIMARY_ACTION_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 42,
+  padding: "0 16px",
+  borderRadius: 8,
+  background: ANALYTICS.INK,
+  border: `1px solid ${ANALYTICS.INK}`,
+  color: "#fff",
+  fontFamily: ANALYTICS.SANS,
+  fontSize: 13,
+  fontWeight: 800,
+  textDecoration: "none",
+  whiteSpace: "nowrap",
 };
 
 const TWO_COL_STYLE: CSSProperties = {

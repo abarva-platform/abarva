@@ -47,6 +47,7 @@ function setupMockSupabase(insertedEvent: {
           event_code: insertedEvent.event_code,
           event_name: "Test Event",
           event_type: "managed_service",
+          sourcing_motion: null,
           current_stage_key: "strategy",
           lifecycle_state: "waiting_on_client",
           linked_program_id: null,
@@ -156,6 +157,26 @@ describe("createSourcingEvent scaffolding", () => {
     expect(insertedRow.current_stage_key).toBe("strategy");
   });
 
+  it("persists explicit sourcing motion for Door 1-created events", async () => {
+    const calls = setupMockSupabase({
+      id: "evt-door1",
+      client_key: "skyharbor_global",
+      event_code: "SKYH-CONTRACT-OPTIMIZATION-2026",
+    });
+
+    await createSourcingEvent({
+      clientKey: "skyharbor_global",
+      eventName: "SkyHarbor Contract Optimization Event",
+      eventType: "managed_service",
+      triggerDescription: "Optimize selected Contract 360 agreement.",
+      sourcingMotion: "contract_optimization",
+    });
+
+    const eventInsert = calls.find((c) => c.table === "source_events")!;
+    const insertedRow = eventInsert.rows as Record<string, unknown>;
+    expect(insertedRow.sourcing_motion).toBe("contract_optimization");
+  });
+
   it("does not duplicate the client name in generated event codes", async () => {
     const calls = setupMockSupabase({
       id: "evt-new-4",
@@ -232,6 +253,7 @@ describe("createSourcingEvent scaffolding", () => {
         event_code: "APEX-3",
         event_name: "X",
         event_type: "managed_service",
+        sourcing_motion: null,
         current_stage_key: "strategy",
         lifecycle_state: "waiting_on_client",
         linked_program_id: null,
