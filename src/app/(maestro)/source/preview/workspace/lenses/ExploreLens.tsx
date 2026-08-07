@@ -61,8 +61,8 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(380px,1fr))', gap: 16, alignItems: 'stretch', height: 'calc(100dvh - 386px)', minHeight: 420 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignContent: 'flex-start', gap: 12, overflowY: 'auto', minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(380px,1fr))', gridTemplateRows: 'minmax(0,1fr)', gap: 16, height: 'calc(100dvh - 386px)', minHeight: 420, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignContent: 'flex-start', gap: 12, overflowY: 'auto', height: '100%', minHeight: 0 }}>
           {ex.boxes.map((b) => (
             <div key={b.id} style={{ flex: '1 1 210px', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 13px 9px', borderBottom: '1px solid rgba(10,10,11,.09)', background: '#fbfaf7' }}>
