@@ -15,7 +15,7 @@ This release hardens Source event origination so a completed intake either opens
 ## Layer Impact
 
 - `global-control-lane`: Source intake UI behavior is hardened for event creation and approval navigation across the shared product surface.
-- Products: Source onboarding tour state is moved to a client-side effect to avoid first-render mismatch.
+- Products: Source onboarding tour and chat-dock persisted mode state are moved to client-side effects to avoid first-render mismatch.
 
 ## Client Applicability
 
@@ -29,6 +29,8 @@ This release hardens Source event origination so a completed intake either opens
 
 - `src/components/source/SourceOriginatePage.tsx`
 - `src/components/source/onboarding/SourceOnboardingTour.tsx`
+- `src/components/agent/AgentDock.tsx`
+- `src/components/agent/__tests__/AgentDock.test.tsx`
 - `src/__tests__/integration/source/source-originate-page.test.ts`
 
 ## QA / Validation

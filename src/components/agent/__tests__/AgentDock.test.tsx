@@ -344,7 +344,7 @@ describe("AgentDock · default mode", () => {
     expect(screen.getByTestId("agent-dock-input")).toHaveValue("");
   });
 
-  it("reads a stored mode preference", () => {
+  it("hydrates a stored mode preference after the stable first render", async () => {
     window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
     render(
       <AgentDock
@@ -355,7 +355,9 @@ describe("AgentDock · default mode", () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument(),
+    );
   });
 
   it("marks agent turns as AI drafts while leaving user turns unmarked", () => {
