@@ -130,6 +130,16 @@ describe('buildContractOptimizationSpine', () => {
     expect(ledger.decisionRecord.recoverable_leakage).toBeNull();
     expect(ledger.decisionRecord.realized_value).toBeNull();
     expect(spine.missingEvidenceStory.join(' ')).toMatch(/SLA credit register/i);
+    expect(spine.missingEvidenceSources.map((requirement) => requirement.lineLabel)).toEqual(
+      expect.arrayContaining([
+        'SLA credits earned but not claimed',
+        'Invoice, duplicate, off-contract, and rate-card variance',
+        'Finance-confirmed realized value',
+      ]),
+    );
+    expect(spine.missingEvidenceSources.flatMap((requirement) => requirement.connections.map((connection) => connection.id))).toEqual(
+      expect.arrayContaining(['itsm', 'ap_erp', 'finance_tower']),
+    );
     expect(spine.selected?.reasons).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -156,6 +166,29 @@ describe('buildContractOptimizationSpine', () => {
     expect(JSON.stringify(spine.sourceConnections)).not.toMatch(/tenant-b/i);
     expect(spine.sourceConnections.flatMap((connection) => connection.evidenceClasses)).toEqual(
       expect.arrayContaining(['invoice', 'rate_card', 'sla', 'service_credit', 'usage', 'finance_value_confirmation']),
+    );
+  });
+
+  it('does not source evidence lines that are already document evidenced or inferred', () => {
+    const contract = row({ annual_value: 43_500_000, actual_annual_spend: 37_400_000 });
+    const ledger = buildContractOptimizationLedger({
+      view: null,
+      contract,
+      leverage: leverage({ annualValue: 43_500_000 }),
+    });
+    const spine = buildContractOptimizationSpine({
+      contract,
+      contracts: [contract],
+      leverageEntries: [leverage({ annualValue: 43_500_000 })],
+      ledger,
+      asOfDateIso,
+    });
+
+    expect(spine.missingEvidenceSources.map((requirement) => requirement.lineLabel)).not.toContain(
+      'Price, term, index cap, volume tier, and termination leverage',
+    );
+    expect(spine.missingEvidenceSources.map((requirement) => requirement.lineLabel)).not.toContain(
+      'Renewal uplift avoided / shelfware removed / scope rationalized',
     );
   });
 });

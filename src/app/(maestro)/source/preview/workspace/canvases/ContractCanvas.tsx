@@ -19,7 +19,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
             </div>
           ) : null}
-          <OptimizationFitPanel vm={vm} />
+          <ContractActionStoryPanel vm={vm} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'start' }}>
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
@@ -297,33 +297,53 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
   );
 }
 
-function OptimizationFitPanel({ vm }: { vm: SourceWorkspaceVM }) {
+function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   if (!spine?.selected) return null;
+  const c = vm.c;
+  const missingSources = spine.missingEvidenceSources ?? [];
+  const evidenceReady = vm.optLedger
+    ? `${vm.optLedger.evidenceReady} ready · ${vm.optLedger.evidenceGaps} gap${vm.optLedger.evidenceGaps === '1' ? '' : 's'}`
+    : 'Not established';
+  const missingLines = vm.optLedger?.lines.filter((line) => line.evidenceClass === 'MISSING') ?? [];
   return (
     <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
-      <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(320px,100%),1fr))', gap: 20, alignItems: 'start' }}>
+      <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(360px,100%),1fr))', gap: 20, alignItems: 'start' }}>
         <div>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
-            Why this contract
+            Contract optimization story
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 9, marginBottom: 10 }}>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 800, color: '#0a0a0b' }}>{spine.selected.rank}</span>
             <span style={{ fontSize: 15, fontWeight: 800, color: '#0a0a0b' }}>{spine.selected.band}</span>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#5f5e5a', border: '1px solid rgba(10,10,11,.14)', borderRadius: 999, padding: '4px 8px' }}>fit {spine.selected.score}/100</span>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#5f5e5a' }}>{spine.selected.annualValue} annual</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#5f5e5a' }}>{evidenceReady}</span>
           </div>
-          <div style={{ fontSize: 13, lineHeight: 1.55, color: '#2c2c2a', marginBottom: 12 }}>{spine.selected.action}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 8 }}>
-            {spine.selected.reasons.slice(0, 4).map((reason) => (
-              <div key={reason.kind} style={{ border: '1px solid rgba(10,10,11,.1)', borderLeft: `3px solid ${reason.tone}`, borderRadius: 6, padding: '10px 12px', background: '#fbfaf7' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.25 }}>{reason.label}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: reason.tone }}>{reason.points} pts</span>
-                </div>
-                <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45 }}>{reason.detail}</div>
-              </div>
-            ))}
+          <div style={{ fontSize: 13, lineHeight: 1.55, color: '#2c2c2a', marginBottom: 12 }}>
+            {spine.selected.action} Missing evidence stays explicit; no recoverable leakage or realized value is invented.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(230px,100%),1fr))', gap: 8 }}>
+            <StoryTile
+              index="01"
+              title="Why this contract"
+              body={spine.selected.reasons[0]?.detail ?? `${spine.selected.annualValue} annual exposure and a governed fit score of ${spine.selected.score}/100.`}
+            />
+            <StoryTile
+              index="02"
+              title="Why now"
+              body={c ? `Notice: ${c.notice}. Expiry: ${c.expiry}. Auto-renew: ${c.auto}. Owner: ${c.role}.` : 'Notice and owner are not established.'}
+            />
+            <StoryTile
+              index="03"
+              title="What supports it"
+              body={spine.selected.reasons.slice(1, 3).map((reason) => reason.label).join(' · ') || 'Evidence support is not established yet.'}
+            />
+            <StoryTile
+              index="04"
+              title="What is missing"
+              body={missingLines.length ? `${missingLines.length} missing line${missingLines.length === 1 ? '' : 's'}: ${missingLines.map((line) => line.label).join('; ')}.` : 'No missing evidence lines remain for this contract.'}
+            />
           </div>
         </div>
         <div>
@@ -345,15 +365,46 @@ function OptimizationFitPanel({ vm }: { vm: SourceWorkspaceVM }) {
               </button>
             ))}
           </div>
+          <div style={{ marginTop: 12, border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: '#fbfaf7' }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
+              05 · How to source the gaps
+            </div>
+            {missingSources.length ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {missingSources.slice(0, 4).map((requirement) => (
+                  <div key={requirement.lineId} style={{ borderLeft: '2px solid rgba(10,10,11,.16)', paddingLeft: 10 }}>
+                    <div style={{ fontSize: 12.2, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.35 }}>{requirement.lineLabel}</div>
+                    <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45, marginTop: 3 }}>{requirement.connections.map((connection) => connection.sourceSystem).join(' + ')}</div>
+                    <div style={{ fontSize: 11.5, color: '#2c2c2a', lineHeight: 1.45, marginTop: 3 }}>{requirement.ask}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.5 }}>No missing evidence sources are required for the current ledger state.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+function StoryTile({ index, title, body }: { index: string; title: string; body: string }) {
+  return (
+    <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '10px 12px', background: '#fbfaf7' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 5 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, color: '#0066CC' }}>{index}</span>
+        <span style={{ fontSize: 12.5, fontWeight: 800, color: '#0a0a0b' }}>{title}</span>
+      </div>
+      <div style={{ fontSize: 11.7, color: '#5f5e5a', lineHeight: 1.45 }}>{body}</div>
+    </div>
+  );
+}
+
 function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
-  if (!spine?.sourceConnections.length) return null;
+  if (!spine) return null;
+  const requirements = spine.missingEvidenceSources ?? [];
   return (
     <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 22px' }}>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
@@ -362,30 +413,36 @@ function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
             How the evidence is sourced
           </div>
           <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5, maxWidth: 760 }}>
-            The workflow starts with controlled extracts, not custom integrations. Each source maps into shared evidence classes so Vendor 360, Door 1, Tower and aVa read the same product contract.
+            This contract only shows the feeds required for unresolved ledger lines. The full system catalogue stays behind the scenes; the user sees the extracts needed to move the decision.
           </div>
         </div>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}>
-          Six feeds to start · APIs later where repeatable
+          {requirements.length ? `${requirements.length} gap${requirements.length === 1 ? '' : 's'} to source` : 'No missing evidence gaps'}
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(310px,100%),1fr))', gap: 10 }}>
-        {spine.sourceConnections.map((connection) => (
-          <div key={connection.id} style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: '#fbfaf7' }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 5 }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#0a0a0b' }}>{connection.sourceSystem}</span>
+      {requirements.length ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(340px,100%),1fr))', gap: 10 }}>
+          {requirements.map((requirement) => (
+            <div key={requirement.lineId} style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: '#fbfaf7' }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0a0a0b', marginBottom: 5 }}>{requirement.lineLabel}</div>
+              <div style={{ fontSize: 12, color: '#2c2c2a', lineHeight: 1.45, marginBottom: 8 }}>{requirement.ask}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {requirement.connections.map((connection) => (
+                  <div key={connection.id} style={{ borderLeft: '2px solid rgba(10,10,11,.14)', paddingLeft: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#0a0a0b' }}>{connection.sourceSystem}</div>
+                    <div style={{ fontSize: 11.2, color: '#888780', lineHeight: 1.4 }}>{connection.examples}</div>
+                    <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45 }}>{connection.extract}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ fontSize: 11.5, color: '#888780', lineHeight: 1.4, marginBottom: 8 }}>{connection.examples}</div>
-            <div style={{ fontSize: 12, color: '#2c2c2a', lineHeight: 1.45, marginBottom: 8 }}>{connection.extract}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
-              {connection.ledgers.map((ledger) => (
-                <span key={ledger} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#0a0a0b', background: '#fff', border: '1px solid rgba(10,10,11,.1)', borderRadius: 999, padding: '3px 7px' }}>{ledger}</span>
-              ))}
-            </div>
-            <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45 }}>{connection.outcome}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '14px 16px', background: '#fbfaf7', fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
+          No missing evidence lines remain. Door 1 can proceed using the currently governed ledger, subject to human approval.
+        </div>
+      )}
     </div>
   );
 }

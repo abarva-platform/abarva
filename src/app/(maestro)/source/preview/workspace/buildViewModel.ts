@@ -594,6 +594,20 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       fields: connection.fields,
       outcome: connection.outcome,
     })),
+    missingEvidenceSources: optSpine.missingEvidenceSources.map((requirement) => ({
+      lineId: requirement.lineId,
+      lineLabel: requirement.lineLabel,
+      nextAction: requirement.nextAction,
+      ask: requirement.ask,
+      connections: requirement.connections.map((connection) => ({
+        id: connection.id,
+        sourceSystem: connection.sourceSystem,
+        examples: connection.examples.join(' · '),
+        extract: connection.extract,
+        fields: connection.fields.slice(0, 6),
+        outcome: connection.outcome,
+      })),
+    })),
     story: optSpine.contractStory,
     missingEvidenceStory: optSpine.missingEvidenceStory,
   } : null;
