@@ -19,6 +19,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
             </div>
           ) : null}
+          <OptimizationFitPanel vm={vm} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'start' }}>
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
@@ -254,6 +255,8 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
 
           <EvidenceLineageGraph vm={vm} />
 
+          <SourceSystemEvidenceMap vm={vm} />
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
             {vm.optLevers.map((l, i) => (
               <div key={i} style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 20px' }}>
@@ -291,6 +294,99 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
         </>
       ) : null}
     </>
+  );
+}
+
+function OptimizationFitPanel({ vm }: { vm: SourceWorkspaceVM }) {
+  const spine = vm.optSpine;
+  if (!spine?.selected) return null;
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(320px,100%),1fr))', gap: 20, alignItems: 'start' }}>
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
+            Why this contract
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 800, color: '#0a0a0b' }}>{spine.selected.rank}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#0a0a0b' }}>{spine.selected.band}</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#5f5e5a', border: '1px solid rgba(10,10,11,.14)', borderRadius: 999, padding: '4px 8px' }}>fit {spine.selected.score}/100</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#5f5e5a' }}>{spine.selected.annualValue} annual</span>
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.55, color: '#2c2c2a', marginBottom: 12 }}>{spine.selected.action}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 8 }}>
+            {spine.selected.reasons.slice(0, 4).map((reason) => (
+              <div key={reason.kind} style={{ border: '1px solid rgba(10,10,11,.1)', borderLeft: `3px solid ${reason.tone}`, borderRadius: 6, padding: '10px 12px', background: '#fbfaf7' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.25 }}>{reason.label}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: reason.tone }}>{reason.points} pts</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45 }}>{reason.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 8 }}>
+            Top optimization queue
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {spine.topCandidates.map((candidate) => (
+              <button key={candidate.rank + candidate.label} onClick={candidate.onClick} style={{ width: '100%', border: `1px solid ${candidate.selected ? '#0a0a0b' : 'rgba(10,10,11,.1)'}`, background: candidate.selected ? '#0a0a0b' : '#fff', color: candidate.selected ? '#fff' : '#0a0a0b', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 800 }}>{candidate.rank}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{candidate.label}</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{candidate.value}</span>
+                </div>
+                <div style={{ marginTop: 3, display: 'flex', gap: 8, alignItems: 'baseline', color: candidate.selected ? 'rgba(255,255,255,.72)' : '#888780' }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9 }}>fit {candidate.score}/100</span>
+                  <span style={{ fontSize: 11 }}>{candidate.band}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
+  const spine = vm.optSpine;
+  if (!spine?.sourceConnections.length) return null;
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 22px' }}>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
+        <div style={{ flex: '1 1 420px' }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 6 }}>
+            How the evidence is sourced
+          </div>
+          <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5, maxWidth: 760 }}>
+            The workflow starts with controlled extracts, not custom integrations. Each source maps into shared evidence classes so Vendor 360, Door 1, Tower and aVa read the same product contract.
+          </div>
+        </div>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}>
+          Six feeds to start · APIs later where repeatable
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(310px,100%),1fr))', gap: 10 }}>
+        {spine.sourceConnections.map((connection) => (
+          <div key={connection.id} style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: '#fbfaf7' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 5 }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#0a0a0b' }}>{connection.sourceSystem}</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: '#888780', lineHeight: 1.4, marginBottom: 8 }}>{connection.examples}</div>
+            <div style={{ fontSize: 12, color: '#2c2c2a', lineHeight: 1.45, marginBottom: 8 }}>{connection.extract}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
+              {connection.ledgers.map((ledger) => (
+                <span key={ledger} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#0a0a0b', background: '#fff', border: '1px solid rgba(10,10,11,.1)', borderRadius: 999, padding: '3px 7px' }}>{ledger}</span>
+              ))}
+            </div>
+            <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45 }}>{connection.outcome}</div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
