@@ -143,6 +143,7 @@ describe('buildContractOptimizationLedger', () => {
     const ledger = buildContractOptimizationLedger({ view, leverage });
 
     expect(ledger.quantifiedLeakageUsd).toBe(340_000);
+    expect(ledger.evidenceGapCount).toBe(2);
     expect(ledger.lines.find((line) => line.id === 'recoverable:sla-credit-gap')).toMatchObject({
       amountUsd: 340_000,
       state: 'quantified',
@@ -196,6 +197,31 @@ describe('buildContractOptimizationLedger', () => {
     expect(
       ledger.lines.find((line) => line.id === 'recoverable:sla-credit-gap')?.lineageFields,
     ).toEqual(expect.arrayContaining(['source_system', 'source_record_id', 'extract_timestamp', 'calculation_rule', 'review_state']));
+  });
+
+  it('counts every missing evidence class as a gap even when the workflow state is not_established', () => {
+    const view = buildContract360View({
+      contract: contract({ contract_id: 'CTR-090', annual_value: 43_500_000, actual_annual_spend: 37_400_000 }),
+      applicationScope: [],
+      financialExposure: [financialExposure({ contract_id: 'CTR-090', contracted_annual_value: 43_500_000, actual_annual_spend: 37_400_000 })],
+      operationalPerformance: [operationalPerformance({ contract_id: 'CTR-090', service_credits_earned: null, service_credits_claimed: null })],
+      initiativeDependencies: [],
+      towerObservations: [],
+      towerValueClaims: [],
+    });
+
+    const ledger = buildContractOptimizationLedger({ view, leverage });
+
+    expect(ledger.lines.filter((line) => line.evidenceClass === 'missing').map((line) => line.id)).toEqual([
+      'recoverable:sla-credit-gap',
+      'recoverable:invoice-rate-card',
+      'realized:tower-finance-proof',
+    ]);
+    expect(ledger.lines.find((line) => line.id === 'realized:tower-finance-proof')).toMatchObject({
+      state: 'not_established',
+      evidenceClass: 'missing',
+    });
+    expect(ledger.evidenceGapCount).toBe(3);
   });
 
   it('does not turn annual-to-actual variance into avoided cost without classification evidence', () => {
