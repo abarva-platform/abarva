@@ -453,6 +453,7 @@ export async function getContractOptimizationEvidencePack(
         `SELECT
             count(*) AS row_count,
             COALESCE(SUM(CASE WHEN approval_state = 'variance_unapproved' THEN 1 ELSE 0 END), 0) AS unapproved_variance_count,
+            COALESCE(SUM(CASE WHEN approval_state = 'variance_unapproved' THEN variance::numeric ELSE 0 END), 0) AS rate_variance_amount,
             COALESCE(SUM(hours::numeric), 0) AS hours
            FROM raw_source_v4.fieldglass_rate_card
           WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
@@ -514,8 +515,10 @@ export async function getContractOptimizationEvidencePack(
 
   const invoiceVariance =
     (numberFromDb(spend?.off_contract_spend) ?? 0) +
-    (numberFromDb(spend?.duplicate_spend) ?? 0);
-  const unapprovedRateVarianceCount = numberFromDb(rate?.unapproved_variance_count) ?? 0;
+    (numberFromDb(spend?.duplicate_spend) ?? 0) +
+    (numberFromDb(rate?.rate_variance_amount) ?? 0);
+  const unapprovedRateVarianceCount =
+    numberFromDb(rate?.unapproved_variance_count) ?? 0;
   if (invoiceVariance > 0 || unapprovedRateVarianceCount > 0) {
     items.push({
       ledger_item_id: "recoverable:invoice-rate-card",
@@ -529,11 +532,14 @@ export async function getContractOptimizationEvidencePack(
         "raw_source_v4.fieldglass_rate_card",
       ],
       source_systems: ["ERP / AP", "Fieldglass"],
-      source_record_ids: [`contract:${contractId}:invoice-matching`, `contract:${contractId}:rate-card`],
+      source_record_ids: [
+        `contract:${contractId}:invoice-matching`,
+        `contract:${contractId}:rate-card`,
+      ],
       document_refs: [],
       page_spans: [],
       calculation_rule:
-        "SUM(off-contract spend + duplicate spend) by contract; rate-card variance count is separately evidenced.",
+        "SUM(off-contract spend + duplicate spend + unapproved rate-card variance) by contract.",
       confidence: invoiceVariance > 0 ? 0.78 : 0.45,
       review_state: invoiceVariance > 0 ? "system_extracted" : "needs_review",
       decision_state: invoiceVariance > 0 ? "candidate" : "workflow_required",
@@ -566,12 +572,11 @@ export async function getContractOptimizationEvidencePack(
     });
   }
 
-  const negotiatedDelta =
-    Math.max(
-      0,
-      (numberFromDb(sourcing?.normalized_cost) ?? 0) -
-        (numberFromDb(sourcing?.line_item_cost) ?? 0),
-    );
+  const negotiatedDelta = Math.max(
+    0,
+    (numberFromDb(sourcing?.normalized_cost) ?? 0) -
+      (numberFromDb(sourcing?.line_item_cost) ?? 0),
+  );
   if (negotiatedDelta > 0) {
     items.push({
       ledger_item_id: "negotiated:commercial-levers",

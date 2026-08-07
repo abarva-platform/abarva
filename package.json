@@ -645,6 +645,8 @@
     "source:inspect-skyharbor-reconciliation": "npx tsx scripts/source/inspect-skyharbor-reconciliation.ts",
     "source:door1:smoke": "npx tsx scripts/source/smoke-skyharbor-door1-front-door.ts",
     "source:contract-optimization:evidence-audit": "npx tsx scripts/source/audit-contract-optimization-evidence-readiness.mjs",
+    "source:contract-evidence:golden:plan": "node scripts/source/load-source-golden-contract-evidence.mjs",
+    "source:contract-evidence:golden:apply": "node scripts/source/load-source-golden-contract-evidence.mjs --apply",
     "source:sourcing-context:package": "node scripts/source/build-source-operational-extraction-package.mjs",
     "source:sourcing-context:package:validate": "node scripts/source/validate-source-operational-extraction-package.mjs",
     "source:sourcing-context:verify-live": "node scripts/source/verify-sourcing-context-depth.mjs",
