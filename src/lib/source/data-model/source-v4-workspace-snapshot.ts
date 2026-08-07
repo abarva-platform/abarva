@@ -1,18 +1,13 @@
 import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
 import { numberFromDb } from "./vendor-contract-portfolio";
 import {
   SOURCE_V4_CUBE_AS_OF_DATE,
   SOURCE_V4_CUBE_DATASET_ID,
   type SourceV4UiLensId,
 } from "./source-v4-cube-ui-catalog";
-
-const SKYHARBOR_TENANT_ALIASES: readonly string[] = [
-  "skyharbor",
-  "skyharbor-air",
-  "skyharbor_global",
-];
 
 type SnapshotState = "available" | "missing" | "error";
 
@@ -527,16 +522,11 @@ export async function loadSourceV4WorkspaceSnapshot(
 }
 
 function tenantKeyAliases(tenantKey: string): string[] {
-  const normalized = tenantKey.trim().toLowerCase();
-  if (!SKYHARBOR_TENANT_ALIASES.includes(normalized)) return [normalized];
-  return [...SKYHARBOR_TENANT_ALIASES];
+  return tenantAliasesFor(tenantKey);
 }
 
 function tenantRlsKey(tenantKey: string): string {
-  const normalized = tenantKey.trim().toLowerCase();
-  return SKYHARBOR_TENANT_ALIASES.includes(normalized)
-    ? "skyharbor_global"
-    : normalized;
+  return canonicalTenantKey(tenantKey);
 }
 
 async function queryForTenant<R>(

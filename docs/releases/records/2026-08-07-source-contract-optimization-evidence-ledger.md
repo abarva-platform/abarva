@@ -14,6 +14,8 @@ This release turns the Source contract Optimization tab from static scenario fra
 
 It also adds a Source workspace bridge that starts or continues a Door 1 `contract_optimization` event from a selected contract. New events get the sourcing motion explicitly at creation time and are seeded with only defensible baseline facts already consumed by Door 1.
 
+Follow-up hardening makes the capability tenant-agnostic: SkyHarbor remains the canary dataset, but tenant aliasing comes from the shared tenant resolver, not from Source-specific branches, and the ledger service now emits a shared decision record for Door 1, Tower, aVa, and Vendor/Contract 360.
+
 ## Layer Impact
 
 - `global-control-lane`: updates the shared Source workspace contract Optimization tab and Source workspace view model.
@@ -36,7 +38,10 @@ It also adds a Source workspace bridge that starts or continues a Door 1 `contra
 - `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx` and `viewModel.tsx`: add launch state and the POST action.
 - `src/app/api/source/workspace/contract/[contractId]/optimization/route.ts`: creates or reuses a `contract_optimization` event and persists cited baseline facts.
 - `scripts/source/audit-contract-optimization-evidence-readiness.mjs` and `package.json`: add a read-only evidence-readiness audit for the four ledgers.
-- `scripts/source/audit-contract-optimization-evidence-readiness.mjs`: hardens the audit with the same SkyHarbor tenant aliases and RLS tenant context used by the Source read adapters, so workflow facts are not undercounted when app-era and canonical tenant keys differ.
+- `scripts/source/audit-contract-optimization-evidence-readiness.mjs`: hardens the audit with the same shared tenant alias resolver and RLS tenant context used by the Source read adapters, so workflow facts are not undercounted when app-era and canonical tenant keys differ.
+- `src/lib/source/data-model/read-adapter.ts`, `source-v4-workspace-snapshot.ts`, and `scripts/source/audit-contract-optimization-evidence-readiness.mjs`: replace Source-local tenant alias lists with the shared tenant alias resolver.
+- `src/lib/source/data-model/contract-optimization-ledger.ts`: exposes the common tenant-neutral decision record with tenant key, dataset version, contract/vendor IDs, four value ledgers, evidence status, evidence refs, confidence, owner, next action, Door 1 event ID, and Tower claim refs.
+- `package.json`: runs the evidence audit through `tsx` so it can use shared runtime tenant resolution.
 
 ## QA / Validation
 
@@ -46,6 +51,8 @@ It also adds a Source workspace bridge that starts or continues a Door 1 `contra
 - PASS: `npm run release:check`.
 - PASS: `node --check scripts/source/audit-contract-optimization-evidence-readiness.mjs`.
 - PASS: `npx eslint scripts/source/audit-contract-optimization-evidence-readiness.mjs`.
+- PASS: `npx jest --runTestsByPath src/lib/source/data-model/__tests__/contract-optimization-ledger.test.ts src/lib/source/data-model/__tests__/read-adapter.test.ts --runInBand`.
+- PASS: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`.
 - BLOCKED locally: `source:contract-optimization:evidence-audit --env-file=/Users/anand/Projects/nexus/.env.local` could not reach the private Azure Postgres DNS name from this machine. Run it through the ACA operator or from a VNet-attached shell for live DB proof.
 
 ## Rollout Plan

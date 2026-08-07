@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import pg from "pg";
+import { canonicalTenantKey, tenantAliasesFor } from "../../src/lib/tenant/aliases";
 
 const { Client } = pg;
 
@@ -16,8 +17,6 @@ const args = new Map(
 const tenantKey = args.get("tenant") || process.env.SOURCE_TENANT_KEY || "skyharbor_global";
 const envFile = args.get("env-file");
 const outDir = args.get("out-dir") || "";
-
-const SKYHARBOR_TENANT_ALIASES = ["skyharbor", "skyharbor-air", "skyharbor_global"];
 
 await loadEnvFile(envFile);
 
@@ -98,17 +97,12 @@ async function queryIfExists(client, tableRef, sql, params = [tenantKey]) {
 }
 
 function tenantKeyAliases(value) {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  return SKYHARBOR_TENANT_ALIASES.includes(normalized)
-    ? [...SKYHARBOR_TENANT_ALIASES]
-    : [normalized || tenantKey];
+  const aliases = tenantAliasesFor(value);
+  return aliases.length > 0 ? aliases : [tenantKey];
 }
 
 function tenantRlsKey(value) {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  return SKYHARBOR_TENANT_ALIASES.includes(normalized)
-    ? "skyharbor_global"
-    : normalized || tenantKey;
+  return canonicalTenantKey(value || tenantKey);
 }
 
 function n(value) {
