@@ -17,6 +17,8 @@ const tenantKey = args.get("tenant") || process.env.SOURCE_TENANT_KEY || "skyhar
 const envFile = args.get("env-file");
 const outDir = args.get("out-dir") || "";
 
+const SKYHARBOR_TENANT_ALIASES = ["skyharbor", "skyharbor-air", "skyharbor_global"];
+
 await loadEnvFile(envFile);
 
 function connectionString() {
@@ -93,6 +95,20 @@ async function queryIfExists(client, tableRef, sql, params = [tenantKey]) {
   }
   const result = await client.query(sql, params);
   return { table: tableRef, exists: true, rows: result.rows };
+}
+
+function tenantKeyAliases(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return SKYHARBOR_TENANT_ALIASES.includes(normalized)
+    ? [...SKYHARBOR_TENANT_ALIASES]
+    : [normalized || tenantKey];
+}
+
+function tenantRlsKey(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return SKYHARBOR_TENANT_ALIASES.includes(normalized)
+    ? "skyharbor_global"
+    : normalized || tenantKey;
 }
 
 function n(value) {
@@ -194,6 +210,9 @@ async function main() {
 
   await client.connect();
   try {
+    const tenantAliases = tenantKeyAliases(tenantKey);
+    await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantRlsKey(tenantKey)]);
+
     const results = {
       recoverableLeakage: {
         spend: await queryIfExists(client, "consumption_v4_canary.sourcing_spend_monthly_v1", `
@@ -205,8 +224,8 @@ async function main() {
             coalesce(sum(CASE WHEN matching_state = 'off_contract' THEN actual_spend ELSE 0 END), 0)::numeric AS off_contract_spend,
             count(DISTINCT matching_state)::int AS matching_states
           FROM consumption_v4_canary.sourcing_spend_monthly_v1
-          WHERE tenant_key = $1
-        `),
+          WHERE tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
         performance: await queryIfExists(client, "consumption_v4_canary.sourcing_performance_v1", `
           SELECT
             count(*)::int AS row_count,
@@ -216,16 +235,16 @@ async function main() {
             coalesce(sum(credit_recovered), 0)::numeric AS credit_recovered,
             coalesce(sum(coalesce(credit_calculated, 0) - coalesce(credit_claimed, 0)), 0)::numeric AS unclaimed_credit
           FROM consumption_v4_canary.sourcing_performance_v1
-          WHERE tenant_key = $1
-        `),
+          WHERE tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
         rateCards: await queryIfExists(client, "raw_source_v4.fieldglass_rate_card", `
           SELECT
             count(*)::int AS row_count,
             coalesce(sum(hours::numeric), 0)::numeric AS hours,
             coalesce(sum(CASE WHEN approval_state = 'variance_unapproved' THEN 1 ELSE 0 END), 0)::int AS unapproved_variance_count
           FROM raw_source_v4.fieldglass_rate_card
-          WHERE _tenant_key = $1
-        `),
+          WHERE _tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
       },
       avoidedCost: {
         contracts: await queryIfExists(client, "consumption_v4_canary.sourcing_contract_v1", `
@@ -236,8 +255,8 @@ async function main() {
             coalesce(sum(CASE WHEN auto_renew THEN 1 ELSE 0 END), 0)::int AS auto_renew_count,
             coalesce(sum(CASE WHEN notice_deadline <= DATE '2027-09-28' THEN 1 ELSE 0 END), 0)::int AS notice_90_day_count
           FROM consumption_v4_canary.sourcing_contract_v1
-          WHERE tenant_key = $1
-        `),
+          WHERE tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
         saas: await queryIfExists(client, "raw_source_v4.entra_saas_usage_monthly", `
           SELECT
             count(*)::int AS row_count,
@@ -246,8 +265,8 @@ async function main() {
             coalesce(sum(actual_cost::numeric), 0)::numeric AS actual_cost,
             coalesce(sum(CASE WHEN claimable_value_state = 'claimable' THEN 1 ELSE 0 END), 0)::int AS claimable_rows
           FROM raw_source_v4.entra_saas_usage_monthly
-          WHERE _tenant_key = $1
-        `),
+          WHERE _tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
         cloud: await queryIfExists(client, "raw_source_v4.azure_cost_monthly", `
           SELECT
             count(*)::int AS row_count,
@@ -255,8 +274,8 @@ async function main() {
             coalesce(sum(amortized_cost::numeric), 0)::numeric AS amortized_cost,
             coalesce(sum(overage_amount::numeric), 0)::numeric AS overage_amount
           FROM raw_source_v4.azure_cost_monthly
-          WHERE _tenant_key = $1
-        `),
+          WHERE _tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
       },
       negotiatedImprovement: {
         sourcingEvents: await queryIfExists(client, "raw_source_v4.ariba_sourcing_events", `
@@ -267,34 +286,34 @@ async function main() {
             avg(score::numeric)::numeric AS average_weighted_score,
             count(DISTINCT event_id)::int AS event_count
           FROM raw_source_v4.ariba_sourcing_events
-          WHERE _tenant_key = $1
-        `),
+          WHERE _tenant_key = ANY($1::text[])
+        `, [tenantAliases]),
         events: await queryIfExists(client, "source_events", `
           SELECT sourcing_motion, count(*)::int AS count
           FROM source_events
-          WHERE client_key = $1
+          WHERE client_key = ANY($1::text[])
           GROUP BY sourcing_motion
           ORDER BY sourcing_motion
-        `),
+        `, [tenantAliases]),
         facts: await queryIfExists(client, "source_event_facts", `
           SELECT f.fact_key, count(*)::int AS count, coalesce(sum(f.value_numeric), 0)::numeric AS numeric_total
           FROM source_event_facts f
           JOIN source_events e ON e.id = f.source_event_id AND e.client_key = f.client_key
-          WHERE f.client_key = $1
+          WHERE f.client_key = ANY($1::text[])
             AND coalesce(f.is_stale, false) = false
             AND e.sourcing_motion = 'contract_optimization'
           GROUP BY f.fact_key
           ORDER BY f.fact_key
-        `),
+        `, [tenantAliases]),
       },
       realizedValue: {
         towerClaims: await queryIfExists(client, "tower.value_claim", `
           SELECT claim_state, count(*)::int AS count, coalesce(sum(calculated_value), 0)::numeric AS calculated_value
           FROM tower.value_claim
-          WHERE tenant_key = $1
+          WHERE tenant_key = ANY($1::text[])
           GROUP BY claim_state
           ORDER BY claim_state
-        `),
+        `, [tenantAliases]),
       },
     };
 
@@ -302,6 +321,7 @@ async function main() {
       event: "source_contract_optimization_evidence_readiness",
       ok: true,
       tenantKey,
+      tenantAliases,
       target: redactTarget(url),
       checkedAt: new Date().toISOString(),
       readiness: evaluateReadiness(results),

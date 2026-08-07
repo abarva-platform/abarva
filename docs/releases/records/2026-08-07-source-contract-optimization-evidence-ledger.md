@@ -36,6 +36,7 @@ It also adds a Source workspace bridge that starts or continues a Door 1 `contra
 - `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx` and `viewModel.tsx`: add launch state and the POST action.
 - `src/app/api/source/workspace/contract/[contractId]/optimization/route.ts`: creates or reuses a `contract_optimization` event and persists cited baseline facts.
 - `scripts/source/audit-contract-optimization-evidence-readiness.mjs` and `package.json`: add a read-only evidence-readiness audit for the four ledgers.
+- `scripts/source/audit-contract-optimization-evidence-readiness.mjs`: hardens the audit with the same SkyHarbor tenant aliases and RLS tenant context used by the Source read adapters, so workflow facts are not undercounted when app-era and canonical tenant keys differ.
 
 ## QA / Validation
 
@@ -43,6 +44,8 @@ It also adds a Source workspace bridge that starts or continues a Door 1 `contra
 - PASS: `npx eslint src/lib/source/data-model/contract-optimization-ledger.ts src/lib/source/data-model/__tests__/contract-optimization-ledger.test.ts 'src/app/(maestro)/source/preview/workspace/viewModel.tsx' 'src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/api/source/workspace/contract/[contractId]/optimization/route.ts'`.
 - PASS: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`.
 - PASS: `npm run release:check`.
+- PASS: `node --check scripts/source/audit-contract-optimization-evidence-readiness.mjs`.
+- PASS: `npx eslint scripts/source/audit-contract-optimization-evidence-readiness.mjs`.
 - BLOCKED locally: `source:contract-optimization:evidence-audit --env-file=/Users/anand/Projects/nexus/.env.local` could not reach the private Azure Postgres DNS name from this machine. Run it through the ACA operator or from a VNet-attached shell for live DB proof.
 
 ## Rollout Plan
