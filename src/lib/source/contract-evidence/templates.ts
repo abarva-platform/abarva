@@ -11,7 +11,7 @@ const baselineColumns = [
     valueType: "text" as const,
     required: true,
     description: "Name of the agreement or SOW being optimized.",
-    example: "Lakeshore Shared Services AMS MSA",
+    example: "Enterprise Shared Services AMS MSA",
   },
   {
     key: "incumbent_vendor",
@@ -54,7 +54,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "contract-baseline.csv",
     required: true,
     purpose: "Anchor the current contract, run rate, renewal date, and decision posture.",
-    sourceGuidance: "Usually prepared from MSA/SOW, pricing schedule, and renewal calendar.",
+    sourceGuidance: "Pull from CLM / contract repository such as Icertis, Ironclad, DocuSign CLM, Agiloft, Conga, or the controlled SharePoint contract library. Map contract name, vendor, run rate, term end, and notice date from the executed agreement, SOW, order form, pricing schedule, and renewal calendar.",
     notFor: "Do not paste the full contract body here; attach it separately as an artifact.",
     columns: baselineColumns,
   },
@@ -64,7 +64,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "invoice-summary.csv",
     required: true,
     purpose: "Summarize billed run cost by period and category so Source can detect spend drift.",
-    sourceGuidance: "Use AP export, vendor invoice register, or finance accrual summary.",
+    sourceGuidance: "Pull from AP / ERP / invoice systems such as SAP S/4HANA, Oracle Fusion, Workday Financials, NetSuite, Coupa Invoice, or Ariba Invoice. Map month, category, contracted amount, invoiced amount, and variance reason from invoice register, PO match, GL coding, accrual summary, and contract baseline.",
     notFor: "Not a raw invoice dump; aggregate by month/category unless an exception needs detail.",
     columns: [
       { key: "month", label: "Month", valueType: "date", required: true, description: "Month or period start.", example: "2026-03-01" },
@@ -80,7 +80,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "invoice-exceptions.csv",
     required: true,
     purpose: "Capture material invoice exceptions that can drive recovery or cure language.",
-    sourceGuidance: "Use AP exception register, disputed invoice tracker, or sample audit output.",
+    sourceGuidance: "Pull from AP exception queues, Coupa/Ariba disputed invoice workflow, SAP/Oracle payment blocks, internal audit samples, or vendor-management issue trackers. Map exception id, month, vendor claim, supported amount, and issue from the invoice line, PO, payment status, and contract entitlement evidence.",
     notFor: "Not every line item; include decision-grade exceptions above the agreed threshold.",
     columns: [
       { key: "exception_id", label: "Exception ID", valueType: "text", required: true, description: "Client or audit identifier.", example: "INV-EX-1042" },
@@ -96,7 +96,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "sla-performance.csv",
     required: true,
     purpose: "Show service commitment, actual performance, and whether remedies are meaningful.",
-    sourceGuidance: "Use SLA report, service review pack, or operational dashboard export.",
+    sourceGuidance: "Pull from ServiceNow, Jira Service Management, PagerDuty, BMC Helix, vendor service-review decks, or observability tools such as Datadog, Splunk, Dynatrace, New Relic, CloudWatch, Azure Monitor, and GCP Operations. Map service level, target, actual, credit cap, and period from contract-governed SLA reports.",
     notFor: "Do not include every operational metric; include contract-governed SLAs.",
     columns: [
       { key: "service_level", label: "Service level", valueType: "text", required: true, description: "SLA name.", example: "P1 restoration" },
@@ -112,7 +112,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "ticket-volumes.csv",
     required: true,
     purpose: "Compare operating demand with the commercial baseline.",
-    sourceGuidance: "Use ServiceNow/Jira/ITSM monthly summary, not raw ticket comments.",
+    sourceGuidance: "Pull monthly aggregate exports from ServiceNow, Jira Service Management, PagerDuty, BMC Helix, or the vendor operations dashboard. Map month, tower, baseline ticket volume, actual ticket volume, and reopen rate from queue-level summaries, not raw ticket text.",
     notFor: "Do not upload sensitive ticket text or individual user narratives.",
     columns: [
       { key: "month", label: "Month", valueType: "date", required: true, description: "Month or period start.", example: "2026-03-01" },
@@ -128,7 +128,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "staffing-model.csv",
     required: true,
     purpose: "Reconcile committed staffing/coverage to observed staffing reality.",
-    sourceGuidance: "Use vendor staffing roster, governance deck, or service review evidence.",
+    sourceGuidance: "Pull role-level staffing evidence from vendor governance packs, Fieldglass / SAP Fieldglass, Beeline, Magnit, contract staffing schedules, or monthly service-review decks. Map tower, committed FTE, observed FTE, coverage, and location mix without employee names or IDs.",
     notFor: "Do not include personal employee data; roles, towers, and location mix are enough.",
     columns: [
       { key: "tower", label: "Tower", valueType: "text", required: true, description: "Service tower.", example: "Finance apps" },
@@ -144,7 +144,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "change-orders.csv",
     required: true,
     purpose: "Separate true project change from recurring run work that should be normalized.",
-    sourceGuidance: "Use change-order log, project billing tracker, or vendor governance pack.",
+    sourceGuidance: "Pull from CLM amendments, SOW/change-order register, Jira/ServiceNow project intake, SAP Ariba/Coupa change requests, or vendor governance packs. Map request id, category, amount, recurring flag, and approval evidence from the approved change record and billing tracker.",
     notFor: "Do not include unrelated transformation project detail unless it changes run baseline.",
     columns: [
       { key: "request_id", label: "Request ID", valueType: "text", required: true, description: "Change-order identifier.", example: "CO-2026-018" },
@@ -160,7 +160,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "renewal-terms.csv",
     required: true,
     purpose: "Capture dates, notice windows, auto-renewal risks, and cure rights.",
-    sourceGuidance: "Use MSA/SOW renewal clause, legal summary, or contract admin tracker.",
+    sourceGuidance: "Pull from CLM renewal metadata, legal clause summary, contract admin tracker, sourcing calendar, or vendor-management renewal register. Map term key, date, summary, and risk level from the renewal, cure, termination, notice, auto-renew, benchmark, and termination-assistance clauses.",
     notFor: "Not legal advice; this is sourcing timeline evidence for decision support.",
     columns: [
       { key: "term_key", label: "Term key", valueType: "text", required: true, description: "Renewal, cure, termination, or notice.", example: "non_renewal_notice" },
@@ -175,7 +175,7 @@ export const CONTRACT_EVIDENCE_TEMPLATES: SourceContractEvidenceTemplate[] = [
     fileName: "evidence-references.csv",
     required: false,
     purpose: "Map each extract back to source documents, exports, pages, tabs, or reports.",
-    sourceGuidance: "Use artifact filename, page/sheet/cell, report date, and owner where known.",
+    sourceGuidance: "For every extract above, capture the artifact filename or system report, page/sheet/cell/report section, report date, export run id, and owner role. Use Blob-backed document inventory for original files and keep this sheet as the lightweight citation map.",
     notFor: "Do not paste confidential raw content; cite where the evidence lives.",
     columns: [
       { key: "evidence_id", label: "Evidence ID", valueType: "text", required: true, description: "Stable reference id.", example: "EVID-SLA-MAR26" },

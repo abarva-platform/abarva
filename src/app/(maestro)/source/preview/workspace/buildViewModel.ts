@@ -3,6 +3,7 @@ import type { WorkspaceViewModel, EnrichedContract, Urgency } from './viewModel'
 import type { DataTableRow, DataTableColumn } from './DataTable';
 import { numberFromDb, type LeverageSignal } from '@/lib/source/data-model/vendor-contract-portfolio';
 import { buildContractOptimizationLedger } from '@/lib/source/data-model/contract-optimization-ledger';
+import { buildContractOptimizationSpine } from '@/lib/source/data-model/contract-optimization-spine';
 import type { SourcingOpportunityReason } from '@/lib/source/data-model/sourcing-opportunities';
 
 /**
@@ -505,6 +506,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const optLedger = contract
     ? buildContractOptimizationLedger({ view: detail, contract: contract.row, leverage: contract.leverage })
     : null;
+  const optSpine = contract
+    ? buildContractOptimizationSpine({
+      contract: contract.row,
+      contracts: vm.portfolio.contracts,
+      leverageEntries: vm.leverage(),
+      ledger: optLedger,
+      asOfDateIso: vm.portfolio.asOfDateIso,
+    })
+    : null;
   const optLedgerView = optLedger ? {
     headline: optLedger.headline,
     quantifiedLeakage: optLedger.quantifiedLeakageUsd > 0 ? money(optLedger.quantifiedLeakageUsd) : 'Not quantified',
@@ -542,6 +552,50 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       sourceRefs: line.sourceRefs,
       lineageFields: line.lineageFields,
     })),
+  } : null;
+  const optSpineView = optSpine ? {
+    selected: optSpine.selected ? {
+      rank: '#' + optSpine.selected.rank,
+      rankNumber: optSpine.selected.rank,
+      band: optSpine.selected.band,
+      score: String(optSpine.selected.score),
+      action: optSpine.selected.action,
+      annualValue: money(optSpine.selected.annualValue),
+      reasons: optSpine.selected.reasons.map((reason) => ({
+        kind: reason.kind,
+        label: reason.label,
+        detail: reason.detail,
+        sourceRef: reason.sourceRef,
+        tone: reason.tone === 'strong' ? COL.teal : reason.tone === 'warning' ? COL.amber : reason.tone === 'missing' ? COL.red : COL.slate,
+        points: String(reason.points),
+      })),
+    } : null,
+    topCandidates: optSpine.topCandidates.map((candidate) => ({
+      rank: '#' + candidate.rank,
+      label: candidate.vendorName + ' · ' + candidate.contractName,
+      value: money(candidate.annualValue),
+      score: String(candidate.score),
+      band: candidate.band,
+      selected: candidate.contractId === contract?.row.contract_id,
+      onClick: () => vm.select('contract', candidate.contractId),
+    })),
+    sourceConnections: optSpine.sourceConnections.map((connection) => ({
+      id: connection.id,
+      sourceSystem: connection.sourceSystem,
+      examples: connection.examples.join(' · '),
+      extract: connection.extract,
+      evidenceClasses: connection.evidenceClasses,
+      ledgers: connection.ledgers.map((ledger) => ({
+        recoverable_leakage: 'Recoverable leakage',
+        avoided_cost: 'Avoided cost',
+        negotiated_improvement: 'Negotiated improvement',
+        realized_value: 'Realized value',
+      }[ledger])),
+      fields: connection.fields,
+      outcome: connection.outcome,
+    })),
+    story: optSpine.contractStory,
+    missingEvidenceStory: optSpine.missingEvidenceStory,
   } : null;
   const optLaunch = c ? S.optimizationLaunch[c.contract_id] : undefined;
   const optCtaLabel = optLaunch?.status === 'loading'
@@ -750,7 +804,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     isContract: kind === 'contract' && !!contract, cTab: S.tabs.contract, c: cVm,
     cOverview: activeTab === 'Overview', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: activeTab === 'Renewal', cLeverage: activeTab === 'Leverage', cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimization',
     termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
-    weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView,
+    weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView,
     optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError,
     startOptimization: c ? () => vm.startContractOptimization(c.contract_id) : () => undefined,
     goActions: () => vm.setTab('contract', 'Optimization'),
