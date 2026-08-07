@@ -1,4 +1,9 @@
 import type { Contract360View } from './contract-360-view';
+import {
+  evidenceItemsById,
+  type ContractOptimizationEvidenceItem,
+  type ContractOptimizationEvidencePack,
+} from './contract-optimization-evidence';
 import type { SourceContract360Row } from './types';
 import type { ContractLeverageEntry } from './vendor-contract-portfolio';
 
@@ -49,6 +54,8 @@ export interface ContractOptimizationLedgerLine {
 export interface ContractOptimizationLedgerSummary {
   readonly lines: readonly ContractOptimizationLedgerLine[];
   readonly quantifiedLeakageUsd: number;
+  readonly avoidedCostUsd: number;
+  readonly negotiatedImprovementUsd: number;
   readonly realizedValueUsd: number;
   readonly evidenceReadyCount: number;
   readonly evidenceGapCount: number;
@@ -146,6 +153,7 @@ export function buildContractOptimizationLedger(input: {
   readonly view: Contract360View | null;
   readonly contract?: SourceContract360Row | null;
   readonly leverage: ContractLeverageEntry | null;
+  readonly optimizationEvidence?: ContractOptimizationEvidencePack | null;
   readonly datasetVersion?: string;
   readonly door1EventId?: string | null;
 }): ContractOptimizationLedgerSummary {
@@ -153,6 +161,12 @@ export function buildContractOptimizationLedger(input: {
   const c = view?.contract ?? input.contract ?? null;
   const perf = view?.operationalPerformance ?? null;
   const fin = view?.financialExposure ?? null;
+  const evidenceById = evidenceItemsById(input.optimizationEvidence ?? view?.optimizationEvidence);
+  const slaEvidence = evidenceById.get('recoverable:sla-credit-gap') ?? null;
+  const invoiceRateEvidence = evidenceById.get('recoverable:invoice-rate-card') ?? null;
+  const avoidedEvidence = evidenceById.get('avoided:renewal-uplift') ?? null;
+  const negotiatedEvidence = evidenceById.get('negotiated:commercial-levers') ?? null;
+  const realizedEvidence = evidenceById.get('realized:tower-finance-proof') ?? null;
 
   const serviceCreditsEarned = finiteOrNull(perf?.service_credits_earned);
   const serviceCreditsClaimed = finiteOrNull(perf?.service_credits_claimed);
@@ -166,6 +180,11 @@ export function buildContractOptimizationLedger(input: {
       .filter((claim) => isClaimableState(claim.claim_state))
       .map((claim) => finiteOrZero(claim.calculated_value)),
   );
+  const realizedEvidenceUsd = finiteOrNull(realizedEvidence?.amount);
+  const governedRealizedValueUsd =
+    realizedEvidenceUsd != null && isRealizedEvidence(realizedEvidence)
+      ? realizedEvidenceUsd
+      : realizedValueUsd;
 
   const actualSpend = finiteOrNull(fin?.actual_annual_spend ?? c?.actual_annual_spend);
   const annualValue = finiteOrNull(fin?.contracted_annual_value ?? c?.annual_value);
@@ -181,86 +200,86 @@ export function buildContractOptimizationLedger(input: {
       id: 'recoverable:sla-credit-gap',
       kind: 'recoverable_leakage',
       label: 'SLA credits earned but not claimed',
-      amountUsd: unclaimedCredits != null && unclaimedCredits > 0 ? unclaimedCredits : null,
-      state:
-        unclaimedCredits != null && unclaimedCredits > 0
+      amountUsd: evidenceAmountOrNull(slaEvidence) ?? (unclaimedCredits != null && unclaimedCredits > 0 ? unclaimedCredits : null),
+      state: evidenceState(slaEvidence) ??
+        (unclaimedCredits != null && unclaimedCredits > 0
           ? 'quantified'
           : serviceCreditsEarned != null
             ? 'not_established'
-            : 'needs_evidence',
-      evidenceClass: serviceCreditsEarned != null ? 'system_evidenced' : 'missing',
-      evidence:
-        unclaimedCredits != null && unclaimedCredits > 0
+            : 'needs_evidence'),
+      evidenceClass: evidenceClass(slaEvidence) ?? (serviceCreditsEarned != null ? 'system_evidenced' : 'missing'),
+      evidence: evidenceNarrative(slaEvidence) ??
+        (unclaimedCredits != null && unclaimedCredits > 0
           ? 'source.contract_operational_performance carries service_credits_earned and service_credits_claimed.'
           : serviceCreditsEarned != null
             ? 'The operational row is present, but it does not show earned credits above claimed credits.'
-            : 'Load or map SLA credit history before claiming credit leakage.',
-      nextAction:
-        unclaimedCredits != null && unclaimedCredits > 0
+            : 'Load or map SLA credit history before claiming credit leakage.'),
+      nextAction: evidenceNextAction(slaEvidence) ??
+        (unclaimedCredits != null && unclaimedCredits > 0
           ? 'Validate credit entitlement with Legal / Vendor Management and add recovery owner.'
-          : 'Request the SLA credit register and monthly service-credit claim log.',
-      sourceRefs: ['source.contract_operational_performance.service_credits_earned', 'source.contract_operational_performance.service_credits_claimed'],
-      lineageFields: serviceCreditsEarned != null ? SYSTEM_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS,
+          : 'Request the SLA credit register and monthly service-credit claim log.'),
+      sourceRefs: evidenceRefs(slaEvidence, ['source.contract_operational_performance.service_credits_earned', 'source.contract_operational_performance.service_credits_claimed']),
+      lineageFields: lineageFieldsFor(slaEvidence, serviceCreditsEarned != null ? SYSTEM_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS),
     },
     {
       id: 'recoverable:invoice-rate-card',
       kind: 'recoverable_leakage',
       label: 'Invoice, duplicate, off-contract, and rate-card variance',
-      amountUsd: null,
-      state: 'needs_evidence',
-      evidenceClass: 'missing',
-      evidence: 'Invoice-line, PO, rate-card, and active-contract matching rows are not part of this Contract 360 read yet.',
-      nextAction: 'Load AP invoice lines, PO lines, rate-card schedule, and active contract periods for the selected contract.',
-      sourceRefs: ['invoice_po_reconciliation', 'rate_card_schedule', 'contract_document_inventory'],
-      lineageFields: MISSING_LINEAGE_FIELDS,
+      amountUsd: evidenceAmountOrNull(invoiceRateEvidence),
+      state: evidenceState(invoiceRateEvidence) ?? 'needs_evidence',
+      evidenceClass: evidenceClass(invoiceRateEvidence) ?? 'missing',
+      evidence: evidenceNarrative(invoiceRateEvidence) ?? 'Invoice-line, PO, rate-card, and active-contract matching rows are not part of this Contract 360 read yet.',
+      nextAction: evidenceNextAction(invoiceRateEvidence) ?? 'Load AP invoice lines, PO lines, rate-card schedule, and active contract periods for the selected contract.',
+      sourceRefs: evidenceRefs(invoiceRateEvidence, ['invoice_po_reconciliation', 'rate_card_schedule', 'contract_document_inventory']),
+      lineageFields: lineageFieldsFor(invoiceRateEvidence, MISSING_LINEAGE_FIELDS),
     },
     {
       id: 'avoided:renewal-uplift',
       kind: 'avoided_cost',
       label: 'Renewal uplift avoided / shelfware removed / scope rationalized',
-      amountUsd: null,
-      state: annualVariance != null ? 'workflow_required' : 'needs_evidence',
-      evidenceClass: annualVariance != null ? 'inferred' : 'missing',
-      evidence:
-        annualVariance != null
+      amountUsd: evidenceAmountOrNull(avoidedEvidence),
+      state: evidenceState(avoidedEvidence) ?? (annualVariance != null ? 'workflow_required' : 'needs_evidence'),
+      evidenceClass: evidenceClass(avoidedEvidence) ?? (annualVariance != null ? 'inferred' : 'missing'),
+      evidence: evidenceNarrative(avoidedEvidence) ??
+        (annualVariance != null
           ? `Contracted-to-actual annual variance is visible (${formatUsd(annualVariance)}), but cause is not classified as value.`
-          : 'No annual-value versus actual-spend comparison is available for this contract.',
-      nextAction: 'Classify the variance with usage, entitlement, renewal quote, and scope evidence before treating any amount as avoided cost.',
-      sourceRefs: ['source.contract_360.annual_value', 'source.contract_360.actual_annual_spend'],
-      lineageFields: annualVariance != null ? INFERRED_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS,
+          : 'No annual-value versus actual-spend comparison is available for this contract.'),
+      nextAction: evidenceNextAction(avoidedEvidence) ?? 'Classify the variance with usage, entitlement, renewal quote, and scope evidence before treating any amount as avoided cost.',
+      sourceRefs: evidenceRefs(avoidedEvidence, ['source.contract_360.annual_value', 'source.contract_360.actual_annual_spend']),
+      lineageFields: lineageFieldsFor(avoidedEvidence, annualVariance != null ? INFERRED_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS),
     },
     {
       id: 'negotiated:commercial-levers',
       kind: 'negotiated_improvement',
       label: 'Price, term, index cap, volume tier, and termination leverage',
-      amountUsd: null,
-      state: hasNegotiationEvidence ? 'workflow_required' : 'needs_evidence',
-      evidenceClass: hasNegotiationEvidence ? 'document_evidenced' : 'missing',
-      evidence:
-        hasNegotiationEvidence
+      amountUsd: evidenceAmountOrNull(negotiatedEvidence),
+      state: evidenceState(negotiatedEvidence) ?? (hasNegotiationEvidence ? 'workflow_required' : 'needs_evidence'),
+      evidenceClass: evidenceClass(negotiatedEvidence) ?? (hasNegotiationEvidence ? 'document_evidenced' : 'missing'),
+      evidence: evidenceNarrative(negotiatedEvidence) ??
+        (hasNegotiationEvidence
           ? `${weakLeverageCount} weak leverage signal(s) and commercial term fields are visible, but no signed concession exists yet.`
-          : 'No benchmark, alternatives, renewal owner, or negotiation concession evidence is established.',
-      nextAction: 'Run Door 1 to convert leverage signals into an evidence-backed negotiation plan and executive approval packet.',
-      sourceRefs: ['source.contract_360.benchmarking_clause', 'source.contract_360.alternatives_available', 'computeContractLeverageSignals(source.contract_360)'],
-      lineageFields: hasNegotiationEvidence ? DOCUMENT_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS,
+          : 'No benchmark, alternatives, renewal owner, or negotiation concession evidence is established.'),
+      nextAction: evidenceNextAction(negotiatedEvidence) ?? 'Run Door 1 to convert leverage signals into an evidence-backed negotiation plan and executive approval packet.',
+      sourceRefs: evidenceRefs(negotiatedEvidence, ['source.contract_360.benchmarking_clause', 'source.contract_360.alternatives_available', 'computeContractLeverageSignals(source.contract_360)']),
+      lineageFields: lineageFieldsFor(negotiatedEvidence, hasNegotiationEvidence ? DOCUMENT_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS),
     },
     {
       id: 'realized:tower-finance-proof',
       kind: 'realized_value',
       label: 'Finance-confirmed realized value',
-      amountUsd: realizedValueUsd > 0 ? realizedValueUsd : null,
-      state: realizedValueUsd > 0 ? 'quantified' : 'not_established',
-      evidenceClass: realizedValueUsd > 0 ? 'human_validated' : 'missing',
-      evidence:
-        realizedValueUsd > 0
+      amountUsd: governedRealizedValueUsd > 0 ? governedRealizedValueUsd : null,
+      state: evidenceState(realizedEvidence) ?? (governedRealizedValueUsd > 0 ? 'quantified' : 'not_established'),
+      evidenceClass: evidenceClass(realizedEvidence) ?? (governedRealizedValueUsd > 0 ? 'human_validated' : 'missing'),
+      evidence: evidenceNarrative(realizedEvidence) ??
+        (governedRealizedValueUsd > 0
           ? 'tower.value_claim has accepted claim rows with calculated_value for this contract/vendor/application scope.'
-          : 'Tower has not cleared a finance-confirmed claimable value row for this contract context.',
-      nextAction:
-        realizedValueUsd > 0
+          : 'Tower has not cleared a finance-confirmed claimable value row for this contract context.'),
+      nextAction: evidenceNextAction(realizedEvidence) ??
+        (governedRealizedValueUsd > 0
           ? 'Review Tower provenance before using the amount externally.'
-          : 'After agreement, register measurement owner, cadence, baseline, actuals, and finance attestation in Tower.',
-      sourceRefs: ['tower.value_claim.claim_state', 'tower.value_claim.calculated_value'],
-      lineageFields: realizedValueUsd > 0 ? HUMAN_VALIDATION_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS,
+          : 'After agreement, register measurement owner, cadence, baseline, actuals, and finance attestation in Tower.'),
+      sourceRefs: evidenceRefs(realizedEvidence, ['tower.value_claim.claim_state', 'tower.value_claim.calculated_value']),
+      lineageFields: lineageFieldsFor(realizedEvidence, governedRealizedValueUsd > 0 ? HUMAN_VALIDATION_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS),
     },
   ];
 
@@ -269,13 +288,25 @@ export function buildContractOptimizationLedger(input: {
       .filter((line) => line.kind === 'recoverable_leakage' && line.state === 'quantified')
       .map((line) => finiteOrZero(line.amountUsd)),
   );
+  const avoidedCostUsd = sum(
+    lines
+      .filter((line) => line.kind === 'avoided_cost' && line.amountUsd != null && line.evidenceClass !== 'missing')
+      .map((line) => finiteOrZero(line.amountUsd)),
+  );
+  const negotiatedImprovementUsd = sum(
+    lines
+      .filter((line) => line.kind === 'negotiated_improvement' && line.amountUsd != null && line.evidenceClass !== 'missing')
+      .map((line) => finiteOrZero(line.amountUsd)),
+  );
   const evidenceReadyCount = lines.filter((line) => line.state === 'quantified' || line.state === 'workflow_required').length;
   const evidenceGapCount = lines.filter(isEvidenceGap).length;
 
   return {
     lines,
     quantifiedLeakageUsd,
-    realizedValueUsd,
+    avoidedCostUsd,
+    negotiatedImprovementUsd,
+    realizedValueUsd: governedRealizedValueUsd,
     evidenceReadyCount,
     evidenceGapCount,
     headline:
@@ -286,7 +317,9 @@ export function buildContractOptimizationLedger(input: {
       c,
       lines,
       quantifiedLeakageUsd,
-      realizedValueUsd,
+      avoidedCostUsd,
+      negotiatedImprovementUsd,
+      realizedValueUsd: governedRealizedValueUsd,
       datasetVersion: input.datasetVersion ?? 'unknown',
       door1EventId: input.door1EventId ?? null,
       towerClaimRefs: view?.towerValueClaims.map((claim) => claim.claim_id) ?? [],
@@ -298,6 +331,8 @@ function buildDecisionRecord(input: {
   readonly c: SourceContract360Row | null;
   readonly lines: readonly ContractOptimizationLedgerLine[];
   readonly quantifiedLeakageUsd: number;
+  readonly avoidedCostUsd: number;
+  readonly negotiatedImprovementUsd: number;
   readonly realizedValueUsd: number;
   readonly datasetVersion: string;
   readonly door1EventId: string | null;
@@ -312,8 +347,8 @@ function buildDecisionRecord(input: {
     vendor_id: input.c?.vendor_ref ?? null,
     optimization_state: optimizationState(input.lines, input.realizedValueUsd),
     recoverable_leakage: input.quantifiedLeakageUsd > 0 ? input.quantifiedLeakageUsd : null,
-    avoided_cost: null,
-    negotiated_improvement: null,
+    avoided_cost: input.avoidedCostUsd > 0 ? input.avoidedCostUsd : null,
+    negotiated_improvement: input.negotiatedImprovementUsd > 0 ? input.negotiatedImprovementUsd : null,
     realized_value: input.realizedValueUsd > 0 ? input.realizedValueUsd : null,
     evidence_status: statusByKind,
     evidence_classes: input.lines.map((line) => ({
@@ -370,6 +405,101 @@ function isEvidenceGap(line: ContractOptimizationLedgerLine): boolean {
 
 function isClaimableState(value: string | null | undefined): boolean {
   return /^(accepted|claimable|finance_validated|realized|realised)$/i.test(value ?? '');
+}
+
+function evidenceAmountOrNull(
+  item: ContractOptimizationEvidenceItem | null,
+): number | null {
+  const amount = finiteOrNull(item?.amount);
+  if (amount == null || amount <= 0) return null;
+  if (item?.amount_state === 'not_quantified' || item?.amount_state === 'not_established') {
+    return null;
+  }
+  return amount;
+}
+
+function evidenceState(
+  item: ContractOptimizationEvidenceItem | null,
+): ContractOptimizationLedgerState | null {
+  if (!item) return null;
+  if (item.evidence_class === 'missing' || item.amount_state === 'not_quantified') {
+    return item.ledger_type === 'realized_value' ? 'not_established' : 'needs_evidence';
+  }
+  if (item.amount_state === 'workflow_required' || item.amount_state === 'addressable_exposure') {
+    return 'workflow_required';
+  }
+  if (item.amount_state === 'quantified' || item.amount_state === 'finance_validated') {
+    return 'quantified';
+  }
+  if (item.amount_state === 'not_established') return 'not_established';
+  return null;
+}
+
+function evidenceClass(
+  item: ContractOptimizationEvidenceItem | null,
+): ContractOptimizationEvidenceClass | null {
+  return item?.evidence_class ?? null;
+}
+
+function evidenceNarrative(item: ContractOptimizationEvidenceItem | null): string | null {
+  if (!item) return null;
+  const basis = item.calculation_rule?.trim();
+  const systems = item.source_systems.length > 0 ? ` Evidence comes from ${item.source_systems.join(', ')}.` : '';
+  if (!basis && !systems) return null;
+  return `${basis ?? 'Governed evidence is present for this ledger item.'}${systems}`;
+}
+
+function evidenceNextAction(item: ContractOptimizationEvidenceItem | null): string | null {
+  if (!item) return null;
+  if (item.decision_state === 'finance_accepted') {
+    return 'Use the finance-attested value in Tower and retain the source evidence chain for audit.';
+  }
+  if (item.decision_state === 'executed') {
+    return 'Confirm the executed commercial change is reflected in invoices and Tower measurement.';
+  }
+  if (item.decision_state === 'approved') {
+    return 'Move the approved position into agreement execution and measurement setup.';
+  }
+  if (item.decision_state === 'workflow_required') {
+    return 'Run Door 1 to convert the evidenced exposure into an approved negotiation or value action.';
+  }
+  if (item.decision_state === 'candidate') {
+    return 'Review the evidence with Procurement, Legal, Finance, and the service owner before external use.';
+  }
+  return null;
+}
+
+function evidenceRefs(
+  item: ContractOptimizationEvidenceItem | null,
+  fallback: readonly string[],
+): readonly string[] {
+  if (!item) return fallback;
+  return Array.from(
+    new Set([
+      ...item.evidence_refs,
+      ...item.source_systems.map((system) => `source_system:${system}`),
+      ...item.source_record_ids.map((id) => `source_record:${id}`),
+      ...item.document_refs.map((id) => `document:${id}`),
+      ...item.page_spans.map((span) => `page_span:${span}`),
+      ...(item.tower_claim_id ? [`tower_claim:${item.tower_claim_id}`] : []),
+    ]),
+  );
+}
+
+function lineageFieldsFor(
+  item: ContractOptimizationEvidenceItem | null,
+  fallback: readonly string[],
+): readonly string[] {
+  if (!item) return fallback;
+  if (item.evidence_class === 'human_validated') return HUMAN_VALIDATION_LINEAGE_FIELDS;
+  if (item.evidence_class === 'document_evidenced') return DOCUMENT_LINEAGE_FIELDS;
+  if (item.evidence_class === 'inferred') return INFERRED_LINEAGE_FIELDS;
+  if (item.evidence_class === 'system_evidenced') return SYSTEM_LINEAGE_FIELDS;
+  return MISSING_LINEAGE_FIELDS;
+}
+
+function isRealizedEvidence(item: ContractOptimizationEvidenceItem | null): boolean {
+  return item?.ledger_type === 'realized_value' && item.amount_state === 'finance_validated';
 }
 
 function finiteOrNull(value: unknown): number | null {

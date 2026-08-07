@@ -1,5 +1,6 @@
 import { buildContractOptimizationLedger } from '@/lib/source/data-model/contract-optimization-ledger';
 import { buildContract360View } from '@/lib/source/data-model/contract-360-view';
+import { buildGoldenContractEvidenceCanary } from '@/lib/source/data-model/contract-optimization-evidence';
 import type {
   SourceContract360Row,
   SourceContractFinancialExposureRow,
@@ -304,5 +305,73 @@ describe('buildContractOptimizationLedger', () => {
     });
     expect(ledger.decisionRecord.tenant_key).not.toBe('skyharbor_global');
     expect(ledger.decisionRecord.evidence_classes.every((entry) => entry.evidence_class !== 'system_evidenced')).toBe(true);
+  });
+
+  it('turns a fully evidenced contract into a four-ledger decision record without tenant-specific logic', () => {
+    const evidencePack = buildGoldenContractEvidenceCanary({
+      tenantKey: 'tenant-golden',
+      datasetVersion: 'v4-canary',
+      contractId: 'CTR-GOLDEN',
+      workflowEventId: 'door1-golden-001',
+      towerClaimId: 'tower-claim-golden-001',
+    });
+    const view = buildContract360View({
+      contract: contract({
+        tenant_key: 'tenant-golden',
+        contract_id: 'CTR-GOLDEN',
+        vendor_ref: 'managed-services-vendor',
+        vendor_name: 'Managed Services Vendor',
+        annual_value: 36_000_000,
+        actual_annual_spend: 35_250_000,
+        renewal_owner_ref: 'role-procurement-lead',
+      }),
+      applicationScope: [],
+      financialExposure: [],
+      operationalPerformance: [],
+      initiativeDependencies: [],
+      towerObservations: [],
+      towerValueClaims: [],
+      optimizationEvidence: evidencePack,
+    });
+
+    const ledger = buildContractOptimizationLedger({
+      view,
+      leverage: null,
+      datasetVersion: evidencePack.dataset_version,
+      door1EventId: 'door1-golden-001',
+    });
+
+    expect(ledger.quantifiedLeakageUsd).toBe(1_305_000);
+    expect(ledger.avoidedCostUsd).toBe(1_580_000);
+    expect(ledger.negotiatedImprovementUsd).toBe(1_100_000);
+    expect(ledger.realizedValueUsd).toBe(1_185_000);
+    expect(ledger.evidenceGapCount).toBe(0);
+    expect(ledger.lines.map((line) => line.evidenceClass)).toEqual([
+      'system_evidenced',
+      'system_evidenced',
+      'inferred',
+      'document_evidenced',
+      'human_validated',
+    ]);
+    expect(ledger.decisionRecord).toMatchObject({
+      tenant_key: 'tenant-golden',
+      dataset_version: 'v4-canary',
+      contract_id: 'CTR-GOLDEN',
+      vendor_id: 'managed-services-vendor',
+      optimization_state: 'VALUE_CONFIRMED',
+      recoverable_leakage: 1_305_000,
+      avoided_cost: 1_580_000,
+      negotiated_improvement: 1_100_000,
+      realized_value: 1_185_000,
+      owner: 'role-procurement-lead',
+      door1_event_id: 'door1-golden-001',
+    });
+    expect(ledger.decisionRecord.evidence_refs).toEqual(
+      expect.arrayContaining([
+        'erp_ap.invoice_lines',
+        'fieldglass.rate_card',
+        'tower_claim:tower-claim-golden-001',
+      ]),
+    );
   });
 });
