@@ -1,9 +1,13 @@
-import { isLockedTenantRole } from '@/lib/auth/access-routing';
-import type { ClientKey } from '@/lib/client-config';
+import { isLockedTenantRole } from "@/lib/auth/access-routing";
+import {
+  PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
+  readPrivateBrowserProofSessionValue,
+} from "@/lib/auth/private-browser-proof-session";
+import type { ClientKey } from "@/lib/client-config";
 import {
   ACTIVE_CLIENT_COOKIE,
   resolveTenant,
-} from '@/lib/tenant/resolveTenant';
+} from "@/lib/tenant/resolveTenant";
 
 // Server-side resolution of the active client for the signed-in user.
 // Kept as the legacy public API while Packet 30 consolidates all tenant
@@ -37,12 +41,14 @@ export { ACTIVE_CLIENT_COOKIE };
  */
 export class TenantLookupUnavailableError extends Error {
   constructor(public readonly cause?: unknown) {
-    super('tenant_lookup_unavailable');
-    this.name = 'TenantLookupUnavailableError';
+    super("tenant_lookup_unavailable");
+    this.name = "TenantLookupUnavailableError";
   }
 }
 
-export async function getActiveClientKey(requestedClientId?: string | null): Promise<ClientKey> {
+export async function getActiveClientKey(
+  requestedClientId?: string | null,
+): Promise<ClientKey> {
   const tenant = await resolveTenant({ requestedClient: requestedClientId });
   return tenant.appClientKey;
 }
@@ -58,12 +64,23 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
  */
 export async function hasLockedTenantSession(): Promise<boolean> {
   try {
-    const { currentUser } = await import('@clerk/nextjs/server');
+    const { cookies } = await import("next/headers");
+    const store = await cookies();
+    const proofSession = await readPrivateBrowserProofSessionValue(
+      store.get(PRIVATE_BROWSER_PROOF_SESSION_COOKIE)?.value,
+    );
+    if (proofSession) return true;
+  } catch {
+    // Fall through to Clerk.
+  }
+  try {
+    const { currentUser } = await import("@clerk/nextjs/server");
     const user = await currentUser();
     const role = user?.publicMetadata?.role as string | undefined;
-    const email = user?.primaryEmailAddress?.emailAddress
-      ?? user?.emailAddresses?.[0]?.emailAddress
-      ?? undefined;
+    const email =
+      user?.primaryEmailAddress?.emailAddress ??
+      user?.emailAddresses?.[0]?.emailAddress ??
+      undefined;
     if (!role && !email) return false;
     return isLockedTenantRole(role, email);
   } catch {
@@ -79,7 +96,12 @@ export async function hasLockedTenantSession(): Promise<boolean> {
  */
 export async function getActiveClientRow(
   requestedClientId?: string | null,
-): Promise<{ id: string; name: string; industry_code: string | null; key: ClientKey } | null> {
+): Promise<{
+  id: string;
+  name: string;
+  industry_code: string | null;
+  key: ClientKey;
+} | null> {
   // Fix B: resolveTenant now THROWS on any DB/lookup failure (it returns a tenant with a
   // null clientId for a genuine no-row). So any error here is a retryable lookup outage,
   // not a "no client" — re-throw it as TenantLookupUnavailableError instead of collapsing

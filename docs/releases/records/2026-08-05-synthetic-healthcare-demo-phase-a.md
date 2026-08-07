@@ -229,6 +229,18 @@ Local proof:
 
 The BPO remediation now labels the baseline as five-year current-state cost, exposes annualized, labor, technology/platform and controls/other components, and normalizes rebadge proposals against the unique eligible current workforce denominator instead of supplier/process row inflation.
 
+### Private Product-Route Proof Addendum
+
+Meridian Health was deployed only to the isolated private proof Container App `ca-meridian-health-proof-eastus` using digest-pinned image `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-web@sha256:dfaaa2fb85242131b0efb1093cf519ab832f78e74c7b6905cd90bbb4ad3d639a`. Shared `app.abarva.ai` traffic was not shifted and Meridian Health was not exposed in the shared app runtime.
+
+Private runtime health returned `ok=true` with Postgres and direct Postgres checks passing. Focused Source workspace browser proof passed with governed nonzero Source V4 counts, no stale zero-count header, zero unfiltered failed requests, zero HTTP errors, zero console errors, zero retired identity hits and zero foreign-tenant matches. Clean six-route signed-in proof passed for Home, Intelligence, Moves, Source, Tower and aVa with zero unfiltered request failures, zero HTTP errors and zero console errors.
+
+Private browser proof ZIP: `/Users/anand/Downloads/Meridian_Health_Private_Browser_Proof_20260807T145600Z.zip`.
+Private browser proof ZIP SHA-256: `512097ff8f6b2b08771bdb85cd236e28240aa3dccf11f98aa1be884bd5fa9da9`.
+The proof ZIP entry/content scrub returned 49 entries, zero retired identity hits and zero phone-value hits.
+
+`admin@abarva.ai` is present in the code-side static launch grant for Meridian Health. The live Clerk metadata mutation remains pending because local `CLERK_SECRET_KEY` was unavailable and the lab Key Vault secret lookup did not return from the operator shell. The requested recovery phone was not used for tenant authorization and is not recorded in proof.
+
 ## Known Gaps
 
-The synthetic healthcare tenant is not active in canonical tenant code. Isolated Meridian Health Layers 1 through 6 have been applied and verified in private lab substrates, but no shared canonical publication, shared Cube traffic shift, web deployment, signed-in product-route proof or tenant activation has occurred.
+The synthetic healthcare tenant is not yet live on the shared `app.abarva.ai` runtime. Isolated Meridian Health Layers 1 through 6 have been applied and verified in private lab substrates, and private signed-in product-route proof now passes, but no shared canonical publication, shared Cube traffic shift, shared web deployment, shared tenant exposure or tenant activation has occurred.

@@ -7,6 +7,7 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import { loadSourceWorkspacePortfolio } from "./live/portfolioAdapter";
 
 export const metadata: Metadata = {
@@ -46,17 +47,27 @@ export default async function SourceWorkspacePreviewPage({
     throw err;
   }
 
-  const [activeClient, params] = await Promise.all([
+  const [activeClient, tenant, params] = await Promise.all([
     getActiveClientRow().catch(() => null),
+    resolveTenant().catch(() => null),
     searchParams,
   ]);
 
-  const tenantKey = activeClient?.key ?? tenancy.clientKey ?? "";
+  const tenantKey =
+    activeClient?.key ?? tenant?.appClientKey ?? tenancy.clientKey ?? "";
   const defaultAsOf = tenantKey.includes("skyharbor")
     ? SKYHARBOR_SYNTHETIC_AS_OF
     : new Date().toISOString();
   const asOfDateIso = params.asOf?.trim() || defaultAsOf;
-  const emptyV4Snapshot = createEmptySourceV4WorkspaceSnapshot(asOfDateIso);
+  const emptyV4Snapshot = createEmptySourceV4WorkspaceSnapshot(
+    asOfDateIso,
+    tenantKey.includes("meridian")
+      ? {
+          datasetId: "meridian-health-source-v1-202608",
+          datasetLabel: "Meridian Health Source v1",
+        }
+      : undefined,
+  );
 
   const portfolio = tenantKey
     ? await loadSourceWorkspacePortfolio(tenantKey, asOfDateIso)
@@ -96,9 +107,11 @@ export default async function SourceWorkspacePreviewPage({
 
   const tenantName =
     canonicalClientDisplayName({
-      key: activeClient?.key,
-      name: activeClient?.name,
-    }) ?? "AbarVa Client";
+      key: tenantKey,
+      name: activeClient?.name ?? tenant?.displayName,
+    }) ??
+    tenant?.displayName ??
+    "AbarVa Client";
 
   return (
     <div

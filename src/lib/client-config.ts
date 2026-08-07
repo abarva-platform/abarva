@@ -10,7 +10,7 @@ export interface ClientOption {
 
 export const DEMO_SAFE_CLIENT_NAMES = {
   apexretail: "Retail Demo",
-  meridian: "Healthcare Demo",
+  meridian: "Meridian Health",
   arcturus: "FS Demo",
   northstar: "Clinical Technology Demo",
   skyharbor: "SkyHarbor Global",
@@ -472,7 +472,7 @@ const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
   "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
   "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
   "anandshp@gmail.com": "lakeshore",
-  "admin@abarva.ai": "arcturus", // First Capital Financial
+  "admin@abarva.ai": "meridian",
   "anand@abarva.ai": "skyharbor",
   "mreddy@republicebank.com": "arcturus", // Madhu Reddy · Republic E Bank / Financial Services pilot
 };

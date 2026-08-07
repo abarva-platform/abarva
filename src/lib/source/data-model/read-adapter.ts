@@ -13,7 +13,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
+import {
+  appClientKeyForTenant,
+  canonicalTenantKey,
+  tenantAliasesFor,
+} from "@/lib/tenant/aliases";
 import {
   buildContractOptimizationEvidencePack,
   type ContractOptimizationEvidenceItem,
@@ -35,6 +39,13 @@ import type {
 
 type NumericRow = Record<string, unknown>;
 
+function isMeridianTenantKey(tenantKey: string): boolean {
+  return (
+    appClientKeyForTenant(tenantKey) === "meridian" ||
+    tenantKey.trim().toLowerCase() === "meridian_health_global"
+  );
+}
+
 /**
  * Resolve tenant aliases through the shared tenant service. Source data-model
  * readers must not carry tenant-specific alias lists because the same contract
@@ -42,10 +53,13 @@ type NumericRow = Record<string, unknown>;
  * classes. Unknown tenants intentionally pass through as exact keys.
  */
 function tenantKeyAliases(tenantKey: string): string[] {
-  return tenantAliasesFor(tenantKey);
+  const aliases = tenantAliasesFor(tenantKey);
+  if (isMeridianTenantKey(tenantKey)) aliases.push("meridian_health_global");
+  return Array.from(new Set(aliases));
 }
 
 function tenantRlsKey(tenantKey: string): string {
+  if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
   return canonicalTenantKey(tenantKey);
 }
 
@@ -75,6 +89,26 @@ async function safeQueryForTenant<R>(
   }
 }
 
+async function meridianCanaryRows<R>(
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  return azureRead.query<R>(sql, ["meridian_health_global", ...params], {
+    missingTable: "empty",
+  });
+}
+
+async function withMeridianFallback<R>(
+  tenantKey: string,
+  legacyRead: () => Promise<R[]>,
+  canaryRead: () => Promise<R[]>,
+): Promise<R[]> {
+  if (!isMeridianTenantKey(tenantKey)) return legacyRead();
+  const canaryRows = await canaryRead();
+  if (canaryRows.length > 0) return canaryRows;
+  return legacyRead();
+}
+
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
@@ -87,9 +121,90 @@ export async function listContractVendor360(
 export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
-  return queryForTenant<SourceContract360Row>(
+  return withMeridianFallback(
     tenantKey,
-    "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    () =>
+      queryForTenant<SourceContract360Row>(
+        tenantKey,
+        "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+      ),
+    () =>
+      meridianCanaryRows<SourceContract360Row>(
+        `with spend as (
+           select contract_family_id, sum(line_amount)::numeric as actual_annual_spend
+             from foundation_v2_meridian_health_cube_canary.meridian_health_spend_invoice_history_v1
+            where tenant_key = $1
+            group by contract_family_id
+         ),
+         scope as (
+           select
+             cs.contract_family_id,
+             count(*)::int as scoped_application_count,
+             count(*) filter (where lower(coalesce(app.criticality, '')) in ('critical', 'high'))::int as critical_application_count,
+             avg(cs.relationship_confidence)::numeric as source_confidence
+            from foundation_v2_meridian_health_cube_canary.meridian_health_contract_scope_v1 cs
+            left join foundation_v2_meridian_health_cube_canary.meridian_health_application_dependency_v1 app
+              on app.tenant_key = cs.tenant_key
+             and app.application_id = cs.application_ref
+           where cs.tenant_key = $1
+           group by cs.contract_family_id
+         ),
+         perf as (
+           select
+             contract_id,
+             sum(p1_count + p2_count)::int as cloud_sev1_sev2_incidents
+            from foundation_v2_meridian_health_cube_canary.meridian_health_sla_itsm_performance_v1
+           where tenant_key = $1
+           group by contract_id
+         )
+         select
+           cf.tenant_key,
+           cf.contract_family_id as contract_id,
+           cf.vendor_id as vendor_ref,
+           coalesce(v.legal_name, cf.vendor_id) as vendor_name,
+           v.supplier_category as vendor_category,
+           cf.contract_name,
+           concat_ws(' · ',
+             nullif(v.supplier_category, ''),
+             nullif(v.risk_tier, ''),
+             nullif(cf.evidence_tier, '')
+           ) as scope_summary,
+           coalesce(sp.actual_annual_spend, cf.synthetic_midpoint_total_contract_value / 5.0) as annual_value,
+           cf.synthetic_midpoint_total_contract_value as total_committed_value,
+           coalesce(sp.actual_annual_spend, cf.synthetic_midpoint_total_contract_value / 5.0) as committed_annual_spend,
+           sp.actual_annual_spend,
+           null::date as end_date,
+           null::int as notice_period_days,
+           false as auto_renew,
+           cf.renewal_window as renewal_decision_state,
+           null::text as renewal_owner_ref,
+           case when cf.sla_term_count > 0 then 'SLA and credit terms present in governed contract-family projection.' else null end as benchmarking_clause,
+           cf.renewal_window as exit_rights_summary,
+           null::text as alternatives_available,
+           v.risk_tier as concentration_note,
+           scope.source_confidence,
+           coalesce(sp.actual_annual_spend, cf.synthetic_midpoint_total_contract_value / 5.0) as resolved_annual_value,
+           cf.synthetic_midpoint_total_contract_value as resolved_total_committed_value,
+           false as annual_value_conflict_flag,
+           false as total_committed_value_conflict_flag,
+           coalesce(scope.scoped_application_count, 0) as scoped_application_count,
+           coalesce(scope.critical_application_count, 0) as critical_application_count,
+           null::numeric as linked_budget_amount,
+           sp.actual_annual_spend as linked_actual_amount,
+           null::int as linked_budget_lines,
+           coalesce(perf.cloud_sev1_sev2_incidents, 0) as cloud_sev1_sev2_incidents,
+           false as operational_evidence_gap,
+           0 as initiative_dependency_count
+          from foundation_v2_meridian_health_cube_canary.meridian_health_contract_family_v1 cf
+          left join foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1 v
+            on v.tenant_key = cf.tenant_key
+           and v.vendor_id = cf.vendor_id
+          left join spend sp on sp.contract_family_id = cf.contract_family_id
+          left join scope on scope.contract_family_id = cf.contract_family_id
+          left join perf on perf.contract_id = cf.contract_family_id
+         where cf.tenant_key = $1
+         order by annual_value desc nulls last`,
+      ),
   );
 }
 
@@ -108,9 +223,34 @@ export async function getContract360(
 export async function listVendorContractPortfolio(
   tenantKey: string,
 ): Promise<SourceVendorContractPortfolioRow[]> {
-  return queryForTenant<SourceVendorContractPortfolioRow>(
+  return withMeridianFallback(
     tenantKey,
-    "SELECT * FROM source.vendor_contract_portfolio WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    () =>
+      queryForTenant<SourceVendorContractPortfolioRow>(
+        tenantKey,
+        "SELECT * FROM source.vendor_contract_portfolio WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+      ),
+    () =>
+      meridianCanaryRows<SourceVendorContractPortfolioRow>(
+        `select
+           v.tenant_key,
+           v.vendor_id as vendor_ref,
+           v.legal_name as vendor_name,
+           v.supplier_category as vendor_category,
+           v.contract_family_count as contract_count,
+           v.invoice_line_amount as annual_value,
+           coalesce(sum(cf.synthetic_midpoint_total_contract_value), v.invoice_line_amount) as total_committed_value,
+           0 as auto_renew_contracts,
+           null::date as next_end_date,
+           coalesce(array_agg(cf.contract_family_id order by cf.contract_family_id) filter (where cf.contract_family_id is not null), '{}'::text[]) as contract_refs
+          from foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1 v
+          left join foundation_v2_meridian_health_cube_canary.meridian_health_contract_family_v1 cf
+            on cf.tenant_key = v.tenant_key
+           and cf.vendor_id = v.vendor_id
+         where v.tenant_key = $1
+         group by v.tenant_key, v.vendor_id, v.legal_name, v.supplier_category, v.contract_family_count, v.invoice_line_amount
+         order by annual_value desc nulls last`,
+      ),
   );
 }
 
@@ -119,15 +259,61 @@ export async function listContractApplicationScope(
   contractId?: string,
 ): Promise<SourceContractApplicationScopeRow[]> {
   if (contractId) {
-    return queryForTenant<SourceContractApplicationScopeRow>(
+    return withMeridianFallback(
       tenantKey,
-      "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[]) AND contract_id = $2",
-      [contractId],
+      () =>
+        queryForTenant<SourceContractApplicationScopeRow>(
+          tenantKey,
+          "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[]) AND contract_id = $2",
+          [contractId],
+        ),
+      () => listMeridianCanaryContractApplicationScope(contractId),
     );
   }
-  return queryForTenant<SourceContractApplicationScopeRow>(
+  return withMeridianFallback(
     tenantKey,
-    "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[])",
+    () =>
+      queryForTenant<SourceContractApplicationScopeRow>(
+        tenantKey,
+        "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[])",
+      ),
+    () => listMeridianCanaryContractApplicationScope(),
+  );
+}
+
+function listMeridianCanaryContractApplicationScope(
+  contractId?: string,
+): Promise<SourceContractApplicationScopeRow[]> {
+  const filter = contractId ? "and cs.contract_family_id = $2" : "";
+  return meridianCanaryRows<SourceContractApplicationScopeRow>(
+    `select
+       cs.tenant_key,
+       cs.contract_family_id as contract_id,
+       cs.vendor_id as vendor_ref,
+       coalesce(v.legal_name, cs.vendor_id) as vendor_name,
+       coalesce(cs.application_ref, cs.business_service_ref, cs.contracted_service_id) as application_ref,
+       coalesce(app.application_name, cs.application_ref, cs.business_service_ref, cs.contracted_service_id) as application_name,
+       app.owner_function as business_function,
+       app.owner_function as function_ref,
+       app.criticality,
+       app.lifecycle as lifecycle_state,
+       null::text as hosting_model,
+       null::numeric as annual_run_cost,
+       app.lifecycle as modernization_plan,
+       null::text as sla_tier,
+       cs.business_service_ref as known_pain_risk,
+       cs.ci_ref as it_portfolio_ref
+      from foundation_v2_meridian_health_cube_canary.meridian_health_contract_scope_v1 cs
+      left join foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1 v
+        on v.tenant_key = cs.tenant_key
+       and v.vendor_id = cs.vendor_id
+      left join foundation_v2_meridian_health_cube_canary.meridian_health_application_dependency_v1 app
+        on app.tenant_key = cs.tenant_key
+       and app.application_id = cs.application_ref
+     where cs.tenant_key = $1
+       ${filter}
+     order by cs.relationship_confidence desc nulls last, application_name`,
+    contractId ? [contractId] : [],
   );
 }
 
