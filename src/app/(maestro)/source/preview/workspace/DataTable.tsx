@@ -48,7 +48,7 @@ export function DataTable({ title, note, binding, footnote, columns, rows }: Dat
         </div>
       ) : null}
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr>
               {columns.map((c, i) => (
@@ -93,6 +93,7 @@ export function DataTable({ title, note, binding, footnote, columns, rows }: Dat
                       fontVariantNumeric: 'tabular-nums',
                       whiteSpace: cell.wrap ? 'normal' : 'nowrap',
                       lineHeight: 1.45,
+                      minWidth: ci < 2 ? 150 : undefined,
                     }}
                   >
                     {cell.text}

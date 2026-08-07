@@ -139,6 +139,18 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     const vm = buildVm({});
     const ex = vm.explore(vm.enrich());
     expect(ex.groups.every((g) => g.labelColor === "#0a0a0b")).toBe(true);
+    expect(ex.intentTitle).toMatch(/leadership conversation/i);
+    expect(ex.emptySelectionCopy).toMatch(/Pick a vendor, urgency/i);
+    expect(ex.chartInstruction).toMatch(/Click a row to narrow/i);
+    expect(ex.quality.showBanner).toBe(false);
+    expect(ex.boxes.map((box) => box.id)).toEqual([
+      "urgency",
+      "benchmark",
+      "alternatives",
+      "autoRenew",
+      "weak",
+    ]);
+    expect(ex.boxes.map((box) => box.id)).not.toContain("category");
   });
 
   it("selecting Vendor = Salesforce shows only the Salesforce bucket by default", () => {

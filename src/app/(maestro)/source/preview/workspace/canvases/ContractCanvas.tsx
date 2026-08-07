@@ -42,7 +42,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               <div style={{ fontSize: 14.5, fontWeight: 600, color: '#0a0a0b', marginBottom: 8 }}>{vm.recAction}</div>
               <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.6, marginBottom: 14 }}>{vm.recWhy}</div>
               <button onClick={vm.goActions} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Open optimization cockpit →
+                Review Door 1 optimization →
               </button>
             </div>
           </div>
@@ -253,9 +253,9 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
           ) : null}
 
-          <EvidenceLineageGraph vm={vm} />
-
           <SourceSystemEvidenceMap vm={vm} />
+
+          <EvidenceLineageGraph vm={vm} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
             {vm.optLevers.map((l, i) => (
@@ -515,12 +515,15 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
       <div style={{ padding: '16px 24px 12px', borderBottom: '1px solid rgba(10,10,11,.12)', fontSize: 14.5, fontWeight: 600, color: '#0a0a0b' }}>
         Document evidence ({d.docExtractions.length})
       </div>
+      <div style={{ padding: '12px 24px', borderBottom: '1px solid rgba(10,10,11,.08)', background: '#fbfaf7', fontSize: 12.5, lineHeight: 1.55, color: '#5f5e5a' }}>
+        Overview and Renewal use governed register facts from <b style={{ color: '#2c2c2a' }}>source.contract_360</b>. The rows below are document-extraction facts from <b style={{ color: '#2c2c2a' }}>doc.extraction</b>; &quot;No document value extracted&quot; means the extractor did not find that concept in the current file, not that the register fact is missing.
+      </div>
       {d.docExtractions.length ? (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {d.docExtractions.map((e) => (
             <div key={e.extraction_id} style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'baseline', padding: '13px 24px', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#0a0a0b', minWidth: 160 }}>{e.concept_ref}</span>
-              <span style={{ fontSize: 12.5, color: '#5f5e5a', flex: 1, minWidth: 240 }}>{e.value_text ?? (e.value_num != null ? String(e.value_num) : 'No value extracted')}</span>
+              <span style={{ fontSize: 12.5, color: '#5f5e5a', flex: 1, minWidth: 240 }}>{e.value_text ?? (e.value_num != null ? String(e.value_num) : 'No document value extracted')}</span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#b4b2a9' }}>{e.source_file_id ?? '—'}{e.source_page != null ? ' · p.' + e.source_page : ''}</span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: e.review_state === 'accepted' ? '#1d9e75' : '#ba7517' }}>{e.review_state ?? 'unreviewed'}</span>
             </div>
