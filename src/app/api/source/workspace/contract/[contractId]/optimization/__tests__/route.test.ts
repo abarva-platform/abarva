@@ -1,0 +1,66 @@
+import { __test__ } from '../route';
+import type { SourceEventRow } from '@/lib/source/queries';
+
+function event(overrides: Partial<SourceEventRow>): SourceEventRow {
+  return {
+    id: 'event-1',
+    client_key: 'client-a',
+    event_code: 'CLIE-AMS-SOURCING-2026-CTR090',
+    event_name: 'Client A AMS Sourcing Event',
+    event_type: 'managed_service',
+    sourcing_motion: 'contract_optimization',
+    current_stage_key: 'strategy',
+    lifecycle_state: 'waiting_on_client',
+    linked_program_id: null,
+    estimated_value_usd: null,
+    trigger_description: null,
+    scope_description: null,
+    decision_owner: null,
+    created_by_user_id: null,
+    created_at: '2026-08-07T00:00:00.000Z',
+    updated_at: '2026-08-07T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+const selectedContract = {
+  contract_id: 'CTR-090',
+  contract_name: 'Sales Platform Agreement 3',
+  vendor_name: 'Northstar Software',
+};
+
+describe('Source workspace contract optimization route helpers', () => {
+  it('rejects a stale optimization event that only shares the contract id', () => {
+    const staleEvent = event({
+      event_name: 'Client A AMS Sourcing Event',
+      trigger_description: 'Optimize Crestline managed services scope.',
+      scope_description: 'Contract ref: CTR-090.',
+    });
+
+    expect(__test__.optimizationEventMatchesContract(staleEvent, selectedContract)).toBe(false);
+  });
+
+  it('accepts only a contract optimization event scoped to the selected vendor and contract', () => {
+    const matchingEvent = event({
+      event_code: 'CLIE-NORTHSTAR-SALES-PLATFORM-2026-CTR090NO',
+      event_name: 'Northstar Software - Sales Platform Agreement 3 Contract Optimization',
+      trigger_description:
+        'Optimize incumbent contract CTR-090: Northstar Software - Sales Platform Agreement 3.',
+      scope_description: 'Contract ref: CTR-090. Use governed contract evidence.',
+    });
+
+    expect(__test__.optimizationEventMatchesContract(matchingEvent, selectedContract)).toBe(true);
+  });
+
+  it('keeps generated event identity specific to vendor and contract', () => {
+    expect(__test__.optimizationEventName({
+      contractId: 'CTR-090',
+      contractName: 'Sales Platform Agreement 3',
+      vendorName: 'Northstar Software',
+    })).toBe('Northstar Software - Sales Platform Agreement 3 Contract Optimization');
+    expect(__test__.optimizationCreationRequestId({
+      contractId: 'CTR-090',
+      vendorName: 'Northstar Software',
+    })).toBe('CTR090NO');
+  });
+});

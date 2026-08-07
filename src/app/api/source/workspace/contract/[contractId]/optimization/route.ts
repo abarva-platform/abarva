@@ -68,7 +68,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
   const financialExposureRows = await listContractFinancialExposure(clientKey).catch(() => []);
   const financialExposure = financialExposureRows.find((row) => row.contract_id === contract.contract_id) ?? null;
 
-  const existing = await findExistingOptimizationEvent(clientKey, contract.contract_id);
+  const existing = await findExistingOptimizationEvent(clientKey, contract);
   const event = existing ?? await createOptimizationEvent({
     clientKey,
     userId: tenancy.userId,
@@ -80,6 +80,19 @@ export async function POST(_request: Request, { params }: RouteContext) {
     actualAnnualSpend: contract.actual_annual_spend,
     renewalOwnerRef: contract.renewal_owner_ref,
   });
+  if (!optimizationEventMatchesContract(event, contract)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'optimization_event_contract_mismatch',
+        detail: 'The existing or created Door 1 event does not match the selected contract. No navigation was performed.',
+        contractId: contract.contract_id,
+        vendorName: contract.vendor_name,
+        contractName: contract.contract_name,
+      },
+      { status: 409, headers: { 'cache-control': 'no-store' } },
+    );
+  }
 
   await persistBaselineFacts({
     event,
@@ -98,6 +111,9 @@ export async function POST(_request: Request, { params }: RouteContext) {
       eventId: event.id,
       eventCode: event.event_code,
       eventName: event.event_name,
+      contractId: contract.contract_id,
+      vendorName: contract.vendor_name,
+      contractName: contract.contract_name,
       sourcingMotion: MOTION,
       approvalUrl: `/source/events/${event.id}/approval`,
       eventUrl: `/source/events/${event.id}?stage=Strategy`,
@@ -109,19 +125,37 @@ export async function POST(_request: Request, { params }: RouteContext) {
 
 async function findExistingOptimizationEvent(
   clientKey: string,
-  contractId: string,
+  contract: OptimizationContractIdentity,
 ): Promise<SourceEventRow | null> {
   const rows = await selectSourceEventsReadAdapter(undefined, clientKey)
     .getActiveEventsForClient(clientKey)
     .catch(() => []);
-  const contractPattern = new RegExp(`\\b${escapeRegExp(contractId)}\\b`, 'i');
-  const event = rows.find((row) => {
-    const haystack = [row.event_name, row.trigger_description, row.scope_description, row.event_code]
-      .filter(Boolean)
-      .join(' ');
-    return row.sourcing_motion === MOTION && contractPattern.test(haystack);
-  });
+  const event = rows.find((row) => optimizationEventMatchesContract(row as SourceEventRow, contract));
   return (event as SourceEventRow | undefined) ?? null;
+}
+
+interface OptimizationContractIdentity {
+  readonly contract_id: string;
+  readonly contract_name: string;
+  readonly vendor_name: string;
+}
+
+function optimizationEventMatchesContract(
+  event: SourceEventRow,
+  contract: OptimizationContractIdentity,
+): boolean {
+  if (event.sourcing_motion !== MOTION) return false;
+  const eventName = normalizeIdentityText(event.event_name);
+  const triggerDescription = normalizeIdentityText(event.trigger_description ?? '');
+  const scopeDescription = normalizeIdentityText(event.scope_description ?? '');
+  return (
+    hasIdentityPhrase(eventName, contract.vendor_name) &&
+    hasIdentityPhrase(eventName, contract.contract_name) &&
+    hasIdentityPhrase(triggerDescription, contract.contract_id) &&
+    hasIdentityPhrase(triggerDescription, contract.vendor_name) &&
+    hasIdentityPhrase(triggerDescription, contract.contract_name) &&
+    hasIdentityPhrase(scopeDescription, contract.contract_id)
+  );
 }
 
 async function createOptimizationEvent(input: {
@@ -138,7 +172,7 @@ async function createOptimizationEvent(input: {
   const eventType = inferEventType(input.vendorCategory, input.contractName);
   const event = await createSourcingEvent({
     clientKey: input.clientKey,
-    eventName: `${input.contractId} Contract Optimization - ${input.vendorName}`,
+    eventName: optimizationEventName(input),
     eventType,
     sourcingMotion: MOTION,
     triggerDescription:
@@ -149,7 +183,7 @@ async function createOptimizationEvent(input: {
       'document evidence, and Tower value claims as the starting evidence pack. Do not claim realized value until Tower/Finance confirms it.',
     estimatedValueUsd: undefined,
     createdByUserId: input.userId ?? undefined,
-    creationRequestId: input.contractId,
+    creationRequestId: optimizationCreationRequestId(input),
   });
 
   if (input.userId) {
@@ -163,6 +197,29 @@ async function createOptimizationEvent(input: {
     }
   }
   return event;
+}
+
+function optimizationEventName(input: {
+  readonly contractId: string;
+  readonly contractName: string;
+  readonly vendorName: string;
+}): string {
+  return `${input.vendorName} - ${input.contractName} Contract Optimization`;
+}
+
+function optimizationCreationRequestId(input: {
+  readonly contractId: string;
+  readonly vendorName: string;
+}): string {
+  const vendor = input.vendorName
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 2);
+  const contract = input.contractId
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 6);
+  return [contract, vendor].filter(Boolean).join('');
 }
 
 async function persistBaselineFacts(input: {
@@ -307,6 +364,21 @@ function finiteOrNull(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function hasIdentityPhrase(haystack: string, value: string): boolean {
+  const needle = normalizeIdentityText(value);
+  return needle.length > 0 && ` ${haystack} `.includes(` ${needle} `);
 }
+
+function normalizeIdentityText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+export const __test__ = {
+  optimizationCreationRequestId,
+  optimizationEventMatchesContract,
+  optimizationEventName,
+};

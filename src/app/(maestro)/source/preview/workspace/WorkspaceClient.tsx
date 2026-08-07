@@ -69,9 +69,12 @@ export function WorkspaceClient({
         if (!r.ok || !payload?.ok) {
           throw new Error(payload?.detail ?? payload?.error ?? `Source returned ${r.status}`);
         }
-        return payload as { approvalUrl?: string; eventUrl?: string; eventId?: string };
+        return payload as { approvalUrl?: string; contractId?: string; eventUrl?: string; eventId?: string };
       })
       .then((payload) => {
+        if (payload.contractId !== contractId) {
+          throw new Error('Door 1 returned a different contract. The workflow was not opened.');
+        }
         window.location.href = payload.approvalUrl ?? payload.eventUrl ?? `/source/events/${payload.eventId ?? ''}`;
       })
       .catch((err) => {
