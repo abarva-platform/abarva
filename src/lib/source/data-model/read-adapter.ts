@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
 import type {
   DocExtractionRow,
   SourceApplicationVendorExposureRow,
@@ -29,33 +30,17 @@ import type {
 } from "./types";
 
 /**
- * Known tenant_key spellings for the same real-world SkyHarbor tenant across
- * different parts of this codebase. The app resolves the active client key
- * as `skyharbor` or `skyharbor-air` (see src/lib/client-config.ts and the
- * contract-optimization load script's DEFAULT_TENANT_KEY), but the source,
- * tower, and doc schemas were verified against a real export under
- * `tenant_key = 'skyharbor_global'` (see types.ts header). Querying by exact
- * match on whichever spelling the caller happens to have produces a silent,
- * honest-looking empty result — not an error — so this alias resolution is
- * required, not optional, for this data model to ever return real rows.
+ * Resolve tenant aliases through the shared tenant service. Source data-model
+ * readers must not carry tenant-specific alias lists because the same contract
+ * optimization capability has to run for every tenant over the same evidence
+ * classes. Unknown tenants intentionally pass through as exact keys.
  */
-const SKYHARBOR_TENANT_ALIASES: readonly string[] = [
-  "skyharbor",
-  "skyharbor-air",
-  "skyharbor_global",
-];
-
 function tenantKeyAliases(tenantKey: string): string[] {
-  const normalized = tenantKey.trim().toLowerCase();
-  if (!SKYHARBOR_TENANT_ALIASES.includes(normalized)) return [normalized];
-  return [...SKYHARBOR_TENANT_ALIASES];
+  return tenantAliasesFor(tenantKey);
 }
 
 function tenantRlsKey(tenantKey: string): string {
-  const normalized = tenantKey.trim().toLowerCase();
-  return SKYHARBOR_TENANT_ALIASES.includes(normalized)
-    ? "skyharbor_global"
-    : normalized;
+  return canonicalTenantKey(tenantKey);
 }
 
 async function queryForTenant<R>(

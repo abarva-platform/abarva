@@ -14,6 +14,18 @@ export type ContractOptimizationLedgerState =
   | 'workflow_required'
   | 'not_established';
 
+export type ContractOptimizationEvidenceStatus =
+  | 'EVIDENCE_AVAILABLE'
+  | 'EVIDENCE_MISSING'
+  | 'WORKFLOW_REQUIRED'
+  | 'NOT_ESTABLISHED';
+
+export type ContractOptimizationState =
+  | 'EVIDENCE_MISSING'
+  | 'WORKFLOW_REQUIRED'
+  | 'READY_FOR_REVIEW'
+  | 'VALUE_CONFIRMED';
+
 export interface ContractOptimizationLedgerLine {
   readonly id: string;
   readonly kind: ContractOptimizationLedgerKind;
@@ -32,12 +44,34 @@ export interface ContractOptimizationLedgerSummary {
   readonly evidenceReadyCount: number;
   readonly evidenceGapCount: number;
   readonly headline: string;
+  readonly decisionRecord: ContractOptimizationDecisionRecord;
+}
+
+export interface ContractOptimizationDecisionRecord {
+  readonly tenant_key: string | null;
+  readonly dataset_version: string;
+  readonly contract_id: string | null;
+  readonly vendor_id: string | null;
+  readonly optimization_state: ContractOptimizationState;
+  readonly recoverable_leakage: number | null;
+  readonly avoided_cost: number | null;
+  readonly negotiated_improvement: number | null;
+  readonly realized_value: number | null;
+  readonly evidence_status: Readonly<Record<ContractOptimizationLedgerKind, ContractOptimizationEvidenceStatus>>;
+  readonly evidence_refs: readonly string[];
+  readonly confidence: number | null;
+  readonly owner: string | null;
+  readonly next_action: string;
+  readonly door1_event_id: string | null;
+  readonly tower_claim_refs: readonly string[];
 }
 
 export function buildContractOptimizationLedger(input: {
   readonly view: Contract360View | null;
   readonly contract?: SourceContract360Row | null;
   readonly leverage: ContractLeverageEntry | null;
+  readonly datasetVersion?: string;
+  readonly door1EventId?: string | null;
 }): ContractOptimizationLedgerSummary {
   const { view, leverage } = input;
   const c = view?.contract ?? input.contract ?? null;
@@ -162,7 +196,79 @@ export function buildContractOptimizationLedger(input: {
       quantifiedLeakageUsd > 0
         ? `${formatUsd(quantifiedLeakageUsd)} recoverable leakage is visible before Door 1 approval.`
         : 'No recoverable leakage is quantified yet; Door 1 must collect the missing evidence before sizing value.',
+    decisionRecord: buildDecisionRecord({
+      c,
+      lines,
+      quantifiedLeakageUsd,
+      realizedValueUsd,
+      datasetVersion: input.datasetVersion ?? 'unknown',
+      door1EventId: input.door1EventId ?? null,
+      towerClaimRefs: view?.towerValueClaims.map((claim) => claim.claim_id) ?? [],
+    }),
   };
+}
+
+function buildDecisionRecord(input: {
+  readonly c: SourceContract360Row | null;
+  readonly lines: readonly ContractOptimizationLedgerLine[];
+  readonly quantifiedLeakageUsd: number;
+  readonly realizedValueUsd: number;
+  readonly datasetVersion: string;
+  readonly door1EventId: string | null;
+  readonly towerClaimRefs: readonly string[];
+}): ContractOptimizationDecisionRecord {
+  const statusByKind = ledgerEvidenceStatus(input.lines);
+  const next = input.lines.find((line) => line.state === 'needs_evidence') ?? input.lines.find((line) => line.state === 'workflow_required') ?? input.lines[0];
+  return {
+    tenant_key: input.c?.tenant_key ?? null,
+    dataset_version: input.datasetVersion,
+    contract_id: input.c?.contract_id ?? null,
+    vendor_id: input.c?.vendor_ref ?? null,
+    optimization_state: optimizationState(input.lines, input.realizedValueUsd),
+    recoverable_leakage: input.quantifiedLeakageUsd > 0 ? input.quantifiedLeakageUsd : null,
+    avoided_cost: null,
+    negotiated_improvement: null,
+    realized_value: input.realizedValueUsd > 0 ? input.realizedValueUsd : null,
+    evidence_status: statusByKind,
+    evidence_refs: Array.from(new Set(input.lines.flatMap((line) => line.sourceRefs))),
+    confidence: finiteOrNull(input.c?.source_confidence),
+    owner: input.c?.renewal_owner_ref ?? null,
+    next_action: next?.nextAction ?? 'Collect governed evidence before opening the optimization decision.',
+    door1_event_id: input.door1EventId,
+    tower_claim_refs: input.towerClaimRefs,
+  };
+}
+
+function ledgerEvidenceStatus(
+  lines: readonly ContractOptimizationLedgerLine[],
+): Readonly<Record<ContractOptimizationLedgerKind, ContractOptimizationEvidenceStatus>> {
+  return {
+    recoverable_leakage: evidenceStatusForKind(lines, 'recoverable_leakage'),
+    avoided_cost: evidenceStatusForKind(lines, 'avoided_cost'),
+    negotiated_improvement: evidenceStatusForKind(lines, 'negotiated_improvement'),
+    realized_value: evidenceStatusForKind(lines, 'realized_value'),
+  };
+}
+
+function evidenceStatusForKind(
+  lines: readonly ContractOptimizationLedgerLine[],
+  kind: ContractOptimizationLedgerKind,
+): ContractOptimizationEvidenceStatus {
+  const kindLines = lines.filter((line) => line.kind === kind);
+  if (kindLines.some((line) => line.state === 'quantified')) return 'EVIDENCE_AVAILABLE';
+  if (kindLines.some((line) => line.state === 'workflow_required')) return 'WORKFLOW_REQUIRED';
+  if (kindLines.some((line) => line.state === 'needs_evidence')) return 'EVIDENCE_MISSING';
+  return 'NOT_ESTABLISHED';
+}
+
+function optimizationState(
+  lines: readonly ContractOptimizationLedgerLine[],
+  realizedValueUsd: number,
+): ContractOptimizationState {
+  if (realizedValueUsd > 0) return 'VALUE_CONFIRMED';
+  if (lines.some((line) => line.state === 'needs_evidence')) return 'EVIDENCE_MISSING';
+  if (lines.some((line) => line.state === 'workflow_required')) return 'WORKFLOW_REQUIRED';
+  return 'READY_FOR_REVIEW';
 }
 
 function isClaimableState(value: string | null | undefined): boolean {

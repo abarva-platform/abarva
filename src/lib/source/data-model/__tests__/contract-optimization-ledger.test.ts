@@ -151,6 +151,22 @@ describe('buildContractOptimizationLedger', () => {
       amountUsd: null,
       state: 'needs_evidence',
     });
+    expect(ledger.decisionRecord).toMatchObject({
+      tenant_key: 'skyharbor_global',
+      dataset_version: 'unknown',
+      contract_id: 'CTR-091',
+      vendor_id: 'salesforce',
+      optimization_state: 'EVIDENCE_MISSING',
+      recoverable_leakage: 340_000,
+      avoided_cost: null,
+      negotiated_improvement: null,
+      realized_value: null,
+      owner: 'role-vendor-management',
+      door1_event_id: null,
+    });
+    expect(ledger.decisionRecord.evidence_status.recoverable_leakage).toBe('EVIDENCE_AVAILABLE');
+    expect(ledger.decisionRecord.evidence_status.avoided_cost).toBe('WORKFLOW_REQUIRED');
+    expect(ledger.decisionRecord.evidence_status.negotiated_improvement).toBe('WORKFLOW_REQUIRED');
   });
 
   it('does not turn annual-to-actual variance into avoided cost without classification evidence', () => {
@@ -164,6 +180,8 @@ describe('buildContractOptimizationLedger', () => {
       amountUsd: null,
       state: 'workflow_required',
     });
+    expect(ledger.decisionRecord.avoided_cost).toBeNull();
+    expect(ledger.decisionRecord.evidence_status.avoided_cost).toBe('WORKFLOW_REQUIRED');
   });
 
   it('recognizes only finance-cleared Tower claims as realized value', () => {
@@ -187,5 +205,37 @@ describe('buildContractOptimizationLedger', () => {
       amountUsd: 125_000,
       state: 'quantified',
     });
+    expect(ledger.decisionRecord.realized_value).toBe(125_000);
+    expect(ledger.decisionRecord.tower_claim_refs).toEqual(['accepted', 'draft']);
+  });
+
+  it('keeps the shared decision record tenant-neutral for a non-SkyHarbor contract', () => {
+    const ledger = buildContractOptimizationLedger({
+      view: null,
+      contract: contract({
+        tenant_key: 'meridian-health',
+        contract_id: 'MER-CTR-001',
+        vendor_ref: 'workday',
+        vendor_name: 'Workday',
+        source_confidence: 0.72,
+      }),
+      leverage: null,
+      datasetVersion: 'v4-portability',
+      door1EventId: 'door1-meridian-001',
+    });
+
+    expect(ledger.decisionRecord).toMatchObject({
+      tenant_key: 'meridian-health',
+      dataset_version: 'v4-portability',
+      contract_id: 'MER-CTR-001',
+      vendor_id: 'workday',
+      recoverable_leakage: null,
+      avoided_cost: null,
+      negotiated_improvement: null,
+      realized_value: null,
+      confidence: 0.72,
+      door1_event_id: 'door1-meridian-001',
+    });
+    expect(ledger.decisionRecord.tenant_key).not.toBe('skyharbor_global');
   });
 });
