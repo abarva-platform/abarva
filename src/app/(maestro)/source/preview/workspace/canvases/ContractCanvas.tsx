@@ -179,7 +179,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: '#0a0a0b', marginBottom: 5 }}>{vm.optLedger.headline}</div>
                   <div style={{ fontSize: 12.5, lineHeight: 1.55, color: '#5f5e5a' }}>
-                    Recoverable leakage, avoided cost, negotiated improvement, and realized value stay separate. Exposure is not savings; realized value requires Tower / Finance proof.
+                    Recoverable leakage, avoided cost, negotiated improvement, and realized value stay separate. Governed extracts and documents can start the cockpit; APIs can replace repeat feeds later.
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -215,17 +215,31 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                   <div style={{ flexBasis: '100%', color: '#a32d2d', fontSize: 12.5, lineHeight: 1.5 }}>{vm.optCtaError}</div>
                 ) : null}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
                 {vm.optLedger.lines.map((line) => (
                   <div key={line.id} style={{ padding: '16px 20px', borderRight: '1px solid rgba(10,10,11,.08)', borderBottom: '1px solid rgba(10,10,11,.08)' }}>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', marginBottom: 9 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: line.tone, flexShrink: 0 }} />
-                      <span style={{ fontSize: 13.5, fontWeight: 700, color: '#0a0a0b' }}>{line.label}</span>
-                      <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: line.tone }}>{line.state}</span>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 9 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: line.tone, flexShrink: 0, marginTop: 5 }} />
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: '#0a0a0b', lineHeight: 1.35, minWidth: 0 }}>{line.label}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: line.tone, whiteSpace: 'nowrap' }}>{line.state}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: line.evidenceTone, border: `1px solid ${line.evidenceTone}`, borderRadius: 4, padding: '3px 7px', background: '#fff' }}>{line.evidenceClass}</span>
                     </div>
                     <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: '#0a0a0b', marginBottom: 9 }}>{line.amount}</div>
                     <div style={{ fontSize: 12.5, color: '#2c2c2a', lineHeight: 1.55, marginBottom: 10 }}>{line.evidence}</div>
                     <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.55, marginBottom: 10 }}><b style={{ color: '#2c2c2a' }}>Next.</b> {line.nextAction}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 6 }}>
+                      Drilldown lineage
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                      {line.lineageFields.slice(0, 5).map((field) => (
+                        <span key={field} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#5f5e5a', background: '#fff', border: '1px solid rgba(10,10,11,.1)', borderRadius: 3, padding: '3px 6px', overflowWrap: 'anywhere' }}>{field}</span>
+                      ))}
+                      {line.lineageFields.length > 5 ? (
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#888780', background: '#fff', border: '1px solid rgba(10,10,11,.08)', borderRadius: 3, padding: '3px 6px' }}>+{line.lineageFields.length - 5} more</span>
+                      ) : null}
+                    </div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {line.sourceRefs.slice(0, 3).map((ref) => (
                         <span key={ref} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#5f5e5a', background: '#f5f1eb', border: '1px solid rgba(10,10,11,.08)', borderRadius: 3, padding: '3px 6px' }}>{ref}</span>

@@ -16,6 +16,8 @@ It also adds a Source workspace bridge that starts or continues a Door 1 `contra
 
 Follow-up hardening makes the capability tenant-agnostic: SkyHarbor remains the canary dataset, but tenant aliasing comes from the shared tenant resolver, not from Source-specific branches, and the ledger service now emits a shared decision record for Door 1, Tower, aVa, and Vendor/Contract 360.
 
+This update adds procurement-grade provenance classes to every four-ledger line: `SYSTEM EVIDENCED`, `DOCUMENT EVIDENCED`, `HUMAN VALIDATED`, `INFERRED`, or `MISSING`. The UI also exposes the drilldown lineage fields required to trace a decision back to source records, reports, contract pages/spans, calculation rules, confidence, and review state.
+
 ## Layer Impact
 
 - `global-control-lane`: updates the shared Source workspace contract Optimization tab and Source workspace view model.
@@ -41,6 +43,8 @@ Follow-up hardening makes the capability tenant-agnostic: SkyHarbor remains the 
 - `scripts/source/audit-contract-optimization-evidence-readiness.mjs`: hardens the audit with the same shared tenant alias resolver and RLS tenant context used by the Source read adapters, so workflow facts are not undercounted when app-era and canonical tenant keys differ.
 - `src/lib/source/data-model/read-adapter.ts`, `source-v4-workspace-snapshot.ts`, and `scripts/source/audit-contract-optimization-evidence-readiness.mjs`: replace Source-local tenant alias lists with the shared tenant alias resolver.
 - `src/lib/source/data-model/contract-optimization-ledger.ts`: exposes the common tenant-neutral decision record with tenant key, dataset version, contract/vendor IDs, four value ledgers, evidence status, evidence refs, confidence, owner, next action, Door 1 event ID, and Tower claim refs.
+- `src/lib/source/data-model/contract-optimization-ledger.ts`: adds evidence provenance classes and required lineage fields per ledger line, without adding tenant-specific logic.
+- `src/app/(maestro)/source/preview/workspace/buildViewModel.ts` and `src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx`: surface evidence provenance badges and compact drilldown lineage chips in Vendor/Contract 360.
 - `package.json`: runs the evidence audit through `tsx` so it can use shared runtime tenant resolution.
 
 ## QA / Validation

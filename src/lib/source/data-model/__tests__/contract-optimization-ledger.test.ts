@@ -146,10 +146,12 @@ describe('buildContractOptimizationLedger', () => {
     expect(ledger.lines.find((line) => line.id === 'recoverable:sla-credit-gap')).toMatchObject({
       amountUsd: 340_000,
       state: 'quantified',
+      evidenceClass: 'system_evidenced',
     });
     expect(ledger.lines.find((line) => line.id === 'recoverable:invoice-rate-card')).toMatchObject({
       amountUsd: null,
       state: 'needs_evidence',
+      evidenceClass: 'missing',
     });
     expect(ledger.decisionRecord).toMatchObject({
       tenant_key: 'skyharbor_global',
@@ -167,6 +169,33 @@ describe('buildContractOptimizationLedger', () => {
     expect(ledger.decisionRecord.evidence_status.recoverable_leakage).toBe('EVIDENCE_AVAILABLE');
     expect(ledger.decisionRecord.evidence_status.avoided_cost).toBe('WORKFLOW_REQUIRED');
     expect(ledger.decisionRecord.evidence_status.negotiated_improvement).toBe('WORKFLOW_REQUIRED');
+    expect(ledger.lines.find((line) => line.id === 'negotiated:commercial-levers')).toMatchObject({
+      amountUsd: null,
+      state: 'workflow_required',
+      evidenceClass: 'document_evidenced',
+    });
+    expect(ledger.decisionRecord.evidence_classes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ledger_line_id: 'recoverable:sla-credit-gap',
+          kind: 'recoverable_leakage',
+          evidence_class: 'system_evidenced',
+        }),
+        expect.objectContaining({
+          ledger_line_id: 'recoverable:invoice-rate-card',
+          kind: 'recoverable_leakage',
+          evidence_class: 'missing',
+        }),
+        expect.objectContaining({
+          ledger_line_id: 'negotiated:commercial-levers',
+          kind: 'negotiated_improvement',
+          evidence_class: 'document_evidenced',
+        }),
+      ]),
+    );
+    expect(
+      ledger.lines.find((line) => line.id === 'recoverable:sla-credit-gap')?.lineageFields,
+    ).toEqual(expect.arrayContaining(['source_system', 'source_record_id', 'extract_timestamp', 'calculation_rule', 'review_state']));
   });
 
   it('does not turn annual-to-actual variance into avoided cost without classification evidence', () => {
@@ -179,6 +208,7 @@ describe('buildContractOptimizationLedger', () => {
     expect(ledger.lines.find((line) => line.id === 'avoided:renewal-uplift')).toMatchObject({
       amountUsd: null,
       state: 'workflow_required',
+      evidenceClass: 'inferred',
     });
     expect(ledger.decisionRecord.avoided_cost).toBeNull();
     expect(ledger.decisionRecord.evidence_status.avoided_cost).toBe('WORKFLOW_REQUIRED');
@@ -204,9 +234,19 @@ describe('buildContractOptimizationLedger', () => {
     expect(ledger.lines.find((line) => line.id === 'realized:tower-finance-proof')).toMatchObject({
       amountUsd: 125_000,
       state: 'quantified',
+      evidenceClass: 'human_validated',
     });
     expect(ledger.decisionRecord.realized_value).toBe(125_000);
     expect(ledger.decisionRecord.tower_claim_refs).toEqual(['accepted', 'draft']);
+    expect(ledger.decisionRecord.evidence_classes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ledger_line_id: 'realized:tower-finance-proof',
+          kind: 'realized_value',
+          evidence_class: 'human_validated',
+        }),
+      ]),
+    );
   });
 
   it('keeps the shared decision record tenant-neutral for a non-SkyHarbor contract', () => {
@@ -237,5 +277,6 @@ describe('buildContractOptimizationLedger', () => {
       door1_event_id: 'door1-meridian-001',
     });
     expect(ledger.decisionRecord.tenant_key).not.toBe('skyharbor_global');
+    expect(ledger.decisionRecord.evidence_classes.every((entry) => entry.evidence_class !== 'system_evidenced')).toBe(true);
   });
 });
