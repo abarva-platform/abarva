@@ -657,16 +657,23 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
     valueStrip: valueStrip.filter((v) => !v.missing), hasPending: valueStrip.filter((v) => v.missing).length > 0, pendingItems: valueStrip.filter((v) => v.missing).map((v) => ({ label: v.label, sub: v.sub })),
-    stripFull: !(kind === 'portfolio' && activeTab === 'Explore'),
-    stripCompact: kind === 'portfolio' && activeTab === 'Explore',
+    stripFull: !((kind === 'portfolio' && activeTab === 'Explore') || (kind === 'contract' && activeTab === 'Optimization')),
+    stripCompact: (kind === 'portfolio' && activeTab === 'Explore') || (kind === 'contract' && activeTab === 'Optimization'),
     compactItems: kind === 'portfolio' && activeTab === 'Explore' ? [
       { label: 'annual', value: money(v4HasPortfolio ? v4Snapshot.executivePortfolio.annualValue : summary.totalAnnualValue) },
       { label: 'contracts', value: String(v4HasPortfolio ? v4Snapshot.executivePortfolio.contractCount : summary.contractCount) },
       { label: 'vendors', value: String(v4HasPortfolio ? v4Snapshot.contextCoverage.vendors : summary.vendorCount) },
       { label: 'in top-10 vendor concentration', value: pct(conc.topNShare(10)) },
+    ] : kind === 'contract' && activeTab === 'Optimization' && contract ? [
+      { label: 'annual value', value: money(contract.row.annual_value) },
+      { label: 'actual spend', value: money(contract.row.actual_annual_spend) },
+      { label: 'weak leverage signals', value: contract.leverage.weakSignalCount + ' of 4' },
     ] : [],
-    categoryCleanPct: pct(categoryQuality.categoryCleanValuePct),
-    categoryCleanPctRaw: Number.isFinite(categoryQuality.categoryCleanValuePct) ? categoryQuality.categoryCleanValuePct : 0,
+    compactRing: kind === 'portfolio' && activeTab === 'Explore'
+      ? { label: 'category-clean', valueLabel: pct(categoryQuality.categoryCleanValuePct), pct01: Number.isFinite(categoryQuality.categoryCleanValuePct) ? categoryQuality.categoryCleanValuePct : 0, color: '#ba7517' }
+      : kind === 'contract' && activeTab === 'Optimization' && contract
+      ? { label: 'leverage risk', valueLabel: contract.leverage.weakSignalCount + ' of 4 weak', pct01: contract.leverage.weakSignalCount / 4, color: contract.leverage.weakSignalCount >= 2 ? COL.red : COL.amber }
+      : null,
     contextTableCols, contextTableRows,
     availDot: vm.portfolio.isEmpty ? COL.gray : COL.amber, availLabel: vm.portfolio.isEmpty ? 'Availability: no rows returned for this tenant' : 'Availability: live · source.contract_360',
     isPortfolioContext: kind === 'portfolio' && activeTab === 'Context', leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
