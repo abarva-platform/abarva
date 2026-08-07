@@ -35,7 +35,9 @@ type SubmitState =
   | { status: "error"; message: string };
 
 type SourceEventCreatePayload = {
+  ok?: boolean;
   event?: { id?: string };
+  eventId?: string;
   eventUrl?: string;
   approvalUrl?: string;
   detail?: string;
@@ -57,6 +59,17 @@ interface SourceOriginatePageProps {
   clientName?: string;
   clientShortName?: string;
   clientKey?: string;
+  contractOptimizationCandidates?: readonly ContractOptimizationCandidate[];
+}
+
+export interface ContractOptimizationCandidate {
+  readonly contractId: string;
+  readonly contractName: string;
+  readonly vendorName: string;
+  readonly annualValueUsd: number | null;
+  readonly actualAnnualSpendUsd: number | null;
+  readonly weakSignalCount: number;
+  readonly reason: string;
 }
 
 const INTAKE_FIELDS: IntakeFieldDefinition[] = [
@@ -310,6 +323,64 @@ function GuidanceCard({
   );
 }
 
+function ContractOptimizationSelectionGate({
+  candidates,
+}: {
+  candidates: readonly ContractOptimizationCandidate[];
+}) {
+  return (
+    <section
+      aria-label="Select contract to optimize"
+      data-testid="contract-optimization-selection-gate"
+      style={CONTRACT_SELECT_GATE}
+    >
+      <div style={{ display: "grid", gap: 5 }}>
+        <div style={SECTION_LABEL}>Required first</div>
+        <h3 style={CONTRACT_SELECT_TITLE}>Select the contract to optimize</h3>
+        <p style={CONTRACT_SELECT_BODY}>
+          Door 1 is contract-bound. Pick one governed contract first so Source
+          can prefill the intake from Contract 360 and route through the
+          contract-specific optimization service.
+        </p>
+      </div>
+      {candidates.length > 0 ? (
+        <div style={CONTRACT_SELECT_LIST}>
+          {candidates.slice(0, 6).map((candidate, index) => (
+            <a
+              key={candidate.contractId}
+              href={buildContractOptimizationCandidateHref(candidate)}
+              style={CONTRACT_SELECT_CARD}
+            >
+              <span style={CONTRACT_SELECT_RANK}>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span style={{ minWidth: 0, display: "grid", gap: 3 }}>
+                <span style={CONTRACT_SELECT_NAME}>
+                  {candidate.vendorName} · {candidate.contractName}
+                </span>
+                <span style={CONTRACT_SELECT_REASON}>{candidate.reason}</span>
+              </span>
+              <span style={CONTRACT_SELECT_VALUE}>
+                {formatDoor1Usd(candidate.annualValueUsd ?? undefined) ??
+                  "Value not quantified"}
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div style={CONTRACT_SELECT_EMPTY}>
+          No ranked contract candidates were returned for this tenant. Open
+          Contract 360 from Source Workspace and launch optimization from a
+          specific contract.
+        </div>
+      )}
+      <a href="/source/preview/workspace" style={CONTRACT_SELECT_EXPLORE_LINK}>
+        Open contract explorer →
+      </a>
+    </section>
+  );
+}
+
 const AGENT_GUIDANCE = [
   {
     agent: "aVa",
@@ -351,6 +422,9 @@ interface Door1ContractContext {
   contractId?: string;
   contractName?: string;
   vendorName?: string;
+  annualValueUsd?: number;
+  actualAnnualSpendUsd?: number;
+  weakSignalCount?: number;
 }
 
 function isDoor1Intent(intent: string | null | undefined): boolean {
@@ -364,7 +438,23 @@ function readDoor1ContractContext(
     contractId: searchParams?.get("contractId")?.trim() || undefined,
     contractName: searchParams?.get("contractName")?.trim() || undefined,
     vendorName: searchParams?.get("vendorName")?.trim() || undefined,
+    annualValueUsd: readOptionalNumberParam(searchParams, "annualValueUsd"),
+    actualAnnualSpendUsd: readOptionalNumberParam(
+      searchParams,
+      "actualAnnualSpendUsd",
+    ),
+    weakSignalCount: readOptionalNumberParam(searchParams, "weakSignalCount"),
   };
+}
+
+function readOptionalNumberParam(
+  searchParams: ReturnType<typeof useSearchParams>,
+  key: string,
+): number | undefined {
+  const raw = searchParams?.get(key)?.trim();
+  if (!raw) return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function buildDoor1ContractPrefill(
@@ -376,12 +466,61 @@ function buildDoor1ContractPrefill(
   const contractLabel = context.contractName ?? context.contractId ?? "selected contract";
   const vendorLabel = context.vendorName ? ` with ${context.vendorName}` : "";
   const contractRef = context.contractId ? ` Contract ref: ${context.contractId}.` : "";
+  const annual = formatDoor1Usd(context.annualValueUsd);
+  const actual = formatDoor1Usd(context.actualAnnualSpendUsd);
+  const valueBasis = [
+    annual ? `annual value ${annual}` : null,
+    actual ? `actual annual spend ${actual}` : null,
+    context.weakSignalCount != null
+      ? `${context.weakSignalCount} weak leverage signal${
+          context.weakSignalCount === 1 ? "" : "s"
+        }`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
   return {
     trigger: `Optimize ${contractLabel}${vendorLabel}.${contractRef}`,
+    decisionOwner:
+      "Vendor Management / Sourcing Lead. Confirm the named accountable owner before any external action.",
     scopeBoundary: `Use the loaded Contract 360 record for ${contractLabel}${vendorLabel} as the starting scope. Confirm included services, SOWs, applications, geographies, amendments, and exclusions before negotiating.`,
+    valueTarget:
+      valueBasis.length > 0
+        ? `Door 1 should test recoverable leakage, avoided cost, negotiated improvement, and realized value against ${valueBasis}. Do not state a savings target until evidence supports it.`
+        : "Door 1 should test recoverable leakage, avoided cost, negotiated improvement, and realized value. Do not state a savings target until evidence supports it.",
     baselineOwner:
       "Vendor management owns the executed agreement and SOWs; AP owns invoice history; the service owner owns SLA and usage evidence.",
   };
+}
+
+function formatDoor1Usd(value: number | undefined): string | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (Math.abs(value) >= 1_000_000_000)
+    return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  if (Math.abs(value) >= 1_000_000)
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000)
+    return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
+export function buildContractOptimizationCandidateHref(
+  candidate: ContractOptimizationCandidate,
+): string {
+  const params = new URLSearchParams({
+    intent: "contract-optimization",
+    contractId: candidate.contractId,
+    contractName: candidate.contractName,
+    vendorName: candidate.vendorName,
+    weakSignalCount: String(candidate.weakSignalCount),
+  });
+  if (candidate.annualValueUsd != null) {
+    params.set("annualValueUsd", String(candidate.annualValueUsd));
+  }
+  if (candidate.actualAnnualSpendUsd != null) {
+    params.set("actualAnnualSpendUsd", String(candidate.actualAnnualSpendUsd));
+  }
+  return `/source/new?${params.toString()}`;
 }
 
 function motionForIntent(
@@ -635,6 +774,7 @@ export function SourceOriginatePage({
   clientName = "Retail Demo",
   clientShortName = "Apex Retail",
   clientKey = "apexretail",
+  contractOptimizationCandidates = [],
 }: SourceOriginatePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -656,6 +796,10 @@ export function SourceOriginatePage({
     () => readDoor1ContractContext(searchParams),
     [searchParams],
   );
+  const door1RequiresContractSelection =
+    sourceIntent === "contract-optimization" && !door1ContractContext.contractId;
+  const showCategoryPicker =
+    !door1RequiresContractSelection && sourceIntent !== "contract-optimization";
   const intakeFields: IntakeFieldDefinition[] =
     intakeShape?.fields ?? INTAKE_FIELDS;
   const intakeSurfaceLabel =
@@ -766,7 +910,10 @@ export function SourceOriginatePage({
   );
   const capturedFactsCount = capturedFacts.length;
   const allFactsCaptured = capturedFactsCount === intakeFields.length;
-  const canCreate = allFactsCaptured && submitState.status !== "submitting";
+  const canCreate =
+    allFactsCaptured &&
+    !door1RequiresContractSelection &&
+    submitState.status !== "submitting";
   const decisionOwnerPreview = useMemo(
     () => buildDecisionOwnerPreview(intake.decisionOwner, clientShortName),
     [clientShortName, intake.decisionOwner],
@@ -813,38 +960,54 @@ export function SourceOriginatePage({
   }, []);
 
   async function createEvent() {
+    if (door1RequiresContractSelection) {
+      setSubmitState({
+        status: "error",
+        message: "Select a governed contract before opening Door 1 optimization.",
+      });
+      return;
+    }
     if (!canCreate) return;
     setSubmitState({ status: "submitting" });
 
-    const eventName = buildEventName(
-      clientShortName,
-      intake,
-      selectedCategory,
-      sourcingMotion,
-    );
     const requestId = creationRequestId || createSourceEventRequestId();
     if (!creationRequestId) setCreationRequestId(requestId);
 
     let response: Response;
     let payload: SourceEventCreatePayload | null = null;
     try {
-      response = await fetch("/api/v1/source/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventName,
-          eventType: inferEventType(intake.scopeBoundary, selectedCategory),
-          triggerDescription: intake.trigger,
-          decisionOwner: intake.decisionOwner || undefined,
-          scopeDescription: intake.scopeBoundary || undefined,
-          valueTargetDescription: intake.valueTarget || undefined,
-          baselineOwnerDescription: intake.baselineOwner || undefined,
-          categoryLabel: selectedCategory?.label,
+      if (sourcingMotion === "contract_optimization" && door1ContractContext.contractId) {
+        response = await fetch(
+          `/api/source/workspace/contract/${encodeURIComponent(
+            door1ContractContext.contractId,
+          )}/optimization`,
+          { method: "POST" },
+        );
+      } else {
+        const eventName = buildEventName(
+          clientShortName,
+          intake,
+          selectedCategory,
           sourcingMotion,
-          creationRequestId: requestId,
-          estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
-        }),
-      });
+        );
+        response = await fetch("/api/v1/source/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventName,
+            eventType: inferEventType(intake.scopeBoundary, selectedCategory),
+            triggerDescription: intake.trigger,
+            decisionOwner: intake.decisionOwner || undefined,
+            scopeDescription: intake.scopeBoundary || undefined,
+            valueTargetDescription: intake.valueTarget || undefined,
+            baselineOwnerDescription: intake.baselineOwner || undefined,
+            categoryLabel: selectedCategory?.label,
+            sourcingMotion,
+            creationRequestId: requestId,
+            estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
+          }),
+        });
+      }
       payload = (await response.json().catch(() => null)) as
         | SourceEventCreatePayload
         | null;
@@ -859,7 +1022,8 @@ export function SourceOriginatePage({
       return;
     }
 
-    if (!response.ok || !payload?.event?.id) {
+    const sourceEventId = payload?.event?.id ?? payload?.eventId;
+    if (!response.ok || !sourceEventId) {
       setSubmitState({
         status: "error",
         message:
@@ -875,12 +1039,13 @@ export function SourceOriginatePage({
     } catch {
       /* local draft cleanup is best-effort */
     }
-    if (sourcingMotion === "contract_optimization") {
-      void fetch(`/api/v1/source/${payload.event.id}/door1/diagnose`, {
+    if (sourcingMotion === "contract_optimization" && !door1ContractContext.contractId) {
+      void fetch(`/api/v1/source/${sourceEventId}/door1/diagnose`, {
         method: "POST",
       }).catch(() => undefined);
     }
-    const approvalUrl = `/source/events/${payload.event.id}/approval`;
+    const approvalUrl =
+      payload?.approvalUrl ?? `/source/events/${sourceEventId}/approval`;
     // Forward the tour into approval; the canvas unlocks after approval.
     const finalUrl = tourActive
       ? approvalUrl + (approvalUrl.includes("?") ? "&tour=1" : "?tour=1")
@@ -998,7 +1163,14 @@ export function SourceOriginatePage({
           </div>
         )}
 
+        {door1RequiresContractSelection && (
+          <ContractOptimizationSelectionGate
+            candidates={contractOptimizationCandidates}
+          />
+        )}
+
         {/* Intake fields */}
+        {!door1RequiresContractSelection && (
         <div style={{ display: "grid", gap: 0 }}>
           <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Intake basics</div>
           {intakeFields.map((field) => {
@@ -1086,8 +1258,10 @@ export function SourceOriginatePage({
             );
           })}
         </div>
+        )}
 
         {/* T02 — Category picker */}
+        {showCategoryPicker && (
         <details
           open={Boolean(selectedCategory)}
           style={OPTIONAL_CATEGORY_STYLE}
@@ -1155,10 +1329,13 @@ export function SourceOriginatePage({
             ))}
           </div>
         </details>
+        )}
 
         {/* Completion route */}
         <div style={{ display: "grid", gap: 7 }}>
-          {!allFactsCaptured && submitState.status !== "submitting" && (
+          {!door1RequiresContractSelection &&
+            !allFactsCaptured &&
+            submitState.status !== "submitting" && (
             <div
               role="status"
               aria-live="polite"
@@ -1176,7 +1353,8 @@ export function SourceOriginatePage({
             </div>
           )}
 
-          <IntakeCompletionFooter
+          {!door1RequiresContractSelection && (
+            <IntakeCompletionFooter
             capturedFacts={capturedFacts}
             decisionOwner={decisionOwnerPreview}
             coApprover={coApproverPreview}
@@ -1187,6 +1365,7 @@ export function SourceOriginatePage({
             onOpenEvent={createEvent}
             onSaveDraft={saveDraft}
           />
+          )}
 
           {submitState.status === "error" && (
             <div
@@ -1504,6 +1683,108 @@ const DOOR1_LEDGER_BODY: CSSProperties = {
   fontSize: 10.5,
   lineHeight: 1.35,
   color: SHELL.INK_SOFT,
+};
+
+const CONTRACT_SELECT_GATE: CSSProperties = {
+  border: `1px solid ${SHELL.PEACH_LINE}`,
+  borderRadius: 12,
+  background: SHELL.CARD_WHITE,
+  padding: "12px 12px",
+  display: "grid",
+  gap: 10,
+};
+
+const CONTRACT_SELECT_TITLE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 16,
+  lineHeight: 1.2,
+  color: SHELL.INK,
+  fontWeight: 800,
+};
+
+const CONTRACT_SELECT_BODY: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: SHELL.INK_SOFT,
+};
+
+const CONTRACT_SELECT_LIST: CSSProperties = {
+  display: "grid",
+  gap: 7,
+};
+
+const CONTRACT_SELECT_CARD: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "28px minmax(0, 1fr) auto",
+  alignItems: "center",
+  gap: 9,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 9,
+  background: SHELL.PAPER,
+  padding: "9px 10px",
+  color: SHELL.INK,
+  textDecoration: "none",
+};
+
+const CONTRACT_SELECT_RANK: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  color: SHELL.INK_MUTED,
+  fontWeight: 800,
+};
+
+const CONTRACT_SELECT_NAME: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12.5,
+  fontWeight: 800,
+  color: SHELL.INK,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const CONTRACT_SELECT_REASON: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  lineHeight: 1.35,
+  color: SHELL.INK_MUTED,
+  overflow: "hidden",
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+};
+
+const CONTRACT_SELECT_VALUE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  color: SHELL.INK_SOFT,
+  fontWeight: 800,
+  whiteSpace: "nowrap",
+};
+
+const CONTRACT_SELECT_EMPTY: CSSProperties = {
+  border: `1px dashed ${SHELL.CARD_LINE}`,
+  borderRadius: 9,
+  background: SHELL.PAPER_SOFT,
+  padding: "10px 11px",
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: SHELL.INK_MUTED,
+};
+
+const CONTRACT_SELECT_EXPLORE_LINK: CSSProperties = {
+  justifySelf: "start",
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: SHELL.INK,
+  textDecoration: "none",
+  fontWeight: 800,
 };
 
 // Intent-shaped intake: one-click starter-prompt bar above the workspace.

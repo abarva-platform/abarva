@@ -80,7 +80,9 @@ function Header({ contract }: { contract: Contract360View["contract"] }) {
     `/source/new?intent=contract-optimization` +
     `&contractId=${encodeURIComponent(contract.contract_id)}` +
     `&contractName=${encodeURIComponent(contract.contract_name)}` +
-    `&vendorName=${encodeURIComponent(contract.vendor_name)}`;
+    `&vendorName=${encodeURIComponent(contract.vendor_name)}` +
+    valueParam("annualValueUsd", numberFromDb(contract.annual_value)) +
+    valueParam("actualAnnualSpendUsd", numberFromDb(contract.actual_annual_spend));
   return (
     <header style={HEADER_STYLE}>
       <div style={{ minWidth: 0, display: "grid", gap: 6 }}>
@@ -103,6 +105,10 @@ function Header({ contract }: { contract: Contract360View["contract"] }) {
       </Link>
     </header>
   );
+}
+
+function valueParam(key: string, value: number | null): string {
+  return value == null ? "" : `&${key}=${encodeURIComponent(String(value))}`;
 }
 
 function ConflictNote({

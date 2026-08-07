@@ -215,6 +215,14 @@ describe("SourceContract360Page", () => {
         "contractName=Salesforce%20Data%20Platform%20Agreement%203",
       ),
     );
+    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+      "href",
+      expect.stringContaining("annualValueUsd=43476437"),
+    );
+    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+      "href",
+      expect.stringContaining("actualAnnualSpendUsd=41000000"),
+    );
   });
 
   it("shows a dash rather than 'Not available' when a value is genuinely absent", () => {
