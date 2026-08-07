@@ -44,6 +44,7 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
       "meridian-health",
       "meridian health",
       "meridian health system",
+      "meridian_health_global",
       "heliara",
       "heliara health",
       "healthcare demo",

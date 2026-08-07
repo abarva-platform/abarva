@@ -239,7 +239,13 @@ Private browser proof ZIP: `/Users/anand/Downloads/Meridian_Health_Private_Brows
 Private browser proof ZIP SHA-256: `512097ff8f6b2b08771bdb85cd236e28240aa3dccf11f98aa1be884bd5fa9da9`.
 The proof ZIP entry/content scrub returned 49 entries, zero retired identity hits and zero phone-value hits.
 
-`admin@abarva.ai` is present in the code-side static launch grant for Meridian Health. The live Clerk metadata mutation remains pending because local `CLERK_SECRET_KEY` was unavailable and the lab Key Vault secret lookup did not return from the operator shell. The requested recovery phone was not used for tenant authorization and is not recorded in proof.
+Admin signed-in proof for `admin@abarva.ai` now passes on the isolated private proof runtime. The live Clerk metadata entitlement resolves to tenant key `meridian_health_global`, the Meridian client row is ensured, Responsible AI acknowledgment and training are complete, Source shows governed nonzero counts, and an unauthorized tenant-manipulation attempt remains bound to Meridian. The requested recovery phone was not used for tenant authorization and is not recorded in proof.
+
+Admin access proof runtime image: `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-web@sha256:d6129f6939db7f7f011a360c10a1a82fe277b8c5cf6194266145d62f404c79ed`.
+Admin access proof revision: `ca-meridian-health-proof-eastus--0000018`.
+Admin signed-in proof ZIP: `/Users/anand/Downloads/Meridian_Health_Admin_Access_Proof_20260807T194313Z.zip`.
+Admin signed-in proof ZIP SHA-256: `eeb42d9dbfb8aeeba0308df6bf0526d4185a9ed0439d4eaa253fb0634a2e2cce`.
+Admin proof package scrub returned zero retired identity, phone-value or auth-token findings.
 
 ## Known Gaps
 
