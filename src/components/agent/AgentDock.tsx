@@ -479,6 +479,8 @@ export interface AgentDockProps {
   /** Suppress loud draft/citation review chrome while preserving the normal rail layout. */
   quietReviewChrome?: boolean;
   defaultMode?: DockMode;
+  /** When true, starts from defaultMode instead of restoring a persisted dock mode. */
+  disableStoredMode?: boolean;
   /** Mode to open when the collapsed chip is invoked. Defaults to the last rich mode. */
   collapsedRestoreMode?: RestorableDockMode;
   /** Free-form context passed back to the API on submit. */
@@ -702,6 +704,7 @@ export function AgentDock(props: AgentDockProps) {
     variant = "standard",
     quietReviewChrome = false,
     defaultMode = "side-rail",
+    disableStoredMode = false,
     collapsedRestoreMode,
     surfaceContext: rawSurfaceContext,
     initialQuote: rawInitialQuote,
@@ -780,22 +783,24 @@ export function AgentDock(props: AgentDockProps) {
 
   useEffect(() => {
     previousSurfaceRef.current = surface;
-    const nextMode = readStoredMode(surface) ?? defaultMode;
+    const nextMode = disableStoredMode
+      ? defaultMode
+      : readStoredMode(surface) ?? defaultMode;
     setModeState(nextMode);
     setLastRichMode(
       nextMode === "collapsed"
         ? resolveCollapsedRestoreMode(defaultMode, collapsedRestoreMode)
         : nextMode,
     );
-  }, [collapsedRestoreMode, defaultMode, surface]);
+  }, [collapsedRestoreMode, defaultMode, disableStoredMode, surface]);
 
   const setMode = useCallback(
     (next: DockMode) => {
       setModeState(next);
-      writeStoredMode(surface, next);
+      if (!disableStoredMode) writeStoredMode(surface, next);
       if (next !== "collapsed") setLastRichMode(next);
     },
-    [surface],
+    [disableStoredMode, surface],
   );
 
   // Esc closes (collapses)

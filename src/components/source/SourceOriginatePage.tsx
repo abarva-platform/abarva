@@ -1340,6 +1340,7 @@ function SourceOriginateDock({
       agent={AVA_INTAKE_AGENT}
       surface="source/new"
       defaultMode="side-rail"
+      disableStoredMode
       defaultLeftPercent={45}
       minLeftPx={340}
       surfaceContext={{
