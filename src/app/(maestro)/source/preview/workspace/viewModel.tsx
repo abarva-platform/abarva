@@ -116,6 +116,7 @@ export interface WorkspaceState {
   concStrip: string | null;
   explorerPinned: boolean;
   contractDetail: Record<string, Contract360Response | 'loading' | 'error'>;
+  optimizationLaunch: Record<string, { status: 'loading' | 'error'; message?: string }>;
 }
 
 export const INITIAL_STATE: WorkspaceState = {
@@ -140,6 +141,7 @@ export const INITIAL_STATE: WorkspaceState = {
   concStrip: null,
   explorerPinned: false,
   contractDetail: {},
+  optimizationLaunch: {},
 };
 
 // ── enriched per-contract row (real columns + a per-contract join of the
@@ -171,6 +173,7 @@ export class WorkspaceViewModel {
   setState: (patch: Partial<WorkspaceState> | ((s: WorkspaceState) => Partial<WorkspaceState>)) => void;
   portfolio: SourceWorkspacePortfolioData;
   fetchContractDetail: (contractId: string) => void;
+  startContractOptimization: (contractId: string) => void;
   tenantName: string;
   asOf: Date;
 
@@ -180,12 +183,14 @@ export class WorkspaceViewModel {
     portfolio: SourceWorkspacePortfolioData,
     tenantName: string,
     fetchContractDetail: (contractId: string) => void,
+    startContractOptimization: (contractId: string) => void = () => undefined,
   ) {
     this.state = state;
     this.setState = setState;
     this.portfolio = portfolio;
     this.tenantName = tenantName;
     this.fetchContractDetail = fetchContractDetail;
+    this.startContractOptimization = startContractOptimization;
     this.asOf = new Date(portfolio.asOfDateIso);
   }
 

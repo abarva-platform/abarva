@@ -2,6 +2,7 @@ import { COL, money, pct, fmtDate } from './viewModel';
 import type { WorkspaceViewModel, EnrichedContract, Urgency } from './viewModel';
 import type { DataTableRow, DataTableColumn } from './DataTable';
 import { numberFromDb, type LeverageSignal } from '@/lib/source/data-model/vendor-contract-portfolio';
+import { buildContractOptimizationLedger } from '@/lib/source/data-model/contract-optimization-ledger';
 import type { SourcingOpportunityReason } from '@/lib/source/data-model/sourcing-opportunities';
 
 /**
@@ -499,6 +500,41 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     { name: 'Renegotiate with market evidence', pos: 'Re-base rates, add or invoke a benchmark right.', risk: 'Requires evidence in place before the notice date.', tone: COL.teal, rec: contract.leverage.weakSignalCount < 3 },
     { name: 'Recompete the scope', pos: 'Take the scope to market with the governed baseline as the starting point.', risk: contract.leverage.weakSignals.alternatives ? 'Few credible alternatives on record.' : 'Alternatives are on record; transition risk is more manageable.', tone: contract.leverage.weakSignals.alternatives ? COL.amber : COL.teal, rec: contract.leverage.weakSignalCount >= 3 },
   ] : [];
+  const optLedger = contract
+    ? buildContractOptimizationLedger({ view: detail, contract: contract.row, leverage: contract.leverage })
+    : null;
+  const optLedgerView = optLedger ? {
+    headline: optLedger.headline,
+    quantifiedLeakage: optLedger.quantifiedLeakageUsd > 0 ? money(optLedger.quantifiedLeakageUsd) : 'Not quantified',
+    realizedValue: optLedger.realizedValueUsd > 0 ? money(optLedger.realizedValueUsd) : 'Not established',
+    evidenceReady: String(optLedger.evidenceReadyCount),
+    evidenceGaps: String(optLedger.evidenceGapCount),
+    lines: optLedger.lines.map((line) => ({
+      id: line.id,
+      kind: line.kind,
+      label: line.label,
+      amount: line.amountUsd == null ? 'Not established' : money(line.amountUsd),
+      state: ({
+        quantified: 'Quantified',
+        needs_evidence: 'Needs evidence',
+        workflow_required: 'Workflow required',
+        not_established: 'Not established',
+      } as const)[line.state],
+      tone: line.state === 'quantified' ? COL.teal : line.state === 'workflow_required' ? COL.amber : line.state === 'needs_evidence' ? COL.red : COL.gray,
+      evidence: line.evidence,
+      nextAction: line.nextAction,
+      sourceRefs: line.sourceRefs,
+    })),
+  } : null;
+  const optLaunch = c ? S.optimizationLaunch[c.contract_id] : undefined;
+  const optCtaLabel = optLaunch?.status === 'loading'
+    ? 'Starting Door 1...'
+    : optLaunch?.status === 'error'
+      ? 'Retry Door 1 workflow'
+      : 'Start / continue Door 1 workflow';
+  const optCtaError = optLaunch?.status === 'error'
+    ? optLaunch.message ?? 'Could not start optimization workflow.'
+    : null;
   const recAction = opp && oppContract && contract && oppContract.row.contract_id === contract.row.contract_id
     ? REASON_LABEL[opp.reasons[0]] + ' — see sourcing opportunity'
     : contract && contract.leverage.weakSignalCount >= 2 ? 'Weak leverage — build alternatives and renegotiate' : contract?.noticePassed ? 'Notice passed — confirm renewal position' : 'Monitor — no deterministic opportunity flag on this contract';
@@ -652,7 +688,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     collapseAll: () => vm.setState({ open: {} }),
     tree, crumbs, title, thesis, tabs,
     headerActions: kind === 'contract' && contract && activeTab !== 'Optimization' ? [
-      { label: 'Build optimisation strategy', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
+      { label: 'Open optimization cockpit', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
       { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
@@ -665,8 +701,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'in top-10 vendor concentration', value: pct(conc.topNShare(10)) },
     ] : kind === 'contract' && activeTab === 'Optimization' && contract ? [
       { label: 'annual value', value: money(contract.row.annual_value) },
-      { label: 'actual spend', value: money(contract.row.actual_annual_spend) },
-      { label: 'weak leverage signals', value: contract.leverage.weakSignalCount + ' of 4' },
+      { label: 'quantified leakage', value: optLedgerView?.quantifiedLeakage ?? 'Not quantified' },
+      { label: 'realized value', value: optLedgerView?.realizedValue ?? 'Not established' },
+      { label: 'evidence gaps', value: optLedgerView?.evidenceGaps ?? '0' },
     ] : valueStrip.filter((v) => !v.missing).slice(0, 4).map((v) => ({ label: v.label, value: v.value })),
     compactRing: kind === 'portfolio' && activeTab === 'Explore'
       ? { label: 'category-clean', valueLabel: pct(categoryQuality.categoryCleanValuePct), pct01: Number.isFinite(categoryQuality.categoryCleanValuePct) ? categoryQuality.categoryCleanValuePct : 0, color: '#ba7517' }
@@ -696,7 +733,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     isContract: kind === 'contract' && !!contract, cTab: S.tabs.contract, c: cVm,
     cOverview: activeTab === 'Overview', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: activeTab === 'Renewal', cLeverage: activeTab === 'Leverage', cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimization',
     termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
-    weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios,
+    weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView,
+    optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError,
+    startOptimization: c ? () => vm.startContractOptimization(c.contract_id) : () => undefined,
     goActions: () => vm.setTab('contract', 'Optimization'),
     detailState, detail,
 
