@@ -184,7 +184,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                 </div>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   {[
-                    ['Quantified leakage', vm.optLedger.quantifiedLeakage],
+                    ['Recoverable leakage', vm.optLedger.quantifiedLeakage],
                     ['Realized value', vm.optLedger.realizedValue],
                     ['Evidence gaps', vm.optLedger.evidenceGaps],
                   ].map(([label, value]) => (
