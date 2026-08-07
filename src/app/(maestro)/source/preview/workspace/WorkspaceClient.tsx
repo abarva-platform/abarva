@@ -225,7 +225,6 @@ export function WorkspaceClient({
               </div>
 
               <div style={{ padding: '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {vm.stripFull ? <FullContextStrip vm={vm} /> : null}
                 {vm.stripCompact ? <CompactContextStrip vm={vm} /> : null}
 
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
