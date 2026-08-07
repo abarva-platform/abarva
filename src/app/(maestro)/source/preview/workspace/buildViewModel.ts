@@ -657,8 +657,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
     valueStrip: valueStrip.filter((v) => !v.missing), hasPending: valueStrip.filter((v) => v.missing).length > 0, pendingItems: valueStrip.filter((v) => v.missing).map((v) => ({ label: v.label, sub: v.sub })),
-    stripFull: !((kind === 'portfolio' && activeTab === 'Explore') || (kind === 'contract' && activeTab === 'Optimization')),
-    stripCompact: (kind === 'portfolio' && activeTab === 'Explore') || (kind === 'contract' && activeTab === 'Optimization'),
+    stripCompact: true,
     compactItems: kind === 'portfolio' && activeTab === 'Explore' ? [
       { label: 'annual', value: money(v4HasPortfolio ? v4Snapshot.executivePortfolio.annualValue : summary.totalAnnualValue) },
       { label: 'contracts', value: String(v4HasPortfolio ? v4Snapshot.executivePortfolio.contractCount : summary.contractCount) },
@@ -668,7 +667,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'annual value', value: money(contract.row.annual_value) },
       { label: 'actual spend', value: money(contract.row.actual_annual_spend) },
       { label: 'weak leverage signals', value: contract.leverage.weakSignalCount + ' of 4' },
-    ] : [],
+    ] : valueStrip.filter((v) => !v.missing).slice(0, 4).map((v) => ({ label: v.label, value: v.value })),
     compactRing: kind === 'portfolio' && activeTab === 'Explore'
       ? { label: 'category-clean', valueLabel: pct(categoryQuality.categoryCleanValuePct), pct01: Number.isFinite(categoryQuality.categoryCleanValuePct) ? categoryQuality.categoryCleanValuePct : 0, color: '#ba7517' }
       : kind === 'contract' && activeTab === 'Optimization' && contract
