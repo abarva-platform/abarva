@@ -142,7 +142,7 @@ The approved target remains schema `foundation_v2_meridian_health_demo`, tenant 
 
 Repo-owned deploy workflow: not applicable.
 Shared runtime mutators: none.
-Approved image digest: not applicable for shared runtime. Layer 1/2 lab jobs used isolated Meridian Health lab image digest `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:81a2abb534066a3683e8609887842aba0983ed9e3b2bfc4e32b7795b27cc2fdf`. Layer 3 optimized lab jobs used isolated Meridian Health lab image digest `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:977d51d005c650af1550f3ef27cdf2dac7b3b032c2cc458cce452831331bf268`. Later Layer 6 repair/proof jobs used private operator image digest `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:6185fdf0fe5252803364b4852bc6fd9b7706c23704c8c0e235295d51b57c50b3`.
+Approved image digest: not applicable for shared runtime. Layer 1/2 lab jobs used isolated Meridian Health lab image digest `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:81a2abb534066a3683e8609887842aba0983ed9e3b2bfc4e32b7795b27cc2fdf`. Layer 3 optimized lab jobs used isolated Meridian Health lab image digest `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:977d51d005c650af1550f3ef27cdf2dac7b3b032c2cc458cce452831331bf268`. Final Layer 6 repair/proof jobs used private operator image digest `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:b79dc58fa68b53bc2d8d23187824953bdc038bc0fcca30e3fa34d1bb5741f976`.
 Private Cube canary image: `acrabarvalab001.azurecr.io/abarva/meridian-health-cube-canary@sha256:f0503de6a14a7fe012323acdbb011aee0e6c2d2b016f2f37861cd1515570c103`.
 ACA runtime invariant: no ACA runtime change.
 Worker image invariant: no worker image change.
@@ -180,10 +180,9 @@ Layer 4 proof ZIP SHA-256: `4b6316cdef719ee8f1d49622b375f4d5d1a0d73e00e752aefa2d
 Layer 5 private Cube canary proof: `/Users/anand/Downloads/meridian-health-demo-layer5-aca-20260806T144312Z/10-cube-private-canary-short-aliases/MERIDIAN_HEALTH_CUBE_CANARY_RUNTIME_VERIFY.json`.
 Layer 5 proof ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Layer5_Private_Cube_Canary_Proof_20260806T155316Z.zip`.
 Layer 5 proof ZIP SHA-256: `326ebc97da7ae595d751afb4a68133d84b0f1fcb86f97ef3b086d884c30b592f`.
-Layer 6 apply proof: `/Users/anand/Downloads/meridian-health-demo-layer6-aca-20260806T1606Z/25-layer6-apply-claim-scan-fixed/proof/proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS.json`.
-Layer 6 verify proof: `/Users/anand/Downloads/meridian-health-demo-layer6-aca-20260806T1606Z/26-layer6-verify-final/proof/proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS.json`.
-Layer 6 proof ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Layer6_Product_Bindings_Proof_20260806T184500Z.zip`.
-Layer 6 proof ZIP SHA-256: `cf493c42313484886b3eae9e9b0e40e659414d7c54ab2f2bbf2485d16ea99c22`.
+Layer 6 repaired apply proof: `/Users/anand/Downloads/meridian-health-data-setup-20260807T015819Z/layer6-apply-repaired/proof/proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS.json`.
+Layer 6 repaired verify proof: `/Users/anand/Downloads/meridian-health-data-setup-20260807T020010Z/layer6-verify-repaired/proof/proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS.json`.
+Layer 6 repaired preflight proof: `/Users/anand/Downloads/meridian-health-data-setup-20260807T015630Z/layer6-preflight-repaired/proof/proof/MERIDIAN_HEALTH_LAYER6_PRODUCT_BINDINGS.json`.
 Governed narrative acceptance now requires side-by-side audit from narrative claim to packet fact/finding to source record to evidence span to Cube measure where applicable; document rendering alone is not acceptable proof.
 Before correction, the package could pass with placeholder canary statements and weaker lineage/substance checks. After correction, the emitted validation report proves resolved question coverage, substantive outcome-map rows across required portfolios, semantic predicate checks, evidence/source joins, planted source join keys, evidence subject relevance and real injected negative canaries.
 
@@ -191,11 +190,11 @@ Before correction, the package could pass with placeholder canary statements and
 
 The semantic remediation pass repaired Layer 4/6 business-grain handling and reran Layer 4 projections, Layer 5 canary reconciliation, private Cube verification and Layer 6 product bindings on the existing branch and PR. It did not regenerate the 54-file source package, open a new PR, shift shared Cube traffic, shift shared web traffic, activate a tenant or publish shared canonical records.
 
-Final private operator image: `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:c18133fff648718622485daf1b412b51869126060bd38cbc9f7e5473dc4f69b3`.
+Final private operator image: `acrabarvalab001.azurecr.io/abarva/meridian-health-demo-lab@sha256:b79dc58fa68b53bc2d8d23187824953bdc038bc0fcca30e3fa34d1bb5741f976`.
 Private Cube canary image: `acrabarvalab001.azurecr.io/abarva/meridian-health-cube-canary@sha256:f0503de6a14a7fe012323acdbb011aee0e6c2d2b016f2f37861cd1515570c103`.
 Final semantic remediation proof ZIP: `/Users/anand/Downloads/Meridian_Health_Demo_Semantic_Remediation_Layer4_6_Proof_20260806T205136Z.zip`.
 Final semantic remediation proof ZIP SHA-256: `0b4d4d0294b8a4cc15ee3fd58acc628d8535b63307368a298fcda27360b78b3b`.
-Final summary file inside proof ZIP: `meridian-health-demo-semantic-aca-20260806T202418Z/FINAL_SEMANTIC_REMEDIATION_SUMMARY.json`.
+Final repaired Layer 6 proof folder: `/Users/anand/Downloads/meridian-health-data-setup-20260807T020010Z/layer6-verify-repaired`.
 
 Final Layer 4 forced apply and independent verify both returned `MERIDIAN_HEALTH_DEMO_LAYER4_PROJECTION_VERIFIED`, `exact_match=true` and zero defects; the forced apply recorded `mutation_executed=true`.
 Final Layer 5 apply and independent verify both returned `MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_VERIFIED`, `exact_match=true`, 18 typed canary tables and zero defects; the apply recorded `mutation_executed=true`.
@@ -209,7 +208,7 @@ The governed artifact set is the final six requested Meridian Health executive a
 
 The healthcare demo naming contract is now Meridian-only: display name `Meridian Health`, tenant key `meridian_health_global`, dataset `meridian-health-source-v1-202608`, industry `Healthcare`, classification `Synthetic demonstration tenant`.
 
-This boundary repair renamed the active demo scripts, docs, migrations, Cube model, package commands, proof filenames and generated source package outputs. It also removed the old identity from active demo text and generated Downloads artifacts.
+This boundary repair renamed the active demo scripts, docs, migrations, Cube model, package commands, proof filenames and generated source package outputs. It also removed the pre-Meridian naming token from active demo text and generated Downloads artifacts.
 
 Local proof:
 
@@ -224,8 +223,8 @@ Local proof:
 - Package ZIP for ACA source-volume loading: `/Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z_package_20260806T222957Z.zip`.
 - Package ZIP SHA-256: `7350881433187abab8b1700f92837257bb3da64240a97066e929a588919cda2e`.
 - Passed: `npm run source:meridian-health-demo:validate -- --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z`; validation reported 70,967 structured rows, 54 Layer 1 release CSVs, 39 source-system extract CSVs, 11 existing BPO event CSVs, 4 BPO transformation CSVs and zero failures/warnings.
-- Passed: case-insensitive scans for the old identity across active demo source paths, the regenerated stage directory, the proof ZIP entries, proof ZIP extracted contents and the individual generated Meridian ZIPs in Downloads.
-- Blocked locally: database preflight for Layer 4/6 could not run in this shell because no `ABARVA_AZURE_DATABASE_URL`, `AZURE_DATABASE_URL` or `DATABASE_URL` is configured in the worktree. Database row scrub and live Cube metadata scrub still require the private-lab operator environment.
+- Passed: case-insensitive scans for the pre-Meridian identity across active demo source paths, the regenerated stage directory, the proof ZIP entries, proof ZIP extracted contents and the individual generated Meridian ZIPs in Downloads.
+- Passed: private operator Layer 6 repaired preflight, apply and independent verify using the final digest-pinned Meridian operator image. Final verify returned `MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED`, `exact_match=true`, zero defects, zero unsupported claim hits, zero cross-tenant defects, zero airline regression defects, no shared traffic shift and no production impact.
 
 The BPO remediation now labels the baseline as five-year current-state cost, exposes annualized, labor, technology/platform and controls/other components, and normalizes rebadge proposals against the unique eligible current workforce denominator instead of supplier/process row inflation.
 
