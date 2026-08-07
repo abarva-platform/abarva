@@ -1953,12 +1953,14 @@ function evaluateCubeProof(proof, baseSummary) {
   const defects = [];
   if (
     proof.status !== "MERIDIAN_HEALTH_DEMO_CUBE_CANARY_VERIFIED" &&
-    proof.status !== "MERIDIAN_HEALTH_DEMO_LAYER5_PRIVATE_CUBE_CANARY_VERIFIED"
+    proof.status !== "MERIDIAN_HEALTH_DEMO_LAYER5_PRIVATE_CUBE_CANARY_VERIFIED" &&
+    proof.status !== "MERIDIAN_HEALTH_DEMO_LAYER5_CUBE_CANARY_VERIFIED"
   ) {
     defects.push(`cube_proof_status:${proof.status}`);
   }
   if (proof.ok === false) defects.push("cube_proof_not_ok");
   if (failures.length > 0) defects.push(`cube_proof_failures:${failures.join("|")}`);
+  if (proof.traffic_shift_executed === true) defects.push("cube_traffic_shift_executed");
   const runtime = proof.runtime || proof.cube_canary?.runtime || proof.cube_canary || {};
   const missingTenantStatus = runtime.security?.missing_tenant_status ?? proof.missing_tenant_status;
   const isolation = runtime.security?.tenant_isolation || proof.tenant_isolation || {};
