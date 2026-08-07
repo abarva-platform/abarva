@@ -270,7 +270,7 @@ export function buildContractOptimizationLedger(input: {
       .map((line) => finiteOrZero(line.amountUsd)),
   );
   const evidenceReadyCount = lines.filter((line) => line.state === 'quantified' || line.state === 'workflow_required').length;
-  const evidenceGapCount = lines.filter((line) => line.state === 'needs_evidence').length;
+  const evidenceGapCount = lines.filter(isEvidenceGap).length;
 
   return {
     lines,
@@ -362,6 +362,10 @@ function optimizationState(
   if (lines.some((line) => line.state === 'needs_evidence')) return 'EVIDENCE_MISSING';
   if (lines.some((line) => line.state === 'workflow_required')) return 'WORKFLOW_REQUIRED';
   return 'READY_FOR_REVIEW';
+}
+
+function isEvidenceGap(line: ContractOptimizationLedgerLine): boolean {
+  return line.evidenceClass === 'missing';
 }
 
 function isClaimableState(value: string | null | undefined): boolean {
