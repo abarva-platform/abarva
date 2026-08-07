@@ -4,6 +4,7 @@ import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
 import { buildContract360View, collectContractSubjectRefs } from '@/lib/source/data-model/contract-360-view';
 import {
   getContract360,
+  getContractOptimizationEvidencePack,
   listContractApplicationScope,
   listContractFinancialExposure,
   listContractInitiativeDependency,
@@ -55,11 +56,12 @@ export async function GET(
     ]);
 
   const subjectRefs = collectContractSubjectRefs(contract, applicationScope);
-  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor] = await Promise.all([
+  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, optimizationEvidence] = await Promise.all([
     listLatestTowerObservationsForSubjects(tenantKey, subjectRefs).catch(() => []),
     listTowerValueClaimsForSubjects(tenantKey, subjectRefs).catch(() => []),
     listDocExtractionsForSubject(tenantKey, contract.contract_id).catch(() => []),
     listDocExtractionsForSubject(tenantKey, contract.vendor_ref).catch(() => []),
+    getContractOptimizationEvidencePack(tenantKey, contract.contract_id).catch(() => null),
   ]);
   const docExtractions = dedupeExtractions([...extractionsByContract, ...extractionsByVendor]);
 
@@ -72,6 +74,7 @@ export async function GET(
     towerObservations,
     towerValueClaims,
     docExtractions,
+    optimizationEvidence,
   });
 
   return NextResponse.json(view);

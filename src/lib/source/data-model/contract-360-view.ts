@@ -16,6 +16,7 @@ import {
   tierApplicationScopeByConfidence,
   type ApplicationScopeConfidenceTiers,
 } from "./vendor-contract-portfolio";
+import type { ContractOptimizationEvidencePack } from "./contract-optimization-evidence";
 import type {
   DocExtractionRow,
   SourceContract360Row,
@@ -38,6 +39,8 @@ export interface Contract360View {
   readonly hasTowerOverlay: boolean;
   /** doc.extraction rows citing this contract or its vendor — exact clause/row provenance. */
   readonly docExtractions: readonly DocExtractionRow[];
+  /** Shared four-ledger optimization evidence, if governed system/document rows exist. */
+  readonly optimizationEvidence: ContractOptimizationEvidencePack | null;
 }
 
 export interface BuildContract360ViewInput {
@@ -49,6 +52,7 @@ export interface BuildContract360ViewInput {
   readonly towerObservations: readonly TowerMetricObservationRow[];
   readonly towerValueClaims: readonly TowerValueClaimRow[];
   readonly docExtractions?: readonly DocExtractionRow[];
+  readonly optimizationEvidence?: ContractOptimizationEvidencePack | null;
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -65,6 +69,7 @@ export function buildContract360View(
     towerObservations,
     towerValueClaims,
     docExtractions = [],
+    optimizationEvidence = null,
     explicitApplicationPairs,
   } = input;
 
@@ -91,6 +96,7 @@ export function buildContract360View(
     hasTowerOverlay:
       towerObservations.length > 0 || towerValueClaims.length > 0,
     docExtractions,
+    optimizationEvidence,
   };
 }
 

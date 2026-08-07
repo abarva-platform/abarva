@@ -14,6 +14,10 @@
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
+import {
+  buildContractOptimizationEvidencePack,
+  type ContractOptimizationEvidenceItem,
+} from "./contract-optimization-evidence";
 import type {
   DocExtractionRow,
   SourceApplicationVendorExposureRow,
@@ -28,6 +32,8 @@ import type {
   TowerMetricProvenanceRow,
   TowerValueClaimRow,
 } from "./types";
+
+type NumericRow = Record<string, unknown>;
 
 /**
  * Resolve tenant aliases through the shared tenant service. Source data-model
@@ -55,6 +61,18 @@ async function queryForTenant<R>(
     ]);
     return run(sql, [aliases, ...params]);
   });
+}
+
+async function safeQueryForTenant<R>(
+  tenantKey: string,
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  try {
+    return await queryForTenant<R>(tenantKey, sql, params);
+  } catch {
+    return [];
+  }
 }
 
 export async function listContractVendor360(
@@ -213,4 +231,201 @@ export async function listDocExtractionsForSubject(
     "SELECT * FROM doc.extraction WHERE tenant_key = ANY($1::text[]) AND subject_ref = $2 ORDER BY extracted_at DESC",
     [subjectRef],
   );
+}
+
+export async function getContractOptimizationEvidencePack(
+  tenantKey: string,
+  contractId: string,
+) {
+  const [performanceRows, spendRows, rateRows, saasRows, sourcingRows] =
+    await Promise.all([
+      safeQueryForTenant<NumericRow>(
+        tenantKey,
+        `SELECT
+            count(*) AS row_count,
+            COALESCE(SUM(credit_calculated), 0) AS credit_calculated,
+            COALESCE(SUM(credit_claimed), 0) AS credit_claimed,
+            COALESCE(SUM(credit_recovered), 0) AS credit_recovered,
+            COALESCE(SUM(COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)), 0) AS unclaimed_credit
+           FROM consumption_v4_canary.sourcing_performance_v1
+          WHERE tenant_key = ANY($1::text[]) AND contract_id = $2`,
+        [contractId],
+      ),
+      safeQueryForTenant<NumericRow>(
+        tenantKey,
+        `SELECT
+            count(*) AS row_count,
+            COALESCE(SUM(invoice_lines), 0) AS invoice_lines,
+            COALESCE(SUM(CASE WHEN matching_state = 'off_contract' THEN actual_spend ELSE 0 END), 0) AS off_contract_spend,
+            COALESCE(SUM(CASE WHEN matching_state ILIKE '%duplicate%' THEN actual_spend ELSE 0 END), 0) AS duplicate_spend
+           FROM consumption_v4_canary.sourcing_spend_monthly_v1
+          WHERE tenant_key = ANY($1::text[]) AND contract_id = $2`,
+        [contractId],
+      ),
+      safeQueryForTenant<NumericRow>(
+        tenantKey,
+        `SELECT
+            count(*) AS row_count,
+            COALESCE(SUM(CASE WHEN approval_state = 'variance_unapproved' THEN 1 ELSE 0 END), 0) AS unapproved_variance_count,
+            COALESCE(SUM(hours::numeric), 0) AS hours
+           FROM raw_source_v4.fieldglass_rate_card
+          WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
+        [contractId],
+      ),
+      safeQueryForTenant<NumericRow>(
+        tenantKey,
+        `SELECT
+            count(*) AS row_count,
+            COALESCE(SUM(assigned_seats::numeric), 0) AS assigned_seats,
+            COALESCE(SUM(active_users::numeric), 0) AS active_users,
+            COALESCE(SUM(actual_cost::numeric), 0) AS actual_cost,
+            COALESCE(SUM(CASE WHEN claimable_value_state = 'claimable' THEN actual_cost::numeric ELSE 0 END), 0) AS claimable_cost
+           FROM raw_source_v4.entra_saas_usage_monthly
+          WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
+        [contractId],
+      ),
+      safeQueryForTenant<NumericRow>(
+        tenantKey,
+        `SELECT
+            count(DISTINCT event_id) AS event_count,
+            COALESCE(SUM(normalized_cost::numeric), 0) AS normalized_cost,
+            COALESCE(SUM(line_item_cost::numeric), 0) AS line_item_cost
+           FROM raw_source_v4.ariba_sourcing_events
+          WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
+        [contractId],
+      ),
+    ]);
+
+  const performance = performanceRows[0];
+  const spend = spendRows[0];
+  const rate = rateRows[0];
+  const saas = saasRows[0];
+  const sourcing = sourcingRows[0];
+  const items: ContractOptimizationEvidenceItem[] = [];
+
+  const unclaimedCredit = positiveNumber(performance?.unclaimed_credit);
+  if (unclaimedCredit != null) {
+    items.push({
+      ledger_item_id: "recoverable:sla-credit-gap",
+      contract_id: contractId,
+      ledger_type: "recoverable_leakage",
+      amount: unclaimedCredit,
+      amount_state: "quantified",
+      evidence_class: "system_evidenced",
+      evidence_refs: ["consumption_v4_canary.sourcing_performance_v1"],
+      source_systems: ["ServiceNow"],
+      source_record_ids: [`contract:${contractId}:sla-performance`],
+      document_refs: [],
+      page_spans: [],
+      calculation_rule: "SUM(credit_calculated - credit_claimed) by contract.",
+      confidence: 0.82,
+      review_state: "system_extracted",
+      decision_state: "candidate",
+      workflow_event_id: null,
+      tower_claim_id: null,
+    });
+  }
+
+  const invoiceVariance =
+    (numberFromDb(spend?.off_contract_spend) ?? 0) +
+    (numberFromDb(spend?.duplicate_spend) ?? 0);
+  const unapprovedRateVarianceCount = numberFromDb(rate?.unapproved_variance_count) ?? 0;
+  if (invoiceVariance > 0 || unapprovedRateVarianceCount > 0) {
+    items.push({
+      ledger_item_id: "recoverable:invoice-rate-card",
+      contract_id: contractId,
+      ledger_type: "recoverable_leakage",
+      amount: invoiceVariance > 0 ? invoiceVariance : null,
+      amount_state: invoiceVariance > 0 ? "quantified" : "not_quantified",
+      evidence_class: invoiceVariance > 0 ? "system_evidenced" : "missing",
+      evidence_refs: [
+        "consumption_v4_canary.sourcing_spend_monthly_v1",
+        "raw_source_v4.fieldglass_rate_card",
+      ],
+      source_systems: ["ERP / AP", "Fieldglass"],
+      source_record_ids: [`contract:${contractId}:invoice-matching`, `contract:${contractId}:rate-card`],
+      document_refs: [],
+      page_spans: [],
+      calculation_rule:
+        "SUM(off-contract spend + duplicate spend) by contract; rate-card variance count is separately evidenced.",
+      confidence: invoiceVariance > 0 ? 0.78 : 0.45,
+      review_state: invoiceVariance > 0 ? "system_extracted" : "needs_review",
+      decision_state: invoiceVariance > 0 ? "candidate" : "workflow_required",
+      workflow_event_id: null,
+      tower_claim_id: null,
+    });
+  }
+
+  const claimableSaasCost = positiveNumber(saas?.claimable_cost);
+  if (claimableSaasCost != null) {
+    items.push({
+      ledger_item_id: "avoided:renewal-uplift",
+      contract_id: contractId,
+      ledger_type: "avoided_cost",
+      amount: claimableSaasCost,
+      amount_state: "addressable_exposure",
+      evidence_class: "inferred",
+      evidence_refs: ["raw_source_v4.entra_saas_usage_monthly"],
+      source_systems: ["SaaS admin"],
+      source_record_ids: [`contract:${contractId}:saas-usage`],
+      document_refs: [],
+      page_spans: [],
+      calculation_rule:
+        "SUM(actual_cost) for usage rows already flagged claimable by the source-system export.",
+      confidence: 0.68,
+      review_state: "needs_review",
+      decision_state: "workflow_required",
+      workflow_event_id: null,
+      tower_claim_id: null,
+    });
+  }
+
+  const negotiatedDelta =
+    Math.max(
+      0,
+      (numberFromDb(sourcing?.normalized_cost) ?? 0) -
+        (numberFromDb(sourcing?.line_item_cost) ?? 0),
+    );
+  if (negotiatedDelta > 0) {
+    items.push({
+      ledger_item_id: "negotiated:commercial-levers",
+      contract_id: contractId,
+      ledger_type: "negotiated_improvement",
+      amount: negotiatedDelta,
+      amount_state: "quantified",
+      evidence_class: "document_evidenced",
+      evidence_refs: ["raw_source_v4.ariba_sourcing_events"],
+      source_systems: ["Sourcing platform"],
+      source_record_ids: [`contract:${contractId}:sourcing-events`],
+      document_refs: [],
+      page_spans: [],
+      calculation_rule: "SUM(normalized_cost - line_item_cost) by contract.",
+      confidence: 0.74,
+      review_state: "document_extracted",
+      decision_state: "candidate",
+      workflow_event_id: null,
+      tower_claim_id: null,
+    });
+  }
+
+  return buildContractOptimizationEvidencePack({
+    tenantKey,
+    datasetVersion: "source-v4",
+    contractId,
+    ledgerItems: items,
+  });
+}
+
+function positiveNumber(value: unknown): number | null {
+  const n = numberFromDb(value);
+  return n != null && n > 0 ? n : null;
+}
+
+function numberFromDb(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
 }
