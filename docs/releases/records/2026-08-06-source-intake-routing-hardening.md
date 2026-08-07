@@ -10,13 +10,14 @@
 
 ## Plain-English Summary
 
-This release hardens Source event origination so a completed intake either opens its approval route or shows a visible creation error. It also removes render-time browser storage and request-id reads that could make the first client render disagree with the server-rendered markup, and prevents a persisted expanded chat dock from covering the intake approval actions.
+This release hardens Source event origination so a completed intake either opens its approval route or shows a visible creation error. It also removes render-time browser storage and request-id reads that could make the first client render disagree with the server-rendered markup, prevents a persisted expanded chat dock from covering the intake approval actions, and moves the public landing request-access behavior into a small client island so the marketing root does not hydrate as one large client component.
 
 ## Layer Impact
 
 - `global-control-lane`: Source intake UI behavior is hardened for event creation and approval navigation across the shared product surface.
 - Products: Source onboarding tour and chat-dock persisted mode state are moved to client-side effects to avoid first-render mismatch.
 - Products: Source new-event intake opts out of persisted chat-dock mode so workflow actions remain clickable on fresh visits.
+- Public route: landing-page request-access behavior is isolated in a focused client controller to reduce root-page hydration work while preserving the same form flow.
 
 ## Client Applicability
 
@@ -32,13 +33,16 @@ This release hardens Source event origination so a completed intake either opens
 - `src/components/source/onboarding/SourceOnboardingTour.tsx`
 - `src/components/agent/AgentDock.tsx`
 - `src/components/agent/__tests__/AgentDock.test.tsx`
+- `src/components/marketing/LoggedOutLandingPage.tsx`
+- `src/components/marketing/RequestAccessController.tsx`
 - `src/__tests__/integration/source/source-originate-page.test.ts`
 
 ## QA / Validation
 
-- `npm test -- --runTestsByPath src/__tests__/integration/source/source-originate-page.test.ts` passed.
-- `npx eslint src/components/source/SourceOriginatePage.tsx src/components/source/onboarding/SourceOnboardingTour.tsx src/__tests__/integration/source/source-originate-page.test.ts` passed.
+- `npm test -- --runTestsByPath src/__tests__/integration/source/source-originate-page.test.ts src/components/agent/__tests__/AgentDock.test.tsx --testNamePattern="hydrates a stored mode preference|can ignore a stored mode preference|SourceOriginatePage"` passed.
+- `npx eslint src/components/marketing/LoggedOutLandingPage.tsx src/components/marketing/RequestAccessController.tsx src/components/agent/AgentDock.tsx src/components/source/SourceOriginatePage.tsx` passed with existing image optimization warnings on the marketing page.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` passed.
+- Lighthouse CI budget covers `/` and `/sign-in`; the landing page client-island split is included to keep that required release gate within budget.
 
 ## Rollout Plan
 
