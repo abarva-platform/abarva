@@ -226,7 +226,7 @@ export function WorkspaceClient({
 
               <div style={{ padding: '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: 18 }}>
                 {vm.stripFull ? <FullContextStrip vm={vm} /> : null}
-                {vm.stripCompact ? <ExploreCompactStrip vm={vm} /> : null}
+                {vm.stripCompact ? <CompactContextStrip vm={vm} /> : null}
 
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
                 {vm.isExplore ? <ExploreLens vm={vm} /> : null}
@@ -315,9 +315,10 @@ function FullContextStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
   );
 }
 
-function ExploreCompactStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
+function CompactContextStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
   const [expanded, setExpanded] = useState(false);
-  const ringDeg = Math.max(0, Math.min(100, vm.categoryCleanPctRaw * 100));
+  const ring = vm.compactRing;
+  const ringDeg = ring ? Math.max(0, Math.min(100, ring.pct01 * 100)) : 0;
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, padding: '10px 16px', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, background: '#fff', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: '#5f5e5a' }}>
@@ -326,18 +327,22 @@ function ExploreCompactStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) 
             <b style={{ color: '#0a0a0b' }}>{it.value}</b> {it.label}
           </span>
         ))}
-        <span
-          style={{
-            width: 22, height: 22, borderRadius: '50%', flex: 'none',
-            background: `conic-gradient(#ba7517 0 ${ringDeg}%, #f1efe8 ${ringDeg}% 100%)`,
-            display: 'grid', placeItems: 'center',
-          }}
-        >
-          <span style={{ width: 13, height: 13, borderRadius: '50%', background: '#fff' }} />
-        </span>
-        <span style={{ color: '#ba7517' }}>
-          <b>{vm.categoryCleanPct}</b> category-clean
-        </span>
+        {ring ? (
+          <>
+            <span
+              style={{
+                width: 22, height: 22, borderRadius: '50%', flex: 'none',
+                background: `conic-gradient(${ring.color} 0 ${ringDeg}%, #f1efe8 ${ringDeg}% 100%)`,
+                display: 'grid', placeItems: 'center',
+              }}
+            >
+              <span style={{ width: 13, height: 13, borderRadius: '50%', background: '#fff' }} />
+            </span>
+            <span style={{ color: ring.color }}>
+              <b>{ring.valueLabel}</b> {ring.label}
+            </span>
+          </>
+        ) : null}
         <button
           onClick={() => setExpanded((e) => !e)}
           style={{ marginLeft: 'auto', border: '1px solid rgba(10,10,11,.16)', background: '#fff', color: '#5f5e5a', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}

@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import type { SourceWorkspaceVM } from '../buildViewModel';
 
 export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
   const ex = vm.ex;
+  const [showQuery, setShowQuery] = useState(false);
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
@@ -59,8 +61,8 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(380px,1fr))', gap: 16, alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(380px,1fr))', gap: 16, alignItems: 'stretch', height: 'calc(100dvh - 386px)', minHeight: 420 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignContent: 'flex-start', gap: 12, overflowY: 'auto', minHeight: 0 }}>
           {ex.boxes.map((b) => (
             <div key={b.id} style={{ flex: '1 1 210px', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 13px 9px', borderBottom: '1px solid rgba(10,10,11,.09)', background: '#fbfaf7' }}>
@@ -82,13 +84,13 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
           ))}
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12, padding: '15px 20px 13px', borderBottom: '1px solid rgba(10,10,11,.12)' }}>
+        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12, padding: '15px 20px 13px', borderBottom: '1px solid rgba(10,10,11,.12)', flex: '0 0 auto' }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#0a0a0b' }}>Annual contract value by {ex.dimLabel}</div>
             <div style={{ fontSize: 12, color: '#5f5e5a' }}>{ex.chartSubtitle}</div>
             <div style={{ marginLeft: 'auto', fontSize: 12, color: '#0066CC', fontWeight: 600 }}>Click any value to select it. Click again to release it.</div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 520, overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
             {ex.groups.map((g) => (
               <div
                 key={g.key}
@@ -113,7 +115,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', padding: '12px 20px', background: '#fbfaf7', borderTop: '1px solid rgba(10,10,11,.12)', fontSize: 11.5, color: '#5f5e5a' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', padding: '12px 20px', background: '#fbfaf7', borderTop: '1px solid rgba(10,10,11,.12)', fontSize: 11.5, color: '#5f5e5a', flex: '0 0 auto' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 11, height: 11, borderRadius: 2, background: '#a32d2d' }} />Passed notice deadline inside the group</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 11, height: 11, borderRadius: 2, background: '#1d9e75' }} />No weak leverage signal</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 11, height: 11, borderRadius: 2, background: '#3d6ea8' }} />Mixed</span>
@@ -122,24 +124,34 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'stretch' }}>
-        <div style={{ background: '#0a0a0b', borderRadius: 8, padding: '20px 22px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)', marginBottom: 12 }}>
-            The query behind this view
+      <div>
+        <button
+          onClick={() => setShowQuery((s) => !s)}
+          style={{ border: '1px solid rgba(10,10,11,.16)', background: '#fff', color: '#5f5e5a', borderRadius: 6, padding: '6px 12px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+        >
+          {showQuery ? '– hide query & rationale' : '+ show the query behind this view'}
+        </button>
+        {showQuery ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'stretch', marginTop: 12 }}>
+            <div style={{ background: '#0a0a0b', borderRadius: 8, padding: '20px 22px' }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)', marginBottom: 12 }}>
+                The query behind this view
+              </div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, lineHeight: 1.65, color: '#a9c7ee', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>{ex.query}</div>
+            </div>
+            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#888780', marginBottom: 10 }}>Why this matters</div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.65, color: '#2c2c2a' }}>This is the exact query the native canvas executes against source.contract_360 — re-grouped live, no separate calculation.</div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 'auto' }}>
+                <button onClick={vm.pinSlice} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 17px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  Pin this cut
+                </button>
+              </div>
+            </div>
           </div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, lineHeight: 1.65, color: '#a9c7ee', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>{ex.query}</div>
-        </div>
-        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#888780', marginBottom: 10 }}>Why this matters</div>
-            <div style={{ fontSize: 13.5, lineHeight: 1.65, color: '#2c2c2a' }}>This is the exact query the native canvas executes against source.contract_360 — re-grouped live, no separate calculation.</div>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 'auto' }}>
-            <button onClick={vm.pinSlice} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 17px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              Pin this cut
-            </button>
-          </div>
-        </div>
+        ) : null}
       </div>
     </>
   );
