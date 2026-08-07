@@ -170,6 +170,73 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
 
       {vm.cActions ? (
         <>
+          {vm.optLedger ? (
+            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ flex: '1 1 520px', minWidth: 280 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 7 }}>
+                    Four-ledger evidence cockpit
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#0a0a0b', marginBottom: 5 }}>{vm.optLedger.headline}</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.55, color: '#5f5e5a' }}>
+                    Recoverable leakage, avoided cost, negotiated improvement, and realized value stay separate. Exposure is not savings; realized value requires Tower / Finance proof.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {[
+                    ['Quantified leakage', vm.optLedger.quantifiedLeakage],
+                    ['Realized value', vm.optLedger.realizedValue],
+                    ['Evidence gaps', vm.optLedger.evidenceGaps],
+                  ].map(([label, value]) => (
+                    <div key={label} style={{ minWidth: 118, border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '10px 12px' }}>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 5 }}>{label}</div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: '#0a0a0b' }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={vm.startOptimization}
+                  disabled={vm.optCtaDisabled}
+                  style={{
+                    border: '1px solid #0a0a0b',
+                    background: vm.optCtaDisabled ? '#5f5e5a' : '#0a0a0b',
+                    color: '#fff',
+                    borderRadius: 6,
+                    padding: '11px 16px',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: vm.optCtaDisabled ? 'wait' : 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {vm.optCtaLabel}
+                </button>
+                {vm.optCtaError ? (
+                  <div style={{ flexBasis: '100%', color: '#a32d2d', fontSize: 12.5, lineHeight: 1.5 }}>{vm.optCtaError}</div>
+                ) : null}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>
+                {vm.optLedger.lines.map((line) => (
+                  <div key={line.id} style={{ padding: '16px 20px', borderRight: '1px solid rgba(10,10,11,.08)', borderBottom: '1px solid rgba(10,10,11,.08)' }}>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', marginBottom: 9 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: line.tone, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: '#0a0a0b' }}>{line.label}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: line.tone }}>{line.state}</span>
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: '#0a0a0b', marginBottom: 9 }}>{line.amount}</div>
+                    <div style={{ fontSize: 12.5, color: '#2c2c2a', lineHeight: 1.55, marginBottom: 10 }}>{line.evidence}</div>
+                    <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.55, marginBottom: 10 }}><b style={{ color: '#2c2c2a' }}>Next.</b> {line.nextAction}</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {line.sourceRefs.slice(0, 3).map((ref) => (
+                        <span key={ref} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#5f5e5a', background: '#f5f1eb', border: '1px solid rgba(10,10,11,.08)', borderRadius: 3, padding: '3px 6px' }}>{ref}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
             {vm.optLevers.map((l, i) => (
               <div key={i} style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 20px' }}>

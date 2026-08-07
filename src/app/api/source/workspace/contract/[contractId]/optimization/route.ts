@@ -1,0 +1,312 @@
+import { NextResponse } from 'next/server';
+
+import { getActiveClientRow } from '@/lib/active-client';
+import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { getContract360, listContractFinancialExposure } from '@/lib/source/data-model/read-adapter';
+import { factSpecByKey } from '@/lib/source/facts/fact-catalog';
+import type { SourceEventFactInsert } from '@/lib/source/facts/fact-types';
+import { createSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
+import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
+import type { SourceCategoryId } from '@/lib/source/taxonomy/category-taxonomy';
+import { readEventFactMap } from '@/lib/source/door1/facts-reader';
+import { runSourceOptimization } from '@/lib/source/door1/optimize';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
+type RouteContext = {
+  params: Promise<{ contractId: string }>;
+};
+
+const MOTION = 'contract_optimization' as const;
+
+export async function POST(_request: Request, { params }: RouteContext) {
+  let tenancy;
+  try {
+    tenancy = await requireTenancy();
+  } catch (err) {
+    if (err instanceof TenancyError && err.code === 'unauthenticated') {
+      return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 });
+    }
+    return NextResponse.json({ ok: false, error: 'tenancy_unavailable' }, { status: 503 });
+  }
+
+  const [{ contractId: rawContractId }, activeClient] = await Promise.all([
+    params,
+    getActiveClientRow().catch(() => null),
+  ]);
+  const contractId = decodeURIComponent(rawContractId);
+  const clientKey = activeClient?.key ?? tenancy.clientKey ?? '';
+  if (!clientKey) {
+    return NextResponse.json({ ok: false, error: 'no_client' }, { status: 403 });
+  }
+
+  const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: clientKey,
+  }).catch(() => null);
+  if (!accessPolicy?.canCreateSourceEvents) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'forbidden_source_create_required',
+        detail: 'Source create access is required to start or refresh a contract optimization workflow.',
+      },
+      { status: 403 },
+    );
+  }
+
+  const contract = await getContract360(clientKey, contractId).catch(() => null);
+  if (!contract) {
+    return NextResponse.json({ ok: false, error: 'contract_not_found' }, { status: 404 });
+  }
+
+  const financialExposureRows = await listContractFinancialExposure(clientKey).catch(() => []);
+  const financialExposure = financialExposureRows.find((row) => row.contract_id === contract.contract_id) ?? null;
+
+  const existing = await findExistingOptimizationEvent(clientKey, contract.contract_id);
+  const event = existing ?? await createOptimizationEvent({
+    clientKey,
+    userId: tenancy.userId,
+    contractId: contract.contract_id,
+    contractName: contract.contract_name,
+    vendorName: contract.vendor_name,
+    vendorCategory: contract.vendor_category,
+    annualValue: contract.annual_value,
+    actualAnnualSpend: contract.actual_annual_spend,
+    renewalOwnerRef: contract.renewal_owner_ref,
+  });
+
+  await persistBaselineFacts({
+    event,
+    contractId: contract.contract_id,
+    actualAnnualSpend: financialExposure?.actual_annual_spend ?? contract.actual_annual_spend,
+    annualValue: financialExposure?.contracted_annual_value ?? contract.annual_value,
+    totalCommittedValue: financialExposure?.total_committed_value ?? contract.total_committed_value,
+  });
+
+  const diagnosis = await diagnoseIfReady(event, clientKey);
+
+  return NextResponse.json(
+    {
+      ok: true,
+      state: existing ? 'existing' : 'created',
+      eventId: event.id,
+      eventCode: event.event_code,
+      eventName: event.event_name,
+      sourcingMotion: MOTION,
+      approvalUrl: `/source/events/${event.id}/approval`,
+      eventUrl: `/source/events/${event.id}?stage=Strategy`,
+      diagnosis,
+    },
+    { headers: { 'cache-control': 'no-store' } },
+  );
+}
+
+async function findExistingOptimizationEvent(
+  clientKey: string,
+  contractId: string,
+): Promise<SourceEventRow | null> {
+  const rows = await selectSourceEventsReadAdapter(undefined, clientKey)
+    .getActiveEventsForClient(clientKey)
+    .catch(() => []);
+  const contractPattern = new RegExp(`\\b${escapeRegExp(contractId)}\\b`, 'i');
+  const event = rows.find((row) => {
+    const haystack = [row.event_name, row.trigger_description, row.scope_description, row.event_code]
+      .filter(Boolean)
+      .join(' ');
+    return row.sourcing_motion === MOTION && contractPattern.test(haystack);
+  });
+  return (event as SourceEventRow | undefined) ?? null;
+}
+
+async function createOptimizationEvent(input: {
+  clientKey: string;
+  userId: string | null | undefined;
+  contractId: string;
+  contractName: string;
+  vendorName: string;
+  vendorCategory: string | null;
+  annualValue: number | null;
+  actualAnnualSpend: number | null;
+  renewalOwnerRef: string | null;
+}): Promise<SourceEventRow> {
+  const eventType = inferEventType(input.vendorCategory, input.contractName);
+  const event = await createSourcingEvent({
+    clientKey: input.clientKey,
+    eventName: `${input.contractId} Contract Optimization - ${input.vendorName}`,
+    eventType,
+    sourcingMotion: MOTION,
+    triggerDescription:
+      `Optimize incumbent contract ${input.contractId}: ${input.vendorName} - ${input.contractName}.`,
+    decisionOwner: input.renewalOwnerRef ?? 'Vendor Management / Sourcing Lead',
+    scopeDescription:
+      `Contract ref: ${input.contractId}. Use the governed source.contract_360 row, financial exposure, operational performance, ` +
+      'document evidence, and Tower value claims as the starting evidence pack. Do not claim realized value until Tower/Finance confirms it.',
+    estimatedValueUsd: undefined,
+    createdByUserId: input.userId ?? undefined,
+    creationRequestId: input.contractId,
+  });
+
+  if (input.userId) {
+    const participantWrite = await selectSourceWriteAdapter(undefined, input.clientKey).insertParticipant({
+      clientKey: input.clientKey,
+      sourceEventId: event.id,
+      userId: input.userId,
+    });
+    if (!participantWrite.ok) {
+      throw new Error(participantWrite.error ?? 'source participant assignment failed');
+    }
+  }
+  return event;
+}
+
+async function persistBaselineFacts(input: {
+  event: SourceEventRow;
+  contractId: string;
+  annualValue: number | null;
+  actualAnnualSpend: number | null;
+  totalCommittedValue: number | null;
+}): Promise<void> {
+  const facts = buildBaselineFactRows(input);
+  if (facts.length === 0) return;
+
+  const supabase = getAzureWriteFluentClient();
+  const factKeys = facts.map((fact) => fact.fact_key);
+  const stale = await supabase
+    .from('source_event_facts')
+    .update({ is_stale: true })
+    .eq('source_event_id', input.event.id)
+    .eq('client_key', input.event.client_key)
+    .in('fact_key', factKeys)
+    .eq('source_method', 'structured_map');
+  if (stale.error) throw new Error(stale.error.message);
+
+  const inserted = await supabase.from('source_event_facts').insert(facts);
+  if (inserted.error) throw new Error(inserted.error.message);
+}
+
+function buildBaselineFactRows(input: {
+  event: SourceEventRow;
+  contractId: string;
+  annualValue: number | null;
+  actualAnnualSpend: number | null;
+  totalCommittedValue: number | null;
+}): SourceEventFactInsert[] {
+  const rows: SourceEventFactInsert[] = [];
+  const runCost = finiteOrNull(input.actualAnnualSpend ?? input.annualValue);
+  const termYears = deriveTermYears(input.annualValue, input.totalCommittedValue);
+
+  pushNumericFact(rows, input, {
+    factKey: 'annual_run_cost',
+    value: runCost,
+    entityKind: 'tower',
+    entityRef: input.contractId,
+    locator: 'actual_annual_spend, fallback annual_value',
+  });
+  pushNumericFact(rows, input, {
+    factKey: 'term_years',
+    value: termYears,
+    entityKind: 'event',
+    entityRef: null,
+    locator: 'total_committed_value / annual_value',
+  });
+
+  return rows;
+}
+
+function pushNumericFact(
+  rows: SourceEventFactInsert[],
+  input: {
+    event: SourceEventRow;
+    contractId: string;
+  },
+  fact: {
+    factKey: string;
+    value: number | null;
+    entityKind: SourceEventFactInsert['entity_kind'];
+    entityRef: string | null;
+    locator: string;
+    confidence?: SourceEventFactInsert['confidence'];
+  },
+): void {
+  if (fact.value == null) return;
+  const spec = factSpecByKey(fact.factKey);
+  if (!spec) return;
+  rows.push({
+    source_event_id: input.event.id,
+    client_key: input.event.client_key,
+    fact_key: fact.factKey,
+    entity_kind: fact.entityKind,
+    entity_ref: fact.entityRef,
+    value_numeric: fact.value,
+    value_text: null,
+    unit: spec.unit,
+    source_method: 'structured_map',
+    source_citation: {
+      doc: 'source.contract_360 / source.contract_operational_performance',
+      locator: `${input.contractId}.${fact.locator}`,
+    },
+    confidence: fact.confidence ?? 'med',
+  });
+}
+
+async function diagnoseIfReady(event: SourceEventRow, clientKey: string) {
+  const resolution = resolveArchetypeForEvent({
+    categoryId: (event.classified_category as SourceCategoryId | null) ?? null,
+    eventType: event.event_type,
+  });
+  if (!resolution.resolved || !resolution.archetype) {
+    return {
+      ok: false,
+      state: 'archetype_unresolved',
+      detail: resolution.reason,
+    };
+  }
+  const facts = await readEventFactMap({ eventId: event.id, clientKey });
+  const optimization = runSourceOptimization({
+    eventId: event.id,
+    archetype: resolution.archetype,
+    facts,
+  });
+  return {
+    ok: true,
+    archetypeId: optimization.archetypeId,
+    factCount: optimization.baseline.factCount,
+    findingCount: optimization.diagnosis.findings.length,
+    needsEvidenceCount: optimization.diagnosis.needsEvidence.length,
+    recoverableLow: optimization.bridge.recoverableLow,
+    recoverableHigh: optimization.bridge.recoverableHigh,
+    playKind: optimization.play.kind,
+  };
+}
+
+function inferEventType(vendorCategory: string | null, contractName: string): 'managed_service' | 'software' | 'staffing' | 'infrastructure' | 'consulting' | 'other' {
+  const text = `${vendorCategory ?? ''} ${contractName}`.toLowerCase();
+  if (/\b(managed|ams|bpo|outsourc|implementation|professional service)\b/.test(text)) return 'managed_service';
+  if (/\b(saas|software|license|subscription|cyber|security|salesforce|servicenow|workday)\b/.test(text)) return 'software';
+  if (/\b(cloud|network|infrastructure|hosting)\b/.test(text)) return 'infrastructure';
+  if (/\b(staff|contractor|contingent)\b/.test(text)) return 'staffing';
+  if (/\b(consult)\b/.test(text)) return 'consulting';
+  return 'other';
+}
+
+function deriveTermYears(annualValue: number | null, totalCommittedValue: number | null): number | null {
+  const annual = finiteOrNull(annualValue);
+  const committed = finiteOrNull(totalCommittedValue);
+  if (annual == null || committed == null || annual <= 0 || committed <= 0) return null;
+  return Math.max(1, Math.round((committed / annual) * 10) / 10);
+}
+
+function finiteOrNull(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

@@ -53,8 +53,41 @@ export function WorkspaceClient({
       .catch(() => setStateRaw((prev) => ({ ...prev, contractDetail: { ...prev.contractDetail, [contractId]: 'error' } })));
   }, []);
 
+  const startContractOptimization = useCallback((contractId: string) => {
+    setStateRaw((prev) => ({
+      ...prev,
+      optimizationLaunch: {
+        ...prev.optimizationLaunch,
+        [contractId]: { status: 'loading' },
+      },
+    }));
+    fetch('/api/source/workspace/contract/' + encodeURIComponent(contractId) + '/optimization', {
+      method: 'POST',
+    })
+      .then(async (r) => {
+        const payload = await r.json().catch(() => null);
+        if (!r.ok || !payload?.ok) {
+          throw new Error(payload?.detail ?? payload?.error ?? `Source returned ${r.status}`);
+        }
+        return payload as { approvalUrl?: string; eventUrl?: string; eventId?: string };
+      })
+      .then((payload) => {
+        window.location.href = payload.approvalUrl ?? payload.eventUrl ?? `/source/events/${payload.eventId ?? ''}`;
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : 'Could not start optimization workflow.';
+        setStateRaw((prev) => ({
+          ...prev,
+          optimizationLaunch: {
+            ...prev.optimizationLaunch,
+            [contractId]: { status: 'error', message },
+          },
+        }));
+      });
+  }, []);
+
   const vm = useMemo(() => {
-    const logic = new WorkspaceViewModel(state, setState, portfolio, tenantName, fetchContractDetail);
+    const logic = new WorkspaceViewModel(state, setState, portfolio, tenantName, fetchContractDetail, startContractOptimization);
     return buildViewModel(logic);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, portfolio, tenantName]);
