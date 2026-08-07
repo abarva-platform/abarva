@@ -14,8 +14,6 @@ import { ExploreLens } from './lenses/ExploreLens';
 import { ConcentrationLens } from './lenses/ConcentrationLens';
 import { RenewalsLens } from './lenses/RenewalsLens';
 import { LeverageLens } from './lenses/LeverageLens';
-import { OpportunitiesLens } from './lenses/OpportunitiesLens';
-import { AgendaLens } from './lenses/AgendaLens';
 import { ListLens } from './lenses/ListLens';
 import { VendorCanvas } from './canvases/VendorCanvas';
 import { ContractCanvas } from './canvases/ContractCanvas';
@@ -238,7 +236,7 @@ export function WorkspaceClient({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 460px', minWidth: 'min(100%,420px)' }}>
-                    <h1 style={{ fontFamily: 'Fraunces,Georgia,serif', fontWeight: 500, fontSize: 'clamp(24px,2.2vw,32px)', lineHeight: 1.12, letterSpacing: '-0.022em', color: '#0a0a0b', margin: '0 0 8px' }}>
+                    <h1 style={{ fontFamily: 'Fraunces,Georgia,serif', fontWeight: 500, fontSize: 'clamp(22px,1.8vw,28px)', lineHeight: 1.12, letterSpacing: '-0.012em', color: '#0a0a0b', margin: '0 0 8px' }}>
                       {vm.title}
                     </h1>
                     <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#5f5e5a', margin: '0 0 14px', maxWidth: 'none' }}>{vm.thesis}</p>
@@ -265,11 +263,14 @@ export function WorkspaceClient({
 
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
                 {vm.isExplore ? <ExploreLens vm={vm} /> : null}
-                {vm.isConc ? <ConcentrationLens vm={vm} /> : null}
+                {vm.isConc ? (
+                  <>
+                    <PortfolioLensSwitch vm={vm} />
+                    {vm.showConcentrationLens ? <ConcentrationLens vm={vm} /> : null}
+                    {vm.showLeverageLens ? <LeverageLens vm={vm} /> : null}
+                  </>
+                ) : null}
                 {vm.isRenewals ? <RenewalsLens vm={vm} /> : null}
-                {vm.isLeverage ? <LeverageLens vm={vm} /> : null}
-                {vm.isOpps ? <OpportunitiesLens vm={vm} /> : null}
-                {vm.isAgenda ? <AgendaLens vm={vm} /> : null}
                 {(vm.isContractList || vm.isVendorList) ? <ListLens vm={vm} /> : null}
                 {vm.isVendor ? <VendorCanvas vm={vm} /> : null}
                 {vm.isContract ? <ContractCanvas vm={vm} /> : null}
@@ -315,6 +316,43 @@ export function WorkspaceClient({
       </div>
 
       <Tooltip tip={vm.tip} />
+    </div>
+  );
+}
+
+function PortfolioLensSwitch({ vm }: { vm: ReturnType<typeof buildViewModel> }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 20px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14 }}>
+      <div style={{ flex: '1 1 360px', minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0a0a0b', marginBottom: 4 }}>
+          One action surface, two lenses
+        </div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.5, color: '#5f5e5a' }}>
+          Spend concentration explains dependency. Leverage explains where a sourcing action is justified.
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {vm.portfolioLensButtons.map((lens) => (
+          <button
+            key={lens.id}
+            onClick={lens.onClick}
+            title={lens.note}
+            style={{
+              border: `1px solid ${lens.border}`,
+              background: lens.bg,
+              color: lens.fg,
+              borderRadius: 6,
+              padding: '9px 14px',
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {lens.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

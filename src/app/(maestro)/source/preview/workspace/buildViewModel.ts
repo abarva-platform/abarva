@@ -79,28 +79,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const grp = (id: string, label: string, count: string) =>
     node({ id, label, caret: S.open[id] ? '▾' : '▸', size: '9.5px', weight: 600, fg: '#888780', badgeCount: count, onClick: () => vm.toggle(id) });
   const T: TreeNode[] = [];
-  T.push(grp('exec', 'Executive portfolio', ''));
-  if (S.open.exec) {
-    ([
-      ['Context', 'Context', '', ''], ['Spend & concentration', 'Concentration', '', money(summary.totalAnnualValue)],
-      ['Explore', 'Explore', '', ''],
-      ['Renewals', 'Renewals', String(rec180Fixed.expiringWithinWindow.length), money(rec180Fixed.expiringWithinWindowAnnualValue)],
-      ['Leverage', 'Leverage', String(rows.filter((c) => c.leverage.weakSignalCount >= 2).length), money(rows.filter((c) => c.leverage.weakSignalCount >= 2).reduce(addRowAnnualValue, 0))],
-      ['Opportunities', 'Opportunities', String(opportunities.length), money(opportunities.reduce((t, o) => t + (numberFromDb(o.annualValue) ?? 0), 0))],
-      ['Sourcing agenda', 'Agenda', '', ''],
-    ] as [string, string, string, string][]).forEach((x) =>
-      T.push(node({ id: 'exec.' + x[1], label: x[0], depth: 1, badgeCount: x[2], badgeVal: x[3], active: kind === 'portfolio' && S.tabs.portfolio === x[1], onClick: () => vm.select('portfolio', null, x[1]) })));
-  }
   T.push(grp('vendors', 'Vendors', String(summary.vendorCount)));
   if (S.open.vendors) {
-    const cats = Array.from(new Set(vm.portfolio.vendors.map((v) => v.vendor_category ?? 'Unresolved')));
-    cats.forEach((cat) => {
-      const vs = vm.portfolio.vendors.filter((v) => (v.vendor_category ?? 'Unresolved') === cat);
-      T.push(node({ id: 'v.' + cat, label: cat, depth: 1, badgeCount: String(vs.length), badgeVal: money(vs.reduce(addAnnualValue, 0)), onClick: () => vm.select('vendorList', cat) }));
-    });
+    conc.byVendor.slice(0, 10).forEach((r) =>
+      T.push(node({ id: 'vv.' + r.vendorRef, label: r.vendorName, depth: 1, size: '12px', badgeVal: money(r.annualValue), active: kind === 'vendor' && sel.id === r.vendorRef, onClick: () => vm.select('vendor', r.vendorRef) })));
     T.push(node({ id: 'allVendors', label: 'All vendors', depth: 1, caret: S.open.allVendors ? '▾' : '▸', badgeCount: String(vm.portfolio.vendors.length), onClick: () => vm.toggle('allVendors') }));
     if (S.open.allVendors) {
-      conc.byVendor.slice(0, 10).forEach((r) =>
+      conc.byVendor.slice(10, 30).forEach((r) =>
         T.push(node({ id: 'vv.' + r.vendorRef, label: r.vendorName, depth: 2, size: '12px', badgeVal: money(r.annualValue), active: kind === 'vendor' && sel.id === r.vendorRef, onClick: () => vm.select('vendor', r.vendorRef) })));
     }
   }
@@ -109,17 +94,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ([
       ['Notice decisions due in 90 days', 'win90', rec90.expiringWithinWindow], ['Contracts expiring in 180 days', 'win180', rec180Fixed.expiringWithinWindow],
       ['Notice deadline passed', 'passed', rec180Fixed.noticeDeadlinePassed], ['Weak leverage', 'weak', rows.filter((c) => c.leverage.weakSignalCount >= 2).map((c) => c.row)],
-    ] as [string, string, readonly { contract_id: string; annual_value: number | null }[]][]).forEach((x) =>
+    ] as [string, string, readonly { contract_id: string; annual_value: number | null }[]][])
+      .filter((x) => x[2].length > 0)
+      .forEach((x) =>
       T.push(node({ id: 'c.' + x[1], label: x[0], depth: 1, badgeCount: String(x[2].length), badgeVal: money(x[2].reduce(addAnnualValue, 0)), badgeColor: x[1] === 'passed' ? COL.red : '#888780', active: kind === 'contractList' && sel.id === x[1], onClick: () => vm.select('contractList', x[1]) })));
     T.push(node({ id: 'allContracts', label: 'All contracts', depth: 1, caret: S.open.allContracts ? '▾' : '▸', badgeCount: String(summary.contractCount), onClick: () => vm.toggle('allContracts') }));
     if (S.open.allContracts) {
       rows.slice().sort((a, b) => (b.row.annual_value ?? 0) - (a.row.annual_value ?? 0)).slice(0, 10).forEach((c) =>
         T.push(node({ id: 'cc.' + c.row.contract_id, label: c.row.vendor_name + ' · ' + c.row.contract_name, depth: 2, size: '12px', badgeVal: money(c.row.annual_value), active: kind === 'contract' && sel.id === c.row.contract_id, onClick: () => vm.select('contract', c.row.contract_id) })));
     }
-  }
-  T.push(grp('opps', 'Opportunities', String(opportunities.length)));
-  if (S.open.opps) {
-    opportunities.forEach((o) => T.push(node({ id: 'o.' + o.contractId, label: o.vendorName + ' · ' + REASON_LABEL[o.reasons[0]], depth: 1, size: '12px', badgeVal: money(o.annualValue), active: kind === 'opportunity' && sel.id === o.contractId, onClick: () => vm.select('opportunity', o.contractId) })));
   }
   T.push(grp('ev', 'Evidence', ''));
   if (S.open.ev) {
@@ -145,7 +128,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   // ── header, tabs ──
   const TABS: Record<string, string[]> = {
-    portfolio: ['Context', 'Explore', 'Concentration', 'Renewals', 'Leverage', 'Opportunities', 'Agenda'],
+    portfolio: ['Home', 'Explore', 'Concentration & Leverage', 'Renewals'],
     vendor: ['Overview', 'Contracts', 'Dependencies', 'Opportunities'],
     contract: ['Overview', 'Economics', 'Scope', 'Performance', 'Renewal', 'Leverage', 'Evidence', 'Optimization'],
     evidence: ['Coverage', 'Source systems', 'Contract documents', 'Conflicts', 'Missing evidence'],
@@ -170,20 +153,18 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   if (kind === 'portfolio') {
     title = ({
-      Context: 'Where leadership should focus first', Explore: 'Slice the portfolio any way the question demands',
-      Concentration: 'Where is spend concentrated?', Renewals: 'Which decisions are already live?',
-      Leverage: 'Where is leverage weak?', Opportunities: 'Where should leadership intervene?', Agenda: 'The sourcing agenda for this quarter',
+      Home: 'Where leadership should focus first',
+      Explore: 'Slice the portfolio any way the question demands',
+      'Concentration & Leverage': 'Which contracts should leadership act on first?',
+      Renewals: 'Which decisions are already live?',
     } as Record<string, string>)[activeTab];
     thesis = ({
-      Context: v4HasPortfolio
+      Home: v4HasPortfolio
         ? 'AbarVa frames the active Source V4 snapshot into a leadership agenda: ' + whole(v4Snapshot.contextCoverage.vendors) + ' material vendors, ' + whole(v4Snapshot.executivePortfolio.contractCount) + ' contract families, ' + whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit scope links, and ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred scope links. Exposure, observations, and finance-confirmed value stay visibly separate.'
         : 'AbarVa frames ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts into a leadership agenda as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Missing values stay named as missing rather than treated as zero.',
       Explore: 'Use associative filters to isolate vendor, renewal, leverage, and evidence questions. The default view shows the selected slice only; compare-all is available when the discussion needs peer context.',
-      Concentration: 'The top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value.',
+      'Concentration & Leverage': 'Use the spend lens to understand dependency, then the leverage lens to choose where to act. Rank alone is not a recommendation.',
       Renewals: rec180Fixed.noticeDeadlinePassed.length + ' active contracts (' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ') are past their notice deadline. ' + rec180Fixed.expiringWithinWindow.length + ' contracts (' + money(rec180Fixed.expiringWithinWindowAnnualValue) + ') expire inside 180 days.',
-      Leverage: rows.filter((c) => c.leverage.weakSignalCount >= 2).length + ' contracts carry two or more weak leverage signals. Every position is a countable signal returned by computeContractLeverageSignals, not a score.',
-      Opportunities: opportunities.length + ' deterministic opportunities, computed from weak-leverage signals, missed notice deadlines, and vendor concentration — never a fabricated priority score.',
-      Agenda: 'What the governed numbers say, generated live from the same aggregates the lenses show.',
     } as Record<string, string>)[activeTab];
     crumbLabels = ['Source', vm.tenantName, 'Executive portfolio', activeTab];
   } else if (kind === 'vendor') {
@@ -360,6 +341,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   // ── leverage lens ──
   const mx = vm.matrix(rows);
+  const highLeverageRows = rows.filter((c) => c.leverage.weakSignalCount >= 2);
   const quadPanel = mx.quads.map((q) => {
     const yMax = Math.max(20, ...rows.map((c) => (c.row.annual_value ?? 0) / 1_000_000));
     const inQ = rows.filter((c) => {
@@ -371,6 +353,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     });
     return { id: q.id, label: q.label, action: q.action, count: inQ.length, value: money(inQ.reduce(addRowAnnualValue, 0)), selected: S.quadrant === q.id, bg: S.quadrant === q.id ? '#0a0a0b' : '#fff', fg: S.quadrant === q.id ? '#fff' : '#0a0a0b', onClick: q.onClick, items: inQ.slice(0, 4).map((c) => ({ label: c.row.vendor_name + ' · ' + c.row.contract_name, value: money(c.row.annual_value), onClick: () => vm.select('contract', c.row.contract_id) })) };
   });
+  const renegotiateQuadrant = quadPanel.find((q) => q.id === 'renegotiate');
   const signalDefs = (['benchmarking', 'alternatives', 'skill_dependency', 'regional_dependency'] as LeverageSignal[]).map((s) => ({
     id: s, label: vm.signalLabel(s), count: String(rows.filter((c) => c.leverage.weakSignals[s]).length) + ' of ' + rows.length,
   }));
@@ -396,8 +379,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       observed: 'At the governed as-of date, ' + passedN + ' active contracts totalling ' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ' in annual value are past the contractual notice window.',
       why: 'The right to change price, scope or supplier on those contracts has lapsed for the current term.',
       response: 'Confirm the renewal position on each contract this month.' },
-    { ref: 'F-2', dot: COL.amber, headline: rows.filter((c) => c.leverage.weakSignalCount >= 2).length + ' contracts carry two or more weak leverage signals',
-      observed: 'Together worth ' + money(rows.filter((c) => c.leverage.weakSignalCount >= 2).reduce(addRowAnnualValue, 0)) + ' of annual value, computed by computeContractLeverageSignals from benchmarking_clause, alternatives_available, and concentration_note.',
+    { ref: 'F-2', dot: COL.amber, headline: highLeverageRows.length + ' contracts carry two or more weak leverage signals',
+      observed: 'Together worth ' + money(highLeverageRows.reduce(addRowAnnualValue, 0)) + ' of annual value, computed by computeContractLeverageSignals from benchmarking_clause, alternatives_available, and concentration_note.',
       why: 'Every position on the leverage axis is a countable signal, not a score.',
       response: 'Prioritise the leverage matrix’s top-right quadrant for renegotiation.' },
     { ref: 'F-3', dot: COL.blue, headline: 'Top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value',
@@ -409,11 +392,36 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       why: 'Each opportunity states its reasons and rationale explicitly; none carries an invented readiness or confidence label.',
       response: 'Work the opportunity list in annual-value order.' },
   ];
+  const homeVerdict = {
+    eyebrow: 'Portfolio verdict',
+    headline: highLeverageRows.length + ' contracts (' + money(highLeverageRows.reduce(addRowAnnualValue, 0)) + ') carry weak leverage signals.',
+    body: 'Start with the leverage lens, not a spend ranking. The strongest action bucket is ' + (renegotiateQuadrant?.action ?? 'Build alternatives and renegotiate') + ': ' + (renegotiateQuadrant?.count ?? 0) + ' contracts, ' + (renegotiateQuadrant?.value ?? 'Not established') + ' annual value.',
+    nextAction: 'Open Concentration & Leverage and work the top-right quadrant before treating concentration alone as risk.',
+  };
+  const homeStorySteps = [
+    { id: '01', label: 'Why now', value: highLeverageRows.length + ' weak-leverage contracts', note: 'Action is triggered by commercial optionality, not page traffic.' },
+    { id: '02', label: 'Where money sits', value: pct(conc.topNShare(10)) + ' in top ten vendors', note: 'Concentration explains dependency; it is not the recommendation by itself.' },
+    { id: '03', label: 'Where to act', value: (renegotiateQuadrant?.count ?? 0) + ' renegotiation candidates', note: 'The leverage lens turns spend into an action queue.' },
+    { id: '04', label: 'What to prove', value: opportunities.length + ' sourced opportunities', note: 'Evidence gaps stay explicit until contract, invoice, SLA or finance proof arrives.' },
+  ];
   const journeys = [
     { id: 'A', eyebrow: 'Path A · optimize an existing contract', title: 'Select a contract and build a fact-based renewal strategy',
       narrative: 'Use the governed register to build a renewal, renegotiation or optimization strategy on a contract already held.',
       cta: 'Select a contract to optimize', onClick: () => vm.select('contractList', 'weak'), primary: true },
   ];
+  const portfolioLensButtons = ([
+    ['leverage', 'By leverage', 'Show action buckets and the contracts to renegotiate first.'],
+    ['spend', 'By spend', 'Show vendor concentration and dependency shape.'],
+  ] as const).map(([id, label, note]) => ({
+    id,
+    label,
+    note,
+    selected: S.portfolioLens === id,
+    bg: S.portfolioLens === id ? '#0a0a0b' : '#fff',
+    fg: S.portfolioLens === id ? '#fff' : '#2c2c2a',
+    border: S.portfolioLens === id ? '#0a0a0b' : 'rgba(10,10,11,.16)',
+    onClick: () => vm.setState({ portfolioLens: id }),
+  }));
 
   // ── list / saved views ──
   const listCols: DataTableColumn[] = [{ label: 'Vendor' }, { label: 'Contract' }, { label: 'Id' }, { label: 'Annual value', align: 'right' }, { label: 'Actual spend', align: 'right' }, { label: 'Notice deadline', align: 'right' }, { label: 'Expiry', align: 'right' }, { label: 'Renewal' }, { label: 'Weak signals', align: 'center' }, { label: 'Urgency' }];
@@ -797,17 +805,22 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       : null,
     contextTableCols, contextTableRows,
     availDot: vm.portfolio.isEmpty ? COL.gray : COL.amber, availLabel: vm.portfolio.isEmpty ? 'Availability: no rows returned for this tenant' : 'Availability: live · source.contract_360',
-    isPortfolioContext: kind === 'portfolio' && activeTab === 'Context', leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
+    isPortfolioContext: kind === 'portfolio' && activeTab === 'Home', homeVerdict, homeStorySteps, leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
     statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
     sourceV4ProofCards, sourceV4DatasetId: v4Snapshot.datasetId, sourceV4AsOf: fmtDate(v4Snapshot.asOfDateIso), dataLayerDiagnostics: diagnostics, categoryQuality,
 
     isExplore: kind === 'portfolio' && activeTab === 'Explore', ex: vm.explore(rows), pinSlice: () => vm.pin('Saved cut', 'Saved cut', 'Governed query'),
-    isConc: kind === 'portfolio' && activeTab === 'Concentration', pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,
+    isConc: kind === 'portfolio' && activeTab === 'Concentration & Leverage',
+    portfolioLens: S.portfolioLens,
+    portfolioLensButtons,
+    showConcentrationLens: kind === 'portfolio' && activeTab === 'Concentration & Leverage' && S.portfolioLens === 'spend',
+    showLeverageLens: kind === 'portfolio' && activeTab === 'Concentration & Leverage' && S.portfolioLens === 'leverage',
+    pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,
     isRenewals: kind === 'portfolio' && activeTab === 'Renewals', windowBtns, tl, urgLegend, reconCards, passedCols, passedRows,
-    isLeverage: kind === 'portfolio' && activeTab === 'Leverage', mx, quadPanel, signalDefs,
-    isOpps: kind === 'portfolio' && activeTab === 'Opportunities', oppGroups, oppCols, oppRows,
-    isAgenda: kind === 'portfolio' && activeTab === 'Agenda', findings, journeys,
+    isLeverage: kind === 'portfolio' && activeTab === 'Concentration & Leverage' && S.portfolioLens === 'leverage', mx, quadPanel, signalDefs,
+    isOpps: false, oppGroups, oppCols, oppRows,
+    isAgenda: false, findings, journeys,
 
     isContractList: kind === 'contractList', isVendorList: kind === 'vendorList', listCols, listRows: vm.contractTableRows(listRows), vendorCols, vendorListRows,
 
