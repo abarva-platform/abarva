@@ -9,7 +9,7 @@
 // card with Skip / Next / Done is enough to unblock first-time
 // adoption without dictating where the user clicks.
 
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -41,17 +41,15 @@ interface Props {
 
 export function SourceOnboardingTour({ active, config }: Props) {
   const router = useRouter();
-  // Read localStorage at mount time (lazy initialiser — no effect needed).
-  // If the user already completed the tour on a previous visit,
-  // treat this instance as pre-dismissed. The `dismissed` state flag
-  // handles the skip/done action within the current session.
-  const [dismissed, setDismissed] = useState<boolean>(() => {
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
     try {
-      return window.localStorage.getItem(STORAGE_KEY) === '1';
+      setDismissed(window.localStorage.getItem(STORAGE_KEY) === '1');
     } catch {
-      return false;
+      setDismissed(false);
     }
-  });
+  }, []);
 
   if (!active || dismissed) return null;
 
