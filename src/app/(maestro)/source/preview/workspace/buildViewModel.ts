@@ -701,7 +701,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'in top-10 vendor concentration', value: pct(conc.topNShare(10)) },
     ] : kind === 'contract' && activeTab === 'Optimization' && contract ? [
       { label: 'annual value', value: money(contract.row.annual_value) },
-      { label: 'quantified leakage', value: optLedgerView?.quantifiedLeakage ?? 'Not quantified' },
+      { label: 'recoverable leakage', value: optLedgerView?.quantifiedLeakage ?? 'Not quantified' },
       { label: 'realized value', value: optLedgerView?.realizedValue ?? 'Not established' },
       { label: 'evidence gaps', value: optLedgerView?.evidenceGaps ?? '0' },
     ] : valueStrip.filter((v) => !v.missing).slice(0, 4).map((v) => ({ label: v.label, value: v.value })),
