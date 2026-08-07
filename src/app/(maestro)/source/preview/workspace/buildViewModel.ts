@@ -651,7 +651,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     backColor: S.hi > 0 ? '#fff' : 'rgba(255,255,255,.28)', fwdColor: S.hi < S.hist.length - 1 ? '#fff' : 'rgba(255,255,255,.28)',
     collapseAll: () => vm.setState({ open: {} }),
     tree, crumbs, title, thesis, tabs,
-    headerActions: kind === 'contract' && contract ? [
+    headerActions: kind === 'contract' && contract && activeTab !== 'Optimization' ? [
       { label: 'Build optimisation strategy', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
       { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
