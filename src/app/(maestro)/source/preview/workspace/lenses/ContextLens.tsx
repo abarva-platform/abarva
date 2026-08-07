@@ -44,15 +44,17 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
       <div style={{ background: '#fff', border: `1px solid ${diag.exploreMatchesV4 ? 'rgba(29,158,117,.28)' : 'rgba(186,117,23,.34)'}`, borderRadius: 8, overflow: 'hidden' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(10,10,11,.09)', background: diag.exploreMatchesV4 ? '#f3fbf8' : '#fff3e6' }}>
           <div style={{ flex: '1 1 360px', minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#0a0a0b', marginBottom: 4 }}>Source data layer diagnostics</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0a0a0b', marginBottom: 4 }}>Evidence reconciliation</div>
             <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#5f5e5a' }}>
-              {diag.mismatchWarning ?? 'Explore projection reconciles to the active Source V4 semantic snapshot.'}
+              {diag.mismatchWarning
+                ? 'The semantic snapshot and contract explorer use different governed projections; values remain labeled by source until the projections are unified.'
+                : 'The semantic snapshot and contract explorer reconcile for the active tenant.'}
             </div>
           </div>
-          <div style={{ flex: '0 1 150px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: '#0a0a0b' }}>{diag.datasetLabel}</b> dataset</div>
-          <div style={{ flex: '0 1 145px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: '#0a0a0b' }}>{diag.v4ContractCount} / {diag.v4VendorCount}</b> V4 contracts/vendors</div>
-          <div style={{ flex: '0 1 150px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: diag.exploreMatchesV4 ? '#1d9e75' : '#ba7517' }}>{diag.legacyContractCount} / {diag.legacyVendorCount}</b> Explore contracts/vendors</div>
-          <div style={{ flex: '0 1 180px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: '#0a0a0b' }}>{diag.analyticsProvider}</b>{diag.activeLoadRunId ?? 'load run not exposed'}</div>
+          <div style={{ flex: '0 1 150px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: '#0a0a0b' }}>{diag.datasetLabel}</b> active dataset</div>
+          <div style={{ flex: '0 1 145px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: '#0a0a0b' }}>{diag.v4ContractCount} / {diag.v4VendorCount}</b> semantic snapshot</div>
+          <div style={{ flex: '0 1 150px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: diag.exploreMatchesV4 ? '#1d9e75' : '#ba7517' }}>{diag.legacyContractCount} / {diag.legacyVendorCount}</b> contract explorer</div>
+          <div style={{ flex: '0 1 180px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}><b style={{ display: 'block', fontSize: 15, color: diag.exploreMatchesV4 ? '#1d9e75' : '#ba7517' }}>{diag.exploreMatchesV4 ? 'Aligned' : 'Source-labeled'}</b> reconciliation state</div>
         </div>
       </div>
 

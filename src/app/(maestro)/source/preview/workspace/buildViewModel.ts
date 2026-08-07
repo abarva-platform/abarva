@@ -54,7 +54,11 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const vendorRef = sel.kind === 'vendor' ? sel.id : contract?.row.vendor_ref ?? null;
   const vendorContracts = vendorRef ? rows.filter((c) => c.row.vendor_ref === vendorRef) : [];
   const vendorPortfolioRow = vendorRef ? vm.vendorRow(vendorRef) : undefined;
-  const vendorName = vendorPortfolioRow?.vendor_name ?? vendorContracts[0]?.row.vendor_name ?? vendorRef ?? '';
+  const vendorConcentration = vendorRef ? conc.byVendor.find((r) => r.vendorRef === vendorRef) : undefined;
+  const vendorAnnualValue = vendorConcentration?.annualValue
+    ?? numberFromDb(vendorPortfolioRow?.annual_value)
+    ?? vendorContracts.reduce(addRowAnnualValue, 0);
+  const vendorName = vendorPortfolioRow?.vendor_name ?? vendorConcentration?.vendorName ?? vendorContracts[0]?.row.vendor_name ?? vendorRef ?? '';
   const vendorCat = vendorPortfolioRow?.vendor_category ?? vendorContracts[0]?.row.vendor_category ?? null;
 
   const opp = kind === 'opportunity' ? opportunities.find((o) => o.contractId === sel.id) ?? opportunities[0] ?? null : opportunities[0] ?? null;
@@ -165,17 +169,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   if (kind === 'portfolio') {
     title = ({
-      Context: 'What does the governed Source data plane show?', Explore: 'Slice the portfolio any way the question demands',
+      Context: 'Where leadership should focus first', Explore: 'Slice the portfolio any way the question demands',
       Concentration: 'Where is spend concentrated?', Renewals: 'Which decisions are already live?',
       Leverage: 'Where is leverage weak?', Opportunities: 'Where should leadership intervene?', Agenda: 'The sourcing agenda for this quarter',
     } as Record<string, string>)[activeTab];
     thesis = ({
       Context: v4HasPortfolio
-        ? 'AbarVa reads the Source V4 semantic snapshot for ' + whole(v4Snapshot.contextCoverage.vendors) + ' material vendors, ' + whole(v4Snapshot.executivePortfolio.contractCount) + ' contract families, ' + whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit scope links and ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred scope links. Where value is exposure or an observation, the page labels it that way.'
-        : 'AbarVa reads ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts directly from source.contract_360, as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Where a read returned no rows, or the schema has no column for something, the page says so rather than guessing.',
-      Explore: diagnostics.exploreMatchesV4
-        ? 'One governed query, re-grouped live against source.contract_360 with selected-only behavior by default.'
-        : 'The Explore interaction is selected-only by default, but this lens is still reading the legacy contract projection while Source V4 reports a different 100-contract / 60-vendor portfolio.',
+        ? 'AbarVa frames the active Source V4 snapshot into a leadership agenda: ' + whole(v4Snapshot.contextCoverage.vendors) + ' material vendors, ' + whole(v4Snapshot.executivePortfolio.contractCount) + ' contract families, ' + whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit scope links, and ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred scope links. Exposure, observations, and finance-confirmed value stay visibly separate.'
+        : 'AbarVa frames ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts into a leadership agenda as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Missing values stay named as missing rather than treated as zero.',
+      Explore: 'Use associative filters to isolate vendor, renewal, leverage, and evidence questions. The default view shows the selected slice only; compare-all is available when the discussion needs peer context.',
       Concentration: 'The top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value.',
       Renewals: rec180Fixed.noticeDeadlinePassed.length + ' active contracts (' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ') are past their notice deadline. ' + rec180Fixed.expiringWithinWindow.length + ' contracts (' + money(rec180Fixed.expiringWithinWindowAnnualValue) + ') expire inside 180 days.',
       Leverage: rows.filter((c) => c.leverage.weakSignalCount >= 2).length + ' contracts carry two or more weak leverage signals. Every position is a countable signal returned by computeContractLeverageSignals, not a score.',
@@ -186,7 +188,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   } else if (kind === 'vendor') {
     title = vendorName;
     const rank = conc.byVendor.findIndex((r) => r.vendorRef === vendorRef) + 1;
-    thesis = money(vendorPortfolioRow?.annual_value ?? vendorContracts.reduce(addRowAnnualValue, 0)) + ' of annual contract value across ' + (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts' + (rank ? ' · rank ' + rank + ' of ' + conc.byVendor.length : '') + '.';
+    thesis = money(vendorAnnualValue) + ' of annual contract value across ' + (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts' + (rank ? ' · rank ' + rank + ' of ' + conc.byVendor.length : '') + '.';
     crumbLabels = ['Source', 'Vendors', vendorCat ?? 'Unresolved', vendorName, activeTab];
   } else if (kind === 'contract' && contract) {
     title = contract.row.vendor_name + ' · ' + contract.row.contract_name;
@@ -239,7 +241,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   } else if (kind === 'vendor') {
     const vRen = vendorContracts.filter((c) => c.expiringWithin180);
     valueStrip = [
-      vsItem('Annual contract value', money(vendorPortfolioRow?.annual_value ?? null), (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts'),
+      vsItem('Annual contract value', money(vendorAnnualValue), (vendorPortfolioRow?.contract_count ?? vendorContracts.length) + ' governed contracts'),
       vsItem('Total committed value', money(vendorPortfolioRow?.total_committed_value ?? null), 'Across remaining terms'),
       vsItem('Auto-renewing contracts', String(vendorPortfolioRow?.auto_renew_contracts ?? vendorContracts.filter((c) => c.row.auto_renew).length), 'source.vendor_contract_portfolio'),
       vsItem('Renewal exposure', vRen.length ? money(vRen.reduce(addRowAnnualValue, 0)) : null, vRen.length ? vRen.length + ' contracts inside 180 days' : 'No decision inside 180 days', vRen.length ? COL.red : undefined),
@@ -407,9 +409,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       response: 'Work the opportunity list in annual-value order.' },
   ];
   const journeys = [
-    { id: 'A', eyebrow: 'Path A · optimise an existing contract', title: 'Select a contract and build a fact-based renewal strategy',
-      narrative: 'Use the governed register to build a renewal, renegotiation or optimisation strategy on a contract already held.',
-      cta: 'Select a contract to optimise', onClick: () => vm.select('contractList', 'weak'), primary: true },
+    { id: 'A', eyebrow: 'Path A · optimize an existing contract', title: 'Select a contract and build a fact-based renewal strategy',
+      narrative: 'Use the governed register to build a renewal, renegotiation or optimization strategy on a contract already held.',
+      cta: 'Select a contract to optimize', onClick: () => vm.select('contractList', 'weak'), primary: true },
   ];
 
   // ── list / saved views ──
@@ -425,7 +427,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   // ── vendor canvas ──
   const vendorStats = [
     { label: 'Portfolio rank', value: (conc.byVendor.findIndex((r) => r.vendorRef === vendorRef) + 1 || '—') + ' of ' + conc.byVendor.length },
-    { label: 'Share of annual contract value', value: vendorPortfolioRow ? pct((vendorPortfolioRow.annual_value ?? 0) / (conc.totalAnnualValue || 1)) : '—' },
+    { label: 'Share of annual contract value', value: vendorConcentration ? pct(vendorConcentration.shareOfTotal) : '—' },
     { label: 'Governed contracts', value: String(vendorPortfolioRow?.contract_count ?? vendorContracts.length) },
     { label: 'Auto-renewing', value: String(vendorPortfolioRow?.auto_renew_contracts ?? vendorContracts.filter((c) => c.row.auto_renew).length) },
     { label: 'Next contract end date', value: vendorPortfolioRow?.next_end_date ? fmtDate(vendorPortfolioRow.next_end_date) : 'Not established' },
@@ -705,7 +707,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     headerActions: kind === 'contract' && contract && activeTab !== 'Optimization' ? [
       { label: 'Open optimization cockpit', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
-      { label: 'Select a contract to optimise', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
+      { label: 'Select a contract to optimize', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
     valueStrip: valueStrip.filter((v) => !v.missing), hasPending: valueStrip.filter((v) => v.missing).length > 0, pendingItems: valueStrip.filter((v) => v.missing).map((v) => ({ label: v.label, sub: v.sub })),
     stripCompact: true,
