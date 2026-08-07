@@ -41,7 +41,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               <div style={{ fontSize: 14.5, fontWeight: 600, color: '#0a0a0b', marginBottom: 8 }}>{vm.recAction}</div>
               <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.6, marginBottom: 14 }}>{vm.recWhy}</div>
               <button onClick={vm.goActions} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Build optimisation strategy →
+                Open optimization cockpit →
               </button>
             </div>
           </div>
