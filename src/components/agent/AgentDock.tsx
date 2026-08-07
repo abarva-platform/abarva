@@ -766,22 +766,19 @@ export function AgentDock(props: AgentDockProps) {
           atlasPageState &&
           (atlasPageState.isStreaming ||
             atlasPageState.isAssemblingContextBundle),
-        );
+  );
 
   // Mode state (persisted)
-  const [mode, setModeState] = useState<DockMode>(() => {
-    return readStoredMode(surface) ?? defaultMode;
-  });
+  const [mode, setModeState] = useState<DockMode>(defaultMode);
   const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
   const [lastRichMode, setLastRichMode] = useState<DockMode>(
-    mode === "collapsed"
+    defaultMode === "collapsed"
       ? resolveCollapsedRestoreMode(defaultMode, collapsedRestoreMode)
-      : mode,
+      : defaultMode,
   );
 
   useEffect(() => {
-    if (previousSurfaceRef.current === surface) return;
     previousSurfaceRef.current = surface;
     const nextMode = readStoredMode(surface) ?? defaultMode;
     setModeState(nextMode);
