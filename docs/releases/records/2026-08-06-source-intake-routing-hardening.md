@@ -10,12 +10,13 @@
 
 ## Plain-English Summary
 
-This release hardens Source event origination so a completed intake either opens its approval route or shows a visible creation error. It also removes render-time browser storage and request-id reads that could make the first client render disagree with the server-rendered markup.
+This release hardens Source event origination so a completed intake either opens its approval route or shows a visible creation error. It also removes render-time browser storage and request-id reads that could make the first client render disagree with the server-rendered markup, and prevents a persisted expanded chat dock from covering the intake approval actions.
 
 ## Layer Impact
 
 - `global-control-lane`: Source intake UI behavior is hardened for event creation and approval navigation across the shared product surface.
 - Products: Source onboarding tour and chat-dock persisted mode state are moved to client-side effects to avoid first-render mismatch.
+- Products: Source new-event intake opts out of persisted chat-dock mode so workflow actions remain clickable on fresh visits.
 
 ## Client Applicability
 

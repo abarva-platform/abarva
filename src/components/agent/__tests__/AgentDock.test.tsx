@@ -360,6 +360,26 @@ describe("AgentDock · default mode", () => {
     );
   });
 
+  it("can ignore a stored mode preference for workflow-first surfaces", async () => {
+    window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="side-rail"
+        disableStoredMode
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("agent-dock-side-rail-shell")).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("agent-dock-expand-overlay")).not.toBeInTheDocument();
+  });
+
   it("marks agent turns as AI drafts while leaving user turns unmarked", () => {
     const thread: ChatMessage[] = [
       { id: "u1", role: "user", body: "What should we do next?" },
