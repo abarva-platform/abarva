@@ -34,6 +34,14 @@ type SubmitState =
   | { status: "submitting" }
   | { status: "error"; message: string };
 
+type SourceEventCreatePayload = {
+  event?: { id?: string };
+  eventUrl?: string;
+  approvalUrl?: string;
+  detail?: string;
+  error?: string;
+};
+
 interface IntakeFieldDefinition {
   id: IntakeFieldId;
   label: string;
@@ -600,7 +608,7 @@ export function SourceOriginatePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tourActive = searchParams?.get("tour") === "1";
-  const [creationRequestId] = useState(() => createSourceEventRequestId());
+  const [creationRequestId, setCreationRequestId] = useState("");
 
   // Iteration-2 punch-list: `/source/new?intent=...` must reshape the intake.
   // When a known intent is present we swap in a tailored field set, a
@@ -643,6 +651,10 @@ export function SourceOriginatePage({
   useEffect(() => {
     clearLegacyAutosavedDraft(clientKey);
   }, [clientKey]);
+
+  useEffect(() => {
+    setCreationRequestId((current) => current || createSourceEventRequestId());
+  }, []);
 
   useEffect(() => {
     if (!isDoor1Intent(sourceIntent)) return;
@@ -762,31 +774,42 @@ export function SourceOriginatePage({
     setSubmitState({ status: "submitting" });
 
     const eventName = buildEventName(clientShortName, intake, selectedCategory);
-    const response = await fetch("/api/v1/source/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventName,
-        eventType: inferEventType(intake.scopeBoundary, selectedCategory),
-        triggerDescription: intake.trigger,
-        decisionOwner: intake.decisionOwner || undefined,
-        scopeDescription: intake.scopeBoundary || undefined,
-        valueTargetDescription: intake.valueTarget || undefined,
-        baselineOwnerDescription: intake.baselineOwner || undefined,
-        categoryLabel: selectedCategory?.label,
-        sourcingMotion,
-        creationRequestId,
-        estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
-      }),
-    });
+    const requestId = creationRequestId || createSourceEventRequestId();
+    if (!creationRequestId) setCreationRequestId(requestId);
 
-    const payload = (await response.json().catch(() => null)) as null | {
-      event?: { id?: string };
-      eventUrl?: string;
-      approvalUrl?: string;
-      detail?: string;
-      error?: string;
-    };
+    let response: Response;
+    let payload: SourceEventCreatePayload | null = null;
+    try {
+      response = await fetch("/api/v1/source/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventName,
+          eventType: inferEventType(intake.scopeBoundary, selectedCategory),
+          triggerDescription: intake.trigger,
+          decisionOwner: intake.decisionOwner || undefined,
+          scopeDescription: intake.scopeBoundary || undefined,
+          valueTargetDescription: intake.valueTarget || undefined,
+          baselineOwnerDescription: intake.baselineOwner || undefined,
+          categoryLabel: selectedCategory?.label,
+          sourcingMotion,
+          creationRequestId: requestId,
+          estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
+        }),
+      });
+      payload = (await response.json().catch(() => null)) as
+        | SourceEventCreatePayload
+        | null;
+    } catch (error) {
+      setSubmitState({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Source event creation failed before the server responded.",
+      });
+      return;
+    }
 
     if (!response.ok || !payload?.event?.id) {
       setSubmitState({
@@ -815,6 +838,11 @@ export function SourceOriginatePage({
       ? approvalUrl + (approvalUrl.includes("?") ? "&tour=1" : "?tour=1")
       : approvalUrl;
     router.push(finalUrl);
+    window.setTimeout(() => {
+      if (window.location.pathname === "/source/new") {
+        window.location.assign(finalUrl);
+      }
+    }, 1200);
   }
 
   function saveDraft() {

@@ -297,6 +297,25 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     });
   });
 
+  it("surfaces Source event creation network failures instead of silently staying on intake", async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error("network down"));
+
+    render(
+      createElement(SourceOriginatePage, {
+        clientName: "Apex Retail Group",
+        clientShortName: "Apex Retail",
+        clientKey: "apexretail",
+      }),
+    );
+    fireEvent.click(screen.getByTestId("emit-source-brief-progress"));
+    fireEvent.click(screen.getByTestId("source-intake-open-event"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain("network down");
+    });
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
   it("submits raw intake fields once so approval readback can render clean facts", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
