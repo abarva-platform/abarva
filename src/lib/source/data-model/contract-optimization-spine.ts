@@ -54,11 +54,20 @@ export interface ContractOptimizationSourceConnection {
   readonly outcome: string;
 }
 
+export interface ContractOptimizationSourcingRequirement {
+  readonly lineId: string;
+  readonly lineLabel: string;
+  readonly nextAction: string;
+  readonly connections: readonly ContractOptimizationSourceConnection[];
+  readonly ask: string;
+}
+
 export interface ContractOptimizationSpine {
   readonly selected: ContractOptimizationCandidate | null;
   readonly candidates: readonly ContractOptimizationCandidate[];
   readonly topCandidates: readonly ContractOptimizationCandidate[];
   readonly sourceConnections: readonly ContractOptimizationSourceConnection[];
+  readonly missingEvidenceSources: readonly ContractOptimizationSourcingRequirement[];
   readonly contractStory: readonly string[];
   readonly missingEvidenceStory: readonly string[];
 }
@@ -126,6 +135,8 @@ const SOURCE_CONNECTIONS: readonly ContractOptimizationSourceConnection[] = [
   },
 ];
 
+const SOURCE_CONNECTION_BY_ID = new Map(SOURCE_CONNECTIONS.map((connection) => [connection.id, connection]));
+
 export function buildContractOptimizationSpine(input: {
   readonly contract: SourceContract360Row | null;
   readonly contracts: readonly SourceContract360Row[];
@@ -150,6 +161,7 @@ export function buildContractOptimizationSpine(input: {
     candidates,
     topCandidates: candidates.slice(0, 5),
     sourceConnections: SOURCE_CONNECTIONS,
+    missingEvidenceSources: sourcingRequirementsFor(input.ledger?.lines ?? []),
     contractStory: selected ? storyFor(selected, input.ledger) : [],
     missingEvidenceStory,
   };
@@ -344,6 +356,58 @@ function missingEvidenceFor(lines: readonly ContractOptimizationLedgerLine[]): r
   return lines
     .filter((line) => line.state === 'needs_evidence')
     .map((line) => `${line.label}: ${line.nextAction}`);
+}
+
+function sourcingRequirementsFor(lines: readonly ContractOptimizationLedgerLine[]): readonly ContractOptimizationSourcingRequirement[] {
+  return lines
+    .filter((line) => line.evidenceClass === 'missing' || line.state === 'needs_evidence')
+    .map((line) => {
+      const connectionIds = sourceConnectionIdsFor(line);
+      const connections = connectionIds
+        .map((id) => SOURCE_CONNECTION_BY_ID.get(id))
+        .filter((connection): connection is ContractOptimizationSourceConnection => Boolean(connection));
+      return {
+        lineId: line.id,
+        lineLabel: line.label,
+        nextAction: line.nextAction,
+        connections,
+        ask: askFor(line, connections),
+      };
+    })
+    .filter((requirement) => requirement.connections.length > 0);
+}
+
+function sourceConnectionIdsFor(line: ContractOptimizationLedgerLine): readonly string[] {
+  if (line.id.includes('sla') || line.sourceRefs.some((ref) => ref.includes('service_credit'))) {
+    return ['itsm', 'clm'];
+  }
+  if (line.id.includes('invoice') || line.id.includes('rate') || line.sourceRefs.some((ref) => ref.includes('invoice') || ref.includes('rate_card'))) {
+    return ['ap_erp', 'clm'];
+  }
+  if (line.kind === 'avoided_cost') {
+    return ['usage', 'clm', 'procurement'];
+  }
+  if (line.kind === 'negotiated_improvement') {
+    return ['procurement', 'clm'];
+  }
+  if (line.kind === 'realized_value') {
+    return ['finance_tower'];
+  }
+  return [];
+}
+
+function askFor(
+  line: ContractOptimizationLedgerLine,
+  connections: readonly ContractOptimizationSourceConnection[],
+): string {
+  const fields = Array.from(new Set(connections.flatMap((connection) => connection.fields))).slice(0, 8);
+  if (line.kind === 'recoverable_leakage') {
+    return `Ask for ${connections.map((connection) => connection.sourceSystem).join(' plus ')} extracts covering ${fields.join(', ')}.`;
+  }
+  if (line.kind === 'realized_value') {
+    return 'Ask Finance/Tower for the approved claim record, baseline, actuals, cadence, owner role, and attestation state.';
+  }
+  return `Ask for ${connections.map((connection) => connection.sourceSystem).join(' plus ')} extracts so Door 1 can classify this line before assigning value.`;
 }
 
 function weakSignalDetail(leverage: ContractLeverageEntry): string {
