@@ -400,6 +400,12 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
         ),
       ).toBeTruthy();
     });
+    expect(screen.getByText("Optimize an existing contract")).toBeTruthy();
+    expect(screen.getByLabelText("Door 1 evidence ledgers")).toBeTruthy();
+    expect(screen.getByText("Recoverable leakage")).toBeTruthy();
+    expect(screen.getByText("Avoided cost")).toBeTruthy();
+    expect(screen.getByText("Negotiated improvement")).toBeTruthy();
+    expect(screen.getByText("Realized value")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText(/Negotiation decision owner/i), {
       target: { value: "CIO and procurement sponsor" },
@@ -413,6 +419,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     const createRequest = fetchMock.mock.calls[0]?.[1] as { body?: string };
     const payload = JSON.parse(createRequest.body ?? "{}") as {
       sourcingMotion?: string;
+      eventName?: string;
       triggerDescription?: string;
       scopeDescription?: string;
       baselineOwnerDescription?: string;
@@ -420,6 +427,8 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
 
     expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/source/events");
     expect(payload.sourcingMotion).toBe("contract_optimization");
+    expect(payload.eventName).toContain("Contract Optimization");
+    expect(payload.eventName).not.toContain("Sourcing Event");
     expect(payload.triggerDescription).toContain("CTR-090");
     expect(payload.scopeDescription).toContain(
       "Crestline AMS Master Services Agreement",

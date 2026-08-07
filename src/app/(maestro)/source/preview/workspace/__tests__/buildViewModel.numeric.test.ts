@@ -220,6 +220,23 @@ function assertPlausibleMoney(label: string, value: string) {
 }
 
 describe("buildViewModel numeric coercion", () => {
+  it("routes the workspace optimize entry to the contract-optimization intake, not generic new sourcing", () => {
+    const vm = buildVm();
+    vm.state.open.events = true;
+    const built = buildViewModel(vm) as {
+      tree: Array<{ id: string; onClick?: () => void }>;
+    };
+    const optimizeNode = built.tree.find((item) => item.id === "events.optimize");
+
+    expect(optimizeNode).toBeDefined();
+    expect(String(optimizeNode?.onClick)).toContain(
+      "/source/new?intent=contract-optimization",
+    );
+    expect(String(optimizeNode?.onClick)).not.toContain(
+      "window.location.href = '/source/new';",
+    );
+  });
+
   it("sums explorer-tree badges without string-concatenating NUMERIC-as-string fields", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as {

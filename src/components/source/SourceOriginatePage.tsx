@@ -328,6 +328,25 @@ const AGENT_GUIDANCE = [
   },
 ];
 
+const DOOR1_LEDGER_HINTS = [
+  {
+    label: "Recoverable leakage",
+    body: "SLA credits, invoice exceptions, off-contract spend, duplicate charges, and rate variance.",
+  },
+  {
+    label: "Avoided cost",
+    body: "Renewal uplift avoided, unused scope removed, shelfware reduced, and demand re-based.",
+  },
+  {
+    label: "Negotiated improvement",
+    body: "Price, term, index cap, volume tier, exit rights, and supplier concessions.",
+  },
+  {
+    label: "Realized value",
+    body: "Finance-confirmed value only. Missing proof stays missing; it never becomes zero.",
+  },
+] as const;
+
 interface Door1ContractContext {
   contractId?: string;
   contractName?: string;
@@ -542,7 +561,19 @@ export function buildEventName(
   clientShortName: string,
   intake: IntakeState,
   selectedCategory?: SourceCategory | null,
+  sourcingMotion?: SourceSourcingMotion,
 ): string {
+  if (sourcingMotion === "contract_optimization") {
+    const triggerClause = sanitizeEventNameClause(
+      intake.trigger.split(/[.;\n]/)[0]?.trim(),
+    );
+    const contractPhrase = triggerClause
+      .replace(/^optimi[sz]e\s+/i, "")
+      .replace(/\s+contract ref:\s*[^.]+$/i, "")
+      .trim();
+    const eventSubject = contractPhrase || "Existing Contract";
+    return `${clientShortName} ${eventSubject} Contract Optimization`.slice(0, 120);
+  }
   if (selectedCategory)
     return `${clientShortName} ${selectedCategory.label} Sourcing Event`.slice(
       0,
@@ -627,6 +658,18 @@ export function SourceOriginatePage({
   );
   const intakeFields: IntakeFieldDefinition[] =
     intakeShape?.fields ?? INTAKE_FIELDS;
+  const intakeSurfaceLabel =
+    sourceIntent === "contract-optimization"
+      ? "Contract optimization"
+      : intakeShape
+        ? intakeShape.eyebrow
+        : "New sourcing event";
+  const intakeContextLabel =
+    sourceIntent === "contract-optimization"
+      ? "Existing-contract optimization"
+      : intakeShape
+        ? intakeShape.eyebrow
+        : "New sourcing event";
 
   const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
@@ -773,7 +816,12 @@ export function SourceOriginatePage({
     if (!canCreate) return;
     setSubmitState({ status: "submitting" });
 
-    const eventName = buildEventName(clientShortName, intake, selectedCategory);
+    const eventName = buildEventName(
+      clientShortName,
+      intake,
+      selectedCategory,
+      sourcingMotion,
+    );
     const requestId = creationRequestId || createSourceEventRequestId();
     if (!creationRequestId) setCreationRequestId(requestId);
 
@@ -867,7 +915,7 @@ export function SourceOriginatePage({
 
   const intakeWorkspace: ReactNode = (
     <aside style={INTAKE_PANE_STYLE}>
-      <section aria-label="New sourcing event intake" style={INTAKE_PANEL}>
+      <section aria-label={`${intakeSurfaceLabel} intake`} style={INTAKE_PANEL}>
         {/* Context strip */}
         <div style={CONTEXT_STRIP}>
           <span style={STRIP_TOKEN}>
@@ -936,6 +984,17 @@ export function SourceOriginatePage({
                 {intakeShape.routingHint.description}
               </div>
             </div>
+          </div>
+        )}
+
+        {sourceIntent === "contract-optimization" && (
+          <div aria-label="Door 1 evidence ledgers" style={DOOR1_LEDGER_GRID}>
+            {DOOR1_LEDGER_HINTS.map((item) => (
+              <div key={item.label} style={DOOR1_LEDGER_CARD}>
+                <div style={DOOR1_LEDGER_LABEL}>{item.label}</div>
+                <div style={DOOR1_LEDGER_BODY}>{item.body}</div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -1190,14 +1249,14 @@ export function SourceOriginatePage({
         sourceIntent,
         sourceSourcingMotion: sourcingMotion,
         context: intakeShape
-          ? `New IT sourcing event intake — ${intakeShape.eyebrow} (aVa guided)`
+          ? `Source intake — ${intakeContextLabel} (aVa guided)`
           : "New IT sourcing event intake — aVa guided",
       }}
       topBarProps={{
         tenantName: clientName,
         showLocked: true,
         context: intakeShape
-          ? `Source · New sourcing event · ${intakeShape.eyebrow}`
+          ? `Source · ${intakeSurfaceLabel}`
           : "Source · New sourcing event",
       }}
       subNav={<SourceSubNav />}
@@ -1414,6 +1473,37 @@ const ROUTING_HINT_STYLE: CSSProperties = {
   borderRadius: 10,
   background: SHELL.MINT_BG,
   padding: "9px 11px",
+};
+
+const DOOR1_LEDGER_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const DOOR1_LEDGER_CARD: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: SHELL.CARD_WHITE,
+  padding: "8px 9px",
+  minWidth: 0,
+};
+
+const DOOR1_LEDGER_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 8.5,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: SHELL.INK_SOFT,
+  fontWeight: 800,
+};
+
+const DOOR1_LEDGER_BODY: CSSProperties = {
+  marginTop: 4,
+  fontFamily: SHELL.SANS,
+  fontSize: 10.5,
+  lineHeight: 1.35,
+  color: SHELL.INK_SOFT,
 };
 
 // Intent-shaped intake: one-click starter-prompt bar above the workspace.

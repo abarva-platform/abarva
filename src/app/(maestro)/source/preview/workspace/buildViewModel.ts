@@ -134,7 +134,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   if (S.open.events) {
     T.push(node({ id: 'events.dashboard', label: 'Events dashboard', depth: 1, onClick: () => { window.location.href = '/source/portfolio'; } }));
     T.push(node({ id: 'events.new', label: 'New event', depth: 1, onClick: () => { window.location.href = '/source/new'; } }));
-    T.push(node({ id: 'events.optimize', label: 'Optimize a contract', depth: 1, onClick: () => { window.location.href = '/source/new'; } }));
+    T.push(node({ id: 'events.optimize', label: 'Optimize a contract', depth: 1, onClick: () => { window.location.href = '/source/new?intent=contract-optimization'; } }));
   }
 
   const q = S.q.trim().toLowerCase();
