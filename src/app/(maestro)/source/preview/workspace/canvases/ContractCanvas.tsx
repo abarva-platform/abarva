@@ -1,6 +1,7 @@
 'use client';
 
 import { DataTable } from '../DataTable';
+import { EvidenceLineageGraph } from './EvidenceLineageGraph';
 import type { SourceWorkspaceVM } from '../buildViewModel';
 
 export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
@@ -250,6 +251,8 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
             </div>
           ) : null}
+
+          <EvidenceLineageGraph vm={vm} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
             {vm.optLevers.map((l, i) => (
