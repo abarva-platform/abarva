@@ -79,7 +79,7 @@ function vendorRow(
 
 // Three contracts in the same vendor category, each carrying weak
 // benchmarking/alternatives clauses (weakSignalCount === 2, so all three
-// land in the "Leverage" exec-tree bucket) — the exact shape that, before
+// land in the "Weak leverage" contract drill-down bucket) — the exact shape that, before
 // this fix, string-concatenated three ~8-digit annual_value strings into a
 // ~24-digit number and rendered as a huge or infinite dollar figure.
 const CONTRACTS: SourceContract360Row[] = [
@@ -247,11 +247,51 @@ describe("buildViewModel numeric coercion", () => {
       if (node.badgeVal) assertPlausibleMoney(node.id, node.badgeVal);
     }
 
-    const leverageNode = built.tree.find((n) => n.id === "exec.Leverage");
+    const leverageNode = built.tree.find((n) => n.id === "c.weak");
     expect(leverageNode).toBeDefined();
     // 3 contracts summing to $127M — nowhere near $1B, so this must render as
     // an "M" figure, not the "$InfinityB" this fixture reproduced pre-fix.
     expect(leverageNode!.badgeVal).toBe("$127.0M");
+  });
+
+  it("presents the portfolio workspace as four top-level tabs", () => {
+    const vm = buildVm();
+    const built = buildViewModel(vm) as {
+      activeTab: string;
+      tabs: Array<{ label: string }>;
+      isPortfolioContext: boolean;
+      isAgenda: boolean;
+      isOpps: boolean;
+    };
+
+    expect(built.activeTab).toBe("Home");
+    expect(built.tabs.map((tab) => tab.label)).toEqual([
+      "Home",
+      "Explore",
+      "Concentration & Leverage",
+      "Renewals",
+    ]);
+    expect(built.isPortfolioContext).toBe(true);
+    expect(built.isAgenda).toBe(false);
+    expect(built.isOpps).toBe(false);
+  });
+
+  it("uses real vendor names in the explorer instead of category buckets", () => {
+    const vm = buildVm();
+    const built = buildViewModel(vm) as {
+      tree: Array<{ id: string; label: string }>;
+    };
+
+    expect(built.tree.some((node) => node.id === "exec.Context")).toBe(false);
+    expect(built.tree.some((node) => node.id === "exec.Agenda")).toBe(false);
+    expect(built.tree.some((node) => node.id === "opps")).toBe(false);
+    expect(built.tree).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "vv.vendor-one", label: "Vendor One" }),
+        expect.objectContaining({ id: "vv.vendor-two", label: "Vendor Two" }),
+        expect.objectContaining({ id: "vv.vendor-three", label: "Vendor Three" }),
+      ]),
+    );
   });
 
   it("sums the leverage quadrant panel without string-concatenation", () => {

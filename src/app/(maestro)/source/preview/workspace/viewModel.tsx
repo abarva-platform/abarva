@@ -97,6 +97,7 @@ export interface HistEntry {
 export interface WorkspaceState {
   sel: Selection;
   tabs: Record<string, string>;
+  portfolioLens: 'spend' | 'leverage';
   open: Record<string, boolean>;
   window: number;
   quadrant: string | null;
@@ -121,7 +122,8 @@ export interface WorkspaceState {
 
 export const INITIAL_STATE: WorkspaceState = {
   sel: { kind: 'portfolio', id: null },
-  tabs: { portfolio: 'Context', vendor: 'Overview', contract: 'Overview', evidence: 'Coverage' },
+  tabs: { portfolio: 'Home', vendor: 'Overview', contract: 'Overview', evidence: 'Coverage' },
+  portfolioLens: 'leverage',
   open: { exec: true, vendors: true, contracts: true, opps: false, ev: false, allVendors: false, allContracts: false },
   window: 180,
   quadrant: null,
