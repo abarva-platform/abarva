@@ -51,7 +51,7 @@ describe("resolveBoardGradeTenantLabel — P1-3 honesty contract", () => {
       { tenant_key: "meridian", tenant_name: "Meridian Health System" },
       "healthcare-provider",
     );
-    expect(tenantLabel).toBe("Healthcare Demo");
+    expect(tenantLabel).toBe("Meridian Health");
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
 
