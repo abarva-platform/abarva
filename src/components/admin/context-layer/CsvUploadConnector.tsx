@@ -10,7 +10,7 @@ import {
 
 import {
   MERIDIAN_CONTEXT_TEMPLATES,
-  NORTHSTAR_CONTEXT_TEMPLATES,
+  MERIDIAN_PHASE0_CONTEXT_TEMPLATES,
   getTemplatesForTenant,
 } from "@/lib/context-ingestion/template-registry";
 import { proposeCsvColumnMapping } from "@/lib/context-ingestion/csv-column-mapping";
@@ -312,25 +312,26 @@ export function CsvUploadConnector({
     () => new Set(MERIDIAN_CONTEXT_TEMPLATES.map((item) => item.id)),
     [],
   );
-  const phsTemplateIds = useMemo(
-    () => new Set(NORTHSTAR_CONTEXT_TEMPLATES.map((item) => item.id)),
+  const meridianSetupTemplateIds = useMemo(
+    () => new Set(MERIDIAN_PHASE0_CONTEXT_TEMPLATES.map((item) => item.id)),
     [],
   );
   const generalTemplates = useMemo(
     () =>
       templates.filter(
         (item) =>
-          !healthcareTemplateIds.has(item.id) && !phsTemplateIds.has(item.id),
+          !healthcareTemplateIds.has(item.id) &&
+          !meridianSetupTemplateIds.has(item.id),
       ),
-    [healthcareTemplateIds, phsTemplateIds, templates],
+    [healthcareTemplateIds, meridianSetupTemplateIds, templates],
   );
   const healthcareTemplates = useMemo(
     () => templates.filter((item) => healthcareTemplateIds.has(item.id)),
     [healthcareTemplateIds, templates],
   );
-  const phsTemplates = useMemo(
-    () => templates.filter((item) => phsTemplateIds.has(item.id)),
-    [phsTemplateIds, templates],
+  const meridianSetupTemplates = useMemo(
+    () => templates.filter((item) => meridianSetupTemplateIds.has(item.id)),
+    [meridianSetupTemplateIds, templates],
   );
 
   const template = useMemo(
@@ -581,7 +582,7 @@ export function CsvUploadConnector({
                 ))}
               </optgroup>
               {healthcareTemplates.length > 0 && (
-                <optgroup label="Meridian/PHS healthcare context">
+                <optgroup label="Meridian healthcare context">
                   {healthcareTemplates.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.label}
@@ -589,9 +590,9 @@ export function CsvUploadConnector({
                   ))}
                 </optgroup>
               )}
-              {phsTemplates.length > 0 && (
-                <optgroup label="PHS command center phase 0">
-                  {phsTemplates.map((item) => (
+              {meridianSetupTemplates.length > 0 && (
+                <optgroup label="Meridian command center phase 0">
+                  {meridianSetupTemplates.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.label}
                     </option>

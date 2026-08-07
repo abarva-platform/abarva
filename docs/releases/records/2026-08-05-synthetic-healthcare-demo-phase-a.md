@@ -225,6 +225,7 @@ Local proof:
 - Passed: `npm run source:meridian-health-demo:validate -- --package-dir /Users/anand/Downloads/meridian_health_demo_phase_a_20260806T212611Z`; validation reported 70,967 structured rows, 54 Layer 1 release CSVs, 39 source-system extract CSVs, 11 existing BPO event CSVs, 4 BPO transformation CSVs and zero failures/warnings.
 - Passed: case-insensitive scans for the pre-Meridian identity across active demo source paths, the regenerated stage directory, the proof ZIP entries, proof ZIP extracted contents and the individual generated Meridian ZIPs in Downloads.
 - Passed: private operator Layer 6 repaired preflight, apply and independent verify using the final digest-pinned Meridian operator image. Final verify returned `MERIDIAN_HEALTH_DEMO_LAYER6_PRODUCT_BINDING_VERIFIED`, `exact_match=true`, zero defects, zero unsupported claim hits, zero cross-tenant defects, zero airline regression defects, no shared traffic shift and no production impact.
+- pilot-data-loader-exception: static-test-fixture. The Meridian interview fixture change is a synthetic static-fixture naming scrub only; it adds no new pilot data, performs no side-load and does not bypass the Admin Data Loader or ingestion ledger.
 
 The BPO remediation now labels the baseline as five-year current-state cost, exposes annualized, labor, technology/platform and controls/other components, and normalizes rebadge proposals against the unique eligible current workforce denominator instead of supplier/process row inflation.
 

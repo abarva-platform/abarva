@@ -1,35 +1,35 @@
-import type { AiDataClass } from '@/lib/integrations/ai-egress';
-import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
+import type { AiDataClass } from "@/lib/integrations/ai-egress";
+import { preflightOpenAIDirectClient } from "@/lib/integrations/ai-egress";
 
 import {
-  evaluatePHSStageReadiness,
-  type PHSStageReadiness,
-  type PHSStageReadinessInput,
-} from './phs-stage-readiness';
+  evaluateMeridianStageReadiness,
+  type MeridianStageReadiness,
+  type MeridianStageReadinessInput,
+} from "./meridian-stage-readiness";
 
-export type PHSCommandCenterArtifactKind =
-  | 'current-state-operating-model'
-  | 'ai-strategy-memo'
-  | 'use-case-portfolio-scorecard'
-  | 'databricks-target-architecture'
-  | 'investment-benefits-realization'
-  | 'mobilization-plan';
+export type MeridianCommandCenterArtifactKind =
+  | "current-state-operating-model"
+  | "ai-strategy-memo"
+  | "use-case-portfolio-scorecard"
+  | "databricks-target-architecture"
+  | "investment-benefits-realization"
+  | "mobilization-plan";
 
-export interface PHSGenerationEvidenceRef {
+export interface MeridianGenerationEvidenceRef {
   evidenceId: string;
   title: string;
   sourceType: string;
   summary: string;
 }
 
-export interface PHSGenerationCorpusPatternRef {
+export interface MeridianGenerationCorpusPatternRef {
   patternId: string;
   title: string;
   domain: string;
   summary: string;
 }
 
-export interface PHSGenerationWorkloadRef {
+export interface MeridianGenerationWorkloadRef {
   workloadId: string;
   workloadName: string;
   domain: string;
@@ -38,21 +38,21 @@ export interface PHSGenerationWorkloadRef {
   phiLevel: string;
 }
 
-export interface PHSGenerationPromptInput {
-  artifactKind: PHSCommandCenterArtifactKind;
-  phase: '1' | '2' | '3' | '4' | '5';
+export interface MeridianGenerationPromptInput {
+  artifactKind: MeridianCommandCenterArtifactKind;
+  phase: "1" | "2" | "3" | "4" | "5";
   tenantId: string;
   clientName: string;
   audience: string;
-  stageReadiness: PHSStageReadiness;
-  evidenceRefs: readonly PHSGenerationEvidenceRef[];
-  corpusPatternRefs: readonly PHSGenerationCorpusPatternRef[];
-  workloadRefs?: readonly PHSGenerationWorkloadRef[];
+  stageReadiness: MeridianStageReadiness;
+  evidenceRefs: readonly MeridianGenerationEvidenceRef[];
+  corpusPatternRefs: readonly MeridianGenerationCorpusPatternRef[];
+  workloadRefs?: readonly MeridianGenerationWorkloadRef[];
   humanInputs?: readonly string[];
   additionalInstructions?: string;
 }
 
-export interface PHSOpenAIResponsesClient {
+export interface MeridianOpenAIResponsesClient {
   responses: {
     create(args: {
       model: string;
@@ -71,14 +71,14 @@ export interface PHSOpenAIResponsesClient {
   };
 }
 
-export interface PHSOpenAIPreflightOk {
+export interface MeridianOpenAIPreflightOk {
   ok: true;
-  client: PHSOpenAIResponsesClient;
+  client: MeridianOpenAIResponsesClient;
   auditId: string;
   dataClass: AiDataClass;
 }
 
-export interface PHSOpenAIPreflightDenied {
+export interface MeridianOpenAIPreflightDenied {
   ok: false;
   reason: string;
   auditId: string;
@@ -86,11 +86,11 @@ export interface PHSOpenAIPreflightDenied {
   policyDecision: string;
 }
 
-export type PHSOpenAIPreflightResult =
-  | PHSOpenAIPreflightOk
-  | PHSOpenAIPreflightDenied;
+export type MeridianOpenAIPreflightResult =
+  | MeridianOpenAIPreflightOk
+  | MeridianOpenAIPreflightDenied;
 
-export type PHSOpenAIPreflightFn = (args: {
+export type MeridianOpenAIPreflightFn = (args: {
   tenantId: string;
   userId?: string;
   workflow: string;
@@ -100,27 +100,29 @@ export type PHSOpenAIPreflightFn = (args: {
   artifactId?: string;
   artifactType?: string;
   metadata?: Record<string, unknown>;
-}) => Promise<PHSOpenAIPreflightResult>;
+}) => Promise<MeridianOpenAIPreflightResult>;
 
-export interface GeneratePHSCommandCenterArtifactArgs
-  extends Omit<PHSGenerationPromptInput, 'stageReadiness'> {
+export interface GenerateMeridianCommandCenterArtifactArgs extends Omit<
+  MeridianGenerationPromptInput,
+  "stageReadiness"
+> {
   userId?: string;
   artifactId: string;
-  readinessInput: PHSStageReadinessInput;
+  readinessInput: MeridianStageReadinessInput;
   model?: string;
   maxOutputTokens?: number;
-  preflightFn?: PHSOpenAIPreflightFn;
+  preflightFn?: MeridianOpenAIPreflightFn;
 }
 
-export type PHSCommandCenterGenerationResult =
+export type MeridianCommandCenterGenerationResult =
   | {
-      status: 'blocked';
+      status: "blocked";
       blockers: string[];
-      readiness: PHSStageReadiness;
+      readiness: MeridianStageReadiness;
       openAiCalled: false;
     }
   | {
-      status: 'generated';
+      status: "generated";
       text: string;
       auditId: string;
       model: string;
@@ -129,34 +131,36 @@ export type PHSCommandCenterGenerationResult =
       stopReason: string | null;
       evidenceIds: string[];
       corpusPatternIds: string[];
-      readiness: PHSStageReadiness;
+      readiness: MeridianStageReadiness;
       openAiCalled: true;
     };
 
-const DEFAULT_OPENAI_MODEL = process.env.PHS_COMMAND_CENTER_OPENAI_MODEL ?? 'gpt-5.1';
+const DEFAULT_OPENAI_MODEL =
+  process.env.MERIDIAN_COMMAND_CENTER_OPENAI_MODEL ?? "gpt-5.1";
 const DEFAULT_MAX_OUTPUT_TOKENS = 2400;
 
 function listBlock(name: string, rows: readonly string[]): string {
   if (rows.length === 0) return `${name}:\n- None supplied.`;
-  return `${name}:\n${rows.map((row) => `- ${row}`).join('\n')}`;
+  return `${name}:\n${rows.map((row) => `- ${row}`).join("\n")}`;
 }
 
-function readinessSummary(readiness: PHSStageReadiness): string {
+function readinessSummary(readiness: MeridianStageReadiness): string {
   const templates = readiness.templateCoverage
     .map((template) => `${template.templateId}=${template.chunksLoaded}`)
-    .join(', ');
+    .join(", ");
   return [
     `readyForStageAdvance=${readiness.readyForStageAdvance}`,
     `evidenceLedgerRows=${readiness.evidenceLedgerRows}`,
     `templateCoverage=${templates}`,
-  ].join('; ');
+  ].join("; ");
 }
 
-export function buildPHSCommandCenterPrompt(
-  input: PHSGenerationPromptInput,
+export function buildMeridianCommandCenterPrompt(
+  input: MeridianGenerationPromptInput,
 ): { systemPrompt: string; userMessage: string } {
   const evidenceRows = input.evidenceRefs.map(
-    (ref) => `${ref.evidenceId} | ${ref.title} | ${ref.sourceType} | ${ref.summary}`,
+    (ref) =>
+      `${ref.evidenceId} | ${ref.title} | ${ref.sourceType} | ${ref.summary}`,
   );
   const patternRows = input.corpusPatternRefs.map(
     (ref) => `${ref.patternId} | ${ref.domain} | ${ref.title} | ${ref.summary}`,
@@ -167,15 +171,15 @@ export function buildPHSCommandCenterPrompt(
   );
 
   const systemPrompt = [
-    'You generate Meridian / PHS command-center artifacts for AbarVa.',
-    'Use OpenAI only; do not refer to any other model provider.',
-    'Do not invent facts, savings, scale, owners, dates, systems, or outcomes.',
-    'Every material claim must cite at least one supplied evidence ID and, where the claim is a pattern or recommendation, one supplied corpus pattern ID.',
-    'If evidence is missing, write an explicit gap instead of filling the blank.',
-    'Use plain CXO-readable language. Do not expose database field names, raw JSON keys, or implementation jargon.',
-    'Do not include PHI or patient-level examples.',
-    'Keep the output action-oriented and suitable for CEO, CFO, CDIO, plan COO, and clinical leadership review.',
-  ].join('\n');
+    "You generate Meridian command-center artifacts for AbarVa.",
+    "Use OpenAI only; do not refer to any other model provider.",
+    "Do not invent facts, savings, scale, owners, dates, systems, or outcomes.",
+    "Every material claim must cite at least one supplied evidence ID and, where the claim is a pattern or recommendation, one supplied corpus pattern ID.",
+    "If evidence is missing, write an explicit gap instead of filling the blank.",
+    "Use plain CXO-readable language. Do not expose database field names, raw JSON keys, or implementation jargon.",
+    "Do not include PHI or patient-level examples.",
+    "Keep the output action-oriented and suitable for CEO, CFO, CDIO, plan COO, and clinical leadership review.",
+  ].join("\n");
 
   const userMessage = [
     `Client: ${input.clientName}`,
@@ -184,54 +188,62 @@ export function buildPHSCommandCenterPrompt(
     `Phase: ${input.phase}`,
     `Audience: ${input.audience}`,
     `Readiness: ${readinessSummary(input.stageReadiness)}`,
-    listBlock('Evidence register references', evidenceRows),
-    listBlock('Corpus pattern references', patternRows),
-    listBlock('Workload inventory references', workloadRows),
-    listBlock('Human-approved inputs', input.humanInputs ?? []),
-    input.additionalInstructions ? `Additional instructions:\n${input.additionalInstructions}` : null,
+    listBlock("Evidence register references", evidenceRows),
+    listBlock("Corpus pattern references", patternRows),
+    listBlock("Workload inventory references", workloadRows),
+    listBlock("Human-approved inputs", input.humanInputs ?? []),
+    input.additionalInstructions
+      ? `Additional instructions:\n${input.additionalInstructions}`
+      : null,
     [
-      'Required output sections:',
-      '1. Executive answer',
-      '2. Evidence used',
-      '3. Recommended action',
-      '4. Gaps / decisions needed',
-      '5. Approval checkpoint',
-    ].join('\n'),
-  ].filter(Boolean).join('\n\n');
+      "Required output sections:",
+      "1. Executive answer",
+      "2. Evidence used",
+      "3. Recommended action",
+      "4. Gaps / decisions needed",
+      "5. Approval checkpoint",
+    ].join("\n"),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   return { systemPrompt, userMessage };
 }
 
 function collectGenerationBlockers(args: {
-  readiness: PHSStageReadiness;
-  evidenceRefs: readonly PHSGenerationEvidenceRef[];
-  corpusPatternRefs: readonly PHSGenerationCorpusPatternRef[];
+  readiness: MeridianStageReadiness;
+  evidenceRefs: readonly MeridianGenerationEvidenceRef[];
+  corpusPatternRefs: readonly MeridianGenerationCorpusPatternRef[];
 }): string[] {
   const blockers = [...args.readiness.blockers];
   if (args.evidenceRefs.length === 0) {
-    blockers.push('No evidence references were supplied for artifact generation.');
+    blockers.push(
+      "No evidence references were supplied for artifact generation.",
+    );
   }
   if (args.corpusPatternRefs.length === 0) {
-    blockers.push('No corpus pattern references were supplied for artifact generation.');
+    blockers.push(
+      "No corpus pattern references were supplied for artifact generation.",
+    );
   }
   return blockers;
 }
 
 async function defaultPreflight(
-  args: Parameters<PHSOpenAIPreflightFn>[0],
-): Promise<PHSOpenAIPreflightResult> {
+  args: Parameters<MeridianOpenAIPreflightFn>[0],
+): Promise<MeridianOpenAIPreflightResult> {
   const result = await preflightOpenAIDirectClient(args);
   if (!result.ok) return result;
   return {
     ...result,
-    client: result.client as unknown as PHSOpenAIResponsesClient,
+    client: result.client as unknown as MeridianOpenAIResponsesClient,
   };
 }
 
-export async function generatePHSCommandCenterArtifact(
-  args: GeneratePHSCommandCenterArtifactArgs,
-): Promise<PHSCommandCenterGenerationResult> {
-  const readiness = evaluatePHSStageReadiness(args.readinessInput);
+export async function generateMeridianCommandCenterArtifact(
+  args: GenerateMeridianCommandCenterArtifactArgs,
+): Promise<MeridianCommandCenterGenerationResult> {
+  const readiness = evaluateMeridianStageReadiness(args.readinessInput);
   const blockers = collectGenerationBlockers({
     readiness,
     evidenceRefs: args.evidenceRefs,
@@ -240,14 +252,14 @@ export async function generatePHSCommandCenterArtifact(
 
   if (blockers.length > 0) {
     return {
-      status: 'blocked',
+      status: "blocked",
       blockers,
       readiness,
       openAiCalled: false,
     };
   }
 
-  const { systemPrompt, userMessage } = buildPHSCommandCenterPrompt({
+  const { systemPrompt, userMessage } = buildMeridianCommandCenterPrompt({
     artifactKind: args.artifactKind,
     phase: args.phase,
     tenantId: args.tenantId,
@@ -261,16 +273,16 @@ export async function generatePHSCommandCenterArtifact(
     additionalInstructions: args.additionalInstructions,
   });
   const model = args.model ?? DEFAULT_OPENAI_MODEL;
-  const prompt = [systemPrompt, userMessage].join('\n\n');
+  const prompt = [systemPrompt, userMessage].join("\n\n");
   const preflight = await (args.preflightFn ?? defaultPreflight)({
     tenantId: args.tenantId,
     userId: args.userId,
-    workflow: 'phs-command-center-artifact-generate',
+    workflow: "meridian-command-center-artifact-generate",
     artifactId: args.artifactId,
     artifactType: args.artifactKind,
     model,
     prompt,
-    dataClass: 'confidential',
+    dataClass: "confidential",
     metadata: {
       phase: args.phase,
       artifactKind: args.artifactKind,
@@ -282,7 +294,7 @@ export async function generatePHSCommandCenterArtifact(
 
   if (!preflight.ok) {
     return {
-      status: 'blocked',
+      status: "blocked",
       blockers: [preflight.reason],
       readiness,
       openAiCalled: false,
@@ -296,7 +308,7 @@ export async function generatePHSCommandCenterArtifact(
     max_output_tokens: args.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
     store: false,
     metadata: {
-      workflow: 'phs-command-center-artifact-generate',
+      workflow: "meridian-command-center-artifact-generate",
       tenantId: args.tenantId,
       artifactId: args.artifactId,
       artifactKind: args.artifactKind,
@@ -304,7 +316,7 @@ export async function generatePHSCommandCenterArtifact(
   });
 
   return {
-    status: 'generated',
+    status: "generated",
     text: response.output_text.trim(),
     auditId: preflight.auditId,
     model: response.model ?? model,
