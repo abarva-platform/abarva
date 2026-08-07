@@ -521,9 +521,24 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         not_established: 'Not established',
       } as const)[line.state],
       tone: line.state === 'quantified' ? COL.teal : line.state === 'workflow_required' ? COL.amber : line.state === 'needs_evidence' ? COL.red : COL.gray,
+      evidenceClass: ({
+        system_evidenced: 'SYSTEM EVIDENCED',
+        document_evidenced: 'DOCUMENT EVIDENCED',
+        human_validated: 'HUMAN VALIDATED',
+        inferred: 'INFERRED',
+        missing: 'MISSING',
+      } as const)[line.evidenceClass],
+      evidenceTone: ({
+        system_evidenced: COL.teal,
+        document_evidenced: '#3d6ea8',
+        human_validated: '#246b45',
+        inferred: COL.amber,
+        missing: COL.red,
+      } as const)[line.evidenceClass],
       evidence: line.evidence,
       nextAction: line.nextAction,
       sourceRefs: line.sourceRefs,
+      lineageFields: line.lineageFields,
     })),
   } : null;
   const optLaunch = c ? S.optimizationLaunch[c.contract_id] : undefined;
