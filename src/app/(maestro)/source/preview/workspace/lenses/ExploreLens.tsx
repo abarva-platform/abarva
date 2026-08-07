@@ -6,6 +6,7 @@ import type { SourceWorkspaceVM } from '../buildViewModel';
 export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
   const ex = vm.ex;
   const [showQuery, setShowQuery] = useState(false);
+  const [showQuality, setShowQuality] = useState(false);
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
@@ -25,16 +26,26 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
       </div>
 
       {ex.quality.state !== 'available' ? (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: ex.quality.state === 'blocked' ? '#fff3e6' : '#fbfaf7', border: '1px solid rgba(186,117,23,.34)', borderRadius: 8, padding: '13px 16px' }}>
-          <div style={{ flex: '1 1 360px', minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0a0a0b', marginBottom: 4 }}>Category analysis is provisional</div>
-            <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#5f5e5a' }}>{ex.quality.message}</div>
-          </div>
-          <div style={{ flex: '0 1 112px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.affectedRows}</b> affected rows</div>
-          <div style={{ flex: '0 1 132px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.affectedValue}</b> affected value</div>
-          <div style={{ flex: '0 1 96px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#a32d2d', fontSize: 15 }}>{ex.quality.conflictedRows}</b> conflicts</div>
-          <div style={{ flex: '0 1 118px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.cleanValuePct}</b> clean value</div>
-          <div style={{ flex: '0 1 180px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#888780', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ex.quality.ruleVersion}</div>
+        <div style={{ flex: '0 0 auto' }}>
+          <button
+            onClick={() => setShowQuality((s) => !s)}
+            style={{ width: '100%', textAlign: 'left', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, background: ex.quality.state === 'blocked' ? '#fff3e6' : '#fbfaf7', border: '1px solid rgba(186,117,23,.34)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer' }}
+          >
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#0a0a0b', whiteSpace: 'nowrap' }}>Category analysis is provisional</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: '#5f5e5a' }}>
+              {ex.quality.affectedRows} affected rows · {ex.quality.affectedValue} affected value · <span style={{ color: '#a32d2d' }}>{ex.quality.conflictedRows} conflicts</span>
+            </span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: '#ba7517', whiteSpace: 'nowrap' }}>{showQuality ? '– hide detail' : '+ detail'}</span>
+          </button>
+          {showQuality ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: ex.quality.state === 'blocked' ? '#fff3e6' : '#fbfaf7', border: '1px solid rgba(186,117,23,.34)', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '13px 16px' }}>
+              <div style={{ flex: '1 1 360px', minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#5f5e5a' }}>{ex.quality.message}</div>
+              </div>
+              <div style={{ flex: '0 1 118px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}><b style={{ display: 'block', color: '#0a0a0b', fontSize: 15 }}>{ex.quality.cleanValuePct}</b> clean value</div>
+              <div style={{ flex: '0 1 180px', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#888780', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ex.quality.ruleVersion}</div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -61,7 +72,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(380px,1fr))', gridTemplateRows: 'minmax(0,1fr)', gap: 16, height: 'calc(100dvh - 386px)', minHeight: 420, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(380px,1fr))', gridTemplateRows: 'minmax(0,1fr)', gap: 16, height: 'calc(100dvh - 600px)', minHeight: 420, overflow: 'hidden' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignContent: 'flex-start', gap: 12, overflowY: 'auto', height: '100%', minHeight: 0 }}>
           {ex.boxes.map((b) => (
             <div key={b.id} style={{ flex: '1 1 210px', background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
