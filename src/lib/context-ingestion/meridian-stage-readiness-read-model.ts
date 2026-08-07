@@ -1,13 +1,11 @@
-import { azureRead, type AzureReadClient } from '@/lib/data-plane/azureRead';
+import { azureRead, type AzureReadClient } from "@/lib/data-plane/azureRead";
 
+import type { MeridianPhase0Manifest } from "./meridian-phase0-manifest";
 import type {
-  PHSPhase0Manifest,
-} from './phs-phase0-manifest';
-import type {
-  PHSReadinessContextChunk,
-  PHSReadinessEvidenceRow,
-  PHSStageReadinessInput,
-} from './phs-stage-readiness';
+  MeridianReadinessContextChunk,
+  MeridianReadinessEvidenceRow,
+  MeridianStageReadinessInput,
+} from "./meridian-stage-readiness";
 
 type ContextChunkRow = {
   chunk_metadata?: Record<string, unknown> | null;
@@ -19,25 +17,27 @@ type EvidenceLedgerRow = {
   source_ref?: Record<string, unknown> | null;
 };
 
-export interface PHSStageReadinessReadModelArgs {
+export interface MeridianStageReadinessReadModelArgs {
   clientId: string;
-  manifest?: PHSPhase0Manifest | null;
+  manifest?: MeridianPhase0Manifest | null;
   readClient?: AzureReadClient;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 }
 
-function contextChunk(row: ContextChunkRow): PHSReadinessContextChunk {
+function contextChunk(row: ContextChunkRow): MeridianReadinessContextChunk {
   return {
     chunkMetadata: asRecord(row.chunk_metadata),
     provenance: asRecord(row.provenance),
   };
 }
 
-function evidenceRow(row: EvidenceLedgerRow): PHSReadinessEvidenceRow | null {
+function evidenceRow(
+  row: EvidenceLedgerRow,
+): MeridianReadinessEvidenceRow | null {
   if (!row.artifact_ref) return null;
   return {
     artifactRef: row.artifact_ref,
@@ -45,26 +45,26 @@ function evidenceRow(row: EvidenceLedgerRow): PHSReadinessEvidenceRow | null {
   };
 }
 
-export async function getPHSStageReadinessInputForClient(
-  args: PHSStageReadinessReadModelArgs,
-): Promise<PHSStageReadinessInput> {
+export async function getMeridianStageReadinessInputForClient(
+  args: MeridianStageReadinessReadModelArgs,
+): Promise<MeridianStageReadinessInput> {
   const readClient = args.readClient ?? azureRead;
   const [contextRows, evidenceRows] = await Promise.all([
     readClient.select<ContextChunkRow>({
-      table: 'enterprise_context_chunks',
-      columns: ['chunk_metadata', 'provenance'],
+      table: "enterprise_context_chunks",
+      columns: ["chunk_metadata", "provenance"],
       where: { client_id: args.clientId },
-      missingTable: 'empty',
+      missingTable: "empty",
       limit: 5000,
     }),
     readClient.select<EvidenceLedgerRow>({
-      table: 'evidence_ledger',
-      columns: ['artifact_ref', 'source_ref'],
+      table: "evidence_ledger",
+      columns: ["artifact_ref", "source_ref"],
       where: {
         client_id: args.clientId,
-        surface: 'moves',
+        surface: "moves",
       },
-      missingTable: 'empty',
+      missingTable: "empty",
       limit: 5000,
     }),
   ]);
@@ -73,7 +73,7 @@ export async function getPHSStageReadinessInputForClient(
     contextChunks: contextRows.map(contextChunk),
     evidenceRows: evidenceRows
       .map(evidenceRow)
-      .filter((row): row is PHSReadinessEvidenceRow => Boolean(row)),
+      .filter((row): row is MeridianReadinessEvidenceRow => Boolean(row)),
     manifest: args.manifest ?? null,
   };
 }

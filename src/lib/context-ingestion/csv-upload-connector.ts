@@ -20,7 +20,7 @@ import {
 import { proposeCsvColumnMapping } from "./csv-column-mapping";
 import { classifyUploadedFile } from "./file-classifier";
 import { computeStableChunkId } from "./fact-identity";
-import { buildPHSEvidenceLedgerInputs } from "./phs-evidence-ledger-binding";
+import { buildMeridianEvidenceLedgerInputs } from "./meridian-evidence-ledger-binding";
 import {
   getTemplateById,
   getTemplateForDimension,
@@ -162,48 +162,48 @@ const MAX_ROWS = 50_000;
 const MAX_TEXT_COLUMNS = 12;
 
 const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
-  enterprise_profile: 'enterprise_profile',
-  financial_kpis: 'it_financials',
-  annual_quarterly_reports: 'enterprise_profile',
-  market_competitor_intel: 'program_inventory',
-  c_suite_strategy: 'enterprise_profile',
-  business_units_segment_pnl: 'it_financials',
-  product_portfolio: 'program_inventory',
-  manufacturing_sites: 'it_landscape',
-  erp_landscape: 'it_landscape',
-  application_portfolio: 'it_landscape',
-  ehr_platform: 'it_landscape',
-  integration_topology: 'it_landscape',
-  interoperability_topology: 'it_landscape',
-  prior_authorization: 'program_inventory',
-  revenue_cycle_denials: 'it_financials',
-  ambient_clinical_documentation: 'program_inventory',
-  clinical_ai_model_inventory: 'it_landscape',
-  hipaa_ai_controls: 'it_landscape',
-  vendor_baa_contracts: 'it_financials',
-  service_line_pnl: 'it_financials',
-  workforce_scheduling: 'org_structure',
-  patient_access: 'program_inventory',
-  imaging_ai_triage: 'program_inventory',
-  cms_interoperability: 'program_inventory',
-  vendor_contracts: 'it_financials',
-  transformation_initiatives: 'program_inventory',
-  org_roles_teams: 'org_structure',
-  delivery_dora_devex: 'program_inventory',
-  regulatory_qms_risk: 'program_inventory',
-  value_based_care: 'program_inventory',
-  population_health: 'program_inventory',
-  data_platform_lineage: 'it_landscape',
-  digital_front_door: 'it_landscape',
-  supply_chain_pharmacy: 'it_financials',
-  ai_governance_decisions: 'program_inventory',
-  clinical_downtime_cyber: 'it_landscape',
-  nursing_workload_acuity: 'org_structure',
-  ai_tooling_model_inventory: 'it_landscape',
-  incidents_ops_telemetry: 'it_landscape',
-  service_levels: 'program_inventory',
-  business_capability: 'program_inventory',
-  infrastructure_estate: 'it_landscape',
+  enterprise_profile: "enterprise_profile",
+  financial_kpis: "it_financials",
+  annual_quarterly_reports: "enterprise_profile",
+  market_competitor_intel: "program_inventory",
+  c_suite_strategy: "enterprise_profile",
+  business_units_segment_pnl: "it_financials",
+  product_portfolio: "program_inventory",
+  manufacturing_sites: "it_landscape",
+  erp_landscape: "it_landscape",
+  application_portfolio: "it_landscape",
+  ehr_platform: "it_landscape",
+  integration_topology: "it_landscape",
+  interoperability_topology: "it_landscape",
+  prior_authorization: "program_inventory",
+  revenue_cycle_denials: "it_financials",
+  ambient_clinical_documentation: "program_inventory",
+  clinical_ai_model_inventory: "it_landscape",
+  hipaa_ai_controls: "it_landscape",
+  vendor_baa_contracts: "it_financials",
+  service_line_pnl: "it_financials",
+  workforce_scheduling: "org_structure",
+  patient_access: "program_inventory",
+  imaging_ai_triage: "program_inventory",
+  cms_interoperability: "program_inventory",
+  vendor_contracts: "it_financials",
+  transformation_initiatives: "program_inventory",
+  org_roles_teams: "org_structure",
+  delivery_dora_devex: "program_inventory",
+  regulatory_qms_risk: "program_inventory",
+  value_based_care: "program_inventory",
+  population_health: "program_inventory",
+  data_platform_lineage: "it_landscape",
+  digital_front_door: "it_landscape",
+  supply_chain_pharmacy: "it_financials",
+  ai_governance_decisions: "program_inventory",
+  clinical_downtime_cyber: "it_landscape",
+  nursing_workload_acuity: "org_structure",
+  ai_tooling_model_inventory: "it_landscape",
+  incidents_ops_telemetry: "it_landscape",
+  service_levels: "program_inventory",
+  business_capability: "program_inventory",
+  infrastructure_estate: "it_landscape",
 };
 
 export function segmentKeyForContextDimension(
@@ -263,11 +263,15 @@ function resolveTemplate(
   templateId?: string | null,
   tenantKey?: string | null,
 ): ContextTemplateDefinition {
-  const explicit = templateId ? getTemplateById(templateId, { tenantKey }) : null;
+  const explicit = templateId
+    ? getTemplateById(templateId, { tenantKey })
+    : null;
   if (explicit) return explicit;
-  const classification = classifyUploadedFile({ fileName, text: '' });
-  return getTemplateForDimension(classification.dimension, { tenantKey })
-    ?? getTemplateById('application-portfolio', { tenantKey })!;
+  const classification = classifyUploadedFile({ fileName, text: "" });
+  return (
+    getTemplateForDimension(classification.dimension, { tenantKey }) ??
+    getTemplateById("application-portfolio", { tenantKey })!
+  );
 }
 
 function parseJsonObject(raw: unknown): Record<string, string> | undefined {
@@ -442,7 +446,11 @@ export function inferCsvSchemaMapping(args: {
   tenantKey?: string | null;
   mapping?: CsvSchemaMapping;
 }): CsvMappingSuggestion {
-  const template = resolveTemplate(args.fileName, args.templateId ?? args.mapping?.templateId, args.tenantKey);
+  const template = resolveTemplate(
+    args.fileName,
+    args.templateId ?? args.mapping?.templateId,
+    args.tenantKey,
+  );
   const fieldMappings: Record<string, string> = {};
   const providedFieldMappings = args.mapping?.fieldMappings ?? {};
   const proposed = proposeCsvColumnMapping({ headers: args.headers, template });
@@ -545,15 +553,23 @@ function assertRequiredFieldsMapped(
   mapping: CsvMappingSuggestion,
 ): void {
   const mappedFields = new Set(Object.keys(mapping.fieldMappings));
-  const missing = template.requiredFields.filter((field) => !mappedFields.has(field));
+  const missing = template.requiredFields.filter(
+    (field) => !mappedFields.has(field),
+  );
   if (missing.length > 0) {
     throw new Error(`Missing required field mappings: ${missing.join(", ")}`);
   }
 }
 
-export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUploadPreparedBatch {
+export function prepareCsvUploadForTenantContext(
+  input: CsvUploadInput,
+): CsvUploadPreparedBatch {
   const parsed = parseCsvUpload(input.csvText);
-  const template = resolveTemplate(input.fileName, input.mapping?.templateId, input.tenantKey);
+  const template = resolveTemplate(
+    input.fileName,
+    input.mapping?.templateId,
+    input.tenantKey,
+  );
   const mapping = inferCsvSchemaMapping({
     headers: parsed.headers,
     fileName: input.fileName,
@@ -573,8 +589,9 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
     safeSlug(input.fileName),
     fileHash.slice(0, 12),
     compactTimestamp(uploadedAt),
-  ].join(':');
-  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension] ?? 'program_inventory';
+  ].join(":");
+  const sourceSegmentId =
+    SEGMENT_BY_DIMENSION[template.dimension] ?? "program_inventory";
   const sourceSystem = template.id;
   const sourceBase = input.sourceBlob
     ? `blob://${input.sourceBlob.bucket}/${input.sourceBlob.path}`
@@ -898,9 +915,9 @@ export async function loadCsvUploadToTenantContext(
       inserted += Array.isArray(data) ? data.length : (count ?? batch.length);
     }
 
-    if (prepared.template.id === "phs-evidence-register") {
+    if (prepared.template.id === "meridian-evidence-register") {
       const parsed = parseCsvUpload(input.csvText);
-      const evidenceInputs = buildPHSEvidenceLedgerInputs({
+      const evidenceInputs = buildMeridianEvidenceLedgerInputs({
         clientId: input.clientId,
         uploadedBy: input.uploadedBy,
         uploadId: prepared.uploadId,
@@ -953,7 +970,7 @@ export async function loadCsvUploadToTenantContext(
             rowsRecorded: evidenceIds.length,
             evidenceIds,
             detail:
-              "PHS evidence register rows were appended to the evidence ledger.",
+              "Meridian evidence register rows were appended to the evidence ledger.",
           }
         : {
             status: "not_applicable",

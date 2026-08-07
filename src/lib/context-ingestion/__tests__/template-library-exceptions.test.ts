@@ -1,8 +1,8 @@
 import {
   CONTEXT_TEMPLATE_REGISTRY,
   MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES,
+  MERIDIAN_PHASE0_CONTEXT_TEMPLATES,
   NORTHSTAR_CONTEXT_TEMPLATES,
-  PHS_CONTEXT_TEMPLATES,
   SUPPORTED_CONTEXT_UPLOAD_FORMATS,
   getTemplateById,
   getTemplateFormatCoverage,
@@ -14,7 +14,11 @@ describe("context template library exception coverage", () => {
     const coverage = getTemplateFormatCoverage();
 
     for (const format of SUPPORTED_CONTEXT_UPLOAD_FORMATS) {
-      expect(coverage[format]).toBe(NORTHSTAR_CONTEXT_TEMPLATES.length);
+      expect(coverage[format]).toBe(
+        CONTEXT_TEMPLATE_REGISTRY.filter((template) =>
+          template.acceptedFormats.includes(format),
+        ).length,
+      );
     }
   });
 
@@ -38,24 +42,24 @@ describe("context template library exception coverage", () => {
     );
   });
 
-  it("registers PHS phase 0 templates in the shared resolver without shrinking the general template set", () => {
-    const template = getTemplateById("phs-evidence-register");
+  it("registers Meridian phase 0 templates in the shared resolver without shrinking the general template set", () => {
+    const template = getTemplateById("meridian-evidence-register");
 
     expect(template).toMatchObject({
-      id: "phs-evidence-register",
-      label: "PHS evidence register",
+      id: "meridian-evidence-register",
+      label: "Meridian evidence register",
       dimension: "c_suite_strategy",
       ownerRole: "Data steward",
     });
-    expect(PHS_CONTEXT_TEMPLATES).toHaveLength(6);
+    expect(MERIDIAN_PHASE0_CONTEXT_TEMPLATES).toHaveLength(6);
     expect(CONTEXT_TEMPLATE_REGISTRY.length).toBe(
       NORTHSTAR_CONTEXT_TEMPLATES.length +
-        PHS_CONTEXT_TEMPLATES.length +
+        MERIDIAN_PHASE0_CONTEXT_TEMPLATES.length +
         MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES.length,
     );
   });
 
-  it("registers the Meridian/PHS healthcare context upload breadth without shrinking phase 0 controls", () => {
+  it("registers the Meridian healthcare context upload breadth without shrinking phase 0 controls", () => {
     expect(MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES).toHaveLength(26);
     expect(
       getTemplateById("prior-auth-workqueue", { tenantKey: "meridian-health" }),
@@ -67,7 +71,7 @@ describe("context template library exception coverage", () => {
       getTemplateById("application-portfolio", { tenantKey: "meridian-health" })
         ?.requiredFields,
     ).toContain("clinical_criticality");
-    expect(PHS_CONTEXT_TEMPLATES).toHaveLength(6);
+    expect(MERIDIAN_PHASE0_CONTEXT_TEMPLATES).toHaveLength(6);
   });
 
   it("pauses non-aligned structured files until the client supplies a field mapping", () => {

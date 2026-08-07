@@ -20,6 +20,24 @@ TENANT_FILTERABLE_CUBES = {
     "source_v4_workforce_rate_cards",
     "source_v4_sourcing_events",
     "source_v4_context_coverage",
+    "meridian_health_vendor_portfolio",
+    "meridian_health_contract_families",
+    "meridian_health_contract_scope",
+    "meridian_health_spend_invoice_history",
+    "meridian_health_workforce_rate_card_economics",
+    "meridian_health_sla_itsm_performance",
+    "meridian_health_service_credits",
+    "meridian_health_application_dependencies",
+    "meridian_health_renewal_exit_terms",
+    "meridian_health_program_dependencies",
+    "meridian_health_enterprise_outcomes",
+    "meridian_health_bpo_baseline",
+    "meridian_health_supplier_proposals_bafo",
+    "meridian_health_rebadge_transition_commitments",
+    "meridian_health_ai_automation_commitments",
+    "meridian_health_retained_org_scenarios",
+    "meridian_health_normalized_tco_inputs",
+    "meridian_health_event_context_snapshot",
 }
 
 VIEW_TO_CUBES = {
@@ -45,6 +63,27 @@ VIEW_TO_CUBES = {
     "source_v4_cloud_optimization": ["source_v4_cloud_cost"],
     "source_v4_workforce_rate_card": ["source_v4_workforce_rate_cards"],
     "source_v4_sourcing_event_bafo": ["source_v4_sourcing_events"],
+    "meridian_health_vendor_360": ["meridian_health_vendor_portfolio", "meridian_health_contract_families"],
+    "meridian_health_contract_360": [
+        "meridian_health_contract_families",
+        "meridian_health_contract_scope",
+        "meridian_health_sla_itsm_performance",
+        "meridian_health_service_credits",
+    ],
+    "meridian_health_bpo_supplier_comparison": [
+        "meridian_health_bpo_baseline",
+        "meridian_health_supplier_proposals_bafo",
+        "meridian_health_rebadge_transition_commitments",
+        "meridian_health_ai_automation_commitments",
+        "meridian_health_retained_org_scenarios",
+        "meridian_health_normalized_tco_inputs",
+    ],
+    "meridian_health_decision_handoff": [
+        "meridian_health_normalized_tco_inputs",
+        "meridian_health_event_context_snapshot",
+        "meridian_health_program_dependencies",
+        "meridian_health_application_dependencies",
+    ],
 }
 
 

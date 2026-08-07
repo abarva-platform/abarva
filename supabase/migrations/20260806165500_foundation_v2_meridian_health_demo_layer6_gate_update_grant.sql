@@ -1,0 +1,1 @@
+GRANT UPDATE ON foundation_v2_meridian_health_demo.layer6_gate_results TO foundation_v2_meridian_health_demo_writer;

@@ -15,7 +15,7 @@ const PILOT_GRANTS: ReadonlyArray<
   ["kmysore@gmail.com", "meridian", "client"],
   ["surekha.durvasula@gmail.com", "lakeshore", "client"],
   ["anandshp@gmail.com", "lakeshore", "client"],
-  ["admin@abarva.ai", "arcturus", "admin"],
+  ["admin@abarva.ai", "meridian", "client"],
   ["anand@abarva.ai", "skyharbor", "admin"],
   ["mreddy@republicebank.com", "arcturus", "client"],
 ];

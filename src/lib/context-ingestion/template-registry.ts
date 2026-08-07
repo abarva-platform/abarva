@@ -920,10 +920,15 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
     id: id as string,
     dimension: dimension as ContextDimension,
     label: label as string,
-    acceptedFormats: acceptedFormats as Exclude<UploadedFileFormat, "unknown">[],
+    acceptedFormats: acceptedFormats as Exclude<
+      UploadedFileFormat,
+      "unknown"
+    >[],
     exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
       (format) =>
-        !(acceptedFormats as Exclude<UploadedFileFormat, "unknown">[]).includes(format),
+        !(acceptedFormats as Exclude<UploadedFileFormat, "unknown">[]).includes(
+          format,
+        ),
     ),
     formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map(
       (format) => FORMAT_SUPPORT_PROFILES[format],
@@ -945,8 +950,142 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
 
 const MERIDIAN_UNLOCKS = [
   "Evidence chips cite uploaded healthcare source locators",
-  "Sentinel can answer Meridian/PHS questions only after tenant-scoped chunks are embedded",
+  "Sentinel can answer Meridian questions only after tenant-scoped chunks are embedded",
   "Source and Tower stay pending until approval and embedding evidence exists",
+];
+
+export const MERIDIAN_PHASE0_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
+  {
+    id: "meridian-evidence-register",
+    dimension: "c_suite_strategy",
+    label: "Meridian evidence register",
+    acceptedFormats: ["csv", "xlsx", "json"],
+    requiredFields: [
+      "citation_key",
+      "title",
+      "source_type",
+      "owner",
+      "evidence_date",
+      "sensitivity",
+      "confidence",
+      "summary",
+      "usable_by_surface",
+    ],
+    optionalFields: ["source_url", "storage_path", "source_quote", "notes"],
+    ownerRole: "Data steward",
+    refreshCadence: "as_needed",
+    unlocks: MERIDIAN_UNLOCKS,
+  },
+  {
+    id: "meridian-uploaded-artifacts",
+    dimension: "c_suite_strategy",
+    label: "Meridian uploaded artifact registry",
+    acceptedFormats: ["csv", "xlsx", "json"],
+    requiredFields: [
+      "artifact_id",
+      "display_name",
+      "artifact_type",
+      "phase",
+      "owner",
+      "storage_path",
+      "parse_status",
+      "approval_status",
+      "sensitivity",
+      "source_evidence_ids",
+    ],
+    optionalFields: ["export_format", "download_url", "waiver_reason", "notes"],
+    ownerRole: "Program steward",
+    refreshCadence: "as_needed",
+    unlocks: MERIDIAN_UNLOCKS,
+  },
+  {
+    id: "meridian-workload-inventory",
+    dimension: "application_portfolio",
+    label: "Meridian workload inventory",
+    acceptedFormats: ["csv", "xlsx", "json"],
+    requiredFields: [
+      "workload_id",
+      "workload_name",
+      "domain",
+      "current_platform",
+      "data_sources",
+      "phi_level",
+      "owner",
+      "business_criticality",
+      "modernization_disposition",
+      "effort_size",
+      "risk",
+    ],
+    optionalFields: [
+      "current_cost_usd",
+      "report_count",
+      "pipeline_count",
+      "notes",
+    ],
+    ownerRole: "CIO delegate",
+    refreshCadence: "as_needed",
+    unlocks: MERIDIAN_UNLOCKS,
+  },
+  {
+    id: "meridian-rate-card",
+    dimension: "vendor_contracts",
+    label: "Meridian rate card",
+    acceptedFormats: ["csv", "xlsx", "json"],
+    requiredFields: [
+      "rate_card_id",
+      "role",
+      "internal_or_external",
+      "location",
+      "hourly_rate_usd",
+      "utilization_assumption",
+      "source",
+      "effective_date",
+    ],
+    optionalFields: ["scenario", "confidence", "notes"],
+    ownerRole: "Finance reviewer",
+    refreshCadence: "as_needed",
+    unlocks: MERIDIAN_UNLOCKS,
+  },
+  {
+    id: "meridian-gate-criteria",
+    dimension: "c_suite_strategy",
+    label: "Meridian gate criteria",
+    acceptedFormats: ["csv", "xlsx", "json"],
+    requiredFields: [
+      "gate_id",
+      "phase",
+      "criterion",
+      "blocker_level",
+      "required_evidence",
+      "owner",
+      "status",
+      "waiver_allowed",
+    ],
+    optionalFields: ["waiver_reason", "due_date", "notes"],
+    ownerRole: "Program steward",
+    refreshCadence: "as_needed",
+    unlocks: MERIDIAN_UNLOCKS,
+  },
+  {
+    id: "meridian-approval-records",
+    dimension: "c_suite_strategy",
+    label: "Meridian approval records",
+    acceptedFormats: ["csv", "xlsx", "json"],
+    requiredFields: [
+      "approval_id",
+      "artifact_id",
+      "approver_name",
+      "role",
+      "decision",
+      "note",
+      "timestamp",
+      "conditions",
+    ],
+    optionalFields: ["approval_meeting", "approval_channel", "notes"],
+    ownerRole: "Executive sponsor",
+    refreshCadence: "as_needed",
+    unlocks: MERIDIAN_UNLOCKS,
+  },
 ];
 
 export const MERIDIAN_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
@@ -1381,12 +1520,12 @@ export const MERIDIAN_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
 export const RUNTIME_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
   ...UNIVERSAL_CONTEXT_TEMPLATES,
   ...NORTHSTAR_CONTEXT_TEMPLATES,
+  ...MERIDIAN_PHASE0_CONTEXT_TEMPLATES,
   ...MERIDIAN_CONTEXT_TEMPLATES,
 ];
 
 export const CONTEXT_TEMPLATE_REGISTRY = RUNTIME_CONTEXT_TEMPLATES;
 export const MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES = MERIDIAN_CONTEXT_TEMPLATES;
-export const PHS_CONTEXT_TEMPLATES = NORTHSTAR_CONTEXT_TEMPLATES;
 
 // Per format, how many templates across the full runtime registry accept it
 // canonically (out of the box, no exception metadata needed). Every format is
@@ -1410,8 +1549,8 @@ function isMeridianTenant(tenantKey?: string | null): boolean {
   return (
     normalized === "meridian" ||
     normalized === "meridian-health" ||
-    normalized === "phs" ||
-    normalized === "phs-meridian"
+    normalized === "meridian-health-global" ||
+    normalized === "meridian-healthcare-demo"
   );
 }
 
@@ -1423,7 +1562,12 @@ function isNorthstarTenant(tenantKey?: string | null): boolean {
 export function getTemplatesForTenant(
   tenantKey?: string | null,
 ): ContextTemplateDefinition[] {
-  if (isMeridianTenant(tenantKey)) return MERIDIAN_CONTEXT_TEMPLATES;
+  if (isMeridianTenant(tenantKey)) {
+    return [
+      ...MERIDIAN_PHASE0_CONTEXT_TEMPLATES,
+      ...MERIDIAN_CONTEXT_TEMPLATES,
+    ];
+  }
   if (isNorthstarTenant(tenantKey)) return NORTHSTAR_CONTEXT_TEMPLATES;
   return UNIVERSAL_CONTEXT_TEMPLATES;
 }
@@ -1444,6 +1588,7 @@ export function getTemplateById(
   return (
     tenantTemplates.find((template) => template.id === id) ??
     NORTHSTAR_CONTEXT_TEMPLATES.find((template) => template.id === id) ??
+    MERIDIAN_PHASE0_CONTEXT_TEMPLATES.find((template) => template.id === id) ??
     MERIDIAN_CONTEXT_TEMPLATES.find((template) => template.id === id) ??
     null
   );
@@ -1457,6 +1602,9 @@ export function getTemplateForDimension(
   return (
     tenantTemplates.find((template) => template.dimension === dimension) ??
     NORTHSTAR_CONTEXT_TEMPLATES.find(
+      (template) => template.dimension === dimension,
+    ) ??
+    MERIDIAN_PHASE0_CONTEXT_TEMPLATES.find(
       (template) => template.dimension === dimension,
     ) ??
     MERIDIAN_CONTEXT_TEMPLATES.find(

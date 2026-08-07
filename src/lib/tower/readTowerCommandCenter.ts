@@ -10,6 +10,7 @@ import type {
   TowerMartCxoAction,
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
+  TowerMartValueFunnelStage,
 } from "@/lib/cio-tower/tower-mart-view-model";
 
 type Numeric = string | number | null;
@@ -105,6 +106,57 @@ interface EvidenceRow {
   result_hashes: string[];
 }
 
+interface MeridianTowerSummaryRow {
+  baseline_rows: number;
+  outcome_count: number;
+  supplier_count: number;
+  recommendation_input_count: number;
+  automation_commitment_count: number;
+  service_credit_count: number;
+  annualized_current_state_cost: Numeric;
+  five_year_current_state_baseline_cost: Numeric;
+  headline_price: Numeric;
+  normalized_five_year_tco: Numeric;
+  risk_adjustment: Numeric;
+  service_credit_eligible_amount: Numeric;
+  service_credit_claimed_amount: Numeric;
+  retained_org_annual_cost: Numeric;
+}
+
+interface MeridianOutcomeRow {
+  health_plan_outcome_snapshot_id: string;
+  outcome_name: string;
+  outcome_category: string | null;
+  trend_state: string | null;
+  measurement_period: string | null;
+  evidence_status: string | null;
+  attestation_status: string | null;
+}
+
+interface MeridianRecommendationRow {
+  event_id: string;
+  supplier_id: string;
+  scenario: string;
+  headline_price: Numeric;
+  normalized_five_year_tco: Numeric;
+  risk_adjustment: Numeric;
+  recommendation_state: string | null;
+  recommendation_basis: string | null;
+}
+
+interface MeridianAutomationRow {
+  automation_commitment_id: string;
+  supplier_id: string;
+  process_name: string;
+  ai_rpa_use_case: string;
+  current_manual_volume: Numeric;
+  target_automation_percentage: Numeric;
+  productivity_commitment_pct: Numeric;
+  contracted_benefit_amount: Numeric;
+  commitment_state: string | null;
+  automation_basis: string | null;
+}
+
 function num(value: Numeric | undefined): number {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -129,12 +181,35 @@ function tenantCandidates(values: readonly (string | null | undefined)[]) {
     if (canonical === "skyharbor_global" || value === "skyharbor-air") {
       out.add("skyharbor_global");
     }
+    if (
+      canonical === "meridian-health" ||
+      value === "meridian" ||
+      value === "meridian_health_global"
+    ) {
+      out.add("meridian_health_global");
+    }
   }
   return [...out];
 }
 
-function decisionLaneFor(row: ProgramRow): TowerMartProgramLane["decisionLane"] {
-  const status = `${row.status ?? ""} ${row.funding_status ?? ""}`.toLowerCase();
+function includesMeridianTenant(
+  values: readonly (string | null | undefined)[],
+) {
+  return values.some((value) => {
+    const normalized = value?.trim().toLowerCase();
+    return (
+      normalized === "meridian" ||
+      normalized === "meridian-health" ||
+      normalized === "meridian_health_global"
+    );
+  });
+}
+
+function decisionLaneFor(
+  row: ProgramRow,
+): TowerMartProgramLane["decisionLane"] {
+  const status =
+    `${row.status ?? ""} ${row.funding_status ?? ""}`.toLowerCase();
   if (status.includes("unfunded")) return "stop";
   if (status.includes("on hold") || status.includes("pending")) return "freeze";
   if (status.includes("at risk") || status.includes("constraint")) return "fix";
@@ -149,7 +224,9 @@ function claimAllowedFor(claimState: string): string {
 }
 
 function programLane(row: ProgramRow): TowerMartProgramLane {
-  const gate = nullableText(row.next_gate) ?? "Load governed baseline, target, actual, and attestation evidence.";
+  const gate =
+    nullableText(row.next_gate) ??
+    "Load governed baseline, target, actual, and attestation evidence.";
   const approvedFundingUsd = num(row.approved_budget_usd);
   const promisedValueUsd = num(row.promised_value);
   const financeValidatedValueUsd =
@@ -201,9 +278,12 @@ function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
   const seats = num(row.seats_purchased);
   const sourceRatePct = num(row.active_user_rate) * 100;
   const fallbackRatePct = seats > 0 ? (activeUsers / seats) * 100 : 0;
-  const adoptionPct = clampPct(sourceRatePct > 0 ? sourceRatePct : fallbackRatePct);
+  const adoptionPct = clampPct(
+    sourceRatePct > 0 ? sourceRatePct : fallbackRatePct,
+  );
   const readinessScore = Math.max(0, Math.min(100, Math.round(adoptionPct)));
-  const valueScore = activeUsers > 0 ? Math.min(100, Math.round(activeUsers / 40)) : 0;
+  const valueScore =
+    activeUsers > 0 ? Math.min(100, Math.round(activeUsers / 40)) : 0;
   return {
     aiPortfolioKey: `tower:${row.subject_ref}`,
     itemName: row.title,
@@ -241,7 +321,9 @@ function aiPortfolioItem(row: AiRow, index: number): TowerMartAiPortfolioItem {
   };
 }
 
-function valueFunnelRows(summary: ClaimSummaryRow): TowerMartCommandViewModel["valueFunnel"] {
+function valueFunnelRows(
+  summary: ClaimSummaryRow,
+): TowerMartCommandViewModel["valueFunnel"] {
   const promisedValue = num(summary.promised_value_amount_usd);
   const financeValidatedValue = num(summary.finance_validated_value_usd);
   const claimableValue = num(summary.claimable_value_usd);
@@ -251,25 +333,52 @@ function valueFunnelRows(summary: ClaimSummaryRow): TowerMartCommandViewModel["v
       : "Known value amount is traceable through tower.value_claim.";
   const stages = [
     ["potential", "Potential", summary.claim_count, "portfolio", promisedValue],
-    ["promised", "Promised", summary.known_value_claim_count, "promised", promisedValue],
-    ["usage_supported", "Usage-supported", summary.usage_supported_count, "usage_supported", 0],
-    ["finance_validated", "Finance-validated", summary.finance_attested_claim_count, "finance_validated", financeValidatedValue],
-    ["claimable", "Claimable", summary.claimable_count, "claimable", claimableValue],
+    [
+      "promised",
+      "Promised",
+      summary.known_value_claim_count,
+      "promised",
+      promisedValue,
+    ],
+    [
+      "usage_supported",
+      "Usage-supported",
+      summary.usage_supported_count,
+      "usage_supported",
+      0,
+    ],
+    [
+      "finance_validated",
+      "Finance-validated",
+      summary.finance_attested_claim_count,
+      "finance_validated",
+      financeValidatedValue,
+    ],
+    [
+      "claimable",
+      "Claimable",
+      summary.claimable_count,
+      "claimable",
+      claimableValue,
+    ],
     ["realized", "Realized", 0, "not_realized", 0],
   ] as const;
-  return stages.map(([stageKey, stageLabel, count, claimStatus, valueNumeric], index) => ({
-    funnelKey: `tower:${summary.tenant_key}:funnel:${stageKey}`,
-    sequence: index + 1,
-    stageKey,
-    stageLabel,
-    valueNumeric,
-    denominatorStageKey: index === 0 ? null : stages[0][0],
-    conversionRatio: summary.claim_count > 0 ? count / summary.claim_count : null,
-    claimStatus,
-    caveat,
-    sourceFile: "tower.value_claim",
-    sourceRow: null,
-  }));
+  return stages.map(
+    ([stageKey, stageLabel, count, claimStatus, valueNumeric], index) => ({
+      funnelKey: `tower:${summary.tenant_key}:funnel:${stageKey}`,
+      sequence: index + 1,
+      stageKey,
+      stageLabel,
+      valueNumeric,
+      denominatorStageKey: index === 0 ? null : stages[0][0],
+      conversionRatio:
+        summary.claim_count > 0 ? count / summary.claim_count : null,
+      claimStatus,
+      caveat,
+      sourceFile: "tower.value_claim",
+      sourceRow: null,
+    }),
+  );
 }
 
 function actionRows(summary: ClaimSummaryRow): TowerMartCxoAction[] {
@@ -307,6 +416,11 @@ function actionRows(summary: ClaimSummaryRow): TowerMartCxoAction[] {
 export async function readTowerCommandCenter(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
 }): Promise<TowerMartCommandViewModel | null> {
+  if (includesMeridianTenant(args.tenantKeyCandidates)) {
+    const meridian = await readMeridianCanaryTowerCommandCenter();
+    if (meridian) return meridian;
+  }
+
   for (const tenantKey of tenantCandidates(args.tenantKeyCandidates)) {
     const [summary] = await azureRead.query<ClaimSummaryRow>(
       `select
@@ -504,7 +618,9 @@ export async function readTowerCommandCenter(args: {
       ),
     ]);
 
-    const totalBudget = num(budget?.target_budget_usd || budget?.total_budget_usd);
+    const totalBudget = num(
+      budget?.target_budget_usd || budget?.total_budget_usd,
+    );
     const knownAmount = num(summary.known_value_amount_usd);
     const promisedAmount = num(summary.promised_value_amount_usd);
     const financeValidatedAmount = num(summary.finance_validated_value_usd);
@@ -519,7 +635,8 @@ export async function readTowerCommandCenter(args: {
     const command: TowerMartCommandCenter = {
       commandCenterKey: `tower:${tenantKey}:command-center`,
       tenantKey,
-      tenantName: tenantKey === "skyharbor_global" ? "SkyHarbor Air" : tenantKey,
+      tenantName:
+        tenantKey === "skyharbor_global" ? "SkyHarbor Air" : tenantKey,
       martVersion: "tower-schema-v1",
       sourceStandard: "tower.metric_observation/value_claim",
       formulaVersion: "tower_claim_state_v1",
@@ -549,9 +666,13 @@ export async function readTowerCommandCenter(args: {
       outcomeMeasuredClaimCount: summary.outcome_measured_claim_count,
       candidateAiOpportunities,
       watchPressureSignals:
-        summary.funded_no_baseline_count + summary.stale_count + summary.disputed_count,
-      runRatio: totalBudget > 0 ? num(budget?.run_budget_usd) / totalBudget : null,
-      changeRatio: totalBudget > 0 ? num(budget?.change_budget_usd) / totalBudget : null,
+        summary.funded_no_baseline_count +
+        summary.stale_count +
+        summary.disputed_count,
+      runRatio:
+        totalBudget > 0 ? num(budget?.run_budget_usd) / totalBudget : null,
+      changeRatio:
+        totalBudget > 0 ? num(budget?.change_budget_usd) / totalBudget : null,
       financeValidationRatio:
         summary.claim_count > 0
           ? summary.finance_attested_claim_count / summary.claim_count
@@ -570,17 +691,19 @@ export async function readTowerCommandCenter(args: {
       ],
     };
 
-    const evidenceLineage: TowerMartEvidenceLineage[] = evidenceRows.map((row) => ({
-      lineageKey: `tower:${row.provenance_id}`,
-      surfaceSection: "metric_observation",
-      displayedFact: `${row.source_system} · ${row.source_schema ?? "unknown"}.${row.source_table ?? "unknown"}`,
-      displayedValueText: `${row.observation_count} observations`,
-      displayedValueNumeric: row.observation_count,
-      sourceFile: row.source_file_id,
-      sourceRow: row.source_row_pointer,
-      sourceSystem: row.source_system,
-      caveat: `${row.attestation_status}; formula ${row.formula_version}; ${row.result_hashes?.length ?? 0} result hashes.`,
-    }));
+    const evidenceLineage: TowerMartEvidenceLineage[] = evidenceRows.map(
+      (row) => ({
+        lineageKey: `tower:${row.provenance_id}`,
+        surfaceSection: "metric_observation",
+        displayedFact: `${row.source_system} · ${row.source_schema ?? "unknown"}.${row.source_table ?? "unknown"}`,
+        displayedValueText: `${row.observation_count} observations`,
+        displayedValueNumeric: row.observation_count,
+        sourceFile: row.source_file_id,
+        sourceRow: row.source_row_pointer,
+        sourceSystem: row.source_system,
+        caveat: `${row.attestation_status}; formula ${row.formula_version}; ${row.result_hashes?.length ?? 0} result hashes.`,
+      }),
+    );
 
     return {
       generatedFrom: "tower_schema",
@@ -593,9 +716,15 @@ export async function readTowerCommandCenter(args: {
         total: aiRows.length,
         candidate: candidateAiOpportunities,
         active: aiRows.length,
-        funded: aiRows.filter((row) => row.subject_kind === "developer_ai_tool").length,
-        embeddedOrUsage: aiRows.filter((row) => row.subject_kind === "service_agent").length,
-        attributedSpendUsd: aiRows.reduce((sum, row) => sum + num(row.estimated_use_cost), 0),
+        funded: aiRows.filter((row) => row.subject_kind === "developer_ai_tool")
+          .length,
+        embeddedOrUsage: aiRows.filter(
+          (row) => row.subject_kind === "service_agent",
+        ).length,
+        attributedSpendUsd: aiRows.reduce(
+          (sum, row) => sum + num(row.estimated_use_cost),
+          0,
+        ),
       },
       cxoActions: actionRows(summary),
       evidenceLineage,
@@ -604,4 +733,350 @@ export async function readTowerCommandCenter(args: {
   }
 
   return null;
+}
+
+async function readMeridianCanaryTowerCommandCenter(): Promise<TowerMartCommandViewModel | null> {
+  const tenantKey = "meridian_health_global";
+  const [summary] = await azureRead.query<MeridianTowerSummaryRow>(
+    `select
+       (select count(*)::int from foundation_v2_meridian_health_cube_canary.meridian_health_bpo_baseline_v1 where tenant_key=$1) as baseline_rows,
+       (select count(*)::int from foundation_v2_meridian_health_cube_canary.meridian_health_enterprise_outcome_v1 where tenant_key=$1) as outcome_count,
+       (select count(distinct supplier_id)::int from foundation_v2_meridian_health_cube_canary.meridian_health_supplier_proposal_bafo_v1 where tenant_key=$1) as supplier_count,
+       (select count(*)::int from foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1 where tenant_key=$1) as recommendation_input_count,
+       (select count(*)::int from foundation_v2_meridian_health_cube_canary.meridian_health_ai_automation_commitment_v1 where tenant_key=$1) as automation_commitment_count,
+       (select count(*)::int from foundation_v2_meridian_health_cube_canary.meridian_health_service_credit_v1 where tenant_key=$1) as service_credit_count,
+       (select coalesce(sum(annualized_current_state_cost),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_bpo_baseline_v1 where tenant_key=$1) as annualized_current_state_cost,
+       (select coalesce(sum(five_year_current_state_baseline_cost),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_bpo_baseline_v1 where tenant_key=$1) as five_year_current_state_baseline_cost,
+       (select coalesce(sum(headline_price),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1 where tenant_key=$1) as headline_price,
+       (select coalesce(sum(normalized_five_year_tco),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1 where tenant_key=$1) as normalized_five_year_tco,
+       (select coalesce(sum(risk_adjustment),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1 where tenant_key=$1) as risk_adjustment,
+       (select coalesce(sum(eligible_amount),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_service_credit_v1 where tenant_key=$1) as service_credit_eligible_amount,
+       (select coalesce(sum(claimed_amount),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_service_credit_v1 where tenant_key=$1) as service_credit_claimed_amount,
+       (select coalesce(sum(annual_cost),0)::numeric from foundation_v2_meridian_health_cube_canary.meridian_health_retained_org_scenario_v1 where tenant_key=$1) as retained_org_annual_cost`,
+    [tenantKey],
+    { missingTable: "empty" },
+  );
+  if (!summary || Number(summary.baseline_rows) === 0) return null;
+
+  const [outcomes, recommendations, automations] = await Promise.all([
+    azureRead.query<MeridianOutcomeRow>(
+      `select
+         health_plan_outcome_snapshot_id,
+         outcome_name,
+         outcome_category,
+         trend_state,
+         measurement_period,
+         evidence_status,
+         attestation_status
+        from foundation_v2_meridian_health_cube_canary.meridian_health_enterprise_outcome_v1
+       where tenant_key=$1
+       order by outcome_category, outcome_name
+       limit 12`,
+      [tenantKey],
+      { missingTable: "empty" },
+    ),
+    azureRead.query<MeridianRecommendationRow>(
+      `select
+         event_id,
+         supplier_id,
+         scenario,
+         headline_price,
+         normalized_five_year_tco,
+         risk_adjustment,
+         recommendation_state,
+         recommendation_basis
+        from foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1
+       where tenant_key=$1
+       order by normalized_five_year_tco asc nulls last, supplier_id, scenario
+       limit 12`,
+      [tenantKey],
+      { missingTable: "empty" },
+    ),
+    azureRead.query<MeridianAutomationRow>(
+      `select
+         automation_commitment_id,
+         supplier_id,
+         process_name,
+         ai_rpa_use_case,
+         current_manual_volume,
+         target_automation_percentage,
+         productivity_commitment_pct,
+         contracted_benefit_amount,
+         commitment_state,
+         automation_basis
+        from foundation_v2_meridian_health_cube_canary.meridian_health_ai_automation_commitment_v1
+       where tenant_key=$1
+       order by contracted_benefit_amount desc nulls last, process_name
+       limit 16`,
+      [tenantKey],
+      { missingTable: "empty" },
+    ),
+  ]);
+
+  const claimCount =
+    Number(summary.outcome_count) +
+    Number(summary.recommendation_input_count) +
+    Number(summary.service_credit_count);
+  const normalizedTco = num(summary.normalized_five_year_tco);
+  const baselineCost = num(summary.five_year_current_state_baseline_cost);
+  const unclaimedCredits =
+    num(summary.service_credit_eligible_amount) -
+    num(summary.service_credit_claimed_amount);
+  const command: TowerMartCommandCenter = {
+    commandCenterKey: `tower:${tenantKey}:meridian-canary-command-center`,
+    tenantKey,
+    tenantName: "Meridian Health",
+    martVersion: "meridian-health-layer5-cube-canary-v1",
+    sourceStandard:
+      "foundation_v2_meridian_health_cube_canary typed projections",
+    formulaVersion: "meridian_health_governed_projection_v1",
+    totalItBudgetFy26: baselineCost,
+    runBudgetFy26: num(summary.annualized_current_state_cost),
+    changeBudgetFy26: normalizedTco,
+    approvedProgramBudgetFy26: normalizedTco,
+    aiTaggedSpendFy26NonAdditive: 0,
+    promisedValueFy26: 0,
+    partialFinanceValidatedValueYtd: 0,
+    realizedValueYtdAllowed: 0,
+    valueClaimCount: claimCount,
+    knownValueClaimCount: 0,
+    unknownValueClaimCount: claimCount,
+    knownZeroValueClaimCount: 0,
+    knownValueAmountUsd: 0,
+    financeAttestedClaimCount: outcomes.filter((row) =>
+      (row.attestation_status ?? "").toLowerCase().includes("attest"),
+    ).length,
+    businessAttestedClaimCount: outcomes.filter((row) =>
+      (row.evidence_status ?? "").toLowerCase().includes("accepted"),
+    ).length,
+    claimableClaimCount: 0,
+    usageSupportedClaimCount: Number(summary.automation_commitment_count),
+    fundedNoBaselineClaimCount: Number(summary.recommendation_input_count),
+    staleClaimCount: 0,
+    disputedClaimCount: 0,
+    baselineLinkedClaimCount: Number(summary.baseline_rows),
+    targetLinkedClaimCount: Number(summary.recommendation_input_count),
+    actualLinkedClaimCount: 0,
+    outcomeMeasuredClaimCount: Number(summary.outcome_count),
+    candidateAiOpportunities: Number(summary.automation_commitment_count),
+    watchPressureSignals:
+      Number(summary.recommendation_input_count) +
+      Number(summary.service_credit_count),
+    runRatio:
+      baselineCost > 0
+        ? num(summary.annualized_current_state_cost) / baselineCost
+        : null,
+    changeRatio: baselineCost > 0 ? normalizedTco / baselineCost : null,
+    financeValidationRatio: null,
+    decisionQuestion:
+      "Which governed Meridian exposures are ready for recommendation, and which remain evidence gaps?",
+    executiveSummary: `${claimCount} governed Meridian decision records are loaded from typed projections. The view shows ${formatCioTowerMoney(baselineCost)} of five-year current-state baseline exposure and ${formatCioTowerMoney(normalizedTco)} of normalized TCO inputs, with realized value held at ${formatCioTowerMoney(0)} until finance-attested claim evidence is loaded.`,
+    sourceFiles: [
+      "foundation_v2_meridian_health_cube_canary.meridian_health_bpo_baseline_v1",
+      "foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1",
+      "foundation_v2_meridian_health_cube_canary.meridian_health_enterprise_outcome_v1",
+      "foundation_v2_meridian_health_cube_canary.meridian_health_service_credit_v1",
+    ],
+  };
+
+  const valueFunnel: TowerMartValueFunnelStage[] = [
+    {
+      funnelKey: `tower:${tenantKey}:funnel:baseline_exposure`,
+      sequence: 1,
+      stageKey: "baseline_exposure",
+      stageLabel: "Baseline exposure",
+      valueNumeric: baselineCost,
+      denominatorStageKey: null,
+      conversionRatio: null,
+      claimStatus: "not_a_savings_claim",
+      caveat: "Baseline cost is exposure context, not realized value.",
+      sourceFile: command.sourceFiles[0] ?? null,
+      sourceRow: null,
+    },
+    {
+      funnelKey: `tower:${tenantKey}:funnel:normalized_tco`,
+      sequence: 2,
+      stageKey: "normalized_tco",
+      stageLabel: "Normalized TCO",
+      valueNumeric: normalizedTco,
+      denominatorStageKey: "baseline_exposure",
+      conversionRatio: baselineCost > 0 ? normalizedTco / baselineCost : null,
+      claimStatus: "recommendation_input",
+      caveat:
+        "Normalized TCO supports supplier comparison; it is not booked savings.",
+      sourceFile: command.sourceFiles[1] ?? null,
+      sourceRow: null,
+    },
+    {
+      funnelKey: `tower:${tenantKey}:funnel:service_credits`,
+      sequence: 3,
+      stageKey: "service_credits",
+      stageLabel: "Service-credit exposure",
+      valueNumeric: Math.max(0, unclaimedCredits),
+      denominatorStageKey: "baseline_exposure",
+      conversionRatio:
+        baselineCost > 0 ? Math.max(0, unclaimedCredits) / baselineCost : null,
+      claimStatus: "operational_entitlement",
+      caveat:
+        "Credit eligibility remains separate from collected or realized value.",
+      sourceFile: command.sourceFiles[3] ?? null,
+      sourceRow: null,
+    },
+    {
+      funnelKey: `tower:${tenantKey}:funnel:claimable`,
+      sequence: 4,
+      stageKey: "claimable",
+      stageLabel: "Claimable value allowed",
+      valueNumeric: 0,
+      denominatorStageKey: "baseline_exposure",
+      conversionRatio: baselineCost > 0 ? 0 : null,
+      claimStatus: "blocked",
+      caveat:
+        "No Meridian projection is promoted into claimable realized value by this reader.",
+      sourceFile: null,
+      sourceRow: null,
+    },
+  ];
+
+  return {
+    generatedFrom: "tower_schema",
+    headline: command.executiveSummary,
+    command,
+    valueFunnel,
+    programLanes: recommendations.map((row, index) => ({
+      laneKey: `tower:${tenantKey}:recommendation:${row.supplier_id}:${row.scenario}:${index}`,
+      programCode: row.event_id,
+      programName: `${row.supplier_id} · ${row.scenario}`,
+      ownerRole: "Sourcing decision owner",
+      financeOwnerRole: "Finance partner",
+      decisionLane: (row.recommendation_state ?? "")
+        .toLowerCase()
+        .includes("recommended")
+        ? "fix"
+        : "freeze",
+      decisionRationale:
+        nullableText(row.recommendation_basis) ??
+        "Recommendation input is loaded, but finance claimability is not asserted.",
+      approvedFundingUsd: num(row.normalized_five_year_tco),
+      aiTaggedSpendUsd: 0,
+      promisedValueUsd: 0,
+      financeValidatedValueUsd: 0,
+      usageMetric: "normalized five-year TCO",
+      usageActual: num(row.normalized_five_year_tco),
+      adoptionRatePct: null,
+      valueClaimStatus: row.recommendation_state ?? "recommendation_input",
+      towerClaimAllowed: "blocked",
+      requiredGates: [
+        {
+          ask: "Complete finance and business attestation before treating the recommendation as claimable value.",
+          status: "blocked",
+        },
+      ],
+      caveat: `Risk adjustment: ${formatCioTowerMoney(num(row.risk_adjustment))}.`,
+      sourceFile: command.sourceFiles[1] ?? null,
+      sourceRow: row.supplier_id,
+    })),
+    aiPortfolio: automations.map((row) => ({
+      aiPortfolioKey: `tower:${tenantKey}:automation:${row.automation_commitment_id}`,
+      itemName: row.ai_rpa_use_case,
+      itemKind: "service_agent",
+      vendorName: row.supplier_id,
+      systemName: row.process_name,
+      aiSpendType: "contractual commitment state",
+      aiSpendCategory: "BPO automation",
+      fundingStatus: row.commitment_state ?? "commitment_state_unknown",
+      decisionLane: (row.commitment_state ?? "")
+        .toLowerCase()
+        .includes("contract")
+        ? "fix"
+        : "freeze",
+      approvedFundingUsd: 0,
+      aiTaggedSpendUsd: 0,
+      promisedValueUsd: 0,
+      financeValidatedValueUsd: 0,
+      usageMetric: "target automation percentage",
+      usageActual: num(row.target_automation_percentage),
+      adoptionRatePct: num(row.target_automation_percentage),
+      valueScore: Math.min(
+        100,
+        Math.round(num(row.productivity_commitment_pct)),
+      ),
+      readinessScore: Math.min(
+        100,
+        Math.round(num(row.target_automation_percentage)),
+      ),
+      riskScore: (row.commitment_state ?? "").toLowerCase().includes("contract")
+        ? 45
+        : 70,
+      duplicateRisk: null,
+      valueClaimStatus: row.commitment_state ?? "not_attested",
+      towerClaimAllowed: "blocked",
+      caveat:
+        nullableText(row.automation_basis) ??
+        "Automation commitment is shown as contract/proposal state, not realized value.",
+      sourceFile:
+        "foundation_v2_meridian_health_cube_canary.meridian_health_ai_automation_commitment_v1",
+      sourceRow: row.automation_commitment_id,
+    })),
+    aiPortfolioCounts: {
+      total: automations.length,
+      candidate: automations.filter(
+        (row) =>
+          !(row.commitment_state ?? "").toLowerCase().includes("contract"),
+      ).length,
+      active: automations.length,
+      funded: automations.filter((row) =>
+        (row.commitment_state ?? "").toLowerCase().includes("contract"),
+      ).length,
+      embeddedOrUsage: automations.length,
+      attributedSpendUsd: 0,
+    },
+    cxoActions: [
+      {
+        actionKey: "tower-meridian-attestation",
+        sequence: 1,
+        actionLane: "fix",
+        title: "Separate recommendation inputs from realized value",
+        actionBody:
+          "Keep normalized TCO, service credits and automation commitments in the decision-input lane until finance and business attestations are loaded.",
+        ownerHint: "Finance partner",
+        moduleHandoff: "Moves",
+      },
+      {
+        actionKey: "tower-meridian-service-credit",
+        sequence: 2,
+        actionLane: "fix",
+        title: "Review service-credit entitlement",
+        actionBody: `${formatCioTowerMoney(Math.max(0, unclaimedCredits))} is visible as unclaimed service-credit exposure, not collected value.`,
+        ownerHint: "Vendor management",
+        moduleHandoff: "Source",
+      },
+    ],
+    evidenceLineage: [
+      {
+        lineageKey: `tower:${tenantKey}:baseline`,
+        surfaceSection: "baseline",
+        displayedFact: "BPO baseline projection rows",
+        displayedValueText: String(summary.baseline_rows),
+        displayedValueNumeric: Number(summary.baseline_rows),
+        sourceFile: command.sourceFiles[0] ?? null,
+        sourceRow: null,
+        sourceSystem: "foundation_v2",
+        caveat: "Typed projection; generic observations are not exposed.",
+      },
+      {
+        lineageKey: `tower:${tenantKey}:outcomes`,
+        surfaceSection: "outcomes",
+        displayedFact: "Enterprise outcome snapshot rows",
+        displayedValueText: String(summary.outcome_count),
+        displayedValueNumeric: Number(summary.outcome_count),
+        sourceFile: command.sourceFiles[2] ?? null,
+        sourceRow: outcomes[0]?.health_plan_outcome_snapshot_id ?? null,
+        sourceSystem: "foundation_v2",
+        caveat:
+          "Outcome snapshots inform context; they do not calculate quality measures.",
+      },
+    ],
+    requiredFieldGaps: [],
+  };
 }

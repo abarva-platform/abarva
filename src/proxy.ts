@@ -24,6 +24,10 @@ import {
   loadSourceLifecycleRouteAction,
   parseSourceEventRoute,
 } from "@/lib/source/lifecycle-routing-guard";
+import {
+  PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
+  readPrivateBrowserProofSessionValue,
+} from "@/lib/auth/private-browser-proof-session";
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 const ACTIVE_CLIENT_COOKIE = "abarva_active_client";
@@ -50,6 +54,8 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/sign-in(.*)",
   "/signed-out(.*)",
   "/invite(.*)",
+  "/access",
+  "/access-denied",
   "/auth-redirect(.*)",
   "/",
   // Public marketing video/demo page. This is not a product workspace; deeper
@@ -67,6 +73,11 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
+  "/api/auth/access-eligibility(.*)",
+  // Private browser proof helper is self-guarded by an opt-in env flag and
+  // bearer token, and returns 404 unless explicitly enabled on an isolated
+  // proof revision.
+  "/api/auth/private-browser-proof(.*)",
   // Health is intentionally public so platform probes can validate runtime
   // readiness before a browser session exists. The route masks raw backing
   // service errors when NODE_ENV=production.
@@ -274,7 +285,7 @@ interface ProxySessionMetadata extends Record<string, unknown> {
 interface ProxySessionIdentity {
   metadata: ProxySessionMetadata;
   email: string | null;
-  source: "session_claims" | "clerk_user_fallback";
+  source: "session_claims" | "clerk_user_fallback" | "private_browser_proof";
 }
 
 interface ClerkUserIdentityLike {
@@ -447,15 +458,32 @@ async function resolveProxySessionIdentity(
 const clerkProtectedProxy = clerkMiddleware(
   async (auth, request: NextRequest) => {
     const { userId, sessionClaims } = await auth();
-    const identity = await resolveProxySessionIdentity(
-      sessionClaims,
-      userId,
-      request.nextUrl.pathname,
+    const privateProofSession = await readPrivateBrowserProofSessionValue(
+      request.cookies.get(PRIVATE_BROWSER_PROOF_SESSION_COOKIE)?.value,
     );
+    const identity =
+      privateProofSession && !userId
+        ? {
+            metadata: {
+              role: privateProofSession.role,
+              clientId: privateProofSession.clientId,
+              defaultClientId: privateProofSession.defaultClientId,
+              tenantKey: privateProofSession.tenantKey,
+              moduleAccess: privateProofSession.moduleAccess,
+            },
+            email: privateProofSession.email,
+            source: "private_browser_proof" as const,
+          }
+        : await resolveProxySessionIdentity(
+            sessionClaims,
+            userId,
+            request.nextUrl.pathname,
+          );
     const metadata = identity.metadata;
     const metadataRole = metadata.role ?? null;
     const email = identity.email;
     const role = resolveSessionRole(metadataRole, email);
+    const isAuthenticated = Boolean(userId || privateProofSession);
     const requestedClientId = request.nextUrl.searchParams.get("client");
     const activeClientId =
       request.cookies.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
@@ -629,7 +657,7 @@ const clerkProtectedProxy = clerkMiddleware(
       );
     if (
       requiresAuth &&
-      userId &&
+      isAuthenticated &&
       isHomeKnowledgeRoute &&
       !isFoundationRouteAllowedForMetadata(request.nextUrl.pathname, metadata)
     ) {
@@ -638,7 +666,7 @@ const clerkProtectedProxy = clerkMiddleware(
 
     if (
       requiresAuth &&
-      userId &&
+      isAuthenticated &&
       foundationTenantKey &&
       !isFoundationRouteAllowedForMetadata(request.nextUrl.pathname, metadata)
     ) {
@@ -713,7 +741,7 @@ const clerkProtectedProxy = clerkMiddleware(
     // Keep the bare domain as the public marketing/request-access landing page
     // even when a visitor still has a Clerk session. App entry continues through
     // /sign-in and /auth-redirect.
-    if (userId && request.nextUrl.pathname.startsWith("/sign-in")) {
+    if (isAuthenticated && request.nextUrl.pathname.startsWith("/sign-in")) {
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(new URL("/auth-redirect", request.url)),
@@ -722,7 +750,7 @@ const clerkProtectedProxy = clerkMiddleware(
 
     // Maestro routes — require authenticated Maestro/Admin/Investor
     if (maestroRoutes(request)) {
-      if (!userId) {
+      if (!isAuthenticated) {
         return createSignInRedirect(request);
       }
       if (role === "client") {
@@ -734,7 +762,7 @@ const clerkProtectedProxy = clerkMiddleware(
     }
 
     // Auth-required routes (any role)
-    if (requiresAuth && !userId) {
+    if (requiresAuth && !isAuthenticated) {
       return createSignInRedirect(request);
     }
 
@@ -769,7 +797,7 @@ const clerkProtectedProxy = clerkMiddleware(
     const sourceLifecycleRoute = parseSourceEventRoute(
       request.nextUrl.pathname,
     );
-    if (requiresAuth && userId && sourceLifecycleRoute) {
+    if (requiresAuth && isAuthenticated && sourceLifecycleRoute) {
       const lifecycleClientKey =
         activeClientId ??
         resolvePinnedSessionClientKey({
@@ -795,7 +823,7 @@ const clerkProtectedProxy = clerkMiddleware(
       }
     }
 
-    if (!isPublicRoute(request)) {
+    if (!isPublicRoute(request) && !privateProofSession) {
       await auth.protect();
     }
 
@@ -809,7 +837,11 @@ const clerkProtectedProxy = clerkMiddleware(
       getResponse().cookies.delete(ACTIVE_CLIENT_COOKIE);
     }
 
-    if (isPublicRoute(request) && userId && !isExternalOnlyRole(role)) {
+    if (
+      isPublicRoute(request) &&
+      isAuthenticated &&
+      !isExternalOnlyRole(role)
+    ) {
       // B-01 fix: only write the cookie when the client key is EXPLICITLY
       // pinned via Clerk metadata or email inference. Using resolveSessionClientKey
       // here was wrong — it returns DEFAULT_CLIENT_KEY='meridian' when no explicit

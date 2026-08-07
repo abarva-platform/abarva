@@ -15,6 +15,7 @@ import {
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { readTowerCommandCenter } from "@/lib/tower/readTowerCommandCenter";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -57,16 +58,30 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
-  const client = await getActiveClientRow(requestedClient).catch(() => null);
+  const [client, tenant] = await Promise.all([
+    getActiveClientRow(requestedClient).catch(() => null),
+    resolveTenant({ requestedClient }).catch(() => null),
+  ]);
+  const effectiveClientKey = client?.key ?? tenant?.appClientKey ?? null;
 
   const tenantName =
-    canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
+    canonicalClientDisplayName({
+      key: effectiveClientKey,
+      name: client?.name ?? tenant?.displayName,
+    }) ??
     client?.name ??
+    tenant?.displayName ??
     "AbarVa Client";
 
   const towerView = await withTowerReadTimeout(
     readTowerCommandCenter({
-      tenantKeyCandidates: [client?.key, requestedClient, client?.id],
+      tenantKeyCandidates: [
+        effectiveClientKey,
+        requestedClient,
+        client?.id,
+        tenant?.canonicalKey,
+        tenant?.brokerKey,
+      ],
     }),
     null,
   );
@@ -74,7 +89,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     tenantName,
   });
   const towerChatClientId =
-    client?.id ?? client?.key ?? requestedClient ?? null;
+    client?.id ?? effectiveClientKey ?? requestedClient ?? null;
 
   return (
     <AppShell

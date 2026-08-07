@@ -333,11 +333,11 @@ describe("csv upload connector", () => {
     );
   });
 
-  it("prepares Meridian/PHS healthcare uploads as template-backed pending loader output with provenance", () => {
+  it("prepares Meridian healthcare uploads as template-backed pending loader output with provenance", () => {
     const prepared = prepareCsvUploadForTenantContext({
       clientId: "client-meridian",
       tenantKey: "meridian-health",
-      uploadedBy: "user-phs",
+      uploadedBy: "user-meridian",
       fileName: "prior-auth-workqueue.csv",
       uploadedAt: "2026-06-05T12:00:00.000Z",
       csvText: [
@@ -370,7 +370,7 @@ describe("csv upload connector", () => {
           client_id: "client-meridian",
           source_doc: "prior-auth-workqueue.csv",
           source_row: 2,
-          uploaded_by: "user-phs",
+          uploaded_by: "user-meridian",
           schema_mapping: expect.objectContaining({
             templateId: "prior-auth-workqueue",
             dimension: "prior_authorization",
@@ -411,7 +411,7 @@ describe("csv upload connector", () => {
     const enterpriseProfile = prepareCsvUploadForTenantContext({
       clientId: "client-meridian",
       tenantKey: "meridian-health",
-      uploadedBy: "user-phs",
+      uploadedBy: "user-meridian",
       fileName: "enterprise-profile.yaml",
       uploadedAt: "2026-06-05T12:00:00.000Z",
       csvText: yamlText,
@@ -442,7 +442,7 @@ describe("csv upload connector", () => {
     const topology = prepareCsvUploadForTenantContext({
       clientId: "client-meridian",
       tenantKey: "meridian-health",
-      uploadedBy: "user-phs",
+      uploadedBy: "user-meridian",
       fileName: "hl7-fhir-integration-topology.json",
       uploadedAt: "2026-06-05T12:00:00.000Z",
       csvText: jsonText,
@@ -537,7 +537,7 @@ describe("csv upload connector", () => {
     ]);
   });
 
-  it("blocks PHS phase 0 uploads with missing required evidence fields before persistence", async () => {
+  it("blocks Meridian phase 0 uploads with missing required evidence fields before persistence", async () => {
     const calls: Array<{ table: string; operation: string; payload: unknown }> =
       [];
     const db = {
@@ -560,12 +560,12 @@ describe("csv upload connector", () => {
         clientId: "client-meridian",
         tenantKey: "meridian-health",
         uploadedBy: "user-3",
-        fileName: "phs-evidence-register.csv",
+        fileName: "meridian-evidence-register.csv",
         csvText: [
           "title,source_type,owner,evidence_date,sensitivity,confidence,summary,usable_by_surface",
           'Stars baseline,public,Data steward,2026-06-05,public,high,Public Stars measure baseline,"moves,admin"',
         ].join("\n"),
-        mapping: { templateId: "phs-evidence-register" },
+        mapping: { templateId: "meridian-evidence-register" },
         db: db as never,
       }),
     ).rejects.toThrow("csv_missing_required_fields:citation_key");
@@ -573,7 +573,7 @@ describe("csv upload connector", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("appends PHS evidence-register rows to the evidence ledger after context chunks insert", async () => {
+  it("appends Meridian evidence-register rows to the evidence ledger after context chunks insert", async () => {
     const calls: Array<{ table: string; operation: string; payload: unknown }> =
       [];
     const evidenceInputs: unknown[] = [];
@@ -583,13 +583,13 @@ describe("csv upload connector", () => {
       clientId: "client-meridian",
       tenantKey: "meridian-health",
       uploadedBy: "user-3",
-      fileName: "phs-evidence-register.csv",
+      fileName: "meridian-evidence-register.csv",
       uploadedAt: "2026-06-05T12:00:00.000Z",
       csvText: [
         "citation_key,title,source_type,owner,evidence_date,sensitivity,confidence,summary,usable_by_surface,source_url,source_quote",
-        'PHS-STARS-2026,Stars baseline,public,Data steward,2026-06-05,public,high,Public Stars measure baseline,"moves,admin",https://example.test/stars,"3.0 Stars baseline"',
+        'Meridian-STARS-2026,Stars baseline,public,Data steward,2026-06-05,public,high,Public Stars measure baseline,"moves,admin",https://example.test/stars,"3.0 Stars baseline"',
       ].join("\n"),
-      mapping: { templateId: "phs-evidence-register" },
+      mapping: { templateId: "meridian-evidence-register" },
       classificationOverrides: { domainSegment: "DATA_ANALYTICS" },
       db: db as never,
       recordEvidenceFn: async (input) => {
@@ -604,7 +604,7 @@ describe("csv upload connector", () => {
       rowsRecorded: 1,
       evidenceIds: ["ledger-1"],
       detail:
-        "PHS evidence register rows were appended to the evidence ledger.",
+        "Meridian evidence register rows were appended to the evidence ledger.",
     });
     expect(calls.map((call) => call.table)).toEqual([
       "data_ingestion_runs",
@@ -619,7 +619,7 @@ describe("csv upload connector", () => {
     expect(evidenceInputs).toEqual([
       expect.objectContaining({
         clientId: "client-meridian",
-        artifactRef: "PHS-STARS-2026",
+        artifactRef: "Meridian-STARS-2026",
         sourceType: "document_extract",
         sourceQuote: "3.0 Stars baseline",
       }),

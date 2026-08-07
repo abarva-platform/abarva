@@ -1,0 +1,133 @@
+{
+  "fixture_id": "meridian-health-demo-phase-a-canary-defects",
+  "generator_version": "meridian-health-demo-phase-a-v1",
+  "purpose": "Small committed canary contract for the offline validator. The bulk generated data is intentionally kept out of git.",
+  "expected_good_package": {
+    "tenant_key": "meridian_health_global",
+    "dataset_id": "meridian-health-source-v1-202608",
+    "dataset_version": "v1",
+    "activation_state": "generated_not_loaded"
+  },
+  "corrupted_canaries": [
+    {
+      "defect": "missing tenant key",
+      "expected_failure": "tenant_key_mismatch"
+    },
+    {
+      "defect": "bad row hash",
+      "expected_failure": "bad_row_hash"
+    },
+    {
+      "defect": "invalid source record path",
+      "expected_failure": "invalid_source_record_path"
+    },
+    {
+      "defect": "duplicate row hash",
+      "expected_failure": "duplicate_row_hash"
+    },
+    {
+      "defect": "duplicate native id",
+      "expected_failure": "duplicate_native_id"
+    },
+    {
+      "defect": "duplicate primary key",
+      "expected_failure": "duplicate_primary_key"
+    },
+    {
+      "defect": "broken contract relationship",
+      "expected_failure": "broken_contract_relationship"
+    },
+    {
+      "defect": "missing supplier event link",
+      "expected_failure": "missing_supplier_event_link"
+    },
+    {
+      "defect": "unsupported value claim",
+      "expected_failure": "unsupported_savings_language"
+    },
+    {
+      "defect": "PII email",
+      "expected_failure": "pii_email"
+    },
+    {
+      "defect": "suspected PHI",
+      "expected_failure": "suspected_phi_pii_marker"
+    },
+    {
+      "defect": "incomplete role coverage",
+      "expected_failure": "incomplete_role_coverage"
+    },
+    {
+      "defect": "CDAO question count below 50",
+      "expected_failure": "cdao_question_count_below_50"
+    },
+    {
+      "defect": "missing source-system guidance",
+      "expected_failure": "missing_source_system_guidance"
+    },
+    {
+      "defect": "missing required story domain",
+      "expected_failure": "missing_required_story_thread"
+    },
+    {
+      "defect": "incorrect time coverage",
+      "expected_failure": "missing_24_month_start"
+    },
+    {
+      "defect": "outcome map below range",
+      "expected_failure": "enterprise_outcomes_kpi_map_count_out_of_range"
+    },
+    {
+      "defect": "separate KPI value-driver tabs",
+      "expected_failure": "separate_kpi_value_driver_tabs_present"
+    },
+    {
+      "defect": "missing outcomes section in interview pack",
+      "expected_failure": "missing_outcomes_kpis_value_drivers_section"
+    },
+    {
+      "defect": "irrelevant hard-question coverage",
+      "expected_failure": "mapped_measure_missing"
+    },
+    {
+      "defect": "broken question-to-evidence lineage",
+      "expected_failure": "mapped_evidence_ref_missing"
+    },
+    {
+      "defect": "existing source record from wrong story thread",
+      "expected_failure": "planted_record_story_thread_mismatch"
+    },
+    {
+      "defect": "existing evidence reference from wrong contract family",
+      "expected_failure": "mapped_evidence_contract_mismatch"
+    },
+    {
+      "defect": "existing source record fails question predicate",
+      "expected_failure": "question_predicate_not_satisfied"
+    },
+    {
+      "defect": "source and evidence records exist but do not join",
+      "expected_failure": "source_evidence_join_mismatch"
+    },
+    {
+      "defect": "same story different BPO supplier",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "same contract different invoice",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "same domain different item and facility",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "same contract different document reference",
+      "expected_failure": "planted_source_join_mismatch"
+    },
+    {
+      "defect": "correct span type with unrelated evidence subject",
+      "expected_failure": "mapped_evidence_subject_mismatch"
+    }
+  ]
+}

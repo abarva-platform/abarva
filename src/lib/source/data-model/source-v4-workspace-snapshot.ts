@@ -1,13 +1,22 @@
 import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
+import {
+  appClientKeyForTenant,
+  canonicalTenantKey,
+  tenantAliasesFor,
+} from "@/lib/tenant/aliases";
 import { numberFromDb } from "./vendor-contract-portfolio";
 import {
   SOURCE_V4_CUBE_AS_OF_DATE,
   SOURCE_V4_CUBE_DATASET_ID,
   type SourceV4UiLensId,
 } from "./source-v4-cube-ui-catalog";
+
+interface SourceV4DatasetMetadata {
+  readonly datasetId: string;
+  readonly datasetLabel: string;
+}
 
 type SnapshotState = "available" | "missing" | "error";
 
@@ -24,7 +33,7 @@ export interface SourceV4SliceAvailability {
 export interface SourceV4WorkspaceSnapshot {
   readonly datasetId: string;
   readonly datasetVersion: "v4";
-  readonly datasetLabel: "SkyHarbor Source v4";
+  readonly datasetLabel: string;
   readonly analyticsProvider: "CubeSourceProvider";
   readonly activeLoadRunId: string | null;
   readonly asOfDateIso: string;
@@ -125,11 +134,12 @@ const EMPTY_CONTEXT_COVERAGE: SourceV4WorkspaceSnapshot["contextCoverage"] = {
 
 export function createEmptySourceV4WorkspaceSnapshot(
   asOfDateIso = `${SOURCE_V4_CUBE_AS_OF_DATE}T00:00:00Z`,
+  metadata: SourceV4DatasetMetadata = datasetMetadataForTenant(null),
 ): SourceV4WorkspaceSnapshot {
   return {
-    datasetId: SOURCE_V4_CUBE_DATASET_ID,
+    datasetId: metadata.datasetId,
     datasetVersion: "v4",
-    datasetLabel: "SkyHarbor Source v4",
+    datasetLabel: metadata.datasetLabel,
     analyticsProvider: "CubeSourceProvider",
     activeLoadRunId: null,
     asOfDateIso,
@@ -209,8 +219,12 @@ export async function loadSourceV4WorkspaceSnapshot(
   tenantKey: string,
   asOfDateIso = `${SOURCE_V4_CUBE_AS_OF_DATE}T00:00:00Z`,
 ): Promise<SourceV4WorkspaceSnapshot> {
+  const datasetMetadata = datasetMetadataForTenant(tenantKey);
   if (!tenantKey.trim())
-    return createEmptySourceV4WorkspaceSnapshot(asOfDateIso);
+    return createEmptySourceV4WorkspaceSnapshot(asOfDateIso, datasetMetadata);
+  if (isMeridianTenantKey(tenantKey)) {
+    return loadMeridianCanarySourceV4WorkspaceSnapshot(tenantKey, asOfDateIso);
+  }
 
   const asOfDate = asOfDateIso.slice(0, 10);
   const [
@@ -387,9 +401,9 @@ export async function loadSourceV4WorkspaceSnapshot(
   const metadataRow = firstRow(metadata);
 
   return {
-    datasetId: SOURCE_V4_CUBE_DATASET_ID,
+    datasetId: datasetMetadata.datasetId,
     datasetVersion: "v4",
-    datasetLabel: "SkyHarbor Source v4",
+    datasetLabel: datasetMetadata.datasetLabel,
     analyticsProvider: "CubeSourceProvider",
     activeLoadRunId: nullableString(metadataRow?.active_load_run_id),
     asOfDateIso,
@@ -521,12 +535,323 @@ export async function loadSourceV4WorkspaceSnapshot(
   };
 }
 
+async function loadMeridianCanarySourceV4WorkspaceSnapshot(
+  tenantKey: string,
+  asOfDateIso: string,
+): Promise<SourceV4WorkspaceSnapshot> {
+  const datasetMetadata = datasetMetadataForTenant(tenantKey);
+  const [
+    context,
+    executive,
+    topVendors,
+    spend,
+    performance,
+    credits,
+    rateCards,
+    sourcingEvents,
+    scope,
+    automation,
+  ] = await Promise.all([
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          (SELECT COUNT(*) FROM foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1 WHERE tenant_key = ANY($1::text[])) AS vendors,
+          (SELECT COUNT(*) FROM foundation_v2_meridian_health_cube_canary.meridian_health_contract_family_v1 WHERE tenant_key = ANY($1::text[])) AS contracts,
+          (SELECT COALESCE(SUM(invoice_line_amount), 0) FROM foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1 WHERE tenant_key = ANY($1::text[])) AS annual_value,
+          (SELECT COUNT(*) FROM foundation_v2_meridian_health_cube_canary.meridian_health_contract_scope_v1 WHERE tenant_key = ANY($1::text[])) AS scope_rows,
+          (SELECT COALESCE(SUM(invoice_line_count), 0) FROM foundation_v2_meridian_health_cube_canary.meridian_health_spend_invoice_history_v1 WHERE tenant_key = ANY($1::text[])) AS invoice_lines,
+          0 AS saas_usage_rows,
+          0 AS cloud_rows,
+          (SELECT COUNT(*) FROM foundation_v2_meridian_health_cube_canary.meridian_health_sla_itsm_performance_v1 WHERE tenant_key = ANY($1::text[])) AS performance_rows`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS contract_count,
+          COALESCE(SUM(v.invoice_line_amount), 0) AS annual_value,
+          COALESCE(SUM(cf.synthetic_midpoint_total_contract_value), 0) AS total_committed_value,
+          0 AS auto_renew_count,
+          0 AS notice_90_day_count
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_contract_family_v1 cf
+         LEFT JOIN foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1 v
+           ON v.tenant_key = cf.tenant_key
+          AND v.vendor_id = cf.vendor_id
+        WHERE cf.tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          vendor_id,
+          legal_name,
+          supplier_category,
+          status AS strategic_status,
+          risk_tier,
+          invoice_line_amount AS annual_value,
+          contract_family_count AS contract_count
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1
+        WHERE tenant_key = ANY($1::text[])
+        ORDER BY invoice_line_amount DESC NULLS LAST
+        LIMIT 8`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(invoice_line_count), 0) AS invoice_lines,
+          COALESCE(SUM(line_amount), 0) AS actual_spend,
+          COALESCE(SUM(line_amount), 0) AS committed_amount,
+          0 AS off_contract_spend
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_spend_invoice_history_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(sla_breach_count), 0) AS breach_count,
+          COALESCE(SUM(service_credit_eligible_amount), 0) AS credit_calculated,
+          COALESCE(SUM(service_credit_claimed_amount), 0) AS credit_claimed,
+          0 AS credit_recovered,
+          COALESCE(SUM(COALESCE(service_credit_eligible_amount, 0) - COALESCE(service_credit_claimed_amount, 0)), 0) AS unclaimed_credit
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_sla_itsm_performance_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(eligible_amount), 0) AS credit_calculated,
+          COALESCE(SUM(claimed_amount), 0) AS credit_claimed
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_service_credit_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(workforce_month_count), 0) AS hours,
+          NULL::numeric AS average_bill_rate,
+          0 AS unapproved_variance_count
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_workforce_rate_card_economics_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(normalized_five_year_tco), 0) AS normalized_cost,
+          COALESCE(SUM(headline_price), 0) AS line_item_cost,
+          NULL::numeric AS average_weighted_score
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_normalized_tco_recommendation_input_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(CASE WHEN relationship_confidence >= 0.95 THEN 1 ELSE 0 END), 0) AS explicit_scope_count,
+          COALESCE(SUM(CASE WHEN relationship_confidence < 0.95 OR relationship_confidence IS NULL THEN 1 ELSE 0 END), 0) AS inferred_scope_count
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_contract_scope_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(current_manual_volume), 0) AS assigned_seats,
+          COALESCE(SUM(current_manual_volume * target_automation_percentage / 100.0), 0) AS active_users,
+          0 AS actual_cost,
+          COALESCE(SUM(CASE WHEN lower(coalesce(commitment_state, '')) LIKE '%contract%' THEN 1 ELSE 0 END), 0) AS claimable_rows
+         FROM foundation_v2_meridian_health_cube_canary.meridian_health_ai_automation_commitment_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+  ]);
+
+  const contextRow = firstRow(context);
+  const executiveRow = firstRow(executive);
+  const spendRow = firstRow(spend);
+  const performanceRow = firstRow(performance);
+  const creditRow = firstRow(credits);
+  const rateCardRow = firstRow(rateCards);
+  const sourcingEventRow = firstRow(sourcingEvents);
+  const scopeRow = firstRow(scope);
+  const automationRow = firstRow(automation);
+
+  const performanceCreditCalculated =
+    num(performanceRow, "credit_calculated") ||
+    num(creditRow, "credit_calculated");
+  const performanceCreditClaimed =
+    num(performanceRow, "credit_claimed") || num(creditRow, "credit_claimed");
+  const unclaimedCredit = Math.max(
+    0,
+    performanceCreditCalculated - performanceCreditClaimed,
+  );
+
+  return {
+    datasetId: datasetMetadata.datasetId,
+    datasetVersion: "v4",
+    datasetLabel: datasetMetadata.datasetLabel,
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: "meridian-health-layer5-cube-canary-v1",
+    asOfDateIso,
+    availability: [
+      availability(
+        "executive_portfolio",
+        stateFromAggregate(executive),
+        num(executiveRow, "contract_count"),
+      ),
+      availability(
+        "vendor_concentration",
+        stateFromRows(topVendors),
+        topVendors.rows.length,
+      ),
+      availability(
+        "renewal_exposure",
+        stateFromAggregate(executive),
+        num(executiveRow, "notice_90_day_count"),
+      ),
+      availability(
+        "scope_confidence",
+        stateFromAggregate(scope),
+        num(scopeRow, "row_count"),
+      ),
+      availability(
+        "spend_consumption",
+        stateFromAggregate(spend),
+        num(spendRow, "row_count"),
+      ),
+      availability(
+        "performance_credits",
+        stateFromAggregate(performance),
+        num(performanceRow, "row_count"),
+      ),
+      availability(
+        "ai_usage_value_proof",
+        stateFromAggregate(automation),
+        num(automationRow, "row_count"),
+      ),
+      availability("cloud_optimization", "missing", 0),
+      availability(
+        "workforce_rate_card",
+        stateFromAggregate(rateCards),
+        num(rateCardRow, "row_count"),
+      ),
+      availability(
+        "sourcing_event_bafo",
+        stateFromAggregate(sourcingEvents),
+        num(sourcingEventRow, "row_count"),
+      ),
+      availability(
+        "context_coverage",
+        stateFromAggregate(context),
+        num(contextRow, "contracts"),
+      ),
+    ],
+    contextCoverage: {
+      vendors: num(contextRow, "vendors"),
+      contracts: num(contextRow, "contracts"),
+      annualValue: num(contextRow, "annual_value"),
+      scopeRows: num(contextRow, "scope_rows"),
+      invoiceLines: num(contextRow, "invoice_lines"),
+      saasUsageRows: 0,
+      cloudRows: 0,
+      performanceRows: num(contextRow, "performance_rows"),
+    },
+    scopeConfidence: {
+      rowCount: num(scopeRow, "row_count"),
+      explicitScopeCount: num(scopeRow, "explicit_scope_count"),
+      inferredScopeCount: num(scopeRow, "inferred_scope_count"),
+    },
+    executivePortfolio: {
+      contractCount: num(executiveRow, "contract_count"),
+      annualValue: num(executiveRow, "annual_value"),
+      totalCommittedValue: num(executiveRow, "total_committed_value"),
+      autoRenewCount: 0,
+      notice90DayCount: 0,
+    },
+    spendConsumption: {
+      rowCount: num(spendRow, "row_count"),
+      invoiceLines: num(spendRow, "invoice_lines"),
+      actualSpend: num(spendRow, "actual_spend"),
+      committedAmount: num(spendRow, "committed_amount"),
+      offContractSpend: 0,
+    },
+    performanceCredits: {
+      rowCount: num(performanceRow, "row_count"),
+      breachCount: num(performanceRow, "breach_count"),
+      creditCalculated: performanceCreditCalculated,
+      creditClaimed: performanceCreditClaimed,
+      creditRecovered: 0,
+      unclaimedCredit,
+    },
+    aiUsageValueProof: {
+      rowCount: num(automationRow, "row_count"),
+      assignedSeats: num(automationRow, "assigned_seats"),
+      activeUsers: num(automationRow, "active_users"),
+      actualCost: 0,
+      claimableRows: num(automationRow, "claimable_rows"),
+      topProducts: [],
+    },
+    cloudOptimization: {
+      rowCount: 0,
+      actualCost: 0,
+      amortizedCost: 0,
+      overageAmount: 0,
+      topServices: [],
+    },
+    workforceRateCards: {
+      rowCount: num(rateCardRow, "row_count"),
+      hours: num(rateCardRow, "hours"),
+      averageBillRate: null,
+      unapprovedVarianceCount: 0,
+    },
+    sourcingEvents: {
+      rowCount: num(sourcingEventRow, "row_count"),
+      normalizedCost: num(sourcingEventRow, "normalized_cost"),
+      lineItemCost: num(sourcingEventRow, "line_item_cost"),
+      averageWeightedScore: null,
+    },
+    topVendors: topVendors.rows.map(vendorSnapshot),
+  };
+}
+
+function isMeridianTenantKey(tenantKey: string): boolean {
+  return (
+    appClientKeyForTenant(tenantKey) === "meridian" ||
+    tenantKey.trim().toLowerCase() === "meridian_health_global"
+  );
+}
+
 function tenantKeyAliases(tenantKey: string): string[] {
-  return tenantAliasesFor(tenantKey);
+  const aliases = tenantAliasesFor(tenantKey);
+  if (isMeridianTenantKey(tenantKey)) aliases.push("meridian_health_global");
+  return Array.from(new Set(aliases));
 }
 
 function tenantRlsKey(tenantKey: string): string {
+  if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
   return canonicalTenantKey(tenantKey);
+}
+
+function datasetMetadataForTenant(
+  tenantKey: string | null,
+): SourceV4DatasetMetadata {
+  if (tenantKey && isMeridianTenantKey(tenantKey)) {
+    return {
+      datasetId: "meridian-health-source-v1-202608",
+      datasetLabel: "Meridian Health Source v1",
+    };
+  }
+  if (appClientKeyForTenant(tenantKey) === "skyharbor") {
+    return {
+      datasetId: SOURCE_V4_CUBE_DATASET_ID,
+      datasetLabel: "SkyHarbor Source v4",
+    };
+  }
+  return {
+    datasetId: SOURCE_V4_CUBE_DATASET_ID,
+    datasetLabel: "Source v4",
+  };
 }
 
 async function queryForTenant<R>(

@@ -46,6 +46,7 @@ describe("canonical tenant aliases", () => {
     expect(canonicalTenantKey("northstar-clinical")).toBe("northstar-clinical");
     expect(canonicalTenantKey("apexretail")).toBe("apex-retail");
     expect(canonicalTenantKey("meridian")).toBe("meridian-health");
+    expect(appClientKeyForTenant("meridian_health_global")).toBe("meridian");
     expect(canonicalTenantKey("arcturus")).toBe("first-capital");
     expect(canonicalTenantKey("lakeshore")).toBe("lakeshore-holdings");
     expect(canonicalTenantKey("lakeshore-holdings")).toBe("lakeshore-holdings");
@@ -55,6 +56,9 @@ describe("canonical tenant aliases", () => {
     expect(brokerTenantKey("lakeshore")).toBe("lakeshore-holdings");
     expect(tenantAliasesFor("skyharbor")).toEqual(
       expect.arrayContaining(["skyharbor", "skyharbor-air"]),
+    );
+    expect(tenantAliasesFor("meridian")).toEqual(
+      expect.arrayContaining(["meridian", "meridian_health_global"]),
     );
     expect(tenantAliasesFor("lakeshore")).toEqual(
       expect.arrayContaining(["lakeshore", "lakeshore-holdings"]),
@@ -170,6 +174,32 @@ describe("resolveTenant", () => {
       appClientKey: "meridian",
       canonicalKey: "meridian-health",
       source: "body",
+    });
+  });
+
+  it("looks up Meridian private global tenant rows as aliases of the app client", async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: "client", clientId: "meridian" },
+      primaryEmailAddress: { emailAddress: "admin@abarva.ai" },
+      emailAddresses: [],
+    });
+    mockCookie(null);
+    azureReadMaybeSingleMock.mockImplementation(async (query) => {
+      if (query?.where?.tenant_key === "meridian_health_global") {
+        return {
+          id: "client-meridian-global",
+          name: "Meridian Health",
+          industry_code: "HEALTHCARE_IDN",
+        };
+      }
+      return null;
+    });
+
+    await expect(resolveTenant()).resolves.toMatchObject({
+      appClientKey: "meridian",
+      canonicalKey: "meridian-health",
+      clientId: "client-meridian-global",
+      source: "email",
     });
   });
 
