@@ -523,6 +523,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     noticePassed: contract?.noticePassed ?? false,
     role: c.renewal_owner_ref ?? 'Not assigned',
     evidence: c.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Not established',
+    scopedApplicationCount: c.scoped_application_count ?? null,
     scopeSummary: isReviewableContractScope(c.scope_summary) ? c.scope_summary : 'Contract scope has not been extracted yet. Load the executed agreement, SOW or order form scope schedule, and application/service ownership extract before treating scope coverage as known.',
   } : null;
   const termRows = c ? ([
