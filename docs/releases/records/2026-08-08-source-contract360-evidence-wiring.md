@@ -12,6 +12,8 @@
 
 Contract 360 now reads the loaded contract evidence detail package for selected contracts instead of relying only on the older portfolio rollup projections. The Scope tab can show the contract overview, business functions, systems/services, source file, scope rows, and commercial pricing line items. The Performance tab can show SLA credit history, invoice exceptions, rate-card variance, recoverable leakage, avoided cost, negotiated improvement, and finance-confirmed realized value when governed evidence rows exist.
 
+The Story tab now avoids rendering a false missing-evidence conclusion while the contract detail read is still loading. It shows an evidence-loading state until the governed detail API resolves.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Source product projection code and the shared Contract 360 tab rendering path for every tenant.
@@ -42,6 +44,7 @@ Contract 360 now reads the loaded contract evidence detail package for selected 
 - `npx jest src/lib/source/data-model/__tests__/read-adapter.test.ts --runInBand` passed.
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run lint -- <touched files>` passed.
+- Live browser check after the first deploy found that evidence-rich tabs populated correctly after detail load, but the Story tab could briefly render stale missing-evidence copy before the contract detail API resolved. This follow-up patch adds a loading/error guard for that state.
 - `npm run build` was attempted in the Codex worktree and failed before application compilation because Turbopack rejected the worktree `node_modules` symlink pointing outside the project root. GitHub/ACA build remains required.
 - Local CLI data-plane read could not be treated as proof because no `ABARVA_AZURE_DATABASE_URL` / `DATABASE_URL` was present in the shell; live signed-in browser validation remains required after deployment.
 
