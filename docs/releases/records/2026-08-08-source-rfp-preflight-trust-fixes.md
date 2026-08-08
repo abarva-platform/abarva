@@ -12,6 +12,8 @@
 
 This release fixes several Source new-event preflight issues where the product could overstate readiness. New competitive events now route to their event-specific approval page, template-bound uploads only mark evidence as parsed when typed facts are actually written, the checklist exposes the matching governed input template, and aVa withholds supplier finalist language until event-specific proposal evidence exists.
 
+Follow-up: parser-backed checklist tasks now show the governed input-template download even when the task also carries descriptive template metadata.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
