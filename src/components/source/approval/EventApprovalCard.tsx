@@ -336,7 +336,7 @@ export function EventApprovalCard({
               value={reason}
               disabled={!currentUserCanApprove || Boolean(busyAction)}
               onChange={(event) => setReason(event.target.value)}
-              rows={5}
+              rows={4}
               placeholder="Record what you reviewed and why this event should move."
               style={TEXTAREA_STYLE}
             />
@@ -646,7 +646,7 @@ function GovernanceHistory({
 const PAGE_STYLE: CSSProperties = {
   minHeight: "100%",
   background: SHELL.PAPER,
-  padding: "28px clamp(24px, 4vw, 56px) 48px",
+  padding: "22px clamp(24px, 4vw, 56px) 40px",
   overflow: "auto",
 };
 
@@ -657,8 +657,8 @@ const BANNER_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.PEACH_LINE}`,
   borderRadius: 8,
   background: SHELL.PEACH_BG,
-  padding: "11px 14px",
-  marginBottom: 24,
+  padding: "10px 14px",
+  marginBottom: 18,
 };
 
 const STATUS_CHIP_STYLE: CSSProperties = {
@@ -674,7 +674,7 @@ const STATUS_CHIP_STYLE: CSSProperties = {
 
 const BANNER_TEXT_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
-  fontSize: 13.5,
+  fontSize: 13,
   color: SHELL.INK,
 };
 
@@ -682,7 +682,7 @@ const HEADER_STYLE: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: 24,
-  marginBottom: 26,
+  marginBottom: 20,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -693,43 +693,44 @@ const EYEBROW_STYLE: CSSProperties = {
 };
 
 const H1_STYLE: CSSProperties = {
-  margin: "8px 0 0",
+  margin: "7px 0 0",
   fontFamily: SHELL.SERIF,
-  fontSize: "clamp(36px, 4vw, 54px)",
-  lineHeight: 1,
+  fontSize: "clamp(27px, 2.2vw, 34px)",
+  lineHeight: 1.08,
   fontWeight: 400,
   letterSpacing: 0,
   color: SHELL.INK,
+  maxWidth: 1180,
 };
 
 const LEDE_STYLE: CSSProperties = {
   maxWidth: 760,
-  margin: "12px 0 0",
+  margin: "8px 0 0",
   fontFamily: SHELL.SANS,
-  fontSize: 15,
-  lineHeight: 1.5,
+  fontSize: 13.5,
+  lineHeight: 1.45,
   color: SHELL.INK_SOFT,
 };
 
 const GRID_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0, 1.1fr) minmax(360px, 0.72fr)",
-  gap: 24,
+  gap: 18,
   alignItems: "start",
 };
 
 const LEFT_COL_STYLE: CSSProperties = {
   display: "grid",
-  gap: 16,
+  gap: 12,
 };
 
 const BRIEF_CARD_STYLE: CSSProperties = {
   display: "grid",
-  gap: 16,
+  gap: 14,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 18,
+  padding: 16,
   boxShadow: "0 12px 34px rgba(15,23,42,0.05)",
 };
 
@@ -741,11 +742,11 @@ const SECTION_HEADER_STYLE: CSSProperties = {
 };
 
 const SECTION_TITLE_STYLE: CSSProperties = {
-  margin: "6px 0 0",
+  margin: "5px 0 0",
   fontFamily: SHELL.SERIF,
-  fontSize: 28,
+  fontSize: 22,
   fontWeight: 400,
-  lineHeight: 1.05,
+  lineHeight: 1.12,
   letterSpacing: 0,
   color: SHELL.INK,
 };
@@ -773,7 +774,7 @@ const FACT_ROW_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(150px, 0.34fr) minmax(0, 1fr)",
   gap: 16,
-  padding: "13px 0",
+  padding: "10px 0",
   borderBottom: `1px solid ${SHELL.CARD_LINE}`,
 };
 
@@ -787,7 +788,7 @@ const FACT_LABEL_STYLE: CSSProperties = {
 const FACT_VALUE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SANS,
-  fontSize: 14,
+  fontSize: 13.5,
   fontWeight: 700,
   lineHeight: 1.35,
   color: SHELL.INK,
@@ -802,7 +803,7 @@ const BLOCKER_STRIP_STYLE: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PEACH_BG,
   color: SHELL.PEACH_TEXT,
-  padding: "11px 13px",
+  padding: "10px 12px",
   fontFamily: SHELL.SANS,
   fontSize: 13,
   lineHeight: 1.35,
@@ -819,11 +820,11 @@ const RIGHT_PANEL_STYLE: CSSProperties = {
   position: "sticky",
   top: 20,
   display: "grid",
-  gap: 16,
+  gap: 13,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 18,
+  padding: 16,
   boxShadow: "0 18px 50px rgba(15,23,42,0.08)",
 };
 
@@ -835,9 +836,9 @@ const ACTION_PANEL_HEADER_STYLE: CSSProperties = {
 const ACTION_TITLE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SERIF,
-  fontSize: 30,
+  fontSize: 22,
   fontWeight: 400,
-  lineHeight: 1.05,
+  lineHeight: 1.12,
   letterSpacing: 0,
   color: SHELL.INK,
 };
@@ -855,7 +856,7 @@ const SELF_NOTICE_STYLE: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PEACH_BG,
   color: SHELL.PEACH_TEXT,
-  padding: "10px 12px",
+  padding: "9px 11px",
   fontFamily: SHELL.SANS,
   fontSize: 13,
   lineHeight: 1.45,
@@ -878,9 +879,9 @@ const TEXTAREA_STYLE: CSSProperties = {
   resize: "vertical",
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
-  padding: 11,
+  padding: 10,
   fontFamily: SHELL.SANS,
-  fontSize: 14,
+  fontSize: 13.5,
   lineHeight: 1.45,
   color: SHELL.INK,
 };
@@ -896,7 +897,7 @@ const CHECKBOX_ROW_STYLE: CSSProperties = {
   alignItems: "flex-start",
   gap: 9,
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.4,
   color: SHELL.INK,
 };

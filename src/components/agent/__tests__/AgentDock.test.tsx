@@ -142,6 +142,26 @@ describe("AgentDock · default mode", () => {
     expect(screen.getByTestId("agent-dock-pin-bottom")).toBeInTheDocument();
   });
 
+  it("uses the light aVa wordmark on the dark collapsed launcher", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="collapsed"
+        disableStoredMode
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const collapsedChip = screen.getByTestId("agent-dock-collapsed-chip");
+    expect(collapsedChip).toBeInTheDocument();
+    expect(
+      within(collapsedChip).getByTestId("ava-ask-wordmark"),
+    ).toHaveAttribute("src", "/brand/ava/ava-wordmark-2tone-light.svg");
+  });
+
   it("softens stale gate wording on Moves surfaces", () => {
     render(
       <AgentDock

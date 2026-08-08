@@ -99,6 +99,26 @@ describe("EventApprovalCard", () => {
     expect(screen.getByText("Routing and audit details")).not.toBeNull();
   });
 
+  it("uses compact approval-screen typography instead of presentation-scale headers", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    expect(screen.getByRole("heading", { level: 1 }).getAttribute("style")).toContain(
+      "font-size: clamp(27px, 2.2vw, 34px)",
+    );
+    expect(screen.getByRole("heading", { level: 1 }).getAttribute("style")).toContain(
+      "line-height: 1.08",
+    );
+    expect(screen.getByText("What you are approving").getAttribute("style")).toContain(
+      "font-size: 22px",
+    );
+    expect(screen.getByText("Approve or send back").getAttribute("style")).toContain(
+      "font-size: 22px",
+    );
+    expect(screen.getByTestId("source-approval-rationale").getAttribute("rows")).toBe(
+      "4",
+    );
+  });
+
   it("shows real governance history when approvals and artifact acceptances are present", () => {
     render(
       <EventApprovalCard

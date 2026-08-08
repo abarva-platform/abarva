@@ -1468,7 +1468,7 @@ export function AgentDock(props: AgentDockProps) {
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
             <AvaAskMark
-              variant="wordmark-dark"
+              variant="wordmark-light"
               style={{ width: 42, minWidth: 42 }}
             />
           </span>
