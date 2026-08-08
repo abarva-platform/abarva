@@ -280,4 +280,61 @@ describe('TaskChecklist provide-task upload', () => {
       '/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-TICKET-HISTORY/template',
     );
   });
+
+  it('falls back to the canonical task id when live payload omits factTemplateCode', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          artifact: {
+            id: 'artifact-1',
+            originalName: 'volumetrics.csv',
+            sourceFormat: 'csv',
+            sizeBytes: 4096,
+            parseStatus: 'pending',
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          eventId: 'evt-1',
+          templateCode: 'VOLUMETRICS_V1',
+          factsWritten: 5,
+          unmappedColumns: [],
+          rejectedRows: [],
+        }),
+      });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const livePayloadTask: StageTaskView = {
+      ...PROVIDE_TASK,
+      id: 'scope.volumetrics',
+      template: {
+        format: 'XLSX',
+        name: 'Volumetrics workbook',
+        meta: 'Template metadata from the live payload',
+      },
+    };
+    render(
+      <TaskChecklist tasks={[livePayloadTask]} eventId="evt-1" stageKey="scope" />,
+    );
+
+    expect(screen.getByTestId('task-template-download')).toHaveAttribute(
+      'href',
+      '/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-TICKET-HISTORY/template',
+    );
+
+    selectFile(
+      new File([new Uint8Array(16)], 'volumetrics.csv', { type: 'text/csv' }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const ingestBody = fetchMock.mock.calls[1][1]?.body as FormData;
+    expect(ingestBody.get('templateCode')).toBe('VOLUMETRICS_V1');
+    expect(ingestBody.get('artifactId')).toBe('artifact-1');
+  });
 });

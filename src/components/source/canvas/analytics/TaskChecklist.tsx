@@ -41,6 +41,22 @@ const TYPE_LABEL: Record<TaskType, string> = {
   decide: 'Decide',
 };
 
+const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
+  'scope.volumetrics': 'VOLUMETRICS_V1',
+  'scope.app-inventory': 'APP_INVENTORY_V1',
+  'scope.vendor-commercials': 'CONTRACT_TERMS_V1',
+  'rfp.clause-coverage': 'RFP_CLAUSES_V1',
+  'responses.coverage': 'RESPONSE_COVERAGE_V1',
+  'evaluation.vendor-bids': 'VENDOR_BIDS_V1',
+  'selection.committed-value': 'COMMITTED_VALUE_V1',
+  'bafo.concession-actuals': 'BAFO_CONCESSIONS_V1',
+  'value.realized-actuals': 'VALUE_REALIZATION_V1',
+};
+
+function factTemplateCodeForTask(task: StageTaskView): string | undefined {
+  return task.factTemplateCode ?? FACT_TEMPLATE_BY_TASK_ID[task.id];
+}
+
 /**
  * Beat 2 — "Your inputs & feedback." The stage task checklist. Every task is
  * typed provide / confirm / decide, carries its "where this comes from:
@@ -144,6 +160,7 @@ function TaskRow({
   onComplete,
 }: TaskRowProps) {
   const effectiveState: TaskState = isDone ? 'done' : 'todo';
+  const factTemplateCode = factTemplateCodeForTask(task);
   const rowStyle: CSSProperties = {
     border: `1px solid ${isOpen ? ANALYTICS.LINE_STRONG : ANALYTICS.LINE}`,
     borderRadius: ANALYTICS.RADIUS,
@@ -216,10 +233,10 @@ function TaskRow({
           </p>
 
           {task.template ? <TemplateChip template={task.template} /> : null}
-          {task.factTemplateCode ? (
+          {factTemplateCode ? (
             <TemplateDownloadLink
               eventId={eventId}
-              factTemplateCode={task.factTemplateCode}
+              factTemplateCode={factTemplateCode}
             />
           ) : null}
           {task.rows ? <ReviewRows rows={task.rows} /> : null}
@@ -230,7 +247,7 @@ function TaskRow({
               signed={/letter|commit/i.test(task.title)}
               eventId={eventId}
               stageKey={stageKey}
-              factTemplateCode={task.factTemplateCode}
+              factTemplateCode={factTemplateCode}
               onUploaded={onComplete}
             />
           ) : null}
