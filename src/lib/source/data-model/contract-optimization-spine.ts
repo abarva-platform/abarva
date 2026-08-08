@@ -329,10 +329,10 @@ function scoreContract(input: {
 
 function actionFor(score: number, reasons: readonly ContractOptimizationFitReason[]): string {
   if (reasons.some((reason) => reason.kind === 'decision_timing' && reason.tone === 'warning')) {
-    return 'Stabilize decision rights, then run Door 1 with minimum evidence.';
+    return 'Stabilize decision rights, then run contract optimization with minimum evidence.';
   }
-  if (score >= 70) return 'Run Door 1 now: baseline, leakage diagnosis, levers, approval, value proof.';
-  if (score >= 45) return 'Open Door 1 after loading the missing evidence pack.';
+  if (score >= 70) return 'Start contract optimization now: baseline, leakage diagnosis, levers, approval, value proof.';
+  if (score >= 45) return 'Open contract optimization after loading the missing evidence pack.';
   if (score >= 25) return 'Keep on the sourcing agenda and enrich evidence before negotiation.';
   return 'Monitor; no current optimization case is established.';
 }
@@ -407,7 +407,7 @@ function askFor(
   if (line.kind === 'realized_value') {
     return 'Ask Finance/Tower for the approved claim record, baseline, actuals, cadence, owner role, and attestation state.';
   }
-  return `Ask for ${connections.map((connection) => connection.sourceSystem).join(' plus ')} extracts so Door 1 can classify this line before assigning value.`;
+  return `Ask for ${connections.map((connection) => connection.sourceSystem).join(' plus ')} extracts so contract optimization can classify this line before assigning value.`;
 }
 
 function weakSignalDetail(leverage: ContractLeverageEntry): string {

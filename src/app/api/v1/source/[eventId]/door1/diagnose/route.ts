@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/v1/source/[eventId]/door1/diagnose
 //
-// Door 1 — existing-contract Diagnose → Recover. Runs the deterministic four-step
+// Existing-contract Diagnose to Recover. Runs the deterministic four-step
 // flow over the event's persisted facts and returns the diagnosis + value bridge +
 // play (including the Door-2 rebid handoff descriptor when a rebid is warranted).
 //
 // Gated behind the `source_analytics` master switch (the whole value-analytics
 // layer ships dark) and `requireTenancy()` (auth + tenant scope). When the flag is
-// off the route 404s — nothing about Door 1 is observable for un-enrolled tenants.
+// off the route 404s, so the optimization path is not observable for un-enrolled tenants.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { NextRequest } from 'next/server';
@@ -34,7 +34,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     const ctx = await requireTenancy();
 
     // Master switch — the whole value-analytics layer ships dark. Off → 404 so
-    // Door 1 is not observable for un-enrolled tenants.
+    // The optimization path is not observable for un-enrolled tenants.
     if (
       !isFeatureEnabled(
         { clientKey: ctx.clientKey, clientId: ctx.clientId },
@@ -62,7 +62,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       return Response.json({ ok: false, error: 'not_found' }, { status: 404 });
     }
 
-    // Resolve the archetype (classifier category preferred). Door 1 reuses the
+    // Resolve the archetype (classifier category preferred). This path reuses the
     // archetype's value-lever rules; without a resolved archetype it refuses
     // rather than diagnose under the wrong DNA.
     const resolution = resolveArchetypeForEvent({
@@ -117,7 +117,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
           detail:
             error instanceof Error
               ? error.message
-              : 'Unknown Door 1 diagnose error',
+              : 'Unknown contract optimization diagnose error',
         },
         { status: 500 },
       );

@@ -259,7 +259,7 @@ export function buildContractOptimizationLedger(input: {
         (hasNegotiationEvidence
           ? `${weakLeverageCount} weak leverage signal(s) and commercial term fields are visible, but no signed concession exists yet.`
           : 'No benchmark, alternatives, renewal owner, or negotiation concession evidence is established.'),
-      nextAction: evidenceNextAction(negotiatedEvidence) ?? 'Run Door 1 to convert leverage signals into an evidence-backed negotiation plan and executive approval packet.',
+      nextAction: evidenceNextAction(negotiatedEvidence) ?? 'Start contract optimization to convert leverage signals into an evidence-backed negotiation plan and executive approval packet.',
       sourceRefs: evidenceRefs(negotiatedEvidence, ['source.contract_360.benchmarking_clause', 'source.contract_360.alternatives_available', 'computeContractLeverageSignals(source.contract_360)']),
       lineageFields: lineageFieldsFor(negotiatedEvidence, hasNegotiationEvidence ? DOCUMENT_LINEAGE_FIELDS : MISSING_LINEAGE_FIELDS),
     },
@@ -311,8 +311,8 @@ export function buildContractOptimizationLedger(input: {
     evidenceGapCount,
     headline:
       quantifiedLeakageUsd > 0
-        ? `${formatUsd(quantifiedLeakageUsd)} recoverable leakage is visible before Door 1 approval.`
-        : 'No recoverable leakage is quantified yet; Door 1 must collect the missing evidence before sizing value.',
+        ? `${formatUsd(quantifiedLeakageUsd)} recoverable leakage is visible before approval.`
+        : 'No recoverable leakage is quantified yet; contract optimization must collect the missing evidence before sizing value.',
     decisionRecord: buildDecisionRecord({
       c,
       lines,
@@ -461,7 +461,7 @@ function evidenceNextAction(item: ContractOptimizationEvidenceItem | null): stri
     return 'Move the approved position into agreement execution and measurement setup.';
   }
   if (item.decision_state === 'workflow_required') {
-    return 'Run Door 1 to convert the evidenced exposure into an approved negotiation or value action.';
+    return 'Start contract optimization to convert the evidenced exposure into an approved negotiation or value action.';
   }
   if (item.decision_state === 'candidate') {
     return 'Review the evidence with Procurement, Legal, Finance, and the service owner before external use.';
