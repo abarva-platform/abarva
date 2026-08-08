@@ -5,6 +5,7 @@ import { VISIBLE_ANSWER_CONTRACT_VERSION } from "@/lib/agent/visible-answer-cont
 import type {
   CioTowerAnswerResult,
   CioTowerVisibleAnswerContract,
+  CioTowerVisibleContextCriteria,
   CioTowerVisibleTable,
 } from "@/lib/cio-tower/answer";
 import { readTowerCommandCenter } from "@/lib/tower/readTowerCommandCenter";
@@ -15,6 +16,7 @@ export interface CurrentTowerAnswerArgs {
   tenantKey: string;
   tenantName: string;
   question: string;
+  visibleContextCriteria?: CioTowerVisibleContextCriteria;
 }
 
 type CurrentTowerIntent =
@@ -219,6 +221,7 @@ export async function answerCurrentTowerQuestion(
       question: args.question,
       intent,
       generatedFrom: view?.generatedFrom ?? "missing",
+      visibleContextCriteria: args.visibleContextCriteria ?? null,
     }),
   );
   const trace = traceKey("tower_current_trace", [

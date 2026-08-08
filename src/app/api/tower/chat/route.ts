@@ -1,5 +1,6 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import type { CioTowerVisibleContextCriteria } from "@/lib/cio-tower/answer";
 import { canonicalCioTowerTenantKey } from "@/lib/cio-tower/metric-packet";
 import { towerProgressEventsForQuestion } from "@/lib/cio-tower/visual-contract";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
@@ -8,6 +9,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type TowerChatResult = Awaited<ReturnType<typeof answerCurrentTowerQuestion>>;
+
+const TOWER_VISIBLE_CONTEXT_CRITERIA: CioTowerVisibleContextCriteria = {
+  renderingPolicy: [
+    "Use the supplied client context and Tower facts to produce a compelling executive value proposition.",
+    "Put structured comparison data in tables so the renderer can create high-quality charts instead of parsing prose.",
+    "Use board-readable labels and concise cells; do not rely on oversized headings to carry the story.",
+  ],
+  artifactCapabilities: [
+    "Recharts-first charts",
+    "SVG-compatible rendered visuals where applicable",
+    "board-grade tables",
+    "multi-pane insight tabs",
+  ],
+  exportTargets: ["PDF", "HTML"],
+  valueProposition:
+    "AbarVa combines client context, governed facts, and Claude judgment to show which AI outcomes are claimable, blocked, or ready for executive action.",
+};
 
 function buildTowerChatPayload(result: TowerChatResult) {
   return {
@@ -109,6 +127,7 @@ export async function POST(request: Request) {
             tenantKey,
             tenantName,
             question,
+            visibleContextCriteria: TOWER_VISIBLE_CONTEXT_CRITERIA,
           });
           emit("status", {
             phase: "validation",
@@ -144,6 +163,7 @@ export async function POST(request: Request) {
       tenantKey,
       tenantName,
       question,
+      visibleContextCriteria: TOWER_VISIBLE_CONTEXT_CRITERIA,
     });
     return Response.json(buildTowerChatPayload(result), {
       headers: {

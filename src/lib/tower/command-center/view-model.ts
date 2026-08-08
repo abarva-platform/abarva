@@ -1,6 +1,6 @@
-// Tower Command Center v2 — governed Tower read model → design shape.
+// Tower Command Center v2 — mart → design shape.
 //
-// Takes the governed `TowerMartCommandViewModel` compatibility shape and returns
+// Takes the governed `TowerMartCommandViewModel` (cio_tower.mart_*) and returns
 // exactly what the design's views need. Two rules bind this file:
 //
 //  1. Every string and number originates in the mart. Where the mart carries
@@ -35,13 +35,13 @@ import type {
   TowerCommandCenterView,
   TowerCommandSummary,
   TowerEvidenceFactView,
-  TowerEvidenceGapLedgerItem,
   TowerEvidenceGapView,
+  TowerEvidenceGapLedgerItem,
   TowerEvidenceIntervention,
   TowerEvidenceMaturityStage,
   TowerEvidenceMaturityView,
-  TowerInterventionLane,
   TowerFunnelStage,
+  TowerInterventionLane,
   TowerLaneKey,
   TowerProgramView,
   TowerSpendLensRow,
@@ -318,6 +318,9 @@ function toProgramView(
   index: number,
 ): TowerProgramView {
   const derived = deriveProgramValues(row);
+  const usageSupported = row.knownSupportedValue ?? derived.usageSupportedUsd;
+  const blocked = row.amountBlocked ?? derived.blockedUsd;
+  const maturity = row.proofMaturityScore ?? derived.evidenceMaturity;
   return {
     id: trimOrNull(row.programCode) ?? row.laneKey ?? `P${index + 1}`,
     name: row.programName,
@@ -330,10 +333,17 @@ function toProgramView(
 
     fundedUsd: num(row.approvedFundingUsd),
     promisedUsd: num(row.promisedValueUsd),
-    usageSupportedUsd: derived.usageSupportedUsd,
+    usageSupportedUsd: usageSupported,
     financeValidatedUsd: num(row.financeValidatedValueUsd),
     claimableUsd: derived.claimableUsd,
-    blockedUsd: derived.blockedUsd,
+    blockedUsd: blocked,
+    fundedAmountUsd: num(row.fundedAmount ?? row.approvedFundingUsd),
+    knownSupportedValueUsd: usageSupported,
+    proofMaturityScore: maturity,
+    riskPressureScore: row.riskPressureScore ?? 0,
+    usageStrengthScore: row.usageStrengthScore ?? 0,
+    lineageTrustState: trimOrNull(row.lineageTrustState),
+    decisionReasonCode: trimOrNull(row.decisionReasonCode),
 
     usageStatus: derived.usageStatus,
     financeStatus: derived.financeStatus,
@@ -341,14 +351,14 @@ function toProgramView(
     usageActual: row.usageActual,
     adoptionRatePct: row.adoptionRatePct,
 
-    evidenceMaturity: derived.evidenceMaturity,
+    evidenceMaturity: maturity,
     proofLevel: derived.proofLevel,
     proofSequenceStatus: derived.proofSequenceStatus,
     proofSequenceExplanation: derived.proofSequenceExplanation,
     semanticSource: "derived_compatibility",
-    valueAtStakeUsd: derived.valueAtStakeUsd,
+    valueAtStakeUsd: Math.max(derived.valueAtStakeUsd, blocked),
 
-    nextGate: nextGateFor(row),
+    nextGate: trimOrNull(row.nextGate) ?? nextGateFor(row),
     blocker: trimOrNull(row.decisionRationale),
     note: trimOrNull(row.caveat),
     sourceFile: trimOrNull(row.sourceFile),
@@ -465,9 +475,8 @@ function gapPriority(
 /**
  * A data-pipeline gap. NOT shown on the executive Evidence tab.
  *
- * The governed field-gap projection records "field X on read-model row Y is
- * unpopulated; fill the source template and rerun the projection", owned by the
- * Data Office.
+ * `mart_required_field_gaps` records "column X on mart table Y is unpopulated;
+ * fill the source template and rerun the projection", owned by the Data Office.
  * That is an ETL backlog item. Rendering it as a CXO evidence answer would
  * break the standing Tower rule that the surface reports business posture, not
  * pipeline state — and, because the table only fills when the pipeline is
@@ -519,11 +528,11 @@ function toPipelineGapView(
 /**
  * **Business evidence gaps — what proof is missing before value can be claimed.**
  *
- * Derived from the claim chain the read model already carries, one gap per
- * program per unmet step. No new projection is required, and nothing is
- * invented: every gap names a program the read model lists, a step of the
- * governed claim chain it has not cleared, the owner recorded for it, and the
- * promised value that cannot be booked until it closes.
+ * Derived from the claim chain the mart already carries, one gap per program per
+ * unmet step. No new mart table is required, and nothing is invented: every gap
+ * names a program the mart lists, a step of the governed claim chain it has not
+ * cleared, the owner the mart records for it, and the promised value that cannot
+ * be booked until it closes.
  *
  * The three steps, in order — a program only raises the FIRST one it fails,
  * because that is the one actually blocking it today:
@@ -536,8 +545,8 @@ function toPipelineGapView(
  * how the shipped Tower produces its "owner gaps / usage gaps / claim blockers"
  * counts. It replaces an earlier wiring that read the Evidence tab's "what is
  * missing / who owns it / what is blocked" questions off
- * the pipeline field-gap projection — a projection that is EMPTY when the data
- * is healthy, so good data produced an empty tab.
+ * `mart_required_field_gaps` — a table that is EMPTY when the data is healthy,
+ * so good data produced an empty tab.
  */
 export function deriveBusinessEvidenceGaps(
   programs: readonly TowerProgramView[],
@@ -554,8 +563,7 @@ export function deriveBusinessEvidenceGaps(
         area: "Value evidence",
         linkedProgram: p.name,
         missing: `Governed financial amount and baseline/target/actual proof for ${p.name}`,
-        why:
-          "Tower has a claim-state row, but no governed dollar amount. Unknown value is withheld from executive totals until the measurement, value amount, provenance and attestations are loaded.",
+        why: "Tower has a claim-state row, but no governed dollar amount. Unknown value is withheld from executive totals until the measurement, value amount, provenance and attestations are loaded.",
         blockedDecision: `${LANE_DECISION_VERB[p.lane]} ${p.name}`,
         owner: p.financeOwnerRole ?? p.ownerRole,
         priority: "high",
@@ -571,6 +579,9 @@ export function deriveBusinessEvidenceGaps(
       });
       continue;
     }
+
+    // A program promising nothing has no value claim to block.
+    if (p.promisedUsd <= 0) continue;
 
     const laneDecision = `${LANE_DECISION_VERB[p.lane]} ${p.name}`;
     const promisedValueExposedUsd = Math.max(0, p.promisedUsd - p.claimableUsd);
@@ -719,6 +730,9 @@ function toEvidenceFactView(
     tag: hasCaveat ? "Traced · caveated" : "Traced",
     sourceFile: trimOrNull(row.sourceFile),
     sourceRow: trimOrNull(row.sourceRow),
+    lineageState: trimOrNull(row.lineageState),
+    sourceCount: row.sourceCount ?? 0,
+    resolutionState: trimOrNull(row.resolutionState),
   };
 }
 
@@ -862,7 +876,11 @@ function buildEvidenceMaturityView(
       "realized",
       "Realized",
       summary.claimableUsd > 0 ? summary.claimableClaimCount : 0,
-      Math.max(0, claims - (summary.claimableUsd > 0 ? summary.claimableClaimCount : 0)),
+      Math.max(
+        0,
+        claims -
+          (summary.claimableUsd > 0 ? summary.claimableClaimCount : 0),
+      ),
       "Realized value evidence",
       "Executive sponsor",
       "Book realized value only after claimable value exists.",
@@ -1041,42 +1059,48 @@ function buildEvidenceMaturityView(
       title: "Establish comparable developer-AI baseline cohorts",
       ownerRole: "CIO / engineering productivity owner",
       why: "Developer AI investment is visible, but baseline and target movement are not governed.",
-      nextAction: "Load baseline, target, actual, and cohort provenance for the developer productivity claims.",
+      nextAction:
+        "Load baseline, target, actual, and cohort provenance for the developer productivity claims.",
     },
     {
       id: "servicenow-outcomes",
       title: "Instrument ServiceNow workflow outcomes",
       ownerRole: "Service management owner",
       why: "Activity can be counted before business outcome movement is proven.",
-      nextAction: "Capture before-and-after cycle time, accepted resolution, quality, and attribution evidence.",
+      nextAction:
+        "Capture before-and-after cycle time, accepted resolution, quality, and attribution evidence.",
     },
     {
       id: "workday-process-measures",
       title: "Capture Workday before-and-after process measures",
       ownerRole: "HR operations owner",
       why: "Agent usage does not become value until the process outcome moves.",
-      nextAction: "Load baseline and actual process measures with business-owner sign-off.",
+      nextAction:
+        "Load baseline and actual process measures with business-owner sign-off.",
     },
     {
       id: "outcome-ownership",
       title: "Define outcome ownership by business role",
       ownerRole: "Portfolio governance",
       why: "Every missing proof item needs one named accountable owner.",
-      nextAction: "Assign owner roles for metric, attribution, Finance, and business attestation gates.",
+      nextAction:
+        "Assign owner roles for metric, attribution, Finance, and business attestation gates.",
     },
     {
       id: "attestation-gates",
       title: "Complete Finance and business attestation",
       ownerRole: "Finance / business owners",
       why: "A claim is not claimable until method, amount, and business usability are attested.",
-      nextAction: "Collect sign-offs after baseline, actuals, and attribution are present.",
+      nextAction:
+        "Collect sign-offs after baseline, actuals, and attribution are present.",
     },
     {
       id: "pause-scaling",
       title: "Pause scaling where measurement and workflow redesign are absent",
       ownerRole: "Executive sponsor",
       why: "Scaling usage without measurement can amplify activity without proving business value.",
-      nextAction: "Hold scale decisions until the relevant evidence lane clears.",
+      nextAction:
+        "Hold scale decisions until the relevant evidence lane clears.",
     },
   ];
 
@@ -1123,10 +1147,19 @@ function toActionView(
     evidence: trimOrNull(action.moduleHandoff)
       ? `Routes to ${action.moduleHandoff}.`
       : "No evidence package is recorded for this action in the mart.",
-    due: null,
-    linkedProgram: null,
+    due: trimOrNull(action.dueWindow) ?? trimOrNull(action.dueDate),
+    amountExposedUsd: action.amountExposed ?? 0,
+    evidenceRequirement: trimOrNull(action.evidenceRequirement),
+    expectedSourceSystem: trimOrNull(action.expectedSourceSystem),
+    evidencePackageId: trimOrNull(action.evidencePackageId),
+    proofStage: trimOrNull(action.proofStage),
+    handoffReadiness: trimOrNull(action.handoffReadiness),
+    actionState: trimOrNull(action.actionState),
+    priority: trimOrNull(action.priority),
+    linkedProgram: trimOrNull(action.programId),
     moveTitle: action.title,
-    moduleHandoff: trimOrNull(action.moduleHandoff),
+    moduleHandoff:
+      trimOrNull(action.handoffModule) ?? trimOrNull(action.moduleHandoff),
   };
 }
 
@@ -1193,7 +1226,7 @@ export function buildTowerCommandCenterView(
   const concentration = vendorConcentrationPct(mart.aiPortfolio);
   if (concentration === null) unknownSlots.push("Top-3 vendor concentration");
 
-  // The command centre reports an AI-tagged total, but the AI portfolio projection may
+  // The command centre reports an AI-tagged total, but `mart_ai_portfolio` may
   // carry no per-item spend at all — verified on the Healthcare Composite Demo
   // tenant 2026-07-23, where every one of the 250 portfolio rows has
   // ai_tagged_spend_usd = 0 while the command centre reports $53.7M. When that
@@ -1210,7 +1243,7 @@ export function buildTowerCommandCenterView(
   const aiSpendUnattributed = portfolioSpendUsd <= 0 && totalAiTaggedUsd > 0;
   if (aiSpendUnattributed) {
     unknownSlots.push(
-      "AI spend attribution (portfolio total exists, but the AI portfolio projection carries no per-item spend)",
+      "AI spend attribution (portfolio total exists, but mart_ai_portfolio carries no per-item spend)",
     );
   }
 
@@ -1254,11 +1287,19 @@ export function buildTowerCommandCenterView(
     promisedUsd: promised,
     usageSupportedUsd: usageSupportedTotal,
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
-    claimableUsd: claimable,
-    blockedUsd: Math.max(0, promised - claimable),
+    claimableUsd: command.claimableValue ?? claimable,
+    blockedUsd: Math.max(
+      0,
+      (command.promisedValueExposure ?? promised) -
+        (command.claimableValue ?? claimable),
+    ),
     valueClaimCount: num(command.valueClaimCount),
     knownValueClaimCount: num(command.knownValueClaimCount),
-    unknownValueClaimCount: num(command.unknownValueClaimCount),
+    financeValidatedBlockedUsd:
+      command.financeValidatedBlockedValue ??
+      Math.max(0, num(command.partialFinanceValidatedValueYtd) - claimable),
+    promisedValueExposureUsd: command.promisedValueExposure ?? promised,
+    unknownValueClaimCount: command.unknownValueClaimCount ?? 0,
     knownZeroValueClaimCount: num(command.knownZeroValueClaimCount),
     knownValueAmountUsd: num(command.knownValueAmountUsd),
     financeAttestedClaimCount: num(command.financeAttestedClaimCount),
@@ -1272,6 +1313,10 @@ export function buildTowerCommandCenterView(
     targetLinkedClaimCount: num(command.targetLinkedClaimCount),
     actualLinkedClaimCount: num(command.actualLinkedClaimCount),
     outcomeMeasuredClaimCount: num(command.outcomeMeasuredClaimCount),
+    claimableProgramCount: command.claimableProgramCount ?? 0,
+    blockedProgramCount: command.blockedProgramCount ?? 0,
+    conflictedProgramCount: command.conflictedProgramCount ?? 0,
+    unmeasuredProgramCount: command.unmeasuredProgramCount ?? 0,
 
     programCount: programs.length,
     aiInitiativeCount: ai.length,
@@ -1303,6 +1348,14 @@ export function buildTowerCommandCenterView(
       claimStatus: stage.claimStatus,
       caveat: stage.caveat,
       sourceFile: trimOrNull(stage.sourceFile),
+      claimCount: stage.claimCount ?? 0,
+      knownValueClaimCount: stage.knownValueClaimCount ?? 0,
+      unknownValueClaimCount: stage.unknownValueClaimCount ?? 0,
+      knownValueAmount: stage.knownValueAmount ?? num(stage.valueNumeric),
+      blockedClaimCount: stage.blockedClaimCount ?? 0,
+      blockedKnownValueAmount: stage.blockedKnownValueAmount ?? 0,
+      primaryBlocker: trimOrNull(stage.primaryBlocker),
+      primaryOwnerRole: trimOrNull(stage.primaryOwnerRole),
     }));
 
   const pipelineGaps = mart.requiredFieldGaps.map((gap) =>
@@ -1318,7 +1371,7 @@ export function buildTowerCommandCenterView(
 
   if (actions.every((a) => a.due === null)) {
     unknownSlots.push(
-      "Action due windows (the action projection carries no due date)",
+      "Action due windows (mart_cxo_actions carries no due date)",
     );
   }
   if (evidenceFacts.length === 0) unknownSlots.push("Evidence lineage rows");

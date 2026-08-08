@@ -21,13 +21,14 @@
 // (mode + side-rail split width) and acts as the telemetry key for upload
 // rows in `agent_attachment`.
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import {
   AgentDock,
   type AgentProfile,
   type AttachmentRef,
   type ChatMessage,
   type DockMode,
+  type RestorableDockMode,
 } from "@/components/agent/AgentDock";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
@@ -90,6 +91,22 @@ export interface AtlasChatPanelProps {
   minLeftPx?: number;
   /** Default mode for first-time visitors (default "side-rail"). */
   defaultMode?: DockMode;
+  /** When false, the surface opens with defaultMode even if localStorage has an older dock mode. */
+  respectStoredMode?: boolean;
+  /** Current AgentDock API: when true, starts from defaultMode instead of localStorage. */
+  disableStoredMode?: boolean;
+  /** Mode restored from the collapsed aVa chip. */
+  collapsedRestoreMode?: RestorableDockMode;
+  /** Expanded overlay sizing for artifact-heavy answer sessions. */
+  expandedWidth?: CSSProperties["width"];
+  expandedMaxWidth?: CSSProperties["maxWidth"];
+  /** Collapsed chip copy. */
+  collapsedSummary?: {
+    label: string;
+    detail?: string;
+  };
+  /** Composer placeholder override. */
+  placeholder?: string;
   /** Preserve already-governed real tenant labels instead of applying demo-safe aliases. */
   preserveVisibleText?: boolean;
   /** Keep suggested questions visible when the surface has an opening advisor turn. */
@@ -118,6 +135,13 @@ export function AtlasChatPanel({
   defaultLeftPercent = 35,
   minLeftPx = 320,
   defaultMode = "side-rail",
+  respectStoredMode = true,
+  disableStoredMode,
+  collapsedRestoreMode,
+  expandedWidth,
+  expandedMaxWidth,
+  collapsedSummary,
+  placeholder,
   preserveVisibleText = false,
   keepSuggestedActionsVisible = false,
 }: AtlasChatPanelProps) {
@@ -161,12 +185,18 @@ export function AtlasChatPanel({
       agent={agent}
       surface={surface}
       defaultMode={defaultMode}
+      disableStoredMode={disableStoredMode ?? !respectStoredMode}
+      collapsedRestoreMode={collapsedRestoreMode}
       defaultLeftPercent={defaultLeftPercent}
       minLeftPx={minLeftPx}
+      expandedWidth={expandedWidth}
+      expandedMaxWidth={expandedMaxWidth}
       surfaceContext={surfaceContext}
       variant={variant}
       initialQuote={initialQuote}
+      placeholder={placeholder}
       preserveVisibleText={preserveVisibleText}
+      collapsedSummary={collapsedSummary}
       thread={thread}
       suggestedActions={suggestedActions}
       keepSuggestedActionsVisible={keepSuggestedActionsVisible}

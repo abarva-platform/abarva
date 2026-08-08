@@ -5,7 +5,7 @@
 // It deliberately mirrors that file's `data()` shape (CC / PROG / AI / CAND /
 // LENS / GAPS / ACT) so the views can be transcribed from the design without
 // reinterpreting them — but every field is populated from the governed
-// governed Tower read model, never from the design file's mock content.
+// `cio_tower.mart_*` read models, never from the design file's mock content.
 //
 // Money is carried in **whole USD**, exactly as the mart stores it. The
 // design's `$M` rendering is a formatting concern and lives in `format.ts`;
@@ -87,6 +87,8 @@ export interface TowerCommandSummary {
   blockedUsd: number;
   valueClaimCount: number;
   knownValueClaimCount: number;
+  financeValidatedBlockedUsd: number;
+  promisedValueExposureUsd: number;
   unknownValueClaimCount: number;
   knownZeroValueClaimCount: number;
   knownValueAmountUsd: number;
@@ -101,6 +103,10 @@ export interface TowerCommandSummary {
   targetLinkedClaimCount: number;
   actualLinkedClaimCount: number;
   outcomeMeasuredClaimCount: number;
+  claimableProgramCount: number;
+  blockedProgramCount: number;
+  conflictedProgramCount: number;
+  unmeasuredProgramCount: number;
 
   programCount: number;
   aiInitiativeCount: number;
@@ -136,7 +142,7 @@ export interface TowerCommandSummary {
   aiSpendUnattributed: boolean;
 }
 
-/** One row of the governed value waterfall projection. */
+/** One row of the value waterfall, straight from `mart_value_funnel`. */
 export interface TowerFunnelStage {
   key: string;
   label: string;
@@ -145,6 +151,14 @@ export interface TowerFunnelStage {
   claimStatus: string;
   caveat: string;
   sourceFile: string | null;
+  claimCount: number;
+  knownValueClaimCount: number;
+  unknownValueClaimCount: number;
+  knownValueAmount: number;
+  blockedClaimCount: number;
+  blockedKnownValueAmount: number;
+  primaryBlocker: string | null;
+  primaryOwnerRole: string | null;
 }
 
 /** One program — the Decision Lanes table, Kanban card and heatmap point. */
@@ -163,6 +177,13 @@ export interface TowerProgramView {
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
+  fundedAmountUsd: number;
+  knownSupportedValueUsd: number;
+  proofMaturityScore: number;
+  riskPressureScore: number;
+  usageStrengthScore: number;
+  lineageTrustState: string | null;
+  decisionReasonCode: string | null;
 
   usageStatus: TowerUsageStatus;
   financeStatus: TowerFinanceStatus;
@@ -258,9 +279,9 @@ export interface TowerSpendLensRow {
  *
  * `usage` / `finance` / `claim_gate` are **business evidence gaps** — proof a
  * CXO needs before value can be claimed. `pipeline` is a data-quality gap from
- * the governed field-gap projection ("this read-model field is unpopulated;
- * rerun the projection"), which is an ops backlog item owned by the data team
- * and is NOT shown on the executive Evidence tab.
+ * `mart_required_field_gaps` ("this mart column is unpopulated; rerun the
+ * projection"), which is an ops backlog item owned by the data team and is NOT
+ * shown on the executive Evidence tab.
  */
 export type TowerEvidenceGapKind =
   | "usage"
@@ -306,6 +327,9 @@ export interface TowerEvidenceFactView {
   tag: string;
   sourceFile: string | null;
   sourceRow: string | null;
+  lineageState: string | null;
+  sourceCount: number;
+  resolutionState: string | null;
 }
 
 export type TowerEvidenceMaturityStageKey =
@@ -317,11 +341,7 @@ export type TowerEvidenceMaturityStageKey =
   | "claimable"
   | "realized";
 
-export type TowerEvidenceMaturityTone =
-  | "teal"
-  | "amber"
-  | "red"
-  | "gray";
+export type TowerEvidenceMaturityTone = "teal" | "amber" | "red" | "gray";
 
 export interface TowerEvidenceMaturityStage {
   key: TowerEvidenceMaturityStageKey;
@@ -402,16 +422,24 @@ export interface TowerActionView {
   why: string;
   evidence: string;
   due: string | null;
+  amountExposedUsd: number;
+  evidenceRequirement: string | null;
+  expectedSourceSystem: string | null;
+  evidencePackageId: string | null;
+  proofStage: string | null;
+  handoffReadiness: string | null;
+  actionState: string | null;
+  priority: string | null;
   linkedProgram: string | null;
   /** The Move that approving this action would create. */
   moveTitle: string;
-  /** Governed handoff target, or null when none is governed. */
+  /** Mart `module_handoff` — the routing target, or null when none is governed. */
   moduleHandoff: string | null;
 }
 
 /**
  * Everything the Command Center page renders. Assembled by
- * `buildTowerCommandCenterView()` from the Tower read-model compatibility shape.
+ * `buildTowerCommandCenterView()` from `TowerMartCommandViewModel`.
  */
 export interface TowerCommandCenterView {
   summary: TowerCommandSummary;
@@ -420,13 +448,13 @@ export interface TowerCommandCenterView {
   ai: readonly TowerAiView[];
   candidates: readonly TowerCandidateView[];
   /**
-   * Every AI portfolio row the read model carries — funded, embedded, governance,
+   * Every AI portfolio row the mart carries — funded, embedded, governance,
    * platform AND candidates — uncapped and unsorted by policy.
    *
    * `ai` and `candidates` are the *executive defaults*: the matrix plots the
    * top 10 and the candidate pipeline lists the top 10, so a 232-row portfolio
    * stays readable. Without this collection those caps would make rows 11+
-   * unreachable in the UI even though the read model holds them. Table mode reads
+   * unreachable in the UI even though the mart holds them. Table mode reads
    * this so the full portfolio is always available behind search and filters.
    */
   allInitiatives: readonly TowerAiView[];
@@ -437,7 +465,7 @@ export interface TowerCommandCenterView {
   /** Executive maturity diagnosis for sparse evidence states and reload work. */
   evidenceMaturity: TowerEvidenceMaturityView;
   /**
-   * Data-pipeline gaps from the governed field-gap projection. Kept separate and off
+   * Data-pipeline gaps from `mart_required_field_gaps`. Kept separate and off
    * the executive Evidence tab: "populate this column and rerun the projection"
    * is an ops backlog item, not a CXO evidence answer.
    */

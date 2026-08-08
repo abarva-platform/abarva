@@ -21,6 +21,9 @@ export interface TowerMartCommandCenter {
   realizedValueYtdAllowed: number;
   valueClaimCount?: number;
   knownValueClaimCount?: number;
+  claimableValue?: number;
+  financeValidatedBlockedValue?: number;
+  promisedValueExposure?: number;
   unknownValueClaimCount?: number;
   knownZeroValueClaimCount?: number;
   knownValueAmountUsd?: number;
@@ -35,6 +38,10 @@ export interface TowerMartCommandCenter {
   targetLinkedClaimCount?: number;
   actualLinkedClaimCount?: number;
   outcomeMeasuredClaimCount?: number;
+  claimableProgramCount?: number;
+  blockedProgramCount?: number;
+  conflictedProgramCount?: number;
+  unmeasuredProgramCount?: number;
   candidateAiOpportunities: number;
   watchPressureSignals: number;
   runRatio: number | null;
@@ -51,6 +58,14 @@ export interface TowerMartValueFunnelStage {
   stageKey: string;
   stageLabel: string;
   valueNumeric: number;
+  claimCount?: number;
+  knownValueClaimCount?: number;
+  unknownValueClaimCount?: number;
+  knownValueAmount?: number;
+  blockedClaimCount?: number;
+  blockedKnownValueAmount?: number;
+  primaryBlocker?: string | null;
+  primaryOwnerRole?: string | null;
   denominatorStageKey: string | null;
   conversionRatio: number | null;
   claimStatus: string;
@@ -68,9 +83,18 @@ export interface TowerMartProgramLane {
   decisionLane: "fund" | "fix" | "freeze" | "stop";
   decisionRationale: string;
   approvedFundingUsd: number;
+  fundedAmount?: number;
   aiTaggedSpendUsd: number;
   promisedValueUsd: number;
   financeValidatedValueUsd: number;
+  knownSupportedValue?: number | null;
+  proofMaturityScore?: number | null;
+  riskPressureScore?: number | null;
+  usageStrengthScore?: number | null;
+  lineageTrustState?: string | null;
+  decisionReasonCode?: string | null;
+  amountBlocked?: number | null;
+  nextGate?: string | null;
   usageMetric: string | null;
   usageActual: number | null;
   adoptionRatePct: number | null;
@@ -118,6 +142,23 @@ export interface TowerMartCxoAction {
   actionBody: string;
   ownerHint: string | null;
   moduleHandoff: string | null;
+  programId?: string | null;
+  claimId?: string | null;
+  proofStage?: string | null;
+  blockedDecision?: string | null;
+  amountExposed?: number;
+  evidenceRequirement?: string | null;
+  expectedSourceSystem?: string | null;
+  evidencePackageId?: string | null;
+  ownerRole?: string | null;
+  secondaryOwnerRole?: string | null;
+  dueWindow?: string | null;
+  dueDate?: string | null;
+  handoffModule?: string | null;
+  handoffEntityId?: string | null;
+  handoffReadiness?: string;
+  actionState?: string;
+  priority?: string;
 }
 
 export interface TowerMartEvidenceLineage {
@@ -126,6 +167,15 @@ export interface TowerMartEvidenceLineage {
   displayedFact: string;
   displayedValueText: string | null;
   displayedValueNumeric: number | null;
+  metricOrFactKey?: string | null;
+  boardVisibleLabel?: string | null;
+  lineageState?: string | null;
+  sourceCount?: number;
+  sourceRefs?: Array<Record<string, unknown>>;
+  conflictingValues?: Array<Record<string, unknown>>;
+  authoritativeValue?: string | null;
+  resolutionOwnerRole?: string | null;
+  resolutionState?: string | null;
   sourceFile: string | null;
   sourceRow: string | null;
   sourceSystem: string | null;
@@ -182,6 +232,29 @@ interface CommandRow {
   promised_value_fy26: string | number;
   partial_finance_validated_value_ytd: string | number;
   realized_value_ytd_allowed: string | number;
+  claimable_value?: string | number | null;
+  finance_validated_blocked_value?: string | number | null;
+  promised_value_exposure?: string | number | null;
+  value_claim_count?: number | null;
+  known_value_claim_count?: number | null;
+  unknown_value_claim_count?: number | null;
+  known_zero_value_claim_count?: number | null;
+  known_value_amount_usd?: string | number | null;
+  finance_attested_claim_count?: number | null;
+  business_attested_claim_count?: number | null;
+  claimable_claim_count?: number | null;
+  usage_supported_claim_count?: number | null;
+  funded_no_baseline_claim_count?: number | null;
+  stale_claim_count?: number | null;
+  disputed_claim_count?: number | null;
+  baseline_linked_claim_count?: number | null;
+  target_linked_claim_count?: number | null;
+  actual_linked_claim_count?: number | null;
+  outcome_measured_claim_count?: number | null;
+  claimable_program_count?: number | null;
+  blocked_program_count?: number | null;
+  conflicted_program_count?: number | null;
+  unmeasured_program_count?: number | null;
   candidate_ai_opportunities: number;
   watch_pressure_signals: number;
   run_ratio: string | number | null;
@@ -217,9 +290,6 @@ export function towerMartMoney(value: number): string {
 export async function loadTowerMartCommandView(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
 }): Promise<TowerMartCommandViewModel | null> {
-  void args;
-  return null;
-/*
   const tenantKeys = Array.from(
     new Set(
       args.tenantKeyCandidates
@@ -330,6 +400,51 @@ export async function loadTowerMartCommandView(args: {
         command.partial_finance_validated_value_ytd,
       ),
       realizedValueYtdAllowed: num(command.realized_value_ytd_allowed),
+      claimableValue: num(
+        command.claimable_value ?? command.realized_value_ytd_allowed,
+      ),
+      financeValidatedBlockedValue: num(
+        command.finance_validated_blocked_value,
+      ),
+      promisedValueExposure: num(
+        command.promised_value_exposure ?? command.promised_value_fy26,
+      ),
+      valueClaimCount: Number(command.value_claim_count ?? 0),
+      knownValueClaimCount: Number(command.known_value_claim_count ?? 0),
+      unknownValueClaimCount: Number(command.unknown_value_claim_count ?? 0),
+      knownZeroValueClaimCount: Number(
+        command.known_zero_value_claim_count ?? 0,
+      ),
+      knownValueAmountUsd: num(
+        command.known_value_amount_usd as string | number | null,
+      ),
+      financeAttestedClaimCount: Number(
+        command.finance_attested_claim_count ?? 0,
+      ),
+      businessAttestedClaimCount: Number(
+        command.business_attested_claim_count ?? 0,
+      ),
+      claimableClaimCount: Number(command.claimable_claim_count ?? 0),
+      usageSupportedClaimCount: Number(
+        command.usage_supported_claim_count ?? 0,
+      ),
+      fundedNoBaselineClaimCount: Number(
+        command.funded_no_baseline_claim_count ?? 0,
+      ),
+      staleClaimCount: Number(command.stale_claim_count ?? 0),
+      disputedClaimCount: Number(command.disputed_claim_count ?? 0),
+      baselineLinkedClaimCount: Number(
+        command.baseline_linked_claim_count ?? 0,
+      ),
+      targetLinkedClaimCount: Number(command.target_linked_claim_count ?? 0),
+      actualLinkedClaimCount: Number(command.actual_linked_claim_count ?? 0),
+      outcomeMeasuredClaimCount: Number(
+        command.outcome_measured_claim_count ?? 0,
+      ),
+      claimableProgramCount: Number(command.claimable_program_count ?? 0),
+      blockedProgramCount: Number(command.blocked_program_count ?? 0),
+      conflictedProgramCount: Number(command.conflicted_program_count ?? 0),
+      unmeasuredProgramCount: Number(command.unmeasured_program_count ?? 0),
       candidateAiOpportunities: Number(command.candidate_ai_opportunities ?? 0),
       watchPressureSignals: Number(command.watch_pressure_signals ?? 0),
       runRatio: nullableNum(command.run_ratio),
@@ -366,6 +481,20 @@ export async function loadTowerMartCommandView(args: {
           row.stage_label ? String(row.stage_label) : null,
         ),
         valueNumeric: num(row.value_numeric as string | number | null),
+        claimCount: Number(row.claim_count ?? 0),
+        knownValueClaimCount: Number(row.known_value_claim_count ?? 0),
+        unknownValueClaimCount: Number(row.unknown_value_claim_count ?? 0),
+        knownValueAmount: num(row.known_value_amount as string | number | null),
+        blockedClaimCount: Number(row.blocked_claim_count ?? 0),
+        blockedKnownValueAmount: num(
+          row.blocked_known_value_amount as string | number | null,
+        ),
+        primaryBlocker: row.primary_blocker
+          ? String(row.primary_blocker)
+          : null,
+        primaryOwnerRole: row.primary_owner_role
+          ? String(row.primary_owner_role)
+          : null,
         denominatorStageKey: row.denominator_stage_key
           ? String(row.denominator_stage_key)
           : null,
@@ -392,6 +521,7 @@ export async function loadTowerMartCommandView(args: {
         approvedFundingUsd: num(
           row.approved_funding_usd as string | number | null,
         ),
+        fundedAmount: num(row.funded_amount as string | number | null),
         aiTaggedSpendUsd: num(
           row.ai_tagged_spend_usd as string | number | null,
         ),
@@ -399,6 +529,28 @@ export async function loadTowerMartCommandView(args: {
         financeValidatedValueUsd: num(
           row.finance_validated_value_usd as string | number | null,
         ),
+        knownSupportedValue: nullableNum(
+          row.known_supported_value as string | number | null,
+        ),
+        proofMaturityScore: nullableNum(
+          row.proof_maturity_score as string | number | null,
+        ),
+        riskPressureScore: nullableNum(
+          row.risk_pressure_score as string | number | null,
+        ),
+        usageStrengthScore: nullableNum(
+          row.usage_strength_score as string | number | null,
+        ),
+        lineageTrustState: row.lineage_trust_state
+          ? String(row.lineage_trust_state)
+          : null,
+        decisionReasonCode: row.decision_reason_code
+          ? String(row.decision_reason_code)
+          : null,
+        amountBlocked: nullableNum(
+          row.amount_blocked as string | number | null,
+        ),
+        nextGate: row.next_gate ? String(row.next_gate) : null,
         usageMetric: row.usage_metric ? String(row.usage_metric) : null,
         usageActual: nullableNum(row.usage_actual as string | number | null),
         adoptionRatePct: nullableNum(
@@ -460,6 +612,35 @@ export async function loadTowerMartCommandView(args: {
         actionBody: String(row.action_body),
         ownerHint: row.owner_hint ? String(row.owner_hint) : null,
         moduleHandoff: row.module_handoff ? String(row.module_handoff) : null,
+        programId: row.program_id ? String(row.program_id) : null,
+        claimId: row.claim_id ? String(row.claim_id) : null,
+        proofStage: row.proof_stage ? String(row.proof_stage) : null,
+        blockedDecision: row.blocked_decision
+          ? String(row.blocked_decision)
+          : null,
+        amountExposed: num(row.amount_exposed as string | number | null),
+        evidenceRequirement: row.evidence_requirement
+          ? String(row.evidence_requirement)
+          : null,
+        expectedSourceSystem: row.expected_source_system
+          ? String(row.expected_source_system)
+          : null,
+        evidencePackageId: row.evidence_package_id
+          ? String(row.evidence_package_id)
+          : null,
+        ownerRole: row.owner_role ? String(row.owner_role) : null,
+        secondaryOwnerRole: row.secondary_owner_role
+          ? String(row.secondary_owner_role)
+          : null,
+        dueWindow: row.due_window ? String(row.due_window) : null,
+        dueDate: row.due_date ? String(row.due_date) : null,
+        handoffModule: row.handoff_module ? String(row.handoff_module) : null,
+        handoffEntityId: row.handoff_entity_id
+          ? String(row.handoff_entity_id)
+          : null,
+        handoffReadiness: String(row.handoff_readiness ?? "not_ready"),
+        actionState: String(row.action_state ?? "open"),
+        priority: String(row.priority ?? "medium"),
       })),
       evidenceLineage: evidenceLineage.map((row) => ({
         lineageKey: String(row.lineage_key),
@@ -471,6 +652,29 @@ export async function loadTowerMartCommandView(args: {
         displayedValueNumeric: nullableNum(
           row.displayed_value_numeric as string | number | null,
         ),
+        metricOrFactKey: row.metric_or_fact_key
+          ? String(row.metric_or_fact_key)
+          : null,
+        boardVisibleLabel: row.board_visible_label
+          ? String(row.board_visible_label)
+          : null,
+        lineageState: row.lineage_state ? String(row.lineage_state) : null,
+        sourceCount: Number(row.source_count ?? 0),
+        sourceRefs: Array.isArray(row.source_refs)
+          ? (row.source_refs as Array<Record<string, unknown>>)
+          : [],
+        conflictingValues: Array.isArray(row.conflicting_values)
+          ? (row.conflicting_values as Array<Record<string, unknown>>)
+          : [],
+        authoritativeValue: row.authoritative_value
+          ? String(row.authoritative_value)
+          : null,
+        resolutionOwnerRole: row.resolution_owner_role
+          ? String(row.resolution_owner_role)
+          : null,
+        resolutionState: row.resolution_state
+          ? String(row.resolution_state)
+          : null,
         sourceFile: row.source_file ? String(row.source_file) : null,
         sourceRow: row.source_row ? String(row.source_row) : null,
         sourceSystem: row.source_system ? String(row.source_system) : null,
@@ -494,5 +698,4 @@ export async function loadTowerMartCommandView(args: {
   }
 
   return null;
-*/
 }
