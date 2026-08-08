@@ -694,11 +694,72 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const unavailableV4Lenses = v4Snapshot.availability
     .filter((slice) => slice.state !== 'available')
     .map((slice) => ({ lensId: slice.lensId, state: slice.state }));
+  const sourceWorkspaceActiveTab = kind === 'contract'
+    ? `Contract 360 / ${activeTab ?? 'Story'}`
+    : kind === 'vendor'
+    ? `Vendor 360 / ${activeTab ?? 'Overview'}`
+    : kind === 'evidence'
+    ? `Evidence / ${activeTab ?? 'Coverage'}`
+    : `Portfolio / ${activeTab ?? 'Home'}`;
+  const sourceWorkspacePageFacts = [
+    `Source Workspace is reading governed ${v4Snapshot.datasetLabel} data as of ${fmtDate(v4Snapshot.asOfDateIso)}.`,
+    `Portfolio totals: ${v4Snapshot.executivePortfolio.contractCount} contracts, ${v4Snapshot.contextCoverage.vendors} vendors, ${money(v4Snapshot.executivePortfolio.annualValue)} annual contract value, ${money(v4Snapshot.executivePortfolio.totalCommittedValue)} total committed value.`,
+    `Top-10 vendor concentration is ${pct(conc.topNShare(10))}; category-clean value coverage is ${pct(categoryQuality.categoryCleanValuePct)}.`,
+    `When a user asks for a chart, table, trend, or graph, answer with concise prose plus structured exhibits where the cited rows support it; never print raw JSON or code fences.`,
+  ];
+  const sourceWorkspaceVendorFacts = kind === 'vendor'
+    ? [
+        `Selected vendor: ${vendorName}; category ${vendorCat ?? 'not classified'}.`,
+        `Vendor portfolio: ${vendorStats.map((stat) => `${stat.label} ${stat.value}`).join('; ')}.`,
+        `Material contracts visible: ${vendorContracts.slice(0, 6).map((row) => `${row.row.contract_id} ${row.row.contract_name} annual ${money(row.row.annual_value)} actual ${money(row.row.actual_annual_spend)}`).join(' | ')}.`,
+      ]
+    : kind === 'contract' && c
+    ? [
+        `Selected contract: ${c.contract_id} ${c.vendor_name} - ${c.contract_name}.`,
+        `Contract economics: annual ${money(c.annual_value)}, actual annual spend ${money(c.actual_annual_spend)}, committed ${money(c.total_committed_value)}, contracted-to-actual variance ${c.annual_value != null && c.actual_annual_spend != null ? money(c.annual_value - c.actual_annual_spend) : 'not established'}.`,
+        `Contract timing: end ${fmtDate(c.end_date)}, notice ${contract?.noticeDate ? fmtDate(contract.noticeDate.toISOString()) : 'not established'}, notice period ${c.notice_period_days ?? 'not established'} days, auto-renew ${c.auto_renew ? 'yes' : 'no'}, renewal owner ${c.renewal_owner_ref ?? 'not assigned'}.`,
+        `Contract scope summary: ${cVm?.scopeSummary ?? 'scope not loaded'}.`,
+        `Scope coverage: ${scopeRows.length} application or service-scope rows visible for this contract.`,
+      ]
+    : [];
+  const sourceWorkspaceLedgerFacts = optLedgerView
+    ? [
+        `Optimization ledger headline: ${optLedgerView.headline}`,
+        `Four-ledger status: ${optLedgerView.quantifiedLeakage} recoverable leakage, ${optLedgerView.realizedValue} realized value, ${optLedgerView.evidenceReady} ready lines, ${optLedgerView.evidenceGaps} evidence gaps.`,
+        ...optLedgerView.lines.map((line) => `${line.label}: ${line.amount}; state ${line.state}; evidence ${line.evidenceClass}; evidence note ${line.evidence}; next action ${line.nextAction}; source refs ${line.sourceRefs.join(', ') || 'not established'}.`),
+      ]
+    : [];
+  const sourceWorkspaceGraphFacts = [
+    ...(optSpineView?.selected
+      ? [
+          `Optimization rank: ${optSpineView.selected.rank} with fit ${optSpineView.selected.score}/100 and action "${optSpineView.selected.action}".`,
+          `Ranking reasons: ${optSpineView.selected.reasons.map((reason) => `${reason.label} (${reason.points} points): ${reason.detail}`).join(' | ')}.`,
+          `Top optimization queue: ${optSpineView.topCandidates.map((candidate) => `${candidate.rank} ${candidate.label} ${candidate.value} fit ${candidate.score}`).join(' | ')}.`,
+        ]
+      : []),
+    ...(optSpineView?.sourceConnections ?? []).map((connection) => `${connection.sourceSystem} feeds ${connection.ledgers.join(', ')} with ${connection.extract} Key fields: ${connection.fields.join(', ')}. Outcome: ${connection.outcome}`),
+  ];
+  const sourceWorkspaceQualityFacts = [
+    `Category quality: ${categoryQuality.qualityMessage}; affected rows ${categoryQuality.affectedRows}; affected value ${money(categoryQuality.affectedAnnualValue)}; authority gate ${categoryQuality.authorityGate}.`,
+    `Evidence state for current selection: ${kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'portfolio-level evidence'}.`,
+    `Missing evidence must be stated as evidence missing or workflow required. Never convert missing value to zero, and never claim realized value without Tower or finance confirmation.`,
+  ];
   const avaSurfaceContext = {
-    tenant: vm.tenantName, module: 'Source',
+    tenant: vm.tenantName, module: 'Source', activeClient: vm.tenantName, clientKey: vm.portfolio.tenantKey,
+    activeTab: sourceWorkspaceActiveTab,
     selection: kind === 'contract' && c ? c.contract_id + ' · ' + c.vendor_name : kind === 'vendor' ? vendorName : kind === 'opportunity' && opp ? opp.contractId : 'Executive portfolio',
     lens: activeTab || null, asOf: fmtDate(vm.portfolio.asOfDateIso),
     evidence: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Portfolio-level',
+    pageFacts: sourceWorkspacePageFacts,
+    tenantFacts: [
+      `Context coverage: ${v4Snapshot.contextCoverage.contracts} contract rows, ${v4Snapshot.contextCoverage.scopeRows} scope rows, ${v4Snapshot.contextCoverage.invoiceLines} invoice lines, ${v4Snapshot.contextCoverage.performanceRows} performance rows, ${v4Snapshot.contextCoverage.saasUsageRows} usage rows, ${v4Snapshot.contextCoverage.cloudRows} cloud rows.`,
+      `Service-credit rollup: calculated ${money(v4Snapshot.performanceCredits.creditCalculated)}, claimed ${money(v4Snapshot.performanceCredits.creditClaimed)}, recovered ${money(v4Snapshot.performanceCredits.creditRecovered)}, unclaimed ${money(v4Snapshot.performanceCredits.unclaimedCredit)}.`,
+      `AI usage value proof: ${v4Snapshot.aiUsageValueProof.rowCount} usage rows, ${v4Snapshot.aiUsageValueProof.assignedSeats} assigned seats, ${v4Snapshot.aiUsageValueProof.activeUsers} active users, ${money(v4Snapshot.aiUsageValueProof.actualCost)} actual cost, ${v4Snapshot.aiUsageValueProof.claimableRows} claimable rows.`,
+    ],
+    vendorFacts: sourceWorkspaceVendorFacts,
+    sourceFacts: [...sourceWorkspaceLedgerFacts, ...sourceWorkspaceQualityFacts],
+    graphFacts: sourceWorkspaceGraphFacts,
+    qualityFacts: sourceWorkspaceQualityFacts,
     sourceV4: {
       datasetId: v4Snapshot.datasetId,
       datasetLabel: v4Snapshot.datasetLabel,

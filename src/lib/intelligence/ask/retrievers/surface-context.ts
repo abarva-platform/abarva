@@ -42,18 +42,19 @@ export function retrieveSurfaceContextSources(
 
   const activeTab = cleanString(context.activeTab) ?? 'current page';
   const activeClient = cleanString(context.activeClient) ?? 'active client';
+  const activeModule = cleanString(context.module) ?? 'Intelligence';
   const sources: AskSource[] = [];
 
   if (surfaceFacts.length > 0) {
     const detail = [
-      `Active Intelligence surface: ${activeTab}.`,
+      `Active ${activeModule} surface: ${activeTab}.`,
       `Active client: ${activeClient}.`,
       ...surfaceFacts.slice(0, 28),
     ].join('\n- ');
 
     sources.push({
       type: 'SURFACE',
-      name: `${activeClient} live Intelligence surface`,
+      name: `${activeClient} live ${activeModule} surface`,
       id: activeTab,
       detail,
       confidence: stageMatchesQuery(activeTab, query) ? 0.99 : 0.92,
@@ -63,13 +64,13 @@ export function retrieveSurfaceContextSources(
   if (tenantFacts.length > 0) {
     const detail = [
       `Tenant 360: ${activeClient}.`,
-      `Current Intelligence surface: ${activeTab}.`,
+      `Current ${activeModule} surface: ${activeTab}.`,
       ...tenantFacts.slice(0, 34),
     ].join('\n- ');
 
     sources.push({
       type: 'TENANT',
-      name: `${activeClient} 360 Intelligence substrate`,
+      name: `${activeClient} 360 ${activeModule} substrate`,
       id: cleanString(context.clientKey) ?? activeClient,
       detail,
       confidence: tenantMatchesQuery(query) ? 0.96 : 0.91,
@@ -79,13 +80,13 @@ export function retrieveSurfaceContextSources(
   if (graphFacts.length > 0) {
     const detail = [
       `Graph view: ${activeClient}.`,
-      `Current Intelligence surface: ${activeTab}.`,
+      `Current ${activeModule} surface: ${activeTab}.`,
       ...graphFacts.slice(0, 34),
     ].join('\n- ');
 
     sources.push({
       type: 'GRAPH',
-      name: `${activeClient} Intelligence graph`,
+      name: `${activeClient} ${activeModule} graph`,
       id: cleanString(context.clientKey) ?? activeClient,
       detail,
       confidence: graphMatchesQuery(query) ? 0.95 : 0.89,
