@@ -39,12 +39,17 @@ application/context data, or any other tenant substrate.
 - `package.json` script `ops:source-open-events:cleanup`
 - `src/components/source/SourceOriginatePage.tsx` keeps the canonical Source category picker
   visible by default so new events can select the real taxonomy after cleanup.
+- Follow-up: source event activity audit inserts are schema-aware and use the live
+  `source_event_activity.metadata` / `reason` columns when present.
 
 ## QA / Validation
 
 - Pass: `npx tsx scripts/ops/source-open-event-cleanup.ts --help`
 - Pass: `npx eslint scripts/ops/source-open-event-cleanup.ts`
 - Pass: `npx jest src/components/source/__tests__/SourceOriginatePage.contractOptimization.test.ts --runInBand`
+- Pass: follow-up `npx eslint scripts/ops/source-open-event-cleanup.ts`
+- Pass: follow-up `npx tsx scripts/ops/source-open-event-cleanup.ts --help`
+- Pass: follow-up `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
 - Pass: `npm run release:check`
 

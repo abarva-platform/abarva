@@ -454,20 +454,15 @@ async function archiveEvents(
     );
 
     let activityRows = 0;
-    if (hasTable(columns, 'source_event_activity')) {
-      const detail = {
+    if (canInsertSourceEventActivity(columns)) {
+      const metadata = {
         reason: args.reason,
         operator: args.operator,
         script: 'scripts/ops/source-open-event-cleanup.ts',
         scopeBoundary: 'source_events.lifecycle_state only; dependent rows and blob objects preserved',
       };
       for (const event of events) {
-        await client.query(
-          `insert into public.source_event_activity
-             (event_id, client_key, actor_user_id, action_type, action_label, details, occurred_at)
-           values ($1::uuid, $2, $3, 'operator_archive', 'Operator archived Source event', $4::jsonb, now())`,
-          [event.id, event.client_key, args.operator, JSON.stringify(detail)],
-        );
+        await insertSourceEventActivity(client, columns, event, args, metadata);
         activityRows += 1;
       }
     }
@@ -481,6 +476,58 @@ async function archiveEvents(
     await client.query('rollback');
     throw error;
   }
+}
+
+function canInsertSourceEventActivity(columns: TableColumns): boolean {
+  return ['event_id', 'client_key', 'action_type', 'action_label'].every((column) =>
+    hasColumn(columns, 'source_event_activity', column),
+  );
+}
+
+async function insertSourceEventActivity(
+  client: Client,
+  columns: TableColumns,
+  event: SourceEventRow,
+  args: Args,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  const insertColumns: string[] = [];
+  const valueExpressions: string[] = [];
+  const values: unknown[] = [];
+  const pushValue = (column: string, value: unknown, cast = '') => {
+    if (!hasColumn(columns, 'source_event_activity', column)) return;
+    insertColumns.push(column);
+    values.push(value);
+    valueExpressions.push(`$${values.length}${cast}`);
+  };
+  const pushNow = (column: string) => {
+    if (!hasColumn(columns, 'source_event_activity', column)) return;
+    insertColumns.push(column);
+    valueExpressions.push('now()');
+  };
+
+  pushValue('event_id', event.id, '::uuid');
+  pushValue('client_key', event.client_key);
+  pushValue('actor_user_id', args.operator);
+  pushValue('actor_display_name', args.operator);
+  pushValue('actor_role', 'operator');
+  pushValue('action_type', 'operator_archive');
+  pushValue('action_label', 'Operator archived Source event');
+  pushValue('stage_key', event.current_stage_key);
+  pushValue('reason', args.reason);
+  if (hasColumn(columns, 'source_event_activity', 'metadata')) {
+    pushValue('metadata', JSON.stringify(metadata), '::jsonb');
+  } else {
+    pushValue('details', JSON.stringify(metadata), '::jsonb');
+  }
+  pushNow('occurred_at');
+
+  await client.query(
+    `insert into public.source_event_activity
+       (${insertColumns.map(quoteIdent).join(', ')})
+     values (${valueExpressions.join(', ')})`,
+    values,
+  );
 }
 
 function writeJson(filePath: string, value: unknown): void {
