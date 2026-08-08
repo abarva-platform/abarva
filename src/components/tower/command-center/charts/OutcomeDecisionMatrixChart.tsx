@@ -155,7 +155,7 @@ export function OutcomeDecisionMatrixChart({
         minHeight: 0,
       }}
     >
-      <div style={{ flex: "1 1 auto", minHeight: 250 }}>
+      <div style={{ flex: "1 1 auto", minHeight: 160 }}>
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 22, right: 22, left: 10, bottom: 26 }}>
             <ReferenceArea
@@ -310,6 +310,8 @@ export function OutcomeDecisionMatrixChart({
           display: "grid",
           gap: 6,
           gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          maxHeight: 74,
+          overflowY: "auto",
           padding: "8px 10px 0",
         }}
       >

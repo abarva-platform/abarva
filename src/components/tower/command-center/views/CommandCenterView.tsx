@@ -230,6 +230,20 @@ function sourceTrustRows(view: TowerCommandCenterView) {
   ];
 }
 
+function avaSynthesis(view: TowerCommandCenterView): string {
+  const s = view.summary;
+  const blockedPrograms =
+    s.blockedProgramCount ||
+    view.programs.filter((program) => program.blockedUsd > 0).length;
+  if (s.claimableUsd > 0) {
+    return `${formatUsdM(s.claimableUsd)} is claimable today. Keep the remaining capital in proof-gated lanes until owners close usage, Finance, and attestation gaps.`;
+  }
+  if (s.promisedUsd > 0) {
+    return `${formatUsdM(s.promisedUsd)} is visible as promised value, but ${formatCount(blockedPrograms)} programs still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
+  }
+  return "Tower can see the operating surface, but no governed value case is loaded yet. Start with source-backed value cases before making capital calls.";
+}
+
 function cockpitVerdict(view: TowerCommandCenterView): string {
   if (view.summary.claimableUsd > 0) {
     return "Some value is claimable, but additional capital still depends on the proof gates below.";
@@ -304,19 +318,47 @@ export function CommandCenterView({
           <div key={stage.label} className={styles.proofStage}>
             <span className={styles.psLabel}>{stage.label}</span>
             <span className={styles.psValue}>{stage.value}</span>
-            <span className={styles.psPrograms}>{stage.programs} programs</span>
+            <span className={styles.psPrograms}>{stage.programs}</span>
             <span className={styles.psNote}>{stage.note}</span>
           </div>
         ))}
       </section>
 
+      <section
+        className={styles.synthesisGrid}
+        aria-label="aVa synthesis and source lineage posture"
+      >
+        <div className={styles.avaSynthesisStrip}>
+          <span className={styles.eyebrow2}>aVa synthesis strip</span>
+          <p>{avaSynthesis(view)}</p>
+        </div>
+        <div className={styles.lineageRailInline}>
+          {sourceTrustRows(view).map((row) => (
+            <div key={row.label} className={styles.lineageRailItem}>
+              <span>
+                <Dot tone={row.tone} />
+                {row.label}
+              </span>
+              <b>{row.value}</b>
+              <Chip tone={row.tone} mono>
+                {row.status}
+              </Chip>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className={styles.cockpitCanvas}>
         <Card
           eyebrow="Where value gets stopped"
-          right="Recharts · governed mart values"
+          right="proof waterfall · governed mart values"
           headId="tcc-outcome-waterfall"
           bodyClassName={styles.cockpitChartBody}
         >
+          <p className={styles.chartTruthNote}>
+            Money moves left to right only when baseline, usage, Finance, and
+            attestation evidence clear the claim gate.
+          </p>
           <div
             className={styles.cockpitWaterfall}
             aria-describedby="tcc-waterfall-alt"
@@ -342,8 +384,8 @@ export function CommandCenterView({
         </Card>
 
         <Card
-          eyebrow="Capital decision matrix"
-          right="Top exposure programs"
+          eyebrow="Portfolio decision matrix"
+          right="risk pressure × proof maturity × exposure"
           headId="tcc-decision-matrix"
           bodyClassName={styles.cockpitChartBody}
         >
@@ -353,6 +395,10 @@ export function CommandCenterView({
             </p>
           ) : (
             <>
+              <p className={styles.chartTruthNote}>
+                Each bubble is a top blocked program: X is proof maturity, Y is
+                risk pressure, and size is promised exposure.
+              </p>
               <div
                 className={styles.cockpitMatrix}
                 aria-describedby="tcc-matrix-alt"

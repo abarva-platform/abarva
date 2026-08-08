@@ -115,7 +115,7 @@ export function ValueWaterfallChart({
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
-        margin={{ top: 26, right: 6, left: 4, bottom: 6 }}
+        margin={{ top: 26, right: 24, left: 4, bottom: 6 }}
         barCategoryGap="18%"
       >
         <CartesianGrid vertical={false} stroke={HEX.border} />
