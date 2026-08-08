@@ -355,11 +355,10 @@ export interface DocExtractionRow {
  * budget-reconciliation percentage) unless and until someone deliberately
  * crosswalks or replaces a v3 contract with it.
  *
- * Empty as of 2026-08-02 — Crestline, NimbusWorks, and AeroLake are not yet
- * loaded into doc.file (confirmed: doc.file contains only the 29 raw CSV
- * intake files, document_type = 'client_intake_csv', zero contract-type
- * documents). This constant exists so that loading them later is additive
- * and safe by default, not a silent portfolio-total corruption.
+ * Supplemental PDFs must still flow through doc.file/page/span/extraction;
+ * they are excluded from portfolio totals until a reviewed crosswalk maps
+ * them to source.contract_360. This constant is intentionally empty until
+ * those supplemental vendors receive governed vendor_ref values.
  */
 export const SUPPLEMENTAL_CONTRACT_VENDOR_REFS: ReadonlySet<string> = new Set([
   // 'crestline', 'nimbusworks', 'aerolake' — populate with real vendor_ref

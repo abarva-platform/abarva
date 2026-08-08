@@ -1,0 +1,63 @@
+{
+  "fileCount": 29,
+  "csvRows": 1752,
+  "contracts": [
+    {
+      "contract_id": "CTR-090",
+      "vendor_name": "Salesforce",
+      "contract_name": "Salesforce Data Platform Agreement 3",
+      "archetype": "SaaS data platform",
+      "annual_value_usd": 43500000,
+      "actual_annual_spend_usd": 37413299,
+      "service_credit_gap_usd": 754720,
+      "invoice_line_exceptions_usd": 2376372,
+      "rate_card_variance_usd": 22140,
+      "recoverable_leakage_usd": 3153232,
+      "avoided_cost_usd": 2420000,
+      "negotiated_improvement_usd": 1250000,
+      "realized_value_usd": 940000
+    },
+    {
+      "contract_id": "CTR-061",
+      "vendor_name": "Microsoft",
+      "contract_name": "Microsoft Cloud Platform Agreement 2",
+      "archetype": "Cloud platform enterprise agreement",
+      "annual_value_usd": 35800000,
+      "actual_annual_spend_usd": 28289093,
+      "service_credit_gap_usd": 525760,
+      "invoice_line_exceptions_usd": 1796833,
+      "rate_card_variance_usd": 17960,
+      "recoverable_leakage_usd": 2340553,
+      "avoided_cost_usd": 2760000,
+      "negotiated_improvement_usd": 1100000,
+      "realized_value_usd": 780000
+    }
+  ],
+  "pdf_intelligence": {
+    "generated_at": "2026-08-08T13:42:56.962006+00:00",
+    "pdf_count": 5,
+    "mapped_golden_pdf_count": 2,
+    "supplemental_prior_pdf_count": 3,
+    "clause_extraction_count": 934,
+    "contracts": [
+      {
+        "contract_id": "CTR-090",
+        "pdf_file": "documents/CTR-090_Salesforce_Executed_Agreement_SYNTHETIC.pdf",
+        "expected_clause_count": 16,
+        "extracted_clause_count": 16
+      },
+      {
+        "contract_id": "CTR-061",
+        "pdf_file": "documents/CTR-061_Microsoft_Executed_Agreement_SYNTHETIC.pdf",
+        "expected_clause_count": 16,
+        "extracted_clause_count": 16
+      }
+    ],
+    "quality_status": "passed",
+    "quality_rule": "PDF text extraction had to find every generated clause heading or value probe.",
+    "prior_corpus_policy": "Older/prior contract PDFs are processed by the same adapter and marked supplemental_unmapped_to_current_register until a reviewed crosswalk maps them to source.contract_360."
+  },
+  "package_sha256_note": "ZIP SHA is computed from the delivered artifact in Downloads.",
+  "packagePath": "datasets/source/contract-intelligence/skyharbor-golden-20260808",
+  "downloadArtifactName": "SkyHarbor_Golden_Contracts_Source_Evidence_20260808.zip"
+}

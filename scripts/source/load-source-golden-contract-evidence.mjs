@@ -1,24 +1,47 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Client } from "pg";
+import Papa from "papaparse";
 
-const RAW_SCHEMA = "raw_source_v4";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, "../..");
+const SOURCE_SCHEMA = "source";
+const DOC_SCHEMA = "doc";
+const META_SCHEMA = "meta";
 const TOWER_SCHEMA = "tower";
 const DATASET_ID = "skyharbor-source-v4-202608-golden-evidence";
 const DATASET_VERSION = "v4-golden-evidence";
 const TENANT_KEY = "skyharbor_global";
-const CONTRACT_ID = "CTR-061";
+const GOLDEN_CONTRACT_IDS = Object.freeze(["CTR-090", "CTR-061"]);
 const SOURCE_THREAD_ID = "source_contract_optimization_golden_evidence_v1";
+const PACKAGE_DIR = path.join(
+  REPO_ROOT,
+  "datasets/source/contract-intelligence/skyharbor-golden-20260808",
+);
 
-const EXPECTED = Object.freeze({
-  slaUnclaimed: 620_000,
-  invoiceException: 275_000,
-  rateVariance: 410_000,
-  recoverableLeakage: 1_305_000,
-  avoidedCost: 1_580_000,
-  negotiatedImprovement: 1_100_000,
-  realizedValue: 1_185_000,
-});
+const PACKAGE_CSV_TABLES = Object.freeze([
+  ["golden_contract_overview", "synthetic/contract_overview.csv"],
+  ["golden_contract_pricing_schedule", "synthetic/contract_pricing_schedule.csv"],
+  ["golden_contract_invoice_lines", "synthetic/invoice_lines.csv"],
+  ["golden_contract_po_contract_match", "synthetic/po_contract_match.csv"],
+  ["golden_contract_rate_card_variance", "synthetic/rate_card_variance.csv"],
+  ["golden_contract_renewal_negotiation_history", "synthetic/renewal_negotiation_history.csv"],
+  ["golden_contract_sla_incident_service_credit_monthly", "synthetic/sla_incident_service_credit_monthly.csv"],
+  ["golden_contract_usage_entitlement_monthly", "synthetic/usage_entitlement_monthly.csv"],
+  ["golden_contract_finance_value_confirmation", "synthetic/finance_value_confirmation.csv"],
+  ["golden_contract_application_scope", "synthetic/contract_application_scope.csv"],
+  ["contract_pdf_document_inventory", "synthetic/contract_pdf_document_inventory.csv"],
+  ["contract_pdf_page_text", "synthetic/contract_pdf_page_text.csv"],
+  ["contract_pdf_clause_extractions", "synthetic/contract_pdf_clause_extractions.csv"],
+  ["golden_contract_reconciliation", "reconciliation/golden_contract_reconciliation.csv"],
+  ["golden_contract_evidence_source_inventory", "templates/evidence_source_inventory.csv"],
+  ["golden_contract_field_level_extraction_guide", "templates/field_level_extraction_guide.csv"],
+  ["golden_contract_parser_persistence_mapping", "implementation/parser_persistence_mapping.csv"],
+  ["golden_contract_talk_track", "story/contract_fact_based_talk_track.csv"],
+]);
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -37,10 +60,18 @@ function parseArgs() {
       value("--tenant-key") ||
       process.env.SOURCE_GOLDEN_EVIDENCE_TENANT_KEY ||
       TENANT_KEY,
-    contractId:
-      value("--contract-id") ||
-      process.env.SOURCE_GOLDEN_EVIDENCE_CONTRACT_ID ||
-      CONTRACT_ID,
+    contractIds: [
+      ...new Set(
+        (
+          value("--contract-id") ||
+          process.env.SOURCE_GOLDEN_EVIDENCE_CONTRACT_ID ||
+          GOLDEN_CONTRACT_IDS.join(",")
+        )
+          .split(",")
+          .map((contractId) => contractId.trim())
+          .filter(Boolean),
+      ),
+    ],
     datasetId:
       value("--dataset-id") ||
       process.env.SOURCE_GOLDEN_EVIDENCE_DATASET_ID ||
@@ -91,6 +122,57 @@ function quoteIdent(value) {
   return `"${String(value).replace(/"/gu, '""')}"`;
 }
 
+function readText(relativePath) {
+  return fs.readFileSync(path.join(PACKAGE_DIR, relativePath), "utf8");
+}
+
+function readJson(relativePath) {
+  return JSON.parse(readText(relativePath));
+}
+
+function readCsv(relativePath) {
+  const parsed = Papa.parse(readText(relativePath), {
+    header: true,
+    skipEmptyLines: true,
+  });
+  if (parsed.errors.length > 0) {
+    throw new Error(
+      `CSV parse failed for ${relativePath}: ${parsed.errors
+        .map((error) => error.message)
+        .join("; ")}`,
+    );
+  }
+  return parsed.data.map((row) => {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(row)) {
+      if (!key) continue;
+      cleaned[key] = value == null ? "" : String(value);
+    }
+    return cleaned;
+  });
+}
+
+function numericValue(value) {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function intValue(value) {
+  const n = numericValue(value);
+  return n == null ? null : Math.trunc(n);
+}
+
+function nonEmpty(value) {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
+function relPackagePath(relativePath) {
+  return `datasets/source/contract-intelligence/skyharbor-golden-20260808/${relativePath}`;
+}
+
 function tenantAliases(tenantKey) {
   return [
     ...new Set(
@@ -101,366 +183,488 @@ function tenantAliases(tenantKey) {
   ];
 }
 
-async function tableColumns(client, table) {
-  const result = await client.query(
-    `SELECT column_name
-       FROM information_schema.columns
-      WHERE table_schema = $1 AND table_name = $2`,
-    [RAW_SCHEMA, table],
+async function ensureSourceCsvTable(client, table, headers) {
+  await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(SOURCE_SCHEMA)}`);
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)} (
+       _tenant_key text not null,
+       _dataset_id text not null,
+       _load_run_id text not null,
+       _source_file text not null,
+       _source_row_number int not null,
+       _row_sha256 text not null,
+       _loaded_at timestamptz not null default now()
+     )`,
   );
-  return new Set(result.rows.map((row) => row.column_name));
-}
-
-async function ensureRawTable(client, table) {
-  const columns = await tableColumns(client, table);
-  if (columns.size === 0) {
-    throw new Error(`Required raw table is missing: ${RAW_SCHEMA}.${table}`);
-  }
-  return columns;
-}
-
-async function deleteAugmentationRows(client, args) {
-  for (const table of [
-    "servicenow_sla_monthly",
-    "s4_vendor_invoice_lines",
-    "fieldglass_rate_card",
-    "entra_saas_usage_monthly",
-    "ariba_sourcing_events",
-  ]) {
-    await ensureRawTable(client, table);
+  for (const header of headers) {
+    if (!header || header.startsWith("_")) continue;
     await client.query(
-      `DELETE FROM ${quoteIdent(RAW_SCHEMA)}.${quoteIdent(table)}
-        WHERE _tenant_key = $1 AND _dataset_id = $2`,
-      [args.tenantKey, args.datasetId],
+      `ALTER TABLE ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)}
+         ADD COLUMN IF NOT EXISTS ${quoteIdent(header)} text`,
     );
   }
-}
-
-function baseRawRow(args, table, index, row) {
-  const logical = {
-    tenant_key: args.tenantKey,
-    dataset_id: args.datasetId,
-    dataset_version: DATASET_VERSION,
-    source_system: row.source_system,
-    source_module: row.source_module,
-    source_object: row.source_object,
-    source_record_id: row.source_record_id,
-    source_record_url_or_path: row.source_record_url_or_path,
-    extract_job_id: args.loadRunId,
-    extract_method: "synthetic_canary_operator_job",
-    extract_timestamp: new Date().toISOString(),
-    as_of_date: "2027-06-30",
-    business_owner_role: "Strategic sourcing lead",
-    technical_owner_role: "Source data steward",
-    quality_state: row.quality_state || "system_record",
-    evidence_state: row.evidence_state || "system_evidenced",
-    synthetic_generation_rule:
-      "Synthetic canary evidence shaped like client source-system exports; not client fact.",
-    scenario_thread_id: SOURCE_THREAD_ID,
-    ...row,
-  };
-  const raw = {
-    ...logical,
-    row_hash: sha256(JSON.stringify(logical)),
-    _tenant_key: args.tenantKey,
-    _dataset_id: args.datasetId,
-    _load_run_id: args.loadRunId,
-    _source_file: `golden-evidence/${table}.csv`,
-    _source_row_number: index + 2,
-    _source_csv_sha256: sha256(`${args.datasetId}:${table}`),
-    _row_sha256: sha256(JSON.stringify(logical)),
-    _loaded_at: new Date(),
-  };
-  return raw;
-}
-
-async function insertRawRows(client, args, table, rows) {
-  const columns = await ensureRawTable(client, table);
-  const prepared = rows.map((row, index) =>
-    baseRawRow(args, table, index, row),
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS ${quoteIdent(`idx_${table}_tenant_dataset`)}
+       ON ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)} (_tenant_key, _dataset_id)`,
   );
-  for (const row of prepared) {
-    const filtered = Object.fromEntries(
-      Object.entries(row).filter(([column]) => columns.has(column)),
-    );
-    const columnNames = Object.keys(filtered);
-    const values = Object.values(filtered);
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS ${quoteIdent(`idx_${table}_contract`)}
+       ON ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)} (contract_id)`,
+  ).catch(() => undefined);
+}
+
+async function loadPackageCsvTable(client, args, table, relativePath) {
+  const rows = readCsv(relativePath);
+  const headers = Object.keys(rows[0] || {});
+  await ensureSourceCsvTable(client, table, headers);
+  await client.query(
+    `DELETE FROM ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)}
+      WHERE _tenant_key = $1 AND _dataset_id = $2`,
+    [args.tenantKey, args.datasetId],
+  );
+  for (const [index, row] of rows.entries()) {
+    const logical = {
+      ...row,
+      _tenant_key: args.tenantKey,
+      _dataset_id: args.datasetId,
+      _load_run_id: args.loadRunId,
+      _source_file: relPackagePath(relativePath),
+      _source_row_number: index + 2,
+    };
+    const record = {
+      ...logical,
+      _row_sha256: sha256(JSON.stringify(row)),
+      _loaded_at: new Date(),
+    };
+    const columns = [
+      "_tenant_key",
+      "_dataset_id",
+      "_load_run_id",
+      "_source_file",
+      "_source_row_number",
+      "_row_sha256",
+      "_loaded_at",
+      ...headers,
+    ];
+    const values = columns.map((column) => record[column] ?? null);
     await client.query(
-      `INSERT INTO ${quoteIdent(RAW_SCHEMA)}.${quoteIdent(table)}
-       (${columnNames.map(quoteIdent).join(", ")})
-       VALUES (${values.map((_, index) => `$${index + 1}`).join(", ")})`,
+      `INSERT INTO ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)}
+       (${columns.map(quoteIdent).join(", ")})
+       VALUES (${values.map((_, valueIndex) => `$${valueIndex + 1}`).join(", ")})`,
       values,
     );
   }
-  return prepared.length;
+  return rows.length;
 }
 
-function monthDate(index, day = 1) {
-  const month = String(index + 1).padStart(2, "0");
-  return `2027-${month}-${String(day).padStart(2, "0")}`;
+async function loadPackageCsvTables(client, args) {
+  const inserted = {};
+  for (const [table, relativePath] of PACKAGE_CSV_TABLES) {
+    inserted[table] = await loadPackageCsvTable(
+      client,
+      args,
+      table,
+      relativePath,
+    );
+  }
+  return inserted;
 }
 
-function performanceRows(contractId) {
-  const monthlyCredits = Array.from({ length: 12 }, (_, index) =>
-    index === 11 ? 48_000 : 52_000,
+async function ensureDocumentSchema(client) {
+  await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}`);
+  await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(META_SCHEMA)}`);
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}.file (
+       file_id text primary key,
+       tenant_key text not null,
+       blob_uri text not null,
+       content_sha256 text not null,
+       file_name text,
+       media_type text,
+       page_count int,
+       load_run_id text not null,
+       source_event_id text,
+       document_role text,
+       document_type text,
+       contract_ref text,
+       sow_ref text,
+       parent_file_id text,
+       duplicate_of_file_id text,
+       duplicate_state text,
+       effective_date date,
+       expiry_date date,
+       visibility_class text not null default 'internal',
+       content_authenticity text not null,
+       uploaded_at timestamptz default now(),
+       metadata_json jsonb not null default '{}'::jsonb,
+       unique (tenant_key, file_id)
+     )`,
   );
-  return monthlyCredits.map((credit, index) => ({
-    source_system: "ServiceNow",
-    source_module: "Vendor SLA Performance",
-    source_object: "sla_credit_month",
-    source_record_id: `SNOW-SLA-${contractId}-${String(index + 1).padStart(2, "0")}`,
-    source_record_url_or_path: "servicenow:/reports/vendor-sla-credit-register",
-    contract_id: contractId,
-    service_id: "SVC-DATA-PLATFORM-SUPPORT",
-    application_id: "APP-DATA-PLATFORM-061",
-    metric_name: "Platform availability service credit",
-    target: "99.9",
-    actual: index % 3 === 0 ? "99.62" : "99.73",
-    unit: "percent",
-    period_start: monthDate(index, 1),
-    period_end: monthDate(index, 28),
-    breach_count: index % 3 === 0 ? "2" : "1",
-    severity_mix: "sev2:1;sev3:2",
-    incident_count: String(4 + (index % 3)),
-    request_count: String(420 + index * 7),
-    change_count: String(18 + (index % 4)),
-    credit_eligible: "true",
-    credit_calculated: String(credit),
-    credit_earned: String(credit),
-    credit_claimed: "0",
-    credit_recovered: "0",
-    claim_state: "earned_unclaimed",
-    root_cause_category: "vendor_platform_availability",
-    vendor_responsibility_marker: "vendor_responsible",
-    dispute_status: "not_disputed",
-    review_state: "system_extracted",
-  }));
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}.page (
+       page_id text primary key,
+       tenant_key text not null,
+       file_id text not null,
+       page_no int not null,
+       page_text text,
+       char_start int,
+       char_end int,
+       render_blob_uri text,
+       page_sha256 text,
+       unique (tenant_key, page_id),
+       unique (tenant_key, file_id, page_no)
+     )`,
+  );
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}.span (
+       span_id text primary key,
+       tenant_key text not null,
+       file_id text not null,
+       span_kind text,
+       heading text,
+       span_text text,
+       page_from int,
+       page_to int,
+       char_start int,
+       char_end int,
+       bbox_json jsonb not null default '{}'::jsonb,
+       visibility_class text not null default 'internal',
+       content_authenticity text not null,
+       unique (tenant_key, span_id)
+     )`,
+  );
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS ${quoteIdent(META_SCHEMA)}.concept (
+       concept_ref text primary key,
+       domain text not null,
+       label text not null,
+       datatype text not null,
+       unit text,
+       definition text not null,
+       active boolean not null default true,
+       created_at timestamptz not null default now()
+     )`,
+  );
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}.extraction (
+       extraction_id text primary key,
+       tenant_key text not null,
+       load_run_id text not null,
+       concept_ref text not null,
+       map_id text,
+       extractor_version text,
+       model_id text,
+       prompt_version text,
+       supersedes_extraction_id text,
+       active_from timestamptz not null default now(),
+       active_to timestamptz,
+       subject_kind text not null,
+       subject_ref text not null,
+       group_id text,
+       group_kind text,
+       value_text text,
+       value_num numeric,
+       value_date date,
+       value_bool boolean,
+       unit text,
+       source_kind text not null,
+       source_span_id text,
+       source_table text,
+       source_row int,
+       source_column text,
+       source_file_id text,
+       source_page int,
+       source_section text,
+       confidence numeric,
+       method text,
+       review_state text not null default 'unreviewed',
+       reviewed_by_role text,
+       reviewed_at timestamptz,
+       manual_basis text,
+       visibility_class text not null default 'internal',
+       content_authenticity text not null,
+       payload_json jsonb not null default '{}'::jsonb,
+       extracted_at timestamptz default now(),
+       unique (tenant_key, extraction_id)
+     )`,
+  );
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS idx_doc_extraction_subject
+       ON ${quoteIdent(DOC_SCHEMA)}.extraction (tenant_key, subject_kind, subject_ref, concept_ref)
+       WHERE active_to IS NULL`,
+  );
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS idx_doc_file_tenant_contract
+       ON ${quoteIdent(DOC_SCHEMA)}.file (tenant_key, contract_ref, document_role, load_run_id)`,
+  );
 }
 
-function invoiceRows(contractId) {
-  return [
-    {
-      source_system: "SAP S/4HANA",
-      source_module: "Accounts Payable",
-      source_object: "vendor_invoice_line",
-      source_record_id: `S4-INV-${contractId}-OFFCONTRACT-001`,
-      source_record_url_or_path: "s4:/ap/vendor-invoice-lines",
-      supplier_id: "SUP-MICROSOFT",
-      vendor_id: "VND-MICROSOFT",
-      contract_id: contractId,
-      po_number: "PO-2027-061-8801",
-      po_line: "10",
-      invoice_id: "INV-2027-061-4412",
-      invoice_line: "1",
-      gl_account: "617500",
-      cost_center: "CC-IT-DATA",
-      business_unit: "Technology",
-      company_code: "SHG1",
-      tax_code: "TX0",
-      service_period_start: "2027-04-01",
-      service_period_end: "2027-04-30",
-      posting_date: "2027-05-04",
-      invoice_date: "2027-05-01",
-      payment_date: "2027-05-29",
-      payment_status: "paid",
-      line_description: "Premium support hours billed outside active SOW.",
-      quantity: "1",
-      unit_price: "185000",
-      net_amount: "185000",
-      line_amount: "185000",
-      actual_spend: "185000",
-      tax_amount: "0",
-      gross_amount: "185000",
-      currency: "USD",
-      matching_state: "off_contract",
-      contract_match_state: "no_active_contract_line",
-      commitment_amount: "0",
-      accrual_adjustment_flag: "false",
-      reason_code: "missing_contract_line",
-      approver_role: "AP operations manager",
-      ap_processing_state: "paid_pending_recovery_review",
-    },
-    {
-      source_system: "SAP S/4HANA",
-      source_module: "Accounts Payable",
-      source_object: "vendor_invoice_line",
-      source_record_id: `S4-INV-${contractId}-DUPLICATE-001`,
-      source_record_url_or_path: "s4:/ap/vendor-invoice-lines",
-      supplier_id: "SUP-MICROSOFT",
-      vendor_id: "VND-MICROSOFT",
-      contract_id: contractId,
-      po_number: "PO-2027-061-8802",
-      po_line: "20",
-      invoice_id: "INV-2027-061-4488",
-      invoice_line: "2",
-      gl_account: "617500",
-      cost_center: "CC-IT-DATA",
-      business_unit: "Technology",
-      company_code: "SHG1",
-      tax_code: "TX0",
-      service_period_start: "2027-05-01",
-      service_period_end: "2027-05-31",
-      posting_date: "2027-06-05",
-      invoice_date: "2027-06-01",
-      payment_date: "2027-06-28",
-      payment_status: "paid",
-      line_description: "Duplicate monthly managed service fee.",
-      quantity: "1",
-      unit_price: "90000",
-      net_amount: "90000",
-      line_amount: "90000",
-      actual_spend: "90000",
-      tax_amount: "0",
-      gross_amount: "90000",
-      currency: "USD",
-      matching_state: "duplicate_exception",
-      contract_match_state: "matched_duplicate_line",
-      commitment_amount: "0",
-      accrual_adjustment_flag: "false",
-      reason_code: "duplicate_invoice_line",
-      approver_role: "AP operations manager",
-      ap_processing_state: "paid_pending_supplier_credit",
-    },
-  ];
+function documentRole(row) {
+  const type = row.document_type || "";
+  if (type.includes("executed")) return "executed_agreement";
+  if (type.includes("dpa")) return "dpa";
+  if (type.includes("sow")) return "sow";
+  return "supplemental_contract_pdf";
 }
 
-function rateCardRows(contractId) {
-  return [1, 2].map((sequence) => ({
-    source_system: "SAP Fieldglass",
-    source_module: "Rate Card",
-    source_object: "work_order_rate_line",
-    source_record_id: `FG-RATE-${contractId}-${sequence}`,
-    source_record_url_or_path: "fieldglass:/rate-card/work-orders",
-    contract_id: contractId,
-    sow_id: `SOW-${contractId}-DATA`,
-    work_order_id: `WO-${contractId}-${sequence}`,
-    role: "Cloud data engineer",
-    role_title: "Senior cloud data engineer",
-    level: "senior",
-    location: sequence === 1 ? "US" : "Nearshore",
-    rate_card_id: `RC-${contractId}-2027`,
-    rate_effective_start: "2027-01-01",
-    rate_effective_end: "2027-12-31",
-    worker_ref: `worker-ref-${sequence}`,
-    bill_rate: "195",
-    billed_rate: "195",
-    approved_rate: "175",
-    currency: "USD",
-    hours: "10250",
-    utilization: "0.87",
-    blended_rate: "195",
-    onshore_offshore_mix: sequence === 1 ? "70/30" : "60/40",
-    variance: "205000",
-    approval_state: "variance_unapproved",
-    reason_code: "rate_card_amendment_missing",
-    change_order_id: `CO-${contractId}-RATE-${sequence}`,
-    rate_card_amendment_exists: "false",
-  }));
+function blobUriFor(args, row) {
+  return `azure-blob://abarva-source-contract-documents/${args.tenantKey}/${args.datasetId}/${row.source_file_name}`;
 }
 
-function usageRows(contractId) {
-  return [
-    ["Unused premium analytics seats", "720", "410", "720", "540000"],
-    ["Retiring duplicate reporting workspace", "940", "510", "940", "710000"],
-    ["Renewal uplift exposure pool", "420", "235", "420", "330000"],
-  ].map(([productName, assigned, active, paid, cost], index) => ({
-    source_system: "Microsoft Entra ID",
-    source_module: "SaaS Usage",
-    source_object: "monthly_saas_usage",
-    source_record_id: `ENTRA-USAGE-${contractId}-${index + 1}`,
-    source_record_url_or_path: "entra:/enterprise-applications/usage",
-    tool_id: `TOOL-${contractId}-${index + 1}`,
-    product_id: `PROD-${contractId}-${index + 1}`,
-    product_name: productName,
-    sku_id: `SKU-${contractId}-${index + 1}`,
-    contract_id: contractId,
-    vendor_id: "VND-MICROSOFT",
-    tenant_subscription_workspace_id: `TENANT-WORKSPACE-${index + 1}`,
-    function_ref: "FUNC-IT-DATA",
-    team_ref: "TEAM-DATA-PLATFORM",
-    assigned_seats: assigned,
-    active_users: active,
-    inactive_users: String(Number(assigned) - Number(active)),
-    paid_seats: paid,
-    overage_seats: "0",
-    usage_metric_name: "monthly_active_users",
-    usage_count: active,
-    last_activity_band: "31-90 days",
-    month: `2027-0${index + 4}-01`,
-    period_start: `2027-0${index + 4}-01`,
-    period_end: `2027-0${index + 4}-28`,
-    unit_cost: String(Math.round(Number(cost) / Math.max(1, Number(paid)))),
-    committed_amount: cost,
-    actual_cost: cost,
-    allocation_basis: "assigned_seat_cost",
-    renewal_true_up_linkage: "renewal_baseline",
-    recoverability_state: "recoverable_after_owner_review",
-    usage_evidence_state: "system_evidenced",
-    baseline_metric_state: "baseline_present",
-    finance_validation_state: "not_validated",
-    claimable_value_state: "claimable",
-  }));
+function pageId(row) {
+  return `${row.source_file_id}:page:${String(row.source_page).padStart(4, "0")}`;
 }
 
-function sourcingRows(contractId) {
-  return [
-    {
-      source_system: "SAP Ariba",
-      source_module: "Sourcing",
-      source_object: "supplier_offer_line",
-      source_record_id: `ARIBA-BAFO-${contractId}-001`,
-      source_record_url_or_path: "ariba:/sourcing/events/bafo-lines",
-      event_id: `EVT-${contractId}-OPT-2027`,
-      event_type: "incumbent_optimization",
-      stage: "BAFO",
-      round: "2",
-      lot_package: "Data platform optimization package",
-      requirement_id: `REQ-${contractId}-COMMERCIAL-01`,
-      scoring_weight: "0.35",
-      supplier_id: "SUP-MICROSOFT",
-      vendor_id: "VND-MICROSOFT",
-      response_id: `RESP-${contractId}-BAFO`,
-      response_status: "submitted",
-      submitted_timestamp: "2027-06-24T15:35:00Z",
-      bafo_marker: "true",
-      commercial_line_item: "Renewal price concession and index-cap package",
-      unit: "annual",
-      volume_assumption: "current run-rate",
-      price: "34900000",
-      transition_cost: "0",
-      optional_excluded_cost: "0",
-      technical_score: "88",
-      commercial_score: "94",
-      risk_score: "76",
-      score: "89",
-      evaluator_role: "Strategic sourcing lead",
-      exception_type: "",
-      clarification_state: "closed",
-      normalized_cost: "36000000",
-      line_item_cost: "34900000",
-      comparability_flag: "comparable",
-      unresolved_gap_reason: "",
-    },
-  ];
+function spanId(row) {
+  return `${row.extraction_id}:span`;
 }
 
-async function verifyContract(client, args) {
+async function deleteDocumentRows(client, args, inventory, pages, clauses) {
+  const fileIds = inventory.map((row) => row.source_file_id);
+  const pageIds = pages.map(pageId);
+  const spanIds = clauses.map(spanId);
+  const extractionIds = clauses.map((row) => row.extraction_id);
+  if (extractionIds.length) {
+    await client.query(
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
+        WHERE tenant_key = $1 AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
+      [args.tenantKey, extractionIds, fileIds],
+    );
+  }
+  if (spanIds.length) {
+    await client.query(
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
+        WHERE tenant_key = $1 AND span_id = ANY($2::text[])`,
+      [args.tenantKey, spanIds],
+    );
+  }
+  if (pageIds.length) {
+    await client.query(
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
+        WHERE tenant_key = $1 AND page_id = ANY($2::text[])`,
+      [args.tenantKey, pageIds],
+    );
+  }
+  if (fileIds.length) {
+    await client.query(
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file
+        WHERE tenant_key = $1 AND file_id = ANY($2::text[])`,
+      [args.tenantKey, fileIds],
+    );
+  }
+}
+
+async function loadDocumentEvidence(client, args) {
+  await ensureDocumentSchema(client);
+  const inventory = readCsv("synthetic/contract_pdf_document_inventory.csv");
+  const pages = readCsv("synthetic/contract_pdf_page_text.csv");
+  const clauses = readCsv("synthetic/contract_pdf_clause_extractions.csv");
+  await deleteDocumentRows(client, args, inventory, pages, clauses);
+
+  const concepts = new Map();
+  for (const row of clauses) {
+    const conceptRef = nonEmpty(row.concept_ref);
+    if (!conceptRef) continue;
+    const isNumeric = nonEmpty(row.value_num) != null;
+    concepts.set(conceptRef, {
+      concept_ref: conceptRef,
+      domain: conceptRef.split(".")[0] || "contract",
+      label: conceptRef
+        .split(".")
+        .slice(1)
+        .join(" ")
+        .replace(/_/gu, " "),
+      datatype: isNumeric ? "numeric" : "text",
+      unit: isNumeric && /value|cost|spend|credit|variance|amount/iu.test(conceptRef)
+        ? "usd"
+        : null,
+      definition:
+        "Synthetic contract-document concept extracted from governed PDF evidence package.",
+    });
+  }
+  for (const concept of concepts.values()) {
+    await client.query(
+      `INSERT INTO ${quoteIdent(META_SCHEMA)}.concept
+       (concept_ref, domain, label, datatype, unit, definition, active)
+       VALUES ($1, $2, $3, $4, $5, $6, true)
+       ON CONFLICT (concept_ref) DO UPDATE SET
+         domain = excluded.domain,
+         label = excluded.label,
+         datatype = excluded.datatype,
+         unit = excluded.unit,
+         definition = excluded.definition,
+         active = true`,
+      [
+        concept.concept_ref,
+        concept.domain,
+        concept.label,
+        concept.datatype,
+        concept.unit,
+        concept.definition,
+      ],
+    );
+  }
+
+  for (const row of inventory) {
+    const mapped = row.mapping_status === "mapped_to_register_contract";
+    await client.query(
+      `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.file (
+         file_id, tenant_key, blob_uri, content_sha256, file_name, media_type,
+         page_count, load_run_id, document_role, document_type, contract_ref,
+         duplicate_state, visibility_class, content_authenticity, metadata_json
+       )
+       VALUES ($1, $2, $3, $4, $5, 'application/pdf', $6, $7, $8, $9, $10,
+               'not_checked', 'internal', 'synthetic', $11::jsonb)`,
+      [
+        row.source_file_id,
+        args.tenantKey,
+        blobUriFor(args, row),
+        row.source_file_sha256,
+        row.source_file_name,
+        intValue(row.page_count),
+        args.loadRunId,
+        documentRole(row),
+        row.document_type,
+        mapped ? nonEmpty(row.contract_id) : null,
+        JSON.stringify({
+          dataset_id: args.datasetId,
+          dataset_version: DATASET_VERSION,
+          mapping_status: row.mapping_status,
+          storage_target: row.storage_target,
+          parser_version: row.parser_version,
+          loaded_policy: row.loaded_policy,
+          source_package_path: relPackagePath(`documents/${row.source_file_name}`),
+        }),
+      ],
+    );
+  }
+
+  for (const row of pages) {
+    const text = row.page_text || "";
+    await client.query(
+      `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.page (
+         page_id, tenant_key, file_id, page_no, page_text, char_start, char_end, page_sha256
+       )
+       VALUES ($1, $2, $3, $4, $5, 0, $6, $7)`,
+      [
+        pageId(row),
+        args.tenantKey,
+        row.source_file_id,
+        intValue(row.source_page),
+        text,
+        text.length,
+        row.page_text_sha256,
+      ],
+    );
+  }
+
+  for (const row of clauses) {
+    await client.query(
+      `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.span (
+         span_id, tenant_key, file_id, span_kind, heading, span_text, page_from, page_to,
+         char_start, char_end, visibility_class, content_authenticity
+       )
+       VALUES ($1, $2, $3, 'clause', $4, $5, $6, $6, 0, $7, 'internal', 'synthetic')`,
+      [
+        spanId(row),
+        args.tenantKey,
+        row.source_file_id,
+        row.source_section || row.concept_ref,
+        row.source_excerpt || row.value_text,
+        intValue(row.source_page),
+        String(row.source_excerpt || row.value_text || "").length,
+      ],
+    );
+    const valueNum = numericValue(row.value_num);
+    const valueText = valueNum == null ? nonEmpty(row.value_text) : null;
+    await client.query(
+      `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.extraction (
+         extraction_id, tenant_key, load_run_id, concept_ref, extractor_version, model_id,
+         prompt_version, subject_kind, subject_ref, value_text, value_num, unit,
+         source_kind, source_span_id, source_file_id, source_page, source_section,
+         confidence, method, review_state, visibility_class, content_authenticity,
+         payload_json, extracted_at
+       )
+       VALUES ($1, $2, $3, $4, $5, null, 'contract_pdf_adapter_v1', $6, $7, $8, $9, $10,
+               'span', $11, $12, $13, $14, $15, $16, $17, 'internal', 'synthetic', $18::jsonb, now())`,
+      [
+        row.extraction_id,
+        args.tenantKey,
+        args.loadRunId,
+        row.concept_ref,
+        row.extractor_version || "contract_pdf_adapter_v1",
+        row.subject_kind || "contract",
+        row.subject_ref || row.contract_id,
+        valueText,
+        valueNum,
+        valueNum == null ? null : (row.ledger === "commercial" ? "usd" : null),
+        spanId(row),
+        row.source_file_id,
+        intValue(row.source_page),
+        row.source_section,
+        numericValue(row.confidence),
+        row.method || "pdf_text_extraction",
+        row.review_state || "unreviewed",
+        JSON.stringify({
+          dataset_id: args.datasetId,
+          dataset_version: DATASET_VERSION,
+          contract_id: row.contract_id,
+          vendor_id: row.vendor_id,
+          vendor_name: row.vendor_name,
+          source_file_sha256: row.source_file_sha256,
+          document_type: row.document_type,
+          evidence_class: row.evidence_class,
+          ledger: row.ledger,
+          source_excerpt: row.source_excerpt,
+        }),
+      ],
+    );
+  }
+
+  return {
+    doc_file: inventory.length,
+    doc_page: pages.length,
+    doc_span: clauses.length,
+    doc_extraction: clauses.length,
+    mapped_contract_pdf: inventory.filter(
+      (row) => row.mapping_status === "mapped_to_register_contract",
+    ).length,
+    supplemental_prior_pdf: inventory.filter((row) =>
+      String(row.mapping_status).startsWith("supplemental"),
+    ).length,
+  };
+}
+
+async function verifyContractById(client, tenantKey, contractId) {
   const result = await client.query(
     `SELECT tenant_key, contract_id, vendor_ref, vendor_name, annual_value
        FROM source.contract_360
       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
       LIMIT 1`,
-    [tenantAliases(args.tenantKey), args.contractId],
+    [tenantAliases(tenantKey), contractId],
   );
   if (!result.rows[0]) {
     throw new Error(
-      `Contract ${args.contractId} was not found in source.contract_360 for ${args.tenantKey}`,
+      `Contract ${contractId} was not found in source.contract_360 for ${tenantKey}`,
     );
   }
   return result.rows[0];
 }
 
-async function upsertTowerClaim(client, args, contract) {
+function reconciliationRowsByContract(contractIds) {
+  const rows = readCsv("reconciliation/golden_contract_reconciliation.csv");
+  const byId = new Map(rows.map((row) => [row.contract_id, row]));
+  for (const contractId of contractIds) {
+    if (!byId.has(contractId)) {
+      throw new Error(
+        `Package reconciliation is missing required contract_id ${contractId}`,
+      );
+    }
+  }
+  return byId;
+}
+
+async function upsertTowerClaim(client, args, contract, reconciliationRow) {
   await client.query(
     `INSERT INTO ${quoteIdent(TOWER_SCHEMA)}.metric_definition (
        metric_ref, domain, label, description, value_type, unit, aggregation_rule,
@@ -500,9 +704,9 @@ async function upsertTowerClaim(client, args, contract) {
   );
   const claimInputHash = sha256(
     JSON.stringify({
-      contract_id: args.contractId,
+      contract_id: contract.contract_id,
       dataset_id: args.datasetId,
-      realized_value: EXPECTED.realizedValue,
+      realized_value: numericValue(reconciliationRow.realized_value_usd),
       source_thread_id: SOURCE_THREAD_ID,
     }),
   );
@@ -533,11 +737,11 @@ async function upsertTowerClaim(client, args, contract) {
        next_gate_owner_role = null,
        evaluated_at = now()`,
     [
-      `claim-source-contract-golden-${args.contractId.toLowerCase()}`,
+      `claim-source-contract-golden-${contract.contract_id.toLowerCase()}`,
       args.tenantKey,
-      args.contractId,
-      EXPECTED.negotiatedImprovement,
-      EXPECTED.realizedValue,
+      contract.contract_id,
+      numericValue(reconciliationRow.negotiated_improvement_usd),
+      numericValue(reconciliationRow.realized_value_usd),
       "Executed amendment, post-amendment AP invoice run-rate, recovered credits, and Finance/Tower attestation.",
       claimInputHash,
       "Synthetic canary evidence pack for product validation; not client fact.",
@@ -546,74 +750,114 @@ async function upsertTowerClaim(client, args, contract) {
 }
 
 async function reconcile(client, args) {
+  const expectedByContract = reconciliationRowsByContract(args.contractIds);
   const result = await client.query(
     `
-    SELECT
-      (SELECT COALESCE(SUM(credit_calculated::numeric - credit_claimed::numeric), 0)
-         FROM ${quoteIdent(RAW_SCHEMA)}.servicenow_sla_monthly
-        WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = $3) AS sla_unclaimed,
-      (SELECT COALESCE(SUM(actual_spend::numeric), 0)
-         FROM ${quoteIdent(RAW_SCHEMA)}.s4_vendor_invoice_lines
-        WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = $3
-          AND (matching_state = 'off_contract' OR matching_state ILIKE '%duplicate%')) AS invoice_exception,
-      (SELECT COALESCE(SUM(variance::numeric), 0)
-         FROM ${quoteIdent(RAW_SCHEMA)}.fieldglass_rate_card
-        WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = $3
-          AND approval_state = 'variance_unapproved') AS rate_variance,
-      (SELECT COALESCE(SUM(actual_cost::numeric), 0)
-         FROM ${quoteIdent(RAW_SCHEMA)}.entra_saas_usage_monthly
-        WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = $3
-          AND claimable_value_state = 'claimable') AS avoided_cost,
-      (SELECT COALESCE(SUM(normalized_cost::numeric - line_item_cost::numeric), 0)
-         FROM ${quoteIdent(RAW_SCHEMA)}.ariba_sourcing_events
-        WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = $3) AS negotiated_improvement,
-      (SELECT COALESCE(SUM(calculated_value), 0)
-         FROM ${quoteIdent(TOWER_SCHEMA)}.value_claim
-        WHERE tenant_key = $1 AND subject_ref = $3 AND claim_state = 'finance_validated') AS realized_value
+    WITH selected AS (
+      SELECT UNNEST($3::text[]) AS contract_id
+    )
+    SELECT jsonb_object_agg(contract_id, payload) AS by_contract
+    FROM (
+      SELECT
+        s.contract_id,
+        jsonb_build_object(
+          'service_credit_gap_usd',
+            (SELECT COALESCE(SUM(service_credits_earned_usd::numeric - service_credits_claimed_usd::numeric), 0)
+               FROM ${quoteIdent(SOURCE_SCHEMA)}.golden_contract_sla_incident_service_credit_monthly
+              WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = s.contract_id),
+          'invoice_line_exceptions_usd',
+            (SELECT COALESCE(SUM(exception_amount_usd::numeric), 0)
+               FROM ${quoteIdent(SOURCE_SCHEMA)}.golden_contract_invoice_lines
+              WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = s.contract_id),
+          'rate_card_variance_usd',
+            (SELECT COALESCE(SUM(rate_variance_usd::numeric), 0)
+               FROM ${quoteIdent(SOURCE_SCHEMA)}.golden_contract_rate_card_variance
+              WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = s.contract_id),
+          'recoverable_leakage_usd',
+            (SELECT COALESCE(SUM(service_credits_earned_usd::numeric - service_credits_claimed_usd::numeric), 0)
+               FROM ${quoteIdent(SOURCE_SCHEMA)}.golden_contract_sla_incident_service_credit_monthly
+              WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = s.contract_id)
+            +
+            (SELECT COALESCE(SUM(exception_amount_usd::numeric), 0)
+               FROM ${quoteIdent(SOURCE_SCHEMA)}.golden_contract_invoice_lines
+              WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = s.contract_id)
+            +
+            (SELECT COALESCE(SUM(rate_variance_usd::numeric), 0)
+               FROM ${quoteIdent(SOURCE_SCHEMA)}.golden_contract_rate_card_variance
+              WHERE _tenant_key = $1 AND _dataset_id = $2 AND contract_id = s.contract_id),
+          'realized_value_usd',
+            (SELECT COALESCE(SUM(calculated_value), 0)
+               FROM ${quoteIdent(TOWER_SCHEMA)}.value_claim
+              WHERE tenant_key = $1 AND subject_ref = s.contract_id AND claim_state = 'finance_validated'),
+          'doc_extraction_rows',
+            (SELECT COUNT(*)
+               FROM ${quoteIdent(DOC_SCHEMA)}.extraction
+              WHERE tenant_key = $1 AND subject_ref = s.contract_id)
+        ) AS payload
+      FROM selected s
+    ) checks
     `,
-    [args.tenantKey, args.datasetId, args.contractId],
+    [args.tenantKey, args.datasetId, args.contractIds],
   );
-  const row = result.rows[0];
-  const actual = {
-    slaUnclaimed: Number(row.sla_unclaimed),
-    invoiceException: Number(row.invoice_exception),
-    rateVariance: Number(row.rate_variance),
-    recoverableLeakage:
-      Number(row.sla_unclaimed) +
-      Number(row.invoice_exception) +
-      Number(row.rate_variance),
-    avoidedCost: Number(row.avoided_cost),
-    negotiatedImprovement: Number(row.negotiated_improvement),
-    realizedValue: Number(row.realized_value),
+  const actualByContract = result.rows[0]?.by_contract || {};
+  const failures = [];
+  for (const contractId of args.contractIds) {
+    const expected = expectedByContract.get(contractId);
+    const actual = actualByContract[contractId] || {};
+    for (const [expectedKey, actualKey] of [
+      ["service_credit_gap_usd", "service_credit_gap_usd"],
+      ["invoice_line_exceptions_usd", "invoice_line_exceptions_usd"],
+      ["rate_card_variance_usd", "rate_card_variance_usd"],
+      ["recoverable_leakage_usd", "recoverable_leakage_usd"],
+      ["realized_value_usd", "realized_value_usd"],
+    ]) {
+      if (Number(actual[actualKey] || 0) !== Number(expected[expectedKey] || 0)) {
+        failures.push(
+          `${contractId}.${expectedKey}: expected ${expected[expectedKey]}, got ${actual[actualKey] || 0}`,
+        );
+      }
+    }
+    if (Number(actual.doc_extraction_rows || 0) <= 0) {
+      failures.push(`${contractId}.doc_extraction_rows: expected > 0`);
+    }
+  }
+  return {
+    by_contract: actualByContract,
+    passed: failures.length === 0,
+    failures,
   };
-  const failures = Object.entries(EXPECTED)
-    .filter(([key, expected]) => actual[key] !== expected)
-    .map(
-      ([key, expected]) => `${key}: expected ${expected}, got ${actual[key]}`,
-    );
-  return { ...actual, passed: failures.length === 0, failures };
 }
 
 async function main() {
   const args = parseArgs();
+  const manifest = readJson("manifest.json");
+  const qualityReport = readJson("documents/pdf_extraction_quality_report.json");
   const plan = {
     event: "source_contract_golden_evidence_plan",
     apply: false,
     tenant_key: args.tenantKey,
     dataset_id: args.datasetId,
     dataset_version: DATASET_VERSION,
-    contract_id: args.contractId,
+    contract_ids: args.contractIds,
     load_run_id: args.loadRunId,
     evidence_rows: {
-      servicenow_sla_monthly: 12,
-      s4_vendor_invoice_lines: 2,
-      fieldglass_rate_card: 2,
-      entra_saas_usage_monthly: 3,
-      ariba_sourcing_events: 1,
-      tower_value_claim: 1,
+      package_csv_tables: PACKAGE_CSV_TABLES.length,
+      source_rows: PACKAGE_CSV_TABLES.reduce(
+        (sum, [, relativePath]) => sum + readCsv(relativePath).length,
+        0,
+      ),
+      doc_file: readCsv("synthetic/contract_pdf_document_inventory.csv").length,
+      doc_page: readCsv("synthetic/contract_pdf_page_text.csv").length,
+      doc_extraction: readCsv("synthetic/contract_pdf_clause_extractions.csv").length,
+      mapped_golden_pdf: qualityReport.mapped_golden_pdf_count,
+      supplemental_prior_pdf: qualityReport.supplemental_prior_pdf_count,
+      tower_value_claim: args.contractIds.length,
     },
-    expected: EXPECTED,
-    note: "Governed synthetic canary evidence; clearly marked synthetic and loaded through source-system-shaped raw tables.",
+    expected: manifest.contracts.filter((contract) =>
+      args.contractIds.includes(contract.contract_id),
+    ),
+    prior_pdf_policy: qualityReport.prior_corpus_policy,
+    note: "Governed synthetic canary evidence; PDFs and CSVs load through the same Source/document adapter path and remain clearly marked synthetic.",
   };
   if (!args.apply) {
     console.log(JSON.stringify(plan, null, 2));
@@ -635,41 +879,28 @@ async function main() {
     await client.query("select set_config('app.tenant_key', $1, false)", [
       args.tenantKey,
     ]);
-    const contract = await verifyContract(client, args);
-    await deleteAugmentationRows(client, args);
+    const reconciliationByContract = reconciliationRowsByContract(
+      args.contractIds,
+    );
+    const contracts = [];
+    for (const contractId of args.contractIds) {
+      contracts.push(await verifyContractById(client, args.tenantKey, contractId));
+    }
+    const sourceTablesInserted = await loadPackageCsvTables(client, args);
+    const documentEvidenceInserted = await loadDocumentEvidence(client, args);
     const inserted = {
-      servicenow_sla_monthly: await insertRawRows(
-        client,
-        args,
-        "servicenow_sla_monthly",
-        performanceRows(args.contractId),
-      ),
-      s4_vendor_invoice_lines: await insertRawRows(
-        client,
-        args,
-        "s4_vendor_invoice_lines",
-        invoiceRows(args.contractId),
-      ),
-      fieldglass_rate_card: await insertRawRows(
-        client,
-        args,
-        "fieldglass_rate_card",
-        rateCardRows(args.contractId),
-      ),
-      entra_saas_usage_monthly: await insertRawRows(
-        client,
-        args,
-        "entra_saas_usage_monthly",
-        usageRows(args.contractId),
-      ),
-      ariba_sourcing_events: await insertRawRows(
-        client,
-        args,
-        "ariba_sourcing_events",
-        sourcingRows(args.contractId),
-      ),
+      source_tables: sourceTablesInserted,
+      document_evidence: documentEvidenceInserted,
+      tower_value_claim: args.contractIds.length,
     };
-    await upsertTowerClaim(client, args, contract);
+    for (const contract of contracts) {
+      await upsertTowerClaim(
+        client,
+        args,
+        contract,
+        reconciliationByContract.get(contract.contract_id),
+      );
+    }
     const reconciliation = await reconcile(client, args);
     if (!reconciliation.passed) {
       throw new Error(
@@ -683,7 +914,7 @@ async function main() {
           ...plan,
           event: "source_contract_golden_evidence_loaded",
           apply: true,
-          contract,
+          contracts,
           inserted,
           reconciliation,
         },
