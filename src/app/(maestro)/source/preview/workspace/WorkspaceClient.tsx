@@ -176,7 +176,7 @@ export function WorkspaceClient({
   }, []);
 
   return (
-    <div className="sw-root" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#f5f1eb', overflow: 'hidden' }}>
+    <div className="sw-root" style={{ height: 'calc(100dvh - 58px)', display: 'flex', flexDirection: 'column', background: '#f5f1eb', overflow: 'hidden' }}>
       {/* Live-data banner — every figure below reads the governed Source
           data plane for this tenant, not an illustrative fixture. */}
       <div
