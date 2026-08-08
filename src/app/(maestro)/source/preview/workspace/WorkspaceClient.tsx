@@ -232,9 +232,9 @@ export function WorkspaceClient({
           suggestedActions={vm.avaSuggestedActions}
           surfaceContext={vm.avaSurfaceContext}
           workspace={
-            <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflowY: 'auto' }}>
-              <div style={{ background: '#fff', borderBottom: '1px solid rgba(10,10,11,.12)', padding: '16px 30px 0', position: 'sticky', top: 0, zIndex: 30 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 11 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflowY: vm.isExplore ? 'hidden' : 'auto' }}>
+              <div style={{ background: '#fff', borderBottom: '1px solid rgba(10,10,11,.12)', padding: vm.isExplore ? '10px 24px 0' : '16px 30px 0', position: 'sticky', top: 0, zIndex: 30, flex: '0 0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: vm.isExplore ? 7 : 11 }}>
                   {vm.crumbs.map((c, i) => (
                     <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: c.color }}>{c.label}</span>
@@ -246,14 +246,14 @@ export function WorkspaceClient({
                     <span style={{ color: '#5f5e5a' }}>{vm.availLabel}</span>
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: vm.isExplore ? 'nowrap' : 'wrap' }}>
                   <div style={{ flex: '1 1 460px', minWidth: 'min(100%,420px)' }}>
-                    <h1 style={{ fontFamily: 'Fraunces,Georgia,serif', fontWeight: 500, fontSize: 'clamp(22px,1.8vw,28px)', lineHeight: 1.12, letterSpacing: '-0.012em', color: '#0a0a0b', margin: '0 0 8px' }}>
+                    <h1 style={{ fontFamily: vm.isExplore ? 'Inter,system-ui,sans-serif' : 'Fraunces,Georgia,serif', fontWeight: vm.isExplore ? 750 : 500, fontSize: vm.isExplore ? 22 : 'clamp(22px,1.8vw,28px)', lineHeight: vm.isExplore ? 1.15 : 1.12, letterSpacing: 0, color: '#0a0a0b', margin: vm.isExplore ? '0 0 3px' : '0 0 8px' }}>
                       {vm.title}
                     </h1>
-                    <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#5f5e5a', margin: '0 0 14px', maxWidth: 'none' }}>{vm.thesis}</p>
+                    <p style={{ fontSize: vm.isExplore ? 12.5 : 14.5, lineHeight: vm.isExplore ? 1.35 : 1.55, color: '#5f5e5a', margin: vm.isExplore ? '0 0 8px' : '0 0 14px', maxWidth: 'none', overflow: vm.isExplore ? 'hidden' : undefined, textOverflow: vm.isExplore ? 'ellipsis' : undefined, whiteSpace: vm.isExplore ? 'nowrap' : undefined }}>{vm.thesis}</p>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, paddingBottom: 14 }}>
+                  <div style={{ display: 'flex', gap: 8, paddingBottom: vm.isExplore ? 8 : 14 }}>
                     {vm.headerActions.map((a, i) => (
                       <button key={i} onClick={a.onClick} style={{ border: `1px solid ${a.border}`, background: a.bg, color: a.fg, borderRadius: 6, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         {a.label}
@@ -263,14 +263,14 @@ export function WorkspaceClient({
                 </div>
                 <div style={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
                   {vm.tabs.map((t, i) => (
-                    <button key={i} onClick={t.onClick} style={{ border: 'none', borderBottom: `2px solid ${t.line}`, background: 'transparent', color: t.fg, fontSize: 13, fontWeight: t.weight, padding: '11px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <button key={i} onClick={t.onClick} style={{ border: 'none', borderBottom: `2px solid ${t.line}`, background: 'transparent', color: t.fg, fontSize: 13, fontWeight: t.weight, padding: vm.isExplore ? '8px 14px' : '11px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       {t.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ padding: '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ padding: vm.isExplore ? '10px 24px 14px' : '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: vm.isExplore ? 10 : 18, flex: vm.isExplore ? '1 1 auto' : undefined, minHeight: vm.isExplore ? 0 : undefined, overflow: vm.isExplore ? 'hidden' : undefined }}>
                 {vm.stripCompact ? <CompactContextStrip vm={vm} /> : null}
 
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
