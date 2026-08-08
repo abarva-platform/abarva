@@ -429,7 +429,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
     <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b' }}>Contract relationship map</div>
-        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value ledgers, and the Door 1 decision.</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value ledgers, and the approval decision.</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(520px,1.3fr) minmax(340px,.7fr)', gap: 0 }}>
         <div style={{ minWidth: 0, padding: '14px 16px' }}>
@@ -449,7 +449,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
             {node(240, 30, 150, 64, 'Scope', `${contract.scoped_application_count ?? 0} apps`, '#3d6ea8')}
             {node(240, 128, 150, 64, 'Source files', `${sourceConnections.length} feeds`, '#ba7517')}
             {node(475, 70, 150, 70, 'Value ledgers', `${readyLines.length} ready / ${gapLines.length} gaps`, gapLines.length ? '#ba7517' : '#1d9e75')}
-            {node(710, 70, 180, 70, 'Door 1 action', spine.selected.band, '#0a0a0b')}
+            {node(710, 70, 180, 70, 'Optimization action', spine.selected.band, '#0a0a0b')}
             {ledger.lines.slice(0, 5).map((item, i) => {
               const x = 485 + i * 26;
               const color = item.evidenceClass === 'MISSING' ? '#a32d2d' : item.state === 'Quantified' ? '#1d9e75' : '#ba7517';
