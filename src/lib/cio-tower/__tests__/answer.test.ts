@@ -6,85 +6,87 @@ import {
   parseVisibleAnswerContract,
   validateVisibleAnswer,
   type CioTowerPromptContext,
-} from '../answer';
-import { selectTowerVisualContract } from '../visual-contract';
-import type { TowerV3RuntimeViewModel } from '@/lib/tower/tower-v3-runtime-view';
+} from "../answer";
+import { selectTowerVisualContract } from "../visual-contract";
+import type { TowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
 
-function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
+function context(
+  overrides: Partial<CioTowerPromptContext> = {},
+): CioTowerPromptContext {
   const base: CioTowerPromptContext = {
-    tenantKey: 'skyharbor-air',
-    tenantName: 'Airline Demo',
-    question: 'give me the list of top 10 IT programs',
+    tenantKey: "skyharbor-air",
+    tenantName: "Airline Demo",
+    question: "give me the list of top 10 IT programs",
     contract: {
-      contract_key: 'tower_top_it_programs_by_budget',
-      intent: 'table',
-      question_family: 'top_it_programs_by_budget',
-      measure_key: 'initiative_budget_fy26',
-      artifact_type: 'table',
+      contract_key: "tower_top_it_programs_by_budget",
+      intent: "table",
+      question_family: "top_it_programs_by_budget",
+      measure_key: "initiative_budget_fy26",
+      artifact_type: "table",
       examples: [],
     },
     visualContract: selectTowerVisualContract({
-      question: 'give me the list of top 10 IT programs',
-      contractKey: 'tower_top_it_programs_by_budget',
-      artifactType: 'table',
+      question: "give me the list of top 10 IT programs",
+      contractKey: "tower_top_it_programs_by_budget",
+      artifactType: "table",
     }),
     measures: [
       {
-        measure_key: 'total_it_budget_fy26',
-        label: 'FY26 IT budget',
-        description: 'Committed FY26 IT budget envelope.',
-        period: 'fy26',
-        basis: 'committed',
-        scope: 'enterprise_envelope',
-        value_numeric: '2578000000',
+        measure_key: "total_it_budget_fy26",
+        label: "FY26 IT budget",
+        description: "Committed FY26 IT budget envelope.",
+        period: "fy26",
+        basis: "committed",
+        scope: "enterprise_envelope",
+        value_numeric: "2578000000",
         value_json: { row_count: 13 },
-        source_fact_keys: ['fact-1'],
-        formula_version: 'cio_tower_v1',
+        source_fact_keys: ["fact-1"],
+        formula_version: "cio_tower_v1",
       },
     ],
     relevantFacts: [
       {
-        fact_key: 'fact-1',
-        entity_key: 'initiative-1',
-        entity_type: 'initiative',
-        entity_display_name: 'Crew Recovery & Legality Modernization',
-        measure: 'budget_fy26_usd',
-        scope: 'initiative',
-        view: 'initiative_budget',
-        amount_type: 'none',
-        basis: 'committed',
-        period: 'fy26',
-        value_numeric: '28300000',
+        fact_key: "fact-1",
+        entity_key: "initiative-1",
+        entity_type: "initiative",
+        entity_display_name: "Crew Recovery & Legality Modernization",
+        measure: "budget_fy26_usd",
+        scope: "initiative",
+        view: "initiative_budget",
+        amount_type: "none",
+        basis: "committed",
+        period: "fy26",
+        value_numeric: "28300000",
         value_text: null,
-        unit: 'usd',
-        value_source: 'tenant_file',
-        confidence: 'high',
-        source_key: 'source-1',
-        source_row: '12',
+        unit: "usd",
+        value_source: "tenant_file",
+        confidence: "high",
+        source_key: "source-1",
+        source_row: "12",
         attributes: {},
       },
     ],
     relationships: [],
-    gaps: ['Actual spend YTD is missing or not separately loaded.'],
+    gaps: ["Actual spend YTD is missing or not separately loaded."],
     valueClaimPolicy: {
-      projectionRole: 'derived_read_model',
-      projectionPath: 'path_a_derived_projection',
-      sourceOfTruthStatus: 'bridge_only',
-      v3ReconciliationStatus: 'not_v3_reconciled',
+      projectionRole: "derived_read_model",
+      projectionPath: "path_a_derived_projection",
+      sourceOfTruthStatus: "bridge_only",
+      v3ReconciliationStatus: "not_v3_reconciled",
       realizedValueLanguageAllowed: false,
-      caveat: 'Realized value requires finance-attested measured evidence.',
+      caveat: "Realized value requires finance-attested measured evidence.",
       claim: {
-        claimId: 'test-claim',
-        claimKind: 'realized_value',
-        label: 'Measured value YTD',
+        claimId: "test-claim",
+        claimKind: "realized_value",
+        label: "Measured value YTD",
         value: null,
-        valueType: 'currency',
+        valueType: "currency",
         sourceFactIds: [],
         evidenceIds: [],
-        gateStatus: 'blocked',
+        gateStatus: "blocked",
         realizedValueLanguageAllowed: false,
-        reason: 'Realized value requires finance-attested measured evidence.',
-        requiredEvidence: ['v3 canonical fact reconciliation'],
+        reason: "Realized value requires finance-attested measured evidence.",
+        requiredEvidence: ["v3 canonical fact reconciliation"],
       },
     },
   };
@@ -104,159 +106,168 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
 function towerV3RuntimeView(): TowerV3RuntimeViewModel {
   return {
     enabled: true,
-    tenantKey: 'meridian-health',
-    tenantName: 'Healthcare Demo',
-    contextPackId: 'meridian-health-tower-v3-live-context-pack',
+    tenantKey: "meridian-health",
+    tenantName: "Healthcare Demo",
+    contextPackId: "meridian-health-tower-v3-live-context-pack",
     headline:
-      'Tower is using the governed context pack for measurement planning, readiness, and value-hypothesis control.',
-    mode: 'active',
-    truthStatus: 'active',
+      "Tower is using the governed context pack for measurement planning, readiness, and value-hypothesis control.",
+    mode: "active",
+    truthStatus: "active",
     cxoStory: {
-      tenantDisplayName: 'Meridian',
-      eyebrow: 'Tower · CIO/CFO value cockpit',
+      tenantDisplayName: "Meridian",
+      eyebrow: "Tower · CIO/CFO value cockpit",
       headline:
         "Meridian's technology value cockpit: budget, portfolio, evidence, and decisions.",
       executiveBrief:
-        'Meridian Tower is ready for a leadership value conversation, but not certified financial outcome claims.',
+        "Meridian Tower is ready for a leadership value conversation, but not certified financial outcome claims.",
       cards: [
         {
-          label: 'Budget lens',
-          value: 'In view',
-          caption: 'Spend signals are available for management review.',
+          label: "Budget lens",
+          value: "In view",
+          caption: "Spend signals are available for management review.",
         },
         {
-          label: 'Planned value',
-          value: '$134.0M',
-          caption: 'Planning hypotheses require proof before board use.',
+          label: "Planned value",
+          value: "$134.0M",
+          caption: "Planning hypotheses require proof before board use.",
         },
         {
-          label: 'Proof posture',
-          value: '79 gated',
-          caption: 'Claims need baseline, owner, and finance evidence.',
+          label: "Proof posture",
+          value: "79 gated",
+          caption: "Claims need baseline, owner, and finance evidence.",
         },
         {
-          label: 'Leadership blockers',
-          value: '1 theme',
-          caption: 'Evidence gaps are grouped for executive action.',
+          label: "Leadership blockers",
+          value: "1 theme",
+          caption: "Evidence gaps are grouped for executive action.",
         },
       ],
       tabs: {
         overview: {
-          key: 'overview',
-          headline: 'What leadership should inspect this week.',
-          summary: 'Align on budget posture, planned value, and proof blockers.',
-          decisionImplication: 'Use Tower as a value-governance cockpit.',
-          nextAction: 'Confirm the baseline evidence required for the next steering meeting.',
-          visualType: 'executive_brief',
+          key: "overview",
+          headline: "What leadership should inspect this week.",
+          summary:
+            "Align on budget posture, planned value, and proof blockers.",
+          decisionImplication: "Use Tower as a value-governance cockpit.",
+          nextAction:
+            "Confirm the baseline evidence required for the next steering meeting.",
+          visualType: "executive_brief",
         },
         value: {
-          key: 'value',
-          headline: 'Where planned value exists but proof is still missing.',
-          summary: 'Rank planning hypotheses and proof gaps.',
-          decisionImplication: 'Discuss value at stake without approving claims.',
-          nextAction: 'Prioritize baseline validation.',
-          visualType: 'value_waterfall',
+          key: "value",
+          headline: "Where planned value exists but proof is still missing.",
+          summary: "Rank planning hypotheses and proof gaps.",
+          decisionImplication:
+            "Discuss value at stake without approving claims.",
+          nextAction: "Prioritize baseline validation.",
+          visualType: "value_waterfall",
         },
         budget: {
-          key: 'budget',
-          headline: 'Where budget pressure needs finance validation.',
-          summary: 'Separate spend signals from numbers that need attestation.',
-          decisionImplication: 'Decide where ownership needs to sharpen.',
-          nextAction: 'Load the finance budget extract.',
-          visualType: 'budget_mix',
+          key: "budget",
+          headline: "Where budget pressure needs finance validation.",
+          summary: "Separate spend signals from numbers that need attestation.",
+          decisionImplication: "Decide where ownership needs to sharpen.",
+          nextAction: "Load the finance budget extract.",
+          visualType: "budget_mix",
         },
         portfolio: {
-          key: 'portfolio',
-          headline: 'Which programs need governance before funding confidence improves.',
-          summary: 'Tie initiatives to value basis and proof posture.',
-          decisionImplication: 'Sequence programs by evidence readiness.',
-          nextAction: 'Assign owners to the top programs.',
-          visualType: 'portfolio_lanes',
+          key: "portfolio",
+          headline:
+            "Which programs need governance before funding confidence improves.",
+          summary: "Tie initiatives to value basis and proof posture.",
+          decisionImplication: "Sequence programs by evidence readiness.",
+          nextAction: "Assign owners to the top programs.",
+          visualType: "portfolio_lanes",
         },
         benchmark: {
-          key: 'benchmark',
-          headline: 'Which external patterns are useful.',
-          summary: 'Use comparators without claiming measured performance.',
-          decisionImplication: 'Choose the right validation questions.',
-          nextAction: 'Validate the tenant baseline.',
-          visualType: 'benchmark_blockers',
+          key: "benchmark",
+          headline: "Which external patterns are useful.",
+          summary: "Use comparators without claiming measured performance.",
+          decisionImplication: "Choose the right validation questions.",
+          nextAction: "Validate the tenant baseline.",
+          visualType: "benchmark_blockers",
         },
         evidence: {
-          key: 'evidence',
-          headline: 'What proof is missing before the view becomes board-ready.',
-          summary: 'Keep lineage and diagnostics out of the executive first read.',
-          decisionImplication: 'Use evidence gaps as the control list.',
-          nextAction: 'Assign source owners and finance attestation.',
-          visualType: 'evidence_checklist',
+          key: "evidence",
+          headline:
+            "What proof is missing before the view becomes board-ready.",
+          summary:
+            "Keep lineage and diagnostics out of the executive first read.",
+          decisionImplication: "Use evidence gaps as the control list.",
+          nextAction: "Assign source owners and finance attestation.",
+          visualType: "evidence_checklist",
         },
         insights: {
-          key: 'insights',
-          headline: 'What the CIO and CFO should do next.',
-          summary: 'Convert posture into executive decisions.',
-          decisionImplication: 'CIO owns readiness; CFO owns measurement confidence.',
-          nextAction: 'Create a joint measurement sprint.',
-          visualType: 'role_decision_cards',
+          key: "insights",
+          headline: "What the CIO and CFO should do next.",
+          summary: "Convert posture into executive decisions.",
+          decisionImplication:
+            "CIO owns readiness; CFO owns measurement confidence.",
+          nextAction: "Create a joint measurement sprint.",
+          visualType: "role_decision_cards",
         },
       },
     },
-    cxoStorySource: 'deterministic',
+    cxoStorySource: "deterministic",
     cxoStoryValidation: { attempted: false, passed: true, issues: [] },
     cxoVisualSpecs: {
       overview: {
-        key: 'overview',
-        visualType: 'executive_brief',
-        title: 'What leadership should inspect this week.',
-        insight: 'Align on budget posture, planned value, and proof blockers.',
+        key: "overview",
+        visualType: "executive_brief",
+        title: "What leadership should inspect this week.",
+        insight: "Align on budget posture, planned value, and proof blockers.",
         dataRefs: [],
-        caveat: 'Use Tower as a value-governance cockpit.',
+        caveat: "Use Tower as a value-governance cockpit.",
       },
       value: {
-        key: 'value',
-        visualType: 'value_waterfall',
-        title: 'Where planned value exists but proof is still missing.',
-        insight: 'Rank planning hypotheses and proof gaps.',
+        key: "value",
+        visualType: "value_waterfall",
+        title: "Where planned value exists but proof is still missing.",
+        insight: "Rank planning hypotheses and proof gaps.",
         dataRefs: [],
-        caveat: 'Discuss value at stake without approving claims.',
+        caveat: "Discuss value at stake without approving claims.",
       },
       budget: {
-        key: 'budget',
-        visualType: 'budget_mix',
-        title: 'Where budget pressure needs finance validation.',
-        insight: 'Separate spend signals from numbers that need attestation.',
+        key: "budget",
+        visualType: "budget_mix",
+        title: "Where budget pressure needs finance validation.",
+        insight: "Separate spend signals from numbers that need attestation.",
         dataRefs: [],
-        caveat: 'Decide where ownership needs to sharpen.',
+        caveat: "Decide where ownership needs to sharpen.",
       },
       portfolio: {
-        key: 'portfolio',
-        visualType: 'portfolio_lanes',
-        title: 'Which programs need governance before funding confidence improves.',
-        insight: 'Tie initiatives to value basis and proof posture.',
+        key: "portfolio",
+        visualType: "portfolio_lanes",
+        title:
+          "Which programs need governance before funding confidence improves.",
+        insight: "Tie initiatives to value basis and proof posture.",
         dataRefs: [],
-        caveat: 'Sequence programs by evidence readiness.',
+        caveat: "Sequence programs by evidence readiness.",
       },
       benchmark: {
-        key: 'benchmark',
-        visualType: 'benchmark_blockers',
-        title: 'Which external patterns are useful.',
-        insight: 'Use comparators without claiming measured performance.',
+        key: "benchmark",
+        visualType: "benchmark_blockers",
+        title: "Which external patterns are useful.",
+        insight: "Use comparators without claiming measured performance.",
         dataRefs: [],
-        caveat: 'Choose the right validation questions.',
+        caveat: "Choose the right validation questions.",
       },
       evidence: {
-        key: 'evidence',
-        visualType: 'evidence_checklist',
-        title: 'What proof is missing before the view becomes board-ready.',
-        insight: 'Keep lineage and diagnostics out of the executive first read.',
+        key: "evidence",
+        visualType: "evidence_checklist",
+        title: "What proof is missing before the view becomes board-ready.",
+        insight:
+          "Keep lineage and diagnostics out of the executive first read.",
         dataRefs: [],
-        caveat: 'Use evidence gaps as the control list.',
+        caveat: "Use evidence gaps as the control list.",
       },
       insights: {
-        key: 'insights',
-        visualType: 'role_decision_cards',
-        title: 'What the CIO and CFO should do next.',
-        insight: 'Convert posture into executive decisions.',
+        key: "insights",
+        visualType: "role_decision_cards",
+        title: "What the CIO and CFO should do next.",
+        insight: "Convert posture into executive decisions.",
         dataRefs: [],
-        caveat: 'CIO owns readiness; CFO owns measurement confidence.',
+        caveat: "CIO owns readiness; CFO owns measurement confidence.",
       },
     },
     metricCount: 140,
@@ -268,203 +279,230 @@ function towerV3RuntimeView(): TowerV3RuntimeViewModel {
     metricFamilies: [],
     valueHypotheses: [
       {
-        label: 'Agent Assist non-clinical adoption',
-        value: '$93.0M',
-        claimBasis: 'forecast',
-        gateStatus: 'caveated',
-        evidenceIds: ['evidence-agent-assist'],
+        label: "Agent Assist non-clinical adoption",
+        value: "$93.0M",
+        claimBasis: "forecast",
+        gateStatus: "caveated",
+        evidenceIds: ["evidence-agent-assist"],
       },
       {
-        label: 'Contact-center workflow automation',
-        value: '$41.0M',
-        claimBasis: 'forecast',
-        gateStatus: 'caveated',
-        evidenceIds: ['evidence-contact-center'],
+        label: "Contact-center workflow automation",
+        value: "$41.0M",
+        claimBasis: "forecast",
+        gateStatus: "caveated",
+        evidenceIds: ["evidence-contact-center"],
       },
     ],
     defaultTabs: [],
     executiveInsights: [
       {
-        role: 'CIO',
-        insightTitle: 'The data foundation is the critical path.',
+        role: "CIO",
+        insightTitle: "The data foundation is the critical path.",
         insightSummary:
-          'The technology team can steer the measurement plan, but scale decisions need certified data, integration, and control readiness.',
+          "The technology team can steer the measurement plan, but scale decisions need certified data, integration, and control readiness.",
         whyItMatters:
-          'Without the foundation, AI programs create operational risk faster than they create board-ready value evidence.',
-        evidenceBasis: 'TowerContextPack evidence',
+          "Without the foundation, AI programs create operational risk faster than they create board-ready value evidence.",
+        evidenceBasis: "TowerContextPack evidence",
         decisionImplication:
-          'Do not expand the portfolio until the measurement spine and source ownership are explicit.',
+          "Do not expand the portfolio until the measurement spine and source ownership are explicit.",
         nextAction:
-          'Name the accountable owner for baseline metrics and source-system lineage.',
-        moduleHandoff: 'Tower',
-        claimStrength: 'hypothesis',
-        evidenceRefsUsed: ['evidence-cio'],
-        contextGapsUsed: ['gap-baseline'],
-        valueClaimGateStatus: 'caveated',
+          "Name the accountable owner for baseline metrics and source-system lineage.",
+        moduleHandoff: "Tower",
+        claimStrength: "hypothesis",
+        evidenceRefsUsed: ["evidence-cio"],
+        contextGapsUsed: ["gap-baseline"],
+        valueClaimGateStatus: "caveated",
       },
       {
-        role: 'CFO',
-        insightTitle: 'Value is visible, but not claimable yet.',
+        role: "CFO",
+        insightTitle: "Value is visible, but not claimable yet.",
         insightSummary:
-          'The finance team can see where forecast value sits, but the evidence does not yet support board claims.',
+          "The finance team can see where forecast value sits, but the evidence does not yet support board claims.",
         whyItMatters:
-          'The CFO should protect claim quality before the dashboard is used in a funding committee.',
-        evidenceBasis: 'TowerContextPack value-claim gates',
+          "The CFO should protect claim quality before the dashboard is used in a funding committee.",
+        evidenceBasis: "TowerContextPack value-claim gates",
         decisionImplication:
-          'Hold value language to forecast and measurement readiness until baselines and actuals are attached.',
+          "Hold value language to forecast and measurement readiness until baselines and actuals are attached.",
         nextAction:
-          'Approve the value formula and finance-attested baseline package before the next review.',
-        moduleHandoff: 'Tower',
-        claimStrength: 'evidence_gap',
-        evidenceRefsUsed: ['evidence-cfo'],
-        contextGapsUsed: ['gap-finance'],
-        valueClaimGateStatus: 'caveated',
+          "Approve the value formula and finance-attested baseline package before the next review.",
+        moduleHandoff: "Tower",
+        claimStrength: "evidence_gap",
+        evidenceRefsUsed: ["evidence-cfo"],
+        contextGapsUsed: ["gap-finance"],
+        valueClaimGateStatus: "caveated",
       },
     ],
     gapThemes: [
       {
-        themeId: 'baseline_metrics',
-        title: 'Baseline metrics need validation',
+        themeId: "baseline_metrics",
+        title: "Baseline metrics need validation",
         whyItMatters:
-          'The dashboard can sequence measurement work, but board use needs validated baselines and formula lineage.',
+          "The dashboard can sequence measurement work, but board use needs validated baselines and formula lineage.",
         affectedRecordCount: 117,
-        representativeEvidenceRefs: ['evidence-baseline'],
+        representativeEvidenceRefs: ["evidence-baseline"],
         requiredEvidence: [
-          'baseline extract',
-          'measurement period',
-          'formula owner attestation',
+          "baseline extract",
+          "measurement period",
+          "formula owner attestation",
         ],
-        ownerOrSteward: 'CFO / Value Office',
-        moduleHandoff: 'Tower',
+        ownerOrSteward: "CFO / Value Office",
+        moduleHandoff: "Tower",
       },
     ],
     caveats: [],
     nextMeasurementActions: [],
     bridgeDiagnostics: {
-      source: 'cio_tower',
-      projectionRole: 'derived_read_model',
-      sourceOfTruthStatus: 'bridge_only',
-      v3ReconciliationStatus: 'not_v3_reconciled',
-      message: 'Bridge diagnostics only.',
+      source: "cio_tower",
+      projectionRole: "derived_read_model",
+      sourceOfTruthStatus: "bridge_only",
+      v3ReconciliationStatus: "not_v3_reconciled",
+      message: "Bridge diagnostics only.",
     },
   };
 }
 
-describe('cio tower answer contract', () => {
-  it('normalizes app tenant aliases into cio_tower package keys', () => {
-    expect(canonicalCioTowerTenantKey('skyharbor')).toBe('skyharbor_global');
-    expect(canonicalCioTowerTenantKey('skyharbor-air')).toBe('skyharbor_global');
-    expect(canonicalCioTowerTenantKey('lakeshore')).toBe('lakeshore-holdings');
-    expect(canonicalCioTowerTenantKey('Lakeshore Holdings')).toBe('lakeshore-holdings');
-    expect(canonicalCioTowerTenantKey('lakeshore-industries')).toBe('lakeshore-industries');
-    expect(canonicalCioTowerTenantKey('morgan-street')).toBe('morgan-street');
-    expect(canonicalCioTowerTenantKey('firstcapital')).toBe('first-capital-financial');
-    expect(canonicalCioTowerTenantKey('apexretail')).toBe('apex-retail');
-    expect(canonicalCioTowerTenantKey('meridian')).toBe('meridian-health');
+describe("cio tower answer contract", () => {
+  it("normalizes app tenant aliases into cio_tower package keys", () => {
+    expect(canonicalCioTowerTenantKey("skyharbor")).toBe("skyharbor_global");
+    expect(canonicalCioTowerTenantKey("lakeshore")).toBe("lakeshore-holdings");
+    expect(canonicalCioTowerTenantKey("Lakeshore Holdings")).toBe(
+      "lakeshore-holdings",
+    );
+    expect(canonicalCioTowerTenantKey("lakeshore-industries")).toBe(
+      "lakeshore-industries",
+    );
+    expect(canonicalCioTowerTenantKey("morgan-street")).toBe("morgan-street");
+    expect(canonicalCioTowerTenantKey("firstcapital")).toBe(
+      "first-capital-financial",
+    );
+    expect(canonicalCioTowerTenantKey("apexretail")).toBe("apex-retail");
+    expect(canonicalCioTowerTenantKey("meridian")).toBe("meridian-health");
   });
 
-  it('instructs Claude to own every visible word and return the explicit JSON contract', () => {
+  it("instructs Claude to own every visible word and return the explicit JSON contract", () => {
     const prompt = buildCioTowerClaudePrompt(context());
 
-    expect(prompt).toContain('Return valid JSON only');
-    expect(prompt).toContain("AbarVa's governed CIO/CFO performance and value-control advisor");
-    expect(prompt).toContain('Authority order:');
-    expect(prompt).toContain('Governed measure results');
-    expect(prompt).toContain('Question contract is authoritative');
-    expect(prompt).toContain('Separate three layers before writing');
-    expect(prompt).toContain('Observed: what governed measures and facts establish');
-    expect(prompt).toContain('Interpretation: what those facts mean');
-    expect(prompt).toContain('Action: what leadership should scale, fix, freeze, stop, or validate next');
-    expect(prompt).toContain('Decision posture vocabulary');
+    expect(prompt).toContain("Return valid JSON only");
+    expect(prompt).toContain(
+      "AbarVa's governed CIO/CFO performance and value-control advisor",
+    );
+    expect(prompt).toContain("Authority order:");
+    expect(prompt).toContain("Governed measure results");
+    expect(prompt).toContain("Question contract is authoritative");
+    expect(prompt).toContain("Separate three layers before writing");
+    expect(prompt).toContain(
+      "Observed: what governed measures and facts establish",
+    );
+    expect(prompt).toContain("Interpretation: what those facts mean");
+    expect(prompt).toContain(
+      "Action: what leadership should scale, fix, freeze, stop, or validate next",
+    );
+    expect(prompt).toContain("Decision posture vocabulary");
     expect(prompt).toContain('"version": "cio_tower_visible_answer_v1"');
-    expect(prompt).toContain('You own every user-visible word');
-    expect(prompt).toContain('AbarVa will render the strings exactly as returned');
-    expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
-    expect(prompt).toContain('Shape the answer as a point of view');
-    expect(prompt).toContain('Valid JSON is more important than a longer answer');
-    expect(prompt).toContain('Do not duplicate table content inside answer. Use tables[] only.');
-    expect(prompt).toContain('Never use markdown code fences');
-    expect(prompt).toContain('Do not use technical quantity counts as evidence');
-    expect(prompt).toContain('Translate internal coverage into executive meaning');
+    expect(prompt).toContain("You own every user-visible word");
+    expect(prompt).toContain(
+      "AbarVa will render the strings exactly as returned",
+    );
+    expect(prompt).toContain(
+      "It will not rewrite, summarize, scrub, relabel, infer, or improve them",
+    );
+    expect(prompt).toContain("Shape the answer as a point of view");
+    expect(prompt).toContain(
+      "Valid JSON is more important than a longer answer",
+    );
+    expect(prompt).toContain(
+      "Do not duplicate table content inside answer. Use tables[] only.",
+    );
+    expect(prompt).toContain("Never use markdown code fences");
+    expect(prompt).toContain(
+      "Do not use technical quantity counts as evidence",
+    );
+    expect(prompt).toContain(
+      "Translate internal coverage into executive meaning",
+    );
     expect(prompt).toContain('"ROI"');
     expect(prompt).toContain('"measured outcome"');
-    expect(prompt).toContain('finance-attestation gate');
-    expect(prompt).toContain('A table with 6 or more rows is invalid');
-    expect(prompt).toContain('must directly continue from your answer');
-    expect(prompt).toContain('Do not use generic menu choices');
-    expect(prompt).toContain('Answer the current question literally');
-    expect(prompt).toContain('do not repeat the generic budget-mix answer');
-    expect(prompt).toContain('Realized-value language allowed: no');
-    expect(prompt).toContain('Projection fallback role: derived_read_model');
-    expect(prompt).toContain('Projection fallback authority: planning-grade only');
-    expect(prompt).toContain('Tower Question Contract:');
-    expect(prompt).toContain('Measure key: initiative_budget_fy26');
-    expect(prompt).toContain('Table required: yes');
-    expect(prompt).toContain('chart-ready supported rows');
-    expect(prompt).toContain('Tower visual contract to use:');
-    expect(prompt).toContain('Recommended visual: horizontal_bar');
-    expect(prompt).toContain('The renderer owns the chart');
-    expect(prompt).toContain('[governed_measure] FY26 IT budget');
-    expect(prompt).toContain('[governed_fact] Crew Recovery & Legality Modernization');
-    expect(prompt).toContain('Crew Recovery & Legality Modernization');
-    expect(prompt).toContain('$28.3M');
-    expect(prompt).not.toContain('GFM markdown table');
-    expect(prompt).not.toContain('```chart');
-    expect(prompt).not.toContain('fenced chart blocks in the answer field');
-    expect(prompt).not.toContain('CHART');
+    expect(prompt).toContain("finance-attestation gate");
+    expect(prompt).toContain("A table with 6 or more rows is invalid");
+    expect(prompt).toContain("must directly continue from your answer");
+    expect(prompt).toContain("Do not use generic menu choices");
+    expect(prompt).toContain("Answer the current question literally");
+    expect(prompt).toContain("do not repeat the generic budget-mix answer");
+    expect(prompt).toContain("Realized-value language allowed: no");
+    expect(prompt).toContain("Projection fallback role: derived_read_model");
+    expect(prompt).toContain(
+      "Projection fallback authority: planning-grade only",
+    );
+    expect(prompt).toContain("Tower Question Contract:");
+    expect(prompt).toContain("Measure key: initiative_budget_fy26");
+    expect(prompt).toContain("Table required: yes");
+    expect(prompt).toContain("chart-ready supported rows");
+    expect(prompt).toContain("Tower visual contract to use:");
+    expect(prompt).toContain("Recommended visual: horizontal_bar");
+    expect(prompt).toContain("The renderer owns the chart");
+    expect(prompt).toContain("[governed_measure] FY26 IT budget");
+    expect(prompt).toContain(
+      "[governed_fact] Crew Recovery & Legality Modernization",
+    );
+    expect(prompt).toContain("Crew Recovery & Legality Modernization");
+    expect(prompt).toContain("$28.3M");
+    expect(prompt).not.toContain("GFM markdown table");
+    expect(prompt).not.toContain("```chart");
+    expect(prompt).not.toContain("fenced chart blocks in the answer field");
+    expect(prompt).not.toContain("CHART");
   });
 
-  it('does not expose raw measured-value labels to Claude when outcome proof is blocked', () => {
+  it("does not expose raw measured-value labels to Claude when outcome proof is blocked", () => {
     const prompt = buildCioTowerClaudePrompt(
       context({
         measures: [
           {
-            measure_key: 'measured_value_ytd',
-            label: 'Measured value YTD',
-            description: 'Legacy bridge field.',
-            period: 'fy26',
-            basis: 'measured',
-            scope: 'enterprise_envelope',
-            value_numeric: '185700000',
+            measure_key: "measured_value_ytd",
+            label: "Measured value YTD",
+            description: "Legacy bridge field.",
+            period: "fy26",
+            basis: "measured",
+            scope: "enterprise_envelope",
+            value_numeric: "185700000",
             value_json: {},
-            source_fact_keys: ['fact-value-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-value-1"],
+            formula_version: "cio_tower_v1",
           },
         ],
         relevantFacts: [
           {
-            fact_key: 'fact-value-1',
-            entity_key: 'initiative-1',
-            entity_type: 'initiative',
-            entity_display_name: 'Agent Assist non-clinical adoption',
-            measure: 'measured_value_ytd',
-            scope: 'initiative',
-            view: 'value',
-            amount_type: 'none',
-            basis: 'measured',
-            period: 'fy26',
-            value_numeric: '93000000',
+            fact_key: "fact-value-1",
+            entity_key: "initiative-1",
+            entity_type: "initiative",
+            entity_display_name: "Agent Assist non-clinical adoption",
+            measure: "measured_value_ytd",
+            scope: "initiative",
+            view: "value",
+            amount_type: "none",
+            basis: "measured",
+            period: "fy26",
+            value_numeric: "93000000",
             value_text: null,
-            unit: 'usd',
-            value_source: 'tenant_file',
-            confidence: 'high',
-            source_key: 'source-1',
-            source_row: '14',
+            unit: "usd",
+            value_source: "tenant_file",
+            confidence: "high",
+            source_key: "source-1",
+            source_row: "14",
             attributes: {},
           },
         ],
       }),
     );
 
-    expect(prompt).toContain('Value figure awaiting finance attestation');
-    expect(prompt).toContain('finance-attestation pending');
-    expect(prompt).not.toContain('Measured value YTD');
-    expect(prompt).not.toContain('measured_value_ytd');
-    expect(prompt).not.toContain('formula cio_tower_v1');
-    expect(prompt).not.toContain('source source-1 row 14');
+    expect(prompt).toContain("Value figure awaiting finance attestation");
+    expect(prompt).toContain("finance-attestation pending");
+    expect(prompt).not.toContain("Measured value YTD");
+    expect(prompt).not.toContain("measured_value_ytd");
+    expect(prompt).not.toContain("formula cio_tower_v1");
+    expect(prompt).not.toContain("source source-1 row 14");
   });
 
-  it('allows ROI/savings/realized-value language and blocks other unsafe patterns', () => {
+  it("allows ROI/savings/realized-value language and blocks other unsafe patterns", () => {
     // The outcome-proof-language check was removed 2026-07-20: a live 25-
     // question eval showed it firing on correctly-hedged, honest sentences
     // ("Realized-value language is blocked until v3-reconciled measured
@@ -473,150 +511,173 @@ describe('cio tower answer contract', () => {
     // a generic fallback — a worse outcome than just showing the real text.
     expect(
       validateVisibleAnswer(
-        'The CIO cannot defend AI ROI until the finance-attestation gate clears.',
+        "The CIO cannot defend AI ROI until the finance-attestation gate clears.",
       ),
-    ).not.toContain('unsupported_outcome_proof_language');
+    ).not.toContain("unsupported_outcome_proof_language");
     expect(
       validateVisibleAnswer(
-        'None of the claims can move to realized value until baselines are signed.',
+        "None of the claims can move to realized value until baselines are signed.",
       ),
-    ).not.toContain('unsupported_outcome_proof_language');
+    ).not.toContain("unsupported_outcome_proof_language");
     expect(
       validateVisibleAnswer(
-        'The dashboard shows $185.7M in measured-value-YTD figures.',
+        "The dashboard shows $185.7M in measured-value-YTD figures.",
       ),
-    ).not.toContain('unsupported_outcome_proof_language');
+    ).not.toContain("unsupported_outcome_proof_language");
     expect(
       validateVisibleAnswer(
-        'Fifth, managed-service and contract evidence: service scope, SLA schedules, and vendor baselines are incomplete.',
+        "Fifth, managed-service and contract evidence: service scope, SLA schedules, and vendor baselines are incomplete.",
       ),
-    ).not.toContain('visible_scaffold_label');
-    expect(validateVisibleAnswer('Evidence: show the row-level proof.')).toContain(
-      'visible_scaffold_label',
+    ).not.toContain("visible_scaffold_label");
+    expect(
+      validateVisibleAnswer("Evidence: show the row-level proof."),
+    ).toContain("visible_scaffold_label");
+    expect(
+      validateVisibleAnswer(
+        "Tower has 300 rows, 500 facts, 800 edges, and 42 nodes to support the answer.",
+      ),
+    ).toContain("technical_count_as_evidence");
+    expect(
+      validateVisibleAnswer(
+        "The AI usage signal count is 8 active signals against the candidate backlog.",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "internal_data_plane_language",
+        "technical_count_as_evidence",
+      ]),
     );
     expect(
       validateVisibleAnswer(
-        'Tower has 300 rows, 500 facts, 800 edges, and 42 nodes to support the answer.',
+        '```chart\n{"type":"bar","data":[{"label":"Run","value":10}]}\n```',
       ),
-    ).toContain('technical_count_as_evidence');
+    ).toContain("code_fence_or_hidden_visual_payload");
+    expect(validateVisibleAnswer("| Phase | Gate |\n| --- | --- |")).toContain(
+      "markdown_table_in_answer_field",
+    );
     expect(
       validateVisibleAnswer(
-        'The AI usage signal count is 8 active signals against the candidate backlog.',
+        "Usage proves the measured outcome for the program.",
       ),
-    ).toEqual(expect.arrayContaining(['internal_data_plane_language', 'technical_count_as_evidence']));
+    ).toContain("usage_promoted_to_outcome");
     expect(
-      validateVisibleAnswer('```chart\n{"type":"bar","data":[{"label":"Run","value":10}]}\n```'),
-    ).toContain('code_fence_or_hidden_visual_payload');
-    expect(validateVisibleAnswer('| Phase | Gate |\n| --- | --- |')).toContain(
-      'markdown_table_in_answer_field',
+      validateVisibleAnswer(
+        "The Finance owner has attested the value and it is due in 10 days.",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "unsupported_attestation_claim",
+        "invented_due_date_or_window",
+      ]),
     );
   });
 
-  it('parses the visible answer contract without changing prose or table labels', () => {
+  it("parses the visible answer contract without changing prose or table labels", () => {
     const raw = JSON.stringify({
-      version: 'cio_tower_visible_answer_v1',
-      answer: 'SkyHarbor has three material IT programs to inspect first.',
+      version: "cio_tower_visible_answer_v1",
+      answer: "SkyHarbor has three material IT programs to inspect first.",
       tables: [
         {
-          id: 'top_programs',
-          title: 'Top IT programs',
-          columns: ['Program', 'Budget'],
-          rows: [['Crew Recovery & Legality Modernization', '$28.3M']],
+          id: "top_programs",
+          title: "Top IT programs",
+          columns: ["Program", "Budget"],
+          rows: [["Crew Recovery & Legality Modernization", "$28.3M"]],
         },
       ],
       tabs: [
         {
-          id: 'risk',
-          label: 'Risk read',
-          prose: 'The largest risk is spending past value proof.',
+          id: "risk",
+          label: "Risk read",
+          prose: "The largest risk is spending past value proof.",
           tables: [],
         },
       ],
-      followUpQuestion: 'Do you want the value-proof view next?',
+      followUpQuestion: "Do you want the value-proof view next?",
     });
 
     expect(parseVisibleAnswerContract(raw)).toEqual({
-      version: 'cio_tower_visible_answer_v1',
-      answer: 'SkyHarbor has three material IT programs to inspect first.',
+      version: "cio_tower_visible_answer_v1",
+      answer: "SkyHarbor has three material IT programs to inspect first.",
       tables: [
         {
-          id: 'top_programs',
-          title: 'Top IT programs',
-          columns: ['Program', 'Budget'],
-          rows: [['Crew Recovery & Legality Modernization', '$28.3M']],
+          id: "top_programs",
+          title: "Top IT programs",
+          columns: ["Program", "Budget"],
+          rows: [["Crew Recovery & Legality Modernization", "$28.3M"]],
         },
       ],
       tabs: [
         {
-          id: 'risk',
-          label: 'Risk read',
-          prose: 'The largest risk is spending past value proof.',
+          id: "risk",
+          label: "Risk read",
+          prose: "The largest risk is spending past value proof.",
           tables: [],
         },
       ],
       visualContract: null,
-      followUpQuestion: 'Do you want the value-proof view next?',
+      followUpQuestion: "Do you want the value-proof view next?",
     });
   });
 
-  it('tolerates harmless wrapper text around a valid Tower answer packet', () => {
+  it("tolerates harmless wrapper text around a valid Tower answer packet", () => {
     const raw = [
-      'Here is the packet:',
+      "Here is the packet:",
       JSON.stringify({
-        version: 'cio_tower_visible_answer_v1',
-        answer: 'The CIO should close the measurement gate before expanding Agent Assist.',
+        version: "cio_tower_visible_answer_v1",
+        answer:
+          "The CIO should close the measurement gate before expanding Agent Assist.",
         tables: [],
         tabs: [],
         followUpQuestion: null,
       }),
-    ].join('\n');
+    ].join("\n");
 
     expect(parseVisibleAnswerContract(raw).answer).toBe(
-      'The CIO should close the measurement gate before expanding Agent Assist.',
+      "The CIO should close the measurement gate before expanding Agent Assist.",
     );
   });
 
-  it('preserves the Tower visual contract when Claude returns one', () => {
+  it("preserves the Tower visual contract when Claude returns one", () => {
     const raw = JSON.stringify({
-      version: 'cio_tower_visible_answer_v1',
+      version: "cio_tower_visible_answer_v1",
       answer:
-        'Use a 2x2 to separate near-term AI funding candidates from strategic-but-gated bets.',
+        "Use a 2x2 to separate near-term AI funding candidates from strategic-but-gated bets.",
       tables: [
         {
-          id: 'ai_program_matrix',
-          title: 'AI program funding view',
-          columns: ['Program', 'Value score', 'Readiness score'],
+          id: "ai_program_matrix",
+          title: "AI program funding view",
+          columns: ["Program", "Value score", "Readiness score"],
           rows: [
-            ['Contact center agent assist', '82', '71'],
-            ['Data foundation', '90', '42'],
+            ["Contact center agent assist", "82", "71"],
+            ["Data foundation", "90", "42"],
           ],
         },
       ],
       tabs: [],
       visualContract: {
-        questionIntent: 'quadrant',
-        recommendedVisual: '2x2',
-        requiredData: ['program', 'value score', 'readiness score'],
-        axes: { x: 'Execution readiness', y: 'Business value' },
-        annotations: ['Use the upper-right quadrant for first-wave funding.'],
+        questionIntent: "quadrant",
+        recommendedVisual: "2x2",
+        requiredData: ["program", "value score", "readiness score"],
+        axes: { x: "Execution readiness", y: "Business value" },
+        annotations: ["Use the upper-right quadrant for first-wave funding."],
         executiveTakeaway:
-          'Fund high-value work only where readiness is credible.',
-        sourceBoundary: 'Use loaded Tower program and readiness fields only.',
+          "Fund high-value work only where readiness is credible.",
+        sourceBoundary: "Use loaded Tower program and readiness fields only.",
       },
       followUpQuestion:
-        'Which upper-right candidate should Tower convert into a funding gate first?',
+        "Which upper-right candidate should Tower convert into a funding gate first?",
     });
 
     const parsed = parseVisibleAnswerContract(raw);
 
     expect(parsed.visualContract).toMatchObject({
-      questionIntent: 'quadrant',
-      recommendedVisual: '2x2',
-      axes: { x: 'Execution readiness', y: 'Business value' },
+      questionIntent: "quadrant",
+      recommendedVisual: "2x2",
+      axes: { x: "Execution readiness", y: "Business value" },
     });
   });
 
-  it('rejects malformed raw output and incomplete Tower tables instead of rendering partial content', () => {
+  it("rejects malformed raw output and incomplete Tower tables instead of rendering partial content", () => {
     expect(() =>
       parseVisibleAnswerContract(
         '{"version":"cio_tower_visible_answer_v1","answer":"Truncated","tables":[{"id":"x","title":"Bad","columns":["A"],"rows":[["open"',
@@ -626,24 +687,24 @@ describe('cio tower answer contract', () => {
     expect(() =>
       parseVisibleAnswerContract(
         JSON.stringify({
-          version: 'cio_tower_visible_answer_v1',
-          answer: 'The table is incomplete.',
+          version: "cio_tower_visible_answer_v1",
+          answer: "The table is incomplete.",
           tables: [
             {
-              id: 'bad_table',
-              title: 'Incomplete table',
-              columns: ['Owner', 'Decision'],
-              rows: [['CIO']],
+              id: "bad_table",
+              title: "Incomplete table",
+              columns: ["Owner", "Decision"],
+              rows: [["CIO"]],
             },
           ],
           tabs: [],
           followUpQuestion: null,
         }),
       ),
-    ).toThrow('cio_tower_visible_contract_invalid_table_shape');
+    ).toThrow("cio_tower_visible_contract_invalid_table_shape");
   });
 
-  it('keeps a well-formed 6-row answer intact instead of discarding it', () => {
+  it("keeps a well-formed 6-row answer intact instead of discarding it", () => {
     // A live 25-question production eval found a 6-row answer to an explicit
     // "rank these 6 tools" question losing its ENTIRE response (tables,
     // visualContract, everything) to the generic fallback over the old
@@ -651,16 +712,16 @@ describe('cio tower answer contract', () => {
     // untouched — this is the exact regression case, not just a synthetic one.
     const parsed = parseVisibleAnswerContract(
       JSON.stringify({
-        version: 'cio_tower_visible_answer_v1',
-        answer: 'Use the complete table for the executive read.',
+        version: "cio_tower_visible_answer_v1",
+        answer: "Use the complete table for the executive read.",
         tables: [
           {
-            id: 'ranked_view',
-            title: 'Ranked view',
-            columns: ['Initiative', 'Gate'],
+            id: "ranked_view",
+            title: "Ranked view",
+            columns: ["Initiative", "Gate"],
             rows: Array.from({ length: 6 }, (_, index) => [
               `Initiative ${index + 1}`,
-              'Caveated',
+              "Caveated",
             ]),
           },
         ],
@@ -671,24 +732,32 @@ describe('cio tower answer contract', () => {
     expect(parsed.tables?.[0]?.rows).toHaveLength(6);
   });
 
-  it('truncates a table that exceeds MAX_TABLE_ROWS/MAX_TABLE_COLUMNS rather than discarding it', () => {
+  it("truncates a table that exceeds MAX_TABLE_ROWS/MAX_TABLE_COLUMNS rather than discarding it", () => {
     const parsed = parseVisibleAnswerContract(
       JSON.stringify({
-        version: 'cio_tower_visible_answer_v1',
-        answer: 'Use the complete table for the executive read.',
+        version: "cio_tower_visible_answer_v1",
+        answer: "Use the complete table for the executive read.",
         tables: [
           {
-            id: 'oversized_table',
-            title: 'Oversized ranked view',
-            columns: ['Initiative', 'Value', 'Readiness', 'Owner', 'Risk', 'Status', 'Extra'],
+            id: "oversized_table",
+            title: "Oversized ranked view",
+            columns: [
+              "Initiative",
+              "Value",
+              "Readiness",
+              "Owner",
+              "Risk",
+              "Status",
+              "Extra",
+            ],
             rows: Array.from({ length: 10 }, (_, index) => [
               `Initiative ${index + 1}`,
-              'High',
-              'Ready',
-              'CIO',
-              'Low',
-              'Active',
-              'Drop me',
+              "High",
+              "Ready",
+              "CIO",
+              "Low",
+              "Active",
+              "Drop me",
             ]),
           },
         ],
@@ -702,188 +771,193 @@ describe('cio tower answer contract', () => {
     expect(table?.rows[0]).toHaveLength(6);
   });
 
-  it('routes portfolio-company budget and value-proof questions to the right Tower contracts', () => {
+  it("routes portfolio-company budget and value-proof questions to the right Tower contracts", () => {
     expect(
       matchContractKey(
-        'Show the holding-company IT budget by portfolio company and shared services.',
+        "Show the holding-company IT budget by portfolio company and shared services.",
       ),
-    ).toBe('tower_total_it_spend');
+    ).toBe("tower_total_it_spend");
     expect(
       matchContractKey(
-        'Which funded programs have the largest gap between promised and measured value?',
+        "Which funded programs have the largest gap between promised and measured value?",
       ),
-    ).toBe('tower_value_realization');
+    ).toBe("tower_value_realization");
   });
 
-  it('builds a user-safe deterministic fallback when Claude misses the Tower answer contract', () => {
+  it("builds a user-safe deterministic fallback when Claude misses the Tower answer contract", () => {
     const fallback = buildCioTowerFallbackAnswer(
       context({
-        tenantName: 'Healthcare Demo',
-        question: 'Where is our technology budget actually going, and is run spend crowding out change?',
+        tenantName: "Healthcare Demo",
+        question:
+          "Where is our technology budget actually going, and is run spend crowding out change?",
         contract: {
-          contract_key: 'tower_total_it_spend',
-          intent: 'budget_control',
-          question_family: 'total_it_spend',
-          measure_key: 'total_it_budget_fy26',
-          artifact_type: 'summary_table',
+          contract_key: "tower_total_it_spend",
+          intent: "budget_control",
+          question_family: "total_it_spend",
+          measure_key: "total_it_budget_fy26",
+          artifact_type: "summary_table",
           examples: [],
         },
         measures: [
           {
-            measure_key: 'total_it_budget_fy26',
-            label: 'FY26 IT budget',
-            description: 'Committed FY26 IT budget envelope.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '1069500000',
+            measure_key: "total_it_budget_fy26",
+            label: "FY26 IT budget",
+            description: "Committed FY26 IT budget envelope.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "1069500000",
             value_json: { row_count: 12 },
-            source_fact_keys: ['fact-budget-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-budget-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'run_budget_fy26',
-            label: 'FY26 run budget',
-            description: 'Run budget.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '713000000',
+            measure_key: "run_budget_fy26",
+            label: "FY26 run budget",
+            description: "Run budget.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "713000000",
             value_json: { row_count: 12 },
-            source_fact_keys: ['fact-run-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-run-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'change_budget_fy26',
-            label: 'FY26 change budget',
-            description: 'Change budget.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '356500000',
+            measure_key: "change_budget_fy26",
+            label: "FY26 change budget",
+            description: "Change budget.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "356500000",
             value_json: { row_count: 12 },
-            source_fact_keys: ['fact-change-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-change-1"],
+            formula_version: "cio_tower_v1",
           },
         ],
       }),
     );
 
-    expect(fallback.version).toBe('cio_tower_visible_answer_v1');
+    expect(fallback.version).toBe("cio_tower_visible_answer_v1");
     expect(fallback.answer).toContain(
-      'This is a run-cost pressure question, not a value-realization win yet.',
+      "This is a run-cost pressure question, not a value-realization win yet.",
     );
-    expect(fallback.answer).not.toContain('My read:');
+    expect(fallback.answer).not.toContain("My read:");
     expect(fallback.answer).toContain(
-      'In the Healthcare Demo synthetic Tower planning context, $1.1B of FY26 technology budget is in view',
+      "In the Healthcare Demo synthetic Tower planning context, $1.1B of FY26 technology budget is in view",
     );
-    expect(fallback.answer).toContain('$713.0M is run versus $356.5M change');
+    expect(fallback.answer).toContain("$713.0M is run versus $356.5M change");
     expect(fallback.followUpQuestion).toBe(
-      'Which services or vendors are driving the $713.0M run base before we protect the $356.5M change pool?',
+      "Which services or vendors are driving the $713.0M run base before we protect the $356.5M change pool?",
     );
-    expect(fallback.answer).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
-    expect(fallback.answer).not.toMatch(/\brealized\b|\bproven\b|\bdelivered\b/i);
+    expect(fallback.answer).not.toMatch(
+      /valid Tower answer contract|No fallback answer|JSON|source key|record ID/i,
+    );
+    expect(fallback.answer).not.toMatch(
+      /\brealized\b|\bproven\b|\bdelivered\b/i,
+    );
     expect(fallback.tables?.[0]?.rows).toEqual([
-      ['Total technology budget', '$1.1B'],
-      ['Run budget', '$713.0M'],
-      ['Change budget', '$356.5M'],
+      ["Total technology budget", "$1.1B"],
+      ["Run budget", "$713.0M"],
+      ["Change budget", "$356.5M"],
     ]);
     expect(fallback.visualContract).toMatchObject({
-      questionIntent: 'distribution',
-      recommendedVisual: 'stacked_bar',
+      questionIntent: "distribution",
+      recommendedVisual: "stacked_bar",
     });
   });
 
-  it('keeps deterministic fallbacks inside visible-contract validation limits', () => {
+  it("keeps deterministic fallbacks inside visible-contract validation limits", () => {
     const fallback = buildCioTowerFallbackAnswer(
       context({
-        tenantName: 'Airline Demo',
+        tenantName: "Airline Demo",
         question:
-          'Create a 2x2 matrix of AI programs by value and execution confidence. Which should get more funding first?',
+          "Create a 2x2 matrix of AI programs by value and execution confidence. Which should get more funding first?",
         measures: [
           {
-            measure_key: 'total_it_budget_fy26',
-            label: 'FY26 IT budget',
-            description: 'Committed FY26 IT budget envelope.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '2578000000',
+            measure_key: "total_it_budget_fy26",
+            label: "FY26 IT budget",
+            description: "Committed FY26 IT budget envelope.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "2578000000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-budget-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-budget-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'run_budget_fy26',
-            label: 'FY26 run budget',
-            description: 'Run budget.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '1710000000',
+            measure_key: "run_budget_fy26",
+            label: "FY26 run budget",
+            description: "Run budget.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "1710000000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-run-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-run-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'change_budget_fy26',
-            label: 'FY26 change budget',
-            description: 'Change budget.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '868000000',
+            measure_key: "change_budget_fy26",
+            label: "FY26 change budget",
+            description: "Change budget.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "868000000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-change-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-change-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'initiative_budget_fy26',
-            label: 'Funded initiatives',
-            description: 'Funded initiative envelope.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '1030000000',
+            measure_key: "initiative_budget_fy26",
+            label: "Funded initiatives",
+            description: "Funded initiative envelope.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "1030000000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-initiative-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-initiative-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'promised_value_fy26',
-            label: 'Promised value',
-            description: 'Planning value hypothesis.',
-            period: 'fy26',
-            basis: 'forecast',
-            scope: 'enterprise_envelope',
-            value_numeric: '3400000000',
+            measure_key: "promised_value_fy26",
+            label: "Promised value",
+            description: "Planning value hypothesis.",
+            period: "fy26",
+            basis: "forecast",
+            scope: "enterprise_envelope",
+            value_numeric: "3400000000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-promised-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-promised-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'measured_value_ytd',
-            label: 'Measurement evidence YTD',
-            description: 'Attestation-pending measurement evidence.',
-            period: 'fy26',
-            basis: 'measured',
-            scope: 'enterprise_envelope',
-            value_numeric: '432000000',
+            measure_key: "measured_value_ytd",
+            label: "Measurement evidence YTD",
+            description: "Attestation-pending measurement evidence.",
+            period: "fy26",
+            basis: "measured",
+            scope: "enterprise_envelope",
+            value_numeric: "432000000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-measurement-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-measurement-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'actual_spend_ytd',
-            label: 'Actual spend YTD',
-            description: 'Actual spend.',
-            period: 'fy26',
-            basis: 'actual',
-            scope: 'enterprise_envelope',
-            value_numeric: '539300000',
+            measure_key: "actual_spend_ytd",
+            label: "Actual spend YTD",
+            description: "Actual spend.",
+            period: "fy26",
+            basis: "actual",
+            scope: "enterprise_envelope",
+            value_numeric: "539300000",
             value_json: { row_count: 13 },
-            source_fact_keys: ['fact-spend-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-spend-1"],
+            formula_version: "cio_tower_v1",
           },
         ],
       }),
@@ -896,91 +970,95 @@ describe('cio tower answer contract', () => {
         ...table.rows.flat(),
       ]),
       ...(fallback.tabs ?? []).flatMap((tab) => [tab.label, tab.prose]),
-      fallback.followUpQuestion ?? '',
-    ].join(' ');
+      fallback.followUpQuestion ?? "",
+    ].join(" ");
 
     expect(fallback.tables?.[0]?.rows).toHaveLength(5);
     expect(validateVisibleAnswer(visibleText)).toEqual([]);
   });
 
-  it('does not repeat the budget-mix fallback when the generated follow-up asks for run drivers', () => {
+  it("does not repeat the budget-mix fallback when the generated follow-up asks for run drivers", () => {
     const fallback = buildCioTowerFallbackAnswer(
       context({
-        tenantName: 'Healthcare Demo',
+        tenantName: "Healthcare Demo",
         question:
-          'Which services or vendors are driving the $713.0M run base before we protect the $356.5M change pool?',
+          "Which services or vendors are driving the $713.0M run base before we protect the $356.5M change pool?",
         contract: {
-          contract_key: 'tower_run_change_split',
-          intent: 'budget_control',
-          question_family: 'run_change_split',
-          measure_key: 'run_budget_fy26',
-          artifact_type: 'summary_table',
+          contract_key: "tower_run_change_split",
+          intent: "budget_control",
+          question_family: "run_change_split",
+          measure_key: "run_budget_fy26",
+          artifact_type: "summary_table",
           examples: [],
         },
         measures: [
           {
-            measure_key: 'total_it_budget_fy26',
-            label: 'FY26 IT budget',
-            description: 'Committed FY26 IT budget envelope.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '1069500000',
+            measure_key: "total_it_budget_fy26",
+            label: "FY26 IT budget",
+            description: "Committed FY26 IT budget envelope.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "1069500000",
             value_json: { row_count: 12 },
-            source_fact_keys: ['fact-budget-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-budget-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'run_budget_fy26',
-            label: 'FY26 run budget',
-            description: 'Run budget.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '713000000',
+            measure_key: "run_budget_fy26",
+            label: "FY26 run budget",
+            description: "Run budget.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "713000000",
             value_json: { row_count: 12 },
-            source_fact_keys: ['fact-run-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-run-1"],
+            formula_version: "cio_tower_v1",
           },
           {
-            measure_key: 'change_budget_fy26',
-            label: 'FY26 change budget',
-            description: 'Change budget.',
-            period: 'fy26',
-            basis: 'committed',
-            scope: 'enterprise_envelope',
-            value_numeric: '356500000',
+            measure_key: "change_budget_fy26",
+            label: "FY26 change budget",
+            description: "Change budget.",
+            period: "fy26",
+            basis: "committed",
+            scope: "enterprise_envelope",
+            value_numeric: "356500000",
             value_json: { row_count: 12 },
-            source_fact_keys: ['fact-change-1'],
-            formula_version: 'cio_tower_v1',
+            source_fact_keys: ["fact-change-1"],
+            formula_version: "cio_tower_v1",
           },
         ],
       }),
     );
 
-    expect(fallback.answer).toContain('This is the right drill-down');
-    expect(fallback.answer).not.toContain('My read:');
-    expect(fallback.answer).toContain('does not yet prove the service-by-service or vendor-by-vendor drivers');
-    expect(fallback.answer).toContain('run allocation, contract owner, renewal date, and application dependency fields');
+    expect(fallback.answer).toContain("This is the right drill-down");
+    expect(fallback.answer).not.toContain("My read:");
+    expect(fallback.answer).toContain(
+      "does not yet prove the service-by-service or vendor-by-vendor drivers",
+    );
+    expect(fallback.answer).toContain(
+      "run allocation, contract owner, renewal date, and application dependency fields",
+    );
     expect(fallback.answer).not.toContain(
-      'this is a run-cost pressure question, not a value-realization win yet',
+      "this is a run-cost pressure question, not a value-realization win yet",
     );
     expect(fallback.followUpQuestion).toBe(
-      'Which vendor, service, and contract-owner fields should be loaded first to rank run-cost exposure without guessing?',
+      "Which vendor, service, and contract-owner fields should be loaded first to rank run-cost exposure without guessing?",
     );
   });
 
-  it('makes the Tower v3 fallback board-ready when Claude raw output fails', () => {
+  it("makes the Tower v3 fallback board-ready when Claude raw output fails", () => {
     const fallback = buildCioTowerFallbackAnswer(
       context({
-        tenantName: 'Healthcare Demo',
-        question: 'What evidence is missing before Tower can claim value?',
+        tenantName: "Healthcare Demo",
+        question: "What evidence is missing before Tower can claim value?",
         contract: {
-          contract_key: 'tower_value_realization',
-          intent: 'evidence_gap',
-          question_family: 'value_readiness',
+          contract_key: "tower_value_realization",
+          intent: "evidence_gap",
+          question_family: "value_readiness",
           measure_key: null,
-          artifact_type: 'executive_summary',
+          artifact_type: "executive_summary",
           examples: [],
         },
         towerV3RuntimeView: towerV3RuntimeView(),
@@ -994,37 +1072,45 @@ describe('cio tower answer contract', () => {
         ...table.rows.flat(),
       ]),
       ...(fallback.tabs ?? []).flatMap((tab) => [tab.label, tab.prose]),
-      fallback.followUpQuestion ?? '',
-    ].join(' ');
+      fallback.followUpQuestion ?? "",
+    ].join(" ");
 
-    expect(fallback.answer).toContain('claim discipline');
-    expect(fallback.answer).not.toContain('My read:');
-    expect(fallback.answer).toContain('enough context to design the measurement agenda');
-    expect(fallback.answer).toContain('0 allowed, 79 caveated, 0 blocked');
-    expect(fallback.answer).not.toContain('140 metric records');
-    expect(fallback.answer).not.toContain('79 value records');
-    expect(fallback.answer).toContain('CIO');
-    expect(fallback.answer).toContain('CFO');
-    expect(fallback.tables?.[0]?.title).toBe('Board-readiness inspection path');
+    expect(fallback.answer).toContain("claim discipline");
+    expect(fallback.answer).not.toContain("My read:");
+    expect(fallback.answer).toContain(
+      "enough context to design the measurement agenda",
+    );
+    expect(fallback.answer).toContain("0 allowed, 79 caveated, 0 blocked");
+    expect(fallback.answer).not.toContain("140 metric records");
+    expect(fallback.answer).not.toContain("79 value records");
+    expect(fallback.answer).toContain("CIO");
+    expect(fallback.answer).toContain("CFO");
+    expect(fallback.tables?.[0]?.title).toBe("Board-readiness inspection path");
     expect(fallback.tables?.[0]?.columns).toEqual([
-      'Owner',
-      'Inspect first',
-      'Why it matters',
-      'Decision to unlock',
+      "Owner",
+      "Inspect first",
+      "Why it matters",
+      "Decision to unlock",
     ]);
     expect(fallback.tabs?.map((tab) => tab.label)).toEqual([
-      'CIO view',
-      'CFO view',
-      'Proof close path',
+      "CIO view",
+      "CFO view",
+      "Proof close path",
     ]);
     expect(fallback.followUpQuestion).toBe(
       'Should Tower turn "Baseline metrics need validation" into a 30-day measurement plan with owners and evidence requests?',
     );
-    expect(visible).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
+    expect(visible).not.toMatch(
+      /valid Tower answer contract|No fallback answer|JSON|source key|record ID/i,
+    );
     expect(visible).not.toMatch(
       /\b\d[\d,]*(?:\.\d+)?\s+(?:source\s+signals?|usage\s+signals?|active\s+signals?|metric\s+records?|value\s+records?|facts?|rows?|edges?|nodes?|citations?|relationships?)\b/i,
     );
-    expect(visible).not.toMatch(/\bROI\b|savings|achieved|realized value|measured outcome|proven value|delivered value|value captured/i);
-    expect(visible).not.toMatch(/\b(Read|Evidence|Implication|Next move|Next):/i);
+    expect(visible).not.toMatch(
+      /\bROI\b|savings|achieved|realized value|measured outcome|proven value|delivered value|value captured/i,
+    );
+    expect(visible).not.toMatch(
+      /\b(Read|Evidence|Implication|Next move|Next):/i,
+    );
   });
 });

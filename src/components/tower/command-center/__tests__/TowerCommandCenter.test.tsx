@@ -104,16 +104,22 @@ describe("TowerCommandCenter", () => {
     expect(tab(/Command Center/)).toHaveAttribute("aria-selected", "true");
   });
 
-  it("opens on Command Center with the four posture tiles", () => {
+  it("opens on Command Center with the CFO outcome proof cockpit", () => {
     renderPage();
-    expect(screen.getByText("Spend posture")).toBeInTheDocument();
-    expect(screen.getByText("Value posture")).toBeInTheDocument();
-    expect(screen.getByText("Risk posture")).toBeInTheDocument();
-    expect(screen.getByText("Decision posture")).toBeInTheDocument();
-    // $650M budget, $0 claimable — both read from the mart, not recomputed.
-    // Appears twice by design: the Spend posture hero and the week-read line.
-    expect(screen.getAllByText("$650M").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("$0").length).toBeGreaterThan(0);
+    expect(screen.getByText("Board value posture")).toBeInTheDocument();
+    expect(screen.getByText("Claimable today")).toBeInTheDocument();
+    expect(
+      screen.getByText("Finance validated but blocked"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Programs missing proof")).toBeInTheDocument();
+    expect(screen.getByText("Material source conflicts")).toBeInTheDocument();
+    expect(screen.getByText("Where value gets stopped")).toBeInTheDocument();
+    expect(screen.getByText("Capital decision matrix")).toBeInTheDocument();
+    expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
+    expect(screen.getByText("Source trust rail")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(formatUsdM(view.summary.claimableUsd)).length,
+    ).toBeGreaterThan(0);
   });
 
   it("moves between tabs with arrow keys and reflects the tab in the URL", () => {

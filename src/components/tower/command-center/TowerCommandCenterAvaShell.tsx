@@ -14,7 +14,7 @@ import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
 import { TowerCommandCenter } from "./TowerCommandCenter";
 
-interface TowerChatResponse {
+interface CioTowerChatResponse {
   response?: string;
   modelOutput?: TowerChatVisibleAnswer;
   traceKey?: string;
@@ -31,7 +31,7 @@ type TowerChatStreamEvent =
     }
   | ({
       type: "tower-answer";
-    } & Partial<TowerChatResponse>)
+    } & Partial<CioTowerChatResponse>)
   | {
       type: "error";
       response?: string;
@@ -47,18 +47,18 @@ type TowerChatStreamEvent =
 async function readTowerChatStream(
   response: Response,
   onStatus: (label: string) => void,
-): Promise<Partial<TowerChatResponse>> {
+): Promise<Partial<CioTowerChatResponse>> {
   if (!response.body) {
     return (await response
       .json()
-      .catch(() => ({}))) as Partial<TowerChatResponse>;
+      .catch(() => ({}))) as Partial<CioTowerChatResponse>;
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let finalPayload: Partial<TowerChatResponse> | null = null;
-  let errorPayload: Partial<TowerChatResponse> | null = null;
+  let finalPayload: Partial<CioTowerChatResponse> | null = null;
+  let errorPayload: Partial<CioTowerChatResponse> | null = null;
 
   const handleLine = (line: string) => {
     const trimmed = line.trim();
@@ -141,7 +141,7 @@ export function TowerCommandCenterAvaShell({
       role: "atlas",
       content: view
         ? `${tenantName} Tower Command Center is loaded. aVa can explain the visible value proof, blocked claims, evidence gaps, AI portfolio posture, and recommended actions without approving anything on its own.`
-        : "aVa is waiting for tenant-bound Tower read-model rows before it can answer portfolio questions.",
+        : "aVa is waiting for tenant-bound Tower mart rows before it can answer portfolio questions.",
     }),
     [tenantName, view],
   );
@@ -187,7 +187,7 @@ export function TowerCommandCenterAvaShell({
       const timeout = window.setTimeout(() => controller.abort(), 90_000);
 
       try {
-        const res = await fetch("/api/tower/chat", {
+        const res = await fetch("/api/tower/cio-chat", {
           method: "POST",
           headers: {
             Accept: "application/x-ndjson",
@@ -196,6 +196,17 @@ export function TowerCommandCenterAvaShell({
           body: JSON.stringify({
             message: trimmed,
             stream: true,
+            visibleContextCriteria: {
+              renderingPolicy: "exact-visible-output",
+              preferredCharts: [
+                "recharts",
+                "svg-compatible",
+                "quadrant-matrix",
+                "value-bridge",
+                "ranked-table",
+              ],
+              exportTargets: ["pdf", "html"],
+            },
           }),
           signal: controller.signal,
         });
@@ -205,7 +216,7 @@ export function TowerCommandCenterAvaShell({
           ? await readTowerChatStream(res, setPendingMessage)
           : ((await res
               .json()
-              .catch(() => ({}))) as Partial<TowerChatResponse>);
+              .catch(() => ({}))) as Partial<CioTowerChatResponse>);
         const modelOutput = json.modelOutput;
         if (!res.ok || !modelOutput?.answer) {
           setMessages((prev) => [
@@ -297,7 +308,21 @@ export function TowerCommandCenterAvaShell({
         clientId,
         tenantName,
         context: `Command Center · ${tenantName}`,
-        towerContextSource: "tower_schema_command_center",
+        towerExperience: "outcome_proof_cockpit",
+        towerContextSource: "cio_tower_mart_command_center",
+        answerRenderingPolicy: {
+          visibleOutputOwner: "claude",
+          rendererPolicy: "exact_visible_strings",
+          constraintsLocation: "input_context_criteria",
+          preferredVisuals: [
+            "recharts",
+            "svg",
+            "tables",
+            "quadrant_matrix",
+            "value_bridge",
+          ],
+          exportTargets: ["pdf", "html"],
+        },
         towerMeasures: view
           ? [
               {
@@ -325,8 +350,17 @@ export function TowerCommandCenterAvaShell({
         towerKnownGaps: view?.gaps.map((gap) => gap.missing).slice(0, 12) ?? [],
       }}
       defaultMode="collapsed"
-      defaultLeftPercent={35}
-      minLeftPx={320}
+      disableStoredMode
+      collapsedRestoreMode="expand"
+      collapsedSummary={{
+        label: "Ask aVa",
+        detail: "Outcome insights",
+      }}
+      placeholder="Ask aVa to explain proof, blocked value, or the next executive action..."
+      defaultLeftPercent={52}
+      minLeftPx={560}
+      expandedWidth="96vw"
+      expandedMaxWidth={1720}
     />
   );
 }

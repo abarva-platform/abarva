@@ -504,6 +504,9 @@ export interface AgentDockProps {
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
   defaultLeftPercent?: number;
+  /** Expanded overlay sizing overrides for artifact-heavy surfaces. */
+  expandedWidth?: CSSProperties["width"];
+  expandedMaxWidth?: CSSProperties["maxWidth"];
   /** Preserve caller-provided visible text when the surface has already applied its own naming policy. */
   preserveVisibleText?: boolean;
   /** Optional copy for the collapsed chip. Defaults to the legacy "Ask {agent}". */
@@ -716,6 +719,8 @@ export function AgentDock(props: AgentDockProps) {
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
+    expandedWidth,
+    expandedMaxWidth,
     preserveVisibleText = false,
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
@@ -1556,7 +1561,15 @@ export function AgentDock(props: AgentDockProps) {
         data-testid="agent-dock-expand-overlay"
         style={EXPAND_OVERLAY_STYLE}
       >
-        <div style={EXPAND_PANEL_STYLE}>{chatPanel}</div>
+        <div
+          style={{
+            ...EXPAND_PANEL_STYLE,
+            ...(expandedWidth ? { width: expandedWidth } : null),
+            ...(expandedMaxWidth ? { maxWidth: expandedMaxWidth } : null),
+          }}
+        >
+          {chatPanel}
+        </div>
       </div>
     </>
   );

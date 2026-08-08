@@ -90,7 +90,7 @@ export function ProgramDrawer({
           "Claimable",
           p.claimableUsd,
           p.claimableUsd > 0 ? "teal" : "red",
-          "can be booked as realized value today",
+          "cleared by the Tower claim gate",
         ],
         [
           "Blocked",

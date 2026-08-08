@@ -235,12 +235,17 @@ describe("assembleMartFromFacts — full CXO story on unified facts", () => {
     expect(cc.total_it_budget_fy26).toBe(650_000_000);
     expect(cc.run_budget_fy26).toBe(487_500_000);
     expect(cc.run_ratio).toBeCloseTo(0.75, 2);
+    expect(cc.claimable_value).toBe(0);
+    expect(cc.finance_validated_blocked_value).toBe(900_000);
+    expect(cc.promised_value_exposure).toBe(10_000_000);
+    expect(cc.blocked_program_count).toBeGreaterThan(0);
+    expect(cc.unmeasured_program_count).toBeGreaterThan(0);
   });
 
   it("NEVER auto-claims realized value", () => {
     expect(mart.command_center[0].realized_value_ytd_allowed).toBe(0);
     const realizedStage = mart.value_funnel.find(
-      (s) => s.stage_key === "realized_claimable",
+      (s) => s.stage_key === "realized",
     );
     expect(realizedStage?.value_numeric).toBe(0);
     expect(realizedStage?.claim_status).toBe("blocked");
@@ -315,17 +320,41 @@ describe("assembleMartFromFacts — full CXO story on unified facts", () => {
   it("produces a value funnel in the right monotone order of claim strength", () => {
     const seq = mart.value_funnel.map((s) => s.stage_key);
     expect(seq).toEqual([
-      "approved_funding",
-      "ai_tagged_spend",
-      "promised_value",
+      "funded",
+      "baseline_supported",
+      "usage_supported",
+      "outcome_measured",
       "finance_validated",
-      "realized_claimable",
+      "claimable",
+      "realized",
     ]);
+    const baseline = mart.value_funnel.find(
+      (stage) => stage.stage_key === "baseline_supported",
+    );
+    expect(baseline?.known_value_amount).toBe(0);
+    expect(baseline?.blocked_claim_count).toBeGreaterThan(0);
   });
 
-  it("emits CXO actions per non-empty lane", () => {
+  it("emits owner-queue CXO actions with blocked decisions and exposed amounts", () => {
     const lanes = mart.cxo_actions.map((a) => a.action_lane);
     expect(lanes).toEqual(expect.arrayContaining(["fund", "fix", "freeze"]));
+    const fix = mart.cxo_actions.find((action) => action.action_lane === "fix");
+    expect(fix?.program_id).toBe("PROG-SNOW");
+    expect(fix?.amount_exposed).toBe(6_000_000);
+    expect(fix?.evidence_requirement).toBe("Usage evidence required");
+    expect(fix?.handoff_readiness).toBe("needs_evidence");
+  });
+
+  it("writes explicit decision-matrix dimensions onto program lane rows", () => {
+    const snow = mart.program_decision_lanes.find(
+      (lane) => lane.program_code === "PROG-SNOW",
+    );
+    expect(snow?.decision_reason_code).toBe("FIX_PROOF");
+    expect(snow?.amount_blocked).toBe(6_000_000);
+    expect(snow?.next_gate).toBe("Usage evidence required");
+    expect(snow?.proof_maturity_score).toBeGreaterThanOrEqual(0);
+    expect(snow?.risk_pressure_score).toBeGreaterThan(50);
+    expect(snow?.lineage_trust_state).toMatch(/AGREE|ONE_SOURCE/);
   });
 
   it("writes an executive summary that leads with the budget, not the tool", () => {
