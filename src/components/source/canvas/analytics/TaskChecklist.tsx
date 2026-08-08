@@ -216,7 +216,7 @@ function TaskRow({
           </p>
 
           {task.template ? <TemplateChip template={task.template} /> : null}
-          {!task.template && task.factTemplateCode ? (
+          {task.factTemplateCode ? (
             <TemplateDownloadLink
               eventId={eventId}
               factTemplateCode={task.factTemplateCode}
