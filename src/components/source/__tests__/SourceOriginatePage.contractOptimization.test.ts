@@ -2,9 +2,17 @@ import {
   buildContractOptimizationCandidateHref,
   isCapturedApprovalFact,
   isReviewableContractScope,
+  SOURCE_INTAKE_CATEGORIES,
 } from "../SourceOriginatePage";
+import { SOURCE_CATEGORY_IDS } from "@/lib/source/taxonomy/category-taxonomy";
 
 describe("SourceOriginatePage contract optimization intake", () => {
+  it("uses the canonical Source taxonomy categories for the intake picker", () => {
+    expect(SOURCE_INTAKE_CATEGORIES.map((category) => category.id)).toEqual([
+      ...SOURCE_CATEGORY_IDS,
+    ]);
+  });
+
   it("builds a contract-bound optimization intake link from a ranked candidate", () => {
     const href = buildContractOptimizationCandidateHref({
       contractId: "CTR-090",

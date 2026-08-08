@@ -177,6 +177,26 @@ describe("createSourcingEvent scaffolding", () => {
     expect(insertedRow.sourcing_motion).toBe("contract_optimization");
   });
 
+  it("persists the selected classifier category when the intake supplies one", async () => {
+    const calls = setupMockSupabase({
+      id: "evt-category",
+      client_key: "skyharbor_global",
+      event_code: "SKYH-AMS-2026",
+    });
+
+    await createSourcingEvent({
+      clientKey: "skyharbor_global",
+      eventName: "SkyHarbor Application Managed Services Sourcing Event",
+      eventType: "managed_service",
+      triggerDescription: "Need AMS sourcing with tower evidence.",
+      categoryId: "ams",
+    });
+
+    const eventInsert = calls.find((c) => c.table === "source_events")!;
+    const insertedRow = eventInsert.rows as Record<string, unknown>;
+    expect(insertedRow.classified_category).toBe("ams");
+  });
+
   it("does not duplicate the client name in generated event codes", async () => {
     const calls = setupMockSupabase({
       id: "evt-new-4",
