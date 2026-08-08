@@ -84,7 +84,8 @@ const INTAKE_COLUMNS: Record<string, string[]> = {
 
 const DEFAULT_INTAKE_COLUMNS = ["What you have", "Details", "Source / date", "Notes"];
 
-function intakeColumnsFor(requirementId: string): string[] {
+function intakeColumnsFor(requirement: SourceEvidenceRequirement): string[] {
+  const requirementId = requirement.requirementId;
   const templateCode = FACT_TEMPLATE_BY_REQUIREMENT_ID[requirementId];
   const template = templateCode ? templateFactMapByCode(templateCode) : undefined;
   if (template) {
@@ -93,7 +94,12 @@ function intakeColumnsFor(requirementId: string): string[] {
       : template.entityRefColumns ?? [];
     return [...entityRefHeaders, ...template.columns.map((column) => column.header)];
   }
-  return INTAKE_COLUMNS[requirementId] ?? DEFAULT_INTAKE_COLUMNS;
+  return (
+    INTAKE_COLUMNS[requirementId] ??
+    (requirement.criticalFields.length > 0
+      ? [...requirement.criticalFields]
+      : DEFAULT_INTAKE_COLUMNS)
+  );
 }
 
 /**
@@ -134,6 +140,10 @@ export async function buildInputTemplateWorkbook(args: {
       `What we need: ${requirement.description}`,
       `Why it matters: ${requirement.unlocks}`,
       `Where it usually lives: ${requirement.sourceLabel}`,
+      `Typical systems: ${requirement.sourceSystems.join(", ")}`,
+      `Record grain: ${requirement.recordGrain}`,
+      `Critical fields: ${requirement.criticalFields.join(", ")}`,
+      `Quality checks: ${requirement.qualityChecks.join("; ")}`,
       `Readiness target: ${requirement.minimumState}.`,
       "Fill in the Intake sheet (or paste an export over it), then upload this",
       "file on the same step. It will attach to this item automatically — keep",
@@ -146,7 +156,7 @@ export async function buildInputTemplateWorkbook(args: {
   const intake = workbook.addWorksheet("Intake", {
     views: [{ state: "frozen", ySplit: 1 }],
   });
-  const columns = intakeColumnsFor(requirement.requirementId);
+  const columns = intakeColumnsFor(requirement);
   intake.columns = columns.map((header) => ({
     header,
     width: Math.max(18, Math.min(48, header.length + 8)),

@@ -40,106 +40,6 @@ const STATE_RANK: Record<string, number> = {
 };
 
 /**
- * Filename keywords per canonical requirement id. Curated, not inferred — the
- * requirement set is small and stable, and explicit keywords keep matching
- * auditable. All matching is against the lowercased filename and scoped to the
- * upload's stage, so cross-stage collisions (e.g. "contract") cannot occur.
- */
-const REQUIREMENT_FILENAME_KEYWORDS: Record<string, string[]> = {
-  // Stage 1 · Strategy
-  "EVID-SRC-STR-INCUMBENT": [
-    "incumbent",
-    "contract",
-    "msa",
-    "sow",
-    "renewal",
-    "agreement",
-  ],
-  "EVID-SRC-STR-SPONSOR-COMMIT": [
-    "sponsor",
-    "commitment",
-    "governance",
-    "authoriz",
-    "mandate",
-  ],
-  // Stage 2 · Scope
-  "EVID-SRC-SCOPE-APP-INV": [
-    "application",
-    "inventory",
-    "cmdb",
-    "portfolio",
-    "app_",
-  ],
-  "EVID-SRC-SCOPE-ORG": [
-    "org",
-    "roster",
-    "headcount",
-    "workforce",
-    "staffing",
-    "fte",
-  ],
-  "EVID-SRC-SCOPE-TICKET-HISTORY": [
-    "ticket",
-    "incident",
-    "itsm",
-    "volume",
-    "servicenow",
-    "jira",
-  ],
-  "EVID-SRC-SCOPE-FY-CONTRACT": [
-    "contract",
-    "spend",
-    "run_cost",
-    "run-cost",
-    "runcost",
-    "budget",
-  ],
-  // Stage 3 · RFP
-  "EVID-SRC-RFP-VENDOR-INTEL": ["vendor", "market", "intel", "landscape"],
-  "EVID-SRC-RFP-LEGAL-TEMPLATE": [
-    "legal",
-    "terms",
-    "template",
-    "dpa",
-    "liability",
-  ],
-  // Stage 4 · Responses
-  "EVID-SRC-RESP-PROPOSALS": ["proposal", "response", "bid", "submission"],
-  "EVID-SRC-RESP-CLARIFICATIONS": ["clarification", "q&a", "qa_", "question"],
-  // Stage 5 · Evaluation
-  "EVID-SRC-EVAL-RATER-SCORES": ["score", "rating", "evaluation", "rater"],
-  "EVID-SRC-EVAL-WEIGHT-RATIONALE": ["weight", "criteria", "rationale"],
-  // Stage 6 · Pricing
-  "EVID-SRC-PRICE-VENDOR-PRICING": [
-    "pricing",
-    "price",
-    "rate",
-    "cost",
-    "commercial",
-  ],
-  "EVID-SRC-PRICE-ASSUMPTIONS": ["assumption", "basis"],
-  // Stage 7 · BAFO
-  "EVID-SRC-BAFO-OPEN-TRAPS": ["trap", "bafo", "open_item", "issue"],
-  // Stage 8 · Executive decision
-  "EVID-SRC-DEC-FINALIST-PRICING": ["pricing", "finalist", "final_offer"],
-  "EVID-SRC-DEC-RISK-REGISTER": ["risk"],
-  // Stage 9 · Selection
-  "EVID-SRC-SEL-CONTRACT": ["contract", "executed", "signature", "signed"],
-  // Stage 10 · Transition
-  "EVID-SRC-TRAN-MILESTONES": ["milestone", "plan", "timeline", "cutover"],
-  "EVID-SRC-TRAN-KT-EVIDENCE": ["kt", "knowledge", "handover"],
-  // Stage 11 · Value
-  "EVID-SRC-VAL-MEASUREMENT": [
-    "value",
-    "kpi",
-    "measure",
-    "benefit",
-    "realization",
-    "realisation",
-  ],
-};
-
-/**
  * Match an uploaded file to the canonical evidence requirement it satisfies,
  * scoped to the upload's stage. Returns null when nothing matches — an honest
  * no-op beats a wrong link.
@@ -154,7 +54,7 @@ export function matchEvidenceRequirementForUpload(args: {
   );
   let best: { req: SourceEvidenceRequirement; hits: number } | null = null;
   for (const req of stageRequirements) {
-    const keywords = REQUIREMENT_FILENAME_KEYWORDS[req.requirementId] ?? [];
+    const keywords = req.filenameTokens;
     const hits = keywords.filter((k) => name.includes(k)).length;
     if (hits > 0 && (!best || hits > best.hits)) best = { req, hits };
   }
@@ -172,8 +72,10 @@ export function matchEvidenceRequirementForUpload(args: {
 export function templateFilenameTokenForRequirement(
   requirementId: string,
 ): string | null {
-  const keywords = REQUIREMENT_FILENAME_KEYWORDS[requirementId];
-  return keywords && keywords.length > 0 ? keywords[0] : null;
+  const requirement = SOURCE_EVIDENCE_REQUIREMENTS.find(
+    (req) => req.requirementId === requirementId,
+  );
+  return requirement?.filenameTokens[0] ?? null;
 }
 
 export interface UploadSubstrateSyncInput {

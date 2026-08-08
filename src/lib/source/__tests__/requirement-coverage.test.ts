@@ -2,6 +2,10 @@ import {
   computeRequirementCoverage,
   computeStageRequirementCoverage,
 } from "@/lib/source/requirement-coverage";
+import {
+  requiredEvidenceForStage,
+  requiredSpecsForStage,
+} from "@/lib/source/canonical-specs";
 import type {
   SourceEventArtifactState,
   SourceEventEvidence,
@@ -32,7 +36,14 @@ function requiredEvidence(
     requirementId,
     stage: "scope",
     label: requirementId,
+    evidenceClass: "scope",
     sourceLabel: "",
+    sourceSystems: ["Test source system"],
+    acceptedFileTypes: ["csv"],
+    recordGrain: "one test record per row",
+    criticalFields: ["record_id"],
+    filenameTokens: ["test"],
+    qualityChecks: ["Test fixture quality check"],
     minimumState,
     level: "required",
     description: "",
@@ -149,12 +160,15 @@ describe("requirement coverage", () => {
   });
 
   it("uses the canonical stage catalog for the canvas strip", () => {
+    const required =
+      requiredSpecsForStage("scope").length +
+      requiredEvidenceForStage("scope").length;
     expect(
       computeStageRequirementCoverage({
         stageKey: "scope",
         artifactStates: [],
         evidenceStates: [],
       }).displayValue,
-    ).toBe("0 / 8");
+    ).toBe(`0 / ${required}`);
   });
 });
