@@ -1,6 +1,7 @@
 import {
   buildContractOptimizationCandidateHref,
   isCapturedApprovalFact,
+  isReviewableContractScope,
 } from "../SourceOriginatePage";
 
 describe("SourceOriginatePage contract optimization intake", () => {
@@ -41,5 +42,29 @@ describe("SourceOriginatePage contract optimization intake", () => {
       ),
     ).toBe(false);
     expect(isCapturedApprovalFact("Not assigned")).toBe(false);
+  });
+
+  it("does not treat synthetic fallback scope as reviewable approval scope", () => {
+    const syntheticScope =
+      "Fictional contract supporting airline technology services for Salesforce; annual value covers only the contract-backed portion of FY2027 vendor spend.";
+
+    expect(isCapturedApprovalFact(syntheticScope)).toBe(true);
+    expect(isReviewableContractScope(syntheticScope)).toBe(false);
+    expect(isReviewableContractScope("CRM platform subscriptions and data integration support.")).toBe(true);
+
+    const href = buildContractOptimizationCandidateHref({
+      contractId: "CTR-090",
+      contractName: "Salesforce Data Platform Agreement 3",
+      vendorName: "Salesforce",
+      annualValueUsd: 43_500_000,
+      actualAnnualSpendUsd: 37_400_000,
+      weakSignalCount: 2,
+      scopeSummary: syntheticScope,
+      decisionOwner: "VP Vendor Management",
+      reason: "High spend with weak leverage signals.",
+    });
+
+    expect(href).not.toContain("scopeSummary=");
+    expect(href).not.toContain("Fictional");
   });
 });

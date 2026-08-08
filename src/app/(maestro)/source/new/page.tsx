@@ -12,6 +12,7 @@ import {
   numberFromDb,
 } from '@/lib/source/data-model/vendor-contract-portfolio';
 import type { SourceContract360Row } from '@/lib/source/data-model/types';
+import { isReviewableContractScope } from '@/lib/source/contract-optimization-intake';
 
 export const metadata: Metadata = { title: 'New IT Sourcing Intake · AbarVa' };
 
@@ -99,7 +100,7 @@ function candidateFromRow(
     annualValueUsd: numberFromDb(row.annual_value),
     actualAnnualSpendUsd: numberFromDb(row.actual_annual_spend),
     weakSignalCount,
-    scopeSummary: row.scope_summary,
+    scopeSummary: isReviewableContractScope(row.scope_summary) ? row.scope_summary : null,
     decisionOwner: row.renewal_owner_ref,
     reason,
   };

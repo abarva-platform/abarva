@@ -5,6 +5,7 @@ import { numberFromDb, type LeverageSignal } from '@/lib/source/data-model/vendo
 import { buildContractOptimizationLedger } from '@/lib/source/data-model/contract-optimization-ledger';
 import { buildContractOptimizationSpine } from '@/lib/source/data-model/contract-optimization-spine';
 import type { SourcingOpportunityReason } from '@/lib/source/data-model/sourcing-opportunities';
+import { isReviewableContractScope } from '@/lib/source/contract-optimization-intake';
 
 /**
  * `node-postgres` returns NUMERIC/DECIMAL columns as strings; a lone value
@@ -33,7 +34,7 @@ const contractOptimizationIntakeHref = (contract: EnrichedContract): string =>
   param('annualValueUsd', numberFromDb(contract.row.annual_value)) +
   param('actualAnnualSpendUsd', numberFromDb(contract.row.actual_annual_spend)) +
   param('weakSignalCount', contract.leverage.weakSignalCount) +
-  param('scopeSummary', contract.row.scope_summary) +
+  param('scopeSummary', isReviewableContractScope(contract.row.scope_summary) ? contract.row.scope_summary : null) +
   param('decisionOwner', contract.row.renewal_owner_ref);
 
 const REASON_LABEL: Record<SourcingOpportunityReason, string> = {
@@ -486,7 +487,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     noticePassed: contract?.noticePassed ?? false,
     role: c.renewal_owner_ref ?? 'Not assigned',
     evidence: c.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Not established',
-    scopeSummary: c.scope_summary ?? 'Not established',
+    scopeSummary: isReviewableContractScope(c.scope_summary) ? c.scope_summary : 'Scope not loaded',
   } : null;
   const termRows = c ? ([
     ['Contract identifier', c.contract_id, 'contract_id'], ['Vendor category', c.vendor_category ?? 'Unresolved', 'vendor_category'],

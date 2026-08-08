@@ -247,4 +247,33 @@ describe("SourceContract360Page", () => {
 
     expect(screen.queryAllByText("Not available")).toHaveLength(0);
   });
+
+  it("does not serialize synthetic fallback scope into the optimize link", () => {
+    const view = buildContract360View({
+      contract: baseContract({
+        scope_summary:
+          "Fictional contract supporting airline technology services for Salesforce; annual value covers only the contract-backed portion of FY2027 vendor spend.",
+      }),
+      applicationScope: [],
+      financialExposure: [],
+      operationalPerformance: [],
+      initiativeDependencies: [],
+      towerObservations: [],
+      towerValueClaims: [],
+      docExtractions: [],
+    });
+
+    render(<SourceContract360Page view={view} tenantName="Airline Demo" />);
+
+    const optimize = screen.getByTestId("contract-360-optimize");
+    expect(optimize).toHaveAttribute(
+      "href",
+      expect.stringContaining("intent=contract-optimization"),
+    );
+    expect(optimize).not.toHaveAttribute(
+      "href",
+      expect.stringContaining("scopeSummary="),
+    );
+    expect(screen.queryByText(/Fictional contract supporting/)).not.toBeInTheDocument();
+  });
 });
