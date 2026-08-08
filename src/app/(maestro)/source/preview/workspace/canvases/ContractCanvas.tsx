@@ -658,6 +658,9 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
     const creditsEarned = perf?.service_credits_earned ?? null;
     const creditsClaimed = perf?.service_credits_claimed ?? null;
     const hasCreditEvidence = creditsEarned != null || creditsClaimed != null;
+    const variance = fin?.linked_forecast_amount != null && fin.linked_actual_amount != null
+      ? fin.linked_forecast_amount - fin.linked_actual_amount
+      : null;
     const performanceRead = incidents != null && incidents > 0
       ? hasCreditEvidence
         ? 'Operational pressure is visible and SLA credit evidence is available for review.'
@@ -683,45 +686,42 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
     }
     return (
       <>
-        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
-            Service and financial performance read
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.35, marginBottom: 7 }}>
+        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 20px' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.35, marginBottom: 6 }}>
             {performanceRead}
           </div>
-          <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.55, maxWidth: '96ch' }}>
-            {financialRead} This tab should tell a sourcing team whether service issues, spend variance, or missing evidence create a negotiation lever; it does not turn incidents or variance into savings by itself.
+          <div style={{ fontSize: 12.8, color: '#5f5e5a', lineHeight: 1.5, maxWidth: '90ch' }}>
+            {financialRead} Treat this as leverage context, not a savings claim.
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 14 }}>
         {fin ? (
-          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 12 }}>Financial exposure</div>
-            {([['Linked budget', fin.linked_budget_amount], ['Linked forecast', fin.linked_forecast_amount], ['Linked actual', fin.linked_actual_amount], ['Linked committed', fin.linked_committed_amount]] as [string, number | null][]).map(([label, v]) => (
-              <div key={label} style={{ display: 'flex', gap: 14, alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
-                <span style={{ fontSize: 13, color: '#5f5e5a' }}>{label}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{formatCurrency(v)}</span>
+          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 20px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 10 }}>Spend position</div>
+            {([['Budget', fin.linked_budget_amount], ['Forecast', fin.linked_forecast_amount], ['Actual', fin.linked_actual_amount], ['Committed', fin.linked_committed_amount]] as [string, number | null][]).map(([label, v]) => (
+              <div key={label} style={{ display: 'flex', gap: 12, alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
+                <span style={{ fontSize: 12.6, color: '#5f5e5a' }}>{label}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.6, fontWeight: 700, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{formatCurrency(v)}</span>
               </div>
             ))}
-            <div style={{ fontSize: 12, color: '#5f5e5a', lineHeight: 1.5, marginTop: 11 }}>
-              Use this to size exposure, not to declare savings. Actual below forecast or contract value needs cause classification.
+            <div style={{ fontSize: 12, color: '#5f5e5a', lineHeight: 1.45, marginTop: 10 }}>
+              {variance == null ? 'Variance cause is not established.' : `${formatCurrency(Math.abs(variance))} ${variance >= 0 ? 'below forecast' : 'above forecast'}; cause still needs usage and entitlement evidence.`}
             </div>
           </div>
         ) : null}
         {perf ? (
-          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 12 }}>Operational performance</div>
-            <div style={{ fontSize: 13, color: '#2c2c2a', lineHeight: 1.6, marginBottom: 10 }}>{perf.sla_summary ?? 'No SLA summary recorded.'}</div>
+          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 20px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 10 }}>Service signal</div>
+            <div style={{ fontSize: 12.8, color: '#2c2c2a', lineHeight: 1.5, marginBottom: 10 }}>{perf.sla_summary ?? 'No SLA summary recorded.'}</div>
             {([['Sev1/Sev2 incidents', perf.cloud_sev1_sev2_incidents], ['Service credits earned', perf.service_credits_earned], ['Service credits claimed', perf.service_credits_claimed]] as [string, number | null][]).map(([label, v]) => (
-              <div key={label} style={{ display: 'flex', gap: 14, alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
-                <span style={{ fontSize: 13, color: '#5f5e5a' }}>{label}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{v == null ? 'Not established' : v.toLocaleString('en-US')}</span>
+              <div key={label} style={{ display: 'flex', gap: 12, alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
+                <span style={{ fontSize: 12.6, color: '#5f5e5a' }}>{label}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.6, fontWeight: 700, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{v == null ? 'Not established' : v.toLocaleString('en-US')}</span>
               </div>
             ))}
             {perf.evidence_gap ? (
-              <div style={{ fontSize: 12.5, color: '#6d420c', lineHeight: 1.5, marginTop: 11, padding: '10px 12px', border: '1px solid rgba(186,117,23,.25)', borderRadius: 6, background: '#fff8ec' }}>
-                <b style={{ color: '#2c2c2a' }}>Evidence still needed:</b> {String(perf.evidence_gap)}
+              <div style={{ fontSize: 12.2, color: '#6d420c', lineHeight: 1.45, marginTop: 10, padding: '9px 11px', border: '1px solid rgba(186,117,23,.25)', borderRadius: 6, background: '#fff8ec' }}>
+                <b style={{ color: '#2c2c2a' }}>Need:</b> {String(perf.evidence_gap)}
               </div>
             ) : null}
           </div>

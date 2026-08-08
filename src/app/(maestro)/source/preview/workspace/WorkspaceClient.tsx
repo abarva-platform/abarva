@@ -285,28 +285,22 @@ export function WorkspaceClient({
 
   return (
     <div className="sw-root" style={{ height: 'calc(100dvh - 73px)', display: 'flex', flexDirection: 'column', background: '#f5f1eb', overflow: 'hidden' }}>
-      {/* Live-data banner — every figure below reads the governed Source
-          data plane for this tenant, not an illustrative fixture. */}
+      {/* Live-data banner — client-facing status only; implementation diagnostics
+          stay in the full-context drawer and aVa context. */}
       <div
         style={{
-          background: portfolio.isEmpty ? '#3a1f0c' : '#0c1a3a', color: 'rgba(255,255,255,.86)', fontSize: 11.5, padding: '5px 20px',
-          display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, fontFamily: "'JetBrains Mono', monospace",
-          letterSpacing: '.02em',
+          background: portfolio.isEmpty ? '#3a1f0c' : '#0c1a3a', color: 'rgba(255,255,255,.86)', fontSize: 11.5, padding: '6px 20px',
+          display: 'flex', gap: 14, alignItems: 'center', flexShrink: 0,
         }}
       >
-        <strong style={{ color: portfolio.isEmpty ? '#ffb066' : '#8fb8ff' }}>
-          {portfolio.isEmpty ? '● SOURCE WORKSPACE · NO ROWS RETURNED' : '● SOURCE WORKSPACE · LIVE'}
+        <strong style={{ color: portfolio.isEmpty ? '#ffb066' : '#8fb8ff', fontWeight: 800 }}>
+          {portfolio.isEmpty ? 'No Source rows returned' : 'SkyHarbor Source'}
         </strong>
-        <span>
+        <span style={{ color: 'rgba(255,255,255,.74)' }}>
           {portfolio.isEmpty
-            ? 'source.contract_360 returned no rows for tenant_key=' + (portfolio.tenantKey || '(none)') + ' — nothing below is estimated in its place.'
-            : portfolio.workspaceDiagnostics.datasetLabel + ' · provider=' + portfolio.workspaceDiagnostics.analyticsProvider + ' · contracts/vendors=' + portfolio.workspaceDiagnostics.v4ContractCount + '/' + portfolio.workspaceDiagnostics.v4VendorCount + ' · tenant_key=' + portfolio.tenantKey + ' · as-of ' + new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+            ? 'Nothing below is estimated in its place.'
+            : portfolio.workspaceDiagnostics.v4ContractCount + ' contracts · ' + portfolio.workspaceDiagnostics.v4VendorCount + ' vendors · as of ' + new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
         </span>
-        {!portfolio.isEmpty && portfolio.workspaceDiagnostics.mismatchWarning ? (
-          <span style={{ color: '#ffcf8a' }}>
-            Explore projection={portfolio.workspaceDiagnostics.legacyContractCount}/{portfolio.workspaceDiagnostics.legacyVendorCount}
-          </span>
-        ) : null}
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexShrink: 0 }}>
           <button onClick={() => { window.location.href = '/source/portfolio'; }} style={{ border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: 'inherit', borderRadius: 5, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             Sourcing events ↗
