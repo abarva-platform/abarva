@@ -85,7 +85,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
       {
         ok: false,
         error: 'optimization_event_contract_mismatch',
-        detail: 'The existing or created Door 1 event does not match the selected contract. No navigation was performed.',
+        detail: 'The existing or created contract optimization event does not match the selected contract. No navigation was performed.',
         contractId: contract.contract_id,
         vendorName: contract.vendor_name,
         contractName: contract.contract_name,

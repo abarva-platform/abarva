@@ -258,6 +258,7 @@ describe("buildViewModel numeric coercion", () => {
     expect(url.searchParams.get("actualAnnualSpendUsd")).toBe("48000000");
     expect(url.searchParams.get("weakSignalCount")).toBe("2");
     expect(built.optCtaHref).not.toContain("/api/source/workspace");
+    expect(JSON.stringify(built)).not.toContain("Door 1");
   });
 
   it("sums explorer-tree badges without string-concatenating NUMERIC-as-string fields", () => {
