@@ -660,9 +660,21 @@ function buildDecisionOwnerPreview(
     .split(/\b(?:with|and|\+|,)\b/i)[0]
     ?.replace(/^(decision owner|owner|sponsor)\s*:\s*/i, "")
     .trim();
+  // Prefilled/aVa-authored owner text can be a full instructional sentence
+  // (e.g. "Vendor Management / Sourcing Lead. Confirm the named accountable
+  // owner before any external action.") rather than an actual name — render
+  // that as-is and it reads as a fabricated person plus a stray role tag.
+  // Anything sentence-length or containing a mid-string sentence break isn't
+  // a name; fall back to the generic label instead.
+  const looksLikeAName = Boolean(
+    firstNamedOwner &&
+      firstNamedOwner.length <= 60 &&
+      !/[.!?]\s+\S/.test(firstNamedOwner),
+  );
+  const resolvedName = looksLikeAName ? firstNamedOwner : undefined;
   return {
-    name: firstNamedOwner || `${clientShortName} decision owner`,
-    role: inferApproverRole(firstNamedOwner || trimmed) || "decision owner",
+    name: resolvedName || `${clientShortName} decision owner`,
+    role: inferApproverRole(resolvedName) || "decision owner",
   };
 }
 
