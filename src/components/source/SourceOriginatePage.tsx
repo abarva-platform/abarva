@@ -1480,12 +1480,17 @@ export function SourceOriginatePage({
       <RelatedContextSection />
 
       {/* Guidance cards */}
-      <section style={{ display: "grid", gap: 6 }}>
-        <div style={SECTION_LABEL}>How to use this</div>
-        {AGENT_GUIDANCE.map((item) => (
-          <GuidanceCard key={item.label} {...item} />
-        ))}
-      </section>
+      <details style={GUIDANCE_DETAILS}>
+        <summary style={GUIDANCE_SUMMARY}>
+          <span style={SECTION_LABEL}>How to use this</span>
+          <span style={GUIDANCE_SUMMARY_TEXT}>aVa intake guide</span>
+        </summary>
+        <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+          {AGENT_GUIDANCE.map((item) => (
+            <GuidanceCard key={item.label} {...item} />
+          ))}
+        </div>
+      </details>
     </aside>
   );
 
@@ -2019,6 +2024,28 @@ const OPTIONAL_CATEGORY_SUMMARY_STYLE: CSSProperties = {
   gap: 8,
   cursor: "pointer",
   listStyle: "none",
+};
+
+const GUIDANCE_DETAILS: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 10,
+  background: SHELL.CARD_WHITE,
+  padding: "8px 11px",
+};
+
+const GUIDANCE_SUMMARY: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 10,
+  cursor: "pointer",
+  listStyle: "none",
+};
+
+const GUIDANCE_SUMMARY_TEXT: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  color: SHELL.INK_MUTED,
 };
 
 const STATUS_CHIP: CSSProperties = {

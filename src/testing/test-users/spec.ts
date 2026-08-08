@@ -327,8 +327,8 @@ function sourceUser(args: {
       canCreatePrograms: false,
       canApproveGates: false,
       canCreateSourceEvents: true,
-      canApproveSourceStages: false,
-      canApproveAward: false,
+      canApproveSourceStages: true,
+      canApproveAward: true,
       canUploadSourceArtifacts: true,
       canGenerateSourcingArtifacts: true,
       canPublishSourcingArtifacts: false,
@@ -343,8 +343,8 @@ function sourceUser(args: {
         canUploadSourceArtifacts: true,
         canGenerateSourcingArtifacts: true,
         canPublishSourcingArtifacts: false,
-        canApproveSourceStages: false,
-        canApproveAward: false,
+        canApproveSourceStages: true,
+        canApproveAward: true,
       }]
       : [],
     expectations: {
@@ -353,7 +353,7 @@ function sourceUser(args: {
       canApprove: false,
       canCreatePrograms: false,
       canCreateSourceEvents: true,
-      canApproveSourceStages: false,
+      canApproveSourceStages: true,
       towerAccess: true,
     },
   };
