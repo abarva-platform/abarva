@@ -28,6 +28,7 @@ import {
   AI_KIND_WORD,
   Card,
   Chip,
+  Dot,
   MiniMeter,
   SubNav,
   ViewHead,
@@ -439,7 +440,11 @@ export function AiPortfolioView({
     body = (
       <div
         className={styles.ccLower}
-        style={{ gridTemplateColumns: "1.22fr 1fr", flex: 1 }}
+        style={{
+          gridTemplateColumns: "minmax(640px, 1.28fr) minmax(360px, 0.72fr)",
+          flex: "0 0 auto",
+          minHeight: 560,
+        }}
       >
         <Card
           eyebrow="Funded & embedded portfolio"
@@ -608,9 +613,9 @@ export function AiPortfolioView({
   }
 
   return (
-    <div className={styles.view}>
+    <div className={cx(styles.view, styles.viewScroll)}>
       <ViewHead
-        title="Which AI is real, embedded, or just an idea"
+        title="AI decision topology"
         hint={
           showChips
             ? "Candidates are separated from the default portfolio so unfunded ideas do not overwhelm value evidence"
@@ -624,6 +629,14 @@ export function AiPortfolioView({
           onChange={onSubView}
         />
       </ViewHead>
+
+      <div className={styles.zipContractNote}>
+        <Dot tone="teal" />
+        <span>
+          North Star read: compare AI spend scale, proof maturity, readiness,
+          and candidate status before treating usage as outcome value.
+        </span>
+      </div>
 
       <div className={styles.evidenceNote}>
         <b>Usage proves activity. It does not prove business value.</b>

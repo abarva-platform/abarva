@@ -140,18 +140,19 @@ describe("TowerCommandCenter", () => {
   it("renders the Value Proof blockers table sorted by blocked dollars", () => {
     renderPage();
     fireEvent.click(tab(/Value Proof/));
-    expect(screen.getByText("Where the value disappears")).toBeInTheDocument();
+    expect(screen.getByText("Outcome proof waterfall")).toBeInTheDocument();
+    expect(screen.getByText("Top evidence blockers")).toBeInTheDocument();
     const table = screen.getByRole("table");
-    const openButtons = within(table).getAllByRole("button", {
-      name: /^Open /,
-    });
-    expect(openButtons[0]).toHaveAccessibleName("Open Risk & Compliance AI");
-    expect(openButtons).toHaveLength(5);
+    expect(within(table).getByText("Missing baseline")).toBeInTheDocument();
   });
 
   it("switches Decision Lanes between its three sub-views", () => {
     renderPage();
     fireEvent.click(tab(/Decision Lanes/));
+    expect(screen.getByText("Portfolio decision topology")).toBeInTheDocument();
+    expect(screen.getByText("Programs")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
     expect(
       screen.getByText("All programs — the decision table"),
     ).toBeInTheDocument();
@@ -171,6 +172,7 @@ describe("TowerCommandCenter", () => {
   it("reclassifies a funded line with no promised value into the Watch bucket", () => {
     renderPage();
     fireEvent.click(tab(/Decision Lanes/));
+    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
     const row = screen.getByRole("row", { name: /Core Banking Platform/ });
     expect(within(row).getByText("Watch")).toBeInTheDocument();
   });
@@ -234,7 +236,7 @@ describe("TowerCommandCenter", () => {
   it("answers one Evidence question at a time", () => {
     renderPage();
     fireEvent.click(tab(/Evidence/));
-    expect(screen.getByText("Question 1 of 4")).toBeInTheDocument();
+    expect(screen.getByText("Question 2 of 4")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("radio", { name: /Who owns the missing proof/ }),
     );
@@ -357,6 +359,7 @@ describe("TowerCommandCenter", () => {
   it("opens the program drawer with its value proof chain, and closes on Escape", () => {
     renderPage();
     fireEvent.click(tab(/Decision Lanes/));
+    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Open Risk & Compliance AI" }),
     );

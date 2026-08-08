@@ -148,6 +148,7 @@ describe("Command Center render harness", () => {
 
   it("writes every drawer", () => {
     fireEvent.click(screen.getByRole("tab", { name: /Decision Lanes/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
     fireEvent.click(screen.getAllByRole("button", { name: /^Open / })[0]);
     dump("07-drawer-program");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });

@@ -19,6 +19,7 @@ import {
 import {
   Card,
   Chip,
+  Dot,
   LANE_HEX,
   LANE_TONE,
   LANE_WORD,
@@ -516,7 +517,13 @@ export function DecisionLanesView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title={valueUnknown ? "The evidence operating room" : "The operating room"}
+        title={
+          subView === "heatmap"
+            ? "Portfolio decision topology"
+            : valueUnknown
+              ? "The evidence operating room"
+              : "The operating room"
+        }
         hint={
           valueUnknown
             ? "Sparse-state lanes prescribe proof work before investment decisions"
@@ -530,6 +537,13 @@ export function DecisionLanesView({
           onChange={onSubView}
         />
       </ViewHead>
+      <div className={styles.zipContractNote}>
+        <Dot tone={subView === "heatmap" ? "amber" : "teal"} />
+        <span>
+          Default view is topology-first: promised exposure, proof maturity,
+          and decision lane should be visible before the operating table.
+        </span>
+      </div>
       {body}
     </div>
   );

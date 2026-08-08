@@ -68,10 +68,19 @@ export function RecommendedActionsView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="Recommended interventions"
-        sub="The work required to make value provable before Tower recommends scale, freeze, stop or fund"
+        title="Routeable action queue"
+        sub="Owner, evidence package, due window, and module handoff required before Tower recommends scale, freeze, stop or fund"
         hint="Click any action to review & route"
       />
+
+      <div className={styles.zipContractNote}>
+        <Dot tone="amber" />
+        <span>
+          North Star read: actions are not advice cards. They should become
+          controlled operating work with owner, due window, evidence package,
+          and handoff readiness.
+        </span>
+      </div>
 
       <section className={styles.interventionMemo}>
         {view.evidenceMaturity.interventions.map((item) => (

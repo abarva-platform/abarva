@@ -81,11 +81,11 @@ export function TowerCommandCenter({
   const [tab, setTab] = useState<TowerTab>(
     urlTab && TAB_IDS.has(urlTab) ? (urlTab as TowerTab) : "command",
   );
-  const [lanesView, setLanesView] = useState<LanesSubView>("table");
+  const [lanesView, setLanesView] = useState<LanesSubView>("heatmap");
   const [aiView, setAiView] = useState<AiSubView>("overview");
   const [aiFilter, setAiFilter] = useState<AiFilter>("all");
   const [aiSearch, setAiSearch] = useState("");
-  const [evidenceQ, setEvidenceQ] = useState<EvidenceQuestion>("exists");
+  const [evidenceQ, setEvidenceQ] = useState<EvidenceQuestion>("missing");
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
