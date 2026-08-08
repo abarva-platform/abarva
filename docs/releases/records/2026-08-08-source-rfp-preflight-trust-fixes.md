@@ -12,7 +12,7 @@
 
 This release fixes several Source new-event preflight issues where the product could overstate readiness. New competitive events now route to their event-specific approval page, template-bound uploads only mark evidence as parsed when typed facts are actually written, the checklist exposes the matching governed input template, and aVa withholds supplier finalist language until event-specific proposal evidence exists.
 
-Follow-up: parser-backed checklist tasks now show the governed input-template download even when the task also carries descriptive template metadata, and fall back to canonical task ids if an older live payload omits the optional template-code field.
+Follow-up: parser-backed checklist tasks now show the governed input-template download even when the task also carries descriptive template metadata, and fall back to canonical task ids if an older live payload omits the optional template-code field. The active-step upload body uses the same resolver, so the visible "Provide" step and the checklist cannot disagree.
 
 ## Layer Impact
 
@@ -37,6 +37,8 @@ Products: Source intake, Source canvas task checklist, File Cabinet readiness, a
 - `src/app/api/v1/source/events/route.ts`
 - `src/components/source/SourceOriginatePage.tsx`
 - `src/components/source/canvas/analytics/TaskChecklist.tsx`
+- `src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx`
+- `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageFallbacks.test.tsx`
 - `src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx`
 - `src/components/source/canvas/analytics/upload-artifact.ts`
 - `src/app/api/v1/source/[eventId]/facts/ingest-file/route.ts`
@@ -48,6 +50,7 @@ Products: Source intake, Source canvas task checklist, File Cabinet readiness, a
 ## QA / Validation
 
 - `npx jest --runTestsByPath src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx 'src/app/api/v1/source/[eventId]/facts/ingest-file/__tests__/route.test.ts' src/app/api/v1/source/events/__tests__/route.test.ts src/lib/source/__tests__/source-answer-engine.test.ts --runInBand` passed.
+- `npx jest --runTestsByPath src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageFallbacks.test.tsx src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx --runInBand` passed.
 - `npx eslint ...` on all touched source and test files passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` passed.
 

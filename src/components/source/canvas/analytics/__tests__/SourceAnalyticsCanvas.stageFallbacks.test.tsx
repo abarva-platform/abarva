@@ -10,6 +10,7 @@ import {
 } from "@/lib/source/constants";
 import { SOURCE_JOURNEYS } from "@/lib/source/sourcing-motion-journeys";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -153,5 +154,32 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
     const rail = screen.getByTestId("source-shell-v2-rail");
     expect(rail).toHaveTextContent("aVa guides Strategy through Agreement");
     expect(rail).not.toHaveTextContent(/steps 1/i);
+  });
+
+  it("shows the active-step parser template link when live payload omits factTemplateCode", () => {
+    const scopeWithoutTemplateCode = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) =>
+        task.id === "scope.volumetrics"
+          ? { ...task, factTemplateCode: undefined }
+          : task,
+      ),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Healthcare Demo"
+        stageView={scopeWithoutTemplateCode}
+      />,
+    );
+
+    const link = screen.getByTestId("task-template-download");
+    expect(link).toHaveTextContent("Download CSV/XLSX template");
+    expect(link).toHaveAttribute(
+      "href",
+      "/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-TICKET-HISTORY/template",
+    );
   });
 });
