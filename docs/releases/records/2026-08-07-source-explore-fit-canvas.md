@@ -32,6 +32,7 @@ The Source Workspace Explore view is tightened into a contained analytics canvas
 - `src/app/(maestro)/source/preview/workspace/lenses/ExploreLens.tsx`
 - `src/app/(maestro)/source/preview/workspace/viewModel.tsx`
 - Follow-up: tightened Explore-only header chrome, metric strip spacing, and bottom status visibility after signed-in viewport measurement showed remaining first-screen overflow.
+- Follow-up: constrained the Explore workbench grid to viewport height so grouped results and contract line items scroll internally instead of expanding the page.
 
 ## QA / Validation
 
