@@ -51,7 +51,11 @@ import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types"
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
-import { TaskProvideUpload } from "./TaskChecklist";
+import {
+  TaskProvideUpload,
+  TemplateDownloadLink,
+  factTemplateCodeForTask,
+} from "./TaskChecklist";
 import { ValueWaterfall } from "./ValueWaterfall";
 import { StepInsightPanel } from "./insights";
 import {
@@ -1144,13 +1148,14 @@ function StepDetail({
   }
 
   if (step.type === "provide") {
+    const factTemplateCode = factTemplateCodeForTask(step);
     // Real per-vendor lever-coverage data, when it exists — never a
     // fabricated file/requirements-completeness table. Gated on the exact
     // factTemplateCode this step's upload parses into (not a title guess)
     // and on the insight being genuinely live (real response_addressed
     // facts exist), matching this codebase's own model-vs-live discipline.
     const vendorCoverage =
-      step.factTemplateCode === "RESPONSE_COVERAGE_V1" &&
+      factTemplateCode === "RESPONSE_COVERAGE_V1" &&
       stepInsight?.kind === "response_coverage" &&
       !stepInsight.isModel &&
       stepInsight.vendors &&
@@ -1159,11 +1164,17 @@ function StepDetail({
         : null;
     return (
       <div style={{ marginLeft: 42, maxWidth: 680 }}>
+        {factTemplateCode ? (
+          <TemplateDownloadLink
+            eventId={eventId}
+            factTemplateCode={factTemplateCode}
+          />
+        ) : null}
         <TaskProvideUpload
           signed={/letter|commit/i.test(step.title)}
           eventId={eventId}
           stageKey={stageKey}
-          factTemplateCode={step.factTemplateCode ?? undefined}
+          factTemplateCode={factTemplateCode}
         />
         {vendorCoverage ? (
           <VendorResponseCoverageList vendors={vendorCoverage} />

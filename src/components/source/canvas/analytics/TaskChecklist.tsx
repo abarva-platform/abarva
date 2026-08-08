@@ -41,7 +41,7 @@ const TYPE_LABEL: Record<TaskType, string> = {
   decide: 'Decide',
 };
 
-const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
+export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
   'scope.volumetrics': 'VOLUMETRICS_V1',
   'scope.app-inventory': 'APP_INVENTORY_V1',
   'scope.vendor-commercials': 'CONTRACT_TERMS_V1',
@@ -53,7 +53,10 @@ const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
   'value.realized-actuals': 'VALUE_REALIZATION_V1',
 };
 
-function factTemplateCodeForTask(task: StageTaskView): string | undefined {
+export function factTemplateCodeForTask(task: {
+  id: string;
+  factTemplateCode?: string | null;
+}): string | undefined {
   return task.factTemplateCode ?? FACT_TEMPLATE_BY_TASK_ID[task.id];
 }
 
@@ -521,7 +524,7 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
   );
 }
 
-function TemplateDownloadLink({
+export function TemplateDownloadLink({
   eventId,
   factTemplateCode,
 }: {
