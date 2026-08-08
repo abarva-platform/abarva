@@ -207,10 +207,12 @@ async function ensureSourceCsvTable(client, table, headers) {
     `CREATE INDEX IF NOT EXISTS ${quoteIdent(`idx_${table}_tenant_dataset`)}
        ON ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)} (_tenant_key, _dataset_id)`,
   );
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS ${quoteIdent(`idx_${table}_contract`)}
-       ON ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)} (contract_id)`,
-  ).catch(() => undefined);
+  if (headers.includes("contract_id")) {
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS ${quoteIdent(`idx_${table}_contract`)}
+         ON ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)} (contract_id)`,
+    );
+  }
 }
 
 async function loadPackageCsvTable(client, args, table, relativePath) {
@@ -931,6 +933,21 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(JSON.stringify({ ok: false, error: error.message }, null, 2));
+  console.error(
+    JSON.stringify(
+      {
+        ok: false,
+        error: error.message,
+        code: error.code,
+        detail: error.detail,
+        schema: error.schema,
+        table: error.table,
+        column: error.column,
+        constraint: error.constraint,
+      },
+      null,
+      2,
+    ),
+  );
   process.exit(1);
 });
