@@ -200,9 +200,17 @@ export function EvidenceView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="Evidence, as a business posture"
+        title="Evidence-owner control room"
         hint="Answers, not a trace log — click a gap for its audit trail"
       />
+
+      <div className={styles.zipContractNote}>
+        <Dot tone="red" />
+        <span>
+          North Star read: the default question is what proof is missing, who
+          owns it, and which decision remains blocked until it arrives.
+        </span>
+      </div>
 
       <div
         className={styles.evseg}
