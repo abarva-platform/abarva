@@ -149,7 +149,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const TABS: Record<string, string[]> = {
     portfolio: ['Home', 'Explore', 'Concentration & Leverage', 'Renewals'],
     vendor: ['Overview', 'Contracts', 'Dependencies', 'Opportunities'],
-    contract: ['Story', 'Scope', 'Economics', 'Performance', 'Evidence', 'Optimize'],
+    contract: ['Story', 'Scope', 'Economics', 'Performance', 'Relationship', 'Evidence', 'Optimize'],
     evidence: ['Coverage', 'Source systems', 'Contract documents', 'Conflicts', 'Missing evidence'],
   };
   const tabList = TABS[kind] || [];
@@ -372,6 +372,42 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     });
     return { id: q.id, label: q.label, action: q.action, count: inQ.length, value: money(inQ.reduce(addRowAnnualValue, 0)), selected: S.quadrant === q.id, bg: S.quadrant === q.id ? '#0a0a0b' : '#fff', fg: S.quadrant === q.id ? '#fff' : '#0a0a0b', onClick: q.onClick, items: inQ.slice(0, 4).map((c) => ({ label: c.row.vendor_name + ' · ' + c.row.contract_name, value: money(c.row.annual_value), onClick: () => vm.select('contract', c.row.contract_id) })) };
   });
+  const leverageRowsForQuadrant = (quadrantId: string | null) => {
+    const yMax = Math.max(20, ...rows.map((c) => (c.row.annual_value ?? 0) / 1_000_000));
+    if (!quadrantId) return highLeverageRows;
+    return rows.filter((c) => {
+      const annualValueM = (c.row.annual_value ?? 0) / 1_000_000;
+      const highExposure = annualValueM >= yMax * 0.3;
+      return quadrantId === 'renegotiate' ? c.leverage.weakSignalCount >= 2 && highExposure
+        : quadrantId === 'benchmark' ? c.leverage.weakSignalCount < 2 && highExposure
+        : quadrantId === 'consolidate' ? c.leverage.weakSignalCount >= 2 && !highExposure
+        : c.leverage.weakSignalCount < 2 && !highExposure;
+    });
+  };
+  const leverageSelectedRows = leverageRowsForQuadrant(S.quadrant).sort((a, b) => (b.row.annual_value ?? 0) - (a.row.annual_value ?? 0));
+  const leverageRowsTitle = S.quadrant
+    ? `${quadPanel.find((q) => q.id === S.quadrant)?.action ?? 'Selected quadrant'} — contract register`
+    : 'Two-or-more weak leverage signals — contract register';
+  const leverageCols: DataTableColumn[] = [
+    { label: 'Vendor' }, { label: 'Contract' }, { label: 'Id' }, { label: 'Annual value', align: 'right' }, { label: 'Actual spend', align: 'right' },
+    { label: 'Weak signals', align: 'center' }, { label: 'Benchmark right' }, { label: 'Alternatives' }, { label: 'Dependency note' }, { label: 'Expiry', align: 'right' },
+  ];
+  const leverageRows = leverageSelectedRows.map((c) => ({
+    key: c.row.contract_id,
+    onClick: () => vm.select('contract', c.row.contract_id),
+    cells: [
+      vm.cell(c.row.vendor_name, { weight: 700 }),
+      vm.cell(c.row.contract_name),
+      vm.cell(c.row.contract_id, { mono: true }),
+      vm.cell(money(c.row.annual_value), { mono: true, align: 'right', weight: 700 }),
+      vm.cell(money(c.row.actual_annual_spend), { mono: true, align: 'right' }),
+      vm.cell(`${c.leverage.weakSignalCount} of 4`, { mono: true, align: 'center', color: c.leverage.weakSignalCount >= 2 ? COL.red : COL.teal }),
+      vm.cell(c.row.benchmarking_clause ?? 'Not verified'),
+      vm.cell(c.row.alternatives_available ?? 'Not assessed'),
+      vm.cell(c.row.concentration_note ?? 'No dependency note'),
+      vm.cell(fmtDate(c.row.end_date), { align: 'right' }),
+    ],
+  }));
   const renegotiateQuadrant = quadPanel.find((q) => q.id === 'renegotiate');
   const signalDefs = (['benchmarking', 'alternatives', 'skill_dependency', 'regional_dependency'] as LeverageSignal[]).map((s) => ({
     id: s, label: vm.signalLabel(s), count: String(rows.filter((c) => c.leverage.weakSignals[s]).length) + ' of ' + rows.length,
@@ -966,7 +1002,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     showLeverageLens: kind === 'portfolio' && activeTab === 'Concentration & Leverage' && S.portfolioLens === 'leverage',
     pareto, top5Pct: pct(conc.topNShare(5)), top10Pct: pct(conc.topNShare(10)), concTake: 'The top ten vendors represent ' + pct(conc.topNShare(10)) + ' of annual contract value.', topCols, topRows, concStrips,
     isRenewals: kind === 'portfolio' && activeTab === 'Renewals', windowBtns, tl, urgLegend, reconCards, passedCols, passedRows,
-    isLeverage: kind === 'portfolio' && activeTab === 'Concentration & Leverage' && S.portfolioLens === 'leverage', mx, quadPanel, signalDefs,
+    isLeverage: kind === 'portfolio' && activeTab === 'Concentration & Leverage' && S.portfolioLens === 'leverage', mx, quadPanel, signalDefs, leverageCols, leverageRows, leverageRowsTitle,
     isOpps: false, oppGroups, oppCols, oppRows,
     isAgenda: false, findings, journeys,
 
@@ -977,7 +1013,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     vendorStats, vendorContractRows, vendorComposition, vendorDependencyMap, vendorOpps, vendorHasOpps: vendorOpps.length > 0,
 
     isContract: kind === 'contract' && !!contract, cTab: S.tabs.contract, c: cVm,
-    cOverview: activeTab === 'Story', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: false, cLeverage: false, cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimize',
+    cOverview: activeTab === 'Story', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRelationship: activeTab === 'Relationship', cRenewal: false, cLeverage: false, cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimize',
     termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
     weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView,
     optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError, optCtaHref,

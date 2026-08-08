@@ -20,7 +20,6 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
           ) : null}
           <ContractActionStoryPanel vm={vm} />
-          <ContractJourneyGraph vm={vm} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'start' }}>
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
@@ -122,6 +121,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
       ) : null}
 
       {vm.cPerformance ? <DetailPanel vm={vm} kind="performance" /> : null}
+      {vm.cRelationship ? <ContractRelationshipCanvas vm={vm} /> : null}
       {vm.cEvidence ? (
         <>
           <DetailPanel vm={vm} kind="evidence" />
@@ -305,17 +305,31 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   if (!spine?.selected) return null;
   const c = vm.c;
-  const missingSources = spine.missingEvidenceSources ?? [];
   const evidenceReady = vm.optLedger
     ? `${vm.optLedger.evidenceReady} ready · ${vm.optLedger.evidenceGaps} gap${vm.optLedger.evidenceGaps === '1' ? '' : 's'}`
     : 'Not established';
   const missingLines = vm.optLedger?.lines.filter((line) => line.evidenceClass === 'MISSING') ?? [];
+  const quantifiedLines = vm.optLedger?.lines.filter((line) => line.state === 'Quantified') ?? [];
+  const workflowLines = vm.optLedger?.lines.filter((line) => line.state === 'Workflow required') ?? [];
+  const ledgerSupport = quantifiedLines.length
+    ? quantifiedLines.map((line) => `${line.label}: ${line.amount}`).join(' · ')
+    : 'No quantified ledger line is established yet.';
+  const runwayText = c
+    ? c.noticePassed
+      ? `Notice deadline has passed (${c.notice}); the commercial choice is remediation or a controlled variation, not a clean renewal cycle.`
+      : c.urgency?.toLowerCase().includes('monitor')
+        ? `The renewal date is not the urgency trigger (${c.notice} notice, ${c.expiry} expiry). The reason to act now is evidence readiness plus material value; the long runway lets Procurement prepare properly.`
+        : `A renewal or notice decision is inside the active window (${c.notice} notice, ${c.expiry} expiry), so the evidence pack should move before leverage decays.`
+    : 'Timing is not established.';
+  const qaGuardrail = c
+    ? `Do not treat ${c.spend} actual spend below ${c.acv} contracted value as savings by itself. It becomes a finding only after usage, entitlement, invoice, and finance evidence classify the cause.`
+    : 'Do not convert variance into value without supporting evidence.';
   return (
     <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
-      <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(360px,100%),1fr))', gap: 20, alignItems: 'start' }}>
+      <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'minmax(0,1.1fr) minmax(300px,.9fr)', gap: 18, alignItems: 'start' }}>
         <div>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
-            Contract optimization story
+            Selected contract decision story
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 9, marginBottom: 10 }}>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 800, color: '#0a0a0b' }}>{spine.selected.rank}</span>
@@ -325,67 +339,51 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#5f5e5a' }}>{evidenceReady}</span>
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.55, color: '#2c2c2a', marginBottom: 12 }}>
-            {spine.selected.action} Missing evidence stays explicit; no recoverable leakage or realized value is invented.
+            {spine.selected.action} This page explains why this contract is actionable; portfolio ranking stays in the portfolio view.
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(230px,100%),1fr))', gap: 8 }}>
             <StoryTile
               index="01"
-              title="Why this contract"
+              title="Why this contract is in scope"
               body={spine.selected.reasons[0]?.detail ?? `${spine.selected.annualValue} annual exposure and a governed fit score of ${spine.selected.score}/100.`}
             />
             <StoryTile
               index="02"
-              title="Why now"
-              body={c ? `Notice: ${c.notice}. Expiry: ${c.expiry}. Auto-renew: ${c.auto}. Owner: ${c.role}.` : 'Notice and owner are not established.'}
+              title="Why now, precisely"
+              body={runwayText}
             />
             <StoryTile
               index="03"
-              title="What supports it"
-              body={spine.selected.reasons.slice(1, 3).map((reason) => reason.label).join(' · ') || 'Evidence support is not established yet.'}
+              title="What supports the case"
+              body={ledgerSupport}
             />
             <StoryTile
               index="04"
               title="What is missing"
-              body={missingLines.length ? `${missingLines.length} missing line${missingLines.length === 1 ? '' : 's'}: ${missingLines.map((line) => line.label).join('; ')}.` : 'No missing evidence lines remain for this contract.'}
+              body={missingLines.length ? `${missingLines.length} missing line${missingLines.length === 1 ? '' : 's'}: ${missingLines.map((line) => line.label).join('; ')}.` : 'No missing evidence lines remain for this contract; remaining work is decision workflow and value attestation.'}
             />
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 8 }}>
-            Top optimization queue
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {spine.topCandidates.map((candidate) => (
-              <button key={candidate.rank + candidate.label} onClick={candidate.onClick} style={{ width: '100%', border: `1px solid ${candidate.selected ? '#0a0a0b' : 'rgba(10,10,11,.1)'}`, background: candidate.selected ? '#0a0a0b' : '#fff', color: candidate.selected ? '#fff' : '#0a0a0b', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', textAlign: 'left' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 800 }}>{candidate.rank}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{candidate.label}</span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{candidate.value}</span>
-                </div>
-                <div style={{ marginTop: 3, display: 'flex', gap: 8, alignItems: 'baseline', color: candidate.selected ? 'rgba(255,255,255,.72)' : '#888780' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9 }}>fit {candidate.score}/100</span>
-                  <span style={{ fontSize: 11 }}>{candidate.band}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: 12, border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: '#fbfaf7' }}>
+          <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '13px 14px', background: '#fbfaf7', marginBottom: 10 }}>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
-              05 · How to source the gaps
+              Executive QA read
             </div>
-            {missingSources.length ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {missingSources.slice(0, 4).map((requirement) => (
-                  <div key={requirement.lineId} style={{ borderLeft: '2px solid rgba(10,10,11,.16)', paddingLeft: 10 }}>
-                    <div style={{ fontSize: 12.2, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.35 }}>{requirement.lineLabel}</div>
-                    <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45, marginTop: 3 }}>{requirement.connections.map((connection) => connection.sourceSystem).join(' + ')}</div>
-                    <div style={{ fontSize: 11.5, color: '#2c2c2a', lineHeight: 1.45, marginTop: 3 }}>{requirement.ask}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.5 }}>No missing evidence sources are required for the current ledger state.</div>
-            )}
+            <div style={{ fontSize: 12.5, color: '#2c2c2a', lineHeight: 1.55 }}>
+              Ranking is a prioritization signal, not a recommendation to sign. It is based on material exposure, governed ledger evidence, dependency context, and any active decision timing.
+            </div>
+          </div>
+          <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '13px 14px', background: '#fff', marginBottom: 10 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 6 }}>Evidence posture</div>
+            <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.55 }}>
+              {workflowLines.length
+                ? `${workflowLines.length} ledger line${workflowLines.length === 1 ? '' : 's'} still require workflow action before they become realized value.`
+                : 'The evidence pack can support a fact-based commercial conversation; realized value still requires Finance/Tower confirmation.'}
+            </div>
+          </div>
+          <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '13px 14px', background: '#fff' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 6 }}>Guardrail</div>
+            <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.55 }}>{qaGuardrail}</div>
           </div>
         </div>
       </div>
@@ -402,6 +400,49 @@ function StoryTile({ index, title, body }: { index: string; title: string; body:
       </div>
       <div style={{ fontSize: 11.7, color: '#5f5e5a', lineHeight: 1.45 }}>{body}</div>
     </div>
+  );
+}
+
+function ContractRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
+  return (
+    <>
+      <ContractJourneyGraph vm={vm} />
+      <ValueLedgerExplainer vm={vm} />
+      <SourceSystemEvidenceMap vm={vm} />
+    </>
+  );
+}
+
+function ValueLedgerExplainer({ vm }: { vm: SourceWorkspaceVM }) {
+  const lines = vm.optLedger?.lines ?? [];
+  const ledgerDefs = [
+    ['recoverable_leakage', 'Recoverable leakage', 'Money that should come back or stop because contract, invoice, SLA, or rate-card evidence proves overbilling, missed credits, duplicates, or off-contract spend.'],
+    ['avoided_cost', 'Avoided cost', 'Future spend not incurred because scope, shelfware, renewal uplift, or consumption is reduced before the commitment is made.'],
+    ['negotiated_improvement', 'Negotiated improvement', 'Commercial gains from price, term, index cap, volume tier, benchmark right, or termination leverage after the supplier agrees or the negotiation packet is approved.'],
+    ['realized_value', 'Realized value', 'Finance-confirmed value only. It is not the same thing as estimated opportunity, usage variance, or a procurement target.'],
+  ];
+  return (
+    <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(10,10,11,.1)' }}>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>What the value ledgers mean</div>
+        <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
+          The ledgers keep different kinds of value separate so the page never turns a data gap, a forecast, or a negotiation target into a claimed saving.
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))' }}>
+        {ledgerDefs.map(([kind, label, definition]) => {
+          const matchingLines = lines.filter((line) => line.kind === kind);
+          const amount = matchingLines.map((line) => line.amount).find((value) => value && value !== 'Not established') ?? 'Not established';
+          return (
+            <div key={label} style={{ padding: '14px 16px', borderRight: '1px solid rgba(10,10,11,.08)', borderBottom: '1px solid rgba(10,10,11,.08)' }}>
+              <div style={{ fontSize: 12.8, fontWeight: 800, color: '#0a0a0b', marginBottom: 5 }}>{label}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 800, color: '#0a0a0b', marginBottom: 7 }}>{amount}</div>
+              <div style={{ fontSize: 11.8, color: '#5f5e5a', lineHeight: 1.45 }}>{definition}</div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -429,7 +470,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
     <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b' }}>Contract relationship map</div>
-        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value ledgers, and the approval decision.</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value ledgers, and the approval decision. This is relationship flow, not a savings claim.</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(520px,1.3fr) minmax(340px,.7fr)', gap: 0 }}>
         <div style={{ minWidth: 0, padding: '14px 16px' }}>
