@@ -119,6 +119,7 @@ export function WorkspaceClient({
         `Selection: ${String(vm.avaSurfaceContext.selection ?? 'Executive portfolio')}.`,
         `Lens: ${String(vm.avaSurfaceContext.lens ?? 'portfolio')}.`,
         'Use the structured Source workspace context supplied in surfaceContext; do not echo raw JSON, context bundles, retrieval receipts, artifact tags, or internal ids in visible prose.',
+        'If the user asks for a chart, graph, visual, trend, or Recharts exhibit, describe the recommended visual in prose; this Source dock must not show inline chart JSON, object literals, code fences, or renderer payloads.',
       ].join(' ');
 
       let acc = '';

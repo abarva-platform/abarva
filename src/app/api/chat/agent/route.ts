@@ -2058,7 +2058,9 @@ export async function POST(request: Request) {
     // observations in code blocks and reciting raw IDs. The chat
     // pane is conversational; the structured workspace is on the
     // RIGHT (artifacts). Keep the chat in flowing prose.
-    '- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, or generic code blocks. The only allowed fenced block is a compact ```abarva-chart JSON block for a response-window bar chart with {"type":"bar","title":"...","data":[{"label":"...","value":123}]}; never expose internal ids in it.',
+    isSourceSurface(surface)
+      ? '- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, generic code blocks, inline JSON objects, or `abarva-chart` blocks. On Source surfaces, chart requests should be answered as a named visual recommendation in prose unless a supported rich artifact renderer is active.'
+      : '- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, or generic code blocks. The only allowed fenced block is a compact ```abarva-chart JSON block for a response-window bar chart with {"type":"bar","title":"...","data":[{"label":"...","value":123}]}; never expose internal ids in it.',
     '- Reference patterns, programs, and people by NAME, not raw ID. Say "AMS Consolidation" not "[PAT-PRG-AMS-CONSOLIDATION-001]". The right-pane card carries the ID; you carry the conversation.',
     "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
     // OV2-4c · attachment doctrine. Always rendered (cheap; the model
@@ -2089,6 +2091,7 @@ export async function POST(request: Request) {
       ? [
           "- SOURCE CONSULTING PARTNER STYLE: short, calm, commercially sharp. No lengthy passages. No intake-form behavior. No 'Acknowledged' opener.",
           "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
+          "- SOURCE VISUAL OUTPUT CONTRACT: if the user asks for charts, graphs, visuals, trends, or Recharts, do not print chart JSON, inline object literals, code fences, or renderer instructions in the visible answer. Name the recommended visual, specify the dimensions/measures it should use, and explain the decision it supports in prose. If the current page cannot render the visual artifact, say what the visual should be rather than emitting machine-readable chart payloads.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
           ...(typeof surfaceContext.sourceEventId === "string" && surfaceContext.sourceEventId.trim()

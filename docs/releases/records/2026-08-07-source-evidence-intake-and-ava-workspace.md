@@ -12,6 +12,8 @@
 
 Source now carries a fuller evidence intake contract for the 11-stage sourcing workflow. Each evidence requirement names the likely system of record, accepted file types, expected record grain, critical fields to parse, filename tokens for upload matching, and quality checks before the item becomes usable evidence. The Source workspace aVa path also now sends structured workspace context to the shared agent route and prevents context/artifact protocol envelopes from appearing as chat prose.
 
+Follow-up hardening adds a Source-specific visual-output contract: Source aVa may recommend charts and tables, but it must not print inline chart JSON or renderer payloads in the visible chat when the current dock is not rendering rich chart artifacts.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
@@ -36,10 +38,12 @@ Source now carries a fuller evidence intake contract for the 11-stage sourcing w
 - Input templates include operational instructions and use requirement critical fields as fallback headers.
 - Source workspace aVa sends structured `surfaceContext` and strips only artifact protocol envelopes from visible chat output.
 - Source operating doctrine instructs aVa not to expose raw JSON, context bundles, retrieval receipts, artifact tags, or prompt mechanics.
+- Source visual-output doctrine instructs aVa to describe recommended visuals in prose instead of emitting inline chart JSON or renderer payloads on Source dock surfaces.
 
 ## QA / Validation
 
 - `npx jest --runTestsByPath src/lib/source/__tests__/canonical-specs.test.ts src/lib/source/canvas-substrate/__tests__/upload-sync.test.ts 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' --runInBand` passed: 3 suites, 98 tests.
+- `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' --runInBand` passed: 1 suite, 3 tests, including the Source visual-output no-inline-JSON contract.
 - `npx eslint` on touched Source evidence, upload, workspace, and test files passed.
 - `git diff --check` passed.
 - Full `npx tsc --noEmit --pretty false` hit the default Node heap limit; rerun with `NODE_OPTIONS=--max-old-space-size=8192` is required for full-program typecheck on this checkout.
