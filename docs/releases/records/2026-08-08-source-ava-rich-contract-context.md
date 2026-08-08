@@ -33,15 +33,17 @@ Source Workspace aVa now uses the rich answer path that can stream, cite evidenc
 - The Source view model now publishes flat page, tenant, vendor, source, quality, and graph facts alongside the existing nested Source snapshot.
 - The ask surface-context retriever labels source citations by the calling module instead of hardcoding Intelligence.
 - Visual exhibit requests from a Source contract surface now attach a deterministic Source packet: four-ledger table, numeric ledger chart when values are present, and contract-to-evidence relationship graph. These artifacts are built from governed Source context, not from model-invented JSON.
+- Source contract visual/evidence asks now use a deterministic ask-route fast path when the selected-contract context is available, so table/chart/graph packets are emitted before the generic model prose path can flatten or override the answer.
 
 ## QA / Validation
 
 - Pass: focused ESLint on the changed Source workspace and ask-route files.
 - Pass: focused Jest coverage for Source aVa contract, Source workspace numeric behavior, contract optimization ledger, contract optimization spine, and read adapter.
+- Pass: renderer regression coverage for Source four-ledger table, ledger value chart, and contract evidence relationship graph.
 - Pass: whitespace check.
 - Pass: TypeScript validation with increased local Node heap.
 - Pass: release checker.
-- Pending: signed-in browser smoke for Source aVa chart/table/graph output on a selected contract.
+- Pending: signed-in browser smoke for Source aVa chart/table/graph output on a selected contract after the fast path is deployed.
 
 ## Rollout Plan
 
