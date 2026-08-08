@@ -84,11 +84,12 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
 
       <div
         style={{
-          flex: '1 1 auto',
+          flex: '0 0 auto',
+          height: 'clamp(330px, calc(100dvh - 338px), 560px)',
           minHeight: 0,
           display: 'grid',
           gridTemplateColumns: 'minmax(260px,330px) minmax(0,1fr)',
-          gridTemplateRows: 'minmax(170px,.92fr) minmax(150px,.72fr)',
+          gridTemplateRows: 'minmax(150px,.92fr) minmax(140px,.72fr)',
           gap: 10,
           overflow: 'hidden',
         }}
