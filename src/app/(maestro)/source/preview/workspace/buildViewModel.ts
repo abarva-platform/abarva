@@ -988,7 +988,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       ? { label: 'leverage risk', valueLabel: contract.leverage.weakSignalCount + ' of 4 weak', pct01: contract.leverage.weakSignalCount / 4, color: contract.leverage.weakSignalCount >= 2 ? COL.red : COL.amber }
       : null,
     contextTableCols, contextTableRows,
-    availDot: vm.portfolio.isEmpty ? COL.gray : COL.amber, availLabel: vm.portfolio.isEmpty ? 'Availability: no rows returned for this tenant' : 'Availability: live · source.contract_360',
+    availDot: vm.portfolio.isEmpty ? COL.gray : COL.teal, availLabel: vm.portfolio.isEmpty ? 'No rows returned' : 'Live governed data',
     isPortfolioContext: kind === 'portfolio' && activeTab === 'Home', homeVerdict, homeStorySteps, leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
     statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
