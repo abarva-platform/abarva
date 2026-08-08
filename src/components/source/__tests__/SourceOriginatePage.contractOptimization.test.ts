@@ -2,6 +2,7 @@ import {
   buildContractOptimizationCandidateHref,
   isCapturedApprovalFact,
   isReviewableContractScope,
+  SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN,
   SOURCE_INTAKE_CATEGORIES,
 } from "../SourceOriginatePage";
 import { SOURCE_CATEGORY_IDS } from "@/lib/source/taxonomy/category-taxonomy";
@@ -11,6 +12,10 @@ describe("SourceOriginatePage contract optimization intake", () => {
     expect(SOURCE_INTAKE_CATEGORIES.map((category) => category.id)).toEqual([
       ...SOURCE_CATEGORY_IDS,
     ]);
+  });
+
+  it("keeps the category picker open by default so the canonical categories are selectable", () => {
+    expect(SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN).toBe(true);
   });
 
   it("builds a contract-bound optimization intake link from a ranked candidate", () => {

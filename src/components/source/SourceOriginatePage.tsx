@@ -141,6 +141,7 @@ type CategoryEventType =
 
 export const SOURCE_INTAKE_CATEGORIES = SOURCE_CATEGORY_DEFINITIONS;
 const SOURCE_CATEGORIES = SOURCE_INTAKE_CATEGORIES;
+export const SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN = true;
 
 const CATEGORY_EVENT_TYPE_BY_ID: Record<SourceCategoryId, CategoryEventType> = {
   ams: "managed_service",
@@ -1334,7 +1335,7 @@ export function SourceOriginatePage({
         {/* T02 — Category picker */}
         {showCategoryPicker && (
         <details
-          open={Boolean(selectedCategory)}
+          open={SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN || Boolean(selectedCategory)}
           style={OPTIONAL_CATEGORY_STYLE}
         >
           <summary style={OPTIONAL_CATEGORY_SUMMARY_STYLE}>
