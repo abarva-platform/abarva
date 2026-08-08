@@ -12,7 +12,7 @@
 
 This release fixes several Source new-event preflight issues where the product could overstate readiness. New competitive events now route to their event-specific approval page, template-bound uploads only mark evidence as parsed when typed facts are actually written, the checklist exposes the matching governed input template, and aVa withholds supplier finalist language until event-specific proposal evidence exists.
 
-Follow-up: parser-backed checklist tasks now show the governed input-template download even when the task also carries descriptive template metadata.
+Follow-up: parser-backed checklist tasks now show the governed input-template download even when the task also carries descriptive template metadata, and fall back to canonical task ids if an older live payload omits the optional template-code field.
 
 ## Layer Impact
 
@@ -37,6 +37,7 @@ Products: Source intake, Source canvas task checklist, File Cabinet readiness, a
 - `src/app/api/v1/source/events/route.ts`
 - `src/components/source/SourceOriginatePage.tsx`
 - `src/components/source/canvas/analytics/TaskChecklist.tsx`
+- `src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx`
 - `src/components/source/canvas/analytics/upload-artifact.ts`
 - `src/app/api/v1/source/[eventId]/facts/ingest-file/route.ts`
 - `src/lib/source/source-answer-engine.ts`
