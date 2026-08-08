@@ -1966,6 +1966,7 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
     activeClient: readString(record.activeClient),
     clientKey: readString(record.clientKey),
     module: readString(record.module),
+    sourceV4: readPlainObject(record.sourceV4),
     substrate: record.substrate,
     pageFacts: readStringArray(record.pageFacts),
     stageFacts: readStringArray(record.stageFacts),
@@ -1989,6 +1990,13 @@ function readString(value: unknown): string | null {
 
 function readBoolean(value: unknown): boolean {
   return value === true || value === "true" || value === "1";
+}
+
+function readPlainObject(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  return value as Record<string, unknown>;
 }
 
 function readStringArray(value: unknown): string[] | undefined {

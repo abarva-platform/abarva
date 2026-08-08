@@ -208,6 +208,87 @@ describe("POST /api/intelligence/ask telemetry", () => {
     );
   });
 
+  it("preserves Source V4 context and emits deterministic contract visuals before generic synthesis", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(
+      makeRequest({
+        query:
+          "Show a four-ledger table, a chart, and a relationship graph for this selected contract.",
+        client: "apexretail",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          module: "Source",
+          activeClient: "Apex Retail Group",
+          clientKey: "apexretail",
+          sourceV4: {
+            selectedContract: {
+              contractId: "CTR-090",
+              vendorName: "Salesforce",
+              contractName: "Salesforce Data Platform Agreement 3",
+              annualValueUsd: 43_500_000,
+              actualAnnualSpendUsd: 37_400_000,
+              totalCommittedValueUsd: 173_900_000,
+              scopeSummary:
+                "Enterprise data platform subscription and support.",
+              scopeRowCount: 8,
+            },
+            optimizationLedger: {
+              lines: [
+                {
+                  id: "recoverable",
+                  kind: "recoverable_leakage",
+                  label: "SLA credits earned but not claimed",
+                  amount: "$1.3M",
+                  amountUsd: 1_300_000,
+                  state: "Quantified",
+                  evidenceClass: "system evidenced",
+                  evidence: "Monthly SLA and AP evidence are matched.",
+                  nextAction: "Review with contract owner.",
+                  sourceRefs: ["sla_incident_service_credit_monthly"],
+                },
+                {
+                  id: "realized",
+                  kind: "realized_value",
+                  label: "Finance-confirmed realized value",
+                  amount: "$940K",
+                  amountUsd: 940_000,
+                  state: "Finance validated",
+                  evidenceClass: "finance confirmed",
+                  evidence: "Tower claim is finance-confirmed.",
+                  nextAction: "Publish to value proof.",
+                  sourceRefs: ["tower.value_claim"],
+                },
+              ],
+            },
+            optimizationSpine: {
+              sourceConnections: [
+                {
+                  id: "clm",
+                  sourceSystem: "CLM",
+                  ledgers: ["contract_term", "renewal"],
+                  extract: "contract terms",
+                  fields: ["contract_id", "notice_date"],
+                  outcome: "Defines the renewal boundary.",
+                },
+              ],
+            },
+          },
+        },
+      }) as never,
+    );
+
+    const text = await readResponseText(response);
+
+    expect(askIntelligence).not.toHaveBeenCalled();
+    expect(text).toContain('"type":"agent-answer"');
+    expect(text).toContain("source_contract_visual");
+    expect(text).toContain("Four-ledger Contract Evidence");
+    expect(text).toContain("Optimization Ledgers With Quantified Evidence");
+    expect(text).toContain("Contract Evidence Relationship");
+  });
+
   it("does not expose raw advisory trace events or internal data-state language", async () => {
     (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
       yield {

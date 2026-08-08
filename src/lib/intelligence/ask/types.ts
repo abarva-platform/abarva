@@ -92,6 +92,7 @@ export interface AskSurfaceContext {
   activeClient?: string | null;
   clientKey?: string | null;
   module?: string | null;
+  sourceV4?: unknown;
   substrate?: unknown;
   pageFacts?: string[];
   stageFacts?: string[];
