@@ -31,6 +31,7 @@ The Source Workspace Explore view is tightened into a contained analytics canvas
 - `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
 - `src/app/(maestro)/source/preview/workspace/lenses/ExploreLens.tsx`
 - `src/app/(maestro)/source/preview/workspace/viewModel.tsx`
+- Follow-up: tightened Explore-only header chrome, metric strip spacing, and bottom status visibility after signed-in viewport measurement showed remaining first-screen overflow.
 
 ## QA / Validation
 

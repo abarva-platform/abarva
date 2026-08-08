@@ -233,8 +233,8 @@ export function WorkspaceClient({
           surfaceContext={vm.avaSurfaceContext}
           workspace={
             <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflowY: vm.isExplore ? 'hidden' : 'auto' }}>
-              <div style={{ background: '#fff', borderBottom: '1px solid rgba(10,10,11,.12)', padding: vm.isExplore ? '10px 24px 0' : '16px 30px 0', position: 'sticky', top: 0, zIndex: 30, flex: '0 0 auto' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: vm.isExplore ? 7 : 11 }}>
+              <div style={{ background: '#fff', borderBottom: '1px solid rgba(10,10,11,.12)', padding: vm.isExplore ? '6px 18px 0' : '16px 30px 0', position: 'sticky', top: 0, zIndex: 30, flex: '0 0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: vm.isExplore ? 9 : 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: vm.isExplore ? 4 : 11 }}>
                   {vm.crumbs.map((c, i) => (
                     <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: c.color }}>{c.label}</span>
@@ -248,10 +248,10 @@ export function WorkspaceClient({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: vm.isExplore ? 'nowrap' : 'wrap' }}>
                   <div style={{ flex: '1 1 460px', minWidth: 'min(100%,420px)' }}>
-                    <h1 style={{ fontFamily: vm.isExplore ? 'Inter,system-ui,sans-serif' : 'Fraunces,Georgia,serif', fontWeight: vm.isExplore ? 750 : 500, fontSize: vm.isExplore ? 22 : 'clamp(22px,1.8vw,28px)', lineHeight: vm.isExplore ? 1.15 : 1.12, letterSpacing: 0, color: '#0a0a0b', margin: vm.isExplore ? '0 0 3px' : '0 0 8px' }}>
+                    <h1 style={{ fontFamily: vm.isExplore ? 'Inter,system-ui,sans-serif' : 'Fraunces,Georgia,serif', fontWeight: vm.isExplore ? 750 : 500, fontSize: vm.isExplore ? 18 : 'clamp(22px,1.8vw,28px)', lineHeight: vm.isExplore ? 1.15 : 1.12, letterSpacing: 0, color: '#0a0a0b', margin: vm.isExplore ? '0 0 4px' : '0 0 8px' }}>
                       {vm.title}
                     </h1>
-                    <p style={{ fontSize: vm.isExplore ? 12.5 : 14.5, lineHeight: vm.isExplore ? 1.35 : 1.55, color: '#5f5e5a', margin: vm.isExplore ? '0 0 8px' : '0 0 14px', maxWidth: 'none', overflow: vm.isExplore ? 'hidden' : undefined, textOverflow: vm.isExplore ? 'ellipsis' : undefined, whiteSpace: vm.isExplore ? 'nowrap' : undefined }}>{vm.thesis}</p>
+                    <p style={{ display: vm.isExplore ? 'none' : undefined, fontSize: 14.5, lineHeight: 1.55, color: '#5f5e5a', margin: '0 0 14px', maxWidth: 'none' }}>{vm.thesis}</p>
                   </div>
                   <div style={{ display: 'flex', gap: 8, paddingBottom: vm.isExplore ? 8 : 14 }}>
                     {vm.headerActions.map((a, i) => (
@@ -263,14 +263,14 @@ export function WorkspaceClient({
                 </div>
                 <div style={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
                   {vm.tabs.map((t, i) => (
-                    <button key={i} onClick={t.onClick} style={{ border: 'none', borderBottom: `2px solid ${t.line}`, background: 'transparent', color: t.fg, fontSize: 13, fontWeight: t.weight, padding: vm.isExplore ? '8px 14px' : '11px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <button key={i} onClick={t.onClick} style={{ border: 'none', borderBottom: `2px solid ${t.line}`, background: 'transparent', color: t.fg, fontSize: 13, fontWeight: t.weight, padding: vm.isExplore ? '6px 12px' : '11px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       {t.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ padding: vm.isExplore ? '10px 24px 14px' : '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: vm.isExplore ? 10 : 18, flex: vm.isExplore ? '1 1 auto' : undefined, minHeight: vm.isExplore ? 0 : undefined, overflow: vm.isExplore ? 'hidden' : undefined }}>
+              <div style={{ padding: vm.isExplore ? '6px 18px 8px' : '22px 30px 60px', display: 'flex', flexDirection: 'column', gap: vm.isExplore ? 6 : 18, flex: vm.isExplore ? '1 1 auto' : undefined, minHeight: vm.isExplore ? 0 : undefined, overflow: vm.isExplore ? 'hidden' : undefined }}>
                 {vm.stripCompact ? <CompactContextStrip vm={vm} /> : null}
 
                 {vm.isPortfolioContext ? <ContextLens vm={vm} /> : null}
@@ -312,7 +312,7 @@ export function WorkspaceClient({
         />
       </div>
 
-      <div style={{ background: '#fff', borderTop: '1px solid rgba(10,10,11,.12)', minHeight: 34, display: 'flex', alignItems: 'center', gap: 14, padding: '6px 20px', flexShrink: 0, fontSize: 11.5, color: '#5f5e5a', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderTop: '1px solid rgba(10,10,11,.12)', minHeight: 34, display: vm.isExplore ? 'none' : 'flex', alignItems: 'center', gap: 14, padding: '6px 20px', flexShrink: 0, fontSize: 11.5, color: '#5f5e5a', whiteSpace: 'nowrap', overflow: 'hidden' }}>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780' }}>Selection</span>
         <span style={{ fontWeight: 600, color: '#2c2c2a', overflow: 'hidden', textOverflow: 'ellipsis' }}>{vm.statusSel}</span>
         <span style={{ width: 1, height: 14, background: 'rgba(10,10,11,.12)', flexShrink: 0 }} />
@@ -406,9 +406,9 @@ function CompactContextStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) 
   const ringDeg = ring ? Math.max(0, Math.min(100, ring.pct01 * 100)) : 0;
   return (
     <>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, padding: '10px 16px', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, background: '#fff', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: '#5f5e5a' }}>
+      <div style={{ display: 'flex', flexWrap: vm.isExplore ? 'nowrap' : 'wrap', alignItems: 'center', gap: vm.isExplore ? 10 : 14, padding: vm.isExplore ? '6px 10px' : '10px 16px', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, background: '#fff', fontFamily: "'JetBrains Mono', monospace", fontSize: vm.isExplore ? 11.5 : 12.5, color: '#5f5e5a', overflow: vm.isExplore ? 'hidden' : undefined }}>
         {vm.compactItems.map((it, i) => (
-          <span key={i}>
+          <span key={i} style={{ whiteSpace: 'nowrap' }}>
             <b style={{ color: '#0a0a0b' }}>{it.value}</b> {it.label}
           </span>
         ))}
@@ -416,14 +416,14 @@ function CompactContextStrip({ vm }: { vm: ReturnType<typeof buildViewModel> }) 
           <>
             <span
               style={{
-                width: 22, height: 22, borderRadius: '50%', flex: 'none',
+                width: vm.isExplore ? 18 : 22, height: vm.isExplore ? 18 : 22, borderRadius: '50%', flex: 'none',
                 background: `conic-gradient(${ring.color} 0 ${ringDeg}%, #f1efe8 ${ringDeg}% 100%)`,
                 display: 'grid', placeItems: 'center',
               }}
             >
-              <span style={{ width: 13, height: 13, borderRadius: '50%', background: '#fff' }} />
+              <span style={{ width: vm.isExplore ? 10 : 13, height: vm.isExplore ? 10 : 13, borderRadius: '50%', background: '#fff' }} />
             </span>
-            <span style={{ color: ring.color }}>
+            <span style={{ color: ring.color, whiteSpace: 'nowrap' }}>
               <b>{ring.valueLabel}</b> {ring.label}
             </span>
           </>
