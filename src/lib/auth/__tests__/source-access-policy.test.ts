@@ -305,6 +305,57 @@ describe("source access policy", () => {
     ).resolves.toBe(true);
   });
 
+  it("keeps pinned AbarVa admin/test accounts as Source admins after person provisioning", async () => {
+    setupRows({
+      person_client_memberships: {
+        role: "client_viewer",
+        access_level: "program_viewer",
+        financial_visibility: false,
+        can_create_source_events: false,
+        can_approve_source_stages: false,
+        can_approve_award: false,
+      },
+      source_event_participants: [],
+    });
+    const { loadUserSourceAccessPolicy } =
+      await import("../source-access-policy");
+    const policy = await loadUserSourceAccessPolicy(
+      {
+        clientId: "client-skyharbor",
+        userId: "00000000-0000-4000-8000-00000000a001",
+        role: "client_viewer",
+        email: "anand@abarva.ai",
+      },
+      { activeClientKey: "skyharbor" },
+    );
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.sourceScope).toBe("all_client_source_events");
+    expect(policy.sourceEventIdsAllowed).toBeNull();
+    expect(policy.canCreateSourceEvents).toBe(true);
+    expect(policy.canApproveSourceStages).toBe(true);
+    expect(policy.canApproveAward).toBe(true);
+  });
+
+  it("does not grant pinned AbarVa admin/test accounts cross-tenant Source access", async () => {
+    setupRows({});
+    const { loadUserSourceAccessPolicy } =
+      await import("../source-access-policy");
+    const policy = await loadUserSourceAccessPolicy(
+      {
+        clientId: "client-meridian",
+        userId: "00000000-0000-4000-8000-00000000a001",
+        role: "client_viewer",
+        email: "anand@abarva.ai",
+      },
+      { activeClientKey: "meridian" },
+    );
+
+    expect(policy.accessLevel).toBe("no_source_access");
+    expect(policy.sourceScope).toBe("none");
+    expect(policy.canCreateSourceEvents).toBe(false);
+  });
+
   it("grants known same-tenant agent roster logins full Source proof scope", async () => {
     setupRows({});
     const { loadUserSourceAccessPolicy, canReadSourceEvent } =

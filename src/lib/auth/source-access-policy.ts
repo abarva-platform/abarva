@@ -350,8 +350,12 @@ export async function loadUserSourceAccessPolicy(
   ctx: TenancyCtx,
   opts: { activeClientKey: string; sourceEventId?: string | null },
 ): Promise<UserSourceAccessPolicy> {
-  if (!isUuidLike(ctx.userId) && isCanonicalClientAdminEmail(ctx.email)) {
-    // Security boundary: canonical admin gets unlimited source-event scope ONLY when acting as their inferred home client; otherwise fall through to regular membership/participant scoping so they cannot read another tenant's events.
+  if (isCanonicalClientAdminEmail(ctx.email)) {
+    // Security boundary: canonical admin/test accounts get unlimited Source
+    // scope ONLY when acting as their inferred home client. Apply this even
+    // after Clerk is mapped to a real persons.id; otherwise a stale membership
+    // row can silently strip Source create/approval rights for the pinned
+    // testing tenant.
     const inferredAdminClientKey = inferClientKeyFromEmail(ctx.email);
     if (
       inferredAdminClientKey &&
