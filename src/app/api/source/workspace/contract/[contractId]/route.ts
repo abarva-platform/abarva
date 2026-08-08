@@ -4,8 +4,12 @@ import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
 import { buildContract360View, collectContractSubjectRefs } from '@/lib/source/data-model/contract-360-view';
 import {
   getContract360,
+  getContractEvidenceOverview,
+  getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
   listContractApplicationScope,
+  listContractEvidencePricing,
+  listContractEvidenceScope,
   listContractFinancialExposure,
   listContractInitiativeDependency,
   listContractOperationalPerformance,
@@ -47,12 +51,16 @@ export async function GET(
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  const [applicationScope, financialExposure, operationalPerformance, initiativeDependencies] =
+  const [applicationScope, financialExposure, operationalPerformance, initiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance] =
     await Promise.all([
       listContractApplicationScope(tenantKey, contractId).catch(() => []),
       listContractFinancialExposure(tenantKey).catch(() => []),
       listContractOperationalPerformance(tenantKey).catch(() => []),
       listContractInitiativeDependency(tenantKey, contractId).catch(() => []),
+      getContractEvidenceOverview(tenantKey, contractId).catch(() => null),
+      listContractEvidenceScope(tenantKey, contractId).catch(() => []),
+      listContractEvidencePricing(tenantKey, contractId).catch(() => []),
+      getContractEvidencePerformanceSummary(tenantKey, contractId).catch(() => null),
     ]);
 
   const subjectRefs = collectContractSubjectRefs(contract, applicationScope);
@@ -75,6 +83,10 @@ export async function GET(
     towerValueClaims,
     docExtractions,
     optimizationEvidence,
+    evidenceOverview,
+    evidenceScope,
+    evidencePricing,
+    evidencePerformance,
   });
 
   return NextResponse.json(view);

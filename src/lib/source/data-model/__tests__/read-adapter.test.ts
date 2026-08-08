@@ -1,6 +1,10 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
+  getContractEvidenceOverview,
+  getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
+  listContractEvidencePricing,
+  listContractEvidenceScope,
   listContractVendor360,
 } from "../read-adapter";
 
@@ -133,5 +137,67 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     expect(invoiceRate?.calculation_rule).toContain(
       "unapproved rate-card variance",
     );
+  });
+
+  it("reads contract evidence detail rows from the loaded evidence package", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("golden_contract_overview")) {
+        return [
+          {
+            contract_id: "CTR-090",
+            contract_english_overview: "This agreement covers the customer data platform.",
+          },
+        ];
+      }
+      if (sql.includes("golden_contract_application_scope")) {
+        return [
+          {
+            contract_id: "CTR-090",
+            application_name: "Passenger Service",
+            service_or_platform_component: "Salesforce Data Cloud",
+            annual_run_cost_usd: "10900000",
+          },
+        ];
+      }
+      if (sql.includes("golden_contract_pricing_schedule")) {
+        return [
+          {
+            contract_id: "CTR-090",
+            line_item_description: "Data Cloud Enterprise",
+            annual_value_usd: "29548800",
+          },
+        ];
+      }
+      if (sql.includes("golden_contract_sla_incident_service_credit_monthly")) {
+        return [
+          {
+            contract_id: "CTR-090",
+            sla_months: 24,
+            service_credits_earned_usd: "890000",
+            service_credits_claimed_usd: "135280",
+            invoice_line_count: 48,
+            invoice_exception_amount_usd: "2376372",
+            realized_value_usd: "940000",
+            source_systems: ["ITSM/SLA management", "ERP/AP"],
+          },
+        ];
+      }
+      return [];
+    });
+
+    const [overview, scope, pricing, performance] = await Promise.all([
+      getContractEvidenceOverview("skyharbor", "CTR-090"),
+      listContractEvidenceScope("skyharbor", "CTR-090"),
+      listContractEvidencePricing("skyharbor", "CTR-090"),
+      getContractEvidencePerformanceSummary("skyharbor", "CTR-090"),
+    ]);
+
+    expect(overview?.contract_english_overview).toContain("customer data platform");
+    expect(scope).toHaveLength(1);
+    expect(pricing[0]?.line_item_description).toBe("Data Cloud Enterprise");
+    expect(performance?.sla_months).toBe(24);
+    expect(performance?.invoice_exception_amount_usd).toBe("2376372");
+    expect(performance?.realized_value_usd).toBe("940000");
   });
 });

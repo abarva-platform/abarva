@@ -27,6 +27,10 @@ import type {
   SourceApplicationVendorExposureRow,
   SourceContract360Row,
   SourceContractApplicationScopeRow,
+  SourceContractEvidenceOverviewRow,
+  SourceContractEvidencePerformanceSummary,
+  SourceContractEvidencePricingRow,
+  SourceContractEvidenceScopeRow,
   SourceContractFinancialExposureRow,
   SourceContractInitiativeDependencyRow,
   SourceContractOperationalPerformanceRow,
@@ -333,6 +337,139 @@ export async function listContractOperationalPerformance(
     tenantKey,
     "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
   );
+}
+
+export async function getContractEvidenceOverview(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractEvidenceOverviewRow | null> {
+  const rows = await safeQueryForTenant<SourceContractEvidenceOverviewRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.golden_contract_overview
+      WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+      ORDER BY _loaded_at DESC NULLS LAST
+      LIMIT 1`,
+    [contractId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function listContractEvidenceScope(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractEvidenceScopeRow[]> {
+  return safeQueryForTenant<SourceContractEvidenceScopeRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.golden_contract_application_scope
+      WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+      ORDER BY annual_run_cost_usd DESC NULLS LAST, application_name`,
+    [contractId],
+  );
+}
+
+export async function listContractEvidencePricing(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractEvidencePricingRow[]> {
+  return safeQueryForTenant<SourceContractEvidencePricingRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.golden_contract_pricing_schedule
+      WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+      ORDER BY annual_value_usd DESC NULLS LAST, line_item_id`,
+    [contractId],
+  );
+}
+
+export async function getContractEvidencePerformanceSummary(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractEvidencePerformanceSummary | null> {
+  const rows = await safeQueryForTenant<SourceContractEvidencePerformanceSummary>(
+    tenantKey,
+    `WITH sla AS (
+       SELECT
+         contract_id,
+         MAX(dataset_version) AS dataset_version,
+         MIN(period_month) AS period_start,
+         MAX(period_month) AS period_end,
+         COUNT(*) AS sla_months,
+         COALESCE(SUM(NULLIF(sev1_incident_count::text, '')::numeric), 0) AS sev1_incidents,
+         COALESCE(SUM(NULLIF(sev2_incident_count::text, '')::numeric), 0) AS sev2_incidents,
+         COALESCE(SUM(NULLIF(service_credits_earned_usd::text, '')::numeric), 0) AS service_credits_earned_usd,
+         COALESCE(SUM(NULLIF(service_credits_claimed_usd::text, '')::numeric), 0) AS service_credits_claimed_usd,
+         COALESCE(SUM(NULLIF(service_credits_received_usd::text, '')::numeric), 0) AS service_credits_received_usd,
+         ARRAY_AGG(DISTINCT source_system) FILTER (WHERE source_system IS NOT NULL) AS sla_source_systems,
+         MAX(refresh_frequency) AS sla_refresh_frequency,
+         MAX(review_status) AS sla_review_status
+        FROM source.golden_contract_sla_incident_service_credit_monthly
+       WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY contract_id
+     ), invoice AS (
+       SELECT
+         contract_id,
+         COUNT(*) AS invoice_line_count,
+         COALESCE(SUM(CASE WHEN COALESCE(NULLIF(exception_amount_usd::text, '')::numeric, 0) > 0 THEN 1 ELSE 0 END), 0) AS invoice_exception_count,
+         COALESCE(SUM(NULLIF(exception_amount_usd::text, '')::numeric), 0) AS invoice_exception_amount_usd,
+         ARRAY_AGG(DISTINCT source_system) FILTER (WHERE source_system IS NOT NULL) AS invoice_source_systems,
+         MAX(refresh_frequency) AS invoice_refresh_frequency,
+         MAX(review_status) AS invoice_review_status
+        FROM source.golden_contract_invoice_lines
+       WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY contract_id
+     ), rate AS (
+       SELECT
+         contract_id,
+         COALESCE(SUM(NULLIF(rate_variance_usd::text, '')::numeric), 0) AS rate_card_variance_usd,
+         ARRAY_AGG(DISTINCT source_system) FILTER (WHERE source_system IS NOT NULL) AS rate_source_systems
+        FROM source.golden_contract_rate_card_variance
+       WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY contract_id
+     ), finance AS (
+       SELECT DISTINCT ON (contract_id)
+         contract_id,
+         NULLIF(recoverable_leakage_usd::text, '')::numeric AS recoverable_leakage_usd,
+         NULLIF(avoided_cost_usd::text, '')::numeric AS avoided_cost_usd,
+         NULLIF(negotiated_improvement_usd::text, '')::numeric AS negotiated_improvement_usd,
+         NULLIF(realized_value_usd::text, '')::numeric AS realized_value_usd,
+         source_system AS finance_source_system,
+         refresh_frequency AS finance_refresh_frequency,
+         review_status AS finance_review_status
+        FROM source.golden_contract_finance_value_confirmation
+       WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+       ORDER BY contract_id, confirmation_date DESC NULLS LAST, _loaded_at DESC NULLS LAST
+     )
+     SELECT
+       COALESCE(sla.contract_id, invoice.contract_id, rate.contract_id, finance.contract_id) AS contract_id,
+       sla.dataset_version,
+       sla.period_start,
+       sla.period_end,
+       COALESCE(sla.sla_months, 0)::int AS sla_months,
+       COALESCE(sla.sev1_incidents, 0)::int AS sev1_incidents,
+       COALESCE(sla.sev2_incidents, 0)::int AS sev2_incidents,
+       COALESCE(sla.service_credits_earned_usd, 0)::numeric AS service_credits_earned_usd,
+       COALESCE(sla.service_credits_claimed_usd, 0)::numeric AS service_credits_claimed_usd,
+       COALESCE(sla.service_credits_received_usd, 0)::numeric AS service_credits_received_usd,
+       COALESCE(invoice.invoice_line_count, 0)::int AS invoice_line_count,
+       COALESCE(invoice.invoice_exception_count, 0)::int AS invoice_exception_count,
+       COALESCE(invoice.invoice_exception_amount_usd, 0)::numeric AS invoice_exception_amount_usd,
+       COALESCE(rate.rate_card_variance_usd, 0)::numeric AS rate_card_variance_usd,
+       COALESCE(finance.recoverable_leakage_usd, 0)::numeric AS recoverable_leakage_usd,
+       COALESCE(finance.avoided_cost_usd, 0)::numeric AS avoided_cost_usd,
+       COALESCE(finance.negotiated_improvement_usd, 0)::numeric AS negotiated_improvement_usd,
+       COALESCE(finance.realized_value_usd, 0)::numeric AS realized_value_usd,
+       ARRAY_REMOVE(ARRAY_CAT(ARRAY_CAT(COALESCE(sla.sla_source_systems, ARRAY[]::text[]), COALESCE(invoice.invoice_source_systems, ARRAY[]::text[])), ARRAY_CAT(COALESCE(rate.rate_source_systems, ARRAY[]::text[]), ARRAY[finance.finance_source_system])), NULL) AS source_systems,
+       COALESCE(finance.finance_refresh_frequency, sla.sla_refresh_frequency, invoice.invoice_refresh_frequency) AS refresh_frequency,
+       COALESCE(finance.finance_review_status, sla.sla_review_status, invoice.invoice_review_status) AS review_status
+      FROM sla
+      FULL OUTER JOIN invoice USING (contract_id)
+      FULL OUTER JOIN rate USING (contract_id)
+      FULL OUTER JOIN finance USING (contract_id)`,
+    [contractId],
+  );
+  return rows[0] ?? null;
 }
 
 export async function listContractInitiativeDependency(
