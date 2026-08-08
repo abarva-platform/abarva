@@ -85,6 +85,13 @@ export interface TowerCommandSummary {
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
+  financeValidatedBlockedUsd: number;
+  promisedValueExposureUsd: number;
+  unknownValueClaimCount: number;
+  claimableProgramCount: number;
+  blockedProgramCount: number;
+  conflictedProgramCount: number;
+  unmeasuredProgramCount: number;
 
   programCount: number;
   aiInitiativeCount: number;
@@ -129,6 +136,14 @@ export interface TowerFunnelStage {
   claimStatus: string;
   caveat: string;
   sourceFile: string | null;
+  claimCount: number;
+  knownValueClaimCount: number;
+  unknownValueClaimCount: number;
+  knownValueAmount: number;
+  blockedClaimCount: number;
+  blockedKnownValueAmount: number;
+  primaryBlocker: string | null;
+  primaryOwnerRole: string | null;
 }
 
 /** One program — the Decision Lanes table, Kanban card and heatmap point. */
@@ -147,6 +162,13 @@ export interface TowerProgramView {
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
+  fundedAmountUsd: number;
+  knownSupportedValueUsd: number;
+  proofMaturityScore: number;
+  riskPressureScore: number;
+  usageStrengthScore: number;
+  lineageTrustState: string | null;
+  decisionReasonCode: string | null;
 
   usageStatus: TowerUsageStatus;
   financeStatus: TowerFinanceStatus;
@@ -290,6 +312,9 @@ export interface TowerEvidenceFactView {
   tag: string;
   sourceFile: string | null;
   sourceRow: string | null;
+  lineageState: string | null;
+  sourceCount: number;
+  resolutionState: string | null;
 }
 
 /** One CXO action card. */
@@ -303,6 +328,14 @@ export interface TowerActionView {
   why: string;
   evidence: string;
   due: string | null;
+  amountExposedUsd: number;
+  evidenceRequirement: string | null;
+  expectedSourceSystem: string | null;
+  evidencePackageId: string | null;
+  proofStage: string | null;
+  handoffReadiness: string | null;
+  actionState: string | null;
+  priority: string | null;
   linkedProgram: string | null;
   /** The Move that approving this action would create. */
   moveTitle: string;

@@ -153,6 +153,219 @@
   .ptiles { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* Outcome Proof Cockpit — first-screen Tower operating room.
+ * Uses the whole canvas: posture spans the width, the main analytical row gives
+ * the waterfall the dominant space, and the owner queue stretches horizontally
+ * so evidence work reads like an operating queue instead of a sidebar note. */
+.cockpitView {
+  display: grid;
+  grid-template-rows: auto auto minmax(290px, 1fr) minmax(176px, 0.62fr);
+  gap: 12px;
+}
+.boardPosture {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.92fr) minmax(520px, 1.08fr);
+  gap: 12px;
+  align-items: stretch;
+}
+.boardVerdict {
+  background: var(--canon-bg-surface);
+  border: 1px solid var(--canon-border);
+  border-left: 4px solid var(--canon-red);
+  border-radius: 13px;
+  box-shadow: var(--shadow-card);
+  padding: 15px 18px;
+}
+.boardVerdict h2 {
+  font-family: var(--abarva-serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0;
+  margin: 6px 0 0;
+  text-wrap: pretty;
+}
+.boardVerdict p {
+  margin: 10px 0 0;
+  color: var(--canon-gray-700);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.boardMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.boardMetric {
+  background: var(--canon-bg-surface);
+  border: 1px solid var(--canon-border);
+  border-top: 3px solid var(--canon-gray-200);
+  border-radius: 13px;
+  box-shadow: var(--shadow-card);
+  padding: 12px 13px;
+  min-width: 0;
+}
+.boardMetric.mteal { border-top-color: var(--canon-teal); }
+.boardMetric.mamber { border-top-color: var(--canon-amber); }
+.boardMetric.mred { border-top-color: var(--canon-red); }
+.boardMetric.mgray { border-top-color: var(--canon-gray-200); }
+.bmLabel {
+  display: block;
+  color: var(--canon-gray-500);
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  min-height: 24px;
+  text-transform: uppercase;
+}
+.bmValue {
+  display: block;
+  font-family: var(--abarva-serif);
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 7px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mteal .bmValue { color: var(--canon-teal-dark); }
+.mred .bmValue { color: var(--canon-red); }
+.mamber .bmValue { color: var(--canon-amber); }
+.bmNote {
+  display: block;
+  color: var(--canon-gray-500);
+  font-size: 11px;
+  line-height: 1.3;
+  margin-top: 5px;
+}
+.proofStrip {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.proofStage {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--canon-border);
+  border-radius: 11px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.psLabel {
+  display: block;
+  color: var(--canon-gray-500);
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.psValue {
+  display: block;
+  font-family: var(--abarva-serif);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 7px;
+}
+.psPrograms {
+  display: block;
+  color: var(--canon-gray-700);
+  font-family: var(--abarva-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-top: 5px;
+}
+.psNote {
+  display: block;
+  color: var(--canon-gray-500);
+  font-size: 10.5px;
+  line-height: 1.28;
+  margin-top: 4px;
+}
+.cockpitCanvas {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(560px, 1.18fr) minmax(480px, 0.82fr);
+  gap: 12px;
+}
+.cockpitChartBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 10px;
+}
+.cockpitWaterfall,
+.cockpitMatrix {
+  flex: 1;
+  min-height: 230px;
+  width: 100%;
+}
+.cockpitCta {
+  align-self: flex-start;
+  font-family: var(--abarva-sans);
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #fff;
+  background: var(--canon-bg-dark);
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 13px;
+  cursor: pointer;
+}
+.cockpitCta:hover { background: var(--canon-teal-dark); color: #fff; }
+.cockpitOps {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(760px, 1.45fr) minmax(300px, 0.55fr);
+  gap: 12px;
+}
+.sourceTrustRail {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.trustMiniRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  border-bottom: 1px solid var(--canon-border);
+  font-size: 11.5px;
+  padding: 6px 0;
+}
+.trustMiniRow:last-child { border-bottom: 0; }
+.trustMiniRow span:first-child {
+  color: var(--canon-gray-700);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.trustMiniRow b {
+  font-family: var(--abarva-mono);
+  font-size: 11.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1180px) {
+  .boardPosture,
+  .cockpitCanvas,
+  .cockpitOps { grid-template-columns: 1fr; }
+  .boardMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .proofStrip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .cockpitView { display: flex; }
+  .boardMetrics,
+  .proofStrip { grid-template-columns: 1fr; }
+  .cockpitWaterfall,
+  .cockpitMatrix { min-height: 260px; }
+}
+
 .weekread { background: var(--canon-bg-surface); color: var(--canon-gray-900); border: 1px solid var(--canon-border); border-radius: 14px; padding: 20px 24px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: var(--shadow-card); }
 .weekread .wkK { font-family: var(--abarva-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--canon-teal-dark); margin-bottom: 12px; }
 .weekread .wkLine { font-family: var(--abarva-serif); font-weight: 500; font-size: clamp(18px, 1.7vw, 24px); line-height: 1.36; letter-spacing: -0.02em; text-wrap: pretty; color: var(--canon-gray-900); }

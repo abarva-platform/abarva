@@ -203,6 +203,7 @@ function visibleAgentDockBody(
 ): string {
   void surface;
   const packetText = avaAnswerTextForDock(agentAnswer);
+  if (preserveVisibleText) return packetText || body;
   const bodyText =
     agentAnswer &&
     hasRenderableAvaArtifacts(agentAnswer) &&
@@ -210,7 +211,7 @@ function visibleAgentDockBody(
       ? stripMarkdownTableFragments(body)
       : body;
   const text = shapePublicText(packetText || bodyText, "");
-  return preserveVisibleText ? text : demoSafeClientText(text);
+  return demoSafeClientText(text);
 }
 
 function chatSessionTitle(thread: readonly ChatMessage[]): string {
@@ -370,7 +371,7 @@ export type DockMode =
   | "expand"
   | "collapsed";
 
-type RestorableDockMode = Exclude<DockMode, "collapsed">;
+export type RestorableDockMode = Exclude<DockMode, "collapsed">;
 
 export const DOCK_MODES: readonly DockMode[] = [
   "side-rail",
@@ -479,6 +480,8 @@ export interface AgentDockProps {
   /** Suppress loud draft/citation review chrome while preserving the normal rail layout. */
   quietReviewChrome?: boolean;
   defaultMode?: DockMode;
+  /** Ignore persisted localStorage mode and honor defaultMode on mount. */
+  respectStoredMode?: boolean;
   /** Mode to open when the collapsed chip is invoked. Defaults to the last rich mode. */
   collapsedRestoreMode?: RestorableDockMode;
   /** Free-form context passed back to the API on submit. */
@@ -502,6 +505,9 @@ export interface AgentDockProps {
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
   defaultLeftPercent?: number;
+  /** Expanded overlay sizing overrides for artifact-heavy surfaces. */
+  expandedWidth?: CSSProperties["width"];
+  expandedMaxWidth?: CSSProperties["maxWidth"];
   /** Preserve caller-provided visible text when the surface has already applied its own naming policy. */
   preserveVisibleText?: boolean;
   /** Optional copy for the collapsed chip. Defaults to the legacy "Ask {agent}". */
@@ -702,6 +708,7 @@ export function AgentDock(props: AgentDockProps) {
     variant = "standard",
     quietReviewChrome = false,
     defaultMode = "side-rail",
+    respectStoredMode = true,
     collapsedRestoreMode,
     surfaceContext: rawSurfaceContext,
     initialQuote: rawInitialQuote,
@@ -713,6 +720,8 @@ export function AgentDock(props: AgentDockProps) {
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
+    expandedWidth,
+    expandedMaxWidth,
     preserveVisibleText = false,
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
@@ -770,7 +779,7 @@ export function AgentDock(props: AgentDockProps) {
 
   // Mode state (persisted)
   const [mode, setModeState] = useState<DockMode>(() => {
-    return readStoredMode(surface) ?? defaultMode;
+    return (respectStoredMode ? readStoredMode(surface) : null) ?? defaultMode;
   });
   const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
@@ -783,14 +792,15 @@ export function AgentDock(props: AgentDockProps) {
   useEffect(() => {
     if (previousSurfaceRef.current === surface) return;
     previousSurfaceRef.current = surface;
-    const nextMode = readStoredMode(surface) ?? defaultMode;
+    const nextMode =
+      (respectStoredMode ? readStoredMode(surface) : null) ?? defaultMode;
     setModeState(nextMode);
     setLastRichMode(
       nextMode === "collapsed"
         ? resolveCollapsedRestoreMode(defaultMode, collapsedRestoreMode)
         : nextMode,
     );
-  }, [collapsedRestoreMode, defaultMode, surface]);
+  }, [collapsedRestoreMode, defaultMode, respectStoredMode, surface]);
 
   const setMode = useCallback(
     (next: DockMode) => {
@@ -1118,7 +1128,10 @@ export function AgentDock(props: AgentDockProps) {
         {chatOnly && thread.length === 0 ? null : (
           <div style={chatOnly ? CHAT_ONLY_HEADER_STYLE : HEADER_STYLE}>
             <div style={AGENT_ROW_STYLE}>
-              <AvaAskMark variant="wordmark-dark" style={AGENT_WORDMARK_STYLE} />
+              <AvaAskMark
+                variant="wordmark-dark"
+                style={AGENT_WORDMARK_STYLE}
+              />
               <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
               </div>
@@ -1160,9 +1173,7 @@ export function AgentDock(props: AgentDockProps) {
         >
           {thread.length === 0 ? (
             <div
-              style={
-                chatOnly ? CHAT_ONLY_EMPTY_STATE_STYLE : EMPTY_STATE_STYLE
-              }
+              style={chatOnly ? CHAT_ONLY_EMPTY_STATE_STYLE : EMPTY_STATE_STYLE}
             >
               {chatOnly ? (
                 <AvaAskMark
@@ -1554,7 +1565,15 @@ export function AgentDock(props: AgentDockProps) {
         data-testid="agent-dock-expand-overlay"
         style={EXPAND_OVERLAY_STYLE}
       >
-        <div style={EXPAND_PANEL_STYLE}>{chatPanel}</div>
+        <div
+          style={{
+            ...EXPAND_PANEL_STYLE,
+            ...(expandedWidth ? { width: expandedWidth } : null),
+            ...(expandedMaxWidth ? { maxWidth: expandedMaxWidth } : null),
+          }}
+        >
+          {chatPanel}
+        </div>
       </div>
     </>
   );

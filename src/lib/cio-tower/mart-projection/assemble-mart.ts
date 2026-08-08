@@ -53,6 +53,14 @@ export interface MartCommandCenterRow {
   promised_value_fy26: number;
   partial_finance_validated_value_ytd: number;
   realized_value_ytd_allowed: number;
+  claimable_value: number;
+  finance_validated_blocked_value: number;
+  promised_value_exposure: number;
+  unknown_value_claim_count: number;
+  claimable_program_count: number;
+  blocked_program_count: number;
+  conflicted_program_count: number;
+  unmeasured_program_count: number;
   candidate_ai_opportunities: number;
   watch_pressure_signals: number;
   run_ratio: number | null;
@@ -71,6 +79,14 @@ export interface MartValueFunnelRow {
   stage_key: string;
   stage_label: string;
   value_numeric: number;
+  claim_count: number;
+  known_value_claim_count: number;
+  unknown_value_claim_count: number;
+  known_value_amount: number;
+  blocked_claim_count: number;
+  blocked_known_value_amount: number;
+  primary_blocker: string | null;
+  primary_owner_role: string | null;
   denominator_stage_key: string | null;
   conversion_ratio: number | null;
   claim_status: string;
@@ -91,9 +107,23 @@ export interface MartProgramDecisionLaneRow {
   decision_lane: DecisionLane;
   decision_rationale: string;
   approved_funding_usd: number;
+  funded_amount: number;
   ai_tagged_spend_usd: number;
   promised_value_usd: number;
   finance_validated_value_usd: number;
+  known_supported_value: number;
+  proof_maturity_score: number;
+  risk_pressure_score: number;
+  usage_strength_score: number;
+  lineage_trust_state: "AGREE" | "ONE_SOURCE" | "CONFLICT" | "ABSENT";
+  decision_reason_code:
+    | "SCALE"
+    | "FIX_PROOF"
+    | "WATCH"
+    | "FREEZE"
+    | "STOP_REDESIGN";
+  amount_blocked: number;
+  next_gate: string | null;
   usage_metric: string | null;
   usage_actual: number | null;
   adoption_rate_pct: number | null;
@@ -149,6 +179,7 @@ export interface MartAiPortfolioRow {
 
 export interface MartCxoActionRow {
   action_key: string;
+  action_id: string;
   tenant_key: string;
   sequence: number;
   action_lane: "fund" | "fix" | "freeze" | "stop" | "govern";
@@ -156,6 +187,23 @@ export interface MartCxoActionRow {
   action_body: string;
   owner_hint: string | null;
   module_handoff: string | null;
+  program_id: string | null;
+  claim_id: string | null;
+  proof_stage: string | null;
+  blocked_decision: string | null;
+  amount_exposed: number;
+  evidence_requirement: string | null;
+  expected_source_system: string | null;
+  evidence_package_id: string | null;
+  owner_role: string | null;
+  secondary_owner_role: string | null;
+  due_window: string | null;
+  due_date: string | null;
+  handoff_module: string | null;
+  handoff_entity_id: string | null;
+  handoff_readiness: "ready" | "needs_evidence" | "not_ready";
+  action_state: "open" | "in_progress" | "closed" | "waived";
+  priority: "high" | "medium" | "low";
   evidence_ids: string[];
   source_fact_keys: string[];
   formula_version: string;
@@ -168,6 +216,19 @@ export interface MartEvidenceLineageRow {
   displayed_fact: string;
   displayed_value_text: string | null;
   displayed_value_numeric: number | null;
+  metric_or_fact_key: string | null;
+  board_visible_label: string | null;
+  lineage_state: "AGREE" | "ONE_SOURCE" | "CONFLICT" | "ABSENT";
+  source_count: number;
+  source_refs: Array<{
+    file: string | null;
+    row: string | null;
+    system: string | null;
+  }>;
+  conflicting_values: unknown[];
+  authoritative_value: string | null;
+  resolution_owner_role: string | null;
+  resolution_state: "not_required" | "open" | "resolved" | "waived";
   source_file: string | null;
   source_row: string | null;
   source_system: string | null;
@@ -455,6 +516,119 @@ function ratio(numerator: number, denominator: number): number | null {
   return round(numerator / denominator);
 }
 
+function clampScore(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function hasUsageEvidence(agg: ProgramAggregate): boolean {
+  return agg.usageActual !== null || agg.adoptionRatePct !== null;
+}
+
+function adoptionFraction(agg: ProgramAggregate): number {
+  return typeof agg.adoptionRatePct === "number" &&
+    Number.isFinite(agg.adoptionRatePct)
+    ? Math.max(0, Math.min(1, agg.adoptionRatePct / 100))
+    : 0;
+}
+
+function usageSupportedValue(agg: ProgramAggregate): number {
+  return round(Math.max(0, agg.promisedValue ?? 0) * adoptionFraction(agg));
+}
+
+function amountBlocked(
+  agg: ProgramAggregate,
+  claim: { allowed: TowerClaimAllowed },
+): number {
+  const promised = Math.max(0, agg.promisedValue ?? 0);
+  const claimable =
+    claim.allowed === "allowed"
+      ? Math.max(0, agg.financeValidatedValue ?? 0)
+      : 0;
+  return round(Math.max(0, promised - claimable));
+}
+
+function proofMaturityScore(
+  agg: ProgramAggregate,
+  claim: { allowed: TowerClaimAllowed },
+): number {
+  const promised = Math.max(0, agg.promisedValue ?? 0);
+  const financeFraction =
+    promised > 0
+      ? Math.max(0, Math.min(1, (agg.financeValidatedValue ?? 0) / promised))
+      : 0;
+  const gateFraction =
+    claim.allowed === "allowed" ? 1 : claim.allowed === "partial" ? 0.55 : 0;
+  return clampScore(
+    100 *
+      (0.4 * financeFraction +
+        0.35 * adoptionFraction(agg) +
+        0.25 * gateFraction),
+  );
+}
+
+function usageStrengthScore(agg: ProgramAggregate): number {
+  if (
+    typeof agg.adoptionRatePct === "number" &&
+    Number.isFinite(agg.adoptionRatePct)
+  ) {
+    return clampScore(agg.adoptionRatePct);
+  }
+  return agg.usageActual !== null ? 35 : 0;
+}
+
+function decisionReasonCode(
+  agg: ProgramAggregate,
+  lane: DecisionLane,
+  claim: { allowed: TowerClaimAllowed },
+): MartProgramDecisionLaneRow["decision_reason_code"] {
+  if (claim.allowed === "allowed") return "SCALE";
+  if (lane === "stop") return "STOP_REDESIGN";
+  if ((agg.promisedValue ?? 0) <= 0 && (agg.approvedFunding ?? 0) > 0)
+    return "WATCH";
+  if (lane === "freeze") return "FREEZE";
+  return "FIX_PROOF";
+}
+
+function nextGateForAggregate(
+  agg: ProgramAggregate,
+  claim: { allowed: TowerClaimAllowed },
+): string | null {
+  if ((agg.promisedValue ?? 0) <= 0) return "Value case required";
+  if (!hasUsageEvidence(agg)) return "Usage evidence required";
+  if ((agg.financeValidatedValue ?? 0) <= 0)
+    return "Finance validation required";
+  if (claim.allowed !== "allowed") return "Claim-gate clearance required";
+  return null;
+}
+
+function riskPressureScore(
+  lane: DecisionLane,
+  blockedAmount: number,
+  promisedValue: number | null,
+  lineageState: MartProgramDecisionLaneRow["lineage_trust_state"],
+): number {
+  const laneBase: Record<DecisionLane, number> = {
+    fund: 18,
+    fix: 66,
+    freeze: 78,
+    stop: 88,
+  };
+  const blockedRatio =
+    (promisedValue ?? 0) > 0
+      ? Math.min(1, blockedAmount / (promisedValue ?? 1))
+      : 0;
+  const conflictPenalty = lineageState === "CONFLICT" ? 16 : 0;
+  return clampScore(laneBase[lane] + blockedRatio * 14 + conflictPenalty);
+}
+
+function lineageStateFor(
+  factKeys: readonly string[],
+): MartProgramDecisionLaneRow["lineage_trust_state"] {
+  if (factKeys.length === 0) return "ABSENT";
+  return new Set(factKeys).size > 1 ? "AGREE" : "ONE_SOURCE";
+}
+
 function sumBudget(
   facts: readonly CioTowerFactRow[],
   metricKey: string,
@@ -510,7 +684,17 @@ export function assembleMartFromFacts(
     factKeys: string[],
     ref: { file: string | null; row: string | null; system: string | null },
     caveat = "",
+    lineageState: MartEvidenceLineageRow["lineage_state"] = lineageStateFor(
+      factKeys,
+    ),
   ): void => {
+    const sourceRefs = [
+      {
+        file: ref.file,
+        row: ref.row,
+        system: ref.system,
+      },
+    ].filter((source) => source.file || source.row || source.system);
     evidence.push({
       lineage_key: `${tenantKey}::${section}::${identityKey}`.slice(0, 240),
       tenant_key: tenantKey,
@@ -518,6 +702,18 @@ export function assembleMartFromFacts(
       displayed_fact: displayedFact,
       displayed_value_text: null,
       displayed_value_numeric: valueNumeric,
+      metric_or_fact_key: factKeys[0] ?? identityKey,
+      board_visible_label: displayedFact,
+      lineage_state: lineageState,
+      source_count: Math.max(0, sourceRefs.length || factKeys.length),
+      source_refs: sourceRefs,
+      conflicting_values: [],
+      authoritative_value:
+        valueNumeric === null || valueNumeric === undefined
+          ? null
+          : String(valueNumeric),
+      resolution_owner_role: null,
+      resolution_state: lineageState === "CONFLICT" ? "open" : "not_required",
       source_file: ref.file,
       source_row: ref.row,
       source_system: ref.system,
@@ -601,6 +797,10 @@ export function assembleMartFromFacts(
       (agg.approvedFunding ?? 0) > 0
     ) {
       const laneKey = `${tenantKey}::lane::${agg.identityKey}`.slice(0, 240);
+      const lineState = lineageStateFor(agg.factKeys);
+      const blocked = amountBlocked(agg, claim);
+      const reasonCode = decisionReasonCode(agg, lane, claim);
+      const nextGate = nextGateForAggregate(agg, claim);
       lanes.push({
         lane_key: laneKey,
         tenant_key: tenantKey,
@@ -611,9 +811,23 @@ export function assembleMartFromFacts(
         decision_lane: lane,
         decision_rationale: decisionRationale(agg, lane),
         approved_funding_usd: round(agg.approvedFunding ?? 0),
+        funded_amount: round(agg.approvedFunding ?? 0),
         ai_tagged_spend_usd: round(agg.aiTaggedSpend),
         promised_value_usd: round(agg.promisedValue ?? 0),
         finance_validated_value_usd: round(agg.financeValidatedValue ?? 0),
+        known_supported_value: usageSupportedValue(agg),
+        proof_maturity_score: proofMaturityScore(agg, claim),
+        risk_pressure_score: riskPressureScore(
+          lane,
+          blocked,
+          agg.promisedValue,
+          lineState,
+        ),
+        usage_strength_score: usageStrengthScore(agg),
+        lineage_trust_state: lineState,
+        decision_reason_code: reasonCode,
+        amount_blocked: blocked,
+        next_gate: nextGate,
         usage_metric: agg.usageMetric,
         usage_actual: agg.usageActual,
         adoption_rate_pct: agg.adoptionRatePct,
@@ -635,6 +849,7 @@ export function assembleMartFromFacts(
         agg.factKeys,
         ref,
         caveat,
+        lineState,
       );
       // Gap discipline: a funded program with no promised value / no finance
       // validation is a gap, not a zero.
@@ -735,6 +950,31 @@ export function assembleMartFromFacts(
       "blocking",
     );
   }
+  const claimableValue = lanes.reduce(
+    (sum, lane) =>
+      sum +
+      (lane.tower_claim_allowed === "allowed"
+        ? lane.finance_validated_value_usd
+        : 0),
+    0,
+  );
+  const blockedProgramCount = lanes.filter(
+    (lane) => lane.amount_blocked > 0,
+  ).length;
+  const claimableProgramCount = lanes.filter(
+    (lane) =>
+      lane.tower_claim_allowed === "allowed" &&
+      lane.finance_validated_value_usd > 0,
+  ).length;
+  const unknownValueClaimCount = lanes.filter(
+    (lane) => lane.approved_funding_usd > 0 && lane.promised_value_usd <= 0,
+  ).length;
+  const unmeasuredProgramCount = lanes.filter(
+    (lane) => lane.usage_strength_score <= 0,
+  ).length;
+  const conflictedProgramCount = lanes.filter(
+    (lane) => lane.lineage_trust_state === "CONFLICT",
+  ).length;
   const commandCenter: MartCommandCenterRow = {
     command_center_key: `${tenantKey}::${martVersion}::command-center`,
     tenant_key: tenantKey,
@@ -754,6 +994,16 @@ export function assembleMartFromFacts(
     // "validated/realized" state is explicitly loaded — which this assembler
     // does not synthesize.
     realized_value_ytd_allowed: 0,
+    claimable_value: round(claimableValue),
+    finance_validated_blocked_value: round(
+      Math.max(0, partialValidatedTotal - claimableValue),
+    ),
+    promised_value_exposure: round(promisedValueTotal),
+    unknown_value_claim_count: unknownValueClaimCount,
+    claimable_program_count: claimableProgramCount,
+    blocked_program_count: blockedProgramCount,
+    conflicted_program_count: conflictedProgramCount,
+    unmeasured_program_count: unmeasuredProgramCount,
     candidate_ai_opportunities: candidateCount,
     watch_pressure_signals: gaps.filter((g) => g.blocking).length,
     run_ratio: ratio(runBudget, totalBudget),
@@ -782,8 +1032,7 @@ export function assembleMartFromFacts(
     aiTaggedSpendTotal,
     promisedValueTotal,
     partialValidatedTotal,
-    usedProgramCount: lanes.filter((l) => l.usage_actual !== null).length,
-    totalProgramCount: lanes.length,
+    lanes,
   });
 
   // --- CXO actions (one per non-empty lane bucket) -------------------------
@@ -846,56 +1095,166 @@ function buildValueFunnel(args: {
   aiTaggedSpendTotal: number;
   promisedValueTotal: number;
   partialValidatedTotal: number;
-  usedProgramCount: number;
-  totalProgramCount: number;
+  lanes: readonly MartProgramDecisionLaneRow[];
 }): MartValueFunnelRow[] {
+  const claimCount = args.lanes.length;
+  const knownValueClaimCount = args.lanes.filter(
+    (lane) => lane.promised_value_usd > 0,
+  ).length;
+  const usageLanes = args.lanes.filter((lane) => lane.usage_strength_score > 0);
+  const financeLanes = args.lanes.filter(
+    (lane) => lane.finance_validated_value_usd > 0,
+  );
+  const claimableLanes = args.lanes.filter(
+    (lane) =>
+      lane.tower_claim_allowed === "allowed" &&
+      lane.finance_validated_value_usd > 0,
+  );
+  const blockedKnownValueAmount = args.lanes.reduce(
+    (sum, lane) => sum + lane.amount_blocked,
+    0,
+  );
+  const primaryBlocked = [...args.lanes]
+    .filter((lane) => lane.amount_blocked > 0)
+    .sort((a, b) => b.amount_blocked - a.amount_blocked)[0];
   const stages: Array<{
     key: string;
     label: string;
     value: number;
+    claims: number;
+    knownClaims: number;
+    unknownClaims: number;
+    blockedClaims: number;
+    blockedKnownValue: number;
     denom: string | null;
     claim: string;
     caveat: string;
+    primaryBlocker: string | null;
+    primaryOwnerRole: string | null;
   }> = [
     {
-      key: "approved_funding",
-      label: "Approved program funding",
+      key: "funded",
+      label: "Funded",
       value: args.approvedProgramBudget,
+      claims: claimCount,
+      knownClaims: args.lanes.filter((lane) => lane.approved_funding_usd > 0)
+        .length,
+      unknownClaims: 0,
+      blockedClaims: 0,
+      blockedKnownValue: 0,
       denom: null,
       claim: "funded",
       caveat: "",
+      primaryBlocker: null,
+      primaryOwnerRole: null,
     },
     {
-      key: "ai_tagged_spend",
-      label: "AI-tagged spend",
-      value: args.aiTaggedSpendTotal,
-      denom: "approved_funding",
-      claim: "spending",
-      caveat: "Non-additive lens on the funded base.",
+      key: "baseline_supported",
+      label: "Baseline supported",
+      value: 0,
+      claims: 0,
+      knownClaims: 0,
+      unknownClaims: claimCount,
+      blockedClaims: claimCount,
+      blockedKnownValue: args.promisedValueTotal,
+      denom: "funded",
+      claim: "blocked",
+      caveat:
+        "Baseline-supported value is not yet loaded as a governed mart amount.",
+      primaryBlocker: "Baseline evidence not loaded",
+      primaryOwnerRole: "Finance",
     },
     {
-      key: "promised_value",
-      label: "Promised value",
-      value: args.promisedValueTotal,
-      denom: "approved_funding",
-      claim: "promised",
-      caveat: "Business-case value, not yet evidenced.",
+      key: "usage_supported",
+      label: "Usage supported",
+      value: usageLanes.reduce(
+        (sum, lane) => sum + lane.known_supported_value,
+        0,
+      ),
+      claims: usageLanes.length,
+      knownClaims: usageLanes.filter((lane) => lane.known_supported_value > 0)
+        .length,
+      unknownClaims: claimCount - usageLanes.length,
+      blockedClaims: claimCount - usageLanes.length,
+      blockedKnownValue: Math.max(
+        0,
+        args.promisedValueTotal -
+          usageLanes.reduce((sum, lane) => sum + lane.known_supported_value, 0),
+      ),
+      denom: "baseline_supported",
+      claim: "usage_supported",
+      caveat: "Usage evidence supports activity, not outcome proof.",
+      primaryBlocker: primaryBlocked?.next_gate ?? null,
+      primaryOwnerRole: primaryBlocked?.owner_role ?? null,
+    },
+    {
+      key: "outcome_measured",
+      label: "Outcome measured",
+      value: 0,
+      claims: 0,
+      knownClaims: 0,
+      unknownClaims: knownValueClaimCount,
+      blockedClaims: knownValueClaimCount,
+      blockedKnownValue: args.promisedValueTotal,
+      denom: "usage_supported",
+      claim: "blocked",
+      caveat:
+        "Outcome-measured value requires governed KPI movement; no amount is inferred from usage.",
+      primaryBlocker: "Outcome KPI movement not loaded",
+      primaryOwnerRole: "Business owner",
     },
     {
       key: "finance_validated",
-      label: "Finance-validated (partial)",
+      label: "Finance validated",
       value: args.partialValidatedTotal,
-      denom: "promised_value",
+      claims: financeLanes.length,
+      knownClaims: financeLanes.length,
+      unknownClaims: claimCount - financeLanes.length,
+      blockedClaims: claimCount - financeLanes.length,
+      blockedKnownValue: Math.max(
+        0,
+        args.promisedValueTotal - args.partialValidatedTotal,
+      ),
+      denom: "outcome_measured",
       claim: "partial",
       caveat: "Only partially validated by finance.",
+      primaryBlocker: primaryBlocked?.next_gate ?? null,
+      primaryOwnerRole: primaryBlocked?.finance_owner_role ?? null,
     },
     {
-      key: "realized_claimable",
-      label: "Realized / claimable",
-      value: 0,
+      key: "claimable",
+      label: "Claimable",
+      value: claimableLanes.reduce(
+        (sum, lane) => sum + lane.finance_validated_value_usd,
+        0,
+      ),
+      claims: claimableLanes.length,
+      knownClaims: claimableLanes.length,
+      unknownClaims: claimCount - claimableLanes.length,
+      blockedClaims: args.lanes.filter((lane) => lane.amount_blocked > 0)
+        .length,
+      blockedKnownValue: blockedKnownValueAmount,
       denom: "finance_validated",
       claim: "blocked",
-      caveat: "Realized value is not claimable until validation completes.",
+      caveat: "Claimable requires the governed Tower claim gate.",
+      primaryBlocker: primaryBlocked?.next_gate ?? null,
+      primaryOwnerRole: primaryBlocked?.finance_owner_role ?? null,
+    },
+    {
+      key: "realized",
+      label: "Realized",
+      value: 0,
+      claims: 0,
+      knownClaims: 0,
+      unknownClaims: claimCount,
+      blockedClaims: claimCount,
+      blockedKnownValue: blockedKnownValueAmount,
+      denom: "claimable",
+      claim: "blocked",
+      caveat:
+        "Realized value is blocked until post-period actuals and finance attestation are reconciled.",
+      primaryBlocker: "Realized-value evidence not loaded",
+      primaryOwnerRole: "Finance",
     },
   ];
   return stages.map((s, i) => ({
@@ -905,6 +1264,14 @@ function buildValueFunnel(args: {
     stage_key: s.key,
     stage_label: s.label,
     value_numeric: round(s.value),
+    claim_count: s.claims,
+    known_value_claim_count: s.knownClaims,
+    unknown_value_claim_count: s.unknownClaims,
+    known_value_amount: round(s.value),
+    blocked_claim_count: s.blockedClaims,
+    blocked_known_value_amount: round(s.blockedKnownValue),
+    primary_blocker: s.primaryBlocker,
+    primary_owner_role: s.primaryOwnerRole,
     denominator_stage_key: s.denom,
     conversion_ratio: null,
     claim_status: s.claim,
@@ -924,38 +1291,74 @@ function buildCxoActions(
 ): MartCxoActionRow[] {
   const actions: MartCxoActionRow[] = [];
   let seq = 0;
-  const laneGroups: Array<{
-    lane: MartCxoActionRow["action_lane"];
-    verb: string;
-  }> = [
-    { lane: "fund", verb: "Protect or scale" },
-    { lane: "fix", verb: "Run a 30-day evidence sprint on" },
-    { lane: "freeze", verb: "Hold incremental funding on" },
-    { lane: "stop", verb: "Stop or redesign" },
-  ];
-  for (const g of laneGroups) {
-    const inLane = lanes.filter((l) => l.decision_lane === g.lane);
-    if (inLane.length === 0) continue;
+  const sortedLanes = [...lanes].sort(
+    (a, b) => b.amount_blocked - a.amount_blocked,
+  );
+  for (const lane of sortedLanes) {
     seq += 1;
+    const actionKey =
+      `${tenantKey}::action::${lane.program_code ?? lane.lane_key}`.slice(
+        0,
+        240,
+      );
+    const owner = lane.finance_owner_role ?? lane.owner_role;
+    const evidenceRequirement =
+      lane.next_gate ??
+      (lane.decision_reason_code === "SCALE"
+        ? "Maintain claim-gate evidence package"
+        : "Complete the next proof gate");
+    const handoffModule =
+      lane.decision_reason_code === "FIX_PROOF"
+        ? "Moves"
+        : lane.decision_reason_code === "STOP_REDESIGN" ||
+            lane.decision_reason_code === "FREEZE"
+          ? "Source"
+          : null;
     actions.push({
-      action_key: `${tenantKey}::action::${g.lane}`,
+      action_key: actionKey,
+      action_id: actionKey,
       tenant_key: tenantKey,
       sequence: seq,
-      action_lane: g.lane,
-      title: `${g.verb} ${inLane.length} program${inLane.length === 1 ? "" : "s"}`,
-      action_body: `${g.verb}: ${inLane.map((l) => l.program_name).join(", ")}.`,
-      owner_hint: g.lane === "fund" || g.lane === "stop" ? "CIO + CFO" : "CDAO",
-      module_handoff: g.lane === "fix" ? "Moves" : null,
+      action_lane: lane.decision_lane,
+      title: `${lane.decision_reason_code.replace(/_/g, " ")}: ${lane.program_name}`,
+      action_body: lane.decision_rationale,
+      owner_hint: owner,
+      module_handoff: handoffModule,
+      program_id: lane.program_code ?? lane.lane_key,
+      claim_id: `${lane.lane_key}::claim`,
+      proof_stage: lane.next_gate,
+      blocked_decision: lane.decision_rationale,
+      amount_exposed: lane.amount_blocked,
+      evidence_requirement: evidenceRequirement,
+      expected_source_system:
+        lane.next_gate === null ? null : "Governed Tower evidence package",
+      evidence_package_id: null,
+      owner_role: owner,
+      secondary_owner_role: lane.owner_role === owner ? null : lane.owner_role,
+      due_window: null,
+      due_date: null,
+      handoff_module: handoffModule,
+      handoff_entity_id: null,
+      handoff_readiness: lane.next_gate === null ? "ready" : "needs_evidence",
+      action_state: "open",
+      priority:
+        lane.amount_blocked >= 5_000_000
+          ? "high"
+          : lane.amount_blocked > 0
+            ? "medium"
+            : "low",
       evidence_ids: [],
-      source_fact_keys: inLane.flatMap((l) => l.source_fact_keys).slice(0, 50),
+      source_fact_keys: lane.source_fact_keys.slice(0, 50),
       formula_version: formulaVersion,
     });
   }
   const blockingGaps = gaps.filter((g) => g.blocking);
   if (blockingGaps.length > 0) {
     seq += 1;
+    const actionKey = `${tenantKey}::action::govern`;
     actions.push({
-      action_key: `${tenantKey}::action::govern`,
+      action_key: actionKey,
+      action_id: actionKey,
       tenant_key: tenantKey,
       sequence: seq,
       action_lane: "govern",
@@ -963,6 +1366,25 @@ function buildCxoActions(
       action_body: blockingGaps.map((g) => g.remediation_action).join(" "),
       owner_hint: "CDAO",
       module_handoff: "Source",
+      program_id: null,
+      claim_id: null,
+      proof_stage: "pipeline",
+      blocked_decision: "Promote Tower output as board-grade",
+      amount_exposed: 0,
+      evidence_requirement: blockingGaps
+        .map((g) => g.required_field)
+        .join(", "),
+      expected_source_system: "Unified Tower facts",
+      evidence_package_id: null,
+      owner_role: "CDAO",
+      secondary_owner_role: null,
+      due_window: null,
+      due_date: null,
+      handoff_module: "Source",
+      handoff_entity_id: null,
+      handoff_readiness: "needs_evidence",
+      action_state: "open",
+      priority: "high",
       evidence_ids: [],
       source_fact_keys: [],
       formula_version: formulaVersion,

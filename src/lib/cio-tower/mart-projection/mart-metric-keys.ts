@@ -57,6 +57,6 @@ export type ValueClaimStatus =
   | "funded_no_value_case"
   | "not_loaded";
 
-export type TowerClaimAllowed = "partial" | "no";
+export type TowerClaimAllowed = "allowed" | "partial" | "no";
 
 export type DecisionLane = "fund" | "fix" | "freeze" | "stop";

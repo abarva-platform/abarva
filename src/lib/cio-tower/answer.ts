@@ -100,6 +100,13 @@ export interface CioTowerValueClaimPolicy {
   caveat: string;
 }
 
+export interface CioTowerVisibleContextCriteria {
+  renderingPolicy: string[];
+  artifactCapabilities: string[];
+  exportTargets: string[];
+  valueProposition: string;
+}
+
 export interface CioTowerPromptContext {
   tenantKey: string;
   tenantName: string;
@@ -111,6 +118,7 @@ export interface CioTowerPromptContext {
   gaps: string[];
   valueClaimPolicy: CioTowerValueClaimPolicy;
   visualContract: TowerVisualContract;
+  visibleContextCriteria?: CioTowerVisibleContextCriteria;
   towerV3RuntimeView?: TowerV3RuntimeViewModel | null;
 }
 
@@ -330,7 +338,10 @@ export function validateVisibleAnswer(text: string): string[] {
       "raw_id_or_internal_key",
       /\b[A-Z]{2,}[A-Z0-9_-]*-\d{2,}\b|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/,
     ],
-    ["visible_scaffold_label", /(^|\n)\s*(Read|Evidence|Implication|Next move):/i],
+    [
+      "visible_scaffold_label",
+      /(^|\n)\s*(Read|Evidence|Implication|Next move):/i,
+    ],
     [
       "internal_data_plane_language",
       /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|metric records|value records|active signals|usage signals|rows)\b/i,
@@ -339,9 +350,24 @@ export function validateVisibleAnswer(text: string): string[] {
       "technical_count_as_evidence",
       /\b\d[\d,]*(?:\.\d+)?\s+(?:source\s+signals?|usage\s+signals?|active\s+signals?|metric\s+records?|value\s+records?|facts?|rows?|edges?|nodes?|citations?|relationships?)\b/i,
     ],
-    ["code_fence_or_hidden_visual_payload", /```|abarva-canvas|chart\s*json|"\s*(?:type|data|series|x|y)\s*"\s*:/i],
+    [
+      "code_fence_or_hidden_visual_payload",
+      /```|abarva-canvas|chart\s*json|"\s*(?:type|data|series|x|y)\s*"\s*:/i,
+    ],
     ["markdown_table_in_answer_field", /^\s*\|.+\|\s*$/m],
     ["atlas_branding", /\bAtlas\b/i],
+    [
+      "usage_promoted_to_outcome",
+      /\busage\b[^.]{0,80}\b(?:proves?|validates?|delivers?|realizes?)\b|\b(?:proven|measured)\s+outcomes?\b/i,
+    ],
+    [
+      "invented_due_date_or_window",
+      /\bdue\s+(?:in\s+\d+\s+(?:days?|weeks?)|by\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2}))/i,
+    ],
+    [
+      "unsupported_attestation_claim",
+      /\b(?:finance|business)\b[^.]{0,60}\b(?:attested|certified|approved|signed\s+off)\b/i,
+    ],
   ];
   for (const [id, pattern] of checks) {
     if (pattern.test(text)) violations.push(id);
@@ -350,9 +376,12 @@ export function validateVisibleAnswer(text: string): string[] {
 }
 
 function contractArtifactRequirements(contract: CioTowerContract): string[] {
-  const artifact = `${contract.intent} ${contract.artifact_type} ${contract.question_family}`.toLowerCase();
+  const artifact =
+    `${contract.intent} ${contract.artifact_type} ${contract.question_family}`.toLowerCase();
   const requiresTable =
-    /table|chart|graph|trend|rank|comparison|portfolio|split|waterfall/.test(artifact);
+    /table|chart|graph|trend|rank|comparison|portfolio|split|waterfall/.test(
+      artifact,
+    );
   const requiresRanking = /rank|top|largest|portfolio|priority/.test(artifact);
   const requiresTrend = /trend|fy25|fy26|year|period|waterfall/.test(artifact);
   return [
@@ -430,7 +459,9 @@ export function parseVisibleAnswerContract(
         (row) =>
           !Array.isArray(row) ||
           row.length !== table.columns.length ||
-          row.some((cell) => typeof cell !== "string" || cell.trim().length === 0),
+          row.some(
+            (cell) => typeof cell !== "string" || cell.trim().length === 0,
+          ),
       )
     ) {
       // Malformed rows/columns (wrong width, empty cells) are a real defect —
@@ -490,7 +521,9 @@ export function buildCioTowerClaudePrompt(
   });
 
   const gapLines = context.gaps.map((gap) => `- ${gap}`);
-  const artifactRequirementLines = contractArtifactRequirements(context.contract);
+  const artifactRequirementLines = contractArtifactRequirements(
+    context.contract,
+  );
   const permittedPostures = permittedDecisionPostures(context.contract);
   const valueClaimPolicyLines = [
     `- Projection fallback role: ${context.valueClaimPolicy.projectionRole}.`,
@@ -503,16 +536,42 @@ export function buildCioTowerClaudePrompt(
     `- Question intent: ${context.visualContract.questionIntent}.`,
     `- Recommended visual: ${context.visualContract.recommendedVisual}.`,
     `- Required data: ${context.visualContract.requiredData.join("; ") || "none"}.`,
-    `- Axes: ${[
-      context.visualContract.axes?.x ? `x=${context.visualContract.axes.x}` : null,
-      context.visualContract.axes?.y ? `y=${context.visualContract.axes.y}` : null,
-      context.visualContract.axes?.size ? `size=${context.visualContract.axes.size}` : null,
-      context.visualContract.axes?.color ? `color=${context.visualContract.axes.color}` : null,
-    ].filter(Boolean).join("; ") || "none"}.`,
+    `- Axes: ${
+      [
+        context.visualContract.axes?.x
+          ? `x=${context.visualContract.axes.x}`
+          : null,
+        context.visualContract.axes?.y
+          ? `y=${context.visualContract.axes.y}`
+          : null,
+        context.visualContract.axes?.size
+          ? `size=${context.visualContract.axes.size}`
+          : null,
+        context.visualContract.axes?.color
+          ? `color=${context.visualContract.axes.color}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("; ") || "none"
+    }.`,
     `- Executive takeaway: ${context.visualContract.executiveTakeaway}`,
     `- Source boundary: ${context.visualContract.sourceBoundary}`,
-    ...context.visualContract.annotations.map((annotation) => `- Annotation: ${annotation}`),
+    ...context.visualContract.annotations.map(
+      (annotation) => `- Annotation: ${annotation}`,
+    ),
   ];
+  const visibleContextCriteriaLines = context.visibleContextCriteria
+    ? [
+        "- Visible prose owner: Claude owns the JSON answer strings; AbarVa renders those strings exactly.",
+        "- Renderer policy: no post-response rewriting, summarizing, client-name relabeling, or softening of the JSON-visible answer fields.",
+        `- Artifact capabilities: ${context.visibleContextCriteria.artifactCapabilities.join("; ")}.`,
+        `- Export targets: ${context.visibleContextCriteria.exportTargets.join("; ")}.`,
+        `- Value proposition: ${context.visibleContextCriteria.valueProposition}`,
+        ...context.visibleContextCriteria.renderingPolicy.map(
+          (policy) => `- ${policy}`,
+        ),
+      ]
+    : [];
   const towerV3Runtime = context.towerV3RuntimeView;
   const towerV3Lines = towerV3Runtime
     ? [
@@ -527,10 +586,12 @@ export function buildCioTowerClaudePrompt(
             `  - ${tab.label}: ${tab.sourceClassification}; ${tab.sourcePosture}; ${tab.rows} rows; caveat: ${tab.caveat}`,
         ),
         "- Top value hypotheses:",
-        ...towerV3Runtime.valueHypotheses.slice(0, 8).map(
-          (item) =>
-            `  - ${item.label}: ${item.value}; basis ${safeBasisLabel(item.claimBasis)}; gate ${item.gateStatus}; proof still required`,
-        ),
+        ...towerV3Runtime.valueHypotheses
+          .slice(0, 8)
+          .map(
+            (item) =>
+              `  - ${item.label}: ${item.value}; basis ${safeBasisLabel(item.claimBasis)}; gate ${item.gateStatus}; proof still required`,
+          ),
         "- Executive blocker themes:",
         ...towerV3Runtime.gapThemes.map(
           (theme) =>
@@ -624,6 +685,13 @@ export function buildCioTowerClaudePrompt(
     "- If no table is needed, return tables as an empty array.",
     "- Do not duplicate table content inside answer. Use tables[] only.",
     "",
+    ...(visibleContextCriteriaLines.length
+      ? [
+          "Tower aVa rendering criteria:",
+          visibleContextCriteriaLines.join("\n"),
+          "",
+        ]
+      : []),
     "Required JSON shape:",
     "{",
     '  "version": "cio_tower_visible_answer_v1",',
@@ -651,11 +719,7 @@ export function buildCioTowerClaudePrompt(
     artifactRequirementLines.join("\n"),
     "",
     ...(towerV3Runtime
-      ? [
-          "Primary governed Tower context:",
-          towerV3Lines.join("\n"),
-          "",
-        ]
+      ? ["Primary governed Tower context:", towerV3Lines.join("\n"), ""]
       : []),
     "Governed measures:",
     measureLines.length
@@ -842,15 +906,15 @@ function measureNumber(
   measures: CioTowerMeasureResult[],
   measureKey: string,
 ): number | null {
-  const raw = measures.find((measure) => measure.measure_key === measureKey)?.value_numeric;
+  const raw = measures.find(
+    (measure) => measure.measure_key === measureKey,
+  )?.value_numeric;
   if (raw === null || raw === undefined || raw === "") return null;
   const numeric = Number(raw);
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function fallbackMetricRows(
-  context: CioTowerPromptContext,
-): string[][] {
+function fallbackMetricRows(context: CioTowerPromptContext): string[][] {
   const keys = [
     ["Total technology budget", "total_it_budget_fy26"],
     ["Run budget", "run_budget_fy26"],
@@ -881,21 +945,35 @@ type CioTowerFallbackQuestionIntent =
   | "evidence_gap"
   | "general";
 
-function fallbackQuestionIntent(context: CioTowerPromptContext): CioTowerFallbackQuestionIntent {
+function fallbackQuestionIntent(
+  context: CioTowerPromptContext,
+): CioTowerFallbackQuestionIntent {
   const question = context.question.toLowerCase();
   if (
-    /(services?|vendors?|contracts?|owners?).*(driv|explain|behind|base|run)/i.test(question) ||
-    /(driv|explain|behind).*(services?|vendors?|contracts?|owners?)/i.test(question)
+    /(services?|vendors?|contracts?|owners?).*(driv|explain|behind|base|run)/i.test(
+      question,
+    ) ||
+    /(driv|explain|behind).*(services?|vendors?|contracts?|owners?)/i.test(
+      question,
+    )
   ) {
     return "run_drivers";
   }
   if (/vendor|renewal|contract|concentration|supplier/i.test(question)) {
     return "vendor_exposure";
   }
-  if (/gap.*(promised|measured|value)|promised.*measured|value[-\s]?proof|measured value|funded programs.*gap/i.test(question)) {
+  if (
+    /gap.*(promised|measured|value)|promised.*measured|value[-\s]?proof|measured value|funded programs.*gap/i.test(
+      question,
+    )
+  ) {
     return "value_gap";
   }
-  if (/run.*change|change.*run|crowding|budget.*going|budget.*mix|run base|change pool/i.test(question)) {
+  if (
+    /run.*change|change.*run|crowding|budget.*going|budget.*mix|run base|change pool/i.test(
+      question,
+    )
+  ) {
     return "budget_mix";
   }
   if (/program|initiative|ai investment|copilot|platform/i.test(question)) {
@@ -904,7 +982,8 @@ function fallbackQuestionIntent(context: CioTowerPromptContext): CioTowerFallbac
   if (/evidence|board[-\s]?ready|missing|gap|trust|attest/i.test(question)) {
     return "evidence_gap";
   }
-  if (context.contract.contract_key === "tower_value_realization") return "value_gap";
+  if (context.contract.contract_key === "tower_value_realization")
+    return "value_gap";
   if (
     context.contract.contract_key === "tower_run_change_split" ||
     context.contract.contract_key === "tower_total_it_spend" ||
@@ -950,7 +1029,10 @@ function buildCioTowerFallbackFollowUp(
     return "Which funded programs need finance-attested value proof before more capital is released?";
   }
 
-  if (context.contract.contract_key === "tower_total_it_spend" && measures.totalBudget !== null) {
+  if (
+    context.contract.contract_key === "tower_total_it_spend" &&
+    measures.totalBudget !== null
+  ) {
     return `Where should the CIO inspect the ${money(measures.totalBudget)} budget first: run base, vendor exposure, or value-proof gaps?`;
   }
 
@@ -967,7 +1049,10 @@ export function buildCioTowerFallbackAnswer(
   const totalBudget = measureNumber(context.measures, "total_it_budget_fy26");
   const runBudget = measureNumber(context.measures, "run_budget_fy26");
   const changeBudget = measureNumber(context.measures, "change_budget_fy26");
-  const initiativeBudget = measureNumber(context.measures, "initiative_budget_fy26");
+  const initiativeBudget = measureNumber(
+    context.measures,
+    "initiative_budget_fy26",
+  );
   const promisedValue = measureNumber(context.measures, "promised_value_fy26");
   const measuredValue = measureNumber(context.measures, "measured_value_ytd");
   const hasRunChange = runBudget !== null || changeBudget !== null;
@@ -979,17 +1064,18 @@ export function buildCioTowerFallbackAnswer(
   let answer: string;
   if (intent === "run_drivers" || intent === "vendor_exposure") {
     const runPart =
-      runBudget !== null
-        ? `${money(runBudget)} run base`
-        : "run base";
+      runBudget !== null ? `${money(runBudget)} run base` : "run base";
     const changePart =
-      changeBudget !== null
-        ? ` and ${money(changeBudget)} change pool`
-        : "";
+      changeBudget !== null ? ` and ${money(changeBudget)} change pool` : "";
     answer = `This is the right drill-down, but the current Tower packet proves the enterprise ${runPart}${changePart}; it does not yet prove the service-by-service or vendor-by-vendor drivers. I would not rank vendors from this view until the run allocation, contract owner, renewal date, and application dependency fields are loaded.`;
-  } else if (intent === "value_gap" || context.contract.contract_key === "tower_value_realization") {
+  } else if (
+    intent === "value_gap" ||
+    context.contract.contract_key === "tower_value_realization"
+  ) {
     const promisedPart =
-      promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
+      promisedValue !== null
+        ? `${money(promisedValue)} promised value`
+        : "promised value";
     const measuredPart =
       measuredValue !== null
         ? `${money(measuredValue)} attestation-pending measurement evidence`
@@ -1007,14 +1093,20 @@ export function buildCioTowerFallbackAnswer(
     answer = `Treat the initiative list as a funding-control view, not a success story. In ${towerContextLabel(context.tenantName)}, Tower can inspect ${initiativePart}, but each program still needs ${measuredPart} and owner-attested evidence before it becomes a scale decision.`;
   } else if (intent === "evidence_gap") {
     answer = `The board-readiness gap is evidence quality, not another dashboard view. In ${towerContextLabel(context.tenantName)}, use the loaded budget and value measures for inspection, but hold any realized-value claim until finance-attested baselines, owner signoff, and source-system lineage are complete.`;
-  } else if (intent === "budget_mix" || context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
+  } else if (
+    intent === "budget_mix" ||
+    context.contract.contract_key === "tower_run_change_split" ||
+    hasRunChange
+  ) {
     const contextLabel = towerContextLabel(context.tenantName);
-    const budgetPart = totalBudget !== null
-      ? `In ${contextLabel}, ${money(totalBudget)} of FY26 technology budget is in view`
-      : `In ${contextLabel}, a Tower budget view is available`;
-    const splitPart = runBudget !== null && changeBudget !== null
-      ? `, and the mix is the point: ${money(runBudget)} is run versus ${money(changeBudget)} change.`
-      : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
+    const budgetPart =
+      totalBudget !== null
+        ? `In ${contextLabel}, ${money(totalBudget)} of FY26 technology budget is in view`
+        : `In ${contextLabel}, a Tower budget view is available`;
+    const splitPart =
+      runBudget !== null && changeBudget !== null
+        ? `, and the mix is the point: ${money(runBudget)} is run versus ${money(changeBudget)} change.`
+        : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
     answer = `This is a run-cost pressure question, not a value-realization win yet. ${budgetPart}${splitPart} I would use this as a budget-control conversation until finance-attested ${valueLanguage} is complete.`;
   } else if (context.contract.contract_key === "tower_total_it_spend") {
     answer =
@@ -1067,19 +1159,31 @@ function buildTowerV3FallbackAnswer(
   const view = context.towerV3RuntimeView;
   if (!view) throw new Error("tower_v3_runtime_view_missing");
   const intent = fallbackQuestionIntent(context);
-  const topValueRows = view.valueHypotheses.slice(0, 5).map((item) => [
-    item.label,
-    item.value,
-    item.claimBasis.replace(/_/g, " "),
-    item.gateStatus,
-  ]);
+  const topValueRows = view.valueHypotheses
+    .slice(0, 5)
+    .map((item) => [
+      item.label,
+      item.value,
+      item.claimBasis.replace(/_/g, " "),
+      item.gateStatus,
+    ]);
   const topGap = view.gapThemes[0];
-  const cioInsight = view.executiveInsights.find((insight) => insight.role === "CIO");
-  const cfoInsight = view.executiveInsights.find((insight) => insight.role === "CFO");
+  const cioInsight = view.executiveInsights.find(
+    (insight) => insight.role === "CIO",
+  );
+  const cfoInsight = view.executiveInsights.find(
+    (insight) => insight.role === "CFO",
+  );
   const cleanTitle = (value: string | undefined, fallback: string): string =>
-    (value?.replace(/[.]+$/g, "").trim() || fallback);
-  const cioTitle = cleanTitle(cioInsight?.insightTitle, "data foundation readiness");
-  const cfoTitle = cleanTitle(cfoInsight?.insightTitle, "baseline and actuals ownership");
+    value?.replace(/[.]+$/g, "").trim() || fallback;
+  const cioTitle = cleanTitle(
+    cioInsight?.insightTitle,
+    "data foundation readiness",
+  );
+  const cfoTitle = cleanTitle(
+    cfoInsight?.insightTitle,
+    "baseline and actuals ownership",
+  );
   const gateSummary = `${view.valueClaimCount} value-claim gates: ${view.gateCounts.allowed} allowed, ${view.gateCounts.caveated} caveated, ${view.gateCounts.blocked} blocked`;
   const inspectionRows = [
     cioInsight
@@ -1108,12 +1212,14 @@ function buildTowerV3FallbackAnswer(
           "Board use needs baselines, actuals, formulas, and claim gates.",
           "Hold outcome language until finance evidence is attached.",
         ],
-    ...view.gapThemes.slice(0, 3).map((theme) => [
-      theme.ownerOrSteward ?? theme.moduleHandoff,
-      theme.title,
-      theme.whyItMatters,
-      `Close with ${theme.requiredEvidence.slice(0, 2).join(" and ")}.`,
-    ]),
+    ...view.gapThemes
+      .slice(0, 3)
+      .map((theme) => [
+        theme.ownerOrSteward ?? theme.moduleHandoff,
+        theme.title,
+        theme.whyItMatters,
+        `Close with ${theme.requiredEvidence.slice(0, 2).join(" and ")}.`,
+      ]),
   ].slice(0, 5);
 
   let answer: string;
@@ -1138,7 +1244,12 @@ function buildTowerV3FallbackAnswer(
             {
               id: "tower_board_readiness_path",
               title: "Board-readiness inspection path",
-              columns: ["Owner", "Inspect first", "Why it matters", "Decision to unlock"],
+              columns: [
+                "Owner",
+                "Inspect first",
+                "Why it matters",
+                "Decision to unlock",
+              ],
               rows: inspectionRows,
             },
           ]
@@ -1151,7 +1262,7 @@ function buildTowerV3FallbackAnswer(
                 rows: topValueRows,
               },
             ]
-        : [],
+          : [],
     tabs: [
       {
         id: "cio_view",
@@ -1216,7 +1327,9 @@ function deriveGaps(
     contract.contract_key === "tower_value_realization" &&
     !valueClaimPolicy.realizedValueLanguageAllowed
   ) {
-    gaps.push("Realized-value language is blocked until v3-reconciled measured evidence is loaded.");
+    gaps.push(
+      "Realized-value language is blocked until v3-reconciled measured evidence is loaded.",
+    );
   }
   if (!Number(actualSpend?.value_numeric)) {
     gaps.push("Actual spend YTD is missing or not separately loaded.");
@@ -1230,7 +1343,9 @@ function deriveGaps(
 function buildCioTowerValueClaimPolicy(
   measures: CioTowerMeasureResult[],
 ): CioTowerValueClaimPolicy {
-  const measuredValue = measures.find((measure) => measure.measure_key === "measured_value_ytd");
+  const measuredValue = measures.find(
+    (measure) => measure.measure_key === "measured_value_ytd",
+  );
   const claim = evaluateTowerValueClaimGate({
     claimId: "cio-tower-realized-value-language",
     claimKind: "realized_value",
@@ -1257,6 +1372,7 @@ export async function loadCioTowerPromptContext(args: {
   tenantKey: string;
   tenantName: string;
   question: string;
+  visibleContextCriteria?: CioTowerVisibleContextCriteria;
 }): Promise<CioTowerPromptContext> {
   const contract = await loadContract(args.question);
   const [measures, relevantFacts, relationships] = await Promise.all([
@@ -1292,6 +1408,7 @@ export async function loadCioTowerPromptContext(args: {
       contractKey: contract.contract_key,
       artifactType: contract.artifact_type,
     }),
+    visibleContextCriteria: args.visibleContextCriteria,
     towerV3RuntimeView,
   };
 }
@@ -1394,6 +1511,7 @@ export async function answerCioTowerQuestion(args: {
   tenantKey: string;
   tenantName: string;
   question: string;
+  visibleContextCriteria?: CioTowerVisibleContextCriteria;
 }): Promise<CioTowerAnswerResult> {
   const startedAt = Date.now();
   const context = await loadCioTowerPromptContext(args);
@@ -1442,13 +1560,6 @@ export async function answerCioTowerQuestion(args: {
     parsedOutput.visualContract ??= context.visualContract;
     for (const visibleText of collectVisibleTextFromContract(parsedOutput)) {
       validationErrors.push(...validateVisibleAnswer(visibleText));
-    }
-    if (validationErrors.length > 0) {
-      parsedOutput = buildCioTowerFallbackAnswer(context);
-      validationErrors.push("cio_tower_deterministic_fallback_generated");
-      for (const visibleText of collectVisibleTextFromContract(parsedOutput)) {
-        validationErrors.push(...validateVisibleAnswer(visibleText));
-      }
     }
   } else {
     parsedOutput = buildCioTowerFallbackAnswer(context);

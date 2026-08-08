@@ -313,6 +313,9 @@ function toProgramView(
   index: number,
 ): TowerProgramView {
   const derived = deriveProgramValues(row);
+  const usageSupported = row.knownSupportedValue ?? derived.usageSupportedUsd;
+  const blocked = row.amountBlocked ?? derived.blockedUsd;
+  const maturity = row.proofMaturityScore ?? derived.evidenceMaturity;
   return {
     id: trimOrNull(row.programCode) ?? row.laneKey ?? `P${index + 1}`,
     name: row.programName,
@@ -325,10 +328,17 @@ function toProgramView(
 
     fundedUsd: num(row.approvedFundingUsd),
     promisedUsd: num(row.promisedValueUsd),
-    usageSupportedUsd: derived.usageSupportedUsd,
+    usageSupportedUsd: usageSupported,
     financeValidatedUsd: num(row.financeValidatedValueUsd),
     claimableUsd: derived.claimableUsd,
-    blockedUsd: derived.blockedUsd,
+    blockedUsd: blocked,
+    fundedAmountUsd: num(row.fundedAmount ?? row.approvedFundingUsd),
+    knownSupportedValueUsd: usageSupported,
+    proofMaturityScore: maturity,
+    riskPressureScore: row.riskPressureScore ?? 0,
+    usageStrengthScore: row.usageStrengthScore ?? 0,
+    lineageTrustState: trimOrNull(row.lineageTrustState),
+    decisionReasonCode: trimOrNull(row.decisionReasonCode),
 
     usageStatus: derived.usageStatus,
     financeStatus: derived.financeStatus,
@@ -336,14 +346,14 @@ function toProgramView(
     usageActual: row.usageActual,
     adoptionRatePct: row.adoptionRatePct,
 
-    evidenceMaturity: derived.evidenceMaturity,
+    evidenceMaturity: maturity,
     proofLevel: derived.proofLevel,
     proofSequenceStatus: derived.proofSequenceStatus,
     proofSequenceExplanation: derived.proofSequenceExplanation,
     semanticSource: "derived_compatibility",
-    valueAtStakeUsd: derived.valueAtStakeUsd,
+    valueAtStakeUsd: Math.max(derived.valueAtStakeUsd, blocked),
 
-    nextGate: nextGateFor(row),
+    nextGate: trimOrNull(row.nextGate) ?? nextGateFor(row),
     blocker: trimOrNull(row.decisionRationale),
     note: trimOrNull(row.caveat),
     sourceFile: trimOrNull(row.sourceFile),
@@ -689,6 +699,9 @@ function toEvidenceFactView(
     tag: hasCaveat ? "Traced · caveated" : "Traced",
     sourceFile: trimOrNull(row.sourceFile),
     sourceRow: trimOrNull(row.sourceRow),
+    lineageState: trimOrNull(row.lineageState),
+    sourceCount: row.sourceCount ?? 0,
+    resolutionState: trimOrNull(row.resolutionState),
   };
 }
 
@@ -718,10 +731,19 @@ function toActionView(
     evidence: trimOrNull(action.moduleHandoff)
       ? `Routes to ${action.moduleHandoff}.`
       : "No evidence package is recorded for this action in the mart.",
-    due: null,
-    linkedProgram: null,
+    due: trimOrNull(action.dueWindow) ?? trimOrNull(action.dueDate),
+    amountExposedUsd: action.amountExposed ?? 0,
+    evidenceRequirement: trimOrNull(action.evidenceRequirement),
+    expectedSourceSystem: trimOrNull(action.expectedSourceSystem),
+    evidencePackageId: trimOrNull(action.evidencePackageId),
+    proofStage: trimOrNull(action.proofStage),
+    handoffReadiness: trimOrNull(action.handoffReadiness),
+    actionState: trimOrNull(action.actionState),
+    priority: trimOrNull(action.priority),
+    linkedProgram: trimOrNull(action.programId),
     moveTitle: action.title,
-    moduleHandoff: trimOrNull(action.moduleHandoff),
+    moduleHandoff:
+      trimOrNull(action.handoffModule) ?? trimOrNull(action.moduleHandoff),
   };
 }
 
@@ -849,8 +871,21 @@ export function buildTowerCommandCenterView(
     promisedUsd: promised,
     usageSupportedUsd: usageSupportedTotal,
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
-    claimableUsd: claimable,
-    blockedUsd: Math.max(0, promised - claimable),
+    claimableUsd: command.claimableValue ?? claimable,
+    blockedUsd: Math.max(
+      0,
+      (command.promisedValueExposure ?? promised) -
+        (command.claimableValue ?? claimable),
+    ),
+    financeValidatedBlockedUsd:
+      command.financeValidatedBlockedValue ??
+      Math.max(0, num(command.partialFinanceValidatedValueYtd) - claimable),
+    promisedValueExposureUsd: command.promisedValueExposure ?? promised,
+    unknownValueClaimCount: command.unknownValueClaimCount ?? 0,
+    claimableProgramCount: command.claimableProgramCount ?? 0,
+    blockedProgramCount: command.blockedProgramCount ?? 0,
+    conflictedProgramCount: command.conflictedProgramCount ?? 0,
+    unmeasuredProgramCount: command.unmeasuredProgramCount ?? 0,
 
     programCount: programs.length,
     aiInitiativeCount: ai.length,
@@ -882,6 +917,14 @@ export function buildTowerCommandCenterView(
       claimStatus: stage.claimStatus,
       caveat: stage.caveat,
       sourceFile: trimOrNull(stage.sourceFile),
+      claimCount: stage.claimCount ?? 0,
+      knownValueClaimCount: stage.knownValueClaimCount ?? 0,
+      unknownValueClaimCount: stage.unknownValueClaimCount ?? 0,
+      knownValueAmount: stage.knownValueAmount ?? num(stage.valueNumeric),
+      blockedClaimCount: stage.blockedClaimCount ?? 0,
+      blockedKnownValueAmount: stage.blockedKnownValueAmount ?? 0,
+      primaryBlocker: trimOrNull(stage.primaryBlocker),
+      primaryOwnerRole: trimOrNull(stage.primaryOwnerRole),
     }));
 
   const pipelineGaps = mart.requiredFieldGaps.map((gap) =>

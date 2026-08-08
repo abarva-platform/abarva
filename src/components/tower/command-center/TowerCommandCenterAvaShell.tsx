@@ -196,6 +196,17 @@ export function TowerCommandCenterAvaShell({
           body: JSON.stringify({
             message: trimmed,
             stream: true,
+            visibleContextCriteria: {
+              renderingPolicy: "exact-visible-output",
+              preferredCharts: [
+                "recharts",
+                "svg-compatible",
+                "quadrant-matrix",
+                "value-bridge",
+                "ranked-table",
+              ],
+              exportTargets: ["pdf", "html"],
+            },
           }),
           signal: controller.signal,
         });
@@ -297,7 +308,21 @@ export function TowerCommandCenterAvaShell({
         clientId,
         tenantName,
         context: `Command Center · ${tenantName}`,
+        towerExperience: "outcome_proof_cockpit",
         towerContextSource: "cio_tower_mart_command_center",
+        answerRenderingPolicy: {
+          visibleOutputOwner: "claude",
+          rendererPolicy: "exact_visible_strings",
+          constraintsLocation: "input_context_criteria",
+          preferredVisuals: [
+            "recharts",
+            "svg",
+            "tables",
+            "quadrant_matrix",
+            "value_bridge",
+          ],
+          exportTargets: ["pdf", "html"],
+        },
         towerMeasures: view
           ? [
               {
@@ -325,8 +350,17 @@ export function TowerCommandCenterAvaShell({
         towerKnownGaps: view?.gaps.map((gap) => gap.missing).slice(0, 12) ?? [],
       }}
       defaultMode="collapsed"
-      defaultLeftPercent={35}
-      minLeftPx={320}
+      respectStoredMode={false}
+      collapsedRestoreMode="expand"
+      collapsedSummary={{
+        label: "Ask aVa",
+        detail: "Outcome insights",
+      }}
+      placeholder="Ask aVa to explain proof, blocked value, or the next executive action..."
+      defaultLeftPercent={52}
+      minLeftPx={560}
+      expandedWidth="96vw"
+      expandedMaxWidth={1720}
     />
   );
 }

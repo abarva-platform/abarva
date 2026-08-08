@@ -336,7 +336,7 @@ const CANDIDATE_SEEDS: ReadonlyArray<{ name: string; reason: string }> = [
     name: "Contact-Centre Sentiment",
     reason: "No KPI defined · pilot stalled",
   },
-  { name: "Branch Queue Vision", reason: "Failed value gate · $0 realized" },
+  { name: "Branch Queue Vision", reason: "Failed value gate · $0 claimable" },
   { name: "Commercial Credit Memo AI", reason: "Candidate — not funded" },
   { name: "Document Intelligence", reason: "Candidate — early, low usage" },
   {

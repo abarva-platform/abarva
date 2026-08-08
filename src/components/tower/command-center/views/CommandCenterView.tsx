@@ -1,177 +1,249 @@
 "use client";
 
-// Tab 1 — Command Center.
-// Transcribed from `viewCommand()` in the design file (line ~730):
-// four posture tiles, "this week's read" with the week bar chart and a CTA into
-// Value Proof, and the "decisions waiting on you" queue.
+// Tab 1 — Outcome Proof Cockpit.
+//
+// The Command Center now opens as a CFO operating room: verdict first, proof
+// waterfall, labeled capital matrix, evidence-owner queue, and a tiny lineage
+// rail. It remains a Layer 4 projection over the existing Tower mart view model.
 
-import {
-  formatCount,
-  formatPct,
-  formatRatioPct,
-  formatUsdM,
-} from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
+import type { ReactNode } from "react";
 import type {
   TowerCommandCenterView,
+  TowerEvidenceGapView,
   TowerProgramView,
 } from "@/lib/tower/command-center/types";
 
-import { WeekReadChart } from "../charts/WeekReadChart";
-import { Card, Dot, Unknown, cx, laneClass, LANE_WORD } from "../primitives";
+import {
+  OutcomeDecisionMatrixChart,
+  decisionMatrixTextAlternative,
+} from "../charts/OutcomeDecisionMatrixChart";
+import {
+  ValueWaterfallChart,
+  buildWaterfallRows,
+} from "../charts/ValueWaterfallChart";
+import { Card, Chip, Dot, Unknown, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
-type Tone = "" | "toneTeal" | "toneAmber" | "toneRed" | "toneBlue";
-type RowTone = "" | "vTeal" | "vAmber" | "vRed";
-
-interface TileRow {
-  label: string;
-  value: React.ReactNode;
-  tone: RowTone;
-}
-
-interface Tile {
-  tone: Tone;
+interface BoardMetric {
   key: string;
-  status: { cls: "steal" | "samber" | "sred" | "sgray"; text: string };
-  hero: string;
-  heroNote: string;
-  rows: TileRow[];
+  label: string;
+  value: ReactNode;
+  note: string;
+  tone: "teal" | "amber" | "red" | "gray";
 }
 
-/**
- * The four posture tiles. Every figure is a governed total or a derived one
- * from `derive.ts` — no tile computes anything locally, and a tile with no
- * governed value renders `Unknown` rather than a zero.
- */
-function buildTiles(view: TowerCommandCenterView): Tile[] {
-  const s = view.summary;
-  const openGaps = view.gaps.length;
-  // Program-derived risk signals — see the Risk posture tile below for why
-  // these do not come from `mart_required_field_gaps`.
-  const ownerGaps =
-    view.programs.filter((p) => !p.ownerRole).length +
-    view.gaps.filter((g) => !g.owner).length;
-  const usageGaps = view.programs.filter(
-    (p) => p.usageStatus === "none",
-  ).length;
-  const claimBlockers = view.programs.filter((p) => p.blockedUsd > 0).length;
-  const watchItems =
-    view.programs.filter((p) => p.lane === "watch").length + claimBlockers;
+interface ProofStage {
+  label: string;
+  value: ReactNode;
+  programs: ReactNode;
+  note: string;
+}
 
-  const laneCount = (lane: TowerProgramView["lane"]) =>
-    view.programs.filter((p) => p.lane === lane).length;
+function uniqueProgramCount(gaps: readonly TowerEvidenceGapView[]): number {
+  return new Set(
+    gaps
+      .map((gap) => gap.sourceProgramId)
+      .filter((id): id is string => Boolean(id)),
+  ).size;
+}
+
+function boardMetrics(view: TowerCommandCenterView): BoardMetric[] {
+  const s = view.summary;
+  const financeBlockedUsd = s.financeValidatedBlockedUsd;
+  const blockedPrograms =
+    s.blockedProgramCount ||
+    view.programs.filter((p) => p.blockedUsd > 0).length;
+  const programsMissingProof = Math.max(
+    blockedPrograms,
+    uniqueProgramCount(view.gaps),
+  );
+  const sourceConflictValue =
+    s.conflictedProgramCount > 0 ? (
+      formatCount(s.conflictedProgramCount)
+    ) : view.evidenceFacts.some((fact) => fact.lineageState === "CONFLICT") ? (
+      formatCount(
+        view.evidenceFacts.filter((fact) => fact.lineageState === "CONFLICT")
+          .length,
+      )
+    ) : (
+      <Unknown label="Not loaded" />
+    );
 
   return [
     {
-      tone: "",
-      key: "Spend posture",
-      status: { cls: "sgray", text: "In view" },
-      hero: formatUsdM(s.budgetUsd),
-      heroNote: `FY26 IT budget across ${formatCount(s.programCount)} programs`,
-      rows: [
-        {
-          label: "Run / keep-lights",
-          value: formatUsdM(s.runUsd),
-          tone: "vAmber",
-        },
-        {
-          label: "Change / transform",
-          value: formatUsdM(s.changeUsd),
-          tone: "",
-        },
-        { label: "AI-tagged", value: formatUsdM(s.aiTaggedUsd), tone: "vTeal" },
-        {
-          label: "Top-3 vendor concentration",
-          value:
-            s.vendorConcentrationPct === null ? (
-              <Unknown label="No vendor data" />
-            ) : (
-              formatPct(s.vendorConcentrationPct)
-            ),
-          tone: "vAmber",
-        },
-      ],
+      key: "claimable",
+      label: "Claimable today",
+      value: formatUsdM(s.claimableUsd),
+      note: "board-bookable value",
+      tone: s.claimableUsd > 0 ? "teal" : "red",
     },
     {
-      tone: "toneRed",
-      key: "Value posture",
-      status: {
-        cls: s.claimableUsd > 0 ? "steal" : "sred",
-        text: s.claimableUsd > 0 ? "Partially proven" : "Unproven",
-      },
-      hero: formatUsdM(s.claimableUsd),
-      heroNote: "is claimable today",
-      rows: [
-        { label: "Promised", value: formatUsdM(s.promisedUsd), tone: "" },
-        {
-          label: "Usage-supported",
-          value: formatUsdM(s.usageSupportedUsd),
-          tone: "vAmber",
-        },
-        {
-          label: "Finance-validated",
-          value: formatUsdM(s.financeValidatedUsd),
-          tone: "vAmber",
-        },
-        { label: "Blocked", value: formatUsdM(s.blockedUsd), tone: "vRed" },
-      ],
+      key: "finance-blocked",
+      label: "Finance validated but blocked",
+      value: formatUsdM(financeBlockedUsd),
+      note: "validated value still held by the claim gate",
+      tone: financeBlockedUsd > 0 ? "amber" : "gray",
     },
     {
-      // Risk posture reads the PROGRAMS, not just `mart_required_field_gaps`.
-      //
-      // Verified live on 2026-07-23: the Healthcare Composite Demo tenant has
-      // ZERO required-field-gap rows, yet 12 programs that cannot claim value.
-      // A tile sourced only from the gap table would have read "0 / 0 / 0" for
-      // the launch tenant and implied a clean risk posture that is not real.
-      // The shipped Tower derives owner / usage / claim gaps from the program
-      // lanes for exactly this reason; this matches it.
-      tone: "toneAmber",
-      key: "Risk posture",
-      status: {
-        cls: claimBlockers > 0 ? "samber" : "steal",
-        text: `${formatCount(watchItems)} watch item${watchItems === 1 ? "" : "s"}`,
-      },
-      hero: formatCount(claimBlockers),
-      heroNote: "programs cannot claim value today",
-      rows: [
-        {
-          label: "Evidence gaps",
-          value: formatCount(openGaps),
-          tone: "vAmber",
-        },
-        { label: "Owner gaps", value: formatCount(ownerGaps), tone: "vRed" },
-        { label: "Usage gaps", value: formatCount(usageGaps), tone: "vAmber" },
-        {
-          label: "Claim blockers",
-          value: formatCount(claimBlockers),
-          tone: "vRed",
-        },
-      ],
+      key: "missing-proof",
+      label: "Programs missing proof",
+      value: formatCount(programsMissingProof),
+      note: "programs with blocked value or evidence gaps",
+      tone: programsMissingProof > 0 ? "red" : "teal",
     },
     {
-      tone: "",
-      key: "Decision posture",
-      status: { cls: "sgray", text: "This week" },
-      hero: formatCount(view.actions.length),
-      heroNote: "decisions waiting on a named owner",
-      rows: [
-        { label: "Fund", value: formatCount(laneCount("fund")), tone: "vTeal" },
-        { label: "Fix", value: formatCount(laneCount("fix")), tone: "vAmber" },
-        {
-          label: "Freeze",
-          value: formatCount(laneCount("freeze")),
-          tone: "vRed",
-        },
-        { label: "Stop", value: formatCount(laneCount("stop")), tone: "vRed" },
-      ],
+      key: "source-conflicts",
+      label: "Material source conflicts",
+      value: sourceConflictValue,
+      note:
+        s.conflictedProgramCount > 0
+          ? "first-class lineage conflicts in the mart"
+          : "requires lineage-status projection in the mart",
+      tone: s.conflictedProgramCount > 0 ? "red" : "amber",
     },
   ];
 }
 
+function proofStages(view: TowerCommandCenterView): ProofStage[] {
+  const programs = view.programs;
+  const stageByKey = new Map(view.funnel.map((stage) => [stage.key, stage]));
+  const funded = stageByKey.get("funded") ?? stageByKey.get("promised_value");
+  const baseline = stageByKey.get("baseline_supported");
+  const usage = stageByKey.get("usage_supported");
+  const finance = stageByKey.get("finance_validated");
+  const claimable =
+    stageByKey.get("claimable") ?? stageByKey.get("realized_claimable");
+  const usagePrograms =
+    usage?.knownValueClaimCount ??
+    programs.filter((p) => p.usageStatus !== "none").length;
+  const financePrograms =
+    finance?.knownValueClaimCount ??
+    programs.filter((p) => p.financeStatus !== "none").length;
+  const claimablePrograms =
+    claimable?.knownValueClaimCount ??
+    programs.filter((p) => p.claimableUsd > 0).length;
+
+  return [
+    {
+      label: "Promised value",
+      value: formatUsdM(funded?.knownValueAmount ?? view.summary.promisedUsd),
+      programs: `${formatCount(funded?.claimCount ?? programs.length)} programs`,
+      note: "business-case value in the mart",
+    },
+    {
+      label: "Baseline supported",
+      value: baseline ? (
+        formatUsdM(baseline.knownValueAmount)
+      ) : (
+        <Unknown label="Not loaded" />
+      ),
+      programs: baseline ? (
+        `${formatCount(baseline.knownValueClaimCount)} programs`
+      ) : (
+        <Unknown label="Not loaded" />
+      ),
+      note:
+        baseline?.primaryBlocker ??
+        "baseline-supported value is not yet a mart field",
+    },
+    {
+      label: "Usage supported",
+      value: formatUsdM(
+        usage?.knownValueAmount ?? view.summary.usageSupportedUsd,
+      ),
+      programs: `${formatCount(usagePrograms)} programs`,
+      note: "usage evidence, not outcome proof",
+    },
+    {
+      label: "Finance validated",
+      value: formatUsdM(
+        finance?.knownValueAmount ?? view.summary.financeValidatedUsd,
+      ),
+      programs: `${formatCount(financePrograms)} programs`,
+      note: "partial validation still may be unclaimable",
+    },
+    {
+      label: "Claimable",
+      value: formatUsdM(
+        claimable?.knownValueAmount ?? view.summary.claimableUsd,
+      ),
+      programs: `${formatCount(claimablePrograms)} programs`,
+      note: "cleared Tower claim gate",
+    },
+  ];
+}
+
+function evidenceOwnerQueue(
+  gaps: readonly TowerEvidenceGapView[],
+): TowerEvidenceGapView[] {
+  return [...gaps]
+    .sort((a, b) => {
+      if (a.primaryBlockingGap !== b.primaryBlockingGap)
+        return a.primaryBlockingGap ? -1 : 1;
+      return (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0);
+    })
+    .slice(0, 6);
+}
+
+function sourceTrustRows(view: TowerCommandCenterView) {
+  const s = view.summary;
+  const conflicts = view.evidenceFacts.filter(
+    (fact) => fact.lineageState === "CONFLICT",
+  ).length;
+  return [
+    {
+      label: "Claimable value",
+      value: formatUsdM(s.claimableUsd),
+      status: "MART",
+      tone: "teal" as const,
+    },
+    {
+      label: "Promised value",
+      value: formatUsdM(s.promisedUsd),
+      status: conflicts > 0 ? "CONFLICT" : "LINEAGE NOT LOADED",
+      tone: "amber" as const,
+    },
+    {
+      label: "AI spend grain",
+      value: formatUsdM(s.aiTaggedUsd),
+      status: s.aiSpendUnattributed ? "PORTFOLIO ONLY" : "ITEM ATTRIBUTED",
+      tone: s.aiSpendUnattributed ? ("amber" as const) : ("teal" as const),
+    },
+    {
+      label: "Conflict count",
+      value:
+        s.conflictedProgramCount > 0
+          ? formatCount(s.conflictedProgramCount)
+          : conflicts > 0
+            ? formatCount(conflicts)
+            : "—",
+      status:
+        s.conflictedProgramCount > 0 || conflicts > 0
+          ? "MART STATE"
+          : "NOT IN MART",
+      tone:
+        s.conflictedProgramCount > 0 || conflicts > 0
+          ? ("red" as const)
+          : ("amber" as const),
+    },
+  ];
+}
+
+function cockpitVerdict(view: TowerCommandCenterView): string {
+  if (view.summary.claimableUsd > 0) {
+    return "Some value is claimable, but additional capital still depends on the proof gates below.";
+  }
+  if (view.summary.promisedUsd > 0) {
+    return "Investment is visible. Outcome proof is not yet board-claimable.";
+  }
+  return "Tower has spend posture in view, but no governed value case is loaded yet.";
+}
+
 /**
- * The decision queue: programs with blocked value, worst first. The design
- * hand-wrote four rows; here they are the top four blocked programs, so the
- * queue always reflects the tenant's actual worst-blocked value.
+ * The decision queue: programs with blocked value, worst first. This supports
+ * the evidence-owner table and program drawer without inventing action fields
+ * the mart does not yet carry.
  */
 function decisionQueue(view: TowerCommandCenterView): TowerProgramView[] {
   return [...view.programs]
@@ -190,136 +262,216 @@ export function CommandCenterView({
   onGoToFunnel: () => void;
 }) {
   const s = view.summary;
-  const tiles = buildTiles(view);
+  const metrics = boardMetrics(view);
+  const stages = proofStages(view);
   const queue = decisionQueue(view);
+  const gaps = evidenceOwnerQueue(view.gaps);
+  const waterfallRows = buildWaterfallRows(s);
 
   return (
-    <div className={styles.view}>
-      <div className={styles.ptiles}>
-        {tiles.map((tile) => (
-          <div
-            key={tile.key}
-            className={cx(styles.ptile, tile.tone && styles[tile.tone])}
-          >
-            <div className={styles.ptK}>
-              <span className={styles.lab}>{tile.key}</span>
-              <span className={cx(styles.st, styles[tile.status.cls])}>
-                {tile.status.text}
-              </span>
+    <div className={cx(styles.view, styles.cockpitView)}>
+      <section
+        className={styles.boardPosture}
+        aria-labelledby="tcc-board-posture"
+      >
+        <div className={styles.boardVerdict}>
+          <div className={styles.eyebrow2}>Board value posture</div>
+          <h2 id="tcc-board-posture">{cockpitVerdict(view)}</h2>
+          <p>
+            Do not scale additional investment until the proof gates below are
+            closed.
+          </p>
+        </div>
+        <div className={styles.boardMetrics}>
+          {metrics.map((metric) => (
+            <div
+              key={metric.key}
+              className={cx(styles.boardMetric, styles[`m${metric.tone}`])}
+            >
+              <span className={styles.bmLabel}>{metric.label}</span>
+              <span className={styles.bmValue}>{metric.value}</span>
+              <span className={styles.bmNote}>{metric.note}</span>
             </div>
-            <div className={styles.ptHero}>{tile.hero}</div>
-            <div className={styles.ptHeron}>{tile.heroNote}</div>
-            <div className={styles.ptRows}>
-              {tile.rows.map((row) => (
-                <div key={row.label} className={styles.ptRow}>
-                  <span className={styles.rl}>{row.label}</span>
-                  <span className={cx(styles.rv, row.tone && styles[row.tone])}>
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
+          ))}
+        </div>
+      </section>
+
+      <section
+        className={styles.proofStrip}
+        aria-label="Money and program proof posture"
+      >
+        {stages.map((stage) => (
+          <div key={stage.label} className={styles.proofStage}>
+            <span className={styles.psLabel}>{stage.label}</span>
+            <span className={styles.psValue}>{stage.value}</span>
+            <span className={styles.psPrograms}>{stage.programs} programs</span>
+            <span className={styles.psNote}>{stage.note}</span>
           </div>
         ))}
-      </div>
+      </section>
 
-      <div className={styles.ccLower}>
-        <section className={styles.weekread} aria-labelledby="tcc-week-read">
-          <div className={styles.wkK} id="tcc-week-read">
-            This week&rsquo;s read
+      <div className={styles.cockpitCanvas}>
+        <Card
+          eyebrow="Where value gets stopped"
+          right="Recharts · governed mart values"
+          headId="tcc-outcome-waterfall"
+          bodyClassName={styles.cockpitChartBody}
+        >
+          <div
+            className={styles.cockpitWaterfall}
+            aria-describedby="tcc-waterfall-alt"
+          >
+            <ValueWaterfallChart summary={s} />
           </div>
-          {/* The run-on sentence is assembled from governed totals only. The
-              turn ("the issue is X") is the mart's own decision question — we
-              do not write a new one. */}
-          <p className={styles.wkLine}>
-            <span className={styles.n}>{formatUsdM(s.budgetUsd)}</span> is in
-            view. <span className={styles.n}>{formatUsdM(s.aiTaggedUsd)}</span>{" "}
-            is AI-tagged.{" "}
-            <span className={styles.n}>{formatUsdM(s.promisedUsd)}</span> is
-            promised value.{" "}
-            <span className={s.claimableUsd > 0 ? styles.n : styles.z}>
-              {formatUsdM(s.claimableUsd)}
-            </span>{" "}
-            is claimable.{" "}
-            {s.decisionQuestion ? (
-              <span className={styles.turn}>{s.decisionQuestion}</span>
-            ) : null}
+          <p id="tcc-waterfall-alt" className={styles.srOnly}>
+            {waterfallRows
+              .map(
+                (row) =>
+                  `${row.name.replace("|", " ")}: ${formatUsdM(row.usd)}`,
+              )
+              .join(". ")}
+            .
           </p>
-
-          <div className={styles.wkViz}>
-            <WeekReadChart summary={s} />
-            <span className={styles.srOnly}>
-              Promised {formatUsdM(s.promisedUsd)}; usage-supported{" "}
-              {formatUsdM(s.usageSupportedUsd)}; finance-validated{" "}
-              {formatUsdM(s.financeValidatedUsd)}; claimable{" "}
-              {formatUsdM(s.claimableUsd)}.
-            </span>
-          </div>
-
-          <div className={styles.wkFoot}>
-            <span>
-              <Dot tone="teal" /> Finance validation rate:{" "}
-              <b>{formatRatioPct(s.financeValidationRatio)}</b>
-            </span>
-            <button
-              type="button"
-              className={styles.wkCta}
-              onClick={onGoToFunnel}
-            >
-              See the value funnel
-            </button>
-          </div>
-        </section>
+          <button
+            type="button"
+            className={styles.cockpitCta}
+            onClick={onGoToFunnel}
+          >
+            Inspect proof gates
+          </button>
+        </Card>
 
         <Card
-          title="Decisions waiting on you"
-          right="aVa proposes · you approve · nothing acts on its own"
-          headId="tcc-decision-queue"
-          bodyClassName={styles.scroll}
+          eyebrow="Capital decision matrix"
+          right="Top exposure programs"
+          headId="tcc-decision-matrix"
+          bodyClassName={styles.cockpitChartBody}
         >
           {queue.length === 0 ? (
             <p className={styles.lhSub}>
               No program currently carries blocked value for this tenant.
             </p>
           ) : (
-            <div className={styles.dq}>
-              {queue.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={cx(styles.dqi, laneClass(p.lane))}
-                  onClick={() => onOpenProgram(p.id)}
-                >
-                  <span className={cx(styles.laneTag, laneClass(p.lane))}>
-                    {LANE_WORD[p.lane]}
-                  </span>
-                  <span className={styles.dqMain}>
-                    <span className={styles.dqTitle}>
-                      {p.blocker ??
-                        `${p.name} — no decision rationale recorded.`}
-                    </span>
-                    <span className={styles.dqMeta}>
-                      <span>
-                        <b>{formatUsdM(p.promisedUsd)}</b> promised
-                      </span>
-                      <span>
-                        <b>{formatUsdM(p.blockedUsd)}</b> blocked
-                      </span>
-                      <span>{p.ownerRole ?? "No owner recorded"}</span>
-                    </span>
-                  </span>
-                  <span className={styles.dqGo}>Review</span>
-                </button>
-              ))}
-            </div>
+            <>
+              <div
+                className={styles.cockpitMatrix}
+                aria-describedby="tcc-matrix-alt"
+              >
+                <OutcomeDecisionMatrixChart
+                  programs={queue}
+                  onSelect={onOpenProgram}
+                />
+              </div>
+              <p id="tcc-matrix-alt" className={styles.srOnly}>
+                {decisionMatrixTextAlternative(queue)}
+              </p>
+            </>
           )}
+        </Card>
+      </div>
+
+      <div className={styles.cockpitOps}>
+        <Card
+          title="Evidence-owner queue"
+          right="Who needs to do what before capital moves"
+          headId="tcc-evidence-owner-queue"
+          bodyClassName={styles.scroll}
+          bodyStyle={{ paddingTop: 8 }}
+        >
+          {gaps.length === 0 ? (
+            <p className={styles.lhSub}>
+              No business evidence gaps are currently recorded for this tenant.
+            </p>
+          ) : (
+            <table className={styles.tbl}>
+              <thead>
+                <tr>
+                  <th scope="col">Proof blocker</th>
+                  <th scope="col" className={styles.num}>
+                    Value exposed
+                  </th>
+                  <th scope="col">Owner</th>
+                  <th scope="col">Evidence needed</th>
+                  <th scope="col">Due</th>
+                  <th scope="col">Decision blocked</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gaps.map((gap) => (
+                  <tr
+                    key={gap.id}
+                    className={gap.sourceProgramId ? styles.click : undefined}
+                    onClick={() => {
+                      if (gap.sourceProgramId)
+                        onOpenProgram(gap.sourceProgramId);
+                    }}
+                  >
+                    <td>
+                      <span className={styles.pname}>{gap.area}</span>
+                      <div className={styles.psub}>{gap.linkedProgram}</div>
+                    </td>
+                    <td className={styles.num}>
+                      <div className={cx(styles.bignum, styles.nRed)}>
+                        {gap.valueAtStakeUsd === null ? (
+                          <Unknown label="Unknown" />
+                        ) : (
+                          formatUsdM(gap.valueAtStakeUsd)
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <Chip tone={gap.owner ? "teal" : "red"} mono>
+                        {gap.owner ?? "No owner"}
+                      </Chip>
+                    </td>
+                    <td>
+                      <div className={styles.gateCell}>
+                        {gap.missing}
+                        <div className={styles.subnum}>
+                          Source: {gap.sourceTemplate ?? "Not recorded"}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <Unknown label="Not recorded" />
+                    </td>
+                    <td>
+                      <span className={styles.gateCell}>
+                        {gap.blockedDecision}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
+
+        <Card
+          title="Source trust rail"
+          right="Tiny, always visible"
+          headId="tcc-source-trust"
+          bodyClassName={styles.sourceTrustRail}
+        >
+          {sourceTrustRows(view).map((row) => (
+            <div key={row.label} className={styles.trustMiniRow}>
+              <span>
+                <Dot tone={row.tone} />
+                {row.label}
+              </span>
+              <b>{row.value}</b>
+              <Chip tone={row.tone} mono>
+                {row.status}
+              </Chip>
+            </div>
+          ))}
         </Card>
       </div>
     </div>
   );
 }
 
-/** Re-exported so the tab bar can badge the same count the tile shows. */
+/** Re-exported so the tab bar can badge the same condition the verdict shows. */
 export function commandCenterAttention(view: TowerCommandCenterView): boolean {
   return view.summary.claimableUsd <= 0 && view.summary.promisedUsd > 0;
 }
