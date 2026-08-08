@@ -32,6 +32,7 @@ Source Workspace aVa now uses the rich answer path that can stream, cite evidenc
 - Source Workspace aVa parses NDJSON streaming events and preserves `agent-answer` packets for renderer-backed tables, charts, graphs, citations, and caveats.
 - The Source view model now publishes flat page, tenant, vendor, source, quality, and graph facts alongside the existing nested Source snapshot.
 - The ask surface-context retriever labels source citations by the calling module instead of hardcoding Intelligence.
+- Visual exhibit requests from a Source contract surface now attach a deterministic Source packet: four-ledger table, numeric ledger chart when values are present, and contract-to-evidence relationship graph. These artifacts are built from governed Source context, not from model-invented JSON.
 
 ## QA / Validation
 
@@ -39,7 +40,7 @@ Source Workspace aVa now uses the rich answer path that can stream, cite evidenc
 - Pass: focused Jest coverage for Source aVa contract, Source workspace numeric behavior, contract optimization ledger, contract optimization spine, and read adapter.
 - Pass: whitespace check.
 - Pass: TypeScript validation with increased local Node heap.
-- Pending: release checker.
+- Pass: release checker.
 - Pending: signed-in browser smoke for Source aVa chart/table/graph output on a selected contract.
 
 ## Rollout Plan

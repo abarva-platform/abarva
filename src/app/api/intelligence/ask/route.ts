@@ -72,6 +72,10 @@ import {
   applyProductTruthRuntimeGuard,
   productTruthGroundingText,
 } from "@/lib/agent/product-truth";
+import {
+  buildSourceWorkspaceVisualAnswer,
+  canBuildSourceWorkspaceVisualAnswer,
+} from "@/lib/source/ava/source-workspace-visual-answer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -1046,6 +1050,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             routing: answerRouting,
             sources: advisorSources,
           });
+          const sourceVisualAnswer = canBuildSourceWorkspaceVisualAnswer({
+            query,
+            surfaceContext,
+          })
+            ? buildSourceWorkspaceVisualAnswer({
+                query,
+                surfaceContext: surfaceContext as AskSurfaceContext,
+              })
+            : null;
+          const sourceVisualArtifacts = sourceVisualAnswer?.artifacts ?? [];
+          const sourceVisualCitations = sourceVisualAnswer?.citations ?? [];
           enqueueTiming(
             routeTrace.finish(
               "route.structured_exhibits.done",
@@ -1055,15 +1070,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 chartCount: exhibits.charts.length,
                 graphCount: exhibits.graphs.length,
                 citationCount: exhibits.citations.length,
+                sourceVisualArtifactCount: sourceVisualArtifacts.length,
               },
             ),
           );
           if (
             hasRenderableStructuredExhibits(exhibits) ||
-            exhibits.citations.length > 0
+            exhibits.citations.length > 0 ||
+            sourceVisualArtifacts.length > 0
           ) {
             const agentAnswer = composeAvaAnswer({
-              surface: "intelligence",
+              surface: sourceVisualAnswer ? "source" : "intelligence",
               mode: "ANALYZE",
               tenantKey:
                 tenantInventoryKey ??
@@ -1073,8 +1090,12 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               question: query,
               intent: answerRouting.outputShape,
               status: "answered",
-              directAnswer: exhibits.prose,
+              directAnswer: sourceVisualAnswer?.directAnswer ?? exhibits.prose,
+              factsUsed: sourceVisualAnswer?.factsUsed,
+              metricsUsed: sourceVisualAnswer?.metricsUsed,
+              relationshipsUsed: sourceVisualAnswer?.relationshipsUsed,
               artifacts: [
+                ...sourceVisualArtifacts,
                 ...exhibits.tables.map((table) => ({
                   ...table,
                   artifact: "table" as const,
@@ -1088,8 +1109,12 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                   artifact: "graph" as const,
                 })),
               ],
-              citations: exhibits.citations,
+              citations:
+                sourceVisualCitations.length > 0
+                  ? [...sourceVisualCitations, ...exhibits.citations]
+                  : exhibits.citations,
               caveats: [
+                ...(sourceVisualAnswer?.caveats ?? []),
                 {
                   id: "validated-structure-only",
                   label: "Structured exhibits",
@@ -1097,11 +1122,14 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                     "Tables, charts, and graphs appear only when aVa has validated structured data.",
                 },
               ],
-              nextSteps: exhibits.followups.map((label, index) => ({
-                id: `followup-${index + 1}`,
-                label,
-              })),
-              corpusUsed: exhibits.citations.some(
+              nextSteps: [
+                ...(sourceVisualAnswer?.nextSteps ?? []),
+                ...exhibits.followups.map((label, index) => ({
+                  id: `followup-${index + 1}`,
+                  label,
+                })),
+              ],
+              corpusUsed: [...sourceVisualCitations, ...exhibits.citations].some(
                 (citation) => citation.sourceClass !== "tenant-fact",
               )
                 ? [
@@ -1113,11 +1141,12 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 : [],
               retrievalSummary: {
                 substrate: "module_read_model",
-                sourceCount: exhibits.citations.length,
-                hasTenantFacts: exhibits.citations.some(
+                sourceCount:
+                  sourceVisualCitations.length + exhibits.citations.length,
+                hasTenantFacts: [...sourceVisualCitations, ...exhibits.citations].some(
                   (citation) => citation.sourceClass === "tenant-fact",
                 ),
-                hasCorpus: exhibits.citations.some(
+                hasCorpus: [...sourceVisualCitations, ...exhibits.citations].some(
                   (citation) => citation.sourceClass !== "tenant-fact",
                 ),
                 hasExperts: false,
