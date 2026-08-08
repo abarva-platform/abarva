@@ -75,46 +75,58 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
       {vm.cScope ? (
         <>
           <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-            <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.6, marginBottom: 12 }}>{c.scopeSummary}</div>
-            {vm.scopeTierCounts ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                {([['Explicit', vm.scopeTierCounts.explicit.length, '#0a0a0b'], ['Reviewed', vm.scopeTierCounts.reviewed.length, '#3d6ea8'], ['Vendor-inferred', vm.scopeTierCounts.vendorInferred.length, '#ba7517'], ['Unresolved', vm.scopeTierCounts.unresolved.length, '#b4b2a9']] as [string, number, string][]).map(([label, n, color]) => (
-                  <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontSize: 12.5 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block' }} />
-                    <span style={{ color: '#2c2c2a' }}>{label}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#5f5e5a' }}>{n}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 20, alignItems: 'start' }}>
+              <div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
+                  What this contract covers
+                </div>
+                <div style={{ fontSize: 14, color: '#2c2c2a', lineHeight: 1.55, maxWidth: '92ch' }}>{c.scopeSummary}</div>
+              </div>
+              {vm.hasScope && vm.scopeTierCounts ? (
+                <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '10px 12px', minWidth: 170 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 5 }}>
+                    Scope evidence
                   </div>
-                ))}
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0a0a0b' }}>{vm.scopeRows.length} rows</div>
+                  <div style={{ fontSize: 11.5, color: '#5f5e5a', marginTop: 3 }}>
+                    {vm.scopeTierCounts.explicit.length} explicit · {vm.scopeTierCounts.reviewed.length} reviewed · {vm.scopeTierCounts.unresolved.length} unresolved
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            {!vm.hasScope ? (
+              <div style={{ marginTop: 14, padding: '11px 13px', border: '1px solid rgba(186,117,23,.25)', borderRadius: 6, background: '#fff8ec', fontSize: 12.5, lineHeight: 1.5, color: '#6d420c' }}>
+                Scope coverage is not available yet. The next upload should include the agreement/SOW scope schedule, product or service line items, and the application or owner mapping used by the client.
               </div>
             ) : null}
           </div>
           {vm.hasScope ? (
             <DataTable
-              title="Application scope"
-              note="tierApplicationScopeByConfidence — no explicit reference set loaded yet, so rows stay unresolved rather than upgraded."
+              title="Systems and services in scope"
+              note="These rows should describe the applications, services, products, functions, and run-cost elements the contract actually covers. Confidence stays visible where the source does not prove the link."
               binding="source.contract_application_scope"
               columns={vm.scopeCols}
               rows={vm.scopeRows}
             />
-          ) : (
-            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px', fontSize: 13, color: '#5f5e5a' }}>
-              No application scope rows returned for this contract.
-            </div>
-          )}
+          ) : null}
           {vm.hasProg ? (
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
-                Transformation dependencies
+                Related initiatives
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {vm.progRows.map((p, i) => (
-                  <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'baseline', paddingBottom: 10, borderBottom: '1px solid rgba(10,10,11,.07)' }}>
+                {vm.progRows.slice(0, 4).map((p, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,.35fr) minmax(0,1fr)', gap: 14, alignItems: 'baseline', paddingBottom: 10, borderBottom: '1px solid rgba(10,10,11,.07)' }}>
                     <span style={{ fontSize: 13.5, fontWeight: 600, color: '#0a0a0b' }}>{p.name}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: p.color, border: `1px solid ${p.color}`, borderRadius: 3, padding: '2px 7px' }}>{p.status}</span>
-                    <span style={{ fontSize: 13, color: '#5f5e5a', flex: 1, minWidth: 300 }}>{p.note}</span>
+                    <span style={{ fontSize: 13, color: '#5f5e5a', minWidth: 0 }}>{p.note}</span>
                   </div>
                 ))}
               </div>
+              {vm.progRows.length > 4 ? (
+                <div style={{ fontSize: 12, color: '#888780', marginTop: 10 }}>
+                  Showing the first 4 related initiatives. Use full context for the complete dependency list.
+                </div>
+              ) : null}
             </div>
           ) : null}
         </>
@@ -407,15 +419,15 @@ function ContractRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
   return (
     <>
       <ContractJourneyGraph vm={vm} />
-      <ValueLedgerExplainer vm={vm} />
+      <ValueProofExplainer vm={vm} />
       <SourceSystemEvidenceMap vm={vm} />
     </>
   );
 }
 
-function ValueLedgerExplainer({ vm }: { vm: SourceWorkspaceVM }) {
+function ValueProofExplainer({ vm }: { vm: SourceWorkspaceVM }) {
   const lines = vm.optLedger?.lines ?? [];
-  const ledgerDefs = [
+  const valueProofDefs = [
     ['recoverable_leakage', 'Recoverable leakage', 'Money that should come back or stop because contract, invoice, SLA, or rate-card evidence proves overbilling, missed credits, duplicates, or off-contract spend.'],
     ['avoided_cost', 'Avoided cost', 'Future spend not incurred because scope, shelfware, renewal uplift, or consumption is reduced before the commitment is made.'],
     ['negotiated_improvement', 'Negotiated improvement', 'Commercial gains from price, term, index cap, volume tier, benchmark right, or termination leverage after the supplier agrees or the negotiation packet is approved.'],
@@ -424,13 +436,13 @@ function ValueLedgerExplainer({ vm }: { vm: SourceWorkspaceVM }) {
   return (
     <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(10,10,11,.1)' }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>What the value ledgers mean</div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>What “value proof” means</div>
         <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
-          The ledgers keep different kinds of value separate so the page never turns a data gap, a forecast, or a negotiation target into a claimed saving.
+          Source separates four kinds of money so the page never turns a data gap, forecast, or negotiation target into a claimed saving.
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))' }}>
-        {ledgerDefs.map(([kind, label, definition]) => {
+        {valueProofDefs.map(([kind, label, definition]) => {
           const matchingLines = lines.filter((line) => line.kind === kind);
           const amount = matchingLines.map((line) => line.amount).find((value) => value && value !== 'Not established') ?? 'Not established';
           return (
@@ -455,53 +467,84 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
   const readyLines = ledger.lines.filter((line) => line.state === 'Quantified' || line.state === 'Workflow required');
   const gapLines = ledger.lines.filter((line) => line.state === 'Needs evidence' || line.evidenceClass === 'MISSING');
   const sourceConnections = spine.sourceConnections.slice(0, 6);
-  const node = (x: number, y: number, w: number, h: number, label: string, sub: string, tone: string) => (
-    <g>
-      <rect x={x} y={y} width={w} height={h} rx="8" fill="#fff" stroke={tone} strokeWidth="1.4" />
-      <text x={x + 14} y={y + 25} fontSize="13" fontWeight="800" fill="#0a0a0b">{label}</text>
-      <text x={x + 14} y={y + 45} fontSize="10.5" fill="#5f5e5a">{sub}</text>
+  const scopeCount = contract.scoped_application_count ?? 0;
+  const proofStatus = gapLines.length ? `${readyLines.length} supported · ${gapLines.length} gaps` : `${readyLines.length} supported · no gaps`;
+  const node = (x: number, y: number, w: number, h: number, label: string, sub: string, tone: string, fill = '#fff') => (
+    <g filter="url(#softShadow)">
+      <rect x={x} y={y} width={w} height={h} rx="10" fill={fill} stroke={tone} strokeWidth="1.4" />
+      <text x={x + 14} y={y + 23} fontSize="12.5" fontWeight="800" fill="#0a0a0b">{label}</text>
+      <text x={x + 14} y={y + 44} fontSize="10.5" fill="#5f5e5a">{sub}</text>
     </g>
   );
   const line = (x1: number, y1: number, x2: number, y2: number, tone = '#b4b2a9') => (
-    <path d={`M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`} fill="none" stroke={tone} strokeWidth="1.3" markerEnd="url(#arrow)" />
+    <path d={`M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`} fill="none" stroke={tone} strokeWidth="1.7" markerEnd="url(#arrow)" />
+  );
+  const chip = (x: number, y: number, label: string, value: string, tone: string) => (
+    <g>
+      <rect x={x} y={y} width="132" height="42" rx="8" fill="#fff" stroke="rgba(10,10,11,.1)" />
+      <circle cx={x + 15} cy={y + 21} r="5" fill={tone} />
+      <text x={x + 27} y={y + 17} fontSize="9.2" fontWeight="800" letterSpacing=".08em" fill="#888780">{label.toUpperCase()}</text>
+      <text x={x + 27} y={y + 32} fontSize="10.8" fontWeight="800" fill="#0a0a0b">{value}</text>
+    </g>
   );
 
   return (
     <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b' }}>Contract relationship map</div>
-        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value ledgers, and the approval decision. This is relationship flow, not a savings claim.</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value proof, and the approval decision. This is relationship flow, not a savings claim.</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(520px,1.3fr) minmax(340px,.7fr)', gap: 0 }}>
         <div style={{ minWidth: 0, padding: '14px 16px' }}>
-          <svg viewBox="0 0 940 250" role="img" aria-label="Contract journey relationship graph" style={{ width: '100%', height: 'auto', display: 'block' }}>
+          <svg viewBox="0 0 940 360" role="img" aria-label="Contract journey relationship graph" style={{ width: '100%', height: 'auto', display: 'block' }}>
             <defs>
               <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                 <path d="M 0 0 L 8 4 L 0 8 z" fill="#9a9890" />
               </marker>
+              <filter id="softShadow" x="-10%" y="-15%" width="120%" height="135%">
+                <feDropShadow dx="0" dy="7" stdDeviation="7" floodColor="#0a0a0b" floodOpacity=".08" />
+              </filter>
+              <linearGradient id="journeyBand" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#f7f3ea" />
+                <stop offset="50%" stopColor="#eff7f5" />
+                <stop offset="100%" stopColor="#eef4fb" />
+              </linearGradient>
             </defs>
-            <rect x="0" y="0" width="940" height="250" rx="12" fill="#fbfaf7" />
-            {line(170, 82, 240, 58)}
-            {line(170, 118, 240, 155)}
-            {line(390, 58, 475, 86)}
-            {line(390, 155, 475, 126)}
-            {line(625, 105, 710, 105, '#1d9e75')}
-            {node(28, 70, 150, 70, 'Contract', contract.contract_id, '#0a0a0b')}
-            {node(240, 30, 150, 64, 'Scope', `${contract.scoped_application_count ?? 0} apps`, '#3d6ea8')}
-            {node(240, 128, 150, 64, 'Source files', `${sourceConnections.length} feeds`, '#ba7517')}
-            {node(475, 70, 150, 70, 'Value ledgers', `${readyLines.length} ready / ${gapLines.length} gaps`, gapLines.length ? '#ba7517' : '#1d9e75')}
-            {node(710, 70, 180, 70, 'Optimization action', spine.selected.band, '#0a0a0b')}
-            {ledger.lines.slice(0, 5).map((item, i) => {
-              const x = 485 + i * 26;
+            <rect x="0" y="0" width="940" height="360" rx="14" fill="#fbfaf7" />
+            <rect x="28" y="42" width="884" height="188" rx="18" fill="url(#journeyBand)" stroke="rgba(10,10,11,.08)" />
+            <text x="44" y="28" fontSize="10" fontWeight="800" letterSpacing=".12em" fill="#888780">CONTRACT JOURNEY</text>
+            <text x="44" y="252" fontSize="10" fontWeight="800" letterSpacing=".12em" fill="#888780">VALUE-PROOF STATUS</text>
+
+            {line(172, 88, 285, 96, '#3d6ea8')}
+            {line(172, 162, 285, 142, '#ba7517')}
+            {line(172, 212, 285, 162, '#1d9e75')}
+            {line(425, 130, 520, 130, '#0a0a0b')}
+            {line(658, 130, 735, 130, gapLines.length ? '#ba7517' : '#1d9e75')}
+
+            {node(38, 58, 134, 58, 'Agreement', 'PDF / CLM terms', '#0a0a0b')}
+            {node(38, 132, 134, 58, 'Scope facts', `${scopeCount} apps / services`, scopeCount ? '#3d6ea8' : '#ba7517')}
+            {node(38, 202, 134, 58, 'Source feeds', `${sourceConnections.length} systems mapped`, '#ba7517')}
+
+            <g filter="url(#softShadow)">
+              <rect x="285" y="78" width="140" height="104" rx="16" fill="#0a0a0b" />
+              <text x="305" y="108" fontSize="12" fontWeight="800" fill="#fff">Contract 360</text>
+              <text x="305" y="130" fontSize="18" fontWeight="900" fill="#fff">{contract.contract_id}</text>
+              <text x="305" y="153" fontSize="11" fill="rgba(255,255,255,.72)">{formatCurrency(contract.annual_value ?? null)} annual</text>
+              <text x="305" y="170" fontSize="10" fill="rgba(255,255,255,.58)">{spine.selected.score}/100 fit score</text>
+            </g>
+
+            {node(520, 78, 138, 104, 'Value proof', proofStatus, gapLines.length ? '#ba7517' : '#1d9e75', '#fff')}
+            {node(735, 78, 160, 104, 'Optimize plan', spine.selected.band, '#0a0a0b', '#fff')}
+
+            {ledger.lines.slice(0, 4).map((item, i) => {
+              const x = 44 + i * 152;
               const color = item.evidenceClass === 'MISSING' ? '#a32d2d' : item.state === 'Quantified' ? '#1d9e75' : '#ba7517';
-              return (
-                <g key={item.id}>
-                  <circle cx={x} cy="160" r="7" fill={color} />
-                  <text x={x - 4} y="184" fontSize="8.5" fill="#5f5e5a">{i + 1}</text>
-                </g>
-              );
+              return chip(x, 270, item.label.length > 17 ? `${item.label.slice(0, 16)}...` : item.label, item.amount, color);
             })}
-            <text x="36" y="210" fontSize="10.5" fill="#5f5e5a">The graph shows relationship flow, not inferred value. Amounts come only from governed ledger rows.</text>
+            <text x="44" y="338" fontSize="10.5" fill="#5f5e5a">The map shows relationship flow and evidence readiness. It does not infer savings; amounts come only from governed evidence rows.</text>
+            <text x="828" y="338" fontSize="10.5" fontWeight="800" textAnchor="end" fill={gapLines.length ? '#ba7517' : '#1d9e75'}>
+              {gapLines.length ? `${gapLines.length} evidence gap${gapLines.length === 1 ? '' : 's'}` : 'evidence complete'}
+            </text>
           </svg>
         </div>
         <div style={{ borderLeft: '1px solid rgba(10,10,11,.1)', padding: '14px 16px', minWidth: 0 }}>
@@ -513,7 +556,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               <div key={connection.id} style={{ border: '1px solid rgba(10,10,11,.09)', borderRadius: 6, padding: '9px 10px', background: '#fff' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span style={{ fontSize: 12.2, fontWeight: 800, color: '#0a0a0b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{connection.sourceSystem}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#888780', whiteSpace: 'nowrap' }}>{connection.ledgers.slice(0, 1).join('')}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#888780', whiteSpace: 'nowrap' }}>{formatValueProofKind(connection.ledgers[0])}</span>
                 </div>
                 <div style={{ fontSize: 11.3, color: '#5f5e5a', lineHeight: 1.4, marginTop: 3 }}>{connection.extract}</div>
               </div>
@@ -523,6 +566,20 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
       </div>
     </section>
   );
+}
+
+function formatValueProofKind(kind?: string) {
+  if (!kind) return 'Evidence';
+  return kind.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatCurrency(value: number | null) {
+  if (value == null) return 'Not established';
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  });
 }
 
 function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
@@ -597,6 +654,18 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
   if (kind === 'performance') {
     const perf = d.operationalPerformance;
     const fin = d.financialExposure;
+    const incidents = perf?.cloud_sev1_sev2_incidents ?? null;
+    const creditsEarned = perf?.service_credits_earned ?? null;
+    const creditsClaimed = perf?.service_credits_claimed ?? null;
+    const hasCreditEvidence = creditsEarned != null || creditsClaimed != null;
+    const performanceRead = incidents != null && incidents > 0
+      ? hasCreditEvidence
+        ? 'Operational pressure is visible and SLA credit evidence is available for review.'
+        : 'Operational pressure is visible, but SLA-credit recovery is not yet provable from the loaded evidence.'
+      : 'No material service-performance signal is established from the loaded evidence.';
+    const financialRead = fin
+      ? 'Financial exposure is linked for this contract; variance still needs usage, entitlement, invoice, and finance evidence before it becomes value.'
+      : 'No contract-level financial exposure rows were returned.';
     if (!perf && !fin) {
       return (
         <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '30px 34px' }}>
@@ -613,32 +682,52 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
       );
     }
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
+      <>
+        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px' }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
+            Service and financial performance read
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.35, marginBottom: 7 }}>
+            {performanceRead}
+          </div>
+          <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.55, maxWidth: '96ch' }}>
+            {financialRead} This tab should tell a sourcing team whether service issues, spend variance, or missing evidence create a negotiation lever; it does not turn incidents or variance into savings by itself.
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
         {fin ? (
           <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 12 }}>Financial exposure</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 12 }}>Financial exposure</div>
             {([['Linked budget', fin.linked_budget_amount], ['Linked forecast', fin.linked_forecast_amount], ['Linked actual', fin.linked_actual_amount], ['Linked committed', fin.linked_committed_amount]] as [string, number | null][]).map(([label, v]) => (
               <div key={label} style={{ display: 'flex', gap: 14, alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
                 <span style={{ fontSize: 13, color: '#5f5e5a' }}>{label}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{v == null ? 'Not established' : v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{formatCurrency(v)}</span>
               </div>
             ))}
+            <div style={{ fontSize: 12, color: '#5f5e5a', lineHeight: 1.5, marginTop: 11 }}>
+              Use this to size exposure, not to declare savings. Actual below forecast or contract value needs cause classification.
+            </div>
           </div>
         ) : null}
         {perf ? (
           <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 12 }}>Operational performance</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 12 }}>Operational performance</div>
             <div style={{ fontSize: 13, color: '#2c2c2a', lineHeight: 1.6, marginBottom: 10 }}>{perf.sla_summary ?? 'No SLA summary recorded.'}</div>
             {([['Sev1/Sev2 incidents', perf.cloud_sev1_sev2_incidents], ['Service credits earned', perf.service_credits_earned], ['Service credits claimed', perf.service_credits_claimed]] as [string, number | null][]).map(([label, v]) => (
               <div key={label} style={{ display: 'flex', gap: 14, alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
                 <span style={{ fontSize: 13, color: '#5f5e5a' }}>{label}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{v == null ? 'Not established' : v}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, color: v == null ? '#b4b2a9' : '#0a0a0b' }}>{v == null ? 'Not established' : v.toLocaleString('en-US')}</span>
               </div>
             ))}
-            {perf.evidence_gap ? <div style={{ fontSize: 12, color: '#ba7517', marginTop: 8 }}>evidence_gap: {String(perf.evidence_gap)}</div> : null}
+            {perf.evidence_gap ? (
+              <div style={{ fontSize: 12.5, color: '#6d420c', lineHeight: 1.5, marginTop: 11, padding: '10px 12px', border: '1px solid rgba(186,117,23,.25)', borderRadius: 6, background: '#fff8ec' }}>
+                <b style={{ color: '#2c2c2a' }}>Evidence still needed:</b> {String(perf.evidence_gap)}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
+      </>
     );
   }
   return (
