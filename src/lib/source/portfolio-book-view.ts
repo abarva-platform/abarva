@@ -31,12 +31,12 @@ import {
   sourceJourneyStageKeys,
 } from "./sourcing-motion-journeys";
 
-// ── Event kind (Full event vs Door 1) ────────────────────────────────────────
+// ── Event kind (Full event vs optimization) ──────────────────────────────────
 // The substrate has no first-class "door" column. We classify HONESTLY from the
 // signals that ARE present: an event whose archetype/name reads as a contract
-// optimization or renewal (the "Door 1 · diagnose→recover" play) is badged
-// "Door 1"; everything else is a "Full event". When the substrate adds a
-// first-class door field this becomes a passthrough.
+// optimization or renewal is badged "Optimization"; everything else is a "Full
+// event". When the substrate adds a first-class event-kind field this becomes a
+// passthrough.
 
 export type PortfolioEventKind = "full" | "door1";
 
@@ -49,7 +49,7 @@ export function classifyEventKind(
 }
 
 export function eventKindLabel(kind: PortfolioEventKind): string {
-  return kind === "door1" ? "Door 1" : "Full event";
+  return kind === "door1" ? "Optimization" : "Full event";
 }
 
 // ── Stat cards ───────────────────────────────────────────────────────────────

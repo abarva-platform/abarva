@@ -126,7 +126,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
     const card = screen.getByTestId(
       "source-book-flight-card-SKYH-CTR090-COMMERCIAL-RENEGOTIATION-2026-20F02DAE",
     );
-    expect(card).toHaveTextContent("Door 1");
+    expect(card).toHaveTextContent("Optimization");
     expect(card).toHaveTextContent("Now at Commercial Baseline · step 3 of 7");
     expect(screen.getByLabelText("Stage 3 of 7")).toBeInTheDocument();
     expect(card).not.toHaveTextContent("Responses");

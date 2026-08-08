@@ -20,6 +20,21 @@ const addAnnualValue = (t: number, r: { annual_value: number | null }): number =
   t + (numberFromDb(r.annual_value) ?? 0);
 const whole = (value: number): string =>
   new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+const param = (key: string, value: string | number | null | undefined): string => {
+  if (value == null) return '';
+  const text = String(value).trim();
+  return text.length > 0 ? '&' + key + '=' + encodeURIComponent(text) : '';
+};
+const contractOptimizationIntakeHref = (contract: EnrichedContract): string =>
+  '/source/new?intent=contract-optimization' +
+  param('contractId', contract.row.contract_id) +
+  param('contractName', contract.row.contract_name) +
+  param('vendorName', contract.row.vendor_name) +
+  param('annualValueUsd', numberFromDb(contract.row.annual_value)) +
+  param('actualAnnualSpendUsd', numberFromDb(contract.row.actual_annual_spend)) +
+  param('weakSignalCount', contract.leverage.weakSignalCount) +
+  param('scopeSummary', contract.row.scope_summary) +
+  param('decisionOwner', contract.row.renewal_owner_ref);
 
 const REASON_LABEL: Record<SourcingOpportunityReason, string> = {
   high_priority_leverage: 'Weak leverage',
@@ -625,13 +640,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   } : null;
   const optLaunch = c ? S.optimizationLaunch[c.contract_id] : undefined;
   const optCtaLabel = optLaunch?.status === 'loading'
-    ? 'Starting Door 1...'
+    ? 'Opening optimization...'
     : optLaunch?.status === 'error'
-      ? 'Retry Door 1 optimization'
-      : 'Start / continue Door 1 optimization';
+      ? 'Retry contract optimization'
+      : 'Start / continue optimization';
   const optCtaError = optLaunch?.status === 'error'
     ? optLaunch.message ?? 'Could not start optimization workflow.'
     : null;
+  const optCtaHref = contract ? contractOptimizationIntakeHref(contract) : null;
   const recAction = opp && oppContract && contract && oppContract.row.contract_id === contract.row.contract_id
     ? REASON_LABEL[opp.reasons[0]] + ' — see sourcing opportunity'
     : contract && contract.leverage.weakSignalCount >= 2 ? 'Weak leverage — build alternatives and renegotiate' : contract?.noticePassed ? 'Notice passed — confirm renewal position' : 'Monitor — no deterministic opportunity flag on this contract';
@@ -785,7 +801,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     collapseAll: () => vm.setState({ open: {} }),
     tree, crumbs, title, thesis, tabs,
     headerActions: kind === 'contract' && contract && activeTab !== 'Optimization' ? [
-      { label: 'Review Door 1 optimization', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
+      { label: 'Review contract optimization', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
     ] : kind === 'portfolio' ? [
       { label: 'Select a contract to optimize', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
@@ -836,8 +852,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     cOverview: activeTab === 'Overview', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: activeTab === 'Renewal', cLeverage: activeTab === 'Leverage', cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimization',
     termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
     weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView,
-    optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError,
-    startOptimization: c ? () => vm.startContractOptimization(c.contract_id) : () => undefined,
+    optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError, optCtaHref,
+    startOptimization: optCtaHref ? () => { window.location.href = optCtaHref; } : () => undefined,
     goActions: () => vm.setTab('contract', 'Optimization'),
     detailState, detail,
 

@@ -99,6 +99,8 @@ function candidateFromRow(
     annualValueUsd: numberFromDb(row.annual_value),
     actualAnnualSpendUsd: numberFromDb(row.actual_annual_spend),
     weakSignalCount,
+    scopeSummary: row.scope_summary,
+    decisionOwner: row.renewal_owner_ref,
     reason,
   };
 }
