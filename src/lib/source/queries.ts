@@ -28,6 +28,7 @@ import {
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getActiveClientRow } from "@/lib/active-client";
 import { classifySourcingEvent } from "./classifier/category-classifier";
+import type { SourceCategoryId } from "./taxonomy/category-taxonomy";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { requireTenancy } from "@/lib/auth/tenancy";
@@ -96,6 +97,7 @@ export interface CreateSourcingEventInput {
   createdByUserId?: string;
   creationRequestId?: string;
   sourcingMotion?: SourceSourcingMotion;
+  categoryId?: SourceCategoryId;
 }
 
 function generateEventCode(
@@ -231,6 +233,7 @@ export async function createSourcingEvent(
         current_stage_entered_at: nowIso,
         lifecycle_state: "waiting_on_client",
         updated_at: nowIso,
+        ...(input.categoryId ? { classified_category: input.categoryId } : {}),
       },
       {
         onConflict: "client_key,event_code",

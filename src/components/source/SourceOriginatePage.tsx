@@ -33,6 +33,11 @@ import {
   isCapturedApprovalFact,
   isReviewableContractScope,
 } from "@/lib/source/contract-optimization-intake";
+import {
+  SOURCE_CATEGORIES as SOURCE_CATEGORY_DEFINITIONS,
+  type SourceCategory,
+  type SourceCategoryId,
+} from "@/lib/source/taxonomy/category-taxonomy";
 export { isCapturedApprovalFact, isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 type SubmitState =
   | { status: "idle" }
@@ -134,75 +139,20 @@ type CategoryEventType =
   | "staffing"
   | "other";
 
-interface SourceCategory {
-  id: string;
-  label: string;
-  description: string;
-  artifactPack: string[];
-  inferredEventType: CategoryEventType;
-}
+export const SOURCE_INTAKE_CATEGORIES = SOURCE_CATEGORY_DEFINITIONS;
+const SOURCE_CATEGORIES = SOURCE_INTAKE_CATEGORIES;
 
-const SOURCE_CATEGORIES: SourceCategory[] = [
-  {
-    id: "ams",
-    label: "Application Managed Services",
-    description:
-      "End-to-end AMS for enterprise applications — SAP, eCommerce, ERP, custom platforms.",
-    artifactPack: [
-      "RFP package",
-      "Scorecard matrix",
-      "TCO model",
-      "Transition plan",
-      "BAFO brief",
-    ],
-    inferredEventType: "managed_service",
-  },
-  {
-    id: "cloud_infra",
-    label: "Cloud & Infrastructure",
-    description:
-      "Cloud operations, hosting, network, platform, and infrastructure management services.",
-    artifactPack: [
-      "Cloud assessment",
-      "Cost comparison",
-      "Migration plan",
-      "Vendor brief",
-    ],
-    inferredEventType: "infrastructure",
-  },
-  {
-    id: "data_analytics",
-    label: "Data, Analytics & AI",
-    description:
-      "Data platforms, analytics pipelines, AI/ML services, and BI tooling.",
-    artifactPack: [
-      "Platform evaluation",
-      "Vendor maturity",
-      "TCO model",
-      "Architecture review",
-    ],
-    inferredEventType: "other",
-  },
-  {
-    id: "enterprise_software",
-    label: "Enterprise Software",
-    description:
-      "SaaS, license optimization, enterprise application selection and renegotiation.",
-    artifactPack: ["License audit", "Vendor comparison", "Negotiation brief"],
-    inferredEventType: "software",
-  },
-  {
-    id: "custom",
-    label: "Custom / Multi-tower",
-    description:
-      "Bespoke or cross-category events. Artifact pack built during strategy phase.",
-    artifactPack: [
-      "Scope specification",
-      "Custom artifact pack (strategy-derived)",
-    ],
-    inferredEventType: "other",
-  },
-];
+const CATEGORY_EVENT_TYPE_BY_ID: Record<SourceCategoryId, CategoryEventType> = {
+  ams: "managed_service",
+  data_ai_platform: "software",
+  ai_engineering_partner: "consulting",
+  saas_renewal: "software",
+  cloud_finops: "infrastructure",
+  bpo_contact_centre: "managed_service",
+  bpo_shared_services: "managed_service",
+  cyber_grc: "managed_service",
+  staff_aug_vs_managed_service: "staffing",
+};
 
 function CategoryOption({
   category,
@@ -252,7 +202,7 @@ function CategoryOption({
             color: selected ? "rgba(255,255,255,0.65)" : SHELL.INK_MUTED,
           }}
         >
-          {category.artifactPack.length} suggested artifacts
+          {category.outputArtifacts.length} suggested artifacts
         </div>
       </div>
       <span
@@ -665,7 +615,7 @@ function inferEventType(
   scopeBoundary: string,
   selectedCategory?: SourceCategory | null,
 ): CategoryEventType {
-  if (selectedCategory) return selectedCategory.inferredEventType;
+  if (selectedCategory) return CATEGORY_EVENT_TYPE_BY_ID[selectedCategory.id];
   const normalized = scopeBoundary.toLowerCase();
   if (
     /\bams\b|managed service|managed services|outsourcing|run operation|application support/.test(
@@ -918,9 +868,8 @@ export function SourceOriginatePage({
         : "New sourcing event";
 
   const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
-  );
+  const [selectedCategoryId, setSelectedCategoryId] =
+    useState<SourceCategoryId | null>(null);
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
   });
@@ -1107,6 +1056,7 @@ export function SourceOriginatePage({
             scopeDescription: intake.scopeBoundary || undefined,
             valueTargetDescription: intake.valueTarget || undefined,
             baselineOwnerDescription: intake.baselineOwner || undefined,
+            categoryId: selectedCategory?.id,
             categoryLabel: selectedCategory?.label,
             sourcingMotion,
             creationRequestId: requestId,

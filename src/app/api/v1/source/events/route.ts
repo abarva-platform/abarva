@@ -11,6 +11,10 @@ import { createSourcingEvent } from '@/lib/source/queries';
 import { buildSourceScopeDescription } from '@/lib/source/intake-summary';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import type { SourceSourcingMotion } from '@/lib/source/sourcing-motion-journeys';
+import {
+  SOURCE_CATEGORY_IDS,
+  type SourceCategoryId,
+} from '@/lib/source/taxonomy/category-taxonomy';
 
 interface CreateSourceEventBody {
   eventName?: string;
@@ -20,6 +24,7 @@ interface CreateSourceEventBody {
   scopeDescription?: string;
   valueTargetDescription?: string;
   baselineOwnerDescription?: string;
+  categoryId?: string;
   categoryLabel?: string;
   sourcingMotion?: SourceSourcingMotion;
   creationRequestId?: string;
@@ -50,6 +55,14 @@ function parseEventType(value: unknown): NonNullable<CreateSourceEventBody['even
 
 function parseOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function parseCategoryId(value: unknown): SourceCategoryId | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return (SOURCE_CATEGORY_IDS as readonly string[]).includes(trimmed)
+    ? (trimmed as SourceCategoryId)
+    : undefined;
 }
 
 function parseOptionalNumber(value: unknown): number | undefined {
@@ -132,6 +145,7 @@ export async function POST(request: Request) {
       createdByUserId: tenancy.userId,
       creationRequestId: parseOptionalString(body.creationRequestId),
       sourcingMotion: parseSourcingMotion(body.sourcingMotion),
+      categoryId: parseCategoryId(body.categoryId),
     });
 
     if (tenancy.userId) {
