@@ -9,6 +9,9 @@ import type { SourceWorkspacePortfolioData } from './live/portfolioAdapter';
 import type { Contract360Response } from './live/contractDetail';
 import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/agent/AgentDock';
 import { stripArtifactsForDisplay } from '@/lib/agent/artifacts';
+import type { AvaAnswerPacket } from '@/lib/ava-answer/contract';
+import { stripGovernedArtifactPayloadsFromText } from '@/lib/intelligence/answer/structured-fence-stream-filter';
+import type { AskSource } from '@/lib/intelligence/ask/types';
 import { Tooltip } from './Tooltip';
 import { ContextLens } from './lenses/ContextLens';
 import { ExploreLens } from './lenses/ExploreLens';
@@ -22,7 +25,57 @@ import { OpportunityCanvas } from './canvases/OpportunityCanvas';
 import { EvidenceCanvas } from './canvases/EvidenceCanvas';
 
 const SOURCE_WORKSPACE_AGENT = { initials: 'aVa', mark: 'ava' as const, name: 'aVa', role: 'Source Workspace advisor' };
-const SOURCE_WORKSPACE_AGENT_API_URL = '/api/chat/agent';
+const SOURCE_WORKSPACE_AGENT_API_URL = '/api/intelligence/ask';
+
+function eventText(event: Record<string, unknown>): string {
+  if (typeof event.text === 'string') return event.text;
+  if (typeof event.delta === 'string') return event.delta;
+  return '';
+}
+
+function isAvaAnswerPacket(value: unknown): value is AvaAnswerPacket {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      typeof (value as { directAnswer?: unknown }).directAnswer === 'string' &&
+      Array.isArray((value as { citations?: unknown }).citations) &&
+      Array.isArray((value as { nextSteps?: unknown }).nextSteps),
+  );
+}
+
+function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
+  return (
+    answer.artifacts.length > 0 ||
+    (answer.tables?.length ?? 0) > 0 ||
+    (answer.charts?.length ?? 0) > 0 ||
+    (answer.graphs?.length ?? 0) > 0
+  );
+}
+
+function answerBodyFromPacket(answer: AvaAnswerPacket): string {
+  const body =
+    answer.prose?.trim() ||
+    answer.directAnswer?.trim() ||
+    [answer.interpretation, answer.businessImplication, answer.recommendation]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join('\n\n')
+      .trim();
+  return stripGovernedArtifactPayloadsFromText(body);
+}
+
+function askSourceTypeFromCitation(
+  sourceClass: AvaAnswerPacket['citations'][number]['sourceClass'],
+): AskSource['type'] {
+  if (sourceClass === 'tenant-fact' || sourceClass === 'tenant-chunk') return 'TENANT';
+  if (sourceClass === 'graph') return 'GRAPH';
+  if (sourceClass === 'worldview') return 'WORLDVIEW';
+  return 'PATTERN';
+}
+
+function resolveSourceAssistantAnswerText(rawStreamedAnswer: string, packetBody: string): string {
+  const visible = packetBody.trim() ? packetBody : rawStreamedAnswer;
+  return stripArtifactsForDisplay(stripGovernedArtifactPayloadsFromText(visible)).trim();
+}
 
 export function WorkspaceClient({
   portfolio,
@@ -94,17 +147,22 @@ export function WorkspaceClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, portfolio, tenantName]);
 
-  // AgentDock's onMessage contract — same runtime call as every other Source
-  // aVa surface (see SourceEventsAgentDockView.tsx), grounded in whatever the
-  // Explorer/canvas is currently showing via vm.avaSurfaceContext.
+  // The Source dock uses the rich aVa route so charts, tables, graphs, and
+  // citations survive as structured packets instead of being flattened to text.
   const onAvaMessage = useCallback(
     async (text: string, attachments: AttachmentRef[]) => {
       if (!text && attachments.length === 0) return;
+      const now = Date.now();
       const userBody =
         attachments.length > 0
           ? `${text}\n\n[attached: ${attachments.map((a) => a.file_name).join(', ')}]`
           : text;
-      setThread((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', body: userBody }]);
+      const assistantId = `a-${now + 1}`;
+      setThread((prev) => [
+        ...prev,
+        { id: `u-${now}`, role: 'user', body: userBody },
+        { id: assistantId, role: 'agent', body: 'Gathering contract, evidence, and outside-in context...' },
+      ]);
 
       const attachmentContext = attachments
         .filter((a) => a.extracted_text_preview && a.extracted_text_preview.trim().length > 0)
@@ -112,52 +170,102 @@ export function WorkspaceClient({
         .join('\n\n');
       const messageForRuntime = attachmentContext ? `${text}\n\n${attachmentContext}` : text;
 
-      const context = [
-        'Surface: /source/preview/workspace.',
-        `Agent: ${SOURCE_WORKSPACE_AGENT.name}.`,
-        `Tenant: ${tenantName}.`,
-        `Selection: ${String(vm.avaSurfaceContext.selection ?? 'Executive portfolio')}.`,
-        `Lens: ${String(vm.avaSurfaceContext.lens ?? 'portfolio')}.`,
-        'Use the structured Source workspace context supplied in surfaceContext; do not echo raw JSON, context bundles, retrieval receipts, artifact tags, or internal ids in visible prose.',
-        'If the user asks for a chart, graph, visual, trend, or Recharts exhibit, describe the recommended visual in prose; this Source dock must not show inline chart JSON, object literals, code fences, or renderer payloads.',
-      ].join(' ');
-
-      let acc = '';
+      let rawAnswer = '';
+      let sawPacket = false;
       try {
         const res = await fetch(SOURCE_WORKSPACE_AGENT_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { Accept: 'application/x-ndjson', 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: messageForRuntime,
-            context,
-            surface: '/source/preview/workspace',
-            tenantName,
+            query: messageForRuntime,
+            client: vm.avaSurfaceContext.clientKey ?? vm.avaSurfaceContext.activeClient ?? tenantName,
+            format: 'rich',
+            richText: true,
+            answerOnlyStreaming: true,
+            traceEnabled: true,
             surfaceContext: vm.avaSurfaceContext,
-            agentName: SOURCE_WORKSPACE_AGENT.name,
           }),
         });
         if (!res.ok) throw new Error(`aVa returned ${res.status}`);
         const reader = res.body?.getReader();
         if (!reader) throw new Error('No response body');
         const decoder = new TextDecoder();
-        let streaming = true;
-        while (streaming) {
-          const { done, value } = await reader.read();
-          if (done) {
-            streaming = false;
-            break;
+        let buffer = '';
+        const applyAskEvent = (line: string) => {
+          if (!line.trim()) return;
+          let event: Record<string, unknown>;
+          try {
+            event = JSON.parse(line) as Record<string, unknown>;
+          } catch {
+            return;
           }
-          acc += decoder.decode(value, { stream: true });
+          if (event.type === 'delta') {
+            const delta = eventText(event);
+            if (!delta) return;
+            rawAnswer += delta;
+            const body = resolveSourceAssistantAnswerText(rawAnswer, '');
+            setThread((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, body: body || 'Writing the Source read...' } : msg)));
+            return;
+          }
+          if (event.type === 'context-summary') {
+            setThread((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, body: 'Selecting Source facts, contract evidence, and outside-in patterns...' } : msg)));
+            return;
+          }
+          if (event.type === 'sources' && Array.isArray(event.sources)) {
+            const citations = event.sources as AskSource[];
+            setThread((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, citations } : msg)));
+            return;
+          }
+          if (event.type === 'agent-answer' && isAvaAnswerPacket(event.answer)) {
+            sawPacket = true;
+            const answerPacket = event.answer;
+            const packetBody = answerBodyFromPacket(answerPacket);
+            const hasArtifacts = hasPacketArtifacts(answerPacket);
+            const packetCitations: AskSource[] = answerPacket.citations.map((citation) => ({
+              id: citation.id,
+              type: askSourceTypeFromCitation(citation.sourceClass),
+              name: citation.label,
+              detail: citation.excerpt ?? '',
+              confidence: citation.confidence === 'high' ? 0.9 : citation.confidence === 'medium' ? 0.65 : 0.35,
+            }));
+            setThread((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      body: resolveSourceAssistantAnswerText(rawAnswer, packetBody) || (hasArtifacts ? 'Structured answer ready.' : 'aVa did not return visible prose.'),
+                      citations: packetCitations.length > 0 ? packetCitations : msg.citations,
+                      agentAnswer: answerPacket,
+                    }
+                  : msg,
+              ),
+            );
+            return;
+          }
+          if (event.type === 'error') {
+            const message = typeof event.error === 'string' ? event.error : 'Unknown ask error';
+            setThread((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, body: `I hit an error: ${message}` } : msg)));
+          }
+        };
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            applyAskEvent(line);
+          }
         }
+        if (buffer.trim()) applyAskEvent(buffer);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Connection error';
-        acc = `I hit an error: ${message}`;
+        setThread((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, body: `I hit an error: ${message}` } : msg)));
       }
 
-      const trimmed = acc.trim();
-      const visibleBody = stripArtifactsForDisplay(trimmed).trim();
-      const finalBody = visibleBody.length > 0 ? visibleBody : 'aVa did not return a response.';
-      setThread((prev) => [...prev, { id: `a-${Date.now()}`, role: 'agent', body: finalBody }]);
+      if (!sawPacket && rawAnswer.trim().length === 0) {
+        setThread((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, body: 'aVa did not return a response.' } : msg)));
+      }
     },
     [tenantName, vm.avaSurfaceContext],
   );

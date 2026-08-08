@@ -1821,6 +1821,7 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
     activeTab: readString(record.activeTab),
     activeClient: readString(record.activeClient),
     clientKey: readString(record.clientKey),
+    module: readString(record.module),
     substrate: record.substrate,
     pageFacts: readStringArray(record.pageFacts),
     stageFacts: readStringArray(record.stageFacts),

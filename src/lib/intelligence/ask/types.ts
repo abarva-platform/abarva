@@ -91,6 +91,7 @@ export interface AskSurfaceContext {
   activeTab?: string | null;
   activeClient?: string | null;
   clientKey?: string | null;
+  module?: string | null;
   substrate?: unknown;
   pageFacts?: string[];
   stageFacts?: string[];
