@@ -205,6 +205,8 @@ describe('TaskChecklist provide-task upload', () => {
     // The second call is the deterministic fact ingest-file route.
     const secondUrl = String(fetchMock.mock.calls[1][0]);
     expect(secondUrl).toContain('/api/v1/source/evt-1/facts/ingest-file');
+    const secondBody = fetchMock.mock.calls[1][1]?.body as FormData;
+    expect(secondBody.get('artifactId')).toBe('artifact-1');
 
     // The honest result chip renders the real written count.
     const chip = await screen.findByTestId('fact-ingest-result');
@@ -261,5 +263,21 @@ describe('TaskChecklist provide-task upload', () => {
     expect(alert).toHaveTextContent(/Month, Ticket volume, P1\/P2 count/i);
     expect(screen.queryByText('official-but-mismatched.csv')).not.toBeInTheDocument();
     expect(routerRefresh).not.toHaveBeenCalled();
+  });
+
+  it('renders a real template download link for template-bound uploads', () => {
+    const boundTask: StageTaskView = {
+      ...PROVIDE_TASK,
+      factTemplateCode: 'VOLUMETRICS_V1',
+    };
+    render(
+      <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
+    );
+
+    const link = screen.getByTestId('task-template-download');
+    expect(link).toHaveAttribute(
+      'href',
+      '/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-TICKET-HISTORY/template',
+    );
   });
 });

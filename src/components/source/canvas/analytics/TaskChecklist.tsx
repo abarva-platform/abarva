@@ -3,6 +3,7 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { ANALYTICS, taskVerb } from './analytics-tokens';
+import { requirementIdForFactTemplate } from '@/lib/source/facts/template-requirements';
 import {
   CANVAS_UPLOAD_ACCEPT,
   formatUploadSize,
@@ -215,10 +216,16 @@ function TaskRow({
           </p>
 
           {task.template ? <TemplateChip template={task.template} /> : null}
+          {!task.template && task.factTemplateCode ? (
+            <TemplateDownloadLink
+              eventId={eventId}
+              factTemplateCode={task.factTemplateCode}
+            />
+          ) : null}
           {task.rows ? <ReviewRows rows={task.rows} /> : null}
           {task.file ? (
             <FileChip file={task.file} />
-          ) : task.type === 'provide' && !task.template ? (
+          ) : task.type === 'provide' ? (
             <TaskProvideUpload
               signed={/letter|commit/i.test(task.title)}
               eventId={eventId}
@@ -497,6 +504,37 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
   );
 }
 
+function TemplateDownloadLink({
+  eventId,
+  factTemplateCode,
+}: {
+  eventId?: string;
+  factTemplateCode: string;
+}) {
+  const requirementId = requirementIdForFactTemplate(factTemplateCode);
+  if (!eventId || !requirementId) return null;
+  return (
+    <a
+      href={`/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirementId)}/template`}
+      download
+      data-testid="task-template-download"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+        color: ANALYTICS.BLUE,
+        fontFamily: ANALYTICS.SANS,
+        fontSize: 12.5,
+        fontWeight: 700,
+        textDecoration: 'none',
+      }}
+    >
+      Download CSV/XLSX template
+    </a>
+  );
+}
+
 /**
  * The honest fact-ingest receipt shown under the uploaded-file card: how many
  * typed facts were written, plus any unmapped columns / rejected rows. Zero
@@ -625,6 +663,7 @@ export function TaskProvideUpload({
             eventId,
             file,
             templateCode: factTemplateCode,
+            artifactId: result.artifactId,
           });
         } catch (ingestError) {
           setStatus({

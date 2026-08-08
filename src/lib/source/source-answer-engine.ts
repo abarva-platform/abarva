@@ -1083,34 +1083,25 @@ function buildSourceEventOverviewAnswer(args: {
 
   const accountName = event.accountName ?? "the client";
   const eventTitle = event.name ?? event.code ?? "this Source event";
-  const isLakeshoreSharedServices =
-    /lakeshore|shared services|shared-services|ams/i.test(
-      `${accountName} ${eventTitle} ${event.code ?? ""}`,
-    );
-  const synopsis = isLakeshoreSharedServices
-    ? "covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support."
-    : "that should be interpreted through its loaded evidence, stage gates, and artifacts.";
+  const synopsis =
+    "that should be interpreted through its loaded evidence, stage gates, and artifacts.";
   const value =
     typeof event.valueAtStakeUsd === "number" && event.valueAtStakeUsd > 0
       ? `$${(event.valueAtStakeUsd / 1_000_000).toFixed(1)}M value basis`
       : "value basis to be confirmed";
   const stage = event.currentStageKey ?? "current";
-  const lead = isLakeshoreSharedServices
-    ? `Lakeshore is preparing a 4-5 year, $15M-$20M shared-services AMS sourcing event ${synopsis}`
-    : `${eventTitle} is ${accountName}'s governed Source event ${synopsis}`;
+  const lead = `${eventTitle} is ${accountName}'s governed Source event ${synopsis}`;
 
   return {
     title: "Source event overview answer",
     answerText: [
       lead,
       `Scope and economics: ${value}; current stage is ${stage}.`,
-      "The working storyline is practical: finish the governed RFP record, use the client-final RFP for issuance, evaluate Vendor A/B/C responses through normalized profiles and scorecards, then run BAFO against the unresolved commercial and delivery risks.",
-      "What matters for the demo: this is a real Source workflow with evidence, artifacts, vendor response intelligence, File Cabinet lineage, and aVa advisory answers tied to the same event.",
+      "The working storyline is practical: finish the governed RFP record, use the client-final RFP for issuance, and evaluate supplier responses only after event-specific proposal evidence is loaded.",
+      "What matters here: this is a real Source workflow with evidence, artifacts, File Cabinet lineage, and aVa advisory answers tied to the same event.",
     ].join("\n"),
     currentStateFindings: [
-      isLakeshoreSharedServices
-        ? "Lakeshore is preparing a shared-services AMS sourcing event for corporate functions."
-        : `${eventTitle} is the active Source event.`,
+      `${eventTitle} is the active Source event.`,
       `Current stage is ${stage}.`,
       `Commercial basis is ${value}.`,
     ],
@@ -1119,11 +1110,11 @@ function buildSourceEventOverviewAnswer(args: {
       "Use the client-final RFP as the governed issuance artifact and the vendor evaluation artifacts for recommendation questions.",
     ],
     cxoGuidance: [
-      "The CIO/CFO steering committee should treat this as a controlled shared-services AMS sourcing decision.",
-      "Do not make award recommendations until BAFO closes the named staffing, SLA, productivity, pricing, and exception gaps.",
+      "The accountable steering team should treat this as a controlled sourcing decision.",
+      "Do not make award recommendations until event-specific proposal, pricing, risk, and service evidence is loaded and reconciled.",
     ],
     recommendedNextAction:
-      "Walk the event from final RFP authority to Vendor A/B/C evaluation, then BAFO conditions and final sourcing recommendation.",
+      "Walk the event from final RFP authority to evidence collection, then proposal evaluation only after the supplier evidence is loaded.",
   };
 }
 
@@ -1164,12 +1155,12 @@ function buildSourceStageReadinessAnswer(args: {
     answerText: [
       `The current stage is ${stage}.`,
       `What is blocking or gating it: ${blockerLine}`,
-      "For this Lakeshore demo path, stage readiness should be judged from the Source gate, the client-final artifact authority chain, and the vendor evaluation/BAFO artifacts. aVa can explain the blockers, but it should not bypass named human approval.",
+      "Stage readiness should be judged from the Source gate, the client-final artifact authority chain, and event-specific evidence. aVa can explain the blockers, but it should not bypass named human approval.",
     ].join("\n"),
     currentStateFindings: [`Current stage is ${stage}.`, blockerLine],
     sourcingImplications: [
       "Stage movement should follow gate criteria and authoritative artifact status.",
-      "Vendor recommendations should remain conditional until BAFO closes scoring holdbacks.",
+      "Supplier recommendations should remain withheld until proposal evidence and scoring holdbacks exist for this event.",
     ],
     cxoGuidance: [
       "Use aVa to surface the gate logic, then require the accountable human owner to approve the next step.",
@@ -2748,7 +2739,8 @@ function buildEvidenceGatedBafoFallback(args: {
 function hasVendorEvaluationEvidence(
   evidence: SourceLiveTenantEvidenceItem[],
 ): boolean {
-  const corpus = evidenceCorpusText(evidence);
+  const eventSpecificEvidence = evidence.filter(isEventSpecificVendorEvidence);
+  const corpus = evidenceCorpusText(eventSpecificEvidence);
   const hasVendorSet =
     /\bVendor\s+A\b/i.test(corpus) &&
     /\bVendor\s+B\b/i.test(corpus) &&
@@ -2761,7 +2753,8 @@ function hasVendorEvaluationEvidence(
 }
 
 function hasBafoEvidence(evidence: SourceLiveTenantEvidenceItem[]): boolean {
-  const corpus = evidenceCorpusText(evidence);
+  const eventSpecificEvidence = evidence.filter(isEventSpecificVendorEvidence);
+  const corpus = evidenceCorpusText(eventSpecificEvidence);
   const hasVendorSet =
     /\bVendor\s+A\b/i.test(corpus) &&
     /\bVendor\s+B\b/i.test(corpus) &&
@@ -2771,6 +2764,32 @@ function hasBafoEvidence(evidence: SourceLiveTenantEvidenceItem[]): boolean {
       corpus,
     );
   return hasVendorSet && hasBafoArtifact;
+}
+
+function isEventSpecificVendorEvidence(
+  item: SourceLiveTenantEvidenceItem,
+): boolean {
+  if (item.sourceDoc === "Source artifact standards registry") return false;
+  if (item.sourceDoc === "Source intake record") return false;
+  if (item.segmentId === "artifact_standards") return false;
+  const corpus = [
+    item.title,
+    item.sourceDoc ?? "",
+    item.sourcePath ?? "",
+    item.recordId ?? "",
+    item.excerpt,
+  ].join(" ");
+  const hasVendorIdentity =
+    /\bVendor\s+[A-Z]\b/i.test(corpus) ||
+    /\b(supplier|proposal|bidder|response|scorecard|BAFO|best and final)\b/i.test(
+      corpus,
+    );
+  const hasEventArtifactBasis =
+    /^source-(artifact|event|artifact-chunk|artifact-fact):/i.test(item.id) ||
+    /\b(source_artifacts|source_artifact_chunks|source_artifact_facts|Source structured evidence)\b/i.test(
+      item.sourceDoc ?? "",
+    );
+  return hasVendorIdentity && hasEventArtifactBasis;
 }
 
 function evidenceCorpusText(evidence: SourceLiveTenantEvidenceItem[]): string {

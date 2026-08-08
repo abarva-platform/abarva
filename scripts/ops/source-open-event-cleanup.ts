@@ -32,6 +32,8 @@ type SourceEventRow = {
   event_name: string | null;
   lifecycle_state: string | null;
   current_stage_key: string | null;
+  sourcing_motion?: string | null;
+  classified_category?: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -206,13 +208,29 @@ async function listCandidateEvents(client: Client, args: Args): Promise<SourceEv
     : [args.tenantKeys, DEFAULT_OPEN_EXCLUSIONS];
   const { rows } = await client.query<SourceEventRow>(`
     select id::text, client_key, event_code, event_name, lifecycle_state,
-           current_stage_key, created_at::text, updated_at::text
+           current_stage_key, sourcing_motion, classified_category,
+           created_at::text, updated_at::text
       from public.source_events
      where client_key = any($1::text[])
        and ${lifecycleClause}
      order by updated_at desc nulls last, created_at desc nulls last, id
   `, params);
   return rows;
+}
+
+function summarizeCandidateEvents(events: SourceEventRow[]): SourceEventRow[] {
+  return events.slice(0, 50).map((event) => ({
+    id: event.id,
+    client_key: event.client_key,
+    event_code: event.event_code,
+    event_name: event.event_name,
+    lifecycle_state: event.lifecycle_state,
+    current_stage_key: event.current_stage_key,
+    sourcing_motion: event.sourcing_motion ?? null,
+    classified_category: event.classified_category ?? null,
+    created_at: event.created_at,
+    updated_at: event.updated_at,
+  }));
 }
 
 async function listArtifacts(
@@ -652,6 +670,7 @@ async function main(): Promise<void> {
         openEvents: events.length,
         artifacts: artifacts.length,
         blobTargets: blobTargets.length,
+        eventReadback: summarizeCandidateEvents(events),
         relatedCounts,
       },
       beforeReadback: {
@@ -662,6 +681,7 @@ async function main(): Promise<void> {
       postReadback: {
         openEvents: postEvents.length,
         artifactsStillLinkedToOpenEvents: postArtifacts.length,
+        eventReadback: summarizeCandidateEvents(postEvents),
         lifecycleCounts: lifecycleCountsAfter,
       },
       outDir: args.outDir,

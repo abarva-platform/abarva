@@ -1105,7 +1105,9 @@ export function SourceOriginatePage({
       }).catch(() => undefined);
     }
     const approvalUrl =
-      payload?.approvalUrl ?? `/source/events/${sourceEventId}/approval`;
+      payload?.approvalUrl && payload.approvalUrl.includes(sourceEventId)
+        ? payload.approvalUrl
+        : `/source/events/${sourceEventId}/approval`;
     // Forward the tour into approval; the canvas unlocks after approval.
     const finalUrl = tourActive
       ? approvalUrl + (approvalUrl.includes("?") ? "&tour=1" : "?tour=1")
