@@ -34,6 +34,7 @@ The Source Workspace Explore view is tightened into a contained analytics canvas
 - Follow-up: tightened Explore-only header chrome, metric strip spacing, and bottom status visibility after signed-in viewport measurement showed remaining first-screen overflow.
 - Follow-up: constrained the Explore workbench grid to viewport height so grouped results and contract line items scroll internally instead of expanding the page.
 - Follow-up: adjusted the Source Workspace root height to fit under the global navigation bar instead of adding a full viewport beneath it.
+- Follow-up: corrected the Source Workspace root height to the measured live navigation height after browser proof showed the remaining page scroll was exactly the top-nav mismatch.
 
 ## QA / Validation
 
