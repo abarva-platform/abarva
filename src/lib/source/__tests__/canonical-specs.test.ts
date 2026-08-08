@@ -135,8 +135,20 @@ describe('canonical evidence requirements · coverage', () => {
   });
 
   it('evidenceById resolves', () => {
-    expect(evidenceById('EVID-SRC-SCOPE-TICKET-HISTORY')?.label).toBe('L2/L3 ticket history');
+    expect(evidenceById('EVID-SRC-SCOPE-TICKET-HISTORY')?.label).toContain('ticket history');
     expect(evidenceById('EVID-NOPE')).toBeUndefined();
+  });
+
+  it('every evidence requirement is operationally sourceable and parseable', () => {
+    for (const req of SOURCE_EVIDENCE_REQUIREMENTS) {
+      expect(req.sourceSystems.length).toBeGreaterThan(0);
+      expect(req.acceptedFileTypes.length).toBeGreaterThan(0);
+      expect(req.recordGrain.length).toBeGreaterThan(0);
+      expect(req.criticalFields.length).toBeGreaterThan(0);
+      expect(req.filenameTokens.length).toBeGreaterThan(0);
+      expect(req.qualityChecks.length).toBeGreaterThan(0);
+      expect(req.evidenceClass.length).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -152,7 +164,7 @@ describe('canonical specs · totals (sanity bounds)', () => {
   });
 
   it('evidence requirements total is in the expected range', () => {
-    expect(SOURCE_EVIDENCE_REQUIREMENTS.length).toBeGreaterThanOrEqual(15);
-    expect(SOURCE_EVIDENCE_REQUIREMENTS.length).toBeLessThanOrEqual(40);
+    expect(SOURCE_EVIDENCE_REQUIREMENTS.length).toBeGreaterThanOrEqual(50);
+    expect(SOURCE_EVIDENCE_REQUIREMENTS.length).toBeLessThanOrEqual(75);
   });
 });

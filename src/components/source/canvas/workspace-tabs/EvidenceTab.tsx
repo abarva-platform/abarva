@@ -163,6 +163,13 @@ function EvidenceRow({
             </>
           ) : null}
         </div>
+        {def ? (
+          <div style={SOURCE_GUIDANCE_STYLE}>
+            <span>Systems: {def.sourceSystems.slice(0, 4).join(", ")}</span>
+            <span>Fields: {def.criticalFields.slice(0, 5).join(", ")}</span>
+            <span>Upload: {def.acceptedFileTypes.join(", ")}</span>
+          </div>
+        ) : null}
         {state.currentState === "Not Requested" ? (
           <button
             type="button"
@@ -258,6 +265,15 @@ function EvidenceRequestPanel({
         </button>
       </div>
       <div style={REQUEST_FORM_GRID_STYLE}>
+        {def ? (
+          <div style={REQUEST_HINT_STYLE}>
+            <strong>Ask for:</strong> {def.recordGrain}.{" "}
+            <strong>Likely systems:</strong>{" "}
+            {def.sourceSystems.slice(0, 5).join(", ")}.{" "}
+            <strong>Critical fields:</strong>{" "}
+            {def.criticalFields.slice(0, 8).join(", ")}.
+          </div>
+        ) : null}
         <label style={FIELD_STYLE}>
           <span style={FIELD_LABEL_STYLE}>Owner or source</span>
           <input
@@ -281,7 +297,7 @@ function EvidenceRequestPanel({
           <textarea
             value={note}
             onChange={(event) => setNote(event.currentTarget.value)}
-            placeholder={`Ask for ${def?.sourceLabel ?? "the source owner"} to provide ${label}.`}
+            placeholder={requestPlaceholder(def, label)}
             rows={3}
             style={TEXTAREA_STYLE}
           />
@@ -306,6 +322,16 @@ function EvidenceRequestPanel({
       </div>
     </section>
   );
+}
+
+function requestPlaceholder(
+  def: SourceEvidenceRequirement | undefined,
+  label: string,
+): string {
+  if (!def) return `Ask the source owner to provide ${label}.`;
+  const systems = def.sourceSystems.slice(0, 3).join(", ");
+  const fields = def.criticalFields.slice(0, 6).join(", ");
+  return `Please export ${label} from ${systems}. Include ${fields}; keep role refs/titles instead of employee PII.`;
 }
 
 function colorForState(s: SourceEventEvidenceCurrentState): string {
@@ -454,6 +480,16 @@ const ROW_META_STYLE: CSSProperties = {
   flexWrap: "wrap",
 };
 
+const SOURCE_GUIDANCE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 3,
+  marginTop: 4,
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: CANVAS.INK_SOFT,
+};
+
 const STATE_LABEL_STYLE: CSSProperties = {
   fontWeight: 600,
   color: CANVAS.INK,
@@ -512,6 +548,18 @@ const REQUEST_FORM_GRID_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: 12,
+};
+
+const REQUEST_HINT_STYLE: CSSProperties = {
+  gridColumn: "1 / -1",
+  padding: "10px 12px",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  background: "#fbfaf7",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  color: CANVAS.INK_SOFT,
 };
 
 const FIELD_STYLE: CSSProperties = {

@@ -8,6 +8,7 @@ import { buildViewModel } from './buildViewModel';
 import type { SourceWorkspacePortfolioData } from './live/portfolioAdapter';
 import type { Contract360Response } from './live/contractDetail';
 import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/agent/AgentDock';
+import { stripArtifactsForDisplay } from '@/lib/agent/artifacts';
 import { Tooltip } from './Tooltip';
 import { ContextLens } from './lenses/ContextLens';
 import { ExploreLens } from './lenses/ExploreLens';
@@ -111,7 +112,14 @@ export function WorkspaceClient({
         .join('\n\n');
       const messageForRuntime = attachmentContext ? `${text}\n\n${attachmentContext}` : text;
 
-      const context = `Surface: /source/preview/workspace. Agent: ${SOURCE_WORKSPACE_AGENT.name}. ${JSON.stringify(vm.avaSurfaceContext)}. The user is asking within the AbarVa platform.`;
+      const context = [
+        'Surface: /source/preview/workspace.',
+        `Agent: ${SOURCE_WORKSPACE_AGENT.name}.`,
+        `Tenant: ${tenantName}.`,
+        `Selection: ${String(vm.avaSurfaceContext.selection ?? 'Executive portfolio')}.`,
+        `Lens: ${String(vm.avaSurfaceContext.lens ?? 'portfolio')}.`,
+        'Use the structured Source workspace context supplied in surfaceContext; do not echo raw JSON, context bundles, retrieval receipts, artifact tags, or internal ids in visible prose.',
+      ].join(' ');
 
       let acc = '';
       try {
@@ -122,6 +130,8 @@ export function WorkspaceClient({
             message: messageForRuntime,
             context,
             surface: '/source/preview/workspace',
+            tenantName,
+            surfaceContext: vm.avaSurfaceContext,
             agentName: SOURCE_WORKSPACE_AGENT.name,
           }),
         });
@@ -144,10 +154,11 @@ export function WorkspaceClient({
       }
 
       const trimmed = acc.trim();
-      const finalBody = trimmed.length > 0 ? trimmed : 'aVa did not return a response.';
+      const visibleBody = stripArtifactsForDisplay(trimmed).trim();
+      const finalBody = visibleBody.length > 0 ? visibleBody : 'aVa did not return a response.';
       setThread((prev) => [...prev, { id: `a-${Date.now()}`, role: 'agent', body: finalBody }]);
     },
-    [vm.avaSurfaceContext],
+    [tenantName, vm.avaSurfaceContext],
   );
 
   useEffect(() => {

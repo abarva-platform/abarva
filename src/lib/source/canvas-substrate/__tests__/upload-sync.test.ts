@@ -97,6 +97,27 @@ describe("matchEvidenceRequirementForUpload (filename → canonical requirement)
       }),
     ).toBeNull();
   });
+
+  it("matches operational extracts across the full sourcing lifecycle", () => {
+    const cases = [
+      ["rfp", "security_privacy_dpa_controls.xlsx", "EVID-SRC-RFP-SECURITY-PRIVACY"],
+      ["responses", "supplier_pricing_rate_card_submission.xlsx", "EVID-SRC-RESP-PRICING-SHEETS"],
+      ["evaluation", "tprm_risk_assessment_vendor_scores.csv", "EVID-SRC-EVAL-RISK-ASSESSMENT"],
+      ["pricing", "ap_detail_invoice_payment_lines.csv", "EVID-SRC-PRICE-INVOICE-DETAIL"],
+      ["bafo", "bafo_offer_concession_register.xlsx", "EVID-SRC-BAFO-OFFERS"],
+      ["executive_decision", "value_ledger_benefit_case.xlsx", "EVID-SRC-DEC-VALUE-LEDGER"],
+      ["selection", "obligation_deliverable_register.xlsx", "EVID-SRC-SEL-OBLIGATION-REGISTER"],
+      ["transition", "cmdb_handover_access_assets.csv", "EVID-SRC-TRAN-ASSET-ACCESS"],
+      ["value", "finance_confirmation_realized_value.xlsx", "EVID-SRC-VAL-FINANCE-CONFIRMATION"],
+    ] as const;
+
+    for (const [stageKey, filename, requirementId] of cases) {
+      expect(
+        matchEvidenceRequirementForUpload({ stageKey, filename })
+          ?.requirementId,
+      ).toBe(requirementId);
+    }
+  });
 });
 
 describe("syncUploadToCanvasSubstrate (durable F1 fix)", () => {
