@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-08-08T13:42:56.962006+00:00",
+  "pdf_count": 5,
+  "mapped_golden_pdf_count": 2,
+  "supplemental_prior_pdf_count": 3,
+  "clause_extraction_count": 934,
+  "contracts": [
+    {
+      "contract_id": "CTR-090",
+      "pdf_file": "documents/CTR-090_Salesforce_Executed_Agreement_SYNTHETIC.pdf",
+      "expected_clause_count": 16,
+      "extracted_clause_count": 16
+    },
+    {
+      "contract_id": "CTR-061",
+      "pdf_file": "documents/CTR-061_Microsoft_Executed_Agreement_SYNTHETIC.pdf",
+      "expected_clause_count": 16,
+      "extracted_clause_count": 16
+    }
+  ],
+  "quality_status": "passed",
+  "quality_rule": "PDF text extraction had to find every generated clause heading or value probe.",
+  "prior_corpus_policy": "Older/prior contract PDFs are processed by the same adapter and marked supplemental_unmapped_to_current_register until a reviewed crosswalk maps them to source.contract_360."
+}

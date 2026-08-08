@@ -423,8 +423,24 @@ export async function getContractOptimizationEvidencePack(
   tenantKey: string,
   contractId: string,
 ) {
-  const [performanceRows, spendRows, rateRows, saasRows, sourcingRows] =
+  const [goldenRows, performanceRows, spendRows, rateRows, saasRows, sourcingRows] =
     await Promise.all([
+      safeQueryForTenant<NumericRow>(
+        tenantKey,
+        `SELECT
+            r.*,
+            (SELECT ARRAY_AGG(DISTINCT source_file_id)
+               FROM source.contract_pdf_clause_extractions x
+              WHERE x._tenant_key = ANY($1::text[]) AND x._dataset_id = r._dataset_id AND x.contract_id = r.contract_id) AS document_refs,
+            (SELECT ARRAY_AGG(DISTINCT source_file_id || ':p' || source_page || ':' || concept_ref)
+               FROM source.contract_pdf_clause_extractions x
+              WHERE x._tenant_key = ANY($1::text[]) AND x._dataset_id = r._dataset_id AND x.contract_id = r.contract_id) AS page_spans
+           FROM source.golden_contract_reconciliation r
+          WHERE r._tenant_key = ANY($1::text[]) AND r.contract_id = $2
+          ORDER BY r._loaded_at DESC NULLS LAST
+          LIMIT 1`,
+        [contractId],
+      ),
       safeQueryForTenant<NumericRow>(
         tenantKey,
         `SELECT
@@ -482,6 +498,149 @@ export async function getContractOptimizationEvidencePack(
         [contractId],
       ),
     ]);
+
+  const golden = goldenRows[0];
+  if (golden) {
+    const documentRefs = arrayFromDb(golden.document_refs);
+    const pageSpans = arrayFromDb(golden.page_spans);
+    const realizedValue = positiveNumber(golden.realized_value_usd);
+    const ledgerItems: ContractOptimizationEvidenceItem[] = [
+      {
+        ledger_item_id: "recoverable:sla-credit-gap",
+        contract_id: contractId,
+        ledger_type: "recoverable_leakage",
+        amount: positiveNumber(golden.service_credit_gap_usd),
+        amount_state: "quantified",
+        evidence_class: "system_evidenced",
+        evidence_refs: [
+          "source.golden_contract_sla_incident_service_credit_monthly",
+          "doc.extraction:contract.sla_credit_terms",
+        ],
+        source_systems: ["ServiceNow", "CLM / contract repository"],
+        source_record_ids: [`contract:${contractId}:monthly-sla-credit-history`],
+        document_refs: documentRefs,
+        page_spans: pageSpans.filter((span) => span.includes("sla") || span.includes("credit")),
+        calculation_rule:
+          "SUM(service_credits_earned_usd - service_credits_claimed_usd) across monthly SLA evidence rows.",
+        confidence: 0.91,
+        review_state: "procurement_reviewed",
+        decision_state: "candidate",
+        workflow_event_id: null,
+        tower_claim_id: null,
+      },
+      {
+        ledger_item_id: "recoverable:invoice-rate-card",
+        contract_id: contractId,
+        ledger_type: "recoverable_leakage",
+        amount:
+          (numberFromDb(golden.invoice_line_exceptions_usd) ?? 0) +
+          (numberFromDb(golden.rate_card_variance_usd) ?? 0),
+        amount_state: "quantified",
+        evidence_class: "system_evidenced",
+        evidence_refs: [
+          "source.golden_contract_invoice_lines",
+          "source.golden_contract_po_contract_match",
+          "source.golden_contract_rate_card_variance",
+          "doc.extraction:contract.pricing_schedule",
+        ],
+        source_systems: ["ERP / AP", "Procurement / PO", "Fieldglass", "CLM / contract repository"],
+        source_record_ids: [`contract:${contractId}:invoice-po-rate-reconciliation`],
+        document_refs: documentRefs,
+        page_spans: pageSpans.filter((span) => span.includes("pricing") || span.includes("rate")),
+        calculation_rule:
+          "SUM(exception_amount_usd) plus SUM(rate_variance_usd) for invoice, PO, and rate-card rows tied to the contract.",
+        confidence: 0.89,
+        review_state: "procurement_reviewed",
+        decision_state: "candidate",
+        workflow_event_id: null,
+        tower_claim_id: null,
+      },
+      {
+        ledger_item_id: "avoided:renewal-uplift",
+        contract_id: contractId,
+        ledger_type: "avoided_cost",
+        amount: positiveNumber(golden.avoided_cost_usd),
+        amount_state: "addressable_exposure",
+        evidence_class: "inferred",
+        evidence_refs: [
+          "source.golden_contract_usage_entitlement_monthly",
+          "source.golden_contract_renewal_negotiation_history",
+          "source.golden_contract_application_scope",
+          "doc.extraction:contract.scope_summary",
+        ],
+        source_systems: ["SaaS / cloud admin", "CLM / contract repository", "APM / CMDB"],
+        source_record_ids: [`contract:${contractId}:usage-entitlement-renewal-scope`],
+        document_refs: documentRefs,
+        page_spans: pageSpans.filter((span) => span.includes("scope") || span.includes("renewal")),
+        calculation_rule:
+          "Reviewed addressable exposure from usage, entitlement, scope-rationalization, and renewal-event evidence; not realized value.",
+        confidence: 0.76,
+        review_state: "needs_review",
+        decision_state: "workflow_required",
+        workflow_event_id: null,
+        tower_claim_id: null,
+      },
+      {
+        ledger_item_id: "negotiated:commercial-levers",
+        contract_id: contractId,
+        ledger_type: "negotiated_improvement",
+        amount: positiveNumber(golden.negotiated_improvement_usd),
+        amount_state: "quantified",
+        evidence_class: "document_evidenced",
+        evidence_refs: [
+          "source.golden_contract_renewal_negotiation_history",
+          "doc.extraction:contract.benchmarking_clause",
+          "doc.extraction:contract.exit_rights_summary",
+          "doc.extraction:contract.indexation_terms",
+        ],
+        source_systems: ["Sourcing platform", "CLM / contract repository"],
+        source_record_ids: [`contract:${contractId}:negotiation-history`],
+        document_refs: documentRefs,
+        page_spans: pageSpans.filter(
+          (span) =>
+            span.includes("benchmark") ||
+            span.includes("exit") ||
+            span.includes("index"),
+        ),
+        calculation_rule:
+          "Commercial-improvement amount from reviewed negotiation-history rows and document-evidenced levers.",
+        confidence: 0.82,
+        review_state: "procurement_reviewed",
+        decision_state: "candidate",
+        workflow_event_id: null,
+        tower_claim_id: null,
+      },
+      {
+        ledger_item_id: "realized:tower-finance-proof",
+        contract_id: contractId,
+        ledger_type: "realized_value",
+        amount: realizedValue,
+        amount_state: realizedValue != null ? "finance_validated" : "not_established",
+        evidence_class: realizedValue != null ? "human_validated" : "missing",
+        evidence_refs: [
+          "source.golden_contract_finance_value_confirmation",
+          "tower.value_claim",
+        ],
+        source_systems: ["Finance", "Tower"],
+        source_record_ids: [`contract:${contractId}:finance-value-confirmation`],
+        document_refs: [],
+        page_spans: [],
+        calculation_rule:
+          "Finance-confirmed realized value only; addressable exposure and negotiated improvement are not treated as realized.",
+        confidence: realizedValue != null ? 0.93 : null,
+        review_state: realizedValue != null ? "finance_validated" : "missing",
+        decision_state: realizedValue != null ? "finance_accepted" : "missing",
+        workflow_event_id: null,
+        tower_claim_id: `claim-source-contract-golden-${contractId.toLowerCase()}`,
+      },
+    ];
+    return buildContractOptimizationEvidencePack({
+      tenantKey,
+      datasetVersion: String(golden.dataset_version || "source-v4-golden"),
+      contractId,
+      ledgerItems,
+    });
+  }
 
   const performance = performanceRows[0];
   const spend = spendRows[0];
@@ -619,4 +778,21 @@ function numberFromDb(value: unknown): number | null {
     return Number.isFinite(n) ? n : null;
   }
   return null;
+}
+
+function arrayFromDb(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => String(entry ?? "").trim())
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .replace(/^\{/u, "")
+      .replace(/\}$/u, "")
+      .split(",")
+      .map((entry) => entry.trim().replace(/^"|"$/gu, ""))
+      .filter(Boolean);
+  }
+  return [];
 }

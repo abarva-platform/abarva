@@ -340,7 +340,7 @@ export function readSkyHarborAiSuccessHome(): AiSuccessHomeData {
       },
       {
         title: "Clause-backed commercial findings",
-        body: "Blocks a document-backed position across 119 contracts. doc.page and doc.span are not loaded.",
+        body: "Portfolio-wide clause coverage is not complete. Golden-contract PDFs can be processed through doc.file, doc.page, doc.span, and doc.extraction, while supplemental PDFs remain unmapped until reviewed.",
         owner: "Source",
       },
       {
