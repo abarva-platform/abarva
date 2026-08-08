@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { DataTable } from '../DataTable';
 import { EvidenceLineageGraph } from './EvidenceLineageGraph';
 import type { SourceWorkspaceVM } from '../buildViewModel';
@@ -108,11 +109,18 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               columns={vm.scopeCols}
               rows={vm.scopeRows}
             />
+          ) : c.scopedApplicationCount ? (
+            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 24px' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 6 }}>Scope rollup exists, but the line-item table is not loaded</div>
+              <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.55, maxWidth: '86ch' }}>
+                The contract rollup reports {c.scopedApplicationCount} scoped application/service links, but the detail feed returned zero rows for this selected contract. Until the agreement/SOW schedule and application-owner mapping are loaded at line-item grain, this page should not pretend to know the contract scope.
+              </div>
+            </div>
           ) : null}
-          {vm.hasProg ? (
+          {vm.hasScope && vm.hasProg ? (
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
-                Related initiatives
+                Related initiatives, not scope line items
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {vm.progRows.slice(0, 4).map((p, i) => (
@@ -124,9 +132,16 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
               {vm.progRows.length > 4 ? (
                 <div style={{ fontSize: 12, color: '#888780', marginTop: 10 }}>
-                  Showing the first 4 related initiatives. Use full context for the complete dependency list.
+                  These are dependency signals, not proof of contract scope. Use full context for the complete dependency list.
                 </div>
               ) : null}
+            </div>
+          ) : !vm.hasScope && vm.hasProg ? (
+            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 24px' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 6 }}>Dependency signals are available, but hidden from scope until scope is proven</div>
+              <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.55, maxWidth: '86ch' }}>
+                {vm.progRows.length} initiative dependency signal{vm.progRows.length === 1 ? '' : 's'} exist for this contract, but they are not contract scope. Load the scope schedule and product/service line items first; then dependencies can explain impact.
+              </div>
             </div>
           ) : null}
         </>
@@ -436,9 +451,9 @@ function ValueProofExplainer({ vm }: { vm: SourceWorkspaceVM }) {
   return (
     <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(10,10,11,.1)' }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>What “value proof” means</div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>What the value evidence means</div>
         <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
-          Source separates four kinds of money so the page never turns a data gap, forecast, or negotiation target into a claimed saving.
+          Source separates four kinds of money so a data gap, forecast, or negotiation target never becomes a claimed saving. Only realized value is finance-confirmed.
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))' }}>
@@ -462,11 +477,13 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   const ledger = vm.optLedger;
   const contract = vm.contractRow;
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   if (!spine?.selected || !ledger || !contract) return null;
 
   const readyLines = ledger.lines.filter((line) => line.state === 'Quantified' || line.state === 'Workflow required');
   const gapLines = ledger.lines.filter((line) => line.state === 'Needs evidence' || line.evidenceClass === 'MISSING');
   const sourceConnections = spine.sourceConnections.slice(0, 6);
+  const activeSource = sourceConnections.find((connection) => connection.id === activeSourceId) ?? sourceConnections[0] ?? null;
   const scopeCount = contract.scoped_application_count ?? 0;
   const proofStatus = gapLines.length ? `${readyLines.length} supported · ${gapLines.length} gaps` : `${readyLines.length} supported · no gaps`;
   const node = (x: number, y: number, w: number, h: number, label: string, sub: string, tone: string, fill = '#fff') => (
@@ -492,11 +509,11 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
     <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b' }}>Contract relationship map</div>
-        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value proof, and the approval decision. This is relationship flow, not a savings claim.</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from source systems and scope facts to governed value evidence and the optimize decision. This is relationship flow, not a savings claim.</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(520px,1.3fr) minmax(340px,.7fr)', gap: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(520px,1.1fr) minmax(360px,.9fr)', gap: 0 }}>
         <div style={{ minWidth: 0, padding: '14px 16px' }}>
-          <svg viewBox="0 0 940 360" role="img" aria-label="Contract journey relationship graph" style={{ width: '100%', height: 'auto', display: 'block' }}>
+          <svg viewBox="0 0 940 390" role="img" aria-label="Contract journey relationship graph" style={{ width: '100%', height: 'auto', display: 'block' }}>
             <defs>
               <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                 <path d="M 0 0 L 8 4 L 0 8 z" fill="#9a9890" />
@@ -510,20 +527,20 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
                 <stop offset="100%" stopColor="#eef4fb" />
               </linearGradient>
             </defs>
-            <rect x="0" y="0" width="940" height="360" rx="14" fill="#fbfaf7" />
-            <rect x="28" y="42" width="884" height="188" rx="18" fill="url(#journeyBand)" stroke="rgba(10,10,11,.08)" />
+            <rect x="0" y="0" width="940" height="390" rx="14" fill="#fbfaf7" />
+            <rect x="28" y="42" width="884" height="220" rx="18" fill="url(#journeyBand)" stroke="rgba(10,10,11,.08)" />
             <text x="44" y="28" fontSize="10" fontWeight="800" letterSpacing=".12em" fill="#888780">CONTRACT JOURNEY</text>
-            <text x="44" y="252" fontSize="10" fontWeight="800" letterSpacing=".12em" fill="#888780">VALUE-PROOF STATUS</text>
+            <text x="44" y="284" fontSize="10" fontWeight="800" letterSpacing=".12em" fill="#888780">VALUE-EVIDENCE STATUS</text>
 
-            {line(172, 88, 285, 96, '#3d6ea8')}
-            {line(172, 162, 285, 142, '#ba7517')}
-            {line(172, 212, 285, 162, '#1d9e75')}
-            {line(425, 130, 520, 130, '#0a0a0b')}
-            {line(658, 130, 735, 130, gapLines.length ? '#ba7517' : '#1d9e75')}
+            {line(172, 88, 285, 116, '#0a0a0b')}
+            {line(172, 162, 285, 132, scopeCount ? '#3d6ea8' : '#ba7517')}
+            {line(172, 226, 285, 152, '#ba7517')}
+            {line(425, 138, 520, 138, '#0a0a0b')}
+            {line(658, 138, 735, 138, gapLines.length ? '#ba7517' : '#1d9e75')}
 
             {node(38, 58, 134, 58, 'Agreement', 'PDF / CLM terms', '#0a0a0b')}
             {node(38, 132, 134, 58, 'Scope facts', `${scopeCount} apps / services`, scopeCount ? '#3d6ea8' : '#ba7517')}
-            {node(38, 202, 134, 58, 'Source feeds', `${sourceConnections.length} systems mapped`, '#ba7517')}
+            {node(38, 196, 134, 58, 'Source systems', `${sourceConnections.length} feeds mapped`, '#ba7517')}
 
             <g filter="url(#softShadow)">
               <rect x="285" y="78" width="140" height="104" rx="16" fill="#0a0a0b" />
@@ -533,35 +550,61 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               <text x="305" y="170" fontSize="10" fill="rgba(255,255,255,.58)">{spine.selected.score}/100 fit score</text>
             </g>
 
-            {node(520, 78, 138, 104, 'Value proof', proofStatus, gapLines.length ? '#ba7517' : '#1d9e75', '#fff')}
+            {node(520, 86, 138, 104, 'Value evidence', proofStatus, gapLines.length ? '#ba7517' : '#1d9e75', '#fff')}
             {node(735, 78, 160, 104, 'Optimize plan', spine.selected.band, '#0a0a0b', '#fff')}
 
             {ledger.lines.slice(0, 4).map((item, i) => {
               const x = 44 + i * 152;
               const color = item.evidenceClass === 'MISSING' ? '#a32d2d' : item.state === 'Quantified' ? '#1d9e75' : '#ba7517';
-              return chip(x, 270, item.label.length > 17 ? `${item.label.slice(0, 16)}...` : item.label, item.amount, color);
+              return chip(x, 302, item.label.length > 17 ? `${item.label.slice(0, 16)}...` : item.label, item.amount, color);
             })}
-            <text x="44" y="338" fontSize="10.5" fill="#5f5e5a">The map shows relationship flow and evidence readiness. It does not infer savings; amounts come only from governed evidence rows.</text>
-            <text x="828" y="338" fontSize="10.5" fontWeight="800" textAnchor="end" fill={gapLines.length ? '#ba7517' : '#1d9e75'}>
+            <text x="44" y="370" fontSize="10.5" fill="#5f5e5a">The map shows relationship flow and evidence readiness. It does not infer savings; amounts come only from governed evidence rows.</text>
+            <text x="828" y="370" fontSize="10.5" fontWeight="800" textAnchor="end" fill={gapLines.length ? '#ba7517' : '#1d9e75'}>
               {gapLines.length ? `${gapLines.length} evidence gap${gapLines.length === 1 ? '' : 's'}` : 'evidence complete'}
             </text>
           </svg>
         </div>
         <div style={{ borderLeft: '1px solid rgba(10,10,11,.1)', padding: '14px 16px', minWidth: 0 }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 10 }}>
-            Source facts
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>Source-system facts inside this map</div>
+          <div style={{ fontSize: 11.8, color: '#5f5e5a', lineHeight: 1.45, marginBottom: 10 }}>
+            Hover or click a feed to see what it contributes. These feeds explain where the value evidence comes from.
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 7, marginBottom: 10 }}>
             {sourceConnections.slice(0, 5).map((connection) => (
-              <div key={connection.id} style={{ border: '1px solid rgba(10,10,11,.09)', borderRadius: 6, padding: '9px 10px', background: '#fff' }}>
+              <button
+                key={connection.id}
+                type="button"
+                onMouseEnter={() => setActiveSourceId(connection.id)}
+                onFocus={() => setActiveSourceId(connection.id)}
+                onClick={() => setActiveSourceId(connection.id)}
+                style={{
+                  textAlign: 'left',
+                  border: `1px solid ${activeSource?.id === connection.id ? '#1d9e75' : 'rgba(10,10,11,.09)'}`,
+                  borderRadius: 6,
+                  padding: '9px 10px',
+                  background: activeSource?.id === connection.id ? '#eff8f5' : '#fff',
+                  cursor: 'pointer',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span style={{ fontSize: 12.2, fontWeight: 800, color: '#0a0a0b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{connection.sourceSystem}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#888780', whiteSpace: 'nowrap' }}>{formatValueProofKind(connection.ledgers[0])}</span>
                 </div>
-                <div style={{ fontSize: 11.3, color: '#5f5e5a', lineHeight: 1.4, marginTop: 3 }}>{connection.extract}</div>
-              </div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#888780', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{connection.ledgers.map(formatValueProofKind).join(' · ')}</div>
+              </button>
             ))}
           </div>
+          {activeSource ? (
+            <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 13px', background: '#fff' }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0a0a0b', marginBottom: 5 }}>{activeSource.sourceSystem}</div>
+              <div style={{ fontSize: 12, color: '#2c2c2a', lineHeight: 1.45, marginBottom: 8 }}>{activeSource.extract}</div>
+              <div style={{ fontSize: 11.8, color: '#5f5e5a', lineHeight: 1.45, marginBottom: 8 }}>{activeSource.outcome}</div>
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                {activeSource.fields.slice(0, 6).map((field) => (
+                  <span key={field} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.3, color: '#5f5e5a', border: '1px solid rgba(10,10,11,.1)', borderRadius: 4, padding: '3px 5px', background: '#fbfaf7' }}>{field}</span>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
@@ -661,14 +704,31 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
     const variance = fin?.linked_forecast_amount != null && fin.linked_actual_amount != null
       ? fin.linked_forecast_amount - fin.linked_actual_amount
       : null;
+    const serviceCreditGap =
+      creditsEarned != null && creditsClaimed != null
+        ? Math.max(0, creditsEarned - creditsClaimed)
+        : null;
     const performanceRead = incidents != null && incidents > 0
       ? hasCreditEvidence
-        ? 'Operational pressure is visible and SLA credit evidence is available for review.'
-        : 'Operational pressure is visible, but SLA-credit recovery is not yet provable from the loaded evidence.'
-      : 'No material service-performance signal is established from the loaded evidence.';
+        ? serviceCreditGap != null && serviceCreditGap > 0
+          ? 'Service issues have a quantified credit gap to review.'
+          : 'Service issues are visible, but the loaded credit fields do not show recoverable leakage.'
+        : 'Service issues are visible, but SLA-credit recovery is not yet provable from the loaded evidence.'
+      : 'No service-performance issue is established from the loaded evidence.';
     const financialRead = fin
-      ? 'Financial exposure is linked for this contract; variance still needs usage, entitlement, invoice, and finance evidence before it becomes value.'
+      ? 'This tab shows the size of the operating/spend signal. It does not explain the cause until usage, entitlement, invoice, and finance evidence are tied back to the contract.'
       : 'No contract-level financial exposure rows were returned.';
+    const knownRead = [
+      fin ? `Spend baseline is available: ${formatCurrency(fin.linked_actual_amount)} actual against ${formatCurrency(fin.linked_forecast_amount)} forecast.` : null,
+      incidents != null ? `Service pressure is available: ${incidents.toLocaleString('en-US')} Sev1/Sev2 incidents.` : null,
+      hasCreditEvidence ? `SLA credit fields are available: earned ${formatCurrency(creditsEarned)}, claimed ${formatCurrency(creditsClaimed)}.` : null,
+    ].filter(Boolean);
+    const missingRead = [
+      fin ? 'usage and entitlement evidence to classify spend variance' : 'contract-level financial exposure rows',
+      hasCreditEvidence ? null : 'monthly SLA credit history',
+      'invoice/rate-card evidence before recovery can be claimed',
+      'Finance/Tower attestation before any realized value claim',
+    ].filter(Boolean);
     if (!perf && !fin) {
       return (
         <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '30px 34px' }}>
@@ -691,7 +751,33 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
             {performanceRead}
           </div>
           <div style={{ fontSize: 12.8, color: '#5f5e5a', lineHeight: 1.5, maxWidth: '90ch' }}>
-            {financialRead} Treat this as leverage context, not a savings claim.
+            {financialRead} Treat this as a diagnostic read, not a savings claim.
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 14 }}>
+          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 18px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 9 }}>What we know</div>
+            <ul style={{ margin: 0, paddingLeft: 18, color: '#2c2c2a', fontSize: 12.6, lineHeight: 1.55 }}>
+              {(knownRead.length ? knownRead : ['No performance or financial signal is established for this contract.']).map((item) => (
+                <li key={String(item)}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 18px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 9 }}>What we cannot conclude yet</div>
+            <ul style={{ margin: 0, paddingLeft: 18, color: '#5f5e5a', fontSize: 12.6, lineHeight: 1.55 }}>
+              <li>Actual below forecast is not automatically savings.</li>
+              <li>Incident count is not automatically a credit claim.</li>
+              <li>Opportunity evidence is not realized value until Finance/Tower confirms it.</li>
+            </ul>
+          </div>
+          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 18px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 9 }}>Evidence needed next</div>
+            <ul style={{ margin: 0, paddingLeft: 18, color: '#5f5e5a', fontSize: 12.6, lineHeight: 1.55 }}>
+              {missingRead.map((item) => (
+                <li key={String(item)}>{item}</li>
+              ))}
+            </ul>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 14 }}>
