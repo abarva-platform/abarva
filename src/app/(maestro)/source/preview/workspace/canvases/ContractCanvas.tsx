@@ -366,6 +366,36 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   if (!spine?.selected) return null;
   const c = vm.c;
+  if (vm.detailState === 'loading' || vm.detailState === 'idle') {
+    return (
+      <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px' }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 8 }}>
+          Selected contract decision story
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: '#0a0a0b', marginBottom: 6 }}>
+          Loading governed contract evidence.
+        </div>
+        <div style={{ fontSize: 13, lineHeight: 1.55, color: '#5f5e5a', maxWidth: 760 }}>
+          AbarVa is assembling the agreement facts, scope rows, service evidence, invoice exceptions, and finance confirmation before stating the optimization case. The page should not claim evidence is missing or unavailable while the contract detail read is still in flight.
+        </div>
+      </div>
+    );
+  }
+  if (vm.detailState === 'error') {
+    return (
+      <div style={{ background: '#fff', border: '1px solid rgba(163,45,45,.22)', borderRadius: 8, padding: '18px 22px' }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#a32d2d', marginBottom: 8 }}>
+          Selected contract decision story
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: '#0a0a0b', marginBottom: 6 }}>
+          Contract evidence could not be loaded.
+        </div>
+        <div style={{ fontSize: 13, lineHeight: 1.55, color: '#5f5e5a', maxWidth: 760 }}>
+          Retry the contract or check the Source detail API before using this page in an executive conversation.
+        </div>
+      </div>
+    );
+  }
   const evidenceReady = vm.optLedger
     ? `${vm.optLedger.evidenceReady} ready · ${vm.optLedger.evidenceGaps} gap${vm.optLedger.evidenceGaps === '1' ? '' : 's'}`
     : 'Not established';
