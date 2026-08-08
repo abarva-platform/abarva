@@ -693,7 +693,7 @@ async function upsertTowerClaim(client, args, contract, reconciliationRow) {
        contract_ref = excluded.contract_ref,
        metadata_json = excluded.metadata_json`,
     [
-      args.contractId,
+      contract.contract_id,
       args.tenantKey,
       `${contract.vendor_name || "Selected vendor"} contract optimization canary`,
       contract.vendor_ref || null,
