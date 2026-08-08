@@ -163,13 +163,16 @@
 }
 
 /* Outcome Proof Cockpit — first-screen Tower operating room.
- * Uses the whole canvas: posture spans the width, the main analytical row gives
- * the waterfall the dominant space, and the owner queue stretches horizontally
- * so evidence work reads like an operating queue instead of a sidebar note. */
+ * Uses the whole canvas, but caps the analytical row so the cockpit reads like
+ * an executive operating surface instead of a report exhibit. */
 .cockpitView {
   display: grid;
-  grid-template-rows: auto auto minmax(290px, 1fr) minmax(176px, 0.62fr);
+  grid-template-rows: auto auto auto auto auto;
   gap: 12px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--canon-gray-300) transparent;
 }
 .boardPosture {
   flex: none;
@@ -295,22 +298,105 @@
   line-height: 1.28;
   margin-top: 4px;
 }
+.synthesisGrid {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(540px, 1.12fr) minmax(420px, 0.88fr);
+  gap: 12px;
+  min-width: 0;
+}
+.avaSynthesisStrip {
+  background: var(--canon-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  box-shadow: var(--shadow-card);
+  color: #fff;
+  min-width: 0;
+  padding: 14px 16px;
+}
+.avaSynthesisStrip .eyebrow2 {
+  color: rgba(255, 255, 255, 0.68);
+  display: block;
+  margin-bottom: 7px;
+}
+.avaSynthesisStrip p {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  line-height: 1.42;
+  margin: 0;
+  text-wrap: pretty;
+}
+.lineageRailInline {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--canon-border);
+  border-radius: 13px;
+  box-shadow: var(--shadow-card);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.lineageRailItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 8px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+.lineageRailItem:nth-child(odd) { border-right: 1px solid var(--canon-border); }
+.lineageRailItem:nth-child(-n+2) { border-bottom: 1px solid var(--canon-border); }
+.lineageRailItem span:first-child {
+  align-items: center;
+  color: var(--canon-gray-700);
+  display: inline-flex;
+  font-size: 11px;
+  gap: 6px;
+  min-width: 0;
+}
+.lineageRailItem b {
+  color: var(--canon-gray-900);
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  justify-self: end;
+  white-space: nowrap;
+}
+.lineageRailItem .chip {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
 .cockpitCanvas {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(560px, 1.18fr) minmax(480px, 0.82fr);
   gap: 12px;
+  align-items: stretch;
+  min-height: 360px;
 }
+.cockpitCanvas > .card { min-height: 360px; }
 .cockpitChartBody {
   display: flex;
   flex-direction: column;
+  flex: none;
   min-height: 0;
-  gap: 10px;
+  gap: 8px;
+  overflow: hidden;
+}
+.chartTruthNote {
+  color: var(--canon-gray-700);
+  flex: none;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: -2px 0 0;
+  text-wrap: pretty;
 }
 .cockpitWaterfall,
 .cockpitMatrix {
-  flex: 1;
-  min-height: 230px;
+  flex: none;
+  height: clamp(220px, 25vh, 260px);
+  min-height: 0;
   width: 100%;
 }
 .cockpitCta {
@@ -362,6 +448,7 @@
 }
 @media (max-width: 1180px) {
   .boardPosture,
+  .synthesisGrid,
   .cockpitCanvas,
   .cockpitOps { grid-template-columns: 1fr; }
   .boardMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -371,8 +458,16 @@
   .cockpitView { display: flex; }
   .boardMetrics,
   .proofStrip { grid-template-columns: 1fr; }
+  .lineageRailInline { grid-template-columns: 1fr; }
+  .lineageRailItem,
+  .lineageRailItem:nth-child(odd),
+  .lineageRailItem:nth-child(-n+2) {
+    border-bottom: 1px solid var(--canon-border);
+    border-right: 0;
+  }
+  .lineageRailItem:last-child { border-bottom: 0; }
   .cockpitWaterfall,
-  .cockpitMatrix { min-height: 260px; }
+  .cockpitMatrix { height: 280px; }
 }
 
 .weekread { background: var(--canon-bg-surface); color: var(--canon-gray-900); border: 1px solid var(--canon-border); border-radius: 14px; padding: 20px 24px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: var(--shadow-card); }
@@ -478,6 +573,28 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 11px; height: 11px; border-radius: 3px; flex: none; }
 .legend i.rd { border-radius: 50%; }
+.heatmapTruthNote {
+  align-items: flex-start;
+  background: var(--canon-amber-light);
+  border: 1px solid rgba(186, 117, 23, 0.28);
+  border-radius: 10px;
+  color: var(--canon-gray-700);
+  display: flex;
+  flex: none;
+  font-size: 12px;
+  gap: 8px;
+  line-height: 1.38;
+  margin-bottom: 10px;
+  padding: 9px 11px;
+}
+.heatmapTruthNote b {
+  color: var(--canon-amber);
+  flex: none;
+  font-weight: 700;
+}
+.heatmapTruthNote span {
+  min-width: 0;
+}
 
 /* The design's viewFunnel() uses .ins / .ik / .itext but never declares them.
  * Styled here to match the drawer's .dr-plain callout, which is the same

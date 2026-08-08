@@ -358,8 +358,27 @@ function HeatmapPanel({
   programs: readonly TowerProgramView[];
   onOpenProgram: (id: string) => void;
 }) {
+  const lowProofPrograms = programs.filter((p) => p.evidenceMaturity <= 5);
+  const proofCollapsed =
+    programs.length > 0 && lowProofPrograms.length / programs.length >= 0.75;
+  const lowProofValue = lowProofPrograms.reduce(
+    (sum, p) => sum + p.valueAtStakeUsd,
+    0,
+  );
+
   return (
     <>
+      {proofCollapsed ? (
+        <div className={styles.heatmapTruthNote}>
+          <b>Proof maturity is concentrated near zero.</b>
+          <span>
+            {formatCount(lowProofPrograms.length)} programs carrying{" "}
+            {formatUsdM(lowProofValue)} are plotted at the left edge because
+            usable proof is missing or immature, not because value has been
+            realized.
+          </span>
+        </div>
+      ) : null}
       <div className={styles.chartwrap} aria-describedby="tcc-heatmap-alt">
         <PortfolioHeatmapChart programs={programs} onSelect={onOpenProgram} />
       </div>
@@ -448,7 +467,7 @@ export function DecisionLanesView({
       >
         <Card
           eyebrow="Portfolio heatmap"
-          right="value at stake × evidence maturity · coloured by decision lane"
+          right="program promised value × proof maturity · by decision lane"
           headId="tcc-lanes-heat-full"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >

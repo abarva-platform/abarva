@@ -1,6 +1,6 @@
 "use client";
 
-// Portfolio heatmap — value at stake × evidence maturity, coloured by lane.
+// Portfolio heatmap — program promised value × proof maturity, coloured by lane.
 // Transcribed from `chart_quad()` in the design file (line ~1278).
 
 import {
@@ -62,7 +62,7 @@ export function PortfolioHeatmapChart({
           type="number"
           dataKey="x"
           domain={[0, 100]}
-          name="Evidence maturity"
+          name="Proof maturity"
           tickCount={6}
           tick={{
             fontSize: 9.5,
@@ -72,7 +72,7 @@ export function PortfolioHeatmapChart({
           axisLine={{ stroke: HEX.borderStrong }}
           tickLine={false}
           label={{
-            value: "Evidence maturity →",
+            value: "Proof maturity (0 = no usable proof loaded) →",
             position: "bottom",
             offset: 6,
             style: {
@@ -87,7 +87,7 @@ export function PortfolioHeatmapChart({
           type="number"
           dataKey="y"
           domain={[0, Math.ceil(maxStakeM)]}
-          name="Value at stake"
+          name="Program promised value"
           tick={{
             fontSize: 9.5,
             fill: HEX.gray300,
@@ -95,8 +95,8 @@ export function PortfolioHeatmapChart({
           }}
           axisLine={false}
           tickLine={false}
-          width={26}
-          tickFormatter={(v: number) => `$${v}`}
+          width={34}
+          tickFormatter={(v: number) => `$${v}M`}
         />
         <ZAxis type="number" dataKey="z" range={[60, 620]} />
         <ReferenceLine x={50} stroke={HEX.borderStrong} strokeDasharray="3 3" />
@@ -140,7 +140,7 @@ export function heatmapTextAlternative(
     .map(
       (p) =>
         `${p.name}: evidence maturity ${p.evidenceMaturity} of 100, ` +
-        `${formatUsdM(p.valueAtStakeUsd)} at stake, ${LANE_WORD[p.lane]} lane.`,
+        `${formatUsdM(p.valueAtStakeUsd)} program promised value, ${LANE_WORD[p.lane]} lane.`,
     )
     .join(" ");
 }
