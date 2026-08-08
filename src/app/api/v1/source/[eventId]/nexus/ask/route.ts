@@ -551,6 +551,52 @@ type SourceArtifactFactContextRow = {
   confidence: number | null;
 };
 
+type SourceEventArtifactContext = {
+  artifacts: SourceArtifactContextRow[];
+  chunks: SourceArtifactChunkContextRow[];
+  facts: SourceArtifactFactContextRow[];
+};
+
+const PROPOSAL_EVIDENCE_PATTERN =
+  /\b(bafo|bid|bidder|commercial response|evaluation|finalist|pricing workbook|proposal|scorecard|supplier response|vendor response)\b/i;
+
+const PROPOSAL_FACT_PATTERN =
+  /\b(bafo|bid|committed_value|concession|proposal|response_addressed|score|vendor_(?:bid|headline|response))\b/i;
+
+function hasEventSpecificProposalEvidence(
+  context: SourceEventArtifactContext,
+): boolean {
+  const hasProposalArtifact = context.artifacts.some((artifact) => {
+    const text = [
+      artifact.title,
+      artifact.artifact_family,
+      artifact.artifact_kind,
+      artifact.original_name,
+      artifact.file_name,
+      artifact.file_format,
+      artifact.stage_key,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .join(" ");
+    if (!PROPOSAL_EVIDENCE_PATTERN.test(text)) return false;
+    return (
+      artifact.source_origin === "uploaded" ||
+      artifact.is_client_final === true ||
+      Boolean(artifact.client_final_accepted_at) ||
+      artifact.parse_status === "parsed"
+    );
+  });
+  if (hasProposalArtifact) return true;
+
+  return context.facts.some((fact) =>
+    PROPOSAL_FACT_PATTERN.test(
+      [fact.fact_type, fact.fact_key]
+        .filter((value): value is string => Boolean(value))
+        .join(" "),
+    ),
+  );
+}
+
 async function buildEventIntakeTenantContextSnapshot(args: {
   activeClientKey?: string;
   activeClientName?: string;
@@ -583,12 +629,14 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     tenantKey: clientKey,
     sourceEventId: args.event.id,
   });
-  const vendorProfiles = buildVendorResponseMveProfiles({
-    id: args.event.id,
-    code: args.event.code,
-    name: args.event.name,
-    accountName: args.event.accountName,
-  });
+  const vendorProfiles = hasEventSpecificProposalEvidence(artifactContext)
+    ? buildVendorResponseMveProfiles({
+        id: args.event.id,
+        code: args.event.code,
+        name: args.event.name,
+        accountName: args.event.accountName,
+      })
+    : null;
   const vendorChallenges = buildVendorChallengeIntelligence(vendorProfiles);
   const vendorBafoPack = buildVendorBafoInstructionPack(vendorChallenges);
   const vendorEvaluationView = buildVendorEvaluationDecisionView(
