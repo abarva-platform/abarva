@@ -286,7 +286,7 @@ describe("buildViewModel numeric coercion", () => {
     );
     expect(built.optCtaHref).not.toContain("scopeSummary=");
     expect(built.optCtaHref).not.toContain("Fictional");
-    expect(built.scopeSummary).toBe("Scope not loaded");
+    expect(built.scopeSummary).toContain("Contract scope has not been extracted yet");
   });
 
   it("sums explorer-tree badges without string-concatenating NUMERIC-as-string fields", () => {

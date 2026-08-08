@@ -523,7 +523,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     noticePassed: contract?.noticePassed ?? false,
     role: c.renewal_owner_ref ?? 'Not assigned',
     evidence: c.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Not established',
-    scopeSummary: isReviewableContractScope(c.scope_summary) ? c.scope_summary : 'Scope not loaded',
+    scopeSummary: isReviewableContractScope(c.scope_summary) ? c.scope_summary : 'Contract scope has not been extracted yet. Load the executed agreement, SOW or order form scope schedule, and application/service ownership extract before treating scope coverage as known.',
   } : null;
   const termRows = c ? ([
     ['Contract identifier', c.contract_id, 'contract_id'], ['Vendor category', c.vendor_category ?? 'Unresolved', 'vendor_category'],
@@ -849,7 +849,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         noticePeriodDays: c.notice_period_days,
         autoRenew: c.auto_renew,
         renewalOwnerRef: c.renewal_owner_ref,
-        scopeSummary: cVm?.scopeSummary ?? 'Scope not loaded',
+        scopeSummary: cVm?.scopeSummary ?? 'Contract scope has not been extracted yet.',
         scopeRowCount: scopeRows.length,
         sourceConfidence: c.source_confidence,
       } : null,
