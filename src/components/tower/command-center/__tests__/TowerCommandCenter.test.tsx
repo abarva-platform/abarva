@@ -42,6 +42,9 @@ jest.mock("recharts", () => {
 const view = buildTowerCommandCenterView(designFixtureMart(), {
   tenantName: "Fixture Tenant",
 });
+if (!view) {
+  throw new Error("design fixture must build a Tower command-center view");
+}
 
 function renderPage() {
   return render(

@@ -370,7 +370,7 @@ export type DockMode =
   | "expand"
   | "collapsed";
 
-type RestorableDockMode = Exclude<DockMode, "collapsed">;
+export type RestorableDockMode = Exclude<DockMode, "collapsed">;
 
 export const DOCK_MODES: readonly DockMode[] = [
   "side-rail",

@@ -93,6 +93,8 @@ export interface AtlasChatPanelProps {
   defaultMode?: DockMode;
   /** When false, the surface opens with defaultMode even if localStorage has an older dock mode. */
   respectStoredMode?: boolean;
+  /** Current AgentDock API: when true, starts from defaultMode instead of localStorage. */
+  disableStoredMode?: boolean;
   /** Mode restored from the collapsed aVa chip. */
   collapsedRestoreMode?: RestorableDockMode;
   /** Expanded overlay sizing for artifact-heavy answer sessions. */
@@ -134,6 +136,7 @@ export function AtlasChatPanel({
   minLeftPx = 320,
   defaultMode = "side-rail",
   respectStoredMode = true,
+  disableStoredMode,
   collapsedRestoreMode,
   expandedWidth,
   expandedMaxWidth,
@@ -182,7 +185,7 @@ export function AtlasChatPanel({
       agent={agent}
       surface={surface}
       defaultMode={defaultMode}
-      respectStoredMode={respectStoredMode}
+      disableStoredMode={disableStoredMode ?? !respectStoredMode}
       collapsedRestoreMode={collapsedRestoreMode}
       defaultLeftPercent={defaultLeftPercent}
       minLeftPx={minLeftPx}
