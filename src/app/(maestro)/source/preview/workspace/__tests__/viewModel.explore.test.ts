@@ -151,6 +151,7 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
       "weak",
     ]);
     expect(ex.boxes.map((box) => box.id)).not.toContain("category");
+    expect(ex.selectedContracts.map((contract) => contract.id)).toEqual(["c1", "c3", "c4", "c2"]);
   });
 
   it("selecting Vendor = Salesforce shows only the Salesforce bucket by default", () => {
@@ -160,6 +161,13 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(ex.groups.map((g) => g.key)).toEqual(["Salesforce"]);
     expect(ex.groups[0]?.labelColor).toBe("#0a0a0b");
     expect(ex.groups[0]?.value).toBe("$43.5M");
+    expect(ex.selectedContracts.map((contract) => contract.id)).toEqual(["c1", "c2"]);
+    expect(ex.selectedContracts[0]).toMatchObject({
+      vendor: "Salesforce",
+      value: "$40.0M",
+      renewal: "Manual",
+      weakSignals: "2 of 4",
+    });
   });
 
   it("Compare all intentionally restores excluded peers", () => {

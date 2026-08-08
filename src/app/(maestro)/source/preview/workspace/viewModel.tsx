@@ -583,6 +583,24 @@ export class WorkspaceViewModel {
         onEnter: (e: { currentTarget: Element }) => this.showTip(e, g.key, [[money(g.val), 'value'], ['Contracts', String(g.list.length)]]),
         onLeave: this.hideTip,
       })),
+      selectedContracts: selRows
+        .slice()
+        .sort((a, b) => (numberFromDb(b.row.annual_value) ?? 0) - (numberFromDb(a.row.annual_value) ?? 0))
+        .map((c) => ({
+          id: c.row.contract_id,
+          vendor: c.row.vendor_name,
+          name: c.row.contract_name,
+          category: c.row.vendor_category ?? 'Unclassified',
+          value: money(c.row.annual_value),
+          actual: money(c.row.actual_annual_spend),
+          endDate: fmtDate(c.row.end_date),
+          renewal: c.row.auto_renew ? 'Auto-renew' : 'Manual',
+          benchmark: c.row.benchmarking_clause ?? 'Not established',
+          alternatives: c.row.alternatives_available ?? 'Not established',
+          weakSignals: c.leverage.weakSignalCount + ' of 4',
+          weak: c.leverage.weakSignalCount,
+          onClick: () => this.select('contract', c.row.contract_id),
+        })),
       dimBtns: this.dims().map((dd) => ({
         label: dd.label, onClick: () => this.setState({ groupBy: dd.id, tip: null }),
         bg: dd.id === S.groupBy ? '#0a0a0b' : '#fff', fg: dd.id === S.groupBy ? '#fff' : '#5f5e5a', border: dd.id === S.groupBy ? '#0a0a0b' : 'rgba(10,10,11,.16)',
