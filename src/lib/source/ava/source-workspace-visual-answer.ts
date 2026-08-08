@@ -1,0 +1,450 @@
+import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
+import type {
+  AvaArtifact,
+  AvaCaveat,
+  AvaCitation,
+  AvaFactRef,
+  AvaMetricRef,
+  AvaNextStep,
+  AvaRelationshipRef,
+} from "@/lib/ava-answer/contract";
+
+interface SourceWorkspaceVisualAnswer {
+  directAnswer: string;
+  artifacts: AvaArtifact[];
+  citations: AvaCitation[];
+  factsUsed: AvaFactRef[];
+  metricsUsed: AvaMetricRef[];
+  relationshipsUsed: AvaRelationshipRef[];
+  caveats: AvaCaveat[];
+  nextSteps: AvaNextStep[];
+}
+
+interface SourceContractContext {
+  contractId: string;
+  vendorName: string;
+  contractName: string;
+  annualValueUsd: number | null;
+  actualAnnualSpendUsd: number | null;
+  totalCommittedValueUsd: number | null;
+  contractedToActualVarianceUsd: number | null;
+  endDate: string | null;
+  noticeDate: string | null;
+  autoRenew: boolean | null;
+  renewalOwnerRef: string | null;
+  scopeSummary: string | null;
+  scopeRowCount: number | null;
+}
+
+interface SourceLedgerLine {
+  id: string;
+  kind: string;
+  label: string;
+  amount: string;
+  amountUsd: number | null;
+  state: string;
+  evidenceClass: string;
+  evidence: string;
+  nextAction: string;
+  sourceRefs: string[];
+}
+
+interface SourceConnection {
+  id: string;
+  sourceSystem: string;
+  ledgers: string[];
+  extract: string;
+  fields: string[];
+  outcome: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function booleanValue(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => stringValue(item))
+    .filter((item): item is string => Boolean(item));
+}
+
+function sourceV4(context: AskSurfaceContext): Record<string, unknown> | null {
+  const raw = (context as { sourceV4?: unknown }).sourceV4;
+  return isRecord(raw) ? raw : null;
+}
+
+function selectedContractFrom(
+  context: AskSurfaceContext,
+): SourceContractContext | null {
+  const source = sourceV4(context);
+  const raw = isRecord(source?.selectedContract)
+    ? source.selectedContract
+    : null;
+  if (!raw) return null;
+  const contractId = stringValue(raw.contractId);
+  const vendorName = stringValue(raw.vendorName);
+  const contractName = stringValue(raw.contractName);
+  if (!contractId || !vendorName || !contractName) return null;
+  return {
+    contractId,
+    vendorName,
+    contractName,
+    annualValueUsd: numberValue(raw.annualValueUsd),
+    actualAnnualSpendUsd: numberValue(raw.actualAnnualSpendUsd),
+    totalCommittedValueUsd: numberValue(raw.totalCommittedValueUsd),
+    contractedToActualVarianceUsd: numberValue(raw.contractedToActualVarianceUsd),
+    endDate: stringValue(raw.endDate),
+    noticeDate: stringValue(raw.noticeDate),
+    autoRenew: booleanValue(raw.autoRenew),
+    renewalOwnerRef: stringValue(raw.renewalOwnerRef),
+    scopeSummary: stringValue(raw.scopeSummary),
+    scopeRowCount: numberValue(raw.scopeRowCount),
+  };
+}
+
+function ledgerLinesFrom(context: AskSurfaceContext): SourceLedgerLine[] {
+  const source = sourceV4(context);
+  const ledger = isRecord(source?.optimizationLedger)
+    ? source.optimizationLedger
+    : null;
+  const rawLines = Array.isArray(ledger?.lines) ? ledger.lines : [];
+  return rawLines
+    .flatMap((line): SourceLedgerLine[] => {
+      if (!isRecord(line)) return [];
+      const id = stringValue(line.id);
+      const kind = stringValue(line.kind);
+      const label = stringValue(line.label);
+      if (!id || !kind || !label) return [];
+      return [
+        {
+          id,
+          kind,
+          label,
+          amount: stringValue(line.amount) ?? "Not established",
+          amountUsd: numberValue(line.amountUsd),
+          state: stringValue(line.state) ?? "Not established",
+          evidenceClass: stringValue(line.evidenceClass) ?? "Not established",
+          evidence: stringValue(line.evidence) ?? "No evidence note supplied.",
+          nextAction: stringValue(line.nextAction) ?? "Confirm evidence owner.",
+          sourceRefs: stringArray(line.sourceRefs),
+        },
+      ];
+    })
+    .slice(0, 8);
+}
+
+function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
+  const source = sourceV4(context);
+  const spine = isRecord(source?.optimizationSpine)
+    ? source.optimizationSpine
+    : null;
+  const rawConnections = Array.isArray(spine?.sourceConnections)
+    ? spine.sourceConnections
+    : [];
+  return rawConnections
+    .flatMap((connection): SourceConnection[] => {
+      if (!isRecord(connection)) return [];
+      const id = stringValue(connection.id);
+      const sourceSystem = stringValue(connection.sourceSystem);
+      if (!id || !sourceSystem) return [];
+      return [
+        {
+          id,
+          sourceSystem,
+          ledgers: stringArray(connection.ledgers),
+          extract: stringValue(connection.extract) ?? "Governed extract",
+          fields: stringArray(connection.fields).slice(0, 6),
+          outcome: stringValue(connection.outcome) ?? "Supports evidence review.",
+        },
+      ];
+    })
+    .slice(0, 6);
+}
+
+function wantsSourceVisualAnswer(query: string): boolean {
+  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|outside[-\s]?in|industry)\b/i.test(
+    query,
+  );
+}
+
+export function canBuildSourceWorkspaceVisualAnswer(input: {
+  query: string;
+  surfaceContext?: AskSurfaceContext | null;
+}): boolean {
+  const context = input.surfaceContext;
+  return Boolean(
+    context &&
+      stringValue(context.module)?.toLowerCase() === "source" &&
+      wantsSourceVisualAnswer(input.query) &&
+      selectedContractFrom(context),
+  );
+}
+
+function currencyLabel(value: number | null): string {
+  if (value == null) return "Not established";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1_000_000_000) return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
+}
+
+function ledgerName(kind: string): string {
+  return kind
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function buildLedgerRows(lines: SourceLedgerLine[]) {
+  return lines.map((line) => ({
+    ledger: ledgerName(line.kind),
+    evidenceLine: line.label,
+    value: line.amountUsd == null ? line.amount : currencyLabel(line.amountUsd),
+    valueUsd: line.amountUsd,
+    state: line.state,
+    evidence: line.evidenceClass,
+    sourceRefs: line.sourceRefs.join(", ") || "Not established",
+    nextAction: line.nextAction,
+  }));
+}
+
+export function buildSourceWorkspaceVisualAnswer(input: {
+  query: string;
+  surfaceContext: AskSurfaceContext;
+}): SourceWorkspaceVisualAnswer | null {
+  const contract = selectedContractFrom(input.surfaceContext);
+  if (!contract) return null;
+  const lines = ledgerLinesFrom(input.surfaceContext);
+  const connections = connectionsFrom(input.surfaceContext);
+  if (lines.length === 0 && connections.length === 0) return null;
+
+  const contractCitationId = "source-contract-context";
+  const ledgerCitationId = "source-ledger-context";
+  const graphCitationId = "source-relationship-context";
+  const outsideInCitationId = "outside-in-pattern-context";
+  const citations: AvaCitation[] = [
+    {
+      id: contractCitationId,
+      label: `${contract.vendorName} ${contract.contractName}`,
+      sourceClass: "tenant-fact",
+      recordId: contract.contractId,
+      excerpt:
+        "Selected contract facts come from the governed Source Contract 360 surface context.",
+      confidence: "high",
+    },
+    {
+      id: ledgerCitationId,
+      label: "Four-ledger optimization evidence",
+      sourceClass: "tenant-fact",
+      recordId: contract.contractId,
+      excerpt:
+        "Ledger values, evidence states, source references, and next actions are read from the current Source optimization ledger.",
+      confidence: lines.some((line) => line.amountUsd != null) ? "high" : "medium",
+    },
+    {
+      id: graphCitationId,
+      label: "Source-system evidence map",
+      sourceClass: "graph",
+      recordId: contract.contractId,
+      excerpt:
+        "Source-system connections map the contract to CLM, AP/ERP, ITSM, usage, procurement, and finance evidence classes.",
+      confidence: connections.length > 0 ? "high" : "medium",
+    },
+    {
+      id: outsideInCitationId,
+      label: "Outside-in sourcing pattern",
+      sourceClass: "worldview",
+      excerpt:
+        "Outside-in guidance is treated as negotiation pattern context only; it does not certify tenant value.",
+      confidence: "medium",
+    },
+  ];
+
+  const ledgerRows = buildLedgerRows(lines);
+  const numericRows = ledgerRows
+    .filter((row) => typeof row.valueUsd === "number")
+    .map((row) => ({
+      ledger: row.ledger,
+      valueUsd: row.valueUsd as number,
+      state: row.state,
+    }));
+
+  const artifacts: AvaArtifact[] = [
+    {
+      artifact: "table",
+      id: "source-contract-four-ledger-table",
+      title: "Four-ledger Contract Evidence",
+      columns: [
+        { key: "ledger", label: "Ledger" },
+        { key: "evidenceLine", label: "Evidence line" },
+        { key: "value", label: "Value", format: "currency", align: "right" },
+        { key: "state", label: "State" },
+        { key: "evidence", label: "Evidence" },
+        { key: "sourceRefs", label: "Source refs" },
+        { key: "nextAction", label: "Next action" },
+      ],
+      rows: ledgerRows.map((row) => ({
+        ledger: row.ledger,
+        evidenceLine: row.evidenceLine,
+        value: row.value,
+        state: row.state,
+        evidence: row.evidence,
+        sourceRefs: row.sourceRefs,
+        nextAction: row.nextAction,
+      })),
+      note:
+        "Rows are governed Source ledger rows. Missing evidence remains explicit and is not converted to zero.",
+      citationIds: [ledgerCitationId],
+    },
+    {
+      artifact: "graph",
+      id: "source-contract-evidence-relationship-graph",
+      title: "Contract Evidence Relationship",
+      nodes: [
+        { id: "contract", label: `${contract.contractId}\n${contract.vendorName}`, kind: "contract" },
+        { id: "scope", label: `Scope\n${contract.scopeRowCount ?? 0} rows`, kind: "scope" },
+        ...connections.map((connection) => ({
+          id: `source-${connection.id}`,
+          label: connection.sourceSystem,
+          kind: "source system",
+        })),
+        { id: "ledger", label: "Four ledgers", kind: "evidence ledger" },
+        { id: "door1", label: "Door 1 action", kind: "workflow" },
+      ],
+      edges: [
+        { from: "contract", to: "scope", label: "defines scope" },
+        ...connections.map((connection) => ({
+          from: `source-${connection.id}`,
+          to: "ledger",
+          label: connection.ledgers.join(", ") || "feeds evidence",
+        })),
+        { from: "contract", to: "ledger", label: "anchors values" },
+        { from: "ledger", to: "door1", label: "gates action" },
+      ],
+      citationIds: [contractCitationId, graphCitationId],
+    },
+  ];
+
+  if (numericRows.length >= 2) {
+    artifacts.splice(1, 0, {
+      artifact: "chart",
+      id: "source-contract-ledger-value-chart",
+      kind: "horizontal-bar",
+      title: "Optimization Ledgers With Quantified Evidence",
+      subtitle: "Only numeric, governed ledger values are plotted.",
+      data: {
+        type: "horizontal-bar",
+        data: numericRows,
+        xKey: "ledger",
+        yKey: "valueUsd",
+        unit: "USD",
+        note:
+          "Chart excludes ledgers without a governed numeric value rather than rendering them as zero.",
+      },
+      builder: "inlineChart",
+      xKey: "ledger",
+      yKey: "valueUsd",
+      unit: "USD",
+      sourceNote:
+        "Numeric values come from Source optimization ledger rows for the selected contract.",
+      citationIds: [ledgerCitationId],
+    });
+  }
+
+  const evidenceReadyCount = lines.filter((line) =>
+    /quantified|validated|evidenced/i.test(`${line.state} ${line.evidenceClass}`),
+  ).length;
+  const gapCount = lines.filter((line) =>
+    /missing|needs evidence|not established/i.test(`${line.state} ${line.evidenceClass}`),
+  ).length;
+  const quantified = numericRows.length;
+
+  return {
+    directAnswer:
+      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) is ready for an evidence-led optimization conversation when the ledger rows below are visible: ${quantified} ledger line(s) carry governed numeric values, ${evidenceReadyCount} line(s) are evidence-ready, and ${gapCount} line(s) still require explicit workflow or evidence if shown. ` +
+      `The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
+    artifacts,
+    citations,
+    factsUsed: [
+      {
+        id: "selected-contract",
+        label: "Selected contract",
+        value: `${contract.contractId} ${contract.vendorName}`,
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "contract-scope-summary",
+        label: "Scope summary",
+        value: contract.scopeSummary,
+        citationIds: [contractCitationId],
+      },
+    ],
+    metricsUsed: [
+      {
+        id: "annual-value",
+        label: "Annual contract value",
+        value: contract.annualValueUsd ?? "Not established",
+        unit: contract.annualValueUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "actual-annual-spend",
+        label: "Actual annual spend",
+        value: contract.actualAnnualSpendUsd ?? "Not established",
+        unit: contract.actualAnnualSpendUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+    ],
+    relationshipsUsed: connections.map((connection) => ({
+      id: connection.id,
+      label: `${connection.sourceSystem} feeds ${connection.ledgers.join(", ") || "contract evidence"}`,
+      fromLabel: connection.sourceSystem,
+      toLabel: "Four-ledger optimization evidence",
+      relationshipType: "feeds_evidence",
+      citationIds: [graphCitationId],
+    })),
+    caveats: [
+      {
+        id: "outside-in-boundary",
+        label: "Outside-in boundary",
+        detail:
+          "Industry context is pattern guidance only. It cannot create recoverable leakage, avoided cost, negotiated improvement, or realized value without governed evidence.",
+      },
+      ...(numericRows.length < 2
+        ? [
+            {
+              id: "chart-evidence-threshold",
+              label: "Chart threshold",
+              detail:
+                "A ledger chart was withheld because fewer than two governed numeric ledger values are available.",
+            },
+          ]
+        : []),
+    ],
+    nextSteps: [
+      {
+        id: "door1",
+        label: "Open Door 1 with the current evidence pack",
+        rationale:
+          "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and value proof.",
+        targetSurface: "source",
+      },
+    ],
+  };
+}
