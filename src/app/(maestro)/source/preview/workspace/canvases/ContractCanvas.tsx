@@ -42,7 +42,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               <div style={{ fontSize: 14.5, fontWeight: 600, color: '#0a0a0b', marginBottom: 8 }}>{vm.recAction}</div>
               <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.6, marginBottom: 14 }}>{vm.recWhy}</div>
               <button onClick={vm.goActions} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Review Door 1 optimization →
+                Review contract optimization →
               </button>
             </div>
           </div>
@@ -440,7 +440,7 @@ function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
       ) : (
         <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '14px 16px', background: '#fbfaf7', fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
-          No missing evidence lines remain. Door 1 can proceed using the currently governed ledger, subject to human approval.
+          No missing evidence lines remain. Contract optimization can proceed using the currently governed ledger, subject to human approval.
         </div>
       )}
     </div>

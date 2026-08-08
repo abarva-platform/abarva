@@ -72,7 +72,7 @@ export function WorkspaceClient({
       })
       .then((payload) => {
         if (payload.contractId !== contractId) {
-          throw new Error('Door 1 returned a different contract. The workflow was not opened.');
+          throw new Error('Contract optimization returned a different contract. The workflow was not opened.');
         }
         window.location.href = payload.approvalUrl ?? payload.eventUrl ?? `/source/events/${payload.eventId ?? ''}`;
       })

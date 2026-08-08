@@ -69,8 +69,8 @@ export function IntakeCompletionFooter({
         </span>
       </div>
 
-      <details style={FACTS_DETAILS}>
-        <summary style={FACTS_SUMMARY}>Captured facts checklist</summary>
+      <details open style={FACTS_DETAILS}>
+        <summary style={FACTS_SUMMARY}>Minimum approval packet</summary>
         <div style={FACTS_GRID}>
           {capturedFacts.map((fact) => (
             <div key={fact.id} style={FACT_ROW}>

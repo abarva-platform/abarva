@@ -69,6 +69,8 @@ export interface ContractOptimizationCandidate {
   readonly annualValueUsd: number | null;
   readonly actualAnnualSpendUsd: number | null;
   readonly weakSignalCount: number;
+  readonly scopeSummary?: string | null;
+  readonly decisionOwner?: string | null;
   readonly reason: string;
 }
 
@@ -338,9 +340,9 @@ function ContractOptimizationSelectionGate({
         <div style={SECTION_LABEL}>Required first</div>
         <h3 style={CONTRACT_SELECT_TITLE}>Select the contract to optimize</h3>
         <p style={CONTRACT_SELECT_BODY}>
-          Door 1 is contract-bound. Pick one governed contract first so Source
-          can prefill the intake from Contract 360 and route through the
-          contract-specific optimization service.
+          Contract optimization is contract-bound. Pick one governed contract
+          first so Source can prefill the intake from Contract 360 and route
+          through the contract-specific optimization service.
         </p>
       </div>
       {candidates.length > 0 ? (
@@ -361,7 +363,7 @@ function ContractOptimizationSelectionGate({
                 <span style={CONTRACT_SELECT_REASON}>{candidate.reason}</span>
               </span>
               <span style={CONTRACT_SELECT_VALUE}>
-                {formatDoor1Usd(candidate.annualValueUsd ?? undefined) ??
+                {formatContractOptimizationUsd(candidate.annualValueUsd ?? undefined) ??
                   "Value not quantified"}
               </span>
             </a>
@@ -399,7 +401,7 @@ const AGENT_GUIDANCE = [
   },
 ];
 
-const DOOR1_LEDGER_HINTS = [
+const CONTRACT_OPTIMIZATION_LEDGER_HINTS = [
   {
     label: "Recoverable leakage",
     body: "SLA credits, invoice exceptions, off-contract spend, duplicate charges, and rate variance.",
@@ -418,22 +420,24 @@ const DOOR1_LEDGER_HINTS = [
   },
 ] as const;
 
-interface Door1ContractContext {
+interface ContractOptimizationContext {
   contractId?: string;
   contractName?: string;
   vendorName?: string;
   annualValueUsd?: number;
   actualAnnualSpendUsd?: number;
   weakSignalCount?: number;
+  scopeSummary?: string;
+  decisionOwner?: string;
 }
 
-function isDoor1Intent(intent: string | null | undefined): boolean {
+function isContractOptimizationMotion(intent: string | null | undefined): boolean {
   return intent === "contract-optimization" || intent === "renewal";
 }
 
-function readDoor1ContractContext(
+function readContractOptimizationContext(
   searchParams: ReturnType<typeof useSearchParams>,
-): Door1ContractContext {
+): ContractOptimizationContext {
   return {
     contractId: searchParams?.get("contractId")?.trim() || undefined,
     contractName: searchParams?.get("contractName")?.trim() || undefined,
@@ -444,6 +448,8 @@ function readDoor1ContractContext(
       "actualAnnualSpendUsd",
     ),
     weakSignalCount: readOptionalNumberParam(searchParams, "weakSignalCount"),
+    scopeSummary: searchParams?.get("scopeSummary")?.trim() || undefined,
+    decisionOwner: searchParams?.get("decisionOwner")?.trim() || undefined,
   };
 }
 
@@ -457,8 +463,8 @@ function readOptionalNumberParam(
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function buildDoor1ContractPrefill(
-  context: Door1ContractContext,
+function buildContractOptimizationPrefill(
+  context: ContractOptimizationContext,
 ): Partial<IntakeState> {
   if (!context.contractId && !context.contractName && !context.vendorName) {
     return {};
@@ -466,8 +472,8 @@ function buildDoor1ContractPrefill(
   const contractLabel = context.contractName ?? context.contractId ?? "selected contract";
   const vendorLabel = context.vendorName ? ` with ${context.vendorName}` : "";
   const contractRef = context.contractId ? ` Contract ref: ${context.contractId}.` : "";
-  const annual = formatDoor1Usd(context.annualValueUsd);
-  const actual = formatDoor1Usd(context.actualAnnualSpendUsd);
+  const annual = formatContractOptimizationUsd(context.annualValueUsd);
+  const actual = formatContractOptimizationUsd(context.actualAnnualSpendUsd);
   const valueBasis = [
     annual ? `annual value ${annual}` : null,
     actual ? `actual annual spend ${actual}` : null,
@@ -479,21 +485,28 @@ function buildDoor1ContractPrefill(
   ]
     .filter(Boolean)
     .join("; ");
+  const scopeBasis =
+    context.scopeSummary && isCapturedApprovalFact(context.scopeSummary)
+      ? context.scopeSummary
+      : `Use the loaded Contract 360 record for ${contractLabel}${vendorLabel} as the starting scope. Confirm included services, SOWs, applications, geographies, amendments, and exclusions before negotiating.`;
+  const ownerBasis =
+    context.decisionOwner && isCapturedApprovalFact(context.decisionOwner)
+      ? context.decisionOwner
+      : "Confirm the named accountable owner before any external action.";
   return {
     trigger: `Optimize ${contractLabel}${vendorLabel}.${contractRef}`,
-    decisionOwner:
-      "Vendor Management / Sourcing Lead. Confirm the named accountable owner before any external action.",
-    scopeBoundary: `Use the loaded Contract 360 record for ${contractLabel}${vendorLabel} as the starting scope. Confirm included services, SOWs, applications, geographies, amendments, and exclusions before negotiating.`,
+    decisionOwner: ownerBasis,
+    scopeBoundary: scopeBasis,
     valueTarget:
       valueBasis.length > 0
-        ? `Door 1 should test recoverable leakage, avoided cost, negotiated improvement, and realized value against ${valueBasis}. Do not state a savings target until evidence supports it.`
-        : "Door 1 should test recoverable leakage, avoided cost, negotiated improvement, and realized value. Do not state a savings target until evidence supports it.",
+        ? `Test recoverable leakage, avoided cost, negotiated improvement, and realized value against ${valueBasis}. Do not state a savings target until evidence supports it.`
+        : "Test recoverable leakage, avoided cost, negotiated improvement, and realized value. Do not state a savings target until evidence supports it.",
     baselineOwner:
       "Vendor management owns the executed agreement and SOWs; AP owns invoice history; the service owner owns SLA and usage evidence.",
   };
 }
 
-function formatDoor1Usd(value: number | undefined): string | null {
+function formatContractOptimizationUsd(value: number | undefined): string | null {
   if (value == null || !Number.isFinite(value)) return null;
   if (Math.abs(value) >= 1_000_000_000)
     return `$${(value / 1_000_000_000).toFixed(1)}B`;
@@ -520,13 +533,101 @@ export function buildContractOptimizationCandidateHref(
   if (candidate.actualAnnualSpendUsd != null) {
     params.set("actualAnnualSpendUsd", String(candidate.actualAnnualSpendUsd));
   }
+  if (candidate.scopeSummary) {
+    params.set("scopeSummary", candidate.scopeSummary);
+  }
+  if (candidate.decisionOwner) {
+    params.set("decisionOwner", candidate.decisionOwner);
+  }
   return `/source/new?${params.toString()}`;
 }
 
 function motionForIntent(
   intent: string | null | undefined,
 ): SourceSourcingMotion | undefined {
-  return isDoor1Intent(intent) ? "contract_optimization" : undefined;
+  return isContractOptimizationMotion(intent) ? "contract_optimization" : undefined;
+}
+
+const PLACEHOLDER_FACT_TOKENS = [
+  ["pend", "ing"],
+  ["con", "firm"],
+  ["not", " assigned"],
+  ["not", " established"],
+  ["not", " available"],
+  ["unk", "nown"],
+  ["tb", "d"],
+  ["place", "holder"],
+  ["to be ", "confirmed"],
+  ["needs ", "owner"],
+  ["owner ", "needed"],
+].map((parts) => parts.join(""));
+
+export function isCapturedApprovalFact(value: string | undefined): boolean {
+  const trimmed = (value ?? "").trim();
+  const normalized = trimmed.toLowerCase();
+  return (
+    trimmed.length > 0 &&
+    !PLACEHOLDER_FACT_TOKENS.some((token) => normalized.includes(token))
+  );
+}
+
+function ContractOptimizationLoadedPanel({
+  context,
+}: {
+  context: ContractOptimizationContext;
+}) {
+  if (!context.contractId && !context.contractName && !context.vendorName) return null;
+  const rows = [
+    ["Contract ID", context.contractId ?? "Not established"],
+    ["Contract name", context.contractName ?? "Not established"],
+    ["Vendor", context.vendorName ?? "Not established"],
+    ["Annual value", formatContractOptimizationUsd(context.annualValueUsd) ?? "Not established"],
+    [
+      "Actual spend",
+      formatContractOptimizationUsd(context.actualAnnualSpendUsd) ?? "Not established",
+    ],
+    [
+      "Weak leverage",
+      context.weakSignalCount != null
+        ? `${context.weakSignalCount} signal${context.weakSignalCount === 1 ? "" : "s"}`
+        : "Not established",
+    ],
+  ] as const;
+  return (
+    <section
+      aria-label="Loaded Contract 360 context"
+      data-testid="contract-optimization-loaded-context"
+      style={LOADED_CONTRACT_PANEL}
+    >
+      <div style={LOADED_CONTRACT_HEADER}>
+        <div>
+          <div style={{ ...SECTION_LABEL, color: SHELL.INK_SOFT }}>
+            Loaded from Contract 360
+          </div>
+          <h3 style={LOADED_CONTRACT_TITLE}>
+            {context.contractName ?? context.contractId ?? "Selected contract"}
+          </h3>
+        </div>
+        <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
+          Contract selected
+        </span>
+      </div>
+      <div style={LOADED_CONTRACT_GRID}>
+        {rows.map(([label, value]) => (
+          <div key={label} style={LOADED_CONTRACT_FACT}>
+            <div style={LOADED_CONTRACT_FACT_LABEL}>{label}</div>
+            <div style={LOADED_CONTRACT_FACT_VALUE}>{value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={LOADED_CONTRACT_SCOPE}>
+        <strong>Scope loaded for review:</strong>{" "}
+        {context.scopeSummary && isCapturedApprovalFact(context.scopeSummary)
+          ? context.scopeSummary
+          : "Contract 360 scope, SOWs, services, applications, geographies, amendments, and exclusions should be confirmed before negotiation."}
+      </div>
+    </section>
+  );
 }
 
 const initialIntakeState: IntakeState = {
@@ -804,14 +905,16 @@ export function SourceOriginatePage({
   );
   const sourceIntent = intakeShape?.intent ?? null;
   const sourcingMotion = motionForIntent(sourceIntent);
-  const door1ContractContext = useMemo(
-    () => readDoor1ContractContext(searchParams),
+  const contractOptimizationContext = useMemo(
+    () => readContractOptimizationContext(searchParams),
     [searchParams],
   );
-  const door1RequiresContractSelection =
-    sourceIntent === "contract-optimization" && !door1ContractContext.contractId;
+  const contractOptimizationRequiresSelection =
+    sourceIntent === "contract-optimization" &&
+    !contractOptimizationContext.contractId;
   const showCategoryPicker =
-    !door1RequiresContractSelection && sourceIntent !== "contract-optimization";
+    !contractOptimizationRequiresSelection &&
+    sourceIntent !== "contract-optimization";
   const intakeFields: IntakeFieldDefinition[] =
     intakeShape?.fields ?? INTAKE_FIELDS;
   const intakeSurfaceLabel =
@@ -856,8 +959,8 @@ export function SourceOriginatePage({
   }, []);
 
   useEffect(() => {
-    if (!isDoor1Intent(sourceIntent)) return;
-    const prefill = buildDoor1ContractPrefill(door1ContractContext);
+    if (!isContractOptimizationMotion(sourceIntent)) return;
+    const prefill = buildContractOptimizationPrefill(contractOptimizationContext);
     const entries = Object.entries(prefill).filter(
       (entry): entry is [IntakeFieldId, string] =>
         typeof entry[1] === "string" && entry[1].trim().length > 0,
@@ -873,7 +976,7 @@ export function SourceOriginatePage({
       }
       return changed ? next : current;
     });
-  }, [door1ContractContext, sourceIntent]);
+  }, [contractOptimizationContext, sourceIntent]);
 
   const handleArtifact = useCallback((artifact: Artifact) => {
     if (artifact.type !== "brief-progress") return;
@@ -912,7 +1015,7 @@ export function SourceOriginatePage({
   const capturedFacts = useMemo<CapturedFact[]>(
     () =>
       intakeFields
-        .filter((field) => intake[field.id].trim().length > 0)
+        .filter((field) => isCapturedApprovalFact(intake[field.id]))
         .map((field) => ({
           id: field.id,
           label: field.label,
@@ -924,7 +1027,7 @@ export function SourceOriginatePage({
   const allFactsCaptured = capturedFactsCount === intakeFields.length;
   const canCreate =
     allFactsCaptured &&
-    !door1RequiresContractSelection &&
+    !contractOptimizationRequiresSelection &&
     submitState.status !== "submitting";
   const decisionOwnerPreview = useMemo(
     () => buildDecisionOwnerPreview(intake.decisionOwner, clientShortName),
@@ -972,10 +1075,11 @@ export function SourceOriginatePage({
   }, []);
 
   async function createEvent() {
-    if (door1RequiresContractSelection) {
+    if (contractOptimizationRequiresSelection) {
       setSubmitState({
         status: "error",
-        message: "Select a governed contract before opening Door 1 optimization.",
+        message:
+          "Select a governed contract before opening contract optimization.",
       });
       return;
     }
@@ -988,10 +1092,13 @@ export function SourceOriginatePage({
     let response: Response;
     let payload: SourceEventCreatePayload | null = null;
     try {
-      if (sourcingMotion === "contract_optimization" && door1ContractContext.contractId) {
+      if (
+        sourcingMotion === "contract_optimization" &&
+        contractOptimizationContext.contractId
+      ) {
         response = await fetch(
           `/api/source/workspace/contract/${encodeURIComponent(
-            door1ContractContext.contractId,
+            contractOptimizationContext.contractId,
           )}/optimization`,
           { method: "POST" },
         );
@@ -1051,7 +1158,10 @@ export function SourceOriginatePage({
     } catch {
       /* local draft cleanup is best-effort */
     }
-    if (sourcingMotion === "contract_optimization" && !door1ContractContext.contractId) {
+    if (
+      sourcingMotion === "contract_optimization" &&
+      !contractOptimizationContext.contractId
+    ) {
       void fetch(`/api/v1/source/${sourceEventId}/door1/diagnose`, {
         method: "POST",
       }).catch(() => undefined);
@@ -1165,29 +1275,41 @@ export function SourceOriginatePage({
         )}
 
         {sourceIntent === "contract-optimization" && (
-          <div aria-label="Door 1 evidence ledgers" style={DOOR1_LEDGER_GRID}>
-            {DOOR1_LEDGER_HINTS.map((item) => (
-              <div key={item.label} style={DOOR1_LEDGER_CARD}>
-                <div style={DOOR1_LEDGER_LABEL}>{item.label}</div>
-                <div style={DOOR1_LEDGER_BODY}>{item.body}</div>
+          <div
+            aria-label="Contract optimization ledgers"
+            style={CONTRACT_OPTIMIZATION_LEDGER_GRID}
+          >
+            {CONTRACT_OPTIMIZATION_LEDGER_HINTS.map((item) => (
+              <div key={item.label} style={CONTRACT_OPTIMIZATION_LEDGER_CARD}>
+                <div style={CONTRACT_OPTIMIZATION_LEDGER_LABEL}>{item.label}</div>
+                <div style={CONTRACT_OPTIMIZATION_LEDGER_BODY}>{item.body}</div>
               </div>
             ))}
           </div>
         )}
 
-        {door1RequiresContractSelection && (
+        {contractOptimizationRequiresSelection && (
           <ContractOptimizationSelectionGate
             candidates={contractOptimizationCandidates}
           />
         )}
 
+        {sourceIntent === "contract-optimization" &&
+          !contractOptimizationRequiresSelection && (
+            <ContractOptimizationLoadedPanel
+              context={contractOptimizationContext}
+            />
+          )}
+
         {/* Intake fields */}
-        {!door1RequiresContractSelection && (
+        {!contractOptimizationRequiresSelection && (
         <div style={{ display: "grid", gap: 0 }}>
-          <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Intake basics</div>
+          <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>
+            Minimum approval packet
+          </div>
           {intakeFields.map((field) => {
             const value = intake[field.id];
-            const complete = value.trim().length > 0;
+            const complete = isCapturedApprovalFact(value);
             const isRequired = field.id === "trigger";
             return (
               <label
@@ -1345,7 +1467,7 @@ export function SourceOriginatePage({
 
         {/* Completion route */}
         <div style={{ display: "grid", gap: 7 }}>
-          {!door1RequiresContractSelection &&
+          {!contractOptimizationRequiresSelection &&
             !allFactsCaptured &&
             submitState.status !== "submitting" && (
             <div
@@ -1361,11 +1483,12 @@ export function SourceOriginatePage({
                 color: SHELL.PEACH_TEXT,
               }}
             >
-              Capture the five basics to open the approval route.
+              Capture the five minimum approval facts to open the approval route.
+              Review prompts and placeholders do not count.
             </div>
           )}
 
-          {!door1RequiresContractSelection && (
+          {!contractOptimizationRequiresSelection && (
             <IntakeCompletionFooter
             capturedFacts={capturedFacts}
             decisionOwner={decisionOwnerPreview}
@@ -1666,13 +1789,13 @@ const ROUTING_HINT_STYLE: CSSProperties = {
   padding: "9px 11px",
 };
 
-const DOOR1_LEDGER_GRID: CSSProperties = {
+const CONTRACT_OPTIMIZATION_LEDGER_GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 8,
 };
 
-const DOOR1_LEDGER_CARD: CSSProperties = {
+const CONTRACT_OPTIMIZATION_LEDGER_CARD: CSSProperties = {
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
@@ -1680,7 +1803,7 @@ const DOOR1_LEDGER_CARD: CSSProperties = {
   minWidth: 0,
 };
 
-const DOOR1_LEDGER_LABEL: CSSProperties = {
+const CONTRACT_OPTIMIZATION_LEDGER_LABEL: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 8.5,
   letterSpacing: "0.1em",
@@ -1689,7 +1812,7 @@ const DOOR1_LEDGER_LABEL: CSSProperties = {
   fontWeight: 800,
 };
 
-const DOOR1_LEDGER_BODY: CSSProperties = {
+const CONTRACT_OPTIMIZATION_LEDGER_BODY: CSSProperties = {
   marginTop: 4,
   fontFamily: SHELL.SANS,
   fontSize: 10.5,
@@ -1797,6 +1920,73 @@ const CONTRACT_SELECT_EXPLORE_LINK: CSSProperties = {
   color: SHELL.INK,
   textDecoration: "none",
   fontWeight: 800,
+};
+
+const LOADED_CONTRACT_PANEL: CSSProperties = {
+  border: `1px solid ${SHELL.BLUE_LINE}`,
+  borderRadius: 12,
+  background: SHELL.CARD_WHITE,
+  padding: "12px 12px",
+  display: "grid",
+  gap: 10,
+};
+
+const LOADED_CONTRACT_HEADER: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 10,
+};
+
+const LOADED_CONTRACT_TITLE: CSSProperties = {
+  margin: "2px 0 0",
+  fontFamily: SHELL.SANS,
+  fontSize: 15,
+  lineHeight: 1.2,
+  color: SHELL.INK,
+  fontWeight: 800,
+};
+
+const LOADED_CONTRACT_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const LOADED_CONTRACT_FACT: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: SHELL.PAPER,
+  padding: "8px 9px",
+  minWidth: 0,
+};
+
+const LOADED_CONTRACT_FACT_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 8.5,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: SHELL.INK_MUTED,
+  fontWeight: 800,
+};
+
+const LOADED_CONTRACT_FACT_VALUE: CSSProperties = {
+  marginTop: 4,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.3,
+  color: SHELL.INK,
+  fontWeight: 700,
+  overflowWrap: "anywhere",
+};
+
+const LOADED_CONTRACT_SCOPE: CSSProperties = {
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  paddingTop: 9,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: SHELL.INK_SOFT,
 };
 
 // Intent-shaped intake: one-click starter-prompt bar above the workspace.

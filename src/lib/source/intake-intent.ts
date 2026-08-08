@@ -148,14 +148,14 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
   },
   'contract-optimization': {
     intent: 'contract-optimization',
-    eyebrow: 'Door 1 · Contract optimization',
+    eyebrow: 'Contract optimization',
     heading: 'Optimize an existing contract',
     subhead:
       'Start with the incumbent contract, invoices, SLA evidence, and renewal economics. Source diagnoses leakage and builds a negotiation path before escalating to an RFP.',
     prefilledPrompt:
       'I want to optimize an existing contract. Help me diagnose leakage, quantify the recovery range, and prepare the negotiation path.',
     initialQuote:
-      'Door 1 is the fast contract-optimization path. Name the contract and baseline owners; I will keep this out of the RFP journey unless the evidence says rebid.',
+      'This is the fast contract-optimization path. Name the contract and baseline owners; I will keep this out of the RFP journey unless the evidence says rebid.',
     fields: [
       {
         id: 'trigger',
@@ -189,9 +189,9 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
       },
     ],
     routingHint: {
-      label: 'Door 1 Diagnose → Recover',
+      label: 'Diagnose → Recover',
       description:
-        'Creates a contract-optimization event with an explicit Door 1 motion, then runs the deterministic diagnose path when evidence is available.',
+        'Creates a contract-optimization event with an explicit incumbent-contract motion, then runs the deterministic diagnose path when evidence is available.',
     },
   },
   renewal: {

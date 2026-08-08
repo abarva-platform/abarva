@@ -202,7 +202,7 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
 
 function buildVm() {
   return new WorkspaceViewModel(
-    INITIAL_STATE,
+    structuredClone(INITIAL_STATE),
     () => undefined,
     PORTFOLIO,
     "Airline Demo",
@@ -235,6 +235,29 @@ describe("buildViewModel numeric coercion", () => {
     expect(String(optimizeNode?.onClick)).not.toContain(
       "window.location.href = '/source/new';",
     );
+  });
+
+  it("routes the selected-contract optimization cockpit through the reviewable intake URL", () => {
+    const vm = buildVm();
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.tabs.contract = "Optimization";
+    const built = buildViewModel(vm) as {
+      optCtaHref: string | null;
+      optCtaLabel: string;
+    };
+
+    expect(built.optCtaLabel).toBe("Start / continue optimization");
+    expect(built.optCtaHref).toContain(
+      "/source/new?intent=contract-optimization",
+    );
+    const url = new URL(built.optCtaHref!, "https://app.abarva.ai");
+    expect(url.searchParams.get("contractId")).toBe("c1");
+    expect(url.searchParams.get("contractName")).toBe("Default Contract");
+    expect(url.searchParams.get("vendorName")).toBe("Vendor One");
+    expect(url.searchParams.get("annualValueUsd")).toBe("50000000");
+    expect(url.searchParams.get("actualAnnualSpendUsd")).toBe("48000000");
+    expect(url.searchParams.get("weakSignalCount")).toBe("2");
+    expect(built.optCtaHref).not.toContain("/api/source/workspace");
   });
 
   it("sums explorer-tree badges without string-concatenating NUMERIC-as-string fields", () => {

@@ -109,11 +109,14 @@ describe('getSourceIntakeShape', () => {
     expect(shape.fields[0].label).toMatch(/contract/i);
   });
 
-  it('routes contract optimization toward Door 1 Diagnose to Recover', () => {
+  it('routes contract optimization toward Diagnose to Recover without retired UI wording', () => {
     const shape = getSourceIntakeShape('contract-optimization')!;
-    expect(shape.eyebrow).toMatch(/door 1/i);
+    expect(shape.eyebrow).toMatch(/contract optimization/i);
+    expect(shape.eyebrow).not.toMatch(/door 1/i);
     expect(shape.heading).toMatch(/optimize an existing contract/i);
     expect(shape.routingHint.label).toMatch(/diagnose/i);
+    expect(shape.routingHint.label).not.toMatch(/door 1/i);
+    expect(shape.initialQuote).not.toMatch(/door 1/i);
     expect(shape.subhead).not.toMatch(/\bRFP\b.*default/i);
   });
 
