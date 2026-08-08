@@ -82,6 +82,31 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                   What this contract covers
                 </div>
                 <div style={{ fontSize: 14, color: '#2c2c2a', lineHeight: 1.55, maxWidth: '92ch' }}>{c.scopeSummary}</div>
+                {c.businessFunctions.length || c.systemsServices.length ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, marginTop: 14 }}>
+                    {c.businessFunctions.length ? (
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#5f5e5a', marginBottom: 6 }}>Business functions</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {c.businessFunctions.map((item) => <span key={item} style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 5, padding: '5px 7px', fontSize: 11.5, color: '#2c2c2a', background: '#fbfaf7' }}>{item}</span>)}
+                        </div>
+                      </div>
+                    ) : null}
+                    {c.systemsServices.length ? (
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#5f5e5a', marginBottom: 6 }}>Systems and services</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {c.systemsServices.map((item) => <span key={item} style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 5, padding: '5px 7px', fontSize: 11.5, color: '#2c2c2a', background: '#fbfaf7' }}>{item}</span>)}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {c.overviewSource || c.refreshFrequency ? (
+                  <div style={{ fontSize: 11.8, color: '#888780', marginTop: 12 }}>
+                    Source: {c.overviewSource ?? 'contract evidence package'}{c.refreshFrequency ? ` · Refresh: ${c.refreshFrequency}` : ''}
+                  </div>
+                ) : null}
               </div>
               {vm.hasScope && vm.scopeTierCounts ? (
                 <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 6, padding: '10px 12px', minWidth: 170 }}>
@@ -104,8 +129,8 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
           {vm.hasScope ? (
             <DataTable
               title="Systems and services in scope"
-              note="These rows should describe the applications, services, products, functions, and run-cost elements the contract actually covers. Confidence stays visible where the source does not prove the link."
-              binding="source.contract_application_scope"
+              note={vm.hasEvidenceScope ? 'Loaded from the contract evidence package at contract-to-application/function grain.' : 'These rows describe applications, services, products, functions, and run-cost elements. Confidence stays visible where the source does not prove the link.'}
+              binding={vm.hasEvidenceScope ? 'source.golden_contract_application_scope' : 'source.contract_application_scope'}
               columns={vm.scopeCols}
               rows={vm.scopeRows}
             />
@@ -143,6 +168,15 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                 {vm.progRows.length} initiative dependency signal{vm.progRows.length === 1 ? '' : 's'} exist for this contract, but they are not contract scope. Load the scope schedule and product/service line items first; then dependencies can explain impact.
               </div>
             </div>
+          ) : null}
+          {vm.hasPricing ? (
+            <DataTable
+              title="Pricing and commercial line items"
+              note="These line items explain what makes up the annual contract value; they are not optimization savings by themselves."
+              binding="source.golden_contract_pricing_schedule"
+              columns={vm.pricingCols}
+              rows={vm.pricingRows}
+            />
           ) : null}
         </>
       ) : null}
@@ -695,6 +729,56 @@ function DetailPanel({ vm, kind }: { vm: SourceWorkspaceVM; kind: 'performance' 
   }
   const d = vm.detail;
   if (kind === 'performance') {
+    const evidencePerf = vm.evidencePerformance;
+    if (evidencePerf) {
+      const creditGap = Math.max(0, Number(evidencePerf.service_credits_earned_usd ?? 0) - Number(evidencePerf.service_credits_claimed_usd ?? 0));
+      const sevTotal = Number(evidencePerf.sev1_incidents ?? 0) + Number(evidencePerf.sev2_incidents ?? 0);
+      const period = evidencePerf.period_start && evidencePerf.period_end ? `${evidencePerf.period_start} to ${evidencePerf.period_end}` : `${evidencePerf.sla_months} monthly SLA rows`;
+      const sourceList = evidencePerf.source_systems.length ? evidencePerf.source_systems.join(' · ') : 'contract evidence package';
+      const card = (label: string, value: string, note: string, tone = '#0a0a0b') => (
+        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '14px 16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#5f5e5a', marginBottom: 6 }}>{label}</div>
+          <div style={{ fontSize: 22, lineHeight: 1.1, fontWeight: 900, color: tone, marginBottom: 7 }}>{value}</div>
+          <div style={{ fontSize: 12, color: '#5f5e5a', lineHeight: 1.4 }}>{note}</div>
+        </div>
+      );
+      return (
+        <>
+          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 20px' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#0a0a0b', lineHeight: 1.35, marginBottom: 6 }}>
+              Service, invoice, and finance evidence is loaded for this contract.
+            </div>
+            <div style={{ fontSize: 12.8, color: '#5f5e5a', lineHeight: 1.5, maxWidth: '96ch' }}>
+              {period}. Source systems: {sourceList}. This tab separates operating pressure, recoverable leakage, negotiated improvement, and finance-confirmed realized value.
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 12 }}>
+            {card('SLA service-credit gap', formatCurrency(creditGap), `${formatCurrency(evidencePerf.service_credits_earned_usd)} earned, ${formatCurrency(evidencePerf.service_credits_claimed_usd)} claimed, ${formatCurrency(evidencePerf.service_credits_received_usd)} received.`, '#1d9e75')}
+            {card('Invoice exceptions', formatCurrency(evidencePerf.invoice_exception_amount_usd), `${evidencePerf.invoice_exception_count} exception lines across ${evidencePerf.invoice_line_count} invoice lines.`, '#1d9e75')}
+            {card('Rate-card variance', formatCurrency(evidencePerf.rate_card_variance_usd), 'Separate from invoice exceptions so overbilling and rate-card issues do not get double-counted.', '#1d9e75')}
+            {card('Finance-confirmed value', formatCurrency(evidencePerf.realized_value_usd), 'Realized value only after finance confirmation; it is not the same as opportunity.', '#246b45')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 12 }}>
+            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 18px' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 9 }}>What performance tells us</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: '#2c2c2a', fontSize: 12.6, lineHeight: 1.55 }}>
+                <li>{sevTotal.toLocaleString('en-US')} Sev1/Sev2 observations create operating pressure, but incidents alone are not a savings claim.</li>
+                <li>{formatCurrency(evidencePerf.recoverable_leakage_usd)} is quantified recoverable leakage from SLA, invoice, and rate-card evidence.</li>
+                <li>{formatCurrency(evidencePerf.avoided_cost_usd)} avoided cost and {formatCurrency(evidencePerf.negotiated_improvement_usd)} negotiated improvement are tracked separately from realized value.</li>
+              </ul>
+            </div>
+            <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 18px' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 9 }}>What we still do not claim</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: '#5f5e5a', fontSize: 12.6, lineHeight: 1.55 }}>
+                <li>Actual spend below forecast is not automatically savings.</li>
+                <li>Addressable exposure is not realized value.</li>
+                <li>External use still needs review of the underlying source files and finance attestation.</li>
+              </ul>
+            </div>
+          </div>
+        </>
+      );
+    }
     const perf = d.operationalPerformance;
     const fin = d.financialExposure;
     const incidents = perf?.cloud_sev1_sev2_incidents ?? null;

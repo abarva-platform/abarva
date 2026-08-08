@@ -125,7 +125,7 @@ const SOURCE_CONNECTIONS: readonly ContractOptimizationSourceConnection[] = [
   },
   {
     id: 'finance_tower',
-    sourceSystem: 'Finance / FP&A / Tower value proof',
+    sourceSystem: 'Finance / FP&A / Tower value evidence',
     examples: ['Apptio', 'Anaplan', 'ERP GL', 'FP&A forecast model', 'AbarVa Tower'],
     extract: 'Baseline, target, actual, owner, attestation state, accepted value claim and caveats.',
     evidenceClasses: ['finance_value_confirmation', 'workforce', 'approved_agreement'],
@@ -331,7 +331,7 @@ function actionFor(score: number, reasons: readonly ContractOptimizationFitReaso
   if (reasons.some((reason) => reason.kind === 'decision_timing' && reason.tone === 'warning')) {
     return 'Stabilize decision rights, then run contract optimization with minimum evidence.';
   }
-  if (score >= 70) return 'Start contract optimization now: baseline, leakage diagnosis, levers, approval, value proof.';
+  if (score >= 70) return 'Start contract optimization now: baseline, leakage diagnosis, levers, approval, and finance value confirmation.';
   if (score >= 45) return 'Open contract optimization after loading the missing evidence pack.';
   if (score >= 25) return 'Keep on the sourcing agenda and enrich evidence before negotiation.';
   return 'Monitor; no current optimization case is established.';

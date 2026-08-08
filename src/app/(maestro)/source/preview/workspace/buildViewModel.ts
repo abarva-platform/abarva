@@ -26,6 +26,16 @@ const param = (key: string, value: string | number | null | undefined): string =
   const text = String(value).trim();
   return text.length > 0 ? '&' + key + '=' + encodeURIComponent(text) : '';
 };
+const textOrNull = (value: unknown): string | null => {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+};
+const splitList = (value: string | null | undefined): string[] =>
+  (value ?? '')
+    .split(/[;|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 const contractOptimizationIntakeHref = (contract: EnrichedContract): string =>
   '/source/new?intent=contract-optimization' +
   param('contractId', contract.row.contract_id) +
@@ -513,6 +523,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   // ── contract canvas ──
   const c = contract?.row ?? null;
+  const evidenceOverview = detail?.evidenceOverview ?? null;
+  const evidenceScope = detail?.evidenceScope ?? [];
+  const evidencePricing = detail?.evidencePricing ?? [];
+  const evidencePerformance = detail?.evidencePerformance ?? null;
   const cVm = c ? {
     id: c.contract_id, vendor: c.vendor_name, name: c.contract_name, cat: c.vendor_category ?? 'Unresolved',
     acv: money(c.annual_value), spend: money(c.actual_annual_spend), committed: money(c.total_committed_value),
@@ -524,7 +538,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     role: c.renewal_owner_ref ?? 'Not assigned',
     evidence: c.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + ' source confidence' : 'Not established',
     scopedApplicationCount: c.scoped_application_count ?? null,
-    scopeSummary: isReviewableContractScope(c.scope_summary) ? c.scope_summary : 'Contract scope has not been extracted yet. Load the executed agreement, SOW or order form scope schedule, and application/service ownership extract before treating scope coverage as known.',
+    scopeSummary: textOrNull(evidenceOverview?.contract_english_overview) ??
+      (isReviewableContractScope(c.scope_summary) ? c.scope_summary : 'Contract scope has not been extracted yet. Load the executed agreement, SOW or order form scope schedule, and application/service ownership extract before treating scope coverage as known.'),
+    businessFunctions: splitList(evidenceOverview?.business_functions_supported),
+    systemsServices: splitList(evidenceOverview?.systems_services_supported),
+    overviewSource: textOrNull(evidenceOverview?.source_system) ? `${evidenceOverview?.source_system}${evidenceOverview?.source_file_report ? ' · ' + evidenceOverview.source_file_report : ''}` : null,
+    refreshFrequency: evidenceOverview?.refresh_frequency ?? evidencePerformance?.refresh_frequency ?? null,
   } : null;
   const termRows = c ? ([
     ['Contract identifier', c.contract_id, 'contract_id'], ['Vendor category', c.vendor_category ?? 'Unresolved', 'vendor_category'],
@@ -539,12 +558,33 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     { label: 'Actual annual spend', value: money(c.actual_annual_spend), pct: c.annual_value ? ((c.actual_annual_spend ?? 0) / c.annual_value) * 100 : 0, color: '#3d6ea8' },
     { label: 'Contracted-to-actual variance', value: c.annual_value != null && c.actual_annual_spend != null ? money(c.annual_value - c.actual_annual_spend) : 'Not established', pct: c.annual_value && c.actual_annual_spend != null ? Math.max(0, ((c.annual_value - c.actual_annual_spend) / c.annual_value) * 100) : 0, color: COL.amber },
   ] : [];
-  const scopeRows: DataTableRow[] = c ? vm.scopeTiers(c.contract_id).unresolved.concat(vm.scopeTiers(c.contract_id).explicit, vm.scopeTiers(c.contract_id).vendorInferred).map((a) => ({ cells: [
+  const fallbackScopeRows: DataTableRow[] = c ? vm.scopeTiers(c.contract_id).unresolved.concat(vm.scopeTiers(c.contract_id).explicit, vm.scopeTiers(c.contract_id).vendorInferred).map((a) => ({ cells: [
     vm.cell(a.application_name, { weight: 600, wrap: true }), vm.cell(a.business_function ?? 'Not established', { color: '#5f5e5a' }), vm.cell(a.criticality ?? 'Not established', { align: 'center' }),
     vm.cell(a.lifecycle_state ?? 'Not established', { color: '#5f5e5a' }), vm.cell(a.hosting_model ?? 'Not established', { color: '#5f5e5a' }),
     vm.cell(a.annual_run_cost != null ? money(a.annual_run_cost) : 'Not established', { align: 'right', mono: true }), vm.cell(a.modernization_plan ?? 'Not established', {}),
   ] })) : [];
-  const scopeCols: DataTableColumn[] = [{ label: 'Application' }, { label: 'Business function' }, { label: 'Criticality', align: 'center' }, { label: 'Lifecycle' }, { label: 'Hosting' }, { label: 'Annual run cost', align: 'right' }, { label: 'Modernisation' }];
+  const evidenceScopeRows: DataTableRow[] = evidenceScope.map((a) => ({ cells: [
+    vm.cell(a.application_name ?? a.application_ref ?? 'Unspecified scope item', { weight: 700, wrap: true, sub: a.service_or_platform_component ?? undefined }),
+    vm.cell(a.business_function ?? 'Not established', { color: '#5f5e5a', wrap: true }),
+    vm.cell(a.criticality ?? 'Not established', { align: 'center' }),
+    vm.cell(a.annual_run_cost_usd != null ? money(numberFromDb(a.annual_run_cost_usd)) : 'Not established', { align: 'right', mono: true }),
+    vm.cell((a.relationship_method ?? 'evidence').replace(/_/g, ' '), { color: '#5f5e5a' }),
+    vm.cell(a.source_file_report ?? a.source_system ?? 'Not established', { color: '#5f5e5a', wrap: true }),
+  ] }));
+  const scopeRows = evidenceScopeRows.length ? evidenceScopeRows : fallbackScopeRows;
+  const scopeCols: DataTableColumn[] = evidenceScopeRows.length
+    ? [{ label: 'Scope item' }, { label: 'Function' }, { label: 'Criticality', align: 'center' }, { label: 'Annual run cost', align: 'right' }, { label: 'Evidence method' }, { label: 'Source' }]
+    : [{ label: 'Application' }, { label: 'Business function' }, { label: 'Criticality', align: 'center' }, { label: 'Lifecycle' }, { label: 'Hosting' }, { label: 'Annual run cost', align: 'right' }, { label: 'Modernisation' }];
+  const pricingRows: DataTableRow[] = evidencePricing.map((line) => ({ cells: [
+    vm.cell(line.line_item_description ?? line.sku_or_service_code ?? line.line_item_id ?? 'Pricing line', { weight: 700, wrap: true, sub: line.sku_or_service_code ?? undefined }),
+    vm.cell(line.spend_driver ?? 'Not established', { color: '#5f5e5a' }),
+    vm.cell(line.quantity_or_commitment != null ? String(line.quantity_or_commitment) : 'Not established', { align: 'right', mono: true }),
+    vm.cell(line.unit_of_measure ?? 'Not established', { color: '#5f5e5a' }),
+    vm.cell(line.unit_price_usd != null ? money(numberFromDb(line.unit_price_usd)) : 'Not established', { align: 'right', mono: true }),
+    vm.cell(line.annual_value_usd != null ? money(numberFromDb(line.annual_value_usd)) : 'Not established', { align: 'right', mono: true }),
+    vm.cell(line.source_file_report ?? line.evidence_source ?? 'Not established', { color: '#5f5e5a', wrap: true }),
+  ] }));
+  const pricingCols: DataTableColumn[] = [{ label: 'Commercial line' }, { label: 'Driver' }, { label: 'Qty', align: 'right' }, { label: 'Unit' }, { label: 'Unit price', align: 'right' }, { label: 'Annual value', align: 'right' }, { label: 'Source' }];
   const scopeTierCounts = c ? vm.scopeTiers(c.contract_id) : null;
 
   const weakFlags = contract ? (Object.keys(contract.leverage.weakSignals) as LeverageSignal[]).map((s) => ({
@@ -1015,7 +1055,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
     isContract: kind === 'contract' && !!contract, cTab: S.tabs.contract, c: cVm,
     cOverview: activeTab === 'Story', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRelationship: activeTab === 'Relationship', cRenewal: false, cLeverage: false, cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimize',
-    termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
+    termRows, econBars, scopeRows, scopeCols, pricingRows, pricingCols, hasScope: scopeRows.length > 0, hasEvidenceScope: evidenceScopeRows.length > 0, hasPricing: pricingRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
+    evidenceOverview, evidencePerformance,
     weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView,
     optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError, optCtaHref,
     startOptimization: optCtaHref ? () => { window.location.href = optCtaHref; } : () => undefined,

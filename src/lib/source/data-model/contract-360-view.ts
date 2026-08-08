@@ -21,6 +21,10 @@ import type {
   DocExtractionRow,
   SourceContract360Row,
   SourceContractApplicationScopeRow,
+  SourceContractEvidenceOverviewRow,
+  SourceContractEvidencePerformanceSummary,
+  SourceContractEvidencePricingRow,
+  SourceContractEvidenceScopeRow,
   SourceContractFinancialExposureRow,
   SourceContractInitiativeDependencyRow,
   SourceContractOperationalPerformanceRow,
@@ -41,6 +45,11 @@ export interface Contract360View {
   readonly docExtractions: readonly DocExtractionRow[];
   /** Shared four-ledger optimization evidence, if governed system/document rows exist. */
   readonly optimizationEvidence: ContractOptimizationEvidencePack | null;
+  /** Contract evidence detail package: source-system extracts at business grain. */
+  readonly evidenceOverview: SourceContractEvidenceOverviewRow | null;
+  readonly evidenceScope: readonly SourceContractEvidenceScopeRow[];
+  readonly evidencePricing: readonly SourceContractEvidencePricingRow[];
+  readonly evidencePerformance: SourceContractEvidencePerformanceSummary | null;
 }
 
 export interface BuildContract360ViewInput {
@@ -53,6 +62,10 @@ export interface BuildContract360ViewInput {
   readonly towerValueClaims: readonly TowerValueClaimRow[];
   readonly docExtractions?: readonly DocExtractionRow[];
   readonly optimizationEvidence?: ContractOptimizationEvidencePack | null;
+  readonly evidenceOverview?: SourceContractEvidenceOverviewRow | null;
+  readonly evidenceScope?: readonly SourceContractEvidenceScopeRow[];
+  readonly evidencePricing?: readonly SourceContractEvidencePricingRow[];
+  readonly evidencePerformance?: SourceContractEvidencePerformanceSummary | null;
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -70,6 +83,10 @@ export function buildContract360View(
     towerValueClaims,
     docExtractions = [],
     optimizationEvidence = null,
+    evidenceOverview = null,
+    evidenceScope = [],
+    evidencePricing = [],
+    evidencePerformance = null,
     explicitApplicationPairs,
   } = input;
 
@@ -97,6 +114,10 @@ export function buildContract360View(
       towerObservations.length > 0 || towerValueClaims.length > 0,
     docExtractions,
     optimizationEvidence,
+    evidenceOverview,
+    evidenceScope,
+    evidencePricing,
+    evidencePerformance,
   };
 }
 

@@ -189,6 +189,116 @@ export interface SourceContractOperationalPerformanceRow {
 }
 
 // ---------------------------------------------------------------------------
+// Contract evidence detail package
+//
+// These rows are loaded from source-system extracts at business grain for a
+// selected contract. The physical SkyHarbor canary tables currently use the
+// `source.golden_contract_*` prefix, but the shape below is deliberately
+// tenant-agnostic: every tenant can populate the same evidence classes from
+// its own CLM, ERP/AP, ITSM, usage, sourcing, and finance systems.
+// ---------------------------------------------------------------------------
+
+export interface SourceContractEvidenceOverviewRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string | null;
+  readonly contract_id: string;
+  readonly vendor_id: string | null;
+  readonly vendor_name: string | null;
+  readonly contract_name: string | null;
+  readonly contract_archetype: string | null;
+  readonly contract_english_overview: string | null;
+  readonly business_functions_supported: string | null;
+  readonly systems_services_supported: string | null;
+  readonly annual_value_usd: number | null;
+  readonly actual_annual_spend_usd: number | null;
+  readonly total_committed_value_usd: number | null;
+  readonly start_date: string | null;
+  readonly end_date: string | null;
+  readonly notice_deadline: string | null;
+  readonly notice_period_days: number | null;
+  readonly auto_renew: boolean | string | null;
+  readonly decision_owner_role_ref: string | null;
+  readonly source_system: string | null;
+  readonly source_system_examples: string | null;
+  readonly source_file_report: string | null;
+  readonly source_record_id: string | null;
+  readonly extraction_grain: string | null;
+  readonly refresh_frequency: string | null;
+  readonly review_status: string | null;
+}
+
+export interface SourceContractEvidenceScopeRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string | null;
+  readonly contract_id: string;
+  readonly vendor_id: string | null;
+  readonly vendor_name: string | null;
+  readonly application_ref: string | null;
+  readonly application_name: string | null;
+  readonly business_function: string | null;
+  readonly criticality: string | null;
+  readonly service_or_platform_component: string | null;
+  readonly annual_run_cost_usd: number | null;
+  readonly relationship_method: string | null;
+  readonly relationship_confidence: number | null;
+  readonly source_system: string | null;
+  readonly source_system_examples: string | null;
+  readonly source_record_id: string | null;
+  readonly source_file_report: string | null;
+  readonly extraction_grain: string | null;
+  readonly refresh_frequency: string | null;
+  readonly review_status: string | null;
+}
+
+export interface SourceContractEvidencePricingRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string | null;
+  readonly contract_id: string;
+  readonly vendor_id: string | null;
+  readonly vendor_name: string | null;
+  readonly line_item_id: string | null;
+  readonly sku_or_service_code: string | null;
+  readonly line_item_description: string | null;
+  readonly spend_driver: string | null;
+  readonly quantity_or_commitment: number | string | null;
+  readonly unit_of_measure: string | null;
+  readonly unit_price_usd: number | null;
+  readonly annual_value_usd: number | null;
+  readonly evidence_source: string | null;
+  readonly source_system: string | null;
+  readonly source_system_examples: string | null;
+  readonly source_record_id: string | null;
+  readonly source_file_report: string | null;
+  readonly extraction_grain: string | null;
+  readonly refresh_frequency: string | null;
+  readonly review_status: string | null;
+}
+
+export interface SourceContractEvidencePerformanceSummary {
+  readonly contract_id: string;
+  readonly dataset_version: string | null;
+  readonly period_start: string | null;
+  readonly period_end: string | null;
+  readonly sla_months: number;
+  readonly sev1_incidents: number;
+  readonly sev2_incidents: number;
+  readonly service_credits_earned_usd: number;
+  readonly service_credits_claimed_usd: number;
+  readonly service_credits_received_usd: number;
+  readonly invoice_line_count: number;
+  readonly invoice_exception_count: number;
+  readonly invoice_exception_amount_usd: number;
+  readonly rate_card_variance_usd: number;
+  readonly recoverable_leakage_usd: number;
+  readonly avoided_cost_usd: number;
+  readonly negotiated_improvement_usd: number;
+  readonly realized_value_usd: number;
+  readonly source_systems: readonly string[];
+  readonly refresh_frequency: string | null;
+  readonly review_status: string | null;
+}
+
+// ---------------------------------------------------------------------------
 // source.contract_initiative_dependency
 // ---------------------------------------------------------------------------
 
