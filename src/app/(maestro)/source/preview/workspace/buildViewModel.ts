@@ -148,7 +148,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const TABS: Record<string, string[]> = {
     portfolio: ['Home', 'Explore', 'Concentration & Leverage', 'Renewals'],
     vendor: ['Overview', 'Contracts', 'Dependencies', 'Opportunities'],
-    contract: ['Overview', 'Economics', 'Scope', 'Performance', 'Renewal', 'Leverage', 'Evidence', 'Optimization'],
+    contract: ['Story', 'Scope', 'Economics', 'Performance', 'Evidence', 'Optimize'],
     evidence: ['Coverage', 'Source systems', 'Contract documents', 'Conflicts', 'Missing evidence'],
   };
   const tabList = TABS[kind] || [];
@@ -800,8 +800,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     backColor: S.hi > 0 ? '#fff' : 'rgba(255,255,255,.28)', fwdColor: S.hi < S.hist.length - 1 ? '#fff' : 'rgba(255,255,255,.28)',
     collapseAll: () => vm.setState({ open: {} }),
     tree, crumbs, title, thesis, tabs,
-    headerActions: kind === 'contract' && contract && activeTab !== 'Optimization' ? [
-      { label: 'Review contract optimization', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimization') },
+    headerActions: kind === 'contract' && contract && activeTab !== 'Optimize' ? [
+      { label: 'Open optimize plan', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.setTab('contract', 'Optimize') },
     ] : kind === 'portfolio' ? [
       { label: 'Select a contract to optimize', bg: '#0a0a0b', fg: '#fff', border: '#0a0a0b', onClick: () => vm.select('contractList', 'weak') },
     ] : [],
@@ -812,7 +812,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'contracts', value: String(v4HasPortfolio ? v4Snapshot.executivePortfolio.contractCount : summary.contractCount) },
       { label: 'vendors', value: String(v4HasPortfolio ? v4Snapshot.contextCoverage.vendors : summary.vendorCount) },
       { label: 'in top-10 vendor concentration', value: pct(conc.topNShare(10)) },
-    ] : kind === 'contract' && activeTab === 'Optimization' && contract ? [
+    ] : kind === 'contract' && activeTab === 'Optimize' && contract ? [
       { label: 'annual value', value: money(contract.row.annual_value) },
       { label: 'recoverable leakage', value: optLedgerView?.quantifiedLeakage ?? 'Not quantified' },
       { label: 'realized value', value: optLedgerView?.realizedValue ?? 'Not established' },
@@ -820,7 +820,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ] : valueStrip.filter((v) => !v.missing).slice(0, 4).map((v) => ({ label: v.label, value: v.value })),
     compactRing: kind === 'portfolio' && activeTab === 'Explore'
       ? { label: 'category-clean', valueLabel: pct(categoryQuality.categoryCleanValuePct), pct01: Number.isFinite(categoryQuality.categoryCleanValuePct) ? categoryQuality.categoryCleanValuePct : 0, color: '#ba7517' }
-      : kind === 'contract' && activeTab === 'Optimization' && contract
+      : kind === 'contract' && activeTab === 'Optimize' && contract
       ? { label: 'leverage risk', valueLabel: contract.leverage.weakSignalCount + ' of 4 weak', pct01: contract.leverage.weakSignalCount / 4, color: contract.leverage.weakSignalCount >= 2 ? COL.red : COL.amber }
       : null,
     contextTableCols, contextTableRows,
@@ -849,12 +849,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     vendorStats, vendorContractRows, vendorComposition, vendorDependencyMap, vendorOpps, vendorHasOpps: vendorOpps.length > 0,
 
     isContract: kind === 'contract' && !!contract, cTab: S.tabs.contract, c: cVm,
-    cOverview: activeTab === 'Overview', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: activeTab === 'Renewal', cLeverage: activeTab === 'Leverage', cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimization',
+    cOverview: activeTab === 'Story', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRenewal: false, cLeverage: false, cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimize',
     termRows, econBars, scopeRows, scopeCols, hasScope: scopeRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
     weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView,
     optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError, optCtaHref,
     startOptimization: optCtaHref ? () => { window.location.href = optCtaHref; } : () => undefined,
-    goActions: () => vm.setTab('contract', 'Optimization'),
+    goActions: () => vm.setTab('contract', 'Optimize'),
     detailState, detail,
 
     isOpp: kind === 'opportunity' && !!opp, oppLevers, oppScenarios,

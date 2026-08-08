@@ -240,7 +240,7 @@ describe("buildViewModel numeric coercion", () => {
   it("routes the selected-contract optimization cockpit through the reviewable intake URL", () => {
     const vm = buildVm();
     vm.state.sel = { kind: "contract", id: "c1" };
-    vm.state.tabs.contract = "Optimization";
+    vm.state.tabs.contract = "Optimize";
     const built = buildViewModel(vm) as {
       optCtaHref: string | null;
       optCtaLabel: string;
@@ -421,7 +421,7 @@ describe("buildViewModel numeric coercion", () => {
             // Live-found bug (2026-08-04): a malformed/unresolved confidence
             // value from the data plane reached pct() as a non-numeric
             // string, and (v * 100).toFixed(1) rendered the literal text
-            // "NaN%" on the Contract 360 header strip and Optimization tab.
+            // "NaN%" on the Contract 360 header strip and Optimize tab.
             source_confidence: "unresolved" as unknown as number,
           }),
         ],

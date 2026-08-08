@@ -20,6 +20,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
           ) : null}
           <ContractActionStoryPanel vm={vm} />
+          <ContractJourneyGraph vm={vm} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'start' }}>
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
@@ -42,7 +43,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               <div style={{ fontSize: 14.5, fontWeight: 600, color: '#0a0a0b', marginBottom: 8 }}>{vm.recAction}</div>
               <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.6, marginBottom: 14 }}>{vm.recWhy}</div>
               <button onClick={vm.goActions} style={{ border: '1px solid #0a0a0b', background: '#0a0a0b', color: '#fff', borderRadius: 6, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Review contract optimization →
+                Open optimize plan
               </button>
             </div>
           </div>
@@ -121,7 +122,12 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
       ) : null}
 
       {vm.cPerformance ? <DetailPanel vm={vm} kind="performance" /> : null}
-      {vm.cEvidence ? <DetailPanel vm={vm} kind="evidence" /> : null}
+      {vm.cEvidence ? (
+        <>
+          <DetailPanel vm={vm} kind="evidence" />
+          <EvidenceLineageGraph vm={vm} />
+        </>
+      ) : null}
 
       {vm.cRenewal ? (
         <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '22px 26px' }}>
@@ -254,8 +260,6 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
           ) : null}
 
           <SourceSystemEvidenceMap vm={vm} />
-
-          <EvidenceLineageGraph vm={vm} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
             {vm.optLevers.map((l, i) => (
@@ -401,10 +405,90 @@ function StoryTile({ index, title, body }: { index: string; title: string; body:
   );
 }
 
+function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
+  const spine = vm.optSpine;
+  const ledger = vm.optLedger;
+  const contract = vm.contractRow;
+  if (!spine?.selected || !ledger || !contract) return null;
+
+  const readyLines = ledger.lines.filter((line) => line.state === 'Quantified' || line.state === 'Workflow required');
+  const gapLines = ledger.lines.filter((line) => line.state === 'Needs evidence' || line.evidenceClass === 'MISSING');
+  const sourceConnections = spine.sourceConnections.slice(0, 6);
+  const node = (x: number, y: number, w: number, h: number, label: string, sub: string, tone: string) => (
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx="8" fill="#fff" stroke={tone} strokeWidth="1.4" />
+      <text x={x + 14} y={y + 25} fontSize="13" fontWeight="800" fill="#0a0a0b">{label}</text>
+      <text x={x + 14} y={y + 45} fontSize="10.5" fill="#5f5e5a">{sub}</text>
+    </g>
+  );
+  const line = (x1: number, y1: number, x2: number, y2: number, tone = '#b4b2a9') => (
+    <path d={`M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`} fill="none" stroke={tone} strokeWidth="1.3" markerEnd="url(#arrow)" />
+  );
+
+  return (
+    <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#0a0a0b' }}>Contract relationship map</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Follow the contract from scope and systems to governed evidence, value ledgers, and the Door 1 decision.</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(520px,1.3fr) minmax(340px,.7fr)', gap: 0 }}>
+        <div style={{ minWidth: 0, padding: '14px 16px' }}>
+          <svg viewBox="0 0 940 250" role="img" aria-label="Contract journey relationship graph" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 z" fill="#9a9890" />
+              </marker>
+            </defs>
+            <rect x="0" y="0" width="940" height="250" rx="12" fill="#fbfaf7" />
+            {line(170, 82, 240, 58)}
+            {line(170, 118, 240, 155)}
+            {line(390, 58, 475, 86)}
+            {line(390, 155, 475, 126)}
+            {line(625, 105, 710, 105, '#1d9e75')}
+            {node(28, 70, 150, 70, 'Contract', contract.contract_id, '#0a0a0b')}
+            {node(240, 30, 150, 64, 'Scope', `${contract.scoped_application_count ?? 0} apps`, '#3d6ea8')}
+            {node(240, 128, 150, 64, 'Source files', `${sourceConnections.length} feeds`, '#ba7517')}
+            {node(475, 70, 150, 70, 'Value ledgers', `${readyLines.length} ready / ${gapLines.length} gaps`, gapLines.length ? '#ba7517' : '#1d9e75')}
+            {node(710, 70, 180, 70, 'Door 1 action', spine.selected.band, '#0a0a0b')}
+            {ledger.lines.slice(0, 5).map((item, i) => {
+              const x = 485 + i * 26;
+              const color = item.evidenceClass === 'MISSING' ? '#a32d2d' : item.state === 'Quantified' ? '#1d9e75' : '#ba7517';
+              return (
+                <g key={item.id}>
+                  <circle cx={x} cy="160" r="7" fill={color} />
+                  <text x={x - 4} y="184" fontSize="8.5" fill="#5f5e5a">{i + 1}</text>
+                </g>
+              );
+            })}
+            <text x="36" y="210" fontSize="10.5" fill="#5f5e5a">The graph shows relationship flow, not inferred value. Amounts come only from governed ledger rows.</text>
+          </svg>
+        </div>
+        <div style={{ borderLeft: '1px solid rgba(10,10,11,.1)', padding: '14px 16px', minWidth: 0 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 10 }}>
+            Source facts
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {sourceConnections.slice(0, 5).map((connection) => (
+              <div key={connection.id} style={{ border: '1px solid rgba(10,10,11,.09)', borderRadius: 6, padding: '9px 10px', background: '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 12.2, fontWeight: 800, color: '#0a0a0b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{connection.sourceSystem}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#888780', whiteSpace: 'nowrap' }}>{connection.ledgers.slice(0, 1).join('')}</span>
+                </div>
+                <div style={{ fontSize: 11.3, color: '#5f5e5a', lineHeight: 1.4, marginTop: 3 }}>{connection.extract}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   if (!spine) return null;
   const requirements = spine.missingEvidenceSources ?? [];
+  const sourceConnections = spine.sourceConnections ?? [];
   return (
     <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 22px' }}>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
@@ -413,11 +497,11 @@ function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
             How the evidence is sourced
           </div>
           <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5, maxWidth: 760 }}>
-            This contract only shows the feeds required for unresolved ledger lines. The full system catalogue stays behind the scenes; the user sees the extracts needed to move the decision.
+            This contract shows the governed feeds that establish the ledger, plus any remaining extracts needed to move the decision.
           </div>
         </div>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#5f5e5a' }}>
-          {requirements.length ? `${requirements.length} gap${requirements.length === 1 ? '' : 's'} to source` : 'No missing evidence gaps'}
+          {requirements.length ? `${requirements.length} gap${requirements.length === 1 ? '' : 's'} to source` : `${sourceConnections.length} governed feed${sourceConnections.length === 1 ? '' : 's'}`}
         </div>
       </div>
       {requirements.length ? (
@@ -439,8 +523,14 @@ function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
           ))}
         </div>
       ) : (
-        <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '14px 16px', background: '#fbfaf7', fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
-          No missing evidence lines remain. Contract optimization can proceed using the currently governed ledger, subject to human approval.
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 10 }}>
+          {sourceConnections.map((connection) => (
+            <div key={connection.id} style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: '#fbfaf7' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0a0a0b', marginBottom: 4 }}>{connection.sourceSystem}</div>
+              <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.45, marginBottom: 7 }}>{connection.extract}</div>
+              <div style={{ fontSize: 11.5, color: '#2c2c2a', lineHeight: 1.45 }}>{connection.outcome}</div>
+            </div>
+          ))}
         </div>
       )}
     </div>
