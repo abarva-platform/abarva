@@ -440,7 +440,7 @@ describe("Source answer engine", () => {
     expect(visiblePayload).not.toContain("RFP-R1,Transition");
   });
 
-  it("opens the Lakeshore sourcing event overview with executive business context", () => {
+  it("opens a tenant sourcing event overview without supplier-finalist placeholders", () => {
     const lakeshoreContext: SourceAgentContextBundle = {
       ...contextBundle,
       tenant: {
@@ -467,11 +467,11 @@ describe("Source answer engine", () => {
     });
 
     expect(answer?.answerText.split("\n")[0]).toBe(
-      "Lakeshore is preparing a 4-5 year, $15M-$20M shared-services AMS sourcing event covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support.",
+      "Lakeshore Shared Services AMS Sourcing Event is Lakeshore Holdings's governed Source event that should be interpreted through its loaded evidence, stage gates, and artifacts.",
     );
     expect(answer?.answerText).toContain("client-final RFP");
-    expect(answer?.answerText).toContain("Vendor A/B/C");
-    expect(answer?.answerText).not.toContain("is Lakeshore Holdings's");
+    expect(answer?.answerText).not.toContain("Vendor A/B/C");
+    expect(answer?.answerText).toContain("proposal evidence is loaded");
   });
 
   it("answers BAFO questions from vendor-specific instructions instead of generic current-state prose", () => {
@@ -988,7 +988,7 @@ describe("Source answer engine", () => {
     );
   });
 
-  it("answers Lakeshore event-overview questions before artifact-authority governance", () => {
+  it("answers event-overview questions before artifact-authority governance", () => {
     const contextWithLakeshoreEvent: SourceAgentContextBundle = {
       ...contextBundle,
       tenant: {
@@ -1036,10 +1036,44 @@ describe("Source answer engine", () => {
 
     expect(answer?.title).toBe("Source event overview answer");
     expect(answer?.answerText.split("\n")[0]).toBe(
-      "Lakeshore is preparing a 4-5 year, $15M-$20M shared-services AMS sourcing event covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support.",
+      "Lakeshore Shared Services AMS Sourcing Event is Lakeshore Holdings's governed Source event that should be interpreted through its loaded evidence, stage gates, and artifacts.",
     );
-    expect(answer?.answerText).toContain("Vendor A/B/C");
+    expect(answer?.answerText).not.toContain("Vendor A/B/C");
     expect(answer?.answerText).not.toContain("final RFP version of record");
+  });
+
+  it("does not unlock vendor-finalist fallback from standards-only context", () => {
+    const contextWithStandardsOnly: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        retrievedEvidence: [
+          {
+            id: "source-artifact-standard:d24_decision_brief",
+            segmentId: "artifact_standards",
+            recordId: "d24_decision_brief",
+            title: "D24 Decision Brief standard",
+            sourceType: "contextChunk",
+            sourceDoc: "Source artifact standards registry",
+            excerpt:
+              "Evaluation scorecard, decision brief, normalized vendor comparison, finalist recommendation, Vendor A, Vendor B, and Vendor C are standard sections when real supplier evidence exists.",
+            confidence: "high",
+            score: 100,
+          },
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "Which vendor should advance to BAFO?",
+      contextBundle: contextWithStandardsOnly,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).not.toBe("Evaluation scorecard answer");
+    expect(answer?.answerText).not.toContain("Advance Vendor A");
+    expect(answer?.answerText).not.toContain("Vendor C as a conditional");
+    expect(answer?.answerText).not.toContain("Vendor B as a price benchmark");
   });
 
   it("falls back to vendor advisory when Lakeshore evaluation artifacts are present but summary row titles are not", () => {

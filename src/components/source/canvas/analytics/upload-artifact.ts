@@ -169,6 +169,8 @@ export interface IngestFactsArgs {
   file: File;
   /** The template fact map this upload is parsed against, e.g. 'VOLUMETRICS_V1'. */
   templateCode: string;
+  /** Registry artifact id to stamp with the typed-fact parse outcome. */
+  artifactId?: string;
 }
 
 /**
@@ -186,6 +188,7 @@ export async function ingestSourceCanvasFacts(
   const formData = new FormData();
   formData.append('file', args.file, args.file.name);
   formData.append('templateCode', args.templateCode);
+  if (args.artifactId) formData.append('artifactId', args.artifactId);
 
   const href = `/api/v1/source/${encodeURIComponent(
     args.eventId,

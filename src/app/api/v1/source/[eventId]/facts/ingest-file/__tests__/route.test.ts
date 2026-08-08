@@ -32,7 +32,6 @@ const insertFacts = jest.fn(async (facts: unknown[]) => ({
   ok: true,
   data: { inserted: facts.length },
 }));
-
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
   tenancyErrorResponse: jest.fn(() =>
@@ -64,7 +63,14 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureReadFluentClient: jest.fn(() => fakeFluentClient()),
 }));
 
+jest.mock("@/lib/source/artifact-registry", () => ({
+  updateSourceArtifactProcessingState: jest.fn(async () => ({
+    id: "artifact-1",
+  })),
+}));
+
 import { POST } from "../route";
+import { updateSourceArtifactProcessingState } from "@/lib/source/artifact-registry";
 
 function fakeFluentClient() {
   return {
@@ -93,6 +99,7 @@ function fileRequest(args: {
   filename?: string;
   mimeType?: string;
   templateCode?: string | null;
+  artifactId?: string | null;
   omitFile?: boolean;
 }): import("next/server").NextRequest {
   const form = new FormData();
@@ -107,6 +114,9 @@ function fileRequest(args: {
   }
   if (args.templateCode !== null) {
     form.append("templateCode", args.templateCode ?? "VOLUMETRICS_V1");
+  }
+  if (args.artifactId !== undefined && args.artifactId !== null) {
+    form.append("artifactId", args.artifactId);
   }
   return {
     formData: async () => form,
@@ -148,6 +158,40 @@ describe("POST facts/ingest-file — happy path", () => {
     expect(json.unmappedColumns).toContain("Notes");
     expect(insertFacts).toHaveBeenCalledTimes(1);
   });
+
+  it("marks the uploaded artifact parsed only when typed facts are written", async () => {
+    const res = await POST(fileRequest({ artifactId: "artifact-1" }), ctx);
+    const json = (await res.json()) as { factsWritten: number };
+
+    expect(res.status).toBe(200);
+    expect(json.factsWritten).toBe(5);
+    expect(jest.mocked(updateSourceArtifactProcessingState)).toHaveBeenCalledWith({
+      artifactId: "artifact-1",
+      parseStatus: "parsed",
+      evidenceState: "parsed_uncited",
+      validatedBy: "person-1",
+    });
+  });
+
+  it("marks the uploaded artifact failed when the template writes zero typed facts", async () => {
+    const res = await POST(
+      fileRequest({
+        artifactId: "artifact-1",
+        csv: "metric,period,value,unit,source\nTickets,2026-07,10,count,test",
+      }),
+      ctx,
+    );
+    const json = (await res.json()) as { factsWritten: number };
+
+    expect(res.status).toBe(200);
+    expect(json.factsWritten).toBe(0);
+    expect(jest.mocked(updateSourceArtifactProcessingState)).toHaveBeenCalledWith({
+      artifactId: "artifact-1",
+      parseStatus: "failed",
+      evidenceState: "unparsed",
+      validatedBy: "person-1",
+    });
+  });
 });
 
 describe("POST facts/ingest-file — validation + fencing", () => {
@@ -174,6 +218,7 @@ describe("POST facts/ingest-file — validation + fencing", () => {
   it("returns 400 for an unparseable / unsupported file", async () => {
     const res = await POST(
       fileRequest({
+        artifactId: "artifact-1",
         csv: "not really tabular",
         filename: "notes.pdf",
         mimeType: "application/pdf",
@@ -184,6 +229,12 @@ describe("POST facts/ingest-file — validation + fencing", () => {
     const json = (await res.json()) as { error?: string };
     expect(json.error).toBe("unparseable_file");
     expect(insertFacts).not.toHaveBeenCalled();
+    expect(jest.mocked(updateSourceArtifactProcessingState)).toHaveBeenCalledWith({
+      artifactId: "artifact-1",
+      parseStatus: "failed",
+      evidenceState: "unparsed",
+      validatedBy: "person-1",
+    });
   });
 
   it("returns 404 when the event belongs to a different tenant", async () => {

@@ -19,6 +19,7 @@ import ExcelJS from "exceljs";
 import type { SourceEvidenceRequirement } from "@/lib/source/canonical-specs";
 import { templateFilenameTokenForRequirement } from "@/lib/source/canvas-substrate/upload-sync";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
+import { FACT_TEMPLATE_BY_REQUIREMENT_ID } from "@/lib/source/facts/template-requirements";
 import {
   SOURCE_XLSX,
   XLSX_CONTENT_TYPE,
@@ -39,13 +40,6 @@ export interface InputTemplateEventMeta {
   /** ISO timestamp; passed in so the generator stays deterministic/testable. */
   generatedAtIso: string;
 }
-
-const FACT_TEMPLATE_BY_REQUIREMENT_ID: Record<string, string> = {
-  "EVID-SRC-SCOPE-APP-INV": "APP_INVENTORY_V1",
-  "EVID-SRC-SCOPE-TICKET-HISTORY": "VOLUMETRICS_V1",
-  "EVID-SRC-RESP-PROPOSALS": "RESPONSE_COVERAGE_V1",
-  "EVID-SRC-PRICE-VENDOR-PRICING": "VENDOR_BIDS_V1",
-};
 
 /**
  * Per-requirement intake columns. Most requirements are narrative ("paste what

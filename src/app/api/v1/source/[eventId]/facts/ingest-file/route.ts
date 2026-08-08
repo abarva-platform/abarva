@@ -10,6 +10,7 @@
 // Multipart form fields:
 //   file          — the CSV / XLSX to parse (required)
 //   templateCode  — a code in TEMPLATE_FACT_MAPS (required)
+//   artifactId    — optional source_artifacts id to stamp with typed-parse state
 //
 // Response 200:
 //   { ok, eventId, templateCode, factsWritten, unmappedColumns, rejectedRows }
@@ -31,6 +32,7 @@ import {
   ingestTemplateUpload,
   ingestFailureStatus,
 } from "@/lib/source/facts/ingest/ingest-template-upload";
+import { updateSourceArtifactProcessingState } from "@/lib/source/artifact-registry";
 import {
   isWithinSourceArtifactSizeLimit,
   MAX_SOURCE_ARTIFACT_SIZE_BYTES,
@@ -41,6 +43,26 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 type RouteCtx = { params: Promise<{ eventId: string }> };
+
+async function markArtifactTypedParseState(args: {
+  artifactId: string | null;
+  factsWritten: number;
+  userId: string | null | undefined;
+}): Promise<void> {
+  if (!args.artifactId) return;
+  await updateSourceArtifactProcessingState({
+    artifactId: args.artifactId,
+    parseStatus: args.factsWritten > 0 ? "parsed" : "failed",
+    evidenceState:
+      args.factsWritten > 0 ? "parsed_uncited" : "unparsed",
+    validatedBy: args.userId ?? null,
+  }).catch((error) => {
+    console.warn(
+      "[POST /api/v1/source/:eventId/facts/ingest-file] artifact_parse_status_update_failed",
+      error instanceof Error ? error.message : String(error),
+    );
+  });
+}
 
 export async function POST(req: NextRequest, { params }: RouteCtx) {
   let tenancy;
@@ -120,6 +142,11 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       );
     }
     const file = fileEntry as File;
+    const artifactIdRaw = formData.get("artifactId");
+    const artifactId =
+      typeof artifactIdRaw === "string" && artifactIdRaw.trim().length > 0
+        ? artifactIdRaw.trim()
+        : null;
 
     if (!isWithinSourceArtifactSizeLimit(file.size)) {
       return Response.json(
@@ -142,6 +169,11 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
         mimeType: file.type,
       });
     } catch (parseError) {
+      await markArtifactTypedParseState({
+        artifactId,
+        factsWritten: 0,
+        userId: tenancy?.userId,
+      });
       return Response.json(
         {
           error: "unparseable_file",
@@ -161,11 +193,21 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       scope: { eventId, clientKey: effectiveClientKey },
     });
     if (!result.ok) {
+      await markArtifactTypedParseState({
+        artifactId,
+        factsWritten: 0,
+        userId: tenancy?.userId,
+      });
       return Response.json(
         { error: result.code, detail: result.detail },
         { status: ingestFailureStatus(result.code) },
       );
     }
+    await markArtifactTypedParseState({
+      artifactId,
+      factsWritten: result.factsWritten,
+      userId: tenancy?.userId,
+    });
 
     return Response.json({
       ok: true,
