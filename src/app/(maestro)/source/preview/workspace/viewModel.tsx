@@ -122,7 +122,7 @@ export interface WorkspaceState {
 
 export const INITIAL_STATE: WorkspaceState = {
   sel: { kind: 'portfolio', id: null },
-  tabs: { portfolio: 'Home', vendor: 'Overview', contract: 'Overview', evidence: 'Coverage' },
+  tabs: { portfolio: 'Home', vendor: 'Overview', contract: 'Story', evidence: 'Coverage' },
   portfolioLens: 'leverage',
   open: { exec: true, vendors: true, contracts: true, opps: false, ev: false, allVendors: false, allContracts: false },
   window: 180,

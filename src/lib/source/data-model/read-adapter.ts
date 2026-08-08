@@ -499,7 +499,7 @@ export async function getContractOptimizationEvidencePack(
       ),
     ]);
 
-  const golden = goldenRows[0];
+  const golden = goldenRows.find((row) => String(row.contract_id ?? "") === contractId);
   if (golden) {
     const documentRefs = arrayFromDb(golden.document_refs);
     const pageSpans = arrayFromDb(golden.page_spans);
