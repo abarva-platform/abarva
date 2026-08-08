@@ -26,6 +26,7 @@ import {
   RELATIONSHIP_METHOD_LABEL,
   type Contract360View,
 } from "@/lib/source/data-model/contract-360-view";
+import { isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 
 interface SourceContract360PageProps {
   view: Contract360View;
@@ -83,7 +84,7 @@ function Header({ contract }: { contract: Contract360View["contract"] }) {
     `&vendorName=${encodeURIComponent(contract.vendor_name)}` +
     valueParam("annualValueUsd", numberFromDb(contract.annual_value)) +
     valueParam("actualAnnualSpendUsd", numberFromDb(contract.actual_annual_spend)) +
-    textParam("scopeSummary", contract.scope_summary) +
+    textParam("scopeSummary", isReviewableContractScope(contract.scope_summary) ? contract.scope_summary : null) +
     textParam("decisionOwner", contract.renewal_owner_ref);
   return (
     <header style={HEADER_STYLE}>
@@ -94,7 +95,7 @@ function Header({ contract }: { contract: Contract360View["contract"] }) {
           {contract.vendor_name}
           {contract.vendor_category ? ` · ${contract.vendor_category}` : ""}
         </p>
-        {contract.scope_summary ? (
+        {isReviewableContractScope(contract.scope_summary) ? (
           <p style={SUBLINE_STYLE}>{contract.scope_summary}</p>
         ) : null}
       </div>

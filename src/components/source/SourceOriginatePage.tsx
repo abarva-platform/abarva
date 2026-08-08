@@ -29,6 +29,11 @@ import {
   parseSourceIntakeText,
 } from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
+import {
+  isCapturedApprovalFact,
+  isReviewableContractScope,
+} from "@/lib/source/contract-optimization-intake";
+export { isCapturedApprovalFact, isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
@@ -486,9 +491,9 @@ function buildContractOptimizationPrefill(
     .filter(Boolean)
     .join("; ");
   const scopeBasis =
-    context.scopeSummary && isCapturedApprovalFact(context.scopeSummary)
+    context.scopeSummary && isReviewableContractScope(context.scopeSummary)
       ? context.scopeSummary
-      : `Use the loaded Contract 360 record for ${contractLabel}${vendorLabel} as the starting scope. Confirm included services, SOWs, applications, geographies, amendments, and exclusions before negotiating.`;
+      : "Scope not loaded. Needs review before approval.";
   const ownerBasis =
     context.decisionOwner && isCapturedApprovalFact(context.decisionOwner)
       ? context.decisionOwner
@@ -533,8 +538,9 @@ export function buildContractOptimizationCandidateHref(
   if (candidate.actualAnnualSpendUsd != null) {
     params.set("actualAnnualSpendUsd", String(candidate.actualAnnualSpendUsd));
   }
-  if (candidate.scopeSummary) {
-    params.set("scopeSummary", candidate.scopeSummary);
+  const candidateScope = candidate.scopeSummary?.trim();
+  if (candidateScope && isReviewableContractScope(candidateScope)) {
+    params.set("scopeSummary", candidateScope);
   }
   if (candidate.decisionOwner) {
     params.set("decisionOwner", candidate.decisionOwner);
@@ -546,29 +552,6 @@ function motionForIntent(
   intent: string | null | undefined,
 ): SourceSourcingMotion | undefined {
   return isContractOptimizationMotion(intent) ? "contract_optimization" : undefined;
-}
-
-const PLACEHOLDER_FACT_TOKENS = [
-  ["pend", "ing"],
-  ["con", "firm"],
-  ["not", " assigned"],
-  ["not", " established"],
-  ["not", " available"],
-  ["unk", "nown"],
-  ["tb", "d"],
-  ["place", "holder"],
-  ["to be ", "confirmed"],
-  ["needs ", "owner"],
-  ["owner ", "needed"],
-].map((parts) => parts.join(""));
-
-export function isCapturedApprovalFact(value: string | undefined): boolean {
-  const trimmed = (value ?? "").trim();
-  const normalized = trimmed.toLowerCase();
-  return (
-    trimmed.length > 0 &&
-    !PLACEHOLDER_FACT_TOKENS.some((token) => normalized.includes(token))
-  );
 }
 
 function ContractOptimizationLoadedPanel({
@@ -621,10 +604,14 @@ function ContractOptimizationLoadedPanel({
         ))}
       </div>
       <div style={LOADED_CONTRACT_SCOPE}>
-        <strong>Scope loaded for review:</strong>{" "}
-        {context.scopeSummary && isCapturedApprovalFact(context.scopeSummary)
+        <strong>
+          {isReviewableContractScope(context.scopeSummary)
+            ? "Scope loaded for review:"
+            : "Scope not loaded:"}
+        </strong>{" "}
+        {context.scopeSummary && isReviewableContractScope(context.scopeSummary)
           ? context.scopeSummary
-          : "Contract 360 scope, SOWs, services, applications, geographies, amendments, and exclusions should be confirmed before negotiation."}
+          : "Needs review before approval. Contract 360 scope, SOWs, services, applications, geographies, amendments, and exclusions should be provided before negotiation."}
       </div>
     </section>
   );

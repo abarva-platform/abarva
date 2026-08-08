@@ -200,11 +200,11 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
   },
 };
 
-function buildVm() {
+function buildVm(overrides: Partial<SourceWorkspacePortfolioData> = {}) {
   return new WorkspaceViewModel(
     structuredClone(INITIAL_STATE),
     () => undefined,
-    PORTFOLIO,
+    { ...PORTFOLIO, ...overrides },
     "Airline Demo",
     () => undefined,
   );
@@ -259,6 +259,34 @@ describe("buildViewModel numeric coercion", () => {
     expect(url.searchParams.get("weakSignalCount")).toBe("2");
     expect(built.optCtaHref).not.toContain("/api/source/workspace");
     expect(JSON.stringify(built)).not.toContain("Door 1");
+  });
+
+  it("does not promote synthetic fallback scope into the selected-contract intake URL", () => {
+    const vm = buildVm({
+      contracts: [
+        contractRow({
+          contract_id: "c1",
+          vendor_ref: "vendor-one",
+          vendor_name: "Vendor One",
+          annual_value: "50000000.00" as unknown as number,
+          scope_summary:
+            "Fictional contract supporting airline technology services for Vendor One; annual value covers only the contract-backed portion of FY2027 vendor spend.",
+        }),
+      ],
+    });
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.tabs.contract = "Optimization";
+    const built = buildViewModel(vm) as {
+      optCtaHref: string | null;
+      scopeSummary: string;
+    };
+
+    expect(built.optCtaHref).toContain(
+      "/source/new?intent=contract-optimization",
+    );
+    expect(built.optCtaHref).not.toContain("scopeSummary=");
+    expect(built.optCtaHref).not.toContain("Fictional");
+    expect(built.scopeSummary).toBe("Scope not loaded");
   });
 
   it("sums explorer-tree badges without string-concatenating NUMERIC-as-string fields", () => {
