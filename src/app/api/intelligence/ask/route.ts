@@ -340,6 +340,121 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           );
         }
         if (blockRetiredFacts({})) return;
+        if (
+          canBuildSourceWorkspaceVisualAnswer({
+            query,
+            surfaceContext,
+          })
+        ) {
+          const sourceVisualAnswer = buildSourceWorkspaceVisualAnswer({
+            query,
+            surfaceContext: surfaceContext as AskSurfaceContext,
+          });
+          if (sourceVisualAnswer) {
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "context-summary",
+                }) + "\n",
+              ),
+            );
+            const agentAnswer = composeAvaAnswer({
+              surface: "source",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: "source_contract_visual",
+              status: "answered",
+              directAnswer: sourceVisualAnswer.directAnswer,
+              factsUsed: sourceVisualAnswer.factsUsed,
+              metricsUsed: sourceVisualAnswer.metricsUsed,
+              relationshipsUsed: sourceVisualAnswer.relationshipsUsed,
+              artifacts: sourceVisualAnswer.artifacts,
+              citations: sourceVisualAnswer.citations,
+              caveats: [
+                ...sourceVisualAnswer.caveats,
+                {
+                  id: "validated-source-visuals",
+                  label: "Structured Source visuals",
+                  detail:
+                    "Tables, charts, and graphs are rendered from the selected contract context instead of model-authored chart instructions.",
+                },
+              ],
+              nextSteps: sourceVisualAnswer.nextSteps,
+              corpusUsed: sourceVisualAnswer.citations.some(
+                (citation) => citation.sourceClass !== "tenant-fact",
+              )
+                ? [
+                    {
+                      id: "outside-in-sourcing-pattern",
+                      label: "Outside-in sourcing pattern",
+                    },
+                  ]
+                : [],
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: sourceVisualAnswer.citations.length,
+                hasTenantFacts: sourceVisualAnswer.citations.some(
+                  (citation) => citation.sourceClass === "tenant-fact",
+                ),
+                hasCorpus: sourceVisualAnswer.citations.some(
+                  (citation) => citation.sourceClass !== "tenant-fact",
+                ),
+                hasExperts: false,
+              },
+            });
+            const guardedAgentAnswer = applyProductTruthToAvaAnswer(
+              agentAnswer,
+              productTruthContext({
+                surface: "source",
+                groundingParts: [surfaceContext, sourceVisualAnswer],
+              }),
+            );
+            if (
+              blockRetiredFacts({
+                textBlocks: [
+                  {
+                    location: "route.source_visual.agent_answer",
+                    text: JSON.stringify(guardedAgentAnswer),
+                  },
+                ],
+              })
+            )
+              return;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "agent-answer",
+                  answer: guardedAgentAnswer,
+                }) + "\n",
+              ),
+            );
+            const event = recordIntelligenceTelemetry({
+              startedAt,
+              tenantId,
+              instanceId:
+                memory?.sessionId ??
+                memory?.tabId ??
+                requestedOrSurfaceClient ??
+                "source-visual-ask",
+              patternId: "source-contract-visual-answer",
+              citationCount: sourceVisualAnswer.citations.length,
+            });
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "done",
+                  telemetryEventId: event.id,
+                }) + "\n",
+              ),
+            );
+            return;
+          }
+        }
         if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
           const homeTenant = sessionTenant ?? tenant;
           const homeTenantAliases =

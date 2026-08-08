@@ -415,6 +415,116 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.queryByText("F12 IT budget")).not.toBeInTheDocument();
   });
 
+  it("renders Source contract ledger tables charts and relationship graphs", () => {
+    const answer: AvaAnswerPacket = {
+      surface: "source",
+      mode: "ANALYZE",
+      tenantKey: "skyharbor_global",
+      question: "Show a contract table chart and relationship graph.",
+      intent: "source_contract_visual",
+      status: "answered",
+      directAnswer:
+        "The selected contract has governed values for the optimization ledgers; outside-in sourcing patterns remain advisory.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      artifacts: [
+        {
+          artifact: "table",
+          id: "source-contract-four-ledger-table",
+          title: "Four-ledger Contract Evidence",
+          columns: [
+            { key: "ledger", label: "Ledger" },
+            { key: "value", label: "Value", format: "currency" },
+            { key: "state", label: "State" },
+          ],
+          rows: [
+            {
+              ledger: "Recoverable leakage",
+              value: 1_301_000,
+              state: "System evidenced",
+            },
+            {
+              ledger: "Avoided cost",
+              value: 2_420_000,
+              state: "Workflow required",
+            },
+          ],
+          citationIds: ["c1"],
+        },
+        {
+          artifact: "chart",
+          id: "source-contract-ledger-value-chart",
+          kind: "horizontal-bar",
+          title: "Optimization Ledgers With Quantified Evidence",
+          xKey: "ledger",
+          yKey: "valueUsd",
+          unit: "USD",
+          builder: "inlineChart",
+          data: {
+            type: "horizontal-bar",
+            xKey: "ledger",
+            yKey: "valueUsd",
+            unit: "USD",
+            data: [
+              { ledger: "Recoverable leakage", valueUsd: 1_301_000 },
+              { ledger: "Avoided cost", valueUsd: 2_420_000 },
+            ],
+          },
+          citationIds: ["c1"],
+        },
+        {
+          artifact: "graph",
+          id: "source-contract-evidence-relationship-graph",
+          title: "Contract Evidence Relationship",
+          nodes: [
+            { id: "contract", label: "Selected contract", kind: "contract" },
+            { id: "source", label: "AP / ERP", kind: "source system" },
+            { id: "ledger", label: "Four ledgers", kind: "ledger" },
+          ],
+          edges: [
+            { from: "source", to: "ledger", label: "feeds evidence" },
+            { from: "contract", to: "ledger", label: "anchors values" },
+          ],
+          citationIds: ["c1"],
+        },
+      ],
+      citations,
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "high",
+        evidenceStrength: "strong",
+        tenantGrounding: "complete",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
+    };
+
+    const { container } = render(<AgentAnswerRenderer answer={answer} />);
+
+    expect(screen.getByText("Decision Table")).toBeInTheDocument();
+    expect(screen.getByText("Four-ledger Contract Evidence")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(
+      screen.getByText("Optimization Ledgers With Quantified Evidence"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        "[data-chart-renderer='recharts'][data-chart-kind='horizontal-bar']",
+      ),
+    ).not.toBeNull();
+    expect(screen.getByText("Relationship View")).toBeInTheDocument();
+    expect(screen.getByText("Contract Evidence Relationship")).toBeInTheDocument();
+    expect(screen.getByLabelText("Contract Evidence Relationship")).toBeInTheDocument();
+  });
+
   it("renders attribution and sources without persona-pack controls when no typed exhibits are present", () => {
     const answer: AvaAnswerPacket = {
       surface: "intelligence",
