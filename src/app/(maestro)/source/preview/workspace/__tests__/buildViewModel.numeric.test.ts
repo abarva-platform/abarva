@@ -328,6 +328,36 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.isOpps).toBe(false);
   });
 
+  it("keeps contract relationship as its own detail tab", () => {
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        sel: { kind: "contract", id: "c1" },
+      },
+      () => undefined,
+      PORTFOLIO,
+      "SkyHarbor Global",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      tabs: Array<{ label: string }>;
+      cOverview: boolean;
+      cRelationship: boolean;
+    };
+
+    expect(built.tabs.map((tab) => tab.label)).toEqual([
+      "Story",
+      "Scope",
+      "Economics",
+      "Performance",
+      "Relationship",
+      "Evidence",
+      "Optimize",
+    ]);
+    expect(built.cOverview).toBe(true);
+    expect(built.cRelationship).toBe(false);
+  });
+
   it("uses real vendor names in the explorer instead of category buckets", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as {
@@ -426,10 +456,19 @@ describe("buildViewModel numeric coercion", () => {
 
   it("sums the leverage quadrant panel without string-concatenation", () => {
     const vm = buildVm();
-    const built = buildViewModel(vm) as { quadPanel: Array<{ value: string }> };
+    const built = buildViewModel(vm) as {
+      quadPanel: Array<{ value: string }>;
+      leverageRowsTitle: string;
+      leverageRows: Array<{ cells: Array<{ text: unknown }> }>;
+    };
     for (const q of built.quadPanel) {
       assertPlausibleMoney(q.value, q.value);
     }
+    expect(built.leverageRowsTitle).toBe("Two-or-more weak leverage signals — contract register");
+    expect(built.leverageRows).toHaveLength(3);
+    expect(built.leverageRows[0]?.cells.map((cell) => cell.text)).toEqual(
+      expect.arrayContaining(["Vendor One", "c1", "$50.0M", "2 of 4"]),
+    );
   });
 
   it("never renders 'NaN%' for a non-finite source_confidence — falls back to an honest gap", () => {
