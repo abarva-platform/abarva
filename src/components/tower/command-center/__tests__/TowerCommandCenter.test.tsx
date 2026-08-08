@@ -114,13 +114,16 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Finance validated but blocked"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Programs missing proof")).toBeInTheDocument();
-    expect(screen.getByText("Material source conflicts")).toBeInTheDocument();
-    expect(screen.getByText("aVa synthesis strip")).toBeInTheDocument();
+    expect(screen.getByText("Adoption evidence")).toBeInTheDocument();
+    expect(screen.getByText("Read model scope")).toBeInTheDocument();
+    expect(screen.getByText(/programs in scope/i)).toBeInTheDocument();
+    expect(screen.getByText(/with adoption evidence/i)).toBeInTheDocument();
     expect(screen.getByText("Where value gets stopped")).toBeInTheDocument();
     expect(screen.getByText("Portfolio decision matrix")).toBeInTheDocument();
-    expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
-    expect(screen.getByText("Source trust rail")).toBeInTheDocument();
+    expect(screen.queryByText("Proof gate summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("aVa synthesis strip")).not.toBeInTheDocument();
+    expect(screen.queryByText("Evidence-owner queue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Source trust rail")).not.toBeInTheDocument();
     expect(
       screen.getAllByText(formatUsdM(view.summary.claimableUsd)).length,
     ).toBeGreaterThan(0);
