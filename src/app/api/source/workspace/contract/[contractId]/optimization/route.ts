@@ -15,6 +15,7 @@ import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetyp
 import type { SourceCategoryId } from '@/lib/source/taxonomy/category-taxonomy';
 import { readEventFactMap } from '@/lib/source/door1/facts-reader';
 import { runSourceOptimization } from '@/lib/source/door1/optimize';
+import { withGovernedOpportunityFinding } from '@/lib/source/door1/governed-opportunity-diagnosis';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -101,8 +102,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   const financialExposureRows = await listContractFinancialExposure(clientKey).catch(() => []);
   const financialExposure = financialExposureRows.find((row) => row.contract_id === contract.contract_id) ?? null;
 
-  const existing = await findExistingOptimizationEvent(clientKey, contract, selectedOpportunity?.opportunityId ?? null);
-  const event = existing ?? await createOptimizationEvent({
+  const eventInput = {
     clientKey,
     userId: tenancy.userId,
     contractId: contract.contract_id,
@@ -115,7 +115,14 @@ export async function POST(request: Request, { params }: RouteContext) {
     selectedOpportunity,
     baselineHeadline: opportunitySet?.baseline.headline ?? null,
     baselineDetail: opportunitySet?.baseline.detail ?? null,
-  });
+  };
+  const existing = await findExistingOptimizationEvent(clientKey, contract, selectedOpportunity?.opportunityId ?? null);
+  const event = existing
+    ? await refreshExistingOptimizationEvent({
+        event: existing,
+        input: eventInput,
+      })
+    : await createOptimizationEvent(eventInput);
   if (!optimizationEventMatchesContract(event, contract, selectedOpportunity?.opportunityId ?? null)) {
     return NextResponse.json(
       {
@@ -139,7 +146,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     totalCommittedValue: financialExposure?.total_committed_value ?? contract.total_committed_value,
   });
 
-  const diagnosis = await diagnoseIfReady(event, clientKey);
+  const diagnosis = await diagnoseIfReady(event, clientKey, selectedOpportunity);
 
   return NextResponse.json(
     {
@@ -244,6 +251,33 @@ async function createOptimizationEvent(input: {
     }
   }
   return event;
+}
+
+async function refreshExistingOptimizationEvent(input: {
+  readonly event: SourceEventRow;
+  readonly input: Parameters<typeof createOptimizationEvent>[0];
+}): Promise<SourceEventRow> {
+  const update = {
+    event_name: optimizationEventName(input.input),
+    trigger_description: optimizationTriggerDescription(input.input),
+    decision_owner: input.input.renewalOwnerRef ?? 'Vendor Management / Sourcing Lead',
+    scope_description: optimizationScopeDescription(input.input),
+    estimated_value_usd: input.input.selectedOpportunity?.amountUsd ?? null,
+    updated_at: new Date().toISOString(),
+  };
+  const supabase = getAzureWriteFluentClient();
+  const { data, error } = await supabase
+    .from('source_events')
+    .update(update)
+    .eq('id', input.event.id)
+    .eq('client_key', input.event.client_key)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return ((data as SourceEventRow | null) ?? {
+    ...input.event,
+    ...update,
+  }) as SourceEventRow;
 }
 
 async function readRequestedOpportunityId(request: Request): Promise<string | null> {
@@ -433,7 +467,11 @@ function pushNumericFact(
   });
 }
 
-async function diagnoseIfReady(event: SourceEventRow, clientKey: string) {
+async function diagnoseIfReady(
+  event: SourceEventRow,
+  clientKey: string,
+  selectedOpportunity: ContractOptimizationOpportunity | null,
+) {
   const resolution = resolveArchetypeForEvent({
     categoryId: (event.classified_category as SourceCategoryId | null) ?? null,
     eventType: event.event_type,
@@ -446,11 +484,18 @@ async function diagnoseIfReady(event: SourceEventRow, clientKey: string) {
     };
   }
   const facts = await readEventFactMap({ eventId: event.id, clientKey });
-  const optimization = runSourceOptimization({
-    eventId: event.id,
-    archetype: resolution.archetype,
-    facts,
+  const optimization = withGovernedOpportunityFinding({
+    optimization: runSourceOptimization({
+      eventId: event.id,
+      archetype: resolution.archetype,
+      facts,
+    }),
+    opportunity: selectedOpportunity,
   });
+  const usedGovernedOpportunity =
+    optimization.diagnosis.findings.length > 0 &&
+    selectedOpportunity != null &&
+    optimization.diagnosis.findings[0]?.ruleKey === selectedOpportunity.opportunityId;
   return {
     ok: true,
     archetypeId: optimization.archetypeId,
@@ -460,6 +505,18 @@ async function diagnoseIfReady(event: SourceEventRow, clientKey: string) {
     recoverableLow: optimization.bridge.recoverableLow,
     recoverableHigh: optimization.bridge.recoverableHigh,
     playKind: optimization.play.kind,
+    source: usedGovernedOpportunity
+      ? 'governed_source_opportunity'
+      : 'source_event_facts',
+    selectedOpportunityFinding: usedGovernedOpportunity
+      ? {
+          opportunityId: selectedOpportunity.opportunityId,
+          label: selectedOpportunity.label,
+          amountUsd: selectedOpportunity.amountUsd,
+          stage: selectedOpportunity.stage,
+          evidenceGrade: selectedOpportunity.evidenceGrade,
+        }
+      : null,
   };
 }
 

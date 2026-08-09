@@ -137,7 +137,20 @@ describe("buildContractOptimizationOpportunitySet", () => {
         },
       ],
       poRows: [],
-      rateRows: [],
+      rateRows: [
+        {
+          contract_id: "CTR-090",
+          rate_card_line_id: "RATE-1",
+          labor_or_service_role: "Salesforce data engineer",
+          contract_rate_usd_per_hour: 172,
+          billed_rate_usd_per_hour: 190,
+          hours_last_12_months: 25,
+          rate_variance_usd: 450,
+          amendment_reference: "No rate-card amendment found",
+          source_record_id: "rate-1",
+          source_system: "VMS / rate card",
+        },
+      ],
       slaRows: [
         {
           contract_id: "CTR-090",
@@ -185,6 +198,7 @@ describe("buildContractOptimizationOpportunitySet", () => {
           "Finance confirmed realized value for approved prior recovery.",
         value_claim_id: "claim-090",
         tower_claim_refs: "tower-claim-1",
+        confirmation_date: "2026-03-31",
       },
       pdfClauseRows: [
         {
@@ -209,7 +223,7 @@ describe("buildContractOptimizationOpportunitySet", () => {
     expect(set).not.toBeNull();
     expect(set?.baseline.status).toBe("ready");
     expect(set?.selectedOpportunityId).toBe("CTR-090:rate-variance");
-    expect(set?.potentialRecoverableUsd).toBe(3_950);
+    expect(set?.potentialRecoverableUsd).toBe(4_400);
     expect(set?.potentialAvoidableUsd).toBe(3_000);
     expect(set?.potentialNegotiableUsd).toBe(1_200);
     expect(set?.financeConfirmedUsd).toBe(700);
@@ -255,10 +269,27 @@ describe("buildContractOptimizationOpportunitySet", () => {
         "source.contract_pdf_clause_extractions",
       ]),
     );
+    const vmsRateCard = set?.opportunities.find(
+      (item) => item.opportunityId === "CTR-090:vms-rate-card-variance",
+    );
+    expect(vmsRateCard).toMatchObject({
+      label: "VMS labor rate-card variance",
+      amountUsd: 450,
+      stage: "quantified",
+      valueType: "recoverable_leakage",
+      approvalState: "requires_vms_rate_exception_review",
+    });
+    expect(vmsRateCard?.calculation).toMatchObject({
+      ruleId: "source.contract_optimization.vms_rate_card_variance.v1",
+      calculatedAmountUsd: 450,
+      eligibleQuantity: 25,
+      includedLineCount: 1,
+    });
     expect(set?.financeRealizations[0]).toMatchObject({
       realizationId: "claim-090",
       amountUsd: 700,
       linkedOpportunityIds: expect.arrayContaining(["CTR-090:rate-variance"]),
+      confirmationDate: "2026-02-28",
     });
   });
 
