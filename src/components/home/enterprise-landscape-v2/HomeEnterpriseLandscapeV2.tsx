@@ -201,19 +201,9 @@ function ArchitectureFlowMap({
 }: {
   model: HomeEnterpriseLandscapeV2Model;
 }) {
-  const layerByTitle = new Map(
-    model.architectureLayers.map((layer) => [layer.title, layer]),
+  const controlLayer = model.architectureLayers.find(
+    (layer) => layer.title === "Core-system action and proof gates",
   );
-  const sourceLayer = layerByTitle.get("Applications and core systems");
-  const integrationLayer = layerByTitle.get(
-    "Integration, ETL, and event movement",
-  );
-  const storageLayer = layerByTitle.get("Storage, EDW, and data marts");
-  const consumptionLayer = layerByTitle.get(
-    "Consumption and decision surfaces",
-  );
-  const agentLayer = layerByTitle.get("AI agents and copilots");
-  const controlLayer = layerByTitle.get("Core-system action and proof gates");
 
   return (
     <section
@@ -235,24 +225,23 @@ function ArchitectureFlowMap({
           <g className={styles.miniDiagramBase}>
             <rect x="26" y="248" width="508" height="44" rx="7" />
             <SvgTextBlock
-              x={44}
-              y={274}
+              x={46}
+              y={267}
               lines={[
                 "Sources",
-                sourceLayer?.examples.slice(0, 4).join(" · ") ?? "",
+                "Ops Control · Crew · MRO",
+                "Booking · Loyalty · Cargo",
               ]}
               className={styles.miniLabel}
             />
             <rect x="42" y="182" width="120" height="44" rx="7" />
             <SvgTextBlock
               x={102}
-              y={201}
-              lines={[
-                "Integration",
-                integrationLayer?.examples.slice(1, 4).join(" · ") ?? "",
-              ]}
+              y={196}
+              lines={["Integration", "Event · API · ETL", "Kafka · MQ"]}
               className={styles.miniCenterText}
               textAnchor="middle"
+              lineHeight={12}
             />
             <rect x="204" y="162" width="150" height="82" rx="12" />
             <SvgTextBlock
@@ -260,8 +249,8 @@ function ArchitectureFlowMap({
               y={185}
               lines={[
                 "Governed platform",
-                "Raw → processed → aggregated",
-                storageLayer?.examples.slice(0, 2).join(" + ") ?? "",
+                "Raw → curated → aggregate",
+                "Teradata EDW · marts",
               ]}
               className={styles.miniCenterText}
               textAnchor="middle"
@@ -269,24 +258,20 @@ function ArchitectureFlowMap({
             <rect x="392" y="182" width="120" height="44" rx="7" />
             <SvgTextBlock
               x={452}
-              y={201}
-              lines={[
-                "Consumption",
-                consumptionLayer?.examples.slice(0, 2).join(" + ") ?? "",
-              ]}
+              y={198}
+              lines={["Consumption", "BI · analytics", "Power BI · Tableau"]}
               className={styles.miniCenterText}
               textAnchor="middle"
+              lineHeight={12}
             />
             <rect x="354" y="70" width="142" height="58" rx="8" />
             <SvgTextBlock
               x={425}
               y={94}
-              lines={[
-                "AI agents",
-                agentLayer?.examples.slice(0, 2).join(" + ") ?? "",
-              ]}
+              lines={["AI agents", "copilot · assist", "governed loopback"]}
               className={styles.miniCenterText}
               textAnchor="middle"
+              lineHeight={12}
             />
             <rect x="56" y="70" width="216" height="48" rx="8" />
             <SvgTextBlock

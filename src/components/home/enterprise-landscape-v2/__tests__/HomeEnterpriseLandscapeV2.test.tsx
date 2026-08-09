@@ -87,8 +87,9 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   expect(screen.getByText("DB2 · MQ")).toBeInTheDocument();
   expect(screen.getByText("Private DC / mainframe")).toBeInTheDocument();
   expect(screen.getByText("Digital edge")).toBeInTheDocument();
-  expect(screen.getAllByText(/Teradata Vantage/).length).toBeGreaterThan(0);
-  expect(screen.getAllByText(/Power BI Copilot/).length).toBeGreaterThan(0);
+  expect(screen.getByText("Teradata EDW · marts")).toBeInTheDocument();
+  expect(screen.getByText("Power BI · Tableau")).toBeInTheDocument();
+  expect(screen.getByText("Ops Control · Crew · MRO")).toBeInTheDocument();
   expect(screen.getAllByText("Hybrid cloud").length).toBeGreaterThan(0);
   expect(
     screen.getByText("Resolve contradictory lifecycle states"),
