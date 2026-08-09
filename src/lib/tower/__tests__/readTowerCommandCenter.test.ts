@@ -3,17 +3,34 @@ import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-mod
 
 import { readTowerCommandCenter } from "../readTowerCommandCenter";
 
-jest.mock("@/lib/data-plane/azureRead", () => ({
-  azureRead: {
-    query: jest.fn(),
-  },
-}));
+jest.mock("@/lib/data-plane/azureRead", () => {
+  const query = jest.fn();
+  const withSession = jest.fn(async (fn) =>
+    fn((sql: string, params: unknown[]) => {
+      if (/set_config\('app\.tenant_key'/i.test(sql)) {
+        return Promise.resolve([]);
+      }
+      return query(sql, params);
+    }),
+  );
+
+  return {
+    azureRead: {
+      query,
+      withSession,
+    },
+  };
+});
 
 const query = azureRead.query as jest.MockedFunction<typeof azureRead.query>;
+const withSession = azureRead.withSession as jest.MockedFunction<
+  typeof azureRead.withSession
+>;
 
 describe("readTowerCommandCenter", () => {
   beforeEach(() => {
     query.mockReset();
+    withSession.mockClear();
   });
 
   it("fails closed for tenants that are not present in governed Tower consumption views", async () => {
@@ -25,6 +42,7 @@ describe("readTowerCommandCenter", () => {
 
     expect(result).toBeNull();
     expect(query).toHaveBeenCalledTimes(1);
+    expect(withSession).toHaveBeenCalledTimes(1);
     expect(String(query.mock.calls[0]?.[0])).toContain(
       "consumption.tower_board_posture_v1",
     );
@@ -295,6 +313,7 @@ describe("readTowerCommandCenter", () => {
     });
     const sqlText = query.mock.calls.map((call) => String(call[0])).join("\n");
 
+    expect(withSession).toHaveBeenCalledTimes(1);
     expect(sqlText).toMatch(/consumption\.tower_board_posture_v1/i);
     expect(sqlText).toMatch(/consumption\.tower_value_trajectory_v1/i);
     expect(sqlText).toMatch(/consumption\.tower_portfolio_decision_v1/i);

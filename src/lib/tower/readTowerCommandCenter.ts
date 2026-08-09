@@ -17,6 +17,11 @@ import type {
 
 type Numeric = string | number | null | undefined;
 type TowerDecisionLane = TowerMartProgramLane["decisionLane"];
+type TowerSqlQuery = <R = Record<string, unknown>>(
+  sql: string,
+  params?: readonly unknown[],
+  opts?: { missingTable?: "empty" | "throw" },
+) => Promise<R[]>;
 
 interface BoardPostureRow {
   command_center_key: string;
@@ -305,6 +310,37 @@ function decisionLane(value: string | null | undefined): TowerDecisionLane {
 
 function sourceFile(row: { source_file: string | null }): string | null {
   return nullableText(row.source_file);
+}
+
+function isMissingTableError(error: unknown): boolean {
+  const record = error as { code?: unknown; message?: unknown };
+  const code = typeof record?.code === "string" ? record.code : "";
+  const message =
+    typeof record?.message === "string" ? record.message : String(error ?? "");
+  return code === "42P01" || /relation .* does not exist/i.test(message);
+}
+
+async function withTowerTenantRead<T>(
+  tenantKey: string,
+  fn: (query: TowerSqlQuery) => Promise<T>,
+): Promise<T> {
+  return azureRead.withSession(async (run) => {
+    await run("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
+    const query: TowerSqlQuery = async (sql, params = [], opts = {}) => {
+      try {
+        return await run(sql, [...params]);
+      } catch (error) {
+        if (
+          (opts.missingTable ?? "throw") === "empty" &&
+          isMissingTableError(error)
+        ) {
+          return [];
+        }
+        throw error;
+      }
+    };
+    return fn(query);
+  });
 }
 
 function mapCommand(row: BoardPostureRow): TowerMartCommandCenter {
@@ -612,28 +648,29 @@ export async function readTowerCommandCenter(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
 }): Promise<TowerMartCommandViewModel | null> {
   for (const tenantKey of tenantCandidates(args.tenantKeyCandidates)) {
-    const [commandRow] = await azureRead.query<BoardPostureRow>(
-      `select *
+    const result = await withTowerTenantRead(tenantKey, async (query) => {
+      const [commandRow] = await query<BoardPostureRow>(
+        `select *
          from consumption.tower_board_posture_v1
         where tenant_key = $1
         order by refresh_timestamp desc nulls last
         limit 1`,
-      [tenantKey],
-      { missingTable: "empty" },
-    );
-    if (!commandRow) continue;
+        [tenantKey],
+        { missingTable: "empty" },
+      );
+      if (!commandRow) return null;
 
-    const [
-      valueFunnel,
-      valueTrajectory,
-      programLanes,
-      toolRows,
-      agentRows,
-      cxoActions,
-      evidence,
-    ] = await Promise.all([
-      azureRead.query<ValueFunnelRow>(
-        `with posture as (
+      const [
+        valueFunnel,
+        valueTrajectory,
+        programLanes,
+        toolRows,
+        agentRows,
+        cxoActions,
+        evidence,
+      ] = await Promise.all([
+        query<ValueFunnelRow>(
+          `with posture as (
              select *
                from consumption.tower_board_posture_v1
               where tenant_key = $1
@@ -735,112 +772,115 @@ export async function readTowerCommandCenter(args: {
              source_row
            from stages
            order by sequence`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-      azureRead.query<ValueTrajectoryRow>(
-        `select *
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+        query<ValueTrajectoryRow>(
+          `select *
              from consumption.tower_value_trajectory_v1
             where tenant_key = $1
               and scenario = 'forecast'
             order by period_start, value_case_id
             limit 1600`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-      azureRead.query<PortfolioDecisionRow>(
-        `select *
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+        query<PortfolioDecisionRow>(
+          `select *
              from consumption.tower_portfolio_decision_v1
             where tenant_key = $1
             order by amount_blocked desc nulls last, proof_maturity_score asc, program_name
             limit 80`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-      azureRead.query<AiPortfolioRow>(
-        `select *
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+        query<AiPortfolioRow>(
+          `select *
              from consumption.tower_tool_productivity_v1
             where tenant_key = $1
             order by ai_tagged_spend_usd desc nulls last, item_name
             limit 80`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-      azureRead.query<AiPortfolioRow>(
-        `select *
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+        query<AiPortfolioRow>(
+          `select *
              from consumption.tower_agent_outcome_v1
             where tenant_key = $1
             order by promised_value_usd desc nulls last, item_name
             limit 80`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-      azureRead.query<ActionQueueRow>(
-        `select *
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+        query<ActionQueueRow>(
+          `select *
              from consumption.tower_action_queue_v1
             where tenant_key = $1
             order by
               case priority when 'critical' then 0 when 'high' then 1 when 'medium' then 2 else 3 end,
               due_date nulls last,
               amount_exposed desc nulls last`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-      azureRead.query<SourceTrustRow>(
-        `select *
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+        query<SourceTrustRow>(
+          `select *
              from consumption.tower_source_trust_v1
             where tenant_key = $1
             order by
               case lineage_state when 'CONFLICT' then 0 when 'ABSENT' then 1 when 'ONE_SOURCE' then 2 else 3 end,
               surface_section,
               displayed_fact`,
-        [tenantKey],
-        { missingTable: "empty" },
-      ),
-    ]);
+          [tenantKey],
+          { missingTable: "empty" },
+        ),
+      ]);
 
-    const command = mapCommand(commandRow);
-    const aiPortfolio = [...toolRows, ...agentRows].map(mapAiItem);
-    const actions = cxoActions.map(mapAction);
-    const attributedSpendUsd = aiPortfolio.reduce(
-      (sum, row) => sum + row.aiTaggedSpendUsd,
-      0,
-    );
+      const command = mapCommand(commandRow);
+      const aiPortfolio = [...toolRows, ...agentRows].map(mapAiItem);
+      const actions = cxoActions.map(mapAction);
+      const attributedSpendUsd = aiPortfolio.reduce(
+        (sum, row) => sum + row.aiTaggedSpendUsd,
+        0,
+      );
 
-    const headline =
-      commandRow.promised_value_trust_state === "CONFLICT"
-        ? `${command.tenantName} Tower has visible investment and adoption signals, but benefit source authority is CONFLICT - authority unresolved. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
-        : command.promisedValueFy26 === null
-          ? `${command.tenantName} Tower separates investment from benefit: approved investment is visible, but no explicit promised benefit assertion is loaded. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
-          : command.executiveSummary;
+      const headline =
+        commandRow.promised_value_trust_state === "CONFLICT"
+          ? `${command.tenantName} Tower has visible investment and adoption signals, but benefit source authority is CONFLICT - authority unresolved. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
+          : command.promisedValueFy26 === null
+            ? `${command.tenantName} Tower separates investment from benefit: approved investment is visible, but no explicit promised benefit assertion is loaded. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
+            : command.executiveSummary;
 
-    return {
-      generatedFrom: "tower_schema",
-      headline,
-      command,
-      valueFunnel: valueFunnel.map(mapValueFunnel),
-      valueTrajectory: valueTrajectory.map(mapValueTrajectory),
-      programLanes: programLanes.map(mapProgramLane),
-      aiPortfolio,
-      aiPortfolioCounts: {
-        total: aiPortfolio.length,
-        candidate: aiPortfolio.filter(
-          (row) => row.itemKind === "candidate_opportunity",
-        ).length,
-        active: aiPortfolio.length,
-        funded: aiPortfolio.filter((row) => row.itemKind === "funded_program")
-          .length,
-        embeddedOrUsage: aiPortfolio.filter((row) =>
-          ["embedded_platform", "usage_benefit", "service_agent"].includes(
-            row.itemKind,
-          ),
-        ).length,
-        attributedSpendUsd,
-      },
-      cxoActions: actions,
-      evidenceLineage: evidence.map(mapEvidence),
-      requiredFieldGaps: gapsFromActions(cxoActions),
-    };
+      return {
+        generatedFrom: "tower_schema",
+        headline,
+        command,
+        valueFunnel: valueFunnel.map(mapValueFunnel),
+        valueTrajectory: valueTrajectory.map(mapValueTrajectory),
+        programLanes: programLanes.map(mapProgramLane),
+        aiPortfolio,
+        aiPortfolioCounts: {
+          total: aiPortfolio.length,
+          candidate: aiPortfolio.filter(
+            (row) => row.itemKind === "candidate_opportunity",
+          ).length,
+          active: aiPortfolio.length,
+          funded: aiPortfolio.filter((row) => row.itemKind === "funded_program")
+            .length,
+          embeddedOrUsage: aiPortfolio.filter((row) =>
+            ["embedded_platform", "usage_benefit", "service_agent"].includes(
+              row.itemKind,
+            ),
+          ).length,
+          attributedSpendUsd,
+        },
+        cxoActions: actions,
+        evidenceLineage: evidence.map(mapEvidence),
+        requiredFieldGaps: gapsFromActions(cxoActions),
+      };
+    });
+
+    if (result) return result;
   }
 
   return null;
