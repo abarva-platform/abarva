@@ -1,8 +1,3 @@
--- The Layer 5 canary typed tables are built by the private operator script,
--- not by ordinary shared migrations. Fresh migration replay still needs this
--- schema to exist so the Layer 6 read-grant migration is deterministic.
-CREATE SCHEMA IF NOT EXISTS foundation_v2_meridian_health_cube_canary;
-
 GRANT USAGE ON SCHEMA foundation_v2_meridian_health_cube_canary TO foundation_v2_meridian_health_demo_reader;
 GRANT USAGE ON SCHEMA foundation_v2_meridian_health_cube_canary TO foundation_v2_meridian_health_demo_writer;
 

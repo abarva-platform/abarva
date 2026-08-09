@@ -10,7 +10,6 @@ import {
   CartesianGrid,
   LabelList,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   XAxis,
@@ -26,6 +25,7 @@ import type {
 
 import { AI_KIND_HEX, AI_KIND_WORD } from "../primitives";
 import { ChartTooltip, HEX, scatterDatum, toM } from "./chart-kit";
+import { MeasuredChartFrame } from "./MeasuredChartFrame";
 
 interface BubblePoint {
   x: number;
@@ -102,99 +102,113 @@ export function AiBubbleMatrixChart({
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <ScatterChart margin={{ top: 12, right: 16, left: 2, bottom: 20 }}>
-        <CartesianGrid stroke={HEX.border} />
-        <XAxis
-          type="number"
-          dataKey="x"
-          domain={[0, 100]}
-          name="Readiness"
-          tick={{
-            fontSize: 9.5,
-            fill: HEX.gray300,
-            fontFamily: "var(--abarva-mono)",
-          }}
-          axisLine={{ stroke: HEX.borderStrong }}
-          tickLine={false}
-          label={{
-            value: "Readiness →",
-            position: "bottom",
-            offset: 6,
-            style: {
-              fontFamily: "var(--abarva-mono)",
+    <MeasuredChartFrame minHeight={220}>
+      {({ width, height }) => (
+        <ScatterChart
+          width={width}
+          height={height}
+          margin={{ top: 12, right: 16, left: 2, bottom: 20 }}
+        >
+          <CartesianGrid stroke={HEX.border} />
+          <XAxis
+            type="number"
+            dataKey="x"
+            domain={[0, 100]}
+            name="Readiness"
+            tick={{
               fontSize: 9.5,
-              fill: HEX.gray500,
-              letterSpacing: "0.04em",
-            },
-          }}
-        />
-        <YAxis
-          type="number"
-          dataKey="y"
-          domain={[0, 100]}
-          name="Value potential"
-          tick={{
-            fontSize: 9.5,
-            fill: HEX.gray300,
-            fontFamily: "var(--abarva-mono)",
-          }}
-          axisLine={false}
-          tickLine={false}
-          width={26}
-          label={{
-            value: "Value →",
-            angle: -90,
-            position: "insideLeft",
-            offset: 14,
-            style: {
+              fill: HEX.gray300,
               fontFamily: "var(--abarva-mono)",
-              fontSize: 9.5,
-              fill: HEX.gray500,
-              letterSpacing: "0.04em",
-            },
-          }}
-        />
-        <ZAxis
-          type="number"
-          dataKey="z"
-          range={sizeMode === "constant" ? [620, 620] : [120, 900]}
-          name={sizeMode === "constant" ? "Constant radius" : "AI spend"}
-        />
-        <ReferenceLine x={50} stroke={HEX.borderStrong} strokeDasharray="3 3" />
-        <ReferenceLine y={50} stroke={HEX.borderStrong} strokeDasharray="3 3" />
-        <ChartTooltip />
-        {[...byKind.entries()].map(([kind, points]) => (
-          <Scatter
-            key={kind}
-            name={AI_KIND_WORD[kind]}
-            data={points}
-            fill={AI_KIND_HEX[kind]}
-            fillOpacity={0.82}
-            stroke="#fff"
-            strokeWidth={2}
-            isAnimationActive={false}
-            style={{ cursor: "pointer" }}
-            onClick={(arg: unknown) => {
-              const point = scatterDatum<BubblePoint>(arg);
-              if (typeof point?.n === "number") onSelect(point.n);
             }}
-          >
-            <LabelList
-              dataKey="n"
-              position="center"
-              style={{
+            axisLine={{ stroke: HEX.borderStrong }}
+            tickLine={false}
+            label={{
+              value: "Readiness →",
+              position: "bottom",
+              offset: 6,
+              style: {
                 fontFamily: "var(--abarva-mono)",
-                fontSize: 11,
-                fontWeight: 700,
-                fill: "#fff",
-                pointerEvents: "none",
+                fontSize: 9.5,
+                fill: HEX.gray500,
+                letterSpacing: "0.04em",
+              },
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="y"
+            domain={[0, 100]}
+            name="Value potential"
+            tick={{
+              fontSize: 9.5,
+              fill: HEX.gray300,
+              fontFamily: "var(--abarva-mono)",
+            }}
+            axisLine={false}
+            tickLine={false}
+            width={26}
+            label={{
+              value: "Value →",
+              angle: -90,
+              position: "insideLeft",
+              offset: 14,
+              style: {
+                fontFamily: "var(--abarva-mono)",
+                fontSize: 9.5,
+                fill: HEX.gray500,
+                letterSpacing: "0.04em",
+              },
+            }}
+          />
+          <ZAxis
+            type="number"
+            dataKey="z"
+            range={sizeMode === "constant" ? [620, 620] : [120, 900]}
+            name={sizeMode === "constant" ? "Constant radius" : "AI spend"}
+          />
+          <ReferenceLine
+            x={50}
+            stroke={HEX.borderStrong}
+            strokeDasharray="3 3"
+          />
+          <ReferenceLine
+            y={50}
+            stroke={HEX.borderStrong}
+            strokeDasharray="3 3"
+          />
+          <ChartTooltip />
+          {[...byKind.entries()].map(([kind, points]) => (
+            <Scatter
+              key={kind}
+              name={AI_KIND_WORD[kind]}
+              data={points}
+              fill={AI_KIND_HEX[kind]}
+              fillOpacity={0.82}
+              stroke="#fff"
+              strokeWidth={2}
+              isAnimationActive={false}
+              style={{ cursor: "pointer" }}
+              onClick={(arg: unknown) => {
+                const point = scatterDatum<BubblePoint>(arg);
+                if (typeof point?.n === "number") onSelect(point.n);
               }}
-            />
-          </Scatter>
-        ))}
-      </ScatterChart>
-    </ResponsiveContainer>
+            >
+              <LabelList
+                dataKey="n"
+                position="center"
+                style={{
+                  fontFamily: "var(--abarva-mono)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  fill: "#fff",
+                  pointerEvents: "none",
+                }}
+              />
+            </Scatter>
+          ))}
+        </ScatterChart>
+      )}
+    </MeasuredChartFrame>
   );
 }
 
@@ -203,7 +217,7 @@ export function bubbleTextAlternative(
   items: readonly TowerAiView[],
   sizeMode: "spend" | "constant" = "spend",
 ): string {
-  if (items.length === 0) return "No AI initiatives to plot.";
+  if (items.length === 0) return "No AI capabilities to plot.";
   return items
     .map(
       (a) =>

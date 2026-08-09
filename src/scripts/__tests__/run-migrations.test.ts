@@ -18,7 +18,13 @@
  * auto-apply on production deploys.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -334,6 +340,19 @@ describe("run-migrations · computeFileSha256", () => {
 
   it("returns a 64-character hex string", () => {
     expect(computeFileSha256("anything")).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("seals the already-applied canary read-grant migration hash", () => {
+    const sql = readFileSync(
+      path.resolve(
+        process.cwd(),
+        "supabase/migrations/20260806162500_foundation_v2_meridian_health_demo_layer6_canary_read_grants.sql",
+      ),
+      "utf8",
+    );
+    expect(computeFileSha256(sql)).toBe(
+      "ef05e3db8e7eaf91063687dfd5036b7c5306313fe1cfa46db1f187e60633ccd4",
+    );
   });
 });
 

@@ -74,8 +74,12 @@ export function ValueProofView({
   return (
     <div className={styles.view}>
       <ViewHead
-        title="Outcome proof waterfall"
-        sub="Promised -> baseline -> usage -> outcome -> Finance -> claimable"
+        title={
+          s.promisedBenefitLoaded
+            ? "Outcome proof waterfall"
+            : "Benefit proof coverage"
+        }
+        sub="Investment is separate from promised benefit, usage, outcome, Finance, and claimable value"
         hint="Click a program for its proof chain & usage evidence"
       />
 
@@ -92,25 +96,69 @@ export function ValueProofView({
         style={{ gridTemplateColumns: "1.12fr 1fr" }}
       >
         <Card
-          eyebrow="Value waterfall"
+          eyebrow={
+            s.promisedBenefitLoaded ? "Value waterfall" : "Benefit not loaded"
+          }
           right="FY26 · governed $M"
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <div
-            className={styles.chartwrap}
-            aria-describedby="tcc-waterfall-alt"
-          >
-            <ValueWaterfallChart summary={s} />
-          </div>
+          {s.promisedBenefitLoaded ? (
+            <div
+              className={styles.chartwrap}
+              aria-describedby="tcc-waterfall-alt"
+            >
+              <ValueWaterfallChart summary={s} />
+            </div>
+          ) : (
+            <div
+              className={styles.emptyPanel}
+              aria-describedby="tcc-waterfall-alt"
+            >
+              <h2>No explicit benefit assertion</h2>
+              <p>
+                Approved investment is visible, but Tower will not create a
+                benefit waterfall until a governed value case carries a
+                source-backed benefit assertion, economic classification, and
+                proof horizon.
+              </p>
+            </div>
+          )}
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
-            {`${rows
-              .map(
-                (r) =>
-                  `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
-              )
-              .join(". ")}.`}
+            {s.promisedBenefitLoaded
+              ? `${rows
+                  .map(
+                    (r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
+                  )
+                  .join(". ")}.`
+              : `Explicit promised benefit is absent. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
           </p>
+
+          <div
+            className={styles.valueProofRails}
+            aria-label="Value proof amount definitions"
+          >
+            <div className={styles.valueProofRail}>
+              <span>Source-backed benefit chain</span>
+              <b>
+                {s.promisedBenefitUsd === null
+                  ? "Not loaded"
+                  : formatUsdM(s.promisedBenefitUsd)}
+              </b>
+              <small>
+                Drives the waterfall only when a governed value-case benefit
+                assertion exists.
+              </small>
+            </div>
+            <div className={styles.valueProofRail}>
+              <span>Finance-calculated but blocked</span>
+              <b>{formatUsdM(s.financeValidatedBlockedUsd)}</b>
+              <small>
+                Kept separate until usage, outcome, attribution, and attestation
+                prove the claim path.
+              </small>
+            </div>
+          </div>
 
           {/* "The read" — the mart's own executive summary, prefixed with the
               two leak figures. Claude writes none of this and no figure in it
@@ -119,11 +167,13 @@ export function ValueProofView({
             <div className={styles.ik}>The read</div>
             <p className={styles.itext}>
               <b>
-                {`${formatUsdM(noUsage)} never becomes usage-supported${
-                  noFinance > 0
-                    ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
-                    : "."
-                }`}
+                {s.promisedBenefitLoaded
+                  ? `${formatUsdM(noUsage)} never becomes usage-supported${
+                      noFinance > 0
+                        ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
+                        : "."
+                    }`
+                  : `${formatUsdM(s.approvedInvestmentUsd)} is approved investment, not promised benefit.`}
               </b>{" "}
               {financeAheadOfUsage ? (
                 <>
@@ -155,7 +205,7 @@ export function ValueProofView({
                 <tr>
                   <th scope="col">Program</th>
                   <th scope="col" className={styles.num}>
-                    Promised
+                    Benefit
                   </th>
                   <th scope="col">Missing evidence · proof</th>
                   <th scope="col" className={styles.num}>
@@ -188,7 +238,9 @@ export function ValueProofView({
                     </td>
                     <td className={styles.num}>
                       <div className={styles.bignum}>
-                        {formatUsdM(p.promisedUsd)}
+                        {p.promisedBenefitLoaded
+                          ? formatUsdM(p.promisedUsd)
+                          : "Not loaded"}
                       </div>
                     </td>
                     <td>
@@ -201,7 +253,7 @@ export function ValueProofView({
                       >
                         <span style={{ fontSize: 12 }}>
                           {p.blocker ??
-                            "No decision rationale recorded in the mart."}
+                            "No decision rationale recorded in the value model."}
                         </span>
                         <Pips level={p.proofLevel} />
                       </div>

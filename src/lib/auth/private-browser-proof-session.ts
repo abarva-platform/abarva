@@ -1,5 +1,10 @@
 import type { ClientKey } from "@/lib/client-config";
+import { isClientKey } from "@/lib/client-config";
 import type { ProductModule } from "@/lib/auth/module-access";
+import {
+  tenantAliasesFor,
+  tenantProfileForClientKey,
+} from "@/lib/tenant/aliases";
 
 export const PRIVATE_BROWSER_PROOF_SESSION_COOKIE =
   "abarva_private_browser_proof_session";
@@ -19,25 +24,39 @@ export interface PrivateBrowserProofSession {
   exp: number;
 }
 
-const MERIDIAN_PROOF_SESSION: Omit<
-  PrivateBrowserProofSession,
-  "email" | "exp"
-> = {
-  role: "client",
-  clientId: "meridian",
-  defaultClientId: "meridian",
-  clientName: "Meridian Health",
-  tenantKey: "meridian_health_global",
-  tenantName: "Meridian Health",
-  allowedClientKeys: ["meridian"],
-  visibleClientKeys: ["meridian"],
-  moduleAccess: ["programs", "source", "intelligence", "tower"],
-  tenantRoles: {
-    meridian: "tenant_admin",
-    "meridian-health": "tenant_admin",
-    meridian_health_global: "tenant_admin",
-  },
-};
+const DEFAULT_PROOF_MODULE_ACCESS: ProductModule[] = [
+  "programs",
+  "source",
+  "intelligence",
+  "tower",
+];
+
+function proofSessionForClient(
+  clientKey: ClientKey,
+): Omit<PrivateBrowserProofSession, "email" | "exp"> {
+  const profile = tenantProfileForClientKey(clientKey);
+  const tenantKey =
+    profile.appClientKey === "meridian"
+      ? "meridian_health_global"
+      : profile.canonicalKey;
+  return {
+    role: "client",
+    clientId: profile.appClientKey,
+    defaultClientId: profile.appClientKey,
+    clientName: profile.displayName,
+    tenantKey,
+    tenantName: profile.displayName,
+    allowedClientKeys: [profile.appClientKey],
+    visibleClientKeys: [profile.appClientKey],
+    moduleAccess: DEFAULT_PROOF_MODULE_ACCESS,
+    tenantRoles: {
+      [profile.appClientKey]: "tenant_admin",
+      [profile.canonicalKey]: "tenant_admin",
+      [profile.brokerKey]: "tenant_admin",
+      [tenantKey]: "tenant_admin",
+    },
+  };
+}
 
 function base64UrlEncode(value: string): string {
   return btoa(value)
@@ -121,12 +140,14 @@ export function isPrivateBrowserProofEnabled(): boolean {
 export async function createPrivateBrowserProofSessionValue(
   email: string,
   ttlSeconds = 900,
+  clientKey: ClientKey = "meridian",
 ): Promise<string | null> {
   const secret = privateProofSecret();
   if (!secret) return null;
+  const session = proofSessionForClient(clientKey);
   const payload = base64UrlEncode(
     JSON.stringify({
-      ...MERIDIAN_PROOF_SESSION,
+      ...session,
       email,
       exp: Math.floor(Date.now() / 1000) + ttlSeconds,
     }),
@@ -150,10 +171,8 @@ export async function readPrivateBrowserProofSessionValue(
     base64UrlDecode(payload),
   ) as PrivateBrowserProofSession;
   if (parsed.exp < Math.floor(Date.now() / 1000)) return null;
-  if (
-    parsed.clientId !== "meridian" ||
-    parsed.tenantKey !== "meridian_health_global"
-  ) {
+  if (!isClientKey(parsed.clientId)) return null;
+  if (!tenantAliasesFor(parsed.clientId).includes(parsed.tenantKey)) {
     return null;
   }
   return parsed;

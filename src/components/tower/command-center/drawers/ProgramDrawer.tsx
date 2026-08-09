@@ -44,8 +44,12 @@ const PLAIN_TONE = {
  * numerically — the sentence restates, it never introduces.
  */
 export function plainProgram(p: TowerProgramView): string {
+  if (!p.promisedBenefitLoaded) {
+    const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
+    return `${formatUsdM(p.fundedUsd)} is approved investment. Explicit promised benefit is not loaded, so Tower does not convert this program into a board value claim yet.${gate}`;
+  }
   if (p.promisedUsd <= 0) {
-    return "No AI value is promised here — this is a run-and-sustain line. It matters for vendor renewal leverage, not the value story.";
+    return "No explicit benefit is promised here. It matters for investment posture and proof follow-up, not the economic benefit total.";
   }
   const claim =
     p.claimableUsd > 0
@@ -55,7 +59,7 @@ export function plainProgram(p: TowerProgramView): string {
     ? ` — because ${p.blocker.charAt(0).toLowerCase()}${p.blocker.slice(1).replace(/\.$/, "")}`
     : "";
   const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
-  return `Of ${formatUsdM(p.promisedUsd)} in promised value, ${claim}${because}. It sits in the ${LANE_WORD[p.lane]} lane.${gate}`;
+  return `Of ${formatUsdM(p.promisedUsd)} in promised benefit, ${claim}${because}. It sits in the ${LANE_WORD[p.lane]} lane.${gate}`;
 }
 
 export function ProgramDrawer({
@@ -73,7 +77,12 @@ export function ProgramDrawer({
 
   const chain = p
     ? ([
-        ["Promised", p.promisedUsd, "", "what the business case claimed"],
+        [
+          "Explicit benefit",
+          p.promisedBenefitLoaded ? p.promisedUsd : null,
+          "",
+          "source-backed business-case benefit",
+        ],
         [
           "Usage-supported",
           p.usageSupportedUsd,
@@ -94,9 +103,9 @@ export function ProgramDrawer({
         ],
         [
           "Blocked",
-          p.blockedUsd,
+          p.promisedBenefitLoaded ? p.blockedUsd : null,
           "red",
-          "promised value that cannot be claimed yet",
+          "benefit that cannot be claimed yet",
         ],
       ] as const)
     : [];
@@ -146,8 +155,12 @@ export function ProgramDrawer({
           <div className={styles.drGrid}>
             <DrawerStat label="Funded" value={formatUsdM(p.fundedUsd)} />
             <DrawerStat
-              label="Promised value"
-              value={formatUsdM(p.promisedUsd)}
+              label="Explicit benefit"
+              value={
+                p.promisedBenefitLoaded
+                  ? formatUsdM(p.promisedUsd)
+                  : "Not loaded"
+              }
             />
             <DrawerStat
               label="Finance-validated"
@@ -163,7 +176,7 @@ export function ProgramDrawer({
             />
           </div>
 
-          <DrawerSection note="— where promised value leaks on the way to claimable">
+          <DrawerSection note="— where explicit benefit moves on the way to claimable">
             Value proof chain
           </DrawerSection>
           {chain.map(([label, value, tint, definition]) => (
@@ -241,7 +254,7 @@ export function ProgramDrawer({
           />
           <DrawerRow
             label="Next gate"
-            value={p.nextGate ?? "No gate recorded in the mart"}
+            value={p.nextGate ?? "No gate recorded in the value model"}
           />
 
           <DrawerSection>The read</DrawerSection>

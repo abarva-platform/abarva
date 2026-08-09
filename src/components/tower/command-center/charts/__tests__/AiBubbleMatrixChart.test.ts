@@ -19,6 +19,7 @@ function ai(overrides: Partial<TowerAiView>): TowerAiView {
     riskScore: 20,
     aiSpendUsd: 0,
     promisedUsd: 0,
+    promisedBenefitLoaded: true,
     financeValidatedUsd: 0,
     posture: "Fund",
     usageHeadline: null,
@@ -45,9 +46,9 @@ describe("buildBubblePoints", () => {
     );
 
     expect(points).toHaveLength(6);
-    expect(points.every((point) => point.rawX === 70 && point.rawY === 82)).toBe(
-      true,
-    );
+    expect(
+      points.every((point) => point.rawX === 70 && point.rawY === 82),
+    ).toBe(true);
     expect(new Set(points.map((point) => `${point.x}:${point.y}`)).size).toBe(
       points.length,
     );

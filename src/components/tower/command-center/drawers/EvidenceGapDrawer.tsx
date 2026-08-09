@@ -101,7 +101,7 @@ export function EvidenceGapDrawer({
           <div className={styles.efact}>
             <p className={styles.es}>
               {gap.kind === "pipeline"
-                ? `Recorded by the Tower mart projection as a required-field gap on ${gap.area.toLowerCase()}.`
+                ? `Recorded by the Tower value model as a required-field gap on ${gap.area.toLowerCase()}.`
                 : `Derived by the Tower business-evidence bridge as ${gap.primaryBlockingGap ? "the primary blocker" : "an additional open proof gap"} for this program.`}
             </p>
             <div className={styles.eloc}>

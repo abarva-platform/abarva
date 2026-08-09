@@ -22,6 +22,7 @@ import type {
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
+  TowerMartValueTrajectoryPoint,
 } from "@/lib/cio-tower/tower-mart-view-model";
 
 const M = 1_000_000;
@@ -599,6 +600,55 @@ function lineage(): TowerMartEvidenceLineage[] {
   ];
 }
 
+function valueTrajectory(): TowerMartValueTrajectoryPoint[] {
+  const start = new Date("2026-01-01T00:00:00.000Z");
+  return Array.from({ length: 8 }, (_, i) => {
+    const periodStart = new Date(start);
+    periodStart.setUTCMonth(start.getUTCMonth() + i * 3);
+    const periodEnd = new Date(periodStart);
+    periodEnd.setUTCMonth(periodStart.getUTCMonth() + 3);
+    periodEnd.setUTCDate(periodEnd.getUTCDate() - 1);
+    const quarter = `${periodStart.getUTCFullYear()}-Q${
+      Math.floor(periodStart.getUTCMonth() / 3) + 1
+    }`;
+    return {
+      tenantKey: "fixture-tenant",
+      valueCaseId: "fixture-value-case",
+      programId: "P3",
+      initiativeId: "P3",
+      valueCaseName: "Fixture value case",
+      valueArchetype: "risk_loss_avoidance",
+      periodStart: periodStart.toISOString().slice(0, 10),
+      periodEnd: periodEnd.toISOString().slice(0, 10),
+      fiscalQuarter: quarter,
+      scenario: "forecast",
+      plannedInvestmentUsd: (600 * M) / 8,
+      actualSpendUsd: i < 2 ? (53.7 * M) / 2 : null,
+      remainingCommitmentUsd: Math.max(0, 600 * M - 53.7 * M) / 8,
+      businessCaseValueUsd: (35.5 * M) / 8,
+      businessCaseBenefitUsd: (35.5 * M) / 8,
+      riskAdjustedForecastUsd: ((18 + i * 1.8) * M) / 8,
+      financeValidatedRunRateUsd: (3.8 * M) / 8,
+      realizedPAndLUsd: null,
+      realizedCashUsd: null,
+      forecastAtCompletionUsd: 35.5 * M,
+      financialConversionUsd: null,
+      usageEvidenceState: "present",
+      operationalOutcomeEvidenceState: "missing",
+      financeAttestationState: "missing",
+      sourceTrustState: "ONE_SOURCE",
+      claimState: "evidence_gap",
+      datasetVersion: "fixture-dataset",
+      sourceRunId: "fixture-run",
+      sourceRefs: [{ view: "consumption.tower_value_trajectory_v1" }],
+      economicClassification: "risk_loss_avoidance",
+      boardScopeState: "board_portfolio",
+      materialScopeState: "material",
+      sourceCount: 1,
+    };
+  });
+}
+
 /** The full fixture, in mart shape. Feed to `buildTowerCommandCenterView()`. */
 export function designFixtureMart(): TowerMartCommandViewModel {
   return {
@@ -699,6 +749,7 @@ export function designFixtureMart(): TowerMartCommandViewModel {
         sourceRow: null,
       },
     ],
+    valueTrajectory: valueTrajectory(),
     programLanes: LANES.map(lane),
     aiPortfolio: aiItems(),
     cxoActions: actions(),

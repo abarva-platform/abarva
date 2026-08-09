@@ -5,7 +5,7 @@
 // It deliberately mirrors that file's `data()` shape (CC / PROG / AI / CAND /
 // LENS / GAPS / ACT) so the views can be transcribed from the design without
 // reinterpreting them — but every field is populated from the governed
-// `cio_tower.mart_*` read models, never from the design file's mock content.
+// governed Tower read models, never from the design file's mock content.
 //
 // Money is carried in **whole USD**, exactly as the mart stores it. The
 // design's `$M` rendering is a formatting concern and lives in `format.ts`;
@@ -75,11 +75,14 @@ export interface TowerCommandSummary {
   sourceStandard: string;
   sourceFiles: readonly string[];
 
-  budgetUsd: number;
-  runUsd: number;
-  changeUsd: number;
+  budgetUsd: number | null;
+  runUsd: number | null;
+  changeUsd: number | null;
+  approvedInvestmentUsd: number | null;
   aiTaggedUsd: number;
 
+  promisedBenefitUsd: number | null;
+  promisedBenefitLoaded: boolean;
   promisedUsd: number;
   usageSupportedUsd: number;
   financeValidatedUsd: number;
@@ -109,6 +112,11 @@ export interface TowerCommandSummary {
   unmeasuredProgramCount: number;
 
   programCount: number;
+  totalProgramSubjectCount: number;
+  activeProgramSubjectCount: number;
+  materialProgramCount: number;
+  boardScopeProgramCount: number;
+  economicReviewQueueCount: number;
   aiInitiativeCount: number;
   candidateAiCount: number;
   watchPressureSignals: number;
@@ -161,6 +169,41 @@ export interface TowerFunnelStage {
   primaryOwnerRole: string | null;
 }
 
+export type TowerConversionBridgeStageKey =
+  | "investment"
+  | "adoption"
+  | "workflow_change"
+  | "operating_outcome"
+  | "economic_conversion"
+  | "finance_validation"
+  | "realized";
+
+export interface TowerConversionBridgeStage {
+  key: TowerConversionBridgeStageKey;
+  label: string;
+  valueUsd: number | null;
+  count: number | null;
+  note: string;
+  source: string;
+  tone: "teal" | "amber" | "red" | "gray";
+}
+
+export interface TowerTrajectoryPoint {
+  fiscalQuarter: string;
+  periodStart: string;
+  periodEnd: string;
+  plannedInvestmentUsd: number | null;
+  actualSpendUsd: number | null;
+  businessCaseBenefitUsd: number | null;
+  riskAdjustedForecastUsd: number | null;
+  financeValidatedRunRateUsd: number | null;
+  realizedPAndLUsd: number | null;
+  realizedCashUsd: number | null;
+  financialConversionUsd: number | null;
+  boardScopeCaseCount: number;
+  sourceTrustState: string | null;
+}
+
 /** One program — the Decision Lanes table, Kanban card and heatmap point. */
 export interface TowerProgramView {
   /** Stable id used for drawer routing and E2E selectors. */
@@ -173,6 +216,7 @@ export interface TowerProgramView {
 
   fundedUsd: number;
   promisedUsd: number;
+  promisedBenefitLoaded: boolean;
   usageSupportedUsd: number;
   financeValidatedUsd: number;
   claimableUsd: number;
@@ -199,7 +243,7 @@ export interface TowerProgramView {
   proofSequenceStatus: TowerProofSequenceStatus;
   proofSequenceExplanation: string | null;
   semanticSource: TowerSemanticSource;
-  /** Heatmap Y axis: promised value, or funded value for no-value-promised lines. */
+  /** Matrix exposure: promised benefit when present, otherwise approved capital. */
   valueAtStakeUsd: number;
 
   /** The next required gate, or null when the mart records none. */
@@ -244,6 +288,7 @@ export interface TowerAiView {
   /** Bubble size. */
   aiSpendUsd: number;
   promisedUsd: number;
+  promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;
   /** Recommended posture — mart-derived, never invented. */
   posture: string;
@@ -444,6 +489,8 @@ export interface TowerActionView {
 export interface TowerCommandCenterView {
   summary: TowerCommandSummary;
   funnel: readonly TowerFunnelStage[];
+  conversionBridge: readonly TowerConversionBridgeStage[];
+  valueTrajectory: readonly TowerTrajectoryPoint[];
   programs: readonly TowerProgramView[];
   ai: readonly TowerAiView[];
   candidates: readonly TowerCandidateView[];

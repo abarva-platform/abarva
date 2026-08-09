@@ -11,7 +11,7 @@
 // rule deliberately dropped (see the CSS module header).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { formatCount } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
@@ -22,7 +22,10 @@ import { EvidenceGapDrawer } from "./drawers/EvidenceGapDrawer";
 import { ProgramDrawer } from "./drawers/ProgramDrawer";
 import { Dot, cx } from "./primitives";
 import styles from "./TowerCommandCenter.module.css";
-import { CommandCenterView } from "./views/CommandCenterView";
+import {
+  CommandCenterView,
+  commandCenterAttention,
+} from "./views/CommandCenterView";
 import {
   AiPortfolioView,
   type AiFilter,
@@ -73,7 +76,6 @@ export function TowerCommandCenter({
   /** ISO date the Tower read model was read. */
   refreshedOn: string;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -91,16 +93,24 @@ export function TowerCommandCenter({
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // Reflect the active tab in `?tab=` so a link can deep-link into a tab and an
-  // E2E spec can address one directly. Sub-view / filter / question stay client
-  // state, exactly as the design has them.
+  // E2E spec can address one directly. This is local UI state, so use the
+  // browser history API instead of App Router navigation; otherwise rapid tab
+  // clicks can let older `router.replace` responses arrive late and snap the
+  // visible tab backward.
   const goToTab = useCallback(
     (next: TowerTab) => {
       setTab(next);
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      const params = new URLSearchParams(
+        typeof window === "undefined"
+          ? (searchParams?.toString() ?? "")
+          : window.location.search,
+      );
       params.set("tab", next);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", `${pathname}?${params}`);
+      }
     },
-    [pathname, router, searchParams],
+    [pathname, searchParams],
   );
 
   // A tab landed on from the URL (back/forward, or a pasted link) must win.
@@ -160,6 +170,9 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
+  const headerScope = view
+    ? `${formatCount(view.summary.boardScopeProgramCount)} board-scope value cases · ${formatCount(view.summary.totalProgramSubjectCount)} tracked program subjects · ${formatCount(view.summary.aiInitiativeCount)} AI tools, agents and linked capabilities`
+    : "no governed rows";
 
   const body = (() => {
     if (!view) {
@@ -168,12 +181,12 @@ export function TowerCommandCenter({
           <div className={styles.emptyPanel}>
             <h2>No governed Tower data for this tenant</h2>
             <p>
-              The <code>tower</code> read model carries no rows for{" "}
-              {tenantName}. This page renders nothing rather than showing zeros
-              — a zero would be a claim that the budget, promised value and
-              claimable value are all nil, which is not what absent data means.
-              Load governed Tower metric observations, claims and provenance for
-              this tenant to populate it.
+              The <code>tower</code> read model carries no rows for {tenantName}
+              . This page renders nothing rather than showing zeros — a zero
+              would be a claim that the budget, promised value and claimable
+              value are all nil, which is not what absent data means. Load
+              governed Tower metric observations, claims and provenance for this
+              tenant to populate it.
             </p>
           </div>
         </div>
@@ -264,13 +277,9 @@ export function TowerCommandCenter({
               <div className={styles.when}>
                 Refreshed {refreshedOn}
                 <br />
-                {view
-                  ? `${formatCount(view.summary.programCount)} programs · ${formatCount(view.summary.aiInitiativeCount)} AI initiatives`
-                  : "no governed rows"}
+                {headerScope}
               </div>
-              {view &&
-              view.summary.claimableUsd <= 0 &&
-              view.summary.promisedUsd > 0 ? (
+              {view && commandCenterAttention(view) ? (
                 <div className={styles.flag}>
                   <Dot tone="red" /> Value proof — Critical
                 </div>
@@ -287,6 +296,10 @@ export function TowerCommandCenter({
               const selected = t.id === tab;
               const count =
                 t.id === "actions" ? (view?.actions.length ?? 0) : null;
+              const tabLabel =
+                t.id === "actions" && count !== null
+                  ? `${t.label}, ${formatCount(count)} total evidence actions`
+                  : t.label;
               const attn =
                 (t.id === "funnel" && attention.funnel) ||
                 (t.id === "evidence" && attention.evidence);
@@ -299,6 +312,7 @@ export function TowerCommandCenter({
                   type="button"
                   role="tab"
                   id={`tcc-tab-${t.id}`}
+                  aria-label={tabLabel}
                   aria-selected={selected}
                   aria-controls="tcc-panel"
                   tabIndex={selected ? 0 : -1}
@@ -308,7 +322,9 @@ export function TowerCommandCenter({
                 >
                   {t.label}
                   {count !== null ? (
-                    <span className={styles.tnum}>{count}</span>
+                    <span className={styles.tnum}>
+                      {formatCount(count)} total
+                    </span>
                   ) : null}
                   {attn ? (
                     <>

@@ -1,0 +1,10 @@
+{
+  "sealed_migrations": [
+    {
+      "migration_name": "20260806162500_foundation_v2_meridian_health_demo_layer6_canary_read_grants.sql",
+      "migration_sha256": "ef05e3db8e7eaf91063687dfd5036b7c5306313fe1cfa46db1f187e60633ccd4",
+      "source_commit": "dda093b156c387879b9ce66f83b0cfbb183f579f",
+      "reason": "Already applied by the private operator before merge; preserve the database-recorded ledger hash and use additive follow-up migrations for any future change."
+    }
+  ]
+}

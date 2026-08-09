@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import './release-control/check-migration-seals.mjs';
 import './release-control/check-azure-deployment-lane.mjs';
 import './audit/check-no-legacy-tenant-inputs.mjs';
 import './release-control/check-release-record.mjs';

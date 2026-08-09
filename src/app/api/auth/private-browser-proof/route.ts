@@ -197,6 +197,37 @@ export async function POST(request: Request) {
   });
   let user = users.data[0] ?? null;
   const launchProfile = getLaunchAccessProfile(email);
+  const proofSessionCookie = await createPrivateBrowserProofSessionValue(
+    email,
+    900,
+    launchProfile?.clientKey ?? "meridian",
+  );
+  if (body?.proofCookieOnly === true) {
+    if (!proofSessionCookie) {
+      return NextResponse.json(
+        { error: "proof_session_unavailable" },
+        { status: 503 },
+      );
+    }
+    const response = NextResponse.json({
+      ok: true,
+      proofSessionCookie,
+      proofSessionCookieName: PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
+      clientKey: launchProfile?.clientKey ?? "meridian",
+    });
+    response.cookies.set(
+      PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
+      proofSessionCookie,
+      {
+        httpOnly: true,
+        maxAge: 900,
+        path: "/",
+        sameSite: "lax",
+        secure: true,
+      },
+    );
+    return response;
+  }
   if (provisionAdmin && email !== "admin@abarva.ai") {
     return unauthorized();
   }
@@ -286,8 +317,6 @@ export async function POST(request: Request) {
     userId: user.id,
     expiresInSeconds: 300,
   });
-  const proofSessionCookie = await createPrivateBrowserProofSessionValue(email);
-
   const response = NextResponse.json({
     ok: true,
     testingToken,

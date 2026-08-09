@@ -10,6 +10,7 @@ import type {
   TowerMartCommandCenter,
   TowerMartCommandViewModel,
   TowerMartProgramLane,
+  TowerMartValueTrajectoryPoint,
 } from "@/lib/cio-tower/tower-mart-view-model";
 
 import {
@@ -121,6 +122,47 @@ function aiItem(
   };
 }
 
+function valueTrajectory(
+  overrides: Partial<TowerMartValueTrajectoryPoint> = {},
+): TowerMartValueTrajectoryPoint {
+  return {
+    tenantKey: "demo-tenant",
+    valueCaseId: "vc-1",
+    programId: "P1",
+    initiativeId: "P1",
+    valueCaseName: "Program One value case",
+    valueArchetype: "capacity",
+    periodStart: "2026-01-01",
+    periodEnd: "2026-03-31",
+    fiscalQuarter: "2026-Q1",
+    scenario: "forecast",
+    plannedInvestmentUsd: 2 * M,
+    actualSpendUsd: 1 * M,
+    remainingCommitmentUsd: 1 * M,
+    businessCaseValueUsd: 3 * M,
+    businessCaseBenefitUsd: 3 * M,
+    riskAdjustedForecastUsd: null,
+    financeValidatedRunRateUsd: 0.2 * M,
+    realizedPAndLUsd: null,
+    realizedCashUsd: null,
+    forecastAtCompletionUsd: 6.8 * M,
+    financialConversionUsd: null,
+    usageEvidenceState: "present",
+    operationalOutcomeEvidenceState: "missing",
+    financeAttestationState: "missing",
+    sourceTrustState: "ONE_SOURCE",
+    claimState: "evidence_gap",
+    datasetVersion: "fixture",
+    sourceRunId: "fixture-run",
+    sourceRefs: [{ view: "consumption.tower_value_trajectory_v1" }],
+    economicClassification: "capacity",
+    boardScopeState: "board_portfolio",
+    materialScopeState: "material",
+    sourceCount: 1,
+    ...overrides,
+  };
+}
+
 function mart(
   overrides: Partial<TowerMartCommandViewModel> = {},
 ): TowerMartCommandViewModel {
@@ -143,6 +185,7 @@ function mart(
         sourceRow: null,
       },
     ],
+    valueTrajectory: [valueTrajectory()],
     programLanes: [lane()],
     aiPortfolio: [aiItem()],
     cxoActions: [
@@ -211,6 +254,7 @@ describe("buildTowerCommandCenterView", () => {
         evidenceLineage: [],
         requiredFieldGaps: [],
         valueFunnel: [],
+        valueTrajectory: [],
       }),
       { tenantName: "Demo" },
     );
@@ -226,8 +270,46 @@ describe("buildTowerCommandCenterView", () => {
         "Top-3 vendor concentration",
         "Evidence lineage rows",
         "Value funnel stages",
+        "Eight-quarter value trajectory",
       ]),
     );
+  });
+
+  it("aggregates the governed eight-quarter trajectory without filling missing conversion dollars", () => {
+    const view = buildTowerCommandCenterView(
+      mart({
+        valueTrajectory: [
+          valueTrajectory({
+            fiscalQuarter: "2026-Q1",
+            periodStart: "2026-01-01",
+            periodEnd: "2026-03-31",
+            plannedInvestmentUsd: 2 * M,
+            actualSpendUsd: 1 * M,
+            financialConversionUsd: null,
+          }),
+          valueTrajectory({
+            valueCaseId: "vc-2",
+            fiscalQuarter: "2026-Q1",
+            periodStart: "2026-01-01",
+            periodEnd: "2026-03-31",
+            plannedInvestmentUsd: 4 * M,
+            actualSpendUsd: null,
+            financialConversionUsd: null,
+          }),
+        ],
+      }),
+      { tenantName: "Demo" },
+    );
+
+    expect(view?.valueTrajectory).toHaveLength(1);
+    expect(view?.valueTrajectory[0]?.plannedInvestmentUsd).toBe(6 * M);
+    expect(view?.valueTrajectory[0]?.actualSpendUsd).toBe(1 * M);
+    expect(view?.valueTrajectory[0]?.financialConversionUsd).toBeNull();
+    expect(
+      view?.conversionBridge.find(
+        (stage) => stage.key === "economic_conversion",
+      )?.valueUsd,
+    ).toBeNull();
   });
 
   it("reads headline totals straight from the mart, not from a re-aggregation", () => {
@@ -300,6 +382,27 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.ai.map((a) => a.name)).toEqual(["Copilot"]);
     expect(view.candidates.map((c) => c.name)).toEqual(["Branch Vision"]);
     expect(view.summary.aiInitiativeCount).toBe(1);
+  });
+
+  it("uses the governed AI initiative count instead of the display slice count", () => {
+    const view = buildTowerCommandCenterView(
+      mart({
+        command: command({ aiInitiativeCount: 132 }),
+        aiPortfolio: [aiItem()],
+        aiPortfolioCounts: {
+          total: 80,
+          candidate: 0,
+          active: 80,
+          funded: 0,
+          embeddedOrUsage: 80,
+          attributedSpendUsd: 3.8 * M,
+        },
+      }),
+      { tenantName: "Demo" },
+    )!;
+
+    expect(view.ai).toHaveLength(1);
+    expect(view.summary.aiInitiativeCount).toBe(132);
   });
 
   it("keeps candidate pool integrity for the real candidate_opportunity enum", () => {

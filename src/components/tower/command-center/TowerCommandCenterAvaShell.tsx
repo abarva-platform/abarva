@@ -141,7 +141,7 @@ export function TowerCommandCenterAvaShell({
       role: "atlas",
       content: view
         ? `${tenantName} Tower Command Center is loaded. aVa can explain the visible value proof, blocked claims, evidence gaps, AI portfolio posture, and recommended actions without approving anything on its own.`
-        : "aVa is waiting for tenant-bound Tower mart rows before it can answer portfolio questions.",
+        : "aVa is waiting for tenant-bound Tower value-model rows before it can answer portfolio questions.",
     }),
     [tenantName, view],
   );
@@ -309,7 +309,7 @@ export function TowerCommandCenterAvaShell({
         tenantName,
         context: `Command Center · ${tenantName}`,
         towerExperience: "outcome_proof_cockpit",
-        towerContextSource: "cio_tower_mart_command_center",
+        towerContextSource: "tower_value_os_command_center",
         answerRenderingPolicy: {
           visibleOutputOwner: "claude",
           rendererPolicy: "exact_visible_strings",
@@ -331,14 +331,19 @@ export function TowerCommandCenterAvaShell({
                 value: view.summary.budgetUsd,
               },
               {
+                measureKey: "approved_program_budget_fy26",
+                label: "Approved investment",
+                value: view.summary.approvedInvestmentUsd,
+              },
+              {
                 measureKey: "ai_tagged_spend_fy26_non_additive",
                 label: "AI-tagged spend",
                 value: view.summary.aiTaggedUsd,
               },
               {
-                measureKey: "promised_value_fy26",
-                label: "Promised value",
-                value: view.summary.promisedUsd,
+                measureKey: "business_case_benefit_fy26",
+                label: "Explicit promised benefit",
+                value: view.summary.promisedBenefitUsd,
               },
               {
                 measureKey: "realized_value_ytd_allowed",

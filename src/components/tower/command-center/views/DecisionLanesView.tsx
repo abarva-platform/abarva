@@ -56,11 +56,23 @@ const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
   gray: "",
 };
 
-function EvidenceLaneBoard({
-  view,
-}: {
-  view: TowerCommandCenterView;
-}) {
+const MATERIAL_PROGRAM_LIMIT = 20;
+
+function materialPrograms(
+  programs: readonly TowerProgramView[],
+): TowerProgramView[] {
+  return [...programs]
+    .sort(
+      (a, b) =>
+        b.valueAtStakeUsd - a.valueAtStakeUsd ||
+        b.blockedUsd - a.blockedUsd ||
+        LANE_ORDER[a.lane] - LANE_ORDER[b.lane] ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, MATERIAL_PROGRAM_LIMIT);
+}
+
+function EvidenceLaneBoard({ view }: { view: TowerCommandCenterView }) {
   return (
     <div className={styles.interventionLanes}>
       {view.evidenceMaturity.interventionLanes.map((lane) => (
@@ -111,7 +123,7 @@ function LaneTable({
             Funded
           </th>
           <th scope="col" className={styles.num}>
-            Promised
+            Benefit
           </th>
           <th scope="col" className={styles.num}>
             Proof
@@ -162,8 +174,8 @@ function LaneTable({
             </td>
             <td className={styles.num}>
               <span className={cx(styles.bignum, styles.bignumSm)}>
-                {valueUnknown ? (
-                  <Unknown label="Unknown" />
+                {valueUnknown || !p.promisedBenefitLoaded ? (
+                  <Unknown label="Not loaded" />
                 ) : (
                   formatUsdM(p.promisedUsd)
                 )}
@@ -234,9 +246,9 @@ function LaneColumns({
               <div className={styles.lhSub}>{lane.sub}</div>
               <div className={cx(styles.lhVal, styles[valueTone])}>
                 {valueUnknown ? (
-                  <Unknown label="Value unknown" />
+                  <Unknown label="Benefit unknown" />
                 ) : (
-                  `${formatUsdM(total)} promised`
+                  `${formatUsdM(total)} benefit`
                 )}
               </div>
             </header>
@@ -261,10 +273,10 @@ function LaneColumns({
                       </span>
                       <span className={styles.p}>
                         funded ·{" "}
-                        {valueUnknown ? (
-                          <Unknown label="value unknown" />
+                        {valueUnknown || !p.promisedBenefitLoaded ? (
+                          <Unknown label="benefit not loaded" />
                         ) : (
-                          `${formatUsdM(p.promisedUsd)} promised`
+                          `${formatUsdM(p.promisedUsd)} benefit`
                         )}
                       </span>
                     </span>
@@ -329,10 +341,10 @@ function LaneLegendList({
             {p.name}
             <small>
               {p.ownerRole ?? "No owner recorded"} ·{" "}
-              {valueUnknown ? (
-                <Unknown label="value unknown" />
+              {valueUnknown || !p.promisedBenefitLoaded ? (
+                <Unknown label="benefit not loaded" />
               ) : (
-                `${formatUsdM(p.promisedUsd)} promised`
+                `${formatUsdM(p.promisedUsd)} benefit`
               )}
             </small>
           </span>
@@ -354,9 +366,11 @@ function LaneLegendList({
 
 function HeatmapPanel({
   programs,
+  totalProgramCount,
   onOpenProgram,
 }: {
   programs: readonly TowerProgramView[];
+  totalProgramCount: number;
   onOpenProgram: (id: string) => void;
 }) {
   const lowProofPrograms = programs.filter((p) => p.evidenceMaturity <= 5);
@@ -379,6 +393,13 @@ function HeatmapPanel({
             realized.
           </span>
         </div>
+      ) : null}
+      {totalProgramCount > programs.length ? (
+        <p className={styles.lhSub} style={{ marginBottom: 8 }}>
+          Showing the top {formatCount(programs.length)} material board-scope
+          value cases of {formatCount(totalProgramCount)}. The full row-level
+          inventory remains in Program table.
+        </p>
       ) : null}
       <div className={styles.chartwrap} aria-describedby="tcc-heatmap-alt">
         <PortfolioHeatmapChart programs={programs} onSelect={onOpenProgram} />
@@ -418,6 +439,7 @@ export function DecisionLanesView({
   onOpenProgram: (id: string) => void;
 }) {
   const programs = view.programs;
+  const focusPrograms = materialPrograms(programs);
   const valueUnknown =
     view.summary.valueClaimCount > 0 &&
     view.summary.knownValueClaimCount === 0 &&
@@ -451,10 +473,14 @@ export function DecisionLanesView({
           headId="tcc-lanes-heat"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <HeatmapPanel programs={programs} onOpenProgram={onOpenProgram} />
+          <HeatmapPanel
+            programs={focusPrograms}
+            totalProgramCount={programs.length}
+            onOpenProgram={onOpenProgram}
+          />
         </Card>
         <LaneColumns
-          programs={programs}
+          programs={focusPrograms}
           valueUnknown={valueUnknown}
           onOpenProgram={onOpenProgram}
         />
@@ -468,11 +494,15 @@ export function DecisionLanesView({
       >
         <Card
           eyebrow="Portfolio heatmap"
-          right="program promised value × proof maturity · by decision lane"
+          right="program benefit × proof maturity · by decision lane"
           headId="tcc-lanes-heat-full"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <HeatmapPanel programs={programs} onOpenProgram={onOpenProgram} />
+          <HeatmapPanel
+            programs={focusPrograms}
+            totalProgramCount={programs.length}
+            onOpenProgram={onOpenProgram}
+          />
         </Card>
         <Card
           title="Programs"
@@ -483,7 +513,7 @@ export function DecisionLanesView({
         >
           <div className={styles.pool}>
             <LaneLegendList
-              programs={programs}
+              programs={focusPrograms}
               valueUnknown={valueUnknown}
               onOpenProgram={onOpenProgram}
             />
@@ -540,8 +570,8 @@ export function DecisionLanesView({
       <div className={styles.zipContractNote}>
         <Dot tone={subView === "heatmap" ? "amber" : "teal"} />
         <span>
-          Default view is topology-first: promised exposure, proof maturity,
-          and decision lane should be visible before the operating table.
+          Default view is topology-first: promised exposure, proof maturity, and
+          decision lane should be visible before the operating table.
         </span>
       </div>
       {body}
