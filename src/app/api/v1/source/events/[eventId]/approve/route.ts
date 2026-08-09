@@ -17,6 +17,7 @@
 // An approval record is written to source_event_approvals in every case.
 
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { after } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
@@ -281,25 +282,29 @@ export async function POST(
     // artifacts as AI-prepared drafts. Stage entry can still draft the next
     // stage through the stage API, but approval output belongs to the stage the
     // human just attested.
-    void autoDraftOnStageEntry(
-      {
-        eventId,
-        clientKey: activeClient.key,
-        enteredStage: effectiveCurrentStage,
-      },
-      { request },
-    ).catch((autoDraftError) => {
-      console.error(
-        "[POST /api/v1/source/events/:eventId/approve] approved_stage_autodraft_failed",
-        {
-          eventId,
-          approvedStage: effectiveCurrentStage,
-          message:
-            autoDraftError instanceof Error
-              ? autoDraftError.message
-              : autoDraftError,
-        },
-      );
+    after(async () => {
+      try {
+        await autoDraftOnStageEntry(
+          {
+            eventId,
+            clientKey: activeClient.key,
+            enteredStage: effectiveCurrentStage,
+          },
+          { request },
+        );
+      } catch (autoDraftError) {
+        console.error(
+          "[POST /api/v1/source/events/:eventId/approve] approved_stage_autodraft_failed",
+          {
+            eventId,
+            approvedStage: effectiveCurrentStage,
+            message:
+              autoDraftError instanceof Error
+                ? autoDraftError.message
+                : autoDraftError,
+          },
+        );
+      }
     });
   }
 

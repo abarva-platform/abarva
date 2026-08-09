@@ -13,6 +13,12 @@ const eventRow = {
 const applyApproval = jest.fn(async () => ({ ok: true }));
 const updateStage = jest.fn(async () => ({ ok: true }));
 
+jest.mock("next/server", () => ({
+  after: jest.fn((task: () => void | Promise<void>) => {
+    void task();
+  }),
+}));
+
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
     userId: "user-1",
@@ -93,13 +99,16 @@ jest.mock("@/lib/source/contract-optimization/read", () => ({
 }));
 
 import { POST } from "../route";
+import { after } from "next/server";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 
+const mockAfter = jest.mocked(after);
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
 
 describe("POST Source event approve", () => {
   beforeEach(() => {
     mockAutoDraftOnStageEntry.mockClear();
+    mockAfter.mockClear();
     applyApproval.mockClear();
     updateStage.mockClear();
   });
@@ -126,6 +135,7 @@ describe("POST Source event approve", () => {
     });
 
     expect(response.status).toBe(200);
+    expect(mockAfter).toHaveBeenCalledTimes(1);
     expect(mockAutoDraftOnStageEntry).toHaveBeenCalledWith(
       {
         eventId: "event-1",
