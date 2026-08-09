@@ -31,6 +31,7 @@ export interface CrawlSurface {
 const CRAWL_VISIBLE_TENANT_NAMES: Partial<
   Record<CxoPersona["clientKey"], string>
 > = {
+  meridian: "Meridian Health",
   skyharbor: "SkyHarbor Global",
 };
 
@@ -41,7 +42,7 @@ const CRAWL_VISIBLE_TENANT_NAMES: Partial<
 // the crawl access-stale. One automation persona per client; each authenticates
 // via Clerk sign-in tokens (no password) as a maestro agent.
 export const CRAWL_PERSONAS: CrawlPersona[] = AGENT_CLIENT_LOGINS.filter(
-  (login) => login.clientKey === "skyharbor",
+  (login) => login.clientKey === "meridian" || login.clientKey === "skyharbor",
 ).map((login) => ({
   key: login.slug,
   tenantKey: login.clientKey,

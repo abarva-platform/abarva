@@ -14,11 +14,12 @@ Agents need signed-in browser state to crawl client workspaces after Clerk gates
 
 ## Canonical Agent Personas
 
-| Persona key | Client | Email | Storage state |
-| --- | --- | --- | --- |
-| `agent-skyharbor` | Airline Demo | `skyharbor-agent@abarva.example.com` | `.auth/agent-skyharbor.json` |
+| Persona key       | Client          | Email                                | Storage state                |
+| ----------------- | --------------- | ------------------------------------ | ---------------------------- |
+| `agent-meridian`  | Healthcare Demo | `meridian-agent@abarva.example.com`  | `.auth/agent-meridian.json`  |
+| `agent-skyharbor` | Airline Demo    | `skyharbor-agent@abarva.example.com` | `.auth/agent-skyharbor.json` |
 
-Retired demo tenants are intentionally absent from the automation roster. Recreate them only through the governed new-template onboarding flow, not by restoring old crawl personas.
+Only tenants on the active automation roster are crawlable. Recreate any additional tenant only through the governed new-template onboarding flow, then add exactly one locked automation persona for that tenant.
 
 ## Prerequisites
 
@@ -57,6 +58,7 @@ BASE_URL=http://localhost:3000 npm run auth:agent-client-states -- --refresh
 Prime one client against production:
 
 ```bash
+BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --client meridian --refresh
 BASE_URL=https://app.abarva.ai npm run auth:agent-client-states -- --client skyharbor --refresh
 ```
 
@@ -74,12 +76,12 @@ The script writes:
 ## Use In Playwright
 
 ```ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.use({ storageState: '.auth/agent-skyharbor.json' });
+test.use({ storageState: ".auth/agent-skyharbor.json" });
 
-test('crawl Airline Demo signed-in pages', async ({ page }) => {
-  await page.goto('/home?client=skyharbor');
+test("crawl Airline Demo signed-in pages", async ({ page }) => {
+  await page.goto("/home?client=skyharbor");
   await expect(page).not.toHaveURL(/sign-in/);
 });
 ```
@@ -98,14 +100,14 @@ test('crawl Airline Demo signed-in pages', async ({ page }) => {
 
 ## Failure Modes
 
-| Failure | Meaning | Fix |
-| --- | --- | --- |
-| `Missing CLERK_SECRET_KEY` | The script cannot mint Clerk sign-in tickets. | Add the local secret to `.env.local`; do not commit it. |
-| `You have been banned` | Clerk bot protection blocked the browser-side ticket exchange before the app route was reached. | Ensure testing tokens are enabled in the Clerk instance and `CLERK_TESTING_TOKEN_SECRET_KEY` or `CLERK_SECRET_KEY` is available to the crawl. |
-| `No Clerk user found` | The canonical persona has not been provisioned in Clerk. | Run `scripts/provision-cxo-personas.ts` for that client. |
-| `publicMetadata.clientId=<x>; expected <y>` | The user is mapped to the wrong tenant. | Fix Clerk metadata before crawling. |
-| `Responsible AI training API returned <status>` | The training gate did not record completion for the signed-in user. | Confirm the training ledger is reachable and the acknowledgment was accepted first. |
-| `redirected to sign-in` | Auth state did not work for the target app. | Confirm `BASE_URL`, Clerk keys, deployment, and user status. |
+| Failure                                         | Meaning                                                                                         | Fix                                                                                                                                           |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Missing CLERK_SECRET_KEY`                      | The script cannot mint Clerk sign-in tickets.                                                   | Add the local secret to `.env.local`; do not commit it.                                                                                       |
+| `You have been banned`                          | Clerk bot protection blocked the browser-side ticket exchange before the app route was reached. | Ensure testing tokens are enabled in the Clerk instance and `CLERK_TESTING_TOKEN_SECRET_KEY` or `CLERK_SECRET_KEY` is available to the crawl. |
+| `No Clerk user found`                           | The canonical persona has not been provisioned in Clerk.                                        | Run `scripts/provision-cxo-personas.ts` for that client.                                                                                      |
+| `publicMetadata.clientId=<x>; expected <y>`     | The user is mapped to the wrong tenant.                                                         | Fix Clerk metadata before crawling.                                                                                                           |
+| `Responsible AI training API returned <status>` | The training gate did not record completion for the signed-in user.                             | Confirm the training ledger is reachable and the acknowledgment was accepted first.                                                           |
+| `redirected to sign-in`                         | Auth state did not work for the target app.                                                     | Confirm `BASE_URL`, Clerk keys, deployment, and user status.                                                                                  |
 
 ## Cleanup
 
