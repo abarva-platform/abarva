@@ -23,7 +23,6 @@ import {
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { composeSentinelSystemPrompt } from "@/lib/agent/voice-doctrine/sentinel";
-import { isSkyHarborContractOptimizationEvent } from "@/lib/source/contract-optimization/eligibility";
 import { loadContractEvidenceRuntimeSummary } from "@/lib/source/contract-evidence/read-model";
 import type { ContractEvidenceMetricSummary } from "@/lib/source/contract-evidence/read-model";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -33,10 +32,7 @@ import {
   buildVendorBafoInstructionPack,
   buildVendorEvaluationDecisionView,
 } from "@/lib/source/proposal-intelligence/mve-profile";
-import {
-  buildContractOptimizationMveProfile,
-  buildSkyHarborAmsExistingContractInput,
-} from "@/lib/source/contract-optimization/mve-profile";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { enforceSourceExistingEventWriteTruth } from "@/lib/source/ava/answer-quality-gate";
 import { buildSourceArtifactStandardsContext } from "@/lib/source/artifact-lifecycle-matrix";
 import { buildVendorCoverageGovernedAnswer } from "@/lib/source/ava/vendor-coverage-governed-answer";
@@ -156,16 +152,9 @@ export async function POST(
       apexContext && apexLiveEventMatches
         ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
         : undefined;
-    const liveEventDetailRaw =
+    const liveEventDetail =
       apexLiveEventDetail ?? fallbackLiveEventDetail ?? undefined;
-    const liveEventDetail = normalizeSourceContractOptimizationDisplay({
-      activeClientKey: activeClient?.key,
-      eventDetail: liveEventDetailRaw,
-    });
-    const displayTenantName =
-      liveEventDetail && liveEventDetail !== liveEventDetailRaw
-        ? liveEventDetail.accountName
-        : activeClientName;
+    const displayTenantName = activeClientName;
     const liveTenantContext =
       apexLiveTenantContext ??
       (fallbackLiveEventDetail
@@ -424,29 +413,6 @@ function sourceEventMatchesRequestedEvent(args: {
   return candidateIds.some((candidateId) => requestedAliases.has(candidateId));
 }
 
-function normalizeSourceContractOptimizationDisplay(args: {
-  activeClientKey?: string;
-  eventDetail?: SourcingEventDetail;
-}): SourcingEventDetail | undefined {
-  if (!args.eventDetail) return undefined;
-  if (
-    !isSkyHarborContractOptimizationEvent({
-      activeClientKey: args.activeClientKey,
-      eventCode: args.eventDetail.code,
-      eventName: args.eventDetail.name,
-    })
-  ) {
-    return args.eventDetail;
-  }
-
-  return {
-    ...args.eventDetail,
-    accountName: "Airline Demo",
-    code: "SKYH-AMS-CONTRACT-OPT-2026",
-    name: "Airline Demo AMS Contract Optimization",
-  };
-}
-
 async function getSourcingEventForAskWithRetry(
   eventId: string,
   args: {
@@ -644,18 +610,10 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     vendorChallenges,
     vendorBafoPack,
   );
-  const contractOptimizationProfile = isSkyHarborContractOptimizationEvent({
-    activeClientKey: clientKey,
-    eventCode: args.event.code,
-    eventName: args.event.name,
-  })
-    ? buildContractOptimizationMveProfile(
-        buildSkyHarborAmsExistingContractInput({
-          sourceEventId: args.event.id,
-          tenantKey: clientKey,
-        }),
-      )
-    : null;
+  const contractOptimizationProfile = await getContractOptimizationProfile(
+    clientKey,
+    args.event.id,
+  ).catch(() => null);
   const eventEvidence = [
     {
       recordId: "trigger",
@@ -1031,9 +989,10 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
   // downstream-context enforcement: the pool-based resolver was already
   // correctly designed (hasActiveAcceptance outranks status/isCurrentAuthoritative),
   // it just needed real data.
-  const acceptanceByArtifactId = await getLatestArtifactAcceptancesByArtifactIds(
-    artifacts.map((artifact) => artifact.id),
-  );
+  const acceptanceByArtifactId =
+    await getLatestArtifactAcceptancesByArtifactIds(
+      artifacts.map((artifact) => artifact.id),
+    );
   const artifactAuthoritySlots = resolveAuthoritativeArtifactSlots(
     artifacts.map((artifact) =>
       toArtifactAuthorityCandidate(artifact, acceptanceByArtifactId),

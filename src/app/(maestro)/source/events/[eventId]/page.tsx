@@ -93,26 +93,21 @@ export default async function SourceEventDetailPage({
       }) ?? event.accountName;
 
     // Persisted contract-optimization profile (findings, levers, recommended
-    // path) for this exact event, if one was loaded for it. Cheap client-key
-    // pre-filter avoids an extra query for every non-SkyHarbor tenant; the
-    // real render gate is the presence of a row for THIS event id, not a
-    // name/keyword heuristic (see isSkyHarborContractOptimizationEvent's
-    // looser matching, which this deliberately does not rely on).
+    // path) for this exact event, if one was loaded for it. The render gate is
+    // row presence for this tenant and event, not tenant identity or keywords.
     const normalizedClientKey = activeClient?.key?.trim().toLowerCase();
-    const contractOptimizationProfile =
-      normalizedClientKey === "skyharbor" ||
-      normalizedClientKey === "skyharbor-air"
-        ? await getContractOptimizationProfile(
-            normalizedClientKey,
-            event.id,
-          ).catch((error) => {
-            console.error(
-              "[SourceEventDetailPage] contract optimization profile read failed",
-              error instanceof Error ? error.message : String(error),
-            );
-            return null;
-          })
-        : null;
+    const contractOptimizationProfile = normalizedClientKey
+      ? await getContractOptimizationProfile(
+          normalizedClientKey,
+          event.id,
+        ).catch((error) => {
+          console.error(
+            "[SourceEventDetailPage] contract optimization profile read failed",
+            error instanceof Error ? error.message : String(error),
+          );
+          return null;
+        })
+      : null;
     const sourceJourney = getSourceJourneyForEvent({
       event,
       hasContractOptimizationProfile: Boolean(contractOptimizationProfile),

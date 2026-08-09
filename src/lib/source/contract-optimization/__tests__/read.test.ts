@@ -85,12 +85,22 @@ describe("getContractOptimizationProfile", () => {
     expect(result).toBeNull();
   });
 
-  it("queries with both known SkyHarbor tenant-key aliases", async () => {
+  it("queries with canonical tenant aliases for any tenant", async () => {
     mockedQuery.mockResolvedValue([]);
     await getContractOptimizationProfile("skyharbor-air", "evt-1");
     const [, params] = mockedQuery.mock.calls[0];
     expect(params[0]).toEqual(
-      expect.arrayContaining(["skyharbor-air", "skyharbor"]),
+      expect.arrayContaining([
+        "skyharbor-air",
+        "skyharbor",
+        "skyharbor_global",
+      ]),
     );
+
+    mockedQuery.mockReset();
+    mockedQuery.mockResolvedValue([]);
+    await getContractOptimizationProfile("tenant-b", "evt-2");
+    const [, tenantBParams] = mockedQuery.mock.calls[0];
+    expect(tenantBParams[0]).toEqual(["tenant-b"]);
   });
 });

@@ -1,4 +1,5 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { ContractOptimizationMveProfile } from "./types";
 
 const MISSING_TABLE_EMPTY = { missingTable: "empty" as const };
@@ -15,24 +16,13 @@ interface ProfilePayloadRow {
  * needed. Returns null when no row exists for this exact event id: presence
  * of a persisted profile is the render gate, not a name/keyword heuristic.
  */
-/** Known aliases for the SkyHarbor tenant key across load scripts and app-tier code. */
-const SKYHARBOR_TENANT_ALIASES: readonly string[] = [
-  "skyharbor",
-  "skyharbor-air",
-];
-
 export async function getContractOptimizationProfile(
   tenantKey: string,
   sourceEventId: string,
 ): Promise<ContractOptimizationMveProfile | null> {
   const normalized = tenantKey.trim().toLowerCase();
   const aliases = Array.from(
-    new Set([
-      normalized,
-      ...(SKYHARBOR_TENANT_ALIASES.includes(normalized)
-        ? SKYHARBOR_TENANT_ALIASES
-        : []),
-    ]),
+    new Set([normalized, ...tenantAliasesFor(normalized)]),
   );
   const rows = await azureRead.query<ProfilePayloadRow>(
     `select profile_payload

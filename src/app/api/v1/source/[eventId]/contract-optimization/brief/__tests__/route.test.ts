@@ -2,9 +2,7 @@ const requireTenancyMock = jest.fn();
 const tenancyErrorResponseMock = jest.fn();
 const getActiveClientRowMock = jest.fn();
 const getSourcingEventMock = jest.fn();
-const isSkyHarborContractOptimizationEventMock = jest.fn();
-const buildContractOptimizationMveProfileMock = jest.fn();
-const buildSkyHarborAmsExistingContractInputMock = jest.fn();
+const getContractOptimizationProfileMock = jest.fn();
 const buildContractOptimizationBriefMarkdownMock = jest.fn();
 
 jest.mock("@/app/api/v1/_intel-auth", () => ({
@@ -24,12 +22,11 @@ jest.mock("@/lib/source/queries", () => ({
 jest.mock("@/lib/source/contract-optimization", () => ({
   buildContractOptimizationBriefMarkdown: (...args: unknown[]) =>
     buildContractOptimizationBriefMarkdownMock(...args),
-  buildContractOptimizationMveProfile: (...args: unknown[]) =>
-    buildContractOptimizationMveProfileMock(...args),
-  buildSkyHarborAmsExistingContractInput: (...args: unknown[]) =>
-    buildSkyHarborAmsExistingContractInputMock(...args),
-  isSkyHarborContractOptimizationEvent: (...args: unknown[]) =>
-    isSkyHarborContractOptimizationEventMock(...args),
+}));
+
+jest.mock("@/lib/source/contract-optimization/read", () => ({
+  getContractOptimizationProfile: (...args: unknown[]) =>
+    getContractOptimizationProfileMock(...args),
 }));
 
 jest.mock("docx", () => ({
@@ -57,7 +54,9 @@ jest.mock("@react-pdf/renderer", () => ({
   pdf: jest.fn(),
 }));
 
-function request(url = "https://app.abarva.ai/api/v1/source/event-1/contract-optimization/brief") {
+function request(
+  url = "https://app.abarva.ai/api/v1/source/event-1/contract-optimization/brief",
+) {
   return {
     nextUrl: new URL(url),
   } as unknown as import("next/server").NextRequest;
@@ -67,23 +66,23 @@ describe("/api/v1/source/[eventId]/contract-optimization/brief", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     requireTenancyMock.mockResolvedValue({
-      clientId: "client-airline",
+      clientId: "client-tenant-b",
       userId: "user-1",
     });
     getActiveClientRowMock.mockResolvedValue({
-      id: "client-airline",
-      key: "airline-demo-new",
-      name: "Airline Demo New",
+      id: "client-tenant-b",
+      key: "tenant-b",
+      name: "Tenant B",
     });
     getSourcingEventMock.mockResolvedValue({
       id: "event-1",
-      code: "AIR-AMS-2026",
-      name: "Application managed services renewal",
+      code: "MER-CONTRACT-2026",
+      name: "Incumbent agreement renewal",
     });
-    isSkyHarborContractOptimizationEventMock.mockReturnValue(false);
+    getContractOptimizationProfileMock.mockResolvedValue(null);
   });
 
-  it("does not serve a legacy fixture-specific contract-optimization pack for governed foundation events", async () => {
+  it("does not serve a contract-optimization pack unless an exact-event profile is persisted", async () => {
     const { GET } = await import("../route");
 
     const response = await GET(request(), {
@@ -95,13 +94,10 @@ describe("/api/v1/source/[eventId]/contract-optimization/brief", () => {
       ok: false,
       error: "not_available",
     });
-    expect(isSkyHarborContractOptimizationEventMock).toHaveBeenCalledWith({
-      activeClientKey: "airline-demo-new",
-      eventCode: "AIR-AMS-2026",
-      eventName: "Application managed services renewal",
-    });
-    expect(buildSkyHarborAmsExistingContractInputMock).not.toHaveBeenCalled();
-    expect(buildContractOptimizationMveProfileMock).not.toHaveBeenCalled();
+    expect(getContractOptimizationProfileMock).toHaveBeenCalledWith(
+      "tenant-b",
+      "event-1",
+    );
     expect(buildContractOptimizationBriefMarkdownMock).not.toHaveBeenCalled();
   });
 });
