@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { AiSuccessCommandCenter } from "@/components/home/ai-success-command-center/AiSuccessCommandCenter";
+import { HomeEnterpriseLandscapeV2 } from "@/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { readSkyHarborAiSuccessHome } from "@/lib/home/readSkyHarborAiSuccessHome";
-import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import { ACTIVE_CLIENT_COOKIE, resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const metadata: Metadata = {
-  title: "AI Success Command Center | AbarVa",
+  title: "Enterprise Landscape | AbarVa",
   description:
-    "SkyHarbor AI Success Home command center with evidence-bound posture, current-state architecture, Tower value proof, Source gaps, and leadership decisions.",
+    "AbarVa Home enterprise landscape with evidence-bound executive read, economics, posture, coherence, trajectory, watchlist, and provenance.",
 };
 
 export const dynamic = "force-dynamic";
@@ -109,11 +109,14 @@ function MeridianHome({ tenantName }: { tenantName: string }) {
 }
 
 export default async function HomePage() {
-  const [client, tenant] = await Promise.all([
+  const [client, tenant, cookieStore] = await Promise.all([
     getActiveClientRow().catch(() => null),
     resolveTenant().catch(() => null),
+    cookies().catch(() => null),
   ]);
-  const clientKey = client?.key ?? tenant?.appClientKey ?? null;
+  const activeClientCookie = cookieStore?.get(ACTIVE_CLIENT_COOKIE)?.value;
+  const cookieClientKey = activeClientCookie === "skyharbor" ? "skyharbor" : null;
+  const clientKey = client?.key ?? tenant?.appClientKey ?? cookieClientKey;
   const tenantName =
     canonicalClientDisplayName({
       key: clientKey,
@@ -123,8 +126,20 @@ export default async function HomePage() {
     "AbarVa Client";
 
   if (clientKey === "skyharbor") {
-    const data = readSkyHarborAiSuccessHome();
-    return <AiSuccessCommandCenter data={data} />;
+    return (
+      <AppShell
+        surface="home"
+        topBarProps={{
+          tenantName,
+          preserveTenantName: true,
+          showLocked: true,
+          context: "Enterprise Landscape",
+        }}
+        hasTenantKey
+      >
+        <HomeEnterpriseLandscapeV2 />
+      </AppShell>
+    );
   }
 
   return <MeridianHome tenantName={tenantName} />;
