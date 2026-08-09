@@ -316,9 +316,9 @@ describe("buildViewModel numeric coercion", () => {
       isOpps: boolean;
     };
 
-    expect(built.activeTab).toBe("Home");
+    expect(built.activeTab).toBe("Portfolio");
     expect(built.tabs.map((tab) => tab.label)).toEqual([
-      "Home",
+      "Portfolio",
       "Explore",
       "Concentration & Leverage",
       "Renewals",
