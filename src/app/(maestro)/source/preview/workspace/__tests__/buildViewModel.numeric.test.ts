@@ -370,6 +370,104 @@ describe("buildViewModel numeric coercion", () => {
     );
   });
 
+  it("labels invoice billing-rate variance separately from rate-card evidence", () => {
+    const vm = buildVm();
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.tabs.contract = "Optimize";
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      optimizationOpportunitySet: {
+        tenantKey: "skyharbor_global",
+        datasetVersion: "v4-golden-evidence",
+        contractId: "c1",
+        vendorId: "vendor-one",
+        vendorName: "Vendor One",
+        contractName: "Default Contract",
+        recommendation: "Build an optimization plan.",
+        recommendationDetail: "Line-level invoice evidence is available.",
+        actionState: "validate_opportunity",
+        baseline: {
+          status: "ready",
+          headline: "Commercial baseline loaded",
+          detail: "Annual value is available.",
+          annualValueUsd: 50_000_000,
+          pricingScheduleAnnualValueUsd: null,
+          actualAnnualSpendUsd: 48_000_000,
+          totalCommittedValueUsd: 150_000_000,
+          conflictAmountUsd: null,
+          sourceRefs: ["source.contract_360"],
+        },
+        selectedOpportunityId: "c1:rate-variance",
+        opportunities: [
+          {
+            opportunityId: "c1:rate-variance",
+            contractId: "c1",
+            label: "Invoice-line rate variance",
+            shortLabel: "Rate variance",
+            valueType: "recoverable_leakage",
+            amountUsd: 365_000,
+            amountState: "exact",
+            stage: "quantified",
+            evidenceGrade: "system_evidenced",
+            confidence: 0.94,
+            deadline: null,
+            owner: "Commercial owner",
+            blockingGap: null,
+            nextAction: "Review invoice-line exceptions.",
+            sourceSystems: ["AP / ERP invoice line extract"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment: "Line-level billing-rate variance only.",
+            approvalState: "needs_review",
+            narrative:
+              "Invoice billing-rate variance is backed by AP evidence.",
+          },
+        ],
+        financeRealizations: [],
+        evidenceRequirements: [],
+        potentialRecoverableUsd: 365_000,
+        potentialAvoidableUsd: 0,
+        potentialNegotiableUsd: 0,
+        financeConfirmedUsd: 0,
+      },
+    };
+
+    const built = buildViewModel(vm) as {
+      opportunityView: {
+        selectedOpportunity: { label: string; shortLabel: string };
+        opportunities: Array<{ label: string; shortLabel: string }>;
+      };
+    };
+
+    expect(built.opportunityView.selectedOpportunity).toMatchObject({
+      label: "Invoice billing-rate variance",
+      shortLabel: "Invoice billing-rate variance",
+    });
+    expect(built.opportunityView.opportunities[0]).toMatchObject({
+      label: "Invoice billing-rate variance",
+      shortLabel: "Invoice billing-rate variance",
+    });
+  });
+
   it("does not promote synthetic fallback scope into the selected-contract intake URL", () => {
     const vm = buildVm({
       contracts: [
@@ -422,6 +520,7 @@ describe("buildViewModel numeric coercion", () => {
     const built = buildViewModel(vm) as {
       activeTab: string;
       tabs: Array<{ label: string }>;
+      tree: Array<{ id: string; label: string }>;
       isPortfolioContext: boolean;
       isAgenda: boolean;
       isOpps: boolean;
@@ -437,6 +536,41 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.isPortfolioContext).toBe(true);
     expect(built.isAgenda).toBe(false);
     expect(built.isOpps).toBe(false);
+    expect(built.tree).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "allVendors",
+          label: "All supplier entities",
+        }),
+        expect.objectContaining({
+          id: "allContracts",
+          label: "All contract records",
+        }),
+      ]),
+    );
+  });
+
+  it("labels Explore aggregate grains without mixing active counts and source records", () => {
+    const vm = new WorkspaceViewModel(
+      {
+        ...INITIAL_STATE,
+        tabs: { ...INITIAL_STATE.tabs, portfolio: "Explore" },
+      },
+      () => undefined,
+      PORTFOLIO,
+      "SkyHarbor Global",
+      () => undefined,
+    );
+    const built = buildViewModel(vm) as {
+      compactItems: Array<{ label: string; value: string }>;
+    };
+
+    expect(built.compactItems).toEqual(
+      expect.arrayContaining([
+        { label: "active contracts", value: "100" },
+        { label: "active strategic vendors", value: "60" },
+      ]),
+    );
   });
 
   it("keeps contract relationship as its own detail tab", () => {

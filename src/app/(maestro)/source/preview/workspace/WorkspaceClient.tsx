@@ -495,9 +495,9 @@ export function WorkspaceClient({
           {portfolio.isEmpty
             ? "Nothing below is estimated in its place."
             : portfolio.workspaceDiagnostics.v4ContractCount +
-              " contracts · " +
+              " active contracts · " +
               portfolio.workspaceDiagnostics.v4VendorCount +
-              " vendors · as of " +
+              " active strategic vendors · as of " +
               new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString(
                 "en-GB",
                 {

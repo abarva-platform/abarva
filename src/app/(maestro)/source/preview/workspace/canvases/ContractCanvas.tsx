@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { Fragment, useState, type CSSProperties } from "react";
 import { DataTable } from "../DataTable";
 import { EvidenceLineageGraph } from "./EvidenceLineageGraph";
 import type { SourceWorkspaceVM } from "../buildViewModel";
@@ -2204,22 +2204,22 @@ function StoryTile({
   );
 }
 
+function sentenceCount(count: number) {
+  if (count === 0) return "No";
+  if (count === 1) return "One";
+  if (count === 2) return "Two";
+  if (count === 3) return "Three";
+  if (count === 4) return "Four";
+  if (count === 5) return "Five";
+  return String(count);
+}
+
 function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const view = vm.opportunityView;
   if (!view) return null;
   const c = vm.c;
   const conflict = view.baseline.status === "conflict";
   const visibleOpportunities = view.opportunities.slice(0, 5);
-  const readyCount = view.opportunities.filter((opportunity) =>
-    [
-      "Quantified",
-      "Validated",
-      "Approval Required",
-      "Target Position",
-      "Agreed",
-      "Finance Confirmed",
-    ].includes(opportunity.stage),
-  ).length;
   const blockedCount = view.opportunities.filter(
     (opportunity) =>
       opportunity.stageRaw === "baseline_conflict" ||
@@ -2227,6 +2227,33 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
       Boolean(opportunity.blockingGap),
   ).length;
   const hasSizedPotential = view.potential.total !== "Not sized";
+  const baselineHeadline =
+    !conflict && c ? "Contract economics loaded" : view.baseline.headline;
+  const baselineDetail =
+    !conflict && c
+      ? "Annual value and actual spend are available; pricing schedule baseline still needs reconciliation."
+      : view.baseline.detail;
+  const baselineRows =
+    !conflict && c
+      ? [
+          ["Annual contract value", c.acv],
+          ["Actual annual spend", c.spend],
+          [
+            "Pricing schedule baseline",
+            view.baseline.pricingScheduleValue === "Not sized"
+              ? "Not reconciled"
+              : view.baseline.pricingScheduleValue,
+          ],
+        ]
+      : [
+          ["Annual value", view.baseline.annualValue],
+          ["Pricing schedule", view.baseline.pricingScheduleValue],
+          ["Actual spend", view.baseline.actualSpend],
+        ];
+  const evidenceRead =
+    blockedCount === 0
+      ? `${sentenceCount(view.opportunities.length)} opportunities identified. None still require evidence review, business approval, or negotiation action. Missing evidence remains explicit.`
+      : `${sentenceCount(view.opportunities.length)} opportunities identified. ${sentenceCount(blockedCount)} still require evidence review, business approval, or negotiation action. Missing evidence remains explicit.`;
   const decisionHeadline = conflict
     ? "Reconcile the commercial baseline before sizing value."
     : hasSizedPotential
@@ -2329,11 +2356,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             <StoryTile
               index="04"
               title="What evidence says"
-              body={
-                conflict
-                  ? view.baseline.headline
-                  : `${readyCount} ready or reviewable; ${blockedCount} blocked or gap-backed. Missing evidence remains explicit.`
-              }
+              body={conflict ? view.baseline.headline : evidenceRead}
             />
             <StoryTile index="05" title="Next decision" body={nextAction} />
           </div>
@@ -2356,7 +2379,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
                 marginBottom: 5,
               }}
             >
-              {view.baseline.headline}
+              {baselineHeadline}
             </div>
             <div
               style={{
@@ -2366,7 +2389,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
                 marginBottom: 10,
               }}
             >
-              {view.baseline.detail}
+              {baselineDetail}
             </div>
             <div
               style={{
@@ -2377,12 +2400,12 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
                 fontSize: 11.5,
               }}
             >
-              <span style={{ color: "#5f5e5a" }}>Annual value</span>
-              <b>{view.baseline.annualValue}</b>
-              <span style={{ color: "#5f5e5a" }}>Pricing schedule</span>
-              <b>{view.baseline.pricingScheduleValue}</b>
-              <span style={{ color: "#5f5e5a" }}>Actual spend</span>
-              <b>{view.baseline.actualSpend}</b>
+              {baselineRows.map(([label, value]) => (
+                <Fragment key={label}>
+                  <span style={{ color: "#5f5e5a" }}>{label}</span>
+                  <b>{value}</b>
+                </Fragment>
+              ))}
               {view.baseline.conflictAmount ? (
                 <>
                   <span style={{ color: "#a32d2d" }}>Conflict</span>
@@ -4153,7 +4176,7 @@ function DetailPanel({
                 "Earned, claimed, and received credits are separated so missed recovery is visible.",
               )}
               {row(
-                "Commercial baseline",
+                "Potential recoverable leakage",
                 formatCurrency(evidencePerf.recoverable_leakage_usd),
                 "Potential recovery is derived from governed SLA, invoice, and rate-card rows.",
               )}
@@ -4203,7 +4226,7 @@ function DetailPanel({
             {valueCard(
               "Recover money",
               formatCurrency(evidencePerf.recoverable_leakage_usd),
-              `${formatCurrency(creditGap)} SLA credit gap, ${formatCurrency(evidencePerf.invoice_exception_amount_usd)} invoice exceptions, ${formatCurrency(evidencePerf.rate_card_variance_usd)} rate-card variance.`,
+              `${formatCurrency(creditGap)} SLA credit gap, ${formatCurrency(evidencePerf.invoice_exception_amount_usd)} invoice billing-rate exceptions, ${formatCurrency(evidencePerf.rate_card_variance_usd)} VMS / labor rate-card variance.`,
               "#1d9e75",
             )}
             {valueCard(
