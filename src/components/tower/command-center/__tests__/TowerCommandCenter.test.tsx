@@ -175,7 +175,7 @@ describe("TowerCommandCenter", () => {
     renderPage();
     fireEvent.click(tab(/Value Proof/));
     expect(
-      screen.getByText("Claim-gated explicit benefit"),
+      screen.getByText("Claim-gated source-backed benefit"),
     ).toBeInTheDocument();
     expect(screen.getByText("Source-backed benefit chain")).toBeInTheDocument();
     expect(
@@ -524,7 +524,7 @@ describe("TowerCommandCenter", () => {
     // 'Finance-validated' and 'Claimable' appear twice by design — once in the
     // 4-up stat grid, once as a proof-chain row.
     for (const stage of [
-      "Explicit benefit",
+      "Explicit source-backed benefit",
       "Usage-supported",
       "Finance-validated",
       "Claimable",

@@ -105,7 +105,7 @@ export function AiInitiativeDrawer({
           <DrawerRow label="Spend type" value={AI_KIND_WORD[a.kind]} />
           <DrawerRow label="Category" value={a.category ?? "Not recorded"} />
           <DrawerRow
-            label="Explicit benefit"
+            label="Explicit source-backed benefit"
             value={
               a.promisedBenefitLoaded ? formatUsdM(a.promisedUsd) : "Not loaded"
             }

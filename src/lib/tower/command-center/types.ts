@@ -243,7 +243,7 @@ export interface TowerProgramView {
   proofSequenceStatus: TowerProofSequenceStatus;
   proofSequenceExplanation: string | null;
   semanticSource: TowerSemanticSource;
-  /** Matrix exposure: promised benefit when present, otherwise approved capital. */
+  /** Matrix exposure: source-backed benefit when present, otherwise approved capital. */
   valueAtStakeUsd: number;
 
   /** The next required gate, or null when the mart records none. */

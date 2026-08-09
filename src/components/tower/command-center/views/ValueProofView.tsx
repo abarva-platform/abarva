@@ -76,10 +76,10 @@ export function ValueProofView({
       <ViewHead
         title={
           s.promisedBenefitLoaded
-            ? "Claim-gated explicit benefit"
+            ? "Claim-gated source-backed benefit"
             : "Benefit proof coverage"
         }
-        sub="Investment is separate from promised benefit, usage, outcome, Finance, and claimable value"
+        sub="Investment is separate from source-backed benefit, usage, outcome, Finance, and claimable value"
         hint="Click a program for its proof chain & usage evidence"
       />
 
@@ -98,7 +98,7 @@ export function ValueProofView({
         <Card
           eyebrow={
             s.promisedBenefitLoaded
-              ? "Explicit benefit claim chain"
+              ? "Explicit source-backed benefit claim chain"
               : "Benefit not loaded"
           }
           right="waterfall excludes Finance-blocked population"
@@ -117,7 +117,7 @@ export function ValueProofView({
               className={styles.emptyPanel}
               aria-describedby="tcc-waterfall-alt"
             >
-              <h2>No explicit benefit assertion</h2>
+              <h2>No explicit source-backed benefit assertion</h2>
               <p>
                 Approved investment is visible, but Tower will not create a
                 benefit waterfall until a governed value case carries a
@@ -133,7 +133,7 @@ export function ValueProofView({
                     (r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
                   )
                   .join(". ")}.`
-              : `Explicit promised benefit is absent. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
+              : `Explicit source-backed benefit is absent. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
           </p>
 
           <div
@@ -175,7 +175,7 @@ export function ValueProofView({
                         ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
                         : "."
                     }`
-                  : `${formatUsdM(s.approvedInvestmentUsd)} is approved investment, not promised benefit.`}
+                  : `${formatUsdM(s.approvedInvestmentUsd)} is approved investment, not source-backed benefit.`}
               </b>{" "}
               {financeAheadOfUsage ? (
                 <>

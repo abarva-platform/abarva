@@ -379,7 +379,7 @@ export function deriveProgramValues(
     usageStatus: usageStatus(row),
     financeStatus: financeStatus(row),
     lane: laneFor(row),
-    // Matrix exposure. Promised benefit is the stake when it exists; otherwise
+    // Matrix exposure. Source-backed benefit is the stake when it exists; otherwise
     // approved funding is shown as capital exposure only. This keeps no-benefit
     // programs visible in the decision matrix without crediting investment as
     // economic value.

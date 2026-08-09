@@ -58,7 +58,8 @@ const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
 const BOARDROOM_VERDICT =
-  "Investment is visible. Benefit evidence and economic conversion remain limited.";
+  "Investment is visible. Source-backed benefit evidence and economic conversion remain limited.";
+const BOARDROOM_UPDATED_LABEL = "Updated Aug 9, 2026";
 
 type DrawerState =
   | { kind: "program"; id: string }
@@ -172,9 +173,7 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
-  const headerScope = view
-    ? `${view.summary.martVersion} · ${view.summary.formulaVersion}`
-    : "no governed rows";
+  const headerScope = view ? BOARDROOM_UPDATED_LABEL : "no governed rows";
   const boardroomRail = view
     ? [
         {
@@ -189,7 +188,7 @@ export function TowerCommandCenter({
             view.summary.promisedBenefitUsd === null
               ? "Not loaded"
               : formatUsdM(view.summary.promisedBenefitUsd),
-          label: "explicit benefit",
+          label: "explicit source-backed benefit",
         },
         {
           value: formatUsdM(view.summary.financeValidatedBlockedUsd),

@@ -328,6 +328,7 @@
   height: 100%;
   overflow-y: auto;
   padding-right: 6px;
+  padding-bottom: 84px;
 }
 
 .vhead {
@@ -1643,6 +1644,172 @@ button.chip.cBlue {
 }
 .chartwrap > * {
   width: 100%;
+}
+.compressedAiChart {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  padding: 2px;
+}
+.compressedAiHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(39, 164, 127, 0.1), rgba(255, 255, 255, 0.72)),
+    var(--canon-bg-surface);
+}
+.compressedAiHeader span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.compressedAiHeader b {
+  font-family: var(--abarva-serif);
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--canon-gray-900);
+}
+.compressedAiHeader small,
+.compressedAiHeader em {
+  color: var(--canon-gray-500);
+  font-size: 11.5px;
+  line-height: 1.35;
+  font-style: normal;
+}
+.compressedAiHeader em {
+  flex: none;
+  font-family: var(--abarva-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.compressedAiRows {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--canon-gray-300) transparent;
+}
+.compressedAiRow {
+  --ai-kind: var(--abarva-signal-blue);
+  --ai-value-width: 0%;
+  --ai-readiness-width: 0%;
+  --ai-spend-width: 0%;
+  display: grid;
+  grid-template-columns: 28px minmax(150px, 1fr) minmax(180px, 0.9fr) minmax(62px, auto);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--canon-border);
+  border-left: 4px solid var(--ai-kind);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 7px 9px 7px 7px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.compressedAiRow:hover {
+  border-color: var(--canon-gray-300);
+  background: var(--canon-bg-surface);
+}
+.compressedAiBadge {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  font-weight: 750;
+}
+.compressedAiName {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.compressedAiName b {
+  color: var(--canon-gray-900);
+  font-size: 12.5px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compressedAiName small {
+  color: var(--canon-gray-500);
+  font-size: 10.5px;
+}
+.compressedAiBars {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.compressedAiBars i {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--canon-gray-100);
+  overflow: hidden;
+}
+.compressedAiBars span {
+  display: block;
+  height: 100%;
+  width: var(--ai-value-width);
+  background: var(--ai-kind);
+}
+.compressedAiBars .readinessBar span {
+  width: var(--ai-readiness-width);
+  background: var(--canon-teal);
+}
+.compressedAiSpend {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  color: var(--canon-gray-700);
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.compressedAiSpend i {
+  display: block;
+  width: 56px;
+  height: 5px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--canon-amber) var(--ai-spend-width), var(--canon-gray-100) 0);
+}
+@media (max-width: 820px) {
+  .compressedAiHeader {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .compressedAiHeader em {
+    white-space: normal;
+  }
+  .compressedAiRow {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+  .compressedAiBars {
+    grid-column: 2 / -1;
+  }
 }
 .legend {
   flex: none;

@@ -35,6 +35,8 @@ Tower's governed value model remains unchanged, but the board-facing presentatio
 - Recommended Actions defaults to grouped executive proof campaigns and keeps the action inventory behind an expansion control.
 - Decision Lanes defaults to ranked decision lanes when proof maturity is compressed and limits heatmap labels to the most material cases.
 - AI Portfolio bubble labels are limited to top/selected-style labels so clustered marks do not all print centered labels.
+- AI Portfolio compressed-score matrices switch to a ranked proof-band exhibit when the chart would otherwise place nearly every marker on top of the same score band.
+- The Tower aVa collapsed launcher receives a Tower-scoped edge placement so the dock affordance does not cover bottom-right analytical content.
 - Value Proof labels separate explicit benefit claim-chain value from Finance-calculated value awaiting proof completion.
 - Evidence now surfaces one-source facts as an action workplan showing current authority, second source needed, owner, and blocked decision.
 - aVa removes hardcoded proof-gap counts from the default Tower prompt.
@@ -42,7 +44,7 @@ Tower's governed value model remains unchanged, but the board-facing presentatio
 ## QA / Validation
 
 - `npx eslint src/components/tower/command-center/TowerCommandCenter.tsx src/components/tower/command-center/TowerCommandCenterAvaShell.tsx src/components/tower/command-center/views/AiPortfolioView.tsx src/components/tower/command-center/views/DecisionLanesView.tsx src/components/tower/command-center/views/RecommendedActionsView.tsx src/components/tower/command-center/views/ValueProofView.tsx src/components/tower/command-center/views/EvidenceView.tsx src/components/tower/command-center/charts/AiBubbleMatrixChart.tsx src/components/tower/command-center/charts/AiSpendLensChart.tsx src/components/tower/command-center/charts/PortfolioHeatmapChart.tsx src/lib/tower/command-center/view-model.ts src/lib/tower/command-center/types.ts src/lib/tower/command-center/__fixtures__/design-fixture.ts` — passed.
-- `npm test -- --runTestsByPath src/lib/tower/command-center/__tests__/view-model.test.ts src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx src/components/tower/command-center/__tests__/css-contract.test.ts src/components/tower/command-center/charts/__tests__/AiBubbleMatrixChart.test.ts` — 71 passed.
+- `npm test -- --runTestsByPath src/components/tower/command-center/charts/__tests__/AiBubbleMatrixChart.test.ts src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx src/components/tower/command-center/__tests__/css-contract.test.ts src/components/tower/command-center/__tests__/render-harness.test.tsx src/lib/tower/command-center/__tests__/view-model.test.ts src/lib/tower/__tests__/readTowerCommandCenter.test.ts src/components/atlas/__tests__/AtlasChatPanel.test.tsx` — 87 passed.
 - `TCC_HARNESS_OUT=/Users/anand/Downloads/tower-boardroom-hardening-harness-2026-08-09-v3 npx jest --runTestsByPath src/components/tower/command-center/__tests__/render-harness.test.tsx` — 2 passed.
 - Browser visual harness with real React, Recharts, CSS modules, and fixture data at 1280x800, 1440x900, and 1792x1120 — all semantic visual gates passed: H1 line count, Recharts render, nonzero spend with no blank chart, spend completeness, bounded action default, one-source Evidence workplan, first analytic visibility, zero page errors, zero Recharts warnings.
 - `git diff --check` — passed.
@@ -71,6 +73,7 @@ Rollback by reverting the UI release commit and redeploying through the repo-own
 - Browser visual proof: `/Users/anand/Downloads/tower-boardroom-browser-proof-2026-08-09-v4`
 - Browser proof report: `/Users/anand/Downloads/tower-boardroom-browser-proof-2026-08-09-v4/tower-browser-visual-proof-semantic.md`
 - Browser proof JSON: `/Users/anand/Downloads/tower-boardroom-browser-proof-2026-08-09-v4/tower-browser-visual-proof-semantic.json`
+- Compressed-score chart-gap proof: `/Users/anand/Downloads/tower-ui-chart-gap-fixes-visual-proof-2026-08-09/visual-proof.md`
 
 ## Known Gaps
 
