@@ -40,16 +40,15 @@ const EXPECTED_STAGE_MARKER: Partial<Record<SourceStageKey, string>> = {
   rfp: "Confirm RFP clause coverage",
   responses: "Confirm vendor response coverage",
   evaluation: "Confirm vendor bids for should-cost",
+  pricing: "Confirm normalized supplier pricing",
   bafo: "Confirm BAFO concessions captured",
+  executive_decision: "Confirm executive recommendation packet",
   selection: "Confirm committed value at award",
+  transition: "Confirm transition go-live readiness",
   value: "Confirm realized value to date",
 };
 
-const PLACEHOLDER_STAGES = new Set<SourceStageKey>([
-  "pricing",
-  "executive_decision",
-  "transition",
-]);
+const PLACEHOLDER_STAGES = new Set<SourceStageKey>();
 
 function makeEvent(): SourcingEventSummary {
   return {
@@ -123,6 +122,7 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
         expect(
           screen.queryByText("Provide the volumetrics"),
         ).not.toBeInTheDocument();
+        expect(screen.queryByText("Sponsor commitment")).not.toBeInTheDocument();
       }
     },
   );
