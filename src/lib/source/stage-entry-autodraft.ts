@@ -6,7 +6,10 @@ import {
   processSourceArtifactGenerationJob,
   type SourceArtifactGenerationJobRow,
 } from "@/lib/source/artifact-generation-queue";
-import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
+import {
+  getPromptTemplate,
+  listSupportedGenerationCodes,
+} from "@/lib/source/agent-generation";
 import { specsForStage } from "@/lib/source/canonical-specs";
 import type { SourceEventArtifactStateRow } from "@/lib/source/canvas-substrate/types";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -57,10 +60,17 @@ export interface AutoDraftOnStageEntryDeps {
     artifactRowId: string;
     status: "drafting";
   }) => Promise<void>;
+  waitForDraftableUpstream?: (input: {
+    eventId: string;
+    artifactCode: string;
+    requiredCodes: string[];
+  }) => Promise<string[]>;
   log?: Pick<Console, "warn" | "error">;
 }
 
 const TERMINAL_ARTIFACT_STATUSES = new Set(["locked", "superseded"]);
+const UPSTREAM_DRAFT_WAIT_TIMEOUT_MS = 8 * 60 * 1000;
+const UPSTREAM_DRAFT_WAIT_INTERVAL_MS = 5_000;
 
 export function autoDraftCodesForStage(stage: SourceStageKey): string[] {
   const supported = new Set(listSupportedGenerationCodes());
@@ -120,6 +130,30 @@ export async function autoDraftOnStageEntry(
     }
 
     try {
+      const requiredCodes =
+        getPromptTemplate(artifactCode)?.upstreamRequired ?? [];
+      if (
+        requiredCodes.length > 0 &&
+        (!deps.loadArtifactRows || deps.waitForDraftableUpstream)
+      ) {
+        const missingUpstream = await (
+          deps.waitForDraftableUpstream ?? defaultWaitForDraftableUpstream
+        )({
+          eventId: input.eventId,
+          artifactCode,
+          requiredCodes,
+        });
+        if (missingUpstream.length > 0) {
+          result.failed.push(`${artifactCode}:upstream_required`);
+          log.warn("[source stage autodraft] upstream draft not ready", {
+            ...input,
+            artifactCode,
+            missingUpstream,
+          });
+          continue;
+        }
+      }
+
       await (deps.updateArtifactStatus ?? defaultUpdateArtifactStatus)({
         clientKey: input.clientKey,
         artifactRowId: row.id,
@@ -321,6 +355,74 @@ async function loadArtifactRowsForStage(
     body: row.body,
     status: row.status,
   }));
+}
+
+async function defaultWaitForDraftableUpstream(input: {
+  eventId: string;
+  artifactCode: string;
+  requiredCodes: string[];
+}): Promise<string[]> {
+  const deadline = Date.now() + UPSTREAM_DRAFT_WAIT_TIMEOUT_MS;
+  let lastMissing = [...input.requiredCodes];
+
+  while (Date.now() <= deadline) {
+    const state = await readDraftableUpstreamState(
+      input.eventId,
+      input.requiredCodes,
+    );
+    lastMissing = state.missingCodes;
+    if (lastMissing.length === 0) return [];
+    if (!state.hasActiveUpstreamJob) return lastMissing;
+    await sleep(UPSTREAM_DRAFT_WAIT_INTERVAL_MS);
+  }
+
+  return lastMissing;
+}
+
+async function readDraftableUpstreamState(
+  eventId: string,
+  requiredCodes: string[],
+): Promise<{ missingCodes: string[]; hasActiveUpstreamJob: boolean }> {
+  const supabase = getAzureReadFluentClient();
+  const { data: rows, error: rowsError } = await supabase
+    .from("source_event_artifact_states")
+    .select("artifact_code, body")
+    .eq("source_event_id", eventId)
+    .in("artifact_code", requiredCodes);
+  if (rowsError) throw new Error(rowsError.message);
+
+  const satisfied = new Set(
+    (
+      (rows ?? []) as Pick<
+        SourceEventArtifactStateRow,
+        "artifact_code" | "body"
+      >[]
+    )
+      .filter((row) => row.body && row.body.trim().length > 0)
+      .map((row) => row.artifact_code),
+  );
+  const missingCodes = requiredCodes.filter((code) => !satisfied.has(code));
+  if (missingCodes.length === 0) {
+    return { missingCodes: [], hasActiveUpstreamJob: false };
+  }
+
+  const { data: jobs, error: jobsError } = await supabase
+    .from("source_artifact_generation_jobs")
+    .select("id")
+    .eq("source_event_id", eventId)
+    .in("artifact_code", missingCodes)
+    .in("status", ["queued", "running"])
+    .limit(1);
+  if (jobsError) throw new Error(jobsError.message);
+
+  return {
+    missingCodes,
+    hasActiveUpstreamJob: (jobs ?? []).length > 0,
+  };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function defaultGenerateArtifact(input: {

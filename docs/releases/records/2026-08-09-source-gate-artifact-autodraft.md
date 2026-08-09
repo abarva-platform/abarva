@@ -16,6 +16,8 @@ The canvas stage-promotion endpoint now follows the same approved-stage invarian
 
 Stage-entry auto-drafts can also use earlier AI-prepared draft bodies as drafting context while preserving the stricter accepted-authoritative upstream rule for manual generation and client-final authority.
 
+Stage-entry auto-drafts now wait for required upstream draft bodies when upstream generation is still queued or running, so dependent stage artifacts do not fail permanently just because an earlier draft is still in flight. AMS events that explicitly reference an RFP or competitive market event also remain on the full competitive sourcing journey instead of being shortened to a contract-optimization journey by trigger wording alone.
+
 ## Layer Impact
 
 - `global-control-lane`: Layer 4 Product projection changes only. The Source approval route and artifact generation orchestration change how existing per-event artifact rows are drafted after approval; no canonical data model, intake shape, adapter, schema, or migration changes are included.
@@ -35,8 +37,11 @@ Stage-entry auto-drafts can also use earlier AI-prepared draft bodies as draftin
 - `src/app/api/v1/source/[eventId]/stage/route.ts`
 - `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts`
 - `src/lib/source/contracts/upstream-satisfaction.ts`
+- `src/lib/source/queries.ts`
 - `src/lib/source/stage-entry-autodraft.ts`
+- `src/lib/source/sourcing-motion-journeys.ts`
 - `src/lib/source/__tests__/stage-entry-autodraft.test.ts`
+- `src/lib/source/__tests__/sourcing-motion-journeys.test.ts`
 - `src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts`
 - `src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts`
 - `src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts`
@@ -46,8 +51,12 @@ Stage-entry auto-drafts can also use earlier AI-prepared draft bodies as draftin
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/jest --runTestsByPath 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts' src/lib/source/__tests__/stage-entry-autodraft.test.ts` passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts` passed.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts` passed.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/eslint src/lib/source/stage-entry-autodraft.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/route.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
+- `./node_modules/.bin/eslint src/lib/source/stage-entry-autodraft.ts src/lib/source/queries.ts src/lib/source/sourcing-motion-journeys.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts` passed.
 - `./node_modules/.bin/eslint 'src/app/api/v1/source/[eventId]/stage/route.ts' 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts'` passed.
+- `NODE_OPTIONS=--max-old-space-size=6144 ./node_modules/.bin/tsc --noEmit --pretty false` passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/gate-advance-contract.test.ts src/lib/source/__tests__/source-governance-enforcement.test.ts src/lib/source/contracts/__tests__/generation-eligibility.test.ts src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/agent-generation/__tests__/prompt-registry.test.ts` found a pre-existing Source governance fixture mismatch outside this release's changed files; the four adjacent non-fixture suites passed.
 
 ## Rollout Plan

@@ -107,6 +107,19 @@ describe("Source sourcing motion journeys", () => {
     expect(journey.id).toBe("competitive_rfp");
   });
 
+  it("keeps AMS events on the full RFP journey when optimization is the trigger but RFP is the work product", () => {
+    const journey = getSourceJourneyForEvent({
+      eventName: "Application Managed Services (AMS) Sourcing Event",
+      eventType: "ams",
+      classifiedCategory: "ams",
+      triggerDescription:
+        "AMS contract optimization is needed now; target is a defensible RFP package.",
+    });
+
+    expect(journey.id).toBe("competitive_rfp");
+    expect(nextSourceStageForJourney("scope", journey)).toBe("rfp");
+  });
+
   it("maps skipped legacy stages to the next visible checkpoint", () => {
     const journey = SOURCE_JOURNEYS.contract_optimization;
 
