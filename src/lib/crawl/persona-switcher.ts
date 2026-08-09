@@ -28,13 +28,6 @@ export interface CrawlSurface {
   requiresContextDemoVectorProof?: boolean;
 }
 
-const CRAWL_VISIBLE_TENANT_NAMES: Partial<
-  Record<CxoPersona["clientKey"], string>
-> = {
-  meridian: "Meridian Health",
-  skyharbor: "SkyHarbor Global",
-};
-
 // Crawl personas are DERIVED from the durable per-client agent roster
 // (src/lib/auth/agent-client-logins.ts) so there is one source of truth across
 // the prime-auth harness and the post-deploy crawl/gauntlet. This replaced the
@@ -46,7 +39,7 @@ export const CRAWL_PERSONAS: CrawlPersona[] = AGENT_CLIENT_LOGINS.filter(
 ).map((login) => ({
   key: login.slug,
   tenantKey: login.clientKey,
-  tenantName: CRAWL_VISIBLE_TENANT_NAMES[login.clientKey] ?? login.tenant,
+  tenantName: login.tenant,
   title: login.titleShort,
   email: login.email,
   sourceSlug: login.slug,
