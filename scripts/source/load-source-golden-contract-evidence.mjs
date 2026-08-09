@@ -675,12 +675,25 @@ async function verifyContractById(client, args, contractId) {
       LIMIT 1`,
     [tenantAliases(args), contractId],
   );
-  if (!result.rows[0]) {
+  if (result.rows[0]) return result.rows[0];
+
+  const overview = readCsv("synthetic/contract_overview.csv").find(
+    (row) => row.contract_id === contractId,
+  );
+  if (!overview) {
     throw new Error(
-      `Contract ${contractId} was not found in source.contract_360 for ${args.tenantKey}`,
+      `Contract ${contractId} was not found in source.contract_360 or synthetic/contract_overview.csv for ${args.tenantKey}`,
     );
   }
-  return result.rows[0];
+
+  return {
+    tenant_key: args.tenantKey,
+    contract_id: overview.contract_id,
+    vendor_ref: overview.vendor_id || null,
+    vendor_name: overview.vendor_name || null,
+    annual_value: numericValue(overview.annual_value_usd),
+    contract_anchor: "evidence_package_overview",
+  };
 }
 
 function reconciliationRowsByContract(contractIds) {
