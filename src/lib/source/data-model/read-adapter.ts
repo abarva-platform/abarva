@@ -487,7 +487,35 @@ export async function getContractEvidencePerformanceSummary(
       FULL OUTER JOIN finance USING (contract_id)`,
       [contractId],
     );
-  return rows[0] ?? null;
+  return rows[0] ? normalizeEvidencePerformanceSummary(rows[0]) : null;
+}
+
+function normalizeEvidencePerformanceSummary(
+  row: SourceContractEvidencePerformanceSummary,
+): SourceContractEvidencePerformanceSummary {
+  return {
+    ...row,
+    sla_months: numberValue(row.sla_months) ?? 0,
+    sev1_incidents: numberValue(row.sev1_incidents) ?? 0,
+    sev2_incidents: numberValue(row.sev2_incidents) ?? 0,
+    service_credits_earned_usd:
+      numberValue(row.service_credits_earned_usd) ?? 0,
+    service_credits_claimed_usd:
+      numberValue(row.service_credits_claimed_usd) ?? 0,
+    service_credits_received_usd:
+      numberValue(row.service_credits_received_usd) ?? 0,
+    invoice_line_count: numberValue(row.invoice_line_count) ?? 0,
+    invoice_exception_count: numberValue(row.invoice_exception_count) ?? 0,
+    invoice_exception_amount_usd:
+      numberValue(row.invoice_exception_amount_usd) ?? 0,
+    rate_card_variance_usd: numberValue(row.rate_card_variance_usd) ?? 0,
+    recoverable_leakage_usd: numberValue(row.recoverable_leakage_usd) ?? 0,
+    avoided_cost_usd: numberValue(row.avoided_cost_usd) ?? 0,
+    negotiated_improvement_usd:
+      numberValue(row.negotiated_improvement_usd) ?? 0,
+    realized_value_usd: numberValue(row.realized_value_usd) ?? 0,
+    source_systems: jsonArray(row.source_systems),
+  };
 }
 
 export async function getContractOptimizationOpportunitySet(

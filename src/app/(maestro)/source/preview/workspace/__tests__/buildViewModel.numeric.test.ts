@@ -226,7 +226,9 @@ describe("buildViewModel numeric coercion", () => {
     const built = buildViewModel(vm) as {
       tree: Array<{ id: string; onClick?: () => void }>;
     };
-    const optimizeNode = built.tree.find((item) => item.id === "events.optimize");
+    const optimizeNode = built.tree.find(
+      (item) => item.id === "events.optimize",
+    );
 
     expect(optimizeNode).toBeDefined();
     expect(String(optimizeNode?.onClick)).toContain(
@@ -261,6 +263,113 @@ describe("buildViewModel numeric coercion", () => {
     expect(JSON.stringify(built)).not.toContain("Door 1");
   });
 
+  it("renders conflicted optimization evidence as not sized instead of zero", () => {
+    const vm = buildVm();
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.tabs.contract = "Optimize";
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      optimizationOpportunitySet: {
+        tenantKey: "skyharbor_global",
+        datasetVersion: "v4-golden-evidence",
+        contractId: "c1",
+        vendorId: "vendor-one",
+        vendorName: "Vendor One",
+        contractName: "Default Contract",
+        recommendation: "Build evidence before optimizing.",
+        recommendationDetail:
+          "Baseline conflict must be resolved before any opportunity is sized.",
+        actionState: "request_evidence",
+        baseline: {
+          status: "conflict",
+          headline: "Commercial baseline conflict",
+          detail: "Annual value conflicts with pricing schedule totals.",
+          annualValueUsd: 35_000_000,
+          pricingScheduleAnnualValueUsd: 45_000_000,
+          actualAnnualSpendUsd: null,
+          totalCommittedValueUsd: null,
+          conflictAmountUsd: 10_000_000,
+          sourceRefs: ["source.golden_contract_pricing_schedule"],
+        },
+        selectedOpportunityId: "c1:baseline-conflict",
+        opportunities: [
+          {
+            opportunityId: "c1:baseline-conflict",
+            contractId: "c1",
+            label: "Commercial baseline conflict",
+            shortLabel: "Baseline conflict",
+            valueType: "recoverable_leakage",
+            amountUsd: null,
+            amountState: "not_sized",
+            stage: "baseline_conflict",
+            evidenceGrade: "conflicted",
+            confidence: 0.92,
+            deadline: null,
+            owner: "Commercial owner",
+            blockingGap: "Annual value conflicts with pricing schedule totals.",
+            nextAction: "Reconcile the baseline before sizing.",
+            sourceSystems: ["CLM / contract repository"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "No opportunity amount is displayed until the baseline is resolved.",
+            approvalState: "blocked_by_baseline_conflict",
+            narrative:
+              "This contract is material, but the current evidence conflicts.",
+          },
+        ],
+        financeRealizations: [],
+        evidenceRequirements: ["Resolve baseline conflict."],
+        potentialRecoverableUsd: 0,
+        potentialAvoidableUsd: 0,
+        potentialNegotiableUsd: 0,
+        financeConfirmedUsd: 0,
+      },
+    };
+
+    const built = buildViewModel(vm) as {
+      compactItems: Array<{ label: string; value: string }>;
+      opportunityView: {
+        potential: {
+          recoverable: string;
+          avoidable: string;
+          negotiable: string;
+          total: string;
+        };
+        financeConfirmed: string;
+      };
+    };
+
+    expect(built.opportunityView.potential.recoverable).toBe("Not sized");
+    expect(built.opportunityView.potential.total).toBe("Not sized");
+    expect(built.opportunityView.financeConfirmed).toBe("Not established");
+    expect(built.compactItems).toEqual(
+      expect.arrayContaining([
+        { label: "potential recoverable", value: "Not sized" },
+        { label: "finance confirmed", value: "Not established" },
+      ]),
+    );
+  });
+
   it("does not promote synthetic fallback scope into the selected-contract intake URL", () => {
     const vm = buildVm({
       contracts: [
@@ -286,7 +395,9 @@ describe("buildViewModel numeric coercion", () => {
     );
     expect(built.optCtaHref).not.toContain("scopeSummary=");
     expect(built.optCtaHref).not.toContain("Fictional");
-    expect(built.scopeSummary).toContain("Contract scope has not been extracted yet");
+    expect(built.scopeSummary).toContain(
+      "Contract scope has not been extracted yet",
+    );
   });
 
   it("sums explorer-tree badges without string-concatenating NUMERIC-as-string fields", () => {
@@ -371,7 +482,10 @@ describe("buildViewModel numeric coercion", () => {
       expect.arrayContaining([
         expect.objectContaining({ id: "vv.vendor-one", label: "Vendor One" }),
         expect.objectContaining({ id: "vv.vendor-two", label: "Vendor Two" }),
-        expect.objectContaining({ id: "vv.vendor-three", label: "Vendor Three" }),
+        expect.objectContaining({
+          id: "vv.vendor-three",
+          label: "Vendor Three",
+        }),
       ]),
     );
   });
@@ -464,7 +578,9 @@ describe("buildViewModel numeric coercion", () => {
     for (const q of built.quadPanel) {
       assertPlausibleMoney(q.value, q.value);
     }
-    expect(built.leverageRowsTitle).toBe("Two-or-more weak leverage signals — contract register");
+    expect(built.leverageRowsTitle).toBe(
+      "Two-or-more weak leverage signals — contract register",
+    );
     expect(built.leverageRows).toHaveLength(3);
     expect(built.leverageRows[0]?.cells.map((cell) => cell.text)).toEqual(
       expect.arrayContaining(["Vendor One", "c1", "$50.0M", "2 of 4"]),
@@ -629,9 +745,7 @@ describe("buildViewModel numeric coercion", () => {
       };
     };
 
-    expect(built.ex.groups.map((group) => group.label)).toEqual([
-      "Vendor One",
-    ]);
+    expect(built.ex.groups.map((group) => group.label)).toEqual(["Vendor One"]);
     expect(built.ex.chartSubtitle).toContain("compare-all is off");
     expect(built.ex.quality.showBanner).toBe(false);
   });
@@ -659,9 +773,9 @@ describe("buildViewModel numeric coercion", () => {
       "Vendor Three",
       "Vendor Two",
     ]);
-    expect(built.ex.groups.find((group) => group.label === "Vendor Two")?.share).toBe(
-      "excluded",
-    );
+    expect(
+      built.ex.groups.find((group) => group.label === "Vendor Two")?.share,
+    ).toBe("excluded");
   });
 
   it("marks category-dependent Explore conclusions as withheld", () => {

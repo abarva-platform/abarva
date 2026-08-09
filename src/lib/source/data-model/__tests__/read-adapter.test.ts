@@ -187,7 +187,8 @@ describe("listContractVendor360 tenant-key aliasing", () => {
         return [
           {
             contract_id: "CTR-090",
-            contract_english_overview: "This agreement covers the customer data platform.",
+            contract_english_overview:
+              "This agreement covers the customer data platform.",
           },
         ];
       }
@@ -234,11 +235,13 @@ describe("listContractVendor360 tenant-key aliasing", () => {
       getContractEvidencePerformanceSummary("skyharbor", "CTR-090"),
     ]);
 
-    expect(overview?.contract_english_overview).toContain("customer data platform");
+    expect(overview?.contract_english_overview).toContain(
+      "customer data platform",
+    );
     expect(scope).toHaveLength(1);
     expect(pricing[0]?.line_item_description).toBe("Data Cloud Enterprise");
     expect(performance?.sla_months).toBe(24);
-    expect(performance?.invoice_exception_amount_usd).toBe("2376372");
-    expect(performance?.realized_value_usd).toBe("940000");
+    expect(performance?.invoice_exception_amount_usd).toBe(2376372);
+    expect(performance?.realized_value_usd).toBe(940000);
   });
 });
