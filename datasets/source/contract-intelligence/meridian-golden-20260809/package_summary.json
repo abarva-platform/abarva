@@ -1,0 +1,12 @@
+{
+  "package_name": "Meridian golden contract evidence package",
+  "dataset_id": "meridian-source-v1-202608-golden-evidence",
+  "tenant_key": "meridian_health_global",
+  "contract_ids": [
+    "CF-001",
+    "CF-003"
+  ],
+  "total_csv_rows": 592,
+  "validation": "detail rows reconcile mechanically to golden_contract_reconciliation.csv",
+  "privacy": "Synthetic, PHI-free, PII-free; role references only."
+}

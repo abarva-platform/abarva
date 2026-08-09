@@ -1,0 +1,14 @@
+{
+  "dataset_id": "meridian-source-v1-202608-golden-evidence",
+  "tenant_key": "meridian_health_global",
+  "mapped_golden_pdf_count": 6,
+  "supplemental_prior_pdf_count": 0,
+  "extraction_rows": 30,
+  "prior_corpus_policy": "All selected synthetic PDFs were processed through the same contract_pdf_* extract path. No separate V1 hiding place.",
+  "quality_gates": {
+    "file_rows_have_sha256": true,
+    "extraction_rows_have_file_page_section": true,
+    "no_pii_no_phi": true,
+    "golden_contracts_have_english_overview": true
+  }
+}
