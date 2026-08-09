@@ -292,6 +292,291 @@
   gap: 18px;
 }
 
+.contextLayout,
+.architectureLayout {
+  display: grid;
+  gap: 18px;
+}
+
+.contextSignalWall {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid #d9e0ea;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.contextSignal {
+  min-width: 0;
+  min-height: 118px;
+  padding: 14px;
+  border-right: 1px solid #d9e0ea;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), #fbfcff),
+    radial-gradient(
+      circle at 85% 14%,
+      rgba(36, 111, 200, 0.12),
+      transparent 34%
+    );
+}
+
+.contextSignal:last-child {
+  border-right: 0;
+}
+
+.contextSignal span,
+.layerNumber {
+  color: #657087;
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.contextSignal strong {
+  color: #172033;
+  font-size: 21px;
+  line-height: 1.05;
+}
+
+.contextSignal p {
+  margin: 0;
+  color: #475a78;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.contextDomainGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.contextDomain,
+.architectureDecision {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #d9e0ea;
+  border-radius: 7px;
+  background: #fff;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.contextDomain p,
+.architectureDecision p,
+.architectureLayer p {
+  margin: 0;
+  color: #475a78;
+  font-size: 12px;
+  line-height: 1.44;
+}
+
+.contextDomain small {
+  color: #657087;
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.architectureGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.architectureHero {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #d9e0ea;
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), #fbfcff),
+    repeating-linear-gradient(
+      90deg,
+      rgba(217, 224, 234, 0.42) 0,
+      rgba(217, 224, 234, 0.42) 1px,
+      transparent 1px,
+      transparent 70px
+    );
+  overflow: hidden;
+}
+
+.flowSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+}
+
+.hostingBands rect {
+  fill: rgba(255, 255, 255, 0.86);
+  stroke: rgba(159, 179, 207, 0.7);
+}
+
+.hostingBands text {
+  fill: #40506a;
+  font-size: 12px;
+  font-weight: 820;
+  letter-spacing: 0;
+}
+
+.flowNode {
+  filter: drop-shadow(0 12px 22px rgba(22, 33, 52, 0.12));
+}
+
+.flowIndex {
+  fill: #fff;
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: 0;
+}
+
+.flowTitle {
+  fill: #172033;
+  font-size: 11px;
+  font-weight: 820;
+  letter-spacing: 0;
+}
+
+.flowDetail {
+  fill: #657087;
+  font-size: 9px;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.flowProofPath text {
+  fill: #8c2d2a;
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0;
+}
+
+.architectureStack {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  border: 1px solid #d9e0ea;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #f7f9fc;
+}
+
+.architectureLayer {
+  min-width: 150px;
+  padding: 13px;
+  border-right: 1px solid #d9e0ea;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), #fff),
+    repeating-linear-gradient(
+      0deg,
+      rgba(217, 224, 234, 0.34) 0,
+      rgba(217, 224, 234, 0.34) 1px,
+      transparent 1px,
+      transparent 38px
+    );
+}
+
+.architectureLayer:last-child {
+  border-right: 0;
+}
+
+.layerNumber {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #142346;
+  color: #fff;
+  letter-spacing: 0;
+}
+
+.layerTitle {
+  display: grid;
+  gap: 4px;
+}
+
+.layerTitle strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.layerTitle span {
+  color: #246fc8;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.architectureDecisionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.laneChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.laneChipRow span {
+  display: inline-flex;
+  max-width: 100%;
+  border: 1px solid #d9e0ea;
+  border-radius: 999px;
+  background: #f7f9fc;
+  color: #40506a;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 720;
+  line-height: 1.15;
+}
+
+.deploymentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.deploymentCard,
+.archetypeCard {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #d9e0ea;
+  border-radius: 7px;
+  background: #fff;
+  display: grid;
+  gap: 9px;
+  align-content: start;
+}
+
+.deploymentCard p,
+.archetypeCard p {
+  margin: 0;
+  color: #475a78;
+  font-size: 12px;
+  line-height: 1.44;
+}
+
+.archetypeGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.archetypeCard strong {
+  color: #172033;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .economicsLayout {
   display: grid;
   gap: 18px;
@@ -674,6 +959,12 @@
   .identityGrid,
   .patternGrid,
   .standoutGrid,
+  .contextSignalWall,
+  .contextDomainGrid,
+  .architectureStack,
+  .architectureDecisionGrid,
+  .deploymentGrid,
+  .archetypeGrid,
   .evidenceGrid,
   .watchGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -744,9 +1035,24 @@
   .identityGrid,
   .patternGrid,
   .standoutGrid,
+  .contextSignalWall,
+  .contextDomainGrid,
+  .architectureStack,
+  .architectureDecisionGrid,
+  .deploymentGrid,
+  .archetypeGrid,
   .evidenceGrid,
   .watchGrid {
     grid-template-columns: 1fr;
+  }
+
+  .contextSignal {
+    border-right: 0;
+    border-bottom: 1px solid #d9e0ea;
+  }
+
+  .contextSignal:last-child {
+    border-bottom: 0;
   }
 
   .identitySignal {

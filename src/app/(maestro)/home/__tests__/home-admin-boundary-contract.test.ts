@@ -8,39 +8,40 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe("Home/Admin boundary contract", () => {
-  it("keeps the canonical /home entry on the AI Success Command Center", () => {
+  it("keeps /home on the integrated enterprise landscape canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const commandCenterSource = readRepoFile(
-      "src/components/home/ai-success-command-center/AiSuccessCommandCenter.tsx",
-    );
 
-    expect(pageSource).toContain("import { AiSuccessCommandCenter }");
-    expect(pageSource).toContain("readSkyHarborAiSuccessHome");
+    expect(pageSource).toContain("import { HomeEnterpriseLandscapeV2 }");
+    expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
+    expect(pageSource).not.toContain("import { AiSuccessCommandCenter }");
+    expect(pageSource).not.toContain("readSkyHarborAiSuccessHome");
+    expect(pageSource).not.toContain("homeView=explorer");
     expect(pageSource).not.toMatch(
       /HomeExecutiveCockpit|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
-
-    expect(pageSource).toContain("<AiSuccessCommandCenter");
-    expect(commandCenterSource).toContain("CurrentStateArchitectureMap");
-    expect(commandCenterSource).toContain(
-      "AI is scaling across SkyHarbor. Value proof has not caught up.",
-    );
-    expect(commandCenterSource).toContain("Of 162 governed value claims");
     expect(pageSource).not.toMatch(
       /ImpactInsightsHome|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
   });
 
-  it("keeps /home data-bound to the SkyHarbor command-center snapshot", () => {
+  it("keeps context and architecture native to the V0.2 Home canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const dataSource = readRepoFile(
-      "src/lib/home/readSkyHarborAiSuccessHome.ts",
+    const modelSource = readRepoFile(
+      "src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts",
     );
 
-    expect(pageSource).toContain("const data = readSkyHarborAiSuccessHome()");
-    expect(dataSource).toContain("architectureGraphSnapshot");
-    expect(dataSource).toContain("advisoryResultSnapshot");
-    expect(dataSource).toContain("dataCapabilityPacketSnapshot");
+    expect(modelSource).toContain('"context"');
+    expect(modelSource).toContain('"architecture"');
+    expect(modelSource).toContain("contextSignals");
+    expect(modelSource).toContain("architectureLayers");
+    expect(modelSource).toContain("architectureDeployments");
+    expect(modelSource).toContain("architectureArchetypes");
+    expect(modelSource).toContain("Data and AI flow");
+    expect(modelSource).toContain("Global airline operating context");
+    expect(modelSource).toContain("Applications, cloud, data, integration");
+    expect(modelSource).toContain("On-prem / private DC");
+    expect(modelSource).toContain("AI agents and copilots");
+    expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
     expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });

@@ -30,11 +30,53 @@ it("renders the compact executive Summary without the old AI Success thesis", ()
     screen.queryByText(/AI scale is real. Value management has not caught up/i),
   ).not.toBeInTheDocument();
   expect(screen.queryByText(/source pending/i)).not.toBeInTheDocument();
-  expect(screen.queryByText(/444 nodes/i)).not.toBeInTheDocument();
 });
 
-it("supports Evidence action, URL view state, and arrow-key tab movement", () => {
+it("integrates context, systems, architecture, Evidence action, and URL tab state", () => {
   render(<HomeEnterpriseLandscapeV2 />);
+
+  fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+  expect(
+    screen.getByRole("heading", {
+      name: "Loaded context, integrated into the Home story",
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Global airline operating context"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getAllByText("Applications, cloud, data, integration").length,
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getByText("architecture_graph · data_capability_packet"),
+  ).toBeInTheDocument();
+  expect(window.location.search).toBe("?view=context");
+
+  fireEvent.click(screen.getByRole("tab", { name: "Architecture" }));
+  expect(
+    screen.getByRole("heading", {
+      name: "Data and AI current-state architecture by lane",
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getAllByText("Applications and core systems").length,
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getAllByText("Integration, ETL, and event movement").length,
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getAllByText("Storage, EDW, and data marts").length,
+  ).toBeGreaterThan(0);
+  expect(screen.getAllByText("Teradata Vantage").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Power BI Copilot").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("On-prem / private DC").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Hybrid cloud").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("ERP and finance core").length).toBeGreaterThan(0);
+  expect(
+    screen.getByText("Resolve contradictory lifecycle states"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Route value claims to Tower")).toBeInTheDocument();
+  expect(window.location.search).toBe("?view=architecture");
 
   fireEvent.click(screen.getByRole("button", { name: "Evidence" }));
   expect(
@@ -61,9 +103,11 @@ it("supports Evidence action, URL view state, and arrow-key tab movement", () =>
   economics.focus();
   fireEvent.keyDown(economics, { key: "ArrowRight" });
   expect(
-    screen.getByRole("heading", { name: "Current posture by evidence domain" }),
+    screen.getByRole("heading", {
+      name: "Data and AI current-state architecture by lane",
+    }),
   ).toBeInTheDocument();
-  expect(screen.getByRole("tab", { name: "Posture" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Architecture" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
