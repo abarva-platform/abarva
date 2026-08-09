@@ -47,6 +47,7 @@ export interface TowerMartCommandCenter {
   blockedProgramCount?: number;
   conflictedProgramCount?: number;
   unmeasuredProgramCount?: number;
+  aiInitiativeCount?: number;
   candidateAiOpportunities: number;
   watchPressureSignals: number;
   runRatio: number | null;

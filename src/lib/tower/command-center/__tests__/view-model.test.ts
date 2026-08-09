@@ -384,6 +384,27 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.summary.aiInitiativeCount).toBe(1);
   });
 
+  it("uses the governed AI initiative count instead of the display slice count", () => {
+    const view = buildTowerCommandCenterView(
+      mart({
+        command: command({ aiInitiativeCount: 132 }),
+        aiPortfolio: [aiItem()],
+        aiPortfolioCounts: {
+          total: 80,
+          candidate: 0,
+          active: 80,
+          funded: 0,
+          embeddedOrUsage: 80,
+          attributedSpendUsd: 3.8 * M,
+        },
+      }),
+      { tenantName: "Demo" },
+    )!;
+
+    expect(view.ai).toHaveLength(1);
+    expect(view.summary.aiInitiativeCount).toBe(132);
+  });
+
   it("keeps candidate pool integrity for the real candidate_opportunity enum", () => {
     const view = buildTowerCommandCenterView(
       mart({

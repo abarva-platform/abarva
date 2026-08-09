@@ -430,6 +430,7 @@ function mapCommand(row: BoardPostureRow): TowerMartCommandCenter {
     blockedProgramCount: count(row.blocked_program_count),
     conflictedProgramCount: count(row.conflicted_program_count),
     unmeasuredProgramCount: count(row.unmeasured_program_count),
+    aiInitiativeCount: count(row.ai_initiative_count),
     candidateAiOpportunities: count(row.candidate_ai_opportunities),
     watchPressureSignals: count(row.watch_pressure_signals),
     runRatio:

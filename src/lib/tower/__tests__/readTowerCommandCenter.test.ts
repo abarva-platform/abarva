@@ -333,6 +333,7 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.conflictedProgramCount).toBe(0);
     expect(mart?.command.totalProgramSubjectCount).toBe(151);
     expect(mart?.command.boardScopeProgramCount).toBe(40);
+    expect(mart?.command.aiInitiativeCount).toBe(12);
     expect(mart?.programLanes[0]?.lineageTrustState).toBe("ABSENT");
     expect(mart?.valueTrajectory?.[0]?.plannedInvestmentUsd).toBe(5_312_500);
     expect(mart?.valueTrajectory?.[0]?.periodStart).toBe("2030-04-01");
@@ -358,6 +359,7 @@ describe("readTowerCommandCenter", () => {
     expect(view?.conversionBridge[4]?.valueUsd).toBeNull();
     expect(view?.summary.totalProgramSubjectCount).toBe(151);
     expect(view?.summary.boardScopeProgramCount).toBe(40);
+    expect(view?.summary.aiInitiativeCount).toBe(12);
     expect(view?.summary.executiveSummary).toMatch(/investment from benefit/i);
   });
 });

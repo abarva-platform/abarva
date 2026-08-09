@@ -1513,7 +1513,7 @@ export function buildTowerCommandCenterView(
     materialProgramCount: command.materialProgramCount ?? programs.length,
     boardScopeProgramCount: command.boardScopeProgramCount ?? programs.length,
     economicReviewQueueCount: command.economicReviewQueueCount ?? 0,
-    aiInitiativeCount: ai.length,
+    aiInitiativeCount: command.aiInitiativeCount ?? ai.length,
     candidateAiCount: totalCandidateCount,
     watchPressureSignals: num(command.watchPressureSignals),
 
