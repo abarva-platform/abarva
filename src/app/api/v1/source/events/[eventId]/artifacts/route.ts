@@ -46,7 +46,7 @@ const EXPORT_READY_ARTIFACTS: Record<
   },
   d11_response_checklist: {
     fileFormat: "xlsx",
-    fileName: "D11 Vendor Response Control Pack.xlsx",
+    fileName: "D11 Vendor Response Workbook.xlsx",
     status: "issue_ready",
   },
   d16_scorecard: {

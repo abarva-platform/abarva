@@ -92,7 +92,7 @@ const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
     stepNumber: 3,
     leadAgent: 'aVa',
     intent:
-      'Draft and finalize the RFP package based on confirmed scope. aVa is shaping the vendor response so proposals are comparable, evidence-backed, and negotiation-ready. All evaluation criteria, weighting, response templates, pricing workbook, claim register, assumptions/exclusions, and commercial exceptions must be locked before the document ships to vendors.',
+      'Draft and finalize the RFP package based on confirmed scope. aVa is shaping the vendor response so proposals are comparable, evidence-backed, and negotiation-ready. All evaluation criteria, weighting, the single Vendor Response Workbook, pricing response tab, claim register, assumptions/exclusions, and commercial exceptions must be locked before the document ships to vendors.',
     exitCriteria: [
       'RFP structure drafted with all required sections',
       'Evaluation criteria defined and weights approved by governance owner',

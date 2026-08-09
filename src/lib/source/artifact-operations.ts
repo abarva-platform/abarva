@@ -448,7 +448,7 @@ const ARTIFACT_OVERRIDES: Record<string, ArtifactOperationOverride> = {
   },
   d11_response_checklist: {
     contentStandard:
-      "Vendor Response Control Pack: response-compliance mandate, vendor claim register, automation/productivity commitment table, structured pricing workbook, staffing and location model, SLA commitment table, assumptions/exclusions log, transition plan template, commercial exceptions table, and commercial leverage readiness matrix.",
+      "Vendor Response Control Pack: one vendor response workbook with a guide tab, response-compliance mandate, vendor claim register, automation/productivity commitment table, pricing response tab, staffing and location model, SLA commitment table, assumptions/exclusions log, transition plan template, commercial exceptions table, and commercial leverage readiness matrix.",
     responsibleAiControl:
       "AI can draft the structured response-control pack, but procurement and legal approve the final vendor-facing templates before issue.",
   },
@@ -888,7 +888,7 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
       "Response compliance mandate",
       "Vendor Claim Register",
       "Automation / Productivity Commitment Table",
-      "Structured Pricing Workbook",
+      "Pricing Response Tab",
       "Staffing and Location Model",
       "SLA Commitment Table",
       "Assumptions and Exclusions Log",

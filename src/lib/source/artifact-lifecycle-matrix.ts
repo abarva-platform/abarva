@@ -203,7 +203,7 @@ const GUIDELINES_BY_CODE: Partial<Record<string, string>> = {
   d08_premortem: "Workshop output; top scope failure modes, mitigations, owner actions.",
   d09_rfp_pack: "11 sections; mandatory tables, source register, gap closure register.",
   d10_rfi_summary: "Market-scan signal matrix, capability fit, caveats, shortlist implications.",
-  d11_response_checklist: "Vendor claim register, pricing workbook, staffing, SLA, assumptions, exceptions.",
+  d11_response_checklist: "Single vendor response workbook; claim register, pricing response tab, staffing, SLA, assumptions, exceptions.",
   d12_vendor_shortlist: "Approved vendors, rationale, fit, disqualification notes, invite conditions.",
   d16_scorecard: "Locked criteria, weights, evidence, pass/fail gates, sensitivity.",
   d19_pricing_workbook: "Pricing template/comparison; normalized assumptions, transition, run, risk reserve.",
