@@ -78,7 +78,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
         )}
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'baseline', flexShrink: 0 }}>
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 800, color: '#fff' }}>{ex.totalVal}</span>
-          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.64)' }}>{ex.contractCount} contracts</span>
+          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.64)' }}>{ex.contractCount} contract records</span>
         </span>
       </div>
 

@@ -223,7 +223,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     T.push(
       node({
         id: "allVendors",
-        label: "All vendors",
+        label: "All supplier entities",
         depth: 1,
         caret: S.open.allVendors ? "▾" : "▸",
         badgeCount: String(vm.portfolio.vendors.length),
@@ -290,7 +290,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     T.push(
       node({
         id: "allContracts",
-        label: "All contracts",
+        label: "All contract records",
         depth: 1,
         caret: S.open.allContracts ? "▾" : "▸",
         badgeCount: String(summary.contractCount),
@@ -2383,6 +2383,18 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             )
             .filter(Boolean) ?? [];
         const selectedLines = selected?.calculation?.lines ?? [];
+        const displayOpportunityLabel = (
+          opportunity: (typeof opportunitySet.opportunities)[number],
+        ) =>
+          opportunity.opportunityId.endsWith(":rate-variance")
+            ? "Invoice billing-rate variance"
+            : opportunity.label;
+        const displayOpportunityShortLabel = (
+          opportunity: (typeof opportunitySet.opportunities)[number],
+        ) =>
+          opportunity.opportunityId.endsWith(":rate-variance")
+            ? "Invoice billing-rate variance"
+            : opportunity.shortLabel;
         return {
           contractId: opportunitySet.contractId,
           recommendation: opportunitySet.recommendation,
@@ -2417,8 +2429,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           selectedOpportunity: selected
             ? {
                 id: selected.opportunityId,
-                label: selected.label,
-                shortLabel: selected.shortLabel,
+                label: displayOpportunityLabel(selected),
+                shortLabel: displayOpportunityShortLabel(selected),
                 valueType: fmtStage(selected.valueType),
                 amount: amount(selected.amountUsd),
                 amountUsd: selected.amountUsd,
@@ -2467,8 +2479,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : null,
           opportunities: opportunitySet.opportunities.map((opportunity) => ({
             id: opportunity.opportunityId,
-            label: opportunity.label,
-            shortLabel: opportunity.shortLabel,
+            label: displayOpportunityLabel(opportunity),
+            shortLabel: displayOpportunityShortLabel(opportunity),
             valueType: fmtStage(opportunity.valueType),
             amount: amount(opportunity.amountUsd),
             amountUsd: opportunity.amountUsd,
@@ -3234,7 +3246,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               ),
             },
             {
-              label: "contracts",
+              label: "active contracts",
               value: String(
                 v4HasPortfolio
                   ? v4Snapshot.executivePortfolio.contractCount
@@ -3242,10 +3254,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               ),
             },
             {
-              label: "vendors",
+              label: "active strategic vendors",
               value: String(
                 v4HasPortfolio
-                  ? v4Snapshot.contextCoverage.vendors
+                  ? vm.portfolio.workspaceDiagnostics.v4VendorCount
                   : summary.vendorCount,
               ),
             },

@@ -116,9 +116,20 @@ describe("ContractCanvas executive story", () => {
     expect(
       screen.getByText(/Finance confirmation is shown separately/),
     ).toBeTruthy();
+    expect(screen.getByText("Contract economics loaded")).toBeTruthy();
+    expect(screen.getByText("Annual contract value")).toBeTruthy();
+    expect(screen.getByText("Actual annual spend")).toBeTruthy();
+    expect(screen.getByText("Pricing schedule baseline")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Three opportunities identified. None still require evidence review, business approval, or negotiation action. Missing evidence remains explicit.",
+      ),
+    ).toBeTruthy();
     expect(screen.getAllByText("Recover money").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Avoid future spend").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Improve the deal").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/ready or reviewable/)).toBeNull();
+    expect(screen.queryByText(/blocked or gap-backed/)).toBeNull();
     expect(screen.queryByText("Contract optimization story")).toBeNull();
   });
 });
