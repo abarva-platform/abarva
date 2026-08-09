@@ -134,6 +134,14 @@ describe("TowerCommandCenter", () => {
       screen.getAllByText(/board-scope value cases/).length,
     ).toBeGreaterThan(0);
     expect(
+      screen.getByText(
+        /value cases still fail the board-claimable proof chain/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/programs still fail the board-claimable proof chain/),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getAllByText(/tracked program subjects/).length,
     ).toBeGreaterThan(0);
     expect(

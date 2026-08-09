@@ -136,7 +136,7 @@ function cockpitRead(view: TowerCommandCenterView): string {
   const hasSourceConflict = view.evidenceFacts.some(
     (fact) => fact.lineageState === "CONFLICT",
   );
-  const blockedPrograms =
+  const blockedValueCases =
     s.blockedProgramCount ||
     view.programs.filter((program) => program.blockedUsd > 0).length;
   if (s.claimableUsd > 0) {
@@ -150,10 +150,10 @@ function cockpitRead(view: TowerCommandCenterView): string {
     s.promisedBenefitUsd > 0 &&
     hasSourceConflict
   ) {
-    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but source authority is unresolved. ${formatCount(blockedPrograms)} programs remain blocked until evidence owners reconcile the proof chain.`;
+    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but source authority is unresolved. ${formatCount(blockedValueCases)} value cases remain blocked until evidence owners reconcile the proof chain.`;
   }
   if (s.promisedBenefitUsd !== null && s.promisedBenefitUsd > 0) {
-    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but ${formatCount(blockedPrograms)} programs still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
+    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but ${formatCount(blockedValueCases)} value cases still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
   }
   return "Tower can see the operating surface, but no governed value case is loaded yet. Start with source-backed value cases before making capital calls.";
 }
