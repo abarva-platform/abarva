@@ -18,6 +18,8 @@ Stage-entry auto-drafts can also use earlier AI-prepared draft bodies as draftin
 
 Stage-entry auto-drafts now wait for required upstream draft bodies when upstream generation is still queued or running, so dependent stage artifacts do not fail permanently just because an earlier draft is still in flight. AMS events that explicitly reference an RFP or competitive market event also remain on the full competitive sourcing journey instead of being shortened to a contract-optimization journey by trigger wording alone.
 
+Approval-triggered auto-drafts now run through Next's post-response lifecycle hook instead of a detached promise, so the route can return promptly while the runtime still has an explicit wait handle for durable job enqueueing and inline worker processing.
+
 ## Layer Impact
 
 - `global-control-lane`: Layer 4 Product projection changes only. The Source approval route and artifact generation orchestration change how existing per-event artifact rows are drafted after approval; no canonical data model, intake shape, adapter, schema, or migration changes are included.
@@ -53,7 +55,9 @@ Stage-entry auto-drafts now wait for required upstream draft bodies when upstrea
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts` passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts` passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/eslint src/lib/source/stage-entry-autodraft.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/route.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
+- `npx eslint 'src/app/api/v1/source/events/[eventId]/approve/route.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts' src/lib/source/stage-entry-autodraft.ts` passed.
 - `./node_modules/.bin/eslint src/lib/source/stage-entry-autodraft.ts src/lib/source/queries.ts src/lib/source/sourcing-motion-journeys.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts src/lib/source/__tests__/sourcing-motion-journeys.test.ts` passed.
 - `./node_modules/.bin/eslint 'src/app/api/v1/source/[eventId]/stage/route.ts' 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts'` passed.
 - `NODE_OPTIONS=--max-old-space-size=6144 ./node_modules/.bin/tsc --noEmit --pretty false` passed.
