@@ -447,8 +447,11 @@ function ArchitectureFlowMap({
             />
           </g>
           <g className={styles.miniDiagramFlows}>
-            <path d="M220 138 L340 138" />
-            <path d="M340 154 L220 154" className={styles.dashedFlow} />
+            <path d="M220 112 C254 96 306 96 340 112" />
+            <path
+              d="M340 176 C306 194 254 194 220 176"
+              className={styles.dashedFlow}
+            />
             <path d="M127 216 C152 236 182 250 214 260" />
             <path d="M433 216 C408 236 378 250 346 260" />
           </g>

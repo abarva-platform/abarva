@@ -442,15 +442,15 @@
 }
 
 .architectureStoryboard {
-  margin-top: 14px;
+  margin-top: 16px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .architectureDiagramCard {
   min-width: 0;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid rgba(217, 224, 234, 0.94);
   border-radius: 7px;
   background:
@@ -513,21 +513,21 @@
 
 .miniLabel {
   fill: #34445d;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 760;
   letter-spacing: 0;
 }
 
 .miniCenterText {
   fill: #172033;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 740;
   letter-spacing: 0;
 }
 
 .miniFootnote {
   fill: #40506a;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -1041,13 +1041,14 @@
 
 .coherenceSplit {
   display: grid;
-  grid-template-columns: minmax(0, 1.18fr) minmax(290px, 0.62fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
   align-items: stretch;
 }
 
 .coherenceDecisionGrid {
   display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
