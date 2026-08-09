@@ -165,6 +165,9 @@ const DATASET_FALLBACK = "source-v4-golden-contract-evidence";
 const RATE_VARIANCE_RULE = "source.contract_optimization.rate_variance.v1";
 const RATE_VARIANCE_FORMULA =
   "Eligible quantity × (billed rate - operative contract rate) - approved exceptions = rate-variance opportunity";
+const VMS_RATE_CARD_RULE = "source.contract_optimization.vms_rate_card_variance.v1";
+const VMS_RATE_CARD_FORMULA =
+  "SUM(hours × (billed hourly rate - operative rate-card hourly rate)) for VMS/rate-card lines with no amendment = labor rate-card variance";
 
 export function buildContractOptimizationOpportunitySet(
   input: BuildContractOptimizationOpportunitySetInput,
@@ -394,6 +397,12 @@ function buildReadyOpportunities(
     sourceRef,
     pdfRefs,
   );
+  const vmsRateCardOpportunity = buildVmsRateCardOpportunity(
+    input,
+    contractId,
+    sourceRef,
+    pdfRefs,
+  );
   const slaOpportunity = buildSlaOpportunity(
     input,
     contractId,
@@ -415,6 +424,7 @@ function buildReadyOpportunities(
   return [
     rateOpportunity,
     offContractOpportunity,
+    vmsRateCardOpportunity,
     slaOpportunity,
     shelfwareOpportunity,
     negotiatedOpportunity,
@@ -427,6 +437,107 @@ function buildReadyOpportunities(
           ? opportunity.narrative
           : `${opportunity.narrative} Baseline state: ${baseline.headline}`,
     }));
+}
+
+function buildVmsRateCardOpportunity(
+  input: BuildContractOptimizationOpportunitySetInput,
+  contractId: string,
+  sourceRef: (
+    row: Row,
+    tableName: string,
+    pageSpan?: string | null,
+  ) => OpportunitySourceReference,
+  pdfRefs: readonly OpportunitySourceReference[],
+): ContractOptimizationOpportunity | null {
+  const rows = input.rateRows.filter(
+    (row) => (number(row.rate_variance_usd) ?? 0) > 0,
+  );
+  if (rows.length === 0) return null;
+
+  const includedLines = rows.map((row) => {
+    const variance = number(row.rate_variance_usd) ?? 0;
+    const hours = number(row.hours_last_12_months);
+    const billedRate = number(row.billed_rate_usd_per_hour);
+    const contractRate = number(row.contract_rate_usd_per_hour);
+    const role = text(row.labor_or_service_role);
+    return {
+      lineId:
+        text(row.rate_card_line_id) ??
+        text(row.source_record_id) ??
+        "rate-card-line",
+      invoiceId: null,
+      invoiceLineId: null,
+      servicePeriod: "last 12 months",
+      skuOrService: role ?? text(row.location) ?? "rate-card line",
+      quantity: hours,
+      quantityBasis:
+        "Native VMS/rate-card hours from the labor or service role rate-band extract.",
+      unitOfMeasure: "hour",
+      billedRateUsd: billedRate,
+      contractRateUsd: contractRate,
+      amountUsd: roundCurrency(variance),
+      inclusion: "included" as const,
+      inclusionReason:
+        "Rate-card row has positive rate_variance_usd and no amendment reference approving the higher billed rate.",
+      pricingScheduleRef: text(row.rate_card_line_id),
+      contractTermRef: "doc.extraction:contract.pricing_schedule",
+      amendmentRef: text(row.amendment_reference) ?? "No rate-card amendment found",
+      sourceRefs: [
+        sourceRef(row, "source.golden_contract_rate_card_variance"),
+        ...pdfRefs
+          .filter((ref) => ref.pageSpan?.includes("pricing"))
+          .slice(0, 2),
+      ],
+    };
+  });
+  const calculatedAmount = roundCurrency(
+    sum(includedLines.map((line) => line.amountUsd)),
+  );
+  const firstLine = includedLines[0];
+  return {
+    opportunityId: `${contractId}:vms-rate-card-variance`,
+    contractId,
+    label: "VMS labor rate-card variance",
+    shortLabel: "VMS rate-card variance",
+    valueType: "recoverable_leakage",
+    amountUsd: calculatedAmount,
+    amountState: "exact",
+    stage: "quantified",
+    evidenceGrade: "system_evidenced",
+    confidence: 0.88,
+    deadline: text(input.overview?.notice_deadline) ?? null,
+    owner:
+      text(input.overview?.decision_owner_role_ref) ??
+      text(input.contract?.renewal_owner_ref) ??
+      "Procurement owner",
+    blockingGap:
+      "Procurement must confirm no approved amendment, exception, or rate-card update covers these billed rates before asserting recovery.",
+    nextAction:
+      "Review the VMS/rate-card variance rows with the CLM amendment search and supplier account team.",
+    sourceSystems: ["VMS / rate card", "CLM pricing schedule"],
+    evidenceRefs: uniqueRefs(includedLines.flatMap((line) => line.sourceRefs)),
+    calculation: {
+      ruleId: VMS_RATE_CARD_RULE,
+      ruleVersion: "1.0.0",
+      formula: VMS_RATE_CARD_FORMULA,
+      eligibleQuantity: roundQuantity(
+        sum(includedLines.map((line) => line.quantity ?? 0)),
+      ),
+      billedRateUsd: firstLine?.billedRateUsd ?? null,
+      contractRateUsd: firstLine?.contractRateUsd ?? null,
+      approvedExceptionsUsd: 0,
+      calculatedAmountUsd: calculatedAmount,
+      includedLineCount: includedLines.length,
+      excludedLineCount: 0,
+      pendingLineCount: 0,
+      lines: includedLines,
+    },
+    overlapTreatment:
+      "Separated from AP invoice-line rate variance. VMS labor rate-card rows are included once as their own recoverable-leakage opportunity.",
+    approvalState: "requires_vms_rate_exception_review",
+    narrative:
+      "VMS/rate-card rows show billed hourly rates above operative contract rates without an approving amendment reference.",
+  };
 }
 
 function buildConflictOpportunities(
@@ -913,7 +1024,7 @@ function buildFinanceRealizations(
       basis:
         text(input.financeRow.realized_value_basis) ??
         "Finance-confirmed realized value linked to originating opportunities.",
-      confirmationDate: text(input.financeRow.confirmation_date),
+      confirmationDate: projectedFinanceConfirmationDate(input),
       owner: text(input.financeRow.finance_owner_role_ref),
       towerClaimRefs: towerRefs,
       linkedOpportunityIds: opportunities
@@ -928,6 +1039,45 @@ function buildFinanceRealizations(
       ],
     },
   ];
+}
+
+function projectedFinanceConfirmationDate(
+  input: BuildContractOptimizationOpportunitySetInput,
+): string | null {
+  const rawDate = isoDate(text(input.financeRow?.confirmation_date));
+  const evidenceAsOf = latestEvidencePeriodEnd(input);
+  if (rawDate && evidenceAsOf && rawDate > evidenceAsOf) return evidenceAsOf;
+  return rawDate;
+}
+
+function latestEvidencePeriodEnd(
+  input: BuildContractOptimizationOpportunitySetInput,
+): string | null {
+  const monthlyDates = [...input.slaRows, ...input.usageRows]
+    .map((row) => text(row.period_month))
+    .map(monthEndDate)
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  return monthlyDates.at(-1) ?? null;
+}
+
+function monthEndDate(value: string | null): string | null {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})/u.exec(value.trim());
+  if (!match) return isoDate(value);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return null;
+  }
+  const end = new Date(Date.UTC(year, month, 0));
+  return end.toISOString().slice(0, 10);
+}
+
+function isoDate(value: string | null): string | null {
+  if (!value) return null;
+  const date = value.trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/u.test(date) ? date : null;
 }
 
 function clauseRefs(

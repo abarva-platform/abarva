@@ -1064,6 +1064,7 @@ function evidenceClassFor(
   if (ref.tableName.includes("sla")) return "sla";
   if (ref.tableName.includes("invoice")) return "invoice";
   if (ref.tableName.includes("pricing")) return "rate_card";
+  if (ref.tableName.includes("rate_card")) return "rate_card";
   if (ref.tableName.includes("usage")) return "usage";
   if (ref.tableName.includes("renewal")) return "renewal";
   if (ref.tableName.includes("finance")) return "finance_value_confirmation";
@@ -1074,6 +1075,8 @@ function evidenceClassFor(
 function grainFor(opportunity: ContractOptimizationOpportunity): string {
   if (opportunity.opportunityId.includes("rate-variance"))
     return "invoice_line";
+  if (opportunity.opportunityId.includes("rate-card"))
+    return "rate_card_line";
   if (opportunity.opportunityId.includes("sla")) return "contract_month";
   if (opportunity.opportunityId.includes("scope")) return "sku_month";
   if (opportunity.opportunityId.includes("negotiated"))
@@ -1087,6 +1090,7 @@ function minimumPeriodFor(
   if (opportunity.opportunityId.includes("sla")) return 24;
   if (opportunity.opportunityId.includes("scope")) return 12;
   if (opportunity.opportunityId.includes("rate-variance")) return 12;
+  if (opportunity.opportunityId.includes("rate-card")) return 12;
   return 1;
 }
 

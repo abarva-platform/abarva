@@ -2494,6 +2494,18 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               : "No deadline",
             blockingGap: opportunity.blockingGap,
             nextAction: opportunity.nextAction,
+            sourceRefs: opportunity.evidenceRefs
+              .map((ref) =>
+                [
+                  ref.tableName,
+                  ref.sourceRecordId,
+                  ref.sourceFileReport,
+                  ref.pageSpan,
+                ]
+                  .filter(Boolean)
+                  .join(" · "),
+              )
+              .filter(Boolean),
             selected: opportunity.opportunityId === selected?.opportunityId,
           })),
           calculationLines: selectedLines.map((line) => ({
@@ -3022,11 +3034,16 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             opportunities: opportunityView.opportunities.map((opportunity) => ({
               id: opportunity.id,
               label: opportunity.label,
+              valueType: opportunity.valueType,
               amount: opportunity.amount,
+              amountUsd: opportunity.amountUsd,
               stage: opportunity.stage,
+              stageRaw: opportunity.stageRaw,
               grade: opportunity.grade,
+              owner: opportunity.owner,
               nextAction: opportunity.nextAction,
               blockingGap: opportunity.blockingGap,
+              sourceRefs: opportunity.sourceRefs,
             })),
           }
         : null,

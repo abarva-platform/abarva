@@ -18,7 +18,11 @@ import {
   listLatestTowerObservationsForSubjects,
   listTowerValueClaimsForSubjects,
 } from '@/lib/source/data-model/read-adapter';
-import type { DocExtractionRow } from '@/lib/source/data-model/types';
+import type {
+  DocExtractionRow,
+  SourceContractEvidencePerformanceSummary,
+  SourceContractOperationalPerformanceRow,
+} from '@/lib/source/data-model/types';
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
 // what /source/vendor-portfolio/[contractId]/page.tsx already does server-side,
@@ -79,7 +83,11 @@ export async function GET(
     contract,
     applicationScope,
     financialExposure,
-    operationalPerformance,
+    operationalPerformance: normalizeOperationalPerformanceRows(
+      operationalPerformance,
+      contract,
+      evidencePerformance,
+    ),
     initiativeDependencies,
     towerObservations,
     towerValueClaims,
@@ -99,4 +107,61 @@ function dedupeExtractions(rows: readonly DocExtractionRow[]): DocExtractionRow[
   const byId = new Map<string, DocExtractionRow>();
   for (const row of rows) byId.set(row.extraction_id, row);
   return [...byId.values()];
+}
+
+function normalizeOperationalPerformanceRows(
+  rows: readonly SourceContractOperationalPerformanceRow[],
+  contract: {
+    readonly tenant_key: SourceContractOperationalPerformanceRow['tenant_key'];
+    readonly contract_id: string;
+    readonly vendor_ref: string;
+    readonly vendor_name: string;
+    readonly scoped_application_count: number | null;
+    readonly critical_application_count: number | null;
+    readonly cloud_sev1_sev2_incidents: number | null;
+    readonly operational_evidence_gap: boolean | string | null;
+  },
+  evidencePerformance: SourceContractEvidencePerformanceSummary | null,
+): SourceContractOperationalPerformanceRow[] {
+  if (!evidencePerformance) return [...rows];
+  const index = rows.findIndex((row) => row.contract_id === contract.contract_id);
+  const base =
+    index >= 0
+      ? rows[index]
+      : {
+          tenant_key: contract.tenant_key,
+          contract_id: contract.contract_id,
+          vendor_ref: contract.vendor_ref,
+          vendor_name: contract.vendor_name,
+          sla_summary: null,
+          scoped_application_count: contract.scoped_application_count,
+          critical_application_count: contract.critical_application_count,
+          cloud_sev1_sev2_incidents: contract.cloud_sev1_sev2_incidents,
+          avg_cloud_change_failure_rate: null,
+          service_credits_earned: null,
+          service_credits_claimed: null,
+          evidence_gap: contract.operational_evidence_gap,
+        };
+  const normalized: SourceContractOperationalPerformanceRow = {
+    ...base,
+    cloud_sev1_sev2_incidents:
+      base.cloud_sev1_sev2_incidents ??
+      evidencePerformance.sev1_incidents + evidencePerformance.sev2_incidents,
+    service_credits_earned:
+      base.service_credits_earned ??
+      evidencePerformance.service_credits_earned_usd,
+    service_credits_claimed:
+      base.service_credits_claimed ??
+      evidencePerformance.service_credits_claimed_usd,
+    evidence_gap:
+      base.evidence_gap ??
+      (typeof contract.operational_evidence_gap === 'string'
+        ? contract.operational_evidence_gap
+        : null) ??
+      (evidencePerformance.review_status
+        ? `governed evidence performance summary: ${evidencePerformance.review_status}`
+        : null),
+  };
+  if (index < 0) return [...rows, normalized];
+  return rows.map((row, rowIndex) => (rowIndex === index ? normalized : row));
 }
