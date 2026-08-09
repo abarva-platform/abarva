@@ -343,6 +343,34 @@ describe("TowerCommandCenter", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("does not expose legacy promised-benefit wording in the Evidence workplan", () => {
+    render(
+      <TowerCommandCenter
+        view={{
+          ...view!,
+          evidenceFacts: [
+            {
+              ...view!.evidenceFacts[0],
+              id: "legacy-promised-benefit-label",
+              name: "Board promised benefit exposure",
+              lineageState: "ONE_SOURCE",
+              sourceCount: 1,
+            },
+          ],
+        }}
+        tenantName="Fixture Tenant"
+        refreshedOn="2026-07-23"
+      />,
+    );
+
+    fireEvent.click(tab(/Evidence/));
+
+    expect(
+      screen.getByText("Board source-backed benefit exposure"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Board promised benefit exposure")).toBeNull();
+  });
+
   it('answers "what is missing" from the claim chain, not the ETL backlog', () => {
     renderPage();
     fireEvent.click(tab(/Evidence/));

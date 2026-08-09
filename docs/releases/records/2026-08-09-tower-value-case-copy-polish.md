@@ -10,16 +10,16 @@
 
 ## Plain-English Summary
 
-Tower Command Center board-posture copy now refers to blocked proof work as value cases instead of programs where the governed Tower Value OS model is discussing value-case evidence. This is a presentation-only correction so the cockpit language matches the semantic model already promoted.
+Tower Command Center board-posture and Evidence workplan copy now refers to value-case evidence and source-backed benefit without using legacy promised-benefit wording in board-visible labels. This is a presentation-only correction so the cockpit language matches the semantic model already promoted.
 
 ## Layer Impact
 
-- `global-control-lane`: Updates shared Tower cockpit presentation copy and a regression test.
+- `global-control-lane`: Updates shared Tower cockpit presentation copy, Evidence workplan label rendering, and regression tests.
 - Products layer: Tower display language changes only. No canonical data, source adapter, schema, Cube, migration, route contract, or tenant data changes are included.
 
 ## Client Applicability
 
-- All clients: Yes, wherever the Tower Command Center cockpit renders this board-posture sentence.
+- All clients: Yes, wherever the Tower Command Center cockpit renders the affected board-posture or Evidence workplan labels.
 - Specific clients: None.
 - Internal only: No.
 - Public/demo only: No.
@@ -28,6 +28,7 @@ Tower Command Center board-posture copy now refers to blocked proof work as valu
 ## Changes Included
 
 - `src/components/tower/command-center/views/CommandCenterView.tsx`
+- `src/components/tower/command-center/views/EvidenceView.tsx`
 - `src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
 - `docs/releases/records/2026-08-09-tower-value-case-copy-polish.md`
 
@@ -35,6 +36,8 @@ Tower Command Center board-posture copy now refers to blocked proof work as valu
 
 - Pass: `npx jest src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx --runInBand`
 - Pass: source scan confirms the stale board-posture phrase is absent from product source and only retained in a negative regression assertion.
+- Pass: `npx eslint src/components/tower/command-center/views/EvidenceView.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
+- Pass: `npm test -- --runTestsByPath src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
 
 ## Rollout Plan
 
@@ -56,7 +59,7 @@ Revert this PR and redeploy through the repo-owned ACA main workflow. Rollback i
 
 ## Audit Evidence
 
-- PR URL: https://github.com/abarva-platform/abarva/pull/6093
+- PR URL: pending
 - Local test output: `npx jest src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx --runInBand`
 - Release gate: `npm run release:check`
 
