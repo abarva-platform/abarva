@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { DataTable } from '../DataTable';
 import { EvidenceLineageGraph } from './EvidenceLineageGraph';
 import type { SourceWorkspaceVM } from '../buildViewModel';
@@ -239,7 +239,9 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
 
       {vm.cActions ? (
         <>
-          {vm.optLedger ? (
+          {vm.opportunityView ? (
+            <OpportunityCockpit vm={vm} />
+          ) : vm.optLedger ? (
             <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ flex: '1 1 520px', minWidth: 280 }}>
@@ -320,9 +322,9 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
           ) : null}
 
-          <SourceSystemEvidenceMap vm={vm} />
+          {!vm.opportunityView ? <SourceSystemEvidenceMap vm={vm} /> : null}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
+          {!vm.opportunityView ? <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
             {vm.optLevers.map((l, i) => (
               <div key={i} style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '16px 20px' }}>
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 10 }}>{l.label} levers</div>
@@ -333,9 +335,9 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                 </div>
               </div>
             ))}
-          </div>
+          </div> : null}
 
-          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+          {!vm.opportunityView ? <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
             <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid rgba(10,10,11,.12)' }}>
               <div style={{ fontSize: 14.5, fontWeight: 600, color: '#0a0a0b' }}>Scenario comparison</div>
               <div style={{ fontSize: 12.5, color: '#5f5e5a', marginTop: 3 }}>No scenario carries a savings number, because none has been validated.</div>
@@ -355,12 +357,175 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
             <div style={{ padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
               <span style={{ fontSize: 12.5, color: '#5f5e5a' }}>aVa reads the same governed data as this canvas. It cannot create a value, a date or a priority.</span>
             </div>
-          </div>
+          </div> : null}
         </>
       ) : null}
     </>
   );
 }
+
+function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
+  const view = vm.opportunityView;
+  if (!view) return null;
+  const selected = view.selectedOpportunity;
+  const hasCalculation = Boolean(selected?.calculation);
+  const included = view.calculationLines.filter((line) => line.inclusionRaw === 'included');
+  const pending = view.calculationLines.filter((line) => line.inclusionRaw === 'pending_review');
+  const excluded = view.calculationLines.filter((line) => line.inclusionRaw === 'excluded');
+  const sourceRefs = selected?.sourceRefs.slice(0, 6) ?? [];
+  return (
+    <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 18, alignItems: 'start', borderBottom: '1px solid rgba(10,10,11,.1)' }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 850, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 7 }}>
+            Optimization opportunity cockpit
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 850, color: '#0a0a0b', lineHeight: 1.25, marginBottom: 6 }}>
+            {selected ? selected.label : view.recommendation}
+          </div>
+          <div style={{ fontSize: 12.7, lineHeight: 1.5, color: '#5f5e5a', maxWidth: '94ch' }}>
+            {selected?.narrative ?? view.recommendationDetail}
+          </div>
+        </div>
+        <button
+          onClick={vm.startOptimization}
+          disabled={vm.optCtaDisabled}
+          style={{
+            border: '1px solid #0a0a0b',
+            background: vm.optCtaDisabled ? '#5f5e5a' : '#0a0a0b',
+            color: '#fff',
+            borderRadius: 6,
+            padding: '10px 14px',
+            fontSize: 12.5,
+            fontWeight: 800,
+            cursor: vm.optCtaDisabled ? 'wait' : 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {vm.optCtaLabel}
+        </button>
+        {vm.optCtaError ? (
+          <div style={{ gridColumn: '1 / -1', color: '#a32d2d', fontSize: 12.5, lineHeight: 1.5 }}>{vm.optCtaError}</div>
+        ) : null}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px,.8fr) minmax(0,1.2fr)' }}>
+        <div style={{ padding: '15px 18px', borderRight: '1px solid rgba(10,10,11,.08)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 8, marginBottom: 14 }}>
+            <SmallMetric label="Amount" value={selected?.amount ?? 'Not sized'} tone={selected?.tone ?? '#0a0a0b'} />
+            <SmallMetric label="Stage" value={selected?.stage ?? view.actionState} />
+            <SmallMetric label="Evidence" value={selected?.grade ?? 'Not established'} />
+            <SmallMetric label="Finance confirmed" value={view.financeConfirmed} tone="#246b45" />
+          </div>
+          <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, overflow: 'hidden' }}>
+            {view.opportunities.map((opportunity) => (
+              <div key={opportunity.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 10, padding: '10px 12px', borderBottom: '1px solid rgba(10,10,11,.07)', background: opportunity.selected ? '#f6fbf9' : '#fff' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.3, fontWeight: 850, color: '#0a0a0b', lineHeight: 1.25 }}>{opportunity.label}</div>
+                  <div style={{ fontSize: 11, color: '#5f5e5a', marginTop: 3 }}>{opportunity.stage} · {opportunity.grade}</div>
+                </div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, fontWeight: 850, color: '#0a0a0b' }}>{opportunity.amount}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ padding: '15px 18px', minWidth: 0 }}>
+          {hasCalculation && selected?.calculation ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 8, marginBottom: 12 }}>
+                <SmallMetric label="Formula result" value={selected.calculation.calculatedAmount} />
+                <SmallMetric label="Included lines" value={String(selected.calculation.includedLineCount)} />
+                <SmallMetric label="Pending review" value={String(selected.calculation.pendingLineCount)} tone="#ba7517" />
+                <SmallMetric label="Excluded lines" value={String(selected.calculation.excludedLineCount)} />
+              </div>
+              <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '11px 12px', background: '#fbfaf7', marginBottom: 12 }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, fontWeight: 850, color: '#0a0a0b', marginBottom: 5 }}>{selected.calculation.ruleId} · v{selected.calculation.ruleVersion}</div>
+                <div style={{ fontSize: 12.2, color: '#2c2c2a', lineHeight: 1.45 }}>{selected.calculation.formula}</div>
+              </div>
+              <OpportunityLineTable title="Included invoice lines" rows={included} />
+              {pending.length ? <OpportunityLineTable title="Pending-review lines" rows={pending} tone="#ba7517" /> : null}
+              {excluded.length ? <OpportunityLineTable title="Excluded sample" rows={excluded.slice(0, 6)} tone="#888780" /> : null}
+            </>
+          ) : (
+            <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '14px 16px', background: '#fbfaf7', fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5 }}>
+              {selected?.blockingGap ?? view.baseline.detail}
+            </div>
+          )}
+          {sourceRefs.length ? (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 850, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 7 }}>Evidence references</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {sourceRefs.map((ref) => (
+                  <span key={ref} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: '#5f5e5a', border: '1px solid rgba(10,10,11,.1)', borderRadius: 4, padding: '4px 6px', background: '#fff', maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ref}</span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div style={{ padding: '13px 18px', borderTop: '1px solid rgba(10,10,11,.08)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 10, background: '#fbfaf7' }}>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.45 }}><b style={{ color: '#0a0a0b' }}>Next action:</b> {selected?.nextAction ?? view.recommendationDetail}</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.45 }}><b style={{ color: '#0a0a0b' }}>Approval state:</b> {selected?.approvalState ?? view.actionState}</div>
+        <div style={{ fontSize: 12.2, color: '#5f5e5a', lineHeight: 1.45 }}><b style={{ color: '#0a0a0b' }}>Overlap:</b> {selected?.overlapTreatment ?? 'No opportunity value is approved until evidence is resolved.'}</div>
+      </div>
+    </section>
+  );
+}
+
+function OpportunityLineTable({ title, rows, tone = '#1d9e75' }: { title: string; rows: NonNullable<SourceWorkspaceVM['opportunityView']>['calculationLines']; tone?: string }) {
+  if (!rows.length) return null;
+  return (
+    <div style={{ marginBottom: 12, border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '9px 11px', background: '#fff', borderBottom: '1px solid rgba(10,10,11,.08)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: tone }} />
+        <span style={{ fontSize: 12.2, fontWeight: 850, color: '#0a0a0b' }}>{title}</span>
+        <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#888780' }}>{rows.length} lines</span>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+          <thead>
+            <tr>
+              {['Invoice line', 'Period', 'SKU/service', 'Qty', 'Billed', 'Contract', 'Amount', 'Why'].map((header) => (
+                <th key={header} style={{ textAlign: header === 'Qty' || header === 'Billed' || header === 'Contract' || header === 'Amount' ? 'right' : 'left', padding: '8px 10px', fontSize: 10, color: '#888780', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(10,10,11,.08)' }}>{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={`${row.invoiceLineId}-${row.inclusionRaw}-${row.amount}`}>
+                <td style={tdStyle}><b>{row.invoiceLineId}</b><div style={subStyle}>{row.invoiceId}</div></td>
+                <td style={tdStyle}>{row.servicePeriod}</td>
+                <td style={tdStyle}>{row.skuOrService}<div style={subStyle}>{row.pricingScheduleRef}</div></td>
+                <td style={{ ...tdStyle, textAlign: 'right' }}>{row.quantity}<div style={subStyle}>{row.unitOfMeasure}</div></td>
+                <td style={{ ...tdStyle, textAlign: 'right' }}>{row.billedRate}</td>
+                <td style={{ ...tdStyle, textAlign: 'right' }}>{row.contractRate}</td>
+                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 850 }}>{row.amount}</td>
+                <td style={tdStyle}>{row.inclusionReason}<div style={subStyle}>{row.quantityBasis}</div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const tdStyle: CSSProperties = {
+  padding: '8px 10px',
+  borderBottom: '1px solid rgba(10,10,11,.06)',
+  fontSize: 11.5,
+  color: '#2c2c2a',
+  verticalAlign: 'top',
+};
+
+const subStyle: CSSProperties = {
+  marginTop: 3,
+  fontSize: 10.2,
+  color: '#888780',
+  lineHeight: 1.35,
+};
 
 function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
@@ -396,6 +561,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
       </div>
     );
   }
+  if (vm.opportunityView) return <OpportunityStoryPanel vm={vm} />;
   const evidenceReady = vm.optLedger
     ? `${vm.optLedger.evidenceReady} ready · ${vm.optLedger.evidenceGaps} gap${vm.optLedger.evidenceGaps === '1' ? '' : 's'}`
     : 'Not established';
@@ -494,13 +660,269 @@ function StoryTile({ index, title, body }: { index: string; title: string; body:
   );
 }
 
+function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
+  const view = vm.opportunityView;
+  if (!view) return null;
+  const conflict = view.baseline.status === 'conflict';
+  return (
+    <section style={{ background: '#fff', border: `1px solid ${conflict ? 'rgba(163,45,45,.22)' : 'rgba(10,10,11,.12)'}`, borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(360px,.9fr)', gap: 16, alignItems: 'start' }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: conflict ? '#a32d2d' : '#0f6e56', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Contract optimization story
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 850, color: '#0a0a0b', lineHeight: 1.25, marginBottom: 7 }}>
+            {view.recommendation}
+          </div>
+          <div style={{ fontSize: 12.7, lineHeight: 1.5, color: '#5f5e5a', maxWidth: '94ch' }}>
+            {view.recommendationDetail}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(155px,1fr))', gap: 8, marginTop: 14 }}>
+            <SmallMetric label="Recoverable" value={view.potential.recoverable} />
+            <SmallMetric label="Avoidable" value={view.potential.avoidable} />
+            <SmallMetric label="Negotiable" value={view.potential.negotiable} />
+            <SmallMetric label="Finance confirmed" value={view.financeConfirmed} tone="#246b45" />
+          </div>
+        </div>
+        <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 8, padding: '12px 14px', background: conflict ? '#fff8ec' : '#fbfaf7' }}>
+          <div style={{ fontSize: 12.5, fontWeight: 850, color: '#0a0a0b', marginBottom: 5 }}>{view.baseline.headline}</div>
+          <div style={{ fontSize: 11.8, lineHeight: 1.45, color: '#5f5e5a', marginBottom: 10 }}>{view.baseline.detail}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', rowGap: 5, columnGap: 12, fontSize: 11.5 }}>
+            <span style={{ color: '#5f5e5a' }}>Annual value</span><b>{view.baseline.annualValue}</b>
+            <span style={{ color: '#5f5e5a' }}>Pricing schedule</span><b>{view.baseline.pricingScheduleValue}</b>
+            <span style={{ color: '#5f5e5a' }}>Actual spend</span><b>{view.baseline.actualSpend}</b>
+            {view.baseline.conflictAmount ? <><span style={{ color: '#a32d2d' }}>Conflict</span><b style={{ color: '#a32d2d' }}>{view.baseline.conflictAmount}</b></> : null}
+          </div>
+        </div>
+      </div>
+      <div style={{ borderTop: '1px solid rgba(10,10,11,.1)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))' }}>
+        {view.opportunities.map((opportunity) => (
+          <div key={opportunity.id} style={{ padding: '13px 16px', borderRight: '1px solid rgba(10,10,11,.08)', borderBottom: '1px solid rgba(10,10,11,.08)', background: opportunity.selected ? '#f6fbf9' : '#fff' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 7 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: opportunity.tone, flexShrink: 0 }} />
+              <span style={{ fontSize: 12.7, fontWeight: 850, color: '#0a0a0b', lineHeight: 1.3 }}>{opportunity.shortLabel}</span>
+              <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, fontWeight: 800, color: '#0a0a0b' }}>{opportunity.amount}</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: '#5f5e5a', lineHeight: 1.4, marginBottom: 8 }}>{opportunity.stage} · {opportunity.grade}</div>
+            <div style={{ fontSize: 11.5, color: '#2c2c2a', lineHeight: 1.4 }}>
+              {opportunity.blockingGap ? opportunity.blockingGap : opportunity.nextAction}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SmallMetric({ label, value, tone = '#0a0a0b' }: { label: string; value: string; tone?: string }) {
+  return (
+    <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 7, padding: '9px 10px', background: '#fff' }}>
+      <div style={{ fontSize: 9.5, fontWeight: 800, color: '#888780', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 850, color: tone }}>{value}</div>
+    </div>
+  );
+}
+
 function ContractRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
+  if (vm.opportunityView) return <OpportunityRelationshipCanvas vm={vm} />;
   return (
     <>
       <ContractJourneyGraph vm={vm} />
       <ValueProofExplainer vm={vm} />
       <SourceSystemEvidenceMap vm={vm} />
     </>
+  );
+}
+
+function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
+  const view = vm.opportunityView;
+  const contract = vm.contractRow;
+  const [active, setActive] = useState('invoice');
+  if (!view || !contract) return null;
+  const sources = [
+    {
+      id: 'clm',
+      label: 'Agreement PDF',
+      sub: 'terms, scope, pricing schedule',
+      feeds: 'baseline + negotiated terms',
+      detail: 'The executed agreement and clause extraction prove scope, pricing authority, benchmark language, notice terms, and renewal rights.',
+    },
+    {
+      id: 'pricing',
+      label: 'Pricing schedule',
+      sub: view.baseline.pricingScheduleValue,
+      feeds: 'contract rate',
+      detail: 'Commercial line items reconcile to the annual baseline for CTR-090; CTR-061 is intentionally blocked when they do not reconcile.',
+    },
+    {
+      id: 'invoice',
+      label: 'AP invoice lines',
+      sub: `${view.selectedOpportunity?.calculation?.includedLineCount ?? 0} included rate lines`,
+      feeds: 'rate variance + off-contract billing',
+      detail: 'Invoice number, line, service period, SKU, billed rate, contract rate, and exception amount drive the recoverable opportunity.',
+    },
+    {
+      id: 'sla',
+      label: 'ITSM SLA history',
+      sub: '24 monthly rows',
+      feeds: 'service credits',
+      detail: 'Monthly service evidence quantifies earned, claimed, and received credits; entitlement review still controls recovery.',
+    },
+    {
+      id: 'usage',
+      label: 'Usage entitlement',
+      sub: 'seat/service utilization',
+      feeds: 'scope rationalization',
+      detail: 'Usage and entitlement rows support reduction hypotheses, but business owners must approve reclaim eligibility.',
+    },
+    {
+      id: 'finance',
+      label: 'Finance / Tower',
+      sub: view.financeConfirmed,
+      feeds: 'realized value',
+      detail: 'Finance confirmation is linked to originating opportunities; it is not added to potential value.',
+    },
+  ];
+  const activeSource = sources.find((source) => source.id === active) ?? sources[0];
+  const tone = view.baseline.status === 'conflict' ? '#a32d2d' : '#1d9e75';
+  const sourceNode = (source: typeof sources[number], x: number, y: number) => (
+    <g
+      key={source.id}
+      onMouseEnter={() => setActive(source.id)}
+      onFocus={() => setActive(source.id)}
+      onClick={() => setActive(source.id)}
+      style={{ cursor: 'pointer' }}
+      tabIndex={0}
+    >
+      <rect x={x} y={y} width="152" height="58" rx="10" fill={active === source.id ? '#eff8f5' : '#fff'} stroke={active === source.id ? '#1d9e75' : 'rgba(10,10,11,.22)'} />
+      <text x={x + 13} y={y + 22} fontSize="12" fontWeight="850" fill="#0a0a0b">{source.label}</text>
+      <text x={x + 13} y={y + 41} fontSize="10.5" fill="#5f5e5a">{source.sub}</text>
+    </g>
+  );
+  const arrow = (x1: number, y1: number, x2: number, y2: number, stroke = '#b4b2a9') => (
+    <path d={`M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`} fill="none" stroke={stroke} strokeWidth="1.6" markerEnd="url(#relArrow)" />
+  );
+  return (
+    <>
+      <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ padding: '13px 16px', borderBottom: '1px solid rgba(10,10,11,.1)', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 14, fontWeight: 850, color: '#0a0a0b' }}>Contract relationship map</div>
+          <div style={{ fontSize: 12.2, color: '#5f5e5a' }}>Click a source block to see how evidence moves into opportunity, workflow, and Finance/Tower proof.</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(620px,1.35fr) minmax(330px,.65fr)' }}>
+          <div style={{ padding: 16, minWidth: 0 }}>
+            <svg viewBox="0 0 980 430" role="img" aria-label="Source evidence to contract opportunity flow" style={{ width: '100%', height: 'auto', display: 'block' }}>
+              <defs>
+                <marker id="relArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M 0 0 L 8 4 L 0 8 z" fill="#9a9890" />
+                </marker>
+                <filter id="relShadow" x="-10%" y="-15%" width="120%" height="135%">
+                  <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#0a0a0b" floodOpacity=".08" />
+                </filter>
+                <linearGradient id="relBand" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="#fbfaf7" />
+                  <stop offset="52%" stopColor="#eef8f5" />
+                  <stop offset="100%" stopColor="#eef4fb" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="980" height="430" rx="18" fill="#fbfaf7" />
+              <rect x="216" y="34" width="540" height="318" rx="24" fill="url(#relBand)" stroke="rgba(10,10,11,.08)" />
+              <text x="24" y="28" fontSize="10" fontWeight="850" letterSpacing=".12em" fill="#888780">SOURCE FACTS</text>
+              <text x="292" y="28" fontSize="10" fontWeight="850" letterSpacing=".12em" fill="#888780">GOVERNED CONTRACT READ</text>
+              <text x="790" y="28" fontSize="10" fontWeight="850" letterSpacing=".12em" fill="#888780">ACTION</text>
+
+              {sourceNode(sources[0], 24, 52)}
+              {sourceNode(sources[1], 24, 126)}
+              {sourceNode(sources[2], 24, 200)}
+              {sourceNode(sources[3], 24, 274)}
+              {sourceNode(sources[4], 24, 348)}
+              {sourceNode(sources[5], 790, 260)}
+
+              {arrow(176, 81, 278, 138)}
+              {arrow(176, 155, 278, 138)}
+              {arrow(176, 229, 278, 240)}
+              {arrow(176, 303, 278, 240)}
+              {arrow(176, 377, 278, 240)}
+              {arrow(492, 188, 586, 188, tone)}
+              {arrow(728, 188, 790, 165, tone)}
+              {arrow(728, 220, 790, 289, '#246b45')}
+
+              <g filter="url(#relShadow)">
+                <rect x="278" y="92" width="214" height="192" rx="18" fill="#0a0a0b" />
+                <text x="300" y="126" fontSize="12" fontWeight="850" fill="#fff">Contract baseline</text>
+                <text x="300" y="154" fontSize="24" fontWeight="900" fill="#fff">{contract.contract_id}</text>
+                <text x="300" y="182" fontSize="12" fill="rgba(255,255,255,.72)">{view.baseline.annualValue} annual</text>
+                <text x="300" y="203" fontSize="11" fill={view.baseline.status === 'conflict' ? '#ffd5c8' : 'rgba(255,255,255,.68)'}>{view.baseline.headline}</text>
+                <text x="300" y="232" fontSize="10.5" fill="rgba(255,255,255,.58)">Pricing schedule {view.baseline.pricingScheduleValue}</text>
+              </g>
+
+              <g filter="url(#relShadow)">
+                <rect x="586" y="80" width="142" height="216" rx="16" fill="#fff" stroke={tone} strokeWidth="1.4" />
+                <text x="606" y="112" fontSize="12" fontWeight="850" fill="#0a0a0b">Opportunities</text>
+                {view.opportunities.slice(0, 5).map((opportunity, index) => (
+                  <g key={opportunity.id}>
+                    <circle cx="608" cy={142 + index * 27} r="4" fill={opportunity.tone} />
+                    <text x="620" y={146 + index * 27} fontSize="10.4" fontWeight="750" fill="#0a0a0b">{opportunity.shortLabel}</text>
+                  </g>
+                ))}
+              </g>
+
+              <g filter="url(#relShadow)">
+                <rect x="790" y="112" width="154" height="74" rx="12" fill="#fff" stroke="#0a0a0b" strokeWidth="1.3" />
+                <text x="808" y="140" fontSize="12.5" fontWeight="850" fill="#0a0a0b">Optimize case</text>
+                <text x="808" y="162" fontSize="10.5" fill="#5f5e5a">{view.actionState}</text>
+              </g>
+              <g filter="url(#relShadow)">
+                <rect x="790" y="258" width="154" height="74" rx="12" fill="#fff" stroke="#246b45" strokeWidth="1.3" />
+                <text x="808" y="286" fontSize="12.5" fontWeight="850" fill="#0a0a0b">Finance / Tower</text>
+                <text x="808" y="308" fontSize="10.5" fill="#5f5e5a">{view.financeConfirmed} confirmed</text>
+              </g>
+
+              <text x="24" y="414" fontSize="10.5" fill="#5f5e5a">Relationship flow only. Potential, target, and finance-confirmed value stay separate.</text>
+            </svg>
+          </div>
+          <aside style={{ borderLeft: '1px solid rgba(10,10,11,.1)', padding: '16px 18px', minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 850, color: '#0a0a0b', marginBottom: 5 }}>{activeSource.label}</div>
+            <div style={{ fontSize: 11.8, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 9 }}>{activeSource.feeds}</div>
+            <div style={{ fontSize: 12.4, color: '#2c2c2a', lineHeight: 1.5, marginBottom: 13 }}>{activeSource.detail}</div>
+            <div style={{ border: '1px solid rgba(10,10,11,.1)', borderRadius: 7, padding: '10px 12px', background: '#fbfaf7' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 850, color: '#0a0a0b', marginBottom: 6 }}>Selected opportunity</div>
+              <div style={{ fontSize: 12, color: '#5f5e5a', lineHeight: 1.45 }}>
+                {view.selectedOpportunity ? `${view.selectedOpportunity.label}: ${view.selectedOpportunity.amount}, ${view.selectedOpportunity.stage}.` : 'No selected opportunity.'}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+      <OpportunityValueEvidenceExplainer vm={vm} />
+    </>
+  );
+}
+
+function OpportunityValueEvidenceExplainer({ vm }: { vm: SourceWorkspaceVM }) {
+  const view = vm.opportunityView;
+  if (!view) return null;
+  const rows = [
+    ['Recoverable opportunity', view.potential.recoverable, 'Money that can be recovered or stopped when invoice, SLA, or rate evidence proves leakage.'],
+    ['Avoidable opportunity', view.potential.avoidable, 'Future spend not incurred after approved scope, usage, or commitment reduction.'],
+    ['Negotiable opportunity', view.potential.negotiable, 'A vendor-facing target or approved position. It is not savings until agreed and confirmed.'],
+    ['Finance-confirmed value', view.financeConfirmed, 'Booked or accepted value linked back to originating opportunities; never added to potential.'],
+  ];
+  return (
+    <section style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '13px 16px', borderBottom: '1px solid rgba(10,10,11,.1)' }}>
+        <div style={{ fontSize: 14, fontWeight: 850, color: '#0a0a0b' }}>Value evidence, not a single savings number</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
+        {rows.map(([label, amount, text]) => (
+          <div key={label} style={{ padding: '13px 16px', borderRight: '1px solid rgba(10,10,11,.08)', borderBottom: '1px solid rgba(10,10,11,.08)' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 850, color: '#0a0a0b', marginBottom: 4 }}>{label}</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13.5, fontWeight: 850, color: '#0a0a0b', marginBottom: 7 }}>{amount}</div>
+            <div style={{ fontSize: 11.8, lineHeight: 1.45, color: '#5f5e5a' }}>{text}</div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

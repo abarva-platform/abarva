@@ -262,8 +262,6 @@ export function buildContractOptimizationSpine(input: {
     contracts: input.contracts,
     leverageEntries: input.leverageEntries,
     asOfDateIso: input.asOfDateIso,
-    selectedLedger: input.ledger,
-    selectedContractId: input.contract?.contract_id ?? null,
   });
   const selected = input.contract
     ? (candidates.find(
@@ -287,8 +285,6 @@ function rankCandidates(input: {
   readonly contracts: readonly SourceContract360Row[];
   readonly leverageEntries: readonly ContractLeverageEntry[];
   readonly asOfDateIso: string;
-  readonly selectedLedger: ContractOptimizationLedgerSummary | null;
-  readonly selectedContractId: string | null;
 }): readonly ContractOptimizationCandidate[] {
   const leverageByContract = new Map(
     input.leverageEntries.map((entry) => [entry.contractId, entry]),
@@ -312,14 +308,9 @@ function rankCandidates(input: {
   const ranked = input.contracts
     .map((contract) => {
       const leverage = leverageByContract.get(contract.contract_id) ?? null;
-      const ledger =
-        input.selectedContractId === contract.contract_id
-          ? input.selectedLedger
-          : null;
       return scoreContract({
         contract,
         leverage,
-        ledger,
         topVendorRefs,
         noticePassed,
         expiring180,
@@ -336,7 +327,6 @@ function rankCandidates(input: {
 function scoreContract(input: {
   readonly contract: SourceContract360Row;
   readonly leverage: ContractLeverageEntry | null;
-  readonly ledger: ContractOptimizationLedgerSummary | null;
   readonly topVendorRefs: ReadonlySet<string>;
   readonly noticePassed: ReadonlySet<string>;
   readonly expiring180: ReadonlySet<string>;
@@ -434,34 +424,6 @@ function scoreContract(input: {
       tone: "strong",
       points: 8,
     });
-  }
-
-  if (input.ledger) {
-    const missingCount = input.ledger.evidenceGapCount;
-    if (missingCount > 0) {
-      reasons.push({
-        kind: "evidence_gap",
-        label: `${missingCount} optimization evidence gap${missingCount === 1 ? "" : "s"}`,
-        detail:
-          "The opportunity is real enough to work, but missing extracts prevent AbarVa from inventing recoverable leakage or realized value.",
-        sourceRef: "contract optimization ledger evidence_status",
-        tone: "missing",
-        points: 4,
-      });
-    }
-    if (
-      input.ledger.realizedValueUsd > 0 ||
-      input.ledger.quantifiedLeakageUsd > 0
-    ) {
-      reasons.push({
-        kind: "value_proof",
-        label: "Quantified evidence exists",
-        detail: `The ledger carries ${formatUsd(input.ledger.quantifiedLeakageUsd)} recoverable leakage and ${formatUsd(input.ledger.realizedValueUsd)} finance-confirmed realized value.`,
-        sourceRef: "contract optimization ledger + tower.value_claim",
-        tone: "strong",
-        points: 18,
-      });
-    }
   }
 
   const score = Math.min(

@@ -36,9 +36,10 @@ const splitList = (value: string | null | undefined): string[] =>
     .split(/[;|]/)
     .map((item) => item.trim())
     .filter(Boolean);
-const contractOptimizationIntakeHref = (contract: EnrichedContract): string =>
+const contractOptimizationIntakeHref = (contract: EnrichedContract, opportunityId?: string | null): string =>
   '/source/new?intent=contract-optimization' +
   param('contractId', contract.row.contract_id) +
+  param('opportunityId', opportunityId) +
   param('contractName', contract.row.contract_name) +
   param('vendorName', contract.row.vendor_name) +
   param('annualValueUsd', numberFromDb(contract.row.annual_value)) +
@@ -529,6 +530,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const evidenceScope = detail?.evidenceScope ?? [];
   const evidencePricing = detail?.evidencePricing ?? [];
   const evidencePerformance = detail?.evidencePerformance ?? null;
+  const opportunitySet = detail?.optimizationOpportunitySet ?? null;
   const cVm = c ? {
     id: c.contract_id, vendor: c.vendor_name, name: c.contract_name, cat: c.vendor_category ?? 'Unresolved',
     acv: money(c.annual_value), spend: money(c.actual_annual_spend), committed: money(c.total_committed_value),
@@ -719,6 +721,141 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     story: optSpine.contractStory,
     missingEvidenceStory: optSpine.missingEvidenceStory,
   } : null;
+  const opportunityView = opportunitySet ? (() => {
+    const selected =
+      opportunitySet.opportunities.find((opportunity) => opportunity.opportunityId === opportunitySet.selectedOpportunityId) ??
+      opportunitySet.opportunities[0] ??
+      null;
+    const fmtStage = (stage: string) => stage.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+    const fmtGrade = (grade: string) => grade.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+    const stageTone = (stage: string) =>
+      stage === 'validated' || stage === 'finance_confirmed'
+        ? COL.teal
+        : stage === 'baseline_conflict' || stage === 'evidence_required'
+          ? COL.red
+          : stage === 'approval_required' || stage === 'target_position' || stage === 'workflow_required'
+            ? COL.amber
+            : '#3d6ea8';
+    const amount = (value: number | null | undefined) =>
+      value == null ? 'Not sized' : money(value);
+    const sourceRefs = selected?.evidenceRefs.map((ref) => [
+      ref.tableName,
+      ref.sourceRecordId,
+      ref.sourceFileReport,
+      ref.pageSpan,
+    ].filter(Boolean).join(' · ')).filter(Boolean) ?? [];
+    const selectedLines = selected?.calculation?.lines ?? [];
+    return {
+      contractId: opportunitySet.contractId,
+      recommendation: opportunitySet.recommendation,
+      recommendationDetail: opportunitySet.recommendationDetail,
+      actionState: fmtStage(opportunitySet.actionState),
+      baseline: {
+        status: opportunitySet.baseline.status,
+        headline: opportunitySet.baseline.headline,
+        detail: opportunitySet.baseline.detail,
+        annualValue: amount(opportunitySet.baseline.annualValueUsd),
+        pricingScheduleValue: amount(opportunitySet.baseline.pricingScheduleAnnualValueUsd),
+        actualSpend: amount(opportunitySet.baseline.actualAnnualSpendUsd),
+        committedValue: amount(opportunitySet.baseline.totalCommittedValueUsd),
+        conflictAmount: opportunitySet.baseline.conflictAmountUsd == null ? null : money(Math.abs(opportunitySet.baseline.conflictAmountUsd)),
+      },
+      potential: {
+        recoverable: money(opportunitySet.potentialRecoverableUsd),
+        avoidable: money(opportunitySet.potentialAvoidableUsd),
+        negotiable: money(opportunitySet.potentialNegotiableUsd),
+        total: money(opportunitySet.potentialRecoverableUsd + opportunitySet.potentialAvoidableUsd + opportunitySet.potentialNegotiableUsd),
+      },
+      financeConfirmed: money(opportunitySet.financeConfirmedUsd),
+      evidenceRequirements: opportunitySet.evidenceRequirements,
+      selectedOpportunityId: selected?.opportunityId ?? null,
+      selectedOpportunity: selected ? {
+        id: selected.opportunityId,
+        label: selected.label,
+        shortLabel: selected.shortLabel,
+        valueType: fmtStage(selected.valueType),
+        amount: amount(selected.amountUsd),
+        amountUsd: selected.amountUsd,
+        stage: fmtStage(selected.stage),
+        stageRaw: selected.stage,
+        grade: fmtGrade(selected.evidenceGrade),
+        tone: stageTone(selected.stage),
+        confidence: selected.confidence == null ? 'Not established' : pct(selected.confidence),
+        owner: selected.owner ?? 'Not assigned',
+        deadline: selected.deadline ? fmtDate(selected.deadline) : 'No deadline',
+        nextAction: selected.nextAction,
+        blockingGap: selected.blockingGap,
+        narrative: selected.narrative,
+        approvalState: fmtStage(selected.approvalState),
+        overlapTreatment: selected.overlapTreatment,
+        sourceRefs,
+        calculation: selected.calculation ? {
+          ruleId: selected.calculation.ruleId,
+          ruleVersion: selected.calculation.ruleVersion,
+          formula: selected.calculation.formula,
+          eligibleQuantity: whole(selected.calculation.eligibleQuantity),
+          billedRate: amount(selected.calculation.billedRateUsd),
+          contractRate: amount(selected.calculation.contractRateUsd),
+          approvedExceptions: amount(selected.calculation.approvedExceptionsUsd),
+          calculatedAmount: amount(selected.calculation.calculatedAmountUsd),
+          includedLineCount: selected.calculation.includedLineCount,
+          excludedLineCount: selected.calculation.excludedLineCount,
+          pendingLineCount: selected.calculation.pendingLineCount,
+        } : null,
+      } : null,
+      opportunities: opportunitySet.opportunities.map((opportunity) => ({
+        id: opportunity.opportunityId,
+        label: opportunity.label,
+        shortLabel: opportunity.shortLabel,
+        valueType: fmtStage(opportunity.valueType),
+        amount: amount(opportunity.amountUsd),
+        amountUsd: opportunity.amountUsd,
+        stage: fmtStage(opportunity.stage),
+        stageRaw: opportunity.stage,
+        grade: fmtGrade(opportunity.evidenceGrade),
+        tone: stageTone(opportunity.stage),
+        owner: opportunity.owner ?? 'Not assigned',
+        deadline: opportunity.deadline ? fmtDate(opportunity.deadline) : 'No deadline',
+        blockingGap: opportunity.blockingGap,
+        nextAction: opportunity.nextAction,
+        selected: opportunity.opportunityId === selected?.opportunityId,
+      })),
+      calculationLines: selectedLines.map((line) => ({
+        lineId: line.lineId,
+        invoiceId: line.invoiceId ?? 'Not established',
+        invoiceLineId: line.invoiceLineId ?? 'Not established',
+        servicePeriod: line.servicePeriod ?? 'Not established',
+        skuOrService: line.skuOrService ?? 'Not established',
+        quantity: line.quantity == null ? 'Not established' : whole(line.quantity),
+        quantityBasis: line.quantityBasis,
+        unitOfMeasure: line.unitOfMeasure ?? 'Not established',
+        billedRate: amount(line.billedRateUsd),
+        contractRate: amount(line.contractRateUsd),
+        amount: amount(line.amountUsd),
+        inclusion: fmtStage(line.inclusion),
+        inclusionRaw: line.inclusion,
+        inclusionReason: line.inclusionReason,
+        pricingScheduleRef: line.pricingScheduleRef ?? 'Not established',
+        contractTermRef: line.contractTermRef ?? 'Not established',
+        amendmentRef: line.amendmentRef ?? 'Not established',
+        sourceRefs: line.sourceRefs.map((ref) => [
+          ref.tableName,
+          ref.sourceRecordId,
+          ref.sourceFileReport,
+          ref.pageSpan,
+        ].filter(Boolean).join(' · ')).filter(Boolean),
+      })),
+      financeRealizations: opportunitySet.financeRealizations.map((item) => ({
+        id: item.realizationId,
+        amount: money(item.amountUsd),
+        basis: item.basis,
+        confirmationDate: item.confirmationDate ? fmtDate(item.confirmationDate) : 'Not established',
+        owner: item.owner ?? 'Not assigned',
+        towerClaimRefs: item.towerClaimRefs,
+        linkedOpportunityIds: item.linkedOpportunityIds,
+      })),
+    };
+  })() : null;
   const optLaunch = c ? S.optimizationLaunch[c.contract_id] : undefined;
   const optCtaLabel = optLaunch?.status === 'loading'
     ? 'Opening optimization...'
@@ -728,11 +865,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const optCtaError = optLaunch?.status === 'error'
     ? optLaunch.message ?? 'Could not start optimization workflow.'
     : null;
-  const optCtaHref = contract ? contractOptimizationIntakeHref(contract) : null;
-  const recAction = opp && oppContract && contract && oppContract.row.contract_id === contract.row.contract_id
+  const optCtaHref = contract ? contractOptimizationIntakeHref(contract, opportunityView?.selectedOpportunityId ?? null) : null;
+  const recAction = opportunityView
+    ? opportunityView.recommendation
+    : opp && oppContract && contract && oppContract.row.contract_id === contract.row.contract_id
     ? REASON_LABEL[opp.reasons[0]] + ' — see sourcing opportunity'
     : contract && contract.leverage.weakSignalCount >= 2 ? 'Weak leverage — build alternatives and renegotiate' : contract?.noticePassed ? 'Notice passed — confirm renewal position' : 'Monitor — no deterministic opportunity flag on this contract';
-  const recWhy = opportunities.find((o) => o.contractId === contract?.row.contract_id)?.rationale.join(' ') ?? 'No sourcing-opportunity rule has flagged this contract at the governed as-of date.';
+  const recWhy = opportunityView?.recommendationDetail ?? opportunities.find((o) => o.contractId === contract?.row.contract_id)?.rationale.join(' ') ?? 'No sourcing-opportunity rule has flagged this contract at the governed as-of date.';
 
   // ── opportunity canvas ──
   const o = opp ? { ref: opp.contractId, vendor: opp.vendorName, name: opp.contractName, why: opp.rationale.join(' '), reasons: opp.reasons.map((r) => REASON_LABEL[r]), annualValue: money(opp.annualValue), role: oppContract?.row.renewal_owner_ref ?? 'Not assigned' } : null;
@@ -809,6 +948,19 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         ...optLedgerView.lines.map((line) => `${line.label}: ${line.amount}; state ${line.state}; evidence ${line.evidenceClass}; evidence note ${line.evidence}; next action ${line.nextAction}; source refs ${line.sourceRefs.join(', ') || 'not established'}.`),
       ]
     : [];
+  const sourceWorkspaceOpportunityFacts = opportunityView
+    ? [
+        `Opportunity recommendation: ${opportunityView.recommendation} ${opportunityView.recommendationDetail}`,
+        `Commercial baseline: ${opportunityView.baseline.headline} ${opportunityView.baseline.detail}`,
+        `Potential value is separated from finance confirmation: ${opportunityView.potential.recoverable} recoverable, ${opportunityView.potential.avoidable} avoidable, ${opportunityView.potential.negotiable} negotiable, ${opportunityView.financeConfirmed} finance-confirmed.`,
+        ...opportunityView.opportunities.map((opportunity) => `${opportunity.label}: ${opportunity.amount}; stage ${opportunity.stage}; evidence ${opportunity.grade}; owner ${opportunity.owner}; next action ${opportunity.nextAction}; blocking gap ${opportunity.blockingGap ?? 'none'}.`),
+        ...(opportunityView.selectedOpportunity?.calculation
+          ? [
+              `Selected opportunity calculation: ${opportunityView.selectedOpportunity.label}; rule ${opportunityView.selectedOpportunity.calculation.ruleId}; formula ${opportunityView.selectedOpportunity.calculation.formula}; amount ${opportunityView.selectedOpportunity.calculation.calculatedAmount}; included ${opportunityView.selectedOpportunity.calculation.includedLineCount}, pending ${opportunityView.selectedOpportunity.calculation.pendingLineCount}, excluded ${opportunityView.selectedOpportunity.calculation.excludedLineCount}.`,
+            ]
+          : []),
+      ]
+    : [];
   const sourceWorkspaceGraphFacts = [
     ...(optSpineView?.selected
       ? [
@@ -837,7 +989,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       `AI usage value proof: ${v4Snapshot.aiUsageValueProof.rowCount} usage rows, ${v4Snapshot.aiUsageValueProof.assignedSeats} assigned seats, ${v4Snapshot.aiUsageValueProof.activeUsers} active users, ${money(v4Snapshot.aiUsageValueProof.actualCost)} actual cost, ${v4Snapshot.aiUsageValueProof.claimableRows} claimable rows.`,
     ],
     vendorFacts: sourceWorkspaceVendorFacts,
-    sourceFacts: [...sourceWorkspaceLedgerFacts, ...sourceWorkspaceQualityFacts],
+    sourceFacts: [...sourceWorkspaceOpportunityFacts, ...sourceWorkspaceLedgerFacts, ...sourceWorkspaceQualityFacts],
     graphFacts: sourceWorkspaceGraphFacts,
     qualityFacts: sourceWorkspaceQualityFacts,
     sourceV4: {
@@ -895,6 +1047,22 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         scopeSummary: cVm?.scopeSummary ?? 'Contract scope has not been extracted yet.',
         scopeRowCount: scopeRows.length,
         sourceConfidence: c.source_confidence,
+      } : null,
+      optimizationOpportunities: opportunityView ? {
+        recommendation: opportunityView.recommendation,
+        baseline: opportunityView.baseline,
+        potential: opportunityView.potential,
+        financeConfirmed: opportunityView.financeConfirmed,
+        selectedOpportunity: opportunityView.selectedOpportunity,
+        opportunities: opportunityView.opportunities.map((opportunity) => ({
+          id: opportunity.id,
+          label: opportunity.label,
+          amount: opportunity.amount,
+          stage: opportunity.stage,
+          grade: opportunity.grade,
+          nextAction: opportunity.nextAction,
+          blockingGap: opportunity.blockingGap,
+        })),
       } : null,
       optimizationLedger: optLedgerView ? {
         headline: optLedgerView.headline,
@@ -1021,9 +1189,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       { label: 'in top-10 vendor concentration', value: pct(conc.topNShare(10)) },
     ] : kind === 'contract' && activeTab === 'Optimize' && contract ? [
       { label: 'annual value', value: money(contract.row.annual_value) },
-      { label: 'recoverable leakage', value: optLedgerView?.quantifiedLeakage ?? 'Not quantified' },
-      { label: 'realized value', value: optLedgerView?.realizedValue ?? 'Not established' },
-      { label: 'evidence gaps', value: optLedgerView?.evidenceGaps ?? '0' },
+      { label: 'potential recoverable', value: opportunityView?.potential.recoverable ?? optLedgerView?.quantifiedLeakage ?? 'Not quantified' },
+      { label: 'finance confirmed', value: opportunityView?.financeConfirmed ?? optLedgerView?.realizedValue ?? 'Not established' },
+      { label: 'opportunities', value: opportunityView ? String(opportunityView.opportunities.length) : (optLedgerView?.evidenceReady ?? '0') },
     ] : valueStrip.filter((v) => !v.missing).slice(0, 4).map((v) => ({ label: v.label, value: v.value })),
     compactRing: kind === 'portfolio' && activeTab === 'Explore'
       ? { label: 'category-clean', valueLabel: pct(categoryQuality.categoryCleanValuePct), pct01: Number.isFinite(categoryQuality.categoryCleanValuePct) ? categoryQuality.categoryCleanValuePct : 0, color: '#ba7517' }
@@ -1059,9 +1227,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     cOverview: activeTab === 'Story', cEconomics: activeTab === 'Economics', cScope: activeTab === 'Scope', cPerformance: activeTab === 'Performance', cRelationship: activeTab === 'Relationship', cRenewal: false, cLeverage: false, cEvidence: activeTab === 'Evidence', cActions: activeTab === 'Optimize',
     termRows, econBars, scopeRows, scopeCols, pricingRows, pricingCols, hasScope: scopeRows.length > 0, hasEvidenceScope: evidenceScopeRows.length > 0, hasPricing: pricingRows.length > 0, scopeSummary: cVm?.scopeSummary ?? '', scopeTierCounts,
     evidenceOverview, evidencePerformance,
-    weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView,
+    weakFlags, weakCount, progRows, hasProg, recAction, recWhy, optLevers, optScenarios, optLedger: optLedgerView, optSpine: optSpineView, opportunityView,
     optCtaLabel, optCtaDisabled: optLaunch?.status === 'loading', optCtaError, optCtaHref,
-    startOptimization: optCtaHref ? () => { window.location.href = optCtaHref; } : () => undefined,
+    startOptimization: contract ? () => vm.startContractOptimization(contract.row.contract_id, opportunityView?.selectedOpportunityId ?? null) : () => undefined,
     goActions: () => vm.setTab('contract', 'Optimize'),
     detailState, detail,
 
