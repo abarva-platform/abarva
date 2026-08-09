@@ -1,4 +1,7 @@
-import { findUnsatisfiedRequiredUpstream } from "../upstream-satisfaction";
+import {
+  findUnsatisfiedDraftableUpstream,
+  findUnsatisfiedRequiredUpstream,
+} from "../upstream-satisfaction";
 import type { SourceGenerationContext } from "@/lib/source/agent-generation/types";
 
 const sourceArtifactsMock = jest.fn();
@@ -20,7 +23,11 @@ jest.mock("@/lib/source/artifact-acceptances", () => ({
 }));
 
 function makeCtx(
-  artifactStates: Array<{ artifactCode: string; linkedArtifactId: string | null }>,
+  artifactStates: Array<{
+    artifactCode: string;
+    linkedArtifactId: string | null;
+    body?: string | null;
+  }>,
   currentStageKey: string,
 ): SourceGenerationContext {
   return {
@@ -182,5 +189,57 @@ describe("findUnsatisfiedRequiredUpstream", () => {
     ]);
     expect(result).toEqual(["d05_scope_memo"]);
     expect(sourceArtifactsMock).toHaveBeenCalledTimes(1); // batched, not N+1
+  });
+});
+
+describe("findUnsatisfiedDraftableUpstream", () => {
+  it("treats a non-empty upstream draft body as enough for stage-entry drafting", () => {
+    const ctx = makeCtx(
+      [
+        {
+          artifactCode: "d01_strategy_memo",
+          linkedArtifactId: "artifact-1",
+          body: "# Strategy draft awaiting review",
+        },
+        {
+          artifactCode: "d05_scope_memo",
+          linkedArtifactId: "artifact-2",
+          body: "# Scope draft awaiting review",
+        },
+      ],
+      "rfp",
+    );
+
+    expect(
+      findUnsatisfiedDraftableUpstream(ctx, [
+        "d01_strategy_memo",
+        "d05_scope_memo",
+      ]),
+    ).toEqual([]);
+  });
+
+  it("still reports required upstream codes that have no usable draft body", () => {
+    const ctx = makeCtx(
+      [
+        {
+          artifactCode: "d01_strategy_memo",
+          linkedArtifactId: "artifact-1",
+          body: "   ",
+        },
+        {
+          artifactCode: "d05_scope_memo",
+          linkedArtifactId: null,
+          body: null,
+        },
+      ],
+      "rfp",
+    );
+
+    expect(
+      findUnsatisfiedDraftableUpstream(ctx, [
+        "d01_strategy_memo",
+        "d05_scope_memo",
+      ]),
+    ).toEqual(["d01_strategy_memo", "d05_scope_memo"]);
   });
 });

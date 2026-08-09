@@ -14,6 +14,8 @@ Source stage approvals now trigger AI-prepared drafts for the approved stage's r
 
 The canvas stage-promotion endpoint now follows the same approved-stage invariant, so direct approval and canvas promotion both draft artifacts for the stage just approved.
 
+Stage-entry auto-drafts can also use earlier AI-prepared draft bodies as drafting context while preserving the stricter accepted-authoritative upstream rule for manual generation and client-final authority.
+
 ## Layer Impact
 
 - `global-control-lane`: Layer 4 Product projection changes only. The Source approval route and artifact generation orchestration change how existing per-event artifact rows are drafted after approval; no canonical data model, intake shape, adapter, schema, or migration changes are included.
@@ -31,8 +33,11 @@ The canvas stage-promotion endpoint now follows the same approved-stage invarian
 
 - `src/app/api/v1/source/events/[eventId]/approve/route.ts`
 - `src/app/api/v1/source/[eventId]/stage/route.ts`
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts`
+- `src/lib/source/contracts/upstream-satisfaction.ts`
 - `src/lib/source/stage-entry-autodraft.ts`
 - `src/lib/source/__tests__/stage-entry-autodraft.test.ts`
+- `src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts`
 - `src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts`
 - `src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts`
 
@@ -40,6 +45,7 @@ The canvas stage-promotion endpoint now follows the same approved-stage invarian
 
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/jest --runTestsByPath 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts' src/lib/source/__tests__/stage-entry-autodraft.test.ts` passed.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts` passed.
 - `./node_modules/.bin/eslint src/lib/source/stage-entry-autodraft.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/route.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/eslint 'src/app/api/v1/source/[eventId]/stage/route.ts' 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/gate-advance-contract.test.ts src/lib/source/__tests__/source-governance-enforcement.test.ts src/lib/source/contracts/__tests__/generation-eligibility.test.ts src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/agent-generation/__tests__/prompt-registry.test.ts` found a pre-existing Source governance fixture mismatch outside this release's changed files; the four adjacent non-fixture suites passed.
