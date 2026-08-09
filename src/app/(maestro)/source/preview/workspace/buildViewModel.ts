@@ -738,6 +738,22 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : '#3d6ea8';
     const amount = (value: number | null | undefined) =>
       value == null ? 'Not sized' : money(value);
+    const opportunityMoney = (valueType: string, emptyLabel = 'Not established') => {
+      const typed = opportunitySet.opportunities.filter((opportunity) => opportunity.valueType === valueType);
+      if (typed.length === 0) return emptyLabel;
+      const valued = typed.filter((opportunity) => opportunity.amountUsd != null && Number.isFinite(opportunity.amountUsd));
+      if (valued.length === 0) return 'Not sized';
+      return money(valued.reduce((total, opportunity) => total + (opportunity.amountUsd ?? 0), 0));
+    };
+    const totalOpportunityMoney = () => {
+      const valued = opportunitySet.opportunities.filter((opportunity) => opportunity.amountUsd != null && Number.isFinite(opportunity.amountUsd));
+      if (valued.length === 0) return 'Not sized';
+      return money(valued.reduce((total, opportunity) => total + (opportunity.amountUsd ?? 0), 0));
+    };
+    const financeConfirmed =
+      opportunitySet.financeRealizations.length > 0
+        ? money(opportunitySet.financeRealizations.reduce((total, item) => total + item.amountUsd, 0))
+        : 'Not established';
     const sourceRefs = selected?.evidenceRefs.map((ref) => [
       ref.tableName,
       ref.sourceRecordId,
@@ -761,12 +777,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         conflictAmount: opportunitySet.baseline.conflictAmountUsd == null ? null : money(Math.abs(opportunitySet.baseline.conflictAmountUsd)),
       },
       potential: {
-        recoverable: money(opportunitySet.potentialRecoverableUsd),
-        avoidable: money(opportunitySet.potentialAvoidableUsd),
-        negotiable: money(opportunitySet.potentialNegotiableUsd),
-        total: money(opportunitySet.potentialRecoverableUsd + opportunitySet.potentialAvoidableUsd + opportunitySet.potentialNegotiableUsd),
+        recoverable: opportunityMoney('recoverable_leakage'),
+        avoidable: opportunityMoney('avoided_cost'),
+        negotiable: opportunityMoney('negotiable_improvement'),
+        total: totalOpportunityMoney(),
       },
-      financeConfirmed: money(opportunitySet.financeConfirmedUsd),
+      financeConfirmed,
       evidenceRequirements: opportunitySet.evidenceRequirements,
       selectedOpportunityId: selected?.opportunityId ?? null,
       selectedOpportunity: selected ? {
