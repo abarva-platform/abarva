@@ -24,7 +24,15 @@ import {
 } from "./contract-optimization-evidence";
 import {
   buildContractOptimizationOpportunitySet,
+  type ContractOptimizationOpportunity,
   type ContractOptimizationOpportunitySet,
+  type FinanceRealizationLink,
+  type OptimizationEvidenceGrade,
+  type OptimizationOpportunityStage,
+  type OptimizationOpportunityValueType,
+  type OpportunityCalculationLine,
+  type OpportunityCalculationRead,
+  type OpportunitySourceReference,
 } from "./contract-optimization-opportunity";
 import type {
   DocExtractionRow,
@@ -396,9 +404,10 @@ export async function getContractEvidencePerformanceSummary(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidencePerformanceSummary | null> {
-  const rows = await safeQueryForTenant<SourceContractEvidencePerformanceSummary>(
-    tenantKey,
-    `WITH sla AS (
+  const rows =
+    await safeQueryForTenant<SourceContractEvidencePerformanceSummary>(
+      tenantKey,
+      `WITH sla AS (
        SELECT
          contract_id,
          MAX(dataset_version) AS dataset_version,
@@ -476,8 +485,8 @@ export async function getContractEvidencePerformanceSummary(
       FULL OUTER JOIN invoice USING (contract_id)
       FULL OUTER JOIN rate USING (contract_id)
       FULL OUTER JOIN finance USING (contract_id)`,
-    [contractId],
-  );
+      [contractId],
+    );
   return rows[0] ?? null;
 }
 
@@ -486,6 +495,13 @@ export async function getContractOptimizationOpportunitySet(
   contractId: string,
   contract: SourceContract360Row | null = null,
 ): Promise<ContractOptimizationOpportunitySet | null> {
+  const persisted = await getPersistedContractOptimizationOpportunitySet(
+    tenantKey,
+    contractId,
+    contract,
+  );
+  if (persisted) return persisted;
+
   const [
     overviewRows,
     pricingRows,
@@ -584,6 +600,7 @@ export async function getContractOptimizationOpportunitySet(
 
   return buildContractOptimizationOpportunitySet({
     tenantKey,
+    datasetVersion: textValue(overviewRows[0]?.dataset_version) ?? undefined,
     contract,
     overview: overviewRows[0] ?? null,
     pricingRows,
@@ -596,6 +613,647 @@ export async function getContractOptimizationOpportunitySet(
     financeRow: financeRows[0] ?? null,
     pdfClauseRows,
   });
+}
+
+async function getPersistedContractOptimizationOpportunitySet(
+  tenantKey: string,
+  contractId: string,
+  contract: SourceContract360Row | null,
+): Promise<ContractOptimizationOpportunitySet | null> {
+  const versionRows = await safeQueryForTenant<{ dataset_version: string }>(
+    tenantKey,
+    `SELECT dataset_version
+       FROM source.optimization_opportunity
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      GROUP BY dataset_version
+      ORDER BY max(updated_at) DESC NULLS LAST
+      LIMIT 1`,
+    [contractId],
+  );
+  const datasetVersion = versionRows[0]?.dataset_version;
+  if (!datasetVersion) return null;
+
+  const [
+    opportunityRows,
+    baselineRows,
+    evidenceRows,
+    calculationRunRows,
+    calculationInputRows,
+    calculationOutputRows,
+    valuationRows,
+    requirementRows,
+    financeRows,
+    financeEvidenceRows,
+  ] = await Promise.all([
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.optimization_opportunity
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+          AND contract_id = $3
+        ORDER BY amount_usd DESC NULLS LAST, opportunity_id`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.optimization_baseline
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+          AND contract_id = $3
+        ORDER BY created_at DESC NULLS LAST
+        LIMIT 1`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.opportunity_evidence
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY opportunity_id, source_table, source_record_id`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.calculation_run
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY opportunity_id, calculation_run_id`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.calculation_input
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY calculation_run_id, input_key`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.calculation_output
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY calculation_run_id, output_key`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.opportunity_valuation
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY opportunity_id, created_at DESC NULLS LAST`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.opportunity_requirement_status
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY opportunity_id, requirement_id`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.finance_realization
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+        ORDER BY confirmation_date DESC NULLS LAST, realization_id`,
+      [datasetVersion],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT evidence.*
+         FROM source.finance_realization_evidence evidence
+         JOIN source.finance_realization realization
+           ON realization.tenant_key = evidence.tenant_key
+          AND realization.dataset_version = evidence.dataset_version
+          AND realization.realization_id = evidence.realization_id
+        WHERE evidence.tenant_key = ANY($1::text[])
+          AND evidence.dataset_version = $2
+        ORDER BY evidence.realization_id, evidence.source_table, evidence.source_record_id`,
+      [datasetVersion],
+    ),
+  ]);
+
+  if (opportunityRows.length === 0) return null;
+
+  const baselineRow = baselineRows[0] ?? {};
+  const evidenceByOpportunity = groupByString(evidenceRows, "opportunity_id");
+  const valuationByOpportunity = groupByString(valuationRows, "opportunity_id");
+  const requirementByOpportunity = groupByString(
+    requirementRows,
+    "opportunity_id",
+  );
+  const calculationRunByOpportunity = new Map(
+    calculationRunRows.map((row) => [textValue(row.opportunity_id) ?? "", row]),
+  );
+  const calculationInputsByRun = groupByString(
+    calculationInputRows,
+    "calculation_run_id",
+  );
+  const calculationOutputsByRun = groupByString(
+    calculationOutputRows,
+    "calculation_run_id",
+  );
+
+  const opportunities = opportunityRows.map((row) =>
+    persistedOpportunityFromRow({
+      row,
+      evidenceRows:
+        evidenceByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? [],
+      valuationRows:
+        valuationByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? [],
+      requirementRows:
+        requirementByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? [],
+      calculationRun:
+        calculationRunByOpportunity.get(textValue(row.opportunity_id) ?? "") ??
+        null,
+      calculationInputsByRun,
+      calculationOutputsByRun,
+    }),
+  );
+
+  const financeEvidenceByRealization = groupByString(
+    financeEvidenceRows,
+    "realization_id",
+  );
+  const opportunityIds = new Set(
+    opportunities.map((opportunity) => opportunity.opportunityId),
+  );
+  const financeRealizations: FinanceRealizationLink[] = financeRows
+    .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
+    .map((row) => ({
+      realizationId: textValue(row.realization_id) ?? "",
+      amountUsd: numberValue(row.amount_usd) ?? 0,
+      basis: textValue(row.basis) ?? "Finance-confirmed realized value.",
+      confirmationDate: textValue(row.confirmation_date),
+      owner: textValue(row.finance_owner_role),
+      towerClaimRefs: jsonArray(row.tower_claim_refs),
+      linkedOpportunityIds: [
+        textValue(row.opportunity_id),
+        ...jsonArray(jsonObject(row.payload).linked_opportunity_ids),
+      ].filter((value): value is string => Boolean(value)),
+      sourceRefs: (
+        financeEvidenceByRealization.get(textValue(row.realization_id) ?? "") ??
+        []
+      ).map(sourceRefFromEvidence),
+    }));
+
+  const potentialRecoverableUsd = sumNumbers(
+    opportunities
+      .filter((opportunity) => opportunity.valueType === "recoverable_leakage")
+      .map((opportunity) => opportunity.amountUsd),
+  );
+  const potentialAvoidableUsd = sumNumbers(
+    opportunities
+      .filter((opportunity) => opportunity.valueType === "avoided_cost")
+      .map((opportunity) => opportunity.amountUsd),
+  );
+  const potentialNegotiableUsd = sumNumbers(
+    opportunities
+      .filter(
+        (opportunity) => opportunity.valueType === "negotiable_improvement",
+      )
+      .map((opportunity) => opportunity.amountUsd),
+  );
+  const financeConfirmedUsd = sumNumbers(
+    financeRealizations.map((item) => item.amountUsd),
+  );
+  const selectedOpportunityId =
+    opportunities.find((opportunity) =>
+      opportunity.opportunityId.endsWith(":rate-variance"),
+    )?.opportunityId ??
+    opportunities.find((opportunity) => opportunity.amountUsd != null)
+      ?.opportunityId ??
+    opportunities[0]?.opportunityId ??
+    null;
+  const blockingRequirements = requirementRows
+    .filter((row) => textValue(row.status) !== "met")
+    .map((row) => textValue(row.status_detail))
+    .filter((value): value is string => Boolean(value));
+
+  return {
+    tenantKey,
+    datasetVersion,
+    contractId,
+    vendorId:
+      textValue(opportunityRows[0]?.vendor_id) ?? contract?.vendor_ref ?? null,
+    vendorName: contract?.vendor_name ?? null,
+    contractName: contract?.contract_name ?? null,
+    recommendation: opportunities.some(
+      (opportunity) => opportunity.stage === "baseline_conflict",
+    )
+      ? "Build evidence before optimizing."
+      : "Act now on governed evidence.",
+    recommendationDetail:
+      opportunities[0]?.narrative ??
+      "Optimization opportunities are loaded from the governed opportunity spine.",
+    actionState: opportunities.some(
+      (opportunity) => opportunity.stage === "baseline_conflict",
+    )
+      ? "request_evidence"
+      : selectedOpportunityId
+        ? "review_calculation"
+        : "request_evidence",
+    baseline: {
+      status:
+        (textValue(baselineRow.baseline_state) as
+          | "ready"
+          | "conflict"
+          | "missing") ?? "missing",
+      headline:
+        textValue(jsonObject(baselineRow.payload).headline) ??
+        "Commercial baseline loaded.",
+      detail:
+        textValue(baselineRow.detail) ??
+        "Commercial baseline detail is not available.",
+      annualValueUsd: numberValue(baselineRow.annual_value_usd),
+      pricingScheduleAnnualValueUsd: numberValue(
+        baselineRow.pricing_schedule_annual_value_usd,
+      ),
+      actualAnnualSpendUsd: numberValue(baselineRow.actual_annual_spend_usd),
+      totalCommittedValueUsd: numberValue(
+        baselineRow.total_committed_value_usd,
+      ),
+      conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
+      sourceRefs: jsonArray(baselineRow.source_refs),
+    },
+    selectedOpportunityId,
+    opportunities,
+    financeRealizations,
+    evidenceRequirements: blockingRequirements,
+    potentialRecoverableUsd,
+    potentialAvoidableUsd,
+    potentialNegotiableUsd,
+    financeConfirmedUsd,
+  };
+}
+
+function persistedOpportunityFromRow(input: {
+  readonly row: NumericRow;
+  readonly evidenceRows: readonly NumericRow[];
+  readonly valuationRows: readonly NumericRow[];
+  readonly requirementRows: readonly NumericRow[];
+  readonly calculationRun: NumericRow | null;
+  readonly calculationInputsByRun: Map<string, NumericRow[]>;
+  readonly calculationOutputsByRun: Map<string, NumericRow[]>;
+}): ContractOptimizationOpportunity {
+  const payload = jsonObject(input.row.payload);
+  const opportunityId = textValue(input.row.opportunity_id) ?? "";
+  const calculation = input.calculationRun
+    ? persistedCalculationFromRows({
+        run: input.calculationRun,
+        inputs:
+          input.calculationInputsByRun.get(
+            textValue(input.calculationRun.calculation_run_id) ?? "",
+          ) ?? [],
+        outputs:
+          input.calculationOutputsByRun.get(
+            textValue(input.calculationRun.calculation_run_id) ?? "",
+          ) ?? [],
+      })
+    : null;
+  const sourceRefs = input.evidenceRows.map(sourceRefFromEvidence);
+  const blockingRequirement = input.requirementRows.find(
+    (row) => textValue(row.status) !== "met",
+  );
+  const valuationAmount =
+    input.valuationRows.find(
+      (row) => textValue(row.valuation_type) === "potential",
+    )?.amount_usd ?? input.row.amount_usd;
+
+  return {
+    opportunityId,
+    contractId: textValue(input.row.contract_id) ?? "",
+    label: textValue(payload.label) ?? opportunityId,
+    shortLabel:
+      textValue(payload.short_label) ??
+      textValue(payload.label) ??
+      opportunityId,
+    valueType: readValueType(input.row.value_type),
+    amountUsd:
+      numberValue(input.row.amount_usd) ?? numberValue(valuationAmount),
+    amountState:
+      readLiteral(input.row.amount_state, ["exact", "range", "not_sized"]) ??
+      "not_sized",
+    stage: readStage(input.row.stage),
+    evidenceGrade: readEvidenceGrade(input.row.evidence_grade),
+    confidence: numberValue(input.row.confidence),
+    deadline: textValue(input.row.deadline),
+    owner: textValue(input.row.owner),
+    blockingGap:
+      textValue(input.row.blocking_gap) ??
+      textValue(blockingRequirement?.status_detail),
+    nextAction:
+      textValue(input.row.next_action) ?? "Review the opportunity evidence.",
+    sourceSystems:
+      jsonArray(payload.source_systems).length > 0
+        ? jsonArray(payload.source_systems)
+        : Array.from(
+            new Set(sourceRefs.map((ref) => ref.sourceSystem).filter(Boolean)),
+          ),
+    evidenceRefs: sourceRefs,
+    calculation,
+    overlapTreatment:
+      textValue(input.row.overlap_treatment) ??
+      "No overlap treatment has been recorded.",
+    approvalState:
+      textValue(input.row.approval_state) ?? "approval_state_not_recorded",
+    narrative:
+      textValue(input.row.narrative) ??
+      "Opportunity narrative is not recorded in the persisted spine.",
+  };
+}
+
+function persistedCalculationFromRows(input: {
+  readonly run: NumericRow;
+  readonly inputs: readonly NumericRow[];
+  readonly outputs: readonly NumericRow[];
+}): OpportunityCalculationRead {
+  const payload = jsonObject(input.run.payload);
+  const outputsByKey = new Map(
+    input.outputs.map((row) => [textValue(row.output_key) ?? "", row]),
+  );
+  const lineGroups = new Map<string, NumericRow[]>();
+  for (const row of input.inputs) {
+    const lineId =
+      textValue(jsonObject(row.payload).line_id) ??
+      textValue(row.input_key)?.split(".")[0] ??
+      "line";
+    const current = lineGroups.get(lineId) ?? [];
+    current.push(row);
+    lineGroups.set(lineId, current);
+  }
+  const lines = Array.from(lineGroups.entries()).map(([lineId, rows]) =>
+    persistedCalculationLineFromRows(lineId, rows),
+  );
+  const calculated = outputsByKey.get("calculated_amount_usd");
+  const quantity = outputsByKey.get("eligible_quantity");
+  return {
+    ruleId:
+      textValue(input.run.rule_id) ?? "source.contract_optimization.unknown",
+    ruleVersion: textValue(input.run.rule_version) ?? "unknown",
+    formula:
+      textValue(jsonObject(input.run.payload).formula) ??
+      "Calculation formula is recorded in source.calculation_rule.",
+    eligibleQuantity:
+      numberValue(quantity?.quantity) ??
+      sumNumbers(lines.map((line) => line.quantity ?? 0)),
+    billedRateUsd: firstNumberForInput(input.inputs, "billed_rate_usd"),
+    contractRateUsd: firstNumberForInput(input.inputs, "contract_rate_usd"),
+    approvedExceptionsUsd: 0,
+    calculatedAmountUsd: numberValue(calculated?.amount_usd) ?? 0,
+    includedLineCount:
+      numberValue(payload.included_line_count) ??
+      lines.filter((line) => line.inclusion === "included").length,
+    excludedLineCount:
+      numberValue(payload.excluded_line_count) ??
+      lines.filter((line) => line.inclusion === "excluded").length,
+    pendingLineCount:
+      numberValue(payload.pending_line_count) ??
+      lines.filter((line) => line.inclusion === "pending_review").length,
+    lines,
+  };
+}
+
+function persistedCalculationLineFromRows(
+  lineId: string,
+  rows: readonly NumericRow[],
+): OpportunityCalculationLine {
+  const bySuffix = new Map<string, NumericRow>();
+  for (const row of rows) {
+    const key = textValue(row.input_key) ?? "";
+    bySuffix.set(key.slice(key.indexOf(".") + 1), row);
+  }
+  const payload = jsonObject(rows[0]?.payload);
+  const exception = bySuffix.get("exception_amount_usd");
+  const quantity = bySuffix.get("quantity");
+  const unit = bySuffix.get("unit_of_measure");
+  const billed = bySuffix.get("billed_rate_usd");
+  const contract = bySuffix.get("contract_rate_usd");
+  const periodRow = bySuffix.get("service_period");
+  const sourceRefs = uniqueSourceRefs(rows.map(sourceRefFromCalculationInput));
+
+  return {
+    lineId,
+    invoiceId: textValue(payload.invoice_id),
+    invoiceLineId: textValue(payload.invoice_line_id),
+    servicePeriod: textValue(periodRow?.value_text),
+    skuOrService: textValue(payload.sku_or_service),
+    quantity: numberValue(quantity?.value_numeric),
+    quantityBasis:
+      textValue(quantity?.inclusion_reason) ??
+      "Quantity basis was not recorded on the persisted calculation input.",
+    unitOfMeasure: textValue(unit?.value_text) ?? textValue(quantity?.unit),
+    billedRateUsd: numberValue(billed?.value_numeric),
+    contractRateUsd: numberValue(contract?.value_numeric),
+    amountUsd: numberValue(exception?.value_numeric) ?? 0,
+    inclusion:
+      readLiteral(rows[0]?.inclusion_state, [
+        "included",
+        "excluded",
+        "pending_review",
+      ]) ?? "pending_review",
+    inclusionReason:
+      textValue(exception?.inclusion_reason) ??
+      textValue(rows[0]?.inclusion_reason) ??
+      "Calculation inclusion reason was not recorded.",
+    pricingScheduleRef: textValue(payload.pricing_schedule_ref),
+    contractTermRef: textValue(payload.contract_term_ref),
+    amendmentRef: textValue(payload.amendment_ref),
+    sourceRefs,
+  };
+}
+
+function sourceRefFromEvidence(row: NumericRow): OpportunitySourceReference {
+  return {
+    sourceSystem:
+      textValue(row.source_system) ??
+      textValue(row.evidence_class) ??
+      "Source evidence",
+    sourceRecordId: textValue(row.source_record_id),
+    sourceFileReport:
+      textValue(row.source_file_report) ?? textValue(row.source_document_id),
+    tableName: textValue(row.source_table) ?? "source.evidence",
+    pageSpan: textValue(row.source_span) ?? textValue(row.source_page),
+    reviewState: textValue(row.review_state),
+  };
+}
+
+function sourceRefFromCalculationInput(
+  row: NumericRow,
+): OpportunitySourceReference {
+  return {
+    sourceSystem: "Calculation input",
+    sourceRecordId: textValue(row.source_record_id),
+    sourceFileReport: null,
+    tableName: textValue(row.source_table) ?? "source.calculation_input",
+    pageSpan: null,
+    reviewState: textValue(row.inclusion_state),
+  };
+}
+
+function groupByString(
+  rows: readonly NumericRow[],
+  key: string,
+): Map<string, NumericRow[]> {
+  const groups = new Map<string, NumericRow[]>();
+  for (const row of rows) {
+    const value = textValue(row[key]);
+    if (!value) continue;
+    const current = groups.get(value) ?? [];
+    current.push(row);
+    groups.set(value, current);
+  }
+  return groups;
+}
+
+function uniqueSourceRefs(
+  refs: readonly OpportunitySourceReference[],
+): OpportunitySourceReference[] {
+  const seen = new Set<string>();
+  const unique: OpportunitySourceReference[] = [];
+  for (const ref of refs) {
+    const key = [
+      ref.sourceSystem,
+      ref.tableName,
+      ref.sourceRecordId,
+      ref.sourceFileReport,
+      ref.pageSpan,
+    ].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(ref);
+  }
+  return unique;
+}
+
+function readValueType(value: unknown): OptimizationOpportunityValueType {
+  const text = textValue(value);
+  if (text === "negotiated_improvement") return "negotiable_improvement";
+  if (
+    text === "recoverable_leakage" ||
+    text === "avoided_cost" ||
+    text === "negotiable_improvement"
+  ) {
+    return text;
+  }
+  return "recoverable_leakage";
+}
+
+function readStage(value: unknown): OptimizationOpportunityStage {
+  return (
+    readLiteral(value, [
+      "signal",
+      "quantified",
+      "validated",
+      "approval_required",
+      "target_position",
+      "agreed",
+      "finance_confirmed",
+      "baseline_conflict",
+      "evidence_required",
+      "workflow_required",
+    ]) ?? "evidence_required"
+  );
+}
+
+function readEvidenceGrade(value: unknown): OptimizationEvidenceGrade {
+  return (
+    readLiteral(value, [
+      "system_evidenced",
+      "document_evidenced",
+      "human_validated",
+      "finance_confirmed",
+      "missing",
+      "conflicted",
+    ]) ?? "missing"
+  );
+}
+
+function readLiteral<const T extends readonly string[]>(
+  value: unknown,
+  allowed: T,
+): T[number] | null {
+  const text = textValue(value);
+  return text && allowed.includes(text) ? text : null;
+}
+
+function firstNumberForInput(
+  rows: readonly NumericRow[],
+  keySuffix: string,
+): number | null {
+  const row = rows.find((item) =>
+    (textValue(item.input_key) ?? "").endsWith(`.${keySuffix}`),
+  );
+  return numberValue(row?.value_numeric);
+}
+
+function jsonObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function jsonArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item ?? "").trim()).filter(Boolean);
+      }
+    } catch {
+      return value
+        .replace(/^\{/u, "")
+        .replace(/\}$/u, "")
+        .split(/[;,|]/u)
+        .map((item) => item.trim().replace(/^"|"$/gu, ""))
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function textValue(value: unknown): string | null {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function numberValue(value: unknown): number | null {
+  return numberFromDb(value);
+}
+
+function sumNumbers(values: Iterable<number | null | undefined>): number {
+  let total = 0;
+  for (const value of values) {
+    if (value != null && Number.isFinite(value)) total += value;
+  }
+  return Math.round((total + Number.EPSILON) * 100) / 100;
 }
 
 export async function listContractInitiativeDependency(
@@ -686,11 +1344,17 @@ export async function getContractOptimizationEvidencePack(
   tenantKey: string,
   contractId: string,
 ) {
-  const [goldenRows, performanceRows, spendRows, rateRows, saasRows, sourcingRows] =
-    await Promise.all([
-      safeQueryForTenant<NumericRow>(
-        tenantKey,
-        `SELECT
+  const [
+    goldenRows,
+    performanceRows,
+    spendRows,
+    rateRows,
+    saasRows,
+    sourcingRows,
+  ] = await Promise.all([
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT
             r.*,
             (SELECT ARRAY_AGG(DISTINCT source_file_id)
                FROM source.contract_pdf_clause_extractions x
@@ -702,11 +1366,11 @@ export async function getContractOptimizationEvidencePack(
           WHERE r._tenant_key = ANY($1::text[]) AND r.contract_id = $2
           ORDER BY r._loaded_at DESC NULLS LAST
           LIMIT 1`,
-        [contractId],
-      ),
-      safeQueryForTenant<NumericRow>(
-        tenantKey,
-        `SELECT
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT
             count(*) AS row_count,
             COALESCE(SUM(credit_calculated), 0) AS credit_calculated,
             COALESCE(SUM(credit_claimed), 0) AS credit_claimed,
@@ -714,33 +1378,33 @@ export async function getContractOptimizationEvidencePack(
             COALESCE(SUM(COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)), 0) AS unclaimed_credit
            FROM consumption_v4_canary.sourcing_performance_v1
           WHERE tenant_key = ANY($1::text[]) AND contract_id = $2`,
-        [contractId],
-      ),
-      safeQueryForTenant<NumericRow>(
-        tenantKey,
-        `SELECT
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT
             count(*) AS row_count,
             COALESCE(SUM(invoice_lines), 0) AS invoice_lines,
             COALESCE(SUM(CASE WHEN matching_state = 'off_contract' THEN actual_spend ELSE 0 END), 0) AS off_contract_spend,
             COALESCE(SUM(CASE WHEN matching_state ILIKE '%duplicate%' THEN actual_spend ELSE 0 END), 0) AS duplicate_spend
            FROM consumption_v4_canary.sourcing_spend_monthly_v1
           WHERE tenant_key = ANY($1::text[]) AND contract_id = $2`,
-        [contractId],
-      ),
-      safeQueryForTenant<NumericRow>(
-        tenantKey,
-        `SELECT
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT
             count(*) AS row_count,
             COALESCE(SUM(CASE WHEN approval_state = 'variance_unapproved' THEN 1 ELSE 0 END), 0) AS unapproved_variance_count,
             COALESCE(SUM(CASE WHEN approval_state = 'variance_unapproved' THEN variance::numeric ELSE 0 END), 0) AS rate_variance_amount,
             COALESCE(SUM(hours::numeric), 0) AS hours
            FROM raw_source_v4.fieldglass_rate_card
           WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
-        [contractId],
-      ),
-      safeQueryForTenant<NumericRow>(
-        tenantKey,
-        `SELECT
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT
             count(*) AS row_count,
             COALESCE(SUM(assigned_seats::numeric), 0) AS assigned_seats,
             COALESCE(SUM(active_users::numeric), 0) AS active_users,
@@ -748,21 +1412,23 @@ export async function getContractOptimizationEvidencePack(
             COALESCE(SUM(CASE WHEN claimable_value_state = 'claimable' THEN actual_cost::numeric ELSE 0 END), 0) AS claimable_cost
            FROM raw_source_v4.entra_saas_usage_monthly
           WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
-        [contractId],
-      ),
-      safeQueryForTenant<NumericRow>(
-        tenantKey,
-        `SELECT
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT
             count(DISTINCT event_id) AS event_count,
             COALESCE(SUM(normalized_cost::numeric), 0) AS normalized_cost,
             COALESCE(SUM(line_item_cost::numeric), 0) AS line_item_cost
            FROM raw_source_v4.ariba_sourcing_events
           WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2`,
-        [contractId],
-      ),
-    ]);
+      [contractId],
+    ),
+  ]);
 
-  const golden = goldenRows.find((row) => String(row.contract_id ?? "") === contractId);
+  const golden = goldenRows.find(
+    (row) => String(row.contract_id ?? "") === contractId,
+  );
   if (golden) {
     const documentRefs = arrayFromDb(golden.document_refs);
     const pageSpans = arrayFromDb(golden.page_spans);
@@ -780,9 +1446,13 @@ export async function getContractOptimizationEvidencePack(
           "doc.extraction:contract.sla_credit_terms",
         ],
         source_systems: ["ServiceNow", "CLM / contract repository"],
-        source_record_ids: [`contract:${contractId}:monthly-sla-credit-history`],
+        source_record_ids: [
+          `contract:${contractId}:monthly-sla-credit-history`,
+        ],
         document_refs: documentRefs,
-        page_spans: pageSpans.filter((span) => span.includes("sla") || span.includes("credit")),
+        page_spans: pageSpans.filter(
+          (span) => span.includes("sla") || span.includes("credit"),
+        ),
         calculation_rule:
           "SUM(service_credits_earned_usd - service_credits_claimed_usd) across monthly SLA evidence rows.",
         confidence: 0.91,
@@ -806,10 +1476,19 @@ export async function getContractOptimizationEvidencePack(
           "source.golden_contract_rate_card_variance",
           "doc.extraction:contract.pricing_schedule",
         ],
-        source_systems: ["ERP / AP", "Procurement / PO", "Fieldglass", "CLM / contract repository"],
-        source_record_ids: [`contract:${contractId}:invoice-po-rate-reconciliation`],
+        source_systems: [
+          "ERP / AP",
+          "Procurement / PO",
+          "Fieldglass",
+          "CLM / contract repository",
+        ],
+        source_record_ids: [
+          `contract:${contractId}:invoice-po-rate-reconciliation`,
+        ],
         document_refs: documentRefs,
-        page_spans: pageSpans.filter((span) => span.includes("pricing") || span.includes("rate")),
+        page_spans: pageSpans.filter(
+          (span) => span.includes("pricing") || span.includes("rate"),
+        ),
         calculation_rule:
           "SUM(exception_amount_usd) plus SUM(rate_variance_usd) for invoice, PO, and rate-card rows tied to the contract.",
         confidence: 0.89,
@@ -831,10 +1510,18 @@ export async function getContractOptimizationEvidencePack(
           "source.golden_contract_application_scope",
           "doc.extraction:contract.scope_summary",
         ],
-        source_systems: ["SaaS / cloud admin", "CLM / contract repository", "APM / CMDB"],
-        source_record_ids: [`contract:${contractId}:usage-entitlement-renewal-scope`],
+        source_systems: [
+          "SaaS / cloud admin",
+          "CLM / contract repository",
+          "APM / CMDB",
+        ],
+        source_record_ids: [
+          `contract:${contractId}:usage-entitlement-renewal-scope`,
+        ],
         document_refs: documentRefs,
-        page_spans: pageSpans.filter((span) => span.includes("scope") || span.includes("renewal")),
+        page_spans: pageSpans.filter(
+          (span) => span.includes("scope") || span.includes("renewal"),
+        ),
         calculation_rule:
           "Reviewed addressable exposure from usage, entitlement, scope-rationalization, and renewal-event evidence; not realized value.",
         confidence: 0.76,
@@ -878,14 +1565,17 @@ export async function getContractOptimizationEvidencePack(
         contract_id: contractId,
         ledger_type: "realized_value",
         amount: realizedValue,
-        amount_state: realizedValue != null ? "finance_validated" : "not_established",
+        amount_state:
+          realizedValue != null ? "finance_validated" : "not_established",
         evidence_class: realizedValue != null ? "human_validated" : "missing",
         evidence_refs: [
           "source.golden_contract_finance_value_confirmation",
           "tower.value_claim",
         ],
         source_systems: ["Finance", "Tower"],
-        source_record_ids: [`contract:${contractId}:finance-value-confirmation`],
+        source_record_ids: [
+          `contract:${contractId}:finance-value-confirmation`,
+        ],
         document_refs: [],
         page_spans: [],
         calculation_rule:
@@ -1045,9 +1735,7 @@ function numberFromDb(value: unknown): number | null {
 
 function arrayFromDb(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value
-      .map((entry) => String(entry ?? "").trim())
-      .filter(Boolean);
+    return value.map((entry) => String(entry ?? "").trim()).filter(Boolean);
   }
   if (typeof value === "string") {
     return value
