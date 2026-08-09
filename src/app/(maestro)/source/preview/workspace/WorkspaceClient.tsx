@@ -473,10 +473,10 @@ export function WorkspaceClient({
         style={{
           background: portfolio.isEmpty ? "#3a1f0c" : "#0c1a3a",
           color: "rgba(255,255,255,.86)",
-          fontSize: 11.5,
-          padding: "6px 20px",
+          fontSize: 11,
+          padding: "5px 20px",
           display: "flex",
-          gap: 14,
+          gap: 10,
           alignItems: "center",
           flexShrink: 0,
         }}
@@ -489,15 +489,17 @@ export function WorkspaceClient({
         >
           {portfolio.isEmpty
             ? "No Source rows returned"
-            : portfolio.workspaceDiagnostics.datasetLabel}
+            : "Source workspace"}
         </strong>
         <span style={{ color: "rgba(255,255,255,.74)" }}>
           {portfolio.isEmpty
             ? "Nothing below is estimated in its place."
-            : portfolio.workspaceDiagnostics.v4ContractCount +
-              " active contracts · " +
+            : tenantName +
+              " · " +
+              portfolio.workspaceDiagnostics.v4ContractCount +
+              " contracts · " +
               portfolio.workspaceDiagnostics.v4VendorCount +
-              " active strategic vendors · as of " +
+              " vendors · " +
               new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString(
                 "en-GB",
                 {
@@ -1230,7 +1232,7 @@ function CompactContextStrip({
             whiteSpace: "nowrap",
           }}
         >
-          {expanded ? "– hide full context" : "+ full context ▾"}
+          {expanded ? "Hide details" : "+ details"}
         </button>
       </div>
       {expanded ? <FullContextStrip vm={vm} /> : null}
