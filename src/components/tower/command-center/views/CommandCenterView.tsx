@@ -9,18 +9,17 @@
 import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type { ReactNode } from "react";
 import type {
+  TowerActionView,
   TowerCommandCenterView,
   TowerProgramView,
 } from "@/lib/tower/command-center/types";
 
+import { EightQuarterTrajectoryChart } from "../charts/EightQuarterTrajectoryChart";
 import {
   OutcomeDecisionMatrixChart,
   decisionMatrixTextAlternative,
 } from "../charts/OutcomeDecisionMatrixChart";
-import {
-  ValueWaterfallChart,
-  buildWaterfallRows,
-} from "../charts/ValueWaterfallChart";
+import { ValueConversionBridgeChart } from "../charts/ValueConversionBridgeChart";
 import { Card, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
@@ -191,10 +190,34 @@ function cockpitVerdict(view: TowerCommandCenterView): string {
  * the mart does not yet carry.
  */
 function decisionQueue(view: TowerCommandCenterView): TowerProgramView[] {
+  const laneRank = {
+    stop: 0,
+    freeze: 1,
+    fix: 2,
+    watch: 3,
+    fund: 4,
+  } satisfies Record<TowerProgramView["lane"], number>;
   return [...view.programs]
-    .filter((p) => p.blockedUsd > 0)
-    .sort((a, b) => b.blockedUsd - a.blockedUsd)
+    .filter(
+      (p) => p.valueAtStakeUsd > 0 || p.nextGate !== null || p.lane !== "fund",
+    )
+    .sort((a, b) => {
+      const laneDelta = laneRank[a.lane] - laneRank[b.lane];
+      if (laneDelta !== 0) return laneDelta;
+      return b.valueAtStakeUsd - a.valueAtStakeUsd;
+    })
     .slice(0, 6);
+}
+
+function ownerQueue(view: TowerCommandCenterView): TowerActionView[] {
+  return [...view.actions]
+    .filter((action) => (action.actionState ?? "open") === "open")
+    .sort((a, b) => {
+      const amountDelta = b.amountExposedUsd - a.amountExposedUsd;
+      if (amountDelta !== 0) return amountDelta;
+      return a.sequence - b.sequence;
+    })
+    .slice(0, 5);
 }
 
 export function CommandCenterView({
@@ -209,7 +232,7 @@ export function CommandCenterView({
   const s = view.summary;
   const metrics = boardMetrics(view);
   const queue = decisionQueue(view);
-  const waterfallRows = buildWaterfallRows(s);
+  const owners = ownerQueue(view);
   const trustRows = sourceTrustRows(view);
   const openGapCount = view.gaps.length;
 
@@ -267,53 +290,55 @@ export function CommandCenterView({
 
       <div className={styles.cockpitCanvas}>
         <Card
-          eyebrow="Where value gets stopped"
-          right="proof waterfall · governed value-model values"
-          headId="tcc-outcome-waterfall"
+          eyebrow="Investment to value conversion"
+          right="evidence gates · governed values"
+          headId="tcc-conversion-bridge"
           bodyClassName={styles.cockpitChartBody}
         >
           <p className={styles.chartTruthNote}>
-            Benefit moves left to right only when baseline, usage, Finance, and
-            attestation evidence clear the claim gate. Approved investment is
-            not treated as promised benefit.
+            AI investment becomes economic value only when adoption, workflow
+            change, operating outcomes, conversion evidence, and Finance
+            attestation are all explicit.
           </p>
-          {s.promisedBenefitLoaded ? (
-            <div
-              className={styles.cockpitWaterfall}
-              aria-describedby="tcc-waterfall-alt"
-            >
-              <ValueWaterfallChart summary={s} />
-            </div>
-          ) : (
-            <div
-              className={styles.emptyPanel}
-              aria-describedby="tcc-waterfall-alt"
-            >
-              <h2>Explicit benefit is not loaded</h2>
+          <div
+            className={styles.cockpitBridge}
+            aria-describedby="tcc-conversion-alt"
+          >
+            <ValueConversionBridgeChart stages={view.conversionBridge} />
+          </div>
+          <p id="tcc-conversion-alt" className={styles.srOnly}>
+            {view.conversionBridge
+              .map(
+                (stage) =>
+                  `${stage.label}: ${formatUsdM(stage.valueUsd)}, ${formatCount(stage.count)} records, ${stage.note}`,
+              )
+              .join(". ")}
+          </p>
+        </Card>
+
+        <Card
+          eyebrow="Eight-quarter value trajectory"
+          right="forecast schedule · consumption view"
+          headId="tcc-value-trajectory"
+          bodyClassName={styles.cockpitChartBody}
+        >
+          <p className={styles.chartTruthNote}>
+            Planned investment, spend, forecast, Finance run-rate, and
+            conversion are read from the governed eight-quarter schedule.
+          </p>
+          {view.valueTrajectory.length === 0 ? (
+            <div className={styles.emptyPanel}>
+              <h2>Trajectory is not loaded</h2>
               <p>
-                Tower can see approved investment, adoption signals, and proof
-                actions, but it will not draw a benefit waterfall until a
-                source-backed benefit assertion exists.
+                The Tower Value OS did not return quarter-level trajectory rows
+                for this tenant, so this cockpit leaves the forward path blank.
               </p>
             </div>
+          ) : (
+            <div className={styles.cockpitTrajectory}>
+              <EightQuarterTrajectoryChart points={view.valueTrajectory} />
+            </div>
           )}
-          <p id="tcc-waterfall-alt" className={styles.srOnly}>
-            {s.promisedBenefitLoaded
-              ? `${waterfallRows
-                  .map(
-                    (row) =>
-                      `${row.name.replace("|", " ")}: ${formatUsdM(row.usd)}`,
-                  )
-                  .join(". ")}.`
-              : `Explicit promised benefit is not loaded. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
-          </p>
-          <button
-            type="button"
-            className={styles.cockpitCta}
-            onClick={onGoToFunnel}
-          >
-            Inspect proof gates
-          </button>
         </Card>
 
         <Card
@@ -329,8 +354,9 @@ export function CommandCenterView({
           ) : (
             <>
               <p className={styles.chartTruthNote}>
-                Each bubble is a top blocked program: X is proof maturity, Y is
-                risk pressure, and size is promised exposure.
+                Each bubble is a board program: X is proof maturity, Y is risk
+                pressure, and size is capital exposure. Benefit remains a
+                separate proof gate.
               </p>
               <div
                 className={styles.cockpitMatrix}
@@ -346,6 +372,88 @@ export function CommandCenterView({
               </p>
             </>
           )}
+        </Card>
+
+        <Card
+          eyebrow="Proof operations"
+          right="evidence owners · source trust"
+          headId="tcc-proof-operations"
+          bodyClassName={styles.cockpitOpsBody}
+        >
+          <div className={styles.opsSplit}>
+            <section aria-label="Evidence-owner queue">
+              <div className={styles.opsHead}>
+                <span>Evidence-owner queue</span>
+                <b>{formatCount(owners.length)}</b>
+              </div>
+              {owners.length === 0 ? (
+                <p className={styles.lhSub}>
+                  No open owner actions are available in the governed queue.
+                </p>
+              ) : (
+                <div className={styles.opsQueue}>
+                  {owners.map((action) => (
+                    <article key={action.id} className={styles.opsAction}>
+                      <span className={styles.opsActionK}>
+                        {action.ownerRole}
+                      </span>
+                      <b>{action.title}</b>
+                      <small>
+                        {action.evidenceRequirement ??
+                          action.evidence ??
+                          "Evidence package required"}
+                      </small>
+                      <em>
+                        {formatUsdM(action.amountExposedUsd)} exposed ·{" "}
+                        {action.due ?? "due not loaded"}
+                      </em>
+                    </article>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className={styles.cockpitCta}
+                onClick={onGoToFunnel}
+              >
+                Inspect proof gates
+              </button>
+            </section>
+
+            <section aria-label="Source trust rail">
+              <div className={styles.opsHead}>
+                <span>Source trust rail</span>
+                <b>{trustRows[2]?.status ?? "ABSENT"}</b>
+              </div>
+              <div className={styles.sourceTrustRail}>
+                {trustRows.map((row) => (
+                  <div key={row.label} className={styles.trustMiniRow}>
+                    <span>
+                      <i
+                        className={cx(styles.dot, styles[row.tone])}
+                        aria-hidden="true"
+                      />
+                      {row.label}
+                    </span>
+                    <b>{row.value}</b>
+                    <span
+                      className={cx(
+                        styles.chip,
+                        styles.cMono,
+                        row.tone === "teal"
+                          ? styles.cTeal
+                          : row.tone === "red"
+                            ? styles.cRed
+                            : styles.cAmber,
+                      )}
+                    >
+                      {row.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
         </Card>
       </div>
     </div>

@@ -114,16 +114,19 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Finance validated but blocked"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Adoption evidence")).toBeInTheDocument();
     expect(screen.getByText("Read model scope")).toBeInTheDocument();
-    expect(screen.getByText(/programs in scope/i)).toBeInTheDocument();
-    expect(screen.getByText(/with adoption evidence/i)).toBeInTheDocument();
-    expect(screen.getByText("Where value gets stopped")).toBeInTheDocument();
+    expect(
+      screen.getByText("Investment to value conversion"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Eight-quarter value trajectory"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Portfolio decision matrix")).toBeInTheDocument();
+    expect(screen.getByText("Proof operations")).toBeInTheDocument();
+    expect(screen.getByLabelText("Evidence-owner queue")).toBeInTheDocument();
+    expect(screen.getByLabelText("Source trust rail")).toBeInTheDocument();
     expect(screen.queryByText("Proof gate summary")).not.toBeInTheDocument();
     expect(screen.queryByText("aVa synthesis strip")).not.toBeInTheDocument();
-    expect(screen.queryByText("Evidence-owner queue")).not.toBeInTheDocument();
-    expect(screen.queryByText("Source trust rail")).not.toBeInTheDocument();
     expect(
       screen.getAllByText(formatUsdM(view.summary.claimableUsd)).length,
     ).toBeGreaterThan(0);
@@ -377,7 +380,7 @@ describe("TowerCommandCenter", () => {
     // 'Finance-validated' and 'Claimable' appear twice by design — once in the
     // 4-up stat grid, once as a proof-chain row.
     for (const stage of [
-      "Promised",
+      "Explicit benefit",
       "Usage-supported",
       "Finance-validated",
       "Claimable",

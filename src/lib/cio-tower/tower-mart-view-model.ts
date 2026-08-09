@@ -79,6 +79,42 @@ export interface TowerMartValueFunnelStage {
   sourceRow: string | null;
 }
 
+export interface TowerMartValueTrajectoryPoint {
+  tenantKey: string;
+  valueCaseId: string;
+  programId: string | null;
+  initiativeId: string | null;
+  valueCaseName: string;
+  valueArchetype: string | null;
+  periodStart: string;
+  periodEnd: string;
+  fiscalQuarter: string;
+  scenario: string;
+  plannedInvestmentUsd: number | null;
+  actualSpendUsd: number | null;
+  remainingCommitmentUsd: number | null;
+  businessCaseValueUsd: number | null;
+  businessCaseBenefitUsd: number | null;
+  riskAdjustedForecastUsd: number | null;
+  financeValidatedRunRateUsd: number | null;
+  realizedPAndLUsd: number | null;
+  realizedCashUsd: number | null;
+  forecastAtCompletionUsd: number | null;
+  financialConversionUsd: number | null;
+  usageEvidenceState: string | null;
+  operationalOutcomeEvidenceState: string | null;
+  financeAttestationState: string | null;
+  sourceTrustState: string | null;
+  claimState: string | null;
+  datasetVersion: string | null;
+  sourceRunId: string | null;
+  sourceRefs: Array<Record<string, unknown>>;
+  economicClassification: string | null;
+  boardScopeState: string | null;
+  materialScopeState: string | null;
+  sourceCount: number;
+}
+
 export interface TowerMartProgramLane {
   laneKey: string;
   programCode: string | null;
@@ -214,6 +250,7 @@ export interface TowerMartCommandViewModel {
   headline: string;
   command: TowerMartCommandCenter;
   valueFunnel: TowerMartValueFunnelStage[];
+  valueTrajectory?: TowerMartValueTrajectoryPoint[];
   programLanes: TowerMartProgramLane[];
   aiPortfolio: TowerMartAiPortfolioItem[];
   cxoActions: TowerMartCxoAction[];

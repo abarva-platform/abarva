@@ -12,6 +12,7 @@ import type {
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
   TowerMartValueFunnelStage,
+  TowerMartValueTrajectoryPoint,
 } from "@/lib/cio-tower/tower-mart-view-model";
 
 type Numeric = string | number | null | undefined;
@@ -98,6 +99,42 @@ interface ValueFunnelRow {
   caveat: string | null;
   source_file: string | null;
   source_row: string | null;
+}
+
+interface ValueTrajectoryRow {
+  tenant_key: string;
+  value_case_id: string;
+  program_id: string | null;
+  initiative_id: string | null;
+  value_case_name: string;
+  value_archetype: string | null;
+  period_start: string;
+  period_end: string;
+  fiscal_quarter: string;
+  scenario: string;
+  planned_investment_usd: Numeric;
+  actual_spend_usd: Numeric;
+  remaining_commitment_usd: Numeric;
+  business_case_value_usd: Numeric;
+  business_case_benefit_usd: Numeric;
+  risk_adjusted_forecast_usd: Numeric;
+  finance_validated_run_rate_usd: Numeric;
+  realized_p_and_l_usd: Numeric;
+  realized_cash_usd: Numeric;
+  forecast_at_completion_usd: Numeric;
+  financial_conversion_usd: Numeric;
+  usage_evidence_state: string | null;
+  operational_outcome_evidence_state: string | null;
+  finance_attestation_state: string | null;
+  source_trust_state: string | null;
+  claim_state: string | null;
+  dataset_version: string | null;
+  source_run_id: string | null;
+  source_refs: Array<Record<string, unknown>> | null;
+  economic_classification: string | null;
+  board_scope_state: string | null;
+  material_scope_state: string | null;
+  source_count: number | null;
 }
 
 interface PortfolioDecisionRow {
@@ -390,6 +427,48 @@ function mapValueFunnel(row: ValueFunnelRow): TowerMartValueFunnelStage {
   };
 }
 
+function mapValueTrajectory(
+  row: ValueTrajectoryRow,
+): TowerMartValueTrajectoryPoint {
+  return {
+    tenantKey: row.tenant_key,
+    valueCaseId: row.value_case_id,
+    programId: nullableText(row.program_id),
+    initiativeId: nullableText(row.initiative_id),
+    valueCaseName: row.value_case_name,
+    valueArchetype: nullableText(row.value_archetype),
+    periodStart: row.period_start,
+    periodEnd: row.period_end,
+    fiscalQuarter: row.fiscal_quarter,
+    scenario: row.scenario,
+    plannedInvestmentUsd: nullableNum(row.planned_investment_usd),
+    actualSpendUsd: nullableNum(row.actual_spend_usd),
+    remainingCommitmentUsd: nullableNum(row.remaining_commitment_usd),
+    businessCaseValueUsd: nullableNum(row.business_case_value_usd),
+    businessCaseBenefitUsd: nullableNum(row.business_case_benefit_usd),
+    riskAdjustedForecastUsd: nullableNum(row.risk_adjusted_forecast_usd),
+    financeValidatedRunRateUsd: nullableNum(row.finance_validated_run_rate_usd),
+    realizedPAndLUsd: nullableNum(row.realized_p_and_l_usd),
+    realizedCashUsd: nullableNum(row.realized_cash_usd),
+    forecastAtCompletionUsd: nullableNum(row.forecast_at_completion_usd),
+    financialConversionUsd: nullableNum(row.financial_conversion_usd),
+    usageEvidenceState: nullableText(row.usage_evidence_state),
+    operationalOutcomeEvidenceState: nullableText(
+      row.operational_outcome_evidence_state,
+    ),
+    financeAttestationState: nullableText(row.finance_attestation_state),
+    sourceTrustState: nullableText(row.source_trust_state),
+    claimState: nullableText(row.claim_state),
+    datasetVersion: nullableText(row.dataset_version),
+    sourceRunId: nullableText(row.source_run_id),
+    sourceRefs: Array.isArray(row.source_refs) ? row.source_refs : [],
+    economicClassification: nullableText(row.economic_classification),
+    boardScopeState: nullableText(row.board_scope_state),
+    materialScopeState: nullableText(row.material_scope_state),
+    sourceCount: count(row.source_count),
+  };
+}
+
 function mapProgramLane(row: PortfolioDecisionRow): TowerMartProgramLane {
   return {
     laneKey: row.decision_ref,
@@ -546,6 +625,7 @@ export async function readTowerCommandCenter(args: {
 
     const [
       valueFunnel,
+      valueTrajectory,
       programLanes,
       toolRows,
       agentRows,
@@ -658,6 +738,16 @@ export async function readTowerCommandCenter(args: {
         [tenantKey],
         { missingTable: "empty" },
       ),
+      azureRead.query<ValueTrajectoryRow>(
+        `select *
+             from consumption.tower_value_trajectory_v1
+            where tenant_key = $1
+              and scenario = 'forecast'
+            order by period_start, value_case_id
+            limit 1600`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
       azureRead.query<PortfolioDecisionRow>(
         `select *
              from consumption.tower_portfolio_decision_v1
@@ -729,6 +819,7 @@ export async function readTowerCommandCenter(args: {
       headline,
       command,
       valueFunnel: valueFunnel.map(mapValueFunnel),
+      valueTrajectory: valueTrajectory.map(mapValueTrajectory),
       programLanes: programLanes.map(mapProgramLane),
       aiPortfolio,
       aiPortfolioCounts: {

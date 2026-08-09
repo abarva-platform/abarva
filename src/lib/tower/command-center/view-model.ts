@@ -21,6 +21,7 @@ import type {
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
+  TowerMartValueTrajectoryPoint,
 } from "@/lib/cio-tower/tower-mart-view-model";
 
 import { deriveProgramValues } from "./derive";
@@ -34,6 +35,7 @@ import type {
   TowerCandidateView,
   TowerCommandCenterView,
   TowerCommandSummary,
+  TowerConversionBridgeStage,
   TowerEvidenceFactView,
   TowerEvidenceGapView,
   TowerEvidenceGapLedgerItem,
@@ -45,6 +47,7 @@ import type {
   TowerLaneKey,
   TowerProgramView,
   TowerSpendLensRow,
+  TowerTrajectoryPoint,
   TowerUsageBar,
 } from "./types";
 
@@ -59,6 +62,32 @@ function trimOrNull(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function sumNullable(values: readonly (number | null | undefined)[]) {
+  let sawValue = false;
+  let total = 0;
+  for (const value of values) {
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    sawValue = true;
+    total += value;
+  }
+  return sawValue ? total : null;
+}
+
+function sourceTrustFor(
+  rows: readonly TowerMartValueTrajectoryPoint[],
+): string | null {
+  const states = new Set(
+    rows
+      .map((row) => trimOrNull(row.sourceTrustState))
+      .filter((state): state is string => state !== null),
+  );
+  if (states.has("CONFLICT")) return "CONFLICT";
+  if (states.has("ABSENT")) return "ABSENT";
+  if (states.has("ONE_SOURCE")) return "ONE_SOURCE";
+  if (states.has("AGREE")) return "AGREE";
+  return [...states][0] ?? null;
 }
 
 /** Title-case a snake_case / kebab-case mart token for display. */
@@ -738,6 +767,157 @@ function toEvidenceFactView(
   };
 }
 
+function buildValueTrajectory(
+  rows: readonly TowerMartValueTrajectoryPoint[],
+): TowerTrajectoryPoint[] {
+  const boardRows = rows.filter(
+    (row) => row.boardScopeState === "board_portfolio",
+  );
+  const scopedRows = boardRows.length > 0 ? boardRows : rows;
+  const byQuarter = new Map<string, TowerMartValueTrajectoryPoint[]>();
+
+  for (const row of scopedRows) {
+    const quarter = trimOrNull(row.fiscalQuarter);
+    if (!quarter) continue;
+    const current = byQuarter.get(quarter) ?? [];
+    current.push(row);
+    byQuarter.set(quarter, current);
+  }
+
+  return [...byQuarter.entries()]
+    .map(([fiscalQuarter, quarterRows]) => {
+      const caseIds = new Set(quarterRows.map((row) => row.valueCaseId));
+      const first = [...quarterRows].sort((a, b) =>
+        a.periodStart.localeCompare(b.periodStart),
+      )[0]!;
+      return {
+        fiscalQuarter,
+        periodStart: first.periodStart,
+        periodEnd: first.periodEnd,
+        plannedInvestmentUsd: sumNullable(
+          quarterRows.map((row) => row.plannedInvestmentUsd),
+        ),
+        actualSpendUsd: sumNullable(
+          quarterRows.map((row) => row.actualSpendUsd),
+        ),
+        businessCaseBenefitUsd: sumNullable(
+          quarterRows.map((row) => row.businessCaseBenefitUsd),
+        ),
+        riskAdjustedForecastUsd: sumNullable(
+          quarterRows.map((row) => row.riskAdjustedForecastUsd),
+        ),
+        financeValidatedRunRateUsd: sumNullable(
+          quarterRows.map((row) => row.financeValidatedRunRateUsd),
+        ),
+        realizedPAndLUsd: sumNullable(
+          quarterRows.map((row) => row.realizedPAndLUsd),
+        ),
+        realizedCashUsd: sumNullable(
+          quarterRows.map((row) => row.realizedCashUsd),
+        ),
+        financialConversionUsd: sumNullable(
+          quarterRows.map((row) => row.financialConversionUsd),
+        ),
+        boardScopeCaseCount: caseIds.size,
+        sourceTrustState: sourceTrustFor(quarterRows),
+      };
+    })
+    .sort((a, b) => a.periodStart.localeCompare(b.periodStart));
+}
+
+function buildConversionBridge(
+  summary: TowerCommandSummary,
+  trajectory: readonly TowerTrajectoryPoint[],
+): TowerConversionBridgeStage[] {
+  const conversionUsd = sumNullable(
+    trajectory.map((point) => point.financialConversionUsd),
+  );
+  const realizedCashOrPnlUsd = sumNullable(
+    trajectory.flatMap((point) => [
+      point.realizedPAndLUsd,
+      point.realizedCashUsd,
+    ]),
+  );
+  const outcomeForecastUsd = sumNullable(
+    trajectory.map((point) => point.riskAdjustedForecastUsd),
+  );
+  const usageValue = summary.promisedBenefitLoaded
+    ? summary.usageSupportedUsd
+    : null;
+
+  return [
+    {
+      key: "investment",
+      label: "Investment",
+      valueUsd: summary.approvedInvestmentUsd,
+      count: summary.boardScopeProgramCount,
+      note: "approved capital only",
+      source: "consumption.tower_board_posture_v1",
+      tone: summary.approvedInvestmentUsd === null ? "gray" : "teal",
+    },
+    {
+      key: "adoption",
+      label: "Adoption evidence",
+      valueUsd: usageValue,
+      count: summary.usageSupportedClaimCount,
+      note: "usage is evidence, not savings",
+      source: "consumption.tower_value_trajectory_v1",
+      tone: summary.usageSupportedClaimCount > 0 ? "amber" : "gray",
+    },
+    {
+      key: "workflow_change",
+      label: "Workflow change",
+      valueUsd: null,
+      count: summary.actualLinkedClaimCount,
+      note: "baseline, target, actual linked",
+      source: "consumption.tower_board_posture_v1",
+      tone: summary.actualLinkedClaimCount > 0 ? "amber" : "gray",
+    },
+    {
+      key: "operating_outcome",
+      label: "Operating outcome",
+      valueUsd: outcomeForecastUsd,
+      count: summary.outcomeMeasuredClaimCount,
+      note: "business KPI outcome evidence",
+      source: "consumption.tower_value_trajectory_v1",
+      tone:
+        outcomeForecastUsd === null
+          ? summary.outcomeMeasuredClaimCount > 0
+            ? "amber"
+            : "gray"
+          : "teal",
+    },
+    {
+      key: "economic_conversion",
+      label: "Economic conversion",
+      valueUsd: conversionUsd,
+      count: summary.knownValueClaimCount,
+      note: "classified value-case economics",
+      source: "consumption.tower_value_trajectory_v1",
+      tone:
+        conversionUsd === null ? "gray" : conversionUsd > 0 ? "teal" : "red",
+    },
+    {
+      key: "finance_validation",
+      label: "Finance validation",
+      valueUsd: summary.financeValidatedUsd,
+      count: summary.financeAttestedClaimCount,
+      note: "validated but may remain blocked",
+      source: "consumption.tower_board_posture_v1",
+      tone: summary.financeValidatedUsd > 0 ? "amber" : "gray",
+    },
+    {
+      key: "realized",
+      label: "Realized",
+      valueUsd: realizedCashOrPnlUsd ?? summary.claimableUsd,
+      count: summary.claimableClaimCount,
+      note: "board-bookable value",
+      source: "consumption.tower_board_posture_v1",
+      tone: summary.claimableUsd > 0 ? "teal" : "red",
+    },
+  ];
+}
+
 function buildEvidenceMaturityView(
   summary: TowerCommandSummary,
   programs: readonly TowerProgramView[],
@@ -1376,6 +1556,8 @@ export function buildTowerCommandCenterView(
     toPipelineGapView(gap, programByKey),
   );
   const gaps = deriveBusinessEvidenceGaps(programs);
+  const valueTrajectory = buildValueTrajectory(mart.valueTrajectory ?? []);
+  const conversionBridge = buildConversionBridge(summary, valueTrajectory);
   const evidenceMaturity = buildEvidenceMaturityView(summary, programs, gaps);
   const evidenceFacts = mart.evidenceLineage.map(toEvidenceFactView);
   const actions = mart.cxoActions
@@ -1390,10 +1572,14 @@ export function buildTowerCommandCenterView(
   }
   if (evidenceFacts.length === 0) unknownSlots.push("Evidence lineage rows");
   if (funnel.length === 0) unknownSlots.push("Value funnel stages");
+  if (valueTrajectory.length === 0)
+    unknownSlots.push("Eight-quarter value trajectory");
 
   return {
     summary,
     funnel,
+    conversionBridge,
+    valueTrajectory,
     programs,
     ai,
     candidates,

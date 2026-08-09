@@ -169,6 +169,41 @@ export interface TowerFunnelStage {
   primaryOwnerRole: string | null;
 }
 
+export type TowerConversionBridgeStageKey =
+  | "investment"
+  | "adoption"
+  | "workflow_change"
+  | "operating_outcome"
+  | "economic_conversion"
+  | "finance_validation"
+  | "realized";
+
+export interface TowerConversionBridgeStage {
+  key: TowerConversionBridgeStageKey;
+  label: string;
+  valueUsd: number | null;
+  count: number | null;
+  note: string;
+  source: string;
+  tone: "teal" | "amber" | "red" | "gray";
+}
+
+export interface TowerTrajectoryPoint {
+  fiscalQuarter: string;
+  periodStart: string;
+  periodEnd: string;
+  plannedInvestmentUsd: number | null;
+  actualSpendUsd: number | null;
+  businessCaseBenefitUsd: number | null;
+  riskAdjustedForecastUsd: number | null;
+  financeValidatedRunRateUsd: number | null;
+  realizedPAndLUsd: number | null;
+  realizedCashUsd: number | null;
+  financialConversionUsd: number | null;
+  boardScopeCaseCount: number;
+  sourceTrustState: string | null;
+}
+
 /** One program — the Decision Lanes table, Kanban card and heatmap point. */
 export interface TowerProgramView {
   /** Stable id used for drawer routing and E2E selectors. */
@@ -208,7 +243,7 @@ export interface TowerProgramView {
   proofSequenceStatus: TowerProofSequenceStatus;
   proofSequenceExplanation: string | null;
   semanticSource: TowerSemanticSource;
-  /** Heatmap Y axis: promised value, or funded value for no-value-promised lines. */
+  /** Matrix exposure: promised benefit when present, otherwise approved capital. */
   valueAtStakeUsd: number;
 
   /** The next required gate, or null when the mart records none. */
@@ -454,6 +489,8 @@ export interface TowerActionView {
 export interface TowerCommandCenterView {
   summary: TowerCommandSummary;
   funnel: readonly TowerFunnelStage[];
+  conversionBridge: readonly TowerConversionBridgeStage[];
+  valueTrajectory: readonly TowerTrajectoryPoint[];
   programs: readonly TowerProgramView[];
   ai: readonly TowerAiView[];
   candidates: readonly TowerCandidateView[];

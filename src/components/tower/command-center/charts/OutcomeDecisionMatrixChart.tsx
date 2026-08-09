@@ -126,7 +126,7 @@ function MatrixTooltip({
         {point.name}
       </div>
       <div>{LANE_WORD[point.lane]} lane</div>
-      <div>{formatUsdM(point.valueAtStakeUsd)} exposure</div>
+      <div>{formatUsdM(point.valueAtStakeUsd)} capital exposure</div>
       <div>{formatUsdM(point.blockedUsd)} blocked</div>
       <div style={{ color: HEX.gray500, marginTop: 5 }}>{point.nextGate}</div>
     </div>
@@ -386,7 +386,7 @@ export function decisionMatrixTextAlternative(
     .map(
       (point) =>
         `${point.name}: ${LANE_WORD[point.lane]} lane, value proof maturity ${point.x} of 100, ` +
-        `risk pressure ${point.y} of 100, ${formatUsdM(point.valueAtStakeUsd)} exposure.`,
+        `risk pressure ${point.y} of 100, ${formatUsdM(point.valueAtStakeUsd)} capital exposure.`,
     )
     .join(" ");
 }

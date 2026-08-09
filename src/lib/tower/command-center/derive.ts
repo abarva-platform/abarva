@@ -379,9 +379,11 @@ export function deriveProgramValues(
     usageStatus: usageStatus(row),
     financeStatus: financeStatus(row),
     lane: laneFor(row),
-    // Heatmap Y axis. Promised value is the stake; for a run-and-sustain line
-    // with nothing promised, the stake is 0 — it plots on the floor rather than
-    // being credited with its (large) run budget as if that were value at risk.
-    valueAtStakeUsd: promised,
+    // Matrix exposure. Promised benefit is the stake when it exists; otherwise
+    // approved funding is shown as capital exposure only. This keeps no-benefit
+    // programs visible in the decision matrix without crediting investment as
+    // economic value.
+    valueAtStakeUsd:
+      promised > 0 ? promised : Math.max(0, safeNum(row.approvedFundingUsd)),
   };
 }

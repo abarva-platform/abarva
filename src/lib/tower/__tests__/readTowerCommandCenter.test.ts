@@ -129,6 +129,43 @@ describe("readTowerCommandCenter", () => {
       ])
       .mockResolvedValueOnce([
         {
+          tenant_key: "skyharbor_global",
+          value_case_id: "vc-1",
+          program_id: "PRJ-001",
+          initiative_id: "PRJ-001",
+          value_case_name: "Cloud Landing Zone Modernization Wave 1",
+          value_archetype: "capacity",
+          period_start: "2030-04-01",
+          period_end: "2030-06-30",
+          fiscal_quarter: "2030-Q2",
+          scenario: "forecast",
+          planned_investment_usd: "5312500",
+          actual_spend_usd: null,
+          remaining_commitment_usd: "5312500",
+          business_case_value_usd: null,
+          business_case_benefit_usd: null,
+          risk_adjusted_forecast_usd: null,
+          finance_validated_run_rate_usd: null,
+          realized_p_and_l_usd: null,
+          realized_cash_usd: null,
+          forecast_at_completion_usd: null,
+          financial_conversion_usd: null,
+          usage_evidence_state: "present",
+          operational_outcome_evidence_state: "missing",
+          finance_attestation_state: "missing",
+          source_trust_state: "ABSENT",
+          claim_state: "evidence_gap",
+          dataset_version: "skyharbor_global_synthetic_current_state_v3",
+          source_run_id: "tower-demo-story-data-20260803T172111Z",
+          source_refs: [{ view: "consumption.tower_value_trajectory_v1" }],
+          economic_classification: null,
+          board_scope_state: "board_portfolio",
+          material_scope_state: "material",
+          source_count: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
           decision_ref: "tower:skyharbor_global:decision:vc-1",
           value_case_id: "vc-1",
           program_id: "PRJ-001",
@@ -259,6 +296,7 @@ describe("readTowerCommandCenter", () => {
     const sqlText = query.mock.calls.map((call) => String(call[0])).join("\n");
 
     expect(sqlText).toMatch(/consumption\.tower_board_posture_v1/i);
+    expect(sqlText).toMatch(/consumption\.tower_value_trajectory_v1/i);
     expect(sqlText).toMatch(/consumption\.tower_portfolio_decision_v1/i);
     expect(sqlText).toMatch(/consumption\.tower_tool_productivity_v1/i);
     expect(sqlText).not.toMatch(/cio_tower\.mart/i);
@@ -277,6 +315,8 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.totalProgramSubjectCount).toBe(151);
     expect(mart?.command.boardScopeProgramCount).toBe(40);
     expect(mart?.programLanes[0]?.lineageTrustState).toBe("ABSENT");
+    expect(mart?.valueTrajectory?.[0]?.plannedInvestmentUsd).toBe(5_312_500);
+    expect(mart?.valueTrajectory?.[0]?.financialConversionUsd).toBeNull();
     expect(mart?.programLanes[0]?.amountBlocked).toBeNull();
     expect(mart?.aiPortfolio[0]?.vendorName).toBe("GitHub");
     expect(mart?.cxoActions[0]?.dueDate).toBe("2030-06-02");
@@ -293,6 +333,8 @@ describe("readTowerCommandCenter", () => {
     expect(view?.summary.promisedUsd).toBe(0);
     expect(view?.summary.promisedBenefitUsd).toBeNull();
     expect(view?.summary.approvedInvestmentUsd).toBe(1_070_600_000);
+    expect(view?.valueTrajectory[0]?.plannedInvestmentUsd).toBe(5_312_500);
+    expect(view?.conversionBridge[4]?.valueUsd).toBeNull();
     expect(view?.summary.totalProgramSubjectCount).toBe(151);
     expect(view?.summary.boardScopeProgramCount).toBe(40);
     expect(view?.summary.executiveSummary).toMatch(/investment from benefit/i);
