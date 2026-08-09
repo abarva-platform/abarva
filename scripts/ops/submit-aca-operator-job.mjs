@@ -164,6 +164,12 @@ function isSensitiveName(name) {
 
 function envArgs(options) {
   const values = [...options.env, ...options.secretEnv];
+  for (const value of operatorMetadataEnv(options)) {
+    const [key] = splitKeyValue(value, "--env");
+    if (!values.some((existing) => existing.startsWith(`${key}=`))) {
+      values.push(value);
+    }
+  }
   if (!values.some((value) => value.startsWith("NODE_OPTIONS="))) {
     values.push("NODE_OPTIONS=--conditions=react-server");
   }
@@ -183,6 +189,128 @@ function writeJson(file, value) {
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function imageDigest(image) {
+  const match = String(image).match(/@sha256:([0-9a-f]{64})$/i);
+  return match ? `sha256:${match[1].toLowerCase()}` : null;
+}
+
+function currentGitCommit() {
+  const result = spawnSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  return result.status === 0 ? result.stdout.trim() || null : null;
+}
+
+function operatorMetadataEnv(options) {
+  const values = [
+    `ABARVA_OPERATOR_IMAGE=${options.image}`,
+    `ABARVA_OPERATOR_IMAGE_DIGEST=${imageDigest(options.image) ?? ""}`,
+  ];
+  const commit = currentGitCommit();
+  if (commit) values.push(`ABARVA_OPERATOR_BRANCH_COMMIT=${commit}`);
+  return values;
+}
+
+function resolvePackageScript(scriptName) {
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
+    );
+    return packageJson.scripts?.[scriptName] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function migrationNamesFromScript(scriptCommand) {
+  if (!scriptCommand || !scriptCommand.includes("run-migrations")) return [];
+  return Array.from(
+    new Set(scriptCommand.match(/\b\d{14}_[^\s"'`]+\.sql\b/g) ?? []),
+  );
+}
+
+function databaseEvidence(options, effectiveEnv) {
+  const secretRefs = options.secretEnv
+    .map((value) => splitKeyValue(value, "--secret-env"))
+    .map(([key, secretRef]) => ({
+      key,
+      secret_ref: secretRef.replace(/^secretref:/, ""),
+    }));
+  const keys = effectiveEnv
+    .map((value) => splitKeyValue(value, "--env")[0])
+    .filter((key) => /DATABASE_URL|AZURE_DATABASE_URL/i.test(key));
+  return {
+    env_keys: Array.from(new Set(keys)).sort(),
+    secret_refs: secretRefs,
+  };
+}
+
+function writeMigrationSeal(
+  options,
+  effectiveEnv,
+  executionName,
+  status,
+  logText,
+  finishedAt,
+  outDir,
+) {
+  const scriptCommand = resolvePackageScript(options.script);
+  const migrationNames = migrationNamesFromScript(scriptCommand);
+  if (migrationNames.length === 0) return null;
+
+  const mode = scriptCommand.includes("--dry")
+    ? "dry-run"
+    : scriptCommand.includes("--ci")
+      ? "apply"
+      : "unknown";
+  const branchCommit =
+    effectiveEnv
+      .find((value) => value.startsWith("ABARVA_OPERATOR_BRANCH_COMMIT="))
+      ?.split("=")
+      .slice(1)
+      .join("=") || null;
+  const digest =
+    effectiveEnv
+      .find((value) => value.startsWith("ABARVA_OPERATOR_IMAGE_DIGEST="))
+      ?.split("=")
+      .slice(1)
+      .join("=") || imageDigest(options.image);
+  const migrations = migrationNames.map((migrationName) => {
+    const filePath = path.join(
+      process.cwd(),
+      "supabase/migrations",
+      migrationName,
+    );
+    const sql = fs.readFileSync(filePath, "utf8");
+    return {
+      migration_name: migrationName,
+      migration_sha256: sha256(sql),
+      branch_commit: branchCommit,
+      operator_image_digest: digest,
+      database: databaseEvidence(options, effectiveEnv),
+      execution_id: executionName,
+      applied_at: mode === "apply" && status === "Succeeded" ? finishedAt : null,
+    };
+  });
+  const seal = {
+    event: "private_operator_migration_seal",
+    script: options.script,
+    script_command: scriptCommand,
+    mode,
+    status,
+    execution_id: executionName,
+    operator_image: options.image,
+    operator_image_digest: digest,
+    branch_commit: branchCommit,
+    log_sha256: sha256(logText || ""),
+    migrations,
+  };
+  const sealPath = path.join(outDir, "06-migration-seal.json");
+  writeJson(sealPath, seal);
+  return { path: sealPath, migrationCount: migrations.length, mode };
 }
 
 function parseExecutionName(startJson) {
@@ -699,6 +827,8 @@ async function main() {
   let executionName = null;
   let status = "NotStarted";
   let proof = { extracted: false, reason: "not attempted" };
+  let migrationSeal = null;
+  let logText = "";
   let restored = { restored: false };
   let failed = null;
 
@@ -757,8 +887,9 @@ async function main() {
         "--format",
         "text",
       ]);
-      fs.writeFileSync(path.join(options.outDir, "04-logs.txt"), logs.stdout);
-      proof = extractProofBundle(logs.stdout, options.outDir);
+      logText = logs.stdout;
+      fs.writeFileSync(path.join(options.outDir, "04-logs.txt"), logText);
+      proof = extractProofBundle(logText, options.outDir);
       writeJson(path.join(options.outDir, "05-proof-extraction.json"), proof);
     }
   } catch (error) {
@@ -774,12 +905,30 @@ async function main() {
         if (!failed) failed = error;
       }
     }
+    const finishedAt = new Date().toISOString();
+    try {
+      migrationSeal = writeMigrationSeal(
+        options,
+        effectiveEnv,
+        executionName,
+        status,
+        logText,
+        finishedAt,
+        options.outDir,
+      );
+    } catch (error) {
+      migrationSeal = {
+        error: error instanceof Error ? error.message : String(error),
+      };
+      if (!failed) failed = error;
+    }
     const summary = {
       ...request,
-      finishedAt: new Date().toISOString(),
+      finishedAt,
       executionName,
       status,
       proof,
+      migrationSeal,
       restored,
       ok: !failed && (!options.wait || status === "Succeeded"),
       outputDir: options.outDir,

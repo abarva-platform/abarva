@@ -35,7 +35,8 @@ Feature flag: none.
 ## Changes Included
 
 - Migration: `supabase/migrations/20260809150000_tower_value_operating_system_v1.sql`
-- Migration ledger repair: restores the previously applied canary read-grant migration to the database-recorded hash and adds `supabase/migrations/20260806162400_foundation_v2_meridian_health_demo_canary_schema_bootstrap.sql` as the separate additive schema bootstrap.
+- Migration ledger repair: restores the previously applied canary read-grant migration to the database-recorded hash and adds `supabase/migrations/20260806162400_foundation_v2_meridian_health_cube_canary_schema_bootstrap.sql` as the separate additive schema bootstrap.
+- Migration seal gate: adds `docs/releases/migration-seals.json` and `scripts/release-control/check-migration-seals.mjs`, wired into `npm run release:check`, so previously applied branch migrations retain their applied SHA through merge.
 - Runtime reader: `src/lib/tower/readTowerCommandCenter.ts`
 - Operator/readback proof: `scripts/tower/verify-tower-value-os.mjs`
 - Repeatable lane scripts: `tower:value-os:migrate:dry`, `tower:value-os:migrate:apply`, `tower:value-os:verify:preflight`, `tower:value-os:verify`
@@ -53,6 +54,11 @@ Feature flag: none.
 - Pass: `npm test -- --runTestsByPath src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx src/lib/tower/__tests__/readTowerCommandCenter.test.ts src/lib/tower/__tests__/value-operating-system-contract.test.ts --runInBand`
 - Pass: `npm run tower:value-os:verify:preflight -- --out-dir /tmp/<proof-dir>`
 - Pass: restored `20260806162500_foundation_v2_meridian_health_demo_layer6_canary_read_grants.sql` to the active database-recorded SHA-256 `ef05e3db8e7eaf91063687dfd5036b7c5306313fe1cfa46db1f187e60633ccd4`; moved the fresh-replay schema bootstrap into its own additive migration with no destructive-pattern findings.
+- Pass: `npm test -- --runTestsByPath src/scripts/__tests__/run-migrations.test.ts scripts/ops/__tests__/submit-aca-operator-job.test.ts --runInBand`
+- Pass: `npx eslint src/scripts/__tests__/run-migrations.test.ts scripts/ops/submit-aca-operator-job.mjs scripts/release-control/check-migration-seals.mjs`
+- Pass: `node scripts/release-control/check-migration-seals.mjs`
+- Pass: `npm run release:check`
+- Pass: hash regression in `src/scripts/__tests__/run-migrations.test.ts` seals `20260806162500_foundation_v2_meridian_health_demo_layer6_canary_read_grants.sql` at `ef05e3db8e7eaf91063687dfd5036b7c5306313fe1cfa46db1f187e60633ccd4`.
 - Not run: live database migration apply, tenant data-build job, production deployment, Cube model generation, and signed-in browser proof. Those require the approved migration/data-build/deploy lane after merge.
 
 ## Rollout Plan
