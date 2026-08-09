@@ -35,7 +35,7 @@ const SKYHARBOR_SYNTHETIC_AS_OF = "2027-06-30T00:00:00Z";
 export default async function SourceWorkspacePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ asOf?: string }>;
+  searchParams: Promise<{ asOf?: string; client?: string }>;
 }) {
   let tenancy;
   try {
@@ -47,14 +47,21 @@ export default async function SourceWorkspacePreviewPage({
     throw err;
   }
 
-  const [activeClient, tenant, params] = await Promise.all([
-    getActiveClientRow().catch(() => null),
-    resolveTenant().catch(() => null),
-    searchParams,
-  ]);
+  const params = await searchParams;
+  const requestedClient = params.client?.trim() || null;
+  const tenant = await resolveTenant({
+    requestedClient,
+    allowFallback: !requestedClient,
+  }).catch(() => null);
+  const activeClient = tenant
+    ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+    : null;
 
   const tenantKey =
-    activeClient?.key ?? tenant?.appClientKey ?? tenancy.clientKey ?? "";
+    activeClient?.key ??
+    tenant?.appClientKey ??
+    (!requestedClient ? tenancy.clientKey : "") ??
+    "";
   const defaultAsOf = tenantKey.includes("skyharbor")
     ? SKYHARBOR_SYNTHETIC_AS_OF
     : new Date().toISOString();
