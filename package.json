@@ -649,6 +649,8 @@
     "source:contract-optimization:evidence-audit": "npx tsx scripts/source/audit-contract-optimization-evidence-readiness.mjs",
     "source:contract-evidence:golden:plan": "node scripts/source/load-source-golden-contract-evidence.mjs",
     "source:contract-evidence:golden:apply": "node scripts/source/load-source-golden-contract-evidence.mjs --apply",
+    "source:contract-optimization:spine:plan": "npx tsx scripts/source/project-contract-optimization-spine.ts",
+    "source:contract-optimization:spine:apply": "npx tsx scripts/source/project-contract-optimization-spine.ts --apply",
     "source:contract-evidence:meridian:build": "node scripts/source/build-meridian-contract-evidence-package.mjs",
     "source:contract-evidence:meridian:validate": "node scripts/source/validate-source-contract-evidence-package.mjs --package-dir datasets/source/contract-intelligence/meridian-golden-20260809",
     "source:contract-evidence:meridian:plan": "node scripts/source/load-source-golden-contract-evidence.mjs --package-dir datasets/source/contract-intelligence/meridian-golden-20260809 --tenant-key meridian_health_global --tenant-alias meridian,meridian-health --dataset-id meridian-source-v1-202608-golden-evidence --dataset-version v1-golden-evidence --contract-id CF-001,CF-003",
