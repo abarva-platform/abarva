@@ -287,7 +287,7 @@ export function buildContractOptimizationFactLayer(
     sourceTable: "source.contract_360",
     sourceRecordId: contractId,
     assertionBasis: "Annual value asserted by Contract 360 register.",
-    confidence: input.contract?.source_confidence ?? 0.82,
+    confidence: confidence(input.contract?.source_confidence, 0.82),
     reviewState: "system_projected",
   });
   const pricingAnnual = roundCurrency(
@@ -847,6 +847,10 @@ function number(value: unknown): number | null {
   if (!cleaned) return null;
   const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function confidence(value: unknown, fallback: number): number {
+  return number(value) ?? fallback;
 }
 
 function text(value: unknown): string | null {
