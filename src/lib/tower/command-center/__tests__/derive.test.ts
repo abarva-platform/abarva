@@ -428,17 +428,19 @@ describe("laneFor", () => {
 
 describe("deriveProgramValues", () => {
   it("keeps usage and finance inside promised, and claimable inside finance", () => {
+    const promisedValueUsd = 12.4 * M;
+    const financeValidatedValueUsd = 3.1 * M;
     const row = lane({
-      promisedValueUsd: 12.4 * M,
-      financeValidatedValueUsd: 3.1 * M,
+      promisedValueUsd,
+      financeValidatedValueUsd,
       adoptionRatePct: 86,
       towerClaimAllowed: "partial",
     });
     const d = deriveProgramValues(row);
-    expect(d.usageSupportedUsd).toBeLessThanOrEqual(row.promisedValueUsd);
+    expect(d.usageSupportedUsd).toBeLessThanOrEqual(promisedValueUsd);
     // 12.4M × 0.86 = 10.664M, comfortably above the 3.1M Finance validated.
     expect(d.usageSupportedUsd).toBeCloseTo(10.664 * M, 0);
-    expect(row.financeValidatedValueUsd).toBeGreaterThanOrEqual(d.claimableUsd);
+    expect(financeValidatedValueUsd).toBeGreaterThanOrEqual(d.claimableUsd);
     expect(d.claimableUsd).toBe(0);
     expect(d.blockedUsd).toBe(12.4 * M);
     expect(d.proofLevel).toBe(2);

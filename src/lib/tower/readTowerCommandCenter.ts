@@ -871,7 +871,7 @@ export async function readTowerCommandCenter(args: {
             : command.executiveSummary;
 
       return {
-        generatedFrom: "tower_schema",
+        generatedFrom: "tower_schema" as const,
         headline,
         command,
         valueFunnel: valueFunnel.map(mapValueFunnel),
