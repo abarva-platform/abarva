@@ -35,6 +35,7 @@ Feature flag: none.
 ## Changes Included
 
 - Migration: `supabase/migrations/20260809150000_tower_value_operating_system_v1.sql`
+- Migration ledger repair: restores the previously applied canary read-grant migration to the database-recorded hash and adds `supabase/migrations/20260806162400_foundation_v2_meridian_health_demo_canary_schema_bootstrap.sql` as the separate additive schema bootstrap.
 - Runtime reader: `src/lib/tower/readTowerCommandCenter.ts`
 - Operator/readback proof: `scripts/tower/verify-tower-value-os.mjs`
 - Repeatable lane scripts: `tower:value-os:migrate:dry`, `tower:value-os:migrate:apply`, `tower:value-os:verify:preflight`, `tower:value-os:verify`
@@ -51,6 +52,7 @@ Feature flag: none.
 - Pass: `npx eslint src/lib/tower/readTowerCommandCenter.ts src/lib/tower/__tests__/readTowerCommandCenter.test.ts src/lib/tower/__tests__/value-operating-system-contract.test.ts src/__tests__/integration/tower/tower-db-only-surface.test.ts src/__tests__/integration/tower/tower-invariants.test.ts src/lib/tower/command-center/types.ts src/lib/tower/command-center/view-model.ts src/components/tower/command-center/views/CommandCenterView.tsx src/components/tower/command-center/TowerCommandCenterAvaShell.tsx src/components/tower/command-center/drawers/EvidenceGapDrawer.tsx src/components/tower/command-center/views/ValueProofView.tsx src/components/tower/command-center/views/RecommendedActionsView.tsx src/components/tower/command-center/drawers/ProgramDrawer.tsx`
 - Pass: `npm test -- --runTestsByPath src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx src/lib/tower/__tests__/readTowerCommandCenter.test.ts src/lib/tower/__tests__/value-operating-system-contract.test.ts --runInBand`
 - Pass: `npm run tower:value-os:verify:preflight -- --out-dir /tmp/<proof-dir>`
+- Pass: restored `20260806162500_foundation_v2_meridian_health_demo_layer6_canary_read_grants.sql` to the active database-recorded SHA-256 `ef05e3db8e7eaf91063687dfd5036b7c5306313fe1cfa46db1f187e60633ccd4`; moved the fresh-replay schema bootstrap into its own additive migration with no destructive-pattern findings.
 - Not run: live database migration apply, tenant data-build job, production deployment, Cube model generation, and signed-in browser proof. Those require the approved migration/data-build/deploy lane after merge.
 
 ## Rollout Plan
