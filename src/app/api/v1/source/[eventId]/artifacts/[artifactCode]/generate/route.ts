@@ -564,7 +564,7 @@ export async function generateSourceArtifactDraft(
       // 8-9 min for the monolithic single call.
       const useD09MapReduce =
         artifactCode === "d09_rfp_pack" &&
-        process.env.ABARVA_SOURCE_D09_MAP_REDUCE === "1";
+        process.env.ABARVA_SOURCE_D09_MAP_REDUCE !== "0";
 
       if (useD09MapReduce) {
         const mapReduceResult = await generateD09ViaMapReduce({

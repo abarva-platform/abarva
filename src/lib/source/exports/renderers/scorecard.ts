@@ -5,17 +5,19 @@
 // dissents and tiebreakers; Score Guidance defines the 1-5 rubric so
 // every evaluator scores the same way.
 //
-// Structure (5 sheets):
-//   1. Cover                 — event metadata, evaluator slot, round
+// Structure (6 sheets):
+//   1. Guide                 — internal-only scoring instructions,
+//                              tab purpose, and vendor-exclusion rules
+//   2. Cover                 — event metadata, evaluator slot, round
 //                              indicator
-//   2. Criteria & Weights    — locked: criterion / weight / description.
+//   3. Criteria & Weights    — locked: criterion / weight / description.
 //                              Bottom row asserts weights sum to 100.
-//   3. Vendor Scoring        — main grid; one row per criterion, two
+//   4. Vendor Scoring        — main grid; one row per criterion, two
 //                              columns per vendor (raw 1-5 + weighted).
 //                              Bottom row computes total weighted score
 //                              per vendor.
-//   4. Score Guidance        — locked: 1-5 rubric definitions
-//   5. Decision Notes        — narrative for tiebreakers, dissent log,
+//   5. Score Guidance        — locked: 1-5 rubric definitions
+//   6. Decision Notes        — narrative for tiebreakers, dissent log,
 //                              cross-checks against d20 trap log
 //
 // Pure: payload → ExcelJS.Workbook. Vendor list is variable-length so
@@ -30,6 +32,7 @@ import {
   applyHeaderRow,
   applyLockedRow,
   buildCoverSheet,
+  buildGuideSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
 import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
@@ -80,6 +83,30 @@ export function buildScorecardWorkbook(
 
   const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
     artifactCode: 'd16',
+  });
+  buildGuideSheet(workbook, {
+    title: `Guide · Evaluation Scorecard`,
+    audience: 'internal',
+    purpose:
+      'Use this workbook to score vendor responses against the published criteria and preserve an auditable evaluator record. This workbook is internal unless procurement explicitly chooses to publish a redacted score summary.',
+    completionRules: [
+      'Score only against the criteria and weights published in the RFP or approved addendum.',
+      'Use the same 1-5 rubric for every vendor and cite evidence in evaluator notes where required by the evaluation protocol.',
+      'Do not alter locked criteria, weights, formulas, vendor names, or totals rows.',
+      'Record tie-breakers, dissenting views, legal exceptions, and commercial normalization adjustments in Decision Notes.',
+      'Do not send this internal workbook to vendors; share only approved summaries or debrief materials.',
+    ],
+    tabDescriptions: [
+      { tab: 'Cover', purpose: 'Event metadata, evaluator name, and evaluation round.' },
+      { tab: 'Criteria & Weights', purpose: 'Locked scoring criteria and weight total check.' },
+      { tab: 'Vendor Scoring', purpose: 'Evaluator raw scores and formula-driven weighted totals.' },
+      { tab: 'Score Guidance', purpose: 'Locked 1-5 rubric definitions for consistent scoring.' },
+      { tab: 'Decision Notes', purpose: 'Internal award rationale, dissent, tie-breakers, and cross-checks.', audience: 'internal' },
+    ],
+    notForVendor: [
+      'Evaluator names, notes, dissent logs, normalization adjustments, and internal legal/finance risk positions.',
+      'Negotiation targets, BAFO fallbacks, benchmark deltas, or unapproved award recommendations.',
+    ],
   });
   buildCoverSheet(workbook, {
     title: `Evaluation Scorecard · ${payload.eventName}`,

@@ -67,6 +67,70 @@ export function applyLockedRow(row: ExcelJS.Row): void {
   });
 }
 
+/** Add a first-tab workbook guide with audience, purpose, tabs, and rules. */
+export function buildGuideSheet(
+  workbook: ExcelJS.Workbook,
+  guide: {
+    title: string;
+    audience: "vendor" | "internal";
+    purpose: string;
+    completionRules: string[];
+    tabDescriptions: Array<{ tab: string; purpose: string; audience?: "vendor" | "internal" }>;
+    notForVendor?: string[];
+  },
+): ExcelJS.Worksheet {
+  const sheet = workbook.addWorksheet("Guide", {
+    views: [{ showGridLines: false }],
+  });
+  sheet.columns = [{ width: 26 }, { width: 90 }];
+
+  const titleRow = sheet.addRow([guide.title]);
+  titleRow.font = { size: 18, bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+  sheet.addRow([]);
+
+  const purpose = sheet.addRow(["Purpose", safeCell(guide.purpose)]);
+  purpose.getCell(1).font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+  purpose.getCell(2).alignment = { wrapText: true, vertical: "top" };
+
+  const audience = sheet.addRow([
+    "Audience",
+    guide.audience === "vendor" ? "Vendor-facing response workbook" : "Internal client review workbook",
+  ]);
+  audience.getCell(1).font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+
+  sheet.addRow([]);
+  const rulesHeader = sheet.addRow(["Completion Rules"]);
+  rulesHeader.font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+  for (const rule of guide.completionRules) {
+    const row = sheet.addRow(["", `• ${safeCell(rule)}`]);
+    row.getCell(2).alignment = { wrapText: true, vertical: "top" };
+  }
+
+  sheet.addRow([]);
+  const tabHeader = sheet.addRow(["Tab", "Purpose"]);
+  applyHeaderRow(tabHeader);
+  for (const tab of guide.tabDescriptions) {
+    const audienceLabel = tab.audience
+      ? ` (${tab.audience === "vendor" ? "vendor-facing" : "internal-only"})`
+      : "";
+    const row = sheet.addRow([safeCell(tab.tab), safeCell(`${tab.purpose}${audienceLabel}`)]);
+    row.getCell(1).font = { bold: true };
+    row.getCell(2).alignment = { wrapText: true, vertical: "top" };
+  }
+
+  if (guide.notForVendor?.length) {
+    sheet.addRow([]);
+    const internalHeader = sheet.addRow(["Not Vendor-Facing"]);
+    internalHeader.font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+    for (const item of guide.notForVendor) {
+      const row = sheet.addRow(["", `• ${safeCell(item)}`]);
+      row.getCell(2).alignment = { wrapText: true, vertical: "top" };
+    }
+  }
+
+  return sheet;
+}
+
 /** Add a Cover sheet with event metadata + instructions. */
 export function buildCoverSheet(
   workbook: ExcelJS.Workbook,

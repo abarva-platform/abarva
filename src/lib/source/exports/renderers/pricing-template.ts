@@ -6,16 +6,18 @@
 // line items, the whole pricing-normalization automation collapses
 // into "humans normalize PDFs by hand."
 //
-// Structure (5 sheets):
-//   1. Cover         — event metadata, vendor name slot, instructions
-//   2. Assumption Set — locked rows from d21 (read-only); vendors
+// Structure (6 sheets):
+//   1. Guide          — vendor-facing how-to, tab purpose,
+//                       editable fields, units, and assumption rules
+//   2. Cover          — event metadata, vendor name slot, instructions
+//   3. Assumption Set — locked rows from d21 (read-only); vendors
 //                       price against this to make submissions
 //                       comparable
-//   3. Pricing Detail — line items derived from d05 scope; vendors
+//   4. Pricing Detail — line items derived from d05 scope; vendors
 //                       fill unit price; extended price = qty × unit
-//   4. TCO Summary   — Year 1/2/3 totals + 3-year, formula-driven
+//   5. TCO Summary   — Year 1/2/3 totals + 3-year, formula-driven
 //                       from Pricing Detail; locked
-//   5. Pricing Notes — vendor-fill narrative for assumptions they
+//   6. Pricing Notes — vendor-fill narrative for assumptions they
 //                       want to challenge or alternative pricing
 //                       models
 //
@@ -32,6 +34,7 @@ import {
   applyHeaderRow,
   applyLockedRow,
   buildCoverSheet,
+  buildGuideSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
 import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
@@ -87,6 +90,26 @@ export function buildPricingTemplateWorkbook(
 
   const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
     artifactCode: 'd19',
+  });
+  buildGuideSheet(workbook, {
+    title: `Guide · Pricing Workbook`,
+    audience: 'vendor',
+    purpose:
+      'Use this workbook to submit normalized pricing against the locked scope and assumption set. The buyer will evaluate pricing from these structured fields rather than from narrative summaries.',
+    completionRules: [
+      'Fill Vendor name on Cover before completing pricing.',
+      'Price every row in Pricing Detail in USD using the stated unit and annual quantity.',
+      'Do not edit Assumption Set, TCO Summary, formulas, locked labels, row IDs, or column names.',
+      'Use Pricing Notes for assumption challenges, alternates, exclusions, and non-standard commercial positions.',
+      'Separate one-time, recurring, transition, pass-through, productivity, SLA-credit, and retained-client economics where requested by the RFP.',
+    ],
+    tabDescriptions: [
+      { tab: 'Cover', purpose: 'Event metadata and vendor name slot.' },
+      { tab: 'Assumption Set', purpose: 'Locked buyer assumptions that every vendor prices against.' },
+      { tab: 'Pricing Detail', purpose: 'Vendor-editable unit prices by normalized scope line item.' },
+      { tab: 'TCO Summary', purpose: 'Formula-driven totals used for buyer-side normalization.' },
+      { tab: 'Pricing Notes', purpose: 'Vendor assumptions, exceptions, and alternative pricing models.' },
+    ],
   });
   buildCoverSheet(workbook, {
     title: `Pricing Template · ${payload.eventName}`,

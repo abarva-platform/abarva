@@ -41,16 +41,26 @@ function makePayload(
 }
 
 describe('buildPricingTemplateWorkbook', () => {
-  it('produces a workbook with the five canonical sheets', async () => {
+  it('produces a workbook with the six canonical sheets and a first Guide tab', async () => {
     const wb = buildPricingTemplateWorkbook(makePayload());
     const sheetNames = wb.worksheets.map((s) => s.name);
     expect(sheetNames).toEqual([
+      'Guide',
       'Cover',
       'Assumption Set',
       'Pricing Detail',
       'TCO Summary',
       'Pricing Notes',
     ]);
+  });
+
+  it('Guide sheet explains pricing completion rules and locked tabs', async () => {
+    const wb = buildPricingTemplateWorkbook(makePayload());
+    const text = collectSheetText(wb.getWorksheet('Guide')!);
+    expect(text).toContain('Pricing Workbook');
+    expect(text).toContain('Vendor-facing response workbook');
+    expect(text).toContain('locked scope and assumption set');
+    expect(text).toContain('Do not edit Assumption Set');
   });
 
   it('Cover sheet carries event metadata + a Vendor name slot', async () => {
