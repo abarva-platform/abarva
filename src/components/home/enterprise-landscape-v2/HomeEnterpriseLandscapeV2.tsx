@@ -84,33 +84,263 @@ function SparkBar({ item }: { item: MetricAnchor | EconomicRow }) {
   );
 }
 
-function BarRows({ rows }: { rows: EconomicRow[] }) {
+function EconomicsExhibit({ rows }: { rows: EconomicRow[] }) {
+  const [budget, actual, committed, aiCost] = rows;
+  const uncommitted = "$0.87B";
+
   return (
-    <div className={styles.barRows} aria-label="Economic trend rows">
-      {rows.map((row) => (
-        <div className={styles.metricRow} key={row.label}>
-          <div className={styles.metricLabel}>
-            {row.label}
-            <small>{row.detail}</small>
-          </div>
-          <div className={styles.barTrack} aria-hidden="true">
-            <div
-              className={`${styles.barFill} ${TONE_CLASS[row.tone]}`}
-              style={{ width: `${Math.max(3, Math.min(100, row.ratio * 100))}%` }}
-            />
-          </div>
-          <div className={styles.metricValue}>{row.value}</div>
+    <div className={styles.economicsExhibit}>
+      <div className={styles.economicsBridgeCard}>
+        <div className={styles.visualTitle}>
+          <strong>Budget commitment bridge</strong>
+          <span>Known economics, unknown value</span>
         </div>
-      ))}
+        <svg
+          className={styles.bridgeSvg}
+          viewBox="0 0 680 288"
+          role="img"
+          aria-label="Budget commitment bridge showing FY2026 actual, FY2027 budget, committed base, and value proof gap"
+        >
+          <defs>
+            <linearGradient id="budgetBridgeBlue" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#246fc8" />
+              <stop offset="1" stopColor="#198f82" />
+            </linearGradient>
+          </defs>
+          <line
+            x1="92"
+            y1="170"
+            x2="588"
+            y2="170"
+            stroke="#d9e0ea"
+            strokeWidth="2"
+          />
+          <g>
+            <rect
+              x="42"
+              y="84"
+              width="120"
+              height="132"
+              rx="6"
+              fill="#eef5ff"
+            />
+            <rect
+              x="42"
+              y="93"
+              width="120"
+              height="123"
+              rx="6"
+              fill="#246fc8"
+              opacity="0.94"
+            />
+            <text
+              x="102"
+              y="64"
+              textAnchor="middle"
+              className={styles.svgLabel}
+            >
+              FY2026 actual
+            </text>
+            <text
+              x="102"
+              y="140"
+              textAnchor="middle"
+              className={styles.svgValue}
+            >
+              {actual.value}
+            </text>
+            <text
+              x="102"
+              y="160"
+              textAnchor="middle"
+              className={styles.svgDetail}
+            >
+              Prior-year spend
+            </text>
+          </g>
+          <g>
+            <rect
+              x="230"
+              y="72"
+              width="136"
+              height="144"
+              rx="6"
+              fill="#eaf6f4"
+            />
+            <rect
+              x="230"
+              y="72"
+              width="136"
+              height="144"
+              rx="6"
+              fill="url(#budgetBridgeBlue)"
+              opacity="0.94"
+            />
+            <text
+              x="298"
+              y="52"
+              textAnchor="middle"
+              className={styles.svgLabel}
+            >
+              FY2027 budget
+            </text>
+            <text
+              x="298"
+              y="136"
+              textAnchor="middle"
+              className={styles.svgValue}
+            >
+              {budget.value}
+            </text>
+            <text
+              x="298"
+              y="156"
+              textAnchor="middle"
+              className={styles.svgDetail}
+            >
+              Governed scope
+            </text>
+          </g>
+          <g>
+            <rect
+              x="430"
+              y="111"
+              width="126"
+              height="105"
+              rx="6"
+              fill="#fff7e8"
+            />
+            <rect
+              x="430"
+              y="111"
+              width="126"
+              height="105"
+              rx="6"
+              fill="#b97824"
+              opacity="0.94"
+            />
+            <text
+              x="493"
+              y="91"
+              textAnchor="middle"
+              className={styles.svgLabel}
+            >
+              Committed base
+            </text>
+            <text
+              x="493"
+              y="159"
+              textAnchor="middle"
+              className={styles.svgValue}
+            >
+              {committed.value}
+            </text>
+            <text
+              x="493"
+              y="179"
+              textAnchor="middle"
+              className={styles.svgDetail}
+            >
+              63% of budget
+            </text>
+          </g>
+          <g>
+            <rect
+              x="578"
+              y="140"
+              width="62"
+              height="76"
+              rx="6"
+              fill="#fff"
+              stroke="#cbd5e1"
+              strokeDasharray="4 4"
+              strokeWidth="2"
+            />
+            <text
+              x="609"
+              y="103"
+              textAnchor="middle"
+              className={styles.svgLabel}
+            >
+              Value proof
+            </text>
+            <text x="609" y="166" textAnchor="middle" className={styles.svgGap}>
+              Not
+            </text>
+            <text x="609" y="184" textAnchor="middle" className={styles.svgGap}>
+              established
+            </text>
+          </g>
+          <path
+            d="M168 144 C190 126 204 112 224 103"
+            fill="none"
+            stroke="#9fb3cf"
+            strokeWidth="2"
+          />
+          <path
+            d="M372 144 C396 148 408 150 424 158"
+            fill="none"
+            stroke="#c6a36e"
+            strokeWidth="2"
+          />
+          <path
+            d="M556 162 C566 162 570 162 574 162"
+            fill="none"
+            stroke="#9aa6ba"
+            strokeWidth="2"
+            strokeDasharray="4 4"
+          />
+          <text
+            x="298"
+            y="248"
+            textAnchor="middle"
+            className={styles.svgFootnote}
+          >
+            Budget expands by $0.17B over prior-year actual; {uncommitted}{" "}
+            remains outside the committed base.
+          </text>
+        </svg>
+      </div>
+
+      <div className={styles.economicInsightGrid}>
+        <article className={styles.economicInsight}>
+          <span>Constraint</span>
+          <strong>63% committed</strong>
+          <div className={styles.stackedBar} aria-hidden="true">
+            <i className={styles.committedSlice} />
+            <i className={styles.flexSlice} />
+          </div>
+          <p>
+            Contracted economics are large enough to shape renewal timing,
+            commercial rights, and portfolio flexibility.
+          </p>
+        </article>
+        <article className={styles.economicInsight}>
+          <span>Cost signal</span>
+          <strong>{aiCost.value} visible</strong>
+          <div className={styles.stackedBar} aria-hidden="true">
+            <i className={styles.aiSlice} />
+            <i className={styles.otherSlice} />
+          </div>
+          <p>
+            AI use cost is visible, but value realization remains a Tower
+            validation lane rather than a Home claim.
+          </p>
+        </article>
+        <article className={`${styles.economicInsight} ${styles.proofGap}`}>
+          <span>Publication guardrail</span>
+          <strong>Claimable value not established</strong>
+          <p>
+            Unknown value is shown as an evidence gap, not a zero-dollar outcome
+            or a savings narrative.
+          </p>
+        </article>
+      </div>
     </div>
   );
 }
 
-function CoherenceMap({
-  model,
-}: {
-  model: HomeEnterpriseLandscapeV2Model;
-}) {
+function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
   const [a, b, c, d] = model.coherence;
   return (
     <div className={`${styles.visualPanel} ${styles.coherenceMap}`}>
@@ -183,7 +413,10 @@ function CoherenceMap({
   );
 }
 
-function TabPanels({ model, selectedTab }: {
+function TabPanels({
+  model,
+  selectedTab,
+}: {
   model: HomeEnterpriseLandscapeV2Model;
   selectedTab: HomeLandscapeTabId;
 }) {
@@ -267,21 +500,25 @@ function TabPanels({ model, selectedTab }: {
         aria-labelledby="tab-economics"
         hidden={selectedTab !== "economics"}
       >
-        <div className={styles.twoCol}>
+        <div className={styles.economicsLayout}>
           <div>
             <h2>Economics without value overclaim</h2>
-            <p className={styles.lead}>
-              Home can show governed budget, spend, and contract posture, but
-              it must not convert unknown or specialist Tower value status into
-              a broad enterprise conclusion.
-            </p>
+            <p className={styles.lead}>{model.economicsRead}</p>
           </div>
-          <div className={styles.visualPanel}>
-            <div className={styles.visualTitle}>
-              <strong>Publication guardrail</strong>
-              <span>Money stays deterministic</span>
+          <EconomicsExhibit rows={model.economics} />
+          <div className={styles.economicAuditTable}>
+            <div className={`${styles.economicAuditRow} ${styles.postureHead}`}>
+              <div>Measure</div>
+              <div>Value</div>
+              <div>Read</div>
             </div>
-            <BarRows rows={model.economics} />
+            {model.economics.map((row) => (
+              <div className={styles.economicAuditRow} key={row.label}>
+                <div data-label="Measure">{row.label}</div>
+                <div data-label="Value">{row.value}</div>
+                <div data-label="Read">{row.detail}</div>
+              </div>
+            ))}
           </div>
         </div>
       </article>
@@ -413,7 +650,7 @@ function TabPanels({ model, selectedTab }: {
         <div>
           <h2>Evidence and content provenance</h2>
           <p className={styles.lead}>
-            This render reflects the V0.2.3 product contract. Production
+            This render reflects the V0.2.4 product contract. Production
             approval still requires HomeEnterpriseEvidenceV2, one Claude
             synthesis, raw-response retention, and narrative validation.
           </p>
@@ -511,7 +748,10 @@ export function HomeEnterpriseLandscapeV2({
           </div>
         </div>
 
-        <section className={styles.canvas} aria-label="Enterprise Landscape canvas">
+        <section
+          className={styles.canvas}
+          aria-label="Enterprise Landscape canvas"
+        >
           <div
             className={styles.tabList}
             role="tablist"
@@ -549,4 +789,3 @@ export function HomeEnterpriseLandscapeV2({
     </main>
   );
 }
-
