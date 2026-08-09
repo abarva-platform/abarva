@@ -216,6 +216,11 @@ export async function getContract360(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContract360Row | null> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const rows = await listContract360(tenantKey);
+    return rows.find((row) => row.contract_id === contractId) ?? null;
+  }
+
   const rows = await queryForTenant<SourceContract360Row>(
     tenantKey,
     "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
