@@ -82,6 +82,7 @@ export interface HomeEnterpriseLandscapeV2Model {
   subtitle: string;
   status: string;
   executiveRead: string;
+  economicsRead: string;
   anchors: MetricAnchor[];
   standouts: StandoutSignal[];
   patterns: PatternSignal[];
@@ -114,6 +115,8 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     status: "Planning-grade | Directional confidence | As of Aug 2, 2026",
     executiveRead:
       "SkyHarbor is a large, operations-intensive airline with substantial modernization activity across its operating, commercial, technology, and data estate. The current landscape points to execution alignment across critical platforms, measures, portfolio dependencies, and commercial commitments as the central management challenge.",
+    economicsRead:
+      "The economic read is not that AI value is zero. It is that the enterprise has a large governed technology budget, a material committed contract base, and a visible AI cost lane while finance-recognized value remains unestablished at Home level.",
     anchors: [
       {
         label: "Technology budget",
@@ -317,8 +320,8 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     evidence: [
       {
         label: "Design contract",
-        value: "V0.2.3",
-        detail: "Summary hierarchy corrected",
+        value: "V0.2.4",
+        detail: "Economics exhibit added",
         tone: "blue",
       },
       {
@@ -341,4 +344,3 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
       },
     ],
   };
-

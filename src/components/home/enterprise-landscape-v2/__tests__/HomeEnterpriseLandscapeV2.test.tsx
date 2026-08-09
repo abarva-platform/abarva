@@ -47,6 +47,15 @@ it("supports Evidence action, URL view state, and arrow-key tab movement", () =>
   expect(
     screen.getByRole("heading", { name: "Economics without value overclaim" }),
   ).toBeInTheDocument();
+  expect(screen.getByText("Budget commitment bridge")).toBeInTheDocument();
+  expect(screen.getByText("63% committed")).toBeInTheDocument();
+  expect(screen.getByText("$170.2M visible")).toBeInTheDocument();
+  expect(
+    screen.getByText("Claimable value not established"),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("Claimable value", { selector: "div" }),
+  ).not.toBeInTheDocument();
   expect(window.location.search).toBe("?view=economics");
 
   economics.focus();
