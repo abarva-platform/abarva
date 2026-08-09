@@ -12,6 +12,8 @@
 
 Source stage approvals now trigger AI-prepared drafts for the approved stage's required gate artifacts instead of only attempting a single primary artifact for the next stage. The artifact list is derived from the canonical Source artifact specification so the workflow output stays aligned with the stage's real gate requirements.
 
+The canvas stage-promotion endpoint now follows the same approved-stage invariant, so direct approval and canvas promotion both draft artifacts for the stage just approved.
+
 ## Layer Impact
 
 - `global-control-lane`: Layer 4 Product projection changes only. The Source approval route and artifact generation orchestration change how existing per-event artifact rows are drafted after approval; no canonical data model, intake shape, adapter, schema, or migration changes are included.
@@ -28,14 +30,18 @@ Source stage approvals now trigger AI-prepared drafts for the approved stage's r
 ## Changes Included
 
 - `src/app/api/v1/source/events/[eventId]/approve/route.ts`
+- `src/app/api/v1/source/[eventId]/stage/route.ts`
 - `src/lib/source/stage-entry-autodraft.ts`
 - `src/lib/source/__tests__/stage-entry-autodraft.test.ts`
+- `src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts`
 - `src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts`
 
 ## QA / Validation
 
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
+- `./node_modules/.bin/jest --runTestsByPath 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts' src/lib/source/__tests__/stage-entry-autodraft.test.ts` passed.
 - `./node_modules/.bin/eslint src/lib/source/stage-entry-autodraft.ts src/lib/source/__tests__/stage-entry-autodraft.test.ts 'src/app/api/v1/source/events/[eventId]/approve/route.ts' 'src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts'` passed.
+- `./node_modules/.bin/eslint 'src/app/api/v1/source/[eventId]/stage/route.ts' 'src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts'` passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/source/__tests__/gate-advance-contract.test.ts src/lib/source/__tests__/source-governance-enforcement.test.ts src/lib/source/contracts/__tests__/generation-eligibility.test.ts src/lib/source/contracts/__tests__/upstream-satisfaction.test.ts src/lib/source/agent-generation/__tests__/prompt-registry.test.ts` found a pre-existing Source governance fixture mismatch outside this release's changed files; the four adjacent non-fixture suites passed.
 
 ## Rollout Plan
