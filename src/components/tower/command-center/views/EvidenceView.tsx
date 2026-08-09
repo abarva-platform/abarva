@@ -132,6 +132,10 @@ function currentAuthority(fact: TowerEvidenceFactView): string {
     .join(" · ");
 }
 
+function boardFactLabel(name: string): string {
+  return name.replace(/promised benefit/gi, "source-backed benefit");
+}
+
 function authorityPlanForFact(
   fact: TowerEvidenceFactView,
 ): SourceAuthorityPlan {
@@ -145,7 +149,7 @@ function authorityPlanForFact(
   ) {
     return {
       id: fact.id,
-      fact: fact.name,
+      fact: boardFactLabel(fact.name),
       currentAuthority: currentAuthority(fact) || "Tower claim calculation",
       secondSourceNeeded: "Finance attestation or actuals cross-check",
       owner: fact.resolutionOwnerRole ?? "Finance",
@@ -161,7 +165,7 @@ function authorityPlanForFact(
   ) {
     return {
       id: fact.id,
-      fact: fact.name,
+      fact: boardFactLabel(fact.name),
       currentAuthority: currentAuthority(fact) || "Budget allocation",
       secondSourceNeeded: "Actual/project ledger or FP&A sign-off",
       owner: fact.resolutionOwnerRole ?? "FP&A",
@@ -177,7 +181,7 @@ function authorityPlanForFact(
   ) {
     return {
       id: fact.id,
-      fact: fact.name,
+      fact: boardFactLabel(fact.name),
       currentAuthority: currentAuthority(fact) || "Business-case source",
       secondSourceNeeded: "Operating owner confirmation",
       owner: fact.resolutionOwnerRole ?? "Business owner",
@@ -189,7 +193,7 @@ function authorityPlanForFact(
   if (key.includes("ai") || key.includes("spend")) {
     return {
       id: fact.id,
-      fact: fact.name,
+      fact: boardFactLabel(fact.name),
       currentAuthority: currentAuthority(fact) || "AI spend ledger",
       secondSourceNeeded: "Tool-owner and cost-center mapping",
       owner: fact.resolutionOwnerRole ?? "IT Finance",
@@ -200,7 +204,7 @@ function authorityPlanForFact(
 
   return {
     id: fact.id,
-    fact: fact.name,
+    fact: boardFactLabel(fact.name),
     currentAuthority: currentAuthority(fact) || "Governed source row",
     secondSourceNeeded: "Independent source or owner attestation",
     owner,
