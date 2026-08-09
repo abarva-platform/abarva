@@ -1,0 +1,54 @@
+{
+  "dataset_id": "meridian-source-v1-202608-golden-evidence",
+  "dataset_version": "v1-golden-evidence",
+  "tenant_key": "meridian_health_global",
+  "generated_at": "2026-08-09T04:47:55.484Z",
+  "status": "synthetic_demo_not_loaded",
+  "grain": "two golden contract families with contract PDFs, source extracts, four-ledger economics, and finance confirmation",
+  "contracts": [
+    {
+      "contract_id": "CF-001",
+      "vendor_id": "VND-001",
+      "vendor_name": "Crestline Analytics Services LLC",
+      "contract_name": "Data and Analytics Managed Services",
+      "contract_archetype": "data analytics managed services",
+      "annual_value_usd": 35000000,
+      "evidence_contract": "complete_for_demo_canary_not_client_fact"
+    },
+    {
+      "contract_id": "CF-003",
+      "vendor_id": "VND-003",
+      "vendor_name": "Workday Inc.",
+      "contract_name": "Workday Finance HCM SaaS and Services",
+      "contract_archetype": "enterprise SaaS and implementation services",
+      "annual_value_usd": 12500000,
+      "evidence_contract": "complete_for_demo_canary_not_client_fact"
+    }
+  ],
+  "row_counts": {
+    "overview": 2,
+    "pricing": 11,
+    "invoices": 192,
+    "po": 24,
+    "rates": 11,
+    "renewal": 6,
+    "sla": 96,
+    "usage": 144,
+    "finance": 2,
+    "scope": 18,
+    "inventory": 6,
+    "pageText": 24,
+    "clauses": 30,
+    "reconciliation": 2,
+    "evidenceInventory": 12,
+    "talkTrack": 12
+  },
+  "non_additive_measures": [
+    "recoverable_leakage_usd",
+    "avoided_cost_usd",
+    "negotiated_improvement_usd",
+    "realized_value_usd",
+    "annual_value_usd",
+    "actual_annual_spend_usd"
+  ]
+}

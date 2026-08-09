@@ -12,15 +12,16 @@ const SOURCE_SCHEMA = "source";
 const DOC_SCHEMA = "doc";
 const META_SCHEMA = "meta";
 const TOWER_SCHEMA = "tower";
-const DATASET_ID = "skyharbor-source-v4-202608-golden-evidence";
-const DATASET_VERSION = "v4-golden-evidence";
-const TENANT_KEY = "skyharbor_global";
-const GOLDEN_CONTRACT_IDS = Object.freeze(["CTR-090", "CTR-061"]);
+const DEFAULT_DATASET_ID = "skyharbor-source-v4-202608-golden-evidence";
+const DEFAULT_DATASET_VERSION = "v4-golden-evidence";
+const DEFAULT_TENANT_KEY = "skyharbor_global";
+const DEFAULT_GOLDEN_CONTRACT_IDS = Object.freeze(["CTR-090", "CTR-061"]);
 const SOURCE_THREAD_ID = "source_contract_optimization_golden_evidence_v1";
-const PACKAGE_DIR = path.join(
+const DEFAULT_PACKAGE_DIR = path.join(
   REPO_ROOT,
   "datasets/source/contract-intelligence/skyharbor-golden-20260808",
 );
+let activePackageDir = DEFAULT_PACKAGE_DIR;
 
 const PACKAGE_CSV_TABLES = Object.freeze([
   ["golden_contract_overview", "synthetic/contract_overview.csv"],
@@ -59,13 +60,13 @@ function parseArgs() {
     tenantKey:
       value("--tenant-key") ||
       process.env.SOURCE_GOLDEN_EVIDENCE_TENANT_KEY ||
-      TENANT_KEY,
+      DEFAULT_TENANT_KEY,
     contractIds: [
       ...new Set(
         (
           value("--contract-id") ||
           process.env.SOURCE_GOLDEN_EVIDENCE_CONTRACT_ID ||
-          GOLDEN_CONTRACT_IDS.join(",")
+          DEFAULT_GOLDEN_CONTRACT_IDS.join(",")
         )
           .split(",")
           .map((contractId) => contractId.trim())
@@ -75,7 +76,26 @@ function parseArgs() {
     datasetId:
       value("--dataset-id") ||
       process.env.SOURCE_GOLDEN_EVIDENCE_DATASET_ID ||
-      DATASET_ID,
+      DEFAULT_DATASET_ID,
+    datasetVersion:
+      value("--dataset-version") ||
+      process.env.SOURCE_GOLDEN_EVIDENCE_DATASET_VERSION ||
+      DEFAULT_DATASET_VERSION,
+    packageDir: path.resolve(
+      value("--package-dir") ||
+        process.env.SOURCE_GOLDEN_EVIDENCE_PACKAGE_DIR ||
+        DEFAULT_PACKAGE_DIR,
+    ),
+    tenantAliases: [
+      ...new Set(
+        (value("--tenant-alias") ||
+          process.env.SOURCE_GOLDEN_EVIDENCE_TENANT_ALIASES ||
+          "")
+          .split(",")
+          .map((alias) => alias.trim())
+          .filter(Boolean),
+      ),
+    ],
     loadRunId:
       value("--load-run-id") ||
       process.env.LOAD_RUN_ID ||
@@ -123,7 +143,7 @@ function quoteIdent(value) {
 }
 
 function readText(relativePath) {
-  return fs.readFileSync(path.join(PACKAGE_DIR, relativePath), "utf8");
+  return fs.readFileSync(path.join(activePackageDir, relativePath), "utf8");
 }
 
 function readJson(relativePath) {
@@ -170,15 +190,25 @@ function nonEmpty(value) {
 }
 
 function relPackagePath(relativePath) {
-  return `datasets/source/contract-intelligence/skyharbor-golden-20260808/${relativePath}`;
+  const repoRelativePackageDir = path.relative(REPO_ROOT, activePackageDir);
+  if (!repoRelativePackageDir.startsWith("..") && !path.isAbsolute(repoRelativePackageDir)) {
+    return `${repoRelativePackageDir}/${relativePath}`;
+  }
+  return `external-source-package/${path.basename(activePackageDir)}/${relativePath}`;
 }
 
-function tenantAliases(tenantKey) {
+function tenantAliases(argsOrTenantKey) {
+  const tenantKey =
+    typeof argsOrTenantKey === "string" ? argsOrTenantKey : argsOrTenantKey.tenantKey;
+  const explicitAliases =
+    typeof argsOrTenantKey === "string" ? [] : argsOrTenantKey.tenantAliases || [];
   return [
     ...new Set(
-      [tenantKey, tenantKey === "skyharbor_global" ? "skyharbor" : null].filter(
-        Boolean,
-      ),
+      [
+        tenantKey,
+        tenantKey === "skyharbor_global" ? "skyharbor" : null,
+        ...explicitAliases,
+      ].filter(Boolean),
     ),
   ];
 }
@@ -530,7 +560,7 @@ async function loadDocumentEvidence(client, args) {
         mapped ? nonEmpty(row.contract_id) : null,
         JSON.stringify({
           dataset_id: args.datasetId,
-          dataset_version: DATASET_VERSION,
+          dataset_version: args.datasetVersion,
           mapping_status: row.mapping_status,
           storage_target: row.storage_target,
           parser_version: row.parser_version,
@@ -609,7 +639,7 @@ async function loadDocumentEvidence(client, args) {
         row.review_state || "unreviewed",
         JSON.stringify({
           dataset_id: args.datasetId,
-          dataset_version: DATASET_VERSION,
+          dataset_version: args.datasetVersion,
           contract_id: row.contract_id,
           vendor_id: row.vendor_id,
           vendor_name: row.vendor_name,
@@ -637,17 +667,17 @@ async function loadDocumentEvidence(client, args) {
   };
 }
 
-async function verifyContractById(client, tenantKey, contractId) {
+async function verifyContractById(client, args, contractId) {
   const result = await client.query(
     `SELECT tenant_key, contract_id, vendor_ref, vendor_name, annual_value
        FROM source.contract_360
       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
       LIMIT 1`,
-    [tenantAliases(tenantKey), contractId],
+    [tenantAliases(args), contractId],
   );
   if (!result.rows[0]) {
     throw new Error(
-      `Contract ${contractId} was not found in source.contract_360 for ${tenantKey}`,
+      `Contract ${contractId} was not found in source.contract_360 for ${args.tenantKey}`,
     );
   }
   return result.rows[0];
@@ -699,7 +729,7 @@ async function upsertTowerClaim(client, args, contract, reconciliationRow) {
       contract.vendor_ref || null,
       JSON.stringify({
         dataset_id: args.datasetId,
-        dataset_version: DATASET_VERSION,
+        dataset_version: args.datasetVersion,
         synthetic_canary: true,
       }),
     ],
@@ -832,6 +862,7 @@ async function reconcile(client, args) {
 
 async function main() {
   const args = parseArgs();
+  activePackageDir = args.packageDir;
   const manifest = readJson("manifest.json");
   const qualityReport = readJson("documents/pdf_extraction_quality_report.json");
   const plan = {
@@ -839,7 +870,7 @@ async function main() {
     apply: false,
     tenant_key: args.tenantKey,
     dataset_id: args.datasetId,
-    dataset_version: DATASET_VERSION,
+    dataset_version: args.datasetVersion,
     contract_ids: args.contractIds,
     load_run_id: args.loadRunId,
     evidence_rows: {
@@ -886,7 +917,7 @@ async function main() {
     );
     const contracts = [];
     for (const contractId of args.contractIds) {
-      contracts.push(await verifyContractById(client, args.tenantKey, contractId));
+      contracts.push(await verifyContractById(client, args, contractId));
     }
     const sourceTablesInserted = await loadPackageCsvTables(client, args);
     const documentEvidenceInserted = await loadDocumentEvidence(client, args);
