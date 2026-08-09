@@ -179,7 +179,7 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     contextRead:
       "The loaded context reads as an airline operating system, not a generic AI portfolio: industry context, source systems, applications, contracts, usage, evidence, and module routes all need to appear in one executive landscape.",
     architectureRead:
-      "The architecture read is the current Data and AI flow from source systems to consumption and agent action. Home should show where operational applications create data, how it moves through integration, where it lands, who consumes it, where AI agents run, and what evidence gates control value claims.",
+      "The architecture read is a set of scoped current-state exhibits, not one giant map. Data and AI, ERP and finance, private data-center/mainframe resilience, and digital airline channels each have distinct source, integration, hosting, consumption, and proof questions.",
     anchors: [
       {
         label: "Technology budget",
@@ -368,7 +368,7 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
         layer: "01",
         title: "Applications and core systems",
         detail:
-          "Operational applications and systems of record are both data producers and workflow endpoints for airline execution.",
+          "Operational applications, digital channels, ERP systems, and mainframe-hosted systems of record are both data producers and workflow endpoints for airline execution.",
         coverage: "Source lane",
         examples: [
           "Operations Control",
@@ -376,6 +376,8 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
           "Baggage",
           "MRO",
           "Passenger service",
+          "IBM mainframe",
+          "Airline.com",
         ],
         tone: "blue",
         ratio: 0.92,
@@ -384,12 +386,13 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
         layer: "02",
         title: "Integration, ETL, and event movement",
         detail:
-          "Batch, API, file, and event paths move data from core systems into analytical and AI-ready platforms.",
+          "Batch, API, file, event, MQ, and ETL paths move data from core systems into analytical and AI-ready platforms.",
         coverage: "Movement lane",
         examples: [
           "ETL modernization",
           "Kafka",
           "MuleSoft",
+          "IBM MQ",
           "IBM DataStage",
           "Informatica",
           "Ab Initio",
@@ -406,6 +409,7 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
         examples: [
           "Teradata Vantage",
           "Teradata EDW",
+          "IBM DB2",
           "Snowflake",
           "SQL Server",
           "PostgreSQL",
@@ -472,7 +476,7 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     architectureDecisions: [
       {
         title: "Resolve contradictory lifecycle states",
-        body: "Systems marked for retirement while still carrying maintain decisions need governance before dependent AI or modernization work is scaled.",
+        body: "Systems marked for retirement while still carrying maintain decisions need governance before dependent AI, ERP, or data-platform modernization work is scaled.",
         evidence: "APP-APP-0011 signal · planning-grade",
         tone: "red",
       },
@@ -497,10 +501,10 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     ],
     architectureDeployments: [
       {
-        label: "On-prem / private DC",
-        posture: "Core and legacy gravity",
-        body: "Airline operational and ERP-adjacent systems often retain private data-center or on-prem gravity where reliability, latency, control, and legacy integration dominate.",
-        examples: ["ERP/finance", "MRO", "SAS", "Teradata", "legacy ETL"],
+        label: "Private DC / mainframe",
+        posture: "Core, resilience, and legacy gravity",
+        body: "A credible airline current state needs at least two private data centers and explicit IBM/mainframe gravity where reliability, latency, settlement, and legacy integration dominate.",
+        examples: ["DC1/DC2", "IBM z/OS", "CICS", "DB2", "MQ", "legacy ETL"],
         tone: "amber",
         ratio: 0.72,
       },
@@ -521,8 +525,9 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
       {
         label: "Hybrid cloud",
         posture: "The real operating model",
-        body: "The practical architecture is hybrid: core systems, integration, warehouses, cloud analytics, and AI tools must be governed as one flow.",
+        body: "The practical architecture is hybrid: mainframe, private cloud, core systems, integration, warehouses, cloud analytics, SaaS, and AI tools must be governed as one flow.",
         examples: [
+          "Private cloud",
           "Kafka/API paths",
           "EDW to marts",
           "Cloud analytics",
@@ -530,6 +535,20 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
         ],
         tone: "teal",
         ratio: 0.88,
+      },
+      {
+        label: "Digital edge",
+        posture: "Customer-facing speed layer",
+        body: "Airline.com, mobile, kiosks, loyalty, passenger service, and contact-center channels follow a real-time API and experience-data pattern rather than the ERP control pattern.",
+        examples: [
+          "Airline.com",
+          "Mobile",
+          "API gateway",
+          "Loyalty",
+          "Passenger service",
+        ],
+        tone: "blue",
+        ratio: 0.8,
       },
     ],
     architectureArchetypes: [

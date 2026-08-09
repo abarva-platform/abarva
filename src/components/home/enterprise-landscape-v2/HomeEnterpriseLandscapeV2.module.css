@@ -441,6 +441,97 @@
   margin-top: 12px;
 }
 
+.architectureStoryboard {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.architectureDiagramCard {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(217, 224, 234, 0.94);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), #fbfcff),
+    repeating-linear-gradient(
+      90deg,
+      rgba(217, 224, 234, 0.34) 0,
+      rgba(217, 224, 234, 0.34) 1px,
+      transparent 1px,
+      transparent 52px
+    );
+  overflow: hidden;
+}
+
+.architectureMiniSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 10px;
+}
+
+.miniDiagramBase rect {
+  fill: #fff;
+  stroke: #cfd9e8;
+  stroke-width: 1.4;
+}
+
+.miniDiagramBase rect:nth-child(1) {
+  fill: #f6f9fd;
+}
+
+.miniDiagramBase rect:nth-child(3),
+.miniDiagramBase rect:nth-child(5) {
+  fill: #f0f7ff;
+}
+
+.miniDiagramBase rect:nth-child(7) {
+  fill: #eef8f6;
+}
+
+.miniDiagramBase rect:nth-child(9) {
+  fill: #fff7e8;
+}
+
+.miniDiagramBase rect:nth-child(11) {
+  fill: #f5f7fb;
+}
+
+.miniDiagramFlows path {
+  fill: none;
+  stroke: #8da2bd;
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.dashedFlow {
+  stroke: #b97824 !important;
+  stroke-dasharray: 6 6;
+}
+
+.miniLabel {
+  fill: #34445d;
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0;
+}
+
+.miniCenterText {
+  fill: #172033;
+  font-size: 10px;
+  font-weight: 740;
+  letter-spacing: 0;
+}
+
+.miniFootnote {
+  fill: #40506a;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .hostingBands rect {
   fill: rgba(255, 255, 255, 0.86);
   stroke: rgba(159, 179, 207, 0.7);
@@ -1069,6 +1160,7 @@
   .contextSignalWall,
   .contextDomainGrid,
   .architectureStack,
+  .architectureStoryboard,
   .architectureDecisionGrid,
   .deploymentGrid,
   .archetypeGrid,
@@ -1145,6 +1237,7 @@
   .contextSignalWall,
   .contextDomainGrid,
   .architectureStack,
+  .architectureStoryboard,
   .architectureDecisionGrid,
   .deploymentGrid,
   .archetypeGrid,
