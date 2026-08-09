@@ -35,11 +35,25 @@ interface BoardMetric {
 function boardMetrics(view: TowerCommandCenterView): BoardMetric[] {
   const s = view.summary;
   const financeBlockedUsd = s.financeValidatedBlockedUsd;
-  const programsWithUsage = view.programs.filter(
-    (program) => program.usageStatus !== "none",
-  ).length;
 
   return [
+    {
+      key: "investment",
+      label: "Approved investment",
+      value: formatUsdM(s.approvedInvestmentUsd),
+      note: `${formatCount(s.boardScopeProgramCount)} board portfolio programs`,
+      tone: (s.approvedInvestmentUsd ?? 0) > 0 ? "gray" : "amber",
+    },
+    {
+      key: "explicit-benefit",
+      label: "Explicit promised benefit",
+      value:
+        s.promisedBenefitUsd === null
+          ? "Not loaded"
+          : formatUsdM(s.promisedBenefitUsd),
+      note: "only source-backed benefit assertions",
+      tone: s.promisedBenefitUsd === null ? "amber" : "teal",
+    },
     {
       key: "claimable",
       label: "Claimable today",
@@ -53,16 +67,6 @@ function boardMetrics(view: TowerCommandCenterView): BoardMetric[] {
       value: formatUsdM(financeBlockedUsd),
       note: "validated value still held by the claim gate",
       tone: financeBlockedUsd > 0 ? "amber" : "gray",
-    },
-    {
-      key: "usage-evidence",
-      label: "Adoption evidence",
-      value: formatCount(programsWithUsage),
-      note:
-        programsWithUsage > 0
-          ? "programs with usage telemetry in this read"
-          : "no usage telemetry projected to these rows",
-      tone: programsWithUsage > 0 ? "teal" : "amber",
     },
   ];
 }
@@ -80,10 +84,27 @@ function sourceTrustRows(view: TowerCommandCenterView) {
       tone: "teal" as const,
     },
     {
-      label: "Promised value",
-      value: formatUsdM(s.promisedUsd),
-      status: conflicts > 0 ? "CONFLICT" : "LINEAGE NOT LOADED",
-      tone: "amber" as const,
+      label: "Approved investment",
+      value: formatUsdM(s.approvedInvestmentUsd),
+      status: "INVESTMENT",
+      tone: "teal" as const,
+    },
+    {
+      label: "Promised benefit",
+      value:
+        s.promisedBenefitUsd === null
+          ? "Not loaded"
+          : formatUsdM(s.promisedBenefitUsd),
+      status:
+        s.promisedBenefitUsd === null
+          ? "ABSENT"
+          : conflicts > 0
+            ? "CONFLICT"
+            : "SOURCE BACKED",
+      tone:
+        s.promisedBenefitUsd === null || conflicts > 0
+          ? ("amber" as const)
+          : ("teal" as const),
     },
     {
       label: "AI spend grain",
@@ -122,11 +143,18 @@ function cockpitRead(view: TowerCommandCenterView): string {
   if (s.claimableUsd > 0) {
     return `${formatUsdM(s.claimableUsd)} is claimable today. Keep the remaining capital in proof-gated lanes until owners close usage, Finance, and attestation gaps.`;
   }
-  if (s.promisedUsd > 0 && hasSourceConflict) {
-    return `${formatUsdM(s.promisedUsd)} is visible as promised exposure, but source authority is unresolved. ${formatCount(blockedPrograms)} programs remain blocked until evidence owners reconcile the proof chain.`;
+  if (!s.promisedBenefitLoaded) {
+    return `${formatUsdM(s.approvedInvestmentUsd)} of approved investment is visible across ${formatCount(s.boardScopeProgramCount)} board portfolio programs, but explicit promised benefit is absent. Keep benefit totals null until source-backed value cases are loaded and classified.`;
   }
-  if (s.promisedUsd > 0) {
-    return `${formatUsdM(s.promisedUsd)} is visible as promised value, but ${formatCount(blockedPrograms)} programs still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
+  if (
+    s.promisedBenefitUsd !== null &&
+    s.promisedBenefitUsd > 0 &&
+    hasSourceConflict
+  ) {
+    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but source authority is unresolved. ${formatCount(blockedPrograms)} programs remain blocked until evidence owners reconcile the proof chain.`;
+  }
+  if (s.promisedBenefitUsd !== null && s.promisedBenefitUsd > 0) {
+    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but ${formatCount(blockedPrograms)} programs still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
   }
   return "Tower can see the operating surface, but no governed value case is loaded yet. Start with source-backed value cases before making capital calls.";
 }
@@ -138,10 +166,20 @@ function cockpitVerdict(view: TowerCommandCenterView): string {
   if (view.summary.claimableUsd > 0) {
     return "Some value is claimable, but additional capital still depends on the proof gates below.";
   }
-  if (view.summary.promisedUsd > 0 && hasSourceConflict) {
-    return "Investment and adoption are visible. The economic case is not board-certified.";
+  if (!view.summary.promisedBenefitLoaded) {
+    return "Investment is visible. Explicit benefit proof is not loaded.";
   }
-  if (view.summary.promisedUsd > 0) {
+  if (
+    view.summary.promisedBenefitUsd !== null &&
+    view.summary.promisedBenefitUsd > 0 &&
+    hasSourceConflict
+  ) {
+    return "Investment and benefit assertions are visible. Source authority is not board-certified.";
+  }
+  if (
+    view.summary.promisedBenefitUsd !== null &&
+    view.summary.promisedBenefitUsd > 0
+  ) {
     return "Investment is visible. Outcome proof is not yet board-claimable.";
   }
   return "Tower has spend posture in view, but no governed value case is loaded yet.";
@@ -173,9 +211,6 @@ export function CommandCenterView({
   const queue = decisionQueue(view);
   const waterfallRows = buildWaterfallRows(s);
   const trustRows = sourceTrustRows(view);
-  const usagePrograms = view.programs.filter(
-    (program) => program.usageStatus !== "none",
-  ).length;
   const openGapCount = view.gaps.length;
 
   return (
@@ -217,14 +252,16 @@ export function CommandCenterView({
           </p>
         </div>
         <div className={styles.scopeFacts}>
-          <span>{formatCount(view.programs.length)} programs in scope</span>
-          <span>{formatCount(usagePrograms)} with adoption evidence</span>
-          <span>{formatCount(openGapCount)} open proof gaps</span>
           <span>
-            {trustRows[1]?.status === "LINEAGE NOT LOADED"
-              ? "source-trust row absent"
-              : `lineage: ${trustRows[1]?.status ?? "not loaded"}`}
+            {formatCount(s.totalProgramSubjectCount)} tracked subjects
           </span>
+          <span>{formatCount(s.boardScopeProgramCount)} board programs</span>
+          <span>{formatCount(s.aiInitiativeCount)} AI initiatives</span>
+          <span>{formatCount(openGapCount)} open proof actions</span>
+          <span>
+            {formatCount(s.economicReviewQueueCount)} economic reviews
+          </span>
+          <span>benefit source: {trustRows[2]?.status ?? "ABSENT"}</span>
         </div>
       </section>
 
@@ -236,23 +273,39 @@ export function CommandCenterView({
           bodyClassName={styles.cockpitChartBody}
         >
           <p className={styles.chartTruthNote}>
-            Money moves left to right only when baseline, usage, Finance, and
-            attestation evidence clear the claim gate.
+            Benefit moves left to right only when baseline, usage, Finance, and
+            attestation evidence clear the claim gate. Approved investment is
+            not treated as promised benefit.
           </p>
-          <div
-            className={styles.cockpitWaterfall}
-            aria-describedby="tcc-waterfall-alt"
-          >
-            <ValueWaterfallChart summary={s} />
-          </div>
+          {s.promisedBenefitLoaded ? (
+            <div
+              className={styles.cockpitWaterfall}
+              aria-describedby="tcc-waterfall-alt"
+            >
+              <ValueWaterfallChart summary={s} />
+            </div>
+          ) : (
+            <div
+              className={styles.emptyPanel}
+              aria-describedby="tcc-waterfall-alt"
+            >
+              <h2>Explicit benefit is not loaded</h2>
+              <p>
+                Tower can see approved investment, adoption signals, and proof
+                actions, but it will not draw a benefit waterfall until a
+                source-backed benefit assertion exists.
+              </p>
+            </div>
+          )}
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
-            {waterfallRows
-              .map(
-                (row) =>
-                  `${row.name.replace("|", " ")}: ${formatUsdM(row.usd)}`,
-              )
-              .join(". ")}
-            .
+            {s.promisedBenefitLoaded
+              ? `${waterfallRows
+                  .map(
+                    (row) =>
+                      `${row.name.replace("|", " ")}: ${formatUsdM(row.usd)}`,
+                  )
+                  .join(". ")}.`
+              : `Explicit promised benefit is not loaded. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
           </p>
           <button
             type="button"
@@ -301,5 +354,10 @@ export function CommandCenterView({
 
 /** Re-exported so the tab bar can badge the same condition the verdict shows. */
 export function commandCenterAttention(view: TowerCommandCenterView): boolean {
-  return view.summary.claimableUsd <= 0 && view.summary.promisedUsd > 0;
+  return (
+    view.summary.claimableUsd <= 0 &&
+    ((view.summary.approvedInvestmentUsd ?? 0) > 0 ||
+      view.summary.promisedBenefitLoaded ||
+      view.summary.economicReviewQueueCount > 0)
+  );
 }

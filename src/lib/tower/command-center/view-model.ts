@@ -333,6 +333,7 @@ function toProgramView(
 
     fundedUsd: num(row.approvedFundingUsd),
     promisedUsd: num(row.promisedValueUsd),
+    promisedBenefitLoaded: row.promisedValueUsd !== null,
     usageSupportedUsd: usageSupported,
     financeValidatedUsd: num(row.financeValidatedValueUsd),
     claimableUsd: derived.claimableUsd,
@@ -388,6 +389,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     riskScore: Math.max(0, Math.min(100, num(item.riskScore))),
     aiSpendUsd: num(item.aiTaggedSpendUsd),
     promisedUsd: num(item.promisedValueUsd),
+    promisedBenefitLoaded: item.promisedValueUsd !== null,
     financeValidatedUsd: num(item.financeValidatedValueUsd),
     posture: postureFor(item),
     usageHeadline: trimOrNull(item.usageMetric)
@@ -1220,7 +1222,8 @@ export function buildTowerCommandCenterView(
     0,
   );
   const claimable = num(command.realizedValueYtdAllowed);
-  const promised = num(command.promisedValueFy26);
+  const promisedBenefitUsd = command.promisedValueFy26 ?? null;
+  const promised = num(promisedBenefitUsd);
 
   const concentration = vendorConcentrationPct(mart.aiPortfolio);
   if (concentration === null) unknownSlots.push("Top-3 vendor concentration");
@@ -1278,11 +1281,14 @@ export function buildTowerCommandCenterView(
     sourceStandard: command.sourceStandard,
     sourceFiles: command.sourceFiles ?? [],
 
-    budgetUsd: num(command.totalItBudgetFy26),
-    runUsd: num(command.runBudgetFy26),
-    changeUsd: num(command.changeBudgetFy26),
+    budgetUsd: command.totalItBudgetFy26,
+    runUsd: command.runBudgetFy26,
+    changeUsd: command.changeBudgetFy26,
+    approvedInvestmentUsd: command.approvedProgramBudgetFy26,
     aiTaggedUsd: totalAiTaggedUsd,
 
+    promisedBenefitUsd,
+    promisedBenefitLoaded: promisedBenefitUsd !== null,
     promisedUsd: promised,
     usageSupportedUsd: usageSupportedTotal,
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
@@ -1317,7 +1323,16 @@ export function buildTowerCommandCenterView(
     conflictedProgramCount: command.conflictedProgramCount ?? 0,
     unmeasuredProgramCount: command.unmeasuredProgramCount ?? 0,
 
-    programCount: programs.length,
+    programCount: command.boardScopeProgramCount ?? programs.length,
+    totalProgramSubjectCount:
+      command.totalProgramSubjectCount ?? programs.length,
+    activeProgramSubjectCount:
+      command.activeProgramSubjectCount ??
+      command.totalProgramSubjectCount ??
+      programs.length,
+    materialProgramCount: command.materialProgramCount ?? programs.length,
+    boardScopeProgramCount: command.boardScopeProgramCount ?? programs.length,
+    economicReviewQueueCount: command.economicReviewQueueCount ?? 0,
     aiInitiativeCount: ai.length,
     candidateAiCount: totalCandidateCount,
     watchPressureSignals: num(command.watchPressureSignals),

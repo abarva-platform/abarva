@@ -56,11 +56,7 @@ const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
   gray: "",
 };
 
-function EvidenceLaneBoard({
-  view,
-}: {
-  view: TowerCommandCenterView;
-}) {
+function EvidenceLaneBoard({ view }: { view: TowerCommandCenterView }) {
   return (
     <div className={styles.interventionLanes}>
       {view.evidenceMaturity.interventionLanes.map((lane) => (
@@ -111,7 +107,7 @@ function LaneTable({
             Funded
           </th>
           <th scope="col" className={styles.num}>
-            Promised
+            Benefit
           </th>
           <th scope="col" className={styles.num}>
             Proof
@@ -162,8 +158,8 @@ function LaneTable({
             </td>
             <td className={styles.num}>
               <span className={cx(styles.bignum, styles.bignumSm)}>
-                {valueUnknown ? (
-                  <Unknown label="Unknown" />
+                {valueUnknown || !p.promisedBenefitLoaded ? (
+                  <Unknown label="Not loaded" />
                 ) : (
                   formatUsdM(p.promisedUsd)
                 )}
@@ -234,9 +230,9 @@ function LaneColumns({
               <div className={styles.lhSub}>{lane.sub}</div>
               <div className={cx(styles.lhVal, styles[valueTone])}>
                 {valueUnknown ? (
-                  <Unknown label="Value unknown" />
+                  <Unknown label="Benefit unknown" />
                 ) : (
-                  `${formatUsdM(total)} promised`
+                  `${formatUsdM(total)} benefit`
                 )}
               </div>
             </header>
@@ -261,10 +257,10 @@ function LaneColumns({
                       </span>
                       <span className={styles.p}>
                         funded ·{" "}
-                        {valueUnknown ? (
-                          <Unknown label="value unknown" />
+                        {valueUnknown || !p.promisedBenefitLoaded ? (
+                          <Unknown label="benefit not loaded" />
                         ) : (
-                          `${formatUsdM(p.promisedUsd)} promised`
+                          `${formatUsdM(p.promisedUsd)} benefit`
                         )}
                       </span>
                     </span>
@@ -329,10 +325,10 @@ function LaneLegendList({
             {p.name}
             <small>
               {p.ownerRole ?? "No owner recorded"} ·{" "}
-              {valueUnknown ? (
-                <Unknown label="value unknown" />
+              {valueUnknown || !p.promisedBenefitLoaded ? (
+                <Unknown label="benefit not loaded" />
               ) : (
-                `${formatUsdM(p.promisedUsd)} promised`
+                `${formatUsdM(p.promisedUsd)} benefit`
               )}
             </small>
           </span>
@@ -468,7 +464,7 @@ export function DecisionLanesView({
       >
         <Card
           eyebrow="Portfolio heatmap"
-          right="program promised value × proof maturity · by decision lane"
+          right="program benefit × proof maturity · by decision lane"
           headId="tcc-lanes-heat-full"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
@@ -540,8 +536,8 @@ export function DecisionLanesView({
       <div className={styles.zipContractNote}>
         <Dot tone={subView === "heatmap" ? "amber" : "teal"} />
         <span>
-          Default view is topology-first: promised exposure, proof maturity,
-          and decision lane should be visible before the operating table.
+          Default view is topology-first: promised exposure, proof maturity, and
+          decision lane should be visible before the operating table.
         </span>
       </div>
       {body}

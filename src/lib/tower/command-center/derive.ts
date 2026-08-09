@@ -107,7 +107,7 @@ export function hasUsageEvidence(row: {
  * rather than hiding it.
  */
 export function usageSupportedUsd(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   adoptionRatePct: number | null;
   usageMetric: string | null;
@@ -125,7 +125,7 @@ export function usageSupportedUsd(row: {
  * taller bar further down the chain.
  */
 export function financeExceedsUsage(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   adoptionRatePct: number | null;
   usageMetric: string | null;
@@ -135,7 +135,7 @@ export function financeExceedsUsage(row: {
 }
 
 export function proofSequenceStatus(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   adoptionRatePct: number | null;
   usageMetric: string | null;
@@ -147,7 +147,7 @@ export function proofSequenceStatus(row: {
 }
 
 export function proofSequenceExplanation(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   adoptionRatePct: number | null;
   usageMetric: string | null;
@@ -189,7 +189,7 @@ export function claimableUsd(row: {
  * on, so it must stay a simple, explainable subtraction.
  */
 export function blockedUsd(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   towerClaimAllowed: string;
   financeValidatedValueUsd: number;
 }): number {
@@ -245,7 +245,7 @@ export function gatesClearedFraction(
  * validated, fully adopted and fully gated scores 100.
  */
 export function evidenceMaturity(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   adoptionRatePct: number | null;
   usageMetric: string | null;
@@ -275,7 +275,7 @@ export function evidenceMaturity(row: {
  * "how complete is the evidence?".
  */
 export function proofLevel(row: {
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   towerClaimAllowed: string;
   adoptionRatePct: number | null;
@@ -335,7 +335,7 @@ export function financeStatus(row: {
  */
 export function laneFor(row: {
   decisionLane: TowerMartProgramLane["decisionLane"];
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   approvedFundingUsd: number;
 }): TowerLaneKey {
   const promised = safeNum(row.promisedValueUsd);

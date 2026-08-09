@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 
-const migration = readFileSync(
+const baseMigration = readFileSync(
   "supabase/migrations/20260809150000_tower_value_operating_system_v1.sql",
+  "utf8",
+);
+const migration = readFileSync(
+  "supabase/migrations/20260809193000_tower_value_os_semantic_remediation_v1.sql",
   "utf8",
 );
 const reader = readFileSync("src/lib/tower/readTowerCommandCenter.ts", "utf8");
@@ -9,15 +13,14 @@ const reader = readFileSync("src/lib/tower/readTowerCommandCenter.ts", "utf8");
 describe("Tower value operating system contract", () => {
   it("creates the additive value-case layer and governed consumption views", () => {
     for (const tableName of [
-      "CREATE TABLE IF NOT EXISTS tower.tracked_subject",
-      "CREATE TABLE IF NOT EXISTS tower.metric_observation",
-      "CREATE TABLE IF NOT EXISTS tower.value_claim",
-      "tower.value_case",
-      "tower.value_case_period",
-      "tower.subject_link",
-      "tower.economic_conversion",
-      "tower.attestation_event",
-      "tower.proof_action",
+      "CREATE TABLE IF NOT EXISTS tower.value_case_claim_link",
+      "CREATE TABLE IF NOT EXISTS tower.ai_identity_crosswalk",
+      "semantic_remediation_v1",
+      "economic_classification",
+      "board_scope_state",
+      "material_scope_state",
+      "source_count",
+      "value_case_group_key",
     ]) {
       expect(migration).toContain(tableName);
     }
@@ -36,9 +39,10 @@ describe("Tower value operating system contract", () => {
     }
   });
 
-  it("keeps promised value conflicted and capacity separate from savings until conversion evidence exists", () => {
+  it("separates investment from explicit benefit and derives source trust from source count", () => {
+    expect(baseMigration).toContain("generate_series(0, 7)");
+    expect(baseMigration).toContain("capacity_hours");
     expect(migration).toContain("generate_series(0, 7)");
-    expect(migration).toContain("capacity_hours");
     expect(migration).toContain("financial_conversion_usd");
     expect(migration).toContain("remaining_commitment_usd");
     expect(migration).toContain("risk_adjusted_forecast_usd");
@@ -53,10 +57,17 @@ describe("Tower value operating system contract", () => {
     expect(migration).toMatch(
       /source_trust_state IN \('AGREE', 'ONE_SOURCE', 'CONFLICT', 'ABSENT'\)/,
     );
-    expect(migration).toContain("CONFLICT - authority unresolved");
+    expect(migration).toContain("source_count = 0 THEN 'ABSENT'");
+    expect(migration).toContain("source_count = 1 THEN 'ONE_SOURCE'");
     expect(migration).toContain(
-      "Source conflicts block claimable or realized value",
+      "distinct_source_value_count <= 1 THEN 'AGREE'",
     );
+    expect(migration).toContain("ELSE 'CONFLICT'");
+    expect(migration).toContain(
+      "Approved funding is investment, not promised benefit",
+    );
+    expect(migration).toContain("CTR-061");
+    expect(migration).toContain("CTR-090");
   });
 
   it("dedupes the observation grain and recalculates usage rate from numerator and denominator", () => {

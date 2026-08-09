@@ -75,11 +75,14 @@ export interface TowerCommandSummary {
   sourceStandard: string;
   sourceFiles: readonly string[];
 
-  budgetUsd: number;
-  runUsd: number;
-  changeUsd: number;
+  budgetUsd: number | null;
+  runUsd: number | null;
+  changeUsd: number | null;
+  approvedInvestmentUsd: number | null;
   aiTaggedUsd: number;
 
+  promisedBenefitUsd: number | null;
+  promisedBenefitLoaded: boolean;
   promisedUsd: number;
   usageSupportedUsd: number;
   financeValidatedUsd: number;
@@ -109,6 +112,11 @@ export interface TowerCommandSummary {
   unmeasuredProgramCount: number;
 
   programCount: number;
+  totalProgramSubjectCount: number;
+  activeProgramSubjectCount: number;
+  materialProgramCount: number;
+  boardScopeProgramCount: number;
+  economicReviewQueueCount: number;
   aiInitiativeCount: number;
   candidateAiCount: number;
   watchPressureSignals: number;
@@ -173,6 +181,7 @@ export interface TowerProgramView {
 
   fundedUsd: number;
   promisedUsd: number;
+  promisedBenefitLoaded: boolean;
   usageSupportedUsd: number;
   financeValidatedUsd: number;
   claimableUsd: number;
@@ -244,6 +253,7 @@ export interface TowerAiView {
   /** Bubble size. */
   aiSpendUsd: number;
   promisedUsd: number;
+  promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;
   /** Recommended posture — mart-derived, never invented. */
   posture: string;

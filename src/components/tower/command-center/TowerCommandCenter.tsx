@@ -22,7 +22,10 @@ import { EvidenceGapDrawer } from "./drawers/EvidenceGapDrawer";
 import { ProgramDrawer } from "./drawers/ProgramDrawer";
 import { Dot, cx } from "./primitives";
 import styles from "./TowerCommandCenter.module.css";
-import { CommandCenterView } from "./views/CommandCenterView";
+import {
+  CommandCenterView,
+  commandCenterAttention,
+} from "./views/CommandCenterView";
 import {
   AiPortfolioView,
   type AiFilter,
@@ -168,12 +171,12 @@ export function TowerCommandCenter({
           <div className={styles.emptyPanel}>
             <h2>No governed Tower data for this tenant</h2>
             <p>
-              The <code>tower</code> read model carries no rows for{" "}
-              {tenantName}. This page renders nothing rather than showing zeros
-              — a zero would be a claim that the budget, promised value and
-              claimable value are all nil, which is not what absent data means.
-              Load governed Tower metric observations, claims and provenance for
-              this tenant to populate it.
+              The <code>tower</code> read model carries no rows for {tenantName}
+              . This page renders nothing rather than showing zeros — a zero
+              would be a claim that the budget, promised value and claimable
+              value are all nil, which is not what absent data means. Load
+              governed Tower metric observations, claims and provenance for this
+              tenant to populate it.
             </p>
           </div>
         </div>
@@ -265,12 +268,10 @@ export function TowerCommandCenter({
                 Refreshed {refreshedOn}
                 <br />
                 {view
-                  ? `${formatCount(view.summary.programCount)} programs · ${formatCount(view.summary.aiInitiativeCount)} AI initiatives`
+                  ? `${formatCount(view.summary.boardScopeProgramCount)} board programs · ${formatCount(view.summary.totalProgramSubjectCount)} tracked subjects · ${formatCount(view.summary.aiInitiativeCount)} AI initiatives`
                   : "no governed rows"}
               </div>
-              {view &&
-              view.summary.claimableUsd <= 0 &&
-              view.summary.promisedUsd > 0 ? (
+              {view && commandCenterAttention(view) ? (
                 <div className={styles.flag}>
                   <Dot tone="red" /> Value proof — Critical
                 </div>

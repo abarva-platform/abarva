@@ -11,19 +11,24 @@ export interface TowerMartCommandCenter {
   martVersion: string;
   sourceStandard: string;
   formulaVersion: string;
-  totalItBudgetFy26: number;
-  runBudgetFy26: number;
-  changeBudgetFy26: number;
-  approvedProgramBudgetFy26: number;
-  aiTaggedSpendFy26NonAdditive: number;
-  promisedValueFy26: number;
+  totalItBudgetFy26: number | null;
+  runBudgetFy26: number | null;
+  changeBudgetFy26: number | null;
+  approvedProgramBudgetFy26: number | null;
+  aiTaggedSpendFy26NonAdditive: number | null;
+  promisedValueFy26: number | null;
   partialFinanceValidatedValueYtd: number;
   realizedValueYtdAllowed: number;
   valueClaimCount?: number;
   knownValueClaimCount?: number;
   claimableValue?: number;
   financeValidatedBlockedValue?: number;
-  promisedValueExposure?: number;
+  promisedValueExposure?: number | null;
+  totalProgramSubjectCount?: number;
+  activeProgramSubjectCount?: number;
+  materialProgramCount?: number;
+  boardScopeProgramCount?: number;
+  economicReviewQueueCount?: number;
   unknownValueClaimCount?: number;
   knownZeroValueClaimCount?: number;
   knownValueAmountUsd?: number;
@@ -85,7 +90,7 @@ export interface TowerMartProgramLane {
   approvedFundingUsd: number;
   fundedAmount?: number;
   aiTaggedSpendUsd: number;
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   knownSupportedValue?: number | null;
   proofMaturityScore?: number | null;
@@ -118,7 +123,7 @@ export interface TowerMartAiPortfolioItem {
   decisionLane: "fund" | "fix" | "freeze" | "stop";
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
-  promisedValueUsd: number;
+  promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   usageMetric: string | null;
   usageActual: number | null;
@@ -224,12 +229,12 @@ interface CommandRow {
   mart_version: string;
   source_standard: string;
   formula_version: string;
-  total_it_budget_fy26: string | number;
-  run_budget_fy26: string | number;
-  change_budget_fy26: string | number;
-  approved_program_budget_fy26: string | number;
-  ai_tagged_spend_fy26_non_additive: string | number;
-  promised_value_fy26: string | number;
+  total_it_budget_fy26: string | number | null;
+  run_budget_fy26: string | number | null;
+  change_budget_fy26: string | number | null;
+  approved_program_budget_fy26: string | number | null;
+  ai_tagged_spend_fy26_non_additive: string | number | null;
+  promised_value_fy26: string | number | null;
   partial_finance_validated_value_ytd: string | number;
   realized_value_ytd_allowed: string | number;
   claimable_value?: string | number | null;
@@ -388,14 +393,16 @@ export async function loadTowerMartCommandView(args: {
       martVersion: command.mart_version,
       sourceStandard: command.source_standard,
       formulaVersion: command.formula_version,
-      totalItBudgetFy26: num(command.total_it_budget_fy26),
-      runBudgetFy26: num(command.run_budget_fy26),
-      changeBudgetFy26: num(command.change_budget_fy26),
-      approvedProgramBudgetFy26: num(command.approved_program_budget_fy26),
-      aiTaggedSpendFy26NonAdditive: num(
+      totalItBudgetFy26: nullableNum(command.total_it_budget_fy26),
+      runBudgetFy26: nullableNum(command.run_budget_fy26),
+      changeBudgetFy26: nullableNum(command.change_budget_fy26),
+      approvedProgramBudgetFy26: nullableNum(
+        command.approved_program_budget_fy26,
+      ),
+      aiTaggedSpendFy26NonAdditive: nullableNum(
         command.ai_tagged_spend_fy26_non_additive,
       ),
-      promisedValueFy26: num(command.promised_value_fy26),
+      promisedValueFy26: nullableNum(command.promised_value_fy26),
       partialFinanceValidatedValueYtd: num(
         command.partial_finance_validated_value_ytd,
       ),
@@ -406,9 +413,7 @@ export async function loadTowerMartCommandView(args: {
       financeValidatedBlockedValue: num(
         command.finance_validated_blocked_value,
       ),
-      promisedValueExposure: num(
-        command.promised_value_exposure ?? command.promised_value_fy26,
-      ),
+      promisedValueExposure: nullableNum(command.promised_value_exposure),
       valueClaimCount: Number(command.value_claim_count ?? 0),
       knownValueClaimCount: Number(command.known_value_claim_count ?? 0),
       unknownValueClaimCount: Number(command.unknown_value_claim_count ?? 0),
@@ -525,7 +530,9 @@ export async function loadTowerMartCommandView(args: {
         aiTaggedSpendUsd: num(
           row.ai_tagged_spend_usd as string | number | null,
         ),
-        promisedValueUsd: num(row.promised_value_usd as string | number | null),
+        promisedValueUsd: nullableNum(
+          row.promised_value_usd as string | number | null,
+        ),
         financeValidatedValueUsd: num(
           row.finance_validated_value_usd as string | number | null,
         ),
@@ -585,7 +592,9 @@ export async function loadTowerMartCommandView(args: {
         aiTaggedSpendUsd: num(
           row.ai_tagged_spend_usd as string | number | null,
         ),
-        promisedValueUsd: num(row.promised_value_usd as string | number | null),
+        promisedValueUsd: nullableNum(
+          row.promised_value_usd as string | number | null,
+        ),
         financeValidatedValueUsd: num(
           row.finance_validated_value_usd as string | number | null,
         ),

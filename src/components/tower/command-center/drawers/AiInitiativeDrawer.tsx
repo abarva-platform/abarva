@@ -104,7 +104,12 @@ export function AiInitiativeDrawer({
           <DrawerRow label="System" value={a.system ?? "Not recorded"} />
           <DrawerRow label="Spend type" value={AI_KIND_WORD[a.kind]} />
           <DrawerRow label="Category" value={a.category ?? "Not recorded"} />
-          <DrawerRow label="Promised value" value={formatUsdM(a.promisedUsd)} />
+          <DrawerRow
+            label="Explicit benefit"
+            value={
+              a.promisedBenefitLoaded ? formatUsdM(a.promisedUsd) : "Not loaded"
+            }
+          />
           <DrawerRow
             label="Finance-validated"
             value={formatUsdM(a.financeValidatedUsd)}

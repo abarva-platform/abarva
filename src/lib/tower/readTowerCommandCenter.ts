@@ -71,6 +71,11 @@ interface BoardPostureRow {
   promised_value_board_status: string | null;
   promised_value_trust_state: string | null;
   source_files: string[] | null;
+  total_program_subject_count?: number | null;
+  active_program_subject_count?: number | null;
+  material_program_count?: number | null;
+  board_scope_program_count?: number | null;
+  economic_review_queue_count?: number | null;
 }
 
 interface ValueFunnelRow {
@@ -279,19 +284,41 @@ function mapCommand(row: BoardPostureRow): TowerMartCommandCenter {
     martVersion: row.mart_version,
     sourceStandard: row.source_standard,
     formulaVersion: row.formula_version,
-    totalItBudgetFy26: totalBudget,
-    runBudgetFy26: runBudget,
-    changeBudgetFy26: changeBudget,
-    approvedProgramBudgetFy26: num(row.approved_program_budget_fy26),
-    aiTaggedSpendFy26NonAdditive: num(row.ai_tagged_spend_fy26_non_additive),
-    promisedValueFy26: num(row.promised_value_fy26),
+    totalItBudgetFy26: nullableNum(row.total_it_budget_fy26),
+    runBudgetFy26: nullableNum(row.run_budget_fy26),
+    changeBudgetFy26: nullableNum(row.change_budget_fy26),
+    approvedProgramBudgetFy26: nullableNum(row.approved_program_budget_fy26),
+    aiTaggedSpendFy26NonAdditive: nullableNum(
+      row.ai_tagged_spend_fy26_non_additive,
+    ),
+    promisedValueFy26: nullableNum(row.promised_value_fy26),
     partialFinanceValidatedValueYtd: num(
       row.partial_finance_validated_value_ytd,
     ),
     realizedValueYtdAllowed: num(row.realized_value_ytd_allowed),
     claimableValue: num(row.realized_value_ytd_allowed),
     financeValidatedBlockedValue: num(row.finance_validated_blocked_value),
-    promisedValueExposure: num(row.promised_value_exposure),
+    promisedValueExposure: nullableNum(row.promised_value_exposure),
+    totalProgramSubjectCount:
+      row.total_program_subject_count == null
+        ? undefined
+        : count(row.total_program_subject_count),
+    activeProgramSubjectCount:
+      row.active_program_subject_count == null
+        ? undefined
+        : count(row.active_program_subject_count),
+    materialProgramCount:
+      row.material_program_count == null
+        ? undefined
+        : count(row.material_program_count),
+    boardScopeProgramCount:
+      row.board_scope_program_count == null
+        ? undefined
+        : count(row.board_scope_program_count),
+    economicReviewQueueCount:
+      row.economic_review_queue_count == null
+        ? undefined
+        : count(row.economic_review_queue_count),
     valueClaimCount,
     knownValueClaimCount: count(row.known_value_claim_count),
     unknownValueClaimCount: count(row.unknown_value_claim_count),
@@ -377,7 +404,7 @@ function mapProgramLane(row: PortfolioDecisionRow): TowerMartProgramLane {
     approvedFundingUsd: num(row.approved_funding_usd),
     fundedAmount: num(row.funded_amount),
     aiTaggedSpendUsd: num(row.ai_tagged_spend_usd),
-    promisedValueUsd: num(row.promised_value_usd),
+    promisedValueUsd: nullableNum(row.promised_value_usd),
     financeValidatedValueUsd: num(row.finance_validated_value_usd),
     knownSupportedValue: nullableNum(row.known_supported_value),
     proofMaturityScore: nullableNum(row.proof_maturity_score),
@@ -412,7 +439,7 @@ function mapAiItem(row: AiPortfolioRow): TowerMartAiPortfolioItem {
     decisionLane: decisionLane(row.decision_lane),
     approvedFundingUsd: num(row.approved_funding_usd),
     aiTaggedSpendUsd: num(row.ai_tagged_spend_usd),
-    promisedValueUsd: num(row.promised_value_usd),
+    promisedValueUsd: nullableNum(row.promised_value_usd),
     financeValidatedValueUsd: num(row.finance_validated_value_usd),
     usageMetric: nullableText(row.usage_metric),
     usageActual: nullableNum(row.usage_actual),
@@ -533,7 +560,7 @@ export async function readTowerCommandCenter(args: {
               limit 1
            ),
            stages as (
-             select 1 as sequence, 'promised'::text as stage_key, 'Promised value'::text as stage_label,
+             select 1 as sequence, 'promised'::text as stage_key, 'Explicit benefit'::text as stage_label,
                     promised_value_exposure as value_numeric,
                     value_claim_count as claim_count,
                     known_value_claim_count,
@@ -692,8 +719,10 @@ export async function readTowerCommandCenter(args: {
 
     const headline =
       commandRow.promised_value_trust_state === "CONFLICT"
-        ? `${command.tenantName} Tower has visible investment and adoption signals, but promised value is CONFLICT - authority unresolved. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
-        : command.executiveSummary;
+        ? `${command.tenantName} Tower has visible investment and adoption signals, but benefit source authority is CONFLICT - authority unresolved. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
+        : command.promisedValueFy26 === null
+          ? `${command.tenantName} Tower separates investment from benefit: approved investment is visible, but no explicit promised benefit assertion is loaded. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
+          : command.executiveSummary;
 
     return {
       generatedFrom: "tower_schema",

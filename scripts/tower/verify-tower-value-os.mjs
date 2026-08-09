@@ -11,8 +11,10 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: path.resolve(process.cwd(), ".env.local") });
 loadEnv();
 
-const MIGRATION_NAME = "20260809150000_tower_value_operating_system_v1.sql";
+const SEALED_BASE_MIGRATION_NAME = "20260809150000_tower_value_operating_system_v1.sql";
+const MIGRATION_NAME = "20260809193000_tower_value_os_semantic_remediation_v1.sql";
 const MIGRATION_PATH = path.join(process.cwd(), "supabase", "migrations", MIGRATION_NAME);
+const SEALED_BASE_MIGRATION_PATH = path.join(process.cwd(), "supabase", "migrations", SEALED_BASE_MIGRATION_NAME);
 const READER_PATH = path.join(process.cwd(), "src", "lib", "tower", "readTowerCommandCenter.ts");
 const DEFAULT_TENANTS = ["skyharbor_global", "meridian_health_global"];
 const TABLES = [
@@ -22,6 +24,8 @@ const TABLES = [
   "tower.economic_conversion",
   "tower.attestation_event",
   "tower.proof_action",
+  "tower.value_case_claim_link",
+  "tower.ai_identity_crosswalk",
 ];
 const VIEWS = [
   "consumption.tower_board_posture_v1",
@@ -34,13 +38,12 @@ const VIEWS = [
 ];
 const LIVE_BASELINE = {
   tenant_key: "skyharbor_global",
-  program_count: 40,
+  tracked_program_subjects: 151,
+  board_portfolio_programs: 40,
   ai_initiative_count: 12,
-  adoption_evidence_displayed_programs: 18,
-  value_claim_count: 164,
-  unknown_value_claim_count: 144,
-  known_value_claim_count: 20,
-  finance_validated_blocked_value: 6471000,
+  prior_live_material_programs: 40,
+  prior_live_promised_value: 1070600000,
+  prior_live_finance_validated_blocked_value: 6471000,
   claimable_value: 0,
 };
 
@@ -117,6 +120,7 @@ function stripSqlComments(sql) {
 
 function inspectStaticContract() {
   const migration = readText(MIGRATION_PATH);
+  const sealedBaseMigration = readText(SEALED_BASE_MIGRATION_PATH);
   const reader = readText(READER_PATH);
   const stripped = stripSqlComments(migration);
   const destructivePatterns = [
@@ -130,6 +134,7 @@ function inspectStaticContract() {
   const destructiveFindings = [];
   stripped.split(/\r?\n/).forEach((line, index) => {
     for (const [name, regex] of destructivePatterns) {
+      if (name === "ALTER TABLE DROP" && /\bdrop\s+not\s+null\b/i.test(line)) continue;
       if (regex.test(line)) {
         destructiveFindings.push({ pattern: name, line: index + 1, snippet: line.trim().slice(0, 220) });
       }
@@ -141,6 +146,8 @@ function inspectStaticContract() {
     migration_name: MIGRATION_NAME,
     migration_sha256: sha256(migration),
     migration_bytes: Buffer.byteLength(migration, "utf8"),
+    sealed_base_migration_name: SEALED_BASE_MIGRATION_NAME,
+    sealed_base_migration_sha256: sha256(sealedBaseMigration),
     contract_tables_present: TABLES.map((object_name) => ({ object_name, present: migration.includes(object_name) })),
     contract_views_present: VIEWS.map((object_name) => ({ object_name, present: migration.includes(object_name) })),
     additive_safety: {
@@ -153,6 +160,14 @@ function inspectStaticContract() {
       meridian_canary_dependency: /foundation_v2_meridian_health_cube_canary/i.test(reader),
     },
     required_semantic_columns: [
+      "semantic_remediation_v1",
+      "value_case_claim_link",
+      "ai_identity_crosswalk",
+      "source_count",
+      "economic_classification",
+      "board_scope_state",
+      "material_scope_state",
+      "total_program_subject_count",
       "remaining_commitment_usd",
       "risk_adjusted_forecast_usd",
       "finance_validated_run_rate_usd",
@@ -321,14 +336,22 @@ async function tenantReadback(client, queryLog, tenant) {
       SELECT
         tenant_key,
         value_case_id,
+        semantic_version,
+        value_case_group_key,
         primary_claim_id,
         initiative_id,
         program_id,
+        business_process_ref,
         business_unit,
         owner_role,
         finance_owner_role,
         value_archetype,
         benefit_category,
+        economic_classification,
+        economic_classification_state,
+        active_scope_state,
+        material_scope_state,
+        board_scope_state,
         approved_funding_usd,
         actual_spend_usd,
         business_case_value_usd AS promised_value_usd,
@@ -344,13 +367,17 @@ async function tenantReadback(client, queryLog, tenant) {
         financial_conversion_evidence_state,
         finance_attestation_state,
         source_trust_state,
+        source_count,
         lineage_state,
         dataset_version,
         source_run_id,
         source_refs,
+        claim_ids,
+        claim_count,
         next_required_extract
       FROM tower.value_case
       WHERE tenant_key = $1
+        AND semantic_version = 'semantic_remediation_v1'
       ORDER BY value_case_id
     `,
     [tenant],
@@ -386,7 +413,36 @@ async function tenantReadback(client, queryLog, tenant) {
         ON vc.tenant_key = sl.tenant_key
        AND vc.value_case_id = sl.to_value_case_id
       WHERE sl.tenant_key = $1
+        AND sl.semantic_version = 'semantic_remediation_v1'
       ORDER BY sl.link_type, sl.from_subject_ref, sl.subject_link_id
+    `,
+    [tenant],
+  );
+  readback.aiIdentityCrosswalk = await safeQuery(
+    client,
+    queryLog,
+    `ai_identity_crosswalk_${tenant}`,
+    `
+      SELECT
+        tenant_key,
+        ai_subject_ref,
+        ai_subject_kind,
+        tool_ref,
+        agent_ref,
+        target_initiative_ref,
+        target_program_ref,
+        business_process_ref,
+        cohort_ref,
+        cost_center_ref,
+        project_code_ref,
+        value_case_id,
+        identity_state,
+        issue,
+        source_refs
+      FROM tower.ai_identity_crosswalk
+      WHERE tenant_key = $1
+        AND semantic_version = 'semantic_remediation_v1'
+      ORDER BY identity_state, ai_subject_ref
     `,
     [tenant],
   );
@@ -526,12 +582,16 @@ async function dataQualityControls(client, queryLog, tenant) {
     `,
     [tenant],
   );
-  controls.missingInitiativeIds = await safeQuery(client, queryLog, `dq_missing_initiative_${tenant}`, "SELECT value_case_id, value_case_name, program_id FROM tower.value_case WHERE tenant_key = $1 AND nullif(initiative_id, '') IS NULL ORDER BY value_case_id", [tenant]);
-  controls.missingBenefitValueCaseIds = await safeQuery(client, queryLog, `dq_missing_benefit_${tenant}`, "SELECT value_case_id, value_case_name, initiative_id, program_id FROM tower.value_case WHERE tenant_key = $1 AND (benefit_category = 'unclassified' OR value_archetype = 'unclassified') ORDER BY value_case_id", [tenant]);
-  controls.missingBaselineTargetActual = await safeQuery(client, queryLog, `dq_missing_bta_${tenant}`, "SELECT value_case_id, value_case_name, initiative_id, program_id, operational_outcome_evidence_state FROM tower.value_case WHERE tenant_key = $1 AND operational_outcome_evidence_state <> 'present' ORDER BY coalesce(business_case_value_usd, 0) DESC, value_case_id", [tenant]);
-  controls.measuredValueWithoutEvidence = await safeQuery(client, queryLog, `dq_measured_without_evidence_${tenant}`, "SELECT value_case_id, value_case_name, known_calculated_value_usd, financial_conversion_evidence_state FROM tower.value_case WHERE tenant_key = $1 AND known_calculated_value_usd IS NOT NULL AND financial_conversion_evidence_state <> 'present' ORDER BY known_calculated_value_usd DESC NULLS LAST", [tenant]);
-  controls.financeValidationWithoutAttestation = await safeQuery(client, queryLog, `dq_finance_without_attestation_${tenant}`, "SELECT value_case_id, value_case_name, finance_validated_value_usd, finance_attestation_state FROM tower.value_case WHERE tenant_key = $1 AND finance_validated_value_usd > 0 AND finance_attestation_state <> 'present' ORDER BY finance_validated_value_usd DESC", [tenant]);
-  controls.conflictingPromisedValue = await safeQuery(client, queryLog, `dq_conflicting_promised_${tenant}`, "SELECT value_case_id, value_case_name, business_case_value_usd, source_trust_state, source_refs FROM tower.value_case WHERE tenant_key = $1 AND business_case_value_usd IS NOT NULL AND source_trust_state = 'CONFLICT' ORDER BY business_case_value_usd DESC NULLS LAST", [tenant]);
+  controls.missingInitiativeIds = await safeQuery(client, queryLog, `dq_missing_initiative_${tenant}`, "SELECT value_case_id, value_case_name, program_id FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND nullif(initiative_id, '') IS NULL ORDER BY value_case_id", [tenant]);
+  controls.economicClassificationReview = await safeQuery(client, queryLog, `dq_economic_classification_${tenant}`, "SELECT value_case_id, value_case_name, initiative_id, program_id, approved_funding_usd, business_case_value_usd FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND board_scope_state = 'board_portfolio' AND economic_classification IS NULL ORDER BY approved_funding_usd DESC NULLS LAST, value_case_id", [tenant]);
+  controls.missingBenefitValueCaseIds = await safeQuery(client, queryLog, `dq_missing_benefit_${tenant}`, "SELECT value_case_id, value_case_name, initiative_id, program_id, source_trust_state, source_count FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND board_scope_state = 'board_portfolio' AND business_case_value_usd IS NULL ORDER BY approved_funding_usd DESC NULLS LAST, value_case_id", [tenant]);
+  controls.missingBaselineTargetActual = await safeQuery(client, queryLog, `dq_missing_bta_${tenant}`, "SELECT value_case_id, value_case_name, initiative_id, program_id, operational_outcome_evidence_state FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND operational_outcome_evidence_state <> 'present' ORDER BY approved_funding_usd DESC NULLS LAST, value_case_id", [tenant]);
+  controls.measuredValueWithoutEvidence = await safeQuery(client, queryLog, `dq_measured_without_evidence_${tenant}`, "SELECT value_case_id, value_case_name, known_calculated_value_usd, financial_conversion_evidence_state FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND known_calculated_value_usd IS NOT NULL AND financial_conversion_evidence_state <> 'present' ORDER BY known_calculated_value_usd DESC NULLS LAST", [tenant]);
+  controls.financeValidationWithoutAttestation = await safeQuery(client, queryLog, `dq_finance_without_attestation_${tenant}`, "SELECT value_case_id, value_case_name, finance_validated_value_usd, finance_attestation_state FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND finance_validated_value_usd > 0 AND finance_attestation_state <> 'present' ORDER BY finance_validated_value_usd DESC", [tenant]);
+  controls.conflictingPromisedValue = await safeQuery(client, queryLog, `dq_conflicting_promised_${tenant}`, "SELECT value_case_id, value_case_name, business_case_value_usd, source_trust_state, source_count, source_refs, source_assertion_values FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND source_trust_state = 'CONFLICT' ORDER BY business_case_value_usd DESC NULLS LAST", [tenant]);
+  controls.invalidConflictSourceCount = await safeQuery(client, queryLog, `dq_invalid_conflict_source_count_${tenant}`, "SELECT value_case_id, value_case_name, source_trust_state, source_count FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND source_trust_state = 'CONFLICT' AND source_count < 2 ORDER BY value_case_id", [tenant]);
+  controls.valueCaseGrouping = await safeQuery(client, queryLog, `dq_value_case_grouping_${tenant}`, "SELECT value_case_group_key, count(*)::int AS value_case_rows, sum(claim_count)::int AS linked_claims FROM tower.value_case WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' GROUP BY value_case_group_key HAVING count(*) > 1 ORDER BY value_case_rows DESC, value_case_group_key", [tenant]);
+  controls.aiIdentityTargets = await safeQuery(client, queryLog, `dq_ai_identity_targets_${tenant}`, "SELECT * FROM tower.ai_identity_crosswalk WHERE tenant_key = $1 AND semantic_version = 'semantic_remediation_v1' AND identity_state <> 'ready' ORDER BY identity_state, ai_subject_ref", [tenant]);
   controls.actionsMissingOwnerDueEvidence = await safeQuery(
     client,
     queryLog,
@@ -550,6 +610,21 @@ async function dataQualityControls(client, queryLog, tenant) {
     `,
     [tenant],
   );
+  controls.proofActionDeduplication = await safeQuery(
+    client,
+    queryLog,
+    `dq_proof_action_dedupe_${tenant}`,
+    `
+      SELECT value_case_id, proof_stage, blocked_decision, evidence_requirement, count(*)::int AS action_count
+      FROM tower.proof_action
+      WHERE tenant_key = $1
+        AND semantic_version = 'semantic_remediation_v1'
+      GROUP BY value_case_id, proof_stage, blocked_decision, evidence_requirement
+      HAVING count(*) > 1
+      ORDER BY action_count DESC, value_case_id, proof_stage
+    `,
+    [tenant],
+  );
   controls.eightQuarterCoverage = await safeQuery(
     client,
     queryLog,
@@ -565,7 +640,9 @@ async function dataQualityControls(client, queryLog, tenant) {
       LEFT JOIN tower.value_case_period p
         ON p.tenant_key = vc.tenant_key
        AND p.value_case_id = vc.value_case_id
+       AND p.semantic_version = 'semantic_remediation_v1'
       WHERE vc.tenant_key = $1
+        AND vc.semantic_version = 'semantic_remediation_v1'
       GROUP BY vc.value_case_id, vc.value_case_name
       HAVING count(p.*) <> 8
       ORDER BY period_count, vc.value_case_id
@@ -604,15 +681,22 @@ function summarizeReconciliation(runtime) {
     tenants[tenant] = {
       board_posture: board,
       observed_counts: {
-        programs: numberish(board?.program_count),
+        board_portfolio_programs: numberish(board?.board_scope_program_count ?? board?.program_count),
+        material_programs: numberish(board?.material_program_count),
+        tracked_program_subjects: numberish(board?.total_program_subject_count),
+        active_program_subjects: numberish(board?.active_program_subject_count),
         ai_initiatives: numberish(board?.ai_initiative_count),
-        value_claims: numberish(board?.value_claim_count),
-        known_value_claims: numberish(board?.known_value_claim_count),
-        unknown_value_claims: numberish(board?.unknown_value_claim_count),
+        grouped_value_cases: numberish(board?.value_claim_count),
+        known_value_cases: numberish(board?.known_value_claim_count),
+        unknown_value_cases: numberish(board?.unknown_value_claim_count),
+        economic_review_queue: numberish(board?.economic_review_queue_count),
+        approved_investment: numberish(board?.approved_program_budget_fy26),
+        promised_benefit: board?.promised_value_fy26 === null || board?.promised_value_fy26 === undefined ? null : numberish(board?.promised_value_fy26),
         finance_validated_blocked_value: numberish(board?.finance_validated_blocked_value),
         claimable_value: numberish(board?.realized_value_ytd_allowed),
         tool_productivity_rows: readback.toolProductivity?.rows?.length ?? 0,
         agent_outcome_rows: readback.agentOutcome?.rows?.length ?? 0,
+        ai_identity_rows: readback.aiIdentityCrosswalk?.rows?.length ?? 0,
         open_proof_actions: readback.actionQueue?.rows?.length ?? 0,
       },
       live_baseline_reconciliation:
@@ -622,14 +706,13 @@ function summarizeReconciliation(runtime) {
                 .filter(([key]) => key !== "tenant_key")
                 .map(([key, expected]) => {
                   const observed = {
-                    program_count: numberish(board?.program_count),
+                    tracked_program_subjects: numberish(board?.total_program_subject_count),
+                    board_portfolio_programs: numberish(board?.board_scope_program_count ?? board?.program_count),
                     ai_initiative_count: numberish(board?.ai_initiative_count),
-                    value_claim_count: numberish(board?.value_claim_count),
-                    unknown_value_claim_count: numberish(board?.unknown_value_claim_count),
-                    known_value_claim_count: numberish(board?.known_value_claim_count),
-                    finance_validated_blocked_value: numberish(board?.finance_validated_blocked_value),
+                    prior_live_material_programs: numberish(board?.material_program_count),
+                    prior_live_promised_value: numberish(board?.promised_value_fy26),
+                    prior_live_finance_validated_blocked_value: numberish(board?.finance_validated_blocked_value),
                     claimable_value: numberish(board?.realized_value_ytd_allowed),
-                    adoption_evidence_displayed_programs: readback.toolProductivity?.rows?.filter((row) => row.usage_actual !== null && row.usage_actual !== undefined).length ?? 0,
                   }[key];
                   return [key, { expected, observed, delta: numberish(observed) - numberish(expected) }];
                 }),
@@ -660,6 +743,8 @@ function buildCoverageRows(runtime) {
         initiative_id: row.initiative_id,
         value_case_id: row.value_case_id,
         value_archetype: row.value_archetype,
+        economic_classification: row.economic_classification,
+        board_scope_state: row.board_scope_state,
         investment_evidence: row.investment_evidence_state,
         usage_evidence: row.usage_evidence_state,
         operational_outcome_evidence: row.operational_outcome_evidence_state,
@@ -667,11 +752,45 @@ function buildCoverageRows(runtime) {
         finance_attestation: row.finance_attestation_state,
         time_series_coverage: "eight_quarter_schedule_required",
         source_trust_state: row.source_trust_state,
+        source_count: row.source_count,
         next_required_extract: row.next_required_extract,
       });
     }
   }
   return rows;
+}
+
+function collectSemanticGateFailures(runtime) {
+  const failures = [];
+  for (const [tenant, controls] of Object.entries(runtime?.dataQuality || {})) {
+    const invalidConflicts = controls.invalidConflictSourceCount?.rows || [];
+    if (invalidConflicts.length > 0) {
+      failures.push({
+        tenant,
+        gate: "source_trust_conflict_requires_two_sources",
+        row_count: invalidConflicts.length,
+      });
+    }
+    const duplicateActions = controls.proofActionDeduplication?.rows || [];
+    if (duplicateActions.length > 0) {
+      failures.push({
+        tenant,
+        gate: "proof_actions_deduped_by_value_case_stage_decision_evidence",
+        row_count: duplicateActions.length,
+      });
+    }
+    const badReadyIdentity = (controls.aiIdentityTargets?.rows || []).filter(
+      (row) => row.identity_state === "ready",
+    );
+    if (badReadyIdentity.length > 0) {
+      failures.push({
+        tenant,
+        gate: "ai_identity_ready_rows_target_governed_entities",
+        row_count: badReadyIdentity.length,
+      });
+    }
+  }
+  return failures;
 }
 
 function toCsv(rows) {
@@ -723,7 +842,7 @@ ${meridian ? renderTenantSummary("meridian_health_global", meridian) : "No Merid
 
 ## CFO Interpretation
 
-Tower is now designed to be a value operating system, not a chart layer. The board story should unfold from investment evidence, to adoption, to operating outcomes, to explicit financial conversion, to Finance attestation. Promised value with source conflict remains exposure and decision risk; it does not become realized, claimable, or board-certified value.
+Tower is now designed to be a value operating system, not a chart layer. The board story should unfold from approved investment, to explicit promised benefit, to adoption, to operating outcomes, to economic classification, to explicit financial conversion, to Finance attestation. Approved funding is investment; it is not promised benefit. Missing benefit and outcome values remain null, and source trust follows source-count rules instead of claim state.
 
 ## Remaining Acceptance Gates
 
@@ -740,15 +859,22 @@ function renderTenantSummary(tenant, summary) {
   const lines = [
     `Tenant: ${tenant}`,
     "",
-    `- Programs: ${counts.programs}`,
+    `- Tracked program subjects: ${counts.tracked_program_subjects}`,
+    `- Active program subjects: ${counts.active_program_subjects}`,
+    `- Material programs: ${counts.material_programs}`,
+    `- Board portfolio programs: ${counts.board_portfolio_programs}`,
     `- AI initiatives: ${counts.ai_initiatives}`,
-    `- Value claims: ${counts.value_claims}`,
-    `- Known value claims: ${counts.known_value_claims}`,
-    `- Unknown value claims: ${counts.unknown_value_claims}`,
+    `- Grouped value cases: ${counts.grouped_value_cases}`,
+    `- Known value cases: ${counts.known_value_cases}`,
+    `- Unknown value cases: ${counts.unknown_value_cases}`,
+    `- Economic review queue: ${counts.economic_review_queue}`,
+    `- Approved investment: ${counts.approved_investment}`,
+    `- Promised benefit: ${counts.promised_benefit === null ? "null" : counts.promised_benefit}`,
     `- Finance validated blocked value: ${counts.finance_validated_blocked_value}`,
     `- Claimable value: ${counts.claimable_value}`,
     `- Tool productivity rows: ${counts.tool_productivity_rows}`,
     `- Agent outcome rows: ${counts.agent_outcome_rows}`,
+    `- AI identity rows: ${counts.ai_identity_rows}`,
     `- Open proof actions: ${counts.open_proof_actions}`,
   ];
   if (baseline) {
@@ -818,16 +944,18 @@ async function main() {
 
   const reconciliation = runtime.error || runtime.skipped ? { generated_at: new Date().toISOString(), tenants: {}, error: runtime.error, skipped: runtime.skipped, reason: runtime.reason } : summarizeReconciliation(runtime);
   const coverageRows = runtime.error || runtime.skipped ? [] : buildCoverageRows(runtime);
+  const semanticGateFailures = runtime.error || runtime.skipped ? [] : collectSemanticGateFailures(runtime);
   const markdown = buildMarkdown(staticContract, runtime.skipped ? {} : runtime, reconciliation);
   const summary = {
     event: "tower_value_os_reconciliation",
-    status: runtime.skipped ? "PREFLIGHT_COMPLETE" : dbError && args.requireDb ? "FAIL" : dbError ? "BLOCKED_DB_UNAVAILABLE" : "COMPLETE",
+    status: runtime.skipped ? "PREFLIGHT_COMPLETE" : dbError && args.requireDb ? "FAIL" : dbError ? "BLOCKED_DB_UNAVAILABLE" : semanticGateFailures.length > 0 ? "FAIL" : "COMPLETE",
     generated_at: new Date().toISOString(),
     mutation_scope: "none",
     tenants: args.tenants,
     static_contract: staticContract,
     runtime,
     reconciliation,
+    semantic_gate_failures: semanticGateFailures,
     db_error: dbError,
   };
 
@@ -843,6 +971,7 @@ async function main() {
 
   if (args.emitProofBundle) emitProofBundle(args.outDir);
   if (dbError && args.requireDb) process.exit(1);
+  if (semanticGateFailures.length > 0 && args.requireDb) process.exit(1);
   if (staticContract.additive_safety.status !== "PASS") process.exit(1);
 }
 

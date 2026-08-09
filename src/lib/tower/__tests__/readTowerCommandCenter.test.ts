@@ -38,10 +38,12 @@ describe("readTowerCommandCenter", () => {
           command_center_key: "tower:skyharbor_global:board-posture",
           tenant_key: "skyharbor_global",
           tenant_name: "Skyharbor Global",
-          mart_version: "tower-value-os-v1",
-          source_standard: "tower.value_case -> consumption.tower_*_v1",
-          formula_version: "tower_value_operating_system_v1",
-          source_contract_version: "consumption.tower_value_os_contract_v1",
+          mart_version: "tower-value-os-semantic-remediation-v1",
+          source_standard:
+            "tower.value_case semantic_remediation_v1 -> consumption.tower_*_v1",
+          formula_version: "tower_value_os_semantic_remediation_v1",
+          source_contract_version:
+            "consumption.tower_value_os_contract_v1.semantic_remediation_v1",
           dataset_version: "skyharbor_global_synthetic_current_state_v3",
           source_run_id: "tower-demo-story-data-20260803T172111Z",
           as_of_period: "2030-05-19",
@@ -51,49 +53,54 @@ describe("readTowerCommandCenter", () => {
           change_budget_fy26: "987000000",
           approved_program_budget_fy26: "1070600000",
           ai_tagged_spend_fy26_non_additive: "170249334",
-          promised_value_fy26: "1070600000",
+          promised_value_fy26: null,
           partial_finance_validated_value_ytd: "6471000",
           realized_value_ytd_allowed: "0",
-          value_claim_count: 164,
-          known_value_claim_count: 20,
-          unknown_value_claim_count: 144,
+          value_claim_count: 40,
+          known_value_claim_count: 0,
+          unknown_value_claim_count: 40,
           known_zero_value_claim_count: 0,
-          known_value_amount_usd: "6471000",
+          known_value_amount_usd: null,
           finance_attested_claim_count: 18,
           business_attested_claim_count: 75,
           claimable_claim_count: 0,
           usage_supported_claim_count: 29,
           funded_no_baseline_claim_count: 89,
           stale_claim_count: 0,
-          disputed_claim_count: 28,
+          disputed_claim_count: 0,
           baseline_linked_claim_count: 75,
           target_linked_claim_count: 75,
           actual_linked_claim_count: 75,
           outcome_measured_claim_count: 75,
           claimable_program_count: 0,
           blocked_program_count: 40,
-          conflicted_program_count: 28,
+          conflicted_program_count: 0,
           unmeasured_program_count: 89,
           program_count: 40,
           ai_initiative_count: 12,
           candidate_ai_opportunities: 0,
           watch_pressure_signals: 102,
           finance_validated_blocked_value: "6471000",
-          promised_value_exposure: "1070600000",
+          promised_value_exposure: null,
           run_ratio: "0.58",
           change_ratio: "0.42",
           finance_validation_ratio: "0.109756",
           decision_question:
             "Are we buying AI, changing work, and converting it into economic value?",
           executive_summary:
-            "AI investment and adoption activity are visible, but portfolio economic case is not board-certified. Promised value is CONFLICT - authority unresolved.",
-          promised_value_board_status: "CONFLICT - authority unresolved",
-          promised_value_trust_state: "CONFLICT",
+            "Tower separates investment from benefit: approved funding is visible, but no board-certified promised benefit is shown without an explicit benefit assertion.",
+          promised_value_board_status: "ABSENT - no explicit benefit assertion",
+          promised_value_trust_state: "ABSENT",
           source_files: [
-            "tower.value_case",
+            "tower.value_case semantic_remediation_v1",
             "tower.value_case_period",
             "consumption.tower_*_v1",
           ],
+          total_program_subject_count: 151,
+          active_program_subject_count: 151,
+          material_program_count: 40,
+          board_scope_program_count: 40,
+          economic_review_queue_count: 40,
         },
       ])
       .mockResolvedValueOnce([
@@ -101,21 +108,21 @@ describe("readTowerCommandCenter", () => {
           funnel_key: "tower:skyharbor_global:funnel:promised",
           sequence: 1,
           stage_key: "promised",
-          stage_label: "Promised value",
-          value_numeric: "1070600000",
-          claim_count: 164,
-          known_value_claim_count: 20,
-          unknown_value_claim_count: 144,
-          known_value_amount: "6471000",
+          stage_label: "Explicit benefit",
+          value_numeric: null,
+          claim_count: 40,
+          known_value_claim_count: 0,
+          unknown_value_claim_count: 40,
+          known_value_amount: null,
           blocked_claim_count: 40,
-          blocked_known_value_amount: "1070600000",
-          primary_blocker: "CONFLICT - authority unresolved",
+          blocked_known_value_amount: null,
+          primary_blocker: "ABSENT - no explicit benefit assertion",
           primary_owner_role: "Tower data steward",
           denominator_stage_key: null,
           conversion_ratio: null,
-          claim_status: "CONFLICT",
+          claim_status: "ABSENT",
           caveat:
-            "Promised value remains blocked until source authority reconciles.",
+            "Approved funding is not promised benefit; load an explicit benefit assertion before drawing the benefit waterfall.",
           source_file: "consumption.tower_board_posture_v1",
           source_row: null,
         },
@@ -131,20 +138,20 @@ describe("readTowerCommandCenter", () => {
           finance_owner_role: "Finance partner",
           decision_lane: "fix",
           decision_rationale:
-            "Source authority conflict blocks board-visible value.",
+            "Explicit benefit assertion is missing, so board-visible benefit is absent.",
           approved_funding_usd: "42500000",
           funded_amount: "42500000",
           ai_tagged_spend_usd: "0",
-          promised_value_usd: "42500000",
+          promised_value_usd: null,
           finance_validated_value_usd: "0",
           known_supported_value: "0",
           proof_maturity_score: 40,
           risk_pressure_score: 95,
           usage_strength_score: 70,
-          lineage_trust_state: "CONFLICT",
-          decision_reason_code: "FIX_PROOF",
-          amount_blocked: "42500000",
-          next_gate: "independent_source_authority_assertions",
+          lineage_trust_state: "ABSENT",
+          decision_reason_code: "FIX_SOURCE_TRUST",
+          amount_blocked: null,
+          next_gate: "explicit_benefit_assertion",
           usage_metric: "usage evidence linked",
           usage_actual: "1",
           adoption_rate_pct: null,
@@ -154,7 +161,7 @@ describe("readTowerCommandCenter", () => {
             { ask: "Resolve source authority", status: "blocked" },
           ],
           caveat:
-            "Promised value is not board-certified until source authority reconciles.",
+            "No promised benefit is shown because no explicit benefit assertion exists. Approved funding remains investment.",
           source_file: "tower.value_case",
           source_row: "claim-project-PRJ-001",
         },
@@ -172,7 +179,7 @@ describe("readTowerCommandCenter", () => {
           decision_lane: "fix",
           approved_funding_usd: "0",
           ai_tagged_spend_usd: "1581589",
-          promised_value_usd: "0",
+          promised_value_usd: null,
           finance_validated_value_usd: "0",
           usage_metric: "active users",
           usage_actual: "4186",
@@ -195,18 +202,18 @@ describe("readTowerCommandCenter", () => {
           action_key: "pa-source-1",
           sequence: 1,
           action_lane: "fix",
-          title: "Resolve promised-value source authority",
+          title: "Load explicit benefit assertion",
           action_body:
-            "Board-visible promised value is blocked until independent source assertions reconcile to one authority.",
+            "Board-visible benefit is absent until a source-backed benefit assertion is loaded and classified.",
           owner_hint: "Tower data steward",
           module_handoff: "Moves",
           program_id: "PRJ-001",
           claim_id: "vc-1",
-          proof_stage: "source_authority",
+          proof_stage: "lineage",
           blocked_decision: "board_value_claim_or_scale_decision",
-          amount_exposed: "42500000",
+          amount_exposed: null,
           evidence_requirement:
-            "Source authority reconciliation with source refs, source run, period, and authoritative owner.",
+            "Explicit benefit assertion with source refs, source run, period, and authoritative owner.",
           expected_source_system:
             "source registry + tower.metric_provenance + source assertions",
           evidence_package_id: "ep-source-1",
@@ -226,15 +233,15 @@ describe("readTowerCommandCenter", () => {
           lineage_key:
             "tower:skyharbor_global:source-trust:board-promised-value",
           surface_section: "board_value_posture",
-          displayed_fact: "Board promised value exposure",
-          displayed_value_text: "CONFLICT - authority unresolved",
-          displayed_value_numeric: "1070600000",
-          metric_or_fact_key: "board_promised_value",
-          board_visible_label: "Promised value",
-          lineage_state: "CONFLICT",
-          source_count: 1,
+          displayed_fact: "Board promised benefit",
+          displayed_value_text: "ABSENT - no explicit benefit assertion",
+          displayed_value_numeric: null,
+          metric_or_fact_key: "board_promised_benefit",
+          board_visible_label: "Explicit promised benefit",
+          lineage_state: "ABSENT",
+          source_count: 0,
           source_refs: [{ view: "consumption.tower_board_posture_v1" }],
-          conflicting_values: [{ state: "CONFLICT - authority unresolved" }],
+          conflicting_values: [],
           authoritative_value: null,
           resolution_owner_role: "Tower data steward",
           resolution_state: "open",
@@ -242,7 +249,7 @@ describe("readTowerCommandCenter", () => {
           source_row: null,
           source_system: "tower",
           caveat:
-            "AI investment and adoption activity are visible, but portfolio economic case is not board-certified.",
+            "Approved funding is visible, but no explicit benefit assertion is loaded.",
         },
       ]);
 
@@ -257,28 +264,37 @@ describe("readTowerCommandCenter", () => {
     expect(sqlText).not.toMatch(/cio_tower\.mart/i);
     expect(sqlText).not.toMatch(/foundation_v2_meridian_health_cube_canary/i);
     expect(mart?.generatedFrom).toBe("tower_schema");
-    expect(mart?.headline).toMatch(/CONFLICT - authority unresolved/i);
-    expect(mart?.command.valueClaimCount).toBe(164);
-    expect(mart?.command.unknownValueClaimCount).toBe(144);
-    expect(mart?.command.promisedValueFy26).toBe(1_070_600_000);
+    expect(mart?.headline).toMatch(/separates investment from benefit/i);
+    expect(mart?.command.valueClaimCount).toBe(40);
+    expect(mart?.command.unknownValueClaimCount).toBe(40);
+    expect(mart?.command.promisedValueFy26).toBeNull();
+    expect(mart?.command.approvedProgramBudgetFy26).toBe(1_070_600_000);
     expect(mart?.command.partialFinanceValidatedValueYtd).toBe(6_471_000);
     expect(mart?.command.realizedValueYtdAllowed).toBe(0);
     expect(mart?.command.claimableProgramCount).toBe(0);
     expect(mart?.command.blockedProgramCount).toBe(40);
-    expect(mart?.programLanes[0]?.lineageTrustState).toBe("CONFLICT");
-    expect(mart?.programLanes[0]?.amountBlocked).toBe(42_500_000);
+    expect(mart?.command.conflictedProgramCount).toBe(0);
+    expect(mart?.command.totalProgramSubjectCount).toBe(151);
+    expect(mart?.command.boardScopeProgramCount).toBe(40);
+    expect(mart?.programLanes[0]?.lineageTrustState).toBe("ABSENT");
+    expect(mart?.programLanes[0]?.amountBlocked).toBeNull();
     expect(mart?.aiPortfolio[0]?.vendorName).toBe("GitHub");
     expect(mart?.cxoActions[0]?.dueDate).toBe("2030-06-02");
     expect(mart?.requiredFieldGaps[0]?.sourceTemplate).toContain(
       "source registry",
     );
-    expect(mart?.evidenceLineage[0]?.lineageState).toBe("CONFLICT");
+    expect(mart?.evidenceLineage[0]?.lineageState).toBe("ABSENT");
+    expect(mart?.evidenceLineage[0]?.sourceCount).toBe(0);
 
     const view = buildTowerCommandCenterView(mart, {
       tenantName: "SkyHarbor Air",
     });
-    expect(view?.summary.unknownValueClaimCount).toBe(144);
-    expect(view?.summary.promisedUsd).toBe(1_070_600_000);
-    expect(view?.summary.executiveSummary).toMatch(/not board-certified/i);
+    expect(view?.summary.unknownValueClaimCount).toBe(40);
+    expect(view?.summary.promisedUsd).toBe(0);
+    expect(view?.summary.promisedBenefitUsd).toBeNull();
+    expect(view?.summary.approvedInvestmentUsd).toBe(1_070_600_000);
+    expect(view?.summary.totalProgramSubjectCount).toBe(151);
+    expect(view?.summary.boardScopeProgramCount).toBe(40);
+    expect(view?.summary.executiveSummary).toMatch(/investment from benefit/i);
   });
 });

@@ -331,14 +331,19 @@ export function TowerCommandCenterAvaShell({
                 value: view.summary.budgetUsd,
               },
               {
+                measureKey: "approved_program_budget_fy26",
+                label: "Approved investment",
+                value: view.summary.approvedInvestmentUsd,
+              },
+              {
                 measureKey: "ai_tagged_spend_fy26_non_additive",
                 label: "AI-tagged spend",
                 value: view.summary.aiTaggedUsd,
               },
               {
-                measureKey: "promised_value_fy26",
-                label: "Promised value",
-                value: view.summary.promisedUsd,
+                measureKey: "business_case_benefit_fy26",
+                label: "Explicit promised benefit",
+                value: view.summary.promisedBenefitUsd,
               },
               {
                 measureKey: "realized_value_ytd_allowed",

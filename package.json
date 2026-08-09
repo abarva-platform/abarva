@@ -258,6 +258,8 @@
     "tower:cio:answer-execute": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/qa/tower-answer-contract-executor.ts",
     "tower:value-os:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260809150000_tower_value_operating_system_v1.sql",
     "tower:value-os:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260809150000_tower_value_operating_system_v1.sql",
+    "tower:value-os:semantic:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260809193000_tower_value_os_semantic_remediation_v1.sql",
+    "tower:value-os:semantic:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260809193000_tower_value_os_semantic_remediation_v1.sql",
     "tower:value-os:verify": "node scripts/tower/verify-tower-value-os.mjs --mode verify",
     "tower:value-os:verify:preflight": "node scripts/tower/verify-tower-value-os.mjs --mode preflight",
     "tower:value-os:verify:bundle": "node scripts/tower/verify-tower-value-os.mjs --mode verify --require-db --emit-proof-bundle",
