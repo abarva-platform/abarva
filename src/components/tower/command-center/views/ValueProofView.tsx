@@ -76,7 +76,7 @@ export function ValueProofView({
       <ViewHead
         title={
           s.promisedBenefitLoaded
-            ? "Outcome proof waterfall"
+            ? "Claim-gated explicit benefit"
             : "Benefit proof coverage"
         }
         sub="Investment is separate from promised benefit, usage, outcome, Finance, and claimable value"
@@ -86,8 +86,8 @@ export function ValueProofView({
       <div className={styles.zipContractNote}>
         <Dot tone="red" />
         <span>
-          CFO read: value is visible only as it clears the proof chain. Evidence
-          progression and blockers explain why capital cannot scale yet.
+          CFO read: the waterfall shows only explicit source-backed benefit.
+          Finance-calculated value awaiting proof completion is held separately.
         </span>
       </div>
 
@@ -97,9 +97,11 @@ export function ValueProofView({
       >
         <Card
           eyebrow={
-            s.promisedBenefitLoaded ? "Value waterfall" : "Benefit not loaded"
+            s.promisedBenefitLoaded
+              ? "Explicit benefit claim chain"
+              : "Benefit not loaded"
           }
-          right="FY26 · governed $M"
+          right="waterfall excludes Finance-blocked population"
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
@@ -151,7 +153,7 @@ export function ValueProofView({
               </small>
             </div>
             <div className={styles.valueProofRail}>
-              <span>Finance-calculated but blocked</span>
+              <span>Finance-calculated value awaiting proof completion</span>
               <b>{formatUsdM(s.financeValidatedBlockedUsd)}</b>
               <small>
                 Kept separate until usage, outcome, attribution, and attestation

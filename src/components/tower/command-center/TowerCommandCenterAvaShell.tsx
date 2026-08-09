@@ -94,10 +94,7 @@ async function readTowerChatStream(
 
 function towerSummaryPrompt(view: TowerCommandCenterView | null): string {
   if (!view) return "What Tower evidence is loaded for this tenant?";
-  const blockedPrograms = view.gaps.filter(
-    (gap) => gap.primaryBlockingGap,
-  ).length;
-  return `Which ${blockedPrograms || "open"} Tower proof gaps should I close first?`;
+  return "Which board-scope Tower proof gaps should I close first?";
 }
 
 function buildSuggestions(

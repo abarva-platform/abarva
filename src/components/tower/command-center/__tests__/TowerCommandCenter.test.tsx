@@ -100,6 +100,7 @@ describe("TowerCommandCenter", () => {
       (t.textContent ?? "")
         .replace(/needs attention/g, "")
         .replace(/\d+/g, "")
+        .replace(/\s+/g, " ")
         .trim();
     expect(tabs.map(label)).toEqual([
       "Command Center",
@@ -173,10 +174,12 @@ describe("TowerCommandCenter", () => {
   it("renders the Value Proof blockers table sorted by blocked dollars", () => {
     renderPage();
     fireEvent.click(tab(/Value Proof/));
-    expect(screen.getByText("Outcome proof waterfall")).toBeInTheDocument();
+    expect(
+      screen.getByText("Claim-gated explicit benefit"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Source-backed benefit chain")).toBeInTheDocument();
     expect(
-      screen.getByText("Finance-calculated but blocked"),
+      screen.getByText("Finance-calculated value awaiting proof completion"),
     ).toBeInTheDocument();
     expect(screen.getByText("Top evidence blockers")).toBeInTheDocument();
     const table = screen.getByRole("table");
@@ -186,8 +189,12 @@ describe("TowerCommandCenter", () => {
   it("switches Decision Lanes between its three sub-views", () => {
     renderPage();
     fireEvent.click(tab(/Decision Lanes/));
-    expect(screen.getByText("Portfolio decision topology")).toBeInTheDocument();
-    expect(screen.getByText("Programs")).toBeInTheDocument();
+    expect(
+      screen.getByText("Exposure-ranked decision lanes"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Fund lane" }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
     expect(
@@ -203,6 +210,7 @@ describe("TowerCommandCenter", () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: "Portfolio heatmap" }));
+    expect(screen.getByText("Portfolio decision topology")).toBeInTheDocument();
     expect(screen.getByText("Programs")).toBeInTheDocument();
   });
 
@@ -272,9 +280,46 @@ describe("TowerCommandCenter", () => {
     ).toBeNull();
   });
 
+  it("does not render a blank AI spend chart when category rows are absent", () => {
+    render(
+      <TowerCommandCenter
+        view={{
+          ...view!,
+          spendLens: [],
+          summary: {
+            ...view!.summary,
+            aiTaggedUsd: 7_100_000,
+            aiSpendUnattributed: false,
+          },
+        }}
+        tenantName="Fixture Tenant"
+        refreshedOn="2026-07-23"
+      />,
+    );
+    fireEvent.click(tab(/AI Portfolio/));
+    fireEvent.click(screen.getByRole("radio", { name: "Spend Attribution" }));
+
+    expect(
+      screen.getByText("AI spend lens is not chartable yet"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/has no positive chart rows to plot/),
+    ).toBeInTheDocument();
+  });
+
   it("answers one Evidence question at a time", () => {
     renderPage();
     fireEvent.click(tab(/Evidence/));
+    expect(
+      screen.getByRole("region", { name: "One-source fact workplan" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("One-source facts needing corroboration"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Needed to reach AGREE/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Operating owner confirmation/),
+    ).toBeInTheDocument();
     expect(screen.getByText("Question 2 of 4")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("radio", { name: /Who owns the missing proof/ }),
@@ -312,9 +357,26 @@ describe("TowerCommandCenter", () => {
     expect(screen.queryByText("Data Office")).toBeNull();
   });
 
-  it("groups Recommended Actions into five owner columns and loses none", () => {
+  it("defaults Recommended Actions to executive campaigns before inventory", () => {
     renderPage();
     fireEvent.click(tab(/Recommended Actions/));
+    expect(
+      screen.getByRole("region", { name: "Executive proof campaigns" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Establish baseline")).toBeInTheDocument();
+    expect(screen.getByText("Obtain attestation")).toBeInTheDocument();
+    const cards = screen
+      .getAllByRole("button")
+      .filter(
+        (b) =>
+          b.textContent?.includes("Linked") ||
+          b.textContent?.includes("Routes to"),
+      );
+    expect(cards).toHaveLength(0);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "View priority action inventory" }),
+    );
     for (const label of [
       "CFO",
       "CIO",
@@ -324,14 +386,53 @@ describe("TowerCommandCenter", () => {
     ]) {
       expect(screen.getByRole("region", { name: label })).toBeInTheDocument();
     }
-    const cards = screen
+  });
+
+  it("keeps the Recommended Actions default page bounded for dense inventories", () => {
+    const owners = ["CFO", "CIO", "CDAO", "Model Risk Office", "Procurement"];
+    const denseActions = Array.from({ length: 30 }, (_, i) => {
+      const base = view!.actions[i % view!.actions.length];
+      return {
+        ...base,
+        id: `dense-action-${i + 1}`,
+        ownerRole: owners[i % owners.length],
+        title: `${base.title} ${i + 1}`,
+      };
+    });
+
+    render(
+      <TowerCommandCenter
+        view={{ ...view!, actions: denseActions }}
+        tenantName="Fixture Tenant"
+        refreshedOn="2026-07-23"
+      />,
+    );
+    fireEvent.click(tab(/Recommended Actions/));
+
+    const renderedCards = screen
       .getAllByRole("button")
       .filter(
         (b) =>
           b.textContent?.includes("Linked") ||
           b.textContent?.includes("Routes to"),
       );
-    expect(cards).toHaveLength(designFixtureMart().cxoActions.length);
+    expect(renderedCards).toHaveLength(0);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "View priority action inventory" }),
+    );
+    const expandedCards = screen
+      .getAllByRole("button")
+      .filter(
+        (b) =>
+          b.textContent?.includes("Linked") ||
+          b.textContent?.includes("Routes to"),
+      );
+    expect(expandedCards.length).toBeLessThan(denseActions.length);
+    expect(expandedCards).toHaveLength(20);
+    expect(
+      screen.getAllByText(/more retained in the full action inventory/).length,
+    ).toBeGreaterThan(0);
   });
 
   it("reaches beyond the Top-10 default via capability inventory + search", () => {
@@ -468,6 +569,9 @@ describe("TowerCommandCenter", () => {
   it("disables Approve & route, because no governed Tower → Moves path exists", () => {
     renderPage();
     fireEvent.click(tab(/Recommended Actions/));
+    fireEvent.click(
+      screen.getByRole("button", { name: "View priority action inventory" }),
+    );
     fireEvent.click(screen.getAllByText(/Attest the avoidance method/)[0]);
 
     const drawer = screen.getByRole("dialog");

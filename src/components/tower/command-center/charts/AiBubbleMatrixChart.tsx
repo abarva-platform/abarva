@@ -34,12 +34,13 @@ interface BubblePoint {
   rawY: number;
   z: number;
   n: number;
+  label: string;
   name: string;
   kind: TowerAiKind;
 }
 
-const COLLISION_BUCKET_SIZE = 8;
-const COLLISION_SPREAD = 4.5;
+const COLLISION_BUCKET_SIZE = 10;
+const COLLISION_SPREAD = 7;
 
 function clampScore(value: number): number {
   return Math.max(0, Math.min(100, value));
@@ -56,13 +57,14 @@ export function buildBubblePoints(
   items: readonly TowerAiView[],
   sizeMode: "spend" | "constant" = "spend",
 ): BubblePoint[] {
-  const points = items.map((item) => ({
+  const points = items.map((item, index) => ({
     x: item.readinessScore,
     y: item.valueScore,
     rawX: item.readinessScore,
     rawY: item.valueScore,
     z: sizeMode === "constant" ? 1 : Math.max(toM(item.aiSpendUsd), 0.01),
     n: item.n,
+    label: index < 3 ? String(item.n) : "",
     name: item.name,
     kind: item.kind,
   }));
@@ -79,6 +81,7 @@ export function buildBubblePoints(
         const angle = (Math.PI * 2 * index) / cluster.length - Math.PI / 2;
         point.x = clampScore(point.rawX + Math.cos(angle) * COLLISION_SPREAD);
         point.y = clampScore(point.rawY + Math.sin(angle) * COLLISION_SPREAD);
+        point.label = index === 0 ? String(point.n) : "";
       });
   }
   return points;
@@ -194,7 +197,7 @@ export function AiBubbleMatrixChart({
               }}
             >
               <LabelList
-                dataKey="n"
+                dataKey="label"
                 position="center"
                 style={{
                   fontFamily: "var(--abarva-mono)",

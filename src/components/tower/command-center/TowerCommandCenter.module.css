@@ -63,7 +63,7 @@
 .serif {
   font-family: var(--abarva-serif);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 .mono {
   font-family: var(--abarva-mono);
@@ -135,6 +135,7 @@
   min-width: 0;
 }
 .dashId {
+  flex: 1 1 auto;
   min-width: 0;
 }
 .dashId .eyebrow {
@@ -151,19 +152,28 @@
   font-weight: 500;
   font-size: 26px;
   line-height: 1;
-  letter-spacing: -0.028em;
+  letter-spacing: 0;
   margin: 0;
   text-wrap: balance;
 }
 .dashId h1 .thin {
   color: var(--canon-gray-500);
 }
+.dashVerdict {
+  margin: 7px 0 0;
+  max-width: 760px;
+  color: var(--canon-gray-700);
+  font-size: 13.5px;
+  line-height: 1.35;
+}
 .dashRight {
-  flex: none;
+  flex: 0 1 auto;
   text-align: right;
   display: flex;
   align-items: center;
   gap: 16px;
+  justify-content: flex-end;
+  min-width: min(100%, 470px);
 }
 .dashRight .when {
   font-family: var(--abarva-mono);
@@ -182,6 +192,33 @@
   background: var(--canon-red-light);
   padding: 6px 12px;
   border-radius: 999px;
+}
+.scopeRail {
+  margin-top: 11px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.scopeRail span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  min-height: 28px;
+  border: 1px solid var(--canon-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.64);
+  padding: 5px 10px;
+  color: var(--canon-gray-500);
+  font-size: 11.5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.scopeRail b {
+  color: var(--canon-gray-900);
+  font-family: var(--abarva-mono);
+  font-size: 11.5px;
+  font-weight: 700;
 }
 
 /* Tabs */
@@ -244,6 +281,30 @@
   background: var(--canon-red);
 }
 
+@media (max-width: 1400px) {
+  .dashTop {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dashId h1 {
+    max-width: 920px;
+    font-size: 24px;
+    line-height: 1.08;
+  }
+  .dashRight {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+    text-align: left;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .tabs {
+    margin-top: 10px;
+  }
+}
+
 /* Body region — fills remaining height */
 .bodyregion {
   flex: 1;
@@ -280,7 +341,7 @@
   font-family: var(--abarva-serif);
   font-size: 19px;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 .vhead .vsub {
   font-size: 12.5px;
@@ -327,7 +388,7 @@
   font-family: var(--abarva-serif);
   font-size: 16px;
   font-weight: 500;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
 }
 .cardH .chR {
   margin-left: auto;
@@ -366,7 +427,7 @@
   font-size: 22px;
   line-height: 1.12;
   font-weight: 500;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   margin: 5px 0 4px;
 }
 .diagnosticBand p {
@@ -396,7 +457,7 @@
   font-size: 20px;
   line-height: 1;
   font-weight: 500;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   color: var(--canon-teal-dark);
   margin-bottom: 3px;
 }
@@ -483,7 +544,7 @@
   font-weight: 500;
   font-size: 27px;
   line-height: 0.95;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 .ptHero small {
@@ -1124,7 +1185,7 @@
   font-weight: 500;
   font-size: clamp(18px, 1.7vw, 24px);
   line-height: 1.36;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   text-wrap: pretty;
   color: var(--canon-gray-900);
 }
@@ -1322,7 +1383,7 @@
   font-family: var(--abarva-serif);
   font-size: 15.5px;
   font-weight: 500;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
   line-height: 1.25;
   text-wrap: pretty;
 }
@@ -1488,7 +1549,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 15px;
   font-weight: 500;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
   line-height: 1.2;
 }
 .psub {
@@ -1504,7 +1565,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 17px;
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 .bignum.nTeal {
@@ -1628,6 +1689,52 @@ button.chip.cBlue {
 .heatmapTruthNote span {
   min-width: 0;
 }
+.proofStages {
+  display: grid;
+  gap: 10px;
+}
+.proofStage {
+  border: 1px solid var(--canon-border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.58);
+  padding: 10px 11px;
+}
+.proofStageTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.proofStageTop span {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--canon-gray-700);
+}
+.proofStageTop b {
+  font-family: var(--abarva-mono);
+  font-size: 12px;
+  color: var(--canon-gray-900);
+}
+.proofStageBar {
+  margin: 8px 0 6px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--canon-gray-100);
+  overflow: hidden;
+}
+.proofStageBar::before {
+  content: "";
+  display: block;
+  width: var(--stage-width);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--canon-teal);
+}
+.proofStage small {
+  color: var(--canon-gray-500);
+  font-family: var(--abarva-mono);
+  font-size: 10.5px;
+}
 
 /* The design's viewFunnel() uses .ins / .ik / .itext but never declares them.
  * Styled here to match the drawer's .dr-plain callout, which is the same
@@ -1721,7 +1828,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   line-height: 1.1;
 }
 .progressionCount {
@@ -1729,7 +1836,7 @@ button.chip.cBlue {
   font-size: 24px;
   line-height: 0.95;
   font-weight: 500;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   color: var(--canon-gray-900);
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -1859,7 +1966,7 @@ button.chip.cBlue {
   font-size: 15.5px;
   line-height: 1.2;
   font-weight: 500;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
   margin: 5px 0 6px;
 }
 .interventionMemo p {
@@ -1875,8 +1982,221 @@ button.chip.cBlue {
   line-height: 1.35;
   color: var(--canon-teal-dark);
 }
+.campaignGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.campaignCard {
+  border: 1px solid var(--canon-border);
+  border-left: 3px solid var(--canon-gray-300);
+  border-radius: 10px;
+  background: var(--canon-bg-surface);
+  padding: 13px 14px;
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.campaignCard.toneTeal {
+  border-left-color: var(--canon-teal);
+}
+.campaignCard.toneAmber {
+  border-left-color: var(--canon-amber);
+}
+.campaignCard.toneRed {
+  border-left-color: var(--canon-red);
+}
+.campaignCard header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.campaignCard header strong {
+  flex: none;
+  font-family: var(--abarva-mono);
+  font-size: 10.5px;
+  color: var(--canon-gray-700);
+}
+.campaignCard h3 {
+  margin: 10px 0 6px;
+  font-family: var(--abarva-serif);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+.campaignCard p {
+  margin: 0;
+  color: var(--canon-gray-700);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.campaignCard dl {
+  display: grid;
+  gap: 6px;
+  margin: 11px 0;
+}
+.campaignCard dl div {
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr);
+  gap: 8px;
+}
+.campaignCard dt {
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--canon-gray-500);
+}
+.campaignCard dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--canon-gray-700);
+  font-size: 11.5px;
+}
+.campaignCard > b {
+  display: block;
+  color: var(--canon-gray-900);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.inventoryControl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--canon-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.62);
+  padding: 10px 12px;
+}
+.inventoryToggle {
+  border: 1px solid var(--canon-gray-900);
+  border-radius: 8px;
+  background: var(--canon-gray-900);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  font-weight: 650;
+  padding: 8px 11px;
+  white-space: nowrap;
+}
+.inventoryControl span {
+  color: var(--canon-gray-500);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1180px) {
+  .campaignGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
 /* AI spend lens */
+.aiPopulationStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.aiPopulationStrip span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--canon-gray-500);
+  font-size: 11.5px;
+  padding: 7px 9px;
+}
+.aiPopulationStrip b {
+  color: var(--canon-gray-900);
+  font-family: var(--abarva-mono);
+  font-size: 11.5px;
+}
+.spendCompleteness {
+  flex: none;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.spendCompletenessTop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--canon-gray-500);
+  font-size: 11.5px;
+}
+.spendCompletenessTop span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.spendCompletenessTop b {
+  color: var(--canon-gray-900);
+  font-family: var(--abarva-mono);
+  font-size: 11.5px;
+}
+.spendStack {
+  display: flex;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--canon-gray-100);
+}
+.spendStack i {
+  display: block;
+  height: 100%;
+  background: var(--canon-teal);
+}
+.spendStack em {
+  display: block;
+  flex: 1;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(186, 117, 23, 0.28) 0,
+    rgba(186, 117, 23, 0.28) 5px,
+    rgba(186, 117, 23, 0.12) 5px,
+    rgba(186, 117, 23, 0.12) 10px
+  );
+}
+.spendStateList {
+  display: grid;
+  gap: 7px;
+  width: min(100%, 420px);
+  margin: 6px 0 0;
+}
+.spendStateList div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  border-top: 1px solid var(--canon-border);
+  padding-top: 7px;
+}
+.spendStateList dt {
+  color: var(--canon-gray-500);
+  font-size: 11.5px;
+}
+.spendStateList dd {
+  margin: 0;
+  color: var(--canon-gray-900);
+  font-family: var(--abarva-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.sourceNeeds {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--canon-gray-700);
+  font-size: 11.5px;
+  line-height: 1.45;
+  text-align: left;
+}
+
 .lensrow {
   display: grid;
   grid-template-columns: 158px 1fr 92px;
@@ -2082,7 +2402,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 17px;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 .lhCnt {
   margin-left: auto;
@@ -2286,7 +2606,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 14.5px;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   color: var(--canon-gray-500);
   line-height: 1.2;
   transition:
@@ -2319,6 +2639,84 @@ button.chip.cBlue {
 .evbtn.on .evn {
   background: var(--canon-teal);
   color: #fff;
+}
+.sourceAuthorityPlan {
+  border: 1px solid var(--canon-border);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-card);
+  padding: 13px 15px;
+}
+.sourceAuthorityPlan header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.sourceAuthorityPlan h3 {
+  margin: 4px 0 0;
+  font-family: var(--abarva-serif);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+.sourceAuthorityPlan header strong {
+  flex: none;
+  border: 1px solid var(--canon-amber-border);
+  border-radius: 999px;
+  background: var(--canon-amber-bg);
+  color: var(--canon-amber);
+  font-family: var(--abarva-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 5px 9px;
+}
+.trustPlanTable {
+  display: grid;
+  gap: 0;
+  overflow-x: auto;
+}
+.trustPlanHead,
+.trustPlanRow {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 0.9fr) minmax(180px, 1.1fr) minmax(190px, 1.2fr)
+    minmax(92px, 0.55fr) minmax(130px, 0.8fr);
+  gap: 12px;
+  min-width: 860px;
+  align-items: center;
+}
+.trustPlanHead {
+  border-bottom: 1px solid var(--canon-border);
+  color: var(--canon-gray-500);
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0 0 7px;
+}
+.trustPlanRow {
+  border-bottom: 1px solid var(--canon-border);
+  color: var(--canon-gray-700);
+  font-size: 11.5px;
+  line-height: 1.35;
+  padding: 8px 0;
+}
+.trustPlanRow:last-child {
+  border-bottom: 0;
+}
+.trustPlanRow b {
+  color: var(--canon-gray-900);
+  font-size: 12px;
+  font-weight: 650;
+}
+.trustPlanRow em {
+  color: var(--canon-amber);
+  font-style: normal;
+  font-weight: 650;
 }
 .evpanel {
   flex: 1;
@@ -2361,7 +2759,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 16px;
   font-weight: 500;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
   color: var(--canon-gray-900);
   line-height: 1.25;
   text-wrap: pretty;
@@ -2397,7 +2795,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 23px;
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -2462,7 +2860,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 15px;
   font-weight: 500;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
 }
 .ocCnt {
   font-family: var(--abarva-mono);
@@ -2529,7 +2927,7 @@ button.chip.cBlue {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.22;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 .acard .adue {
   font-size: 10.5px;
@@ -2549,6 +2947,17 @@ button.chip.cBlue {
 .acard .alink b {
   color: var(--canon-gray-700);
   font-weight: 500;
+}
+.actionOverflow {
+  border: 1px dashed var(--canon-border-strong);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-family: var(--abarva-mono);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--canon-gray-500);
+  background: rgba(255, 255, 255, 0.54);
 }
 
 /* Drawer */
@@ -2628,7 +3037,7 @@ button.chip.cBlue {
   font-size: 23px;
   font-weight: 500;
   line-height: 1.16;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   text-wrap: pretty;
   margin: 0;
 }
@@ -2671,7 +3080,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 22px;
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 .drGrid .v.sm {
@@ -3007,7 +3416,7 @@ button.chip.cBlue {
   font-family: var(--abarva-serif);
   font-size: 21px;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   margin: 0;
 }
 .emptyPanel p {

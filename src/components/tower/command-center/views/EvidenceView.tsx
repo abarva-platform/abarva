@@ -13,6 +13,7 @@
 import { formatCount } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
+  TowerEvidenceFactView,
   TowerEvidenceGapLedgerItem,
   TowerInterventionLane,
 } from "@/lib/tower/command-center/types";
@@ -51,6 +52,16 @@ const TONE_CLASS: Record<Tone, string> = {
   red: "mRed",
 };
 
+interface SourceAuthorityPlan {
+  id: string;
+  fact: string;
+  currentAuthority: string;
+  secondSourceNeeded: string;
+  owner: string;
+  decisionBlocked: string;
+  status: string;
+}
+
 function ledgerTone(item: { tone: string }): Tone {
   if (item.tone === "teal") return "teal";
   if (item.tone === "amber") return "amber";
@@ -80,9 +91,7 @@ function ownerAnswers(
       return {
         id: `owner:${owner}`,
         name: owner,
-        detail: items
-          .map((g) => `${g.label}: ${g.nextAction}`)
-          .join(" · "),
+        detail: items.map((g) => `${g.label}: ${g.nextAction}`).join(" · "),
         metric: formatCount(total),
         unit: total === 1 ? "claim-gate gap" : "claim-gate gaps",
         tone: red ? "red" : amber ? "amber" : "teal",
@@ -117,6 +126,141 @@ function blockedDecisionAnswers(
     }));
 }
 
+function currentAuthority(fact: TowerEvidenceFactView): string {
+  return [fact.sourceSystem, fact.sourceFile, fact.sourceRow]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function authorityPlanForFact(
+  fact: TowerEvidenceFactView,
+): SourceAuthorityPlan {
+  const key = `${fact.name} ${fact.unit}`.toLowerCase();
+  const owner = fact.resolutionOwnerRole ?? "Data / PMO";
+
+  if (
+    key.includes("finance") ||
+    key.includes("validated") ||
+    key.includes("calculated")
+  ) {
+    return {
+      id: fact.id,
+      fact: fact.name,
+      currentAuthority: currentAuthority(fact) || "Tower claim calculation",
+      secondSourceNeeded: "Finance attestation or actuals cross-check",
+      owner: fact.resolutionOwnerRole ?? "Finance",
+      decisionBlocked: "Board claim gate",
+      status: fact.lineageState ?? "ONE_SOURCE",
+    };
+  }
+
+  if (
+    key.includes("budget") ||
+    key.includes("investment") ||
+    key.includes("approved")
+  ) {
+    return {
+      id: fact.id,
+      fact: fact.name,
+      currentAuthority: currentAuthority(fact) || "Budget allocation",
+      secondSourceNeeded: "Actual/project ledger or FP&A sign-off",
+      owner: fact.resolutionOwnerRole ?? "FP&A",
+      decisionBlocked: "Capital posture",
+      status: fact.lineageState ?? "ONE_SOURCE",
+    };
+  }
+
+  if (
+    key.includes("benefit") ||
+    key.includes("promised") ||
+    key.includes("value")
+  ) {
+    return {
+      id: fact.id,
+      fact: fact.name,
+      currentAuthority: currentAuthority(fact) || "Business-case source",
+      secondSourceNeeded: "Operating owner confirmation",
+      owner: fact.resolutionOwnerRole ?? "Business owner",
+      decisionBlocked: "Benefit-case acceptance",
+      status: fact.lineageState ?? "ONE_SOURCE",
+    };
+  }
+
+  if (key.includes("ai") || key.includes("spend")) {
+    return {
+      id: fact.id,
+      fact: fact.name,
+      currentAuthority: currentAuthority(fact) || "AI spend ledger",
+      secondSourceNeeded: "Tool-owner and cost-center mapping",
+      owner: fact.resolutionOwnerRole ?? "IT Finance",
+      decisionBlocked: "AI spend attribution",
+      status: fact.lineageState ?? "ONE_SOURCE",
+    };
+  }
+
+  return {
+    id: fact.id,
+    fact: fact.name,
+    currentAuthority: currentAuthority(fact) || "Governed source row",
+    secondSourceNeeded: "Independent source or owner attestation",
+    owner,
+    decisionBlocked: "Source authority",
+    status: fact.lineageState ?? "ONE_SOURCE",
+  };
+}
+
+function SourceAuthorityWorkplan({ view }: { view: TowerCommandCenterView }) {
+  const oneSourceFacts = view.evidenceFacts.filter(
+    (fact) =>
+      fact.lineageState === "ONE_SOURCE" ||
+      (fact.lineageState === null && fact.sourceCount === 1),
+  );
+  const rows = oneSourceFacts.map(authorityPlanForFact);
+
+  return (
+    <section
+      className={styles.sourceAuthorityPlan}
+      aria-label="One-source fact workplan"
+    >
+      <header>
+        <div>
+          <span className={styles.eyebrow2}>Source-authority workplan</span>
+          <h3>One-source facts needing corroboration</h3>
+        </div>
+        <strong>
+          {formatCount(rows.length)} ONE_SOURCE fact
+          {rows.length === 1 ? "" : "s"}
+        </strong>
+      </header>
+      {rows.length === 0 ? (
+        <p className={styles.lhSub}>
+          No ONE_SOURCE board facts are exposed by the current governed lineage
+          packet.
+        </p>
+      ) : (
+        <div className={styles.trustPlanTable}>
+          <div className={styles.trustPlanHead} role="row">
+            <span>Board fact</span>
+            <span>Current authority</span>
+            <span>Needed to reach AGREE</span>
+            <span>Owner</span>
+            <span>Decision blocked</span>
+          </div>
+          {rows.map((row) => (
+            <div key={row.id} className={styles.trustPlanRow} role="row">
+              <b>{row.fact}</b>
+              <span>{row.currentAuthority}</span>
+              <span>{row.secondSourceNeeded}</span>
+              <span>{row.owner}</span>
+              <em>{row.decisionBlocked}</em>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function buildAnswers(
   question: EvidenceQuestion,
   view: TowerCommandCenterView,
@@ -135,8 +279,8 @@ function buildAnswers(
           : f.detail,
         metric: f.metricText,
         unit: f.unit,
-        tone: f.tone,
-        tag: f.tag,
+        tone: f.lineageState === "ONE_SOURCE" ? "amber" : f.tone,
+        tag: f.lineageState ?? f.tag,
       })),
     };
   }
@@ -211,6 +355,8 @@ export function EvidenceView({
           owns it, and which decision remains blocked until it arrives.
         </span>
       </div>
+
+      <SourceAuthorityWorkplan view={view} />
 
       <div
         className={styles.evseg}
@@ -290,7 +436,11 @@ function EvidenceRowBody({
       </span>
       <span className={styles.ebigRight}>
         <span className={cx(styles.ebigMetric, styles[TONE_CLASS[item.tone]])}>
-          {item.metric === "Unknown" ? <Unknown label="Unknown" /> : item.metric}
+          {item.metric === "Unknown" ? (
+            <Unknown label="Unknown" />
+          ) : (
+            item.metric
+          )}
         </span>
         <span className={styles.ebigUnit}>{item.unit}</span>
         <span className={styles.ebigTag}>{item.tag}</span>
