@@ -7,6 +7,7 @@ import {
   type SourceArtifactGenerationJobRow,
 } from "@/lib/source/artifact-generation-queue";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
+import { specsForStage } from "@/lib/source/canonical-specs";
 import type { SourceEventArtifactStateRow } from "@/lib/source/canvas-substrate/types";
 import type { SourceStageKey } from "@/lib/source/types";
 
@@ -61,20 +62,12 @@ export interface AutoDraftOnStageEntryDeps {
 
 const TERMINAL_ARTIFACT_STATUSES = new Set(["locked", "superseded"]);
 
-const AUTO_DRAFT_PRIMARY_CODES_BY_STAGE: Partial<
-  Record<SourceStageKey, readonly string[]>
-> = {
-  strategy: ["d01_strategy_memo"],
-  scope: ["d05_scope_memo"],
-  rfp: ["d09_rfp_pack"],
-  executive_decision: ["d24_decision_brief"],
-};
-
 export function autoDraftCodesForStage(stage: SourceStageKey): string[] {
   const supported = new Set(listSupportedGenerationCodes());
-  return [...(AUTO_DRAFT_PRIMARY_CODES_BY_STAGE[stage] ?? [])].filter((code) =>
-    supported.has(code),
-  );
+  return specsForStage(stage)
+    .filter((spec) => spec.requirementLevel === "required" || spec.gateDefining)
+    .map((spec) => spec.code)
+    .filter((code) => supported.has(code));
 }
 
 export async function autoDraftOnStageEntry(
@@ -132,7 +125,9 @@ export async function autoDraftOnStageEntry(
         artifactRowId: row.id,
         status: "drafting",
       });
-      const job = await (deps.enqueueGenerationJob ?? defaultEnqueueGenerationJob)({
+      const job = await (
+        deps.enqueueGenerationJob ?? defaultEnqueueGenerationJob
+      )({
         eventId: input.eventId,
         clientKey: input.clientKey,
         artifactCode,
@@ -172,11 +167,14 @@ export async function autoDraftOnStageEntry(
       result.generated.push(artifactCode);
     } catch (error) {
       if (isSourceArtifactGenerationQueueUnavailable(error)) {
-        log.warn("[source stage autodraft] durable queue unavailable; falling back to direct generation", {
-          ...input,
-          artifactCode,
-          message: error instanceof Error ? error.message : String(error),
-        });
+        log.warn(
+          "[source stage autodraft] durable queue unavailable; falling back to direct generation",
+          {
+            ...input,
+            artifactCode,
+            message: error instanceof Error ? error.message : String(error),
+          },
+        );
         const fallbackResponse = await runDirectGeneration({
           eventId: input.eventId,
           artifactCode,
@@ -313,9 +311,8 @@ async function defaultGenerateArtifact(input: {
   artifactCode: string;
   request?: Request;
 }): Promise<Response> {
-  const { generateSourceArtifactDraft } = await import(
-    "@/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route"
-  );
+  const { generateSourceArtifactDraft } =
+    await import("@/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route");
   return generateSourceArtifactDraft(
     input.request ?? new Request("https://app.abarva.ai/source-autodraft"),
     {
@@ -327,10 +324,9 @@ async function defaultGenerateArtifact(input: {
   );
 }
 
-async function safeReadJson(response: Response): Promise<Record<
-  string,
-  unknown
-> | null> {
+async function safeReadJson(
+  response: Response,
+): Promise<Record<string, unknown> | null> {
   try {
     return (await response.json()) as Record<string, unknown>;
   } catch {

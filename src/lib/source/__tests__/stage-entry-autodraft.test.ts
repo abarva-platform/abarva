@@ -55,7 +55,9 @@ function queuedJob(artifactCode = "d01_strategy_memo") {
   } as const;
 }
 
-function queuedDeps(over: Partial<Parameters<typeof autoDraftOnStageEntry>[1]> = {}) {
+function queuedDeps(
+  over: Partial<Parameters<typeof autoDraftOnStageEntry>[1]> = {},
+) {
   return {
     enqueueGenerationJob: jest.fn(async (input: { artifactCode: string }) =>
       queuedJob(input.artifactCode),
@@ -67,42 +69,70 @@ function queuedDeps(over: Partial<Parameters<typeof autoDraftOnStageEntry>[1]> =
 }
 
 describe("autoDraftOnStageEntry", () => {
-  it("maps stage entry to the primary supported Source template", () => {
-    expect(autoDraftCodesForStage("strategy")).toEqual(["d01_strategy_memo"]);
-    expect(autoDraftCodesForStage("scope")).toEqual(["d05_scope_memo"]);
-    expect(autoDraftCodesForStage("rfp")).toEqual(["d09_rfp_pack"]);
-    expect(autoDraftCodesForStage("responses")).toEqual([]);
+  it("maps stage entry to all supported required gate-defining Source templates", () => {
+    expect(autoDraftCodesForStage("strategy")).toEqual([
+      "d01_strategy_memo",
+      "d02_value_target",
+    ]);
+    expect(autoDraftCodesForStage("scope")).toEqual([
+      "d04_app_inv",
+      "d05_scope_memo",
+      "d06_excl_log",
+      "d07_ticket_synth",
+    ]);
+    expect(autoDraftCodesForStage("rfp")).toEqual([
+      "d09_rfp_pack",
+      "d11_response_checklist",
+      "d12_vendor_shortlist",
+    ]);
   });
 
-  it("generates an empty templated artifact once", async () => {
+  it("generates each empty required templated artifact once", async () => {
     const deps = queuedDeps();
 
-    const result = await autoDraftOnStageEntry(baseInput, {
-      loadArtifactRows: async () => [row("d01_strategy_memo")],
-      ...deps,
-      log: silentLog,
-    });
+    const result = await autoDraftOnStageEntry(
+      { ...baseInput, enteredStage: "rfp" },
+      {
+        loadArtifactRows: async () => [
+          row("d09_rfp_pack"),
+          row("d11_response_checklist"),
+          row("d12_vendor_shortlist"),
+        ],
+        ...deps,
+        log: silentLog,
+      },
+    );
 
     expect(result).toEqual({
-      queued: ["d01_strategy_memo"],
-      generated: ["d01_strategy_memo"],
+      queued: [
+        "d09_rfp_pack",
+        "d11_response_checklist",
+        "d12_vendor_shortlist",
+      ],
+      generated: [
+        "d09_rfp_pack",
+        "d11_response_checklist",
+        "d12_vendor_shortlist",
+      ],
       skipped: [],
       failed: [],
     });
-    expect(deps.updateArtifactStatus).toHaveBeenCalledWith({
-      artifactRowId: "row-d01_strategy_memo",
-      status: "drafting",
-    });
+    expect(deps.updateArtifactStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artifactRowId: "row-d09_rfp_pack",
+        status: "drafting",
+      }),
+    );
     expect(deps.enqueueGenerationJob).toHaveBeenCalledWith(
       expect.objectContaining({
         eventId: "evt-1",
         clientKey: "skyharbor-air",
-        artifactCode: "d01_strategy_memo",
-        artifactRowId: "row-d01_strategy_memo",
-        stageKey: "strategy",
+        artifactCode: "d09_rfp_pack",
+        artifactRowId: "row-d09_rfp_pack",
+        stageKey: "rfp",
       }),
     );
-    expect(deps.processGenerationJob).toHaveBeenCalledTimes(1);
+    expect(deps.processGenerationJob).toHaveBeenCalledTimes(3);
   });
 
   it("is idempotent when the artifact already has a body", async () => {
@@ -111,6 +141,7 @@ describe("autoDraftOnStageEntry", () => {
     const result = await autoDraftOnStageEntry(baseInput, {
       loadArtifactRows: async () => [
         row("d01_strategy_memo", { body: "# Existing strategy" }),
+        row("d02_value_target", { body: "# Existing value target" }),
       ],
       generateArtifact,
       log: silentLog,
@@ -118,7 +149,10 @@ describe("autoDraftOnStageEntry", () => {
 
     expect(result.generated).toEqual([]);
     expect(result.queued).toEqual([]);
-    expect(result.skipped).toEqual(["d01_strategy_memo:already_authored"]);
+    expect(result.skipped).toEqual([
+      "d01_strategy_memo:already_authored",
+      "d02_value_target:already_authored",
+    ]);
     expect(result.failed).toEqual([]);
     expect(generateArtifact).not.toHaveBeenCalled();
   });
@@ -129,6 +163,7 @@ describe("autoDraftOnStageEntry", () => {
     const result = await autoDraftOnStageEntry(baseInput, {
       loadArtifactRows: async () => [
         row("d01_strategy_memo", { status: "locked" }),
+        row("d02_value_target", { status: "locked" }),
       ],
       generateArtifact,
       log: silentLog,
@@ -136,35 +171,39 @@ describe("autoDraftOnStageEntry", () => {
 
     expect(result.generated).toEqual([]);
     expect(result.queued).toEqual([]);
-    expect(result.skipped).toEqual(["d01_strategy_memo:locked"]);
+    expect(result.skipped).toEqual([
+      "d01_strategy_memo:locked",
+      "d02_value_target:locked",
+    ]);
     expect(result.failed).toEqual([]);
     expect(generateArtifact).not.toHaveBeenCalled();
   });
 
-  it("no-ops for stages without a supported primary template", async () => {
+  it("skips required artifacts that do not have a scaffold row yet", async () => {
     const generateArtifact = jest.fn(async () => okResponse());
 
     const result = await autoDraftOnStageEntry(
-      { ...baseInput, enteredStage: "responses" },
+      { ...baseInput, enteredStage: "scope" },
       {
-        loadArtifactRows: async () => [row("d13_vendor_responses")],
+        loadArtifactRows: async () => [row("d05_scope_memo")],
         generateArtifact,
         log: silentLog,
       },
     );
 
-    expect(result).toEqual({
-      queued: [],
-      generated: [],
-      skipped: ["responses:no_supported_templates"],
-      failed: [],
-    });
-    expect(generateArtifact).not.toHaveBeenCalled();
+    expect(result.skipped).toEqual([
+      "d04_app_inv:missing_artifact_row",
+      "d06_excl_log:missing_artifact_row",
+      "d07_ticket_synth:missing_artifact_row",
+    ]);
   });
 
   it("records generation failures without throwing", async () => {
     const result = await autoDraftOnStageEntry(baseInput, {
-      loadArtifactRows: async () => [row("d01_strategy_memo")],
+      loadArtifactRows: async () => [
+        row("d01_strategy_memo"),
+        row("d02_value_target", { body: "# Existing value target" }),
+      ],
       ...queuedDeps({
         processGenerationJob: jest.fn(async () => {
           throw new Error("provider down");
@@ -175,13 +214,16 @@ describe("autoDraftOnStageEntry", () => {
 
     expect(result.generated).toEqual([]);
     expect(result.queued).toEqual(["d01_strategy_memo"]);
-    expect(result.skipped).toEqual([]);
+    expect(result.skipped).toEqual(["d02_value_target:already_authored"]);
     expect(result.failed).toEqual(["d01_strategy_memo:generation_failed"]);
   });
 
   it("records non-ok generation responses without throwing", async () => {
     const result = await autoDraftOnStageEntry(baseInput, {
-      loadArtifactRows: async () => [row("d01_strategy_memo")],
+      loadArtifactRows: async () => [
+        row("d01_strategy_memo"),
+        row("d02_value_target", { body: "# Existing value target" }),
+      ],
       ...queuedDeps({
         processGenerationJob: jest.fn(async () =>
           Response.json({ error: "upstream_required" }, { status: 409 }),
@@ -192,7 +234,7 @@ describe("autoDraftOnStageEntry", () => {
 
     expect(result.generated).toEqual([]);
     expect(result.queued).toEqual(["d01_strategy_memo"]);
-    expect(result.skipped).toEqual([]);
+    expect(result.skipped).toEqual(["d02_value_target:already_authored"]);
     expect(result.failed).toEqual(["d01_strategy_memo:upstream_required"]);
   });
 
@@ -200,9 +242,14 @@ describe("autoDraftOnStageEntry", () => {
     const generateArtifact = jest.fn(async () => okResponse());
 
     const result = await autoDraftOnStageEntry(baseInput, {
-      loadArtifactRows: async () => [row("d01_strategy_memo")],
+      loadArtifactRows: async () => [
+        row("d01_strategy_memo"),
+        row("d02_value_target", { body: "# Existing value target" }),
+      ],
       enqueueGenerationJob: jest.fn(async () => {
-        throw new Error('relation "source_artifact_generation_jobs" does not exist');
+        throw new Error(
+          'relation "source_artifact_generation_jobs" does not exist',
+        );
       }),
       updateArtifactStatus: jest.fn(async () => undefined),
       generateArtifact,
@@ -212,7 +259,7 @@ describe("autoDraftOnStageEntry", () => {
     expect(result).toEqual({
       queued: [],
       generated: ["d01_strategy_memo"],
-      skipped: [],
+      skipped: ["d02_value_target:already_authored"],
       failed: [],
     });
     expect(generateArtifact).toHaveBeenCalledTimes(1);
