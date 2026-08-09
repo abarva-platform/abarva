@@ -300,24 +300,6 @@ export async function createSourcingEvent(
     );
   }
 
-  // Auto-draft the Strategy memo (d01) the moment the event is created, so
-  // the sponsor has a real memo to review before confirming the Strategy
-  // gate. Not awaited — generation can take minutes; event creation must not
-  // block on it. Durable: goes through the same enqueue-then-process job the
-  // stage-entry autodraft uses everywhere else, so a mid-generation process
-  // restart leaves a recoverable "running" job rather than losing the work.
-  void autoDraftOnStageEntry({
-    eventId: row.id,
-    clientKey: row.client_key,
-    enteredStage: "strategy",
-  }).catch((autoDraftError) => {
-    console.warn(
-      "source strategy autodraft failure:",
-      row.id,
-      autoDraftError instanceof Error ? autoDraftError.message : autoDraftError,
-    );
-  });
-
   return row;
 }
 

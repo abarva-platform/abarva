@@ -147,6 +147,15 @@ export function resolveSourceSourcingMotion(
     .toLowerCase();
 
   if (
+    classifiedCategory !== "saas_renewal" &&
+    /\b(rfp|rfi|competitive|multi[-\s]?vendor|market\s+event|vendor\s+selection)\b/.test(
+      text,
+    )
+  ) {
+    return "competitive_rfp";
+  }
+
+  if (
     /\b(contract\s+optimization|optimi[sz]e\s+(?:a\s+)?contract|renewal|renegotiat\w*|incumbent\s+negotiation|sole[-\s]?source)\b/.test(
       text,
     )

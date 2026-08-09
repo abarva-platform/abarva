@@ -13,6 +13,46 @@ A coherent sourcing operating workspace that answers: what is ready, what is blo
 
 ---
 
+## SRC47 — Source event archive and stale fact cleanup
+
+**Priority:** P0
+**Status:** pending
+**Type:** operator / governance hygiene
+**Primary surface:** Source event portfolio, event evidence ledger, Source facts
+**Primary agent:** Nexus
+**Dependencies:** Source event/fact read-model access, object storage archive path
+
+### Purpose
+Provide an operator-safe cleanup path for rehearsal or superseded Source events so they leave active portfolio views without deleting the audit record or touching canonical contract/vendor data.
+
+### Workflow and data requirements
+- Archive the event record so it no longer appears in active/in-flight Source lists.
+- Archive uploaded event blobs alongside the event record.
+- Before any mutation, report `source_event_facts` counts grouped by `fact_key` for the event.
+- Mark event-scoped facts `is_stale = true` rather than deleting them.
+- Verify from the live database whether any event facts were promoted to enterprise context before declaring cleanup complete.
+- Do not touch Contract 360, vendor register, canonical contract tables, or tenant-wide Source projections.
+
+### Acceptance criteria
+- Target events are absent from active/in-flight Source portfolio views.
+- Uploaded blobs remain auditable but are archived with the event.
+- Event facts are stale-flagged and no longer available to non-stale readers.
+- Enterprise-context promotion status is explicitly reported from live DB evidence.
+- The cleanup is event-scoped and cannot mutate canonical contract/vendor records.
+
+### Codex-ready slice prompt
+```text
+Implement SRC47 — Source event archive and stale fact cleanup.
+
+Scope:
+Build or run the narrow operator path for archiving superseded Source events, associated uploaded blobs, and event-scoped parsed facts. Use `is_stale = true` for facts, with a pre-flip fact-key count and live DB verification of enterprise-context promotion status. Do not touch Contract 360, vendor register, canonical contract tables, or tenant-wide projections.
+
+Validation:
+Show pre/post event visibility, fact stale counts, blob archive evidence, and enterprise-context verification. Treat this as operator/governance hygiene, not a data reload.
+```
+
+---
+
 ## SRC39 — Vendor selection readiness model
 
 **Priority:** P0

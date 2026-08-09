@@ -135,6 +135,55 @@ describe("autoDraftOnStageEntry", () => {
     expect(deps.processGenerationJob).toHaveBeenCalledTimes(3);
   });
 
+  it("waits for required upstream drafts before generating dependent stage artifacts", async () => {
+    const deps = queuedDeps({
+      waitForDraftableUpstream: jest.fn(async () => []),
+    });
+
+    const result = await autoDraftOnStageEntry(
+      { ...baseInput, enteredStage: "scope" },
+      {
+        loadArtifactRows: async () => [row("d04_app_inv")],
+        ...deps,
+        log: silentLog,
+      },
+    );
+
+    expect(result.generated).toEqual(["d04_app_inv"]);
+    expect(deps.waitForDraftableUpstream).toHaveBeenCalledWith({
+      eventId: "evt-1",
+      artifactCode: "d04_app_inv",
+      requiredCodes: ["d01_strategy_memo"],
+    });
+    expect(deps.updateArtifactStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artifactRowId: "row-d04_app_inv",
+        status: "drafting",
+      }),
+    );
+  });
+
+  it("does not enqueue dependent artifacts when upstream drafts never become available", async () => {
+    const deps = queuedDeps({
+      waitForDraftableUpstream: jest.fn(async () => ["d01_strategy_memo"]),
+    });
+
+    const result = await autoDraftOnStageEntry(
+      { ...baseInput, enteredStage: "scope" },
+      {
+        loadArtifactRows: async () => [row("d04_app_inv")],
+        ...deps,
+        log: silentLog,
+      },
+    );
+
+    expect(result.failed).toEqual(["d04_app_inv:upstream_required"]);
+    expect(result.queued).toEqual([]);
+    expect(result.generated).toEqual([]);
+    expect(deps.enqueueGenerationJob).not.toHaveBeenCalled();
+    expect(deps.processGenerationJob).not.toHaveBeenCalled();
+  });
+
   it("is idempotent when the artifact already has a body", async () => {
     const generateArtifact = jest.fn(async () => okResponse());
 
