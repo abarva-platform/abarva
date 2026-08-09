@@ -25,7 +25,8 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.maxTokens).toBeGreaterThanOrEqual(5000);
     expect(template?.systemPrompt).toContain("Source register");
     expect(template?.systemPrompt).toContain("Risk, issue, dependency");
-    expect(template?.systemPrompt).toContain("client-to-complete");
+    expect(template?.systemPrompt).toContain("issue-to-release gap");
+    expect(template?.systemPrompt).toContain("Vendor Response Workbook");
     expect(template?.systemPrompt).toContain("friendly exhibit labels");
     expect(template?.systemPrompt).toContain("Never stop after a partial table");
     expect(template?.systemPrompt).toContain("Section budget");
@@ -92,7 +93,8 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
     expect(template?.systemPrompt).toContain("Vendor Claim Register");
     expect(template?.systemPrompt).toContain("Automation / Productivity Commitment Table");
-    expect(template?.systemPrompt).toContain("Structured Pricing Workbook");
+    expect(template?.systemPrompt).toContain("Pricing Response");
+    expect(template?.systemPrompt).toContain("one vendor response workbook");
     expect(template?.systemPrompt).toContain("Staffing and Location Model");
     expect(template?.systemPrompt).toContain("SLA Commitment Table");
     expect(template?.systemPrompt).toContain("Assumptions and Exclusions Log");

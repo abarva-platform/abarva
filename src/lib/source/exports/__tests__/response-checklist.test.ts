@@ -46,15 +46,25 @@ function makePayload(
 }
 
 describe('buildResponseChecklistWorkbook', () => {
-  it('produces a workbook with the five canonical sheets', () => {
+  it('produces a workbook with the six canonical sheets and a first Guide tab', () => {
     const wb = buildResponseChecklistWorkbook(makePayload());
     expect(wb.worksheets.map((s) => s.name)).toEqual([
+      'Guide',
       'Cover',
       'Mandatory Items',
       'Optional Items',
       'Format Expectations',
       'Submission Sign-off',
     ]);
+  });
+
+  it('Guide sheet explains completion rules and vendor-facing purpose', () => {
+    const wb = buildResponseChecklistWorkbook(makePayload());
+    const text = collectSheetText(wb.getWorksheet('Guide')!);
+    expect(text).toContain('Vendor Response Control Pack');
+    expect(text).toContain('Vendor-facing response workbook');
+    expect(text).toContain('Mandatory Items');
+    expect(text).toContain('evidence pointer');
   });
 
   it('Cover sheet carries event metadata + a Vendor name slot + submission deadline', () => {

@@ -45,15 +45,25 @@ function makePayload(
 }
 
 describe('buildScorecardWorkbook', () => {
-  it('produces a workbook with the five canonical sheets', () => {
+  it('produces a workbook with the six canonical sheets and a first Guide tab', () => {
     const wb = buildScorecardWorkbook(makePayload());
     expect(wb.worksheets.map((s) => s.name)).toEqual([
+      'Guide',
       'Cover',
       'Criteria & Weights',
       'Vendor Scoring',
       'Score Guidance',
       'Decision Notes',
     ]);
+  });
+
+  it('Guide sheet marks the scorecard as internal-only', () => {
+    const wb = buildScorecardWorkbook(makePayload());
+    const text = collectSheetText(wb.getWorksheet('Guide')!);
+    expect(text).toContain('Evaluation Scorecard');
+    expect(text).toContain('Internal client review workbook');
+    expect(text).toContain('Do not send this internal workbook to vendors');
+    expect(text).toContain('Not Vendor-Facing');
   });
 
   it('Cover sheet carries event metadata + Evaluator slot + round label', () => {

@@ -30,23 +30,17 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain("## §7A · Directional commercial leverage assumptions");
     expect(completed).toContain("## §10 · Risk register, transition controls, and failure modes");
     expect(completed).toContain("## §12 · Legal, commercial, and submission terms for client counsel review");
-    expect(completed).toContain("## Appendix A · Vendor Claim Register Template");
-    expect(completed).toContain("## Appendix B · Automation / Productivity Commitment Table");
-    expect(completed).toContain("## Appendix C · Structured Pricing Workbook Template");
-    expect(completed).toContain("## Appendix D · Staffing and Location Model Template");
-    expect(completed).toContain("## Appendix E · SLA Commitment Table Template");
-    expect(completed).toContain("## Appendix F · Assumptions and Exclusions Log Template");
-    expect(completed).toContain("## Appendix G · Transition Plan Template");
-    expect(completed).toContain("## Appendix H · Commercial Exceptions Table Template");
-    expect(completed).toContain("## Appendix I · Evaluation Scorecard Template");
-    expect(completed).toContain("## Appendix J · BAFO and Clarification Round Instructions");
+    expect(completed).toContain("## Appendix A · Vendor Response Workbook Tab Guide");
+    expect(completed).toContain("## Appendix B · Vendor Response Workbook Commercial Leverage Map");
+    expect(completed).toContain("## Appendix C · Internal Review and Negotiation Workbook");
+    expect(completed).toContain("## Appendix D · BAFO and Clarification Round Instructions");
     expect(completed).toContain("R-08");
     expect(completed).toContain("PCI DSS");
     expect(completed).toContain("1,800+ FTE");
-    expect(completed).toContain("CLM-001");
-    expect(completed).toContain("A-001");
+    expect(completed).toContain("Vendor Claim Register");
+    expect(completed).toContain("Assumptions and Exclusions");
     expect(completed).toContain(
-      "Commercial competitiveness and transparency",
+      "Bundled run/change economics",
     );
     expect(completed).toContain("Written clarification");
     expect(completed).toContain("### §11A · Source register");
@@ -127,7 +121,8 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).not.toMatch(/\[CLIENT TO (SET|CONFIRM|COMPLETE)\]/);
     expect(completed).not.toMatch(/placeholder/i);
     expect(completed).toContain("T+5 weeks from sponsor sign-off");
-    expect(completed).toContain("| Service delivery capability | 20% |");
+    expect(completed).toContain("Vendor Response Workbook Tab Guide");
+    expect(completed).toContain("Pricing Response: run vs change split");
     expect(completed).toContain(
       "Approved evaluation criteria and weights are loaded",
     );

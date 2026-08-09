@@ -5,16 +5,18 @@
 // pointer (filename + page). Procurement uses this to gate response
 // completeness (d15).
 //
-// Structure (5 sheets):
-//   1. Cover                  — event metadata, vendor name slot,
+// Structure (6 sheets):
+//   1. Guide                  — vendor-facing how-to, tab purpose,
+//                               completion rules, and evidence rules
+//   2. Cover                  — event metadata, vendor name slot,
 //                               submission deadline placeholder
-//   2. Mandatory Items        — locked Item / Section / Requirement
+//   3. Mandatory Items        — locked Item / Section / Requirement
 //                               columns; vendor fills Confirmed (Y/N) +
 //                               Evidence pointer + Note
-//   3. Optional / Recommended — same shape, lower priority
-//   4. Format Expectations    — locked: file types, naming conventions,
+//   4. Optional / Recommended — same shape, lower priority
+//   5. Format Expectations    — locked: file types, naming conventions,
 //                               page limits, redactions
-//   5. Submission Sign-off    — vendor sign-off block (officer name,
+//   6. Submission Sign-off    — vendor sign-off block (officer name,
 //                               title, certification statements)
 //
 // The renderer is pure (payload → ExcelJS.Workbook). The payload binder
@@ -31,6 +33,7 @@ import {
   applyHeaderRow,
   applyLockedRow,
   buildCoverSheet,
+  buildGuideSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
 import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
@@ -81,6 +84,26 @@ export function buildResponseChecklistWorkbook(
 
   const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
     artifactCode: 'd11',
+  });
+  buildGuideSheet(workbook, {
+    title: `Guide · Vendor Response Control Pack`,
+    audience: 'vendor',
+    purpose:
+      'Use this workbook to submit comparable, evidence-backed response content. Narrative files may supplement these tabs, but they do not replace required workbook fields.',
+    completionRules: [
+      'Complete every row in Mandatory Items with Confirmed = Y or N and an evidence pointer.',
+      'Use the Evidence pointer field for filename, tab, row, page, or exhibit references.',
+      'Do not rename, delete, reorder, or merge locked columns; altered templates may be rejected as non-compliant.',
+      'Use Vendor note only for concise clarifications; material assumptions and exceptions belong in the required assumptions, pricing, SLA, transition, or commercial exception tables referenced by the RFP.',
+      'Macros, external portal links, and scanned-only responses are not accepted as substitutes for completed fields.',
+    ],
+    tabDescriptions: [
+      { tab: 'Cover', purpose: 'Event metadata, vendor name, and submission deadline.' },
+      { tab: 'Mandatory Items', purpose: 'Required response checklist; every row must be addressed.' },
+      { tab: 'Optional Items', purpose: 'Recommended response items that may strengthen scoring but do not gate completeness.' },
+      { tab: 'Format Expectations', purpose: 'Locked file, naming, page-limit, redaction, and submission-channel rules.' },
+      { tab: 'Submission Sign-off', purpose: 'Authorized officer certification and submission attestations.' },
+    ],
   });
   buildCoverSheet(workbook, {
     title: `Response Checklist · ${payload.eventName}`,

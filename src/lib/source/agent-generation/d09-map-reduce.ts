@@ -8,9 +8,8 @@
 // block. The assembly pass generates §1 (exec summary) after seeing all
 // other sections, then stitches the document in order.
 //
-// Feature-gated: set ABARVA_SOURCE_D09_MAP_REDUCE=1 to enable.
-// Disabled by default so the existing single-call path remains canonical
-// until the parallel path is live-proven.
+// Default path for d09 generation. Set ABARVA_SOURCE_D09_MAP_REDUCE=0
+// to opt out and fall back to the legacy single-call path.
 //
 // The assembled body feeds directly into the existing quality gate and
 // d09-completion governance appender — no other route changes required.
@@ -88,7 +87,7 @@ Milestone | Planned Date | Blackout Window | Risk | Mitigation | Owner
     instruction: `Write ONLY ## §7 · Commercial model, run/change baseline, and pricing instructions.
 Include one pricing/commercial table:
 Item | Basis | Vendor-to-Complete | Notes
-Minimum 4 rows. Reference Exhibit 08 (pricing assumptions) and Exhibit 15 (run-vs-change baseline) if uploaded. Reference the value-target range from d01 without disclosing internal sensitivity. Instruct vendors to complete d21 assumption set and d19a pricing template as separate artifacts.`,
+Minimum 4 rows. Reference Exhibit 08 (pricing assumptions) and Exhibit 15 (run-vs-change baseline) if uploaded. Reference the value-target range from d01 without disclosing internal sensitivity. Instruct vendors to complete the Pricing Response tab in the single Vendor Response Workbook. Do not create separate pricing-file burden unless a counsel-approved schedule explicitly requires it.`,
   },
   {
     key: "s8",
@@ -99,7 +98,7 @@ ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
 Include one vendor response-control table:
 Required Deliverable | Format | Required Completion Rule | Downstream Use | Due Date | Notes
-Minimum 8 rows and include: Vendor Claim Register, Automation / Productivity Commitment Table, Structured Pricing Workbook, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table. Reference pricing template d19a and the Vendor Response Control Pack. Reference Exhibit 10 (vendor response expectations) if uploaded. Use gate-relative target dates for submission dates when exact dates are missing; do not use bracketed client fill-in markers.`,
+Minimum 8 rows and include the single Vendor Response Workbook tabs: Guide, Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table, and Evidence Checklist. Reference Exhibit 10 (vendor response expectations) if uploaded. Use gate-relative target dates for submission dates when exact dates are missing; do not use bracketed client fill-in markers.`,
   },
   {
     key: "s9",
@@ -120,12 +119,12 @@ Reference Exhibits 07, 13, and 14 where applicable.`,
   {
     key: "s11",
     heading: "§11 · Source register, assumptions, and client-to-complete gaps",
-    instruction: `Write ONLY ## §11 · Source register, assumptions, and client-to-complete gaps.
+    instruction: `Write ONLY ## §11 · Source register, assumptions, and issue-to-release gaps.
 Two tables only. 8 rows max each.
 
 Table A — Source register:
 Source | Status | Used In Sections | Remaining Action
-Separate: locked uploaded evidence / upstream draft artifacts / working assumptions / client-to-complete gaps.
+Separate: locked uploaded evidence / upstream draft artifacts / working assumptions / issue-to-release gaps.
 
 Table B — Gap closure register:
 Gap ID | Item | Owner Placeholder | Due Date Placeholder | Blocking Gate | Downstream Impact
