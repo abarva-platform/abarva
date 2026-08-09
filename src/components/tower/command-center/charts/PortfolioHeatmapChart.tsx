@@ -49,7 +49,7 @@ export function PortfolioHeatmapChart({
   const labeledProgramIds = new Set(
     [...programs]
       .sort((a, b) => b.valueAtStakeUsd - a.valueAtStakeUsd)
-      .slice(0, 8)
+      .slice(0, 3)
       .map((p) => p.id),
   );
 
@@ -74,7 +74,7 @@ export function PortfolioHeatmapChart({
         <ScatterChart
           width={width}
           height={height}
-          margin={{ top: 12, right: 14, left: 2, bottom: 20 }}
+          margin={{ top: 12, right: 74, left: 2, bottom: 20 }}
         >
           <CartesianGrid stroke={HEX.border} />
           <XAxis

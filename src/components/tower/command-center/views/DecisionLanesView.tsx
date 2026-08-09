@@ -57,6 +57,7 @@ const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
 };
 
 const MATERIAL_PROGRAM_LIMIT = 20;
+const MATURITY_LOW_VARIANCE_RANGE = 10;
 
 function materialPrograms(
   programs: readonly TowerProgramView[],
@@ -70,6 +71,94 @@ function materialPrograms(
         a.name.localeCompare(b.name),
     )
     .slice(0, MATERIAL_PROGRAM_LIMIT);
+}
+
+function proofMaturityRange(programs: readonly TowerProgramView[]): number {
+  if (programs.length === 0) return 0;
+  const scores = programs.map((p) => p.evidenceMaturity);
+  return Math.max(...scores) - Math.min(...scores);
+}
+
+function proofMaturityIsCompressed(
+  programs: readonly TowerProgramView[],
+): boolean {
+  return (
+    programs.length > 3 &&
+    proofMaturityRange(programs) <= MATURITY_LOW_VARIANCE_RANGE
+  );
+}
+
+function ProofStageDistribution({
+  programs,
+}: {
+  programs: readonly TowerProgramView[];
+}) {
+  const stages = [
+    {
+      label: "No usable proof",
+      items: programs.filter((p) => p.proofLevel <= 0),
+    },
+    {
+      label: "Usage only",
+      items: programs.filter(
+        (p) =>
+          p.proofLevel === 1 ||
+          (p.usageStatus !== "none" &&
+            p.financeValidatedUsd <= 0 &&
+            p.claimableUsd <= 0),
+      ),
+    },
+    {
+      label: "Outcome measured",
+      items: programs.filter(
+        (p) =>
+          p.proofLevel === 2 &&
+          p.financeValidatedUsd <= 0 &&
+          p.claimableUsd <= 0,
+      ),
+    },
+    {
+      label: "Finance validated",
+      items: programs.filter(
+        (p) => p.financeValidatedUsd > 0 && p.claimableUsd <= 0,
+      ),
+    },
+    {
+      label: "Claimable",
+      items: programs.filter((p) => p.claimableUsd > 0),
+    },
+  ];
+  const maxCount = Math.max(1, ...stages.map((stage) => stage.items.length));
+
+  return (
+    <div className={styles.proofStages}>
+      {stages.map((stage) => {
+        const valueAtStake = stage.items.reduce(
+          (sum, item) => sum + item.valueAtStakeUsd,
+          0,
+        );
+        return (
+          <div key={stage.label} className={styles.proofStage}>
+            <div className={styles.proofStageTop}>
+              <span>{stage.label}</span>
+              <b>{formatCount(stage.items.length)}</b>
+            </div>
+            <div
+              className={styles.proofStageBar}
+              aria-hidden
+              style={{
+                ["--stage-width" as string]: `${Math.max(
+                  4,
+                  (stage.items.length / maxCount) * 100,
+                )}%`,
+              }}
+            />
+            <small>{formatUsdM(valueAtStake)} exposure</small>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function EvidenceLaneBoard({ view }: { view: TowerCommandCenterView }) {
@@ -374,9 +463,15 @@ function HeatmapPanel({
   onOpenProgram: (id: string) => void;
 }) {
   const lowProofPrograms = programs.filter((p) => p.evidenceMaturity <= 5);
-  const proofCollapsed =
+  const maturityRange = proofMaturityRange(programs);
+  const nearZeroProofCollapsed =
     programs.length > 0 && lowProofPrograms.length / programs.length >= 0.75;
-  const lowProofValue = lowProofPrograms.reduce(
+  const maturityBandCompressed = proofMaturityIsCompressed(programs);
+  const proofCollapsed = nearZeroProofCollapsed || maturityBandCompressed;
+  const compressedPrograms = nearZeroProofCollapsed
+    ? lowProofPrograms
+    : programs;
+  const compressedValue = compressedPrograms.reduce(
     (sum, p) => sum + p.valueAtStakeUsd,
     0,
   );
@@ -385,13 +480,26 @@ function HeatmapPanel({
     <>
       {proofCollapsed ? (
         <div className={styles.heatmapTruthNote}>
-          <b>Proof maturity is concentrated near zero.</b>
-          <span>
-            {formatCount(lowProofPrograms.length)} programs carrying{" "}
-            {formatUsdM(lowProofValue)} are plotted at the left edge because
-            usable proof is missing or immature, not because value has been
-            realized.
-          </span>
+          <b>
+            {nearZeroProofCollapsed
+              ? "Proof maturity is concentrated near zero."
+              : "Proof maturity is tightly compressed."}
+          </b>
+          {nearZeroProofCollapsed ? (
+            <span>
+              {formatCount(lowProofPrograms.length)} programs carrying{" "}
+              {formatUsdM(compressedValue)} are plotted at the left edge because
+              usable proof is missing or immature, not because value has been
+              realized.
+            </span>
+          ) : (
+            <span>
+              {formatCount(programs.length)} material cases carrying{" "}
+              {formatUsdM(compressedValue)} sit within a {maturityRange}-point
+              maturity band. Use the ranked program list for identity; the chart
+              is showing compressed proof, not differentiated readiness.
+            </span>
+          )}
         </div>
       ) : null}
       {totalProgramCount > programs.length ? (
@@ -440,6 +548,7 @@ export function DecisionLanesView({
 }) {
   const programs = view.programs;
   const focusPrograms = materialPrograms(programs);
+  const maturityCompressed = proofMaturityIsCompressed(focusPrograms);
   const valueUnknown =
     view.summary.valueClaimCount > 0 &&
     view.summary.knownValueClaimCount === 0 &&
@@ -466,18 +575,37 @@ export function DecisionLanesView({
     body = (
       <div
         className={styles.ccLower}
-        style={{ gridTemplateColumns: "340px 1fr", flex: 1 }}
+        style={{ gridTemplateColumns: "330px 1fr", flex: 1 }}
       >
         <Card
-          eyebrow="Portfolio heatmap"
-          headId="tcc-lanes-heat"
+          title={
+            maturityCompressed
+              ? "Proof-stage distribution"
+              : "Portfolio topology"
+          }
+          right={
+            maturityCompressed
+              ? "adaptive default"
+              : "program benefit x proof maturity"
+          }
+          headId="tcc-lanes-distribution"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <HeatmapPanel
-            programs={focusPrograms}
-            totalProgramCount={programs.length}
-            onOpenProgram={onOpenProgram}
-          />
+          {maturityCompressed ? (
+            <>
+              <p className={styles.lhSub} style={{ marginBottom: 10 }}>
+                Proof maturity has low variance, so the default view switches to
+                stage distribution and ranked lanes instead of a scatterplot.
+              </p>
+              <ProofStageDistribution programs={focusPrograms} />
+            </>
+          ) : (
+            <HeatmapPanel
+              programs={focusPrograms}
+              totalProgramCount={programs.length}
+              onOpenProgram={onOpenProgram}
+            />
+          )}
         </Card>
         <LaneColumns
           programs={focusPrograms}
@@ -550,9 +678,11 @@ export function DecisionLanesView({
         title={
           subView === "heatmap"
             ? "Portfolio decision topology"
-            : valueUnknown
-              ? "The evidence operating room"
-              : "The operating room"
+            : subView === "overview"
+              ? "Exposure-ranked decision lanes"
+              : valueUnknown
+                ? "The evidence operating room"
+                : "The operating room"
         }
         hint={
           valueUnknown
@@ -570,8 +700,9 @@ export function DecisionLanesView({
       <div className={styles.zipContractNote}>
         <Dot tone={subView === "heatmap" ? "amber" : "teal"} />
         <span>
-          Default view is topology-first: promised exposure, proof maturity, and
-          decision lane should be visible before the operating table.
+          {maturityCompressed && subView === "overview"
+            ? "Default view is distribution-first because proof maturity is tightly compressed; the heatmap remains available as optional topology."
+            : "Decision lanes show exposure, proof maturity, and the next proof gate before the operating table."}
         </span>
       </div>
       {body}

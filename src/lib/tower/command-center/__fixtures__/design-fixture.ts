@@ -562,6 +562,9 @@ function lineage(): TowerMartEvidenceLineage[] {
       sourceFile: "08_it_budget_spend_value.csv",
       sourceRow: "row-12",
       sourceSystem: "finance",
+      lineageState: "ONE_SOURCE",
+      sourceCount: 1,
+      resolutionOwnerRole: "Business owner",
       caveat: "",
     },
     {
@@ -573,6 +576,9 @@ function lineage(): TowerMartEvidenceLineage[] {
       sourceFile: "08_it_budget_spend_value.csv",
       sourceRow: "row-1",
       sourceSystem: "finance",
+      lineageState: "ONE_SOURCE",
+      sourceCount: 1,
+      resolutionOwnerRole: "FP&A",
       caveat: "",
     },
     {
@@ -584,6 +590,9 @@ function lineage(): TowerMartEvidenceLineage[] {
       sourceFile: "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       sourceRow: "row-4",
       sourceSystem: "finance",
+      lineageState: "ONE_SOURCE",
+      sourceCount: 1,
+      resolutionOwnerRole: "IT Finance",
       caveat: "Non-additive lens on the funded base.",
     },
     {
@@ -595,6 +604,9 @@ function lineage(): TowerMartEvidenceLineage[] {
       sourceFile: "14_metrics-outcomes.csv",
       sourceRow: "row-7",
       sourceSystem: "finance",
+      lineageState: "AGREE",
+      sourceCount: 2,
+      resolutionOwnerRole: "Finance",
       caveat: "Only partially validated by finance.",
     },
   ];

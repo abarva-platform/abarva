@@ -45,7 +45,7 @@ function boardMetrics(view: TowerCommandCenterView): BoardMetric[] {
     },
     {
       key: "explicit-benefit",
-      label: "Explicit promised benefit",
+      label: "Explicit source-backed benefit",
       value:
         s.promisedBenefitUsd === null
           ? "Not loaded"
@@ -89,7 +89,7 @@ function sourceTrustRows(view: TowerCommandCenterView) {
       tone: "teal" as const,
     },
     {
-      label: "Promised benefit",
+      label: "Explicit source-backed benefit",
       value:
         s.promisedBenefitUsd === null
           ? "Not loaded"
@@ -136,24 +136,24 @@ function cockpitRead(view: TowerCommandCenterView): string {
   const hasSourceConflict = view.evidenceFacts.some(
     (fact) => fact.lineageState === "CONFLICT",
   );
-  const blockedPrograms =
+  const blockedValueCases =
     s.blockedProgramCount ||
     view.programs.filter((program) => program.blockedUsd > 0).length;
   if (s.claimableUsd > 0) {
     return `${formatUsdM(s.claimableUsd)} is claimable today. Keep the remaining capital in proof-gated lanes until owners close usage, Finance, and attestation gaps.`;
   }
   if (!s.promisedBenefitLoaded) {
-    return `${formatUsdM(s.approvedInvestmentUsd)} of approved investment is visible across ${formatCount(s.boardScopeProgramCount)} board-scope value cases, but explicit promised benefit is absent. Keep benefit totals null until source-backed value cases are loaded and classified.`;
+    return `${formatUsdM(s.approvedInvestmentUsd)} of approved investment is visible across ${formatCount(s.boardScopeProgramCount)} board-scope value cases, but explicit source-backed benefit is absent. Keep benefit totals null until source-backed value cases are loaded and classified.`;
   }
   if (
     s.promisedBenefitUsd !== null &&
     s.promisedBenefitUsd > 0 &&
     hasSourceConflict
   ) {
-    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but source authority is unresolved. ${formatCount(blockedPrograms)} programs remain blocked until evidence owners reconcile the proof chain.`;
+    return `${formatUsdM(s.promisedBenefitUsd)} is visible as explicit source-backed benefit, but source authority is unresolved. ${formatCount(blockedValueCases)} value cases remain blocked until evidence owners reconcile the proof chain.`;
   }
   if (s.promisedBenefitUsd !== null && s.promisedBenefitUsd > 0) {
-    return `${formatUsdM(s.promisedBenefitUsd)} is visible as promised benefit, but ${formatCount(blockedPrograms)} programs still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
+    return `${formatUsdM(s.promisedBenefitUsd)} is visible as explicit source-backed benefit, but ${formatCount(blockedValueCases)} value cases still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
   }
   return "Tower can see the operating surface, but no governed value case is loaded yet. Start with source-backed value cases before making capital calls.";
 }
@@ -166,7 +166,7 @@ function cockpitVerdict(view: TowerCommandCenterView): string {
     return "Some value is claimable, but additional capital still depends on the proof gates below.";
   }
   if (!view.summary.promisedBenefitLoaded) {
-    return "Investment is visible. Explicit benefit proof is not loaded.";
+    return "Investment is visible. Explicit source-backed benefit proof is not loaded.";
   }
   if (
     view.summary.promisedBenefitUsd !== null &&

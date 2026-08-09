@@ -120,11 +120,13 @@ describe("Command Center render harness", () => {
     dump("02-value-proof");
 
     fireEvent.click(screen.getByRole("tab", { name: /Decision Lanes/ }));
-    dump("03-decision-lanes-table");
+    dump("03-decision-lanes-overview");
+    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
+    dump("03b-decision-lanes-table");
     fireEvent.click(screen.getByRole("radio", { name: "Kanban lanes" }));
-    dump("03b-decision-lanes-kanban");
+    dump("03c-decision-lanes-kanban");
     fireEvent.click(screen.getByRole("radio", { name: "Portfolio heatmap" }));
-    dump("03c-decision-lanes-heatmap");
+    dump("03d-decision-lanes-heatmap");
 
     fireEvent.click(screen.getByRole("tab", { name: /AI Portfolio/ }));
     dump("04-ai-integrated");
@@ -173,6 +175,9 @@ describe("Command Center render harness", () => {
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
     fireEvent.click(screen.getByRole("tab", { name: /Recommended Actions/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "View priority action inventory" }),
+    );
     fireEvent.click(screen.getAllByText(/Attest the avoidance method/)[0]);
     dump("10-drawer-action");
 

@@ -105,6 +105,8 @@ export interface AtlasChatPanelProps {
     label: string;
     detail?: string;
   };
+  /** Optional style override for the collapsed aVa launcher. */
+  collapsedChipStyle?: CSSProperties;
   /** Composer placeholder override. */
   placeholder?: string;
   /** Preserve already-governed real tenant labels instead of applying demo-safe aliases. */
@@ -141,6 +143,7 @@ export function AtlasChatPanel({
   expandedWidth,
   expandedMaxWidth,
   collapsedSummary,
+  collapsedChipStyle,
   placeholder,
   preserveVisibleText = false,
   keepSuggestedActionsVisible = false,
@@ -197,6 +200,7 @@ export function AtlasChatPanel({
       placeholder={placeholder}
       preserveVisibleText={preserveVisibleText}
       collapsedSummary={collapsedSummary}
+      collapsedChipStyle={collapsedChipStyle}
       thread={thread}
       suggestedActions={suggestedActions}
       keepSuggestedActionsVisible={keepSuggestedActionsVisible}

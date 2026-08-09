@@ -76,18 +76,18 @@ export function ValueProofView({
       <ViewHead
         title={
           s.promisedBenefitLoaded
-            ? "Outcome proof waterfall"
+            ? "Claim-gated source-backed benefit"
             : "Benefit proof coverage"
         }
-        sub="Investment is separate from promised benefit, usage, outcome, Finance, and claimable value"
+        sub="Investment is separate from source-backed benefit, usage, outcome, Finance, and claimable value"
         hint="Click a program for its proof chain & usage evidence"
       />
 
       <div className={styles.zipContractNote}>
         <Dot tone="red" />
         <span>
-          CFO read: value is visible only as it clears the proof chain. Evidence
-          progression and blockers explain why capital cannot scale yet.
+          CFO read: the waterfall shows only explicit source-backed benefit.
+          Finance-calculated value awaiting proof completion is held separately.
         </span>
       </div>
 
@@ -97,9 +97,11 @@ export function ValueProofView({
       >
         <Card
           eyebrow={
-            s.promisedBenefitLoaded ? "Value waterfall" : "Benefit not loaded"
+            s.promisedBenefitLoaded
+              ? "Explicit source-backed benefit claim chain"
+              : "Benefit not loaded"
           }
-          right="FY26 · governed $M"
+          right="waterfall excludes Finance-blocked population"
           headId="tcc-waterfall"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
@@ -115,7 +117,7 @@ export function ValueProofView({
               className={styles.emptyPanel}
               aria-describedby="tcc-waterfall-alt"
             >
-              <h2>No explicit benefit assertion</h2>
+              <h2>No explicit source-backed benefit assertion</h2>
               <p>
                 Approved investment is visible, but Tower will not create a
                 benefit waterfall until a governed value case carries a
@@ -131,7 +133,7 @@ export function ValueProofView({
                     (r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
                   )
                   .join(". ")}.`
-              : `Explicit promised benefit is absent. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
+              : `Explicit source-backed benefit is absent. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
           </p>
 
           <div
@@ -151,7 +153,7 @@ export function ValueProofView({
               </small>
             </div>
             <div className={styles.valueProofRail}>
-              <span>Finance-calculated but blocked</span>
+              <span>Finance-calculated value awaiting proof completion</span>
               <b>{formatUsdM(s.financeValidatedBlockedUsd)}</b>
               <small>
                 Kept separate until usage, outcome, attribution, and attestation
@@ -173,7 +175,7 @@ export function ValueProofView({
                         ? `; a further ${formatUsdM(noFinance)} has usage but no Finance sign-off.`
                         : "."
                     }`
-                  : `${formatUsdM(s.approvedInvestmentUsd)} is approved investment, not promised benefit.`}
+                  : `${formatUsdM(s.approvedInvestmentUsd)} is approved investment, not source-backed benefit.`}
               </b>{" "}
               {financeAheadOfUsage ? (
                 <>

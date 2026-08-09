@@ -94,10 +94,7 @@ async function readTowerChatStream(
 
 function towerSummaryPrompt(view: TowerCommandCenterView | null): string {
   if (!view) return "What Tower evidence is loaded for this tenant?";
-  const blockedPrograms = view.gaps.filter(
-    (gap) => gap.primaryBlockingGap,
-  ).length;
-  return `Which ${blockedPrograms || "open"} Tower proof gaps should I close first?`;
+  return "Which board-scope Tower proof gaps should I close first?";
 }
 
 function buildSuggestions(
@@ -342,7 +339,7 @@ export function TowerCommandCenterAvaShell({
               },
               {
                 measureKey: "business_case_benefit_fy26",
-                label: "Explicit promised benefit",
+                label: "Explicit source-backed benefit",
                 value: view.summary.promisedBenefitUsd,
               },
               {
@@ -360,6 +357,16 @@ export function TowerCommandCenterAvaShell({
       collapsedSummary={{
         label: "Ask aVa",
         detail: "Outcome insights",
+      }}
+      collapsedChipStyle={{
+        right: 0,
+        bottom: 20,
+        minWidth: 58,
+        width: 58,
+        height: 54,
+        padding: "0 8px",
+        boxSizing: "border-box",
+        borderRadius: "18px 0 0 18px",
       }}
       placeholder="Ask aVa to explain proof, blocked value, or the next executive action..."
       defaultLeftPercent={52}

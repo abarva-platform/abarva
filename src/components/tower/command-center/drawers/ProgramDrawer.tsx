@@ -46,10 +46,10 @@ const PLAIN_TONE = {
 export function plainProgram(p: TowerProgramView): string {
   if (!p.promisedBenefitLoaded) {
     const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
-    return `${formatUsdM(p.fundedUsd)} is approved investment. Explicit promised benefit is not loaded, so Tower does not convert this program into a board value claim yet.${gate}`;
+    return `${formatUsdM(p.fundedUsd)} is approved investment. Explicit source-backed benefit is not loaded, so Tower does not convert this program into a board value claim yet.${gate}`;
   }
   if (p.promisedUsd <= 0) {
-    return "No explicit benefit is promised here. It matters for investment posture and proof follow-up, not the economic benefit total.";
+    return "No explicit source-backed benefit is loaded here. It matters for investment posture and proof follow-up, not the economic benefit total.";
   }
   const claim =
     p.claimableUsd > 0
@@ -59,7 +59,7 @@ export function plainProgram(p: TowerProgramView): string {
     ? ` — because ${p.blocker.charAt(0).toLowerCase()}${p.blocker.slice(1).replace(/\.$/, "")}`
     : "";
   const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
-  return `Of ${formatUsdM(p.promisedUsd)} in promised benefit, ${claim}${because}. It sits in the ${LANE_WORD[p.lane]} lane.${gate}`;
+  return `Of ${formatUsdM(p.promisedUsd)} in explicit source-backed benefit, ${claim}${because}. It sits in the ${LANE_WORD[p.lane]} lane.${gate}`;
 }
 
 export function ProgramDrawer({
@@ -78,7 +78,7 @@ export function ProgramDrawer({
   const chain = p
     ? ([
         [
-          "Explicit benefit",
+          "Explicit source-backed benefit",
           p.promisedBenefitLoaded ? p.promisedUsd : null,
           "",
           "source-backed business-case benefit",
@@ -155,7 +155,7 @@ export function ProgramDrawer({
           <div className={styles.drGrid}>
             <DrawerStat label="Funded" value={formatUsdM(p.fundedUsd)} />
             <DrawerStat
-              label="Explicit benefit"
+              label="Explicit source-backed benefit"
               value={
                 p.promisedBenefitLoaded
                   ? formatUsdM(p.promisedUsd)
@@ -176,7 +176,7 @@ export function ProgramDrawer({
             />
           </div>
 
-          <DrawerSection note="— where explicit benefit moves on the way to claimable">
+          <DrawerSection note="— where explicit source-backed benefit moves on the way to claimable">
             Value proof chain
           </DrawerSection>
           {chain.map(([label, value, tint, definition]) => (

@@ -759,10 +759,12 @@ function toEvidenceFactView(
     unit: humanize(row.surfaceSection) ?? "evidence",
     tone: hasCaveat ? "amber" : "teal",
     tag: hasCaveat ? "Traced · caveated" : "Traced",
+    sourceSystem: trimOrNull(row.sourceSystem),
     sourceFile: trimOrNull(row.sourceFile),
     sourceRow: trimOrNull(row.sourceRow),
     lineageState: trimOrNull(row.lineageState),
     sourceCount: row.sourceCount ?? 0,
+    resolutionOwnerRole: trimOrNull(row.resolutionOwnerRole),
     resolutionState: trimOrNull(row.resolutionState),
   };
 }

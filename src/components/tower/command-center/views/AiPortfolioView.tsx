@@ -7,7 +7,7 @@
 // whole-portfolio category breakdown — filtering it would misrepresent the
 // AI-tagged total. That exception is the design's, and it is deliberate.
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type {
   TowerAiKind,
   TowerAiView,
@@ -230,21 +230,122 @@ function CandidatePipelinePanel({ view }: { view: TowerCommandCenterView }) {
   );
 }
 
+function AiPopulationStrip({ view }: { view: TowerCommandCenterView }) {
+  const all = view.allInitiatives;
+  const funded = all.filter((item) => item.kind === "funded").length;
+  const directTools = all.filter((item) => item.kind === "embedded").length;
+  const enablers = all.filter(
+    (item) => item.kind === "platform" || item.kind === "governance",
+  ).length;
+  const candidates = view.portfolioCounts.totalCandidateCount;
+  const rows = [
+    ["Funded AI programs", funded],
+    ["Embedded tools/capabilities", directTools],
+    ["Platform/governance enablers", enablers],
+    ["Candidate opportunities", candidates],
+  ] as const;
+
+  return (
+    <div
+      className={styles.aiPopulationStrip}
+      aria-label="AI portfolio populations"
+    >
+      {rows.map(([label, count]) => (
+        <span key={label}>
+          <b>{formatCount(count)}</b>
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Shown in place of the spend lens when the AI portfolio projection carries no per-item
- * spend. Drawing an empty bar chart beneath a "$53.7M AI-tagged" header would
- * assert a breakdown the read model cannot substantiate.
+ * spend. Drawing an empty bar chart beneath an AI-tagged spend header would assert
+ * a breakdown the read model cannot substantiate.
  */
-function SpendUnattributed({ aiTagged }: { aiTagged: string }) {
+function SpendLensUnavailable({
+  aiTagged,
+  attributed,
+  unattributed,
+  reason,
+}: {
+  aiTagged: string;
+  attributed: string;
+  unattributed: string;
+  reason: "portfolio-only" | "empty-category-lens";
+}) {
+  const isPortfolioOnly = reason === "portfolio-only";
   return (
     <div className={styles.emptyPanel}>
-      <h2>AI spend is portfolio-only today</h2>
+      <h2>
+        {isPortfolioOnly
+          ? "AI spend is portfolio-only today"
+          : "AI spend lens is not chartable yet"}
+      </h2>
       <p>
-        {aiTagged} is tagged to AI-related spend, but none is currently
-        attributable to a specific tool, agent or linked capability. This view
-        supports position and value-readiness evidence, not spend concentration,
-        until the governed attribution projection exists.
+        {isPortfolioOnly
+          ? `${aiTagged} is tagged to AI-related spend, but none is currently attributable to a specific tool, agent or linked capability.`
+          : `${aiTagged} is tagged to AI-related spend, but the governed category lens has no positive chart rows to plot.`}{" "}
+        This view will not draw an empty bar chart; load or reconcile the
+        attribution projection before using spend concentration in the CFO read.
       </p>
+      <dl className={styles.spendStateList}>
+        <div>
+          <dt>Total AI-tagged spend</dt>
+          <dd>{aiTagged}</dd>
+        </div>
+        <div>
+          <dt>Governed category attribution</dt>
+          <dd>{attributed}</dd>
+        </div>
+        <div>
+          <dt>Awaiting mapping</dt>
+          <dd>{unattributed}</dd>
+        </div>
+      </dl>
+      <ul className={styles.sourceNeeds}>
+        <li>GL/project-code mapping</li>
+        <li>tool-to-initiative crosswalk</li>
+        <li>cost-center ownership</li>
+        <li>platform/enabler allocation policy</li>
+      </ul>
+    </div>
+  );
+}
+
+function SpendAttributionCompleteness({
+  totalUsd,
+  attributedUsd,
+}: {
+  totalUsd: number;
+  attributedUsd: number;
+}) {
+  if (totalUsd <= 0) return null;
+  const cappedAttributed = Math.min(Math.max(attributedUsd, 0), totalUsd);
+  const unattributedUsd = Math.max(0, totalUsd - cappedAttributed);
+  const attributedPct = Math.round((cappedAttributed / totalUsd) * 100);
+
+  return (
+    <div className={styles.spendCompleteness}>
+      <div className={styles.spendCompletenessTop}>
+        <span>
+          <b>{formatUsdM(totalUsd)}</b> total AI-tagged
+        </span>
+        <span>
+          <b>{formatUsdM(cappedAttributed)}</b> attributed
+        </span>
+        {unattributedUsd > 0 ? (
+          <span>
+            <b>{formatUsdM(unattributedUsd)}</b> awaiting mapping
+          </span>
+        ) : null}
+      </div>
+      <div className={styles.spendStack} aria-hidden>
+        <i style={{ width: `${Math.max(2, attributedPct)}%` }} />
+        {unattributedUsd > 0 ? <em /> : null}
+      </div>
     </div>
   );
 }
@@ -424,6 +525,20 @@ export function AiPortfolioView({
     subView === "overview" || subView === "bubble" || subView === "all";
   const aiTagged = formatUsdM(view.summary.aiTaggedUsd);
   const sizeMode = view.summary.aiSpendUnattributed ? "constant" : "spend";
+  const spendLensHasRows = view.spendLens.some((row) => row.valueUsd > 0);
+  const spendLensAttributedUsd = view.spendLens.reduce(
+    (sum, row) => sum + Math.max(row.valueUsd, 0),
+    0,
+  );
+  const spendLensUnattributedUsd = Math.max(
+    0,
+    view.summary.aiTaggedUsd - spendLensAttributedUsd,
+  );
+  const spendLensUnavailableReason = view.summary.aiSpendUnattributed
+    ? "portfolio-only"
+    : spendLensHasRows
+      ? null
+      : "empty-category-lens";
   const fundedCount = view.ai.filter((a) => a.kind === "funded").length;
   const embeddedCount = view.ai.filter((a) => a.kind === "embedded").length;
   const topVendors = topVendorAttribution(view.allInitiatives);
@@ -479,10 +594,19 @@ export function AiPortfolioView({
               flexDirection: "column",
             }}
           >
-            {view.summary.aiSpendUnattributed ? (
-              <SpendUnattributed aiTagged={aiTagged} />
+            {spendLensUnavailableReason ? (
+              <SpendLensUnavailable
+                aiTagged={aiTagged}
+                attributed={formatUsdM(spendLensAttributedUsd)}
+                unattributed={formatUsdM(spendLensUnattributedUsd)}
+                reason={spendLensUnavailableReason}
+              />
             ) : (
               <>
+                <SpendAttributionCompleteness
+                  totalUsd={view.summary.aiTaggedUsd}
+                  attributedUsd={spendLensAttributedUsd}
+                />
                 <div className={styles.chartwrap}>
                   <AiSpendLensChart rows={view.spendLens} />
                 </div>
@@ -559,10 +683,19 @@ export function AiPortfolioView({
           padding: "18px 22px",
         }}
       >
-        {view.summary.aiSpendUnattributed ? (
-          <SpendUnattributed aiTagged={aiTagged} />
+        {spendLensUnavailableReason ? (
+          <SpendLensUnavailable
+            aiTagged={aiTagged}
+            attributed={formatUsdM(spendLensAttributedUsd)}
+            unattributed={formatUsdM(spendLensUnattributedUsd)}
+            reason={spendLensUnavailableReason}
+          />
         ) : (
           <>
+            <SpendAttributionCompleteness
+              totalUsd={view.summary.aiTaggedUsd}
+              attributedUsd={spendLensAttributedUsd}
+            />
             <div className={styles.chartwrap} aria-describedby="tcc-lens-alt">
               <AiSpendLensChart rows={view.spendLens} />
             </div>
@@ -573,7 +706,7 @@ export function AiPortfolioView({
           </>
         )}
         <div className={styles.legend} style={{ marginTop: 12 }}>
-          {view.summary.aiSpendUnattributed
+          {spendLensUnavailableReason
             ? null
             : (["funded", "embedded", "governance", "platform"] as const).map(
                 (kind) => (
@@ -648,6 +781,8 @@ export function AiPortfolioView({
           attestation and claim state are shown as separate gates.
         </span>
       </div>
+
+      <AiPopulationStrip view={view} />
 
       <div
         style={{

@@ -696,7 +696,7 @@ export async function readTowerCommandCenter(args: {
               limit 1
            ),
            stages as (
-             select 1 as sequence, 'promised'::text as stage_key, 'Explicit benefit'::text as stage_label,
+             select 1 as sequence, 'promised'::text as stage_key, 'Explicit source-backed benefit'::text as stage_label,
                     promised_value_exposure as value_numeric,
                     value_claim_count as claim_count,
                     known_value_claim_count,
@@ -867,7 +867,7 @@ export async function readTowerCommandCenter(args: {
         commandRow.promised_value_trust_state === "CONFLICT"
           ? `${command.tenantName} Tower has visible investment and adoption signals, but benefit source authority is CONFLICT - authority unresolved. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
           : command.promisedValueFy26 === null
-            ? `${command.tenantName} Tower separates investment from benefit: approved investment is visible, but no explicit promised benefit assertion is loaded. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
+            ? `${command.tenantName} Tower separates investment from benefit: approved investment is visible, but no explicit source-backed benefit assertion is loaded. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
             : command.executiveSummary;
 
       return {

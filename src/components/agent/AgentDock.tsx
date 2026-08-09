@@ -514,6 +514,8 @@ export interface AgentDockProps {
     label: string;
     detail?: string;
   };
+  /** Optional presentation override for the collapsed launcher. */
+  collapsedChipStyle?: CSSProperties;
   /**
    * Optional override: when true, AgentDock shows a throbber turn at the
    * end of the thread even if no agent message is in flight via
@@ -723,6 +725,7 @@ export function AgentDock(props: AgentDockProps) {
     expandedMaxWidth,
     preserveVisibleText = false,
     collapsedSummary,
+    collapsedChipStyle,
     isAgentBusy: isAgentBusyOverride,
   } = props;
   const displayAgentName = "aVa";
@@ -774,7 +777,7 @@ export function AgentDock(props: AgentDockProps) {
           atlasPageState &&
           (atlasPageState.isStreaming ||
             atlasPageState.isAssemblingContextBundle),
-  );
+        );
 
   // Mode state (persisted)
   const [mode, setModeState] = useState<DockMode>(defaultMode);
@@ -790,7 +793,7 @@ export function AgentDock(props: AgentDockProps) {
     previousSurfaceRef.current = surface;
     const nextMode = disableStoredMode
       ? defaultMode
-      : readStoredMode(surface) ?? defaultMode;
+      : (readStoredMode(surface) ?? defaultMode);
     setModeState(nextMode);
     setLastRichMode(
       nextMode === "collapsed"
@@ -1125,7 +1128,10 @@ export function AgentDock(props: AgentDockProps) {
         {chatOnly && thread.length === 0 ? null : (
           <div style={chatOnly ? CHAT_ONLY_HEADER_STYLE : HEADER_STYLE}>
             <div style={AGENT_ROW_STYLE}>
-              <AvaAskMark variant="wordmark-dark" style={AGENT_WORDMARK_STYLE} />
+              <AvaAskMark
+                variant="wordmark-dark"
+                style={AGENT_WORDMARK_STYLE}
+              />
               <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
               </div>
@@ -1167,9 +1173,7 @@ export function AgentDock(props: AgentDockProps) {
         >
           {thread.length === 0 ? (
             <div
-              style={
-                chatOnly ? CHAT_ONLY_EMPTY_STATE_STYLE : EMPTY_STATE_STYLE
-              }
+              style={chatOnly ? CHAT_ONLY_EMPTY_STATE_STYLE : EMPTY_STATE_STYLE}
             >
               {chatOnly ? (
                 <AvaAskMark
@@ -1469,7 +1473,7 @@ export function AgentDock(props: AgentDockProps) {
           data-testid="agent-dock-collapsed-chip"
           onClick={() => setMode(restoreMode)}
           onDoubleClick={() => setMode(restoreMode)}
-          style={COLLAPSED_CHIP_STYLE}
+          style={{ ...COLLAPSED_CHIP_STYLE, ...collapsedChipStyle }}
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
             <AvaAskMark

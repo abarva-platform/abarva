@@ -1,5 +1,8 @@
 import type { TowerAiView } from "@/lib/tower/command-center/types";
-import { buildBubblePoints } from "../AiBubbleMatrixChart";
+import {
+  buildBubblePoints,
+  isBubbleMatrixCompressed,
+} from "../AiBubbleMatrixChart";
 
 function ai(overrides: Partial<TowerAiView>): TowerAiView {
   return {
@@ -31,6 +34,33 @@ function ai(overrides: Partial<TowerAiView>): TowerAiView {
 }
 
 describe("buildBubblePoints", () => {
+  it("flags compressed score bands before rendering overlapping bubbles", () => {
+    expect(
+      isBubbleMatrixCompressed(
+        Array.from({ length: 10 }, (_, index) =>
+          ai({
+            n: index + 1,
+            id: `ai-${index + 1}`,
+            name: `AI Initiative ${index + 1}`,
+            valueScore: index % 2 === 0 ? 30 : 31,
+            readinessScore: 100,
+          }),
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps normally distributed score bands in matrix mode", () => {
+    expect(
+      isBubbleMatrixCompressed([
+        ai({ n: 1, valueScore: 20, readinessScore: 30 }),
+        ai({ n: 2, id: "ai-2", valueScore: 45, readinessScore: 60 }),
+        ai({ n: 3, id: "ai-3", valueScore: 65, readinessScore: 45 }),
+        ai({ n: 4, id: "ai-4", valueScore: 90, readinessScore: 85 }),
+      ]),
+    ).toBe(false);
+  });
+
   it("keeps governed scores but separates visually colliding points", () => {
     const points = buildBubblePoints(
       Array.from({ length: 6 }, (_, index) =>

@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { formatCount } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
 import { AiInitiativeDrawer } from "./drawers/AiInitiativeDrawer";
@@ -57,6 +57,9 @@ const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
+const BOARDROOM_VERDICT =
+  "Investment is visible. Source-backed benefit evidence and economic conversion remain limited.";
+const BOARDROOM_UPDATED_LABEL = "Updated Aug 9, 2026";
 
 type DrawerState =
   | { kind: "program"; id: string }
@@ -83,7 +86,7 @@ export function TowerCommandCenter({
   const [tab, setTab] = useState<TowerTab>(
     urlTab && TAB_IDS.has(urlTab) ? (urlTab as TowerTab) : "command",
   );
-  const [lanesView, setLanesView] = useState<LanesSubView>("heatmap");
+  const [lanesView, setLanesView] = useState<LanesSubView>("overview");
   const [aiView, setAiView] = useState<AiSubView>("overview");
   const [aiFilter, setAiFilter] = useState<AiFilter>("all");
   const [aiSearch, setAiSearch] = useState("");
@@ -170,9 +173,45 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
-  const headerScope = view
-    ? `${formatCount(view.summary.boardScopeProgramCount)} board-scope value cases · ${formatCount(view.summary.totalProgramSubjectCount)} tracked program subjects · ${formatCount(view.summary.aiInitiativeCount)} AI tools, agents and linked capabilities`
-    : "no governed rows";
+  const headerScope = view ? BOARDROOM_UPDATED_LABEL : "no governed rows";
+  const boardroomRail = view
+    ? [
+        {
+          value:
+            view.summary.approvedInvestmentUsd === null
+              ? "Not loaded"
+              : formatUsdM(view.summary.approvedInvestmentUsd),
+          label: "approved investment",
+        },
+        {
+          value:
+            view.summary.promisedBenefitUsd === null
+              ? "Not loaded"
+              : formatUsdM(view.summary.promisedBenefitUsd),
+          label: "explicit source-backed benefit",
+        },
+        {
+          value: formatUsdM(view.summary.financeValidatedBlockedUsd),
+          label: "Finance-calculated but blocked",
+        },
+        {
+          value: formatUsdM(view.summary.claimableUsd),
+          label: "claimable",
+        },
+        {
+          value: formatCount(view.summary.boardScopeProgramCount),
+          label: "board-scope value cases",
+        },
+        {
+          value: formatCount(view.summary.totalProgramSubjectCount),
+          label: "tracked program subjects",
+        },
+        {
+          value: formatCount(view.summary.aiInitiativeCount),
+          label: "AI tools, agents and capabilities",
+        },
+      ]
+    : [];
 
   const body = (() => {
     if (!view) {
@@ -260,18 +299,10 @@ export function TowerCommandCenter({
               <div className={styles.eyebrow}>
                 IT Investment Tower · FY26 · {tenantName}
               </div>
-              <h1>
-                {view?.summary.decisionQuestion ? (
-                  view.summary.decisionQuestion
-                ) : (
-                  <>
-                    Funded ahead of proof.{" "}
-                    <span className={styles.thin}>
-                      Value is the constraint.
-                    </span>
-                  </>
-                )}
-              </h1>
+              <h1>AI value posture</h1>
+              <p className={styles.dashVerdict}>
+                {view ? BOARDROOM_VERDICT : "No governed Tower posture loaded."}
+              </p>
             </div>
             <div className={styles.dashRight}>
               <div className={styles.when}>
@@ -285,6 +316,19 @@ export function TowerCommandCenter({
                 </div>
               ) : null}
             </div>
+            {boardroomRail.length > 0 ? (
+              <div
+                className={styles.scopeRail}
+                aria-label="Tower boardroom scope and value posture"
+              >
+                {boardroomRail.map((item) => (
+                  <span key={item.label}>
+                    <b>{item.value}</b>
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <nav
@@ -322,14 +366,18 @@ export function TowerCommandCenter({
                 >
                   {t.label}
                   {count !== null ? (
-                    <span className={styles.tnum}>
-                      {formatCount(count)} total
-                    </span>
+                    <>
+                      {" "}
+                      <span className={styles.tnum}>
+                        {formatCount(count)} total
+                      </span>
+                    </>
                   ) : null}
                   {attn ? (
                     <>
+                      {" "}
                       <span className={styles.adot} aria-hidden />
-                      <span className={styles.srOnly}>needs attention</span>
+                      <span className={styles.srOnly}> needs attention</span>
                     </>
                   ) : null}
                 </button>

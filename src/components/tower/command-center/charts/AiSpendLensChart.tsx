@@ -18,6 +18,7 @@ export function AiSpendLensChart({
   rows: readonly TowerSpendLensRow[];
 }) {
   const data = [...rows]
+    .filter((row) => row.valueUsd > 0)
     .sort((a, b) => b.valueUsd - a.valueUsd)
     .map((row) => ({
       name: row.category,
@@ -80,6 +81,10 @@ export function AiSpendLensChart({
 export function spendLensTextAlternative(
   rows: readonly TowerSpendLensRow[],
 ): string {
-  if (rows.length === 0) return "No AI spend recorded by category.";
-  return rows.map((r) => `${r.category}: ${formatUsdM(r.valueUsd)}.`).join(" ");
+  const chartRows = rows.filter((r) => r.valueUsd > 0);
+  if (chartRows.length === 0)
+    return "No positive AI spend recorded by category.";
+  return chartRows
+    .map((r) => `${r.category}: ${formatUsdM(r.valueUsd)}.`)
+    .join(" ");
 }
