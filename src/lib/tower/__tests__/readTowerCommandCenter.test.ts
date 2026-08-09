@@ -153,8 +153,8 @@ describe("readTowerCommandCenter", () => {
           initiative_id: "PRJ-001",
           value_case_name: "Cloud Landing Zone Modernization Wave 1",
           value_archetype: "capacity",
-          period_start: "2030-04-01",
-          period_end: "2030-06-30",
+          period_start: new Date("2030-04-01T00:00:00.000Z"),
+          period_end: new Date("2030-06-30T00:00:00.000Z"),
           fiscal_quarter: "2030-Q2",
           scenario: "forecast",
           planned_investment_usd: "5312500",
@@ -275,7 +275,7 @@ describe("readTowerCommandCenter", () => {
           owner_role: "Tower data steward",
           secondary_owner_role: "Finance partner",
           due_window: "14 days",
-          due_date: "2030-06-02",
+          due_date: new Date("2030-06-02T00:00:00.000Z"),
           handoff_module: "Moves",
           handoff_entity_id: "PRJ-001",
           handoff_readiness: "not_ready",
@@ -335,6 +335,8 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.boardScopeProgramCount).toBe(40);
     expect(mart?.programLanes[0]?.lineageTrustState).toBe("ABSENT");
     expect(mart?.valueTrajectory?.[0]?.plannedInvestmentUsd).toBe(5_312_500);
+    expect(mart?.valueTrajectory?.[0]?.periodStart).toBe("2030-04-01");
+    expect(mart?.valueTrajectory?.[0]?.periodEnd).toBe("2030-06-30");
     expect(mart?.valueTrajectory?.[0]?.financialConversionUsd).toBeNull();
     expect(mart?.programLanes[0]?.amountBlocked).toBeNull();
     expect(mart?.aiPortfolio[0]?.vendorName).toBe("GitHub");

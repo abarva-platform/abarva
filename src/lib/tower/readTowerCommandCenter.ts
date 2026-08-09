@@ -113,8 +113,8 @@ interface ValueTrajectoryRow {
   initiative_id: string | null;
   value_case_name: string;
   value_archetype: string | null;
-  period_start: string;
-  period_end: string;
+  period_start: unknown;
+  period_end: unknown;
   fiscal_quarter: string;
   scenario: string;
   planned_investment_usd: Numeric;
@@ -223,7 +223,7 @@ interface ActionQueueRow {
   owner_role: string | null;
   secondary_owner_role: string | null;
   due_window: string | null;
-  due_date: string | null;
+  due_date: unknown;
   handoff_module: string | null;
   handoff_entity_id: string | null;
   handoff_readiness: string | null;
@@ -271,6 +271,24 @@ function nullableText(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function dateText(value: unknown): string {
+  if (value instanceof Date && Number.isFinite(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === "string") {
+    return value.slice(0, 10);
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value).slice(0, 10);
+}
+
+function nullableDateText(value: unknown): string | null {
+  const text = dateText(value);
+  return text.length > 0 ? text : null;
 }
 
 function tenantCandidates(values: readonly (string | null | undefined)[]) {
@@ -473,8 +491,8 @@ function mapValueTrajectory(
     initiativeId: nullableText(row.initiative_id),
     valueCaseName: row.value_case_name,
     valueArchetype: nullableText(row.value_archetype),
-    periodStart: row.period_start,
-    periodEnd: row.period_end,
+    periodStart: dateText(row.period_start),
+    periodEnd: dateText(row.period_end),
     fiscalQuarter: row.fiscal_quarter,
     scenario: row.scenario,
     plannedInvestmentUsd: nullableNum(row.planned_investment_usd),
@@ -591,7 +609,7 @@ function mapAction(row: ActionQueueRow): TowerMartCxoAction {
     ownerRole: nullableText(row.owner_role),
     secondaryOwnerRole: nullableText(row.secondary_owner_role),
     dueWindow: nullableText(row.due_window),
-    dueDate: nullableText(row.due_date),
+    dueDate: nullableDateText(row.due_date),
     handoffModule: nullableText(row.handoff_module),
     handoffEntityId: nullableText(row.handoff_entity_id),
     handoffReadiness: nullableText(row.handoff_readiness) ?? "not_ready",
