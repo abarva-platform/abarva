@@ -14,8 +14,8 @@ describe("Tower invariants", () => {
     expect(pageSource).not.toContain("getAiControlTowerReadModel");
   });
 
-  it("sources its data from the governed cio_tower substrate", () => {
-    expect(pageSource).toContain("loadTowerMartCommandView");
+  it("sources its data from the governed Tower consumption substrate", () => {
+    expect(pageSource).toContain("readTowerCommandCenter");
     expect(pageSource).toContain("buildTowerCommandCenterView");
   });
 

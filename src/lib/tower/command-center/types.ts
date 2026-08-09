@@ -5,7 +5,7 @@
 // It deliberately mirrors that file's `data()` shape (CC / PROG / AI / CAND /
 // LENS / GAPS / ACT) so the views can be transcribed from the design without
 // reinterpreting them — but every field is populated from the governed
-// `cio_tower.mart_*` read models, never from the design file's mock content.
+// governed Tower read models, never from the design file's mock content.
 //
 // Money is carried in **whole USD**, exactly as the mart stores it. The
 // design's `$M` rendering is a formatting concern and lives in `format.ts`;

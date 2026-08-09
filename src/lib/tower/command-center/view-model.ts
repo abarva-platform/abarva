@@ -1,6 +1,6 @@
 // Tower Command Center v2 — mart → design shape.
 //
-// Takes the governed `TowerMartCommandViewModel` (cio_tower.mart_*) and returns
+// Takes the governed `TowerMartCommandViewModel` and returns
 // exactly what the design's views need. Two rules bind this file:
 //
 //  1. Every string and number originates in the mart. Where the mart carries
@@ -878,8 +878,7 @@ function buildEvidenceMaturityView(
       summary.claimableUsd > 0 ? summary.claimableClaimCount : 0,
       Math.max(
         0,
-        claims -
-          (summary.claimableUsd > 0 ? summary.claimableClaimCount : 0),
+        claims - (summary.claimableUsd > 0 ? summary.claimableClaimCount : 0),
       ),
       "Realized value evidence",
       "Executive sponsor",

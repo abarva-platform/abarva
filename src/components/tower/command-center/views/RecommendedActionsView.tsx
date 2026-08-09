@@ -97,9 +97,9 @@ export function RecommendedActionsView({
         <div className={styles.emptyPanel}>
           <h2>No recommended actions</h2>
           <p>
-            The Tower mart records no CXO actions for this tenant. Actions
-            appear once the projection job writes them; nothing is generated
-            here.
+            The Tower value model records no CXO actions for this tenant.
+            Actions appear once the projection job writes them; nothing is
+            generated here.
           </p>
         </div>
       ) : (

@@ -257,7 +257,9 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText(/Scale, fund, freeze, and stop decisions wait/),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/Proof work before decision/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Proof work before decision/).length,
+    ).toBeGreaterThan(0);
   });
 
   it('answers "what is missing" from the claim chain, not the ETL backlog', () => {
@@ -269,7 +271,7 @@ describe("TowerCommandCenter", () => {
     // a pipeline instruction — "rerun the projection" must never reach a CXO.
     expect(screen.getByText(/at stake/)).toBeInTheDocument();
     expect(
-      screen.queryByText(/rerun the governed Tower mart projection/i),
+      screen.queryByText(/rerun the governed Tower value-model projection/i),
     ).toBeNull();
     expect(screen.queryByText("Data Office")).toBeNull();
   });

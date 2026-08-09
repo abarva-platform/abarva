@@ -105,10 +105,7 @@ export function ValueProofView({
           </div>
           <p id="tcc-waterfall-alt" className={styles.srOnly}>
             {`${rows
-              .map(
-                (r) =>
-                  `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`,
-              )
+              .map((r) => `${r.name.replace("|", " ")}: ${formatUsdM(r.usd)}`)
               .join(". ")}.`}
           </p>
 
@@ -201,7 +198,7 @@ export function ValueProofView({
                       >
                         <span style={{ fontSize: 12 }}>
                           {p.blocker ??
-                            "No decision rationale recorded in the mart."}
+                            "No decision rationale recorded in the value model."}
                         </span>
                         <Pips level={p.proofLevel} />
                       </div>

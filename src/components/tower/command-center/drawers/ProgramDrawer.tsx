@@ -241,7 +241,7 @@ export function ProgramDrawer({
           />
           <DrawerRow
             label="Next gate"
-            value={p.nextGate ?? "No gate recorded in the mart"}
+            value={p.nextGate ?? "No gate recorded in the value model"}
           />
 
           <DrawerSection>The read</DrawerSection>

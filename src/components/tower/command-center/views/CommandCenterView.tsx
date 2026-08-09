@@ -76,7 +76,7 @@ function sourceTrustRows(view: TowerCommandCenterView) {
     {
       label: "Claimable value",
       value: formatUsdM(s.claimableUsd),
-      status: "MART",
+      status: "VALUE OS",
       tone: "teal" as const,
     },
     {
@@ -101,8 +101,8 @@ function sourceTrustRows(view: TowerCommandCenterView) {
             : "—",
       status:
         s.conflictedProgramCount > 0 || conflicts > 0
-          ? "MART STATE"
-          : "NOT IN MART",
+          ? "VALUE OS STATE"
+          : "NOT IN VALUE OS",
       tone:
         s.conflictedProgramCount > 0 || conflicts > 0
           ? ("red" as const)
@@ -113,11 +113,17 @@ function sourceTrustRows(view: TowerCommandCenterView) {
 
 function cockpitRead(view: TowerCommandCenterView): string {
   const s = view.summary;
+  const hasSourceConflict = view.evidenceFacts.some(
+    (fact) => fact.lineageState === "CONFLICT",
+  );
   const blockedPrograms =
     s.blockedProgramCount ||
     view.programs.filter((program) => program.blockedUsd > 0).length;
   if (s.claimableUsd > 0) {
     return `${formatUsdM(s.claimableUsd)} is claimable today. Keep the remaining capital in proof-gated lanes until owners close usage, Finance, and attestation gaps.`;
+  }
+  if (s.promisedUsd > 0 && hasSourceConflict) {
+    return `${formatUsdM(s.promisedUsd)} is visible as promised exposure, but source authority is unresolved. ${formatCount(blockedPrograms)} programs remain blocked until evidence owners reconcile the proof chain.`;
   }
   if (s.promisedUsd > 0) {
     return `${formatUsdM(s.promisedUsd)} is visible as promised value, but ${formatCount(blockedPrograms)} programs still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
@@ -126,8 +132,14 @@ function cockpitRead(view: TowerCommandCenterView): string {
 }
 
 function cockpitVerdict(view: TowerCommandCenterView): string {
+  const hasSourceConflict = view.evidenceFacts.some(
+    (fact) => fact.lineageState === "CONFLICT",
+  );
   if (view.summary.claimableUsd > 0) {
     return "Some value is claimable, but additional capital still depends on the proof gates below.";
+  }
+  if (view.summary.promisedUsd > 0 && hasSourceConflict) {
+    return "Investment and adoption are visible. The economic case is not board-certified.";
   }
   if (view.summary.promisedUsd > 0) {
     return "Investment is visible. Outcome proof is not yet board-claimable.";
@@ -198,20 +210,19 @@ export function CommandCenterView({
         <div className={styles.scopeNarrative}>
           <span className={styles.eyebrow2}>Read model scope</span>
           <p>
-            This view is a Tower mart projection. Adoption, finance validation,
-            and claimable value are separate gates; usage does not become
-            board-bookable value until outcome and attestation evidence clear.
+            This view is a governed Tower value-model projection. Adoption,
+            finance validation, and claimable value are separate gates; usage
+            does not become board-bookable value until outcome and attestation
+            evidence clear.
           </p>
         </div>
         <div className={styles.scopeFacts}>
-          <span>
-            {formatCount(view.programs.length)} programs in scope
-          </span>
+          <span>{formatCount(view.programs.length)} programs in scope</span>
           <span>{formatCount(usagePrograms)} with adoption evidence</span>
           <span>{formatCount(openGapCount)} open proof gaps</span>
           <span>
             {trustRows[1]?.status === "LINEAGE NOT LOADED"
-              ? "lineage row absent in mart"
+              ? "source-trust row absent"
               : `lineage: ${trustRows[1]?.status ?? "not loaded"}`}
           </span>
         </div>
@@ -220,7 +231,7 @@ export function CommandCenterView({
       <div className={styles.cockpitCanvas}>
         <Card
           eyebrow="Where value gets stopped"
-          right="proof waterfall · governed mart values"
+          right="proof waterfall · governed value-model values"
           headId="tcc-outcome-waterfall"
           bodyClassName={styles.cockpitChartBody}
         >
@@ -284,7 +295,6 @@ export function CommandCenterView({
           )}
         </Card>
       </div>
-
     </div>
   );
 }
