@@ -286,6 +286,36 @@
   line-height: 1.45;
 }
 
+.patternGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.patternCard {
+  min-height: 138px;
+  border-top: 4px solid #d9e0ea;
+}
+
+.patternCard:nth-child(1) {
+  border-top-color: #246fc8;
+}
+
+.patternCard:nth-child(2),
+.patternCard:nth-child(5) {
+  border-top-color: #b97824;
+}
+
+.patternCard:nth-child(3) {
+  border-top-color: #198f82;
+}
+
+.patternCard:nth-child(4) {
+  border-top-color: #66758a;
+}
+
+.patternCard:nth-child(6) {
+  border-top-color: #b63b35;
+}
+
 .twoCol {
   display: grid;
   grid-template-columns: minmax(0, 1.02fr) minmax(340px, 0.68fr);
@@ -830,11 +860,12 @@
   font-size: 12px;
 }
 
-.postureTable {
+.postureMatrix {
   display: grid;
   border: 1px solid #d9e0ea;
   border-radius: 7px;
   overflow: hidden;
+  background: #fff;
 }
 
 .postureRow {
@@ -864,14 +895,89 @@
   color: #657087;
 }
 
+.postureDomain {
+  color: #172033;
+  font-weight: 760;
+  background: #fbfcff;
+}
+
+.postureCell {
+  display: grid;
+  place-items: center start;
+  font-weight: 800;
+}
+
+.stateHigh {
+  color: #0f6f59 !important;
+  background: #e9f7f2;
+}
+
+.stateModerate {
+  color: #246fc8 !important;
+  background: #edf5ff;
+}
+
+.stateLimited {
+  color: #8c2d2a !important;
+  background: #fff0ef;
+}
+
+.stateMixed {
+  color: #475a78 !important;
+  background: #f4f7fb;
+}
+
+.stateFragmented {
+  color: #9b5a18 !important;
+  background: #fff5e6;
+}
+
+.stateConstrained,
+.stateLocked {
+  color: #8c2d2a !important;
+  background: #fff4f1;
+}
+
+.stateSelective {
+  color: #4b617d !important;
+  background: #f6f8fb;
+}
+
+.coherenceLayout {
+  display: grid;
+  gap: 18px;
+}
+
+.coherenceSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(290px, 0.62fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.coherenceDecisionGrid {
+  display: grid;
+  gap: 10px;
+}
+
 .coherenceMap {
-  min-height: 310px;
+  min-height: 440px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), #fbfcff),
+    repeating-linear-gradient(
+      90deg,
+      rgba(217, 224, 234, 0.38) 0,
+      rgba(217, 224, 234, 0.38) 1px,
+      transparent 1px,
+      transparent 64px
+    );
 }
 
 .mapSvg {
   width: 100%;
   height: auto;
-  min-height: 260px;
+  min-height: 360px;
+  margin-top: 10px;
 }
 
 .mapNode {
@@ -937,7 +1043,7 @@
 }
 
 .evidenceGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .evidenceCard b {
@@ -952,7 +1058,8 @@
 @media (max-width: 1180px) {
   .tenantBar,
   .twoCol,
-  .economicsExhibit {
+  .economicsExhibit,
+  .coherenceSplit {
     grid-template-columns: 1fr;
   }
 

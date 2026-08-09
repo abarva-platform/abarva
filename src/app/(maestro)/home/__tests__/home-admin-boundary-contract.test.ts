@@ -24,14 +24,31 @@ describe("Home/Admin boundary contract", () => {
     );
   });
 
-  it("keeps context and architecture native to the V0.2 Home canvas", () => {
+  it("keeps context and architecture inside the approved eight-tab Home canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
     const modelSource = readRepoFile(
       "src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts",
     );
+    const componentSource = readRepoFile(
+      "src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.tsx",
+    );
 
-    expect(modelSource).toContain('"context"');
-    expect(modelSource).toContain('"architecture"');
+    expect(modelSource).not.toContain('{ id: "context", label: "Context" }');
+    expect(modelSource).not.toContain(
+      '{ id: "architecture", label: "Architecture" }',
+    );
+    for (const label of [
+      "Summary",
+      "Patterns",
+      "Economics",
+      "Posture",
+      "Coherence",
+      "Trajectory",
+      "Watchlist",
+      "Evidence",
+    ]) {
+      expect(modelSource).toContain(`label: "${label}"`);
+    }
     expect(modelSource).toContain("contextSignals");
     expect(modelSource).toContain("architectureLayers");
     expect(modelSource).toContain("architectureDeployments");
@@ -41,6 +58,10 @@ describe("Home/Admin boundary contract", () => {
     expect(modelSource).toContain("Applications, cloud, data, integration");
     expect(modelSource).toContain("On-prem / private DC");
     expect(modelSource).toContain("AI agents and copilots");
+    expect(componentSource).toContain('context: "patterns"');
+    expect(componentSource).toContain('architecture: "coherence"');
+    expect(componentSource).toContain("Why enterprise coherence is difficult");
+    expect(componentSource).toContain("ArchitectureFlowMap model={model}");
     expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
     expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
