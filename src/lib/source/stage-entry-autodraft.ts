@@ -69,7 +69,7 @@ export interface AutoDraftOnStageEntryDeps {
 }
 
 const TERMINAL_ARTIFACT_STATUSES = new Set(["locked", "superseded"]);
-const UPSTREAM_DRAFT_WAIT_TIMEOUT_MS = 8 * 60 * 1000;
+const UPSTREAM_DRAFT_WAIT_TIMEOUT_MS = 20 * 60 * 1000;
 const UPSTREAM_DRAFT_WAIT_INTERVAL_MS = 5_000;
 
 export function autoDraftCodesForStage(stage: SourceStageKey): string[] {
@@ -410,7 +410,6 @@ async function readDraftableUpstreamState(
     .from("source_artifact_generation_jobs")
     .select("id")
     .eq("source_event_id", eventId)
-    .in("artifact_code", missingCodes)
     .in("status", ["queued", "running"])
     .limit(1);
   if (jobsError) throw new Error(jobsError.message);
