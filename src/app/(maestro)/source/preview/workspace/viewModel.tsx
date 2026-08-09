@@ -175,7 +175,7 @@ export class WorkspaceViewModel {
   setState: (patch: Partial<WorkspaceState> | ((s: WorkspaceState) => Partial<WorkspaceState>)) => void;
   portfolio: SourceWorkspacePortfolioData;
   fetchContractDetail: (contractId: string) => void;
-  startContractOptimization: (contractId: string) => void;
+  startContractOptimization: (contractId: string, opportunityId?: string | null) => void;
   tenantName: string;
   asOf: Date;
 
@@ -185,7 +185,7 @@ export class WorkspaceViewModel {
     portfolio: SourceWorkspacePortfolioData,
     tenantName: string,
     fetchContractDetail: (contractId: string) => void,
-    startContractOptimization: (contractId: string) => void = () => undefined,
+    startContractOptimization: (contractId: string, opportunityId?: string | null) => void = () => undefined,
   ) {
     this.state = state;
     this.setState = setState;

@@ -22,6 +22,10 @@ import {
   buildContractOptimizationEvidencePack,
   type ContractOptimizationEvidenceItem,
 } from "./contract-optimization-evidence";
+import {
+  buildContractOptimizationOpportunitySet,
+  type ContractOptimizationOpportunitySet,
+} from "./contract-optimization-opportunity";
 import type {
   DocExtractionRow,
   SourceApplicationVendorExposureRow,
@@ -475,6 +479,123 @@ export async function getContractEvidencePerformanceSummary(
     [contractId],
   );
   return rows[0] ?? null;
+}
+
+export async function getContractOptimizationOpportunitySet(
+  tenantKey: string,
+  contractId: string,
+  contract: SourceContract360Row | null = null,
+): Promise<ContractOptimizationOpportunitySet | null> {
+  const [
+    overviewRows,
+    pricingRows,
+    invoiceRows,
+    poRows,
+    rateRows,
+    slaRows,
+    usageRows,
+    renewalRows,
+    financeRows,
+    pdfClauseRows,
+  ] = await Promise.all([
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_overview
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY _loaded_at DESC NULLS LAST
+        LIMIT 1`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_pricing_schedule
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY annual_value_usd DESC NULLS LAST, line_item_id`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_invoice_lines
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY invoice_date, invoice_id, invoice_line_id`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_po_contract_match
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY po_number, po_line_id`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_rate_card_variance
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY rate_card_line_id`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_sla_incident_service_credit_monthly
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY period_month`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_usage_entitlement_monthly
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY period_month, sku_or_service`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_renewal_negotiation_history
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY event_date, renewal_event_id`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.golden_contract_finance_value_confirmation
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY confirmation_date DESC NULLS LAST, _loaded_at DESC NULLS LAST
+        LIMIT 1`,
+      [contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT *
+         FROM source.contract_pdf_clause_extractions
+        WHERE _tenant_key = ANY($1::text[]) AND contract_id = $2
+        ORDER BY source_page, concept_ref`,
+      [contractId],
+    ),
+  ]);
+
+  return buildContractOptimizationOpportunitySet({
+    tenantKey,
+    contract,
+    overview: overviewRows[0] ?? null,
+    pricingRows,
+    invoiceRows,
+    poRows,
+    rateRows,
+    slaRows,
+    usageRows,
+    renewalRows,
+    financeRow: financeRows[0] ?? null,
+    pdfClauseRows,
+  });
 }
 
 export async function listContractInitiativeDependency(

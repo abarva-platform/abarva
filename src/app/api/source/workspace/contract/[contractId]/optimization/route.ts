@@ -6,7 +6,8 @@ import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { getContract360, listContractFinancialExposure } from '@/lib/source/data-model/read-adapter';
+import { getContract360, getContractOptimizationOpportunitySet, listContractFinancialExposure } from '@/lib/source/data-model/read-adapter';
+import type { ContractOptimizationOpportunity } from '@/lib/source/data-model/contract-optimization-opportunity';
 import { factSpecByKey } from '@/lib/source/facts/fact-catalog';
 import type { SourceEventFactInsert } from '@/lib/source/facts/fact-types';
 import { createSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
@@ -25,7 +26,24 @@ type RouteContext = {
 
 const MOTION = 'contract_optimization' as const;
 
-export async function POST(_request: Request, { params }: RouteContext) {
+type SelectedOptimizationOpportunityContext = Pick<
+  ContractOptimizationOpportunity,
+  | 'opportunityId'
+  | 'label'
+  | 'shortLabel'
+  | 'amountUsd'
+  | 'stage'
+  | 'evidenceGrade'
+  | 'blockingGap'
+  | 'nextAction'
+> & {
+  readonly calculation: Pick<
+    NonNullable<ContractOptimizationOpportunity['calculation']>,
+    'ruleId' | 'ruleVersion' | 'includedLineCount' | 'pendingLineCount' | 'excludedLineCount'
+  > | null;
+};
+
+export async function POST(request: Request, { params }: RouteContext) {
   let tenancy;
   try {
     tenancy = await requireTenancy();
@@ -64,11 +82,26 @@ export async function POST(_request: Request, { params }: RouteContext) {
   if (!contract) {
     return NextResponse.json({ ok: false, error: 'contract_not_found' }, { status: 404 });
   }
+  const requestOpportunityId = await readRequestedOpportunityId(request);
+  const opportunitySet = await getContractOptimizationOpportunitySet(clientKey, contract.contract_id, contract).catch(() => null);
+  const selectedOpportunity = resolveSelectedOpportunity(opportunitySet?.opportunities ?? [], requestOpportunityId);
+  if (requestOpportunityId && !selectedOpportunity) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'opportunity_not_found',
+        detail: 'The requested optimization opportunity is not available for this contract.',
+        contractId: contract.contract_id,
+        opportunityId: requestOpportunityId,
+      },
+      { status: 404, headers: { 'cache-control': 'no-store' } },
+    );
+  }
 
   const financialExposureRows = await listContractFinancialExposure(clientKey).catch(() => []);
   const financialExposure = financialExposureRows.find((row) => row.contract_id === contract.contract_id) ?? null;
 
-  const existing = await findExistingOptimizationEvent(clientKey, contract);
+  const existing = await findExistingOptimizationEvent(clientKey, contract, selectedOpportunity?.opportunityId ?? null);
   const event = existing ?? await createOptimizationEvent({
     clientKey,
     userId: tenancy.userId,
@@ -79,14 +112,18 @@ export async function POST(_request: Request, { params }: RouteContext) {
     annualValue: contract.annual_value,
     actualAnnualSpend: contract.actual_annual_spend,
     renewalOwnerRef: contract.renewal_owner_ref,
+    selectedOpportunity,
+    baselineHeadline: opportunitySet?.baseline.headline ?? null,
+    baselineDetail: opportunitySet?.baseline.detail ?? null,
   });
-  if (!optimizationEventMatchesContract(event, contract)) {
+  if (!optimizationEventMatchesContract(event, contract, selectedOpportunity?.opportunityId ?? null)) {
     return NextResponse.json(
       {
         ok: false,
         error: 'optimization_event_contract_mismatch',
-        detail: 'The existing or created contract optimization event does not match the selected contract. No navigation was performed.',
+        detail: 'The existing or created contract optimization event does not match the selected contract and opportunity. No navigation was performed.',
         contractId: contract.contract_id,
+        opportunityId: selectedOpportunity?.opportunityId ?? null,
         vendorName: contract.vendor_name,
         contractName: contract.contract_name,
       },
@@ -114,6 +151,10 @@ export async function POST(_request: Request, { params }: RouteContext) {
       contractId: contract.contract_id,
       vendorName: contract.vendor_name,
       contractName: contract.contract_name,
+      opportunityId: selectedOpportunity?.opportunityId ?? null,
+      opportunityLabel: selectedOpportunity?.label ?? null,
+      opportunityStage: selectedOpportunity?.stage ?? null,
+      opportunityAmountUsd: selectedOpportunity?.amountUsd ?? null,
       sourcingMotion: MOTION,
       approvalUrl: `/source/events/${event.id}/approval`,
       eventUrl: `/source/events/${event.id}?stage=Strategy`,
@@ -126,11 +167,12 @@ export async function POST(_request: Request, { params }: RouteContext) {
 async function findExistingOptimizationEvent(
   clientKey: string,
   contract: OptimizationContractIdentity,
+  opportunityId: string | null,
 ): Promise<SourceEventRow | null> {
   const rows = await selectSourceEventsReadAdapter(undefined, clientKey)
     .getActiveEventsForClient(clientKey)
     .catch(() => []);
-  const event = rows.find((row) => optimizationEventMatchesContract(row as SourceEventRow, contract));
+  const event = rows.find((row) => optimizationEventMatchesContract(row as SourceEventRow, contract, opportunityId));
   return (event as SourceEventRow | undefined) ?? null;
 }
 
@@ -143,12 +185,13 @@ interface OptimizationContractIdentity {
 function optimizationEventMatchesContract(
   event: SourceEventRow,
   contract: OptimizationContractIdentity,
+  opportunityId: string | null = null,
 ): boolean {
   if (event.sourcing_motion !== MOTION) return false;
   const eventName = normalizeIdentityText(event.event_name);
   const triggerDescription = normalizeIdentityText(event.trigger_description ?? '');
   const scopeDescription = normalizeIdentityText(event.scope_description ?? '');
-  return (
+  const matchesContract = (
     hasIdentityPhrase(eventName, contract.vendor_name) &&
     hasIdentityPhrase(eventName, contract.contract_name) &&
     hasIdentityPhrase(triggerDescription, contract.contract_id) &&
@@ -156,6 +199,9 @@ function optimizationEventMatchesContract(
     hasIdentityPhrase(triggerDescription, contract.contract_name) &&
     hasIdentityPhrase(scopeDescription, contract.contract_id)
   );
+  if (!matchesContract) return false;
+  if (!opportunityId) return true;
+  return hasIdentityPhrase(scopeDescription, opportunityId) || hasIdentityPhrase(triggerDescription, opportunityId);
 }
 
 async function createOptimizationEvent(input: {
@@ -168,20 +214,21 @@ async function createOptimizationEvent(input: {
   annualValue: number | null;
   actualAnnualSpend: number | null;
   renewalOwnerRef: string | null;
+  selectedOpportunity: ContractOptimizationOpportunity | null;
+  baselineHeadline: string | null;
+  baselineDetail: string | null;
 }): Promise<SourceEventRow> {
   const eventType = inferEventType(input.vendorCategory, input.contractName);
+  const opportunity = input.selectedOpportunity;
   const event = await createSourcingEvent({
     clientKey: input.clientKey,
     eventName: optimizationEventName(input),
     eventType,
     sourcingMotion: MOTION,
-    triggerDescription:
-      `Optimize incumbent contract ${input.contractId}: ${input.vendorName} - ${input.contractName}.`,
+    triggerDescription: optimizationTriggerDescription(input),
     decisionOwner: input.renewalOwnerRef ?? 'Vendor Management / Sourcing Lead',
-    scopeDescription:
-      `Contract ref: ${input.contractId}. Use the governed source.contract_360 row, financial exposure, operational performance, ` +
-      'document evidence, and Tower value claims as the starting evidence pack. Do not claim realized value until Tower/Finance confirms it.',
-    estimatedValueUsd: undefined,
+    scopeDescription: optimizationScopeDescription(input),
+    estimatedValueUsd: opportunity?.amountUsd ?? undefined,
     createdByUserId: input.userId ?? undefined,
     creationRequestId: optimizationCreationRequestId(input),
   });
@@ -199,17 +246,53 @@ async function createOptimizationEvent(input: {
   return event;
 }
 
+async function readRequestedOpportunityId(request: Request): Promise<string | null> {
+  const url = new URL(request.url);
+  const queryValue = normalizeOptionalId(url.searchParams.get('opportunityId'));
+  if (queryValue) return queryValue;
+  const contentType = request.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().includes('application/json')) return null;
+  const body = await request.json().catch(() => null);
+  return normalizeOptionalId((body as { opportunityId?: unknown } | null)?.opportunityId);
+}
+
+function resolveSelectedOpportunity(
+  opportunities: readonly ContractOptimizationOpportunity[],
+  requestedOpportunityId: string | null,
+): ContractOptimizationOpportunity | null {
+  if (requestedOpportunityId) {
+    return opportunities.find((opportunity) => opportunity.opportunityId === requestedOpportunityId) ?? null;
+  }
+  return (
+    opportunities.find((opportunity) => opportunity.opportunityId.endsWith(':rate-variance')) ??
+    opportunities.find((opportunity) => opportunity.amountUsd != null && opportunity.stage !== 'baseline_conflict') ??
+    opportunities[0] ??
+    null
+  );
+}
+
+function normalizeOptionalId(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
 function optimizationEventName(input: {
   readonly contractId: string;
   readonly contractName: string;
   readonly vendorName: string;
+  readonly selectedOpportunity?: Pick<ContractOptimizationOpportunity, 'shortLabel'> | null;
 }): string {
-  return `${input.vendorName} - ${input.contractName} Contract Optimization`;
+  const suffix = input.selectedOpportunity?.shortLabel
+    ? ` ${input.selectedOpportunity.shortLabel} Optimization`
+    : ' Contract Optimization';
+  return `${input.vendorName} - ${input.contractName}${suffix}`;
 }
 
 function optimizationCreationRequestId(input: {
   readonly contractId: string;
   readonly vendorName: string;
+  readonly selectedOpportunity?: Pick<ContractOptimizationOpportunity, 'opportunityId'> | null;
 }): string {
   const vendor = input.vendorName
     .toUpperCase()
@@ -219,7 +302,45 @@ function optimizationCreationRequestId(input: {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '')
     .slice(0, 6);
-  return [contract, vendor].filter(Boolean).join('');
+  const opportunity = (input.selectedOpportunity?.opportunityId ?? '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(-8);
+  return [contract, vendor, opportunity].filter(Boolean).join('');
+}
+
+function optimizationTriggerDescription(input: {
+  readonly contractId: string;
+  readonly contractName: string;
+  readonly vendorName: string;
+  readonly selectedOpportunity: SelectedOptimizationOpportunityContext | null;
+}): string {
+  const base = `Optimize incumbent contract ${input.contractId}: ${input.vendorName} - ${input.contractName}.`;
+  if (!input.selectedOpportunity) return base;
+  return `${base} Selected opportunity ${input.selectedOpportunity.opportunityId}: ${input.selectedOpportunity.label}.`;
+}
+
+function optimizationScopeDescription(input: {
+  readonly contractId: string;
+  readonly selectedOpportunity: SelectedOptimizationOpportunityContext | null;
+  readonly baselineHeadline: string | null;
+  readonly baselineDetail: string | null;
+}): string {
+  const opportunity = input.selectedOpportunity;
+  const lines = [
+    `Contract ref: ${input.contractId}.`,
+    input.baselineHeadline ? `Baseline: ${input.baselineHeadline} ${input.baselineDetail ?? ''}`.trim() : null,
+    opportunity
+      ? `Opportunity ref: ${opportunity.opportunityId}. Stage: ${opportunity.stage}. Evidence: ${opportunity.evidenceGrade}. Amount: ${opportunity.amountUsd == null ? 'not sized' : `$${Math.round(opportunity.amountUsd).toLocaleString('en-US')}`}.`
+      : null,
+    opportunity?.calculation
+      ? `Calculation rule: ${opportunity.calculation.ruleId} ${opportunity.calculation.ruleVersion}; included ${opportunity.calculation.includedLineCount}, pending ${opportunity.calculation.pendingLineCount}, excluded ${opportunity.calculation.excludedLineCount}.`
+      : null,
+    opportunity?.blockingGap ? `Blocking gap: ${opportunity.blockingGap}` : null,
+    opportunity ? `Next action: ${opportunity.nextAction}` : null,
+    'Use the governed Source opportunity, source.contract_360 row, financial exposure, document evidence, and Tower value claims as the starting evidence pack. Do not claim realized value until Tower/Finance confirms it.',
+  ];
+  return lines.filter((line): line is string => Boolean(line)).join(' ');
 }
 
 async function persistBaselineFacts(input: {
@@ -381,4 +502,7 @@ export const __test__ = {
   optimizationCreationRequestId,
   optimizationEventMatchesContract,
   optimizationEventName,
+  optimizationScopeDescription,
+  optimizationTriggerDescription,
+  resolveSelectedOpportunity,
 };

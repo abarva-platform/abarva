@@ -17,6 +17,7 @@ import {
   type ApplicationScopeConfidenceTiers,
 } from "./vendor-contract-portfolio";
 import type { ContractOptimizationEvidencePack } from "./contract-optimization-evidence";
+import type { ContractOptimizationOpportunitySet } from "./contract-optimization-opportunity";
 import type {
   DocExtractionRow,
   SourceContract360Row,
@@ -45,6 +46,8 @@ export interface Contract360View {
   readonly docExtractions: readonly DocExtractionRow[];
   /** Shared four-ledger optimization evidence, if governed system/document rows exist. */
   readonly optimizationEvidence: ContractOptimizationEvidencePack | null;
+  /** Atomic opportunity spine and governed calculation/evidence detail. */
+  readonly optimizationOpportunitySet: ContractOptimizationOpportunitySet | null;
   /** Contract evidence detail package: source-system extracts at business grain. */
   readonly evidenceOverview: SourceContractEvidenceOverviewRow | null;
   readonly evidenceScope: readonly SourceContractEvidenceScopeRow[];
@@ -62,6 +65,7 @@ export interface BuildContract360ViewInput {
   readonly towerValueClaims: readonly TowerValueClaimRow[];
   readonly docExtractions?: readonly DocExtractionRow[];
   readonly optimizationEvidence?: ContractOptimizationEvidencePack | null;
+  readonly optimizationOpportunitySet?: ContractOptimizationOpportunitySet | null;
   readonly evidenceOverview?: SourceContractEvidenceOverviewRow | null;
   readonly evidenceScope?: readonly SourceContractEvidenceScopeRow[];
   readonly evidencePricing?: readonly SourceContractEvidencePricingRow[];
@@ -83,6 +87,7 @@ export function buildContract360View(
     towerValueClaims,
     docExtractions = [],
     optimizationEvidence = null,
+    optimizationOpportunitySet = null,
     evidenceOverview = null,
     evidenceScope = [],
     evidencePricing = [],
@@ -114,6 +119,7 @@ export function buildContract360View(
       towerObservations.length > 0 || towerValueClaims.length > 0,
     docExtractions,
     optimizationEvidence,
+    optimizationOpportunitySet,
     evidenceOverview,
     evidenceScope,
     evidencePricing,

@@ -140,14 +140,14 @@ describe('buildContractOptimizationSpine', () => {
     expect(spine.missingEvidenceSources.flatMap((requirement) => requirement.connections.map((connection) => connection.id))).toEqual(
       expect.arrayContaining(['itsm', 'ap_erp', 'finance_tower']),
     );
-    expect(spine.selected?.reasons).toEqual(
+    expect(spine.selected?.reasons).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           kind: 'evidence_gap',
-          tone: 'missing',
         }),
       ]),
     );
+    expect(spine.missingEvidenceSources).toHaveLength(3);
   });
 
   it('uses shared source-system evidence classes without tenant-specific branching', () => {

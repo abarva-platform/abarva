@@ -7,6 +7,7 @@ import {
   getContractEvidenceOverview,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
+  getContractOptimizationOpportunitySet,
   listContractApplicationScope,
   listContractEvidencePricing,
   listContractEvidenceScope,
@@ -64,12 +65,13 @@ export async function GET(
     ]);
 
   const subjectRefs = collectContractSubjectRefs(contract, applicationScope);
-  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, optimizationEvidence] = await Promise.all([
+  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, optimizationEvidence, optimizationOpportunitySet] = await Promise.all([
     listLatestTowerObservationsForSubjects(tenantKey, subjectRefs).catch(() => []),
     listTowerValueClaimsForSubjects(tenantKey, subjectRefs).catch(() => []),
     listDocExtractionsForSubject(tenantKey, contract.contract_id).catch(() => []),
     listDocExtractionsForSubject(tenantKey, contract.vendor_ref).catch(() => []),
     getContractOptimizationEvidencePack(tenantKey, contract.contract_id).catch(() => null),
+    getContractOptimizationOpportunitySet(tenantKey, contract.contract_id, contract).catch(() => null),
   ]);
   const docExtractions = dedupeExtractions([...extractionsByContract, ...extractionsByVendor]);
 
@@ -83,6 +85,7 @@ export async function GET(
     towerValueClaims,
     docExtractions,
     optimizationEvidence,
+    optimizationOpportunitySet,
     evidenceOverview,
     evidenceScope,
     evidencePricing,

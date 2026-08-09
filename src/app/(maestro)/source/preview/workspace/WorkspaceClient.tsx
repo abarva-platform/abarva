@@ -105,7 +105,7 @@ export function WorkspaceClient({
       .catch(() => setStateRaw((prev) => ({ ...prev, contractDetail: { ...prev.contractDetail, [contractId]: 'error' } })));
   }, []);
 
-  const startContractOptimization = useCallback((contractId: string) => {
+  const startContractOptimization = useCallback((contractId: string, opportunityId?: string | null) => {
     setStateRaw((prev) => ({
       ...prev,
       optimizationLaunch: {
@@ -113,19 +113,25 @@ export function WorkspaceClient({
         [contractId]: { status: 'loading' },
       },
     }));
-    fetch('/api/source/workspace/contract/' + encodeURIComponent(contractId) + '/optimization', {
+    const opportunityQuery = opportunityId ? `?opportunityId=${encodeURIComponent(opportunityId)}` : '';
+    fetch('/api/source/workspace/contract/' + encodeURIComponent(contractId) + '/optimization' + opportunityQuery, {
       method: 'POST',
+      headers: opportunityId ? { 'content-type': 'application/json' } : undefined,
+      body: opportunityId ? JSON.stringify({ opportunityId }) : undefined,
     })
       .then(async (r) => {
         const payload = await r.json().catch(() => null);
         if (!r.ok || !payload?.ok) {
           throw new Error(payload?.detail ?? payload?.error ?? `Source returned ${r.status}`);
         }
-        return payload as { approvalUrl?: string; contractId?: string; eventUrl?: string; eventId?: string };
+        return payload as { approvalUrl?: string; contractId?: string; eventUrl?: string; eventId?: string; opportunityId?: string | null };
       })
       .then((payload) => {
         if (payload.contractId !== contractId) {
           throw new Error('Contract optimization returned a different contract. The workflow was not opened.');
+        }
+        if (opportunityId && payload.opportunityId !== opportunityId) {
+          throw new Error('Contract optimization returned a different opportunity. The workflow was not opened.');
         }
         window.location.href = payload.approvalUrl ?? payload.eventUrl ?? `/source/events/${payload.eventId ?? ''}`;
       })
