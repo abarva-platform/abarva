@@ -356,7 +356,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         {
           eventId: persistedEvent.id,
           clientKey: effectiveClientKey,
-          enteredStage: stageKey,
+          enteredStage: currentStage,
         },
         { request: req },
       ).catch((error) => {
