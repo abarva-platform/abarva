@@ -470,7 +470,7 @@ const PROFILES: SourceArtifactProfile[] = [
       "response_compliance_mandate",
       "vendor_claim_register",
       "automation_productivity_commitment_table",
-      "structured_pricing_workbook",
+      "pricing_response_tab",
       "staffing_and_location_model",
       "sla_commitment_table",
       "assumptions_and_exclusions_log",
