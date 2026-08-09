@@ -11,7 +11,7 @@
 // rule deliberately dropped (see the CSS module header).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { formatCount } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
@@ -76,7 +76,6 @@ export function TowerCommandCenter({
   /** ISO date the Tower read model was read. */
   refreshedOn: string;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -94,16 +93,24 @@ export function TowerCommandCenter({
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // Reflect the active tab in `?tab=` so a link can deep-link into a tab and an
-  // E2E spec can address one directly. Sub-view / filter / question stay client
-  // state, exactly as the design has them.
+  // E2E spec can address one directly. This is local UI state, so use the
+  // browser history API instead of App Router navigation; otherwise rapid tab
+  // clicks can let older `router.replace` responses arrive late and snap the
+  // visible tab backward.
   const goToTab = useCallback(
     (next: TowerTab) => {
       setTab(next);
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      const params = new URLSearchParams(
+        typeof window === "undefined"
+          ? (searchParams?.toString() ?? "")
+          : window.location.search,
+      );
       params.set("tab", next);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", `${pathname}?${params}`);
+      }
     },
-    [pathname, router, searchParams],
+    [pathname, searchParams],
   );
 
   // A tab landed on from the URL (back/forward, or a pasted link) must win.

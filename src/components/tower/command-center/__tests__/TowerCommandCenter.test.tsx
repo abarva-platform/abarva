@@ -17,6 +17,7 @@ import { TowerCommandCenter } from "../TowerCommandCenter";
 import { topVendorAttribution } from "../views/AiPortfolioView";
 
 const replace = jest.fn();
+const replaceState = jest.spyOn(window.history, "replaceState");
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: (...args: unknown[]) => replace(...args) }),
@@ -86,7 +87,11 @@ function tab(name: RegExp) {
 }
 
 describe("TowerCommandCenter", () => {
-  beforeEach(() => replace.mockClear());
+  beforeEach(() => {
+    replace.mockClear();
+    replaceState.mockClear();
+    window.history.replaceState(null, "", "/tower/command");
+  });
 
   it("renders the six tabs as a real tablist", () => {
     renderPage();
@@ -150,9 +155,11 @@ describe("TowerCommandCenter", () => {
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
     expect(tab(/Value Proof/)).toHaveAttribute("aria-selected", "true");
-    expect(replace).toHaveBeenCalledWith("/tower/command?tab=funnel", {
-      scroll: false,
-    });
+    expect(replaceState).toHaveBeenCalledWith(
+      null,
+      "",
+      "/tower/command?tab=funnel",
+    );
   });
 
   it("renders the Value Proof blockers table sorted by blocked dollars", () => {
