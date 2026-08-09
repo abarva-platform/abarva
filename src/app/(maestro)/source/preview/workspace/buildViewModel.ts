@@ -2266,10 +2266,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           ledgers: connection.ledgers.map(
             (ledger) =>
               ({
-                recoverable_leakage: "Recoverable leakage",
-                avoided_cost: "Avoided cost",
-                negotiated_improvement: "Negotiated improvement",
-                realized_value: "Realized value",
+                recoverable_leakage: "Recoverable opportunity",
+                avoided_cost: "Avoidable opportunity",
+                negotiated_improvement: "Negotiable improvement",
+                realized_value: "Finance-confirmed outcome",
               })[ledger],
           ),
           fields: connection.fields,
@@ -2880,8 +2880,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         : [];
   const sourceWorkspaceLedgerFacts = optLedgerView
     ? [
-        `Optimization ledger headline: ${optLedgerView.headline}`,
-        `Four-ledger status: ${optLedgerView.quantifiedLeakage} recoverable leakage, ${optLedgerView.realizedValue} realized value, ${optLedgerView.evidenceReady} ready lines, ${optLedgerView.evidenceGaps} evidence gaps.`,
+        `Optimization evidence headline: ${optLedgerView.headline}`,
+        `Opportunity evidence status: ${optLedgerView.quantifiedLeakage} recoverable opportunity, ${optLedgerView.realizedValue} finance-confirmed outcome, ${optLedgerView.evidenceReady} ready lines, ${optLedgerView.evidenceGaps} evidence gaps.`,
         ...optLedgerView.lines.map(
           (line) =>
             `${line.label}: ${line.amount}; state ${line.state}; evidence ${line.evidenceClass}; evidence note ${line.evidence}; next action ${line.nextAction}; source refs ${line.sourceRefs.join(", ") || "not established"}.`,
@@ -2948,7 +2948,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     tenantFacts: [
       `Context coverage: ${v4Snapshot.contextCoverage.contracts} contract rows, ${v4Snapshot.contextCoverage.scopeRows} scope rows, ${v4Snapshot.contextCoverage.invoiceLines} invoice lines, ${v4Snapshot.contextCoverage.performanceRows} performance rows, ${v4Snapshot.contextCoverage.saasUsageRows} usage rows, ${v4Snapshot.contextCoverage.cloudRows} cloud rows.`,
       `Service-credit rollup: calculated ${money(v4Snapshot.performanceCredits.creditCalculated)}, claimed ${money(v4Snapshot.performanceCredits.creditClaimed)}, recovered ${money(v4Snapshot.performanceCredits.creditRecovered)}, unclaimed ${money(v4Snapshot.performanceCredits.unclaimedCredit)}.`,
-      `AI usage value proof: ${v4Snapshot.aiUsageValueProof.rowCount} usage rows, ${v4Snapshot.aiUsageValueProof.assignedSeats} assigned seats, ${v4Snapshot.aiUsageValueProof.activeUsers} active users, ${money(v4Snapshot.aiUsageValueProof.actualCost)} actual cost, ${v4Snapshot.aiUsageValueProof.claimableRows} claimable rows.`,
+      `AI usage value evidence: ${v4Snapshot.aiUsageValueProof.rowCount} usage rows, ${v4Snapshot.aiUsageValueProof.assignedSeats} assigned seats, ${v4Snapshot.aiUsageValueProof.activeUsers} active users, ${money(v4Snapshot.aiUsageValueProof.actualCost)} actual cost, ${v4Snapshot.aiUsageValueProof.claimableRows} claimable rows.`,
     ],
     vendorFacts: sourceWorkspaceVendorFacts,
     sourceFacts: [

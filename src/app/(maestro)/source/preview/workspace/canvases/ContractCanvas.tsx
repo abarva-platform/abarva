@@ -299,7 +299,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                     marginBottom: 8,
                   }}
                 >
-                  What this contract covers
+                  Scope overview
                 </div>
                 <div
                   style={{
@@ -526,7 +526,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                   marginBottom: 14,
                 }}
               >
-                Related initiatives, not scope line items
+                Related initiatives
               </div>
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
@@ -562,8 +562,8 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
               {vm.progRows.length > 4 ? (
                 <div style={{ fontSize: 12, color: "#888780", marginTop: 10 }}>
-                  These are dependency signals, not proof of contract scope. Use
-                  full context for the complete dependency list.
+                  Dependency signals only. They do not replace the scope line
+                  item feed.
                 </div>
               ) : null}
             </div>
@@ -867,7 +867,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                       marginBottom: 7,
                     }}
                   >
-                    Four-ledger evidence cockpit
+                    Opportunity evidence cockpit
                   </div>
                   <div
                     style={{
@@ -886,16 +886,16 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                       color: "#5f5e5a",
                     }}
                   >
-                    Recoverable leakage, avoided cost, negotiated improvement,
-                    and realized value stay separate. Governed extracts and
+                    Recoverable opportunity, avoidable opportunity, negotiable
+                    improvement, and finance-confirmed outcome stay separate. Governed extracts and
                     documents can start the cockpit; APIs can replace repeat
                     feeds later.
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   {[
-                    ["Recoverable leakage", vm.optLedger.quantifiedLeakage],
-                    ["Realized value", vm.optLedger.realizedValue],
+                    ["Recoverable opportunity", vm.optLedger.quantifiedLeakage],
+                    ["Finance confirmed", vm.optLedger.realizedValue],
                     ["Evidence gaps", vm.optLedger.evidenceGaps],
                   ].map(([label, value]) => (
                     <div
@@ -1928,7 +1928,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
     [];
   const ledgerSupport = quantifiedLines.length
     ? quantifiedLines.map((line) => `${line.label}: ${line.amount}`).join(" · ")
-    : "No quantified ledger line is established yet.";
+    : "No quantified opportunity evidence line is established yet.";
   const runwayText = c
     ? c.noticePassed
       ? `Notice deadline has passed (${c.notice}); the commercial choice is remediation or a controlled variation, not a clean renewal cycle.`
@@ -2100,7 +2100,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
             <div style={{ fontSize: 12.5, color: "#2c2c2a", lineHeight: 1.55 }}>
               Ranking is a prioritization signal, not a recommendation to sign.
-              It is based on material exposure, governed ledger evidence,
+              It is based on material exposure, governed opportunity evidence,
               dependency context, and any active decision timing.
             </div>
           </div>
@@ -2125,7 +2125,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
             <div style={{ fontSize: 12.2, color: "#5f5e5a", lineHeight: 1.55 }}>
               {workflowLines.length
-                ? `${workflowLines.length} ledger line${workflowLines.length === 1 ? "" : "s"} still require workflow action before they become realized value.`
+                ? `${workflowLines.length} opportunity line${workflowLines.length === 1 ? " still requires" : "s still require"} workflow action before ${workflowLines.length === 1 ? "it becomes" : "they become"} finance-confirmed.`
                 : "The evidence pack can support a fact-based commercial conversation; realized value still requires Finance/Tower confirmation."}
             </div>
           </div>
@@ -2727,11 +2727,11 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
           }}
         >
           <div style={{ fontSize: 14, fontWeight: 850, color: "#0a0a0b" }}>
-            Contract relationship map
+            Contract relationship
           </div>
           <div style={{ fontSize: 12.2, color: "#5f5e5a" }}>
-            Click a source block to see how evidence moves into opportunity,
-            workflow, and Finance/Tower proof.
+            Click a source block to see what feeds the baseline, opportunity
+            evidence, and finance-confirmed outcome.
           </div>
         </div>
         <div
@@ -2804,7 +2804,7 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                 letterSpacing=".12em"
                 fill="#888780"
               >
-                SOURCE FACTS
+                SOURCE SYSTEMS
               </text>
               <text
                 x="292"
@@ -3108,7 +3108,7 @@ function OpportunityValueEvidenceExplainer({ vm }: { vm: SourceWorkspaceVM }) {
         }}
       >
         <div style={{ fontSize: 14, fontWeight: 850, color: "#0a0a0b" }}>
-          Value evidence, not a single savings number
+          Opportunity evidence, not a single savings number
         </div>
       </div>
       <div
@@ -3162,22 +3162,22 @@ function ValueProofExplainer({ vm }: { vm: SourceWorkspaceVM }) {
   const valueProofDefs = [
     [
       "recoverable_leakage",
-      "Recoverable leakage",
+      "Recoverable opportunity",
       "Money that should come back or stop because contract, invoice, SLA, or rate-card evidence proves overbilling, missed credits, duplicates, or off-contract spend.",
     ],
     [
       "avoided_cost",
-      "Avoided cost",
+      "Avoidable opportunity",
       "Future spend not incurred because scope, shelfware, renewal uplift, or consumption is reduced before the commitment is made.",
     ],
     [
       "negotiated_improvement",
-      "Negotiated improvement",
+      "Negotiable improvement",
       "Commercial gains from price, term, index cap, volume tier, benchmark right, or termination leverage after the supplier agrees or the negotiation packet is approved.",
     ],
     [
       "realized_value",
-      "Realized value",
+      "Finance-confirmed outcome",
       "Finance-confirmed value only. It is not the same thing as estimated opportunity, usage variance, or a procurement target.",
     ],
   ];
@@ -3204,12 +3204,11 @@ function ValueProofExplainer({ vm }: { vm: SourceWorkspaceVM }) {
             marginBottom: 4,
           }}
         >
-          What the value evidence means
+          How Source separates value
         </div>
         <div style={{ fontSize: 12.5, color: "#5f5e5a", lineHeight: 1.5 }}>
-          Source separates four kinds of money so a data gap, forecast, or
-          negotiation target never becomes a claimed saving. Only realized value
-          is finance-confirmed.
+          Opportunity, target, and finance-confirmed outcome stay separate. This
+          prevents a forecast or data gap from becoming a claimed saving.
         </div>
       </div>
       <div
@@ -3401,12 +3400,11 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
         }}
       >
         <div style={{ fontSize: 14, fontWeight: 800, color: "#0a0a0b" }}>
-          Contract relationship map
+          Contract relationship
         </div>
         <div style={{ fontSize: 12.2, color: "#5f5e5a" }}>
-          Follow the contract from source systems and scope facts to governed
-          value evidence and the optimize decision. This is relationship flow,
-          not a savings claim.
+          Follow the contract from source systems and scope facts to
+          opportunity evidence and the optimize decision.
         </div>
       </div>
       <div
@@ -3483,7 +3481,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               letterSpacing=".12em"
               fill="#888780"
             >
-              VALUE-EVIDENCE STATUS
+              OPPORTUNITY EVIDENCE
             </text>
 
             {line(172, 88, 285, 116, "#0a0a0b")}
@@ -3540,7 +3538,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               86,
               138,
               104,
-              "Value evidence",
+              "Opportunity evidence",
               proofStatus,
               gapLines.length ? "#ba7517" : "#1d9e75",
               "#fff",
@@ -3607,7 +3605,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               marginBottom: 4,
             }}
           >
-            Source-system facts inside this map
+            Source systems in this map
           </div>
           <div
             style={{
@@ -3617,8 +3615,8 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               marginBottom: 10,
             }}
           >
-            Hover or click a feed to see what it contributes. These feeds
-            explain where the value evidence comes from.
+            Hover or click a feed to see what it contributes to the opportunity
+            case.
           </div>
           <div
             style={{
@@ -3749,11 +3747,25 @@ function formatValueProofKind(kind?: string) {
 
 function formatCurrency(value: number | null) {
   if (value == null) return "Not established";
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  const trim = (raw: string) => raw.replace(/\.0+$/, "");
+  if (abs >= 1_000_000_000) {
+    return `${sign}$${trim(
+      (abs / 1_000_000_000).toFixed(abs >= 10_000_000_000 ? 1 : 2),
+    )}B`;
+  }
+  if (abs >= 1_000_000) {
+    return `${sign}$${trim(
+      (abs / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2),
+    )}M`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}$${Math.round(abs / 1_000).toLocaleString("en-US")}K`;
+  }
+  return `${sign}$${abs.toLocaleString("en-US", {
     maximumFractionDigits: 0,
-  });
+  })}`;
 }
 
 function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
@@ -3801,8 +3813,9 @@ function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
               maxWidth: 760,
             }}
           >
-            This contract shows the governed feeds that establish the ledger,
-            plus any remaining extracts needed to move the decision.
+            This contract shows the governed feeds that establish the
+            opportunity case, plus any remaining extracts needed to move the
+            decision.
           </div>
         </div>
         <div
