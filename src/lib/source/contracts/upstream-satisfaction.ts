@@ -69,9 +69,8 @@ export async function findUnsatisfiedRequiredUpstream(
       : (data as SourceArtifactGovernanceRow[]).map((row) => [row.id, row]),
   );
 
-  const acceptanceById = await getLatestArtifactAcceptancesByArtifactIds(
-    linkedIds,
-  );
+  const acceptanceById =
+    await getLatestArtifactAcceptancesByArtifactIds(linkedIds);
 
   const eventStageKey = ctx.event.currentStageKey as SourceStageKey;
 
@@ -90,5 +89,25 @@ export async function findUnsatisfiedRequiredUpstream(
       eventStageKey,
     });
     return !satisfied;
+  });
+}
+
+/**
+ * Stage-entry auto-drafts are not client-final artifacts; they are the working
+ * drafts a reviewer needs in order to reach client-final authority later.
+ * For that internal path, a non-empty upstream draft body is sufficient
+ * context for drafting the next packet. Manual generation still uses
+ * findUnsatisfiedRequiredUpstream above.
+ */
+export function findUnsatisfiedDraftableUpstream(
+  ctx: SourceGenerationContext,
+  requiredCodes: string[],
+): string[] {
+  if (requiredCodes.length === 0) return [];
+  return requiredCodes.filter((code) => {
+    const row = ctx.artifactStates.find(
+      (artifact) => artifact.artifactCode === code,
+    );
+    return !row?.body?.trim();
   });
 }

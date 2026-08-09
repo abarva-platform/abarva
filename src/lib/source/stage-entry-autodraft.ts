@@ -253,15 +253,16 @@ async function processQueuedGenerationJob(input: {
     request?: Request;
   }) => Promise<Response>;
 }): Promise<Response> {
+  const stageAutoDraftRequest = withStageAutoDraftHeaders(input.request);
   const result = await processSourceArtifactGenerationJob(
-    { jobId: input.job.id, request: input.request },
+    { jobId: input.job.id, request: stageAutoDraftRequest },
     {
       generateArtifact: input.generateArtifact
         ? () =>
             input.generateArtifact!({
               eventId: input.eventId,
               artifactCode: input.artifactCode,
-              request: input.request,
+              request: stageAutoDraftRequest,
             })
         : undefined,
     },
@@ -284,8 +285,24 @@ async function runDirectGeneration(input: {
   }) => Promise<Response>;
 }): Promise<Response> {
   return input.generateArtifact
-    ? input.generateArtifact(input)
-    : defaultGenerateArtifact(input);
+    ? input.generateArtifact({
+        ...input,
+        request: withStageAutoDraftHeaders(input.request),
+      })
+    : defaultGenerateArtifact({
+        ...input,
+        request: withStageAutoDraftHeaders(input.request),
+      });
+}
+
+function withStageAutoDraftHeaders(request?: Request): Request {
+  const headers = new Headers(request?.headers);
+  headers.set("x-source-stage-autodraft", "1");
+  headers.set("x-source-worker-call", "1");
+  return new Request(request?.url ?? "https://app.abarva.ai/source-autodraft", {
+    method: "POST",
+    headers,
+  });
 }
 
 async function loadArtifactRowsForStage(

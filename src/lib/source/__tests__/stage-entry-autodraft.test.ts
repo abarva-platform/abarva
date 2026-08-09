@@ -264,6 +264,41 @@ describe("autoDraftOnStageEntry", () => {
     });
     expect(generateArtifact).toHaveBeenCalledTimes(1);
   });
+
+  it("marks direct fallback requests as internal stage auto-drafts", async () => {
+    const generateArtifact = jest.fn(
+      async (input: {
+        eventId: string;
+        artifactCode: string;
+        request?: Request;
+      }) => {
+        void input;
+        return okResponse();
+      },
+    );
+    const request = new Request("https://app.abarva.ai/source/events/event-1", {
+      headers: { "x-original": "kept" },
+    });
+
+    await autoDraftOnStageEntry(baseInput, {
+      loadArtifactRows: async () => [row("d01_strategy_memo")],
+      enqueueGenerationJob: jest.fn(async () => {
+        throw new Error(
+          'relation "source_artifact_generation_jobs" does not exist',
+        );
+      }),
+      updateArtifactStatus: jest.fn(async () => undefined),
+      generateArtifact,
+      request,
+      log: silentLog,
+    });
+
+    expect(generateArtifact).toHaveBeenCalledTimes(1);
+    const generatedRequest = generateArtifact.mock.calls[0][0].request;
+    expect(generatedRequest?.headers.get("x-source-stage-autodraft")).toBe("1");
+    expect(generatedRequest?.headers.get("x-source-worker-call")).toBe("1");
+    expect(generatedRequest?.headers.get("x-original")).toBe("kept");
+  });
 });
 
 const silentLog = {

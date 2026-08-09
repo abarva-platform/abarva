@@ -38,7 +38,10 @@ import {
   type SourceGenerationContext,
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
-import { findUnsatisfiedRequiredUpstream } from "@/lib/source/contracts/upstream-satisfaction";
+import {
+  findUnsatisfiedDraftableUpstream,
+  findUnsatisfiedRequiredUpstream,
+} from "@/lib/source/contracts/upstream-satisfaction";
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
 import { generateD09ViaMapReduce } from "@/lib/source/agent-generation/d09-map-reduce";
@@ -425,10 +428,10 @@ export async function generateSourceArtifactDraft(
   // superseded version no longer satisfies the requirement — this is the
   // shared resolver ask #6 required, so no route implements its own
   // interpretation of "satisfied."
-  const missingUpstream = await findUnsatisfiedRequiredUpstream(
-    ctx,
-    template.upstreamRequired,
-  );
+  const stageAutoDraft = _req.headers.get("x-source-stage-autodraft") === "1";
+  const missingUpstream = stageAutoDraft
+    ? findUnsatisfiedDraftableUpstream(ctx, template.upstreamRequired)
+    : await findUnsatisfiedRequiredUpstream(ctx, template.upstreamRequired);
   const eligibility = evaluateGenerationEligibility({
     artifactCode,
     currentStage: ctx.event.currentStageKey,
@@ -439,7 +442,11 @@ export async function generateSourceArtifactDraft(
   );
   if (stageBlocker) {
     return Response.json(
-      { error: stageBlocker.code, detail: stageBlocker.detail, ...stageBlocker.meta },
+      {
+        error: stageBlocker.code,
+        detail: stageBlocker.detail,
+        ...stageBlocker.meta,
+      },
       { status: 409 },
     );
   }
@@ -1040,9 +1047,7 @@ export async function generateSourceArtifactDraft(
         missing_evidence: env.refusal?.missingEvidence
           ? JSON.stringify(env.refusal.missingEvidence)
           : null,
-        claims: env.claims?.length
-          ? JSON.stringify(env.claims)
-          : null,
+        claims: env.claims?.length ? JSON.stringify(env.claims) : null,
         envelope: JSON.stringify(env),
         generated_by_user_id: currentUser?.clerkUserId ?? null,
         generated_at: nowIso,
