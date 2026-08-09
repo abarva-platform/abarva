@@ -9,6 +9,7 @@ const RAW_ID_RE =
   /\b(?:[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}|[A-Z]{2,12}-\d{3,6})\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const RAW_ID_TEST_RE =
   /\b(?:[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}|[A-Z]{2,12}-\d{3,6})\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+const PUBLIC_SOURCE_CONTRACT_ID_RE = /\bCTR-\d{3,6}\b/;
 const SNAKE_CASE_RE = /\b[a-z]+(?:_[a-z0-9]+){1,}\b/g;
 const SNAKE_CASE_TEST_RE = /\b[a-z]+(?:_[a-z0-9]+){1,}\b/;
 const INTERNAL_PHRASE_RE =
@@ -66,6 +67,12 @@ const INTERNAL_REPLACEMENTS: Array<[RegExp, string]> = [
 const EVIDENCE_BOUNDARY_PARAGRAPH_RE =
   /^\s*Evidence boundary:\s*.+(?:\n(?!\s*$).*)*$/gim;
 
+function replaceRawIds(value: string, replacement: string): string {
+  return value.replace(RAW_ID_RE, (match) =>
+    PUBLIC_SOURCE_CONTRACT_ID_RE.test(match) ? match : replacement,
+  );
+}
+
 function dedupeEvidenceBoundaryParagraphs(text: string): string {
   const seen = new Set<string>();
   return text
@@ -84,8 +91,7 @@ export function businessLabel(value: unknown, fallback = "Business context"): st
   if (!raw) return fallback;
   const known = BUSINESS_LABELS[raw.toLowerCase()];
   if (known) return known;
-  const cleaned = raw
-    .replace(RAW_ID_RE, "source")
+  const cleaned = replaceRawIds(raw, "source")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -106,8 +112,7 @@ export function shapePublicText(value: unknown, fallback = ""): string {
   for (const [pattern, replacement] of INTERNAL_REPLACEMENTS) {
     text = text.replace(pattern, replacement);
   }
-  text = text
-    .replace(RAW_ID_RE, "source")
+  text = replaceRawIds(text, "source")
     .replace(SNAKE_CASE_RE, (match) => businessLabel(match))
     .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")

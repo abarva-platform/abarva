@@ -96,6 +96,43 @@ describe("sanitizeAgentAnswerForRender", () => {
     expect(table?.rows[0]?.source).toBe("evidence");
   });
 
+  it("preserves public Source contract references while scrubbing non-contract internal ids", () => {
+    const safe = sanitizeAgentAnswerForRender({
+      ...unsafeAnswer,
+      directAnswer:
+        "Salesforce contract CTR-090 should stay visible, but BASE-007 should not.",
+      factsUsed: [
+        {
+          id: "selected-contract",
+          label: "Selected contract",
+          value: "CTR-090 Salesforce",
+        },
+        {
+          id: "internal-record",
+          label: "Internal record",
+          value: "BASE-007",
+        },
+      ],
+      artifacts: [
+        {
+          artifact: "graph",
+          id: "contract-graph",
+          title: "Contract graph",
+          nodes: [
+            { id: "contract", label: "CTR-090 Salesforce", kind: "contract" },
+            { id: "raw", label: "BASE-007", kind: "raw" },
+          ],
+          edges: [],
+        },
+      ],
+    });
+
+    const renderedPayload = JSON.stringify(safe);
+
+    expect(renderedPayload).toContain("CTR-090");
+    expect(renderedPayload).not.toMatch(/\bBASE-007\b/);
+  });
+
   it("scrubs data-layer and Move trace labels before server-side render", () => {
     const safe = sanitizeAgentAnswerForRender({
       ...unsafeAnswer,
